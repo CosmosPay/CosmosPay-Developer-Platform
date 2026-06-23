@@ -1,0 +1,42 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import Invite from "@/components/cosmos/Invite.tsx";
+import { getInvitationByToken, acceptInvitation } from "@/lib/invitations";
+
+// Magic-link invitation landing. If the visitor is signed in with the invited email we
+// accept the invitation here (server-side) and show success; otherwise we prompt sign-in,
+// returning to this same link afterwards.
+const { token } = Astro.params;
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const user = Astro.locals.user;
+
+let state = "invalid";
+let org = "";
+let email = "";
+
+if (token) {
+  const inv = await getInvitationByToken(token).catch(() => null);
+  if (inv) {
+    org = inv.org?.name ?? "";
+    email = inv.email;
+    if (!user) {
+      state = inv.acceptedAt ? "accepted" : inv.expiresAt.getTime() < Date.now() ? "expired" : "needsLogin";
+    } else {
+      const res = await acceptInvitation(token, { id: user.id, email: user.email }).catch(() => null);
+      if (!res) {
+        state = "invalid";
+      } else if (res.ok) {
+        state = "success";
+        org = res.orgName;
+      } else {
+        state = res.reason;
+        if (res.email) email = res.email;
+      }
+    }
+  }
+}
+---
+
+<CosmosLayout title="Invitation — Cosmos Pay" lang={lang}>
+  <Invite client:load state={state} org={org} email={email} token={token} lang={lang} />
+</CosmosLayout>

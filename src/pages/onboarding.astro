@@ -1,0 +1,36 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import Onboarding from "@/components/cosmos/Onboarding.tsx";
+import { listForUser } from "@/lib/organizations";
+import { planFeatures, ONBOARDING_ENABLED } from "@/lib/features";
+
+// Only for signed-in users without an organization yet.
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/");
+}
+
+// Onboarding turned off → the dashboard auto-provisions the org; send them there.
+if (!ONBOARDING_ENABLED) {
+  return Astro.redirect("/dashboard");
+}
+
+let orgs: unknown[] = [];
+try {
+  orgs = await listForUser(user.id);
+} catch (e) {
+  orgs = [];
+}
+// Already onboarded → straight to the dashboard.
+if (orgs.length > 0) {
+  return Astro.redirect("/dashboard");
+}
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// New accounts onboard as a regular user; plan options follow the env flags.
+const features = planFeatures("user");
+---
+
+<CosmosLayout title="Welcome — Cosmos Pay" lang={lang}>
+  <Onboarding client:load lang={lang} features={features} />
+</CosmosLayout>

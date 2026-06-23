@@ -1,0 +1,2 @@
+export function Field({ label, hint, ...p }) { return (<div className="fld"><label className="field-l">{label}{hint && <span className="field-hint"> {hint}</span>}</label><input className="field" {...p} /></div>); }
+export function Sel({ label, value, onChange, options, labels }) { return (<div className="fld"><label className="field-l">{label}</label><select className="field" value={value} onChange={(e) => onChange(e.target.value)}>{options.map((o) => <option key={o} value={o}>{labels ? (labels[o] || o) : o}</option>)}</select></div>); }

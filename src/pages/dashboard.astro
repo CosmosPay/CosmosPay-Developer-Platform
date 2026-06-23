@@ -1,0 +1,68 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import Dashboard from "@/components/cosmos/Dashboard.tsx";
+import { getProfile, getRole } from "@/lib/profile";
+import { listForUser, ensureDefaultOrg } from "@/lib/organizations";
+import { planFeatures, ONBOARDING_ENABLED } from "@/lib/features";
+
+// Auth guard — the dashboard is only for logged-in developers.
+// Astro.locals.user is populated by src/middleware.ts from the Authentik session.
+// There is no login page: unauthenticated visitors are sent home, where the nav's
+// "Log in" / "Get API keys" actions kick off the OAuth flow directly.
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/");
+}
+
+// Onboarding gate — a user with no organization must create their first one first.
+let orgCount = 0;
+try {
+  orgCount = (await listForUser(user.id)).length;
+} catch (e) {
+  orgCount = 0;
+}
+if (orgCount === 0) {
+  // With onboarding enabled, send them through the wizard. With it disabled, skip
+  // straight to a default organization so they land on the dashboard.
+  if (ONBOARDING_ENABLED) {
+    return Astro.redirect("/onboarding");
+  }
+  try {
+    orgCount = (await ensureDefaultOrg(user.id, user.name)).length;
+  } catch (e) {
+    orgCount = 0;
+  }
+  if (orgCount === 0) {
+    return Astro.redirect("/onboarding");
+  }
+}
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// Account role (user | support | admin | owner) — gates staff features (support inbox,
+// user management). The first account bootstraps to "owner" (see getRole). Best-effort.
+const profile = await getProfile(user.id).catch(() => null);
+const role = await getRole(user.id).catch(() => "user");
+const plan = profile?.plan ?? "community";
+// The custom profile (displayName / avatarUrl) overrides the OAuth name + photo when set.
+// We pass both the effective values (name/image) and the raw OAuth fallbacks (authName/
+// authImage) so the account editor can revert cleanly when a custom value is cleared.
+const dashUser = {
+  id: user.id,
+  name: profile?.displayName || user.name,
+  email: user.email,
+  image: profile?.avatarUrl || user.image,
+  role,
+  plan,
+  authName: user.name,
+  authImage: user.image ?? null,
+  displayName: profile?.displayName ?? "",
+  bio: profile?.bio ?? "",
+};
+// Plan/onboarding flags resolved for this account (drives plan UI gating).
+const features = planFeatures(role);
+---
+
+<CosmosLayout title="Dashboard — Cosmos Pay" lang={lang}>
+  <Dashboard client:load user={dashUser} lang={lang} features={features} />
+</CosmosLayout>

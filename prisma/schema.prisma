@@ -1,0 +1,248 @@
+// Cosmos Pay — Developer Platform
+// Own accounts/profile system backing the Authentik (OAuth2) login.
+// better-auth persists its core models here; Profile is our own per-user data.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------- better-auth core models ----------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions        Session[]
+  accounts        Account[]
+  profile         Profile?
+  notifications   Notification[]
+  supportMessages SupportMessage[]
+  supportTickets  SupportTicket[]
+  ownedOrgs       Organization[]       @relation("OrgOwner")
+  orgMemberships  OrganizationMember[] @relation("OrgMembership")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// ---------------- Cosmos Pay own profile data ----------------
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  displayName String?
+  avatarUrl   String?
+  bio         String?
+  locale      String   @default("EN")
+  theme       String   @default("light")
+
+  // Developer-panel account role: "user" (default) | "support" | "admin" | "owner".
+  role        String   @default("user")
+
+  // Billing plan (mock — not yet wired to a billing provider): community | starter | growth | enterprise.
+  plan        String   @default("community")
+
+  // Defaults captured at account creation.
+  region      String?
+  country     String?
+  language    String   @default("en")
+
+  // Last sign-in location (CDN country header + IP), refreshed per new session.
+  lastSessionId   String?
+  lastLoginIp     String?
+  lastLoginCountry String?
+  lastLoginRegion  String?
+  lastLoginAt     DateTime?
+
+  // Last activity (any authenticated request), throttled — used for "last online".
+  lastSeenAt      DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profile")
+}
+
+// ---------------- Activity notifications ----------------
+// System-generated on actions (api-key create/update/delete, sign-in, …).
+// Readable by the owning user; only owner/admin accounts may create them via the API.
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String?
+  origin    String?
+  country   String?
+  region    String?
+  ipAddress String?
+  read      Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notification")
+}
+
+// ---------------- Support chat ----------------
+// One conversation per customer (keyed by `userId`). `fromStaff` distinguishes the
+// customer's messages from staff (owner/admin/support) replies. Read flags are tracked
+// per side so both the bell badge and the staff inbox can show unread counts.
+// A support ticket: an individual conversation thread owned by a customer, with its own
+// subject and status. A customer can have several tickets open in parallel.
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String // the customer who owns the ticket
+  subject   String
+  status    String   @default("open") // open | pending | resolved | closed
+  priority  String   @default("normal") // low | normal | high | urgent
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages SupportMessage[]
+
+  @@index([userId, updatedAt])
+  @@index([status])
+  @@map("support_ticket")
+}
+
+model SupportMessage {
+  id          String   @id @default(cuid())
+  ticketId    String // the ticket this message belongs to
+  userId      String // ticket owner (the customer) — denormalized for convenience
+  senderId    String // user id of whoever sent this message
+  senderName  String?
+  fromStaff   Boolean  @default(false)
+  body          String
+  readByUser    Boolean   @default(false)
+  readByStaff   Boolean   @default(false)
+  readByUserAt  DateTime? // when the customer read this (for staff messages)
+  readByStaffAt DateTime? // when staff read this (for customer messages)
+  createdAt     DateTime  @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@index([userId, createdAt])
+  @@map("support_message")
+}
+
+// ---------------- Organizations ----------------
+// A workspace owned by a user; members join via OrganizationMember with an org-level role.
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  // Onboarding context (industry, goals, expected volume) — optional, captured on creation.
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner       User                     @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     OrganizationMember[]
+  invitations OrganizationInvitation[]
+
+  @@index([ownerId])
+  @@map("organization")
+}
+
+// Pending email invitations to join an organization. The owner/admin invites by email;
+// an invitation carries a single-use magic-link token that expires after 3 days. The
+// invitee accepts by visiting /invite/:token while signed in with the invited email.
+model OrganizationInvitation {
+  id          String    @id @default(cuid())
+  orgId       String
+  email       String // invited email (lower-cased)
+  role        String    @default("member") // admin | member
+  permissions String[]  @default([]) // per-action permissions granted on accept (members)
+  token       String    @unique // magic-link token
+  invitedById String // user id of the inviter
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([email])
+  @@map("organization_invitation")
+}
+
+model OrganizationMember {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  role      String   @default("member") // owner | admin | member
+  // Per-action permissions for "member" collaborators (owners/admins implicitly have all).
+  // e.g. apiKeysTest | apiKeysLive | webhooks | products | customers | payments
+  permissions String[] @default([])
+  createdAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation("OrgMembership", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@map("organization_member")
+}

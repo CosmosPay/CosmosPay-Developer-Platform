@@ -1,0 +1,13 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import Landing from "@/components/cosmos/Landing.tsx";
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const user = Astro.locals.user
+  ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
+  : null;
+---
+
+<CosmosLayout title="Cosmos Pay — Developer Platform" lang={lang}>
+  <Landing client:load user={user} lang={lang} />
+</CosmosLayout>

@@ -1,0 +1,43 @@
+---
+import "@/styles/cosmos.css";
+import "@/styles/views.css";
+import "@/styles/onboarding.css";
+
+interface Props {
+  title?: string;
+  lang?: string;
+}
+
+const { title = "Cosmos Pay — Developer Platform", lang } = Astro.props;
+// Locale comes from the cookie (set by the in-app language switcher) so SSR and the
+// first client render agree. Defaults to English.
+const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+    <script is:inline>
+      // Apply persisted theme before paint to avoid a flash.
+      try {
+        const t = localStorage.getItem("cosmospay-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,48 @@
+---
+export const prerender = false;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paydev API Docs</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/swagger-ui-dist@5.21.0/swagger-ui.css"
+    />
+    <style>
+      body {
+        margin: 0;
+        background: #fafafa;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script
+      is:inline
+      src="https://unpkg.com/swagger-ui-dist@5.21.0/swagger-ui-bundle.js"
+    ></script>
+    <script
+      is:inline
+      src="https://unpkg.com/swagger-ui-dist@5.21.0/swagger-ui-standalone-preset.js"
+    ></script>
+    <script is:inline>
+      window.onload = function () {
+        window.ui = SwaggerUIBundle({
+          url: '/api/openapi.json',
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset,
+          ],
+          layout: 'StandaloneLayout',
+          persistAuthorization: true,
+        });
+      };
+    </script>
+  </body>
+</html>
