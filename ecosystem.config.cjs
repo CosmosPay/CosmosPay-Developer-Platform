@@ -1,0 +1,53 @@
+/**
+ * PM2 process config — defines TWO apps that share the same `.env`:
+ *
+ *   devplat       → PRODUCTION. Runs the compiled Astro server (@astrojs/node
+ *                   standalone). Build first with `npm run build` (emits
+ *                   dist/server/entry.mjs).
+ *   devplat-dev   → DEVELOPMENT. Runs `astro dev` with Vite/hot-reload.
+ *
+ * Start ONE of them (they both bind port 4321, so don't run both at once):
+ *   pm2 start ecosystem.config.cjs --only devplat        # production
+ *   pm2 start ecosystem.config.cjs --only devplat-dev    # development
+ *
+ * Why the dotenv load: the app reads env vars two ways and in production (no Vite at
+ * runtime) BOTH need them in the real `process.env`:
+ *   - `astro:env/server` secrets (BETTER_AUTH_SECRET, AUTHENTIK_*, DATABASE_URL, ...)
+ *   - Prisma's query engine (reads DATABASE_URL from process.env)
+ * Without this, PM2 starts the process without `.env` loaded and Prisma throws
+ * "Environment variable not found: DATABASE_URL" → DB requests 500.
+ *
+ * NOTE: PUBLIC_* client vars (e.g. PUBLIC_BETTER_AUTH_URL) are inlined at BUILD time,
+ * so `.env` must hold the production values BEFORE running `npm run build`.
+ *
+ * Deploy (production):
+ *   git pull && npm install && npm run build
+ *   pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat; pm2 save
+ */
+const { parsed } = require('dotenv').config({ path: __dirname + '/.env' });
+
+// nginx proxies to this host:port; keep it on localhost + the default Astro port.
+const env = {
+  ...process.env,
+  ...parsed,
+  HOST: '127.0.0.1',
+  PORT: '4321',
+};
+
+module.exports = {
+  apps: [
+    {
+      name: 'devplat',
+      script: './dist/server/entry.mjs',
+      cwd: __dirname,
+      env,
+    },
+    {
+      name: 'devplat-dev',
+      script: 'npm',
+      args: 'run dev',
+      cwd: __dirname,
+      env,
+    },
+  ],
+};
