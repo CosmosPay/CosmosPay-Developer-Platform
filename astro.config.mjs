@@ -33,8 +33,15 @@ export default defineConfig({
       // this secret + the consumer identity itself, exactly as the gateway would.
       // Optional: leave empty when the upstream runs with ENFORCE_GATEWAY=false (local dev).
       COSMOS_GATEWAY_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      // SMTP — used to email organization invitations (magic links). Optional: when
-      // unset, invites can't be sent and the API returns a clear "email not configured" error.
+      // --- Email (organization invitations / magic links) ---
+      // Two transports, in priority order:
+      //   1. Resend HTTP API (preferred) — set RESEND_API_KEY. Sends over HTTPS (443),
+      //      so it works even on hosts that block outbound SMTP ports (OVH, etc.).
+      //   2. SMTP fallback — set SMTP_HOST/PORT/USER/PASS/SECURE (e.g. Resend SMTP).
+      // In both cases the "from" address is SMTP_FROM and must be a verified sender.
+      // When neither is configured, invites can't be sent and the API returns a clear
+      // "email not configured" error.
+      RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
       SMTP_HOST: envField.string({ context: 'server', access: 'secret', optional: true }),
       SMTP_PORT: envField.number({ context: 'server', access: 'secret', optional: true, default: 587 }),
       SMTP_USER: envField.string({ context: 'server', access: 'secret', optional: true }),
