@@ -25,6 +25,14 @@ async function getTransport(): Promise<any> {
         port: SMTP_PORT ?? 587,
         secure: SMTP_SECURE ?? false,
         auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+        // Fail fast instead of hanging the whole request when SMTP egress is
+        // blocked/slow (common on VPS hosts like OVH that block outbound 25/465/587).
+        // Without these, a blocked port leaves the request open until the proxy
+        // (Cloudflare ~100s) times out and returns a 502. With them, sendMail()
+        // rejects in seconds and callers return a clean "mail_failed" error.
+        connectionTimeout: 10_000, // TCP connect
+        greetingTimeout: 10_000,   // wait for the SMTP server greeting
+        socketTimeout: 20_000,     // overall socket inactivity
       });
     });
   }
