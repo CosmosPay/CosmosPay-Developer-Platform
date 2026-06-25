@@ -14,6 +14,11 @@ export default defineConfig({
       DATABASE_URL: envField.string({ context: 'server', access: 'secret' }),
       BETTER_AUTH_SECRET: envField.string({ context: 'server', access: 'secret' }),
       BETTER_AUTH_URL: envField.string({ context: 'server', access: 'secret' }),
+      // Same URL as BETTER_AUTH_URL, but exposed to the browser bundle so the
+      // auth client (src/lib/auth-client.ts) points at the deployed domain in
+      // production instead of a hardcoded localhost. Client env vars must be
+      // PUBLIC_-prefixed; keep this in sync with BETTER_AUTH_URL.
+      PUBLIC_BETTER_AUTH_URL: envField.string({ context: 'client', access: 'public' }),
       AUTHENTIK_CLIENT_ID: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_DISCOVERY_URL: envField.string({ context: 'server', access: 'secret' }),
@@ -53,6 +58,12 @@ export default defineConfig({
   },
 
   vite: {
+    server: {
+      // Hosts allowed to reach the dev server. Without this, Vite rejects
+      // requests whose Host header isn't localhost (e.g. when the dev server is
+      // proxied behind the dev.cosmospay.lat domain) with a "host not allowed" error.
+      allowedHosts: ['dev.cosmospay.lat'],
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
