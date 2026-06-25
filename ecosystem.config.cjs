@@ -32,6 +32,13 @@ const env = {
   ...parsed,
   HOST: '127.0.0.1',
   PORT: '4321',
+  // Server-to-server OAuth (discovery/token/userinfo) reaches Authentik through the
+  // local nginx, which serves a Cloudflare Origin Certificate that Node doesn't trust
+  // by default → "unable to verify the first certificate". Point Node at the Cloudflare
+  // Origin CA root so it trusts that cert WITHOUT disabling TLS verification globally.
+  // Download the root on the server (see deploy notes); override the path via .env if needed.
+  NODE_EXTRA_CA_CERTS:
+    parsed?.NODE_EXTRA_CA_CERTS || '/etc/ssl/certs/cloudflare_origin_root.pem',
 };
 
 module.exports = {
