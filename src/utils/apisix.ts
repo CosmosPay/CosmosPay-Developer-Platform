@@ -126,9 +126,37 @@ export async function createRoute(
     uri,
 
     plugins: {
-      // API-key auth, APISIX-native: clients send `apikey: <key>`. After a match,
-      // the per-credential serverless-pre-function (baked in createApiKey) forwards
-      // the key's scopes/role/env downstream as X-Consumer-* headers.
+      // Accept the API key in any of three forms and normalize it into the `apikey`
+      // header that key-auth reads, BEFORE key-auth runs (phase: rewrite):
+      //   - apikey: <key>
+      //   - Authorization: <key>
+      //   - Authorization: Bearer <key>
+      // We only set `apikey` from Authorization when the client didn't already send an
+      // `apikey` header, so an explicit apikey always wins. The Bearer prefix is stripped
+      // case-insensitively. key-auth (hide_credentials) + proxy-rewrite then drop all of
+      // these before the request reaches the upstream.
+      'serverless-pre-function': {
+        phase: 'rewrite',
+        functions: [
+          `
+return function(conf, ctx)
+  if ngx.var.http_apikey and ngx.var.http_apikey ~= "" then
+    return
+  end
+  local auth = ngx.var.http_authorization
+  if auth and auth ~= "" then
+    local token = string.gsub(auth, "^[Bb][Ee][Aa][Rr][Ee][Rr]%s+", "")
+    ngx.req.set_header("apikey", token)
+  end
+end
+`,
+        ],
+      },
+
+      // API-key auth, APISIX-native: key-auth reads the `apikey` header (fed above from
+      // apikey / Authorization / Authorization: Bearer). After a match, the per-credential
+      // serverless-pre-function (baked in createApiKey) forwards the key's scopes/role/env
+      // downstream as X-Consumer-* headers.
       'key-auth': {
         hide_credentials: true,
       },
