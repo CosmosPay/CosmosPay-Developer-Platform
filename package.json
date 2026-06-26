@@ -13,6 +13,8 @@
     "astro": "astro",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "sync:route": "node scripts/sync-apisix-route.mjs"
   },
   "dependencies": {
