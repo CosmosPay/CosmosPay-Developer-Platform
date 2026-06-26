@@ -30,22 +30,21 @@ function ScopePicker({ value, m }: any) {
   );
 }
 
-/* Create + edit API keys. In edit mode the environment is fixed (it's baked into the secret). */
-export function ApiKeyModal({ mode, initial, onClose, onSubmit, allowLive = true, canTest = true, canLive = true }) {
+/* Create + edit API keys. The environment (test vs production) is NOT chosen here — it
+   follows the dashboard's test/production switch and is injected by the caller, so the
+   key is always created for the environment the user is currently viewing. */
+export function ApiKeyModal({ mode, initial, onClose, onSubmit }) {
   const t = useT();
   const m = t.dash.modals.key;
   const isEdit = mode === "edit";
   const [name, setName] = useState((initial && initial.name) || "");
   const [description, setDescription] = useState((initial && initial.description) || "");
-  // Default to whichever environment the user is allowed to create.
-  const [environment, setEnvironment] = useState(canTest ? "dev" : "prod");
   const [role, setRole] = useState((initial && initial.role) || "user");
   const [perms, setPerms] = useState(initial && initial.permissions && initial.permissions.length ? initial.permissions : ["payments:read"]);
   // admin keys bypass scopes upstream, so the matrix only matters for "user" keys.
   const valid = name.trim().length > 0 && (role === "admin" || perms.length > 0);
   const submit = () => {
     const body = { role, permissions: role === "admin" ? [] : perms, name: name.trim(), description: description.trim() };
-    if (!isEdit) body.environment = environment;
     onSubmit(body);
     onClose();
   };
@@ -54,10 +53,6 @@ export function ApiKeyModal({ mode, initial, onClose, onSubmit, allowLive = true
       <p>{isEdit ? m.editDesc : m.desc}</p>
       <label className="field-l">{m.nameLabel}</label><input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={m.namePlaceholder} autoFocus />
       <label className="field-l" style={{ marginTop: 14 }}>{m.descLabel} <span className="field-hint">{t.dash.common.optional}</span></label><input className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={m.descPlaceholder} />
-      {!isEdit && (<>
-        <label className="field-l" style={{ marginTop: 14 }}>{m.envLabel}</label>
-        <div className="seg2 wrap">{["dev", "prod"].map((e) => { const disabled = e === "dev" ? !canTest : (!allowLive || !canLive); return <button key={e} className={environment === e ? "on" : ""} disabled={disabled} onClick={() => setEnvironment(e)}>{m.envs[e]}</button>; })}</div>
-      </>)}
       <label className="field-l" style={{ marginTop: 14 }}>{m.roleLabel}</label>
       <div className="seg2 wrap">{["user", "admin"].map((r) => <button key={r} className={role === r ? "on" : ""} onClick={() => setRole(r)}>{m.roles[r]}</button>)}</div>
       {role === "admin" ? (

@@ -22,9 +22,11 @@ import {
   createConsumer,
   createRoute,
   listUserApiKeys,
+  parseApiKeyEnv,
   parseApiKeyRole,
   parseLabelString,
   parsePermissionsLabel,
+  syncConsumerForwarder,
 } from "@/utils/apisix";
 import { safeNotify } from "@/lib/notifications";
 import { geoLocate } from "@/lib/geo";
@@ -86,16 +88,22 @@ export const GET: APIRoute = async (ctx) => {
     });
   }
 
+  // Self-heal: make sure the consumer-level forwarder reflects the user's current keys, so
+  // keys minted before this mechanism existed start forwarding their scopes/role/env to the
+  // community server. No-op (no write) when the forwarder already matches.
+  await syncConsumerForwarder(session.user.id).catch(() => null);
+
   const scopedKeys = orgFilter
     ? userApiKeys.filter((data: { value: { labels?: { org?: string } } }) => data.value.labels?.org === orgFilter)
     : userApiKeys;
 
-  const apiKeys = scopedKeys.map((data: { value: { id: string; create_time: string; update_time: string; name?: string; desc?: string; labels?: { permissions?: string; role?: string; org?: string } } }) => ({
+  const apiKeys = scopedKeys.map((data: { value: { id: string; create_time: string; update_time: string; name?: string; desc?: string; labels?: { permissions?: string; role?: string; env?: string; org?: string } } }) => ({
     id: data.value.id,
     createdAt: data.value.create_time,
     updatedAt: data.value.update_time,
     permissions: parsePermissionsLabel(data.value.labels?.permissions),
     role: parseApiKeyRole(data.value.labels?.role),
+    environment: parseApiKeyEnv(data.value.labels?.env),
     name: parseLabelString(data.value.name),
     description: parseLabelString(data.value.desc),
   }));
@@ -230,6 +238,7 @@ export const POST: APIRoute = async (ctx) => {
       updatedAt: result.updatedAt,
       permissions: result.permissions ?? [],
       role: result.role as 'admin' | 'user' ?? 'user',
+      environment: result.environment ?? body.data.environment,
       name: result.name,
       description: result.description,
     },

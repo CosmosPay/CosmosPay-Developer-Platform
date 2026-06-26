@@ -1,4 +1,5 @@
 import { z } from '@/lib/openapi/zod';
+import { apiKeyEnvironmentSchema } from '../shared/environment';
 
 const apiKeyIdValueSchema = z
   .string()
@@ -30,6 +31,7 @@ export const apiKeyDataSchema = z
     updatedAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     permissions: z.array(z.string()).openapi({ example: ['read', 'write'] }),
     role: z.enum(['admin', 'user']).openapi({ example: 'admin' }),
+    environment: apiKeyEnvironmentSchema,
     name: z.string().optional().openapi({ example: 'Production server' }),
     description: z.string().optional().openapi({ example: 'Used by the billing service' }),
   })
@@ -55,6 +57,7 @@ export const apiKeyIdDataSchema = z
     updatedAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     permissions: z.array(z.string()).openapi({ example: ['read', 'write'] }),
     role: z.enum(['admin', 'user']).openapi({ example: 'user' }),
+    environment: apiKeyEnvironmentSchema,
     name: z.string().optional().openapi({ example: 'Production server' }),
     description: z.string().optional().openapi({ example: 'Used by the billing service' }),
   })
@@ -71,6 +74,7 @@ export const apiKeyListDataSchema = z
     updatedAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     permissions: z.array(z.string()).openapi({ example: ['read', 'write'] }),
     role: z.enum(['admin', 'user']).openapi({ example: 'admin' }),
+    environment: apiKeyEnvironmentSchema,
     name: z.string().optional().openapi({ example: 'Production server' }),
     description: z.string().optional().openapi({ example: 'Used by the billing service' }),
   })

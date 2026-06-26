@@ -15,6 +15,7 @@ import {
 import {
   deleteApiKey,
   getApiKey,
+  parseApiKeyEnv,
   parseApiKeyRole,
   parseLabelString,
   parsePermissionsLabel,
@@ -76,6 +77,7 @@ export const GET: APIRoute = async (ctx) => {
       updatedAt: apiKey.value.update_time,
       permissions: parsePermissionsLabel(apiKey.value.labels?.permissions),
       role: parseApiKeyRole(apiKey.value.labels?.role),
+      environment: parseApiKeyEnv(apiKey.value.labels?.env),
       name: parseLabelString(apiKey.value.name),
       description: parseLabelString(apiKey.value.desc),
     },
@@ -224,6 +226,7 @@ export const PATCH: APIRoute = async (ctx) => {
       updatedAt: result.updatedAt,
       permissions: result.permissions ?? [],
       role: result.role as 'admin' | 'user' ?? 'user',
+      environment: result.environment ?? parseApiKeyEnv(apiKey.value.labels?.env),
       name: result.name,
       description: result.description,
     },

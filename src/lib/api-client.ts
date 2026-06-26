@@ -20,9 +20,10 @@ async function request(url, options = {}) {
 }
 
 /* API keys CRUD — see src/pages/api/api-keys.
-   create body: { environment: 'dev'|'prod', permissions: string[] (>=1), role: 'user'|'admin' }
-   create → { username, apiKey (secret, shown once), id, createdAt, updatedAt, permissions, role }
-   list   → [{ id, createdAt, updatedAt, permissions, role }] (no secret) */
+   create body: { org, environment: 'dev'|'prod', permissions: string[] (>=1), role: 'user'|'admin' }
+     (environment is injected from the dashboard's test/production switch, not chosen in the modal)
+   create → { username, apiKey (secret, shown once), id, createdAt, updatedAt, permissions, role, environment }
+   list   → [{ id, createdAt, updatedAt, permissions, role, environment }] (no secret) */
 export const apiKeys = {
   list: (orgId) => request(orgId ? `/api/api-keys?org=${encodeURIComponent(orgId)}` : "/api/api-keys"),
   create: (body) => request("/api/api-keys", { method: "POST", body: JSON.stringify(body) }),

@@ -31,7 +31,8 @@ export default defineConfig({
       // Shared secret APISIX injects on every proxied request (X-Gateway-Secret).
       // The dashboard reaches the Cosmos Payments API server-to-server, so it presents
       // this secret + the consumer identity itself, exactly as the gateway would.
-      // Optional: leave empty when the upstream runs with ENFORCE_GATEWAY=false (local dev).
+      // Must equal the community server's APISIX_GATEWAY_SECRET; that service always
+      // enforces it, so an empty value makes every Payments API call fail with 403.
       COSMOS_GATEWAY_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       // --- Email (organization invitations / magic links) ---
       // Two transports, in priority order:

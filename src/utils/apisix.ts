@@ -34,6 +34,10 @@ export function parseApiKeyRole(raw: unknown): 'admin' | 'user' {
   return raw === 'admin' ? 'admin' : 'user';
 }
 
+export function parseApiKeyEnv(raw: unknown): 'dev' | 'prod' {
+  return raw === 'prod' ? 'prod' : 'dev';
+}
+
 export function parseLabelString(raw: unknown): string {
   return typeof raw === 'string' ? raw : '';
 }
@@ -165,7 +169,7 @@ end
         regex_uri: [rewritePattern, rewriteTemplate],
         headers: {
           // Prove the request came through the gateway (the community server's
-          // ApisixGuard checks this when ENFORCE_GATEWAY=true). Only set when configured.
+          // ApisixGuard always checks this). Only set when configured.
           ...(COSMOS_GATEWAY_SECRET
             ? { set: { 'X-Gateway-Secret': COSMOS_GATEWAY_SECRET } }
             : {}),
@@ -268,23 +272,37 @@ function generateApiKey(
 }
 
 
-/* A per-credential APISIX plugin that forwards the key's authorization context to
-   the upstream once this key authenticates. The values are baked in at create/update
-   time (no runtime label lookup), so the community server's PermissionsGuard can
-   enforce `read`/`write` scopes and pick the Stellar network from the env.
+type ForwardEntry = { p: string; r: 'admin' | 'user'; e: Environment };
+
+/* A CONSUMER-level APISIX plugin that forwards each API key's authorization context to
+   the upstream, so the community server's PermissionsGuard can enforce `resource:action`
+   scopes and pick the Stellar network from the env.
+
+   Why consumer-level (and not per-credential): APISIX credentials only accept auth
+   plugins (key-auth/basic-auth/hmac-auth/jwt-auth), so a serverless-pre-function on a
+   credential is rejected and never runs. The forwarder therefore lives on the user's
+   consumer, where it IS executed for credential-authenticated requests, and switches on
+   `ctx.consumer.credential_id` (the key that authenticated) to emit that key's values.
+   The map is rebuilt by syncConsumerForwarder() whenever the user's keys change.
    Runs in the `access` phase — after key-auth, before the upstream request. */
-function forwardingPlugin(permissions: string[], role: string, environment: Environment) {
-  const permsJson = JSON.stringify(permissions ?? []);
-  const safeRole = role === 'admin' ? 'admin' : 'user';
-  const env = environment === 'prod' ? 'prod' : 'dev';
+function consumerForwardingPlugin(map: Record<string, ForwardEntry>) {
+  // Embedded as a Lua long string with a `==` level so JSON quotes/brackets don't need
+  // escaping; map values are sanitized in syncConsumerForwarder so they can't contain `]==]`.
+  const mapJson = JSON.stringify(map ?? {});
   return {
     phase: 'access',
     functions: [
       `
 return function(conf, ctx)
-  ngx.req.set_header("X-Consumer-Permissions", '${permsJson}')
-  ngx.req.set_header("X-Consumer-Role", "${safeRole}")
-  ngx.req.set_header("X-Consumer-Env", "${env}")
+  local cjson = require("cjson.safe")
+  local map = cjson.decode([==[${mapJson}]==]) or {}
+  local cid = ctx.consumer and ctx.consumer.credential_id
+  local entry = cid and map[cid]
+  if entry then
+    ngx.req.set_header("X-Consumer-Permissions", entry.p or "[]")
+    ngx.req.set_header("X-Consumer-Role", entry.r or "user")
+    ngx.req.set_header("X-Consumer-Env", entry.e or "dev")
+  end
 end
 `,
     ],
@@ -297,10 +315,15 @@ export async function createConsumer(
 
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 
-
+  // Idempotent: never overwrite an existing consumer — it carries the forwarder plugin
+  // (syncConsumerForwarder). A blind PUT here would wipe that plugin on every list call.
+  const existing = await apisix.get(`/consumers/${username}`).then((r) => r.data).catch(() => null);
+  if (existing) {
+    return { username };
+  }
 
   const response = await apisix.put(
-    `/consumers/`,
+    `/consumers`,
     {
       username,
     },
@@ -316,6 +339,75 @@ export async function createConsumer(
     username
   };
 
+}
+
+/* Rebuilds the consumer-level forwarder so it reflects the user's CURRENT set of keys.
+   Reads every credential's labels (permissions/role/env) and bakes a
+   credential_id → context map into a single consumer plugin. APISIX versions the
+   per-credential consumer cache by `credential.modifiedIndex .. consumer.modifiedIndex`,
+   so updating the consumer here invalidates that cache and the new values take effect on
+   the next request — including for credentials created earlier. Best-effort: failures are
+   logged but never block the create/update/delete that triggered the sync. */
+export async function syncConsumerForwarder(userId: string) {
+  const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
+
+  const credentials = await listUserApiKeys(userId).catch(() => []);
+
+  // Sorted by id so the baked map (and thus the function body) is deterministic — the
+  // idempotency check below relies on a stable string for unchanged key sets.
+  const sorted = (Array.isArray(credentials) ? credentials : [])
+    .slice()
+    .sort((a, b) => {
+      const ai = a?.value?.id ?? '';
+      const bi = b?.value?.id ?? '';
+      return ai < bi ? -1 : ai > bi ? 1 : 0;
+    });
+
+  const map: Record<string, ForwardEntry> = {};
+  for (const credential of sorted) {
+    const id = credential?.value?.id;
+    if (!id) continue;
+    const labels = credential.value.labels ?? {};
+    // Restrict scopes to a Lua-safe charset so the baked map can never break out of the
+    // `[==[ ... ]==]` long string (scopes are `resource:action`, well within this set).
+    const permissions = parsePermissionsLabel(labels.permissions).filter((scope) =>
+      /^[A-Za-z0-9:_.\-]+$/.test(scope),
+    );
+    map[id] = {
+      p: JSON.stringify(permissions),
+      r: parseApiKeyRole(labels.role),
+      e: parseApiKeyEnv(labels.env),
+    };
+  }
+
+  const desired = consumerForwardingPlugin(map);
+
+  // Idempotent: skip the write when the forwarder already matches. This keeps list calls
+  // (which sync to self-heal pre-existing keys) cheap and avoids needless consumer
+  // revisions that would churn APISIX's per-credential cache.
+  const existing = await apisix
+    .get(`/consumers/${username}`)
+    .then((r) => r.data?.value)
+    .catch(() => null);
+  const existingFn = existing?.plugins?.['serverless-pre-function']?.functions?.[0];
+  if (existing && existingFn === desired.functions[0]) {
+    return { username };
+  }
+
+  const response = await apisix.put(
+    `/consumers`,
+    {
+      username,
+      plugins: {
+        'serverless-pre-function': desired,
+      },
+    },
+  ).catch((err) => {
+    console.warn('[apisix] failed to sync consumer forwarder', err?.response?.data ?? err?.message);
+    return null;
+  });
+
+  return response ? { username } : null;
 }
 
 export async function createApiKey(
@@ -353,29 +445,17 @@ export async function createApiKey(
   if (name && name.trim()) base.name = name.trim();
   if (description && description.trim()) base.desc = description.trim();
 
-  // Preferred payload adds a per-credential function that forwards the key's
-  // scopes/role/env downstream after auth.
-  const withForwarding: Record<string, unknown> = {
-    ...base,
-    plugins: {
-      ...(base.plugins as Record<string, unknown>),
-      'serverless-pre-function': forwardingPlugin(permissions, role, environment),
-    },
-  };
-
+  // The credential only holds key-auth + labels. Scope/role/env forwarding is done by a
+  // consumer-level plugin (APISIX credentials reject non-auth plugins) refreshed below.
   const url = `/consumers/${username}/credentials/${randomId}`;
-  let response = await apisix.put(url, withForwarding).catch(() => null);
-  if (!response) {
-    // Some APISIX builds reject extra plugins on a credential — fall back to a
-    // plain key so creation still succeeds (downstream scope forwarding stays off
-    // until the gateway supports it; the dashboard path is unaffected).
-    console.warn('[apisix] credential forwarding plugin rejected; creating key without it');
-    response = await apisix.put(url, base).catch(() => null);
-  }
+  const response = await apisix.put(url, base).catch(() => null);
 
   if (!response) {
     return null;
   }
+
+  // Rebuild the consumer forwarder so this new key forwards its scopes/role/env downstream.
+  await syncConsumerForwarder(userId).catch(() => null);
 
   return {
     username,
@@ -385,6 +465,7 @@ export async function createApiKey(
     updatedAt: response.data.value.update_time,
     permissions: parsePermissionsLabel(response.data.value.labels?.permissions),
     role: parseApiKeyRole(response.data.value.labels?.role),
+    environment: parseApiKeyEnv(response.data.value.labels?.env),
     name: parseLabelString(response.data.value.name),
     description: parseLabelString(response.data.value.desc),
     org: parseLabelString(response.data.value.labels?.org),
@@ -501,6 +582,9 @@ export async function deleteApiKey(
       return null;
     }
 
+    // Drop the revoked key from the consumer forwarder map.
+    await syncConsumerForwarder(userId).catch(() => null);
+
     return {
       success: true,
     };
@@ -592,15 +676,14 @@ export async function updateApiKey(
   const nextName = (name !== undefined ? name : parseLabelString(existing.value.name)).trim();
   const nextDescription = (description !== undefined ? description : parseLabelString(existing.value.desc)).trim();
 
-  // Preserve the key's environment + organization (set at creation) and refresh the
-  // downstream-forwarding plugin so the new scopes/role take effect immediately.
+  // Preserve the key's environment + organization (set at creation). Scope/role forwarding
+  // lives on the consumer (see syncConsumerForwarder), not on the credential.
   const existingEnv: Environment = existing.value.labels?.env === 'prod' ? 'prod' : 'dev';
   const existingOrg = existing.value.labels?.org;
 
   const payload: Record<string, unknown> = {
     plugins: {
       ...(existing.value.plugins ?? {}),
-      'serverless-pre-function': forwardingPlugin(permissions, role, existingEnv),
     },
     labels: {
       permissions: JSON.stringify(permissions),
@@ -623,10 +706,14 @@ export async function updateApiKey(
     return null;
   }
 
+  // Refresh the consumer forwarder so the new scopes/role take effect immediately.
+  await syncConsumerForwarder(userId).catch(() => null);
+
   return {
     apiKeyId,
     permissions,
     role,
+    environment: existingEnv,
     name: nextName,
     description: nextDescription,
     createdAt: response.data.value.create_time,

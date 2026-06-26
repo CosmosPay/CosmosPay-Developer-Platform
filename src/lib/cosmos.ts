@@ -61,7 +61,8 @@ async function cosmosFetch<T>(
     // request log (which should only show real API-key usage, not dashboard traffic).
     "X-Cosmos-Internal": "1",
   };
-  // Only sent when configured — the upstream skips the check when ENFORCE_GATEWAY=false.
+  // Only sent when configured — but the community server always enforces it now, so
+  // COSMOS_GATEWAY_SECRET must be set (and match) for these calls to succeed.
   if (COSMOS_GATEWAY_SECRET) headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
 
   let res: Response;

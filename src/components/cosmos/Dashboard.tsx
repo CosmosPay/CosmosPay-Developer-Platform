@@ -172,8 +172,12 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const orgLimits = planLimits(org.plan);
   const myPerms = effectivePermissions(org.role, org.permissions);
   const can = (permission) => myPerms.has(permission);
-  // API keys split create / edit / delete across test + production.
-  const canCreateKeys = can("apiKeysTest:create") || can("apiKeysLive:create");
+  // API keys split create / edit / delete across test + production. New keys are minted for
+  // the environment currently selected by the test/production switch, so creation is gated by
+  // that environment's permission (and, for production, the plan's live-key allowance).
+  const canCreateKeys = live
+    ? (can("apiKeysLive:create") && orgLimits.allowLive)
+    : can("apiKeysTest:create");
   const canEditKeys = can("apiKeysTest:edit") || can("apiKeysLive:edit");
   const canDeleteKeys = can("apiKeysTest:delete") || can("apiKeysLive:delete");
   const keysSorted = keys.slice().sort(byAge);
@@ -206,11 +210,13 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     setConfirm({ title: og.deleteTitle, body: fmt(og.deleteBody, { name: o.name }), confirmLabel: og.deleteConfirm, onConfirm: () => deleteOrg(o.id) });
   };
   // POST to the developer API; on success prepend the (secret-less) record + reveal the secret once.
-  // Keys belong to the active organization, so tag the create payload with it.
+  // Keys belong to the active organization (org) and to the environment currently selected by
+  // the test/production switch (environment) — the modal never asks for either.
   const addKey = (body) => {
-    apiKeysApi.create({ ...body, org: curOrg })
+    const environment = live ? "prod" : "dev";
+    apiKeysApi.create({ ...body, org: curOrg, environment })
       .then((created) => {
-        setKeys((k) => [{ id: created.id, createdAt: created.createdAt, updatedAt: created.updatedAt, permissions: created.permissions || [], role: created.role, name: created.name, description: created.description }, ...k]);
+        setKeys((k) => [{ id: created.id, createdAt: created.createdAt, updatedAt: created.updatedAt, permissions: created.permissions || [], role: created.role, environment: created.environment || environment, name: created.name, description: created.description }, ...k]);
         setReveal({ id: created.id, secret: created.apiKey });
         refreshNotifsSoon();
       })
@@ -268,7 +274,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} />;
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "developers": return <ApiKeysView keys={keys} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
+      case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;
       case "weblogs": return <LogsView kind="webhooks" env={live ? "prod" : "dev"} />;
@@ -332,7 +338,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} />}
       {modal === "plan" && canChangePlan && <PlanModal current={plan} enabledPlans={feat.enabledPlans} onClose={() => setModal(null)} onSelect={requestChangePlan} />}
       {renamingOrg && <RenameOrgModal current={renamingOrg} onClose={() => setRenamingOrg(null)} onRename={(name) => requestRenameOrg(renamingOrg, name)} />}
-      {modal === "key" && <ApiKeyModal mode="create" allowLive={orgLimits.allowLive} canTest={can("apiKeysTest:create")} canLive={can("apiKeysLive:create")} onClose={() => setModal(null)} onSubmit={addKey} />}
+      {modal === "key" && <ApiKeyModal mode="create" onClose={() => setModal(null)} onSubmit={addKey} />}
       {editing && <ApiKeyModal mode="edit" initial={editing} onClose={() => setEditing(null)} onSubmit={(body) => updateKey(editing.id, body)} />}
       {reveal && <RevealKeyModal k={reveal} onClose={() => setReveal(null)} />}
       {confirm && <ConfirmModal title={confirm.title} body={confirm.body} confirmLabel={confirm.confirmLabel} cancelLabel={t.dash.common.cancel} onConfirm={confirm.onConfirm} onClose={() => setConfirm(null)} />}

@@ -7,13 +7,17 @@ import { usePaged, useGsapRows } from "../hooks";
 import { ViewHead } from "../components/ViewHead";
 import { Pagination } from "../components/Pagination";
 
-export function ApiKeysView({ keys, loading, error, limit, lockedIds, canCreate = true, canEdit = true, canDelete = true, onCreate, onRevoke, onEdit }) {
+export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedIds, canCreate = true, canEdit = true, canDelete = true, onCreate, onRevoke, onEdit }) {
   const t = useT();
   const ak = t.dash.apikeys;
   const roleLabels = t.dash.modals.key.roles;
-  const pg = usePaged(keys, keys.length);
+  // Show only the keys for the active environment (production vs test). Keys without an
+  // explicit environment are treated as test. Usage / the plan limit stay computed from
+  // the full set, since the limit is per organization across both environments.
+  const shown = keys.filter((k) => (env === "prod" ? k.environment === "prod" : k.environment !== "prod"));
+  const pg = usePaged(shown, shown.length);
   const tref = useRef(null); useGsapRows(tref, pg.page);
-  const showTable = !loading && !error && keys.length > 0;
+  const showTable = !loading && !error && shown.length > 0;
   const reached = atLimit(limit, keys.length);
   const usage = fmt(ak.usage, { used: keys.length, limit: limit == null ? "∞" : limit });
   const readOnly = !canCreate && !canEdit && !canDelete;
@@ -43,7 +47,7 @@ export function ApiKeysView({ keys, loading, error, limit, lockedIds, canCreate 
         )}
         {loading && <div className="empty">{ak.loading}</div>}
         {!loading && error && <div className="empty">{ak.loadError}</div>}
-        {!loading && !error && !keys.length && <div className="empty">{ak.empty}</div>}
+        {!loading && !error && !shown.length && <div className="empty">{ak.empty}</div>}
         {showTable && <Pagination {...pg} />}
       </div>
     </>
