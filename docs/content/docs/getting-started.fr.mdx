@@ -1,0 +1,63 @@
+---
+title: Pour commencer
+description: Tout ce dont vous avez besoin avant votre premier paiement Cosmos Pay — ce que c'est, comment se déroule un paiement, et les deux façons d'intégrer.
+---
+
+**Cosmos Pay** vous permet d'accepter des paiements sur le réseau [Stellar](https://stellar.org) à l'aide
+des **intentions de paiement** SEP-7 : vous décrivez un paiement, le payeur le complète depuis son propre
+portefeuille, et vous le confirmez sur la chaîne. Autour de ce cœur, vous bénéficiez aussi de **webhooks**, **produits**,
+**clients** et **analyses**.
+
+Il existe deux façons d'intégrer, et la plupart des applications utilisent les deux ensemble :
+
+<Cards>
+  <Card title="Utiliser le SDK (recommandé)" href="/sdk/server/overview" description="@cosmosapp/pay_sdk — un client JavaScript/TypeScript typé qui gère l'authentification, les requêtes et la signature par le portefeuille pour vous." />
+  <Card title="Appeler directement l'API REST" href="/api" description="L'API REST Payments (OpenAPI) si vous n'êtes pas en JavaScript ou si vous voulez un contrôle total sur les requêtes." />
+</Cards>
+
+## Comment fonctionne un paiement
+
+Chaque paiement passe par les trois mêmes étapes :
+
+1. **Votre serveur crée une intention** avec votre clé API secrète — par ex. `client.paymentIntents.createPay({ ... })`. Vous récupérez un `uri` SEP-7 et un `qr` à présenter au payeur.
+2. **Le payeur la complète** dans son portefeuille Stellar (Freighter, xBull, Rabet, LOBSTR ou Albedo). Dans le navigateur, c'est un seul appel : `new WebClient().pay(intent)`, qui renvoie un `txHash` sur la chaîne.
+3. **Votre serveur valide** ce hash — `intent.validate(txHash)` — ce qui met à jour le statut du paiement et déclenche un webhook vers vos points de terminaison.
+
+<Callout title="Testnet vs mainnet">
+Vous ne choisissez jamais le réseau dans le code — il est déterminé par le **préfixe de votre clé API** : les clés `dv_` s'exécutent
+sur le **testnet**, les clés `prod_` s'exécutent sur le **mainnet**. Développez avec une clé `dv_`, puis remplacez-la par une
+clé `prod_` pour passer en production.
+</Callout>
+
+## Avant de commencer
+
+1. **Obtenez une clé API** — connectez-vous à la plateforme développeur et générez-en une. Voir [Obtenez votre clé API](/api-keys).
+2. **Installez le SDK** — `npm install @cosmosapp/pay_sdk` (Node.js ≥ 18). Voir [Installation](/sdk/server/installation).
+3. **Gardez la clé sur votre serveur.** C'est un secret ; le client web du navigateur n'en a jamais besoin.
+
+## Votre premier paiement
+
+```ts
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+
+const intent = await client.paymentIntents.createPay({
+  destination: 'G...YOUR_MERCHANT_ACCOUNT',
+  amount: '10',
+  asset: Assets.USDC,
+  msg: 'Order #1001',
+});
+
+console.log(intent.uri); // show as a link / button
+console.log(intent.qr);  // render this data: URL as an <img>
+```
+
+## Étapes suivantes
+
+<Cards>
+  <Card title="Obtenez votre clé API" href="/api-keys" description="Connectez-vous, choisissez un environnement et générez une clé dans le tableau de bord." />
+  <Card title="Démarrage rapide" href="/sdk/server/quickstart" description="L'exemple complet serveur-crée / navigateur-complète." />
+  <Card title="Webhooks" href="/sdk/server/webhooks" description="Soyez notifié à l'instant où un paiement réussit." />
+  <Card title="Référence de l'API" href="/api" description="Chaque point de terminaison, avec ses schémas et un terrain de jeu de requêtes." />
+</Cards>

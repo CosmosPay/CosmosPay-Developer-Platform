@@ -1,0 +1,63 @@
+---
+title: Getting started
+description: Everything you need before your first Cosmos Pay payment — what it is, how a payment flows, and the two ways to integrate.
+---
+
+**Cosmos Pay** lets you accept payments on the [Stellar](https://stellar.org) network using
+SEP-7 **payment intents**: you describe a payment, the payer completes it from their own
+wallet, and you confirm it on-chain. Around that core you also get **webhooks**, **products**,
+**customers** and **analytics**.
+
+There are two ways to integrate, and most apps use both together:
+
+<Cards>
+  <Card title="Use the SDK (recommended)" href="/sdk/server/overview" description="@cosmosapp/pay_sdk — a typed JavaScript/TypeScript client that handles auth, requests and wallet signing for you." />
+  <Card title="Call the REST API directly" href="/api" description="The Payments REST API (OpenAPI) if you're not on JavaScript or want full control over requests." />
+</Cards>
+
+## How a payment works
+
+Every payment moves through the same three steps:
+
+1. **Your server creates an intent** with your secret API key — e.g. `client.paymentIntents.createPay({ ... })`. You get back a SEP-7 `uri` and a `qr` to show the payer.
+2. **The payer completes it** in their Stellar wallet (Freighter, xBull, Rabet, LOBSTR or Albedo). In the browser this is one call: `new WebClient().pay(intent)`, which returns an on-chain `txHash`.
+3. **Your server validates** that hash — `intent.validate(txHash)` — which updates the payment's status and fires a webhook to your endpoints.
+
+<Callout title="Testnet vs mainnet">
+You never choose the network in code — it's decided by your **API key prefix**: `dv_` keys run
+on **testnet**, `prod_` keys run on **mainnet**. Develop with a `dv_` key, then swap in a
+`prod_` key to go live.
+</Callout>
+
+## Before you start
+
+1. **Get an API key** — sign in to the developer platform and mint one. See [Get your API key](/api-keys).
+2. **Install the SDK** — `npm install @cosmosapp/pay_sdk` (Node.js ≥ 18). See [Installation](/sdk/server/installation).
+3. **Keep the key on your server.** It's a secret; the browser web client never needs it.
+
+## Your first payment
+
+```ts
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+
+const intent = await client.paymentIntents.createPay({
+  destination: 'G...YOUR_MERCHANT_ACCOUNT',
+  amount: '10',
+  asset: Assets.USDC,
+  msg: 'Order #1001',
+});
+
+console.log(intent.uri); // show as a link / button
+console.log(intent.qr);  // render this data: URL as an <img>
+```
+
+## Next steps
+
+<Cards>
+  <Card title="Get your API key" href="/api-keys" description="Sign in, choose an environment, and mint a key in the dashboard." />
+  <Card title="Quickstart" href="/sdk/server/quickstart" description="The full server-creates / browser-completes example." />
+  <Card title="Webhooks" href="/sdk/server/webhooks" description="Get notified the moment a payment succeeds." />
+  <Card title="API reference" href="/api" description="Every endpoint, with schemas and a request playground." />
+</Cards>

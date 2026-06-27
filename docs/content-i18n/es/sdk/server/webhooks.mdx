@@ -1,0 +1,119 @@
+---
+title: "Webhooks"
+description: "Registra endpoints de webhook, recibe eventos por HTTP / Express y verifica sus firmas."
+---
+
+Los webhooks le avisan a tu servidor cuando cambia el estado de un pago, para que no tengas que sondear. Esta página cubre el registro de endpoints y la verificación de que los eventos entrantes son auténticos.
+
+Dos mitades: **registrar** endpoints (CRUD del servidor) y **recibir** eventos
+(la escucha + los manejadores). `client.webhooks` hace ambas.
+
+## Registrar y administrar endpoints
+
+```ts
+import { WebhookEventType } from '@cosmosapp/pay_sdk';
+
+const endpoint = await client.webhooks.create({
+  url: 'https://me.example.com/hooks/cosmos',
+  description: 'Production events',
+  eventTypes: [
+    WebhookEventType.PaymentIntentSucceeded,
+    WebhookEventType.PaymentIntentFailed,
+  ], // omit/empty → receive ALL events
+});
+console.log(endpoint.secret); // whsec_… — returned ONCE, store it now!
+
+await endpoint.disable();        // pause
+await endpoint.enable();         // resume
+await endpoint.edit({ url: 'https://new...' });
+await endpoint.ping();           // send a test event
+const rotated = await endpoint.rotateSecret(); // new instance carries new secret
+await endpoint.delete();
+
+// audit trail + manual redelivery
+const deliveries = await endpoint.fetchDeliveries({ status: 'FAILED', take: 50 });
+for (const d of deliveries.items) await d.redeliver();
+```
+
+También existen las formas del administrador: `client.webhooks.list()`, `.fetch(id)`,
+`.update(id, {...})`, `.delete(id)`, `.rotateSecret(id)`, `.ping(id)`,
+`.fetchDeliveries(id, {...})`, `.redeliver(id, deliveryId)`.
+
+## Recibir eventos — `client.webhooks.on(...)`
+
+Suscríbete con el tipo en crudo, el alias en camelCase, o `event` para todos:
+
+```ts
+client.webhooks.on('paymentIntentSucceeded', (event) => {
+  console.log('Paid!', event.data.id, event.data.amount);
+});
+client.webhooks.on('PAYMENT_INTENT_FAILED', (event) => { /* ... */ });
+client.webhooks.on('event', (event) => console.log(event.type));
+```
+
+Establece el secreto de firma en el cliente (o pasa `{ secret }` al manejador):
+
+```ts
+const client = new Client({
+  apiKey: process.env.COSMOS_PAY_API_KEY,
+  webhookSecret: process.env.COSMOS_WEBHOOK_SECRET, // whsec_…
+});
+```
+
+### `http` de Node.js (cero dependencias)
+
+```ts
+import { createServer } from 'node:http';
+createServer(client.webhooks.createHandler()).listen(4242);
+// verifies signature → emits event → replies 200 (or 400 on bad signature)
+```
+
+### Express
+
+```ts
+import express from 'express';
+const app = express();
+app.post(
+  '/hooks/cosmos',
+  express.raw({ type: '*/*' }),     // MUST be the RAW body
+  client.webhooks.middleware(),
+  (req, res) => res.sendStatus(200), // req.cosmosEvent is the verified event
+);
+```
+
+## Verificar firmas manualmente
+
+El despachador firma cada POST con `X-Cosmos-Signature: t=<unixSeconds>,v1=<hmacSha256>`.
+
+```ts
+import { Webhooks } from '@cosmosapp/pay_sdk';
+
+Webhooks.verify(rawBody, header, secret);          // → true or throws
+const event = Webhooks.constructEvent(rawBody, header, secret); // verify + parse
+// both accept { toleranceSeconds } (default 300s replay window; 0 disables)
+
+// or on a client (also emits to your on(...) listeners):
+client.webhooks.process(rawBody, header, { secret });
+```
+
+Las firmas inválidas lanzan `WebhookSignatureError`.
+
+## Forma de la carga útil del evento
+
+```ts
+interface WebhookEvent {
+  id: string;        // stable — use for idempotency
+  type: WebhookEventType;
+  createdAt: string;
+  data: PaymentIntentData;
+}
+```
+
+Tipos de evento: `PAYMENT_INTENT_CREATED`, `PAYMENT_INTENT_UPDATED`,
+`PAYMENT_INTENT_SUCCEEDED`, `PAYMENT_INTENT_FAILED`, `PAYMENT_INTENT_CANCELLED`,
+`PAYMENT_INTENT_DELETED`.
+
+## Referencias
+
+- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.
+- [WebhookSignatureError](/sdk/definitions/webhook-signature-error) — Se lanza cuando la verificación de la firma de un webhook falla.

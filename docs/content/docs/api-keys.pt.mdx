@@ -1,0 +1,60 @@
+---
+title: Obtenha sua chave de API
+description: Entre na plataforma para desenvolvedores do Cosmos Pay, escolha um ambiente e gere uma chave de API com os escopos que sua integração precisa.
+---
+
+Toda requisição ao Cosmos Pay é autenticada com uma **chave de API**. Você cria e gerencia chaves
+no painel para desenvolvedores. Uma chave carrega duas coisas que importam: o **ambiente** ao qual
+ela pertence (que define a rede Stellar) e os **escopos** que ela tem permissão de usar.
+
+## Crie uma chave
+
+1. **Entre** na plataforma para desenvolvedores em [dev.cosmospay.lat](https://dev.cosmospay.lat) e abra o **Painel**.
+2. **Escolha o ambiente** com o seletor **Test / Production** do painel:
+   - **Test** emite chaves `dv_…` que rodam na **testnet** — use-as durante o desenvolvimento.
+   - **Production** emite chaves `prod_…` que rodam na **mainnet** — use-as para entrar em produção.
+3. Vá em **API Keys → Create**.
+4. Dê um **nome** à chave (e uma descrição opcional) para que você possa reconhecê-la depois.
+5. Escolha um **papel**:
+   - **User** — com escopo. Selecione exatamente as permissões necessárias na matriz (por recurso: **read** e/ou **write** para pagamentos, webhooks, produtos, clientes e análises).
+   - **Admin** — acesso total; ignora a matriz de escopos. Use com moderação.
+6. **Crie** e, em seguida, **copie a chave imediatamente**.
+
+<Callout type="warn" title="Exibida apenas uma vez">
+A chave completa é exibida **uma única vez**, na criação (e novamente apenas se você fizer a rotação dela). Armazene-a em
+um gerenciador de segredos ou nas variáveis de ambiente do seu servidor imediatamente — você não poderá visualizá-la de novo.
+</Callout>
+
+## Use a chave
+
+Mantenha a chave no seu **servidor** e passe-a ao SDK (ou envie-a como um token Bearer para a
+API REST):
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+// Reads e.g. COSMOS_PAY_API_KEY from your server environment — never hard-code it.
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+```http
+Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Callout title="Privilégio mínimo">
+Dê a cada chave apenas os escopos de que ela precisa. Um servidor que apenas cria pagamentos pode usar uma chave com
+`payments:write` e `payments:read` e nada mais — assim, uma chave vazada não pode fazer mais do que a sua função.
+</Callout>
+
+## Boas práticas
+
+- **Uma chave por ambiente / serviço.** Não reutilize uma chave `prod_` em teste, e faça a rotação das chaves por serviço para que você possa revogar uma sem derrubar as demais.
+- **Nunca envie uma chave para o navegador.** O [cliente web](/sdk/web/web-client) assina transações com a carteira do usuário e não precisa da sua chave.
+- **Faça a rotação em caso de exposição.** Se uma chave vazar, faça a rotação dela no painel — o valor antigo deixa de funcionar imediatamente.
+
+## Próximos passos
+
+<Cards>
+  <Card title="Início rápido" href="/sdk/server/quickstart" description="Crie sua primeira intenção de pagamento com a chave que você acabou de gerar." />
+  <Card title="Autenticação" href="/sdk/server/authentication" description="Como a chave seleciona a rede e como mantê-la segura." />
+</Cards>

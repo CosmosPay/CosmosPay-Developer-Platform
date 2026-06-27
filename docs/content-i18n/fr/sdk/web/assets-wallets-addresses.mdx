@@ -1,0 +1,66 @@
+---
+title: "Actifs, portefeuilles et adresses typés"
+description: "Catalogues typés d'actifs et de portefeuilles, ainsi que des validateurs d'adresses, pour le testnet et le mainnet."
+---
+
+Le SDK fournit des catalogues typés et conscients du réseau pour que vous n'ayez jamais à saisir à la main un émetteur d'actif ou un id de portefeuille, ainsi que des validateurs pour les adresses Stellar.
+
+De petits catalogues typés pour que vous ne colliez jamais le mauvais émetteur ou une chaîne magique. Les
+chaînes brutes fonctionnent toujours partout. Exportés depuis **les deux** points d'entrée
+(`@cosmosapp/pay_sdk` et `@cosmosapp/pay_sdk/web`).
+
+## Actifs
+
+```ts
+import { Assets, TestnetAssets, defineAsset, resolveAsset, isNativeAsset } from '@cosmosapp/pay_sdk';
+
+Assets.XLM;   // native lumens
+Assets.USDC;  // { code: 'USDC', issuer: 'GA5Z…' }  (Circle, mainnet — verified)
+Assets.EURC;  // { code: 'EURC', issuer: 'GDHU…' }
+
+// Custom asset (issuer/contract validated):
+const AQUA = defineAsset({ code: 'AQUA', issuer: 'GBNZ…', name: 'Aquarius' });
+
+await client.paymentIntents.createPay({ destination: 'G...', amount: '5', asset: AQUA });
+
+// Plain code + issuer also works:
+await client.paymentIntents.createPay({ destination: 'G...', amount: '5', assetCode: 'USDC', assetIssuer: 'G...' });
+```
+
+> ⚠️ Les émetteurs sont **spécifiques au réseau**. `Assets.*` = mainnet ; utilisez `TestnetAssets.*`
+> (par ex. `TestnetAssets.USDC`) pour le testnet, en accord avec votre clé `dv_`.
+
+Helpers : `resolveAsset(ref)` → `{ code, issuer? }` ; `isNativeAsset(ref)` → booléen.
+
+## Portefeuilles
+
+```ts
+import { Wallets } from '@cosmosapp/pay_sdk/web';
+Wallets.FREIGHTER; Wallets.XBULL; Wallets.RABET; Wallets.LOBSTR; Wallets.ALBEDO;
+
+const wc = new WebClient({ preferredWallets: [Wallets.XBULL, Wallets.FREIGHTER] });
+await wc.pay(intent, { wallet: Wallets.FREIGHTER });
+```
+
+## Carnet d'adresses
+
+```ts
+import { addresses, resolveAddress, isStellarAddress, isMuxedAddress, isContractAddress, isAddress, assertAddress } from '@cosmosapp/pay_sdk';
+
+addresses.define('merchant', 'GC...PAYOUT');
+await client.paymentIntents.createPay({ destination: 'merchant', amount: '10' });
+
+resolveAddress('merchant'); // → 'GC...PAYOUT' (unknown values pass through unchanged)
+isStellarAddress('GC...');  // true
+isMuxedAddress('MA...');    // true
+isContractAddress('CA...'); // true
+isAddress('merchant');      // true
+assertAddress(value);       // throws on an invalid value
+```
+
+Les adresses brutes `G…`, muxées `M…`, de contrat `C…` et de fédération continuent de fonctionner comme
+des chaînes simples.
+
+## Références
+
+- [WebClient](/sdk/definitions/web-client)

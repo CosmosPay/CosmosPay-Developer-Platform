@@ -1,0 +1,67 @@
+---
+title: "Início rápido"
+description: "O menor fluxo de ponta a ponta: criar uma intenção de pagamento, concluí-la na carteira e validar a transação."
+---
+
+Se você só quer ver um pagamento funcionar de ponta a ponta, comece por aqui. O primeiro exemplo é a integração mais curta possível; o segundo mostra a divisão realista de servidor-cria / navegador-conclui.
+
+```ts
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+
+// 1. Create a SEP-7 `pay` intent (no source → pay URI + QR).
+const intent = await client.paymentIntents.createPay({
+  destination: 'GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO',
+  amount: '120.1234567',
+  asset: Assets.USDC, // fills the verified mainnet issuer for you
+  msg: 'Order #24',
+});
+
+console.log(intent.uri); // web+stellar:pay?destination=...
+console.log(intent.qr);  // data:image/png;base64,...  (render this)
+
+// 2. After the payer submits a transaction, validate it.
+const outcome = await intent.validate('<txHash>');
+if (outcome.valid) console.log('Settled!', outcome.status);
+```
+
+## Divisão completa (servidor cria, navegador conclui)
+
+```ts
+// ── server.ts ──────────────────────────────────────────────────────
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+
+export async function createIntent() {
+  const intent = await client.paymentIntents.createPay({
+    destination: 'G...MERCHANT',
+    amount: '10',
+    asset: Assets.USDC,
+  });
+  return intent.toJSON(); // send this payload to the browser
+}
+
+export function confirm(intentId: string, txHash: string) {
+  return client.paymentIntents.validate(intentId, { txHash });
+}
+```
+
+```ts
+// ── browser.ts ─────────────────────────────────────────────────────
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+
+const intent = await fetch('/api/create-intent', { method: 'POST' }).then((r) => r.json());
+const { txHash, account, wallet } = await new WebClient().pay(intent);
+
+await fetch('/api/confirm', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ intentId: intent.id, txHash }),
+});
+```
+
+## Referências
+
+- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.
+- [WebClient](/sdk/definitions/web-client)

@@ -1,0 +1,60 @@
+---
+title: Get your API key
+description: Sign in to the Cosmos Pay developer platform, choose an environment, and mint an API key with the scopes your integration needs.
+---
+
+Every request to Cosmos Pay is authenticated with an **API key**. You create and manage keys
+in the developer dashboard. A key carries two things that matter: the **environment** it
+belongs to (which picks the Stellar network) and the **scopes** it's allowed to use.
+
+## Create a key
+
+1. **Sign in** to the developer platform at [dev.cosmospay.lat](https://dev.cosmospay.lat) and open the **Dashboard**.
+2. **Pick the environment** with the dashboard's **Test / Production** switch:
+   - **Test** issues `dv_…` keys that run on **testnet** — use these while developing.
+   - **Production** issues `prod_…` keys that run on **mainnet** — use these to go live.
+3. Go to **API Keys → Create**.
+4. Give the key a **name** (and an optional description) so you can recognise it later.
+5. Choose a **role**:
+   - **User** — scoped. Pick exactly the permissions it needs from the matrix (per resource: **read** and/or **write** for payments, webhooks, products, customers and analytics).
+   - **Admin** — full access; it bypasses the scope matrix. Use sparingly.
+6. **Create**, then **copy the key immediately**.
+
+<Callout type="warn" title="Shown only once">
+The full key is displayed **once**, at creation (and again only if you rotate it). Store it in
+a secret manager or your server's environment variables right away — you can't view it again.
+</Callout>
+
+## Use the key
+
+Keep the key on your **server** and pass it to the SDK (or send it as a Bearer token to the
+REST API):
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+// Reads e.g. COSMOS_PAY_API_KEY from your server environment — never hard-code it.
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+```http
+Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Callout title="Least privilege">
+Give each key only the scopes it needs. A server that just creates payments can use a key with
+`payments:write` and `payments:read` and nothing else — so a leaked key can't do more than its job.
+</Callout>
+
+## Good practice
+
+- **One key per environment / service.** Don't reuse a `prod_` key in test, and rotate keys per service so you can revoke one without taking down the rest.
+- **Never ship a key to the browser.** The [web client](/sdk/web/web-client) signs transactions with the user's wallet and does not need your key.
+- **Rotate on exposure.** If a key leaks, rotate it in the dashboard — the old value stops working immediately.
+
+## Next steps
+
+<Cards>
+  <Card title="Quickstart" href="/sdk/server/quickstart" description="Create your first payment intent with the key you just made." />
+  <Card title="Authentication" href="/sdk/server/authentication" description="How the key selects the network and how to keep it safe." />
+</Cards>

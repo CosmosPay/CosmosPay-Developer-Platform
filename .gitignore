@@ -1,6 +1,9 @@
 # build output
 dist/
 
+# docs static export, copied in by scripts/build-docs.mjs (source lives in docs/)
+public/docs/
+
 # design handoff bundle (reference only)
 .design-ref/
 

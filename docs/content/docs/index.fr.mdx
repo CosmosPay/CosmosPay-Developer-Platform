@@ -1,0 +1,24 @@
+---
+title: Introduction
+description: Intégrez les paiements Stellar (SEP-7) avec Cosmos Pay — le SDK JavaScript/TypeScript et l'API REST Payments.
+---
+
+**Cosmos Pay** vous permet d'accepter des paiements Stellar (intentions de paiement SEP-7), de gérer les webhooks,
+les produits, les clients et les analyses. Cette documentation couvre les deux façons d'intégrer :
+
+<Cards>
+  <Card title="SDK · Aperçu" href="/sdk/server/overview" description="Ce qu'est @cosmosapp/pay_sdk, les points d'entrée serveur + navigateur, et le modèle mental." />
+  <Card title="SDK · Démarrage rapide" href="/sdk/server/quickstart" description="Le flux de bout en bout le plus simple : créer une intention, la compléter dans le portefeuille, la valider." />
+  <Card title="Référence de l'API" href="/api" description="L'API REST Payments (OpenAPI) : intentions de paiement, webhooks, produits, clients, analyses." />
+  <Card title="Webhooks" href="/sdk/server/webhooks" description="Enregistrez des points de terminaison, recevez des événements et vérifiez les signatures." />
+</Cards>
+
+## Le flux de paiement
+
+Un paiement comporte trois étapes :
+
+1. Le **serveur** crée une intention avec votre clé API secrète (`client.paymentIntents.createPay`/`createTx`).
+2. Le **navigateur** la complète avec le portefeuille Stellar de l'utilisateur (`new WebClient().pay(intent)`), produisant un `txHash` sur la chaîne.
+3. Le **serveur** valide ce hash (`intent.validate(txHash)`), ce qui met à jour le statut et déclenche un webhook.
+
+Le réseau est choisi par le type de clé API : les clés `dv_` ciblent le **testnet**, les clés `prod_` ciblent le **mainnet**.

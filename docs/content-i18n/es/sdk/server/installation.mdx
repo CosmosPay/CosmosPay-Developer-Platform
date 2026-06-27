@@ -1,0 +1,45 @@
+---
+title: "Instalación"
+description: "Instala @cosmosapp/pay_sdk, la dependencia de par opcional de Stellar y los estilos de importación ESM / CommonJS."
+---
+
+Agrega el paquete a cualquier proyecto de Node.js. El soporte de billeteras en el navegador es un extra opcional que solo instalas cuando realmente lo necesitas.
+
+```bash
+npm install @cosmosapp/pay_sdk
+# or: pnpm add @cosmosapp/pay_sdk
+# or: yarn add @cosmosapp/pay_sdk
+```
+
+Requiere **Node.js ≥ 18** (para `fetch` global). En entornos de ejecución más antiguos pasa un
+polyfill de `fetch` mediante la opción de cliente `fetch`.
+
+## Cliente web del navegador (dependencia de par opcional)
+
+El cliente web del navegador construye y envía transacciones de Stellar, así que necesita el
+SDK de Stellar (una dependencia de par opcional, importada de forma diferida cuando está presente):
+
+```bash
+npm install @cosmosapp/pay_sdk @stellar/stellar-sdk
+```
+
+## Importación
+
+```ts
+// ESM
+import { Client } from '@cosmosapp/pay_sdk';
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+```
+
+```js
+// CommonJS
+const { Client } = require('@cosmosapp/pay_sdk');
+```
+
+El paquete incluye tanto ESM (`./dist/index.js`) como CJS (`./dist/index.cjs`) con
+declaraciones de tipos completas.
+
+## Referencias
+
+- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.
+- [WebClient](/sdk/definitions/web-client)

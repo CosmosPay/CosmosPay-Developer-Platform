@@ -10,6 +10,29 @@ import { NavUserMenu } from "./NavUserMenu";
 import { MegaPanel } from "./MegaPanel";
 import { Avatar } from "@/components/cosmos/ui/Avatar";
 
+/* Deep links into the docs site (served at /docs) for the mega-menu columns. The message
+   catalogs only carry translated labels, not hrefs, so the targets are defined here once
+   (they're identical in every language) and overlaid onto the catalog by position. Keyed by
+   nav item → column index → link index; a missing entry leaves that link's own href intact. */
+const NAV_DOC_HREFS: Record<string, Record<number, (string | undefined)[]>> = {
+  developers: { 0: ["/docs/api", "/docs/sdk/server/overview", "/docs/sdk/server/webhooks", "/docs/getting-started"] },
+  resources: { 0: ["/docs", "/docs/getting-started"] },
+};
+
+/* Overlay the doc hrefs above onto an item's columns without mutating the catalog. */
+function withDocHrefs(item: any): any {
+  const map = NAV_DOC_HREFS[item.key];
+  if (!map || !item.cols) return item;
+  return {
+    ...item,
+    cols: item.cols.map((col: any, ci: number) => {
+      const hrefs = map[ci];
+      if (!hrefs) return col;
+      return { ...col, links: col.links.map((l: any, li: number) => (l.href || !hrefs[li] ? l : { ...l, href: hrefs[li] })) };
+    }),
+  };
+}
+
 /* Build the nav item list from the active catalog. */
 function useNavItems(): any[] {
   const t = useT();
@@ -17,8 +40,8 @@ function useNavItems(): any[] {
   return [
     { key: "products", label: n.products.label, cols: n.products.cols, featured: n.products.featured },
     { key: "solutions", label: n.solutions.label, cols: n.solutions.cols, featured: n.solutions.featured },
-    { key: "developers", label: n.developers.label, cols: n.developers.cols, featured: n.developers.featured },
-    { key: "resources", label: n.resources.label, cols: n.resources.cols, featured: n.resources.featured },
+    withDocHrefs({ key: "developers", label: n.developers.label, cols: n.developers.cols, featured: n.developers.featured }),
+    withDocHrefs({ key: "resources", label: n.resources.label, cols: n.resources.cols, featured: n.resources.featured }),
     { key: "pricing", label: n.pricing.label, href: PRICING },
   ];
 }

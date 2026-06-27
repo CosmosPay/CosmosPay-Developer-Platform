@@ -1,0 +1,52 @@
+---
+title: "Référence de configuration"
+description: "La référence complète des options et les surcharges avancées pour auto-héberger la passerelle."
+---
+
+La plupart des intégrations n'ont besoin de rien de tout cela. Cette page documente chaque option et les surcharges avancées pour l'auto-hébergement ou le développement local.
+
+```ts
+new Client({
+  apiKey: 'prod_xxx',            // required — the only thing you normally set
+  webhookSecret: 'whsec_...',    // default secret for the webhook listener
+  timeout: 30_000,               // ms (default 30000)
+  retries: 2,                    // network errors / 429 / 5xx (default 2)
+  headers: { 'X-Trace': 'abc' }, // extra headers on every request
+  fetch: customFetch,            // custom fetch implementation
+
+  // Advanced / internal — pre-filled from Client.shared, rarely overridden:
+  baseURL: 'https://api.cosmospay.lat/cosmos-api', // gateway URL (default)
+  version: 'v1',                 // route prefix
+  gatewaySecret: '...',          // direct access (X-Gateway-Secret), local dev
+  consumerUsername: '...',       // direct access (X-Consumer-Username), local dev
+});
+```
+
+## Variables d'environnement (convention)
+
+Le SDK ne lit rien depuis l'environnement lui-même — c'est vous qui passez les valeurs. Convention
+courante utilisée dans la documentation/les exemples :
+
+| Variable | Utilisée pour |
+| --- | -------- |
+| `COSMOS_PAY_API_KEY` | `new Client({ apiKey })` |
+| `COSMOS_WEBHOOK_SECRET` | `new Client({ webhookSecret })` / handler `{ secret }` |
+
+## Auto-hébergement / préproduction
+
+```ts
+// Once at startup, for every client:
+Client.shared.baseURL = 'https://gateway.your-domain.com';
+
+// Or per-client, bypassing the gateway in local dev:
+new Client({
+  apiKey: 'x',
+  baseURL: 'http://localhost:3000',
+  gatewaySecret: process.env.APISIX_GATEWAY_SECRET,
+  consumerUsername: 'cosmos_demo',
+});
+```
+
+## Références
+
+- [Client](/sdk/definitions/client) — Le point d'entrée principal du SDK — un client unique et atomique qui expose chaque ressource via son propre gestionnaire — une conception atomique à client unique.

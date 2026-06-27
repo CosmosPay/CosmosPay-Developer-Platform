@@ -1,0 +1,57 @@
+---
+title: "Autenticación"
+description: "Autentícate con una sola clave de API; la red (testnet vs mainnet) se elige automáticamente según el prefijo de la clave."
+---
+
+La autenticación es deliberadamente mínima: una clave de API secreta, guardada en tu servidor. El prefijo de la clave también selecciona la red de Stellar por ti, así que no hay nada más que configurar. ¿Eres nuevo aquí? Consulta [cómo obtener tu clave de API](/api-keys).
+
+**Solo necesitas tu clave de API.** Todo lo demás (URL del gateway, versión de la API) es
+parte de la configuración compartida del SDK, mantenida por Cosmos Pay.
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+La clave de API se envía como `Authorization: Bearer <apiKey>`.
+
+## Selección de red (importante)
+
+La **red se determina según el tipo de clave** — NO la configuras:
+
+| Prefijo de clave | Red |
+| ---------- | ------- |
+| `dv_…`     | testnet |
+| `prod_…`   | mainnet |
+
+Por esto, los emisores de activos son específicos de cada red: usa `Assets.*` para mainnet
+y `TestnetAssets.*` para testnet (consulta la documentación de activos).
+
+## Mantén la clave en el servidor
+
+La clave de API es un secreto. Crea y valida intenciones en tu **servidor**. El
+cliente web del navegador solo firma/envía; no necesita la clave. (*Puede* aceptar
+una `apiKey` para prototipos de confianza, pero nunca envíes una clave de producción al navegador).
+
+## Anulaciones compartidas / de autoalojamiento (avanzado)
+
+```ts
+// Change the gateway for every client created afterward (once, at startup):
+Client.shared.baseURL = 'https://gateway.your-domain.com';
+
+// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+const client = new Client({
+  apiKey: '...',
+  baseURL: 'http://localhost:3000',
+  gatewaySecret: process.env.APISIX_GATEWAY_SECRET,
+  consumerUsername: 'cosmos_demo',
+});
+```
+
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` son todos opcionales — una
+integración normal nunca los establece.
+
+## Referencias
+
+- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.

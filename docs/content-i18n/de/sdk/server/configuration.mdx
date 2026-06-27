@@ -1,0 +1,52 @@
+---
+title: "Konfigurationsreferenz"
+description: "Die vollständige Optionsreferenz und die fortgeschrittenen Overrides für das Self-Hosting des Gateways."
+---
+
+Die meisten Integrationen benötigen nichts davon. Hier wird jede Option dokumentiert sowie die fortgeschrittenen Overrides für Self-Hosting oder lokale Entwicklung.
+
+```ts
+new Client({
+  apiKey: 'prod_xxx',            // required — the only thing you normally set
+  webhookSecret: 'whsec_...',    // default secret for the webhook listener
+  timeout: 30_000,               // ms (default 30000)
+  retries: 2,                    // network errors / 429 / 5xx (default 2)
+  headers: { 'X-Trace': 'abc' }, // extra headers on every request
+  fetch: customFetch,            // custom fetch implementation
+
+  // Advanced / internal — pre-filled from Client.shared, rarely overridden:
+  baseURL: 'https://api.cosmospay.lat/cosmos-api', // gateway URL (default)
+  version: 'v1',                 // route prefix
+  gatewaySecret: '...',          // direct access (X-Gateway-Secret), local dev
+  consumerUsername: '...',       // direct access (X-Consumer-Username), local dev
+});
+```
+
+## Umgebungsvariablen (Konvention)
+
+Das SDK liest selbst nichts aus der Umgebung — Sie übergeben die Werte. Übliche
+Konvention, die in der gesamten Dokumentation/in den Beispielen verwendet wird:
+
+| Variable | Verwendet für |
+| --- | -------- |
+| `COSMOS_PAY_API_KEY` | `new Client({ apiKey })` |
+| `COSMOS_WEBHOOK_SECRET` | `new Client({ webhookSecret })` / Handler `{ secret }` |
+
+## Self-Hosting / Staging
+
+```ts
+// Once at startup, for every client:
+Client.shared.baseURL = 'https://gateway.your-domain.com';
+
+// Or per-client, bypassing the gateway in local dev:
+new Client({
+  apiKey: 'x',
+  baseURL: 'http://localhost:3000',
+  gatewaySecret: process.env.APISIX_GATEWAY_SECRET,
+  consumerUsername: 'cosmos_demo',
+});
+```
+
+## Referenzen
+
+- [Client](/sdk/definitions/client) — Der Haupteinstiegspunkt des SDK — ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt — ein atomares Single-Client-Design.

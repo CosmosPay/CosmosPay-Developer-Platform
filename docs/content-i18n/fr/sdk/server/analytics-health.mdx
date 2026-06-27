@@ -1,0 +1,30 @@
+---
+title: "Analyses et santé"
+description: "Lisez le résumé de votre compte, vos soldes et journaux, et vérifiez la vivacité et la disponibilité du service."
+---
+
+Ces points de terminaison en lecture seule vous offrent une visibilité opérationnelle : combien vous avez encaissé, l'activité récente, et si le service est actif.
+
+## Analyses (lecture seule) — `client.analytics`
+
+```ts
+const summary  = await client.analytics.summary();   // totals, volume, webhook health, 30-day series
+const balances = await client.analytics.balances();  // settled + pending per asset
+const apiLogs  = await client.analytics.apiLogs();    // recent API requests
+const hookLogs = await client.analytics.webhookLogs(); // recent webhook deliveries
+```
+
+`summary()` → `{ totals: { all, succeeded, pending, submitted, failed, cancelled,
+expired, successRate }, volume: [...], webhooks: { endpoints, deliveries, ... } }`.
+
+`balances()` → `{ data: [{ asset, amount, pending, count }], total }`
+où `amount`/`pending` sont des chaînes décimales et `count` est le nombre de paiements.
+
+## Santé (sondes publiques) — `client.health`
+
+```ts
+await client.health.liveness();        // → true when the service is up
+const ready = await client.health.readiness(); // → { status, info, details } (checks the DB)
+```
+
+Ces routes ne nécessitent pas de consommateur authentifié.

@@ -4,6 +4,12 @@ import { useT } from "@/lib/i18n/index";
 import { API_SNIPPET, API_CARD_KEYS, SDK_KEYS } from "./data";
 import { API_ICONS, SDK_ICONS } from "./icons";
 
+// Deep links into the docs site (served at /docs).
+const SDK_HREF: Record<string, string> = {
+  web: "/docs/sdk/web/web-client",
+  node: "/docs/sdk/server/overview",
+};
+
 function TermCopy({ text }) {
   const t = useT();
   const [done, run] = useCopy();
@@ -27,7 +33,7 @@ export function ApiSection() {
               <div className="ic">{API_ICONS[key]}</div>
               <h3>{a.cards[key].title}</h3>
               <p>{a.cards[key].desc}</p>
-              <a className="docs-link" href="#">{a.docsLink} <IcChevSm /></a>
+              <a className="docs-link" href="/docs/api">{a.docsLink} <IcChevSm /></a>
             </div>
           ))}
         </div>
@@ -45,9 +51,9 @@ export function ApiSection() {
             <h3>{a.docsTitle}</h3>
             <p>{a.docsDesc}</p>
             <div className="sdk-btns">
-              {SDK_KEYS.map((key) => (<a className="sdk-btn" href="#" key={key}>{SDK_ICONS[key]}{a.sdkBtns[key]}</a>))}
+              {SDK_KEYS.map((key) => (<a className="sdk-btn" href={SDK_HREF[key] || "/docs"} key={key}>{SDK_ICONS[key]}{a.sdkBtns[key]}</a>))}
             </div>
-            <a className="docs-explore" href="#">{a.exploreDocs} <IcArrow /></a>
+            <a className="docs-explore" href="/docs">{a.exploreDocs} <IcArrow /></a>
           </div>
         </div>
       </div>

@@ -1,0 +1,97 @@
+---
+title: "Recetas"
+description: "Recetas prácticas de extremo a extremo: checkout, donaciones, webhooks idempotentes, conciliación y testnet/mainnet."
+---
+
+Soluciones para copiar y pegar para escenarios comunes, ensambladas a partir de las piezas documentadas a lo largo del resto de esta documentación.
+
+Patrones de extremo a extremo para copiar y pegar. Todos los fragmentos de servidor asumen:
+
+```ts
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+## 1. Checkout (el servidor crea, el navegador paga, el webhook confirma)
+
+```ts
+// server: create the intent for an order
+export async function startCheckout(orderId: string, total: string) {
+  const intent = await client.paymentIntents.createPay({
+    destination: process.env.MERCHANT_ACCOUNT,
+    amount: total,
+    asset: Assets.USDC,
+    reference: orderId,           // ties the intent to your order
+    msg: `Order ${orderId}`,
+  });
+  return intent.toJSON();         // → send to the browser
+}
+```
+
+```ts
+// browser: complete it with the user's wallet
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+const { txHash } = await new WebClient().pay(intentPayload);
+await fetch('/api/confirm', { method: 'POST', body: JSON.stringify({ id: intentPayload.id, txHash }) });
+```
+
+```ts
+// server: fulfill on the webhook (don't trust the browser alone)
+client.webhooks.on('paymentIntentSucceeded', async (event) => {
+  await markOrderPaid(event.data.reference, event.data.id);
+});
+```
+
+## 2. Donación / bote de propinas (monto abierto)
+
+```ts
+const intent = await client.paymentIntents.createPay({
+  destination: process.env.MERCHANT_ACCOUNT,
+  asset: Assets.USDC,   // no amount → the wallet asks the user
+  msg: 'Support us 💜',
+});
+// browser: await new WebClient().pay(intent, { amount: enteredAmount });
+```
+
+## 3. Manejo idempotente de webhooks
+
+```ts
+const processed = new Set<string>(); // use your DB in production
+client.webhooks.on('event', (event) => {
+  if (processed.has(event.id)) return; // event.id is stable — dedupe on it
+  processed.add(event.id);
+  handle(event);
+});
+```
+
+## 4. Conciliar un pago en el servidor
+
+```ts
+// You received a txHash out-of-band (e.g. polled the browser). Finalize it:
+const outcome = await client.paymentIntents.validate(intentId, { txHash });
+if (!outcome.valid) {
+  console.warn('payment not valid:', outcome.reason); // amount/destination/memo mismatch
+}
+```
+
+## 5. Testnet vs mainnet
+
+```ts
+import { Assets, TestnetAssets } from '@cosmosapp/pay_sdk';
+// dv_ key → testnet → use TestnetAssets.USDC
+// prod_ key → mainnet → use Assets.USDC
+const asset = process.env.COSMOS_PAY_API_KEY.startsWith('prod_') ? Assets.USDC : TestnetAssets.USDC;
+```
+
+## 6. Catálogo: productos + clientes
+
+```ts
+const product = await client.products.create({ name: 'Pro', amount: '49.00', assetCode: 'USDC', kind: 'recurring' });
+const customer = await client.customers.create({ name: 'Acme', email: 'billing@acme.com', account: 'G...' });
+// then create intents referencing the customer's account as destination/source.
+```
+
+## Referencias
+
+- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.
+- [WebClient](/sdk/definitions/web-client)
