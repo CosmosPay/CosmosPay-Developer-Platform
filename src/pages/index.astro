@@ -8,6 +8,10 @@ const user = Astro.locals.user
   : null;
 ---
 
-<CosmosLayout title="Cosmos Pay — Developer Platform" lang={lang}>
+<CosmosLayout
+  title="Cosmos Pay — Developer Platform for Stellar Payments"
+  description="Issue API keys and integrate Stellar (SEP-7) payments with Cosmos Pay: create payment intents, manage webhooks, products and customers, and track analytics — all from one developer dashboard."
+  lang={lang}
+>
   <Landing client:load user={user} lang={lang} />
 </CosmosLayout>

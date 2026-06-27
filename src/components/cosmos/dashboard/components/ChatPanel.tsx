@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { fmtWhen } from "../helpers";
+import { fmtWhen } from "@/components/cosmos/dashboard/helpers";
 
 /* ---------------- support chat ---------------- */
 export function ChatPanel({ messages, mineWhenStaff, placeholder, sendLabel, emptyText, youLabel, staffLabel, seenLabel = "", onSend }) {

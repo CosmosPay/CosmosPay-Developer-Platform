@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useT } from "@/lib/i18n/index";
 import { metrics as metricsApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { fmtDateTime } from "../helpers";
-import { usePaged, useGsapRows, usePolling } from "../hooks";
-import { Pill } from "../components/Pill";
-import { Toolbar } from "../components/Toolbar";
-import { ViewHead } from "../components/ViewHead";
-import { Pagination } from "../components/Pagination";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 
 const codePill = (c) => (c == null ? "ref" : c < 400 ? "ok" : c < 500 ? "ref" : "fail");
 

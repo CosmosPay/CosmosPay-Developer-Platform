@@ -295,25 +295,25 @@ export default function Dashboard({ user: initialUser, lang, features }) {
         <div className="side-top">
           <div className="side-brand-row">
             <a className="brand" href={HOME}><CosmosMark size={26} color="var(--ink)" /> <span className="lbl">Cosmos&nbsp;Pay</span></a>
-            <button className="collapse-btn" title={t.dash.sidebar.collapse} onClick={() => setCollapsed((c) => !c)}>{DI.collapse}</button>
+            <button className="collapse-btn" title={t.dash.sidebar.collapse} aria-label={t.dash.sidebar.collapse} onClick={() => setCollapsed((c) => !c)}>{DI.collapse}</button>
           </div>
           <OrgSwitcher orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} />
           <EnvSwitcher live={live} setLive={setLive} />
         </div>
         <nav className="side-nav">
-          {SIDE.map((g) => { const items = g.items.filter((k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k))); return (<div key={g.sec}><div className="side-sec lbl">{t.dash.sidebar.sections[g.sec]}</div>{items.map((k) => (<div key={k} className={`side-link${view === k ? " active" : ""}`} title={t.dash.sidebar.items[k]} onClick={() => go(k)}>{DI[k]}<span className="lbl">{t.dash.sidebar.items[k]}</span>{k === "support" && supportUnread > 0 && <span className="side-dot" />}</div>))}</div>); })}
+          {SIDE.map((g) => { const items = g.items.filter((k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k))); return (<div key={g.sec}><div className="side-sec lbl">{t.dash.sidebar.sections[g.sec]}</div>{items.map((k) => (<div key={k} role="button" tabIndex={0} aria-current={view === k ? "page" : undefined} aria-label={t.dash.sidebar.items[k]} className={`side-link${view === k ? " active" : ""}`} title={t.dash.sidebar.items[k]} onClick={() => go(k)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(k); } }}>{DI[k]}<span className="lbl">{t.dash.sidebar.items[k]}</span>{k === "support" && supportUnread > 0 && <span className="side-dot" />}</div>))}</div>); })}
         </nav>
         <ProfileMenu user={user} onAccount={() => go("account")} />
       </aside>
 
       <div className="dash-main">
         <header className="topbar">
-          <button className="icon-btn burger" onClick={() => setNavOpen(true)}>{DI.menu}</button>
+          <button className="icon-btn burger" title={t.nav.menu} aria-label={t.nav.menu} onClick={() => setNavOpen(true)}>{DI.menu}</button>
           <h1>{t.dash.viewLabels[view]}</h1>
-          <div className="search">{DI.search}<input placeholder={t.dash.topbar.search} /></div>
+          <div className="search">{DI.search}<input placeholder={t.dash.topbar.search} aria-label={t.dash.topbar.search} /></div>
           <div className="top-actions">
             <LangSelect />
-            <button className="icon-btn" title={t.dash.topbar.theme} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? <IcSun /> : <IcMoon />}</button>
+            <button className="icon-btn" title={t.dash.topbar.theme} aria-label={t.dash.topbar.theme} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? <IcSun /> : <IcMoon />}</button>
             <NotificationsMenu items={visibleNotifs} loading={notifsLoading} error={notifsError} unread={unreadNotifs} onOpen={markNotifsRead} onViewAll={() => go("activity")} />
             <TopbarProfile user={user} onAccount={() => go("account")} />
           </div>
@@ -332,7 +332,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
             ))}
           </div>
         )}
-        <div className="dash-body" key={view}>{renderView()}</div>
+        <main id="main" className="dash-body" key={view}>{renderView()}</main>
       </div>
 
       {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} />}

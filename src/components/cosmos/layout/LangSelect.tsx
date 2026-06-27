@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useLang, setLang, LOCALES } from "@/lib/i18n/index";
-import { useOutside } from "../hooks/useOutside";
-import { Flag } from "../ui/Flag";
-import { IcChev, IcCheck } from "../icons";
+import { useOutside } from "@/components/cosmos/hooks/useOutside";
+import { Flag } from "@/components/cosmos/ui/Flag";
+import { IcChev, IcCheck } from "@/components/cosmos/icons";
 
 /* Language selector — flips the active locale live across all islands. */
 export function LangSelect() {

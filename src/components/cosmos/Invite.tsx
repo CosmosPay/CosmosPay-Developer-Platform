@@ -21,7 +21,7 @@ export default function Invite({ state = "invalid", org = "", email = "", token 
   const m = map[state] || map.invalid;
 
   return (
-    <div className="invite-wrap">
+    <main id="main" className="invite-wrap">
       <div className="invite-card">
         <a className="invite-brand" href="/"><CosmosMark size={28} /> <span>Cosmos&nbsp;Pay</span></a>
         <div className="invite-eyebrow">{v.eyebrow}</div>
@@ -35,6 +35,6 @@ export default function Invite({ state = "invalid", org = "", email = "", token 
           {m.kind === "home" && <a className="btn btn-soft" href="/">{v.backHome}</a>}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

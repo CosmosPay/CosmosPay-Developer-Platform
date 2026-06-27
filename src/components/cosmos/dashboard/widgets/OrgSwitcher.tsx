@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { IcCheck } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { DI, IcLock } from "../icons";
-import { initials } from "../helpers";
-import { useOutside } from "../hooks";
+import { DI, IcLock } from "@/components/cosmos/dashboard/icons";
+import { initials } from "@/components/cosmos/dashboard/helpers";
+import { useOutside } from "@/components/cosmos/dashboard/hooks";
 
 export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds }) {
   const t = useT();
@@ -24,9 +24,9 @@ export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds }) {
   };
   return (
     <div className="org-wrap" ref={ref}>
-      <button className={`org-switch${open ? " open" : ""}`} onClick={() => setOpen((o) => !o)}>
+      <button className={`org-switch${open ? " open" : ""}`} aria-haspopup="menu" aria-expanded={open} aria-label={current.name} onClick={() => setOpen((o) => !o)}>
         <span className="org-av">{initials(current.name)}</span><span className="org-nm lbl">{current.name}</span>
-        <svg className="org-chev lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
+        <svg className="org-chev lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
       </button>
       {open && (<div className="org-menu">
         <div className="org-menu-h">{og.owned}</div>

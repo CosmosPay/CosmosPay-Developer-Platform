@@ -2,15 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, ConfirmModal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { fmtDateTime } from "../helpers";
-import { usePaged, useGsapRows, usePolling } from "../hooks";
-import { Pill } from "../components/Pill";
-import { Toolbar } from "../components/Toolbar";
-import { ViewHead } from "../components/ViewHead";
-import { Field, Sel } from "../components/Field";
-import { Pagination } from "../components/Pagination";
-import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "../components/PayLinkDetail";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Field, Sel } from "@/components/cosmos/dashboard/components/Field";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
 const FILTER_KEYS = ["all", "PENDING", "SUCCEEDED", "FAILED"];
 

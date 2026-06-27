@@ -2,15 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { customers as custApi, paymentIntents as payApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { fmtDate, fmtDateTime } from "../helpers";
-import { usePaged, useGsapRows } from "../hooks";
-import { Toolbar } from "../components/Toolbar";
-import { ViewHead } from "../components/ViewHead";
-import { Field } from "../components/Field";
-import { Pagination } from "../components/Pagination";
-import { Pill } from "../components/Pill";
-import { STATUS_PILL } from "../components/PayLinkDetail";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDate, fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
 const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
 const acctExplorer = (account, env) => `https://stellar.expert/explorer/${env === "prod" ? "public" : "testnet"}/account/${account}`;
@@ -60,8 +60,8 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
                 <td className="cust">{c.succeeded ?? 0}/{c.payments ?? 0}</td>
                 <td className="cust">{fmtDate(c.createdAt)}</td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
-                  <button className="icon-mini" title={cx.custDetail.title} onClick={() => setDetail(c)}>{DI.docs}</button>
-                  {canManage && <button className="icon-mini danger" title={cx.delete} onClick={() => remove(c)}>{DI.trash}</button>}
+                  <button className="icon-mini" title={cx.custDetail.title} aria-label={cx.custDetail.title} onClick={() => setDetail(c)}>{DI.docs}</button>
+                  {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(c)}>{DI.trash}</button>}
                 </td>
               </tr>
             ))}</tbody>

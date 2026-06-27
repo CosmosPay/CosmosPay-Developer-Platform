@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { ConfirmModal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { fmtDateTime } from "../helpers";
-import { Pill } from "../components/Pill";
-import { ViewHead } from "../components/ViewHead";
-import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL } from "../components/PayLinkDetail";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
 const num = (s) => { const n = Number(s); return Number.isFinite(n) ? n : 0; };
 

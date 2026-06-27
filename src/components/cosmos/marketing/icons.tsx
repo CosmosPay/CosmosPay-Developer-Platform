@@ -10,6 +10,7 @@ export const API_ICONS = {
 
 export const SDK_ICONS = {
   node: (<svg className="si" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M10 9l4 3-4 3z" fill="currentColor" /></svg>),
+  web: (<svg className="si" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.7 2.6 15.3 0 18M12 3C9.4 5.7 9.4 18.3 12 21" /></svg>),
   python: (<svg className="si" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4" /></svg>),
   go: (<svg className="si" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3C9.5 5.5 9.5 18.5 12 21" /></svg>),
   ruby: (<svg className="si" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4c-2.2 0-2 3.2-2 4.5C7 10 6 11 4.5 11 6 11 7 12 7 13.5 7 14.8 6.8 18 9 18M15 4c2.2 0 2 3.2 2 4.5C17 10 18 11 19.5 11 18 11 17 12 17 13.5c0 1.3.2 4.5-2 4.5" /></svg>),

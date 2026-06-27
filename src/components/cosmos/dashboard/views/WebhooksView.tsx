@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, IcCheck, IcCopy, showToast, copyText } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { webhooks as whApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { fmtDateTime } from "../helpers";
-import { usePaged, useGsapRows } from "../hooks";
-import { Pill } from "../components/Pill";
-import { ViewHead } from "../components/ViewHead";
-import { Field } from "../components/Field";
-import { Pagination } from "../components/Pagination";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 
 const EVENT_TYPES = [
   "PAYMENT_INTENT_CREATED",
@@ -76,10 +76,10 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
                 <td className="cust">{w.eventTypes && w.eventTypes.length ? fmt(wv.eventsCount, { n: w.eventTypes.length }) : cx.allEvents}</td>
                 <td><Pill st={w.enabled ? "ok" : "ref"} label={w.enabled ? cx.active : cx.inactive} /></td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
-                  {canManage && <button className="icon-mini" title={cx.ping} onClick={() => ping(w)}>{DI.activity}</button>}
-                  {canManage && <button className="icon-mini" title={cx.rotate} onClick={() => rotate(w)}>{DI.key}</button>}
-                  {canManage && <button className="icon-mini" title={w.enabled ? cx.disable : cx.enable} onClick={() => toggle(w)}>{DI.network}</button>}
-                  {canManage && <button className="icon-mini danger" title={cx.delete} onClick={() => remove(w)}>{DI.trash}</button>}
+                  {canManage && <button className="icon-mini" title={cx.ping} aria-label={cx.ping} onClick={() => ping(w)}>{DI.activity}</button>}
+                  {canManage && <button className="icon-mini" title={cx.rotate} aria-label={cx.rotate} onClick={() => rotate(w)}>{DI.key}</button>}
+                  {canManage && <button className="icon-mini" title={w.enabled ? cx.disable : cx.enable} aria-label={w.enabled ? cx.disable : cx.enable} onClick={() => toggle(w)}>{DI.network}</button>}
+                  {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(w)}>{DI.trash}</button>}
                 </td>
               </tr>
             ))}</tbody>
@@ -181,7 +181,7 @@ function RevealSecretModal({ cx, data, onClose }) {
         <p>{cx.secretNote}</p>
         <div className="paylink-block">
           <div className="paylink-block-head"><label className="field-l">{cx.secret}</label>
-            <button type="button" className="copy-mini" title={t.toasts.copied} onClick={() => copyText(data.secret).then(() => showToast(t.toasts.copied))}><IcCopy /></button>
+            <button type="button" className="copy-mini" title={t.toasts.copied} aria-label={t.toasts.copied} onClick={() => copyText(data.secret).then(() => showToast(t.toasts.copied))}><IcCopy /></button>
           </div>
           <div className="paylink-code">{data.secret}</div>
         </div>

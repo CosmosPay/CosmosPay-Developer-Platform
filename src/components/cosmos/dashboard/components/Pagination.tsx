@@ -1,5 +1,5 @@
 import { useT, fmt } from "@/lib/i18n/index";
-import { PAGE_SIZE } from "../data";
+import { PAGE_SIZE } from "@/components/cosmos/dashboard/data";
 
 export function Pagination({ page, pages, total, start, count, setPage }) {
   const t = useT();

@@ -4,9 +4,9 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { organizations as orgsApi } from "@/lib/api-client";
 import { planLimits } from "@/lib/plans.ts";
 import { ORG_RESOURCES, ORG_ACTIONS, permKey } from "@/lib/org-permissions.ts";
-import { DI } from "../icons";
-import { fmtDate } from "../helpers";
-import { ViewHead } from "../components/ViewHead";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDate } from "@/components/cosmos/dashboard/helpers";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 
 /* Per-action permission matrix (resource × create/edit/delete) — multi-select checkboxes,
    shared by the invite form and the member editor. */
@@ -114,7 +114,7 @@ function OrgMembersPanel({ org, orgLimits }) {
         {canManage && inviting && (
           <>
             <div className="member-add">
-              <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={og.memberEmail} autoFocus />
+              <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={og.memberEmail} aria-label={og.memberEmail} autoFocus />
               <button className="btn btn-violet btn-sm" disabled={!email.trim() || sending} onClick={invite}>{sending ? og.sending : og.send}</button>
             </div>
             <div className="invite-opts">
@@ -143,8 +143,8 @@ function OrgMembersPanel({ org, orgLimits }) {
             <span className="kg pub" style={{ marginLeft: "auto" }}>{(og.roles && og.roles[m.role]) || m.role}</span>
             {canManage && m.role !== "owner" && (
               <>
-                <button className="icon-mini" title={og.editMember} style={{ marginLeft: 8 }} onClick={() => setEditing(m)}>{DI.edit}</button>
-                <button className="icon-mini danger" title={og.remove} onClick={() => setConfirm({ member: m })}>{DI.trash}</button>
+                <button className="icon-mini" title={og.editMember} aria-label={og.editMember} style={{ marginLeft: 8 }} onClick={() => setEditing(m)}>{DI.edit}</button>
+                <button className="icon-mini danger" title={og.remove} aria-label={og.remove} onClick={() => setConfirm({ member: m })}>{DI.trash}</button>
               </>
             )}
           </div>
@@ -157,7 +157,7 @@ function OrgMembersPanel({ org, orgLimits }) {
                 <span className="av-sm pending">{(iv.email || "?").slice(0, 2).toUpperCase()}</span>
                 <div><b>{iv.email}</b><span>{fmt(og.expires, { date: fmtDate(iv.expiresAt) })}</span></div>
                 <span className="kg" style={{ marginLeft: "auto" }}>{(og.roles && og.roles[iv.role]) || iv.role}</span>
-                <button className="icon-mini danger" title={og.revokeInvite} style={{ marginLeft: 8 }} onClick={() => revoke(iv.id)}>{DI.trash}</button>
+                <button className="icon-mini danger" title={og.revokeInvite} aria-label={og.revokeInvite} style={{ marginLeft: 8 }} onClick={() => revoke(iv.id)}>{DI.trash}</button>
               </div>
             ))}
           </>

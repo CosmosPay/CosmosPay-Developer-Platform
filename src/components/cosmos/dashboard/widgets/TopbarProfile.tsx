@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Avatar } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { useOutside } from "../hooks";
+import { useOutside } from "@/components/cosmos/dashboard/hooks";
 import { AccountMenuItems } from "./AccountMenuItems";
 
 /* Topbar avatar dropdown — same options as the sidebar profile menu. */

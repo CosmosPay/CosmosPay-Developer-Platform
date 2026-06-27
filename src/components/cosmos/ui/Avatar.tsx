@@ -1,4 +1,4 @@
-import type { User } from "../lib/types";
+import type { User } from "@/components/cosmos/lib/types";
 
 /* User avatar — real Authentik photo when present, initials fallback otherwise. */
 export function Avatar({ user, size = 34 }: { user?: User | null; size?: number }) {

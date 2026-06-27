@@ -15,7 +15,7 @@ interface ConfirmModalProps {
    Texts are passed in (already localized); `danger` styles the confirm button red. */
 export function ConfirmModal({ title, body, confirmLabel, cancelLabel = "Cancel", onConfirm, onClose, danger = true }: ConfirmModalProps) {
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={onClose} label={title}>
       <div className="modal-body">
         <h3>{title}</h3>
         {body && <p>{body}</p>}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useT } from "@/lib/i18n/index";
-import { initials } from "../helpers";
-import { useOutside } from "../hooks";
+import { initials } from "@/components/cosmos/dashboard/helpers";
+import { useOutside } from "@/components/cosmos/dashboard/hooks";
 import { AccountMenuItems } from "./AccountMenuItems";
 
 export function ProfileMenu({ user, onAccount }) {
@@ -14,9 +14,9 @@ export function ProfileMenu({ user, onAccount }) {
   const goSettings = () => { setOpen(false); onAccount && onAccount(); };
   return (
     <div className="prof-wrap" ref={ref}>
-      <button className="side-foot" onClick={() => setOpen((o) => !o)}>
+      <button className="side-foot" aria-haspopup="menu" aria-expanded={open} aria-label={name} onClick={() => setOpen((o) => !o)}>
         <div className="av">{initials(name)}</div><div className="who lbl"><b>{name}</b><span>{email}</span></div>
-        <svg className="prof-chev lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
+        <svg className="prof-chev lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
       </button>
       {open && (<div className="prof-menu">
         <div className="prof-head"><b>{name}</b><span>{email}</span></div>

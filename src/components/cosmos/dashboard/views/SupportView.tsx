@@ -1,19 +1,21 @@
-import { useState } from "react";
+import { useState, useId } from "react";
 import { showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { support as supportApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { fmtWhen } from "../helpers";
-import { usePolling } from "../hooks";
-import { ViewHead } from "../components/ViewHead";
-import { ChatPanel } from "../components/ChatPanel";
-import { TicketStatusPill, TicketPriorityTag } from "../components/TicketStatusPill";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtWhen } from "@/components/cosmos/dashboard/helpers";
+import { usePolling } from "@/components/cosmos/dashboard/hooks";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
+import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
 
 /* Customer support — a ticket system. The customer can open several tickets in parallel;
    each has a subject, a status and its own message thread. */
 export function SupportView() {
   const t = useT();
   const s = t.dash.support;
+  const subjectId = useId();
+  const msgId = useId();
   const [tickets, setTickets] = useState([]);
   const [sel, setSel] = useState(null);
   const [ticket, setTicket] = useState(null);
@@ -63,10 +65,10 @@ export function SupportView() {
           {creating ? (
             <div className="panel"><div className="ticket-new">
               <h3>{s.newTicketTitle}</h3>
-              <label className="field-l">{s.subjectLabel}</label>
-              <input className="field" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={s.subjectPlaceholder} maxLength={140} autoFocus />
-              <label className="field-l" style={{ marginTop: 14 }}>{s.messageLabel}</label>
-              <textarea className="field ticket-textarea" rows={5} value={firstMsg} onChange={(e) => setFirstMsg(e.target.value)} placeholder={s.placeholder} maxLength={4000} />
+              <label className="field-l" htmlFor={subjectId}>{s.subjectLabel}</label>
+              <input id={subjectId} className="field" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={s.subjectPlaceholder} maxLength={140} autoFocus />
+              <label className="field-l" htmlFor={msgId} style={{ marginTop: 14 }}>{s.messageLabel}</label>
+              <textarea id={msgId} className="field ticket-textarea" rows={5} value={firstMsg} onChange={(e) => setFirstMsg(e.target.value)} placeholder={s.placeholder} maxLength={4000} />
               <div className="modal-actions">
                 <button className="btn btn-violet" disabled={!subject.trim() || !firstMsg.trim()} onClick={create}>{s.create}</button>
                 <button className="btn btn-soft" onClick={() => setCreating(false)}>{t.dash.common.cancel}</button>

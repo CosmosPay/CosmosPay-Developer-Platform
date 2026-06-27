@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { useState, Fragment, useId } from "react";
 import { Modal, IcCheck } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { COSMOS_RESOURCES, COSMOS_ACTIONS, cosmosScopeKey } from "@/lib/cosmos-scopes.ts";
@@ -36,6 +36,8 @@ function ScopePicker({ value, m }: any) {
 export function ApiKeyModal({ mode, initial, onClose, onSubmit }) {
   const t = useT();
   const m = t.dash.modals.key;
+  const nameId = useId();
+  const descId = useId();
   const isEdit = mode === "edit";
   const [name, setName] = useState((initial && initial.name) || "");
   const [description, setDescription] = useState((initial && initial.description) || "");
@@ -51,8 +53,8 @@ export function ApiKeyModal({ mode, initial, onClose, onSubmit }) {
   return (
     <Modal onClose={onClose}><div className="modal-body"><div className="modal-eyebrow">{m.eyebrow}</div><h3>{isEdit ? m.editTitle : m.title}</h3>
       <p>{isEdit ? m.editDesc : m.desc}</p>
-      <label className="field-l">{m.nameLabel}</label><input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={m.namePlaceholder} autoFocus />
-      <label className="field-l" style={{ marginTop: 14 }}>{m.descLabel} <span className="field-hint">{t.dash.common.optional}</span></label><input className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={m.descPlaceholder} />
+      <label className="field-l" htmlFor={nameId}>{m.nameLabel}</label><input id={nameId} className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={m.namePlaceholder} autoFocus />
+      <label className="field-l" htmlFor={descId} style={{ marginTop: 14 }}>{m.descLabel} <span className="field-hint">{t.dash.common.optional}</span></label><input id={descId} className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={m.descPlaceholder} />
       <label className="field-l" style={{ marginTop: 14 }}>{m.roleLabel}</label>
       <div className="seg2 wrap">{["user", "admin"].map((r) => <button key={r} className={role === r ? "on" : ""} onClick={() => setRole(r)}>{m.roles[r]}</button>)}</div>
       {role === "admin" ? (

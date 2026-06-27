@@ -39,7 +39,7 @@ export function PlansSection({ user, billing }) {
               <a className={`btn ${meta.ctaCls}`} {...ctaProps(user)}>{plan.cta}{meta.ctaCls === "btn-violet" && <IcArrow />}</a>
               <ul>
                 {plan.feats.map((f, j) => (
-                  <li className={meta.on[j] ? "" : "off"} key={f}>{meta.on[j] ? <IcCheck /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 12h12" /></svg>}{f}</li>
+                  <li className={meta.on[j] ? "" : "off"} key={f}>{meta.on[j] ? <IcCheck /> : <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 12h12" /></svg>}{f}</li>
                 ))}
               </ul>
             </div>

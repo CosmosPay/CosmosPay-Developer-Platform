@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useT } from "@/lib/i18n/index";
-import type { Theme, SetTheme, User } from "../lib/types";
-import { HOME, PRICING, DASH } from "../lib/constants";
-import { startLogin, startLogout } from "../lib/auth";
-import { CosmosMark, IcNChev } from "../icons";
+import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
+import { HOME, PRICING, DASH } from "@/components/cosmos/lib/constants";
+import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
+import { CosmosMark, IcNChev } from "@/components/cosmos/icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangSelect } from "./LangSelect";
 import { NavUserMenu } from "./NavUserMenu";
 import { MegaPanel } from "./MegaPanel";
-import { Avatar } from "../ui/Avatar";
+import { Avatar } from "@/components/cosmos/ui/Avatar";
 
 /* Build the nav item list from the active catalog. */
 function useNavItems(): any[] {
@@ -66,7 +66,7 @@ export function Nav({ theme, setTheme, user = null }: { theme: Theme; setTheme: 
             </>
           )}
           <button className="nav-burger" aria-label={t.nav.menu} onClick={() => setMob((m) => !m)}>
-            {mob ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>}
+            {mob ? <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg> : <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>}
           </button>
         </div>
       </div>

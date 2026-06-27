@@ -2,12 +2,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { products as prodApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { usePaged, useGsapRows } from "../hooks";
-import { Pill } from "../components/Pill";
-import { ViewHead } from "../components/ViewHead";
-import { Field, Sel } from "../components/Field";
-import { Pagination } from "../components/Pagination";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Field, Sel } from "@/components/cosmos/dashboard/components/Field";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 
 const TYPE_TO_KIND = { Recurring: "recurring", "One-time": "one_time", "Payment link": "link" };
 const KIND_TO_TYPE = { recurring: "Recurring", one_time: "One-time", link: "Payment link" };
@@ -52,7 +52,7 @@ export function ProductsView({ canManage = true, orgId, env = "dev" }) {
                 <td className="cust">{pr.types[KIND_TO_TYPE[p.kind]] || p.kind}</td>
                 <td><Pill st={p.active ? "ok" : "ref"} label={p.active ? cx.active : cx.inactive} /></td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                  {canManage && <button className="icon-mini danger" title={cx.delete} onClick={() => remove(p)}>{DI.trash}</button>}
+                  {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(p)}>{DI.trash}</button>}
                 </td>
               </tr>
             ))}</tbody>

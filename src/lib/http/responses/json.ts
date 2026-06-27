@@ -3,7 +3,7 @@ import {
   type ApiEnvelope,
   type ApiErrorEnvelope,
   type JsonResponseOptions,
-} from '../envelope.types';
+} from '@/lib/http/envelope.types';
 
 const JSON_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',

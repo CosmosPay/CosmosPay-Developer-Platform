@@ -18,12 +18,12 @@ export function Cta({ user }) {
       </div>
       <div className="cta-helpers reveal">
         <a className="cta-help" href={PRICING}>
-          <span className="chi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12l-8 8-9-9V3h8z" /><circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" /></svg></span>
+          <span className="chi"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12l-8 8-9-9V3h8z" /><circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" /></svg></span>
           <span><b>{c.helpers[0].b}</b><span>{c.helpers[0].s}</span></span>
           <span className="chg"><IcArrow /></span>
         </a>
         <a className="cta-help" href="#api">
-          <span className="chi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 5l-2 14" /></svg></span>
+          <span className="chi"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 5l-2 14" /></svg></span>
           <span><b>{c.helpers[1].b}</b><span>{c.helpers[1].s}</span></span>
           <span className="chg"><IcArrow /></span>
         </a>

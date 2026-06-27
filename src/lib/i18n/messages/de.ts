@@ -481,12 +481,10 @@ export default {
         }
       },
       docsTitle: "Erstklassige Dokumentation",
-      docsDesc: "Von Entwicklern für Entwickler entwickelt. Interaktive Anleitungen, detaillierte API-Referenzen und SDKs für jede Sprache, die Sie lieben.",
+      docsDesc: "Von Entwicklern für Entwickler. Interaktive Anleitungen, eine detaillierte OpenAPI-Referenz und ein vollständig typisiertes JavaScript-/TypeScript-SDK für Server und Browser.",
       sdkBtns: {
-        node: "Node.js SDK",
-        python: "Python SDK",
-        go: "Go SDK",
-        ruby: "Ruby SDK"
+        node: "Node.js / TypeScript SDK",
+        web: "Browser / Web SDK"
       },
       exploreDocs: "Gesamte Dokumentation erkunden",
       copy: "Kopieren",

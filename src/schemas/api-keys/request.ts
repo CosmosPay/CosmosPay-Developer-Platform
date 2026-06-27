@@ -1,5 +1,5 @@
 import { z } from '@/lib/openapi/zod';
-import { apiKeyEnvironmentSchema } from '../shared/environment';
+import { apiKeyEnvironmentSchema } from '@/schemas/shared/environment';
 
 // Scopes are `resource:action` (e.g. payments:write). May be empty for `admin`
 // keys, which bypass scope checks upstream.

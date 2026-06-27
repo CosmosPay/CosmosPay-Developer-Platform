@@ -1,5 +1,5 @@
 import { z } from '@/lib/openapi/zod';
-import { apiKeyEnvironmentSchema } from '../shared/environment';
+import { apiKeyEnvironmentSchema } from '@/schemas/shared/environment';
 
 const apiKeyIdValueSchema = z
   .string()

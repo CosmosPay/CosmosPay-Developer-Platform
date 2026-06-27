@@ -8,6 +8,10 @@ const user = Astro.locals.user
   : null;
 ---
 
-<CosmosLayout title="Pricing — Cosmos Pay" lang={lang}>
+<CosmosLayout
+  title="Pricing — Cosmos Pay"
+  description="Simple plans for the Cosmos Pay developer platform. Compare API key limits, organizations and features, and pick the plan that fits your Stellar payments integration."
+  lang={lang}
+>
   <Pricing client:load user={user} lang={lang} />
 </CosmosLayout>

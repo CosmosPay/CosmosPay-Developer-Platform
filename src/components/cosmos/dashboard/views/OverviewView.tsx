@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useT, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi } from "@/lib/api-client";
-import { fmtDateTime } from "../helpers";
-import { sl, notifIcon, fmtWhen, humanizeLocal, notifMeta } from "../helpers";
-import { Spark } from "../components/Spark";
-import { AreaChart } from "../components/AreaChart";
-import { Pill } from "../components/Pill";
-import { ViewHead } from "../components/ViewHead";
+import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { sl, notifIcon, fmtWhen, humanizeLocal, notifMeta } from "@/components/cosmos/dashboard/helpers";
+import { Spark } from "@/components/cosmos/dashboard/components/Spark";
+import { AreaChart } from "@/components/cosmos/dashboard/components/AreaChart";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 
 const STATUS_PILL = { SUCCEEDED: "ok", FAILED: "fail", EXPIRED: "fail", CANCELLED: "fail", PENDING: "ref", SUBMITTED: "ref" };
 const short = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);

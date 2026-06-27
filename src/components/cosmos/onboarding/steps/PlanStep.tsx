@@ -1,5 +1,5 @@
 /* PlanStep.jsx — step 2: plan picker. */
-import { PLAN_IDS, POPULAR, PLAN_DATA } from "../data";
+import { PLAN_IDS, POPULAR, PLAN_DATA } from "@/components/cosmos/onboarding/data";
 
 export function PlanStep({ ob, t, plan, pickPlan, showRec, recId, plans }) {
   const ids = plans && plans.length ? plans : PLAN_IDS;

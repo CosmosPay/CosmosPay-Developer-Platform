@@ -1,0 +1,14 @@
+{
+  "name": "Cosmos Pay — Developer Platform",
+  "short_name": "Cosmos Pay",
+  "description": "Mint API keys and operate the Cosmos Pay Payments API: Stellar SEP-7 payment intents, webhooks, products, customers and analytics.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FBFBFB",
+  "theme_color": "#6B47FF",
+  "icons": [
+    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

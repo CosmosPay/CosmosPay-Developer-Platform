@@ -1,4 +1,4 @@
-import { IcChevSm } from "../icons";
+import { IcChevSm } from "@/components/cosmos/icons";
 
 /* Mega-menu dropdown panel for a nav item (columns of links + optional feature). */
 export function MegaPanel({ item }: { item: any }) {

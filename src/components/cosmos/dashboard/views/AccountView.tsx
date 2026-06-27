@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { Avatar, showToast, startLogout } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { DI } from "../icons";
-import { ViewHead } from "../components/ViewHead";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 
 /* Read an image file and center-crop + downscale it to a small square data URL, so the
    avatar stays tiny (a few KB) and consistent regardless of the source dimensions. */

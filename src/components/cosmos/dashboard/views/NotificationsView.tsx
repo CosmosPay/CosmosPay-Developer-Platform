@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import { useT } from "@/lib/i18n/index";
-import { notifIcon, fmtWhen, humanizeLocal, notifLocation, notifIp, deviceLabel } from "../helpers";
-import { usePaged, useGsapRows } from "../hooks";
-import { ViewHead } from "../components/ViewHead";
-import { Pagination } from "../components/Pagination";
+import { notifIcon, fmtWhen, humanizeLocal, notifLocation, notifIp, deviceLabel } from "@/components/cosmos/dashboard/helpers";
+import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 
 export function NotificationsView({ notifications, loading, error }) {
   const t = useT();

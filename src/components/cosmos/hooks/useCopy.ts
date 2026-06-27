@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { copyText } from "../lib/clipboard";
-import { showToast } from "../ui/toast";
+import { copyText } from "@/components/cosmos/lib/clipboard";
+import { showToast } from "@/components/cosmos/ui/toast";
 
 /* Copy-to-clipboard with a transient "done" flag (for check-mark feedback) and an
    optional toast. Returns [done, run(text, toastMsg?)]. */

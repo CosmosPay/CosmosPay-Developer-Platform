@@ -16,7 +16,7 @@ export default function Landing({ user = null, lang }) {
   return (
     <>
       <Nav theme={theme} setTheme={setTheme} user={user} />
-      <main>
+      <main id="main">
         <Hero user={user} />
         <ApiSection />
         <IntegrationPaths />

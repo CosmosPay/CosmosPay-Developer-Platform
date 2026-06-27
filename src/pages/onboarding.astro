@@ -31,6 +31,6 @@ const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const features = planFeatures("user");
 ---
 
-<CosmosLayout title="Welcome — Cosmos Pay" lang={lang}>
+<CosmosLayout title="Welcome — Cosmos Pay" lang={lang} noindex>
   <Onboarding client:load lang={lang} features={features} />
 </CosmosLayout>

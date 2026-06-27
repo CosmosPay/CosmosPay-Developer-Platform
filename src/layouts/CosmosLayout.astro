@@ -2,16 +2,58 @@
 import "@/styles/cosmos.css";
 import "@/styles/views.css";
 import "@/styles/onboarding.css";
+import { PUBLIC_GA_ID, PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
 
 interface Props {
   title?: string;
   lang?: string;
+  description?: string;
+  /** OG/Twitter share image (absolute path under /public). */
+  image?: string;
+  /** Set true on private/auth pages so search engines don't index them. */
+  noindex?: boolean;
+  /** Open Graph type — "website" for marketing pages, "article" for posts. */
+  type?: string;
 }
 
-const { title = "Cosmos Pay — Developer Platform", lang } = Astro.props;
+const {
+  title = "Cosmos Pay — Developer Platform",
+  lang,
+  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API — Stellar SEP-7 payment intents, webhooks, products, customers and analytics.",
+  image = "/og-image.png",
+  noindex = false,
+  type = "website",
+} = Astro.props;
+
 // Locale comes from the cookie (set by the in-app language switcher) so SSR and the
 // first client render agree. Defaults to English.
 const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+
+// Absolute URLs for canonical + social cards. Astro.site is set in astro.config.mjs.
+const siteBase = Astro.site ?? new URL("https://dev.cosmospay.lat");
+const canonical = new URL(Astro.url.pathname, siteBase).href;
+const ogImage = new URL(image, siteBase).href;
+const robots = noindex ? "noindex, nofollow" : "index, follow";
+const gaId = PUBLIC_GA_ID;
+const googleSiteVerification = PUBLIC_GOOGLE_SITE_VERIFICATION;
+
+// Structured data (skipped on noindex pages — search engines ignore them anyway).
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      name: "Cosmos Pay",
+      url: siteBase.origin,
+      logo: new URL("/android-chrome-512x512.png", siteBase).href,
+    },
+    {
+      "@type": "WebSite",
+      name: "Cosmos Pay — Developer Platform",
+      url: siteBase.origin,
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -19,14 +61,53 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content={robots} />
+    {googleSiteVerification && (
+      <meta name="google-site-verification" content={googleSiteVerification} />
+    )}
+    <link rel="canonical" href={canonical} />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Icons / PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FBFBFB" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0A" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content="Cosmos Pay" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={locale} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    {!noindex && (
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+    )}
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>{title}</title>
+
     <script is:inline>
       // Apply persisted theme before paint to avoid a flash.
       try {
@@ -36,8 +117,36 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
         document.documentElement.setAttribute("data-theme", "light");
       }
     </script>
+
+    {gaId && (
+      <Fragment>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+        <script
+          is:inline
+          set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`}
+        />
+      </Fragment>
+    )}
+    <style>
+      /* Keyboard skip-to-content link — visually hidden until focused. */
+      .skip-link {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 1000;
+        padding: 10px 16px;
+        background: #6b47ff;
+        color: #fff;
+        font: 600 14px/1 "Hanken Grotesk", system-ui, sans-serif;
+        border-radius: 0 0 8px 0;
+      }
+      .skip-link:focus {
+        left: 0;
+      }
+    </style>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <slot />
   </body>
 </html>

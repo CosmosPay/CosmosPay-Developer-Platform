@@ -123,7 +123,7 @@ export function Hero({ user }) {
           <p className="lede">{t.landing.hero.lede}</p>
           <div className="hero-cta">
             <a className="btn btn-dark" {...ctaProps(user)}>{t.landing.hero.getKeys} <IcArrow /></a>
-            <CopyPill cmd="npm i @cosmos-pay" />
+            <CopyPill cmd="npm i @cosmosapp/pay_sdk" />
           </div>
           <div className="clients">
             <div className="clients-label">{t.landing.hero.trustedBy}</div>

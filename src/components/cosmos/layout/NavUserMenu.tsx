@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useT } from "@/lib/i18n/index";
-import type { User } from "../lib/types";
-import { DASH } from "../lib/constants";
-import { startLogout } from "../lib/auth";
-import { useOutside } from "../hooks/useOutside";
-import { Avatar } from "../ui/Avatar";
-import { IcGauge, IcUser, IcDocs, IcLogout } from "../icons";
+import type { User } from "@/components/cosmos/lib/types";
+import { DASH } from "@/components/cosmos/lib/constants";
+import { startLogout } from "@/components/cosmos/lib/auth";
+import { useOutside } from "@/components/cosmos/hooks/useOutside";
+import { Avatar } from "@/components/cosmos/ui/Avatar";
+import { IcGauge, IcUser, IcDocs, IcLogout } from "@/components/cosmos/icons";
 
 /* Signed-in account dropdown for the marketing nav. */
 export function NavUserMenu({ user }: { user: User }) {

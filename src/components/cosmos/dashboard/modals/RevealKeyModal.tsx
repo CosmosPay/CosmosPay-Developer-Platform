@@ -10,7 +10,7 @@ export function RevealKeyModal({ k, onClose }) {
       <p>{m.body}</p>
       <label className="field-l">{m.idLabel}</label>
       <div className="reveal-key"><code>{k.id}</code></div>
-      <div className="reveal-key" style={{ marginTop: 10 }}><code>{k.secret}</code><button className={`copy-inline${done ? " done" : ""}`} title={t.dash.common.copy} onClick={() => run(k.secret, t.toasts.copied)}>{done ? <IcCheck /> : <IcCopy />}</button></div>
+      <div className="reveal-key" style={{ marginTop: 10 }}><code>{k.secret}</code><button className={`copy-inline${done ? " done" : ""}`} title={t.dash.common.copy} aria-label={t.dash.common.copy} onClick={() => run(k.secret, t.toasts.copied)}>{done ? <IcCheck /> : <IcCopy />}</button></div>
       <div className="modal-actions"><button className="btn btn-violet" onClick={onClose}>{m.saved}</button></div>
     </div></Modal>
   );

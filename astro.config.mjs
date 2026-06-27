@@ -9,6 +9,9 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
+  // Canonical public origin — used for SEO canonical/OG URLs and the sitemap. Change this
+  // if the public site moves to another domain.
+  site: 'https://dev.cosmospay.lat',
   env: {
     schema: {
       DATABASE_URL: envField.string({ context: 'server', access: 'secret' }),
@@ -62,6 +65,18 @@ export default defineConfig({
       // Comma-separated plan ids offered for self-selection (onboarding + plan modal),
       // e.g. "community". Empty = all plans. The first entry is the default plan.
       ENABLED_PLANS: envField.string({ context: 'server', access: 'public', optional: true, default: '' }),
+      // --- Analytics ---
+      // Google Analytics 4 Measurement ID (e.g. "G-XXXXXXXXXX"). Exposed to the browser.
+      // When empty, the analytics snippet is not injected (no tracking in local dev).
+      PUBLIC_GA_ID: envField.string({ context: 'client', access: 'public', optional: true, default: '' }),
+      // --- SEO / Google Search Console ---
+      // Site-ownership verification token for Google Search Console. Paste only the
+      // `content` value from the "HTML tag" verification method (the part inside
+      // content="..."), e.g. "abc123…". When set, a
+      // <meta name="google-site-verification"> tag is injected on every public page —
+      // all Search Console needs to verify ownership. Empty = no tag (local dev).
+      // (Search Console can also verify via the existing Google Analytics property.)
+      PUBLIC_GOOGLE_SITE_VERIFICATION: envField.string({ context: 'client', access: 'public', optional: true, default: '' }),
     },
   },
 

@@ -1,5 +1,5 @@
-import type { Theme, SetTheme } from "../lib/types";
-import { IcSun, IcMoon } from "../icons";
+import type { Theme, SetTheme } from "@/components/cosmos/lib/types";
+import { IcSun, IcMoon } from "@/components/cosmos/icons";
 
 export function ThemeToggle({ theme, setTheme }: { theme: Theme; setTheme: SetTheme }) {
   return (

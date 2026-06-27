@@ -1,11 +1,11 @@
 import { useRef } from "react";
 import { useT, fmt } from "@/lib/i18n/index";
 import { atLimit } from "@/lib/plans.ts";
-import { DI } from "../icons";
-import { fmtDate } from "../helpers";
-import { usePaged, useGsapRows } from "../hooks";
-import { ViewHead } from "../components/ViewHead";
-import { Pagination } from "../components/Pagination";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDate } from "@/components/cosmos/dashboard/helpers";
+import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 
 export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedIds, canCreate = true, canEdit = true, canDelete = true, onCreate, onRevoke, onEdit }) {
   const t = useT();
@@ -37,8 +37,8 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
                 <td className="cust">{Array.isArray(k.permissions) && k.permissions.length ? k.permissions.join(", ") : ak.none}</td>
                 <td className="cust">{fmtDate(k.createdAt)}</td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                  {canEdit && <button className="icon-mini" title={ak.edit} onClick={() => onEdit(k)} disabled={locked}>{DI.edit}</button>}
-                  {canDelete && <button className="icon-mini danger" title={ak.revoke} onClick={() => onRevoke(k)}>{DI.trash}</button>}
+                  {canEdit && <button className="icon-mini" title={ak.edit} aria-label={ak.edit} onClick={() => onEdit(k)} disabled={locked}>{DI.edit}</button>}
+                  {canDelete && <button className="icon-mini danger" title={ak.revoke} aria-label={ak.revoke} onClick={() => onRevoke(k)}>{DI.trash}</button>}
                   {!canEdit && !canDelete && <span className="cust">—</span>}
                 </td>
               </tr>

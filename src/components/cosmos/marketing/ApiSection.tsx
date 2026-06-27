@@ -38,7 +38,7 @@ export function ApiSection() {
             <div className="terminal-bar"><i /><i /><i /><TermCopy text={API_SNIPPET} /></div>
             <div className="terminal-body">
               <pre dangerouslySetInnerHTML={{ __html: hl(API_SNIPPET) }} />
-              <span className="terminal-badge">sdk-v2.4.8</span>
+              <span className="terminal-badge">@cosmosapp/pay_sdk</span>
             </div>
           </div>
           <div className="docs-copy reveal" style={{ transitionDelay: ".08s" }}>

@@ -3,8 +3,8 @@ import { Modal, showToast, IcCopy, IcCheck } from "@/components/cosmos/shared";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { useT } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
-import { DI } from "../icons";
-import { fmtDateTime } from "../helpers";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 
 /* Map an upstream status to a status-pill class (reuses the existing ok/fail/ref pills). */
 export const STATUS_PILL = { SUCCEEDED: "ok", FAILED: "fail", EXPIRED: "fail", CANCELLED: "fail", PENDING: "ref", SUBMITTED: "ref" };
@@ -29,11 +29,11 @@ export function explorerUrl(intent) {
 export function PayLinkRowActions({ intent, t, pl, onView, canManage = false, onDelete }) {
   return (
     <td className="paylink-row-actions" onClick={(e) => e.stopPropagation()}>
-      <button className="icon-mini" title={pl.detail.eyebrow} onClick={() => onView(intent)}>{DI.docs}</button>
+      <button className="icon-mini" title={pl.detail.eyebrow} aria-label={pl.detail.eyebrow} onClick={() => onView(intent)}>{DI.docs}</button>
       {hasTransaction(intent)
-        ? <a className="icon-mini" title={t.dash.balances.explorer} href={explorerUrl(intent)} target="_blank" rel="noopener noreferrer">{DI.network}</a>
-        : <button className="icon-mini" title={t.dash.balances.explorer} disabled>{DI.network}</button>}
-      {canManage && intent.status !== "SUCCEEDED" && <button className="icon-mini danger" title={pl.detail.delete} onClick={() => onDelete(intent)}>{DI.trash}</button>}
+        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={explorerUrl(intent)} target="_blank" rel="noopener noreferrer">{DI.network}</a>
+        : <button className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} disabled>{DI.network}</button>}
+      {canManage && intent.status !== "SUCCEEDED" && <button className="icon-mini danger" title={pl.detail.delete} aria-label={pl.detail.delete} onClick={() => onDelete(intent)}>{DI.trash}</button>}
     </td>
   );
 }
@@ -60,7 +60,7 @@ function CopyBlock({ label, value, children }) {
     <div className="paylink-block">
       <div className="paylink-block-head">
         <label className="field-l">{label}</label>
-        <button type="button" className={`copy-mini${done ? " done" : ""}`} onClick={() => copy(value, t.toasts.copied)} title={t.toasts.copy || label}>
+        <button type="button" className={`copy-mini${done ? " done" : ""}`} onClick={() => copy(value, t.toasts.copied)} title={t.toasts.copy || label} aria-label={t.toasts.copy || label}>
           {done ? <IcCheck /> : <IcCopy />}
         </button>
       </div>

@@ -45,7 +45,7 @@ export function MiniSelect({ value, options, onChange, disabled = false }) {
     <div className="msel">
       <button type="button" ref={btnRef} className={`msel-btn${open ? " open" : ""}`} onClick={toggle} disabled={disabled} aria-haspopup="listbox" aria-expanded={open}>
         <span>{cur ? cur.label : value}</span>
-        <svg className="msel-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+        <svg aria-hidden="true" className="msel-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
       </button>
       {open && pos && createPortal(
         <div ref={menuRef} className="msel-menu" role="listbox" style={{ top: pos.top, left: pos.left, minWidth: pos.minWidth }}>

@@ -1,4 +1,4 @@
-import type { FileResponseOptions } from '../envelope.types';
+import type { FileResponseOptions } from '@/lib/http/envelope.types';
 
 export function fileDownload(options: FileResponseOptions): Response {
   const disposition = options.disposition ?? 'attachment';

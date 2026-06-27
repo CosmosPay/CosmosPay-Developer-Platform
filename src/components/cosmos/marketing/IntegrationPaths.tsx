@@ -6,7 +6,7 @@ import { SCALE_VALUES, PATH_NUMS } from "./data";
 function pathMock(n) {
   if (n === "01") return null; // filled by caller with translated link text
   if (n === "02") return <div className="ip-mock gw3"><div className="ip-logos">{[0, 1, 2, 3, 4, 5].map((k) => <i key={k} />)}</div></div>;
-  return <div className="ip-mock"><div className="ip-code"><span className="tok-kw">const</span> cosmos = require(<span className="tok-str">'@cosmos-pay/sdk'</span>);<br />await cosmos.payments.create(...)</div></div>;
+  return <div className="ip-mock"><div className="ip-code"><span className="tok-kw">const</span> {"{ Client }"} = require(<span className="tok-str">'@cosmosapp/pay_sdk'</span>);<br />await client.paymentIntents.createPay(...)</div></div>;
 }
 
 export function IntegrationPaths() {

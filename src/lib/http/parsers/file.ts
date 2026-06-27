@@ -1,6 +1,6 @@
 import { type ZodType, type z } from 'zod';
-import { jsonBadRequest } from '../responses/json';
-import type { ParseResult } from '../envelope.types';
+import { jsonBadRequest } from '@/lib/http/responses/json';
+import type { ParseResult } from '@/lib/http/envelope.types';
 import { formatZodError } from './zod.utils';
 
 export async function parseMultipartFile<S extends ZodType>(

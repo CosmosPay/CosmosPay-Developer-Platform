@@ -1,0 +1,11 @@
+# Cosmos Pay — Developer Platform
+User-agent: *
+Allow: /
+
+# Authenticated / non-public areas — no value to index.
+Disallow: /dashboard
+Disallow: /onboarding
+Disallow: /invite/
+Disallow: /api/
+
+Sitemap: https://dev.cosmospay.lat/sitemap.xml

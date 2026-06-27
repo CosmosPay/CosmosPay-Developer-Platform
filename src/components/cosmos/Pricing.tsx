@@ -14,7 +14,7 @@ export default function Pricing({ user = null, lang }) {
   return (
     <>
       <Nav theme={theme} setTheme={setTheme} user={user} />
-      <main>
+      <main id="main">
         <PricingHero billing={billing} setBilling={setBilling} />
         <PlansSection user={user} billing={billing} />
         <CompareSection />

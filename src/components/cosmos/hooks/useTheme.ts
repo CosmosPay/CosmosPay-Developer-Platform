@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Theme } from "../lib/types";
+import type { Theme } from "@/components/cosmos/lib/types";
 
 /* Persisted light/dark theme, reflected onto <html data-theme>. */
 export function useTheme() {

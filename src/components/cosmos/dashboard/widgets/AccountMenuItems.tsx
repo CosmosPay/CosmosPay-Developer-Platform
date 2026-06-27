@@ -1,5 +1,5 @@
 import { HOME, startLogout } from "@/components/cosmos/shared";
-import { DI } from "../icons";
+import { DI } from "@/components/cosmos/dashboard/icons";
 
 /* Shared account-menu options (used by both the sidebar and the topbar menus). */
 export function AccountMenuItems({ pm, onAccount, onBilling }) {

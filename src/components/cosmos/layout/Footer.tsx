@@ -1,6 +1,6 @@
 import { useT } from "@/lib/i18n/index";
-import { HOME, PRICING, DASH } from "../lib/constants";
-import { CosmosMark } from "../icons";
+import { HOME, PRICING, DASH } from "@/components/cosmos/lib/constants";
+import { CosmosMark } from "@/components/cosmos/icons";
 
 /* Hrefs are kept here (aligned by index to the catalog link order); labels come
    from the active locale. Most links are placeholders (#); two point to real routes. */

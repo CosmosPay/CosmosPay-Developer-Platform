@@ -1,6 +1,6 @@
 /* ReviewStep.jsx — step 3: review summary + terms agreement. */
-import { I } from "../icons";
-import { PLAN_DATA } from "../data";
+import { I } from "@/components/cosmos/onboarding/icons";
+import { PLAN_DATA } from "@/components/cosmos/onboarding/data";
 
 export function ReviewStep({ ob, t, name, industry, goals, volume, plan, error, agreed, setAgreed, goto }) {
   return (

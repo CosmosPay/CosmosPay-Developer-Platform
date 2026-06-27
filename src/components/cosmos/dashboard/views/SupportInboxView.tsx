@@ -3,12 +3,12 @@ import { showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { supportAdmin as supportAdminApi } from "@/lib/api-client";
 import { TICKET_STATUSES, TICKET_PRIORITIES } from "@/lib/support-status";
-import { humanizeLocal, fmtWhen } from "../helpers";
-import { usePolling } from "../hooks";
-import { ViewHead } from "../components/ViewHead";
-import { ChatPanel } from "../components/ChatPanel";
-import { TicketStatusPill, TicketPriorityTag } from "../components/TicketStatusPill";
-import { MiniSelect } from "../components/MiniSelect";
+import { humanizeLocal, fmtWhen } from "@/components/cosmos/dashboard/helpers";
+import { usePolling } from "@/components/cosmos/dashboard/hooks";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
+import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
+import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
 
 /* Staff support inbox — every customer ticket, filterable by status, with a reply pane
    and a status selector to move tickets through open → pending → resolved → closed. */

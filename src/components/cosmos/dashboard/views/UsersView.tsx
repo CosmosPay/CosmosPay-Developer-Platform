@@ -3,12 +3,12 @@ import { showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { admin as adminApi } from "@/lib/api-client";
 import { roleLevel } from "@/lib/account-roles";
-import { ROLE_OPTIONS, PLAN_OPTIONS } from "../data";
-import { usePaged, useGsapRows } from "../hooks";
-import { Toolbar } from "../components/Toolbar";
-import { ViewHead } from "../components/ViewHead";
-import { Pagination } from "../components/Pagination";
-import { MiniSelect } from "../components/MiniSelect";
+import { ROLE_OPTIONS, PLAN_OPTIONS } from "@/components/cosmos/dashboard/data";
+import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
 
 /* Admin: assign roles + plans to accounts (owner/admin only). You can't change your own
    role, only assign roles strictly below your own, and can't modify peers/superiors. */
