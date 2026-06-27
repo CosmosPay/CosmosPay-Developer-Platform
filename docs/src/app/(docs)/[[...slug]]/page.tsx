@@ -16,6 +16,7 @@ import { gitConfig } from '@/lib/shared';
 import { openapi } from '@/lib/openapi';
 import { OpenAPIPage } from '@/components/api-page';
 import { baseOptions } from '@/lib/layout.shared';
+import { MobileSidebarTrigger } from '@/components/mobile-sidebar-trigger';
 import { DOCS_LANGUAGES, DEFAULT_DOCS_LANGUAGE } from '@/lib/i18n-config';
 
 // The route is a single optional catch-all. When the first segment is a (non-default) locale
@@ -48,6 +49,7 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
   // Cosmos navbar is rendered in the root layout, so Fumadocs' own top nav stays disabled.
   return (
     <DocsLayout tree={source.getPageTree(lang)} {...baseOptions()} nav={{ enabled: false }}>
+      <MobileSidebarTrigger />
       <DocsPage toc={page.data.toc} full={page.data.full}>
         <DocsTitle>{page.data.title}</DocsTitle>
         <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
