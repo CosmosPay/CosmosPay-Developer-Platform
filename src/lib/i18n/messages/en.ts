@@ -140,10 +140,10 @@ export default {
         label: "Developers",
         cols: [
           { head: "Build", links: [
-            { t: "API reference", s: "REST & GraphQL" },
-            { t: "SDKs & libraries", s: "Six typed languages" },
-            { t: "Webhooks", s: "Real-time events" },
-            { t: "Sandbox", s: "Test everything safely" },
+            { t: "API reference", s: "REST & GraphQL", href: "/docs/api" },
+            { t: "SDKs & libraries", s: "Typed JS / TS SDK", href: "/docs/sdk/server/overview" },
+            { t: "Webhooks", s: "Real-time events", href: "/docs/sdk/server/webhooks" },
+            { t: "Sandbox", s: "Test everything safely", href: "/docs/getting-started" },
           ] },
           { head: "Operate", links: [
             { t: "CLI", s: "Local-to-prod parity" },
@@ -158,8 +158,8 @@ export default {
         label: "Resources",
         cols: [
           { head: "Learn", links: [
-            { t: "Documentation", s: "Guides & references" },
-            { t: "Tutorials", s: "Step-by-step walkthroughs" },
+            { t: "Documentation", s: "Guides & references", href: "/docs" },
+            { t: "Tutorials", s: "Step-by-step walkthroughs", href: "/docs/getting-started" },
             { t: "Blog", s: "Engineering & product" },
             { t: "Customer stories", s: "Built on Cosmos Pay" },
           ] },

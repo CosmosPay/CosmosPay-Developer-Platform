@@ -1,0 +1,67 @@
+---
+title: "El Client"
+description: "El objeto Client: los administradores que expone, sus opciones de constructor y las estructuras que actúan sobre sí mismas que devuelve."
+---
+
+Casi todo lo que haces pasa por una sola instancia de `Client`. Agrupa la API en un administrador por recurso y devuelve objetos que pueden actuar sobre sí mismos.
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+Un solo cliente expone cada recurso a través de su propio administrador.
+
+| Administrador | Recurso | Métodos clave |
+| ------- | -------- | ----------- |
+| `client.paymentIntents` | Intenciones SEP-7 de Stellar | `createTx` · `createPay` · `fetch` · `list` · `update` · `delete` · `validate` |
+| `client.webhooks` | Endpoints + entregas + escucha de eventos | `create` · `list` · `fetch` · `update` · `delete` · `rotateSecret` · `ping` · `fetchDeliveries` · `redeliver` · `on(...)` · `process` · `createHandler` · `middleware` |
+| `client.products` | Productos / precios | `create` · `list` · `fetch` · `update` · `delete` |
+| `client.customers` | Clientes | `create` · `list` · `fetch` · `update` · `delete` |
+| `client.analytics` | Métricas de solo lectura | `summary` · `balances` · `apiLogs` · `webhookLogs` |
+| `client.health` | Liveness / readiness | `liveness` · `readiness` |
+
+## Opciones del constructor
+
+```ts
+new Client({
+  apiKey: 'prod_xxx',          // required — the only thing you normally set
+  webhookSecret: 'whsec_...',  // default secret for the webhook listener
+  timeout: 30_000,             // ms (default 30000)
+  retries: 2,                  // network errors / 429 / 5xx (default 2)
+  headers: { 'X-Trace': 'abc' },
+  fetch: customFetch,          // custom fetch implementation
+
+  // Advanced / internal (pre-filled from Client.shared, rarely set):
+  baseURL: 'https://api.cosmospay.lat/cosmos-api',
+  version: 'v1',
+  gatewaySecret: '...',
+  consumerUsername: '...',
+});
+```
+
+## Estáticos y mutadores
+
+```ts
+Client.version;                         // library version string
+Client.shared.baseURL = 'https://...';  // process-wide default for all clients
+
+client.setApiKey('prod_rotated');
+client.setWebhookSecret('whsec_new');
+client.setGatewayCredentials(secret, consumerUsername); // local-dev direct access
+```
+
+## Los objetos devueltos son "estructuras"
+
+Los métodos de los administradores devuelven instancias enriquecidas (`PaymentIntent`, `WebhookEndpoint`,
+`Product`, `Customer`) que pueden actuar sobre sí mismas y exponen accesores tipados —
+p. ej. `intent.isPay`, `intent.assetLabel`, `await intent.validate(txHash)`,
+`await endpoint.disable()`. Llama a `.toJSON()` para obtener la carga útil en crudo.
+
+## Referencias
+
+- [Customer](/sdk/definitions/customer) — Un registro de cliente, opcionalmente enriquecido con estadísticas de pago en cadena.
+- [PaymentIntent](/sdk/definitions/payment-intent) — Una intención de pago SEP-7 de Stellar
+- [Product](/sdk/definitions/product) — Un producto / precio por el que el consumidor puede cobrar.
+- [WebhookEndpoint](/sdk/definitions/webhook-endpoint) — Un endpoint de webhook registrado
+- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.

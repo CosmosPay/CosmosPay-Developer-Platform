@@ -10,14 +10,12 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-// Apply the persisted theme before paint to avoid a flash (mirrors the portal's CosmosLayout).
-const themeScript = `try{var t=localStorage.getItem('cosmospay-theme')||'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}`;
-
 export default function Layout({ children }: LayoutProps<'/'>) {
+  // next-themes (configured in Provider) injects its own pre-paint script and manages both
+  // the `.dark` class and `data-theme` attribute, so no manual theme script is needed here.
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning data-theme="light">
+    <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

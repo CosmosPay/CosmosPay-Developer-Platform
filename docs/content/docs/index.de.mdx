@@ -1,0 +1,24 @@
+---
+title: Einführung
+description: Integrieren Sie Stellar-Zahlungen (SEP-7) mit Cosmos Pay — dem JavaScript/TypeScript-SDK und der Payments-REST-API.
+---
+
+Mit **Cosmos Pay** akzeptieren Sie Stellar-Zahlungen (SEP-7-Zahlungsabsichten), verwalten Webhooks,
+Produkte, Kunden und Analysen. Diese Dokumentation behandelt beide Integrationswege:
+
+<Cards>
+  <Card title="SDK · Überblick" href="/sdk/server/overview" description="Was @cosmosapp/pay_sdk ist, die Server- und Browser-Einstiegspunkte und das mentale Modell." />
+  <Card title="SDK · Schnellstart" href="/sdk/server/quickstart" description="Der kleinste End-to-End-Ablauf: eine Absicht erstellen, sie im Wallet abschließen, sie validieren." />
+  <Card title="API-Referenz" href="/api" description="Die Payments-REST-API (OpenAPI): Zahlungsabsichten, Webhooks, Produkte, Kunden, Analysen." />
+  <Card title="Webhooks" href="/sdk/server/webhooks" description="Endpunkte registrieren, Ereignisse empfangen und Signaturen verifizieren." />
+</Cards>
+
+## Der Zahlungsablauf
+
+Eine Zahlung besteht aus drei Schritten:
+
+1. Der **Server** erstellt eine Absicht mit Ihrem geheimen API-Schlüssel (`client.paymentIntents.createPay`/`createTx`).
+2. Der **Browser** schließt sie mit dem Stellar-Wallet des Nutzers ab (`new WebClient().pay(intent)`) und erzeugt einen On-Chain-`txHash`.
+3. Der **Server** validiert diesen Hash (`intent.validate(txHash)`), wodurch der Status aktualisiert und ein Webhook ausgelöst wird.
+
+Das Netzwerk wird durch den Typ des API-Schlüssels bestimmt: `dv_`-Schlüssel verwenden das **Testnet**, `prod_`-Schlüssel das **Mainnet**.

@@ -1,0 +1,121 @@
+---
+title: "Client web (portefeuilles de navigateur)"
+description: "Le WebClient du navigateur : détectez le portefeuille Stellar de l'utilisateur, puis construisez, signez et soumettez la transaction."
+---
+
+Le client web s'exécute dans le navigateur et est la seule partie qui touche au portefeuille de l'utilisateur. Il est agnostique du fournisseur et n'a jamais besoin de votre clé secrète.
+
+`@cosmosapp/pay_sdk/web` *complète* une intention dans le navigateur de l'utilisateur. Les portefeuilles
+Stellar n'ingèrent pas les URI SEP-7 `web+stellar:` provenant d'une dapp, donc le client web
+détecte automatiquement le portefeuille, adapte l'intention en transaction, signe et soumet.
+
+```bash
+npm install @cosmosapp/pay_sdk @stellar/stellar-sdk
+```
+
+## Chemin idéal en un seul appel
+
+```ts
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+
+const webClient = new WebClient();          // auto-detects the wallet
+const result = await webClient.pay(intent); // intent = payload/instance/URI string
+
+result.wallet;    // 'freighter' | 'xbull' | 'rabet' | 'lobstr' | 'albedo' | …
+result.account;   // the G... account that signed
+result.txHash;    // on-chain transaction hash
+result.submitted; // true
+```
+
+Communiquez `result.txHash` à votre serveur et finalisez avec `intent.validate(txHash)`.
+
+## Portefeuilles pris en charge
+
+Détectés automatiquement (injectent un global de navigateur, zéro configuration) :
+
+| Portefeuille | id | Détection |
+| ------ | -- | --------- |
+| Freighter | `freighter` | `window.freighterApi` |
+| xBull | `xbull` | `window.xBullSDK` |
+| Rabet | `rabet` | `window.rabet` |
+
+Activés en passant leur bibliothèque (pas de global fiable) :
+
+| Portefeuille | id | Activation |
+| ------ | -- | ------ |
+| Albedo | `albedo` | `new WebClient({ albedo })` — `import albedo from '@albedo-link/intent'` |
+| LOBSTR | `lobstr` | `new WebClient({ lobstr })` — `import * as lobstr from '@lobstrco/signer-extension-api'` |
+
+## Inspecter et choisir
+
+```ts
+import { Wallets } from '@cosmosapp/pay_sdk/web';
+
+const wallets = await webClient.getAvailableWallets(); // [{ id, name, available }]
+const { wallet, address, network } = await webClient.connect(); // just connect
+await webClient.pay(intent, { wallet: Wallets.XBULL });         // pin for one call
+const pinned = new WebClient({ preferredWallets: [Wallets.XBULL, Wallets.FREIGHTER] });
+```
+
+## Options et variantes de `pay()`
+
+```ts
+await webClient.pay(intent, { amount: '5' });   // open-amount intent
+await webClient.pay(intent, { sign: true });    // sign WITHOUT submitting → { signedXdr }
+await webClient.pay(intent, { submit: false }); // also skips submission
+await webClient.pay(intent, { wallet: 'xbull' });
+
+// Inspect the tx before prompting the wallet:
+const { xdr, source, network } = await webClient.buildTransaction(intent);
+```
+
+`pay` vs `tx` : pour les intentions **pay**, le client construit un paiement depuis le compte
+connecté (charge la séquence depuis Horizon, ajoute l'op + le memo, les frais, les timebounds). Pour les intentions **tx**,
+il signe le XDR renvoyé tel quel (lève une erreur si le portefeuille connecté n'est pas la `source` de l'intention).
+
+## Réseau
+
+Inféré depuis l'intention (`network` / SEP-7 `network_passphrase`). Surchargez si vous
+auto-hébergez Horizon : `new WebClient({ network: 'testnet', horizonUrl: '...' })`.
+
+## Adaptateur de portefeuille personnalisé
+
+```ts
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+
+const myWallet = {
+  id: 'my-wallet',
+  name: 'My Wallet',
+  async isAvailable() { return Boolean(globalThis.myWallet); },
+  async getPublicKey() { return globalThis.myWallet.getAddress(); },
+  async signTransaction(xdr, { networkPassphrase }) {
+    return globalThis.myWallet.sign(xdr, networkPassphrase);
+  },
+};
+const wc = new WebClient();
+wc.registerWallet(myWallet, /* prepend */ true);
+```
+
+## Injection de dépendances (SSR / contrôle du bundle)
+
+```ts
+import * as StellarSdk from '@stellar/stellar-sdk';
+import freighter from '@stellar/freighter-api';
+const wc = new WebClient({ stellarSdk: StellarSdk, freighter });
+```
+
+## API directe (environnements de confiance uniquement)
+
+> ⚠️ Envoie votre clé API au navigateur. Réservé aux prototypes/outils internes avec une
+> clé `dv_` de testnet à portée limitée. En production, créez/validez sur votre serveur.
+
+```ts
+const wc = new WebClient({ apiKey: 'dv_test_only' });
+const intent = await wc.createPay({ destination: 'G...', amount: '10' });
+const result = await wc.pay(intent);
+const outcome = await wc.validate(intent.id, result.txHash);
+```
+
+## Références
+
+- [WebClient](/sdk/definitions/web-client)

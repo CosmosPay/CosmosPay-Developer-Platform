@@ -1,0 +1,52 @@
+---
+title: "Referência de configuração"
+description: "A referência completa de opções e as sobrescritas avançadas para auto-hospedar o gateway."
+---
+
+A maioria das integrações não precisa de nada disto. Aqui se documenta cada opção e as sobrescritas avançadas para auto-hospedagem ou desenvolvimento local.
+
+```ts
+new Client({
+  apiKey: 'prod_xxx',            // required — the only thing you normally set
+  webhookSecret: 'whsec_...',    // default secret for the webhook listener
+  timeout: 30_000,               // ms (default 30000)
+  retries: 2,                    // network errors / 429 / 5xx (default 2)
+  headers: { 'X-Trace': 'abc' }, // extra headers on every request
+  fetch: customFetch,            // custom fetch implementation
+
+  // Advanced / internal — pre-filled from Client.shared, rarely overridden:
+  baseURL: 'https://api.cosmospay.lat/cosmos-api', // gateway URL (default)
+  version: 'v1',                 // route prefix
+  gatewaySecret: '...',          // direct access (X-Gateway-Secret), local dev
+  consumerUsername: '...',       // direct access (X-Consumer-Username), local dev
+});
+```
+
+## Variáveis de ambiente (convenção)
+
+O SDK não lê nada do ambiente por conta própria — você passa os valores. Convenção
+comum usada ao longo da documentação/exemplos:
+
+| Variável | Usada para |
+| --- | -------- |
+| `COSMOS_PAY_API_KEY` | `new Client({ apiKey })` |
+| `COSMOS_WEBHOOK_SECRET` | `new Client({ webhookSecret })` / handler `{ secret }` |
+
+## Auto-hospedagem / staging
+
+```ts
+// Once at startup, for every client:
+Client.shared.baseURL = 'https://gateway.your-domain.com';
+
+// Or per-client, bypassing the gateway in local dev:
+new Client({
+  apiKey: 'x',
+  baseURL: 'http://localhost:3000',
+  gatewaySecret: process.env.APISIX_GATEWAY_SECRET,
+  consumerUsername: 'cosmos_demo',
+});
+```
+
+## Referências
+
+- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.

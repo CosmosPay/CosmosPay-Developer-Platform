@@ -8,6 +8,13 @@ import { defineMiddleware } from "astro:middleware";
 ensureCosmosRouteSynced();
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Next 16 client-prefetch segment files (`__next.*`) under /docs don't exist in the static
+  // export, so they'd 404-flood the console. Real assets (/docs/_next/*, llms.txt, content.md)
+  // are served by the static handler before this runs; only the phantom prefetches reach here.
+  if (context.url.pathname.startsWith('/docs/') && context.url.pathname.includes('__next')) {
+    return new Response(null, { status: 204 });
+  }
+
   // Belt-and-suspenders: ensure the route was synced (no-op after the first call).
   ensureCosmosRouteSynced();
 

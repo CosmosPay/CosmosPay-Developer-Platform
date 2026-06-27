@@ -1,13 +1,7 @@
-import { source } from '@/lib/source';
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
-import { baseOptions } from '@/lib/layout.shared';
-
+// The Fumadocs <DocsLayout> (sidebar + page tree) is rendered inside the page itself, not
+// here, because the tree is per-locale and only the page route knows the active language
+// (this is a static export, so there's no middleware to inject it). This group layout is
+// just a passthrough.
 export default function Layout({ children }: LayoutProps<'/'>) {
-  return (
-    // The global Cosmos navbar is rendered in the root layout, so disable Fumadocs' own
-    // top nav. The sidebar/TOC are offset below it via `--fd-nav-height` (set in global.css).
-    <DocsLayout tree={source.getPageTree()} {...baseOptions()} nav={{ enabled: false }}>
-      {children}
-    </DocsLayout>
-  );
+  return children;
 }

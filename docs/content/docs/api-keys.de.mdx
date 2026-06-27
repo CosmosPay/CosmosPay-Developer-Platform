@@ -1,0 +1,60 @@
+---
+title: API-Schlüssel holen
+description: Melden Sie sich an der Cosmos-Pay-Entwicklerplattform an, wählen Sie eine Umgebung und erzeugen Sie einen API-Schlüssel mit den Berechtigungen, die Ihre Integration benötigt.
+---
+
+Jede Anfrage an Cosmos Pay wird mit einem **API-Schlüssel** authentifiziert. Sie erstellen und verwalten Schlüssel
+im Entwickler-Dashboard. Ein Schlüssel trägt zwei wichtige Eigenschaften: die **Umgebung**, zu der er
+gehört (die das Stellar-Netzwerk bestimmt), und die **Berechtigungen**, die er nutzen darf.
+
+## Einen Schlüssel erstellen
+
+1. **Melden Sie sich** an der Entwicklerplattform unter [dev.cosmospay.lat](https://dev.cosmospay.lat) an und öffnen Sie das **Dashboard**.
+2. **Wählen Sie die Umgebung** über den **Test-/Produktion**-Schalter des Dashboards:
+   - **Test** stellt `dv_…`-Schlüssel aus, die im **Testnet** laufen — nutzen Sie diese während der Entwicklung.
+   - **Produktion** stellt `prod_…`-Schlüssel aus, die im **Mainnet** laufen — nutzen Sie diese für den Live-Betrieb.
+3. Gehen Sie zu **API Keys → Create**.
+4. Geben Sie dem Schlüssel einen **Namen** (und optional eine Beschreibung), damit Sie ihn später wiedererkennen.
+5. Wählen Sie eine **Rolle**:
+   - **User** — eingeschränkt. Wählen Sie aus der Matrix genau die Berechtigungen, die er braucht (pro Ressource: **read** und/oder **write** für Zahlungen, Webhooks, Produkte, Kunden und Analysen).
+   - **Admin** — voller Zugriff; umgeht die Berechtigungsmatrix. Sparsam einsetzen.
+6. **Erstellen** Sie ihn und **kopieren Sie den Schlüssel sofort**.
+
+<Callout type="warn" title="Nur einmal angezeigt">
+Der vollständige Schlüssel wird **einmal** angezeigt, bei der Erstellung (und erneut nur, wenn Sie ihn rotieren). Speichern Sie ihn sofort in
+einem Secret-Manager oder in den Umgebungsvariablen Ihres Servers — Sie können ihn nicht erneut einsehen.
+</Callout>
+
+## Den Schlüssel verwenden
+
+Bewahren Sie den Schlüssel auf Ihrem **Server** auf und übergeben Sie ihn an das SDK (oder senden Sie ihn als Bearer-Token an die
+REST-API):
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+// Reads e.g. COSMOS_PAY_API_KEY from your server environment — never hard-code it.
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+```http
+Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Callout title="Geringstmögliche Rechte">
+Geben Sie jedem Schlüssel nur die Berechtigungen, die er braucht. Ein Server, der lediglich Zahlungen erstellt, kann einen Schlüssel mit
+`payments:write` und `payments:read` und sonst nichts verwenden — so kann ein durchgesickerter Schlüssel nicht mehr tun als seine Aufgabe.
+</Callout>
+
+## Bewährte Vorgehensweise
+
+- **Ein Schlüssel pro Umgebung / Dienst.** Verwenden Sie einen `prod_`-Schlüssel nicht im Test wieder und rotieren Sie Schlüssel pro Dienst, damit Sie einen widerrufen können, ohne den Rest lahmzulegen.
+- **Liefern Sie einen Schlüssel niemals an den Browser aus.** Der [Web-Client](/sdk/web/web-client) signiert Transaktionen mit dem Wallet des Nutzers und benötigt Ihren Schlüssel nicht.
+- **Bei Offenlegung rotieren.** Wenn ein Schlüssel durchsickert, rotieren Sie ihn im Dashboard — der alte Wert wird sofort ungültig.
+
+## Nächste Schritte
+
+<Cards>
+  <Card title="Schnellstart" href="/sdk/server/quickstart" description="Erstellen Sie Ihre erste Zahlungsabsicht mit dem soeben erzeugten Schlüssel." />
+  <Card title="Authentifizierung" href="/sdk/server/authentication" description="Wie der Schlüssel das Netzwerk auswählt und wie Sie ihn sicher aufbewahren." />
+</Cards>

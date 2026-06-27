@@ -1,0 +1,63 @@
+---
+title: "Tratamento de erros & observabilidade"
+description: "As classes de erro que o SDK lança, seu comportamento de retry e os eventos de telemetria nos quais você pode se conectar."
+---
+
+Tudo o que o SDK pode lançar é um erro tipado que você pode capturar, e toda chamada de rede emite telemetria que você pode observar.
+
+## Erros
+
+```ts
+import { CosmosPayAPIError, CosmosPayRequestError } from '@cosmosapp/pay_sdk';
+
+try {
+  await client.paymentIntents.fetch('missing');
+} catch (err) {
+  if (err instanceof CosmosPayAPIError) {
+    // server responded with an error status
+    console.error(err.status, err.code, err.body); // e.g. 404
+  } else if (err instanceof CosmosPayRequestError) {
+    // no usable response — network / TLS / timeout / offline
+    console.error('Network/timeout:', err.cause);
+  } else {
+    throw err;
+  }
+}
+```
+
+- `CosmosPayAPIError` — a API respondeu com 4xx/5xx. Campos: `status`, `code`, `body`.
+- `CosmosPayRequestError` — a requisição nunca foi concluída. Campo: `cause`.
+- O cliente web adiciona: `CosmosPayWebError`, `WalletNotFoundError`, `WalletError`
+  (usuário recusou / bloqueado), `StellarSdkRequiredError`, `IntentError`. As classes de
+  erro da API também são reexportadas de `/web`, então o `catch` funciona em todos os pontos de entrada.
+- Falhas de assinatura de webhook lançam `WebhookSignatureError`.
+
+### Retries
+
+Falhas transitórias (erros de rede, `408`, `429`, `5xx`) são repetidas
+automaticamente — padrão de **2** retries, respeitando `Retry-After`. Ajuste via
+`new Client({ retries, timeout })`.
+
+## Observabilidade
+
+O cliente reemite telemetria REST:
+
+```ts
+client.on('request',     ({ method, url, attempt }) => {});
+client.on('response',    ({ method, url, status, attempt }) => {});
+client.on('rateLimited', ({ method, url, attempt }) => {});
+client.on('debug',       (message) => {});
+```
+
+Conecte-os ao seu logger/APM para rastrear ou medir cada requisição.
+
+## Referências
+
+- [REST](/sdk/definitions/rest) — A camada HTTP
+- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.
+- [WebhookSignatureError](/sdk/definitions/webhook-signature-error) — Lançado quando a assinatura de um webhook falha na verificação.
+- [CosmosPayWebError](/sdk/definitions/cosmos-pay-web-error) — Classe base para todos os erros lançados pelo `@cosmosapp/pay_sdk/web`.
+- [WalletNotFoundError](/sdk/definitions/wallet-not-found-error) — Nenhuma carteira Stellar compatível pôde ser detectada no ambiente atual.
+- [WalletError](/sdk/definitions/wallet-error) — Uma carteira foi encontrada, mas a operação falhou (usuário recusou, bloqueado, etc.).
+- [StellarSdkRequiredError](/sdk/definitions/stellar-sdk-required-error) — Montar uma transação `pay` (ou enviá-la ao Horizon) requer o Stellar SDK, que é uma peer dependency opcional
+- [IntentError](/sdk/definitions/intent-error) — A intenção / requisição SEP-7 não pôde ser interpretada ou está com dados faltando.

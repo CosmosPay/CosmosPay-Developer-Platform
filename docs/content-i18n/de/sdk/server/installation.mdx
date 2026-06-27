@@ -1,0 +1,45 @@
+---
+title: "Installation"
+description: "Installieren Sie @cosmosapp/pay_sdk, die optionale Stellar-Peer-Abhängigkeit und die ESM-/CommonJS-Import-Stile."
+---
+
+Fügen Sie das Paket einem beliebigen Node.js-Projekt hinzu. Die Browser-Wallet-Unterstützung ist ein optionaler Zusatz, den Sie nur installieren, wenn Sie ihn tatsächlich benötigen.
+
+```bash
+npm install @cosmosapp/pay_sdk
+# or: pnpm add @cosmosapp/pay_sdk
+# or: yarn add @cosmosapp/pay_sdk
+```
+
+Erfordert **Node.js ≥ 18** (für globales `fetch`). Auf älteren Laufzeitumgebungen übergeben Sie ein `fetch`-
+Polyfill über die Client-Option `fetch`.
+
+## Browser-Web-Client (optionale Peer-Abhängigkeit)
+
+Der Browser-Web-Client erstellt und übermittelt Stellar-Transaktionen und benötigt daher das
+Stellar-SDK (eine optionale Peer-Abhängigkeit, die bei Vorhandensein verzögert importiert wird):
+
+```bash
+npm install @cosmosapp/pay_sdk @stellar/stellar-sdk
+```
+
+## Importieren
+
+```ts
+// ESM
+import { Client } from '@cosmosapp/pay_sdk';
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+```
+
+```js
+// CommonJS
+const { Client } = require('@cosmosapp/pay_sdk');
+```
+
+Das Paket liefert sowohl ESM (`./dist/index.js`) als auch CJS (`./dist/index.cjs`) mit
+vollständigen Typdeklarationen.
+
+## Referenzen
+
+- [Client](/sdk/definitions/client) — Der Haupteinstiegspunkt des SDK — ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt — ein atomares Single-Client-Design.
+- [WebClient](/sdk/definitions/web-client)

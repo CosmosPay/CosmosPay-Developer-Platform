@@ -17,3 +17,18 @@ html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
 }
+
+/* Make in-content links clearly visible. Fumadocs renders prose links in the body text
+   colour, so they blend into the page; tint them with the Cosmos accent blue (which adapts
+   per theme via cosmos.css) and underline them. Scope to text containers so heading anchor
+   links (which wrap the heading text) keep the heading colour. */
+.prose :is(p, li, td, th, blockquote, figcaption) a {
+  color: var(--blue, #5b7cff);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.prose :is(p, li, td, th, blockquote, figcaption) a:hover {
+  color: var(--violet, #6b47ff);
+}

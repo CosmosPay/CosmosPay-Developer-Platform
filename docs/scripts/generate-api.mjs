@@ -44,7 +44,54 @@ const TAGS = [
 const spec = JSON.parse(fs.readFileSync(SRC, 'utf8'));
 spec.tags = TAGS.map((t) => ({ name: t.name, description: t.description }));
 if (!Array.isArray(spec.servers) || spec.servers.length === 0) {
-  spec.servers = [{ url: GATEWAY, description: 'Cosmos Pay APISIX gateway' }];
+  spec.servers = [{ url: GATEWAY, description: 'Cosmos Pay API' }];
+}
+
+// Public-facing auth only. The source spec documents the INTERNAL gateway handshake
+// (`X-Gateway-Secret` + `X-Consumer-Username`), which APISIX injects and external callers never
+// see. Replace it with the single scheme developers actually use: their secret API key in the
+// `Authorization: Bearer <apiKey>` header. Also strip any internal header params / per-op
+// security so nothing about the gateway leaks into the reference, even if the spec adds more.
+const INTERNAL_SCHEMES = new Set(['gateway-secret', 'consumer']);
+const INTERNAL_HEADERS = new Set(['x-gateway-secret', 'x-consumer-username']);
+spec.components = spec.components || {};
+spec.components.securitySchemes = {
+  apiKey: {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'API key',
+    description: 'Your Cosmos Pay secret API key, sent as `Authorization: Bearer <apiKey>`.',
+  },
+};
+spec.security = [{ apiKey: [] }];
+
+// The server's top-level `info.description` also narrates the internal gateway handshake; drop
+// any sentence that mentions it and state the public auth instead. (Rendered atop every tag page.)
+if (spec.info && typeof spec.info.description === 'string') {
+  const kept = spec.info.description
+    .split(/(?<=\.)\s+/)
+    .filter((s) => !/x-gateway-secret|x-consumer-username|apisix|gateway/i.test(s));
+  spec.info.description = [
+    ...kept,
+    'Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.',
+  ]
+    .join(' ')
+    .trim();
+}
+
+for (const methods of Object.values(spec.paths || {})) {
+  for (const op of Object.values(methods)) {
+    if (!op || typeof op !== 'object') continue;
+    if (Array.isArray(op.security)) {
+      op.security = op.security.filter((s) => !Object.keys(s).some((k) => INTERNAL_SCHEMES.has(k)));
+      if (op.security.length === 0) delete op.security;
+    }
+    if (Array.isArray(op.parameters)) {
+      op.parameters = op.parameters.filter(
+        (p) => !(p && p.in === 'header' && INTERNAL_HEADERS.has(String(p.name).toLowerCase())),
+      );
+    }
+  }
 }
 fs.writeFileSync(SPEC_OUT, JSON.stringify(spec, null, 2));
 console.log(`[generate-api] wrote spec -> ${SPEC_OUT} (from ${SRC})`);
@@ -83,13 +130,19 @@ const cards = ordered
   .join('\n');
 const index = `---
 title: API Reference
-description: The Cosmos Pay Payments REST API (OpenAPI). Endpoints are versioned under /v1 and reached through the APISIX gateway.
+description: The Cosmos Pay Payments REST API (OpenAPI). Endpoints are versioned under /v1 and authenticated with your secret API key.
 ---
 
 The **Payments API** is a REST API for Stellar payment intents and the resources around them.
-All paths are versioned (\`/v1/...\`) and must arrive through the APISIX gateway: a valid
-\`X-Gateway-Secret\` header plus an authenticated consumer (\`X-Consumer-Username\`). In practice
-you call it through the [SDK](/sdk/overview), which handles auth for you.
+All paths are versioned (\`/v1/...\`). Authenticate every request with your secret API key in the
+\`Authorization\` header:
+
+\`\`\`http
+Authorization: Bearer <your-api-key>
+\`\`\`
+
+Need a key? See [API keys](/api-keys). In practice you call the API through the
+[SDK](/sdk/server/overview), which sets this header for you.
 
 <Cards>
 ${cards}

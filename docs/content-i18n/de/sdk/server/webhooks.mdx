@@ -1,0 +1,119 @@
+---
+title: "Webhooks"
+description: "Registrieren Sie Webhook-Endpunkte, empfangen Sie Ereignisse über HTTP / Express und verifizieren Sie deren Signaturen."
+---
+
+Webhooks teilen Ihrem Server mit, wann sich der Status einer Zahlung ändert, sodass Sie nicht abfragen müssen. Diese Seite behandelt das Registrieren von Endpunkten und das Verifizieren, dass eingehende Ereignisse echt sind.
+
+Zwei Hälften: das **Registrieren** von Endpunkten (Server-CRUD) und das **Empfangen** von Ereignissen
+(der Listener + Handler). `client.webhooks` erledigt beides.
+
+## Endpunkte registrieren und verwalten
+
+```ts
+import { WebhookEventType } from '@cosmosapp/pay_sdk';
+
+const endpoint = await client.webhooks.create({
+  url: 'https://me.example.com/hooks/cosmos',
+  description: 'Production events',
+  eventTypes: [
+    WebhookEventType.PaymentIntentSucceeded,
+    WebhookEventType.PaymentIntentFailed,
+  ], // omit/empty → receive ALL events
+});
+console.log(endpoint.secret); // whsec_… — returned ONCE, store it now!
+
+await endpoint.disable();        // pause
+await endpoint.enable();         // resume
+await endpoint.edit({ url: 'https://new...' });
+await endpoint.ping();           // send a test event
+const rotated = await endpoint.rotateSecret(); // new instance carries new secret
+await endpoint.delete();
+
+// audit trail + manual redelivery
+const deliveries = await endpoint.fetchDeliveries({ status: 'FAILED', take: 50 });
+for (const d of deliveries.items) await d.redeliver();
+```
+
+Manager-Formen existieren ebenfalls: `client.webhooks.list()`, `.fetch(id)`,
+`.update(id, {...})`, `.delete(id)`, `.rotateSecret(id)`, `.ping(id)`,
+`.fetchDeliveries(id, {...})`, `.redeliver(id, deliveryId)`.
+
+## Ereignisse empfangen — `client.webhooks.on(...)`
+
+Abonnieren Sie mit dem rohen Typ, dem camelCase-Alias oder `event` für alle:
+
+```ts
+client.webhooks.on('paymentIntentSucceeded', (event) => {
+  console.log('Paid!', event.data.id, event.data.amount);
+});
+client.webhooks.on('PAYMENT_INTENT_FAILED', (event) => { /* ... */ });
+client.webhooks.on('event', (event) => console.log(event.type));
+```
+
+Setzen Sie das Signatur-Secret am Client (oder übergeben Sie `{ secret }` an den Handler):
+
+```ts
+const client = new Client({
+  apiKey: process.env.COSMOS_PAY_API_KEY,
+  webhookSecret: process.env.COSMOS_WEBHOOK_SECRET, // whsec_…
+});
+```
+
+### Node.js `http` (ohne Abhängigkeiten)
+
+```ts
+import { createServer } from 'node:http';
+createServer(client.webhooks.createHandler()).listen(4242);
+// verifies signature → emits event → replies 200 (or 400 on bad signature)
+```
+
+### Express
+
+```ts
+import express from 'express';
+const app = express();
+app.post(
+  '/hooks/cosmos',
+  express.raw({ type: '*/*' }),     // MUST be the RAW body
+  client.webhooks.middleware(),
+  (req, res) => res.sendStatus(200), // req.cosmosEvent is the verified event
+);
+```
+
+## Signaturen manuell verifizieren
+
+Der Dispatcher signiert jeden POST mit `X-Cosmos-Signature: t=<unixSeconds>,v1=<hmacSha256>`.
+
+```ts
+import { Webhooks } from '@cosmosapp/pay_sdk';
+
+Webhooks.verify(rawBody, header, secret);          // → true or throws
+const event = Webhooks.constructEvent(rawBody, header, secret); // verify + parse
+// both accept { toleranceSeconds } (default 300s replay window; 0 disables)
+
+// or on a client (also emits to your on(...) listeners):
+client.webhooks.process(rawBody, header, { secret });
+```
+
+Ungültige Signaturen werfen `WebhookSignatureError`.
+
+## Form der Ereignis-Nutzlast
+
+```ts
+interface WebhookEvent {
+  id: string;        // stable — use for idempotency
+  type: WebhookEventType;
+  createdAt: string;
+  data: PaymentIntentData;
+}
+```
+
+Ereignistypen: `PAYMENT_INTENT_CREATED`, `PAYMENT_INTENT_UPDATED`,
+`PAYMENT_INTENT_SUCCEEDED`, `PAYMENT_INTENT_FAILED`, `PAYMENT_INTENT_CANCELLED`,
+`PAYMENT_INTENT_DELETED`.
+
+## Referenzen
+
+- [Client](/sdk/definitions/client) — Der Haupteinstiegspunkt des SDK — ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt — ein atomares Single-Client-Design.
+- [WebhookSignatureError](/sdk/definitions/webhook-signature-error) — Wird geworfen, wenn eine Webhook-Signatur die Verifizierung nicht besteht.

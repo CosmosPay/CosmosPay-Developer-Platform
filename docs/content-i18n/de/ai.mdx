@@ -1,0 +1,69 @@
+---
+title: LLMs & KI
+description: Füttern Sie Ihr LLM oder Ihren Coding-Agenten mit der Cosmos-Pay-Dokumentation und dem SDK — fertige llms.txt-Dateien, Markdown pro Seite und „In ChatGPT/Claude öffnen".
+---
+
+Diese Dokumentation ist dafür gemacht, von LLMs und Coding-Agenten (Cursor, Claude, ChatGPT …) genutzt zu werden, nicht
+nur von Menschen. Das Kopieren des Markdowns einer Seite ist eine Möglichkeit — aber es gibt noch viel mehr.
+
+## Fertige Kontextdateien
+
+Zwei Endpunkte stellen die gesamte Dokumentation als Klartext bereit, den ein LLM in einem Durchgang aufnehmen kann:
+
+- `/docs/llms.txt` — ein kompakter Index: jede Seite mit ihrem Titel, ihrer URL und Beschreibung.
+- `/docs/llms-full.txt` — der vollständige Text jeder Seite, aneinandergereiht.
+
+```bash
+# the index
+curl https://dev.cosmospay.lat/docs/llms.txt
+
+# everything, in one file (great for a single prompt or a RAG ingest)
+curl https://dev.cosmospay.lat/docs/llms-full.txt
+```
+
+## Jede einzelne Seite als Markdown
+
+Jede Seite hat ein Aktionsmenü (oben rechts auf der Seite) mit:
+
+- **Copy Markdown** / **View as Markdown** — der rohe Markdown-Quelltext dieser Seite.
+- **Open in ChatGPT** / **Open in Claude** — öffnet den Assistenten mit dieser Seite vorgeladen.
+
+Sie können das Markdown einer Seite auch direkt abrufen, indem Sie `/content.md` unter `/docs/llms.mdx` anhängen:
+
+```bash
+# the quickstart page, as Markdown
+curl https://dev.cosmospay.lat/docs/llms.mdx/sdk/server/quickstart/content.md
+```
+
+<Callout title="In einem Prompt verwenden">
+Fügen Sie `llms-full.txt` (oder das Markdown einer einzelnen Seite) in Ihren Assistenten ein und lassen Sie ihn die
+Integration schreiben — z. B. *„Erstelle damit einen Cosmos-Pay-Checkout, der 10 USDC berechnet und die Zahlung
+mit einem Webhook verifiziert."*
+</Callout>
+
+## Das SDK liefert seine eigene LLM-Dokumentation mit
+
+Das Paket `@cosmosapp/pay_sdk` bündelt einen KI-lesbaren `llms/`-Ordner, sodass die Dokumentation nach der Installation
+direkt in `node_modules` verfügbar ist — ohne Netzwerk:
+
+```text
+node_modules/@cosmosapp/pay_sdk/llms/
+├─ llms.txt          # index
+├─ llms-full.txt     # everything in one file
+└─ NN-*.md           # one atomic topic per file
+```
+
+```bash
+# point your agent at the installed SDK docs
+cat node_modules/@cosmosapp/pay_sdk/llms/llms-full.txt
+```
+
+## Ausführbare Beispiele
+
+Das SDK-Repository enthält ein ausführbares Beispiel pro Funktion (Zahlungsabsichten, Webhooks, der Web-
+Client, Kunden, Produkte, Analysen, Fehlerbehandlung) — ideales Few-Shot-Material für einen Agenten.
+
+<Cards>
+  <Card title="SDK-Beispiele" href="https://github.com/CosmosPay/CosmosJS_SDK/tree/main/examples" description="Ein ausführbares Beispiel pro Funktion, im SDK-Repository." />
+  <Card title="Schnellstart" href="/sdk/server/quickstart" description="Die kürzeste End-to-End-Integration." />
+</Cards>

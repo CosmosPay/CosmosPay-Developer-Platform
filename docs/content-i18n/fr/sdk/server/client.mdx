@@ -1,0 +1,67 @@
+---
+title: "Le Client"
+description: "L'objet Client : les gestionnaires qu'il expose, ses options de constructeur et les structures auto-actives qu'il renvoie."
+---
+
+Presque tout ce que vous faites passe par une seule instance de `Client`. Elle regroupe l'API en un gestionnaire par ressource et renvoie des objets qui peuvent agir sur eux-mêmes.
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+Un seul client expose chaque ressource via son propre gestionnaire.
+
+| Gestionnaire | Ressource | Méthodes clés |
+| ------- | -------- | ----------- |
+| `client.paymentIntents` | Intentions Stellar SEP-7 | `createTx` · `createPay` · `fetch` · `list` · `update` · `delete` · `validate` |
+| `client.webhooks` | Points de terminaison + livraisons + écouteur d'événements | `create` · `list` · `fetch` · `update` · `delete` · `rotateSecret` · `ping` · `fetchDeliveries` · `redeliver` · `on(...)` · `process` · `createHandler` · `middleware` |
+| `client.products` | Produits / prix | `create` · `list` · `fetch` · `update` · `delete` |
+| `client.customers` | Clients | `create` · `list` · `fetch` · `update` · `delete` |
+| `client.analytics` | Métriques en lecture seule | `summary` · `balances` · `apiLogs` · `webhookLogs` |
+| `client.health` | Liveness / readiness | `liveness` · `readiness` |
+
+## Options du constructeur
+
+```ts
+new Client({
+  apiKey: 'prod_xxx',          // required — the only thing you normally set
+  webhookSecret: 'whsec_...',  // default secret for the webhook listener
+  timeout: 30_000,             // ms (default 30000)
+  retries: 2,                  // network errors / 429 / 5xx (default 2)
+  headers: { 'X-Trace': 'abc' },
+  fetch: customFetch,          // custom fetch implementation
+
+  // Advanced / internal (pre-filled from Client.shared, rarely set):
+  baseURL: 'https://api.cosmospay.lat/cosmos-api',
+  version: 'v1',
+  gatewaySecret: '...',
+  consumerUsername: '...',
+});
+```
+
+## Statiques et mutateurs
+
+```ts
+Client.version;                         // library version string
+Client.shared.baseURL = 'https://...';  // process-wide default for all clients
+
+client.setApiKey('prod_rotated');
+client.setWebhookSecret('whsec_new');
+client.setGatewayCredentials(secret, consumerUsername); // local-dev direct access
+```
+
+## Les objets renvoyés sont des « structures »
+
+Les méthodes des gestionnaires renvoient des instances riches (`PaymentIntent`, `WebhookEndpoint`,
+`Product`, `Customer`) qui peuvent agir sur elles-mêmes et exposent des accesseurs typés —
+par ex. `intent.isPay`, `intent.assetLabel`, `await intent.validate(txHash)`,
+`await endpoint.disable()`. Appelez `.toJSON()` pour la charge utile brute.
+
+## Références
+
+- [Customer](/sdk/definitions/customer) — Un enregistrement client, éventuellement enrichi de statistiques de paiement sur la chaîne.
+- [PaymentIntent](/sdk/definitions/payment-intent) — Une intention de paiement Stellar SEP-7
+- [Product](/sdk/definitions/product) — Un produit / prix que le consommateur peut facturer.
+- [WebhookEndpoint](/sdk/definitions/webhook-endpoint) — Un point de terminaison webhook enregistré
+- [Client](/sdk/definitions/client) — Le point d'entrée principal du SDK — un client unique et atomique qui expose chaque ressource via son propre gestionnaire — une conception atomique à client unique.

@@ -8,12 +8,12 @@ export function MegaPanel({ item }: { item: any }) {
         {item.cols.map((col: any) => (
           <div className="mega-col" key={col.head}>
             <h6>{col.head}</h6>
-            {col.links.map((l: any) => (<a className="mega-link" href="#" key={l.t}><div className="t">{l.t}</div><div className="s">{l.s}</div></a>))}
+            {col.links.map((l: any) => (<a className="mega-link" href={l.href || "#"} key={l.t}><div className="t">{l.t}</div><div className="s">{l.s}</div></a>))}
           </div>
         ))}
       </div>
       {item.featured && (
-        <div className="mega-feat"><div className="thumb" /><div className="body"><strong>{item.featured.title}</strong><p>{item.featured.desc}</p><a href="#">{item.featured.cta} <IcChevSm /></a></div></div>
+        <div className="mega-feat"><div className="thumb" /><div className="body"><strong>{item.featured.title}</strong><p>{item.featured.desc}</p><a href={item.featured.href || (item.key === "developers" ? "/docs/getting-started" : "#")}>{item.featured.cta} <IcChevSm /></a></div></div>
       )}
     </div>
   );

@@ -1,0 +1,57 @@
+---
+title: "Authentifizierung"
+description: "Authentifizieren Sie sich mit einem einzigen API-Schlüssel; das Netzwerk (Testnet vs. Mainnet) wird automatisch durch das Schlüsselpräfix gewählt."
+---
+
+Die Authentifizierung ist bewusst minimal gehalten: ein geheimer API-Schlüssel, der auf Ihrem Server bleibt. Das Schlüsselpräfix wählt außerdem das Stellar-Netzwerk für Sie aus, sodass es nichts weiter zu konfigurieren gibt. Neu hier? Siehe [wie Sie Ihren API-Schlüssel erhalten](/api-keys).
+
+**Sie benötigen nur Ihren API-Schlüssel.** Alles andere (Gateway-URL, API-Version) ist
+Teil der gemeinsamen Konfiguration des SDK, die von Cosmos Pay gepflegt wird.
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+Der API-Schlüssel wird als `Authorization: Bearer <apiKey>` gesendet.
+
+## Netzwerkauswahl (wichtig)
+
+Das **Netzwerk wird durch den Schlüsseltyp bestimmt** — Sie konfigurieren es NICHT:
+
+| Schlüsselpräfix | Netzwerk |
+| ---------- | ------- |
+| `dv_…`     | testnet |
+| `prod_…`   | mainnet |
+
+Daher sind Asset-Aussteller netzwerkspezifisch: Verwenden Sie `Assets.*` für das Mainnet
+und `TestnetAssets.*` für das Testnet (siehe Assets-Dokumentation).
+
+## Den Schlüssel auf dem Server behalten
+
+Der API-Schlüssel ist geheim. Erstellen und validieren Sie Absichten auf Ihrem **Server**. Der
+Browser-Web-Client signiert/übermittelt nur; er benötigt den Schlüssel nicht. (Er *kann* für
+vertrauenswürdige Prototypen einen `apiKey` annehmen, aber liefern Sie niemals einen Produktionsschlüssel an den Browser aus.)
+
+## Gemeinsame / Self-Hosting-Overrides (fortgeschritten)
+
+```ts
+// Change the gateway for every client created afterward (once, at startup):
+Client.shared.baseURL = 'https://gateway.your-domain.com';
+
+// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+const client = new Client({
+  apiKey: '...',
+  baseURL: 'http://localhost:3000',
+  gatewaySecret: process.env.APISIX_GATEWAY_SECRET,
+  consumerUsername: 'cosmos_demo',
+});
+```
+
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sind alle optional — eine
+normale Integration setzt sie nie.
+
+## Referenzen
+
+- [Client](/sdk/definitions/client) — Der Haupteinstiegspunkt des SDK — ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt — ein atomares Single-Client-Design.

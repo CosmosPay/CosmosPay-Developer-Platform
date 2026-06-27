@@ -1,0 +1,52 @@
+---
+title: "Referencia de configuración"
+description: "La referencia completa de opciones y las anulaciones avanzadas para autoalojar el gateway."
+---
+
+La mayoría de las integraciones no necesitan nada de esto. Documenta cada opción y las anulaciones avanzadas para autoalojamiento o desarrollo local.
+
+```ts
+new Client({
+  apiKey: 'prod_xxx',            // required — the only thing you normally set
+  webhookSecret: 'whsec_...',    // default secret for the webhook listener
+  timeout: 30_000,               // ms (default 30000)
+  retries: 2,                    // network errors / 429 / 5xx (default 2)
+  headers: { 'X-Trace': 'abc' }, // extra headers on every request
+  fetch: customFetch,            // custom fetch implementation
+
+  // Advanced / internal — pre-filled from Client.shared, rarely overridden:
+  baseURL: 'https://api.cosmospay.lat/cosmos-api', // gateway URL (default)
+  version: 'v1',                 // route prefix
+  gatewaySecret: '...',          // direct access (X-Gateway-Secret), local dev
+  consumerUsername: '...',       // direct access (X-Consumer-Username), local dev
+});
+```
+
+## Variables de entorno (convención)
+
+El SDK no lee nada del entorno por sí mismo — tú le pasas los valores. Convención
+común usada en toda la documentación/ejemplos:
+
+| Var | Usada para |
+| --- | -------- |
+| `COSMOS_PAY_API_KEY` | `new Client({ apiKey })` |
+| `COSMOS_WEBHOOK_SECRET` | `new Client({ webhookSecret })` / handler `{ secret }` |
+
+## Autoalojamiento / staging
+
+```ts
+// Once at startup, for every client:
+Client.shared.baseURL = 'https://gateway.your-domain.com';
+
+// Or per-client, bypassing the gateway in local dev:
+new Client({
+  apiKey: 'x',
+  baseURL: 'http://localhost:3000',
+  gatewaySecret: process.env.APISIX_GATEWAY_SECRET,
+  consumerUsername: 'cosmos_demo',
+});
+```
+
+## Referencias
+
+- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.

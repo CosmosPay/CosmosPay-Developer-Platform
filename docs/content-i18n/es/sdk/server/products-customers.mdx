@@ -1,0 +1,62 @@
+---
+title: "Productos y clientes"
+description: "Administra tu catálogo de productos y tus clientes, incluidas sus estadísticas de pago."
+---
+
+Los productos y los clientes son catálogos opcionales que puedes asociar a los pagos para organizarlos y generar informes sobre ellos.
+
+## Productos / precios — `client.products`
+
+```ts
+import { ProductKind } from '@cosmosapp/pay_sdk';
+
+const product = await client.products.create({
+  name: 'Pro plan — monthly',
+  description: 'Priority support included.', // optional
+  amount: '49.00',                           // optional — omit for customer-set amount
+  assetCode: 'USDC',                         // optional — omit for native XLM
+  kind: ProductKind.Recurring,               // 'recurring' | 'one_time' | 'link'
+  reference: 'sku_pro_monthly',              // optional
+});
+
+await client.products.list();
+await client.products.fetch(product.id);
+await product.edit({ amount: '59.00' });
+await product.deactivate(); // active = false
+await product.activate();   // active = true
+await product.delete();
+```
+
+Accesores de `Product`: `id`, `name`, `description`, `amount`, `asset`, `assetLabel`,
+`kind`, `active`, `reference`, `createdAt`, `updatedAt`.
+
+## Clientes — `client.customers`
+
+```ts
+const customer = await client.customers.create({
+  name: 'Acme Inc.',
+  email: 'billing@acme.com',  // optional
+  alias: 'acme',              // optional
+  account: 'G...',            // optional Stellar account to associate
+  reference: 'crm_4821',      // optional
+});
+
+await customer.edit({ note: 'VIP, net-30' });
+await client.customers.fetch(customer.id);
+await customer.delete();
+
+// list() includes payment stats per customer:
+const customers = await client.customers.list();
+for (const c of customers) {
+  console.log(c.name, c.payments, c.succeeded, c.total);
+}
+```
+
+Accesores de `Customer`: `id`, `consumerId`, `name`, `alias`, `note`, `email`,
+`account`, `reference`, `createdAt`, `updatedAt`, además de las estadísticas solo de listas
+`payments`, `succeeded`, `total` (null fuera de `list()`).
+
+## Referencias
+
+- [Customer](/sdk/definitions/customer) — Un registro de cliente, opcionalmente enriquecido con estadísticas de pago en cadena.
+- [Product](/sdk/definitions/product) — Un producto / precio por el que el consumidor puede cobrar.

@@ -1,0 +1,57 @@
+---
+title: "Authentification"
+description: "Authentifiez-vous avec une seule clé API ; le réseau (testnet vs mainnet) est choisi automatiquement par le préfixe de la clé."
+---
+
+L'authentification est volontairement minimale : une seule clé API secrète, conservée sur votre serveur. Le préfixe de la clé sélectionne aussi le réseau Stellar pour vous, il n'y a donc rien d'autre à configurer. Nouveau ici ? Voir [comment obtenir votre clé API](/api-keys).
+
+**Vous n'avez besoin que de votre clé API.** Tout le reste (URL de la passerelle, version de l'API) fait
+partie de la configuration partagée du SDK, maintenue par Cosmos Pay.
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+La clé API est envoyée sous la forme `Authorization: Bearer <apiKey>`.
+
+## Sélection du réseau (important)
+
+Le **réseau est déterminé par le type de clé** — vous ne le configurez PAS :
+
+| Préfixe de clé | Réseau |
+| ---------- | ------- |
+| `dv_…`     | testnet |
+| `prod_…`   | mainnet |
+
+De ce fait, les émetteurs d'actifs sont spécifiques au réseau : utilisez `Assets.*` pour le mainnet
+et `TestnetAssets.*` pour le testnet (voir la documentation des actifs).
+
+## Gardez la clé sur le serveur
+
+La clé API est un secret. Créez et validez les intentions sur votre **serveur**. Le
+client web du navigateur se contente de signer/soumettre ; il n'a pas besoin de la clé. (Il *peut* prendre
+une `apiKey` pour des prototypes de confiance, mais n'envoyez jamais une clé de production au navigateur.)
+
+## Surcharges partagées / d'auto-hébergement (avancé)
+
+```ts
+// Change the gateway for every client created afterward (once, at startup):
+Client.shared.baseURL = 'https://gateway.your-domain.com';
+
+// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+const client = new Client({
+  apiKey: '...',
+  baseURL: 'http://localhost:3000',
+  gatewaySecret: process.env.APISIX_GATEWAY_SECRET,
+  consumerUsername: 'cosmos_demo',
+});
+```
+
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sont tous facultatifs — une
+intégration normale ne les définit jamais.
+
+## Références
+
+- [Client](/sdk/definitions/client) — Le point d'entrée principal du SDK — un client unique et atomique qui expose chaque ressource via son propre gestionnaire — une conception atomique à client unique.

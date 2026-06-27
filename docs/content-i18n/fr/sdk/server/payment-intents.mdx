@@ -1,0 +1,88 @@
+---
+title: "Intentions de paiement"
+description: "Créez, récupérez, listez, modifiez, annulez, supprimez et validez des intentions de paiement Stellar SEP-7."
+---
+
+Une intention de paiement représente un paiement que vous souhaitez qu'un utilisateur effectue. C'est la ressource centrale de l'API et le gestionnaire que vous solliciterez le plus souvent.
+
+`client.paymentIntents` — intentions Stellar SEP-7. Deux types :
+
+- **intention `pay`** — sans source. Le portefeuille du payeur choisit le compte source.
+  Produit un URI `web+stellar:pay?...` + QR (sans XDR).
+- **intention `tx`** — source connue. Produit un XDR non signé + un URI `web+stellar:tx?...`
+  + QR.
+
+## Créer
+
+```ts
+import { Assets } from '@cosmosapp/pay_sdk';
+
+// pay (no source)
+const pay = await client.paymentIntents.createPay({
+  destination: 'G...',          // required — payee (or an address-book name)
+  amount: '10',                 // optional — omit for an open amount (donations)
+  asset: Assets.USDC,           // typed asset → fills assetCode + verified issuer
+  // assetCode: 'USDC', assetIssuer: 'G...',  // …or set them explicitly
+  // omit asset entirely for native lumens (XLM)
+  memo: '123456789',            // optional MEMO_ID (uint64) — auto-generated if omitted
+  msg: 'Order #24',             // optional, ≤ 300 chars, shown in the wallet
+  callback: 'url:https://...',  // optional SEP-7 callback for the signed XDR
+});
+
+// tx (source known)
+const tx = await client.paymentIntents.createTx({
+  source: 'G...PAYER',          // required (extra vs pay)
+  destination: 'G...MERCHANT',
+  amount: '25.5',
+});
+console.log(tx.xdr, tx.uri, tx.qr);
+```
+
+> Les montants sont des **chaînes décimales**, max 7 décimales. Les émetteurs d'actifs sont
+> spécifiques au réseau (mainnet vs testnet).
+
+## Récupérer / lister
+
+```ts
+const intent = await client.paymentIntents.fetch('pi_123');
+
+const page = await client.paymentIntents.list({
+  status: 'SUCCEEDED', // optional filter (PaymentIntentStatus)
+  take: 50,            // page size, max 100, default 20
+  skip: 0,             // offset
+});
+// page → { items: PaymentIntent[], total, take, skip }
+```
+
+## Mettre à jour / annuler / supprimer
+
+```ts
+await intent.edit({ reference: 'order_1234' }); // status / txHash / reference
+await intent.cancel();                          // → status CANCELLED
+await intent.delete();
+// manager forms: client.paymentIntents.update(id, {...}) / .delete(id)
+```
+
+## Valider (finaliser)
+
+```ts
+const outcome = await intent.validate('<txHash>');
+// → { valid, status, reason, paymentIntent }
+if (outcome.valid) console.log('settled', outcome.status);
+// manager form: client.paymentIntents.validate(id, { txHash })
+```
+
+La validation vérifie la réussite de la tx + la destination + le montant + le memo, finalise le statut
+côté serveur, et déclenche le webhook.
+
+## Accesseurs de structure (sur un `PaymentIntent`)
+
+`id`, `kind`, `status`, `network`, `source`, `destination`, `amount`, `asset`,
+`assetIssuer`, `memo`, `msg`, `callback`, `xdr`, `uri`, `qr`, `txHash`,
+`reference`, `createdAt`, `updatedAt`. Helpers : `isTx`, `isPay`, `isSucceeded`,
+`isPending`, `assetLabel` (`'XLM'` pour le natif). Méthodes : `fetch()`, `edit()`,
+`validate(txHash)`, `cancel()`, `delete()`, `toJSON()`.
+
+## Références
+
+- [PaymentIntent](/sdk/definitions/payment-intent) — Une intention de paiement Stellar SEP-7

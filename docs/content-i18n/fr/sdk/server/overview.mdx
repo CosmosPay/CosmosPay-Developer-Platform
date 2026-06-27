@@ -1,0 +1,53 @@
+---
+title: "Aperçu"
+description: "Ce qu'est le SDK, ses points d'entrée serveur et navigateur, le flux de paiement en trois étapes, et les faits essentiels à connaître."
+---
+
+C'est le modèle mental de l'ensemble du SDK — lisez-le en premier. Il explique pourquoi il existe deux points d'entrée (serveur et navigateur) et comment un seul paiement passe par trois étapes.
+
+`@cosmosapp/pay_sdk` est le SDK orienté objet JavaScript/TypeScript pour
+l'API Payments de **Cosmos Pay** — **intentions de paiement** Stellar **SEP-7**, **webhooks**,
+**produits**, **clients** et **analyses**.
+
+## Deux points d'entrée
+
+| Import | S'exécute dans | Objectif |
+| ------ | ------- | ------- |
+| `@cosmosapp/pay_sdk` | serveur (Node ≥ 18) | Créer et gérer les intentions, webhooks, produits, clients, analyses — tout ce qui nécessite votre clé API secrète. |
+| `@cosmosapp/pay_sdk/web` | navigateur | *Compléter* une intention : détecter automatiquement le portefeuille Stellar de l'utilisateur (Freighter, xBull, Rabet, LOBSTR, Albedo), construire la transaction, signer et soumettre. Agnostique du fournisseur. |
+
+## Modèle mental
+
+Un paiement comporte deux moitiés :
+
+1. Le **serveur** crée une intention avec votre clé secrète (`client.paymentIntents.createPay`/`createTx`)
+   et renvoie la charge utile (`uri`, `qr`, et pour les intentions `tx` un `xdr` non signé) à votre frontend.
+2. Le **navigateur** la complète avec le portefeuille de l'utilisateur (`new WebClient().pay(intent)`),
+   produisant un `txHash` sur la chaîne.
+3. Le **serveur** finalise en validant ce hash (`intent.validate(txHash)`), ce qui
+   met à jour le statut et déclenche un webhook.
+
+## Conception
+
+- **Atomique** — un seul `Client` ; un gestionnaire par ressource (`client.paymentIntents`,
+  `client.webhooks`, `client.products`, `client.customers`, `client.analytics`,
+  `client.health`).
+- **Structures auto-actives** — les objets renvoyés agissent sur eux-mêmes :
+  `intent.validate()`, `endpoint.rotateSecret()`, `product.deactivate()`.
+- **Zéro dépendance d'exécution** — `fetch` natif + `node:crypto`. Le SDK Stellar
+  est une dépendance peer *facultative*, nécessaire uniquement au client web du navigateur.
+- **Entièrement typé** — fonctionne à la fois en CJS et en ESM.
+
+## Faits clés pour une intégration correcte
+
+- Le **réseau est choisi par le type de clé API** : `dv_` → testnet, `prod_` → mainnet.
+  Vous ne passez jamais de réseau côté serveur.
+- **Les montants sont des chaînes décimales** (par ex. `'10'`, `'120.1234567'`), max 7 décimales.
+- Le **secret du webhook (`whsec_…`) n'est affiché qu'une seule fois** lors de `create`/`rotateSecret`.
+- L'**URL de la passerelle est préconfigurée** ; une intégration normale ne définit que `apiKey`.
+- Passerelle par défaut : `https://api.cosmospay.lat/cosmos-api`. Nécessite Node ≥ 18.
+
+## Références
+
+- [Client](/sdk/definitions/client) — Le point d'entrée principal du SDK — un client unique et atomique qui expose chaque ressource via son propre gestionnaire — une conception atomique à client unique.
+- [WebClient](/sdk/definitions/web-client)

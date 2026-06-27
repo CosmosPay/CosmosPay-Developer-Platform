@@ -1,0 +1,53 @@
+---
+title: "Überblick"
+description: "Was das SDK ist, seine Server- und Browser-Einstiegspunkte, der dreistufige Zahlungsablauf und die wichtigsten Fakten, die Sie kennen müssen."
+---
+
+Dies ist das mentale Modell für das gesamte SDK — lesen Sie es zuerst. Es erklärt, warum es zwei Einstiegspunkte gibt (Server und Browser) und wie eine einzelne Zahlung drei Schritte durchläuft.
+
+`@cosmosapp/pay_sdk` ist das objektorientierte JavaScript/TypeScript-SDK für die
+**Cosmos Pay** Payments API — Stellar-**SEP-7-Zahlungsabsichten**, **Webhooks**,
+**Produkte**, **Kunden** und **Analysen**.
+
+## Zwei Einstiegspunkte
+
+| Import | Läuft in | Zweck |
+| ------ | ------- | ------- |
+| `@cosmosapp/pay_sdk` | Server (Node ≥ 18) | Absichten, Webhooks, Produkte, Kunden, Analysen erstellen und verwalten — alles, was Ihren geheimen API-Schlüssel benötigt. |
+| `@cosmosapp/pay_sdk/web` | Browser | Eine Absicht *abschließen*: das Stellar-Wallet des Nutzers automatisch erkennen (Freighter, xBull, Rabet, LOBSTR, Albedo), die Transaktion erstellen, signieren und übermitteln. Anbieterunabhängig. |
+
+## Mentales Modell
+
+Eine Zahlung besteht aus zwei Hälften:
+
+1. Der **Server** erstellt eine Absicht mit Ihrem geheimen Schlüssel (`client.paymentIntents.createPay`/`createTx`)
+   und gibt die Nutzlast (`uri`, `qr` und bei `tx`-Absichten ein unsigniertes `xdr`) an Ihr Frontend zurück.
+2. Der **Browser** schließt sie mit dem Wallet des Nutzers ab (`new WebClient().pay(intent)`)
+   und erzeugt einen On-Chain-`txHash`.
+3. Der **Server** schließt ab, indem er diesen Hash validiert (`intent.validate(txHash)`), wodurch
+   der Status aktualisiert und ein Webhook ausgelöst wird.
+
+## Aufbau
+
+- **Atomar** — ein `Client`; ein Manager pro Ressource (`client.paymentIntents`,
+  `client.webhooks`, `client.products`, `client.customers`, `client.analytics`,
+  `client.health`).
+- **Selbsthandelnde Strukturen** — zurückgegebene Objekte handeln an sich selbst:
+  `intent.validate()`, `endpoint.rotateSecret()`, `product.deactivate()`.
+- **Keine Laufzeitabhängigkeiten** — natives `fetch` + `node:crypto`. Das Stellar-SDK
+  ist eine *optionale* Peer-Abhängigkeit, die nur vom Browser-Web-Client benötigt wird.
+- **Vollständig typisiert** — funktioniert sowohl in CJS als auch in ESM.
+
+## Wichtige Fakten für eine korrekte Integration
+
+- Das **Netzwerk wird durch den Typ des API-Schlüssels bestimmt**: `dv_` → Testnet, `prod_` → Mainnet.
+  Auf dem Server übergeben Sie niemals ein Netzwerk.
+- **Beträge sind Dezimalzeichenketten** (z. B. `'10'`, `'120.1234567'`), maximal 7 Dezimalstellen.
+- Das **Webhook-Secret (`whsec_…`) wird nur einmal** bei `create`/`rotateSecret` angezeigt.
+- Die **Gateway-URL ist vorkonfiguriert**; eine normale Integration setzt nur `apiKey`.
+- Standard-Gateway: `https://api.cosmospay.lat/cosmos-api`. Erfordert Node ≥ 18.
+
+## Referenzen
+
+- [Client](/sdk/definitions/client) — Der Haupteinstiegspunkt des SDK — ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt — ein atomares Single-Client-Design.
+- [WebClient](/sdk/definitions/web-client)

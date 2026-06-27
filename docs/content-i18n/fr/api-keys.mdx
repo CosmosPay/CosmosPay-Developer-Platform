@@ -1,0 +1,60 @@
+---
+title: Obtenez votre clé API
+description: Connectez-vous à la plateforme développeur Cosmos Pay, choisissez un environnement et générez une clé API avec les portées dont votre intégration a besoin.
+---
+
+Chaque requête vers Cosmos Pay est authentifiée par une **clé API**. Vous créez et gérez les clés
+dans le tableau de bord développeur. Une clé porte deux choses importantes : l'**environnement** auquel elle
+appartient (qui détermine le réseau Stellar) et les **portées** qu'elle est autorisée à utiliser.
+
+## Créer une clé
+
+1. **Connectez-vous** à la plateforme développeur sur [dev.cosmospay.lat](https://dev.cosmospay.lat) et ouvrez le **Tableau de bord**.
+2. **Choisissez l'environnement** avec le commutateur **Test / Production** du tableau de bord :
+   - **Test** délivre des clés `dv_…` qui s'exécutent sur le **testnet** — utilisez-les pendant le développement.
+   - **Production** délivre des clés `prod_…` qui s'exécutent sur le **mainnet** — utilisez-les pour passer en production.
+3. Allez dans **API Keys → Create**.
+4. Donnez à la clé un **nom** (et une description facultative) pour pouvoir la reconnaître plus tard.
+5. Choisissez un **rôle** :
+   - **User** — limité. Sélectionnez exactement les permissions dont elle a besoin dans la matrice (par ressource : **lecture** et/ou **écriture** pour les paiements, webhooks, produits, clients et analyses).
+   - **Admin** — accès complet ; il contourne la matrice de portées. À utiliser avec parcimonie.
+6. **Créez**, puis **copiez la clé immédiatement**.
+
+<Callout type="warn" title="Affichée une seule fois">
+La clé complète est affichée **une seule fois**, à la création (et à nouveau seulement si vous la faites tourner). Stockez-la dans
+un gestionnaire de secrets ou les variables d'environnement de votre serveur dès maintenant — vous ne pourrez plus la consulter.
+</Callout>
+
+## Utiliser la clé
+
+Gardez la clé sur votre **serveur** et transmettez-la au SDK (ou envoyez-la comme jeton Bearer à
+l'API REST) :
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+// Reads e.g. COSMOS_PAY_API_KEY from your server environment — never hard-code it.
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+```http
+Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Callout title="Moindre privilège">
+Ne donnez à chaque clé que les portées dont elle a besoin. Un serveur qui ne fait que créer des paiements peut utiliser une clé avec
+`payments:write` et `payments:read` et rien d'autre — ainsi une clé divulguée ne peut pas faire plus que son rôle.
+</Callout>
+
+## Bonnes pratiques
+
+- **Une clé par environnement / service.** Ne réutilisez pas une clé `prod_` en test, et faites tourner les clés par service afin de pouvoir en révoquer une sans interrompre le reste.
+- **N'envoyez jamais une clé au navigateur.** Le [client web](/sdk/web/web-client) signe les transactions avec le portefeuille de l'utilisateur et n'a pas besoin de votre clé.
+- **Faites tourner en cas d'exposition.** Si une clé fuite, faites-la tourner dans le tableau de bord — l'ancienne valeur cesse de fonctionner immédiatement.
+
+## Étapes suivantes
+
+<Cards>
+  <Card title="Démarrage rapide" href="/sdk/server/quickstart" description="Créez votre première intention de paiement avec la clé que vous venez de créer." />
+  <Card title="Authentification" href="/sdk/server/authentication" description="Comment la clé sélectionne le réseau et comment la garder en sécurité." />
+</Cards>

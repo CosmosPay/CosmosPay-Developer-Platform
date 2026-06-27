@@ -1,0 +1,13 @@
+{
+  "title": "Referencia de la API",
+  "description": "API REST de pagos de Cosmos Pay",
+  "pages": [
+    "index",
+    "payment-intents",
+    "webhooks",
+    "products",
+    "customers",
+    "analytics",
+    "health"
+  ]
+}

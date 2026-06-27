@@ -70,5 +70,20 @@ const before = fs.readFileSync(authClient, 'utf8');
 const after = before.replace(/from\s+["']astro:env\/client["']/g, 'from "@/shims/astro-env-client"');
 if (after !== before) fs.writeFileSync(authClient, after, 'utf8');
 
+// The docs (Next) and portal (Astro) are separate bundles, so the i18n store may not be a
+// shared singleton — a nav language switch wouldn't reach the Fumadocs Provider. Patch the
+// copied setLang to also broadcast a window event the docs Provider can listen for (it then
+// re-reads the cookie). This makes the docs chrome follow the language switch reliably.
+const i18nIndex = path.join(DOCS_SRC, 'lib/i18n/index.tsx');
+if (fs.existsSync(i18nIndex)) {
+  const src = fs.readFileSync(i18nIndex, 'utf8');
+  const patched = src.replace(
+    /listeners\.forEach\(\(fn\) => fn\(\)\);/,
+    "listeners.forEach((fn) => fn());\n  try { window.dispatchEvent(new CustomEvent('cosmospay:lang', { detail: code })); } catch (e) {}",
+  );
+  if (patched !== src) fs.writeFileSync(i18nIndex, patched, 'utf8');
+  console.log(`[sync-portal-ui] patched i18n setLang to broadcast 'cosmospay:lang': ${patched !== src}`);
+}
+
 console.log(`[sync-portal-ui] copied ${count} portal targets -> ${DOCS_SRC} (from ${PORTAL_SRC})`);
 console.log(`[sync-portal-ui] rewrote astro:env/client import in lib/auth-client.ts: ${after !== before}`);

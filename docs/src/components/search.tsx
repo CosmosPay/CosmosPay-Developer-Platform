@@ -12,8 +12,8 @@ import {
 } from 'fumadocs-ui/components/dialog/search';
 import { useDocsSearch } from 'fumadocs-core/search/client';
 import { oramaStaticClient } from 'fumadocs-core/search/client/orama-static';
-import { create } from '@orama/orama';
 import { useI18n } from 'fumadocs-ui/contexts/i18n';
+import { create } from '@orama/orama';
 
 function initOrama() {
   return create({
@@ -24,12 +24,16 @@ function initOrama() {
 }
 
 export default function DefaultSearchDialog(props: SharedProps) {
-  const { locale } = useI18n(); // (optional) for i18n
+  // The docs are URL-localized, so the static index is per-locale. Filter by the active UI
+  // locale so results link to the right localized pages. The index lives under the /docs
+  // basePath, which fumadocs' client fetch does NOT prefix automatically.
+  const { locale } = useI18n();
   const { search, setSearch, query } = useDocsSearch({
     client: oramaStaticClient({
       initOrama,
-      locale,
+      from: '/docs/api/search',
     }),
+    locale,
   });
 
   return (

@@ -1,0 +1,66 @@
+---
+title: "Typisierte Assets, Wallets & Adressen"
+description: "Typisierte Kataloge von Assets und Wallets sowie Adressvalidatoren, für Testnet und Mainnet."
+---
+
+Das SDK liefert typisierte, netzwerkbewusste Kataloge, sodass Sie nie einen Asset-Aussteller oder eine Wallet-ID von Hand eintippen müssen, plus Validatoren für Stellar-Adressen.
+
+Kleine typisierte Kataloge, damit Sie nie den falschen Aussteller oder eine magische Zeichenkette einfügen. Einfache
+Zeichenketten funktionieren weiterhin überall. Exportiert aus **beiden** Einstiegspunkten
+(`@cosmosapp/pay_sdk` und `@cosmosapp/pay_sdk/web`).
+
+## Assets
+
+```ts
+import { Assets, TestnetAssets, defineAsset, resolveAsset, isNativeAsset } from '@cosmosapp/pay_sdk';
+
+Assets.XLM;   // native lumens
+Assets.USDC;  // { code: 'USDC', issuer: 'GA5Z…' }  (Circle, mainnet — verified)
+Assets.EURC;  // { code: 'EURC', issuer: 'GDHU…' }
+
+// Custom asset (issuer/contract validated):
+const AQUA = defineAsset({ code: 'AQUA', issuer: 'GBNZ…', name: 'Aquarius' });
+
+await client.paymentIntents.createPay({ destination: 'G...', amount: '5', asset: AQUA });
+
+// Plain code + issuer also works:
+await client.paymentIntents.createPay({ destination: 'G...', amount: '5', assetCode: 'USDC', assetIssuer: 'G...' });
+```
+
+> ⚠️ Aussteller sind **netzwerkspezifisch**. `Assets.*` = Mainnet; verwenden Sie `TestnetAssets.*`
+> (z. B. `TestnetAssets.USDC`) für das Testnet, passend zu Ihrem `dv_`-Schlüssel.
+
+Hilfsmethoden: `resolveAsset(ref)` → `{ code, issuer? }`; `isNativeAsset(ref)` → boolean.
+
+## Wallets
+
+```ts
+import { Wallets } from '@cosmosapp/pay_sdk/web';
+Wallets.FREIGHTER; Wallets.XBULL; Wallets.RABET; Wallets.LOBSTR; Wallets.ALBEDO;
+
+const wc = new WebClient({ preferredWallets: [Wallets.XBULL, Wallets.FREIGHTER] });
+await wc.pay(intent, { wallet: Wallets.FREIGHTER });
+```
+
+## Adressbuch
+
+```ts
+import { addresses, resolveAddress, isStellarAddress, isMuxedAddress, isContractAddress, isAddress, assertAddress } from '@cosmosapp/pay_sdk';
+
+addresses.define('merchant', 'GC...PAYOUT');
+await client.paymentIntents.createPay({ destination: 'merchant', amount: '10' });
+
+resolveAddress('merchant'); // → 'GC...PAYOUT' (unknown values pass through unchanged)
+isStellarAddress('GC...');  // true
+isMuxedAddress('MA...');    // true
+isContractAddress('CA...'); // true
+isAddress('merchant');      // true
+assertAddress(value);       // throws on an invalid value
+```
+
+Rohe `G…`-, gemuxte `M…`-, Contract-`C…`- und Federation-Adressen funktionieren weiterhin als
+einfache Zeichenketten.
+
+## Referenzen
+
+- [WebClient](/sdk/definitions/web-client)

@@ -65,7 +65,15 @@ function cosmosDocsDevStatic() {
         if (resolved !== root && !resolved.startsWith(root + path.sep)) return next();
 
         fs.stat(resolved, (err, st) => {
-          if (err || !st.isFile()) return next();
+          if (err || !st.isFile()) {
+            // Next 16 client-prefetch segment files (`__next.*`) don't exist in a static
+            // export — answer 204 instead of a noisy 404 (navigation still works on click).
+            if (url.includes('__next')) {
+              res.statusCode = 204;
+              return res.end();
+            }
+            return next();
+          }
           res.setHeader('Content-Type', TYPES[path.extname(resolved).toLowerCase()] || 'application/octet-stream');
           fs.createReadStream(resolved).pipe(res);
         });
