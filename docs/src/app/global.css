@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-openapi/css/preset.css';
+
+/* Height of the global Cosmos navbar (.nav-inner is 78px) so Fumadocs offsets its sticky
+   sidebar/TOC below it (Fumadocs' own nav is disabled — see (docs)/layout.tsx). */
+:root {
+  --fd-nav-height: 78px;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

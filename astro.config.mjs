@@ -1,11 +1,78 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
 
 
 import node from '@astrojs/node';
 
 import react from '@astrojs/react';
+
+// Dev-only: `astro dev` (Vite) serves exact files from public/ but doesn't resolve directory
+// requests (/docs/, /docs/sdk/overview/) to their index.html — so the statically-exported
+// Fumadocs site 404s in dev even though the production node adapter serves it fine. This
+// middleware serves public/docs at /docs during dev so the route behaves the same as in prod.
+function cosmosDocsDevStatic() {
+  const root = fileURLToPath(new URL('./public/docs', import.meta.url));
+  const TYPES = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.mjs': 'text/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.txt': 'text/plain; charset=utf-8',
+    '.map': 'application/json; charset=utf-8',
+    '.svg': 'image/svg+xml',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.ico': 'image/x-icon',
+    '.woff2': 'font/woff2',
+    '.woff': 'font/woff',
+  };
+  return {
+    name: 'cosmos-docs-dev-static',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (!req.url) return next();
+        const url = req.url.split('?')[0].split('#')[0];
+        if (url !== '/docs' && !url.startsWith('/docs/')) return next();
+
+        // Normalize /docs (no slash) -> /docs/ so relative links resolve.
+        if (url === '/docs') {
+          res.statusCode = 302;
+          res.setHeader('Location', '/docs/');
+          return res.end();
+        }
+
+        let rel;
+        try {
+          rel = decodeURIComponent(url.slice('/docs'.length));
+        } catch {
+          return next();
+        }
+        // Directory or extensionless path -> its index.html (matches next export trailingSlash).
+        let candidate;
+        if (rel.endsWith('/')) candidate = path.join(root, rel, 'index.html');
+        else if (path.extname(rel)) candidate = path.join(root, rel);
+        else candidate = path.join(root, rel, 'index.html');
+
+        const resolved = path.resolve(candidate);
+        if (resolved !== root && !resolved.startsWith(root + path.sep)) return next();
+
+        fs.stat(resolved, (err, st) => {
+          if (err || !st.isFile()) return next();
+          res.setHeader('Content-Type', TYPES[path.extname(resolved).toLowerCase()] || 'application/octet-stream');
+          fs.createReadStream(resolved).pipe(res);
+        });
+      });
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -81,6 +148,8 @@ export default defineConfig({
   },
 
   vite: {
+    // Serve the statically-exported docs at /docs during `astro dev` (see comment above).
+    plugins: [cosmosDocsDevStatic()],
     server: {
       // Hosts allowed to reach the dev server. Without this, Vite rejects
       // requests whose Host header isn't localhost (e.g. when the dev server is

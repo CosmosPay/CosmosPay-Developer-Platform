@@ -6,8 +6,11 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "predev": "node scripts/ensure-docs.mjs",
     "dev": "astro dev --host",
-    "build": "prisma generate && astro build",
+    "build": "prisma generate && npm run docs:build && astro build",
+    "docs:build": "node scripts/build-docs.mjs",
+    "prestart": "node scripts/ensure-docs.mjs",
     "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview",
     "astro": "astro",
