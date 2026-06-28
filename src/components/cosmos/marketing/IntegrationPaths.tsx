@@ -3,6 +3,11 @@ import { IcChevSm } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { SCALE_VALUES, PATH_NUMS } from "./data";
 
+// Targets for the three integration-path CTAs (by position — the catalogs only carry the
+// translated label, and the order is the same in every language): No-code → dashboard,
+// Prebuilt UI → browser SDK, Build-your-own (the REST/SDK "API" path) → the docs.
+const PATH_HREFS = ["/dashboard", "/docs/sdk/web/web-client", "/docs"];
+
 function pathMock(n) {
   if (n === "01") return null; // filled by caller with translated link text
   if (n === "02") return <div className="ip-mock gw3"><div className="ip-logos">{[0, 1, 2, 3, 4, 5].map((k) => <i key={k} />)}</div></div>;
@@ -32,7 +37,7 @@ export function IntegrationPaths() {
                 <div className="ipn">{num}</div>
                 <h3>{p.t}</h3>
                 <p>{p.d}</p>
-                <a className="card-link" href="#">{p.a} <IcChevSm /></a>
+                <a className="card-link" href={PATH_HREFS[i] || "#"}>{p.a} <IcChevSm /></a>
               </div>
             );
           })}
