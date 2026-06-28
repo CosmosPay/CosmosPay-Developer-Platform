@@ -366,33 +366,87 @@ for (const c of allClasses) if (!c.doc && CURATED_DOC[c.name]) c.doc = CURATED_D
 // name -> { path, summary } for cross-referencing from prose
 const CLASS_INDEX = new Map(allClasses.map((c) => [c.name, { path: CLASS_PATH(c), summary: c.doc }]));
 
+/** Names imported from the SDK in a page's code examples (`import { A, B as C } from '@cosmosapp/pay_sdk…'`). */
+function extractImportedSymbols(md) {
+  const names = new Set();
+  const re = /import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*['"]@cosmosapp\/pay_sdk[^'"]*['"]/g;
+  let m;
+  while ((m = re.exec(md))) {
+    for (const part of m[1].split(',')) {
+      const name = part.trim().split(/\s+as\s+/)[0].trim();
+      if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name)) names.add(name);
+    }
+  }
+  return names;
+}
+
 fs.rmSync(OUT, { recursive: true, force: true });
 const sections = { server: [], web: [], definitions: [] };
 
-for (const f of files) {
+// Pass A — render every page body (so we can index what each one documents before wiring refs).
+const pages = files.map((f) => {
   const slug = f.replace(/^\d\d-/, '').replace(/\.md$/, '');
-  const cat = CATEGORY[slug] || 'server';
   const raw = fs.readFileSync(path.join(SDK_LLMS, f), 'utf8');
   const { title, body } = extractTitleAndBody(raw);
-  let out = sanitizeInternal(rewriteLinks(body));
+  const out = sanitizeInternal(rewriteLinks(body));
   const meta = META[slug] || {};
-  const description = meta.description || firstParagraph(out) || `${title || slug} — Cosmos Pay SDK.`;
-  const intro = meta.intro ? `${meta.intro}\n\n` : '';
+  return {
+    slug,
+    cat: CATEGORY[slug] || 'server',
+    title,
+    out,
+    description: meta.description || firstParagraph(out) || `${title || slug} — Cosmos Pay SDK.`,
+    intro: meta.intro ? `${meta.intro}\n\n` : '',
+  };
+});
 
-  // Append a "References" section linking class names mentioned in the page to their definitions.
-  const refs = [];
-  for (const [name, info] of CLASS_INDEX) {
-    if (new RegExp(`\\b${name}\\b`).test(out)) refs.push({ name, ...info });
+// The assets/wallets/addresses page documents a set of NON-class exports (Assets, Wallets,
+// resolveAddress, …). Map each symbol it imports to that page, so examples elsewhere that import
+// them get a reference too — not just the exported classes.
+const CATALOG_INDEX = new Map();
+const catalogPage = pages.find((p) => p.slug === 'assets-wallets-addresses');
+if (catalogPage) {
+  for (const name of extractImportedSymbols(catalogPage.out)) {
+    if (!CLASS_INDEX.has(name)) {
+      CATALOG_INDEX.set(name, {
+        path: PROSE_PATH('assets-wallets-addresses'),
+        summary: 'Typed asset / wallet catalog or address helper.',
+      });
+    }
   }
+}
+const SYMBOL_INDEX = new Map([...CLASS_INDEX, ...CATALOG_INDEX]);
+
+// Pass B — append a "References" section (every SDK symbol imported in the page's examples, plus
+// any class named in its prose) and write each page.
+for (const p of pages) {
+  const selfPath = PROSE_PATH(p.slug);
+  const refNames = new Set();
+  for (const name of extractImportedSymbols(p.out)) if (SYMBOL_INDEX.has(name)) refNames.add(name);
+  for (const name of CLASS_INDEX.keys()) if (new RegExp(`\\b${name}\\b`).test(p.out)) refNames.add(name);
+  const refs = [...refNames]
+    .map((name) => ({ name, ...SYMBOL_INDEX.get(name) }))
+    .filter((r) => r.path !== selfPath) // don't link a page to itself
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   let refsBlock = '';
   if (refs.length) {
-    refsBlock = '\n\n## References\n\n' + refs.map((r) => `- [${r.name}](${r.path})${r.summary ? ` — ${escapeMdxText(r.summary.split('. ')[0])}` : ''}`).join('\n') + '\n';
+    refsBlock =
+      '\n\n## References\n\n' +
+      refs
+        .map((r) => `- [${r.name}](${r.path})${r.summary ? ` — ${escapeMdxText(r.summary.split('. ')[0])}` : ''}`)
+        .join('\n') +
+      '\n';
   }
 
-  const dir = path.join(OUT, cat);
+  const dir = path.join(OUT, p.cat);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, `${slug}.mdx`), `---\ntitle: ${yaml(title || slug)}\ndescription: ${yaml(description)}\n---\n\n${intro}${out.trimEnd()}${refsBlock}\n`, 'utf8');
-  sections[cat].push(slug);
+  fs.writeFileSync(
+    path.join(dir, `${p.slug}.mdx`),
+    `---\ntitle: ${yaml(p.title || p.slug)}\ndescription: ${yaml(p.description)}\n---\n\n${p.intro}${p.out.trimEnd()}${refsBlock}\n`,
+    'utf8',
+  );
+  sections[p.cat].push(p.slug);
 }
 
 // Definitions: one atomic page per class, nested under `server/` and `web/` subfolders so the

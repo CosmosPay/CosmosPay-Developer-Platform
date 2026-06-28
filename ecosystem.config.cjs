@@ -1,10 +1,11 @@
 /**
  * PM2 process config — defines TWO apps that share the same `.env`:
  *
- *   devplat       → PRODUCTION. Runs the compiled Astro server (@astrojs/node
- *                   standalone). Build first with `npm run build` (emits
- *                   dist/server/entry.mjs).
- *   devplat-dev   → DEVELOPMENT. Runs `astro dev` with Vite/hot-reload.
+ *   devplat       → PRODUCTION. Runs scripts/start-prod.mjs, which ensures the /docs site is
+ *                   built/mirrored (ensure-docs) and then boots the compiled Astro server
+ *                   (@astrojs/node standalone) in the same process. Build first with
+ *                   `npm run build` (emits dist/server/entry.mjs).
+ *   devplat-dev   → DEVELOPMENT. Runs `astro dev` with Vite/hot-reload (predev ensures /docs).
  *
  * Start ONE of them (they both bind port 4321, so don't run both at once):
  *   pm2 start ecosystem.config.cjs --only devplat        # production
@@ -45,7 +46,9 @@ module.exports = {
   apps: [
     {
       name: 'devplat',
-      script: './dist/server/entry.mjs',
+      // Ensures /docs is built (ensure-docs) before booting the compiled server — so bringing
+      // the ecosystem up always serves an up-to-date /docs, even without a fresh `npm run build`.
+      script: './scripts/start-prod.mjs',
       cwd: __dirname,
       env,
     },
