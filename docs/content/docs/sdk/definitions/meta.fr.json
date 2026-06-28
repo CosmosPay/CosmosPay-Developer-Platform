@@ -1,0 +1,9 @@
+{
+  "title": "Définitions",
+  "description": "Types, enums et chaque classe exportée — référence atomique.",
+  "pages": [
+    "types-reference",
+    "server",
+    "web"
+  ]
+}

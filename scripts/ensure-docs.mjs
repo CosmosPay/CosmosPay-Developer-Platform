@@ -7,6 +7,13 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+// Load .env so SDK_LLMS_DIR / OPENAPI_SRC overrides are available even when this runs standalone
+// (predev/prestart). Won't override vars PM2 already injected. Optional dependency.
+try {
+  await import('dotenv/config');
+} catch {
+  /* dotenv not installed — rely on the ambient process.env */
+}
 
 const root = path.resolve(import.meta.dirname, '..');
 const publicDocs = path.join(root, 'public', 'docs');
@@ -33,13 +40,16 @@ function maxMtime(p) {
   return st.mtimeMs;
 }
 
-// Inputs that affect the docs output: the docs app source + config, the hand-written docs
-// pages, the canonical SDK/API inputs (sibling repos), and the portal UI the navbar reuses.
+// Inputs that affect the docs output: the docs app source + config, ALL docs content (the
+// committed generated content/docs/{sdk,api} + hand-written pages), the translations, the spec,
+// and the portal UI the navbar reuses. The external source repos are listed too so a local change
+// to them triggers a rebuild — but they're optional (absent on prod; generate-sdk/api just skip).
 const SOURCES = [
   path.join(root, 'docs', 'src'),
   path.join(root, 'docs', 'scripts'),
-  path.join(root, 'docs', 'content', 'docs', 'index.mdx'),
-  path.join(root, 'docs', 'content', 'docs', 'meta.json'),
+  path.join(root, 'docs', 'content', 'docs'),
+  path.join(root, 'docs', 'content-i18n'),
+  path.join(root, 'docs', 'openapi.json'),
   path.join(root, 'docs', 'next.config.mjs'),
   path.join(root, 'docs', 'source.config.ts'),
   path.join(root, 'docs', 'package.json'),
@@ -58,13 +68,14 @@ function needsBuild() {
   return newest > built;
 }
 
+// The docs always build from the committed content (generate-sdk/api skip when the external repos
+// are absent — see those scripts), so there's no repo dependency. Just (re)build when out of date.
 if (needsBuild()) {
   console.log('[ensure-docs] /docs missing or out of date — building…');
   try {
     execSync('node scripts/build-docs.mjs', { cwd: root, stdio: 'inherit' });
   } catch {
-    // Non-fatal: e.g. a dist-only production box without the sibling repos. Don't block
-    // `dev`/`start` — serve whatever docs were already built (if any).
+    // Non-fatal: don't block `dev`/`start` — serve whatever docs were already built (if any).
     console.warn('[ensure-docs] docs build failed; continuing with existing /docs (if present).');
   }
 } else {

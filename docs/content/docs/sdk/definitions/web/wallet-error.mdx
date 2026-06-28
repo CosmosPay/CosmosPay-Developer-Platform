@@ -1,0 +1,42 @@
+---
+title: "WalletError"
+description: "A wallet was found but the operation failed (user rejected, locked, etc.)."
+---
+
+A wallet was found but the operation failed (user rejected, locked, etc.).
+
+## Constructor
+
+### WalletError
+
+```ts
+constructor(wallet: string, message: string, cause?: unknown)
+```
+
+**Parameters**
+
+- `wallet` — `string`
+- `message` — `string`
+- `cause` _(optional)_ — `unknown`
+
+## Properties
+
+### wallet
+
+Id of the wallet that produced the error (e.g. `freighter`).
+
+```ts
+readonly wallet: string
+```
+
+### cause
+
+The underlying error, if any.
+
+```ts
+readonly cause: unknown
+```
+
+## Related
+
+- [CosmosPayWebError](/sdk/definitions/web/cosmos-pay-web-error)

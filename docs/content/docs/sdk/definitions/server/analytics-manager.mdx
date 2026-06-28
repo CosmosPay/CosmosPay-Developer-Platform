@@ -1,0 +1,74 @@
+---
+title: "AnalyticsManager"
+description: "Read-only analytics derived from the consumer's intents and deliveries — `client.analytics`. Powers dashboard-style Overview / Balances / Logs views."
+---
+
+Read-only analytics derived from the consumer's intents and deliveries — `client.analytics`. Powers dashboard-style Overview / Balances / Logs views.
+
+## Constructor
+
+### AnalyticsManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### summary()
+
+Overview metrics: totals, settled volume, webhook health, 30-day series.
+
+```ts
+summary(): Promise<AnalyticsSummaryData>
+```
+
+**Returns** `Promise<AnalyticsSummaryData>`
+
+### balances()
+
+Settled (and pending) amount per asset.
+
+```ts
+balances(): Promise<AnalyticsBalancesData>
+```
+
+**Returns** `Promise<AnalyticsBalancesData>`
+
+### apiLogs()
+
+Recent API requests reaching the service (with details).
+
+```ts
+apiLogs(): Promise<ApiLogsData>
+```
+
+**Returns** `Promise<ApiLogsData>`
+
+### webhookLogs()
+
+Recent webhook deliveries across all endpoints (with details).
+
+```ts
+webhookLogs(): Promise<WebhookLogsData>
+```
+
+**Returns** `Promise<WebhookLogsData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

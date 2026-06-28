@@ -1,0 +1,38 @@
+---
+title: "The Client"
+description: "The Client object: the managers it exposes, its constructor options, and the self-acting structures it returns."
+---
+
+Almost everything you do goes through a single `Client` instance. It groups the API into one manager per resource and returns objects that can act on themselves.
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+One client exposes every resource through its own manager.
+
+| Manager | Resource | Key methods |
+| ------- | -------- | ----------- |
+| `client.paymentIntents` | Stellar SEP-7 intents | `createTx` · `createPay` · `fetch` · `list` · `update` · `delete` · `validate` |
+| `client.webhooks` | Endpoints + deliveries + event listener | `create` · `list` · `fetch` · `update` · `delete` · `rotateSecret` · `ping` · `fetchDeliveries` · `redeliver` · `on(...)` · `process` · `createHandler` · `middleware` |
+| `client.products` | Products / prices | `create` · `list` · `fetch` · `update` · `delete` |
+| `client.customers` | Customers | `create` · `list` · `fetch` · `update` · `delete` |
+| `client.analytics` | Read-only metrics | `summary` · `balances` · `apiLogs` · `webhookLogs` |
+| `client.health` | Liveness / readiness | `liveness` · `readiness` |
+
+## Returned objects are "structures"
+
+Manager methods return rich instances (`PaymentIntent`, `WebhookEndpoint`,
+`Product`, `Customer`) that can act on themselves and expose typed accessors —
+e.g. `intent.isPay`, `intent.assetLabel`, `await intent.validate(txHash)`,
+`await endpoint.disable()`. Call `.toJSON()` for the raw payload.
+
+## References
+
+- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+- [Customer](/sdk/definitions/server/customer) — A customer record, optionally enriched with on-chain payment stats.
+- [PaymentIntent](/sdk/definitions/server/payment-intent) — A Stellar SEP-7 payment intent
+- [Product](/sdk/definitions/server/product) — A product / price the consumer can charge for.
+- [WebhookEndpoint](/sdk/definitions/server/webhook-endpoint) — A registered webhook endpoint
+

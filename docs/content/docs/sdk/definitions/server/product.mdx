@@ -1,0 +1,172 @@
+---
+title: "Product"
+description: "A product / price the consumer can charge for."
+---
+
+A product / price the consumer can charge for.
+
+## Constructor
+
+### Product
+
+```ts
+constructor(client: Client, data: ProductData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `ProductData`
+
+## Properties
+
+### name
+
+```ts
+name: string
+```
+
+### description
+
+```ts
+description: string | null
+```
+
+### amount
+
+```ts
+amount: string | null
+```
+
+### asset
+
+Asset code, or `native` for XLM.
+
+```ts
+asset: string
+```
+
+### kind
+
+```ts
+kind: ProductKind
+```
+
+### active
+
+```ts
+active: boolean
+```
+
+### reference
+
+```ts
+reference: string | null
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: ProductData): this
+```
+
+### get
+
+Human-readable asset label (`XLM` for native).
+
+```ts
+get assetLabel(): string
+```
+
+### deleted
+
+```ts
+deleted: boolean
+```
+
+### member
+
+```ts
+}>
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch this product.
+
+```ts
+fetch(): Promise<Product>
+```
+
+**Returns** `Promise<Product>`
+
+### edit()
+
+Update this product. Mutates and returns this.
+
+```ts
+edit(options: UpdateProductOptions): Promise<this>
+```
+
+**Parameters**
+
+- `options` — `UpdateProductOptions`
+
+**Returns** `Promise<this>`
+
+### activate()
+
+Mark the product active.
+
+```ts
+activate(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### deactivate()
+
+Mark the product inactive.
+
+```ts
+deactivate(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### delete()
+
+Delete this product.
+
+```ts
+delete(): Promise<{ id: string
+```
+
+**Returns** `Promise<{ id: string`
+
+### toJSON()
+
+```ts
+toJSON(): ProductData
+```
+
+**Returns** `ProductData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

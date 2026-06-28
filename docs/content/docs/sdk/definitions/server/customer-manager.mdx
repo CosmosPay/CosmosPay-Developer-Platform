@@ -1,0 +1,80 @@
+---
+title: "CustomerManager"
+description: "Manages customers — `client.customers`."
+---
+
+Manages customers — `client.customers`.
+
+## Methods
+
+### create()
+
+Create a customer.
+
+```ts
+create(options: CreateCustomerOptions): Promise<Customer>
+```
+
+**Parameters**
+
+- `options` — `CreateCustomerOptions`
+
+**Returns** [`Promise<Customer>`](/sdk/definitions/server/customer)
+
+### list()
+
+List the consumer's customers (with payment stats).
+
+```ts
+list(): Promise<Customer[]>
+```
+
+**Returns** [`Promise<Customer[]>`](/sdk/definitions/server/customer)
+
+### fetch()
+
+Get a customer by id.
+
+```ts
+fetch(id: string): Promise<Customer>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<Customer>`](/sdk/definitions/server/customer)
+
+### update()
+
+Update a customer.
+
+```ts
+update(id: string, options: UpdateCustomerOptions): Promise<Customer>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `UpdateCustomerOptions`
+
+**Returns** [`Promise<Customer>`](/sdk/definitions/server/customer)
+
+### delete()
+
+Delete a customer.
+
+```ts
+delete(id: string): Promise<CustomerDeletedData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<CustomerDeletedData>`
+
+## Related
+
+- [Customer](/sdk/definitions/server/customer)
+- [BaseManager](/sdk/definitions/server/base-manager)

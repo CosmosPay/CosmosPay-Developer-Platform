@@ -1,0 +1,124 @@
+---
+title: "Web client (browser wallets)"
+description: "The browser WebClient: detect the user's Stellar wallet, then build, sign and submit the transaction."
+---
+
+The web client runs in the browser and is the only part that touches the user's wallet. It is provider-agnostic and never needs your secret key.
+
+`@cosmosapp/pay_sdk/web` *completes* an intent in the user's browser. Stellar
+wallets don't ingest SEP-7 `web+stellar:` URIs from a dapp, so the web client
+auto-detects the wallet, adapts the intent into a transaction, signs and submits.
+
+```bash
+npm install @cosmosapp/pay_sdk @stellar/stellar-sdk
+```
+
+## One-call happy path
+
+```ts
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+
+const webClient = new WebClient();          // auto-detects the wallet
+const result = await webClient.pay(intent); // intent = payload/instance/URI string
+
+result.wallet;    // 'freighter' | 'xbull' | 'rabet' | 'lobstr' | 'albedo' | …
+result.account;   // the G... account that signed
+result.txHash;    // on-chain transaction hash
+result.submitted; // true
+```
+
+Report `result.txHash` to your server and finalize with `intent.validate(txHash)`.
+
+## Supported wallets
+
+Auto-detected (inject a browser global, zero config):
+
+| Wallet | id | Detection |
+| ------ | -- | --------- |
+| Freighter | `freighter` | `window.freighterApi` |
+| xBull | `xbull` | `window.xBullSDK` |
+| Rabet | `rabet` | `window.rabet` |
+
+Enabled by passing their library (no reliable global):
+
+| Wallet | id | Enable |
+| ------ | -- | ------ |
+| Albedo | `albedo` | `new WebClient({ albedo })` — `import albedo from '@albedo-link/intent'` |
+| LOBSTR | `lobstr` | `new WebClient({ lobstr })` — `import * as lobstr from '@lobstrco/signer-extension-api'` |
+
+## Inspect & choose
+
+```ts
+import { Wallets } from '@cosmosapp/pay_sdk/web';
+
+const wallets = await webClient.getAvailableWallets(); // [{ id, name, available }]
+const { wallet, address, network } = await webClient.connect(); // just connect
+await webClient.pay(intent, { wallet: Wallets.XBULL });         // pin for one call
+const pinned = new WebClient({ preferredWallets: [Wallets.XBULL, Wallets.FREIGHTER] });
+```
+
+## `pay()` options & variations
+
+```ts
+await webClient.pay(intent, { amount: '5' });   // open-amount intent
+await webClient.pay(intent, { sign: true });    // sign WITHOUT submitting → { signedXdr }
+await webClient.pay(intent, { submit: false }); // also skips submission
+await webClient.pay(intent, { wallet: 'xbull' });
+
+// Inspect the tx before prompting the wallet:
+const { xdr, source, network } = await webClient.buildTransaction(intent);
+```
+
+`pay` vs `tx`: for **pay** intents the client builds a payment from the connected
+account (loads sequence from Horizon, adds op + memo, fee, timebounds). For **tx**
+intents it signs the returned XDR as-is (throws if the connected wallet isn't the
+intent's `source`).
+
+## Network
+
+Inferred from the intent (`network` / SEP-7 `network_passphrase`). Override if you
+self-host Horizon: `new WebClient({ network: 'testnet', horizonUrl: '...' })`.
+
+## Custom wallet adapter
+
+```ts
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+
+const myWallet = {
+  id: 'my-wallet',
+  name: 'My Wallet',
+  async isAvailable() { return Boolean(globalThis.myWallet); },
+  async getPublicKey() { return globalThis.myWallet.getAddress(); },
+  async signTransaction(xdr, { networkPassphrase }) {
+    return globalThis.myWallet.sign(xdr, networkPassphrase);
+  },
+};
+const wc = new WebClient();
+wc.registerWallet(myWallet, /* prepend */ true);
+```
+
+## Dependency injection (SSR / bundle control)
+
+```ts
+import * as StellarSdk from '@stellar/stellar-sdk';
+import freighter from '@stellar/freighter-api';
+const wc = new WebClient({ stellarSdk: StellarSdk, freighter });
+```
+
+## Direct API (trusted environments only)
+
+> ⚠️ Ships your API key to the browser. Only for prototypes/internal tools with a
+> scoped testnet `dv_` key. For production, create/validate on your server.
+
+```ts
+const wc = new WebClient({ apiKey: 'dv_test_only' });
+const intent = await wc.createPay({ destination: 'G...', amount: '10' });
+const result = await wc.pay(intent);
+const outcome = await wc.validate(intent.id, result.txHash);
+```
+
+## References
+
+- [Wallets](/sdk/web/assets-wallets-addresses) — Typed asset / wallet catalog or address helper.
+- [WebClient](/sdk/definitions/web/web-client) — The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction
+

@@ -1,0 +1,113 @@
+---
+title: "PaymentIntentManager"
+description: "Manages Stellar payment intents — `client.paymentIntents`."
+---
+
+Manages Stellar payment intents — `client.paymentIntents`.
+
+## Methods
+
+### createTx()
+
+Create a SEP-7 `tx` intent (source known → unsigned XDR + tx URI + QR).
+
+```ts
+createTx(options: CreateTxPaymentIntentOptions): Promise<PaymentIntent>
+```
+
+**Parameters**
+
+- `options` — `CreateTxPaymentIntentOptions`
+
+**Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
+
+### createPay()
+
+Create a SEP-7 `pay` intent (no source → pay URI + QR, no XDR).
+
+```ts
+createPay(options: CreatePayPaymentIntentOptions): Promise<PaymentIntent>
+```
+
+**Parameters**
+
+- `options` — `CreatePayPaymentIntentOptions`
+
+**Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
+
+### fetch()
+
+Get a single payment intent by id.
+
+```ts
+fetch(id: string): Promise<PaymentIntent>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
+
+### list()
+
+List the consumer's payment intents (paginated).
+
+```ts
+list(options?: ListPaymentIntentsOptions): Promise<PaymentIntentPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListPaymentIntentsOptions`
+
+**Returns** `Promise<PaymentIntentPage>`
+
+### update()
+
+Update a payment intent (status / txHash / reference).
+
+```ts
+update(id: string, options: UpdatePaymentIntentOptions): Promise<PaymentIntent>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `UpdatePaymentIntentOptions`
+
+**Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
+
+### delete()
+
+Delete a payment intent.
+
+```ts
+delete(id: string): Promise<DeletedData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<DeletedData>`
+
+### validate()
+
+Validate a submitted transaction against the intent (tx success + destination + amount + memo). Finalizes status server-side and fires events.
+
+```ts
+validate(id: string, options: ValidatePaymentIntentOptions): Promise<ValidationOutcome>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `ValidatePaymentIntentOptions`
+
+**Returns** `Promise<ValidationOutcome>`
+
+## Related
+
+- [PaymentIntent](/sdk/definitions/server/payment-intent)
+- [BaseManager](/sdk/definitions/server/base-manager)

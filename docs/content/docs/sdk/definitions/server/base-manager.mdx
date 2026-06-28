@@ -1,0 +1,74 @@
+---
+title: "BaseManager"
+description: "Base class for all resource managers. Each manager owns a slice of the API (payment intents, webhooks, ...) and a lightweight in-memory cache of the structures it has material"
+---
+
+Base class for all resource managers. Each manager owns a slice of the API (payment intents, webhooks, ...) and a lightweight in-memory cache of the structures it has materialized — an atomic, per-resource manager pattern. Extends EventEmitter so managers that surface real-time events (e.g. the webhook listener) can `emit`/`on` without extra plumbing.
+
+## Constructor
+
+### BaseManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### id
+
+```ts
+id: string
+```
+
+### member
+
+```ts
+}> extends EventEmitter { readonly client: Client
+```
+
+### cache
+
+Cache of structures keyed by id, populated on fetch/create.
+
+```ts
+readonly cache: Map<string, Structure>
+```
+
+### protected
+
+Shortcut to the shared REST instance.
+
+```ts
+protected get rest(): REST
+```
+
+### protected
+
+Store a structure in the cache and return it.
+
+```ts
+protected _add(structure: Structure): Structure
+```
+
+### resolveId
+
+Resolve an id from either a raw id or a structure instance.
+
+```ts
+resolveId(idOrStructure: string | { id: string
+```
+
+### member
+
+```ts
+}): string
+```
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

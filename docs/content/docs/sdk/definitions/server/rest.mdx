@@ -1,0 +1,131 @@
+---
+title: "REST"
+description: "The HTTP layer. Owns the base URL, authentication and retry/timeout policy, and exposes thin verb helpers (`get`/`post`/`patch`/`delete`). Managers call these — they never tou"
+---
+
+The HTTP layer. Owns the base URL, authentication and retry/timeout policy, and exposes thin verb helpers (`get`/`post`/`patch`/`delete`). Managers call these — they never touch `fetch` directly.
+
+## Constructor
+
+### REST
+
+```ts
+constructor(options: RESTOptions)
+```
+
+**Parameters**
+
+- `options` — `RESTOptions`
+
+## Properties
+
+### baseURL
+
+```ts
+baseURL: string
+```
+
+### version
+
+```ts
+readonly version: string
+```
+
+## Methods
+
+### setApiKey()
+
+Replace the API key used for subsequent requests.
+
+```ts
+setApiKey(apiKey: string): this
+```
+
+**Parameters**
+
+- `apiKey` — `string`
+
+**Returns** `this`
+
+### get()
+
+```ts
+get<T>(path: string, options?: RequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `path` — `string`
+- `options` _(optional)_ — `RequestOptions`
+
+**Returns** `Promise<T>`
+
+### post()
+
+```ts
+post<T>(path: string, options?: RequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `path` — `string`
+- `options` _(optional)_ — `RequestOptions`
+
+**Returns** `Promise<T>`
+
+### patch()
+
+```ts
+patch<T>(path: string, options?: RequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `path` — `string`
+- `options` _(optional)_ — `RequestOptions`
+
+**Returns** `Promise<T>`
+
+### delete()
+
+```ts
+delete<T>(path: string, options?: RequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `path` — `string`
+- `options` _(optional)_ — `RequestOptions`
+
+**Returns** `Promise<T>`
+
+### buildURL()
+
+Build the absolute URL for a route, applying the version prefix + query.
+
+```ts
+buildURL(path: string, query?: RequestOptions['query']): string
+```
+
+**Parameters**
+
+- `path` — `string`
+- `query` _(optional)_ — `RequestOptions['query']`
+
+**Returns** `string`
+
+### request()
+
+Core request with retry, timeout and structured error handling.
+
+```ts
+request<T>(method: string, path: string, options?: RequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `method` — `string`
+- `path` — `string`
+- `options` _(optional)_ — `RequestOptions`
+
+**Returns** `Promise<T>`

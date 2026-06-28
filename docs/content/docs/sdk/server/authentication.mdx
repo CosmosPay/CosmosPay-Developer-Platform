@@ -1,0 +1,40 @@
+---
+title: "Authentication"
+description: "Authenticate with a single API key; the network (testnet vs mainnet) is chosen automatically by the key prefix."
+---
+
+Authentication is deliberately minimal: one secret API key, kept on your server. The key prefix also selects the Stellar network for you, so there is nothing else to configure. New here? See [how to get your API key](/api-keys).
+
+**You only need your API key.** Everything else (gateway URL, API version) is
+part of the SDK's shared configuration, maintained by Cosmos Pay.
+
+```ts
+import { Client } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+The API key is sent as `Authorization: Bearer <apiKey>`.
+
+## Network selection (important)
+
+The **network is determined by the key type** — you do NOT configure it:
+
+| Key prefix | Network |
+| ---------- | ------- |
+| `dv_…`     | testnet |
+| `prod_…`   | mainnet |
+
+Because of this, asset issuers are network-specific: use `Assets.*` for mainnet
+and `TestnetAssets.*` for testnet (see assets docs).
+
+## Keep the key on the server
+
+The API key is a secret. Create and validate intents on your **server**. The
+browser web client only signs/submits; it does not need the key. (It *can* take
+an `apiKey` for trusted prototypes, but never ship a production key to the browser.)
+
+## References
+
+- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+

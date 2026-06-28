@@ -1,0 +1,107 @@
+---
+title: "WalletRegistry"
+description: "Registry of the supported browser wallet adapters — detects which wallets are installed and resolves the right adapter."
+---
+
+Registry of the supported browser wallet adapters — detects which wallets are installed and resolves the right adapter.
+
+## Constructor
+
+### WalletRegistry
+
+```ts
+constructor(adapters?: WalletAdapter[])
+```
+
+**Parameters**
+
+- `adapters` _(optional)_ — `WalletAdapter[]`
+
+## Methods
+
+### register()
+
+Register (or replace, by id) a wallet adapter. By default it's appended at the lowest priority; pass `prepend` to make it win auto-detection.
+
+```ts
+register(adapter: WalletAdapter, prepend?: boolean): this
+```
+
+**Parameters**
+
+- `adapter` — `WalletAdapter`
+- `prepend` _(optional)_ — `boolean`
+
+**Returns** `this`
+
+### unregister()
+
+Remove an adapter by id.
+
+```ts
+unregister(id: string): this
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `this`
+
+### get()
+
+Get a registered adapter by id.
+
+```ts
+get(id: string): WalletAdapter | undefined
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `WalletAdapter | undefined`
+
+### ids()
+
+All registered adapter ids, in priority order.
+
+```ts
+ids(): string[]
+```
+
+**Returns** `string[]`
+
+### list()
+
+Probe every adapter and report which are available.
+
+```ts
+list(): Promise<WalletInfo[]>
+```
+
+**Returns** `Promise<WalletInfo[]>`
+
+### available()
+
+The available adapters, in priority order.
+
+```ts
+available(): Promise<WalletAdapter[]>
+```
+
+**Returns** `Promise<WalletAdapter[]>`
+
+### detect()
+
+Pick a wallet automatically. If `preferred` is given and available it wins; otherwise the first available adapter (in priority order) is returned. Throws &#123;@link WalletNotFoundError&#125; when nothing is available.
+
+```ts
+detect(preferred?: string): Promise<WalletAdapter>
+```
+
+**Parameters**
+
+- `preferred` _(optional)_ — `string`
+
+**Returns** `Promise<WalletAdapter>`

@@ -1,0 +1,260 @@
+---
+title: "PaymentIntent"
+description: "A Stellar SEP-7 payment intent. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it directly: `await intent.validate(txHash)`, `a"
+---
+
+A Stellar SEP-7 payment intent. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it directly: `await intent.validate(txHash)`, `await intent.cancel()`, `await intent.delete()`.
+
+## Constructor
+
+### PaymentIntent
+
+```ts
+constructor(client: Client, data: PaymentIntentData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `PaymentIntentData`
+
+## Properties
+
+### kind
+
+```ts
+kind: PaymentIntentKind
+```
+
+### status
+
+```ts
+status: PaymentIntentStatus
+```
+
+### network
+
+```ts
+network: string
+```
+
+### source
+
+Payer account (null for PAY intents).
+
+```ts
+source: string | null
+```
+
+### destination
+
+```ts
+destination: string
+```
+
+### amount
+
+```ts
+amount: string | null
+```
+
+### asset
+
+Asset code, or `native` for XLM.
+
+```ts
+asset: string
+```
+
+### assetIssuer
+
+```ts
+assetIssuer: string | null
+```
+
+### memo
+
+Mandatory MEMO_ID.
+
+```ts
+memo: string
+```
+
+### msg
+
+```ts
+msg: string | null
+```
+
+### callback
+
+```ts
+callback: string | null
+```
+
+### xdr
+
+Unsigned transaction envelope (base64 XDR); null for PAY intents.
+
+```ts
+xdr: string | null
+```
+
+### uri
+
+SEP-7 deep link (`tx` or `pay`).
+
+```ts
+uri: string
+```
+
+### qr
+
+QR code of the SEP-7 URI (PNG data URL).
+
+```ts
+qr: string
+```
+
+### txHash
+
+```ts
+txHash: string | null
+```
+
+### reference
+
+```ts
+reference: string | null
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: PaymentIntentData): this
+```
+
+### get
+
+Whether this is a SEP-7 `tx` intent (known source, has XDR).
+
+```ts
+get isTx(): boolean
+```
+
+### get
+
+Whether this is a SEP-7 `pay` intent (no source).
+
+```ts
+get isPay(): boolean
+```
+
+### get
+
+Whether the payment has settled on-chain.
+
+```ts
+get isSucceeded(): boolean
+```
+
+### get
+
+Whether the intent is still awaiting payment.
+
+```ts
+get isPending(): boolean
+```
+
+### get
+
+Human-readable asset label (`XLM` for native).
+
+```ts
+get assetLabel(): string
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch this intent from the API, returning a fresh instance.
+
+```ts
+fetch(): Promise<PaymentIntent>
+```
+
+**Returns** `Promise<PaymentIntent>`
+
+### edit()
+
+Update this intent (status / txHash / reference). Mutates and returns it.
+
+```ts
+edit(options: UpdatePaymentIntentOptions): Promise<this>
+```
+
+**Parameters**
+
+- `options` — `UpdatePaymentIntentOptions`
+
+**Returns** `Promise<this>`
+
+### validate()
+
+Validate a submitted transaction against this intent. On a match the status is finalized server-side and the webhook fires.
+
+```ts
+validate(txHash: string): Promise<ValidationOutcome>
+```
+
+**Parameters**
+
+- `txHash` — `string`
+
+**Returns** `Promise<ValidationOutcome>`
+
+### cancel()
+
+Mark this intent as cancelled.
+
+```ts
+cancel(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### delete()
+
+Delete this intent.
+
+```ts
+delete(): Promise<DeletedData>
+```
+
+**Returns** `Promise<DeletedData>`
+
+### toJSON()
+
+```ts
+toJSON(): PaymentIntentData
+```
+
+**Returns** `PaymentIntentData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

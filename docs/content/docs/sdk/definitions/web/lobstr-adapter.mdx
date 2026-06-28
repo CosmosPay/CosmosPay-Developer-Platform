@@ -1,0 +1,67 @@
+---
+title: "LobstrAdapter"
+description: "Wallet adapter for the LOBSTR wallet."
+---
+
+Wallet adapter for the LOBSTR wallet.
+
+## Constructor
+
+### LobstrAdapter
+
+```ts
+constructor(api?: LobstrApi | undefined)
+```
+
+**Parameters**
+
+- `api` _(optional)_ — `LobstrApi | undefined`
+
+## Properties
+
+### id
+
+```ts
+readonly id = "lobstr"
+```
+
+### name
+
+```ts
+readonly name = "LOBSTR"
+```
+
+## Methods
+
+### isAvailable()
+
+```ts
+isAvailable(): Promise<boolean>
+```
+
+**Returns** `Promise<boolean>`
+
+### getPublicKey()
+
+```ts
+getPublicKey(_network: NetworkConfig): Promise<string>
+```
+
+**Parameters**
+
+- `_network` — `NetworkConfig`
+
+**Returns** `Promise<string>`
+
+### signTransaction()
+
+```ts
+signTransaction(xdr: string, _params: SignParams): Promise<string>
+```
+
+**Parameters**
+
+- `xdr` — `string`
+- `_params` — `SignParams`
+
+**Returns** `Promise<string>`

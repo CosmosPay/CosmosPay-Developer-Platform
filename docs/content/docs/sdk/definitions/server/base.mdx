@@ -1,0 +1,64 @@
+---
+title: "Base"
+description: "Root of every API structure. Holds a back-reference to the {@link Client} so instances can perform their own actions (e.g. `paymentIntent.delete()`), and provides the `_patch`"
+---
+
+Root of every API structure. Holds a back-reference to the &#123;@link Client&#125; so instances can perform their own actions (e.g. `paymentIntent.delete()`), and provides the `_patch`/`toJSON` plumbing shared by all structures.
+
+## Properties
+
+### id
+
+```ts
+id: string
+```
+
+### member
+
+The client that instantiated this structure.
+
+```ts
+}> { readonly client: Client
+```
+
+### id
+
+Unique identifier of the resource.
+
+```ts
+id: string
+```
+
+### protected
+
+```ts
+protected constructor(client: Client, data: Data)
+```
+
+### protected
+
+Merge raw API data onto this instance. Subclasses override and call super.
+
+```ts
+protected _patch(data: Data): this
+```
+
+### abstract
+
+Return the raw API representation of this structure.
+
+```ts
+abstract toJSON(): Data
+```
+
+## Methods
+
+### valueOf()
+
+Allow `String(structure)` / template literals to resolve to the id.
+
+```ts
+valueOf(): string
+```
+
+**Returns** `string`

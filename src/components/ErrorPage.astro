@@ -1,0 +1,117 @@
+---
+// Branded error page (404 / 500 / …). Static — no React islands — so it renders reliably even
+// when something is broken. Themed via the cosmos.css variables loaded by CosmosLayout.
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+
+interface Props {
+  code: string | number;
+  title: string;
+  message: string;
+  lang?: string;
+}
+
+const { code, title, message, lang } = Astro.props;
+const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+---
+
+<CosmosLayout title={`${code} — ${title} · Cosmos Pay`} noindex={true} lang={locale}>
+  <main id="main" class="errp">
+    <div class="errp-inner">
+      <a class="errp-brand" href="/">
+        <span class="cosmos-mark" aria-hidden="true">
+          <img class="cm-dark" src="/logo-black.png" alt="" />
+          <img class="cm-light" src="/logo-white.png" alt="" />
+        </span>
+        Cosmos&nbsp;Pay
+      </a>
+      <div class="errp-code">{code}</div>
+      <h1 class="errp-title">{title}</h1>
+      <p class="errp-msg">{message}</p>
+      <div class="errp-actions">
+        <a class="errp-btn primary" href="/">Back to home</a>
+        <a class="errp-btn" href="/dashboard">Go to dashboard</a>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    .errp {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 40px 20px;
+      background: var(--surface, #fbfbfb);
+      color: var(--ink, #161616);
+      font-family: "Hanken Grotesk", system-ui, sans-serif;
+    }
+    .errp-inner {
+      text-align: center;
+      max-width: 480px;
+    }
+    .errp-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      font-weight: 800;
+      font-size: 19px;
+      letter-spacing: -0.03em;
+      color: var(--ink, #161616);
+      text-decoration: none;
+    }
+    .errp-brand .cosmos-mark {
+      width: 28px;
+      height: 28px;
+    }
+    .errp-code {
+      font-family: "Poppins", system-ui, sans-serif;
+      font-weight: 700;
+      font-size: clamp(72px, 18vw, 128px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: var(--violet, #6b47ff);
+    }
+    .errp-title {
+      margin: 10px 0;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink, #161616);
+    }
+    .errp-msg {
+      margin: 0 0 30px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--ink-2, #565656);
+    }
+    .errp-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .errp-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 11px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--line, #e2e2e2);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--ink, #161616);
+      text-decoration: none;
+      transition: background 0.15s ease, opacity 0.15s ease;
+    }
+    .errp-btn:hover {
+      background: var(--surface-2, #f2f2f2);
+    }
+    .errp-btn.primary {
+      background: var(--btn-bg, #161616);
+      border-color: var(--btn-bg, #161616);
+      color: #fff;
+    }
+    .errp-btn.primary:hover {
+      background: var(--btn-bg, #161616);
+      opacity: 0.9;
+    }
+  </style>
+</CosmosLayout>

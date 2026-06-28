@@ -1,0 +1,24 @@
+---
+title: API Reference
+description: The Cosmos Pay Payments REST API (OpenAPI). Endpoints are versioned under /v1 and authenticated with your secret API key.
+---
+
+The **Payments API** is a REST API for Stellar payment intents and the resources around them.
+All paths are versioned (`/v1/...`). Authenticate every request with your secret API key in the
+`Authorization` header:
+
+```http
+Authorization: Bearer <your-api-key>
+```
+
+Need a key? See [API keys](/api-keys). In practice you call the API through the
+[SDK](/sdk/server/overview), which sets this header for you.
+
+<Cards>
+  <Card title="Payment Intents" href="/api/payment-intents" />
+  <Card title="Webhooks" href="/api/webhooks" />
+  <Card title="Products" href="/api/products" />
+  <Card title="Customers" href="/api/customers" />
+  <Card title="Analytics" href="/api/analytics" />
+  <Card title="Health" href="/api/health" />
+</Cards>

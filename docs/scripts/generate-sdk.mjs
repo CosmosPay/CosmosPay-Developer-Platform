@@ -351,6 +351,13 @@ function renderCallable(m, heading, selfName) {
 }
 
 // --- Generate -----------------------------------------------------------------------------
+// The SDK docs are GENERATED from the external SDK repo (its llms/ + built dist/*.d.ts). That repo
+// only exists on dev/build machines — on a production box it's absent, and we DON'T want the docs
+// to depend on it. The generated content is committed, so here we just skip (leaving it in place).
+if (!fs.existsSync(SDK_LLMS)) {
+  console.warn(`[generate-sdk] SDK source not found at ${SDK_LLMS} — keeping the committed content/docs/sdk as-is.`);
+  process.exit(0);
+}
 const files = fs.readdirSync(SDK_LLMS).filter((f) => /^\d\d-.+\.md$/.test(f)).sort();
 if (!files.length) {
   console.error(`[generate-sdk] No NN-*.md files found in ${SDK_LLMS}`);

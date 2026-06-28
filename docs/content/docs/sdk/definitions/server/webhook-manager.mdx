@@ -1,0 +1,183 @@
+---
+title: "WebhookManager"
+description: "Manages webhook endpoints, their delivery audit trail, **and** the incoming event listener — `client.webhooks`. Registering endpoints (server-side CRUD):"
+---
+
+Manages webhook endpoints, their delivery audit trail, **and** the incoming event listener — `client.webhooks`. Registering endpoints (server-side CRUD):
+
+## Methods
+
+### create()
+
+Register a webhook endpoint (the returned instance carries the secret once).
+
+```ts
+create(options: CreateWebhookEndpointOptions): Promise<WebhookEndpoint>
+```
+
+**Parameters**
+
+- `options` — `CreateWebhookEndpointOptions`
+
+**Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
+
+### list()
+
+List the consumer's webhook endpoints.
+
+```ts
+list(): Promise<WebhookEndpoint[]>
+```
+
+**Returns** [`Promise<WebhookEndpoint[]>`](/sdk/definitions/server/webhook-endpoint)
+
+### fetch()
+
+Get a webhook endpoint by id.
+
+```ts
+fetch(id: string): Promise<WebhookEndpoint>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
+
+### update()
+
+Update a webhook endpoint (url/description/enabled/eventTypes).
+
+```ts
+update(id: string, options: UpdateWebhookEndpointOptions): Promise<WebhookEndpoint>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `UpdateWebhookEndpointOptions`
+
+**Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
+
+### delete()
+
+Delete a webhook endpoint.
+
+```ts
+delete(id: string): Promise<WebhookDeletedData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<WebhookDeletedData>`
+
+### rotateSecret()
+
+Rotate the signing secret (returns a new instance carrying the secret).
+
+```ts
+rotateSecret(id: string): Promise<WebhookEndpoint>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
+
+### ping()
+
+Send a test event to verify the endpoint.
+
+```ts
+ping(id: string): Promise<WebhookPingData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<WebhookPingData>`
+
+### fetchDeliveries()
+
+List delivery attempts for an endpoint (audit trail).
+
+```ts
+fetchDeliveries(id: string, options?: ListWebhookDeliveriesOptions): Promise<WebhookDeliveryPage>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` _(optional)_ — `ListWebhookDeliveriesOptions`
+
+**Returns** `Promise<WebhookDeliveryPage>`
+
+### redeliver()
+
+Manually re-send a past delivery.
+
+```ts
+redeliver(id: string, deliveryId: string): Promise<WebhookDelivery>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `deliveryId` — `string`
+
+**Returns** [`Promise<WebhookDelivery>`](/sdk/definitions/server/webhook-delivery)
+
+### process()
+
+Verify a raw incoming webhook request and dispatch it to the listeners registered via &#123;@link WebhookManager.on&#125;. Returns the parsed event. Emits, in order: the raw type (`PAYMENT_INTENT_SUCCEEDED`), the camelCase alias (`paymentIntentSucceeded`) and the catch-all `event`.
+
+```ts
+process(rawBody: string | Uint8Array, signatureHeader: string | null | undefined, options?: WebhookProcessOptions): WebhookEvent<PaymentIntentData>
+```
+
+**Parameters**
+
+- `rawBody` — `string | Uint8Array`
+- `signatureHeader` — `string | null | undefined`
+- `options` _(optional)_ — `WebhookProcessOptions`
+
+**Returns** `WebhookEvent<PaymentIntentData>`
+
+### createHandler()
+
+Build a Node.js `http`/`https` request handler that verifies the signature, dispatches the event to your listeners, and replies `200`/`400`.
+
+```ts
+createHandler(options?: WebhookHandlerOptions): (req: IncomingMessage, res: ServerResponse) => void
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `WebhookHandlerOptions`
+
+**Returns** `(req: IncomingMessage, res: ServerResponse) => void`
+
+### middleware()
+
+Express-style middleware. Expects the **raw** body (e.g. mounted with `express.raw({ type: '*​/*' })`). On success it attaches the parsed event to `req.cosmosEvent` and calls `next()`; on a bad signature it replies `400`.
+
+```ts
+middleware(options?: WebhookHandlerOptions): (req: RequestLike, res: ResponseLike, next: (err?: unknown) => void) => void
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `WebhookHandlerOptions`
+
+**Returns** `(req: RequestLike, res: ResponseLike, next: (err?: unknown) => void) => void`
+
+## Related
+
+- [WebhookEndpoint](/sdk/definitions/server/webhook-endpoint)
+- [WebhookDelivery](/sdk/definitions/server/webhook-delivery)
+- [BaseManager](/sdk/definitions/server/base-manager)

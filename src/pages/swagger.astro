@@ -1,0 +1,77 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import { apiDocsEnabled } from "@/lib/api-docs";
+
+// Environment-gated: dev-only by default (set API_DOCS_ENABLED to expose it elsewhere). When
+// off, show the branded 404 instead of the reference.
+if (!apiDocsEnabled) {
+  return Astro.rewrite("/404");
+}
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const envLabel = import.meta.env.DEV ? "development" : "enabled";
+---
+
+<CosmosLayout
+  title="API Reference — Cosmos Pay"
+  description="Interactive Swagger reference for the Cosmos Pay developer-platform API."
+  noindex={true}
+  lang={lang}
+>
+  <header class="swagger-bar">
+    <a class="brand" href="/">
+      <span class="cosmos-mark" aria-hidden="true">
+        <img class="cm-dark" src="/logo-black.png" alt="" />
+        <img class="cm-light" src="/logo-white.png" alt="" />
+      </span>
+      Cosmos&nbsp;Pay
+    </a>
+    <span class="swagger-tag">API reference · {envLabel}</span>
+    <a class="btn btn-dark btn-sm" href="/dashboard">Dashboard</a>
+  </header>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+  <main id="main">
+    <div id="swagger-ui"></div>
+  </main>
+
+  <script is:inline src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script is:inline>
+    window.addEventListener("load", () => {
+      window.SwaggerUIBundle({
+        url: "/api/openapi.json",
+        dom_id: "#swagger-ui",
+        deepLinking: true,
+        docExpansion: "list",
+        defaultModelsExpandDepth: 0,
+      });
+    });
+  </script>
+
+  <style>
+    .swagger-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 22px;
+      background: var(--surface, #fbfbfb);
+      border-bottom: 1px solid var(--line, #ececec);
+    }
+    .swagger-bar .swagger-tag {
+      margin-inline-start: auto;
+      font: 600 13px/1 "Hanken Grotesk", system-ui, sans-serif;
+      color: var(--ink-2, #565656);
+    }
+    .swagger-bar .cosmos-mark {
+      width: 26px;
+      height: 26px;
+    }
+    #swagger-ui {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+  </style>
+</CosmosLayout>

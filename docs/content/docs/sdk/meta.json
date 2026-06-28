@@ -1,0 +1,9 @@
+{
+  "title": "@cosmosapp/pay_sdk",
+  "description": "JavaScript / TypeScript SDK for Cosmos Pay.",
+  "pages": [
+    "server",
+    "web",
+    "definitions"
+  ]
+}

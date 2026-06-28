@@ -1,0 +1,67 @@
+---
+title: "Typed assets, wallets & addresses"
+description: "Typed catalogs of assets and wallets, plus address validators, for both testnet and mainnet."
+---
+
+The SDK ships typed, network-aware catalogs so you never hand-type an asset issuer or wallet id, plus validators for Stellar addresses.
+
+Small typed catalogs so you never paste the wrong issuer or a magic string. Plain
+strings still work everywhere. Exported from **both** entry points
+(`@cosmosapp/pay_sdk` and `@cosmosapp/pay_sdk/web`).
+
+## Assets
+
+```ts
+import { Assets, TestnetAssets, defineAsset, resolveAsset, isNativeAsset } from '@cosmosapp/pay_sdk';
+
+Assets.XLM;   // native lumens
+Assets.USDC;  // { code: 'USDC', issuer: 'GA5Z…' }  (Circle, mainnet — verified)
+Assets.EURC;  // { code: 'EURC', issuer: 'GDHU…' }
+
+// Custom asset (issuer/contract validated):
+const AQUA = defineAsset({ code: 'AQUA', issuer: 'GBNZ…', name: 'Aquarius' });
+
+await client.paymentIntents.createPay({ destination: 'G...', amount: '5', asset: AQUA });
+
+// Plain code + issuer also works:
+await client.paymentIntents.createPay({ destination: 'G...', amount: '5', assetCode: 'USDC', assetIssuer: 'G...' });
+```
+
+> ⚠️ Issuers are **network-specific**. `Assets.*` = mainnet; use `TestnetAssets.*`
+> (e.g. `TestnetAssets.USDC`) for testnet, matched to your `dv_` key.
+
+Helpers: `resolveAsset(ref)` → `{ code, issuer? }`; `isNativeAsset(ref)` → boolean.
+
+## Wallets
+
+```ts
+import { Wallets } from '@cosmosapp/pay_sdk/web';
+Wallets.FREIGHTER; Wallets.XBULL; Wallets.RABET; Wallets.LOBSTR; Wallets.ALBEDO;
+
+const wc = new WebClient({ preferredWallets: [Wallets.XBULL, Wallets.FREIGHTER] });
+await wc.pay(intent, { wallet: Wallets.FREIGHTER });
+```
+
+## Address book
+
+```ts
+import { addresses, resolveAddress, isStellarAddress, isMuxedAddress, isContractAddress, isAddress, assertAddress } from '@cosmosapp/pay_sdk';
+
+addresses.define('merchant', 'GC...PAYOUT');
+await client.paymentIntents.createPay({ destination: 'merchant', amount: '10' });
+
+resolveAddress('merchant'); // → 'GC...PAYOUT' (unknown values pass through unchanged)
+isStellarAddress('GC...');  // true
+isMuxedAddress('MA...');    // true
+isContractAddress('CA...'); // true
+isAddress('merchant');      // true
+assertAddress(value);       // throws on an invalid value
+```
+
+Raw `G…`, muxed `M…`, contract `C…` and federation addresses keep working as
+plain strings.
+
+## References
+
+- [WebClient](/sdk/definitions/web/web-client) — The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction
+

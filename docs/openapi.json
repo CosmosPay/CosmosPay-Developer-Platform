@@ -1,0 +1,2327 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/health/liveness": {
+      "get": {
+        "operationId": "HealthController_liveness_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/v1/health/readiness": {
+      "get": {
+        "operationId": "HealthController_readiness_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Readiness probe (checks the database)",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/v1/payment-intents/tx": {
+      "post": {
+        "operationId": "PaymentIntentsController_createTx_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTxPaymentIntentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TxPaymentIntentEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a SEP-7 `tx` intent (source known → unsigned XDR + tx URI + QR)",
+        "tags": [
+          "payment-intents"
+        ]
+      }
+    },
+    "/v1/payment-intents/pay": {
+      "post": {
+        "operationId": "PaymentIntentsController_createPay_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayPaymentIntentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPaymentIntentEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a SEP-7 `pay` intent (no source → pay URI + QR, no XDR)",
+        "tags": [
+          "payment-intents"
+        ]
+      }
+    },
+    "/v1/payment-intents": {
+      "get": {
+        "operationId": "PaymentIntentsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "SUBMITTED",
+                "SUCCEEDED",
+                "FAILED",
+                "CANCELLED",
+                "EXPIRED"
+              ]
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentIntentListEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the consumer's payment intents",
+        "tags": [
+          "payment-intents"
+        ]
+      }
+    },
+    "/v1/payment-intents/{id}": {
+      "get": {
+        "operationId": "PaymentIntentsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentIntentEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a payment intent by id",
+        "tags": [
+          "payment-intents"
+        ]
+      },
+      "patch": {
+        "operationId": "PaymentIntentsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaymentIntentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentIntentEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a payment intent (status / txHash / reference)",
+        "tags": [
+          "payment-intents"
+        ]
+      },
+      "delete": {
+        "operationId": "PaymentIntentsController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete a payment intent",
+        "tags": [
+          "payment-intents"
+        ]
+      }
+    },
+    "/v1/payment-intents/{id}/validate": {
+      "post": {
+        "operationId": "PaymentIntentsController_validate_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidatePaymentIntentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcomeEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Validate a submitted tx against the intent (tx success + destination + amount + memo); finalizes status and fires the event",
+        "tags": [
+          "payment-intents"
+        ]
+      }
+    },
+    "/v1/webhooks": {
+      "post": {
+        "operationId": "WebhooksController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookEndpointDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointWithSecretEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Register a webhook endpoint (returns the signing secret — shown once)",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "get": {
+        "operationId": "WebhooksController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookEndpointEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the consumer's webhook endpoints",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}": {
+      "get": {
+        "operationId": "WebhooksController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a webhook endpoint",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "patch": {
+        "operationId": "WebhooksController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhookEndpointDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a webhook endpoint (url/description/enabled/eventTypes)",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "delete": {
+        "operationId": "WebhooksController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeletedEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete a webhook endpoint",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}/rotate-secret": {
+      "post": {
+        "operationId": "WebhooksController_rotateSecret_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointWithSecretEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Rotate the signing secret (returns the new secret)",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}/ping": {
+      "post": {
+        "operationId": "WebhooksController_ping_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookPingEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Send a test event to verify the endpoint",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}/deliveries": {
+      "get": {
+        "operationId": "WebhooksController_listDeliveries_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "SUCCEEDED",
+                "FAILED"
+              ]
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryListEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List delivery attempts for an endpoint (audit trail)",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}/deliveries/{deliveryId}/redeliver": {
+      "post": {
+        "operationId": "WebhooksController_redeliver_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deliveryId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Manually re-send a past delivery",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/summary": {
+      "get": {
+        "operationId": "AnalyticsController_summary_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Aggregated overview for the consumer."
+          }
+        },
+        "summary": "Overview metrics: totals, settled volume, webhook health, 30-day series",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/v1/balances": {
+      "get": {
+        "operationId": "AnalyticsController_balances_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Balances per asset for the consumer."
+          }
+        },
+        "summary": "Settled (and pending) amount per asset",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/v1/logs": {
+      "get": {
+        "operationId": "AnalyticsController_apiLogs_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "API request log for the consumer."
+          }
+        },
+        "summary": "Recent API requests reaching the service (with details)",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/v1/logs/webhooks": {
+      "get": {
+        "operationId": "AnalyticsController_webhookLogs_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Webhook delivery log for the consumer."
+          }
+        },
+        "summary": "Recent webhook deliveries across all endpoints (with details)",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/v1/products": {
+      "post": {
+        "operationId": "ProductsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a product",
+        "tags": [
+          "products"
+        ]
+      },
+      "get": {
+        "operationId": "ProductsController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the consumer's products",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/v1/products/{id}": {
+      "get": {
+        "operationId": "ProductsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a product by id",
+        "tags": [
+          "products"
+        ]
+      },
+      "patch": {
+        "operationId": "ProductsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a product",
+        "tags": [
+          "products"
+        ]
+      },
+      "delete": {
+        "operationId": "ProductsController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDeletedEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete a product",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/v1/customers": {
+      "post": {
+        "operationId": "CustomersController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Create a customer",
+        "tags": [
+          "customers"
+        ]
+      },
+      "get": {
+        "operationId": "CustomersController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List the consumer's customers (with payment stats)",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
+    "/v1/customers/{id}": {
+      "get": {
+        "operationId": "CustomersController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get a customer by id",
+        "tags": [
+          "customers"
+        ]
+      },
+      "patch": {
+        "operationId": "CustomersController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Update a customer",
+        "tags": [
+          "customers"
+        ]
+      },
+      "delete": {
+        "operationId": "CustomersController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a customer",
+        "tags": [
+          "customers"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Cosmos Pay — Payments API",
+    "description": "Payments microservice (Stellar payment intents). Paths already include the version (`/v1/...`). Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "payment-intents",
+      "description": "Create, fetch, update, cancel and validate Stellar (SEP-7) payment intents."
+    },
+    {
+      "name": "webhooks",
+      "description": "Register endpoints, manage them, and inspect delivery attempts for payment events."
+    },
+    {
+      "name": "products",
+      "description": "CRUD for your product catalog."
+    },
+    {
+      "name": "customers",
+      "description": "CRUD for customers and their payment stats."
+    },
+    {
+      "name": "analytics",
+      "description": "Account summary, balances and operational logs."
+    },
+    {
+      "name": "health",
+      "description": "Liveness and readiness probes."
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://api.cosmospay.lat/cosmos-api",
+      "description": "Cosmos Pay API"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API key",
+        "description": "Your Cosmos Pay secret API key, sent as `Authorization: Bearer <apiKey>`."
+      }
+    },
+    "schemas": {
+      "CreateTxPaymentIntentDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Payer's Stellar account — the transaction source.",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Payee's Stellar account.",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount as a decimal string (max 7 decimals).",
+            "example": "120.1234567"
+          },
+          "assetCode": {
+            "type": "string",
+            "description": "Asset code. Omit (or \"XLM\"/\"native\") for native lumens.",
+            "example": "USDC"
+          },
+          "assetIssuer": {
+            "type": "string",
+            "description": "Issuer account for a non-native asset.",
+            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
+          },
+          "memo": {
+            "type": "string",
+            "description": "MEMO_ID (numeric uint64) for idempotency + on-chain identification. Auto-generated when omitted.",
+            "example": "123456789"
+          },
+          "msg": {
+            "type": "string",
+            "description": "SEP-7 `msg`: shown to the user in their wallet (≤ 300 chars).",
+            "example": "Order #24"
+          },
+          "callback": {
+            "type": "string",
+            "description": "SEP-7 `callback` where the wallet POSTs the signed XDR, e.g. `url:https://...`.",
+            "example": "url:https://merchant.example.com/sep7/callback"
+          }
+        },
+        "required": [
+          "source",
+          "destination",
+          "amount"
+        ]
+      },
+      "TxPaymentIntentEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TX",
+              "PAY"
+            ],
+            "example": "TX"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "destination": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "amount": {
+            "type": "string",
+            "example": "120.1234567"
+          },
+          "asset": {
+            "type": "string",
+            "example": "native"
+          },
+          "assetIssuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "memo": {
+            "type": "string",
+            "example": "123456789",
+            "description": "Mandatory MEMO_ID."
+          },
+          "msg": {
+            "type": "object",
+            "nullable": true,
+            "example": "Order #24"
+          },
+          "callback": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "xdr": {
+            "type": "string",
+            "description": "Unsigned transaction envelope (base64 XDR).",
+            "example": "AAAAAgAAAABx…(base64 XDR)…AAAAAAAAAAA="
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:tx?xdr=AAAAAgAAAABx…"
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…"
+          },
+          "txHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "reference": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "network",
+          "source",
+          "destination",
+          "amount",
+          "asset",
+          "assetIssuer",
+          "memo",
+          "msg",
+          "callback",
+          "xdr",
+          "uri",
+          "qr",
+          "txHash",
+          "reference",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreatePayPaymentIntentDto": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "Payee's Stellar account.",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount the destination should receive. Omit to let the user enter it (e.g. donations).",
+            "example": "120.1234567"
+          },
+          "assetCode": {
+            "type": "string",
+            "description": "Asset code the destination receives. Omit for native lumens (XLM).",
+            "example": "USD"
+          },
+          "assetIssuer": {
+            "type": "string",
+            "description": "Issuer account for a non-native asset.",
+            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
+          },
+          "memo": {
+            "type": "string",
+            "description": "MEMO_ID (numeric uint64) for idempotency + on-chain identification. Auto-generated when omitted.",
+            "example": "123456789"
+          },
+          "msg": {
+            "type": "string",
+            "description": "SEP-7 `msg`: shown to the user in their wallet (≤ 300 chars).",
+            "example": "pay me with lumens"
+          },
+          "callback": {
+            "type": "string",
+            "description": "SEP-7 `callback`, e.g. `url:https://...`.",
+            "example": "url:https://merchant.example.com/sep7/callback"
+          }
+        },
+        "required": [
+          "destination"
+        ]
+      },
+      "PayPaymentIntentEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TX",
+              "PAY"
+            ],
+            "example": "PAY"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "source": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "Always null for PAY."
+          },
+          "destination": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "amount": {
+            "type": "object",
+            "nullable": true,
+            "example": "120.1234567"
+          },
+          "asset": {
+            "type": "string",
+            "example": "native"
+          },
+          "assetIssuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "memo": {
+            "type": "string",
+            "example": "123456789",
+            "description": "Mandatory MEMO_ID."
+          },
+          "msg": {
+            "type": "object",
+            "nullable": true,
+            "example": "pay me with lumens"
+          },
+          "callback": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "xdr": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "Always null for PAY."
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567"
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…"
+          },
+          "txHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "reference": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "network",
+          "source",
+          "destination",
+          "amount",
+          "asset",
+          "assetIssuer",
+          "memo",
+          "msg",
+          "callback",
+          "xdr",
+          "uri",
+          "qr",
+          "txHash",
+          "reference",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaymentIntentEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TX",
+              "PAY"
+            ],
+            "example": "TX"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "source": {
+            "type": "object",
+            "nullable": true,
+            "example": "Greally…56charpublickey",
+            "description": "Payer account (null for PAY intents)."
+          },
+          "destination": {
+            "type": "string",
+            "example": "GASMERCHANT…56charpublickey"
+          },
+          "amount": {
+            "type": "object",
+            "nullable": true,
+            "example": "25.5"
+          },
+          "asset": {
+            "type": "string",
+            "example": "native",
+            "description": "Asset code, or \"native\" for XLM."
+          },
+          "assetIssuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "memo": {
+            "type": "string",
+            "example": "123456789",
+            "description": "Mandatory MEMO_ID (auto-generated if not provided)."
+          },
+          "msg": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "SEP-7 msg."
+          },
+          "callback": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "SEP-7 callback."
+          },
+          "xdr": {
+            "type": "object",
+            "nullable": true,
+            "description": "Unsigned transaction envelope (null for PAY intents).",
+            "example": "AAAAAgAAAABx…(base64 XDR)…AAAAAAAAAAA="
+          },
+          "uri": {
+            "type": "string",
+            "description": "SEP-7 deep link (`tx` for TX intents, `pay` for PAY intents).",
+            "example": "web+stellar:tx?xdr=AAAAAgAAAABx…"
+          },
+          "qr": {
+            "type": "string",
+            "description": "QR code of the SEP-7 URI (PNG data URL), derived on read.",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…"
+          },
+          "txHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "reference": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "network",
+          "source",
+          "destination",
+          "amount",
+          "asset",
+          "assetIssuer",
+          "memo",
+          "msg",
+          "callback",
+          "xdr",
+          "uri",
+          "qr",
+          "txHash",
+          "reference",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaymentIntentListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentIntentEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "ValidatePaymentIntentDto": {
+        "type": "object",
+        "properties": {
+          "txHash": {
+            "type": "string",
+            "description": "Hash of the submitted Stellar transaction to validate against this intent.",
+            "example": "3389e9f0d6b3e3f1c2a1..."
+          }
+        },
+        "required": [
+          "txHash"
+        ]
+      },
+      "ValidationOutcomeEntity": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "example": "SUCCEEDED"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why validation failed, when `valid` is false."
+          },
+          "paymentIntent": {
+            "$ref": "#/components/schemas/PaymentIntentEntity"
+          }
+        },
+        "required": [
+          "valid",
+          "status"
+        ]
+      },
+      "UpdatePaymentIntentDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ]
+          },
+          "txHash": {
+            "type": "string",
+            "description": "Stellar transaction hash once the signed tx is submitted.",
+            "example": "3389e9f0..."
+          },
+          "reference": {
+            "type": "string",
+            "description": "Merchant reference.",
+            "example": "order_1234"
+          }
+        }
+      },
+      "DeletedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "deleted"
+        ]
+      },
+      "CreateWebhookEndpointDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "HTTPS URL that will receive POSTed event notifications.",
+            "example": "https://integrator.example.com/webhooks/cosmos"
+          },
+          "description": {
+            "type": "string",
+            "example": "Production payment events"
+          },
+          "eventTypes": {
+            "type": "array",
+            "description": "Event types to subscribe to. Omit/empty to receive all events.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PAYMENT_INTENT_CREATED",
+                "PAYMENT_INTENT_UPDATED",
+                "PAYMENT_INTENT_SUCCEEDED",
+                "PAYMENT_INTENT_FAILED",
+                "PAYMENT_INTENT_CANCELLED",
+                "PAYMENT_INTENT_DELETED"
+              ]
+            }
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "WebhookEndpointWithSecretEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "we_9z8a1b0000abcd1234efgh"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://integrator.example.com/webhooks/cosmos"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true,
+            "example": "Production payment events"
+          },
+          "enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "eventTypes": {
+            "type": "array",
+            "example": [
+              "PAYMENT_INTENT_SUCCEEDED"
+            ],
+            "description": "Subscribed events; empty means all.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PAYMENT_INTENT_CREATED",
+                "PAYMENT_INTENT_UPDATED",
+                "PAYMENT_INTENT_SUCCEEDED",
+                "PAYMENT_INTENT_FAILED",
+                "PAYMENT_INTENT_CANCELLED",
+                "PAYMENT_INTENT_DELETED"
+              ]
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          },
+          "secret": {
+            "type": "string",
+            "description": "HMAC signing secret — shown once. Store it securely.",
+            "example": "whsec_3f9a1c…"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "description",
+          "enabled",
+          "eventTypes",
+          "createdAt",
+          "updatedAt",
+          "secret"
+        ]
+      },
+      "WebhookEndpointEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "we_9z8a1b0000abcd1234efgh"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://integrator.example.com/webhooks/cosmos"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true,
+            "example": "Production payment events"
+          },
+          "enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "eventTypes": {
+            "type": "array",
+            "example": [
+              "PAYMENT_INTENT_SUCCEEDED"
+            ],
+            "description": "Subscribed events; empty means all.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PAYMENT_INTENT_CREATED",
+                "PAYMENT_INTENT_UPDATED",
+                "PAYMENT_INTENT_SUCCEEDED",
+                "PAYMENT_INTENT_FAILED",
+                "PAYMENT_INTENT_CANCELLED",
+                "PAYMENT_INTENT_DELETED"
+              ]
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "description",
+          "enabled",
+          "eventTypes",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateWebhookEndpointDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://integrator.example.com/webhooks/cosmos"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Pause/resume deliveries to this endpoint."
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PAYMENT_INTENT_CREATED",
+                "PAYMENT_INTENT_UPDATED",
+                "PAYMENT_INTENT_SUCCEEDED",
+                "PAYMENT_INTENT_FAILED",
+                "PAYMENT_INTENT_CANCELLED",
+                "PAYMENT_INTENT_DELETED"
+              ]
+            }
+          }
+        }
+      },
+      "WebhookDeletedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "we_9z8a1b0000abcd1234efgh"
+          },
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "deleted"
+        ]
+      },
+      "WebhookPingEntity": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          },
+          "responseStatus": {
+            "type": "object",
+            "nullable": true,
+            "example": 200
+          },
+          "error": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          }
+        },
+        "required": [
+          "ok",
+          "responseStatus",
+          "error"
+        ]
+      },
+      "WebhookDeliveryEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "wd_9z8a1b0000abcd1234efgh"
+          },
+          "endpointId": {
+            "type": "string",
+            "example": "we_9z8a1b0000abcd1234efgh"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "PAYMENT_INTENT_CREATED",
+              "PAYMENT_INTENT_UPDATED",
+              "PAYMENT_INTENT_SUCCEEDED",
+              "PAYMENT_INTENT_FAILED",
+              "PAYMENT_INTENT_CANCELLED",
+              "PAYMENT_INTENT_DELETED"
+            ],
+            "example": "PAYMENT_INTENT_SUCCEEDED"
+          },
+          "eventId": {
+            "type": "string",
+            "example": "evt_2c3d4e5f-aaaa-bbbb-cccc-1234567890ab"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true,
+            "example": {
+              "id": "evt_2c3d…",
+              "type": "PAYMENT_INTENT_SUCCEEDED",
+              "createdAt": "2026-06-21T12:34:56.000Z",
+              "data": {
+                "id": "clx9z8a1b…",
+                "status": "SUCCEEDED"
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUCCEEDED",
+              "FAILED"
+            ],
+            "example": "SUCCEEDED"
+          },
+          "attempts": {
+            "type": "number",
+            "example": 1
+          },
+          "responseStatus": {
+            "type": "object",
+            "nullable": true,
+            "example": 200
+          },
+          "error": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "lastAttemptAt": {
+            "type": "object",
+            "nullable": true,
+            "example": "2026-06-21T12:34:57.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:57.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "endpointId",
+          "eventType",
+          "eventId",
+          "payload",
+          "status",
+          "attempts",
+          "responseStatus",
+          "error",
+          "lastAttemptAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WebhookDeliveryListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pro plan — monthly"
+          },
+          "description": {
+            "type": "string",
+            "example": "Full access, billed every month."
+          },
+          "amount": {
+            "type": "string",
+            "example": "49.00",
+            "description": "Decimal price (≤ 7 decimals). Omit for a customer-set amount."
+          },
+          "assetCode": {
+            "type": "string",
+            "example": "USDC",
+            "description": "Asset code the price is in. Omit for native lumens (XLM)."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recurring",
+              "one_time",
+              "link"
+            ],
+            "default": "one_time"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          },
+          "reference": {
+            "type": "string",
+            "example": "sku_pro_monthly"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ProductEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pro plan — monthly"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true,
+            "example": "Full access, billed every month."
+          },
+          "amount": {
+            "type": "object",
+            "nullable": true,
+            "example": "49.00"
+          },
+          "asset": {
+            "type": "string",
+            "example": "native",
+            "description": "Asset code, or \"native\" for XLM."
+          },
+          "kind": {
+            "type": "string",
+            "example": "one_time",
+            "enum": [
+              "recurring",
+              "one_time",
+              "link"
+            ]
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "reference": {
+            "type": "object",
+            "nullable": true,
+            "example": "sku_pro_monthly"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "amount",
+          "asset",
+          "kind",
+          "active",
+          "reference",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pro plan — monthly"
+          },
+          "description": {
+            "type": "string",
+            "example": "Full access, billed every month."
+          },
+          "amount": {
+            "type": "string",
+            "example": "49.00",
+            "description": "Decimal price (≤ 7 decimals). Omit for a customer-set amount."
+          },
+          "assetCode": {
+            "type": "string",
+            "example": "USDC",
+            "description": "Asset code the price is in. Omit for native lumens (XLM)."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recurring",
+              "one_time",
+              "link"
+            ],
+            "default": "one_time"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          },
+          "reference": {
+            "type": "string",
+            "example": "sku_pro_monthly"
+          }
+        }
+      },
+      "ProductDeletedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "deleted"
+        ]
+      },
+      "CreateCustomerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Acme Inc."
+          },
+          "alias": {
+            "type": "string",
+            "example": "Acme — billing"
+          },
+          "note": {
+            "type": "string",
+            "example": "VIP customer, net-30 terms."
+          },
+          "email": {
+            "type": "string",
+            "example": "billing@acme.com"
+          },
+          "account": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "Optional Stellar account to associate the customer with."
+          },
+          "reference": {
+            "type": "string",
+            "example": "cust_001"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateCustomerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Acme Inc."
+          },
+          "alias": {
+            "type": "string",
+            "example": "Acme — billing"
+          },
+          "note": {
+            "type": "string",
+            "example": "VIP customer, net-30 terms."
+          },
+          "email": {
+            "type": "string",
+            "example": "billing@acme.com"
+          },
+          "account": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "Optional Stellar account to associate the customer with."
+          },
+          "reference": {
+            "type": "string",
+            "example": "cust_001"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "apiKey": []
+    }
+  ]
+}

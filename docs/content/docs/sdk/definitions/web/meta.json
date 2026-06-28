@@ -1,0 +1,19 @@
+{
+  "title": "Web",
+  "description": "Browser-side classes.",
+  "pages": [
+    "freighter-adapter",
+    "xbull-adapter",
+    "rabet-adapter",
+    "lobstr-adapter",
+    "albedo-adapter",
+    "wallet-registry",
+    "web-client",
+    "cosmos-pay-web-error",
+    "wallet-not-found-error",
+    "wallet-error",
+    "stellar-sdk-required-error",
+    "intent-error",
+    "web-rest"
+  ]
+}

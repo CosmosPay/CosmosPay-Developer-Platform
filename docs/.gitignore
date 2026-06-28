@@ -25,10 +25,20 @@ yarn-error.log*
 .vercel
 next-env.d.ts
 
-# generated docs content (built from the sibling SDK + community-server repos)
-/content/docs/sdk/
-/content/docs/api/
-/openapi.json
+# Generated docs content is COMMITTED so the build never needs the external SDK / community-server
+# repos (their dist/*.d.ts + openapi.json). Refresh it by building locally where those repos are,
+# then commit content/docs/{sdk,api} + openapi.json. On a box without the repos, generate-sdk /
+# generate-api skip and the build uses this committed content.
+# Per-locale siblings are RE-APPLIED from content-i18n/ at build time (scripts/apply-translations
+# .mjs), so keep them out of git to avoid churn:
+/content/docs/**/*.es.mdx
+/content/docs/**/*.fr.mdx
+/content/docs/**/*.de.mdx
+/content/docs/**/*.pt.mdx
+/content/docs/api/meta.es.json
+/content/docs/api/meta.fr.json
+/content/docs/api/meta.de.json
+/content/docs/api/meta.pt.json
 
 # portal UI copied in by scripts/sync-portal-ui.mjs (single source of truth is ../src)
 /src/components/cosmos/
