@@ -1,0 +1,46 @@
+---
+title: "Installation"
+description: "Install @cosmosapp/pay_sdk, the optional Stellar peer dependency, and the ESM / CommonJS import styles."
+---
+
+Add the package to any Node.js project. Browser wallet support is an optional extra you only install when you actually need it.
+
+```bash
+npm install @cosmosapp/pay_sdk
+# or: pnpm add @cosmosapp/pay_sdk
+# or: yarn add @cosmosapp/pay_sdk
+```
+
+Requires **Node.js ≥ 18** (for global `fetch`). On older runtimes pass a `fetch`
+polyfill via the `fetch` client option.
+
+## Browser web client (optional peer dependency)
+
+The browser web client builds & submits Stellar transactions, so it needs the
+Stellar SDK (an optional peer dependency, lazy-imported when present):
+
+```bash
+npm install @cosmosapp/pay_sdk @stellar/stellar-sdk
+```
+
+## Importing
+
+```ts
+// ESM
+import { Client } from '@cosmosapp/pay_sdk';
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+```
+
+```js
+// CommonJS
+const { Client } = require('@cosmosapp/pay_sdk');
+```
+
+The package ships both ESM (`./dist/index.js`) and CJS (`./dist/index.cjs`) with
+full type declarations.
+
+## References
+
+- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+- [WebClient](/sdk/definitions/web/web-client) — The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction
+

@@ -1,0 +1,124 @@
+---
+title: "WebhookDelivery"
+description: "A single attempt to deliver an event to a webhook endpoint (audit record)."
+---
+
+A single attempt to deliver an event to a webhook endpoint (audit record).
+
+## Constructor
+
+### WebhookDelivery
+
+```ts
+constructor(client: Client, data: WebhookDeliveryData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `WebhookDeliveryData`
+
+## Properties
+
+### endpointId
+
+```ts
+endpointId: string
+```
+
+### eventType
+
+```ts
+eventType: WebhookEventType
+```
+
+### eventId
+
+```ts
+eventId: string
+```
+
+### payload
+
+```ts
+payload: Record<string, unknown>
+```
+
+### status
+
+```ts
+status: WebhookDeliveryStatus
+```
+
+### attempts
+
+```ts
+attempts: number
+```
+
+### responseStatus
+
+```ts
+responseStatus: number | null
+```
+
+### error
+
+```ts
+error: string | null
+```
+
+### lastAttemptAt
+
+```ts
+lastAttemptAt: Date | null
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: WebhookDeliveryData): this
+```
+
+### get
+
+```ts
+get isSucceeded(): boolean
+```
+
+## Methods
+
+### redeliver()
+
+Manually re-send this delivery.
+
+```ts
+redeliver(): Promise<WebhookDelivery>
+```
+
+**Returns** `Promise<WebhookDelivery>`
+
+### toJSON()
+
+```ts
+toJSON(): WebhookDeliveryData
+```
+
+**Returns** `WebhookDeliveryData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

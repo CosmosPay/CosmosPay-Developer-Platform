@@ -1,0 +1,67 @@
+---
+title: "AlbedoAdapter"
+description: "Wallet adapter for Albedo (web-based signing)."
+---
+
+Wallet adapter for Albedo (web-based signing).
+
+## Constructor
+
+### AlbedoAdapter
+
+```ts
+constructor(injected?: AlbedoIntent | undefined)
+```
+
+**Parameters**
+
+- `injected` _(optional)_ — `AlbedoIntent | undefined`
+
+## Properties
+
+### id
+
+```ts
+readonly id = "albedo"
+```
+
+### name
+
+```ts
+readonly name = "Albedo"
+```
+
+## Methods
+
+### isAvailable()
+
+```ts
+isAvailable(): Promise<boolean>
+```
+
+**Returns** `Promise<boolean>`
+
+### getPublicKey()
+
+```ts
+getPublicKey(_network: NetworkConfig): Promise<string>
+```
+
+**Parameters**
+
+- `_network` — `NetworkConfig`
+
+**Returns** `Promise<string>`
+
+### signTransaction()
+
+```ts
+signTransaction(xdr: string, params: SignParams): Promise<string>
+```
+
+**Parameters**
+
+- `xdr` — `string`
+- `params` — `SignParams`
+
+**Returns** `Promise<string>`

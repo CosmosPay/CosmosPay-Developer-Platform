@@ -1,0 +1,67 @@
+---
+title: "FreighterAdapter"
+description: "Wallet adapter for the Freighter browser extension."
+---
+
+Wallet adapter for the Freighter browser extension.
+
+## Constructor
+
+### FreighterAdapter
+
+```ts
+constructor(injected?: FreighterApi | undefined)
+```
+
+**Parameters**
+
+- `injected` _(optional)_ — `FreighterApi | undefined`
+
+## Properties
+
+### id
+
+```ts
+readonly id = "freighter"
+```
+
+### name
+
+```ts
+readonly name = "Freighter"
+```
+
+## Methods
+
+### isAvailable()
+
+```ts
+isAvailable(): Promise<boolean>
+```
+
+**Returns** `Promise<boolean>`
+
+### getPublicKey()
+
+```ts
+getPublicKey(_network: NetworkConfig): Promise<string>
+```
+
+**Parameters**
+
+- `_network` — `NetworkConfig`
+
+**Returns** `Promise<string>`
+
+### signTransaction()
+
+```ts
+signTransaction(xdr: string, params: SignParams): Promise<string>
+```
+
+**Parameters**
+
+- `xdr` — `string`
+- `params` — `SignParams`
+
+**Returns** `Promise<string>`

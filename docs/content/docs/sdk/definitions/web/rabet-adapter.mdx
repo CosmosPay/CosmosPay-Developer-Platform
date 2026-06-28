@@ -1,0 +1,75 @@
+---
+title: "RabetAdapter"
+description: "Wallet adapter for the Rabet wallet."
+---
+
+Wallet adapter for the Rabet wallet.
+
+## Constructor
+
+### RabetAdapter
+
+```ts
+constructor(injected?: RabetApi | undefined)
+```
+
+**Parameters**
+
+- `injected` _(optional)_ — `RabetApi | undefined`
+
+## Properties
+
+### id
+
+```ts
+readonly id = "rabet"
+```
+
+### name
+
+```ts
+readonly name = "Rabet"
+```
+
+## Methods
+
+### isAvailable()
+
+```ts
+isAvailable(): Promise<boolean>
+```
+
+**Returns** `Promise<boolean>`
+
+### getPublicKey()
+
+```ts
+getPublicKey(_network: NetworkConfig): Promise<string>
+```
+
+**Parameters**
+
+- `_network` — `NetworkConfig`
+
+**Returns** `Promise<string>`
+
+### signTransaction()
+
+```ts
+signTransaction(xdr: string, params: SignParams): Promise<string>
+```
+
+**Parameters**
+
+- `xdr` — `string`
+- `params` — `SignParams`
+
+**Returns** `Promise<string>`
+
+### disconnect()
+
+```ts
+disconnect(): Promise<void>
+```
+
+**Returns** `Promise<void>`

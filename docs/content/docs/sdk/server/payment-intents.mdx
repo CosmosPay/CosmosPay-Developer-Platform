@@ -1,0 +1,90 @@
+---
+title: "Payment intents"
+description: "Create, fetch, list, edit, cancel, delete and validate Stellar SEP-7 payment intents."
+---
+
+A payment intent represents one payment you want a user to make. It is the core resource of the API and the manager you will reach for most often.
+
+`client.paymentIntents` — Stellar SEP-7 intents. Two kinds:
+
+- **`pay` intent** — no source. The payer's wallet picks the source account.
+  Produces a `web+stellar:pay?...` URI + QR (no XDR).
+- **`tx` intent** — source known. Produces an unsigned XDR + `web+stellar:tx?...`
+  URI + QR.
+
+## Create
+
+```ts
+import { Assets } from '@cosmosapp/pay_sdk';
+
+// pay (no source)
+const pay = await client.paymentIntents.createPay({
+  destination: 'G...',          // required — payee (or an address-book name)
+  amount: '10',                 // optional — omit for an open amount (donations)
+  asset: Assets.USDC,           // typed asset → fills assetCode + verified issuer
+  // assetCode: 'USDC', assetIssuer: 'G...',  // …or set them explicitly
+  // omit asset entirely for native lumens (XLM)
+  memo: '123456789',            // optional MEMO_ID (uint64) — auto-generated if omitted
+  msg: 'Order #24',             // optional, ≤ 300 chars, shown in the wallet
+  callback: 'url:https://...',  // optional SEP-7 callback for the signed XDR
+});
+
+// tx (source known)
+const tx = await client.paymentIntents.createTx({
+  source: 'G...PAYER',          // required (extra vs pay)
+  destination: 'G...MERCHANT',
+  amount: '25.5',
+});
+console.log(tx.xdr, tx.uri, tx.qr);
+```
+
+> Amounts are **decimal strings**, max 7 decimals. Asset issuers are
+> network-specific (mainnet vs testnet).
+
+## Fetch / list
+
+```ts
+const intent = await client.paymentIntents.fetch('pi_123');
+
+const page = await client.paymentIntents.list({
+  status: 'SUCCEEDED', // optional filter (PaymentIntentStatus)
+  take: 50,            // page size, max 100, default 20
+  skip: 0,             // offset
+});
+// page → { items: PaymentIntent[], total, take, skip }
+```
+
+## Update / cancel / delete
+
+```ts
+await intent.edit({ reference: 'order_1234' }); // status / txHash / reference
+await intent.cancel();                          // → status CANCELLED
+await intent.delete();
+// manager forms: client.paymentIntents.update(id, {...}) / .delete(id)
+```
+
+## Validate (finalize)
+
+```ts
+const outcome = await intent.validate('<txHash>');
+// → { valid, status, reason, paymentIntent }
+if (outcome.valid) console.log('settled', outcome.status);
+// manager form: client.paymentIntents.validate(id, { txHash })
+```
+
+Validation checks tx success + destination + amount + memo, finalizes the status
+server-side, and fires the webhook.
+
+## Structure accessors (on a `PaymentIntent`)
+
+`id`, `kind`, `status`, `network`, `source`, `destination`, `amount`, `asset`,
+`assetIssuer`, `memo`, `msg`, `callback`, `xdr`, `uri`, `qr`, `txHash`,
+`reference`, `createdAt`, `updatedAt`. Helpers: `isTx`, `isPay`, `isSucceeded`,
+`isPending`, `assetLabel` (`'XLM'` for native). Methods: `fetch()`, `edit()`,
+`validate(txHash)`, `cancel()`, `delete()`, `toJSON()`.
+
+## References
+
+- [Assets](/sdk/web/assets-wallets-addresses) — Typed asset / wallet catalog or address helper.
+- [PaymentIntent](/sdk/definitions/server/payment-intent) — A Stellar SEP-7 payment intent
+

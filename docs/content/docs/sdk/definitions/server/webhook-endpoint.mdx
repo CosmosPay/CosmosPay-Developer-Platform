@@ -1,0 +1,194 @@
+---
+title: "WebhookEndpoint"
+description: "A registered webhook endpoint. Note: the signing `secret` is only ever present on the instance returned by `create()` / `rotateSecret()` — list/get responses never include it."
+---
+
+A registered webhook endpoint. Note: the signing `secret` is only ever present on the instance returned by `create()` / `rotateSecret()` — list/get responses never include it.
+
+## Constructor
+
+### WebhookEndpoint
+
+```ts
+constructor(client: Client, data: WebhookEndpointData | WebhookEndpointWithSecretData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `WebhookEndpointData | WebhookEndpointWithSecretData`
+
+## Properties
+
+### url
+
+```ts
+url: string
+```
+
+### description
+
+```ts
+description: string | null
+```
+
+### enabled
+
+```ts
+enabled: boolean
+```
+
+### eventTypes
+
+```ts
+eventTypes: WebhookEventType[]
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### secret
+
+HMAC signing secret — only set on create/rotate responses.
+
+```ts
+readonly secret: string | null
+```
+
+### protected
+
+```ts
+protected _patch(data: WebhookEndpointData | WebhookEndpointWithSecretData): this
+```
+
+### get
+
+Whether the endpoint receives all events (empty subscription).
+
+```ts
+get receivesAllEvents(): boolean
+```
+
+### deleted
+
+```ts
+deleted: boolean
+```
+
+### member
+
+```ts
+}>
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch this endpoint.
+
+```ts
+fetch(): Promise<WebhookEndpoint>
+```
+
+**Returns** `Promise<WebhookEndpoint>`
+
+### edit()
+
+Update url/description/enabled/eventTypes. Mutates and returns this.
+
+```ts
+edit(options: UpdateWebhookEndpointOptions): Promise<this>
+```
+
+**Parameters**
+
+- `options` — `UpdateWebhookEndpointOptions`
+
+**Returns** `Promise<this>`
+
+### disable()
+
+Pause deliveries to this endpoint.
+
+```ts
+disable(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### enable()
+
+Resume deliveries to this endpoint.
+
+```ts
+enable(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### rotateSecret()
+
+Rotate the signing secret (returns a new instance carrying the secret).
+
+```ts
+rotateSecret(): Promise<WebhookEndpoint>
+```
+
+**Returns** `Promise<WebhookEndpoint>`
+
+### ping()
+
+Send a test event to verify the endpoint.
+
+```ts
+ping(): Promise<WebhookPingData>
+```
+
+**Returns** `Promise<WebhookPingData>`
+
+### fetchDeliveries()
+
+List delivery attempts for this endpoint.
+
+```ts
+fetchDeliveries(options?: ListWebhookDeliveriesOptions): Promise<WebhookDeliveryPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListWebhookDeliveriesOptions`
+
+**Returns** `Promise<WebhookDeliveryPage>`
+
+### delete()
+
+Delete this endpoint.
+
+```ts
+delete(): Promise<{ id: string
+```
+
+**Returns** `Promise<{ id: string`
+
+### toJSON()
+
+```ts
+toJSON(): WebhookEndpointData
+```
+
+**Returns** `WebhookEndpointData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

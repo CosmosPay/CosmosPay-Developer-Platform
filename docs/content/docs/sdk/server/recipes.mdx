@@ -1,0 +1,100 @@
+---
+title: "Recipes"
+description: "Practical end-to-end recipes: checkout, donations, idempotent webhooks, reconciliation and testnet/mainnet."
+---
+
+Copy-paste solutions for common scenarios, assembled from the pieces documented across the rest of these docs.
+
+Copy-paste end-to-end patterns. All server snippets assume:
+
+```ts
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+```
+
+## 1. Checkout (server creates, browser pays, webhook confirms)
+
+```ts
+// server: create the intent for an order
+export async function startCheckout(orderId: string, total: string) {
+  const intent = await client.paymentIntents.createPay({
+    destination: process.env.MERCHANT_ACCOUNT,
+    amount: total,
+    asset: Assets.USDC,
+    reference: orderId,           // ties the intent to your order
+    msg: `Order ${orderId}`,
+  });
+  return intent.toJSON();         // → send to the browser
+}
+```
+
+```ts
+// browser: complete it with the user's wallet
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+const { txHash } = await new WebClient().pay(intentPayload);
+await fetch('/api/confirm', { method: 'POST', body: JSON.stringify({ id: intentPayload.id, txHash }) });
+```
+
+```ts
+// server: fulfill on the webhook (don't trust the browser alone)
+client.webhooks.on('paymentIntentSucceeded', async (event) => {
+  await markOrderPaid(event.data.reference, event.data.id);
+});
+```
+
+## 2. Donation / tip jar (open amount)
+
+```ts
+const intent = await client.paymentIntents.createPay({
+  destination: process.env.MERCHANT_ACCOUNT,
+  asset: Assets.USDC,   // no amount → the wallet asks the user
+  msg: 'Support us 💜',
+});
+// browser: await new WebClient().pay(intent, { amount: enteredAmount });
+```
+
+## 3. Idempotent webhook handling
+
+```ts
+const processed = new Set<string>(); // use your DB in production
+client.webhooks.on('event', (event) => {
+  if (processed.has(event.id)) return; // event.id is stable — dedupe on it
+  processed.add(event.id);
+  handle(event);
+});
+```
+
+## 4. Reconcile a payment server-side
+
+```ts
+// You received a txHash out-of-band (e.g. polled the browser). Finalize it:
+const outcome = await client.paymentIntents.validate(intentId, { txHash });
+if (!outcome.valid) {
+  console.warn('payment not valid:', outcome.reason); // amount/destination/memo mismatch
+}
+```
+
+## 5. Testnet vs mainnet
+
+```ts
+import { Assets, TestnetAssets } from '@cosmosapp/pay_sdk';
+// dv_ key → testnet → use TestnetAssets.USDC
+// prod_ key → mainnet → use Assets.USDC
+const asset = process.env.COSMOS_PAY_API_KEY.startsWith('prod_') ? Assets.USDC : TestnetAssets.USDC;
+```
+
+## 6. Catalog: products + customers
+
+```ts
+const product = await client.products.create({ name: 'Pro', amount: '49.00', assetCode: 'USDC', kind: 'recurring' });
+const customer = await client.customers.create({ name: 'Acme', email: 'billing@acme.com', account: 'G...' });
+// then create intents referencing the customer's account as destination/source.
+```
+
+## References
+
+- [Assets](/sdk/web/assets-wallets-addresses) — Typed asset / wallet catalog or address helper.
+- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+- [TestnetAssets](/sdk/web/assets-wallets-addresses) — Typed asset / wallet catalog or address helper.
+- [WebClient](/sdk/definitions/web/web-client) — The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction
+

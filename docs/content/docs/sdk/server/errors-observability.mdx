@@ -1,0 +1,64 @@
+---
+title: "Error handling & observability"
+description: "The error classes the SDK throws, its retry behaviour, and the telemetry events you can hook into."
+---
+
+Everything the SDK can throw is a typed error you can catch, and every network call emits telemetry you can observe.
+
+## Errors
+
+```ts
+import { CosmosPayAPIError, CosmosPayRequestError } from '@cosmosapp/pay_sdk';
+
+try {
+  await client.paymentIntents.fetch('missing');
+} catch (err) {
+  if (err instanceof CosmosPayAPIError) {
+    // server responded with an error status
+    console.error(err.status, err.code, err.body); // e.g. 404
+  } else if (err instanceof CosmosPayRequestError) {
+    // no usable response — network / TLS / timeout / offline
+    console.error('Network/timeout:', err.cause);
+  } else {
+    throw err;
+  }
+}
+```
+
+- `CosmosPayAPIError` — the API replied with 4xx/5xx. Fields: `status`, `code`, `body`.
+- `CosmosPayRequestError` — the request never completed. Field: `cause`.
+- Web client adds: `CosmosPayWebError`, `WalletNotFoundError`, `WalletError`
+  (user rejected / locked), `StellarSdkRequiredError`, `IntentError`. The API
+  error classes are re-exported from `/web` too, so `catch` works across entries.
+- Webhook signature failures throw `WebhookSignatureError`.
+
+### Retries
+
+Transient failures (network errors, `408`, `429`, `5xx`) are retried
+automatically — default **2** retries, honoring `Retry-After`. Tune via
+`new Client({ retries, timeout })`.
+
+## Observability
+
+The client re-emits REST telemetry:
+
+```ts
+client.on('request',     ({ method, url, attempt }) => {});
+client.on('response',    ({ method, url, status, attempt }) => {});
+client.on('rateLimited', ({ method, url, attempt }) => {});
+client.on('debug',       (message) => {});
+```
+
+Wire these into your logger/APM to trace or meter every request.
+
+## References
+
+- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+- [CosmosPayWebError](/sdk/definitions/web/cosmos-pay-web-error) — Base class for every error thrown by `@cosmosapp/pay_sdk/web`.
+- [IntentError](/sdk/definitions/web/intent-error) — The intent / SEP-7 request could not be interpreted or is missing data.
+- [REST](/sdk/definitions/server/rest) — The HTTP layer
+- [StellarSdkRequiredError](/sdk/definitions/web/stellar-sdk-required-error) — Building a `pay` transaction (or submitting to Horizon) requires the Stellar SDK, which is an optional peer dependency
+- [WalletError](/sdk/definitions/web/wallet-error) — A wallet was found but the operation failed (user rejected, locked, etc.).
+- [WalletNotFoundError](/sdk/definitions/web/wallet-not-found-error) — No compatible Stellar wallet could be detected in the current environment.
+- [WebhookSignatureError](/sdk/definitions/server/webhook-signature-error) — Thrown when a webhook signature fails verification.
+

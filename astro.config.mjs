@@ -140,6 +140,11 @@ export default defineConfig({
       // Comma-separated plan ids offered for self-selection (onboarding + plan modal),
       // e.g. "community". Empty = all plans. The first entry is the default plan.
       ENABLED_PLANS: envField.string({ context: 'server', access: 'public', optional: true, default: '' }),
+      // --- API reference (Swagger) ---
+      // Exposes the portal's own API reference UI at /swagger (+ the /api/openapi.json spec). It's
+      // a developer/internal tool, so it's ON in development and OFF in production by default — set
+      // this true to also expose it in a given (e.g. staging) environment.
+      API_DOCS_ENABLED: envField.boolean({ context: 'server', access: 'public', optional: true, default: false }),
       // --- Analytics ---
       // Google Analytics 4 Measurement ID (e.g. "G-XXXXXXXXXX"). Exposed to the browser.
       // When empty, the analytics snippet is not injected (no tracking in local dev).

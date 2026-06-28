@@ -1,0 +1,80 @@
+---
+title: "ProductManager"
+description: "Manages products / prices — `client.products`."
+---
+
+Manages products / prices — `client.products`.
+
+## Methods
+
+### create()
+
+Create a product.
+
+```ts
+create(options: CreateProductOptions): Promise<Product>
+```
+
+**Parameters**
+
+- `options` — `CreateProductOptions`
+
+**Returns** [`Promise<Product>`](/sdk/definitions/server/product)
+
+### list()
+
+List the consumer's products.
+
+```ts
+list(): Promise<Product[]>
+```
+
+**Returns** [`Promise<Product[]>`](/sdk/definitions/server/product)
+
+### fetch()
+
+Get a product by id.
+
+```ts
+fetch(id: string): Promise<Product>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<Product>`](/sdk/definitions/server/product)
+
+### update()
+
+Update a product.
+
+```ts
+update(id: string, options: UpdateProductOptions): Promise<Product>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `UpdateProductOptions`
+
+**Returns** [`Promise<Product>`](/sdk/definitions/server/product)
+
+### delete()
+
+Delete a product.
+
+```ts
+delete(id: string): Promise<ProductDeletedData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<ProductDeletedData>`
+
+## Related
+
+- [Product](/sdk/definitions/server/product)
+- [BaseManager](/sdk/definitions/server/base-manager)

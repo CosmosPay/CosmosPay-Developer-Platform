@@ -41,6 +41,14 @@ const TAGS = [
   { name: 'health', title: 'Health', description: 'Liveness and readiness probes.' },
 ];
 
+// The API reference is GENERATED from the external community-server's openapi.json. That repo is
+// only on dev/build machines; on a production box it's absent and we don't want the docs to depend
+// on it. The generated content/docs/api + openapi.json are committed, so just skip here.
+if (!fs.existsSync(SRC)) {
+  console.warn(`[generate-api] OpenAPI source not found at ${SRC} — keeping the committed content/docs/api + openapi.json as-is.`);
+  process.exit(0);
+}
+
 const spec = JSON.parse(fs.readFileSync(SRC, 'utf8'));
 spec.tags = TAGS.map((t) => ({ name: t.name, description: t.description }));
 if (!Array.isArray(spec.servers) || spec.servers.length === 0) {

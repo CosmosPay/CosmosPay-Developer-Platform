@@ -1,0 +1,18 @@
+{
+  "title": "Serveur",
+  "description": "@cosmosapp/pay_sdk — le client côté serveur.",
+  "pages": [
+    "overview",
+    "installation",
+    "authentication",
+    "quickstart",
+    "client",
+    "payment-intents",
+    "webhooks",
+    "products-customers",
+    "analytics-health",
+    "errors-observability",
+    "configuration",
+    "recipes"
+  ]
+}

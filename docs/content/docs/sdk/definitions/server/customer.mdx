@@ -1,0 +1,168 @@
+---
+title: "Customer"
+description: "A customer record, optionally enriched with on-chain payment stats."
+---
+
+A customer record, optionally enriched with on-chain payment stats.
+
+## Constructor
+
+### Customer
+
+```ts
+constructor(client: Client, data: CustomerData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `CustomerData`
+
+## Properties
+
+### consumerId
+
+```ts
+consumerId: string
+```
+
+### name
+
+```ts
+name: string
+```
+
+### alias
+
+```ts
+alias: string | null
+```
+
+### note
+
+```ts
+note: string | null
+```
+
+### email
+
+```ts
+email: string | null
+```
+
+### account
+
+Optional Stellar account associated with the customer.
+
+```ts
+account: string | null
+```
+
+### reference
+
+```ts
+reference: string | null
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### payments
+
+Number of payment intents from this customer's account (list view only).
+
+```ts
+payments: number | null
+```
+
+### succeeded
+
+Number of succeeded payments (list view only).
+
+```ts
+succeeded: number | null
+```
+
+### total
+
+Total settled amount as a decimal string (list view only).
+
+```ts
+total: string | null
+```
+
+### protected
+
+```ts
+protected _patch(data: CustomerData): this
+```
+
+### deleted
+
+```ts
+deleted: boolean
+```
+
+### member
+
+```ts
+}>
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch this customer.
+
+```ts
+fetch(): Promise<Customer>
+```
+
+**Returns** `Promise<Customer>`
+
+### edit()
+
+Update this customer. Mutates and returns this.
+
+```ts
+edit(options: UpdateCustomerOptions): Promise<this>
+```
+
+**Parameters**
+
+- `options` — `UpdateCustomerOptions`
+
+**Returns** `Promise<this>`
+
+### delete()
+
+Delete this customer.
+
+```ts
+delete(): Promise<{ id: string
+```
+
+**Returns** `Promise<{ id: string`
+
+### toJSON()
+
+```ts
+toJSON(): CustomerData
+```
+
+**Returns** `CustomerData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

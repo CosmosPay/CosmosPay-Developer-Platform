@@ -1,0 +1,69 @@
+---
+title: "Quickstart"
+description: "The smallest end-to-end flow: create a payment intent, complete it in the wallet, and validate the transaction."
+---
+
+If you just want to see a payment work end to end, start here. The first example is the shortest possible integration; the second shows the realistic server-creates / browser-completes split.
+
+```ts
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+
+// 1. Create a SEP-7 `pay` intent (no source → pay URI + QR).
+const intent = await client.paymentIntents.createPay({
+  destination: 'GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO',
+  amount: '120.1234567',
+  asset: Assets.USDC, // fills the verified mainnet issuer for you
+  msg: 'Order #24',
+});
+
+console.log(intent.uri); // web+stellar:pay?destination=...
+console.log(intent.qr);  // data:image/png;base64,...  (render this)
+
+// 2. After the payer submits a transaction, validate it.
+const outcome = await intent.validate('<txHash>');
+if (outcome.valid) console.log('Settled!', outcome.status);
+```
+
+## Full split (server creates, browser completes)
+
+```ts
+// ── server.ts ──────────────────────────────────────────────────────
+import { Client, Assets } from '@cosmosapp/pay_sdk';
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+
+export async function createIntent() {
+  const intent = await client.paymentIntents.createPay({
+    destination: 'G...MERCHANT',
+    amount: '10',
+    asset: Assets.USDC,
+  });
+  return intent.toJSON(); // send this payload to the browser
+}
+
+export function confirm(intentId: string, txHash: string) {
+  return client.paymentIntents.validate(intentId, { txHash });
+}
+```
+
+```ts
+// ── browser.ts ─────────────────────────────────────────────────────
+import { WebClient } from '@cosmosapp/pay_sdk/web';
+
+const intent = await fetch('/api/create-intent', { method: 'POST' }).then((r) => r.json());
+const { txHash, account, wallet } = await new WebClient().pay(intent);
+
+await fetch('/api/confirm', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ intentId: intent.id, txHash }),
+});
+```
+
+## References
+
+- [Assets](/sdk/web/assets-wallets-addresses) — Typed asset / wallet catalog or address helper.
+- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+- [WebClient](/sdk/definitions/web/web-client) — The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction
+

@@ -1,0 +1,36 @@
+---
+title: "Configuration reference"
+description: "The full option reference and the advanced overrides for self-hosting the gateway."
+---
+
+Most integrations need none of this. It documents every option and the advanced overrides for self-hosting or local development.
+
+```ts
+new Client({
+  apiKey: 'prod_xxx',            // required — the only thing you normally set
+  webhookSecret: 'whsec_...',    // default secret for the webhook listener
+  timeout: 30_000,               // ms (default 30000)
+  retries: 2,                    // network errors / 429 / 5xx (default 2)
+  headers: { 'X-Trace': 'abc' }, // extra headers on every request
+  fetch: customFetch,            // custom fetch implementation
+
+  // Advanced / internal — pre-filled from Client.shared, rarely overridden:
+  baseURL: 'https://api.cosmospay.lat/cosmos-api', // gateway URL (default)
+  version: 'v1',                 // route prefix
+});
+```
+
+## Environment variables (convention)
+
+The SDK reads nothing from the environment itself — you pass values in. Common
+convention used across the docs/examples:
+
+| Var | Used for |
+| --- | -------- |
+| `COSMOS_PAY_API_KEY` | `new Client({ apiKey })` |
+| `COSMOS_WEBHOOK_SECRET` | `new Client({ webhookSecret })` / handler `{ secret }` |
+
+## References
+
+- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+

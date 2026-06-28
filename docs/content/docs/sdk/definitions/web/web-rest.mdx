@@ -1,0 +1,99 @@
+---
+title: "WebREST"
+description: "The browser-side HTTP layer the web client uses to talk to the Cosmos Pay gateway."
+---
+
+The browser-side HTTP layer the web client uses to talk to the Cosmos Pay gateway.
+
+## Constructor
+
+### WebREST
+
+```ts
+constructor(options: WebRESTOptions)
+```
+
+**Parameters**
+
+- `options` — `WebRESTOptions`
+
+## Properties
+
+### baseURL
+
+```ts
+baseURL: string
+```
+
+### version
+
+```ts
+readonly version: string
+```
+
+## Methods
+
+### setApiKey()
+
+```ts
+setApiKey(apiKey: string): this
+```
+
+**Parameters**
+
+- `apiKey` — `string`
+
+**Returns** `this`
+
+### get()
+
+```ts
+get<T>(path: string, options?: WebRequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `path` — `string`
+- `options` _(optional)_ — `WebRequestOptions`
+
+**Returns** `Promise<T>`
+
+### post()
+
+```ts
+post<T>(path: string, options?: WebRequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `path` — `string`
+- `options` _(optional)_ — `WebRequestOptions`
+
+**Returns** `Promise<T>`
+
+### patch()
+
+```ts
+patch<T>(path: string, options?: WebRequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `path` — `string`
+- `options` _(optional)_ — `WebRequestOptions`
+
+**Returns** `Promise<T>`
+
+### request()
+
+```ts
+request<T>(method: string, path: string, options?: WebRequestOptions): Promise<T>
+```
+
+**Parameters**
+
+- `method` — `string`
+- `path` — `string`
+- `options` _(optional)_ — `WebRequestOptions`
+
+**Returns** `Promise<T>`

@@ -1,0 +1,54 @@
+---
+title: "HealthManager"
+description: "Service health probes — `client.health`. These routes are public (they don't require an authenticated consumer)."
+---
+
+Service health probes — `client.health`. These routes are public (they don't require an authenticated consumer).
+
+## Constructor
+
+### HealthManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### liveness()
+
+Liveness probe — resolves when the service is up.
+
+```ts
+liveness(): Promise<boolean>
+```
+
+**Returns** `Promise<boolean>`
+
+### readiness()
+
+Readiness probe (checks the database). Returns the health report.
+
+```ts
+readiness(): Promise<HealthCheckData>
+```
+
+**Returns** `Promise<HealthCheckData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

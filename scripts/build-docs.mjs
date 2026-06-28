@@ -2,8 +2,10 @@
 // portal's public/docs, so the portal serves the documentation at dev.cosmospay.lat/docs.
 //
 // The docs build (docs/package.json `prebuild`) regenerates the SDK + API content from the
-// sibling repos and syncs the shared navbar before `next build`. Output lands in docs/out
-// with every route/asset prefixed by /docs (next.config basePath), so we copy it verbatim.
+// external repos WHEN THEY'RE PRESENT (otherwise it keeps the committed content/docs/{sdk,api} +
+// openapi.json as-is — see generate-sdk/generate-api), syncs the shared navbar, then `next build`.
+// So this always builds: on a production box (no external repos) it builds from the committed
+// content. Output lands in docs/out (every route/asset prefixed by /docs via basePath), copied verbatim.
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';

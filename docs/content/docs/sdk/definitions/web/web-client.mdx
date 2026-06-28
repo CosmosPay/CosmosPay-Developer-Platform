@@ -1,0 +1,196 @@
+---
+title: "WebClient"
+description: "The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key."
+---
+
+The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key.
+
+## Constructor
+
+### WebClient
+
+```ts
+constructor(options?: WebClientOptions)
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `WebClientOptions`
+
+## Properties
+
+### wallets
+
+The wallet adapter registry (auto-detection + custom registration).
+
+```ts
+readonly wallets: WalletRegistry
+```
+
+**Type** [`WalletRegistry`](/sdk/definitions/web/wallet-registry)
+
+### connection
+
+The most recent successful connection (wallet + address + network).
+
+```ts
+connection: ConnectResult | null
+```
+
+### connect
+
+Auto-detect a wallet and connect, returning the account + network. You can skip this and call &#123;@link pay&#125; directly — it connects on demand.
+
+```ts
+connect(options?: { wallet?: WalletId
+```
+
+### network
+
+```ts
+network?: StellarNetwork
+```
+
+### member
+
+```ts
+}): Promise<ConnectResult>
+```
+
+### source
+
+```ts
+source: string
+```
+
+### intent
+
+```ts
+intent: NormalizedIntent
+```
+
+### network
+
+```ts
+network: NetworkConfig
+```
+
+### member
+
+```ts
+}>
+```
+
+## Methods
+
+### getAvailableWallets()
+
+Probe and list wallets, flagging which are currently available.
+
+```ts
+getAvailableWallets(): Promise<WalletInfo[]>
+```
+
+**Returns** `Promise<WalletInfo[]>`
+
+### registerWallet()
+
+Register a custom wallet adapter (WalletConnect, Ledger, …).
+
+```ts
+registerWallet(adapter: WalletAdapter, prepend?: boolean): this
+```
+
+**Parameters**
+
+- `adapter` — `WalletAdapter`
+- `prepend` _(optional)_ — `boolean`
+
+**Returns** `this`
+
+### disconnect()
+
+Forget the current connection (and disconnect the adapter if it supports it).
+
+```ts
+disconnect(): Promise<void>
+```
+
+**Returns** `Promise<void>`
+
+### pay()
+
+The one-call happy path: detect a wallet, adapt the intent into a transaction, sign it, and (unless told otherwise) broadcast it. Works for both `tx` intents (signs the returned XDR) and `pay` intents (builds the payment from the connected account).
+
+```ts
+pay(input: PayableInput, options?: PayOptions): Promise<PayResult>
+```
+
+**Parameters**
+
+- `input` — `PayableInput`
+- `options` _(optional)_ — `PayOptions`
+
+**Returns** `Promise<PayResult>`
+
+### buildTransaction()
+
+Adapt an intent into an unsigned transaction without signing it. Useful when you want to inspect/confirm the XDR before prompting the wallet.
+
+```ts
+buildTransaction(input: PayableInput, options?: PayOptions): Promise<{ xdr: string
+```
+
+**Parameters**
+
+- `input` — `PayableInput`
+- `options` _(optional)_ — `PayOptions`
+
+**Returns** `Promise<{ xdr: string`
+
+### createPay()
+
+Create a `pay` intent directly from the browser. Requires a browser-safe `apiKey` (trusted environments only). Accepts typed assets (`Assets.USDC`) and named addresses.
+
+```ts
+createPay(options: CreatePayPaymentIntentOptions): Promise<PaymentIntentData>
+```
+
+**Parameters**
+
+- `options` — `CreatePayPaymentIntentOptions`
+
+**Returns** `Promise<PaymentIntentData>`
+
+### createTx()
+
+Create a `tx` intent directly from the browser. Requires a browser-safe `apiKey` (trusted environments only). Accepts typed assets (`Assets.USDC`) and named addresses.
+
+```ts
+createTx(options: CreateTxPaymentIntentOptions): Promise<PaymentIntentData>
+```
+
+**Parameters**
+
+- `options` — `CreateTxPaymentIntentOptions`
+
+**Returns** `Promise<PaymentIntentData>`
+
+### validate()
+
+Validate a submitted transaction against an intent. Requires an `apiKey`.
+
+```ts
+validate(intentId: string, txHash: string): Promise<ValidationOutcomeData>
+```
+
+**Parameters**
+
+- `intentId` — `string`
+- `txHash` — `string`
+
+**Returns** `Promise<ValidationOutcomeData>`
+
+## Related
+
+- [WalletRegistry](/sdk/definitions/web/wallet-registry)

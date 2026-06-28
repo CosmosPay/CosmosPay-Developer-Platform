@@ -1,0 +1,162 @@
+---
+title: "Client"
+description: "The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design."
+---
+
+The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+
+## Constructor
+
+### Client
+
+```ts
+constructor(options: ClientOptions)
+```
+
+**Parameters**
+
+- `options` — `ClientOptions`
+
+## Properties
+
+### version
+
+Library version.
+
+```ts
+static readonly version = "1.1.0"
+```
+
+### shared
+
+Process-wide shared defaults maintained by Cosmos Pay (gateway URL, version, internal secrets). Mutate once at startup to change them for every client (e.g. self-hosting): `Client.shared.baseURL = 'https://gateway.your-domain.com'`.
+
+```ts
+static readonly shared: SharedConfig
+```
+
+### shared
+
+Resolved shared configuration for this client instance.
+
+```ts
+readonly shared: SharedConfig
+```
+
+### webhookSecret
+
+Default webhook signing secret for the webhook listener (if configured).
+
+```ts
+webhookSecret: string | undefined
+```
+
+### rest
+
+The underlying HTTP layer. Shared by every manager.
+
+```ts
+readonly rest: REST
+```
+
+**Type** [`REST`](/sdk/definitions/server/rest)
+
+### paymentIntents
+
+Stellar payment intents — create/list/fetch/update/delete/validate.
+
+```ts
+readonly paymentIntents: PaymentIntentManager
+```
+
+**Type** [`PaymentIntentManager`](/sdk/definitions/server/payment-intent-manager)
+
+### webhooks
+
+Webhook endpoints, delivery audit trail, and the event listener.
+
+```ts
+readonly webhooks: WebhookManager
+```
+
+**Type** [`WebhookManager`](/sdk/definitions/server/webhook-manager)
+
+### products
+
+Products / prices.
+
+```ts
+readonly products: ProductManager
+```
+
+**Type** [`ProductManager`](/sdk/definitions/server/product-manager)
+
+### customers
+
+Customers.
+
+```ts
+readonly customers: CustomerManager
+```
+
+**Type** [`CustomerManager`](/sdk/definitions/server/customer-manager)
+
+### analytics
+
+Read-only analytics (summary, balances, logs).
+
+```ts
+readonly analytics: AnalyticsManager
+```
+
+**Type** [`AnalyticsManager`](/sdk/definitions/server/analytics-manager)
+
+### health
+
+Service health probes (public).
+
+```ts
+readonly health: HealthManager
+```
+
+**Type** [`HealthManager`](/sdk/definitions/server/health-manager)
+
+## Methods
+
+### setApiKey()
+
+Update the API key used for subsequent requests.
+
+```ts
+setApiKey(apiKey: string): this
+```
+
+**Parameters**
+
+- `apiKey` — `string`
+
+**Returns** `this`
+
+### setWebhookSecret()
+
+Set the default webhook signing secret for the webhook listener.
+
+```ts
+setWebhookSecret(secret: string): this
+```
+
+**Parameters**
+
+- `secret` — `string`
+
+**Returns** `this`
+
+## Related
+
+- [REST](/sdk/definitions/server/rest)
+- [PaymentIntentManager](/sdk/definitions/server/payment-intent-manager)
+- [WebhookManager](/sdk/definitions/server/webhook-manager)
+- [ProductManager](/sdk/definitions/server/product-manager)
+- [CustomerManager](/sdk/definitions/server/customer-manager)
+- [AnalyticsManager](/sdk/definitions/server/analytics-manager)
+- [HealthManager](/sdk/definitions/server/health-manager)

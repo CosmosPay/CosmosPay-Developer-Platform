@@ -1,0 +1,75 @@
+---
+title: "XBullAdapter"
+description: "Wallet adapter for the xBull wallet."
+---
+
+Wallet adapter for the xBull wallet.
+
+## Constructor
+
+### XBullAdapter
+
+```ts
+constructor(injected?: XBullSDK | undefined)
+```
+
+**Parameters**
+
+- `injected` _(optional)_ — `XBullSDK | undefined`
+
+## Properties
+
+### id
+
+```ts
+readonly id = "xbull"
+```
+
+### name
+
+```ts
+readonly name = "xBull"
+```
+
+## Methods
+
+### isAvailable()
+
+```ts
+isAvailable(): Promise<boolean>
+```
+
+**Returns** `Promise<boolean>`
+
+### getPublicKey()
+
+```ts
+getPublicKey(_network: NetworkConfig): Promise<string>
+```
+
+**Parameters**
+
+- `_network` — `NetworkConfig`
+
+**Returns** `Promise<string>`
+
+### signTransaction()
+
+```ts
+signTransaction(xdr: string, params: SignParams): Promise<string>
+```
+
+**Parameters**
+
+- `xdr` — `string`
+- `params` — `SignParams`
+
+**Returns** `Promise<string>`
+
+### disconnect()
+
+```ts
+disconnect(): Promise<void>
+```
+
+**Returns** `Promise<void>`

@@ -1,0 +1,8 @@
+{
+  "title": "Web",
+  "description": "@cosmosapp/pay_sdk/web — el cliente de billeteras del navegador.",
+  "pages": [
+    "web-client",
+    "assets-wallets-addresses"
+  ]
+}

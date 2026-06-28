@@ -1,0 +1,21 @@
+{
+  "title": "Serveur",
+  "pages": [
+    "analytics-manager",
+    "base",
+    "customer",
+    "rest",
+    "base-manager",
+    "customer-manager",
+    "health-manager",
+    "payment-intent",
+    "payment-intent-manager",
+    "product",
+    "product-manager",
+    "webhook-delivery",
+    "webhook-endpoint",
+    "webhook-manager",
+    "client",
+    "webhook-signature-error"
+  ]
+}
