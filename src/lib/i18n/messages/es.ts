@@ -192,9 +192,10 @@ export default {
   },
   nav: {
     login: "Iniciar sesión",
-    getKeys: "Obtener claves de API",
+    getKeys: "Obtener claves",
     dashboard: "Panel",
     menu: "Menú",
+    docs: "Documentación",
     items: {
       products: {
         label: "Productos",

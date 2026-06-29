@@ -94,6 +94,7 @@ export default {
     getKeys: "Get API keys",
     dashboard: "Dashboard",
     menu: "Menu",
+    docs: "Documentation",
     items: {
       products: {
         label: "Products",

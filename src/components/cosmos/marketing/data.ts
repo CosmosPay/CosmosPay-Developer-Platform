@@ -1,7 +1,13 @@
 /* data.js — non-component constants for the marketing landing.
    Brand names + code snippets are not translated. */
 
-export const CLIENTS = ["Northwind", "Lumio", "Vertexa", "Quanta", "Helios", "Cobalt", "Riverstone", "Novex"];
+/* Company names for the hero "Trusted by engineering teams at" strip.
+   These were placeholder/mock names — replace them with your real customers.
+   While this array is empty the whole strip is hidden (see Hero.tsx), so no mock
+   names ever appear. Add your own as plain strings, e.g.:
+     export const CLIENTS = ["Acme", "Globex", "Initech"];
+   To show logos instead of names, swap the <Marquee> render in Hero.tsx. */
+export const CLIENTS: string[] = [];
 
 export const API_SNIPPET = `import { Client } from '@cosmosapp/pay_sdk';
 
