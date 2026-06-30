@@ -131,10 +131,43 @@ export const account = {
   updateProfile: (body) => request("/api/account/profile", { method: "PATCH", body: JSON.stringify(body) }),
 };
 
-/* Admin user management (owner/admin). 403 otherwise. */
+/* Build a query string for the admin list endpoints. `consumer` filters by the owning
+   consumer's local id (used by the cross-organization drill-down navigation). */
+function adminQs(query = {}) {
+  const qs = new URLSearchParams();
+  if (query.network) qs.set("network", query.network);
+  if (query.status) qs.set("status", query.status);
+  if (query.consumer) qs.set("consumer", query.consumer);
+  if (query.take != null) qs.set("take", String(query.take));
+  if (query.skip != null) qs.set("skip", String(query.skip));
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
+/* Admin (platform owner/admin). 403 otherwise — the /api/admin proxy enforces it.
+   - users/setUser: account role management.
+   - the rest are read-only, cross-organization (global) views proxied to the Payments
+     API's /v1/admin/* endpoints; each returns the upstream JSON directly. */
 export const admin = {
   users: () => request("/api/admin/users"),
   setUser: (userId, patch) => request(`/api/admin/users/${encodeURIComponent(userId)}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  summary: (network) => request(`/api/admin/summary${network ? `?network=${encodeURIComponent(network)}` : ""}`),
+  consumers: (query = {}) => request(`/api/admin/consumers${adminQs(query)}`),
+  paymentIntents: (query = {}) => request(`/api/admin/payment-intents${adminQs(query)}`),
+  swaps: (query = {}) => request(`/api/admin/swaps${adminQs(query)}`),
+  customers: (query = {}) => request(`/api/admin/customers${adminQs(query)}`),
+  products: (query = {}) => request(`/api/admin/products${adminQs(query)}`),
+  receivers: (query = {}) => request(`/api/admin/receivers${adminQs(query)}`),
+  payins: (query = {}) => request(`/api/admin/payins${adminQs(query)}`),
+  payouts: (query = {}) => request(`/api/admin/payouts${adminQs(query)}`),
+  // Global enable/disable of any consumer's fiat receiver (no org/env — admin is global).
+  setReceiverAccess: (id, disabled) => request(`/api/admin/receivers/${encodeURIComponent(id)}/access`, { method: "PATCH", body: JSON.stringify({ disabled }) }),
+  // Global approve (pending_review → pending_user, emails the customer the terms link)
+  // and activation (submits the tos_id) for any consumer's fiat receiver.
+  approveReceiver: (id, redirect_url) => request(`/api/admin/receivers/${encodeURIComponent(id)}/approve`, { method: "POST", body: JSON.stringify({ redirect_url }) }),
+  enableReceiver: (id, tos_id) => request(`/api/admin/receivers/${encodeURIComponent(id)}/enable`, { method: "POST", body: JSON.stringify({ tos_id }) }),
+  // Resend the KYC verification (terms-of-service) email for any consumer's pending_user receiver.
+  resendReceiverTos: (id, redirect_url) => request(`/api/admin/receivers/${encodeURIComponent(id)}/tos`, { method: "POST", body: JSON.stringify({ redirect_url }) }),
 };
 
 /* Invitations addressed to the signed-in user (shown in their own dashboard). */
@@ -142,6 +175,51 @@ export const invites = {
   mine: () => request("/api/invitations"),
   accept: (id) => request("/api/invitations/accept", { method: "POST", body: JSON.stringify({ id }) }),
 };
+
+/* Asset swaps (Stellar path payments) — proxied to the Cosmos Payments API and
+   scoped to the active organization. `env` is 'dev' (testnet) or 'prod' (public).
+   There is NO fee parameter: the commission is the org plan's rate, resolved
+   server-side. The quote's `fee` is display-only.
+   quote body: { org, environment, amount, sourceAssetCode?, sourceAssetIssuer?,
+     destAssetCode, destAssetIssuer?, slippageBps? } → a quote.
+   create body: quote fields + { source, destination?, memo? } → a Swap.
+   submit body: { signedXdr } → { submitted, status, txHash?, reason?, resultCodes?, swap }. */
+export const swaps = {
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    if (query.skip) qs.set("skip", String(query.skip));
+    return request(`/api/swaps?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/swaps/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  quote: (body) => request("/api/swaps/quote", { method: "POST", body: JSON.stringify(body) }),
+  create: (body) => request("/api/swaps", { method: "POST", body: JSON.stringify(body) }),
+  submit: (id, org, env, signedXdr) => request(`/api/swaps/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ signedXdr }) }),
+};
+
+/* BlindPay onramp/offramp/KYC — generic same-origin proxies. Any sub-path is
+   forwarded to the Payments API `/v1/<prefix>/<path>` with ?org=&env= and the
+   response is the inner upstream JSON. Mutations require the payments:create
+   permission (enforced server-side). Use the path-style helpers, e.g.
+   kyc.get("receivers", env, org), kyc.post(`receivers/${id}/wallets`, env, org, body). */
+function blindpayClient(prefix) {
+  const url = (path, env, org) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    return `/api/${prefix}/${path}?${qs.toString()}`;
+  };
+  return {
+    get: (path, env, org) => request(url(path, env, org)),
+    post: (path, env, org, body) => request(url(path, env, org), { method: "POST", body: JSON.stringify(body || {}) }),
+    patch: (path, env, org, body) => request(url(path, env, org), { method: "PATCH", body: JSON.stringify(body || {}) }),
+    remove: (path, env, org) => request(url(path, env, org), { method: "DELETE" }),
+  };
+}
+export const kyc = blindpayClient("kyc");
+export const onramp = blindpayClient("onramp");
+export const offramp = blindpayClient("offramp");
 
 /* Organizations CRUD + members. */
 export const organizations = {

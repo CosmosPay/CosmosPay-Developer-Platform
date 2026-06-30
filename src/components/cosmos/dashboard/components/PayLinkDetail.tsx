@@ -39,7 +39,7 @@ export function PayLinkRowActions({ intent, t, pl, onView, canManage = false, on
 }
 
 /* A single copyable key/value row (click anywhere on it to copy the value). */
-function CopyField({ label, value }) {
+export function CopyField({ label, value }) {
   const t = useT();
   const [done, copy] = useCopy();
   const text = String(value);
@@ -53,7 +53,7 @@ function CopyField({ label, value }) {
 }
 
 /* A labelled, copyable long-text block (the SEP-7 URI or the unsigned XDR). */
-function CopyBlock({ label, value, children }) {
+export function CopyBlock({ label, value, children }) {
   const t = useT();
   const [done, copy] = useCopy();
   return (

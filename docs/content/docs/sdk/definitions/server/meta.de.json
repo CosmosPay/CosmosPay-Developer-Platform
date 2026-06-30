@@ -12,6 +12,8 @@
     "payment-intent-manager",
     "product",
     "product-manager",
+    "swap",
+    "swap-manager",
     "webhook-delivery",
     "webhook-endpoint",
     "webhook-manager",

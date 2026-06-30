@@ -1,0 +1,84 @@
+---
+title: "SwapManager"
+description: "Manages Stellar swaps — `client.swaps`."
+---
+
+Manages Stellar swaps — `client.swaps`.
+
+## Methods
+
+### quote()
+
+Price a swap without creating it. Returns a plain quote (not a &#123;@link Swap&#125;).
+
+```ts
+quote(options: QuoteSwapOptions): Promise<SwapQuoteData>
+```
+
+**Parameters**
+
+- `options` — `QuoteSwapOptions`
+
+**Returns** `Promise<SwapQuoteData>`
+
+### create()
+
+Create a swap (unsigned XDR + SEP-7 URI + QR).
+
+```ts
+create(options: CreateSwapOptions): Promise<Swap>
+```
+
+**Parameters**
+
+- `options` — `CreateSwapOptions`
+
+**Returns** [`Promise<Swap>`](/sdk/definitions/server/swap)
+
+### fetch()
+
+Get a single swap by id.
+
+```ts
+fetch(id: string): Promise<Swap>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<Swap>`](/sdk/definitions/server/swap)
+
+### list()
+
+List the consumer's swaps (paginated).
+
+```ts
+list(options?: ListSwapsOptions): Promise<SwapPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListSwapsOptions`
+
+**Returns** `Promise<SwapPage>`
+
+### submit()
+
+Relay a signed swap transaction to the network. Finalizes status server-side and returns the outcome with the refreshed swap materialized.
+
+```ts
+submit(id: string, options: SubmitSwapOptions): Promise<SwapSubmitOutcome>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `SubmitSwapOptions`
+
+**Returns** `Promise<SwapSubmitOutcome>`
+
+## Related
+
+- [Swap](/sdk/definitions/server/swap)
+- [BaseManager](/sdk/definitions/server/base-manager)

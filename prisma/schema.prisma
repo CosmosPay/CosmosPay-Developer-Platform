@@ -246,3 +246,43 @@ model OrganizationMember {
   @@index([userId])
   @@map("organization_member")
 }
+
+// ---------------- Wallet account provisioning ----------------
+// A pending CosmosPay account request initiated by the (public, open-source) CosmosPay
+// Wallet. Because the wallet can hold no server secret, the request is authenticated by
+// a Stellar key signature (proves control of the account) and the account is only
+// created after the user confirms ownership of their email via a one-time link. The
+// resulting API key is delivered back to the initiating wallet via a one-time claim
+// token (only its SHA-256 hash is stored here), never embedded or emailed.
+model WalletRegistration {
+  id             String   @id @default(cuid())
+  email          String
+  name           String?
+  stellarAddress String
+  // Single-use token in the emailed verification link.
+  verifyToken    String   @unique
+  // SHA-256 of the claim secret the wallet keeps; the raw secret never touches the DB.
+  claimHash      String
+  // pending → confirmed (account created, key awaiting claim) → claimed (key delivered).
+  status         String   @default("pending")
+  // "register" = email-link account creation; "link" = access-code linking to an EXISTING
+  // account (the email already has a user). Drives which flow verify/claim runs.
+  kind           String   @default("register")
+  // SHA-256 of the one-time access code emailed for the "link" flow (null for register).
+  codeHash       String?
+  // Failed access-code attempts for the "link" flow; the row locks past a small cap.
+  attempts       Int      @default(0)
+  // Populated once confirmed; the API key is re-read from APISIX on claim (not stored).
+  userId         String?
+  organizationId String?
+  credentialId   String?
+  environment    String?
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([email])
+  @@index([stellarAddress])
+  @@index([claimHash])
+  @@map("wallet_registration")
+}

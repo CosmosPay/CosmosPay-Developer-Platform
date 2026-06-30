@@ -1,7 +1,7 @@
 /* organizations.ts — workspaces owned by users, with members + org-level roles.
    Plan limits (maxOrgs) are enforced on creation. */
 import { prisma } from "@/lib/prisma";
-import { planLimits, atLimit } from "@/lib/plans";
+import { planLimits, planSwapFeeBps, atLimit } from "@/lib/plans";
 import { getProfile } from "@/lib/profile";
 
 export type OrgRole = "owner" | "admin" | "member";
@@ -103,6 +103,18 @@ export async function orgOwnerPlanLimits(orgId: string) {
   const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { ownerId: true } });
   const ownerProfile = org ? await getProfile(org.ownerId).catch(() => null) : null;
   return planLimits(ownerProfile?.plan);
+}
+
+/* The organization's plan + swap commission (bps), governed by the org OWNER's plan
+   — NOT whoever is acting, and never a request parameter. This is the single source
+   of the swap fee: the dashboard passes it to the Payments API on swap calls, and the
+   APISIX consumer forwarder bakes it into the gateway headers for API-key callers, so
+   the rate is enforced per organization and can't be bypassed. */
+export async function orgSwapContext(orgId: string): Promise<{ plan: string; swapFeeBps: number }> {
+  const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { ownerId: true } });
+  const ownerProfile = org ? await getProfile(org.ownerId).catch(() => null) : null;
+  const plan = ownerProfile?.plan ?? "community";
+  return { plan, swapFeeBps: planSwapFeeBps(plan) };
 }
 
 export function canManageOrg(role: OrgRole): boolean {

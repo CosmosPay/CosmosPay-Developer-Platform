@@ -16,6 +16,15 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  // Link an Authentik ("ak") sign-in to an existing user with the same (verified) email.
+  // This is what lets a CosmosPay account auto-provisioned from the wallet be picked up
+  // when that user later logs in at auth.cosmospay.lat, instead of creating a duplicate.
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["ak"],
+    },
+  },
   plugins: [
     genericOAuth({
       config: [

@@ -1,0 +1,46 @@
+<!doctype html>
+<!--
+  Terms-of-service acceptance email for fiat (onramp/offramp) KYC/KYB.
+  Placeholders ({{name}}) are filled by src/lib/emails.ts → renderTosEmail():
+    {{name}}  the receiver's name (escaped)
+    {{url}}   the hosted terms-of-service acceptance link
+  This file is a plain HTML template — edit it freely to restyle the email.
+-->
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Cosmos Pay - Accept terms of service</title>
+</head>
+
+<body style="margin:0;background:#f6f6fb;font-family:'Poppins',Arial,sans-serif;color:#1a1830;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #ececf3;">
+          <tr>
+            <td style="padding:30px 34px 28px;">
+              <div style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#6b47ff;font-weight:600;">
+                Cosmos&nbsp;Pay</div>
+              <h1 style="font-size:22px;margin:14px 0 6px;color:#13112a;">Accept the terms of service</h1>
+              <p style="font-size:15px;line-height:1.6;color:#4a4862;margin:0 0 22px;">Hi {{name}}, to activate your
+                account for fiat onramp/offramp you need to review and accept the terms of service. Your account stays
+                <b>inactive</b> until you do.</p>
+              <a href="{{url}}"
+                style="display:inline-block;background:#6b47ff;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:11px;">Review
+                &amp; accept</a>
+              <p style="font-size:13px;line-height:1.6;color:#8a89a0;margin:22px 0 0;">After accepting, return to Cosmos
+                Pay to finish enabling your account. If you weren't expecting this, you can ignore this email.</p>
+              <p style="font-size:12px;color:#a7a6ba;margin:18px 0 0;word-break:break-all;">{{url}}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>

@@ -2,7 +2,7 @@
    from the dashboard's own org-permissions. These map 1:1 to the actions the
    community server enforces (@RequirePermissions), e.g. `payments:write`.
    Presented as a resource × action matrix in the API-key modal. */
-export const COSMOS_RESOURCES = ["payments", "webhooks", "products", "customers"] as const;
+export const COSMOS_RESOURCES = ["payments", "swaps", "webhooks", "products", "customers"] as const;
 export const COSMOS_ACTIONS = ["read", "write"] as const;
 
 export type CosmosResource = (typeof COSMOS_RESOURCES)[number];
