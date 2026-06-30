@@ -23,8 +23,20 @@ import { renderWalletVerifyEmail, renderWalletLinkCodeEmail } from "@/lib/emails
 import { provisionAuthentikIdentity } from "@/lib/authentik";
 import { linkMessage, registrationMessage, verifyStellarSignature } from "@/lib/stellar-verify";
 
-// Wallet keys can only quote/build/submit swaps — nothing else.
-const WALLET_KEY_SCOPES = ["swaps:read", "swaps:write"];
+// Scopes granted to wallet-provisioned keys. Beyond swaps, the wallet now also creates
+// pay links (payments), and runs the BlindPay fiat flow (kyc receivers + onramp/offramp).
+const WALLET_KEY_SCOPES = [
+  "swaps:read",
+  "swaps:write",
+  "payments:read",
+  "payments:write",
+  "kyc:read",
+  "kyc:write",
+  "onramp:read",
+  "onramp:write",
+  "offramp:read",
+  "offramp:write",
+];
 // How long a pending registration (and its claim token) stays valid.
 const REGISTRATION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 // Minimum gap between registration emails for the same address (anti-spam).
