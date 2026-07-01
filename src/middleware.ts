@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { recordLogin, touchLastSeen } from "@/lib/profile";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
-import { CORS_ALLOWED_ORIGINS } from "astro:env/server";
+import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
 // COSMOS_API_URL. Runs once per process (idempotent), non-blocking.
@@ -12,23 +12,9 @@ ensureCosmosRouteSynced();
    cosmospay.lat (site + wallet) calls this API (dev.cosmospay.lat) cross-origin, so we
    reflect an allowed Origin and answer preflight. We reflect a specific origin (never
    `*`) with Allow-Credentials so the session cookie can ride along; origins outside the
-   allowlist get no CORS headers (browser blocks them). Extend via CORS_ALLOWED_ORIGINS. */
-const DEFAULT_ALLOWED = [
-  "https://cosmospay.lat",
-  "https://www.cosmospay.lat",
-  "https://dev.cosmospay.lat",
-  "capacitor://localhost",
-  "ionic://localhost",
-  "http://localhost",
-  "https://localhost",
-];
-const ALLOWED_ORIGINS = new Set([
-  ...DEFAULT_ALLOWED,
-  ...(CORS_ALLOWED_ORIGINS || "")
-    .split(",")
-    .map((o) => o.trim())
-    .filter(Boolean),
-]);
+   allowlist get no CORS headers (browser blocks them). The allowlist (and the matching
+   Better Auth trustedOrigins) lives in @/lib/allowed-origins; extend via CORS_ALLOWED_ORIGINS. */
+const ALLOWED_ORIGINS = new Set(ALLOWED_ORIGINS_LIST);
 
 function isAllowedOrigin(origin: string | null): origin is string {
   if (!origin) return false;
