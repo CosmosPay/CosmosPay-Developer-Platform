@@ -696,10 +696,14 @@ export async function rotateApiKey(
   return {
     apiKeyId,
     apiKey: newApiKey,
+    username,
     createdAt: response.data.value.create_time,
     updatedAt: response.data.value.update_time,
     permissions: parsePermissionsLabel(response.data.value.labels?.permissions),
     role: parseApiKeyRole(response.data.value.labels?.role),
+    environment: parseApiKeyEnv(response.data.value.labels?.env),
+    name: parseLabelString(response.data.value.name),
+    description: parseLabelString(response.data.value.desc),
   };
 }
 

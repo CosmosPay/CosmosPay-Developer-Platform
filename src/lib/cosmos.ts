@@ -389,6 +389,8 @@ export interface Swap {
   slippageBps: number;
   path: { code: string; issuer: string | null }[];
   memo: string | null;
+  /** On-chain commission label ("Cosmos Swap Commission") when one was taken. */
+  commissionMemo: string | null;
   xdr: string;
   uri: string;
   txHash: string;
@@ -437,6 +439,130 @@ export const cosmosSwaps = {
     cosmosFetch<Swap>(userId, env, `/v1/swaps/${encodeURIComponent(id)}`, { org }),
   submit: (userId: string, env: CosmosEnv, org: string, id: string, signedXdr: string) =>
     cosmosFetch<SwapSubmitOutcome>(userId, env, `/v1/swaps/${encodeURIComponent(id)}/submit`, { method: "POST", body: { signedXdr }, org }),
+};
+
+/* ---- Stellar AMM liquidity pools. Non-custodial like swaps: the Payments API
+   prices a deposit/withdraw against the pool's on-chain reserves, builds the
+   unsigned XDR (plus a pool-share changeTrust when needed) and relays the signed
+   envelope. Liquidity operations carry the same plan commission as swaps,
+   skimmed from both assets and reported in the fee* fields. ---- */
+export interface LiquidityReserve {
+  asset: string;
+  issuer: string | null;
+  amount: string;
+}
+export interface LiquidityPool {
+  id: string;
+  network: string;
+  feeBp: number;
+  totalTrustlines: string;
+  totalShares: string;
+  reserves: LiquidityReserve[];
+}
+export interface LiquidityPoolList {
+  data: LiquidityPool[];
+  cursor: string | null;
+}
+export interface LiquidityPosition {
+  poolId: string;
+  shares: string;
+  totalShares: string;
+  shareOfPoolBps: number;
+  reserves: LiquidityReserve[];
+  redeemable: LiquidityReserve[];
+}
+export interface LiquidityPositionList {
+  account: string;
+  network: string;
+  data: LiquidityPosition[];
+}
+export interface LiquidityOperation {
+  id: string;
+  kind: "DEPOSIT" | "WITHDRAW";
+  status: Swap["status"];
+  network: string;
+  source: string;
+  poolId: string;
+  assetA: string;
+  assetAIssuer: string | null;
+  assetB: string;
+  assetBIssuer: string | null;
+  amountA: string;
+  amountB: string;
+  shares: string | null;
+  minPrice: string | null;
+  maxPrice: string | null;
+  slippageBps: number;
+  /** Plan commission (bps) taken from both assets — 0 when none applies. */
+  feeBps: number;
+  feeAmountA: string;
+  feeAmountB: string;
+  feeWallet: string | null;
+  /** On-chain commission label ("Cosmos Liquidity Commission") when taken. */
+  commissionMemo: string | null;
+  xdr: string;
+  uri: string;
+  txHash: string;
+  qr: string;
+  expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface LiquidityOperationList {
+  data: LiquidityOperation[];
+  total: number;
+  take: number;
+  skip: number;
+}
+export interface LiquiditySubmitOutcome {
+  submitted: boolean;
+  status: LiquidityOperation["status"];
+  txHash?: string;
+  reason?: string;
+  resultCodes?: string[];
+  operation: LiquidityOperation;
+}
+export interface DepositLiquidityInput {
+  source: string;
+  assetACode?: string;
+  assetAIssuer?: string;
+  assetBCode?: string;
+  assetBIssuer?: string;
+  maxAmountA: string;
+  maxAmountB?: string;
+  slippageBps?: number;
+  memo?: string;
+}
+export interface WithdrawLiquidityInput {
+  source: string;
+  poolId: string;
+  shares: string;
+  slippageBps?: number;
+  memo?: string;
+}
+
+export const cosmosLiquidity = {
+  pools: (
+    userId: string,
+    env: CosmosEnv,
+    org: string,
+    query: { assetACode?: string; assetAIssuer?: string; assetBCode?: string; assetBIssuer?: string; account?: string; cursor?: string; limit?: number } = {},
+  ) =>
+    cosmosFetch<LiquidityPoolList>(userId, env, "/v1/liquidity-pools", { query: { ...query }, org }),
+  pool: (userId: string, env: CosmosEnv, org: string, id: string) =>
+    cosmosFetch<LiquidityPool>(userId, env, `/v1/liquidity-pools/${encodeURIComponent(id)}`, { org }),
+  positions: (userId: string, env: CosmosEnv, org: string, account: string) =>
+    cosmosFetch<LiquidityPositionList>(userId, env, "/v1/liquidity-pools/positions", { query: { account }, org }),
+  deposit: (userId: string, env: CosmosEnv, org: string, body: DepositLiquidityInput) =>
+    cosmosFetch<LiquidityOperation>(userId, env, "/v1/liquidity-pools/deposit", { method: "POST", body, org }),
+  withdraw: (userId: string, env: CosmosEnv, org: string, body: WithdrawLiquidityInput) =>
+    cosmosFetch<LiquidityOperation>(userId, env, "/v1/liquidity-pools/withdraw", { method: "POST", body, org }),
+  operations: (userId: string, env: CosmosEnv, org: string, query: { kind?: string; status?: string; take?: number; skip?: number } = {}) =>
+    cosmosFetch<LiquidityOperationList>(userId, env, "/v1/liquidity-pools/operations", { query: { ...query }, org }),
+  operation: (userId: string, env: CosmosEnv, org: string, id: string) =>
+    cosmosFetch<LiquidityOperation>(userId, env, `/v1/liquidity-pools/operations/${encodeURIComponent(id)}`, { org }),
+  submit: (userId: string, env: CosmosEnv, org: string, id: string, signedXdr: string) =>
+    cosmosFetch<LiquiditySubmitOutcome>(userId, env, `/v1/liquidity-pools/operations/${encodeURIComponent(id)}/submit`, { method: "POST", body: { signedXdr }, org }),
 };
 
 /* ---- Read-only dashboard aggregates. ---- */

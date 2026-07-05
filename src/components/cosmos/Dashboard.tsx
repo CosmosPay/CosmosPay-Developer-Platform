@@ -13,7 +13,7 @@ import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { SIDE, STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
 import {
-  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, BlindPayView,
+  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
@@ -280,6 +280,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "swaps": return <SwapsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "liquidity": return <LiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;

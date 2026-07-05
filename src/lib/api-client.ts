@@ -199,6 +199,40 @@ export const swaps = {
   submit: (id, org, env, signedXdr) => request(`/api/swaps/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ signedXdr }) }),
 };
 
+/* Liquidity pools (Stellar AMM) — proxied to the Cosmos Payments API and scoped
+   to the active organization. Non-custodial like swaps: deposit/withdraw return an
+   unsigned XDR + SEP-7 URI + QR to sign, then the signed XDR is submitted back.
+   deposit body: { org, environment, source, assetACode?, assetAIssuer?, assetBCode?,
+     assetBIssuer?, maxAmountA, maxAmountB?, slippageBps? } → a LiquidityOperation.
+   withdraw body: { org, environment, source, poolId, shares, slippageBps? }.
+   submit body: { signedXdr } → { submitted, status, txHash?, reason?, resultCodes?, operation }. */
+export const liquidity = {
+  pools: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    for (const k of ["assetACode", "assetAIssuer", "assetBCode", "assetBIssuer", "account", "cursor"]) {
+      if (query[k]) qs.set(k, query[k]);
+    }
+    if (query.limit) qs.set("limit", String(query.limit));
+    return request(`/api/liquidity/pools?${qs.toString()}`);
+  },
+  pool: (id, org, env) => request(`/api/liquidity/pools/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  positions: (account, org, env) => request(`/api/liquidity/positions?env=${env || "dev"}&account=${encodeURIComponent(account)}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  deposit: (body) => request("/api/liquidity/deposit", { method: "POST", body: JSON.stringify(body) }),
+  withdraw: (body) => request("/api/liquidity/withdraw", { method: "POST", body: JSON.stringify(body) }),
+  operations: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.kind) qs.set("kind", query.kind);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    if (query.skip) qs.set("skip", String(query.skip));
+    return request(`/api/liquidity/operations?${qs.toString()}`);
+  },
+  operation: (id, org, env) => request(`/api/liquidity/operations/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  submit: (id, org, env, signedXdr) => request(`/api/liquidity/operations/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ signedXdr }) }),
+};
+
 /* BlindPay onramp/offramp/KYC — generic same-origin proxies. Any sub-path is
    forwarded to the Payments API `/v1/<prefix>/<path>` with ?org=&env= and the
    response is the inner upstream JSON. Mutations require the payments:create

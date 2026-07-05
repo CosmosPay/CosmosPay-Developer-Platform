@@ -28,6 +28,8 @@ import { linkMessage, registrationMessage, verifyStellarSignature } from "@/lib/
 const WALLET_KEY_SCOPES = [
   "swaps:read",
   "swaps:write",
+  "liquidity:read",
+  "liquidity:write",
   "payments:read",
   "payments:write",
   "kyc:read",
@@ -39,6 +41,22 @@ const WALLET_KEY_SCOPES = [
 ];
 // How long a pending registration (and its claim token) stays valid.
 const REGISTRATION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Whether a user was provisioned via Cosmos Wallet (vs Authentik OAuth). Their
+ * dev + prod API keys are auto-minted at registration, so such accounts cannot
+ * create *additional* keys — the API-key endpoint rotates their existing keys
+ * instead. Authoritative signal: a confirmed/claimed WalletRegistration row.
+ */
+export async function isWalletProvisionedUser(userId: string): Promise<boolean> {
+  const reg = await prisma.walletRegistration
+    .findFirst({
+      where: { userId, status: { in: ["confirmed", "claimed"] } },
+      select: { id: true },
+    })
+    .catch(() => null);
+  return !!reg;
+}
 // Minimum gap between registration emails for the same address (anti-spam).
 const RESEND_COOLDOWN_MS = 60 * 1000;
 // How long an emailed access code (account-linking flow) stays valid.

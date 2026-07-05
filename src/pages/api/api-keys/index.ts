@@ -26,8 +26,10 @@ import {
   parseApiKeyRole,
   parseLabelString,
   parsePermissionsLabel,
+  rotateApiKey,
   syncConsumerForwarder,
 } from "@/utils/apisix";
+import { isWalletProvisionedUser } from "@/lib/wallet-provisioning";
 import { safeNotify } from "@/lib/notifications";
 import { geoLocate } from "@/lib/geo";
 import type { APIRoute } from "astro";
@@ -167,7 +169,54 @@ export const POST: APIRoute = async (ctx) => {
     ? existingKeys.filter((k: { value?: { labels?: { org?: string } } }) => k.value?.labels?.org === orgId).length
     : 0;
   if (atLimit(limits.maxApiKeys, orgKeyCount)) {
-    return jsonForbidden("You have reached your plan's API key limit for this organization. Upgrade to create more.");
+    // Cosmos-Wallet accounts can't mint *additional* keys — their dev + prod keys
+    // are auto-provisioned at registration. Rather than fail at the limit, rotate
+    // the org's existing key for this environment and return the fresh secret.
+    const walletProvisioned = await isWalletProvisionedUser(session.user.id).catch(() => false);
+    if (!walletProvisioned) {
+      return jsonForbidden("You have reached your plan's API key limit for this organization. Upgrade to create more.");
+    }
+    const rotatable = (Array.isArray(existingKeys) ? existingKeys : []).filter(
+      (k: { value?: { labels?: { org?: string; env?: string } } }) =>
+        k.value?.labels?.org === orgId &&
+        parseApiKeyEnv(k.value?.labels?.env) === body.data.environment,
+    ) as Array<{ value: { id: string } }>;
+    if (rotatable.length === 0) {
+      return jsonForbidden("No existing API key to rotate for this environment. Upgrade to create more.");
+    }
+    const rotated = await rotateApiKey(rotatable[0].value.id, session.user.id, body.data.environment).catch(() => null);
+    if (!rotated) {
+      return jsonError({ message: "Failed to rotate API key", code: 500, status: "internal_error" });
+    }
+
+    const rloc = await geoLocate(ctx.request.headers, ctx.clientAddress).catch(() => null);
+    safeNotify({
+      userId: session.user.id,
+      type: "apikey.created",
+      title: "API key rotated",
+      message: rotated.name ? `Rotated “${rotated.name}”` : `Rotated key ${rotated.apiKeyId}`,
+      origin: rloc?.origin ?? null,
+      country: rloc?.country ?? null,
+      region: rloc?.region ?? null,
+      ipAddress: rloc?.ip ?? null,
+      metadata: { id: rotated.apiKeyId, environment: rotated.environment, role: rotated.role, rotated: true, city: rloc?.city ?? null, publicIp: rloc?.publicIp ?? null, userAgent: rloc?.userAgent ?? null, local: rloc?.isLocal ?? false },
+    });
+
+    return jsonCreated<ApiKeyData>({
+      data: {
+        username: rotated.username,
+        apiKey: rotated.apiKey,
+        id: rotated.apiKeyId,
+        createdAt: rotated.createdAt,
+        updatedAt: rotated.updatedAt,
+        permissions: rotated.permissions ?? [],
+        role: (rotated.role as "admin" | "user") ?? "user",
+        environment: rotated.environment ?? body.data.environment,
+        name: rotated.name,
+        description: rotated.description,
+      },
+      message: "API key limit reached for this Cosmos Wallet account; your existing key was rotated and returned.",
+    });
   }
 
   const route = await createRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL).catch(err => {

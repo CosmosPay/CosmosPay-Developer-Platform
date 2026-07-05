@@ -86,7 +86,7 @@ export const PLAN_OPTIONS = ["community", "starter", "essentials", "growth", "en
 
 /* ---------------- shell config ---------------- */
 export const SIDE = [
-  { sec: "Platform", items: ["overview", "payments", "balances", "customers", "products", "swaps", "blindpay"] },
+  { sec: "Platform", items: ["overview", "payments", "balances", "customers", "products", "swaps", "liquidity", "blindpay"] },
   { sec: "Build", items: ["developers", "webhook", "logs", "weblogs"] },
   { sec: "Support", items: ["support", "inbox"] },
   { sec: "Account", items: ["activity", "settings", "account"] },

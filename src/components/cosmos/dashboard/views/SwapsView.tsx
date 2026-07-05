@@ -9,6 +9,7 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
@@ -153,8 +154,15 @@ function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
         <p>{m.desc}</p>
         <Field label={m.source} hint={m.sourceHint} value={source} onChange={onChange(setSource)} placeholder="G…" autoFocus />
         <Field label={m.amount} hint={m.amountHint} value={amount} onChange={onChange(setAmount)} placeholder="100.00" inputMode="decimal" />
-        <Field label={m.destAsset} hint={m.destAssetHint} value={destAssetCode} onChange={onChange(setDestAssetCode)} placeholder="USDC" />
-        {needsIssuer && <Field label={m.destIssuer} hint={m.destIssuerHint} value={destAssetIssuer} onChange={onChange(setDestAssetIssuer)} placeholder="G…" />}
+        <AssetSelect
+          network={env === "prod" ? "public" : "testnet"}
+          label={m.destAsset} codeLabel={m.destAsset} issuerLabel={m.destIssuer}
+          hint={m.destAssetHint} issuerHint={m.destIssuerHint}
+          code={destAssetCode} issuer={destAssetIssuer}
+          onCode={(v) => { setDestAssetCode(v); setQuote(null); }}
+          onIssuer={(v) => { setDestAssetIssuer(v); setQuote(null); }}
+          customText={t.dash.common.assetCustom} codePlaceholder="USDC"
+        />
         <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={onChange(setSlippageBps)} placeholder="50" inputMode="numeric" />
 
         <div className="paylink-actions" style={{ marginBottom: 14 }}>
@@ -234,6 +242,7 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
     [F.minimum, data.destMin ? `${data.destMin} ${data.destAsset}` : null],
     [F.fee, data.feeAmount ? `${data.feeAmount} ${assetLabel(data.sendAsset)} (${data.feeBps} ${sw.modal.bps})` : null],
     [F.memo, data.memo],
+    [F.commissionMemo, data.commissionMemo],
     [F.txHash, data.txHash],
     [F.created, fmtDateTime(data.createdAt)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
