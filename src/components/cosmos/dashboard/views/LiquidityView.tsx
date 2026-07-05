@@ -353,6 +353,7 @@ function WithdrawModal({ lq, orgId, env, prefill, onClose, onCreated }) {
         <Field label={m.poolId} hint={m.poolIdHint} value={poolId} onChange={(e) => setPoolId(e.target.value)} placeholder="dd7b1ab8…" />
         <Field label={m.shares} hint={m.sharesHint} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="50" inputMode="decimal" />
         <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
+        <p className="field-note">{m.commissionNote}</p>
         <div className="modal-actions">
           <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
           <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>

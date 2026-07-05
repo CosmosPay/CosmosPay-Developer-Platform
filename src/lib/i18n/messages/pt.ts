@@ -1553,6 +1553,7 @@ export default {
         trustNote: "If the account doesn't trust the pool shares yet, the transaction includes the trustline automatically.",
         create: "Build transaction", creating: "Building…",
         createError: "Couldn't build the transaction.",
+        commissionNote: "The plan commission applies only to your earnings — the gain over what you deposited — never to your principal. Positions opened outside Cosmos Pay are not charged.",
       },
       detail: {
         eyebrow: "Liquidity",

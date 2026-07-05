@@ -1553,6 +1553,7 @@ export default {
         trustNote: "Si la cuenta aún no confía en las participaciones del pool, la transacción incluye la trustline automáticamente.",
         create: "Generar transacción", creating: "Generando…",
         createError: "No se pudo generar la transacción.",
+        commissionNote: "La comisión del plan se aplica solo a tus ganancias — lo que rindió por encima de lo que depositaste — nunca a tu capital. Las posiciones abiertas fuera de Cosmos Pay no pagan comisión.",
       },
       detail: {
         eyebrow: "Liquidez",
