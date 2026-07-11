@@ -3,12 +3,12 @@
 // better-auth persists its core models here; Profile is our own per-user data.
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ---------------- better-auth core models ----------------

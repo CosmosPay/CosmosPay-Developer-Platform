@@ -1,7 +1,7 @@
 {
   "name": "paydev",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -24,7 +24,8 @@
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@astrojs/node": "^11.0.2",
     "@astrojs/react": "^6.0.1",
-    "@prisma/client": "^6.19.3",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "astro": "^7.0.7",
@@ -34,14 +35,16 @@
     "gsap": "^3.15.0",
     "maxmind": "^5.0.6",
     "nodemailer": "^9.0.3",
+    "pg": "^8.22.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "prisma": "^6.19.3"
+    "prisma": "^7.8.0"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "@hono/node-server": "^1.19.14"
   }
 }
