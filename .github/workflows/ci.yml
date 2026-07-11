@@ -5,7 +5,7 @@ name: CI
 # fresh checkout), then the Astro SSR build — so a green build exercises the whole app.
 on:
   push:
-    branches: [main, fumadocs]
+    branches: [main, dev]
   pull_request:
   workflow_dispatch:
 
