@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.1.1] - 2026-07-11
+
+### Miscellaneous
+- Bump @types/node from 25.9.4 to 26.1.1 in /docs (65b3f86)
+
 ## [0.1.0] - 2026-07-11
 
 ### Features
