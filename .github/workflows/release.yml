@@ -37,6 +37,9 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Build-time public env required by astro:env (inlined into the client bundle).
+          PUBLIC_BETTER_AUTH_URL: ${{ vars.PUBLIC_BETTER_AUTH_URL || 'https://dev.cosmospay.lat' }}
 
       # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
       - name: Security audit

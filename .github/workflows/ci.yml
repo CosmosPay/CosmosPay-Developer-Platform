@@ -33,3 +33,8 @@ jobs:
       # prisma generate + Fumadocs docs export + Astro SSR build (dist/).
       - name: Build
         run: npm run build
+        env:
+          # astro:env validates PUBLIC_ (client) vars at build time — they're inlined into
+          # the client bundle. Any valid URL satisfies the compile check; the real value is
+          # injected at deploy. Set a repo Variable to override the default.
+          PUBLIC_BETTER_AUTH_URL: ${{ vars.PUBLIC_BETTER_AUTH_URL || 'https://dev.cosmospay.lat' }}
