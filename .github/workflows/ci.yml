@@ -1,0 +1,35 @@
+name: CI
+
+# Build on every push and pull request. `npm run build` runs prisma generate, builds
+# the nested Fumadocs (Next.js) docs subproject (build-docs.mjs installs its deps on a
+# fresh checkout), then the Astro SSR build — so a green build exercises the whole app.
+on:
+  push:
+    branches: [main, fumadocs]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # prisma generate + Fumadocs docs export + Astro SSR build (dist/).
+      - name: Build
+        run: npm run build

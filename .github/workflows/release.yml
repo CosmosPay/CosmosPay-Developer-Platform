@@ -1,0 +1,121 @@
+name: Release
+
+# Auto-versioned releases from Conventional Commits. On every push to main this:
+#   0. Builds + runs a dependency security audit (`verify` job). The release job
+#      `needs` it, so nothing is versioned/tagged unless the build is green and the
+#      shipped deps are clean.
+#   1. Picks a semver bump from the pushed commit messages (feat -> minor,
+#      fix/anything -> patch, `!:` or `BREAKING CHANGE` -> major).
+#   2. Bumps package.json, regenerates CHANGELOG.md (git-cliff), commits both back
+#      with `[skip ci]`, and tags vX.Y.Z.
+#   3. Publishes a GitHub Release whose body is the git-cliff change list.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # commit the bump, push tags, create releases
+
+jobs:
+  verify:
+    name: Build & security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
+      - name: Security audit
+        run: npm audit --omit=dev --audit-level=low
+
+  release:
+    name: Version, changelog & release
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history: needed to diff the pushed commit range
+          fetch-tags: true # git-cliff needs prior tags to scope "since last release"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # ---- 1. Decide the semver bump from the pushed commit messages ----
+      - name: Determine version bump
+        id: bump
+        run: |
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            MSGS="$(git log -1 --format=%B "$AFTER")"
+          else
+            MSGS="$(git log --format=%B "${BEFORE}..${AFTER}")"
+          fi
+          echo "Analyzing commits:"; echo "$MSGS"
+          if echo "$MSGS" | grep -qE '(^|[[:space:]])BREAKING CHANGE|^[a-z]+(\(.+\))?!:'; then
+            BUMP=major
+          elif echo "$MSGS" | grep -qiE '^feat(\(.+\))?:'; then
+            BUMP=minor
+          else
+            BUMP=patch
+          fi
+          echo "Selected bump: $BUMP"
+          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+
+      # ---- 2. Compute the new version (writes package.json in the workspace) ----
+      - name: Compute version
+        id: ver
+        run: |
+          npm version --no-git-tag-version --allow-same-version "$(node -p "require('./package.json').version.split('-')[0]")" >/dev/null
+          npm version --no-git-tag-version "${{ steps.bump.outputs.bump }}" >/dev/null
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # ---- 3. Changelog from Conventional Commits (git-cliff via npx) ----
+      - name: Generate release notes
+        run: |
+          V="v${{ steps.ver.outputs.version }}"
+          npx --yes git-cliff@2 --tag "$V" --unreleased --strip all --output RELEASE_NOTES.md
+          echo "=== RELEASE_NOTES.md ===" && cat RELEASE_NOTES.md
+
+      - name: Update CHANGELOG.md
+        run: npx --yes git-cliff@2 --tag "v${{ steps.ver.outputs.version }}" --output CHANGELOG.md
+
+      # ---- 4. Commit the bump + changelog, tag the release ----
+      - name: Commit version bump + changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore(release): v${{ steps.ver.outputs.version }} [skip ci]"
+          git tag "v${{ steps.ver.outputs.version }}"
+          git push origin "HEAD:${{ github.ref_name }}"
+          git push origin "v${{ steps.ver.outputs.version }}"
+
+      # ---- 5. Publish the GitHub Release with the generated notes ----
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: Cosmos Pay Developer Platform v${{ steps.ver.outputs.version }}
+          body_path: RELEASE_NOTES.md
