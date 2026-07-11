@@ -40,6 +40,8 @@ jobs:
         env:
           # Build-time public env required by astro:env (inlined into the client bundle).
           PUBLIC_BETTER_AUTH_URL: ${{ vars.PUBLIC_BETTER_AUTH_URL || 'https://dev.cosmospay.lat' }}
+          # prisma.config.ts resolves env('DATABASE_URL') at load time (codegen only, no DB).
+          DATABASE_URL: ${{ vars.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db' }}
 
       # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
       - name: Security audit
