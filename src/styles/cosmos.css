@@ -32,7 +32,7 @@
 
   --radius:    14px;
   --radius-lg: 22px;
-  --maxw:      1240px;
+  --maxw:      1440px;
   --ff-sans:   'Hanken Grotesk', system-ui, sans-serif;
   /* replaces the old monospace; a soft, rounded face used for codes, ids & accents */
   --ff-soft:   'Poppins', 'Hanken Grotesk', system-ui, sans-serif;
@@ -96,8 +96,11 @@ button { font-family: inherit; cursor: pointer; }
 .nav.scrolled { border-color: var(--line); }
 .nav-inner { display: flex; align-items: center; gap: 30px; height: 78px; }
 
-.brand { display: flex; align-items: center; gap: 11px; font-weight: 800; font-size: 21px; letter-spacing: -0.03em; color: var(--ink); }
+.brand { display: flex; align-items: center; gap: 11px; color: var(--ink); }
 .brand .mark { width: 30px; height: 30px; flex: 0 0 auto; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.05; }
+.brand-name { font-weight: 800; font-size: 19px; letter-spacing: -0.03em; }
+.brand-sub { font-weight: 600; font-size: 12px; letter-spacing: .04em; color: var(--ink-3); }
 
 /* brand logo mark — PNG that swaps with the theme */
 .cosmos-mark { display: inline-block; flex: 0 0 auto; line-height: 0; }
@@ -151,6 +154,19 @@ button { font-family: inherit; cursor: pointer; }
 .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 /* uniform height for every nav control so no single button looks bigger */
 .nav-right .btn-sm, .nav-right .lang-btn, .nav-right .theme-btn { height: 40px; }
+/* keep every nav label on one line so longer translations (es/pt/fr/de) can't wrap
+   onto two lines and break the bar's height + alignment */
+.nav .nav-trigger, .nav .link-login, .nav .btn { white-space: nowrap; }
+
+/* Skeleton placeholders for the session (log in / get keys / dashboard) buttons,
+   shown until React hydrates and the auth + language state resolves, so the buttons
+   appear once in their final form instead of flickering through variants on load. */
+.nav-session-skel { display: flex; align-items: center; gap: 12px; }
+.btn-skel { display: inline-block; background: var(--line); border-radius: 999px; animation: navSkelPulse 1.2s ease-in-out infinite; }
+.btn-skel-link { width: 52px; height: 16px; border-radius: 6px; }
+.btn-skel-cta { width: 116px; height: 40px; }
+@keyframes navSkelPulse { 0%, 100% { opacity: .5; } 50% { opacity: .85; } }
+@media (prefers-reduced-motion: reduce) { .btn-skel { animation: none; } }
 
 /* theme toggle */
 .theme-btn {

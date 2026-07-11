@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
-import { HOME, PRICING, DASH } from "@/components/cosmos/lib/constants";
+import { HOME, PRICING, DASH, DOCS } from "@/components/cosmos/lib/constants";
 import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
-import { CosmosMark, IcNChev } from "@/components/cosmos/icons";
+import { CosmosMark, IcNChev, IcDocs } from "@/components/cosmos/icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangSelect } from "./LangSelect";
 import { NavUserMenu } from "./NavUserMenu";
@@ -52,18 +52,23 @@ export function Nav({ theme, setTheme, user = null }: { theme: Theme; setTheme: 
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [mob, setMob] = useState(false);
+  /* Gate the session buttons until after hydration so they render once in the
+     resolved language + auth state, instead of flashing through default →
+     translated → signed-in variants on first load. */
+  const [ready, setReady] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const h = () => { setScrolled(window.scrollY > 8); setActive(null); };
     window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h);
   }, []);
+  useEffect(() => { setReady(true); }, []);
   const open = (k: string | null) => { if (timer.current) clearTimeout(timer.current); setActive(k); };
   const scheduleClose = () => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setActive(null), 150); };
   const activeItem = NAV_ITEMS.find((i) => i.key === active && i.cols);
   return (
     <header className={`nav${scrolled ? " scrolled" : ""}`}>
       <div className="wrap nav-inner">
-        <a className="brand" href={HOME}><CosmosMark size={30} /> Cosmos&nbsp;Pay</a>
+        <a className="brand" href={HOME}><CosmosMark size={30} /><span className="brand-text"><span className="brand-name">Cosmos&nbsp;Pay</span><span className="brand-sub">Developers</span></span></a>
         <nav className="nav-center" onMouseLeave={scheduleClose}>
           {NAV_ITEMS.map((it) => it.cols ? (
             <div className="nav-item" key={it.key} onMouseEnter={() => open(it.key)}>
@@ -76,8 +81,14 @@ export function Nav({ theme, setTheme, user = null }: { theme: Theme; setTheme: 
         </nav>
         <div className="nav-right">
           <ThemeToggle theme={theme} setTheme={setTheme} />
+          <a className="theme-btn docs-btn" href={DOCS} aria-label={t.nav.docs} title={t.nav.docs}><IcDocs /></a>
           <LangSelect />
-          {user ? (
+          {!ready ? (
+            <div className="nav-session-skel" aria-hidden="true">
+              <span className="btn-skel btn-skel-link" />
+              <span className="btn-skel btn-skel-cta" />
+            </div>
+          ) : user ? (
             <>
               <a className="btn btn-dark btn-sm getkeys" href={DASH}>{t.nav.dashboard}</a>
               <NavUserMenu user={user} />

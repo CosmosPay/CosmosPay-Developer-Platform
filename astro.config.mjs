@@ -100,6 +100,12 @@ export default defineConfig({
       AUTHENTIK_CLIENT_ID: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_DISCOVERY_URL: envField.string({ context: 'server', access: 'secret' }),
+      // Authentik admin API (e.g. https://auth.cosmospay.lat) + a token, used to create an
+      // Authentik identity when a wallet user provisions an account, so they can later log
+      // in at auth.cosmospay.lat. Optional: when unset, the dev-platform account is still
+      // created and will link to Authentik on first OAuth sign-in (account linking is on).
+      AUTHENTIK_API_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      AUTHENTIK_API_TOKEN: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       APISIX_URL: envField.string({ context: 'server', access: 'secret' }),
       APISIX_ADMIN_KEY: envField.string({ context: 'server', access: 'secret' }),
       APISSIX_ROUTE_ID: envField.string({ context: 'server', access: 'secret' }),
@@ -112,6 +118,14 @@ export default defineConfig({
       // Must equal the community server's APISIX_GATEWAY_SECRET; that service always
       // enforces it, so an empty value makes every Payments API call fail with 403.
       COSMOS_GATEWAY_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      // Extra browser origins allowed to call this API cross-origin (comma-separated),
+      // on top of the built-in defaults (cosmospay.lat, www.cosmospay.lat, dev.cosmospay.lat,
+      // localhost, and Capacitor/Ionic webview origins for the CosmosPay Wallet). Handled by
+      // src/middleware.ts. Leave empty to use only the defaults.
+      CORS_ALLOWED_ORIGINS: envField.string({ context: 'server', access: 'public', optional: true, default: '' }),
+      // Origins the APISIX swap/data-plane route allows cross-origin (comma-separated), so
+      // the wallet's in-browser swap calls to the gateway aren't blocked. Used by createRoute.
+      COSMOS_API_CORS_ORIGINS: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://cosmospay.lat,https://dev.cosmospay.lat' }),
       // --- Email (organization invitations / magic links) ---
       // Two transports, in priority order:
       //   1. Resend HTTP API (preferred) — set RESEND_API_KEY. Sends over HTTPS (443),

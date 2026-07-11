@@ -9,6 +9,7 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field, Sel } from "@/components/cosmos/dashboard/components/Field";
+import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
@@ -159,8 +160,12 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
         <Field label={m.destination} hint={m.destinationHint} value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="G…" autoFocus />
         {isTx && <Field label={m.source} hint={m.sourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" />}
         <Field label={m.amount} hint={isTx ? undefined : m.amountHint} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="120.50" inputMode="decimal" />
-        <Field label={m.asset} value={assetCode} onChange={(e) => setAssetCode(e.target.value)} placeholder="XLM" />
-        {needsIssuer && <Field label={m.assetIssuer} hint={m.assetIssuerHint} value={assetIssuer} onChange={(e) => setAssetIssuer(e.target.value)} placeholder="G…" />}
+        <AssetSelect
+          network={env === "prod" ? "public" : "testnet"}
+          label={m.asset} codeLabel={m.asset} issuerLabel={m.assetIssuer}
+          issuerHint={m.assetIssuerHint}
+          code={assetCode} issuer={assetIssuer} onCode={setAssetCode} onIssuer={setAssetIssuer}
+          customText={t.dash.common.assetCustom} anyText={t.dash.common.assetAny} allowAny codePlaceholder="XLM" />
         <Field label={m.memo} hint={m.memoHint} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" />
         <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Order #24" />
         <div className="modal-actions">

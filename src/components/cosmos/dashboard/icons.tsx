@@ -8,6 +8,9 @@ export const DI = {
   balances: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h15a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><path d="M3 7l13-3 2 3" /><circle cx="17" cy="13" r="1.3" fill="currentColor" /></svg>,
   customers: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0111 0" /><path d="M16 6.2a3 3 0 010 5.6M17.5 19a5.5 5.5 0 00-2.5-4.6" /></svg>,
   products: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M12 3v18M4 7.5l8 4.5 8-4.5" /></svg>,
+  swaps: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3" /></svg>,
+  liquidity: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z" /><path d="M9.5 14a2.5 2.5 0 002.5 2.5" /></svg>,
+  blindpay: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18" /><circle cx="8" cy="14" r="1.2" fill="currentColor" /></svg>,
   developers: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 5l-2 14" /></svg>,
   webhook: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="6" r="2.5" /><circle cx="6" cy="17" r="2.5" /><circle cx="18" cy="17" r="2.5" /><path d="M10.5 8L7 14.5M13.5 8L17 14.5M8.5 17h7" /></svg>,
   weblogs: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h10M4 12h7M4 18h10" /><circle cx="18" cy="13" r="2.5" /><path d="M18 15.5V19M16 17.5l-1.5 1M20 17.5l1.5 1" /></svg>,
@@ -35,5 +38,14 @@ export const DI = {
   account: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0116 0" /></svg>,
   users: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="8.5" cy="8" r="3" /><circle cx="17" cy="9.5" r="2.2" /><path d="M2.5 19a6 6 0 0112 0" /><path d="M15 19a4.5 4.5 0 016.5-3.6" /></svg>,
 };
+
+/* Platform-admin sidebar items reuse sensible existing glyphs. */
+DI.adminOverview = DI.overview;
+DI.adminPayments = DI.payments;
+DI.adminSwaps = DI.swaps;
+DI.adminFiat = DI.blindpay;
+DI.adminCustomers = DI.customers;
+DI.adminProducts = DI.products;
+DI.adminConsumers = DI.org;
 
 export const IcLock = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>);

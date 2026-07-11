@@ -1,0 +1,264 @@
+---
+title: "Swap"
+description: "A Stellar path-payment swap. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it directly: `await swap.fetch()`, `await swap.subm"
+---
+
+A Stellar path-payment swap. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it directly: `await swap.fetch()`, `await swap.submit({ signedXdr })`.
+
+## Constructor
+
+### Swap
+
+```ts
+constructor(client: Client, data: SwapData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `SwapData`
+
+## Properties
+
+### status
+
+```ts
+status: SwapStatus
+```
+
+### network
+
+```ts
+network: string
+```
+
+### source
+
+Account performing the swap.
+
+```ts
+source: string
+```
+
+### destination
+
+Account that receives the swapped asset.
+
+```ts
+destination: string
+```
+
+### sendAsset
+
+Asset code being sent, or `native` for XLM.
+
+```ts
+sendAsset: string
+```
+
+### sendAssetIssuer
+
+```ts
+sendAssetIssuer: string | null
+```
+
+### sendAmount
+
+```ts
+sendAmount: string
+```
+
+### feeAmount
+
+```ts
+feeAmount: string
+```
+
+### feeBps
+
+```ts
+feeBps: number
+```
+
+### swapAmount
+
+Amount swapped after the fee is deducted.
+
+```ts
+swapAmount: string
+```
+
+### destAsset
+
+Asset code being received, or `native` for XLM.
+
+```ts
+destAsset: string
+```
+
+### destAssetIssuer
+
+```ts
+destAssetIssuer: string | null
+```
+
+### destEstimated
+
+```ts
+destEstimated: string
+```
+
+### destMin
+
+```ts
+destMin: string
+```
+
+### slippageBps
+
+```ts
+slippageBps: number
+```
+
+### path
+
+```ts
+path: { code: string
+```
+
+### issuer
+
+```ts
+issuer: string | null
+```
+
+### member
+
+```ts
+}[]
+```
+
+### memo
+
+```ts
+memo: string | null
+```
+
+### xdr
+
+Unsigned transaction envelope (base64 XDR).
+
+```ts
+xdr: string
+```
+
+### uri
+
+SEP-7 deep link.
+
+```ts
+uri: string
+```
+
+### txHash
+
+```ts
+txHash: string
+```
+
+### qr
+
+QR code of the SEP-7 URI (PNG data URL).
+
+```ts
+qr: string
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: SwapData): this
+```
+
+### get
+
+Whether the swap has settled on-chain.
+
+```ts
+get isSucceeded(): boolean
+```
+
+### get
+
+Whether the swap is still awaiting submission.
+
+```ts
+get isPending(): boolean
+```
+
+### get
+
+Human-readable send asset label (`XLM` for native).
+
+```ts
+get sendAssetLabel(): string
+```
+
+### get
+
+Human-readable destination asset label (`XLM` for native).
+
+```ts
+get destAssetLabel(): string
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch this swap from the API, returning a fresh instance.
+
+```ts
+fetch(): Promise<Swap>
+```
+
+**Returns** `Promise<Swap>`
+
+### submit()
+
+Relay the signed transaction for this swap. Mutates this instance from the refreshed swap in the outcome and returns the outcome.
+
+```ts
+submit(options: SubmitSwapOptions): Promise<SwapSubmitOutcome>
+```
+
+**Parameters**
+
+- `options` — `SubmitSwapOptions`
+
+**Returns** `Promise<SwapSubmitOutcome>`
+
+### toJSON()
+
+```ts
+toJSON(): SwapData
+```
+
+**Returns** `SwapData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

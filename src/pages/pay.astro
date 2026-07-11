@@ -1,0 +1,323 @@
+---
+/* /pay — dedicated web+stellar: (SEP-7) protocol-handler view.
+ *
+ * Browser extensions cannot register protocol handlers on Chrome, but a regular
+ * https page CAN. This page is that bridge, giving the wallet FULL link support
+ * on every browser:
+ *
+ *   1. The user clicks "Activate" here once → navigator.registerProtocolHandler
+ *      registers  https://dev.cosmospay.lat/pay?uri=%s  for `web+stellar:`.
+ *   2. From then on, clicking any web+stellar:pay?… link anywhere opens this page
+ *      with the URI, and we hand it to the Cosmos Wallet extension via
+ *      window.cosmosWallet.requestPayment() (approval window → sign → submit).
+ *   3. No extension? Fallback button deep-links the wallet web app, which already
+ *      reads ?uri= (readIncomingSep7) and prefills the Send screen.
+ *
+ * Public page (middleware only populates locals; no auth gate). noindex: functional.
+ */
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const es = lang === "es";
+
+// Where the wallet web app lives (fallback when the extension isn't installed).
+// It already understands /?uri=web+stellar:… (readIncomingSep7 → prefilled Send).
+const WALLET_WEB_URL = "https://cosmospay.lat";
+
+const t = es
+  ? {
+      title: "Pagos Stellar · Cosmos Wallet",
+      heading: "Enlaces de pago Stellar",
+      sub: "Activa Cosmos Wallet como tu manejador de enlaces web+stellar: (SEP-7). Después, cualquier enlace de pago Stellar en la web se abrirá directo en tu wallet.",
+      activate: "Activar en este navegador",
+      activated: "Handler registrado. Si el navegador te lo pregunta, acepta el aviso.",
+      activateFail: "No se pudo registrar",
+      incoming: "Solicitud de pago",
+      dest: "Destino",
+      amount: "Importe",
+      memo: "Memo",
+      network: "Los detalles finales se confirman en tu wallet antes de firmar.",
+      payExt: "Pagar con la extensión",
+      paying: "Abriendo tu wallet…",
+      payWeb: "Abrir en la wallet web",
+      noExt: "No se detectó la extensión Cosmos Wallet. Instálala, o usa la wallet web.",
+      waiting: "Buscando la extensión Cosmos Wallet…",
+      success: "Pago enviado",
+      hash: "Hash de la transacción",
+      rejected: "Solicitud rechazada o cancelada.",
+      invalid: "El enlace no contiene un pago SEP-7 válido.",
+      how: "¿Cómo funciona?",
+      how1: "Pulsa «Activar» una vez: el navegador registrará esta página para los enlaces web+stellar:.",
+      how2: "Haz clic en cualquier enlace de pago Stellar (SEP-7) en cualquier web.",
+      how3: "Esta página se lo pasa a tu extensión Cosmos Wallet: apruebas, se firma en tu dispositivo y se envía.",
+    }
+  : {
+      title: "Stellar payments · Cosmos Wallet",
+      heading: "Stellar payment links",
+      sub: "Make Cosmos Wallet your handler for web+stellar: (SEP-7) links. From then on, any Stellar payment link on the web opens straight in your wallet.",
+      activate: "Activate in this browser",
+      activated: "Handler registered. If the browser asks, accept the prompt.",
+      activateFail: "Could not register",
+      incoming: "Payment request",
+      dest: "Destination",
+      amount: "Amount",
+      memo: "Memo",
+      network: "Final details are confirmed in your wallet before signing.",
+      payExt: "Pay with the extension",
+      paying: "Opening your wallet…",
+      payWeb: "Open in the web wallet",
+      noExt: "Cosmos Wallet extension not detected. Install it, or use the web wallet.",
+      waiting: "Looking for the Cosmos Wallet extension…",
+      success: "Payment sent",
+      hash: "Transaction hash",
+      rejected: "Request rejected or cancelled.",
+      invalid: "This link does not contain a valid SEP-7 payment.",
+      how: "How does it work?",
+      how1: "Press “Activate” once — the browser registers this page for web+stellar: links.",
+      how2: "Click any Stellar (SEP-7) payment link on any website.",
+      how3: "This page hands it to your Cosmos Wallet extension: you approve, it signs on your device and submits.",
+    };
+---
+
+<CosmosLayout title={t.title} lang={lang} noindex={true}>
+  <main class="pay-wrap">
+    <section class="pay-card" id="card">
+      <div class="pay-badge">SEP-7 · web+stellar:</div>
+      <h1>{t.heading}</h1>
+      <p class="pay-sub">{t.sub}</p>
+
+      <!-- Incoming payment (only visible when ?uri= is present) -->
+      <div id="incoming" class="pay-incoming" hidden>
+        <h2>{t.incoming}</h2>
+        <div class="pay-rows">
+          <div class="pay-row"><span>{t.dest}</span><code id="r-dest">—</code></div>
+          <div class="pay-row"><span>{t.amount}</span><b id="r-amount">—</b></div>
+          <div class="pay-row" id="row-memo" hidden><span>{t.memo}</span><b id="r-memo">—</b></div>
+        </div>
+        <p class="pay-note">{t.network}</p>
+        <div class="pay-actions">
+          <button class="btn btn-dark" id="btn-ext" hidden>{t.payExt}</button>
+          <a class="btn btn-outline-w" id="btn-web" hidden>{t.payWeb}</a>
+        </div>
+        <p class="pay-status" id="status">{t.waiting}</p>
+        <pre class="pay-result" id="result" hidden></pre>
+      </div>
+
+      <!-- Register CTA (always available) -->
+      <div class="pay-register">
+        <button class="btn btn-dark" id="btn-register">{t.activate}</button>
+        <p class="pay-status" id="reg-status"></p>
+      </div>
+
+      <div class="pay-how">
+        <h2>{t.how}</h2>
+        <ol>
+          <li>{t.how1}</li>
+          <li>{t.how2}</li>
+          <li>{t.how3}</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+</CosmosLayout>
+
+<script
+  is:inline
+  define:vars={{
+    walletWebUrl: WALLET_WEB_URL,
+    msg: {
+      activated: t.activated,
+      activateFail: t.activateFail,
+      paying: t.paying,
+      noExt: t.noExt,
+      waiting: t.waiting,
+      success: t.success,
+      hash: t.hash,
+      invalid: t.invalid,
+    },
+  }}
+>
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- register the protocol handler (works on Chrome + Firefox: this is
+     a regular https page, unlike the extension, which Chrome forbids) ---------- */
+  $("btn-register").addEventListener("click", () => {
+    try {
+      navigator.registerProtocolHandler("web+stellar", location.origin + "/pay?uri=%s");
+      $("reg-status").textContent = msg.activated;
+    } catch (e) {
+      $("reg-status").textContent = msg.activateFail + ": " + ((e && e.message) || e);
+    }
+  });
+
+  /* ---------------- incoming web+stellar: URI (?uri= / ?sep7=) ---------------- */
+  const qs = new URLSearchParams(location.search);
+  const uri = (qs.get("uri") || qs.get("sep7") || "").trim();
+
+  /* Minimal SEP-7 `pay` parser — display only; the wallet re-parses and the user
+     confirms everything in the approval window before anything is signed. */
+  function parsePay(raw) {
+    if (!/^web\+stellar:/i.test(raw)) return null;
+    const rest = raw.slice("web+stellar:".length);
+    const q = rest.indexOf("?");
+    if ((q === -1 ? rest : rest.slice(0, q)).toLowerCase() !== "pay") return null;
+    const p = new URLSearchParams(q === -1 ? "" : rest.slice(q + 1));
+    const destination = (p.get("destination") || "").trim();
+    if (!/^G[A-Z2-7]{55}$/.test(destination)) return null;
+    return {
+      destination,
+      amount: p.get("amount") || "",
+      memo: p.get("memo") || "",
+      asset: p.get("asset_code") || "XLM",
+    };
+  }
+
+  if (uri) {
+    const pay = parsePay(uri);
+    $("incoming").hidden = false;
+    if (!pay) {
+      $("status").textContent = msg.invalid;
+    } else {
+      const short = (s) => (s.length > 20 ? s.slice(0, 10) + "…" + s.slice(-10) : s);
+      $("r-dest").textContent = short(pay.destination);
+      $("r-amount").textContent = (pay.amount || "—") + " " + pay.asset;
+      if (pay.memo) {
+        $("row-memo").hidden = false;
+        $("r-memo").textContent = pay.memo;
+      }
+      // Fallback: the wallet web app reads ?uri= itself (readIncomingSep7).
+      const webHref = walletWebUrl + "/?uri=" + encodeURIComponent(uri);
+      $("btn-web").href = webHref;
+
+      let attempted = false;
+      async function payWithExtension() {
+        if (attempted) return;
+        attempted = true;
+        $("status").textContent = msg.paying;
+        try {
+          const res = await window.cosmosWallet.requestPayment(uri);
+          $("status").textContent = "✓ " + msg.success;
+          $("result").hidden = false;
+          $("result").textContent = msg.hash + ":\n" + (res && res.hash ? res.hash : JSON.stringify(res));
+        } catch (e) {
+          attempted = false; // allow retry
+          $("status").textContent = "✗ " + ((e && e.message) || e);
+        }
+      }
+
+      function wireUp() {
+        if (window.cosmosWallet) {
+          $("btn-ext").hidden = false;
+          $("btn-ext").addEventListener("click", payWithExtension);
+          $("status").textContent = "";
+          payWithExtension(); // hand it over automatically — this page IS the handler
+        } else {
+          $("btn-web").hidden = false;
+          $("status").textContent = msg.noExt;
+        }
+      }
+      // The content script injects window.cosmosWallet asynchronously at page start.
+      window.addEventListener("cosmosWallet#initialized", wireUp, { once: true });
+      setTimeout(() => { if (!attempted) wireUp(); }, 900);
+    }
+  }
+</script>
+
+<style>
+  .pay-wrap {
+    min-height: 70vh;
+    display: flex;
+    justify-content: center;
+    padding: 56px 20px 80px;
+  }
+  .pay-card {
+    width: 100%;
+    max-width: 640px;
+  }
+  .pay-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    opacity: 0.75;
+    margin-bottom: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .pay-card h1 {
+    font-size: clamp(26px, 4.5vw, 36px);
+    margin: 0 0 10px;
+  }
+  .pay-sub {
+    opacity: 0.75;
+    line-height: 1.6;
+    margin: 0 0 26px;
+  }
+  .pay-incoming,
+  .pay-how {
+    border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 22px;
+  }
+  .pay-incoming h2,
+  .pay-how h2 {
+    font-size: 16px;
+    margin: 0 0 12px;
+  }
+  .pay-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pay-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 14px;
+  }
+  .pay-row span {
+    opacity: 0.65;
+  }
+  .pay-row code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+  }
+  .pay-note {
+    font-size: 12.5px;
+    opacity: 0.6;
+    margin: 12px 0 0;
+  }
+  .pay-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .pay-status {
+    font-size: 13.5px;
+    margin: 12px 0 0;
+    min-height: 1em;
+  }
+  .pay-result {
+    margin: 12px 0 0;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .pay-register {
+    margin-bottom: 22px;
+  }
+  .pay-how ol {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.8;
+    font-size: 14px;
+    opacity: 0.85;
+  }
+</style>

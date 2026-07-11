@@ -21,14 +21,20 @@ export interface PlanSpec {
   price: string; // headline price tag, e.g. "Free", "$33/mo", "Custom"
   perTx: string; // per-transaction fee
   settle: string; // settlement speed
+  // Swap commission in basis points (50 = 0.5%) taken from the source asset on every
+  // Stellar swap. This is the rate the Payments API enforces per organization — it is
+  // injected into the gateway/consumer context (never a request param) so it can't be
+  // bypassed. It mirrors the percentage part of `perTx` (the flat-cent part of `perTx`
+  // does not apply to on-chain swaps, which charge only a percentage of the asset).
+  swapFeeBps: number;
 }
 
 export const PLAN_SPECS: Record<PlanId, PlanSpec> = {
-  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "—",             settle: "~5 sec" },
-  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1.5% + 0.25¢", perTx: "1.5% + 0.25¢",  settle: "~5 sec" },
-  essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "0.5% + 10¢",    settle: "~5 sec" },
-  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.35% + 5¢",    settle: "~5 sec" },
-  enterprise: { id: "enterprise", maxApiKeys: null, maxOrgs: null, maxSeats: null, mainnet: true, api: "full",          price: "Custom",       perTx: "Custom",        settle: "~5 sec" },
+  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "—",             settle: "~5 sec", swapFeeBps: 150 },
+  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1.5% + 0.25¢", perTx: "1.5% + 0.25¢",  settle: "~5 sec", swapFeeBps: 150 },
+  essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "0.5% + 10¢",    settle: "~5 sec", swapFeeBps: 50  },
+  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.35% + 5¢",    settle: "~5 sec", swapFeeBps: 35  },
+  enterprise: { id: "enterprise", maxApiKeys: null, maxOrgs: null, maxSeats: null, mainnet: true, api: "full",          price: "Custom",       perTx: "Custom",        settle: "~5 sec", swapFeeBps: 0   },
 };
 
 /* The restrictions enforced across the app, derived from the specs above. */
@@ -61,6 +67,13 @@ export function planSpec(plan: unknown): PlanSpec {
 
 export function planLimits(plan: unknown): PlanLimits {
   return PLAN_LIMITS[normalizePlan(plan)];
+}
+
+/* The swap commission (basis points) charged on every Stellar swap for a plan.
+   The Payments API enforces this per organization (see orgSwapContext) — it's never
+   accepted as a request parameter, so the rate can't be undercut. */
+export function planSwapFeeBps(plan: unknown): number {
+  return PLAN_SPECS[normalizePlan(plan)].swapFeeBps;
 }
 
 /* true when adding one more would exceed the plan's limit (null = unlimited). */

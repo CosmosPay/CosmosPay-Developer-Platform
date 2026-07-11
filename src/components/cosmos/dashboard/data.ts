@@ -86,12 +86,15 @@ export const PLAN_OPTIONS = ["community", "starter", "essentials", "growth", "en
 
 /* ---------------- shell config ---------------- */
 export const SIDE = [
-  { sec: "Platform", items: ["overview", "payments", "balances", "customers", "products"] },
+  { sec: "Platform", items: ["overview", "payments", "balances", "customers", "products", "swaps", "liquidity", "blindpay"] },
   { sec: "Build", items: ["developers", "webhook", "logs", "weblogs"] },
   { sec: "Support", items: ["support", "inbox"] },
-  { sec: "Account", items: ["activity", "users", "settings", "account"] },
+  { sec: "Account", items: ["activity", "settings", "account"] },
+  { sec: "Admin", items: ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"] },
 ];
 export const STAFF_ROLES = ["owner", "admin", "support"];
 export const MANAGER_ROLES = ["owner", "admin"];
 export const STAFF_ONLY = ["inbox"];   // visible to owner/admin/support
-export const MANAGER_ONLY = ["users"]; // visible to owner/admin only
+export const MANAGER_ONLY = [];        // (user management moved to the Admin section / OWNER_ONLY)
+// Platform-admin (cross-organization) views + user management — owner/admin account role only.
+export const OWNER_ONLY = ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"];

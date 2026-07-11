@@ -2,10 +2,12 @@ import axios from "axios";
 import {
   APISIX_ADMIN_KEY,
   APISIX_URL,
+  COSMOS_API_CORS_ORIGINS,
   COSMOS_API_REWRITE,
   COSMOS_GATEWAY_SECRET,
 } from "astro:env/server";
 import { randomBytes, randomUUID } from "node:crypto";
+import { orgSwapContext } from "@/lib/organizations";
 
 export const keyPrefix = 'cosmos_';
 
@@ -130,6 +132,17 @@ export async function createRoute(
     uri,
 
     plugins: {
+      // CORS: let the wallet/site (cosmospay.lat) call the gateway from the browser.
+      // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
+      // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
+      cors: {
+        allow_origins: COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat',
+        allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+        allow_headers: 'Content-Type,Authorization,apikey',
+        allow_credential: true,
+        max_age: 86400,
+      },
+
       // Accept the API key in any of three forms and normalize it into the `apikey`
       // header that key-auth reads, BEFORE key-auth runs (phase: rewrite):
       //   - apikey: <key>
@@ -177,8 +190,14 @@ end
             'Authorization',
             'apikey',
             'X-API-KEY',
-            // Internal-only marker — never trust a client-supplied copy.
+            // Internal-only markers — never trust a client-supplied copy. The dev
+            // platform sets these server-to-server; X-Cosmos-Admin additionally gates
+            // the global owner-only admin endpoints, so it must never come from a client.
+            // X-Cosmos-Tos-Cooldown-Ms shortens the KYC email resend limit by dashboard
+            // role, so a client must never be able to set it either.
             'X-Cosmos-Internal',
+            'X-Cosmos-Admin',
+            'X-Cosmos-Tos-Cooldown-Ms',
           ],
         },
       },
@@ -272,7 +291,18 @@ function generateApiKey(
 }
 
 
-type ForwardEntry = { p: string; r: 'admin' | 'user'; e: Environment };
+type ForwardEntry = {
+  p: string;
+  r: 'admin' | 'user';
+  e: Environment;
+  // Organization the key belongs to, the org's plan, and the plan's swap commission
+  // (basis points). Baked from each credential's `org` label + the owner's plan so the
+  // Payments API enforces the swap fee per organization — the client can never set or
+  // undercut it (the forwarder overwrites these headers on every request).
+  o?: string;
+  pl?: string;
+  f?: number;
+};
 
 /* A CONSUMER-level APISIX plugin that forwards each API key's authorization context to
    the upstream, so the community server's PermissionsGuard can enforce `resource:action`
@@ -302,6 +332,11 @@ return function(conf, ctx)
     ngx.req.set_header("X-Consumer-Permissions", entry.p or "[]")
     ngx.req.set_header("X-Consumer-Role", entry.r or "user")
     ngx.req.set_header("X-Consumer-Env", entry.e or "dev")
+    -- Always set (never append) the org/plan/fee headers so a client-supplied copy is
+    -- overwritten — the swap commission is the org plan's rate, enforced server-side.
+    ngx.req.set_header("X-Consumer-Org", entry.o or "")
+    ngx.req.set_header("X-Consumer-Plan", entry.pl or "")
+    ngx.req.set_header("X-Plan-Swap-Fee-Bps", (entry.f ~= nil) and tostring(entry.f) or "")
   end
 end
 `,
@@ -363,6 +398,18 @@ export async function syncConsumerForwarder(userId: string) {
       return ai < bi ? -1 : ai > bi ? 1 : 0;
     });
 
+  // Resolve each org's plan + swap fee once (a user's keys often share an org).
+  const orgCtxCache = new Map<string, { plan: string; swapFeeBps: number }>();
+  const orgCtx = async (orgId: string) => {
+    if (!orgCtxCache.has(orgId)) {
+      orgCtxCache.set(
+        orgId,
+        await orgSwapContext(orgId).catch(() => ({ plan: '', swapFeeBps: 0 })),
+      );
+    }
+    return orgCtxCache.get(orgId)!;
+  };
+
   const map: Record<string, ForwardEntry> = {};
   for (const credential of sorted) {
     const id = credential?.value?.id;
@@ -373,10 +420,20 @@ export async function syncConsumerForwarder(userId: string) {
     const permissions = parsePermissionsLabel(labels.permissions).filter((scope) =>
       /^[A-Za-z0-9:_.\-]+$/.test(scope),
     );
+    // The key's org (Lua-safe: cuid). When present, bake in the org plan's swap fee so
+    // the Payments API charges the right commission for every swap on this key.
+    const org =
+      typeof labels.org === 'string' && /^[A-Za-z0-9:_.\-]+$/.test(labels.org)
+        ? labels.org
+        : '';
+    const ctx = org ? await orgCtx(org) : null;
     map[id] = {
       p: JSON.stringify(permissions),
       r: parseApiKeyRole(labels.role),
       e: parseApiKeyEnv(labels.env),
+      o: org,
+      pl: ctx?.plan ?? '',
+      f: ctx ? ctx.swapFeeBps : undefined,
     };
   }
 
@@ -639,10 +696,14 @@ export async function rotateApiKey(
   return {
     apiKeyId,
     apiKey: newApiKey,
+    username,
     createdAt: response.data.value.create_time,
     updatedAt: response.data.value.update_time,
     permissions: parsePermissionsLabel(response.data.value.labels?.permissions),
     role: parseApiKeyRole(response.data.value.labels?.role),
+    environment: parseApiKeyEnv(response.data.value.labels?.env),
+    name: parseLabelString(response.data.value.name),
+    description: parseLabelString(response.data.value.desc),
   };
 }
 

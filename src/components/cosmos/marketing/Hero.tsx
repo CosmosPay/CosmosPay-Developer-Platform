@@ -125,10 +125,12 @@ export function Hero({ user }) {
             <a className="btn btn-dark" {...ctaProps(user)}>{t.landing.hero.getKeys} <IcArrow /></a>
             <CopyPill cmd="npm i @cosmosapp/pay_sdk" />
           </div>
-          <div className="clients">
-            <div className="clients-label">{t.landing.hero.trustedBy}</div>
-            <Marquee />
-          </div>
+          {CLIENTS.length > 0 && (
+            <div className="clients">
+              <div className="clients-label">{t.landing.hero.trustedBy}</div>
+              <Marquee />
+            </div>
+          )}
         </div>
         <div className="reveal in" style={{ transitionDelay: ".1s" }}>
           <HeroArt />

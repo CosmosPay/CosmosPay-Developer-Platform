@@ -1,0 +1,19 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import KycReturn from "@/components/cosmos/dashboard/KycReturn.tsx";
+
+// BlindPay redirects here after the user accepts the hosted terms of service,
+// appending ?tos_id=… to the URL. Auth-gate like the dashboard: this enables a
+// receiver scoped to the signed-in user.
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/");
+}
+
+const { org, env, receiver } = Astro.params;
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+---
+
+<CosmosLayout title="Activate account — Cosmos Pay" lang={lang} noindex>
+  <KycReturn org={org} env={env} receiver={receiver} lang={lang} client:load />
+</CosmosLayout>

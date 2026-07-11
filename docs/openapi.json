@@ -447,6 +447,197 @@
         ]
       }
     },
+    "/v1/swaps/quote": {
+      "post": {
+        "operationId": "SwapsController_quote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteSwapDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapQuoteEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Quote a swap (Horizon strict-send path search + fee/slippage); persists nothing",
+        "tags": [
+          "swaps"
+        ]
+      }
+    },
+    "/v1/swaps": {
+      "post": {
+        "operationId": "SwapsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSwapDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a swap → unsigned XDR + SEP-7 tx URI + QR for the wallet to sign",
+        "tags": [
+          "swaps"
+        ]
+      },
+      "get": {
+        "operationId": "SwapsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "SUBMITTED",
+                "SUCCEEDED",
+                "FAILED",
+                "EXPIRED"
+              ]
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapListEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the consumer's swaps",
+        "tags": [
+          "swaps"
+        ]
+      }
+    },
+    "/v1/swaps/{id}": {
+      "get": {
+        "operationId": "SwapsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a swap by id",
+        "tags": [
+          "swaps"
+        ]
+      }
+    },
+    "/v1/swaps/{id}/submit": {
+      "post": {
+        "operationId": "SwapsController_submit_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitSwapDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapSubmitResultEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Relay the signed swap transaction to the network (hash-checked); finalizes status",
+        "tags": [
+          "swaps"
+        ]
+      }
+    },
     "/v1/webhooks": {
       "post": {
         "operationId": "WebhooksController_create_v1",
@@ -1094,6 +1285,869 @@
           "customers"
         ]
       }
+    },
+    "/v1/kyc/receivers": {
+      "post": {
+        "operationId": "ReceiversController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReceiverDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiverEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a receiver (start KYC/KYB)",
+        "tags": [
+          "kyc"
+        ]
+      },
+      "get": {
+        "operationId": "ReceiversController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceiverEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the consumer's receivers",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/receivers/{id}": {
+      "get": {
+        "operationId": "ReceiversController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiverEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a receiver (refreshes KYC status from BlindPay)",
+        "tags": [
+          "kyc"
+        ]
+      },
+      "patch": {
+        "operationId": "ReceiversController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReceiverDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiverEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a receiver",
+        "tags": [
+          "kyc"
+        ]
+      },
+      "delete": {
+        "operationId": "ReceiversController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a receiver",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/receivers/{receiverId}/wallets/sign-message": {
+      "get": {
+        "operationId": "WalletsController_signMessage_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get the message to sign for the secure wallet flow",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/receivers/{receiverId}/wallets": {
+      "post": {
+        "operationId": "WalletsController_create_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWalletDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Register a blockchain wallet for a receiver",
+        "tags": [
+          "kyc"
+        ]
+      },
+      "get": {
+        "operationId": "WalletsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WalletEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List a receiver's wallets",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/receivers/{receiverId}/wallets/{id}": {
+      "delete": {
+        "operationId": "WalletsController_remove_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a wallet",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/receivers/{receiverId}/bank-accounts": {
+      "post": {
+        "operationId": "BankAccountsController_create_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Add a fiat bank account for a receiver",
+        "tags": [
+          "kyc"
+        ]
+      },
+      "get": {
+        "operationId": "BankAccountsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankAccountEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List a receiver's bank accounts",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/receivers/{receiverId}/bank-accounts/{id}": {
+      "delete": {
+        "operationId": "BankAccountsController_remove_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a bank account",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/upload": {
+      "post": {
+        "operationId": "KycMetaController_upload_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "bucket": {
+                    "type": "string",
+                    "enum": [
+                      "avatar",
+                      "onboarding",
+                      "limit_increase"
+                    ]
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Upload a KYC document; returns its file_url",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/terms-of-service": {
+      "post": {
+        "operationId": "KycMetaController_initiateTos_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateTosDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Start ToS acceptance; returns the hosted URL (first KYC step)",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/rails": {
+      "get": {
+        "operationId": "KycMetaController_rails_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List available bank rails",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/kyc/bank-details": {
+      "get": {
+        "operationId": "KycMetaController_bankDetails_v1",
+        "parameters": [
+          {
+            "name": "rail",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get the field schema required by a rail",
+        "tags": [
+          "kyc"
+        ]
+      }
+    },
+    "/v1/onramp/quotes": {
+      "post": {
+        "operationId": "OnrampController_createQuote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayinQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayinQuoteEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a payin quote (expires in ~5 min)",
+        "tags": [
+          "onramp"
+        ]
+      }
+    },
+    "/v1/onramp/payins": {
+      "post": {
+        "operationId": "OnrampController_createPayin_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayinDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayinEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a payin from a quote; returns funding instructions",
+        "tags": [
+          "onramp"
+        ]
+      },
+      "get": {
+        "operationId": "OnrampController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayinEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the consumer's payins",
+        "tags": [
+          "onramp"
+        ]
+      }
+    },
+    "/v1/onramp/payins/{id}": {
+      "get": {
+        "operationId": "OnrampController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayinEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a payin (refreshes status from BlindPay)",
+        "tags": [
+          "onramp"
+        ]
+      }
+    },
+    "/v1/onramp/trustline": {
+      "post": {
+        "operationId": "OnrampController_createTrustline_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTrustlineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Build an unsigned Stellar trustline tx (XDR) for the customer to sign",
+        "tags": [
+          "onramp"
+        ]
+      }
+    },
+    "/v1/onramp/receivers/{receiverId}/virtual-accounts": {
+      "post": {
+        "operationId": "VirtualAccountsController_create_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVirtualAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Create a virtual account for a receiver",
+        "tags": [
+          "onramp"
+        ]
+      },
+      "get": {
+        "operationId": "VirtualAccountsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "receiverId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List a receiver's virtual accounts",
+        "tags": [
+          "onramp"
+        ]
+      }
+    },
+    "/v1/offramp/quotes": {
+      "post": {
+        "operationId": "OfframpController_createQuote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayoutQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutQuoteEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a payout quote (EVM quote carries the approve contract)",
+        "tags": [
+          "offramp"
+        ]
+      }
+    },
+    "/v1/offramp/payouts/authorize": {
+      "post": {
+        "operationId": "OfframpController_authorize_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizePayoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Build the unsigned Stellar/Solana payout tx to sign",
+        "tags": [
+          "offramp"
+        ]
+      }
+    },
+    "/v1/offramp/payouts": {
+      "post": {
+        "operationId": "OfframpController_createPayout_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a payout from a quote",
+        "tags": [
+          "offramp"
+        ]
+      },
+      "get": {
+        "operationId": "OfframpController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayoutEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the consumer's payouts",
+        "tags": [
+          "offramp"
+        ]
+      }
+    },
+    "/v1/offramp/payouts/{id}": {
+      "get": {
+        "operationId": "OfframpController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a payout (refreshes status from BlindPay)",
+        "tags": [
+          "offramp"
+        ]
+      }
+    },
+    "/v1/offramp/payouts/{id}/documents": {
+      "post": {
+        "operationId": "OfframpController_addDocument_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Attach a compliance document to a payout",
+        "tags": [
+          "offramp"
+        ]
+      }
     }
   },
   "info": {
@@ -1738,6 +2792,499 @@
           "deleted"
         ]
       },
+      "QuoteSwapDto": {
+        "type": "object",
+        "properties": {
+          "sourceAssetCode": {
+            "type": "string",
+            "description": "Source asset code (the asset being sold). Native if omitted.",
+            "example": "XLM"
+          },
+          "sourceAssetIssuer": {
+            "type": "string",
+            "description": "Issuer account for a non-native source asset.",
+            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount of the source asset to swap (decimal, ≤ 7 places). The platform fee is deducted from this and the remainder is routed.",
+            "example": "100"
+          },
+          "destAssetCode": {
+            "type": "string",
+            "description": "Destination asset code (the asset being bought).",
+            "example": "USDC"
+          },
+          "destAssetIssuer": {
+            "type": "string",
+            "description": "Issuer account for the destination asset (required unless it is native).",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "slippageBps": {
+            "type": "number",
+            "description": "Slippage tolerance in basis points (50 = 0.5%) used to derive the on-chain minimum received. Defaults to the service setting; capped by it.",
+            "example": 50
+          }
+        },
+        "required": [
+          "amount",
+          "destAssetCode"
+        ]
+      },
+      "SwapAssetAmount": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "example": "native",
+            "description": "Asset code, or \"native\"."
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amount": {
+            "type": "string",
+            "example": "100"
+          }
+        },
+        "required": [
+          "asset",
+          "issuer",
+          "amount"
+        ]
+      },
+      "SwapFeeBreakdown": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "example": "native"
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amount": {
+            "type": "string",
+            "example": "0.5"
+          },
+          "bps": {
+            "type": "number",
+            "example": 50,
+            "description": "Fee in basis points (50 = 0.5%)."
+          },
+          "wallet": {
+            "type": "object",
+            "nullable": true,
+            "example": "GBFEE...WALLET",
+            "description": "Fee collector account (null when the fee is disabled)."
+          }
+        },
+        "required": [
+          "asset",
+          "issuer",
+          "amount",
+          "bps",
+          "wallet"
+        ]
+      },
+      "SwapDestinationQuote": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "estimated": {
+            "type": "string",
+            "example": "24.81",
+            "description": "Quoted amount received for the routed (post-fee) input."
+          },
+          "minimum": {
+            "type": "string",
+            "example": "24.68595",
+            "description": "On-chain minimum (destMin) after slippage — swap reverts below it."
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 50
+          }
+        },
+        "required": [
+          "asset",
+          "issuer",
+          "estimated",
+          "minimum",
+          "slippageBps"
+        ]
+      },
+      "SwapPathHop": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "yXLM",
+            "description": "Asset code, or \"native\"."
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": "GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55",
+            "description": "Issuer for a non-native hop (null for native)."
+          }
+        },
+        "required": [
+          "code",
+          "issuer"
+        ]
+      },
+      "SwapQuoteEntity": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "source": {
+            "description": "Gross source input.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapAssetAmount"
+              }
+            ]
+          },
+          "fee": {
+            "$ref": "#/components/schemas/SwapFeeBreakdown"
+          },
+          "swap": {
+            "description": "Net amount routed (input − fee).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapAssetAmount"
+              }
+            ]
+          },
+          "destination": {
+            "$ref": "#/components/schemas/SwapDestinationQuote"
+          },
+          "path": {
+            "description": "Intermediate hops (may be empty).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SwapPathHop"
+            }
+          }
+        },
+        "required": [
+          "network",
+          "source",
+          "fee",
+          "swap",
+          "destination",
+          "path"
+        ]
+      },
+      "CreateSwapDto": {
+        "type": "object",
+        "properties": {
+          "sourceAssetCode": {
+            "type": "string",
+            "description": "Source asset code (the asset being sold). Native if omitted.",
+            "example": "XLM"
+          },
+          "sourceAssetIssuer": {
+            "type": "string",
+            "description": "Issuer account for a non-native source asset.",
+            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount of the source asset to swap (decimal, ≤ 7 places). The platform fee is deducted from this and the remainder is routed.",
+            "example": "100"
+          },
+          "destAssetCode": {
+            "type": "string",
+            "description": "Destination asset code (the asset being bought).",
+            "example": "USDC"
+          },
+          "destAssetIssuer": {
+            "type": "string",
+            "description": "Issuer account for the destination asset (required unless it is native).",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "slippageBps": {
+            "type": "number",
+            "description": "Slippage tolerance in basis points (50 = 0.5%) used to derive the on-chain minimum received. Defaults to the service setting; capped by it.",
+            "example": 50
+          },
+          "source": {
+            "type": "string",
+            "description": "Account paying for (and signing) the swap — the tx source.",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Account credited the destination asset. Defaults to `source` (a self-swap). Must already trust a non-native destination asset.",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "memo": {
+            "type": "string",
+            "description": "Optional MEMO_ID (numeric uint64) echoed on-chain for reconciliation.",
+            "example": "123456789"
+          }
+        },
+        "required": [
+          "amount",
+          "destAssetCode",
+          "source"
+        ]
+      },
+      "SwapEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "destination": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "sendAsset": {
+            "type": "string",
+            "example": "native"
+          },
+          "sendAssetIssuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "sendAmount": {
+            "type": "string",
+            "example": "100",
+            "description": "Gross source amount."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.5"
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50
+          },
+          "swapAmount": {
+            "type": "string",
+            "example": "99.5",
+            "description": "Amount routed through the DEX/AMM."
+          },
+          "destAsset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "destAssetIssuer": {
+            "type": "object",
+            "nullable": true,
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "destEstimated": {
+            "type": "string",
+            "example": "24.81"
+          },
+          "destMin": {
+            "type": "string",
+            "example": "24.68595"
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 50
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SwapPathHop"
+            }
+          },
+          "memo": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "xdr": {
+            "type": "string",
+            "description": "Unsigned transaction envelope (base64 XDR) to sign.",
+            "example": "AAAAAgAAAABx…(base64 XDR)…AAAAAAAAAAA="
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:tx?xdr=AAAAAgAAAABx…"
+          },
+          "txHash": {
+            "type": "string",
+            "description": "Deterministic transaction hash (verified on submit).",
+            "example": "3389e9f0...64hex"
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-29T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-29T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "network",
+          "source",
+          "destination",
+          "sendAsset",
+          "sendAssetIssuer",
+          "sendAmount",
+          "feeAmount",
+          "feeBps",
+          "swapAmount",
+          "destAsset",
+          "destAssetIssuer",
+          "destEstimated",
+          "destMin",
+          "slippageBps",
+          "path",
+          "memo",
+          "xdr",
+          "uri",
+          "txHash",
+          "qr",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "SwapListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SwapEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "SubmitSwapDto": {
+        "type": "object",
+        "properties": {
+          "signedXdr": {
+            "type": "string",
+            "description": "The signed transaction envelope (base64 XDR).",
+            "example": "AAAAAgAAAABx…(signed base64 XDR)…AAAAAAAAAAA="
+          }
+        },
+        "required": [
+          "signedXdr"
+        ]
+      },
+      "SwapSubmitResultEntity": {
+        "type": "object",
+        "properties": {
+          "submitted": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "SUCCEEDED"
+          },
+          "txHash": {
+            "type": "string",
+            "nullable": true,
+            "example": "3389e9f0...64hex",
+            "description": "The on-chain transaction hash once submitted."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why submission failed, when `submitted` is false."
+          },
+          "resultCodes": {
+            "nullable": true,
+            "example": [
+              "op_under_dest_min"
+            ],
+            "description": "Horizon transaction/operation result codes on a rejection.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "swap": {
+            "$ref": "#/components/schemas/SwapEntity"
+          }
+        },
+        "required": [
+          "submitted",
+          "status",
+          "swap"
+        ]
+      },
       "CreateWebhookEndpointDto": {
         "type": "object",
         "properties": {
@@ -1761,7 +3308,18 @@
                 "PAYMENT_INTENT_SUCCEEDED",
                 "PAYMENT_INTENT_FAILED",
                 "PAYMENT_INTENT_CANCELLED",
-                "PAYMENT_INTENT_DELETED"
+                "PAYMENT_INTENT_DELETED",
+                "RECEIVER_UPDATED",
+                "PAYIN_CREATED",
+                "PAYIN_UPDATED",
+                "PAYIN_COMPLETED",
+                "PAYOUT_CREATED",
+                "PAYOUT_UPDATED",
+                "PAYOUT_COMPLETED",
+                "SWAP_CREATED",
+                "SWAP_SUBMITTED",
+                "SWAP_SUCCEEDED",
+                "SWAP_FAILED"
               ]
             }
           }
@@ -1804,7 +3362,18 @@
                 "PAYMENT_INTENT_SUCCEEDED",
                 "PAYMENT_INTENT_FAILED",
                 "PAYMENT_INTENT_CANCELLED",
-                "PAYMENT_INTENT_DELETED"
+                "PAYMENT_INTENT_DELETED",
+                "RECEIVER_UPDATED",
+                "PAYIN_CREATED",
+                "PAYIN_UPDATED",
+                "PAYIN_COMPLETED",
+                "PAYOUT_CREATED",
+                "PAYOUT_UPDATED",
+                "PAYOUT_COMPLETED",
+                "SWAP_CREATED",
+                "SWAP_SUBMITTED",
+                "SWAP_SUCCEEDED",
+                "SWAP_FAILED"
               ]
             }
           },
@@ -1869,7 +3438,18 @@
                 "PAYMENT_INTENT_SUCCEEDED",
                 "PAYMENT_INTENT_FAILED",
                 "PAYMENT_INTENT_CANCELLED",
-                "PAYMENT_INTENT_DELETED"
+                "PAYMENT_INTENT_DELETED",
+                "RECEIVER_UPDATED",
+                "PAYIN_CREATED",
+                "PAYIN_UPDATED",
+                "PAYIN_COMPLETED",
+                "PAYOUT_CREATED",
+                "PAYOUT_UPDATED",
+                "PAYOUT_COMPLETED",
+                "SWAP_CREATED",
+                "SWAP_SUBMITTED",
+                "SWAP_SUCCEEDED",
+                "SWAP_FAILED"
               ]
             }
           },
@@ -1918,7 +3498,18 @@
                 "PAYMENT_INTENT_SUCCEEDED",
                 "PAYMENT_INTENT_FAILED",
                 "PAYMENT_INTENT_CANCELLED",
-                "PAYMENT_INTENT_DELETED"
+                "PAYMENT_INTENT_DELETED",
+                "RECEIVER_UPDATED",
+                "PAYIN_CREATED",
+                "PAYIN_UPDATED",
+                "PAYIN_COMPLETED",
+                "PAYOUT_CREATED",
+                "PAYOUT_UPDATED",
+                "PAYOUT_COMPLETED",
+                "SWAP_CREATED",
+                "SWAP_SUBMITTED",
+                "SWAP_SUCCEEDED",
+                "SWAP_FAILED"
               ]
             }
           }
@@ -1984,7 +3575,18 @@
               "PAYMENT_INTENT_SUCCEEDED",
               "PAYMENT_INTENT_FAILED",
               "PAYMENT_INTENT_CANCELLED",
-              "PAYMENT_INTENT_DELETED"
+              "PAYMENT_INTENT_DELETED",
+              "RECEIVER_UPDATED",
+              "PAYIN_CREATED",
+              "PAYIN_UPDATED",
+              "PAYIN_COMPLETED",
+              "PAYOUT_CREATED",
+              "PAYOUT_UPDATED",
+              "PAYOUT_COMPLETED",
+              "SWAP_CREATED",
+              "SWAP_SUBMITTED",
+              "SWAP_SUCCEEDED",
+              "SWAP_FAILED"
             ],
             "example": "PAYMENT_INTENT_SUCCEEDED"
           },
@@ -2316,6 +3918,1455 @@
             "example": "cust_001"
           }
         }
+      },
+      "ReceiverOwnerDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "example": "beneficial_owner"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "Jane"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "example": "1985-04-12T00:00:00.000Z"
+          },
+          "tax_id": {
+            "type": "string",
+            "example": "123-45-6789"
+          },
+          "country": {
+            "type": "string",
+            "example": "US"
+          },
+          "address_line_1": {
+            "type": "string",
+            "example": "123 Main St"
+          },
+          "address_line_2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "example": "New York"
+          },
+          "state_province_region": {
+            "type": "string",
+            "example": "NY"
+          },
+          "postal_code": {
+            "type": "string",
+            "example": "10001"
+          },
+          "ownership_percentage": {
+            "type": "number",
+            "example": 25.5,
+            "description": "Ownership percentage"
+          },
+          "title": {
+            "type": "string",
+            "example": "Director"
+          },
+          "id_doc_country": {
+            "type": "string",
+            "example": "US"
+          },
+          "id_doc_type": {
+            "type": "string",
+            "example": "PASSPORT"
+          },
+          "id_doc_front_file": {
+            "type": "string",
+            "description": "file_url from POST /v1/kyc/upload"
+          },
+          "id_doc_back_file": {
+            "type": "string"
+          },
+          "proof_of_address_doc_type": {
+            "type": "string",
+            "example": "UTILITY_BILL"
+          },
+          "proof_of_address_doc_file": {
+            "type": "string",
+            "description": "file_url from POST /v1/kyc/upload"
+          },
+          "tax_type": {
+            "type": "string",
+            "description": "Owner's tax id type."
+          }
+        }
+      },
+      "CreateReceiverDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ],
+            "example": "individual"
+          },
+          "kyc_type": {
+            "type": "string",
+            "enum": [
+              "light",
+              "standard",
+              "enhanced"
+            ],
+            "example": "standard"
+          },
+          "email": {
+            "type": "string",
+            "example": "jane@acme.com"
+          },
+          "country": {
+            "type": "string",
+            "example": "US",
+            "description": "ISO 3166-1 alpha-2 country code"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "Jane"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "example": "1985-04-12T00:00:00.000Z",
+            "description": "ISO 8601 datetime (BlindPay rejects date-only values)."
+          },
+          "tax_id": {
+            "type": "string",
+            "example": "123-45-6789"
+          },
+          "occupation": {
+            "type": "string",
+            "example": "Engineer"
+          },
+          "id_doc_country": {
+            "type": "string",
+            "example": "US"
+          },
+          "id_doc_type": {
+            "type": "string",
+            "example": "PASSPORT"
+          },
+          "id_doc_front_file": {
+            "type": "string",
+            "description": "file_url from POST /v1/kyc/upload"
+          },
+          "id_doc_back_file": {
+            "type": "string"
+          },
+          "selfie_file": {
+            "type": "string"
+          },
+          "account_purpose": {
+            "type": "string",
+            "example": "receiving_payments"
+          },
+          "account_purpose_other": {
+            "type": "string"
+          },
+          "source_of_funds_doc_type": {
+            "type": "string",
+            "example": "employment"
+          },
+          "source_of_funds_doc_file": {
+            "type": "string"
+          },
+          "source_of_wealth": {
+            "type": "string"
+          },
+          "sole_proprietor_doc_type": {
+            "type": "string",
+            "example": "bank_statement",
+            "description": "master_service_agreement | salary_slip | bank_statement"
+          },
+          "proof_of_address_doc_type": {
+            "type": "string",
+            "example": "UTILITY_BILL"
+          },
+          "proof_of_address_doc_file": {
+            "type": "string"
+          },
+          "recipient_relationship": {
+            "type": "string",
+            "example": "self"
+          },
+          "purpose_of_transactions": {
+            "type": "string",
+            "example": "business_transactions"
+          },
+          "purpose_of_transactions_explanation": {
+            "type": "string"
+          },
+          "legal_name": {
+            "type": "string",
+            "example": "Acme Inc."
+          },
+          "alternate_name": {
+            "type": "string",
+            "example": "Acme"
+          },
+          "business_type": {
+            "type": "string",
+            "example": "cooperative"
+          },
+          "business_industry": {
+            "type": "string",
+            "example": "541511"
+          },
+          "business_description": {
+            "type": "string"
+          },
+          "formation_date": {
+            "type": "string",
+            "example": "2015-01-01T00:00:00.000Z"
+          },
+          "estimated_annual_revenue": {
+            "type": "string",
+            "example": "1000000_4999999"
+          },
+          "publicly_traded": {
+            "type": "boolean",
+            "example": false
+          },
+          "website": {
+            "type": "string",
+            "example": "https://acme.com"
+          },
+          "incorporation_doc_file": {
+            "type": "string"
+          },
+          "proof_of_ownership_doc_file": {
+            "type": "string"
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiverOwnerDto"
+            }
+          },
+          "address_line_1": {
+            "type": "string",
+            "example": "123 Main St"
+          },
+          "address_line_2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "example": "New York"
+          },
+          "state_province_region": {
+            "type": "string",
+            "example": "NY"
+          },
+          "postal_code": {
+            "type": "string",
+            "example": "10001"
+          },
+          "phone_number": {
+            "type": "string",
+            "example": "+12025550123"
+          },
+          "ip_address": {
+            "type": "string"
+          },
+          "external_id": {
+            "type": "string",
+            "description": "Your own id for this receiver"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "tos_id": {
+            "type": "string",
+            "description": "Accepted terms-of-service id (from the redirect of POST /v1/kyc/terms-of-service). Required by BlindPay to create a receiver."
+          }
+        },
+        "required": [
+          "type",
+          "kyc_type",
+          "email",
+          "country"
+        ]
+      },
+      "ReceiverEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clz9xreceiver01"
+          },
+          "blindpayId": {
+            "type": "string",
+            "example": "re_000000000000"
+          },
+          "type": {
+            "type": "string",
+            "example": "individual"
+          },
+          "kycType": {
+            "type": "object",
+            "example": "standard"
+          },
+          "kycStatus": {
+            "type": "object",
+            "example": "verifying",
+            "description": "BlindPay KYC status (verifying, approved, rejected, ...)."
+          },
+          "email": {
+            "type": "object",
+            "example": "jane@acme.com"
+          },
+          "name": {
+            "type": "object",
+            "example": "Jane Doe"
+          },
+          "country": {
+            "type": "object",
+            "example": "US"
+          },
+          "externalId": {
+            "type": "object",
+            "example": "cust_001"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-28T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-28T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "blindpayId",
+          "type",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateReceiverDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ],
+            "example": "individual"
+          },
+          "kyc_type": {
+            "type": "string",
+            "enum": [
+              "light",
+              "standard",
+              "enhanced"
+            ],
+            "example": "standard"
+          },
+          "email": {
+            "type": "string",
+            "example": "jane@acme.com"
+          },
+          "country": {
+            "type": "string",
+            "example": "US",
+            "description": "ISO 3166-1 alpha-2 country code"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "Jane"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "example": "1985-04-12T00:00:00.000Z",
+            "description": "ISO 8601 datetime (BlindPay rejects date-only values)."
+          },
+          "tax_id": {
+            "type": "string",
+            "example": "123-45-6789"
+          },
+          "occupation": {
+            "type": "string",
+            "example": "Engineer"
+          },
+          "id_doc_country": {
+            "type": "string",
+            "example": "US"
+          },
+          "id_doc_type": {
+            "type": "string",
+            "example": "PASSPORT"
+          },
+          "id_doc_front_file": {
+            "type": "string",
+            "description": "file_url from POST /v1/kyc/upload"
+          },
+          "id_doc_back_file": {
+            "type": "string"
+          },
+          "selfie_file": {
+            "type": "string"
+          },
+          "account_purpose": {
+            "type": "string",
+            "example": "receiving_payments"
+          },
+          "account_purpose_other": {
+            "type": "string"
+          },
+          "source_of_funds_doc_type": {
+            "type": "string",
+            "example": "employment"
+          },
+          "source_of_funds_doc_file": {
+            "type": "string"
+          },
+          "source_of_wealth": {
+            "type": "string"
+          },
+          "sole_proprietor_doc_type": {
+            "type": "string",
+            "example": "bank_statement",
+            "description": "master_service_agreement | salary_slip | bank_statement"
+          },
+          "proof_of_address_doc_type": {
+            "type": "string",
+            "example": "UTILITY_BILL"
+          },
+          "proof_of_address_doc_file": {
+            "type": "string"
+          },
+          "recipient_relationship": {
+            "type": "string",
+            "example": "self"
+          },
+          "purpose_of_transactions": {
+            "type": "string",
+            "example": "business_transactions"
+          },
+          "purpose_of_transactions_explanation": {
+            "type": "string"
+          },
+          "legal_name": {
+            "type": "string",
+            "example": "Acme Inc."
+          },
+          "alternate_name": {
+            "type": "string",
+            "example": "Acme"
+          },
+          "business_type": {
+            "type": "string",
+            "example": "cooperative"
+          },
+          "business_industry": {
+            "type": "string",
+            "example": "541511"
+          },
+          "business_description": {
+            "type": "string"
+          },
+          "formation_date": {
+            "type": "string",
+            "example": "2015-01-01T00:00:00.000Z"
+          },
+          "estimated_annual_revenue": {
+            "type": "string",
+            "example": "1000000_4999999"
+          },
+          "publicly_traded": {
+            "type": "boolean",
+            "example": false
+          },
+          "website": {
+            "type": "string",
+            "example": "https://acme.com"
+          },
+          "incorporation_doc_file": {
+            "type": "string"
+          },
+          "proof_of_ownership_doc_file": {
+            "type": "string"
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiverOwnerDto"
+            }
+          },
+          "address_line_1": {
+            "type": "string",
+            "example": "123 Main St"
+          },
+          "address_line_2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "example": "New York"
+          },
+          "state_province_region": {
+            "type": "string",
+            "example": "NY"
+          },
+          "postal_code": {
+            "type": "string",
+            "example": "10001"
+          },
+          "phone_number": {
+            "type": "string",
+            "example": "+12025550123"
+          },
+          "ip_address": {
+            "type": "string"
+          },
+          "external_id": {
+            "type": "string",
+            "description": "Your own id for this receiver"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "tos_id": {
+            "type": "string",
+            "description": "Accepted terms-of-service id (from the redirect of POST /v1/kyc/terms-of-service). Required by BlindPay to create a receiver."
+          }
+        }
+      },
+      "CreateWalletDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Primary wallet"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "base",
+              "arbitrum",
+              "polygon",
+              "stellar",
+              "solana",
+              "tron",
+              "sepolia",
+              "base_sepolia",
+              "arbitrum_sepolia",
+              "polygon_amoy",
+              "stellar_testnet",
+              "solana_devnet"
+            ],
+            "example": "stellar"
+          },
+          "address": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "Wallet address (account-abstraction / non-secure flow)."
+          },
+          "signature_tx_hash": {
+            "type": "string",
+            "description": "Signed sign-message tx hash (secure EOA flow)."
+          },
+          "is_account_abstraction": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "name",
+          "network"
+        ]
+      },
+      "WalletEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clz9xwallet001"
+          },
+          "blindpayId": {
+            "type": "string",
+            "example": "bw_000000000000"
+          },
+          "name": {
+            "type": "object",
+            "example": "Primary wallet"
+          },
+          "network": {
+            "type": "string",
+            "example": "stellar"
+          },
+          "address": {
+            "type": "object",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "isAccountAbstraction": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-28T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "blindpayId",
+          "network",
+          "isAccountAbstraction",
+          "createdAt"
+        ]
+      },
+      "CreateBankAccountDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "wire",
+              "ach",
+              "rtp",
+              "pix",
+              "pix_safe",
+              "ted",
+              "spei_bitso",
+              "transfers_bitso",
+              "ach_cop_bitso",
+              "international_swift",
+              "sepa"
+            ],
+            "example": "ach"
+          },
+          "name": {
+            "type": "string",
+            "example": "Acme payouts — USD"
+          },
+          "account_class": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ],
+            "example": "individual"
+          },
+          "account_type": {
+            "type": "string",
+            "enum": [
+              "checking",
+              "saving"
+            ],
+            "example": "checking"
+          },
+          "beneficiary_name": {
+            "type": "string",
+            "example": "Jane Doe"
+          },
+          "recipient_relationship": {
+            "type": "string",
+            "example": "first_party"
+          },
+          "account_number": {
+            "type": "string",
+            "example": "0123456789"
+          },
+          "routing_number": {
+            "type": "string",
+            "example": "021000021"
+          },
+          "business_industry": {
+            "type": "string",
+            "example": "541511",
+            "description": "NAICS code; required for business-class US/SWIFT accounts."
+          },
+          "phone_number": {
+            "type": "string",
+            "example": "+12025550123"
+          },
+          "tax_id": {
+            "type": "string",
+            "example": "123456789"
+          },
+          "pix_key": {
+            "type": "string",
+            "example": "jane@acme.com"
+          },
+          "pix_safe_bank_code": {
+            "type": "string"
+          },
+          "pix_safe_branch_code": {
+            "type": "string"
+          },
+          "pix_safe_cpf_cnpj": {
+            "type": "string"
+          },
+          "ted_bank_code": {
+            "type": "string"
+          },
+          "ted_branch_code": {
+            "type": "string"
+          },
+          "ted_cpf_cnpj": {
+            "type": "string"
+          },
+          "transfers_account": {
+            "type": "string",
+            "example": "0000003100010000000001"
+          },
+          "transfers_type": {
+            "type": "string",
+            "example": "CBU",
+            "description": "CVU | CBU | ALIAS"
+          },
+          "spei_clabe": {
+            "type": "string",
+            "example": "012345678901234567"
+          },
+          "spei_institution_code": {
+            "type": "string"
+          },
+          "spei_protocol": {
+            "type": "string"
+          },
+          "ach_cop_beneficiary_first_name": {
+            "type": "string"
+          },
+          "ach_cop_beneficiary_last_name": {
+            "type": "string"
+          },
+          "ach_cop_document_id": {
+            "type": "string"
+          },
+          "ach_cop_document_type": {
+            "type": "string"
+          },
+          "ach_cop_email": {
+            "type": "string"
+          },
+          "ach_cop_bank_code": {
+            "type": "string"
+          },
+          "ach_cop_bank_account": {
+            "type": "string"
+          },
+          "swift_account_holder_name": {
+            "type": "string"
+          },
+          "swift_account_number_iban": {
+            "type": "string"
+          },
+          "swift_code_bic": {
+            "type": "string"
+          },
+          "swift_bank_name": {
+            "type": "string"
+          },
+          "swift_bank_address_line_1": {
+            "type": "string"
+          },
+          "swift_bank_city": {
+            "type": "string"
+          },
+          "swift_bank_state_province_region": {
+            "type": "string"
+          },
+          "swift_bank_country": {
+            "type": "string"
+          },
+          "swift_bank_postal_code": {
+            "type": "string"
+          },
+          "swift_beneficiary_address_line_1": {
+            "type": "string"
+          },
+          "swift_beneficiary_city": {
+            "type": "string"
+          },
+          "swift_beneficiary_state_province_region": {
+            "type": "string"
+          },
+          "swift_beneficiary_country": {
+            "type": "string"
+          },
+          "swift_beneficiary_postal_code": {
+            "type": "string"
+          },
+          "swift_bank_address_line_2": {
+            "type": "string"
+          },
+          "swift_beneficiary_address_line_2": {
+            "type": "string"
+          },
+          "swift_payment_code": {
+            "type": "string",
+            "description": "SWIFT payment/purpose code."
+          },
+          "swift_intermediary_bank_swift_code_bic": {
+            "type": "string"
+          },
+          "swift_intermediary_bank_account_number_iban": {
+            "type": "string"
+          },
+          "swift_intermediary_bank_name": {
+            "type": "string"
+          },
+          "swift_intermediary_bank_country": {
+            "type": "string"
+          },
+          "sepa_iban": {
+            "type": "string"
+          },
+          "sepa_beneficiary_bic": {
+            "type": "string"
+          },
+          "sepa_beneficiary_legal_name": {
+            "type": "string"
+          },
+          "sepa_beneficiary_address_line_1": {
+            "type": "string"
+          },
+          "sepa_beneficiary_city": {
+            "type": "string"
+          },
+          "sepa_beneficiary_postal_code": {
+            "type": "string"
+          },
+          "sepa_beneficiary_country": {
+            "type": "string"
+          },
+          "sepa_beneficiary_address_line_2": {
+            "type": "string"
+          },
+          "sepa_beneficiary_state_province_region": {
+            "type": "string"
+          },
+          "address_line_1": {
+            "type": "string"
+          },
+          "address_line_2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state_province_region": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "postal_code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ]
+      },
+      "BankAccountEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clz9xbank00001"
+          },
+          "blindpayId": {
+            "type": "string",
+            "example": "ba_000000000000"
+          },
+          "rail": {
+            "type": "object",
+            "example": "ach"
+          },
+          "name": {
+            "type": "object",
+            "example": "Acme payouts — USD"
+          },
+          "country": {
+            "type": "object",
+            "example": "US"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-28T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "blindpayId",
+          "createdAt"
+        ]
+      },
+      "InitiateTosDto": {
+        "type": "object",
+        "properties": {
+          "redirect_url": {
+            "type": "string",
+            "example": "https://yourapp.com/kyc/return",
+            "description": "Where BlindPay redirects after acceptance (gets ?tos_id=...)."
+          },
+          "receiver_id": {
+            "type": "string",
+            "description": "Existing receiver to (re)accept updated terms for."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "UUID for idempotency. Auto-generated when omitted."
+          }
+        },
+        "required": [
+          "redirect_url"
+        ]
+      },
+      "PayerRulesDto": {
+        "type": "object",
+        "properties": {
+          "pix_allowed_tax_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "transfers_allowed_tax_id": {
+            "type": "string",
+            "example": "20123456786",
+            "description": "Argentine payer CUIT/CUIL (Transfers 3.0)."
+          },
+          "pse_allowed_tax_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pse_full_name": {
+            "type": "string",
+            "example": "Jane Doe"
+          },
+          "pse_document_type": {
+            "type": "string",
+            "example": "CC",
+            "description": "CC | NIT"
+          },
+          "pse_document_number": {
+            "type": "string",
+            "example": "123456789"
+          },
+          "pse_email": {
+            "type": "string",
+            "example": "jane@acme.com"
+          },
+          "pse_phone": {
+            "type": "string",
+            "example": "+573001234567"
+          },
+          "pse_bank_code": {
+            "type": "string",
+            "example": "9"
+          }
+        }
+      },
+      "CreatePayinQuoteDto": {
+        "type": "object",
+        "properties": {
+          "blockchain_wallet_id": {
+            "type": "string",
+            "example": "clz9xwallet001",
+            "description": "Cosmos Pay wallet id (from POST /v1/kyc/receivers/:id/wallets) that receives the minted stablecoin."
+          },
+          "currency_type": {
+            "type": "string",
+            "enum": [
+              "sender",
+              "receiver"
+            ],
+            "example": "sender"
+          },
+          "payment_method": {
+            "type": "string",
+            "enum": [
+              "ach",
+              "wire",
+              "pix",
+              "ted",
+              "spei",
+              "transfers",
+              "pse",
+              "international_swift",
+              "rtp"
+            ],
+            "example": "pix",
+            "description": "Fiat-in method. Note: payins use `spei`/`transfers`/`pse` (not the `_bitso` payout rails)."
+          },
+          "token": {
+            "type": "string",
+            "enum": [
+              "USDC",
+              "USDT",
+              "USDB"
+            ],
+            "example": "USDC"
+          },
+          "request_amount": {
+            "type": "number",
+            "example": 10000,
+            "description": "Amount in minor units (integer)."
+          },
+          "cover_fees": {
+            "type": "boolean",
+            "example": false,
+            "description": "When true, the sender absorbs the fees."
+          },
+          "payer_rules": {
+            "description": "Required for Transfers (AR) and PSE (CO) payins.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayerRulesDto"
+              }
+            ]
+          },
+          "is_otc": {
+            "type": "boolean",
+            "example": false
+          },
+          "partner_fee_id": {
+            "type": "string"
+          },
+          "wallet_id": {
+            "type": "string",
+            "description": "Optional custodial wallet id."
+          }
+        },
+        "required": [
+          "blockchain_wallet_id",
+          "currency_type",
+          "payment_method",
+          "token",
+          "request_amount"
+        ]
+      },
+      "PayinQuoteEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "pi_000000000000"
+          },
+          "expires_at": {
+            "type": "number",
+            "example": 1782692400,
+            "description": "Unix expiry (~5 min out)."
+          },
+          "commercial_quotation": {
+            "type": "number",
+            "example": 5.42
+          },
+          "receiver_amount": {
+            "type": "number",
+            "example": 10000
+          },
+          "sender_amount": {
+            "type": "number",
+            "example": 10000
+          }
+        },
+        "required": [
+          "id",
+          "expires_at"
+        ]
+      },
+      "CreatePayinDto": {
+        "type": "object",
+        "properties": {
+          "payin_quote_id": {
+            "type": "string",
+            "example": "qu_000000000000",
+            "description": "The id returned by POST /v1/onramp/quotes."
+          }
+        },
+        "required": [
+          "payin_quote_id"
+        ]
+      },
+      "PayinEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clz9xpayin0001"
+          },
+          "blindpayId": {
+            "type": "string",
+            "example": "pi_000000000000"
+          },
+          "status": {
+            "type": "object",
+            "example": "processing"
+          },
+          "token": {
+            "type": "object",
+            "example": "USDC"
+          },
+          "network": {
+            "type": "object",
+            "example": "stellar"
+          },
+          "paymentMethod": {
+            "type": "object",
+            "example": "pix"
+          },
+          "senderAmount": {
+            "type": "object",
+            "example": "10000"
+          },
+          "receiverAmount": {
+            "type": "object",
+            "example": "9950"
+          },
+          "instructions": {
+            "type": "object",
+            "description": "Funding instructions for the payer (memo/CLABE/PIX/CBU/PSE/...).",
+            "example": {
+              "pix_code": "00020126...5204000053039865802BR..."
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-28T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "blindpayId",
+          "createdAt"
+        ]
+      },
+      "CreateTrustlineDto": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "Stellar address that needs the asset trustline."
+          }
+        },
+        "required": [
+          "address"
+        ]
+      },
+      "CreateVirtualAccountDto": {
+        "type": "object",
+        "properties": {
+          "banking_partner": {
+            "type": "string",
+            "enum": [
+              "jpmorgan",
+              "citi",
+              "hsbc",
+              "cfsb"
+            ],
+            "example": "cfsb"
+          },
+          "token": {
+            "type": "string",
+            "enum": [
+              "USDC",
+              "USDT",
+              "USDB"
+            ],
+            "example": "USDC"
+          },
+          "blockchain_wallet_id": {
+            "type": "string",
+            "example": "clz9xwallet001",
+            "description": "Cosmos Pay wallet id that receives the converted stablecoin."
+          },
+          "signed_agreement_id": {
+            "type": "string"
+          },
+          "sole_proprietor_doc_type": {
+            "type": "string"
+          },
+          "sole_proprietor_doc_file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "banking_partner",
+          "token",
+          "blockchain_wallet_id"
+        ]
+      },
+      "CreatePayoutQuoteDto": {
+        "type": "object",
+        "properties": {
+          "bank_account_id": {
+            "type": "string",
+            "example": "clz9xbank00001",
+            "description": "Cosmos Pay bank account id (from POST /v1/kyc/receivers/:id/bank-accounts) that receives the fiat."
+          },
+          "currency_type": {
+            "type": "string",
+            "enum": [
+              "sender",
+              "receiver"
+            ],
+            "example": "sender"
+          },
+          "cover_fees": {
+            "type": "boolean",
+            "example": false,
+            "description": "When true, the sender absorbs fees."
+          },
+          "request_amount": {
+            "type": "number",
+            "example": 10000,
+            "description": "Amount in minor units (integer)."
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "base",
+              "arbitrum",
+              "polygon",
+              "stellar",
+              "solana",
+              "tron",
+              "sepolia",
+              "base_sepolia",
+              "arbitrum_sepolia",
+              "polygon_amoy",
+              "stellar_testnet",
+              "solana_devnet"
+            ],
+            "example": "base"
+          },
+          "token": {
+            "type": "string",
+            "enum": [
+              "USDC",
+              "USDT",
+              "USDB"
+            ],
+            "example": "USDC"
+          },
+          "description": {
+            "type": "string"
+          },
+          "partner_fee_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bank_account_id",
+          "currency_type",
+          "cover_fees",
+          "request_amount",
+          "network",
+          "token"
+        ]
+      },
+      "PayoutQuoteEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "qe_000000000000"
+          },
+          "expires_at": {
+            "type": "number",
+            "example": 1782692400,
+            "description": "Unix expiry (~5 min out)."
+          },
+          "sender_amount": {
+            "type": "number",
+            "example": 10000
+          },
+          "receiver_local_amount": {
+            "type": "number",
+            "example": 53850,
+            "description": "Local fiat amount (minor units)."
+          },
+          "contract": {
+            "type": "object",
+            "description": "EVM approve payload to sign (abi, address, functionName, amount, network).",
+            "example": {
+              "abi": [],
+              "address": "0xToken...",
+              "functionName": "approve",
+              "blindpayContractAddress": "0xBlindPay...",
+              "amount": "10000",
+              "network": {
+                "name": "base",
+                "chainId": 8453
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "expires_at"
+        ]
+      },
+      "AuthorizePayoutDto": {
+        "type": "object",
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "example": "qe_000000000000"
+          },
+          "sender_wallet_address": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana"
+            ],
+            "example": "stellar"
+          }
+        },
+        "required": [
+          "quote_id",
+          "sender_wallet_address",
+          "chain"
+        ]
+      },
+      "CreatePayoutDto": {
+        "type": "object",
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "example": "qe_000000000000"
+          },
+          "sender_wallet_address": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "evm",
+              "stellar",
+              "solana"
+            ],
+            "example": "evm"
+          },
+          "signed_transaction": {
+            "type": "string",
+            "description": "Signed transaction (Stellar XDR / Solana tx) from the authorize step."
+          }
+        },
+        "required": [
+          "quote_id",
+          "sender_wallet_address",
+          "chain"
+        ]
+      },
+      "PayoutEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clz9xpayout001"
+          },
+          "blindpayId": {
+            "type": "string",
+            "example": "pa_000000000000"
+          },
+          "status": {
+            "type": "object",
+            "example": "processing"
+          },
+          "token": {
+            "type": "object",
+            "example": "USDC"
+          },
+          "network": {
+            "type": "object",
+            "example": "base"
+          },
+          "rail": {
+            "type": "object",
+            "example": "ach"
+          },
+          "senderAmount": {
+            "type": "object",
+            "example": "10000"
+          },
+          "receiverAmount": {
+            "type": "object",
+            "example": "9900"
+          },
+          "senderWalletAddress": {
+            "type": "object",
+            "example": "0x1234abcd..."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-28T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "blindpayId",
+          "createdAt"
+        ]
+      },
+      "PayoutDocumentDto": {
+        "type": "object",
+        "properties": {
+          "transaction_document_type": {
+            "type": "string",
+            "example": "invoice"
+          },
+          "transaction_document_id": {
+            "type": "string",
+            "example": "INV-2026-001"
+          },
+          "transaction_document_file": {
+            "type": "string",
+            "description": "file_url from POST /v1/kyc/upload"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "transaction_document_type",
+          "transaction_document_id",
+          "transaction_document_file"
+        ]
       }
     }
   },

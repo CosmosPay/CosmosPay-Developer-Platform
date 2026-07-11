@@ -11,10 +11,11 @@ import { apiKeys as apiKeysApi, notifications as notificationsApi, account as ac
 import { planLimits, PLAN_IDS } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { SIDE, STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY } from "@/components/cosmos/dashboard/data";
+import { SIDE, STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
 import {
-  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView,
+  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
+  AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
 import { OrgSwitcher } from "@/components/cosmos/dashboard/widgets/OrgSwitcher";
 import { EnvSwitcher } from "@/components/cosmos/dashboard/widgets/EnvSwitcher";
@@ -243,7 +244,11 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       .then((updated) => { setKeys((k) => k.map((x) => x.id === id ? { ...x, ...updated } : x)); refreshNotifsSoon(); })
       .catch(() => showToast(t.dash.apikeys.updateError, "error"));
   };
-  const go = (v) => { setView(v); setNavOpen(false); };
+  // Cross-organization drill-down filter for the platform-admin views. Sidebar
+  // navigation (go) always clears it; only goToAdmin sets it.
+  const [adminFilter, setAdminFilter] = useState(null); // { consumer, label, tab? } | null
+  const go = (v) => { setView(v); setAdminFilter(null); setNavOpen(false); };
+  const goToAdmin = (v, filter = null) => { setView(v); setAdminFilter(filter); setNavOpen(false); };
 
   // Pending invitations addressed to my email — surfaced as a banner so I can join from
   // inside the dashboard (in addition to the emailed magic link).
@@ -274,6 +279,9 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} />;
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "swaps": return <SwapsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "liquidity": return <LiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;
@@ -282,6 +290,13 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "support": return <SupportView />;
       case "inbox": return isStaff ? <SupportInboxView /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
       case "users": return isManager ? <UsersView currentUserId={user.id} currentRole={user.role} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
+      case "adminOverview": return isManager ? <AdminOverviewView env={live ? "prod" : "dev"} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
+      case "adminPayments": return isManager ? <AdminPaymentsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
+      case "adminSwaps": return isManager ? <AdminSwapsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
+      case "adminFiat": return isManager ? <AdminFiatView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
+      case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
+      case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
+      case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
       case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
       case "account": return <AccountView user={user} theme={theme} setTheme={setTheme} planId={plan} limits={limits} orgCount={orgs.length} onChangePlan={canChangePlan ? () => setModal("plan") : null} plansEnabled={feat.plansEnabled} onSaveProfile={saveProfile} />;
       default: return <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;
@@ -301,7 +316,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
           <EnvSwitcher live={live} setLive={setLive} />
         </div>
         <nav className="side-nav">
-          {SIDE.map((g) => { const items = g.items.filter((k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k))); return (<div key={g.sec}><div className="side-sec lbl">{t.dash.sidebar.sections[g.sec]}</div>{items.map((k) => (<div key={k} role="button" tabIndex={0} aria-current={view === k ? "page" : undefined} aria-label={t.dash.sidebar.items[k]} className={`side-link${view === k ? " active" : ""}`} title={t.dash.sidebar.items[k]} onClick={() => go(k)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(k); } }}>{DI[k]}<span className="lbl">{t.dash.sidebar.items[k]}</span>{k === "support" && supportUnread > 0 && <span className="side-dot" />}</div>))}</div>); })}
+          {SIDE.map((g) => { const items = g.items.filter((k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k))); if (!items.length) return null; return (<div key={g.sec}><div className="side-sec lbl">{t.dash.sidebar.sections[g.sec]}</div>{items.map((k) => (<div key={k} role="button" tabIndex={0} aria-current={view === k ? "page" : undefined} aria-label={t.dash.sidebar.items[k]} className={`side-link${view === k ? " active" : ""}`} title={t.dash.sidebar.items[k]} onClick={() => go(k)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(k); } }}>{DI[k]}<span className="lbl">{t.dash.sidebar.items[k]}</span>{k === "support" && supportUnread > 0 && <span className="side-dot" />}</div>))}</div>); })}
         </nav>
         <ProfileMenu user={user} onAccount={() => go("account")} />
       </aside>
