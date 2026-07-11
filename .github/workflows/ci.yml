@@ -38,3 +38,6 @@ jobs:
           # the client bundle. Any valid URL satisfies the compile check; the real value is
           # injected at deploy. Set a repo Variable to override the default.
           PUBLIC_BETTER_AUTH_URL: ${{ vars.PUBLIC_BETTER_AUTH_URL || 'https://dev.cosmospay.lat' }}
+          # prisma.config.ts resolves env('DATABASE_URL') at load time. `prisma generate`
+          # only does codegen (no DB connection), so a dummy URL is enough for CI.
+          DATABASE_URL: ${{ vars.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db' }}
