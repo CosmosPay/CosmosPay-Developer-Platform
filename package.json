@@ -28,7 +28,7 @@
     "@prisma/client": "^7.8.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "astro": "^7.0.7",
+    "astro": "^7.1.1",
     "axios": "^1.18.1",
     "better-auth": "^1.6.23",
     "dotenv": "^17.4.2",
