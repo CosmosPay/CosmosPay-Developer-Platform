@@ -6,7 +6,7 @@ export default function Buttons() {
       <button
         id="login"
         onClick={() =>
-          signIn.oauth2({ providerId: "ak", callbackURL: "/dashboard" })
+          signIn.social({ provider: "ak", callbackURL: "/dashboard" })
         }
       >
         {" "}

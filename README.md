@@ -137,7 +137,9 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 
 ### External setup checklist
 
-- **Authentik:** register a Redirect URI of `https://<your-domain>/api/auth/oauth2/callback/ak`.
+- **Authentik:** register a Redirect URI of `https://<your-domain>/api/auth/callback/ak`.
+  (better-auth 1.7 moved the generic-OAuth callback off `/api/auth/oauth2/callback/:id`;
+  an instance upgraded from 1.6 must re-register this URI before the deploy.)
 - **Email:** verify your `SMTP_FROM` domain in Resend (SPF/DKIM).
 - **APISIX:** point `APISIX_URL` at the **local/internal** admin API (never expose it publicly).
 

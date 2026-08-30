@@ -10,7 +10,7 @@ import type { User } from "./types";
    redirected straight to the OAuth provider to mint a token. */
 export function startLogin(callbackURL: string = DASH) {
   try {
-    return signIn.oauth2({ providerId: "ak", callbackURL });
+    return signIn.social({ provider: "ak", callbackURL });
   } catch (e) {
     /* signIn redirects the browser; nothing else to do on failure. */
   }
