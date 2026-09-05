@@ -1,0 +1,146 @@
+---
+title: Kyc
+description: >-
+  Receivers, KYC documents, blockchain wallets, bank accounts, and the rail
+  catalogue.
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: List the consumer's receivers
+      url: '#list-the-consumers-receivers'
+    - depth: 2
+      title: Create a receiver (start KYC/KYB)
+      url: '#create-a-receiver-start-kyckyb'
+    - depth: 2
+      title: Get a receiver (refreshes KYC status from BlindPay)
+      url: '#get-a-receiver-refreshes-kyc-status-from-blindpay'
+    - depth: 2
+      title: Update a receiver
+      url: '#update-a-receiver'
+    - depth: 2
+      title: Delete a receiver
+      url: '#delete-a-receiver'
+    - depth: 2
+      title: >-
+        Approve a pending-review receiver (admin-only review gate); sends the
+        customer the terms link and returns it
+      url: >-
+        #approve-a-pending-review-receiver-admin-only-review-gate-sends-the-customer-the-terms-link-and-returns-it
+    - depth: 2
+      title: >-
+        Request a terms-of-service link for a receiver ('code' returns the URL;
+        'email' sends it, max once/day)
+      url: >-
+        #request-a-terms-of-service-link-for-a-receiver-code-returns-the-url-email-sends-it-max-onceday
+    - depth: 2
+      title: Enable an inactive receiver with an accepted terms-of-service id
+      url: '#enable-an-inactive-receiver-with-an-accepted-terms-of-service-id'
+    - depth: 2
+      title: >-
+        Enable or disable a fiat account (admin-only kill-switch for
+        onramp/offramp)
+      url: >-
+        #enable-or-disable-a-fiat-account-admin-only-kill-switch-for-onrampofframp
+    - depth: 2
+      title: Get the message to sign for the secure wallet flow
+      url: '#get-the-message-to-sign-for-the-secure-wallet-flow'
+    - depth: 2
+      title: List a receiver's wallets
+      url: '#list-a-receivers-wallets'
+    - depth: 2
+      title: Register a blockchain wallet for a receiver
+      url: '#register-a-blockchain-wallet-for-a-receiver'
+    - depth: 2
+      title: Delete a wallet
+      url: '#delete-a-wallet'
+    - depth: 2
+      title: List a receiver's bank accounts
+      url: '#list-a-receivers-bank-accounts'
+    - depth: 2
+      title: Add a fiat bank account for a receiver
+      url: '#add-a-fiat-bank-account-for-a-receiver'
+    - depth: 2
+      title: Delete a bank account
+      url: '#delete-a-bank-account'
+    - depth: 2
+      title: Upload a KYC document; returns its file_url
+      url: '#upload-a-kyc-document-returns-its-file_url'
+    - depth: 2
+      title: Start ToS acceptance; returns the hosted URL (first KYC step)
+      url: '#start-tos-acceptance-returns-the-hosted-url-first-kyc-step'
+    - depth: 2
+      title: List available bank rails
+      url: '#list-available-bank-rails'
+    - depth: 2
+      title: Get the field schema required by a rail
+      url: '#get-the-field-schema-required-by-a-rail'
+  structuredData:
+    headings:
+      - content: List the consumer's receivers
+        id: list-the-consumers-receivers
+      - content: Create a receiver (start KYC/KYB)
+        id: create-a-receiver-start-kyckyb
+      - content: Get a receiver (refreshes KYC status from BlindPay)
+        id: get-a-receiver-refreshes-kyc-status-from-blindpay
+      - content: Update a receiver
+        id: update-a-receiver
+      - content: Delete a receiver
+        id: delete-a-receiver
+      - content: >-
+          Approve a pending-review receiver (admin-only review gate); sends the
+          customer the terms link and returns it
+        id: >-
+          approve-a-pending-review-receiver-admin-only-review-gate-sends-the-customer-the-terms-link-and-returns-it
+      - content: >-
+          Request a terms-of-service link for a receiver ('code' returns the
+          URL; 'email' sends it, max once/day)
+        id: >-
+          request-a-terms-of-service-link-for-a-receiver-code-returns-the-url-email-sends-it-max-onceday
+      - content: Enable an inactive receiver with an accepted terms-of-service id
+        id: enable-an-inactive-receiver-with-an-accepted-terms-of-service-id
+      - content: >-
+          Enable or disable a fiat account (admin-only kill-switch for
+          onramp/offramp)
+        id: >-
+          enable-or-disable-a-fiat-account-admin-only-kill-switch-for-onrampofframp
+      - content: Get the message to sign for the secure wallet flow
+        id: get-the-message-to-sign-for-the-secure-wallet-flow
+      - content: List a receiver's wallets
+        id: list-a-receivers-wallets
+      - content: Register a blockchain wallet for a receiver
+        id: register-a-blockchain-wallet-for-a-receiver
+      - content: Delete a wallet
+        id: delete-a-wallet
+      - content: List a receiver's bank accounts
+        id: list-a-receivers-bank-accounts
+      - content: Add a fiat bank account for a receiver
+        id: add-a-fiat-bank-account-for-a-receiver
+      - content: Delete a bank account
+        id: delete-a-bank-account
+      - content: Upload a KYC document; returns its file_url
+        id: upload-a-kyc-document-returns-its-file_url
+      - content: Start ToS acceptance; returns the hosted URL (first KYC step)
+        id: start-tos-acceptance-returns-the-hosted-url-first-kyc-step
+      - content: List available bank rails
+        id: list-available-bank-rails
+      - content: Get the field schema required by a rail
+        id: get-the-field-schema-required-by-a-rail
+    contents: []
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { APIPage, OpenAPIPage } = props.components ?? {};
+  // "APIPage" is the old name from v10, this allows both for backward compatibility
+  const Comp = OpenAPIPage ?? APIPage;
+  return (
+    <>
+      {props.children}
+      <Comp document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/kyc/receivers","method":"get"},{"path":"/v1/kyc/receivers","method":"post"},{"path":"/v1/kyc/receivers/{id}","method":"get"},{"path":"/v1/kyc/receivers/{id}","method":"patch"},{"path":"/v1/kyc/receivers/{id}","method":"delete"},{"path":"/v1/kyc/receivers/{id}/approve","method":"post"},{"path":"/v1/kyc/receivers/{id}/tos","method":"post"},{"path":"/v1/kyc/receivers/{id}/enable","method":"post"},{"path":"/v1/kyc/receivers/{id}/access","method":"patch"},{"path":"/v1/kyc/receivers/{receiverId}/wallets/sign-message","method":"get"},{"path":"/v1/kyc/receivers/{receiverId}/wallets","method":"get"},{"path":"/v1/kyc/receivers/{receiverId}/wallets","method":"post"},{"path":"/v1/kyc/receivers/{receiverId}/wallets/{id}","method":"delete"},{"path":"/v1/kyc/receivers/{receiverId}/bank-accounts","method":"get"},{"path":"/v1/kyc/receivers/{receiverId}/bank-accounts","method":"post"},{"path":"/v1/kyc/receivers/{receiverId}/bank-accounts/{id}","method":"delete"},{"path":"/v1/kyc/upload","method":"post"},{"path":"/v1/kyc/terms-of-service","method":"post"},{"path":"/v1/kyc/rails","method":"get"},{"path":"/v1/kyc/bank-details","method":"get"}]} showTitle />
+    </>
+  );
+}

@@ -4,6 +4,12 @@
   "pages": [
     "index",
     "payment-intents",
+    "swaps",
+    "liquidity-pools",
+    "onramp",
+    "offramp",
+    "kyc",
+    "pollar",
     "webhooks",
     "products",
     "customers",

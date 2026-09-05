@@ -1,6 +1,12 @@
-/* sync-apisix-route.mjs — point the APISIX route's upstream at COSMOS_API_URL from .env.
+/* sync-apisix-route.mjs — point the APISIX routes' upstream at COSMOS_API_URL from .env.
    Standalone (reads .env itself, no server needed). Run:  node scripts/sync-apisix-route.mjs
-   Useful to fix a stale route immediately without restarting the app. */
+   Useful to fix a stale route immediately without restarting the app.
+
+   Both routes are patched: the main one, and the keyless `-pollar-callback` sibling that
+   the OAuth callback lands on (see src/utils/apisix.ts). Patching only the first is how a
+   tunnel change leaves social login pointing at an upstream that moved — with the rest of
+   the API working perfectly, so nothing says which half is stale. The sibling is created
+   by the app at boot; a 404 here just means it does not exist yet. */
 import { readFileSync } from "node:fs";
 
 function loadEnv(path = ".env") {
@@ -42,19 +48,29 @@ if (!base || !routeId || !env.APISIX_ADMIN_KEY) {
   process.exit(1);
 }
 
-const url = `${base}/routes/${routeId}`;
-console.log(`Patching ${url} -> upstream ${node}`);
+async function patchRoute(id, { optional = false } = {}) {
+  const url = `${base}/routes/${id}`;
+  console.log(`Patching ${url} -> upstream ${node}`);
 
-const res = await fetch(url, {
-  method: "PATCH",
-  headers: { "X-API-KEY": env.APISIX_ADMIN_KEY, "Content-Type": "application/json" },
-  body: JSON.stringify({ upstream: { type: "roundrobin", nodes: { [node]: 1 } } }),
-});
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "X-API-KEY": env.APISIX_ADMIN_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ upstream: { type: "roundrobin", nodes: { [node]: 1 } } }),
+  });
 
-const text = await res.text();
-if (res.ok) {
-  console.log(`✓ Route synced (${res.status}). Upstream is now ${node}.`);
-} else {
-  console.error(`✗ APISIX returned ${res.status}: ${text}`);
-  process.exit(1);
+  const text = await res.text();
+  if (res.ok) {
+    console.log(`✓ Route "${id}" synced (${res.status}). Upstream is now ${node}.`);
+    return true;
+  }
+  if (optional && res.status === 404) {
+    console.warn(`- Route "${id}" does not exist yet; the app creates it at boot.`);
+    return true;
+  }
+  console.error(`✗ APISIX returned ${res.status} for "${id}": ${text}`);
+  return false;
 }
+
+const ok = await patchRoute(routeId);
+const okCallback = await patchRoute(`${routeId}-pollar-callback`, { optional: true });
+if (!ok || !okCallback) process.exit(1);

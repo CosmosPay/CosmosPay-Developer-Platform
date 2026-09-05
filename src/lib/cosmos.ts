@@ -47,6 +47,15 @@ async function cosmosFetch<T>(
     // caller can't change the fee. Resolved server-side via orgSwapContext().
     org?: string;
     swapFeeBps?: number;
+    // The END USER's address, for a call the platform makes on their behalf (the
+    // social-login bridge). The Payments service keys its rate limits on the peer
+    // it sees, and for a direct server-to-server call that peer is this process --
+    // so without this every social login in the world shares one bucket and the
+    // twentieth user in ten minutes is refused because of the nineteen before them.
+    // It sets X-Forwarded-For, which that service reads with `trust proxy = 1`:
+    // the rightmost entry, i.e. exactly what we put here and nothing a client
+    // prepended. Never pass a value a request body supplied.
+    clientIp?: string;
   } = {},
 ): Promise<T> {
   const url = new URL(baseUrl() + path);
@@ -77,6 +86,7 @@ async function cosmosFetch<T>(
   // exactly as the APISIX consumer forwarder would for an API-key caller.
   if (init.org) headers["X-Consumer-Org"] = init.org;
   if (init.swapFeeBps !== undefined) headers["X-Plan-Swap-Fee-Bps"] = String(init.swapFeeBps);
+  if (init.clientIp) headers["X-Forwarded-For"] = init.clientIp;
 
   let res: Response;
   try {
@@ -571,4 +581,120 @@ export const cosmosAnalytics = {
   balances: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/balances"),
   apiLogs: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/logs"),
   webhookLogs: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/logs/webhooks"),
+};
+
+/* ── Pollar social login ────────────────────────────────────────────────────────
+   The bridge routes on the Payments service (`/v1/pollar/oauth/*`) are scoped
+   `pollar:read` / `pollar:write`, so they need a credential -- and the whole point
+   of social login is the person driving it does not have one yet. That was the
+   chicken-and-egg: an API key is minted for an ACCOUNT, an account needed an email
+   round-trip, and the wallet had nothing to authenticate the login with.
+
+   The way out is that this platform is already a trusted backend: it presents the
+   gateway identity headers itself (see cosmosFetch) instead of holding a key. So the
+   handshake runs HERE, under one dedicated consumer, and no bootstrap credential is
+   ever handed to a client -- which is the alternative, and the one that would put a
+   key capable of spending the operator's XLM into a public app bundle.
+
+   What the caller still has to hold is the PKCE verifier: the poll route hands the
+   code to whoever knows the `state`, and it is the verifier -- which never leaves the
+   wallet -- that decides who may redeem it. `authorizePollarLogin` therefore requires
+   a challenge; the upstream treats it as optional and we do not. */
+
+/* The consumer every pre-account handshake belongs to. One row upstream, created on
+   first use, and deliberately NOT per-user: there is no user yet. Budgets still
+   partition per address because we forward the end user's IP. */
+const SOCIAL_BOOTSTRAP_USER = "social_bootstrap";
+
+export interface PollarAuthorization {
+  state: string;
+  authorization_url: string;
+  provider: string;
+  redirect_uri: string | null;
+  expires_at?: string;
+}
+
+export interface PollarSessionStatus {
+  status: "pending" | "authorized" | "exchanging" | "consumed" | "failed" | "expired";
+  state: string;
+  code?: string;
+  code_expires_at?: string | null;
+  error_code?: string | null;
+}
+
+export interface PollarWallet {
+  type: string;
+  address: string | null;
+  chain?: string;
+  exists_on_stellar?: boolean;
+  funding_mode?: string;
+  network?: string;
+}
+
+export interface PollarProfile {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  avatar?: string;
+}
+
+export interface PollarSession {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_at: number;
+  user_id: string | null;
+  wallet: PollarWallet;
+  wallets: PollarWallet[];
+  profile: PollarProfile;
+  publishable_key: string;
+  api_base_url: string;
+}
+
+export interface PollarActivation {
+  public_key: string;
+  amount: string;
+  activated: boolean;
+}
+
+export const cosmosPollar = {
+  /** Open a handshake. `codeChallenge` is required here even though upstream allows none. */
+  authorize: (
+    env: CosmosEnv,
+    body: { provider: string; code_challenge: string; code_challenge_method: string; device_label?: string },
+    clientIp?: string,
+  ) =>
+    cosmosFetch<PollarAuthorization>(SOCIAL_BOOTSTRAP_USER, env, "/v1/pollar/oauth/authorize", {
+      method: "POST",
+      body,
+      clientIp,
+    }),
+
+  /** Poll one handshake. Only `authorized` carries a code, and each poll retires the last. */
+  sessionStatus: (env: CosmosEnv, state: string, clientIp?: string) =>
+    cosmosFetch<PollarSessionStatus>(
+      SOCIAL_BOOTSTRAP_USER,
+      env,
+      `/v1/pollar/oauth/sessions/${encodeURIComponent(state)}`,
+      { clientIp },
+    ),
+
+  /** Redeem the code for a live Pollar session. A 409 means "still provisioning; retry". */
+  exchange: (env: CosmosEnv, body: { code: string; code_verifier: string }, clientIp?: string) =>
+    cosmosFetch<PollarSession>(SOCIAL_BOOTSTRAP_USER, env, "/v1/pollar/oauth/token", {
+      method: "POST",
+      body,
+      clientIp,
+    }),
+
+  /* Fund a deferred wallet's XLM reserve. Done here rather than left to the wallet
+     because on a first run the wallet has no key at this point -- and an address with
+     no reserve is an account that does not exist on-chain, which the user meets as a
+     receive QR nobody can pay. Idempotent: a repeat reports `activated: false`. */
+  activate: (env: CosmosEnv, publicKey: string, clientIp?: string) =>
+    cosmosFetch<PollarActivation>(SOCIAL_BOOTSTRAP_USER, env, "/v1/pollar/wallets/activate", {
+      method: "POST",
+      body: { public_key: publicKey },
+      clientIp,
+    }),
 };

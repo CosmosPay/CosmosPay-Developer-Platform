@@ -117,45 +117,87 @@ export async function routeExists(routeId: string): Promise<boolean> {
   return route !== null;
 }
 
-export async function createRoute(
-  routeId: string,
-  uri: string,
-  upstreamHost: string,
-) {
-  const exists = await routeExists(routeId);
+/* -- The Cosmos API routes in APISIX --------------------------------------------
+   Two routes, and the second one is what makes social login possible at all.
+
+   Everything under COSMOS_API_ENTRY carries `key-auth`: an API key is the price of
+   admission, which is right for every path the wallet or an integrator calls. The
+   Pollar OAuth callback is the exception, and not by preference -- the user's BROWSER
+   lands there after consenting at Google or GitHub, carrying no key and no way to be
+   handed one. Behind key-auth that navigation is a 401 at the gateway: the handshake
+   never completes, and the wallet polls a login that can never finish. The community
+   server declares that one route `@Public()` for the same reason (the unguessable
+   `state` is the credential, and the transition it drives is single-shot).
+
+   So the callback gets its own route -- higher priority, no key-auth, matching the
+   exact callback path rather than a prefix of the API, so nothing else loses its
+   authentication alongside it. */
+
+/* Where the community server serves the callback, relative to the gateway entry. Keep
+   it equal to POLLAR_BRIDGE_CALLBACK_URL over there (the URL also registered with
+   Pollar); the bridge appends `/{state}`, which is what the trailing `*` covers. */
+const POLLAR_CALLBACK_PATH = '/v1/pollar/oauth/callback';
+
+/* `/cosmos-api/*` -> `/cosmos-api`. The entry is a wildcard URI; the sibling route
+   builds its own path under the same prefix. */
+function entryPrefix(entry: string): string {
+  return entry.trim().replace(/["']/g, '').replace(/\/+\*?$/, '');
+}
+
+/* Route id for the public callback. Derived from the main one so a deployment needs no
+   extra env var, and so the pair is obvious in the APISIX admin listing. */
+export function callbackRouteId(routeId: string): string {
+  return `${routeId}-pollar-callback`;
+}
+
+/* The gateway URI the callback (and its `/{state}` form) is served on. */
+export function callbackRouteUri(entry: string): string {
+  return `${entryPrefix(entry)}${POLLAR_CALLBACK_PATH}*`;
+}
+
+/* The plugin stack both routes share. `keyAuth: false` drops key-auth AND the header
+   normalizer that only exists to feed it -- everything else (CORS, the rewrite, the
+   gateway secret, the internal-header scrub, the access log) is identical, so the two
+   routes cannot drift into disagreeing about what reaches the upstream. */
+function cosmosRoutePlugins(opts: { keyAuth: boolean }) {
   const [rewritePattern, rewriteTemplate] = parseRewriteRegex();
-  const upstreamNode = normalizeUpstreamHost(upstreamHost);
 
-  const route = {
-    id: routeId,
+  return {
+    // CORS: let the wallet/site (cosmospay.lat) call the gateway from the browser.
+    // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
+    // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
+    cors: {
+      allow_origins: COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat',
+      allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+      // Idempotency-Key is read by the swap / liquidity / payout routes; a browser
+      // cannot send a non-safelisted request header unless preflight allows it here.
+      allow_headers: 'Content-Type,Authorization,apikey,Idempotency-Key',
+      // A browser hides every response header that is not safelisted, so without this
+      // the throttling headers the API already sends are invisible to a web client: it
+      // sees a 429 with no idea when to come back, and has to guess an interval against
+      // a fixed-window limiter. The Pollar login path is where 429s are ORDINARY --
+      // `authorize` is capped because each handshake can fund a Stellar account -- so
+      // this is the difference between "retry in 47s" and a retry storm.
+      expose_headers: 'Retry-After,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset',
+      allow_credential: true,
+      max_age: 86400,
+    },
 
-    uri,
-
-    plugins: {
-      // CORS: let the wallet/site (cosmospay.lat) call the gateway from the browser.
-      // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
-      // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
-      cors: {
-        allow_origins: COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat',
-        allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-        allow_headers: 'Content-Type,Authorization,apikey',
-        allow_credential: true,
-        max_age: 86400,
-      },
-
-      // Accept the API key in any of three forms and normalize it into the `apikey`
-      // header that key-auth reads, BEFORE key-auth runs (phase: rewrite):
-      //   - apikey: <key>
-      //   - Authorization: <key>
-      //   - Authorization: Bearer <key>
-      // We only set `apikey` from Authorization when the client didn't already send an
-      // `apikey` header, so an explicit apikey always wins. The Bearer prefix is stripped
-      // case-insensitively. key-auth (hide_credentials) + proxy-rewrite then drop all of
-      // these before the request reaches the upstream.
-      'serverless-pre-function': {
-        phase: 'rewrite',
-        functions: [
-          `
+    ...(opts.keyAuth
+      ? {
+          // Accept the API key in any of three forms and normalize it into the `apikey`
+          // header that key-auth reads, BEFORE key-auth runs (phase: rewrite):
+          //   - apikey: <key>
+          //   - Authorization: <key>
+          //   - Authorization: Bearer <key>
+          // We only set `apikey` from Authorization when the client didn't already send an
+          // `apikey` header, so an explicit apikey always wins. The Bearer prefix is stripped
+          // case-insensitively. key-auth (hide_credentials) + proxy-rewrite then drop all of
+          // these before the request reaches the upstream.
+          'serverless-pre-function': {
+            phase: 'rewrite',
+            functions: [
+              `
 return function(conf, ctx)
   if ngx.var.http_apikey and ngx.var.http_apikey ~= "" then
     return
@@ -167,45 +209,57 @@ return function(conf, ctx)
   end
 end
 `,
+            ],
+          },
+
+          // API-key auth, APISIX-native: key-auth reads the `apikey` header (fed above from
+          // apikey / Authorization / Authorization: Bearer). After a match, the per-credential
+          // serverless-pre-function (baked in createApiKey) forwards the key's scopes/role/env
+          // downstream as X-Consumer-* headers.
+          'key-auth': {
+            hide_credentials: true,
+          },
+        }
+      : {}),
+
+    'proxy-rewrite': {
+      regex_uri: [rewritePattern, rewriteTemplate],
+      headers: {
+        // Prove the request came through the gateway (the community server's
+        // ApisixGuard always checks this). Only set when configured.
+        ...(COSMOS_GATEWAY_SECRET
+          ? { set: { 'X-Gateway-Secret': COSMOS_GATEWAY_SECRET } }
+          : {}),
+        remove: [
+          'Authorization',
+          'apikey',
+          'X-API-KEY',
+          // Internal-only markers -- never trust a client-supplied copy. The dev
+          // platform sets these server-to-server; X-Cosmos-Admin additionally gates
+          // the global owner-only admin endpoints, so it must never come from a client.
+          // X-Cosmos-Tos-Cooldown-Ms shortens the KYC email resend limit by dashboard
+          // role, so a client must never be able to set it either.
+          'X-Cosmos-Internal',
+          'X-Cosmos-Admin',
+          'X-Cosmos-Tos-Cooldown-Ms',
+          // The consumer identity APISIX itself injects after key-auth. Scrubbed on the
+          // way in so a client can never supply its own -- which matters most on the
+          // keyless callback route, where there is no key-auth step to overwrite them.
+          'X-Consumer-Username',
+          'X-Consumer-Permissions',
+          'X-Consumer-Role',
+          'X-Consumer-Env',
+          'X-Consumer-Org',
+          'X-Consumer-Plan',
+          'X-Plan-Swap-Fee-Bps',
         ],
       },
+    },
 
-      // API-key auth, APISIX-native: key-auth reads the `apikey` header (fed above from
-      // apikey / Authorization / Authorization: Bearer). After a match, the per-credential
-      // serverless-pre-function (baked in createApiKey) forwards the key's scopes/role/env
-      // downstream as X-Consumer-* headers.
-      'key-auth': {
-        hide_credentials: true,
-      },
-
-      'proxy-rewrite': {
-        regex_uri: [rewritePattern, rewriteTemplate],
-        headers: {
-          // Prove the request came through the gateway (the community server's
-          // ApisixGuard always checks this). Only set when configured.
-          ...(COSMOS_GATEWAY_SECRET
-            ? { set: { 'X-Gateway-Secret': COSMOS_GATEWAY_SECRET } }
-            : {}),
-          remove: [
-            'Authorization',
-            'apikey',
-            'X-API-KEY',
-            // Internal-only markers — never trust a client-supplied copy. The dev
-            // platform sets these server-to-server; X-Cosmos-Admin additionally gates
-            // the global owner-only admin endpoints, so it must never come from a client.
-            // X-Cosmos-Tos-Cooldown-Ms shortens the KYC email resend limit by dashboard
-            // role, so a client must never be able to set it either.
-            'X-Cosmos-Internal',
-            'X-Cosmos-Admin',
-            'X-Cosmos-Tos-Cooldown-Ms',
-          ],
-        },
-      },
-
-      'serverless-post-function': {
-        phase: 'log',
-        functions: [
-          `
+    'serverless-post-function': {
+      phase: 'log',
+      functions: [
+        `
 return function(conf, ctx)
 
   ngx.log(
@@ -218,27 +272,46 @@ return function(conf, ctx)
 
 end
 `,
-        ],
-      },
-    },
-
-    upstream: {
-      type: 'roundrobin',
-      nodes: {
-        [upstreamNode]: 1,
-      },
+      ],
     },
   };
+}
+
+/* Why a call to the APISIX admin API failed, in one short line fit for a log.
+   The two failures that actually happen look nothing alike and need telling apart:
+   the control plane being unreachable (APISIX/etcd not running, wrong APISIX_URL --
+   an axios `code` like ECONNREFUSED and no response), versus APISIX rejecting the
+   route definition (a status plus its own `error_msg`, e.g. a bad plugin schema or
+   the wrong admin key). Without this the caller could only report "Failed", which
+   says nothing about which of the two to go fix. */
+export function apisixErrorReason(err: unknown): string {
+  const e = err as { code?: string; message?: string; response?: { status?: number; data?: any } };
+  const status = e?.response?.status;
+
+  if (status) {
+    const data = e.response?.data;
+    const detail =
+      (data && (data.error_msg || data.message)) ||
+      (typeof data === 'string' ? data : null);
+    return detail ? `HTTP ${status}: ${detail}` : `HTTP ${status}`;
+  }
+
+  return e?.code ? `${e.code} (${APISIX_URL} unreachable)` : e?.message || 'unknown error';
+}
+
+/* PUT a route definition, reporting whether it was created or updated -- or, on
+   failure, WHY (see apisixErrorReason). Still resolves rather than throwing: route
+   sync is best-effort and must not take the request down with it. */
+async function putRoute(routeId: string, route: Record<string, unknown>) {
+  const exists = await routeExists(routeId);
 
   const response = await apisix.put(
     `/routes/${routeId}`,
-    route,
-  ).catch(err => {
-    return null;
-  });
+    { id: routeId, ...route },
+  ).catch((err: unknown) => ({ __error: apisixErrorReason(err) }) as const);
 
-  if (!response) {
-    return null;
+  if ('__error' in response) {
+    return { error: response.__error } as const;
   }
 
   return {
@@ -246,6 +319,48 @@ end
     updated: exists,
     route: response.data,
   };
+}
+
+export async function createRoute(
+  routeId: string,
+  uri: string,
+  upstreamHost: string,
+) {
+  return putRoute(routeId, {
+    uri,
+    // Explicit, because the callback route below outranks it: APISIX resolves
+    // overlapping URIs by priority, highest first.
+    priority: 0,
+    plugins: cosmosRoutePlugins({ keyAuth: true }),
+    upstream: {
+      type: 'roundrobin',
+      nodes: {
+        [normalizeUpstreamHost(upstreamHost)]: 1,
+      },
+    },
+  });
+}
+
+/* The keyless sibling, for the Pollar OAuth callback only. GET plus the preflight:
+   it serves one browser navigation and nothing else, so anything that is not that
+   navigation still meets the authenticated route. */
+export async function createCallbackRoute(
+  routeId: string,
+  entry: string,
+  upstreamHost: string,
+) {
+  return putRoute(callbackRouteId(routeId), {
+    uri: callbackRouteUri(entry),
+    priority: 10,
+    methods: ['GET', 'OPTIONS'],
+    plugins: cosmosRoutePlugins({ keyAuth: false }),
+    upstream: {
+      type: 'roundrobin',
+      nodes: {
+        [normalizeUpstreamHost(upstreamHost)]: 1,
+      },
+    },
+  });
 }
 
 export async function deleteRoute(routeId: string) {
@@ -654,10 +769,17 @@ export async function deleteApiKey(
   }
 }
 
+/* Swap a credential's secret, keeping its identity. `permissions` is optional and
+   exists for one case: a wallet-provisioned account whose keys were minted before a
+   scope existed (`pollar:*`, say). Rotation is the only lever those users have -- the
+   dashboard refuses them additional keys -- so re-applying the current scope set here
+   is what lets an existing account reach a newly added surface instead of being stuck
+   with a key that can never be granted it. Absent, the labels are kept verbatim. */
 export async function rotateApiKey(
   apiKeyId: string,
   userId: string,
   environment: Environment,
+  permissions?: string[],
 ) {
   const key = apiKeyId.includes(keyPrefix) ? apiKeyId : `${keyPrefix}${apiKeyId}`;
 
@@ -685,12 +807,21 @@ export async function rotateApiKey(
           key: newApiKey,
         },
       },
-      labels: apiKey.value.labels,
+      labels: permissions
+        ? { ...(apiKey.value.labels ?? {}), permissions: JSON.stringify(permissions) }
+        : apiKey.value.labels,
     },
   );
 
   if (!response) {
     return null;
+  }
+
+  // The consumer forwarder bakes credential_id -> scopes into a single plugin, so a
+  // label change here is invisible downstream until it is rebuilt: the key would work
+  // and its new scopes would not. Only needed when the labels actually moved.
+  if (permissions) {
+    await syncConsumerForwarder(userId).catch(() => null);
   }
 
   return {

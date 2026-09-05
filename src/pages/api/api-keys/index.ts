@@ -20,6 +20,7 @@ import {
 import {
   createApiKey,
   createConsumer,
+  apisixErrorReason,
   createRoute,
   listUserApiKeys,
   parseApiKeyEnv,
@@ -29,7 +30,7 @@ import {
   rotateApiKey,
   syncConsumerForwarder,
 } from "@/utils/apisix";
-import { isWalletProvisionedUser } from "@/lib/wallet-provisioning";
+import { isWalletProvisionedUser, WALLET_KEY_SCOPES } from "@/lib/wallet-provisioning";
 import { safeNotify } from "@/lib/notifications";
 import { geoLocate } from "@/lib/geo";
 import type { APIRoute } from "astro";
@@ -54,9 +55,11 @@ export const GET: APIRoute = async (ctx) => {
     }
   }
 
-  const route = await createRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL);
+  const route = await createRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL)
+    .catch((err: unknown) => ({ error: apisixErrorReason(err) }) as const);
 
-  if (!route) {
+  if ("error" in route) {
+    console.error(`[apisix] Failed to sync route "${APISSIX_ROUTE_ID}": ${route.error}`);
     return jsonError({
       message: "Failed to get route",
       code: 500,
@@ -184,7 +187,17 @@ export const POST: APIRoute = async (ctx) => {
     if (rotatable.length === 0) {
       return jsonForbidden("No existing API key to rotate for this environment. Upgrade to create more.");
     }
-    const rotated = await rotateApiKey(rotatable[0].value.id, session.user.id, body.data.environment).catch(() => null);
+    // Rotate onto the CURRENT wallet scope set, not the labels the key was minted with.
+    // These accounts cannot create additional keys, so a key minted before a scope
+    // existed (`pollar:*` for social login, for one) could never be granted it — the
+    // rotate they are offered instead was handing back the same limitation with a new
+    // secret.
+    const rotated = await rotateApiKey(
+      rotatable[0].value.id,
+      session.user.id,
+      body.data.environment,
+      WALLET_KEY_SCOPES,
+    ).catch(() => null);
     if (!rotated) {
       return jsonError({ message: "Failed to rotate API key", code: 500, status: "internal_error" });
     }
@@ -219,11 +232,11 @@ export const POST: APIRoute = async (ctx) => {
     });
   }
 
-  const route = await createRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL).catch(err => {
-    return null
-  });
+  const route = await createRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL)
+    .catch((err: unknown) => ({ error: apisixErrorReason(err) }) as const);
 
-  if (!route) {
+  if ("error" in route) {
+    console.error(`[apisix] Failed to create route "${APISSIX_ROUTE_ID}": ${route.error}`);
     return jsonError({
       message: "Failed to create route",
       code: 500,

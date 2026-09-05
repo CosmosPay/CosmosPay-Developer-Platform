@@ -24,8 +24,18 @@ import { provisionAuthentikIdentity } from "@/lib/authentik";
 import { linkMessage, registrationMessage, verifyStellarSignature } from "@/lib/stellar-verify";
 
 // Scopes granted to wallet-provisioned keys. Beyond swaps, the wallet now also creates
-// pay links (payments), and runs the BlindPay fiat flow (kyc receivers + onramp/offramp).
-const WALLET_KEY_SCOPES = [
+// pay links (payments), runs the BlindPay fiat flow (kyc receivers + onramp/offramp),
+// and drives the Pollar social-login bridge.
+//
+// `pollar:*` is what makes "Continue with Google" possible at all. The bridge routes
+// (`POST /v1/pollar/oauth/authorize`, `GET /v1/pollar/oauth/sessions/{state}`,
+// `POST /v1/pollar/oauth/token`, `POST /v1/pollar/wallets/activate`) are scoped, and the
+// wallet's only gateway credential is the key minted here — so without these two scopes
+// the login died on its first call with `insufficient_scope`, which reads to the user
+// like a broken install. Exported because the rotate path (api-keys) re-applies this set
+// to a wallet key: accounts provisioned before a scope was added would otherwise keep a
+// key that can never reach the new surface.
+export const WALLET_KEY_SCOPES = [
   "swaps:read",
   "swaps:write",
   "liquidity:read",
@@ -38,6 +48,8 @@ const WALLET_KEY_SCOPES = [
   "onramp:write",
   "offramp:read",
   "offramp:write",
+  "pollar:read",
+  "pollar:write",
 ];
 // How long a pending registration (and its claim token) stays valid.
 const REGISTRATION_TTL_MS = 30 * 60 * 1000; // 30 minutes
@@ -76,7 +88,7 @@ function genAccessCode(): string {
  * whichever network it's set to (dev = testnet, prod = mainnet). Returns the raw keys plus
  * the APISIX credential ids (so the register flow can re-read them on claim).
  */
-async function mintWalletKeys(
+export async function mintWalletKeys(
   userId: string,
   organizationId: string,
 ): Promise<{ dev: string | null; prod: string | null; ids: string[] }> {

@@ -16,6 +16,9 @@ _openapi:
       title: List the consumer's payment intents
       url: '#list-the-consumers-payment-intents'
     - depth: 2
+      title: List the status-transition history for a payment intent
+      url: '#list-the-status-transition-history-for-a-payment-intent'
+    - depth: 2
       title: Get a payment intent by id
       url: '#get-a-payment-intent-by-id'
     - depth: 2
@@ -38,6 +41,8 @@ _openapi:
         id: create-a-sep-7-pay-intent-no-source--pay-uri--qr-no-xdr
       - content: List the consumer's payment intents
         id: list-the-consumers-payment-intents
+      - content: List the status-transition history for a payment intent
+        id: list-the-status-transition-history-for-a-payment-intent
       - content: Get a payment intent by id
         id: get-a-payment-intent-by-id
       - content: Update a payment intent (status / txHash / reference)
@@ -61,7 +66,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <Comp document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-intents/tx","method":"post"},{"path":"/v1/payment-intents/pay","method":"post"},{"path":"/v1/payment-intents","method":"get"},{"path":"/v1/payment-intents/{id}","method":"get"},{"path":"/v1/payment-intents/{id}","method":"patch"},{"path":"/v1/payment-intents/{id}","method":"delete"},{"path":"/v1/payment-intents/{id}/validate","method":"post"}]} showTitle />
+      <Comp document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-intents/tx","method":"post"},{"path":"/v1/payment-intents/pay","method":"post"},{"path":"/v1/payment-intents","method":"get"},{"path":"/v1/payment-intents/{id}/transitions","method":"get"},{"path":"/v1/payment-intents/{id}","method":"get"},{"path":"/v1/payment-intents/{id}","method":"patch"},{"path":"/v1/payment-intents/{id}","method":"delete"},{"path":"/v1/payment-intents/{id}/validate","method":"post"}]} showTitle />
     </>
   );
 }

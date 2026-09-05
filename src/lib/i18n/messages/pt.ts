@@ -930,7 +930,7 @@ export default {
         },
         permsLabel: "Permissões",
         permResource: "Recurso",
-        scopeResources: { payments: "Pagamentos", swaps: "Swaps", liquidity: "Liquidez", webhooks: "Webhooks", products: "Produtos", customers: "Clientes" },
+        scopeResources: { payments: "Pagamentos", swaps: "Swaps", liquidity: "Liquidez", webhooks: "Webhooks", products: "Produtos", customers: "Clientes", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", pollar: "Login social" },
         adminHint: "As chaves de admin têm acesso total a todos os recursos.",
         perms: {
           read: "Leitura",

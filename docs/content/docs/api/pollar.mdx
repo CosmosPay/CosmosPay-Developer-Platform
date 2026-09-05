@@ -1,0 +1,159 @@
+---
+title: Pollar
+description: >-
+  Sign in with Google or GitHub and get a Stellar wallet Pollar custodies. The
+  bridge opens the login, receives the user back, and redeems a single-use code
+  for a session; the operator routes fund the reserve and manage trustlines.
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: Open a Pollar login and get the URL to send the user to
+      url: '#open-a-pollar-login-and-get-the-url-to-send-the-user-to'
+    - depth: 2
+      title: Where Pollar returns the browser after consent
+      url: '#where-pollar-returns-the-browser-after-consent'
+    - depth: 2
+      title: Callback fallback, with the state in the query
+      url: '#callback-fallback-with-the-state-in-the-query'
+    - depth: 2
+      title: Poll a login, and collect its code
+      url: '#poll-a-login-and-collect-its-code'
+    - depth: 2
+      title: Redeem a bridge code for a Pollar session
+      url: '#redeem-a-bridge-code-for-a-pollar-session'
+    - depth: 2
+      title: Rotate a Pollar token pair
+      url: '#rotate-a-pollar-token-pair'
+    - depth: 2
+      title: Revoke a Pollar session (this device, or all)
+      url: '#revoke-a-pollar-session-this-device-or-all'
+    - depth: 2
+      title: Fund a Pollar wallet's XLM reserve
+      url: '#fund-a-pollar-wallets-xlm-reserve'
+    - depth: 2
+      title: Enable the app's configured assets on a wallet
+      url: '#enable-the-apps-configured-assets-on-a-wallet'
+    - depth: 2
+      title: Enable specific assets on a wallet
+      url: '#enable-specific-assets-on-a-wallet'
+    - depth: 2
+      title: Remove a trustline
+      url: '#remove-a-trustline'
+    - depth: 2
+      title: Register a user with Pollar ahead of their first login
+      url: '#register-a-user-with-pollar-ahead-of-their-first-login'
+    - depth: 2
+      title: Register a user and provision their Stellar wallet
+      url: '#register-a-user-and-provision-their-stellar-wallet'
+    - depth: 2
+      title: Validate a Pollar end-user access token
+      url: '#validate-a-pollar-end-user-access-token'
+  structuredData:
+    headings:
+      - content: Open a Pollar login and get the URL to send the user to
+        id: open-a-pollar-login-and-get-the-url-to-send-the-user-to
+      - content: Where Pollar returns the browser after consent
+        id: where-pollar-returns-the-browser-after-consent
+      - content: Callback fallback, with the state in the query
+        id: callback-fallback-with-the-state-in-the-query
+      - content: Poll a login, and collect its code
+        id: poll-a-login-and-collect-its-code
+      - content: Redeem a bridge code for a Pollar session
+        id: redeem-a-bridge-code-for-a-pollar-session
+      - content: Rotate a Pollar token pair
+        id: rotate-a-pollar-token-pair
+      - content: Revoke a Pollar session (this device, or all)
+        id: revoke-a-pollar-session-this-device-or-all
+      - content: Fund a Pollar wallet's XLM reserve
+        id: fund-a-pollar-wallets-xlm-reserve
+      - content: Enable the app's configured assets on a wallet
+        id: enable-the-apps-configured-assets-on-a-wallet
+      - content: Enable specific assets on a wallet
+        id: enable-specific-assets-on-a-wallet
+      - content: Remove a trustline
+        id: remove-a-trustline
+      - content: Register a user with Pollar ahead of their first login
+        id: register-a-user-with-pollar-ahead-of-their-first-login
+      - content: Register a user and provision their Stellar wallet
+        id: register-a-user-and-provision-their-stellar-wallet
+      - content: Validate a Pollar end-user access token
+        id: validate-a-pollar-end-user-access-token
+    contents:
+      - content: >-
+          Mints a Pollar client session and returns a ready-to-open
+          authorization URL. Open it in a browser; the bridge receives the user
+          back and produces a single-use code for this handshake.
+        heading: open-a-pollar-login-and-get-the-url-to-send-the-user-to
+      - content: >-
+          Not called by your code — the user's browser lands here. Public by
+          necessity: a navigation carries no API key and no gateway consumer, so
+          the unguessable `state` is the credential and the transition it drives
+          is single-shot. Point POLLAR_BRIDGE_CALLBACK_URL at this route
+          (without the state; the bridge appends it) and register its host with
+          Pollar.
+        heading: where-pollar-returns-the-browser-after-consent
+      - content: >-
+          Identical to `GET /callback/{state}`, for a redirect chain that keeps
+          the query but not the path segment. Prefer the path form.
+        heading: callback-fallback-with-the-state-in-the-query
+      - content: >-
+          For a wallet with no addressable redirect URI. Returns the handshake
+          status, and — once the user has come back — the single-use code. Each
+          call issues a fresh code and retires the previous one, so redeem the
+          code from your most recent poll.
+        heading: poll-a-login-and-collect-its-code
+      - content: >-
+          Trades the single-use code for Pollar's end-user tokens and the wallet
+          it resolved. May take a moment on a first login: Pollar creates the
+          Stellar account, funds its reserve and adds the trustlines first. A
+          409 means it is still working — retry the same code.
+        heading: redeem-a-bridge-code-for-a-pollar-session
+      - content: >-
+          Refresh tokens are single-use — Pollar rotates on every call and
+          treats a replay as a compromise. Not available for a DPoP-bound
+          session: only the holder of the wallet's private key can refresh one.
+        heading: rotate-a-pollar-token-pair
+      - content: >-
+          The Deferred funding mode: call it when your own rule says the user
+          has earned an on-chain account. Idempotent — an already-funded wallet
+          comes back with `activated: false`, not an error.
+        heading: fund-a-pollar-wallets-xlm-reserve
+      - content: >-
+          The asset must hold a zero balance. Code and issuer are separate path
+          segments here; Pollar's own route joins them with a colon, which this
+          service does on the way out so neither has to be escaped by the
+          caller.
+        heading: remove-a-trustline
+      - content: >-
+          The account then exists before the user ever sees a consent screen.
+          Pollar does not publish the content shape of this route, so the
+          response is a narrow projection of it rather than the provider
+          payload.
+        heading: register-a-user-with-pollar-ahead-of-their-first-login
+      - content: >-
+          Same body as POST /v1/pollar/users, but the Stellar wallet is created
+          in the same call instead of waiting for the first login to do it.
+        heading: register-a-user-and-provision-their-stellar-wallet
+      - content: >-
+          Use this before trusting a token a wallet presents to your backend. It
+          also proves the token was minted for your Pollar application, which a
+          local JWT decode cannot.
+        heading: validate-a-pollar-end-user-access-token
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { APIPage, OpenAPIPage } = props.components ?? {};
+  // "APIPage" is the old name from v10, this allows both for backward compatibility
+  const Comp = OpenAPIPage ?? APIPage;
+  return (
+    <>
+      {props.children}
+      <Comp document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/pollar/oauth/authorize","method":"post"},{"path":"/v1/pollar/oauth/callback/{state}","method":"get"},{"path":"/v1/pollar/oauth/callback","method":"get"},{"path":"/v1/pollar/oauth/sessions/{state}","method":"get"},{"path":"/v1/pollar/oauth/token","method":"post"},{"path":"/v1/pollar/oauth/refresh","method":"post"},{"path":"/v1/pollar/oauth/logout","method":"post"},{"path":"/v1/pollar/wallets/activate","method":"post"},{"path":"/v1/pollar/wallets/{address}/trustlines/default","method":"post"},{"path":"/v1/pollar/wallets/{address}/trustlines","method":"post"},{"path":"/v1/pollar/wallets/{address}/trustlines/{code}/{issuer}","method":"delete"},{"path":"/v1/pollar/users","method":"post"},{"path":"/v1/pollar/users/with-wallet","method":"post"},{"path":"/v1/pollar/tokens/verify","method":"post"}]} showTitle />
+    </>
+  );
+}

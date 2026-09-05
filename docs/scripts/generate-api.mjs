@@ -27,6 +27,40 @@ const TAGS = [
     description: 'Create, fetch, update, cancel and validate Stellar (SEP-7) payment intents.',
   },
   {
+    name: 'swaps',
+    title: 'Swaps',
+    description: 'Quote, create, sign and submit Stellar path-payment swaps.',
+  },
+  {
+    name: 'liquidity-pools',
+    title: 'Liquidity Pools',
+    description: 'Deposit into and withdraw from Stellar AMM pools, and track your positions.',
+  },
+  {
+    name: 'onramp',
+    title: 'On-ramp',
+    description: 'Fiat in: quotes, payins, virtual accounts, and the trustline for the asset delivered.',
+  },
+  {
+    name: 'offramp',
+    title: 'Off-ramp',
+    description: 'Fiat out: quotes, payout authorization, and payout tracking.',
+  },
+  {
+    name: 'kyc',
+    title: 'KYC',
+    description:
+      'Receivers, KYC documents, blockchain wallets, bank accounts, and the rail catalogue.',
+  },
+  {
+    name: 'pollar',
+    title: 'Social Login',
+    description:
+      'Sign in with Google or GitHub and get a Stellar wallet Pollar custodies. The bridge ' +
+      'opens the login, receives the user back, and redeems a single-use code for a session; ' +
+      'the operator routes fund the reserve and manage trustlines.',
+  },
+  {
     name: 'webhooks',
     title: 'Webhooks',
     description: 'Register endpoints, manage them, and inspect delivery attempts for payment events.',
