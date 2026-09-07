@@ -10449,7 +10449,7 @@
     },
     "/v1/pollar/oauth/sessions/{state}": {
       "get": {
-        "description": "For a wallet with no addressable redirect URI. Returns the handshake status, and — once the user has come back — the single-use code. Each call issues a fresh code and retires the previous one, so redeem the code from your most recent poll.",
+        "description": "For a wallet with no addressable redirect URI. Returns the handshake status, and — once the user has come back — the single-use code. Each call issues a fresh code and retires the previous one, so redeem the code from your most recent poll. This is also what notices the login finished: Pollar ends its hosted flow on its own page rather than returning the browser to the callback, so the poll asks Pollar directly.",
         "operationId": "PollarOauthController_status_v1",
         "parameters": [
           {
@@ -16850,6 +16850,38 @@
           }
         }
       },
+      "PollarNetworkWalletEntity": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "testnet"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "pending",
+              "failed"
+            ],
+            "description": "`ready` — the wallet exists and its address is below. `pending` — not provisioned yet, being retried; poll the redemption result of the next login, or read it back once your user needs that network. `failed` — out of retry budget, which in practice means that network has no Pollar key configured or Pollar keeps refusing the registration.",
+            "example": "ready"
+          },
+          "address": {
+            "type": "object",
+            "description": "Stellar public key, once there is a wallet. Null while pending.",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+          }
+        },
+        "required": [
+          "network",
+          "status"
+        ]
+      },
       "PollarSessionEntity": {
         "type": "object",
         "properties": {
@@ -16898,6 +16930,13 @@
           "profile": {
             "$ref": "#/components/schemas/PollarProfileEntity"
           },
+          "network_wallets": {
+            "description": "This user's wallet on each Stellar network. The session above acts on one of them; the other is provisioned in the background so it is already there when the user switches. Never fewer than one entry, never more than one per network, and a `pending` entry never means the login failed.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PollarNetworkWalletEntity"
+            }
+          },
           "publishable_key": {
             "type": "string",
             "description": "The Pollar publishable key for this network. The wallet needs it in `x-pollar-api-key` on every direct call, and it is public by design.",
@@ -16917,6 +16956,7 @@
           "wallet",
           "wallets",
           "profile",
+          "network_wallets",
           "publishable_key",
           "api_base_url"
         ]
