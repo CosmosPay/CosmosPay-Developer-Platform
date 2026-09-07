@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import {
   CosmosMark, ConfirmModal, useTheme,
   IcSun, IcMoon, HOME, LangSelect, showToast,
+  startTracking, setTrackEnv, track, trackView,
 } from "@/components/cosmos/shared";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi } from "@/lib/api-client";
@@ -14,7 +15,7 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { SIDE, STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
 import {
   OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
-  ApiKeysView, WebhooksView, LogsView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
+  ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
 import { OrgSwitcher } from "@/components/cosmos/dashboard/widgets/OrgSwitcher";
@@ -67,6 +68,12 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     } catch (e) {}
   }, [view]);
   const [live, setLive] = useState(false);
+  // Activity tracking. `startTracking` also wires the uncaught-error and rejected-
+  // promise handlers, which is why it runs from the shell rather than from the
+  // first view that happens to want an event.
+  useEffect(() => { startTracking(live ? "prod" : "dev"); track("dashboard.open", { category: "lifecycle" }); }, []);
+  useEffect(() => { setTrackEnv(live ? "prod" : "dev"); }, [live]);
+  useEffect(() => { trackView(view); }, [view]);
   const [collapsed, setCollapsed] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   // Real organizations (API-backed). The active org is persisted to localStorage.
@@ -286,6 +293,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;
       case "weblogs": return <LogsView kind="webhooks" env={live ? "prod" : "dev"} />;
+      case "activityLog": return <ActivityLogView env={live ? "prod" : "dev"} />;
       case "activity": return <NotificationsView notifications={visibleNotifs} loading={notifsLoading} error={notifsError} />;
       case "support": return <SupportView />;
       case "inbox": return isStaff ? <SupportInboxView /> : <OverviewView org={org} userName={userName} notifications={visibleNotifs} onViewActivity={() => go("activity")} env={live ? "prod" : "dev"} />;

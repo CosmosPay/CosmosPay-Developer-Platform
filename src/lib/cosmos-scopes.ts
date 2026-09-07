@@ -22,6 +22,7 @@ export const COSMOS_RESOURCES = [
   "onramp",
   "offramp",
   "pollar",
+  "activity",
 ] as const;
 export const COSMOS_ACTIONS = ["read", "write"] as const;
 

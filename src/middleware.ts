@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { recordLogin, touchLastSeen } from "@/lib/profile";
+import { trackActivity } from "@/lib/activity";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
@@ -36,6 +37,56 @@ function applyCors(headers: Headers, origin: string, request: Request): void {
   headers.set("Access-Control-Max-Age", "86400");
   const vary = headers.get("Vary");
   headers.set("Vary", vary && !/(^|,)\s*origin\s*(,|$)/i.test(vary) ? `${vary}, Origin` : vary || "Origin");
+}
+
+/* --- Activity: this app's own API surface ---
+   The Payments service logs what reaches IT. Nothing logged what reaches US, so
+   the half of a session that never leaves this app — signing in, minting a key,
+   loading the dashboard — was invisible in the activity feed while an API-key
+   call from a script was not. Recorded here, once, rather than in forty route
+   handlers that would each have to remember.
+
+   Only for a signed-in user: a row is attributed to that account's consumer
+   upstream, and an anonymous caller has none. The public wallet routes are not
+   lost by that — the wallet reports its own side to /api/telemetry.
+
+   The two telemetry routes are skipped, or the feed would be mostly a record of
+   itself. */
+const ACTIVITY_SKIP_PREFIXES = ["/api/activity", "/api/telemetry"];
+
+function trackApiRequest(context: {
+  url: URL;
+  request: Request;
+  locals: { user?: { id: string } | null };
+}, status: number, startedAt: number): void {
+  const path = context.url.pathname;
+  if (!path.startsWith("/api/")) return;
+  if (ACTIVITY_SKIP_PREFIXES.some((p) => path.startsWith(p))) return;
+  const userId = context.locals.user?.id;
+  if (!userId) return;
+
+  const method = context.request.method.toUpperCase();
+  // A successful read is not activity worth a row. The dashboard polls notifications
+  // every 20s and unread support replies every 15s per open tab, so recording every
+  // 200 GET would bury the events somebody actually goes looking for — and would grow
+  // the table by two rows a minute per idle tab. A FAILED read is kept: a 500 on a
+  // poll is exactly the invisible breakage this feed exists for.
+  const read = method === "GET" || method === "HEAD";
+  if (read && status < 400) return;
+
+  trackActivity(userId, context.url.searchParams.get("env") === "prod" ? "prod" : "dev", {
+    type: "api.request",
+    source: "server",
+    // The severity IS the status: a feed filtered to `error` should show the
+    // 500s without anyone having to know which endpoint they came from.
+    level: status >= 500 ? "error" : status >= 400 ? "warn" : "info",
+    category: "api",
+    // Path only, never the query string: `?token=`, `?state=` and `?code=` all
+    // appear on real routes here, and a telemetry row is not the place for them.
+    message: `${method} ${path}`,
+    durationMs: Math.round(performance.now() - startedAt),
+    props: { method, path, status },
+  });
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -77,7 +128,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.session = null;
   }
 
+  const startedAt = performance.now();
   const response = await next();
   if (corsOk) applyCors(response.headers, origin, context.request);
+  trackApiRequest(context, response.status, startedAt);
   return response;
 });

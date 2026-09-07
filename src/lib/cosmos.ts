@@ -583,6 +583,59 @@ export const cosmosAnalytics = {
   webhookLogs: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/logs/webhooks"),
 };
 
+/* ---- Client activity (telemetry reported by the wallet + this dashboard). ----
+   The write side is buffered in @/lib/activity; these are the raw calls. Scoped
+   `activity:write` / `activity:read` upstream, so the internal gateway identity
+   this module presents (role `admin`) satisfies them the same way it does the
+   payments scopes. */
+export interface ActivityEventPayload {
+  type: string;
+  source?: string;
+  level?: string;
+  category?: string;
+  message?: string;
+  props?: Record<string, unknown>;
+  durationMs?: number;
+  sessionId?: string;
+  distinctId?: string;
+  appVersion?: string;
+  platform?: string;
+  network?: string;
+  occurredAt?: string;
+  eventId?: string;
+}
+
+export interface ActivityQuery {
+  source?: string;
+  level?: string;
+  category?: string;
+  type?: string;
+  network?: string;
+  since?: string;
+  until?: string;
+  take?: number;
+  skip?: number;
+}
+
+export const cosmosActivity = {
+  /* Report a batch. `clientIp` is only set for the anonymous wallet path, where
+     the address that matters is the wallet's and not this process's. */
+  ingest: (userId: string, env: CosmosEnv, events: ActivityEventPayload[], clientIp?: string) =>
+    cosmosFetch<{ accepted: number; duplicates: number }>(userId, env, "/v1/activity/events", {
+      method: "POST",
+      body: { events },
+      clientIp,
+    }),
+
+  list: (userId: string, env: CosmosEnv, query: ActivityQuery = {}) =>
+    cosmosFetch<{ data: any[]; total: number; take: number; skip: number }>(userId, env, "/v1/activity/events", {
+      query: { ...query },
+    }),
+
+  summary: (userId: string, env: CosmosEnv, query: { days?: number; source?: string } = {}) =>
+    cosmosFetch<any>(userId, env, "/v1/activity/summary", { query: { ...query } }),
+};
+
 /* ── Pollar social login ────────────────────────────────────────────────────────
    The bridge routes on the Payments service (`/v1/pollar/oauth/*`) are scoped
    `pollar:read` / `pollar:write`, so they need a credential -- and the whole point

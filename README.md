@@ -24,6 +24,9 @@ proxies the Cosmos Pay Payments API on the developer's behalf.
 - **Webhooks** — register endpoints, inspect deliveries, redeliver, rotate signing secrets.
 - **Products & customers** — catalog items / price links and merchant-managed customers.
 - **Analytics** — summary, balances, API & webhook logs.
+- **Client activity** — what the dashboard and the Cosmos Pay Wallet report about
+  themselves (errors, timings, transactions), including everything that never became an
+  API call; browsable under **Build → Activity log**.
 - **Plans & onboarding** — feature-flagged onboarding wizard and plan selection.
 - **Support** — in-dashboard tickets.
 - **i18n** — multi-language UI (en, es, pt, fr, de).
@@ -71,12 +74,14 @@ src/
 │   ├── pricing.astro · docs/ · invite/[token].astro · index.astro
 ├── components/           # UI (cosmos/dashboard views, widgets, modals) + React islands
 ├── layouts/              # CosmosLayout etc.
-├── lib/                  # auth, cosmos (Payments API client), invitations, mailer,
-│                         # plans, profile, prisma, apisix-route, notifications, i18n…
+├── lib/                  # auth, cosmos (Payments API client), activity (telemetry
+│                         # buffer), rate-limit, invitations, mailer, plans, profile,
+│                         # prisma, apisix-route, notifications, i18n…
 ├── utils/                # apisix.ts (admin API: routes/consumers/credentials)
 ├── schemas/              # Zod schemas (OpenAPI source of truth)
 ├── emails/               # transactional email templates
-├── middleware.ts         # session resolution + one-time APISIX route sync
+├── middleware.ts         # session resolution, CORS, one-time APISIX route sync, and
+│                         # the activity record of this app's own /api/* traffic
 └── styles/
 prisma/schema.prisma      # User, Session, Account, Profile, Organization(+Member,
                           # Invitation), Notification, SupportTicket/Message …
@@ -190,6 +195,11 @@ served at **`/api/openapi.json`** (schemas live in `src/schemas/`). Highlights:
 - `…/api/products` · `…/api/customers` — catalog & customers
 - `…/api/organizations/[id]/…` — orgs, members, invitations
 - `GET /api/cosmos/[metric]` — analytics proxy
+- `GET|POST /api/activity` · `GET /api/activity/summary` — the client-activity feed
+  (POST is the dashboard reporting its own page views, actions and errors)
+- `POST /api/telemetry` — **public**: activity from a wallet that has no Cosmos Pay
+  account yet, forwarded upstream under one shared consumer so it stays anonymous
+  rather than being attributed to a guess. Rate-limited per address *and* globally
 - `…/api/support/…` · `…/api/notifications/…` — tickets & notifications
 
 ---

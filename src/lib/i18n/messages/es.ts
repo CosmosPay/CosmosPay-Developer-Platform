@@ -800,6 +800,7 @@ export default {
       webhook: "Webhooks",
       logs: "Registros de API",
       weblogs: "Registros de webhooks",
+      activityLog: "Actividad de clientes",
       settings: "Organización",
       account: "Cuenta",
       activity: "Actividad",
@@ -835,6 +836,7 @@ export default {
         webhook: "Webhooks",
         logs: "Registros",
         weblogs: "Logs webhook",
+        activityLog: "Registro de actividad",
         settings: "Organización",
         account: "Cuenta",
         activity: "Actividad",
@@ -930,7 +932,7 @@ export default {
         },
         permsLabel: "Permisos",
         permResource: "Recurso",
-        scopeResources: { payments: "Pagos", swaps: "Swaps", liquidity: "Liquidez", webhooks: "Webhooks", products: "Productos", customers: "Clientes", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", pollar: "Login social" },
+        scopeResources: { payments: "Pagos", swaps: "Swaps", liquidity: "Liquidez", webhooks: "Webhooks", products: "Productos", customers: "Clientes", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", pollar: "Login social", activity: "Actividad" },
         adminHint: "Las claves de admin tienen acceso total a todos los recursos.",
         perms: {
           read: "Lectura",
@@ -1175,6 +1177,18 @@ export default {
         eventsLabel: "Eventos a enviar",
         add: "Añadir endpoint"
       }
+    },
+    activityLog: {
+      sub: "Lo que la wallet y este panel reportaron sobre sí mismos, incluido lo que nunca llegó a ser una llamada a la API",
+      searchPlaceholder: "Buscar eventos…",
+      empty: "Todavía no hay actividad reportada.",
+      context: "Contexto",
+      props: "Detalles",
+      topErrors: "Errores más frecuentes",
+      cards: { total: "Eventos", errors: "Errores", sessions: "Sesiones", devices: "Dispositivos" },
+      sources: { all: "Todas las fuentes", wallet: "Wallet", dashboard: "Panel", server: "Servidor", sdk: "SDK" },
+      levels: { all: "Todos los niveles", error: "Error", warn: "Aviso", info: "Info", debug: "Depuración" },
+      tableHead: { level: "Nivel", source: "Fuente", event: "Evento", detail: "Detalle", timestamp: "Marca de tiempo", count: "Cantidad" },
     },
     logs: {
       title: "Registros de API",

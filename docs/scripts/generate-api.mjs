@@ -72,6 +72,15 @@ const TAGS = [
     title: 'Analytics',
     description: 'Account summary, balances and operational logs.',
   },
+  {
+    name: 'activity',
+    title: 'Client Activity',
+    description:
+      'Report what your own client did — errors, timings, transactions — and read it back. ' +
+      'Unlike the API logs, which only ever see requests that reached this service, these are ' +
+      'the events that happen entirely on a device: a crash, a cancelled signature, a screen ' +
+      'that failed before any request left it.',
+  },
   { name: 'health', title: 'Health', description: 'Liveness and readiness probes.' },
 ];
 

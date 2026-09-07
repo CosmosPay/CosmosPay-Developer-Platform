@@ -4761,6 +4761,477 @@
         ]
       }
     },
+    "/v1/activity/events": {
+      "post": {
+        "description": "Accepted, not created: the batch is written under the consumer the gateway authenticated, and nothing in the body can change that attribution. Over-long messages are truncated and an over-sized `props` is replaced with a marker rather than failing the call — losing a whole batch to one malformed field is worst exactly when the client is in a state it did not anticipate.",
+        "operationId": "ActivityController_ingest_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestActivityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityIngestResultEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the request is not valid in the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No authenticated consumer, or admin credentials are required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist, or does not belong to this consumer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with existing state — an idempotency clash, an operation already in flight, or an invalid state transition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (`rate_limited`). Only routes that declare a budget can return this — today the Pollar routes that create or fund a Stellar account. Honour `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error. The detail is logged server-side and never returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "An upstream provider returned an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "An upstream provider is unavailable, or the service is misconfigured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Report a batch of client events (errors, metrics, transactions)",
+        "tags": [
+          "activity"
+        ]
+      },
+      "get": {
+        "description": "`level` is a floor, not an exact match: `level=warn` returns warnings and errors.",
+        "operationId": "ActivityController_list_v1",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "source",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "wallet",
+                "dashboard",
+                "server",
+                "sdk"
+              ]
+            }
+          },
+          {
+            "name": "level",
+            "required": false,
+            "in": "query",
+            "description": "Minimum severity, not an exact match: `warn` returns warnings and errors.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "transaction",
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Prefix match on the event name.",
+            "schema": {
+              "example": "payment.",
+              "type": "string"
+            }
+          },
+          {
+            "name": "network",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "testnet",
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "required": false,
+            "in": "query",
+            "description": "Only events that occurred at or after this instant.",
+            "schema": {
+              "example": "2026-09-01T00:00:00.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "until",
+            "required": false,
+            "in": "query",
+            "description": "Only events that occurred at or before this instant.",
+            "schema": {
+              "example": "2026-09-07T00:00:00.000Z",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityEventListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the request is not valid in the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No authenticated consumer, or admin credentials are required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist, or does not belong to this consumer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with existing state — an idempotency clash, an operation already in flight, or an invalid state transition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (`rate_limited`). Only routes that declare a budget can return this — today the Pollar routes that create or fund a Stellar account. Honour `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error. The detail is logged server-side and never returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "An upstream provider returned an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "An upstream provider is unavailable, or the service is misconfigured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Recent client events for this consumer, newest first",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/v1/activity/summary": {
+      "get": {
+        "operationId": "ActivityController_summary_v1",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 90,
+              "default": 7,
+              "type": "number"
+            }
+          },
+          {
+            "name": "source",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "wallet",
+                "dashboard",
+                "server",
+                "sdk"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySummaryEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the request is not valid in the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No authenticated consumer, or admin credentials are required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist, or does not belong to this consumer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with existing state — an idempotency clash, an operation already in flight, or an invalid state transition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (`rate_limited`). Only routes that declare a budget can return this — today the Pollar routes that create or fund a Stellar account. Honour `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error. The detail is logged server-side and never returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "An upstream provider returned an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "An upstream provider is unavailable, or the service is misconfigured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Counts, top event types, top errors and a daily series",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
     "/v1/kyc/receivers": {
       "post": {
         "operationId": "ReceiversController_create_v1",
@@ -11872,6 +12343,10 @@
       "description": "Account summary, balances and operational logs."
     },
     {
+      "name": "activity",
+      "description": "Report what your own client did — errors, timings, transactions — and read it back. Unlike the API logs, which only ever see requests that reached this service, these are the events that happen entirely on a device: a crash, a cancelled signature, a screen that failed before any request left it."
+    },
+    {
       "name": "health",
       "description": "Liveness and readiness probes."
     }
@@ -14490,6 +14965,371 @@
           "total",
           "take",
           "skip"
+        ]
+      },
+      "ActivityEventDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Event name, e.g. `payment.sent`. Lowercase, dot/underscore/dash/colon separated.",
+            "example": "payment.sent"
+          },
+          "eventId": {
+            "type": "string",
+            "description": "The client's own id for this event. Send one to make a flush retry safe: a batch that was written but never acknowledged can be re-sent without doubling its rows.",
+            "example": "6f1a2b3c-4d5e-4f60-8a1b-2c3d4e5f6071"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "wallet",
+              "dashboard",
+              "server",
+              "sdk"
+            ],
+            "default": "sdk"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "debug",
+              "info",
+              "warn",
+              "error"
+            ],
+            "default": "info"
+          },
+          "category": {
+            "type": "string",
+            "description": "Coarse grouping: error, metric, transaction, auth, navigation, api, lifecycle, ui.",
+            "example": "transaction",
+            "default": "event"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable detail. Truncated rather than rejected when long — a telemetry call must not fail on the size of an error string.",
+            "example": "op_no_trust"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Anonymous id grouping one run of the app. Not an account id."
+          },
+          "distinctId": {
+            "type": "string",
+            "description": "Anonymous id for one install. Not an account id."
+          },
+          "appVersion": {
+            "type": "string",
+            "example": "1.5.0"
+          },
+          "platform": {
+            "type": "string",
+            "description": "web | ext | app | desktop | dashboard | node",
+            "example": "ext"
+          },
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "durationMs": {
+            "type": "number",
+            "description": "Duration of the measured operation, for a timing metric.",
+            "example": 812
+          },
+          "props": {
+            "type": "object",
+            "description": "Structured detail. Size-capped at ingest; never credentials, never a seed.",
+            "additionalProperties": true,
+            "example": {
+              "asset": "XLM",
+              "amount": "12.5"
+            }
+          },
+          "occurredAt": {
+            "type": "string",
+            "description": "When the client says it happened. Clamped to the receipt time when the device clock is too far off. Defaults to receipt time.",
+            "example": "2026-09-06T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "IngestActivityDto": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "description": "Up to 100 events. Clients batch: a wallet queues while offline and flushes on the next launch.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityEventDto"
+            }
+          }
+        },
+        "required": [
+          "events"
+        ]
+      },
+      "ActivityIngestResultEntity": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "number",
+            "description": "Events written.",
+            "example": 24
+          },
+          "duplicates": {
+            "type": "number",
+            "description": "Events dropped as duplicates of a batch already written. Never an error: a client that retries a flush it never saw acknowledged is doing the right thing.",
+            "example": 0
+          }
+        },
+        "required": [
+          "accepted",
+          "duplicates"
+        ]
+      },
+      "ActivityEventEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clz9xact00001"
+          },
+          "source": {
+            "type": "string",
+            "example": "wallet"
+          },
+          "level": {
+            "type": "string",
+            "example": "error"
+          },
+          "category": {
+            "type": "string",
+            "example": "transaction"
+          },
+          "type": {
+            "type": "string",
+            "example": "payment.sent"
+          },
+          "message": {
+            "type": "object",
+            "nullable": true,
+            "example": "op_no_trust"
+          },
+          "sessionId": {
+            "type": "object",
+            "nullable": true,
+            "example": "s_9f2a1c"
+          },
+          "distinctId": {
+            "type": "object",
+            "nullable": true,
+            "example": "d_41b0c8"
+          },
+          "appVersion": {
+            "type": "object",
+            "nullable": true,
+            "example": "1.5.0"
+          },
+          "platform": {
+            "type": "object",
+            "nullable": true,
+            "example": "ext"
+          },
+          "network": {
+            "type": "object",
+            "nullable": true,
+            "example": "testnet"
+          },
+          "durationMs": {
+            "type": "object",
+            "nullable": true,
+            "example": 812
+          },
+          "props": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "example": {
+              "asset": "XLM",
+              "amount": "12.5"
+            }
+          },
+          "ip": {
+            "type": "object",
+            "nullable": true,
+            "example": "203.0.113.7"
+          },
+          "userAgent": {
+            "type": "object",
+            "nullable": true,
+            "example": "CosmosWallet/1.5.0"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the client says it happened.",
+            "example": "2026-09-06T12:34:56.000Z"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When this service received it — later for a queued batch.",
+            "example": "2026-09-06T12:35:10.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "level",
+          "category",
+          "type",
+          "at",
+          "receivedAt"
+        ]
+      },
+      "ActivityEventListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityEventEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total matching rows — not the page length.",
+            "example": 4120
+          },
+          "take": {
+            "type": "number",
+            "example": 100
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "ActivityCountEntity": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "error"
+          },
+          "count": {
+            "type": "number",
+            "example": 12
+          }
+        },
+        "required": [
+          "key",
+          "count"
+        ]
+      },
+      "ActivitySeriesPointEntity": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-06"
+          },
+          "count": {
+            "type": "number",
+            "example": 128
+          },
+          "errors": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": [
+          "date",
+          "count",
+          "errors"
+        ]
+      },
+      "ActivitySummaryEntity": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Events in the window.",
+            "example": 4120
+          },
+          "sessions": {
+            "type": "number",
+            "description": "Distinct `sessionId`s in the window — app runs, not accounts.",
+            "example": 318
+          },
+          "devices": {
+            "type": "number",
+            "description": "Distinct `distinctId`s in the window — installs, not accounts.",
+            "example": 96
+          },
+          "levels": {
+            "description": "Count per level.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityCountEntity"
+            }
+          },
+          "sources": {
+            "description": "Count per source.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityCountEntity"
+            }
+          },
+          "categories": {
+            "description": "Count per category.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityCountEntity"
+            }
+          },
+          "topTypes": {
+            "description": "Most frequent event types.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityCountEntity"
+            }
+          },
+          "topErrors": {
+            "description": "Most frequent error messages — what to fix first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityCountEntity"
+            }
+          },
+          "series": {
+            "description": "Daily buckets, pre-seeded so a quiet day is a zero.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySeriesPointEntity"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "sessions",
+          "devices",
+          "levels",
+          "sources",
+          "categories",
+          "topTypes",
+          "topErrors",
+          "series"
         ]
       },
       "ReceiverOwnerDto": {

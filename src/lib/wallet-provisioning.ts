@@ -50,6 +50,12 @@ export const WALLET_KEY_SCOPES = [
   "offramp:write",
   "pollar:read",
   "pollar:write",
+  // Telemetry. `write` is what lets the wallet report its own errors, timings and
+  // transactions instead of losing them on the device; `read` is what lets the
+  // person who owns that wallet see them in the dashboard, since a
+  // wallet-provisioned account has exactly one key and no way to mint another.
+  "activity:read",
+  "activity:write",
 ];
 // How long a pending registration (and its claim token) stays valid.
 const REGISTRATION_TTL_MS = 30 * 60 * 1000; // 30 minutes

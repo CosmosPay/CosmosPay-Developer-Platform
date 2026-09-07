@@ -44,6 +44,9 @@ import { createConsumer } from "@/utils/apisix";
 import { provisionAuthentikIdentity } from "@/lib/authentik";
 import { mintWalletKeys, type WalletKeys } from "@/lib/wallet-provisioning";
 import { cosmosPollar, type CosmosEnv, type PollarSession } from "@/lib/cosmos";
+// The in-process first line, shared with the other unauthenticated route
+// (wallet telemetry) rather than copied into it. See @/lib/rate-limit.
+import { withinBudget } from "@/lib/rate-limit";
 
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
@@ -69,47 +72,6 @@ const SOCIAL_CLAIM_RATE_LIMIT = { limit: 30, windowMs: WINDOW_MS };
 const SOCIAL_AUTHORIZE_GLOBAL_LIMIT = { limit: 300, windowMs: WINDOW_MS };
 const SOCIAL_POLL_GLOBAL_LIMIT = { limit: 20_000, windowMs: WINDOW_MS };
 const SOCIAL_CLAIM_GLOBAL_LIMIT = { limit: 600, windowMs: WINDOW_MS };
-
-/* ── Rate limiting ──────────────────────────────────────────────────────────────
-   Per process and per address, in memory. It is the FIRST line, not the durable one:
-   the Payments service counts the same calls in Postgres (and we forward the end
-   user's address so those budgets partition per user rather than pooling on this
-   server's IP). What this adds is refusing an obvious flood before it costs an
-   upstream round trip, and it is deliberately cheap enough to be always on.
-
-   A restart forgets the counters, and two replicas count separately. Both are fine
-   for a first line; neither would be fine as the only one, which is why it is not. */
-const hits = new Map<string, number[]>();
-
-function allow(bucket: string, address: string, policy: { limit: number; windowMs: number }): boolean {
-  const key = `${bucket}:${address}`;
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < policy.windowMs);
-  if (recent.length >= policy.limit) {
-    hits.set(key, recent);
-    return false;
-  }
-  recent.push(now);
-  hits.set(key, recent);
-  // Bound the map: a long-lived process would otherwise keep one array per address
-  // that ever called, forever.
-  if (hits.size > 10_000) {
-    for (const [k, times] of hits) {
-      if (times.every((t) => now - t >= policy.windowMs)) hits.delete(k);
-    }
-  }
-  return true;
-}
-
-/* Both keys have to admit the call: the caller's address, and everyone together. */
-function withinBudget(
-  bucket: string,
-  address: string,
-  perAddress: { limit: number; windowMs: number },
-  global: { limit: number; windowMs: number },
-): boolean {
-  return allow(bucket, address, perAddress) && allow(bucket, "*", global);
-}
 
 export type SocialAuthorizeResult =
   | { status: "opened"; state: string; authorizationUrl: string; provider: string; expiresAt?: string }
