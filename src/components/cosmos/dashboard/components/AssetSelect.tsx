@@ -102,7 +102,10 @@ export function AssetSelect({
           {allowAny && <option value={ANY_KEY}>{anyText}</option>}
           {assets.map((a) => (
             <option key={a.key} value={a.key}>
-              {a.label}
+              {/* The issuer, not just the code: mainnet carries two legitimate
+                  EURCs from different issuers and twenty impostor USDCs, so a
+                  bare code does not say which asset this option builds. */}
+              {a.issuer ? `${a.label} · ${a.issuerName}` : a.label}
             </option>
           ))}
           <option value={CUSTOM_KEY}>{customText}</option>

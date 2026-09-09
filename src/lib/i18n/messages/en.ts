@@ -391,10 +391,10 @@ export default {
 
   /* ---------------- dashboard ---------------- */
   dash: {
-    viewLabels: { overview: "Overview", payments: "Payments", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", liquidity: "Liquidity pools", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activity: "Activity", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments — all orgs", adminSwaps: "Swaps — all orgs", adminFiat: "Fiat — all orgs", adminCustomers: "Customers — all orgs", adminProducts: "Products — all orgs", adminConsumers: "Organizations" },
+    viewLabels: { overview: "Overview", payments: "Payments", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", liquidity: "Liquidity pools", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activityLog: "Client activity", activity: "Activity", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments — all orgs", adminSwaps: "Swaps — all orgs", adminFiat: "Fiat — all orgs", adminCustomers: "Customers — all orgs", adminProducts: "Products — all orgs", adminConsumers: "Organizations" },
     sidebar: {
       sections: { Platform: "Platform", Build: "Build", Account: "Account", Support: "Support", Admin: "Admin" },
-      items: { overview: "Overview", payments: "Payments", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", liquidity: "Liquidity", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
+      items: { overview: "Overview", payments: "Payments", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", liquidity: "Liquidity", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activityLog: "Activity log", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
       collapse: "Collapse sidebar",
     },
     admin: {
@@ -491,7 +491,7 @@ export default {
         roles: { user: "User", admin: "Admin" },
         permsLabel: "Permissions",
         permResource: "Resource",
-        scopeResources: { payments: "Payments", swaps: "Swaps", liquidity: "Liquidity", webhooks: "Webhooks", products: "Products", customers: "Customers" },
+        scopeResources: { payments: "Payments", swaps: "Swaps", liquidity: "Liquidity", webhooks: "Webhooks", products: "Products", customers: "Customers", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", pollar: "Social login", activity: "Activity" },
         adminHint: "Admin keys have full access to every resource.",
         perms: { read: "Read", write: "Write" },
         create: "Create key", save: "Save changes",
@@ -769,6 +769,18 @@ export default {
         desc: "We’ll POST event payloads to this URL.",
         urlLabel: "Endpoint URL", eventsLabel: "Events to send", add: "Add endpoint",
       },
+    },
+    activityLog: {
+      sub: "What the wallet and this dashboard reported about themselves — including what never became an API call",
+      searchPlaceholder: "Search events…",
+      empty: "No activity reported yet.",
+      context: "Context",
+      props: "Details",
+      topErrors: "Most frequent errors",
+      cards: { total: "Events", errors: "Errors", sessions: "Sessions", devices: "Devices" },
+      sources: { all: "All sources", wallet: "Wallet", dashboard: "Dashboard", server: "Server", sdk: "SDK" },
+      levels: { all: "All levels", error: "Error", warn: "Warning", info: "Info", debug: "Debug" },
+      tableHead: { level: "Level", source: "Source", event: "Event", detail: "Detail", timestamp: "Timestamp", count: "Count" },
     },
     logs: {
       title: "API logs",

@@ -9,6 +9,7 @@ export { BlindPayView } from "./BlindPayView";
 export { ApiKeysView } from "./ApiKeysView";
 export { WebhooksView } from "./WebhooksView";
 export { LogsView } from "./LogsView";
+export { ActivityLogView } from "./ActivityLogView";
 export { NotificationsView } from "./NotificationsView";
 export { SupportView } from "./SupportView";
 export { SupportInboxView } from "./SupportInboxView";

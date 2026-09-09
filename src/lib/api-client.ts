@@ -98,6 +98,25 @@ export const metrics = {
   webhookLogs: (env) => request(`/api/cosmos/webhook-logs?env=${env || "dev"}`),
 };
 
+/* Client activity — what the wallet and this dashboard reported about themselves.
+   Distinct from `metrics.apiLogs`, which only ever sees requests that REACHED the
+   Payments API: everything a client did before (or instead of) a request is here. */
+export const activity = {
+  list: (env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    for (const k of ["source", "level", "category", "type", "network", "since", "until", "take", "skip"]) {
+      if (query[k] !== undefined && query[k] !== null && query[k] !== "") qs.set(k, String(query[k]));
+    }
+    return request(`/api/activity?${qs.toString()}`);
+  },
+  summary: (env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (query.days) qs.set("days", String(query.days));
+    if (query.source) qs.set("source", query.source);
+    return request(`/api/activity/summary?${qs.toString()}`);
+  },
+};
+
 /* Activity notifications — list is open to the user; create is owner/admin only (403 otherwise). */
 export const notifications = {
   list: () => request("/api/notifications"),

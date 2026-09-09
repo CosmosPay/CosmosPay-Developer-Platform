@@ -800,6 +800,7 @@ export default {
       webhook: "Webhooks",
       logs: "Journaux d’API",
       weblogs: "Journaux de webhooks",
+      activityLog: "Activité des clients",
       settings: "Organisation",
       account: "Compte",
       activity: "Activité",
@@ -835,6 +836,7 @@ export default {
         webhook: "Webhooks",
         logs: "Journaux",
         weblogs: "Journaux webhook",
+        activityLog: "Journal d'activité",
         settings: "Organisation",
         account: "Compte",
         activity: "Activité",
@@ -930,7 +932,7 @@ export default {
         },
         permsLabel: "Permissions",
         permResource: "Ressource",
-        scopeResources: { payments: "Paiements", swaps: "Swaps", liquidity: "Liquidité", webhooks: "Webhooks", products: "Produits", customers: "Clients" },
+        scopeResources: { payments: "Paiements", swaps: "Swaps", liquidity: "Liquidité", webhooks: "Webhooks", products: "Produits", customers: "Clients", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", pollar: "Connexion sociale", activity: "Activité" },
         adminHint: "Les clés admin ont un accès complet à toutes les ressources.",
         perms: {
           read: "Lecture",
@@ -1175,6 +1177,18 @@ export default {
         eventsLabel: "Événements à envoyer",
         add: "Ajouter un endpoint"
       }
+    },
+    activityLog: {
+      sub: "Ce que le portefeuille et ce tableau de bord ont signalé sur eux-mêmes, y compris ce qui n'est jamais devenu un appel API",
+      searchPlaceholder: "Rechercher des évènements…",
+      empty: "Aucune activité signalée pour l'instant.",
+      context: "Contexte",
+      props: "Détails",
+      topErrors: "Erreurs les plus fréquentes",
+      cards: { total: "Évènements", errors: "Erreurs", sessions: "Sessions", devices: "Appareils" },
+      sources: { all: "Toutes les sources", wallet: "Portefeuille", dashboard: "Tableau de bord", server: "Serveur", sdk: "SDK" },
+      levels: { all: "Tous les niveaux", error: "Erreur", warn: "Avertissement", info: "Info", debug: "Débogage" },
+      tableHead: { level: "Niveau", source: "Source", event: "Évènement", detail: "Détail", timestamp: "Horodatage", count: "Nombre" },
     },
     logs: {
       title: "Journaux d’API",

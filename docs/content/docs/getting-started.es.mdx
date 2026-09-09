@@ -45,7 +45,7 @@ const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
 const intent = await client.paymentIntents.createPay({
   destination: 'G...YOUR_MERCHANT_ACCOUNT',
   amount: '10',
-  asset: Assets.USDC,
+  asset: Assets.XLM,
   msg: 'Order #1001',
 });
 
