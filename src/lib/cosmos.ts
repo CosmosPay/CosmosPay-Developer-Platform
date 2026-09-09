@@ -751,3 +751,48 @@ export const cosmosPollar = {
       clientIp,
     }),
 };
+
+/* ------------------------------ asset registry ----------------------------- */
+
+/**
+ * The Payments service's asset catalog — which (code, issuer) pairs the platform
+ * vouches for on a network, and who issues them.
+ *
+ * Read through the same server-to-server channel as everything else rather than
+ * copied into this repo. A second hand-maintained copy of an issuer list is a
+ * second place to be wrong about which of the twenty accounts issuing `USDC` is
+ * Circle's, and the two would drift silently — both would keep serving 200s.
+ *
+ * `SYSTEM_USER` is a synthetic consumer id: the catalog carries no tenant data
+ * and the upstream route requires no scope, so the call needs an identity only
+ * because every gateway request has one.
+ */
+const SYSTEM_USER = "system";
+
+export interface RegistryAssetPayload {
+  code: string;
+  issuer: string | null;
+  name: string;
+  issuerName: string;
+  issuerDomain: string;
+  verified: boolean;
+  contract: string | null;
+  flags: { authRevocable: boolean; clawback: boolean };
+}
+
+export interface AssetRegistryPayload {
+  network: string;
+  version: number;
+  data: RegistryAssetPayload[];
+}
+
+export async function fetchAssetRegistry(
+  network: "public" | "testnet",
+): Promise<AssetRegistryPayload> {
+  // The network is a query parameter upstream, not a function of the key's
+  // environment, so either env resolves the same catalog. `prod` is passed for
+  // determinism rather than significance.
+  return cosmosFetch<AssetRegistryPayload>(SYSTEM_USER, "prod", "/v1/assets", {
+    query: { network },
+  });
+}

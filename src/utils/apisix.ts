@@ -32,8 +32,26 @@ export function parsePermissionsLabel(raw: unknown): string[] {
   }
 }
 
-export function parseApiKeyRole(raw: unknown): 'admin' | 'user' {
-  return raw === 'admin' ? 'admin' : 'user';
+export type ApiKeyRole = 'admin' | 'user' | 'public';
+
+/**
+ * Normalizes a credential's `role` label.
+ *
+ * `public` names the SHARED key embedded in the open-source wallet — one
+ * credential held by everyone, so the Payments service must be able to tell it
+ * from an ordinary tenant's key and confine it to the routes that return no
+ * per-consumer rows. It has to survive this parser AND the forwarder below: this
+ * function used to collapse everything that was not `admin` into `user`, which
+ * would have handed the public key an ordinary tenant's read access with nothing
+ * in any build failing.
+ *
+ * Anything unrecognised is still `user`, which is the restrictive default for an
+ * ordinary key.
+ */
+export function parseApiKeyRole(raw: unknown): ApiKeyRole {
+  if (raw === 'admin') return 'admin';
+  if (raw === 'public') return 'public';
+  return 'user';
 }
 
 export function parseApiKeyEnv(raw: unknown): 'dev' | 'prod' {
@@ -408,7 +426,7 @@ function generateApiKey(
 
 type ForwardEntry = {
   p: string;
-  r: 'admin' | 'user';
+  r: ApiKeyRole;
   e: Environment;
   // Organization the key belongs to, the org's plan, and the plan's swap commission
   // (basis points). Baked from each credential's `org` label + the owner's plan so the
