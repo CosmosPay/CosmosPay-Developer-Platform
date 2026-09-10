@@ -1,0 +1,82 @@
+---
+title: "ActivityManager"
+description: "The client event stream — `client.activity`. This is the trail the wallet, the dashboard and your own server write to: errors, screen views, timings, the operations they built"
+---
+
+The client event stream — `client.activity`. This is the trail the wallet, the dashboard and your own server write to: errors, screen views, timings, the operations they built. It exists because a console is not a trail — an extension popup's console dies with the popup and a phone's WebView console needs a cable — and because the failures worth having are the ones that never reach the API at all. Two rules the writers are expected to keep, and neither is enforceable here: report only what the user consented to, and never put memo text or anything that names a counterparty in `props`.
+
+## Constructor
+
+### ActivityManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+### summary
+
+Counts, top event types, top errors and a daily series.
+
+```ts
+summary(options?: { days?: number
+```
+
+### source
+
+```ts
+source?: string
+```
+
+### member
+
+```ts
+}): Promise<ActivitySummaryData>
+```
+
+## Methods
+
+### report()
+
+Report a batch of events. Accepts the array directly or the full body. Give each event an `eventId`: the service de-duplicates on it, which is the difference between a retried batch and a double-counted one.
+
+```ts
+report(events: ActivityEventInput[] | ReportActivityOptions): Promise<ActivityReportData>
+```
+
+**Parameters**
+
+- `events` — `ActivityEventInput[] | ReportActivityOptions`
+
+**Returns** `Promise<ActivityReportData>`
+
+### events()
+
+Recent events for this consumer, newest first.
+
+```ts
+events(options?: ListActivityOptions): Promise<ActivityPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListActivityOptions`
+
+**Returns** `Promise<ActivityPage>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

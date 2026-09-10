@@ -7,6 +7,7 @@
     "rabet-adapter",
     "lobstr-adapter",
     "albedo-adapter",
+    "cosmos-wallet-adapter",
     "wallet-registry",
     "web-client",
     "cosmos-pay-web-error",

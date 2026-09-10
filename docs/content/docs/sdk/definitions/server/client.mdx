@@ -24,7 +24,7 @@ constructor(options: ClientOptions)
 Library version.
 
 ```ts
-static readonly version = "1.2.0"
+static readonly version = "1.1.0"
 ```
 
 ### shared
@@ -101,6 +101,66 @@ readonly swaps: SwapManager
 
 **Type** [`SwapManager`](/sdk/definitions/server/swap-manager)
 
+### liquidity
+
+Liquidity pools: browse, positions, deposit / withdraw.
+
+```ts
+readonly liquidity: LiquidityManager
+```
+
+**Type** [`LiquidityManager`](/sdk/definitions/server/liquidity-manager)
+
+### onramp
+
+Fiat -> stablecoin: quotes, payins, trustlines, virtual accounts.
+
+```ts
+readonly onramp: OnrampManager
+```
+
+**Type** [`OnrampManager`](/sdk/definitions/server/onramp-manager)
+
+### offramp
+
+Stablecoin -> fiat: quotes, authorize, payouts, compliance documents.
+
+```ts
+readonly offramp: OfframpManager
+```
+
+**Type** [`OfframpManager`](/sdk/definitions/server/offramp-manager)
+
+### activity
+
+The client event stream: report events, read them back, summarize.
+
+```ts
+readonly activity: ActivityManager
+```
+
+**Type** [`ActivityManager`](/sdk/definitions/server/activity-manager)
+
+### kyc
+
+KYC / KYB: receivers, their wallets and their bank accounts.
+
+```ts
+readonly kyc: KycManager
+```
+
+**Type** [`KycManager`](/sdk/definitions/server/kyc-manager)
+
+### pollar
+
+Pollar: social login, its sessions, and the custodial wallets behind them.
+
+```ts
+readonly pollar: PollarManager
+```
+
+**Type** [`PollarManager`](/sdk/definitions/server/pollar-manager)
+
 ### customers
 
 Customers.
@@ -168,6 +228,12 @@ setWebhookSecret(secret: string): this
 - [WebhookManager](/sdk/definitions/server/webhook-manager)
 - [ProductManager](/sdk/definitions/server/product-manager)
 - [SwapManager](/sdk/definitions/server/swap-manager)
+- [LiquidityManager](/sdk/definitions/server/liquidity-manager)
+- [OnrampManager](/sdk/definitions/server/onramp-manager)
+- [OfframpManager](/sdk/definitions/server/offramp-manager)
+- [ActivityManager](/sdk/definitions/server/activity-manager)
+- [KycManager](/sdk/definitions/server/kyc-manager)
+- [PollarManager](/sdk/definitions/server/pollar-manager)
 - [CustomerManager](/sdk/definitions/server/customer-manager)
 - [AnalyticsManager](/sdk/definitions/server/analytics-manager)
 - [HealthManager](/sdk/definitions/server/health-manager)
