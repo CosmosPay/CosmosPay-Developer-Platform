@@ -173,6 +173,21 @@ export function callbackRouteUri(entry: string): string {
   return `${entryPrefix(entry)}${POLLAR_CALLBACK_PATH}*`;
 }
 
+/* The consumer identity the gateway establishes and the upstream trusts. A client must
+   never be able to supply any of these; where they get scrubbed depends on whether the
+   route authenticates a key, and the long comment on `remove` below is why that
+   distinction is load-bearing rather than tidy. Keep in step with the community server's
+   ApisixContextMiddleware, which is the only thing that reads them. */
+const CONSUMER_HEADERS = [
+  'X-Consumer-Username',
+  'X-Consumer-Permissions',
+  'X-Consumer-Role',
+  'X-Consumer-Env',
+  'X-Consumer-Org',
+  'X-Consumer-Plan',
+  'X-Plan-Swap-Fee-Bps',
+];
+
 /* The plugin stack both routes share. `keyAuth: false` drops key-auth AND the header
    normalizer that only exists to feed it -- everything else (CORS, the rewrite, the
    gateway secret, the internal-header scrub, the access log) is identical, so the two
@@ -189,7 +204,15 @@ function cosmosRoutePlugins(opts: { keyAuth: boolean }) {
       allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
       // Idempotency-Key is read by the swap / liquidity / payout routes; a browser
       // cannot send a non-safelisted request header unless preflight allows it here.
-      allow_headers: 'Content-Type,Authorization,apikey,Idempotency-Key',
+      //
+      // X-Cosmos-Trace-Id is the wallet's per-request correlation id (TRACE_HEADER in its
+      // src/constants/telemetry.ts). It has to be listed for the same reason: omitted, the
+      // PREFLIGHT fails and the browser never sends the request at all -- so adding a
+      // trace id to the client would take out every call it was meant to help diagnose,
+      // in the web and Tauri builds. The extension would keep working, because
+      // host_permissions exempt it from CORS entirely, which is exactly the shape of bug
+      // that ships: green where it is developed, dead everywhere else.
+      allow_headers: 'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id',
       // A browser hides every response header that is not safelisted, so without this
       // the throttling headers the API already sends are invisible to a web client: it
       // sees a 429 with no idea when to come back, and has to guess an interval against
@@ -217,6 +240,9 @@ function cosmosRoutePlugins(opts: { keyAuth: boolean }) {
             functions: [
               `
 return function(conf, ctx)
+  for _, h in ipairs({${CONSUMER_HEADERS.map((h) => `"${h}"`).join(', ')}}) do
+    ngx.req.clear_header(h)
+  end
   if ngx.var.http_apikey and ngx.var.http_apikey ~= "" then
     return
   end
@@ -253,23 +279,40 @@ end
           'apikey',
           'X-API-KEY',
           // Internal-only markers -- never trust a client-supplied copy. The dev
-          // platform sets these server-to-server; X-Cosmos-Admin additionally gates
-          // the global owner-only admin endpoints, so it must never come from a client.
+          // platform sets these server-to-server. X-Cosmos-Admin no longer gates anything --
+          // the Payments service replaced it with an Authorization Bearer credential -- but it
+          // stays in this list because a stripped dead header costs nothing and a resurrected
+          // one would be a client-settable marker again.
           // X-Cosmos-Tos-Cooldown-Ms shortens the KYC email resend limit by dashboard
           // role, so a client must never be able to set it either.
           'X-Cosmos-Internal',
           'X-Cosmos-Admin',
           'X-Cosmos-Tos-Cooldown-Ms',
-          // The consumer identity APISIX itself injects after key-auth. Scrubbed on the
-          // way in so a client can never supply its own -- which matters most on the
-          // keyless callback route, where there is no key-auth step to overwrite them.
-          'X-Consumer-Username',
-          'X-Consumer-Permissions',
-          'X-Consumer-Role',
-          'X-Consumer-Env',
-          'X-Consumer-Org',
-          'X-Consumer-Plan',
-          'X-Plan-Swap-Fee-Bps',
+          /* The consumer identity, scrubbed HERE ONLY ON THE KEYLESS ROUTE.
+
+             It must be scrubbed somewhere: without it a client could hand the upstream
+             its own `X-Consumer-Role: admin`. But `proxy-rewrite` is the wrong place to
+             do it on the key-auth route, and that mistake was a full outage. Phase order
+             inside `rewrite` is by descending plugin priority --
+             serverless-pre-function (10000), key-auth (2500), proxy-rewrite (1008) --
+             so a `remove` listed here runs AFTER key-auth has injected the authentic
+             `X-Consumer-Username`, and deletes it. The upstream then sees a request with
+             a valid gateway secret and no consumer, which is exactly the community
+             server's `no_authenticated_consumer` 401: every authenticated call through
+             the gateway failed, on every key, until this was split.
+
+             On the key-auth route the scrub therefore lives in that route's own
+             serverless-pre-function (CONSUMER_HEADERS above), which runs BEFORE key-auth:
+             a client copy is cleared, the authentic values are then written by key-auth
+             and by the consumer forwarder, and a credential missing from the forwarder
+             map arrives with no headers at all rather than with the client's. Fails
+             closed either way.
+
+             The keyless callback route has no serverless-pre-function -- it is dropped
+             along with key-auth, since it only exists to feed it -- and no key-auth step
+             to re-inject anything, so removing them here is both correct and the only
+             option left. */
+          ...(opts.keyAuth ? [] : CONSUMER_HEADERS),
         ],
       },
     },

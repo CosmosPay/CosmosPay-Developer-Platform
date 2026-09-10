@@ -107,7 +107,8 @@ export async function blindpayProxy(ctx: APIContext, prefix: string): Promise<Re
  * Generic dashboard → Payments proxy for the PLATFORM-ADMIN (owner) endpoints, used by
  * the `/api/admin/[...path].ts` catch-all. Only a platform owner/admin (NOT merely an org
  * member) may reach it — verified here against the account role — and it sets the trusted
- * X-Cosmos-Admin marker so the Payments service returns global, cross-consumer data.
+ * platform-admin Bearer credential (COSMOS_ADMIN_API_SECRET) so the Payments service returns
+ * global, cross-consumer data.
  */
 export async function adminProxy(ctx: APIContext): Promise<Response> {
   const authed = await getUserId(ctx.request);
