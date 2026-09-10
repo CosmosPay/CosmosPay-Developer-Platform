@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.2.1] - 2026-09-10
+
+### Bug Fixes
+- Update environment variables and improve admin proxy handling for Payments API (f232cfe)
+
 ## [0.2.0] - 2026-09-10
 
 ### Features
