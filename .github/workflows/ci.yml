@@ -88,3 +88,11 @@ jobs:
           # prisma.config.ts resolves env('DATABASE_URL') at load time. `prisma generate`
           # only does codegen (no DB connection), so a dummy URL is enough for CI.
           DATABASE_URL: ${{ vars.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db' }}
+
+      # A green build is NOT a server that runs. The build bundles src/ and leaves
+      # dependencies external, so an import like `{ parse } from 'cookie'` is not resolved
+      # until node loads dist/server/entry.mjs — and a dependency that renamed an export
+      # between versions compiles clean and then dies on the first boot. That shipped once
+      # (astro 7.3 -> cookie@2 renamed parse/serialize); this step is what sees it.
+      - name: Smoke test (boot the built server)
+        run: npm run test:smoke

@@ -345,8 +345,10 @@ curl -s -H "X-API-KEY: <admin-key>" http://127.0.0.1:9180/apisix/admin/routes/co
 ## Checklist rápido de un deploy sano
 
 ```bash
-# 1. Código y deps
-git pull && npm install
+# 1. Código y deps (ci, no install: install puede traer un minor nuevo a node_modules
+#    mientras dist/ sigue siendo el build viejo; las deps son externas en el bundle,
+#    así que el desajuste sólo aparece al arrancar el server)
+git pull && npm ci
 
 # 2. .env de producción con dominios públicos y URLs internas correctas:
 #    BETTER_AUTH_URL / PUBLIC_BETTER_AUTH_URL = https://dev.cosmospay.lat

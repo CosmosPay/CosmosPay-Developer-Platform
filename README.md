@@ -171,7 +171,12 @@ The repo ships an [`ecosystem.config.cjs`](./ecosystem.config.cjs) that loads `.
 process (so Prisma sees `DATABASE_URL`) and defines two apps that share it:
 
 ```bash
-# Build, then run the compiled server
+# Install from the lockfile, build, then run the compiled server.
+# `npm ci` and not `npm install`: install re-resolves the ranges in package.json, which can
+# put a newer minor in node_modules while dist/ is still the build made against the old one.
+# Dependencies are external in that bundle, so the mismatch only shows when the server boots
+# ("does not provide an export named ...") and PM2 restart-loops. Rebuild after every install.
+npm ci
 npm run build
 pm2 start ecosystem.config.cjs --only devplat       # production
 pm2 save
