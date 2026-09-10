@@ -47,6 +47,12 @@ jobs:
           # prisma.config.ts resolves env('DATABASE_URL') at load time (codegen only, no DB).
           DATABASE_URL: ${{ vars.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db' }}
 
+      # A green build is not a server that runs: dependencies stay external, so a renamed
+      # export only surfaces when node loads dist/server/entry.mjs. Nothing gets tagged
+      # until the artifact has actually booted once.
+      - name: Smoke test (boot the built server)
+        run: npm run test:smoke
+
       # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
       - name: Security audit (portal)
         run: npm audit --omit=dev --audit-level=low
