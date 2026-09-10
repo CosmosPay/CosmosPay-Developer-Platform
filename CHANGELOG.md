@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.1.5] - 2026-09-10
+
+### Bug Fixes
+- Boot the built server in CI, and install deploys from the lockfile (2607cfa)
+
 ## [0.1.4] - 2026-09-10
 
 ### Features
