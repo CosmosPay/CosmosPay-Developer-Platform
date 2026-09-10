@@ -1,8 +1,16 @@
 name: CI
 
-# Build on every push and pull request. `npm run build` runs prisma generate, builds
-# the nested Fumadocs (Next.js) docs subproject (build-docs.mjs installs its deps on a
-# fresh checkout), then the Astro SSR build — so a green build exercises the whole app.
+# Two jobs on every push and pull request, run in parallel:
+#
+#   verify — the unit suite plus a dependency security audit of BOTH lockfiles.
+#            The audit used to run only in the release workflow, so a vulnerable
+#            dependency merged green and only surfaced when someone pushed to main —
+#            which is how 19 advisories piled up before one of them blocked a release.
+#            It is cheap; run it where it can still block the merge.
+#   build  — `npm run build` runs prisma generate, builds the nested Fumadocs
+#            (Next.js) docs subproject (build-docs.mjs installs its deps on a fresh
+#            checkout), then the Astro SSR build — so a green build exercises the
+#            whole app.
 on:
   push:
     branches: [main, dev]
@@ -17,13 +25,52 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    name: Tests & security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # node:test over the pure modules in src/lib (no database, no astro:env).
+      - name: Unit tests
+        run: npm run test:unit
+
+      # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
+      # Dev-only tooling is excluded because it never reaches a user; a finding there is
+      # Dependabot's errand, not a merge blocker.
+      #
+      # package.json holds two `overrides` purely to keep this step green, and JSON cannot
+      # carry the reason, so it lives here:
+      #   mysql2, deepmerge-ts — both are pinned to an exact version by the `prisma` CLI,
+      #   which is a devDependency but reaches the production tree anyway as an OPTIONAL
+      #   PEER of @prisma/client. npm's own suggested fix is a downgrade to prisma 6, and
+      #   no prisma 7.x has picked up either patch. Neither package is on a path this app
+      #   executes (it is Postgres, via @prisma/adapter-pg), so the override is the honest
+      #   move: patch them where they sit rather than exclude them from the audit. Drop the
+      #   override once a prisma release ships the bumps itself.
+      - name: Security audit (portal)
+        run: npm audit --omit=dev --audit-level=low
+
+      # The docs subproject keeps its own lockfile, so the root audit cannot see it — and
+      # its build output is served from public/docs by the same origin as the dashboard.
+      # `--prefix` audits it straight from docs/package-lock.json; no install needed.
+      - name: Security audit (docs)
+        run: npm audit --prefix docs --omit=dev --audit-level=low
+
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm

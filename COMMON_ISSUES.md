@@ -84,7 +84,7 @@ curl -s https://auth.cosmospay.lat/application/o/cosmos-pay/.well-known/openid-c
 ```
 
 Confirmá también que el **Redirect URI** del provider en Authentik incluya:
-`https://dev.cosmospay.lat/api/auth/oauth2/callback/ak`
+`https://dev.cosmospay.lat/api/auth/callback/ak`
 
 ---
 
@@ -374,4 +374,4 @@ pm2 logs devplat --lines 30          # sin errores; route created
 - `ufw`: permitir la subred Docker → `3000`.
 - Cosmos API escuchando en `0.0.0.0:3000`.
 - Cloudflare: `api.cosmospay.lat` sin Managed Challenge (nube gris o Bot Fight Mode off).
-- Authentik: Redirect URI `https://dev.cosmospay.lat/api/auth/oauth2/callback/ak`.
+- Authentik: Redirect URI `https://dev.cosmospay.lat/api/auth/callback/ak`.

@@ -21,9 +21,14 @@ if (!fs.existsSync(docsDir)) {
 }
 
 // Install docs deps on first run (fresh clone / CI) so the portal build is self-sufficient.
+// `npm ci` when the lockfile is there, so the versions CI BUILDS are the versions CI
+// AUDITED (`npm audit --prefix docs` reads docs/package-lock.json). `npm install` may
+// resolve past the lockfile and rewrite it mid-build, which would leave the audit a
+// statement about a tree that no longer exists. Fall back only when there is no lockfile.
 if (!fs.existsSync(path.join(docsDir, 'node_modules'))) {
-  console.log('[build-docs] installing docs dependencies…');
-  execSync('npm install', { cwd: docsDir, stdio: 'inherit' });
+  const locked = fs.existsSync(path.join(docsDir, 'package-lock.json'));
+  console.log(`[build-docs] installing docs dependencies (${locked ? 'npm ci' : 'npm install'})…`);
+  execSync(locked ? 'npm ci' : 'npm install', { cwd: docsDir, stdio: 'inherit' });
 }
 
 // Remove the previous export up-front: on Windows, Next's own cleanup of out/ can hit a

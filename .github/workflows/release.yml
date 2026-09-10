@@ -1,9 +1,10 @@
 name: Release
 
 # Auto-versioned releases from Conventional Commits. On every push to main this:
-#   0. Builds + runs a dependency security audit (`verify` job). The release job
-#      `needs` it, so nothing is versioned/tagged unless the build is green and the
-#      shipped deps are clean.
+#   0. Builds, runs the unit suite and audits both lockfiles (`verify` job). The
+#      release job `needs` it, so nothing is versioned/tagged unless the build is
+#      green, the tests pass and the shipped deps are clean. CI runs the same three
+#      checks on every PR — this is the last gate, not the first one.
 #   1. Picks a semver bump from the pushed commit messages (feat -> minor,
 #      fix/anything -> patch, `!:` or `BREAKING CHANGE` -> major).
 #   2. Bumps package.json, regenerates CHANGELOG.md (git-cliff), commits both back
@@ -23,17 +24,20 @@ permissions:
 
 jobs:
   verify:
-    name: Build & security audit
+    name: Build, tests & security audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
 
       - run: npm ci
+
+      - name: Unit tests
+        run: npm run test:unit
 
       - name: Build
         run: npm run build
@@ -44,8 +48,12 @@ jobs:
           DATABASE_URL: ${{ vars.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db' }}
 
       # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
-      - name: Security audit
+      - name: Security audit (portal)
         run: npm audit --omit=dev --audit-level=low
+
+      # The docs subproject keeps its own lockfile, invisible to the root audit.
+      - name: Security audit (docs)
+        run: npm audit --prefix docs --omit=dev --audit-level=low
 
   release:
     name: Version, changelog & release
@@ -57,7 +65,7 @@ jobs:
           fetch-depth: 0 # full history: needed to diff the pushed commit range
           fetch-tags: true # git-cliff needs prior tags to scope "since last release"
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
