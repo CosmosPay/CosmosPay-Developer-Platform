@@ -120,13 +120,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -136,7 +141,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -153,7 +167,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -164,7 +187,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -174,7 +198,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -274,13 +307,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -290,7 +328,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -302,7 +349,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -312,7 +360,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -323,11 +380,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -337,7 +396,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -3120,6 +3188,143 @@
         "summary": "Get a liquidity pool by id (Horizon proxy)",
         "tags": [
           "liquidity-pools"
+        ]
+      }
+    },
+    "/v1/assets": {
+      "get": {
+        "description": "The wallet ships a bundled copy of this list and prefers whichever of the two carries the higher `version`, so a client that cannot reach this endpoint still resolves assets correctly — it just misses the newest additions.",
+        "operationId": "AssetsController_list_v1",
+        "parameters": [
+          {
+            "name": "network",
+            "required": false,
+            "in": "query",
+            "description": "Which Stellar network to list.",
+            "schema": {
+              "default": "public",
+              "type": "string",
+              "enum": [
+                "public",
+                "testnet"
+              ]
+            }
+          },
+          {
+            "name": "verified",
+            "required": false,
+            "in": "query",
+            "description": "Return only issuer-verified entries. Omit to get the whole catalog, verified and not, and render the difference.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the request is not valid in the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No authenticated consumer, or admin credentials are required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist, or does not belong to this consumer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with existing state — an idempotency clash, an operation already in flight, or an invalid state transition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (`rate_limited`). Only routes that declare a budget can return this — today the Pollar routes that create or fund a Stellar account. Honour `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error. The detail is logged server-side and never returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "An upstream provider returned an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "An upstream provider is unavailable, or the service is misconfigured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Known Stellar assets per network, with issuer identity",
+        "tags": [
+          "assets"
         ]
       }
     },
@@ -14072,6 +14277,107 @@
         "required": [
           "data",
           "cursor"
+        ]
+      },
+      "AssetIssuerFlagsEntity": {
+        "type": "object",
+        "properties": {
+          "authRevocable": {
+            "type": "boolean",
+            "example": true,
+            "description": "The issuer may freeze this trustline."
+          },
+          "clawback": {
+            "type": "boolean",
+            "example": false,
+            "description": "The issuer may claw the balance back out of the holder."
+          }
+        },
+        "required": [
+          "authRevocable",
+          "clawback"
+        ]
+      },
+      "AssetEntity": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "USDT0"
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": "GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q",
+            "description": "Issuing account, or null for native XLM."
+          },
+          "name": {
+            "type": "string",
+            "example": "USDT0"
+          },
+          "issuerName": {
+            "type": "string",
+            "example": "Tether",
+            "description": "Who issues it, for display next to the code."
+          },
+          "issuerDomain": {
+            "type": "string",
+            "example": "circle.com",
+            "description": "The issuer's on-chain home_domain, or empty when it publishes none — which is the case for USDT0 and every testnet issuer. Never a domain attributed by a third party: rendered next to a token, that reads as the issuer's own claim."
+          },
+          "verified": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the issuing account was checked against the named organization. A claim about identity, not about quality — render unverified rows differently rather than hiding them."
+          },
+          "contract": {
+            "type": "object",
+            "nullable": true,
+            "example": "CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF",
+            "description": "Stellar Asset Contract id, when wrapped for Soroban."
+          },
+          "flags": {
+            "$ref": "#/components/schemas/AssetIssuerFlagsEntity"
+          }
+        },
+        "required": [
+          "code",
+          "issuer",
+          "name",
+          "issuerName",
+          "issuerDomain",
+          "verified",
+          "contract",
+          "flags"
+        ]
+      },
+      "AssetListEntity": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "example": "public",
+            "enum": [
+              "public",
+              "testnet"
+            ]
+          },
+          "version": {
+            "type": "number",
+            "example": 1,
+            "description": "Monotonic registry version. A client holding a bundled copy compares this against its own and keeps whichever is newer."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetEntity"
+            }
+          }
+        },
+        "required": [
+          "network",
+          "version",
+          "data"
         ]
       },
       "CreateWebhookEndpointDto": {

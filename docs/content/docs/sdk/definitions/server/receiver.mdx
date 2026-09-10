@@ -1,0 +1,270 @@
+---
+title: "Receiver"
+description: "A verified identity — the thing both ramps hang off. Everything a receiver owns is reachable from the instance (`receiver.addBankAccount(…)`, `receiver.wallets()`), because th"
+---
+
+A verified identity — the thing both ramps hang off. Everything a receiver owns is reachable from the instance (`receiver.addBankAccount(…)`, `receiver.wallets()`), because the alternative is carrying a receiver id and a manager reference side by side through a KYC flow that already has enough moving parts.
+
+## Constructor
+
+### Receiver
+
+```ts
+constructor(client: Client, data: ReceiverData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `ReceiverData`
+
+## Properties
+
+### blindpayId
+
+```ts
+blindpayId: string
+```
+
+### type
+
+`individual` or `business`.
+
+```ts
+type: string
+```
+
+### kycType
+
+```ts
+kycType: string | null
+```
+
+### kycStatus
+
+Verification state, refreshed from upstream on every read.
+
+```ts
+kycStatus: string | null
+```
+
+### email
+
+```ts
+email: string | null
+```
+
+### name
+
+```ts
+name: string | null
+```
+
+### country
+
+```ts
+country: string | null
+```
+
+### externalId
+
+Your own id for this receiver, if you set one.
+
+```ts
+externalId: string | null
+```
+
+### disabled
+
+True when the receiver is cut off from both ramps.
+
+```ts
+disabled: boolean
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: ReceiverData): this
+```
+
+### get
+
+True once verification has passed and the ramps will act on this receiver.
+
+```ts
+get isApproved(): boolean
+```
+
+## Methods
+
+### fetch()
+
+Re-read this receiver, refreshing `kycStatus`, and patch it in place.
+
+```ts
+fetch(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### update()
+
+Update and patch in place.
+
+```ts
+update(options: UpdateReceiverOptions): Promise<this>
+```
+
+**Parameters**
+
+- `options` — `UpdateReceiverOptions`
+
+**Returns** `Promise<this>`
+
+### delete()
+
+Delete this receiver.
+
+```ts
+delete(): Promise<void>
+```
+
+**Returns** `Promise<void>`
+
+### approve()
+
+Approve it out of review (admin-only).
+
+```ts
+approve(options?: ApproveReceiverOptions): Promise<ReceiverData>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ApproveReceiverOptions`
+
+**Returns** `Promise<ReceiverData>`
+
+### requestTos()
+
+Ask for a terms-of-service link for this receiver.
+
+```ts
+requestTos(options: RequestTosOptions): Promise<TermsOfServiceData>
+```
+
+**Parameters**
+
+- `options` — `RequestTosOptions`
+
+**Returns** `Promise<TermsOfServiceData>`
+
+### enable()
+
+Enable it with an accepted terms-of-service id, and patch in place.
+
+```ts
+enable(options: EnableReceiverOptions): Promise<this>
+```
+
+**Parameters**
+
+- `options` — `EnableReceiverOptions`
+
+**Returns** `Promise<this>`
+
+### setAccess()
+
+Cut this receiver off from both ramps, or let it back in.
+
+```ts
+setAccess(disabled: boolean): Promise<this>
+```
+
+**Parameters**
+
+- `disabled` — `boolean`
+
+**Returns** `Promise<this>`
+
+### addWallet()
+
+Register a blockchain wallet for this receiver.
+
+```ts
+addWallet(options: CreateReceiverWalletOptions): Promise<ReceiverWalletData>
+```
+
+**Parameters**
+
+- `options` — `CreateReceiverWalletOptions`
+
+**Returns** `Promise<ReceiverWalletData>`
+
+### wallets()
+
+This receiver's wallets.
+
+```ts
+wallets(options?: ListKycOptions): Promise<ReceiverWalletPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListKycOptions`
+
+**Returns** `Promise<ReceiverWalletPage>`
+
+### addBankAccount()
+
+Add a fiat bank account — where an off-ramp pays out.
+
+```ts
+addBankAccount(options: CreateBankAccountOptions): Promise<BankAccountData>
+```
+
+**Parameters**
+
+- `options` — `CreateBankAccountOptions`
+
+**Returns** `Promise<BankAccountData>`
+
+### bankAccounts()
+
+This receiver's bank accounts.
+
+```ts
+bankAccounts(options?: ListKycOptions): Promise<BankAccountPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListKycOptions`
+
+**Returns** `Promise<BankAccountPage>`
+
+### toJSON()
+
+```ts
+toJSON(): ReceiverData
+```
+
+**Returns** `ReceiverData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)
