@@ -2,6 +2,18 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.1.4] - 2026-09-10
+
+### Features
+- Implement social login via Google/GitHub (5793d18)
+- Enhance Pollar OAuth session description and add network wallet schema (2e337ff)
+- Add client activity tracking and reporting endpoints (e77e213)
+- Implement public asset catalog and shared API key retrieval (0c9fe26)
+
+### Bug Fixes
+- Use XLM in the first payment example (#27) (14a4a80)
+- Clear every dependency advisory and unblock the better-auth 1.7 build (cb17ee2)
+
 ## [0.1.3] - 2026-07-11
 
 ### CI/CD
