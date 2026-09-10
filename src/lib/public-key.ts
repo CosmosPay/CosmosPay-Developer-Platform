@@ -35,6 +35,7 @@ import {
   keyPrefix,
   listUserApiKeys,
   parseApiKeyEnv,
+  syncConsumerForwarder,
 } from "@/utils/apisix";
 
 /* A fixed id, so the APISIX consumer username is deterministic (`cosmos_public`)
@@ -134,16 +135,49 @@ async function readPublicKeys(): Promise<PublicKeys> {
 }
 
 /**
+ * Repairs the APISIX side of the public consumer, whether or not a key is missing.
+ *
+ * Two things have to exist for a public key to WORK, and only one of them is a key:
+ * the consumer itself, and the forwarder plugin on it that turns each credential into
+ * the `X-Consumer-Role` / `-Permissions` / `-Env` / `-Org` headers the Payments service
+ * reads. A key with no forwarder still authenticates — so it looks provisioned from
+ * here — and then arrives upstream with role `null` and no scopes, where PermissionsGuard
+ * refuses it and PublicKeyGuard does not recognise it as public. Nothing about that
+ * state heals on its own, and nothing about it is visible from `/api/public-key`, which
+ * only ever asked whether a key existed.
+ *
+ * Both calls are idempotent and cheap: `createConsumer` returns early when the consumer
+ * is there (a blind PUT would wipe the forwarder), and `syncConsumerForwarder` compares
+ * the baked Lua against what is already deployed and skips the write when they match.
+ * So the common path costs two GETs, which is what makes it safe to run on the cold
+ * path of every `/api/public-key` fetch rather than only when minting.
+ */
+async function healPublicConsumer(userId: string): Promise<void> {
+  await createConsumer(userId).catch(() => null);
+  await syncConsumerForwarder(userId).catch(() => null);
+}
+
+/**
  * The public keys, provisioning them if they do not exist yet.
  *
  * Idempotent and safe to call on every request: the common path is one APISIX
  * list call, and the callers cache on top of it. Both environments are minted
  * together because a wallet switching to testnet must not have to re-fetch from a
  * different place — dev is testnet, prod is mainnet, same as everywhere else.
+ *
+ * The heal runs on EVERY call, not only when a key is missing. Returning early on
+ * "both keys exist" is what let a consumer with a missing or stale forwarder sit there
+ * indefinitely, handing out keys that authenticate and are then refused for having no
+ * scopes — see healPublicConsumer.
  */
 export async function ensurePublicKeys(): Promise<PublicKeys> {
   const existing = await readPublicKeys();
-  if (existing.dev && existing.prod) return existing;
+  if (existing.dev && existing.prod) {
+    // The account and the org are already implied by the credentials existing; only the
+    // APISIX half can rot underneath them, so that is the only half re-checked here.
+    await healPublicConsumer(PUBLIC_USER_ID);
+    return existing;
+  }
 
   const userId = await ensurePublicAccount();
   const organizationId = await ensurePublicOrg(userId);
@@ -165,6 +199,11 @@ export async function ensurePublicKeys(): Promise<PublicKeys> {
   // stacking a second credential onto the same environment.
   if (!existing.dev) await mint("dev", "testnet");
   if (!existing.prod) await mint("prod", "mainnet");
+
+  // `createApiKey` syncs the forwarder itself, but it does so per key: the dev mint bakes
+  // a map that knows only the dev credential. One more sync here is what makes the map
+  // describe both, and it is a no-op when the second mint already produced that map.
+  await syncConsumerForwarder(userId).catch(() => null);
 
   return readPublicKeys();
 }
