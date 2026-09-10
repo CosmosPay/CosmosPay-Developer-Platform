@@ -126,6 +126,22 @@ export default defineConfig({
       // Origins the APISIX swap/data-plane route allows cross-origin (comma-separated), so
       // the wallet's in-browser swap calls to the gateway aren't blocked. Used by createRoute.
       COSMOS_API_CORS_ORIGINS: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://cosmospay.lat,https://dev.cosmospay.lat' }),
+      // --- Payments API platform-admin credentials (community server issue #34) ---
+      // The dashboard's /api/admin/* proxy reaches cross-consumer endpoints on the Payments
+      // service. That service replaced the old plaintext `X-Cosmos-Admin: 1` marker with a
+      // real shared secret presented as `Authorization: Bearer <secret>` and matched against
+      // its own ADMIN_API_CREDENTIALS. It fails CLOSED, so until this is set every admin
+      // screen answers 401 "Valid admin credentials required" — with the signed-in account
+      // holding perfectly good platform-admin rights, which is what makes it confusing.
+      //
+      // The value must equal the `secret` of a `"role":"write"` entry in the Payments
+      // service's ADMIN_API_CREDENTIALS. Minimum 16 characters — that service silently drops
+      // shorter ones, so `1` can never become a credential again.
+      COSMOS_ADMIN_API_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      // Optional least-privilege companion: a `"role":"read"` secret used for GET/HEAD admin
+      // calls so a browsing session never presents the write credential. Unset = the write
+      // secret is used for reads too, which is what a single-credential deployment wants.
+      COSMOS_ADMIN_API_SECRET_READ: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       // --- Email (organization invitations / magic links) ---
       // Two transports, in priority order:
       //   1. Resend HTTP API (preferred) — set RESEND_API_KEY. Sends over HTTPS (443),
