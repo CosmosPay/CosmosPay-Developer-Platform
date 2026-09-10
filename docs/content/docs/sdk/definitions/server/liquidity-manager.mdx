@@ -1,0 +1,140 @@
+---
+title: "LiquidityManager"
+description: "Liquidity pools — `client.liquidity`. Two surfaces in one manager, because they are two halves of the same job: *browsing* pools and positions (read-only, straight off Horizon"
+---
+
+Liquidity pools — `client.liquidity`. Two surfaces in one manager, because they are two halves of the same job: *browsing* pools and positions (read-only, straight off Horizon), and *operating* on them (deposit / withdraw), which produces an unsigned envelope for a wallet to sign and a `submit()` to relay it back. The managed structure is the OPERATION, not the pool: a pool is a public on-chain object with no lifecycle of its own, while an operation is a thing this consumer created, can re-read and can push to the network.
+
+## Methods
+
+### deposit()
+
+Build a deposit into the pool formed by the two assets → unsigned XDR, SEP-7 URI and QR. The pool is DERIVED from the two assets rather than named: a constant-product pool id is a hash of its (assetA, assetB, fee) in CAP-38 order, so there is exactly one pool the pair can form and no id for a caller to get wrong.
+
+```ts
+deposit(options: DepositLiquidityOptions): Promise<LiquidityOperation>
+```
+
+**Parameters**
+
+- `options` — `DepositLiquidityOptions`
+
+**Returns** [`Promise<LiquidityOperation>`](/sdk/definitions/server/liquidity-operation)
+
+### withdraw()
+
+Build a withdrawal (burn shares) from a pool → unsigned XDR, SEP-7 URI and QR.
+
+```ts
+withdraw(options: WithdrawLiquidityOptions): Promise<LiquidityOperation>
+```
+
+**Parameters**
+
+- `options` — `WithdrawLiquidityOptions`
+
+**Returns** [`Promise<LiquidityOperation>`](/sdk/definitions/server/liquidity-operation)
+
+### positions()
+
+An account's pool share positions, with what each is redeemable for right now.
+
+```ts
+positions(account: string): Promise<LiquidityPositionsData>
+```
+
+**Parameters**
+
+- `account` — `string`
+
+**Returns** `Promise<LiquidityPositionsData>`
+
+### browse()
+
+Browse on-chain pools (Horizon proxy). Filter by asset pair or by holder.
+
+```ts
+browse(options?: BrowseLiquidityPoolsOptions): Promise<LiquidityPoolPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `BrowseLiquidityPoolsOptions`
+
+**Returns** `Promise<LiquidityPoolPage>`
+
+### pool()
+
+One on-chain pool by its hex id (Horizon proxy).
+
+```ts
+pool(poolId: string): Promise<LiquidityPoolData>
+```
+
+**Parameters**
+
+- `poolId` — `string`
+
+**Returns** `Promise<LiquidityPoolData>`
+
+### operations()
+
+List this consumer's pool operations (paginated).
+
+```ts
+operations(options?: ListLiquidityOperationsOptions): Promise<LiquidityOperationPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListLiquidityOperationsOptions`
+
+**Returns** `Promise<LiquidityOperationPage>`
+
+### fetch()
+
+Get one operation by id, materialized.
+
+```ts
+fetch(id: string): Promise<LiquidityOperation>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<LiquidityOperation>`](/sdk/definitions/server/liquidity-operation)
+
+### fetchRaw()
+
+The raw payload for one operation. Exists so &#123;@link LiquidityOperation.fetch&#125; can patch itself in place instead of materializing a second instance of the thing the caller is already holding.
+
+```ts
+fetchRaw(id: string): Promise<LiquidityOperationData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<LiquidityOperationData>`
+
+### submit()
+
+Relay a signed operation to the network. The service checks the envelope's hash against the one it built, so a signed envelope that is not the one this operation describes is refused rather than broadcast.
+
+```ts
+submit(id: string, options: SubmitLiquidityOptions): Promise<LiquiditySubmitOutcome>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `SubmitLiquidityOptions`
+
+**Returns** `Promise<LiquiditySubmitOutcome>`
+
+## Related
+
+- [LiquidityOperation](/sdk/definitions/server/liquidity-operation)
+- [BaseManager](/sdk/definitions/server/base-manager)

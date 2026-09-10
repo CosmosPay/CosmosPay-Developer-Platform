@@ -1,0 +1,134 @@
+---
+title: "OnrampManager"
+description: "Fiat → stablecoin — `client.onramp`. Three steps, in this order and no other: **quote** (a price, valid for about five minutes), **payin** (created FROM that quote, and what r"
+---
+
+Fiat → stablecoin — `client.onramp`. Three steps, in this order and no other: **quote** (a price, valid for about five minutes), **payin** (created FROM that quote, and what returns the funding instructions the payer acts on), then the money arrives off-band and the payin status moves on its own. There is no structure class here on purpose. A payin has no action of its own — it is a mirror of the provider's record, read and re-read — so an object with a client back-reference would carry a `fetch()` and nothing else.
+
+## Constructor
+
+### OnrampManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### quote()
+
+Price a payin. The quote expires — check `expires_at` before using it.
+
+```ts
+quote(options: CreatePayinQuoteOptions): Promise<PayinQuoteData>
+```
+
+**Parameters**
+
+- `options` — `CreatePayinQuoteOptions`
+
+**Returns** `Promise<PayinQuoteData>`
+
+### createPayin()
+
+Create a payin from a quote. The response carries the funding instructions.
+
+```ts
+createPayin(options: CreatePayinOptions): Promise<PayinData>
+```
+
+**Parameters**
+
+- `options` — `CreatePayinOptions`
+
+**Returns** `Promise<PayinData>`
+
+### payins()
+
+List this consumer's payins (paginated).
+
+```ts
+payins(options?: ListPayinsOptions): Promise<PayinPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListPayinsOptions`
+
+**Returns** `Promise<PayinPage>`
+
+### payin()
+
+One payin. Served from the local mirror, refreshed from the provider when it is stale — so this is the right call to poll, not the provider's own API.
+
+```ts
+payin(id: string): Promise<PayinData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<PayinData>`
+
+### createTrustline()
+
+Build the unsigned trustline transaction an address needs before it can hold the stablecoin the ramp pays out in. The envelope comes from the gateway, so a wallet signing it must decode and bound it first — the issuer it names is the one the payout will use, and it is not known to the caller in advance.
+
+```ts
+createTrustline(options: CreateTrustlineOptions): Promise<TrustlineData>
+```
+
+**Parameters**
+
+- `options` — `CreateTrustlineOptions`
+
+**Returns** `Promise<TrustlineData>`
+
+### createVirtualAccount()
+
+Open a virtual account (a permanent bank reference) for a verified receiver.
+
+```ts
+createVirtualAccount(receiverId: string, options: CreateVirtualAccountOptions): Promise<VirtualAccountData>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `options` — `CreateVirtualAccountOptions`
+
+**Returns** `Promise<VirtualAccountData>`
+
+### virtualAccounts()
+
+A receiver's virtual accounts.
+
+```ts
+virtualAccounts(receiverId: string, options?: ListPayinsOptions): Promise<VirtualAccountData>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `options` _(optional)_ — `ListPayinsOptions`
+
+**Returns** `Promise<VirtualAccountData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

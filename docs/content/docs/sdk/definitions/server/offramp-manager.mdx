@@ -1,0 +1,119 @@
+---
+title: "OfframpManager"
+description: "Stablecoin → fiat — `client.offramp`. Four steps, and the middle one is the one people miss: **quote**, **authorize** (which builds the unsigned transaction that moves the sta"
+---
+
+Stablecoin → fiat — `client.offramp`. Four steps, and the middle one is the one people miss: **quote**, **authorize** (which builds the unsigned transaction that moves the stablecoin), the wallet signs it, and only then **create the payout** with that signature attached. A payout created without a signed transfer is a payout with nothing behind it. `authorize` is for the chains that need a transaction built for them (Stellar, Solana). On EVM the quote itself carries the `approve` contract payload, so the caller signs that instead and goes straight to `createPayout`.
+
+## Constructor
+
+### OfframpManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### quote()
+
+Price a payout. Expires in about five minutes.
+
+```ts
+quote(options: CreatePayoutQuoteOptions): Promise<PayoutQuoteData>
+```
+
+**Parameters**
+
+- `options` — `CreatePayoutQuoteOptions`
+
+**Returns** `Promise<PayoutQuoteData>`
+
+### authorize()
+
+Build the unsigned transfer for a Stellar or Solana payout. What comes back is built by the gateway, not by the caller: bound it against the quote the user confirmed before signing, or the amount that leaves is whatever the response says it is.
+
+```ts
+authorize(options: AuthorizePayoutOptions): Promise<AuthorizePayoutData>
+```
+
+**Parameters**
+
+- `options` — `AuthorizePayoutOptions`
+
+**Returns** `Promise<AuthorizePayoutData>`
+
+### createPayout()
+
+Create the payout from a quote, with the signed transfer attached.
+
+```ts
+createPayout(options: CreatePayoutOptions): Promise<PayoutData>
+```
+
+**Parameters**
+
+- `options` — `CreatePayoutOptions`
+
+**Returns** `Promise<PayoutData>`
+
+### payouts()
+
+List this consumer's payouts (paginated).
+
+```ts
+payouts(options?: ListPayoutsOptions): Promise<PayoutPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListPayoutsOptions`
+
+**Returns** `Promise<PayoutPage>`
+
+### payout()
+
+One payout. Served from the local mirror, refreshed when stale.
+
+```ts
+payout(id: string): Promise<PayoutData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<PayoutData>`
+
+### attachDocument()
+
+Attach a compliance document to a payout — an invoice or proof of funds the rail asks for before it will settle.
+
+```ts
+attachDocument(id: string, options: AttachPayoutDocumentOptions): Promise<PayoutDocumentData>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `AttachPayoutDocumentOptions`
+
+**Returns** `Promise<PayoutDocumentData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

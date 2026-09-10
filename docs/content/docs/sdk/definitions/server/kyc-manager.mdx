@@ -1,0 +1,322 @@
+---
+title: "KycManager"
+description: "KYC / KYB — `client.kyc`. A receiver is the verified identity both ramps hang off: an on-ramp pays INTO one of its wallets, an off-ramp pays OUT to one of its bank accounts, a"
+---
+
+KYC / KYB — `client.kyc`. A receiver is the verified identity both ramps hang off: an on-ramp pays INTO one of its wallets, an off-ramp pays OUT to one of its bank accounts, and neither works until verification passes. The order is not obvious and the API will not guess it for you: 1. `termsOfService()` — the acceptance the provider requires up front, which returns a `tos_id`. 2. `upload()` each document, keeping the `file_url` it returns. 3. `createReceiver()` with those URLs and the `tos_id`. 4. `addWallet()` / `addBankAccount()` for where money should land. 5. verification runs; `fetchReceiver()` refreshes `kycStatus` from upstream.
+
+## Properties
+
+### protected
+
+```ts
+protected get rest(): REST
+```
+
+## Methods
+
+### createReceiver()
+
+Create a receiver and start verification.
+
+```ts
+createReceiver(options: CreateReceiverOptions): Promise<Receiver>
+```
+
+**Parameters**
+
+- `options` — `CreateReceiverOptions`
+
+**Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
+
+### receivers()
+
+List this consumer's receivers (paginated).
+
+```ts
+receivers(options?: ListKycOptions): Promise<ReceiverPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListKycOptions`
+
+**Returns** `Promise<ReceiverPage>`
+
+### fetchReceiver()
+
+One receiver, materialized. Reading it refreshes `kycStatus` upstream.
+
+```ts
+fetchReceiver(id: string): Promise<Receiver>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
+
+### fetchReceiverRaw()
+
+The raw payload, so a &#123;@link Receiver&#125; can patch itself in place.
+
+```ts
+fetchReceiverRaw(id: string): Promise<ReceiverData>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<ReceiverData>`
+
+### updateReceiver()
+
+Update a receiver — the same fields as creation, all optional.
+
+```ts
+updateReceiver(id: string, options: UpdateReceiverOptions): Promise<Receiver>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `UpdateReceiverOptions`
+
+**Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
+
+### deleteReceiver()
+
+Delete a receiver.
+
+```ts
+deleteReceiver(id: string): Promise<void>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<void>`
+
+### approveReceiver()
+
+Approve a receiver sitting in review. Admin-only: it is the human gate on a verification the provider could not decide by itself.
+
+```ts
+approveReceiver(id: string, options?: ApproveReceiverOptions): Promise<ReceiverData>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` _(optional)_ — `ApproveReceiverOptions`
+
+**Returns** `Promise<ReceiverData>`
+
+### requestTos()
+
+Ask for a terms-of-service link for an existing receiver. `channel: 'code'` returns the URL to render; `'email'` sends it to the receiver instead.
+
+```ts
+requestTos(id: string, options: RequestTosOptions): Promise<TermsOfServiceData>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `RequestTosOptions`
+
+**Returns** `Promise<TermsOfServiceData>`
+
+### enableReceiver()
+
+Enable an inactive receiver with an accepted terms-of-service id.
+
+```ts
+enableReceiver(id: string, options: EnableReceiverOptions): Promise<Receiver>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `EnableReceiverOptions`
+
+**Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
+
+### setReceiverAccess()
+
+Cut a receiver off from both ramps, or let it back in. Admin-only, and the fastest lever there is when something is wrong with an account.
+
+```ts
+setReceiverAccess(id: string, options: SetReceiverAccessOptions): Promise<Receiver>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `options` — `SetReceiverAccessOptions`
+
+**Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
+
+### walletSignMessage()
+
+The message a receiver must sign to prove it controls an address. Sign it, then pass the resulting transaction hash as `signature_tx_hash` to &#123;@link addWallet&#125;.
+
+```ts
+walletSignMessage(receiverId: string): Promise<WalletSignMessageData>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+
+**Returns** `Promise<WalletSignMessageData>`
+
+### addWallet()
+
+Register a blockchain wallet for a receiver.
+
+```ts
+addWallet(receiverId: string, options: CreateReceiverWalletOptions): Promise<ReceiverWalletData>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `options` — `CreateReceiverWalletOptions`
+
+**Returns** `Promise<ReceiverWalletData>`
+
+### wallets()
+
+A receiver's wallets (paginated).
+
+```ts
+wallets(receiverId: string, options?: ListKycOptions): Promise<ReceiverWalletPage>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `options` _(optional)_ — `ListKycOptions`
+
+**Returns** `Promise<ReceiverWalletPage>`
+
+### deleteWallet()
+
+Delete one of a receiver's wallets.
+
+```ts
+deleteWallet(receiverId: string, id: string): Promise<void>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `id` — `string`
+
+**Returns** `Promise<void>`
+
+### addBankAccount()
+
+Add a fiat bank account for a receiver — where an off-ramp pays out.
+
+```ts
+addBankAccount(receiverId: string, options: CreateBankAccountOptions): Promise<BankAccountData>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `options` — `CreateBankAccountOptions`
+
+**Returns** `Promise<BankAccountData>`
+
+### bankAccounts()
+
+A receiver's bank accounts (paginated).
+
+```ts
+bankAccounts(receiverId: string, options?: ListKycOptions): Promise<BankAccountPage>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `options` _(optional)_ — `ListKycOptions`
+
+**Returns** `Promise<BankAccountPage>`
+
+### deleteBankAccount()
+
+Delete one of a receiver's bank accounts.
+
+```ts
+deleteBankAccount(receiverId: string, id: string): Promise<void>
+```
+
+**Parameters**
+
+- `receiverId` — `string`
+- `id` — `string`
+
+**Returns** `Promise<void>`
+
+### upload()
+
+Upload a KYC document and get back the `file_url` every `*_file` field expects. Documents are uploaded first and referenced by URL — the receiver payload never carries bytes.
+
+```ts
+upload(file: unknown): Promise<KycUploadData>
+```
+
+**Parameters**
+
+- `file` — `unknown`
+
+**Returns** `Promise<KycUploadData>`
+
+### termsOfService()
+
+Start terms-of-service acceptance and get the hosted URL. This is the FIRST step of the flow: the provider will not create a receiver without the `tos_id` it produces.
+
+```ts
+termsOfService(options?: InitiateTosOptions): Promise<TermsOfServiceData>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `InitiateTosOptions`
+
+**Returns** `Promise<TermsOfServiceData>`
+
+### rails()
+
+The bank rails available to this consumer.
+
+```ts
+rails(): Promise<KycRailsData>
+```
+
+**Returns** `Promise<KycRailsData>`
+
+### bankDetails()
+
+The field schema a given rail requires. The authority on which of the ~70 rail-specific bank-account fields to send — read it at runtime rather than hard-coding a rail's shape.
+
+```ts
+bankDetails(rail: string): Promise<BankDetailsData>
+```
+
+**Parameters**
+
+- `rail` — `string`
+
+**Returns** `Promise<BankDetailsData>`
+
+## Related
+
+- [Receiver](/sdk/definitions/server/receiver)
+- [BaseManager](/sdk/definitions/server/base-manager)

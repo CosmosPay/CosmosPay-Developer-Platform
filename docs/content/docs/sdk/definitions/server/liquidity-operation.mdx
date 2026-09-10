@@ -1,0 +1,278 @@
+---
+title: "LiquidityOperation"
+description: "One deposit into, or withdrawal from, a Stellar liquidity pool. The server builds the envelope and the wallet signs it, so an operation is a two-step object: it arrives `PENDI"
+---
+
+One deposit into, or withdrawal from, a Stellar liquidity pool. The server builds the envelope and the wallet signs it, so an operation is a two-step object: it arrives `PENDING` carrying an unsigned `xdr`, and reaches `SUBMITTED`/`SUCCEEDED` only once the signed envelope comes back through `submit()`. Both steps are available on the instance — `await operation.submit({ signedXdr })` — so a caller never has to keep the id and the manager in scope alongside it.
+
+## Constructor
+
+### LiquidityOperation
+
+```ts
+constructor(client: Client, data: LiquidityOperationData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `LiquidityOperationData`
+
+## Properties
+
+### kind
+
+Deposit or withdrawal.
+
+```ts
+kind: LiquidityOperationKind
+```
+
+### status
+
+```ts
+status: LiquidityOperationStatus
+```
+
+### network
+
+```ts
+network: string
+```
+
+### source
+
+Account whose funds move, and which must sign.
+
+```ts
+source: string
+```
+
+### poolId
+
+The pool this operation acts on (hex id).
+
+```ts
+poolId: string
+```
+
+### assetA
+
+```ts
+assetA: string
+```
+
+### assetAIssuer
+
+```ts
+assetAIssuer: string | null
+```
+
+### assetB
+
+```ts
+assetB: string
+```
+
+### assetBIssuer
+
+```ts
+assetBIssuer: string | null
+```
+
+### amountA
+
+Maximum of asset A put in (deposit), or minimum taken out (withdrawal).
+
+```ts
+amountA: string
+```
+
+### amountB
+
+```ts
+amountB: string
+```
+
+### shares
+
+Pool shares minted or burned; null until the network settles a deposit.
+
+```ts
+shares: string | null
+```
+
+### minPrice
+
+Price band a deposit executes within, as decimal strings.
+
+```ts
+minPrice: string | null
+```
+
+### maxPrice
+
+```ts
+maxPrice: string | null
+```
+
+### slippageBps
+
+```ts
+slippageBps: number
+```
+
+### idempotencyKey
+
+```ts
+idempotencyKey: string | null
+```
+
+### feeBps
+
+```ts
+feeBps: number
+```
+
+### feeAmountA
+
+```ts
+feeAmountA: string
+```
+
+### feeAmountB
+
+```ts
+feeAmountB: string
+```
+
+### feeWallet
+
+```ts
+feeWallet: string | null
+```
+
+### commissionMemo
+
+```ts
+commissionMemo: string | null
+```
+
+### xdr
+
+Unsigned transaction envelope (base64 XDR) — what the wallet signs.
+
+```ts
+xdr: string
+```
+
+### uri
+
+SEP-7 `web+stellar:tx` deep link for the same envelope.
+
+```ts
+uri: string
+```
+
+### txHash
+
+```ts
+txHash: string
+```
+
+### qr
+
+QR code of the SEP-7 URI (PNG data URL).
+
+```ts
+qr: string
+```
+
+### expiresAt
+
+When the built envelope stops being submittable.
+
+```ts
+expiresAt: Date | null
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: LiquidityOperationData): this
+```
+
+### get
+
+True while the envelope still needs a signature.
+
+```ts
+get isPending(): boolean
+```
+
+### get
+
+True once the network accepted it.
+
+```ts
+get isSucceeded(): boolean
+```
+
+### get
+
+True for a deposit, false for a withdrawal.
+
+```ts
+get isDeposit(): boolean
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch this operation and patch it in place.
+
+```ts
+fetch(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### submit()
+
+Relay the signed envelope to the network and patch this instance with the result.
+
+```ts
+submit(options: SubmitLiquidityOptions): Promise<LiquiditySubmitOutcome>
+```
+
+**Parameters**
+
+- `options` — `SubmitLiquidityOptions`
+
+**Returns** `Promise<LiquiditySubmitOutcome>`
+
+### toJSON()
+
+```ts
+toJSON(): LiquidityOperationData
+```
+
+**Returns** `LiquidityOperationData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

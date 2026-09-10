@@ -1,0 +1,205 @@
+---
+title: "PollarManager"
+description: "Pollar — social login and the custodial wallets behind it — `client.pollar`. The login is a three-legged flow, and the middle leg is the one that surprises people: the browser"
+---
+
+Pollar — social login and the custodial wallets behind it — `client.pollar`. The login is a three-legged flow, and the middle leg is the one that surprises people: the browser leaves for the provider and comes back to POLLAR, not to you, so a client cannot simply await a redirect. It polls instead. 1. `authorize()` → a `state` and the `authorization_url` to open. 2. `session(state)` until `status` is `authorized`, which carries a bridge `code`. 3. `token({ code, code_verifier })` → the session, its wallets and the profile. Use PKCE. The code travels through a redirect a client does not control, and the `code_verifier` is the only reason an intercepted one is worth nothing. The two callback routes (`/oauth/callback…`) are deliberately absent from this manager: they are where a BROWSER lands, not something a server calls. Polling `session()` is the programmatic half of the same step.
+
+## Constructor
+
+### PollarManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### authorize()
+
+Start a login and get the URL to send the user to.
+
+```ts
+authorize(options: PollarAuthorizeOptions): Promise<PollarAuthorizeData>
+```
+
+**Parameters**
+
+- `options` — `PollarAuthorizeOptions`
+
+**Returns** `Promise<PollarAuthorizeData>`
+
+### session()
+
+Poll a login. `status: 'authorized'` carries the bridge `code` to redeem; `pending` means keep waiting; anything else is over.
+
+```ts
+session(state: string): Promise<PollarLoginSessionData>
+```
+
+**Parameters**
+
+- `state` — `string`
+
+**Returns** `Promise<PollarLoginSessionData>`
+
+### token()
+
+Redeem the bridge code for a session. Single use — a consumed code is dead.
+
+```ts
+token(options: PollarTokenOptions): Promise<PollarSessionData>
+```
+
+**Parameters**
+
+- `options` — `PollarTokenOptions`
+
+**Returns** `Promise<PollarSessionData>`
+
+### refresh()
+
+Rotate the token pair. The old refresh token stops working, so store what comes back before using it — a rotation you lose is a session you lose.
+
+```ts
+refresh(options: PollarRefreshOptions): Promise<PollarRefreshData>
+```
+
+**Parameters**
+
+- `options` — `PollarRefreshOptions`
+
+**Returns** `Promise<PollarRefreshData>`
+
+### logout()
+
+Revoke a session — this device, or every one of them.
+
+```ts
+logout(options: PollarLogoutOptions): Promise<PollarLogoutData>
+```
+
+**Parameters**
+
+- `options` — `PollarLogoutOptions`
+
+**Returns** `Promise<PollarLogoutData>`
+
+### verifyToken()
+
+Validate an end-user access token and learn whose it is.
+
+```ts
+verifyToken(options: VerifyPollarTokenOptions): Promise<PollarTokenVerificationData>
+```
+
+**Parameters**
+
+- `options` — `VerifyPollarTokenOptions`
+
+**Returns** `Promise<PollarTokenVerificationData>`
+
+### activateWallet()
+
+Fund a wallet's XLM base reserve. A Stellar account does not exist until something pays for it, which is why a fresh Pollar wallet can have an address and still not be on the network.
+
+```ts
+activateWallet(options: ActivatePollarWalletOptions): Promise<PollarActivationData>
+```
+
+**Parameters**
+
+- `options` — `ActivatePollarWalletOptions`
+
+**Returns** `Promise<PollarActivationData>`
+
+### addDefaultTrustlines()
+
+Enable the application's configured assets on a wallet.
+
+```ts
+addDefaultTrustlines(address: string): Promise<PollarTrustlineData>
+```
+
+**Parameters**
+
+- `address` — `string`
+
+**Returns** `Promise<PollarTrustlineData>`
+
+### addTrustlines()
+
+Enable specific assets on a wallet.
+
+```ts
+addTrustlines(address: string, options: PollarTrustlinesOptions): Promise<PollarTrustlineData>
+```
+
+**Parameters**
+
+- `address` — `string`
+- `options` — `PollarTrustlinesOptions`
+
+**Returns** `Promise<PollarTrustlineData>`
+
+### removeTrustline()
+
+Remove a trustline. An asset is `(code, issuer)`, and both are in the path for that reason: a bare code names no asset.
+
+```ts
+removeTrustline(address: string, code: string, issuer: string): Promise<PollarTrustlineData>
+```
+
+**Parameters**
+
+- `address` — `string`
+- `code` — `string`
+- `issuer` — `string`
+
+**Returns** `Promise<PollarTrustlineData>`
+
+### registerUser()
+
+Register a user with Pollar ahead of their first login.
+
+```ts
+registerUser(options: RegisterPollarUserOptions): Promise<PollarUserData>
+```
+
+**Parameters**
+
+- `options` — `RegisterPollarUserOptions`
+
+**Returns** `Promise<PollarUserData>`
+
+### registerUserWithWallet()
+
+Register a user AND provision their Stellar wallet in one call — the variant to use when the user should be able to receive before they ever log in.
+
+```ts
+registerUserWithWallet(options: RegisterPollarUserOptions): Promise<PollarUserData>
+```
+
+**Parameters**
+
+- `options` — `RegisterPollarUserOptions`
+
+**Returns** `Promise<PollarUserData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

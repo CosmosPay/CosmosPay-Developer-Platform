@@ -1,0 +1,67 @@
+---
+title: "CosmosWalletAdapter"
+description: "The CosmosWalletAdapter class."
+---
+
+## Constructor
+
+### CosmosWalletAdapter
+
+```ts
+constructor(options?: CosmosProviderOptions | CosmosWalletProvider)
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `CosmosProviderOptions | CosmosWalletProvider`
+
+## Properties
+
+### id
+
+```ts
+readonly id = "cosmos"
+```
+
+### name
+
+```ts
+readonly name = "Cosmos Wallet"
+```
+
+## Methods
+
+### isAvailable()
+
+Available when a provider is already here, or when a hosted wallet is configured — the hosted build needs no install, so it is always usable. Deliberately does NOT wait for the hosted script: this answer gates a modal, and a wallet that takes a network round trip to say "yes" reads as broken. The script is fetched on the first real call instead.
+
+```ts
+isAvailable(): Promise<boolean>
+```
+
+**Returns** `Promise<boolean>`
+
+### getPublicKey()
+
+```ts
+getPublicKey(_network: NetworkConfig): Promise<string>
+```
+
+**Parameters**
+
+- `_network` — `NetworkConfig`
+
+**Returns** `Promise<string>`
+
+### signTransaction()
+
+```ts
+signTransaction(xdr: string, params: SignParams): Promise<string>
+```
+
+**Parameters**
+
+- `xdr` — `string`
+- `params` — `SignParams`
+
+**Returns** `Promise<string>`
