@@ -2,6 +2,14 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.2.0] - 2026-09-10
+
+### Features
+- Add LiquidityOperation, OfframpManager, OnrampManager, PollarManager, and Receiver documentation (babbcb2)
+
+### Bug Fixes
+- Request the openid/profile/email scopes from Authentik explicitly (e36d840)
+
 ## [0.1.5] - 2026-09-10
 
 ### Bug Fixes
