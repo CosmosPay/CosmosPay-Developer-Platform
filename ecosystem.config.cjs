@@ -22,7 +22,14 @@
  * so `.env` must hold the production values BEFORE running `npm run build`.
  *
  * Deploy (production):
- *   git pull && npm install && npm run build
+ *   git pull && npm ci && npm run build
+ *
+ * `npm ci` and not `npm install`: install resolves package.json's ranges afresh, so a
+ * caret can pull a new minor into node_modules while dist/ still holds the build made
+ * against the old one. Dependencies are EXTERNAL in that bundle, so the mismatch only
+ * appears when the server boots — `does not provide an export named 'parse'` and PM2
+ * restart-looping. ci installs the lockfile, the same tree CI built and audited.
+ * ALWAYS re-run `npm run build` after installing: a stale dist/ is the same failure.
  *   pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat; pm2 save
  */
 const { parsed } = require('dotenv').config({ path: __dirname + '/.env' });
