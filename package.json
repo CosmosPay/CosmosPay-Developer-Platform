@@ -24,7 +24,7 @@
     "test": "npm run test:unit"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^8.5.0",
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
     "@astrojs/node": "^11.1.5",
     "@astrojs/react": "^6.0.5",
     "@prisma/adapter-pg": "^7.10.0",
