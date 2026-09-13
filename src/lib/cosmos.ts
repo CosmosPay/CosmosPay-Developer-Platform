@@ -8,13 +8,9 @@
    tripping through the data plane we call the Payments API directly and present
    those same headers ourselves — scoping every payment intent to the signed-in
    user's consumer (`cosmos_<userId>`), exactly as a real API key would. */
-import {
-  COSMOS_ADMIN_API_SECRET,
-  COSMOS_ADMIN_API_SECRET_READ,
-  COSMOS_API_URL,
-  COSMOS_GATEWAY_SECRET,
-} from "astro:env/server";
+import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
 import { keyPrefix } from "@/utils/apisix";
+import { isSafeUpstreamPath } from "@/lib/upstream-path";
 
 export type CosmosEnv = "dev" | "prod";
 
@@ -27,34 +23,6 @@ function baseUrl(): string {
   return COSMOS_API_URL.replace(/\/+$/, "");
 }
 
-/**
- * Why the admin proxy cannot act, said once so every admin screen says the same thing.
- *
- * A 503 rather than a 401: the signed-in account's platform rights were already checked
- * and are fine -- what is missing is THIS SERVICE's credential for the Payments API, which
- * is a deployment fault the user can do nothing about. Reporting it as 401 is what made
- * the original bug read as "your admin account is not really an admin".
- */
-export const ADMIN_SECRET_MISSING =
-  "COSMOS_ADMIN_API_SECRET is not configured, so this service holds no platform-admin " +
-  "credential for the Payments API. Set it to the `write` secret in that service's " +
-  "ADMIN_API_CREDENTIALS.";
-
-/**
- * The admin credential to present for `method`.
- *
- * Safe methods use the read secret when a deployment configured one, so a session that is
- * only browsing never puts the write credential on the wire; everything else uses the
- * write secret. With only one configured, it answers for both -- the Payments service's
- * role lattice already has write imply read, so a single-credential deployment loses
- * nothing but the extra separation.
- */
-function adminSecretFor(method: string): string {
-  const safe = method === "GET" || method === "HEAD";
-  if (safe && COSMOS_ADMIN_API_SECRET_READ) return COSMOS_ADMIN_API_SECRET_READ;
-  return COSMOS_ADMIN_API_SECRET || COSMOS_ADMIN_API_SECRET_READ;
-}
-
 export class CosmosApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -62,6 +30,11 @@ export class CosmosApiError extends Error {
     this.name = "CosmosApiError";
     this.status = status;
   }
+}
+
+/** Refuse a path that would escape its feature prefix. See {@link isSafeUpstreamPath}. */
+function assertNoTraversal(path: string): void {
+  if (!isSafeUpstreamPath(path)) throw new CosmosApiError("Invalid path", 400);
 }
 
 /* Low-level request. Attaches the gateway headers + consumer identity and unwraps
@@ -91,6 +64,7 @@ async function cosmosFetch<T>(
     clientIp?: string;
   } = {},
 ): Promise<T> {
+  assertNoTraversal(path);
   const url = new URL(baseUrl() + path);
   if (init.query) {
     for (const [k, v] of Object.entries(init.query)) {
@@ -162,16 +136,19 @@ export async function proxyCosmosRequest(opts: {
   // when the caller consumed the request body, e.g. to validate it first).
   request?: Request;
   bodyJson?: unknown;
-  // Present the Payments service's platform-admin credential, for the global
-  // owner-only admin endpoints. Callers MUST have verified the signed-in user is a
-  // platform owner/admin first -- this only carries the credential, it does not decide
-  // who may use it.
-  admin?: boolean;
+  // The signed-in account's platform role ("owner" / "admin"), set for the global
+  // owner-only admin endpoints. Callers MUST have verified the account holds it first --
+  // this only forwards the label for the Payments service's audit trail, it neither
+  // decides nor unlocks anything. What admits the call there is the pair every request
+  // from this service already carries: the gateway secret plus X-Cosmos-Internal, which
+  // APISIX strips from client requests. There is no separate admin secret any more.
+  adminRole?: string;
   // Extra trusted, server-to-server headers (e.g. role-derived cooldowns). These are only
   // honored upstream alongside X-Cosmos-Internal, which APISIX strips from client requests,
   // so an external API key can never forge them. Never use for caller-controlled values.
   extraHeaders?: Record<string, string>;
 }): Promise<{ status: number; json: any }> {
+  assertNoTraversal(opts.path);
   const url = new URL(`${baseUrl()}/v1/${opts.path.replace(/^\/+/, "")}`);
   if (opts.searchParams) {
     for (const [k, v] of opts.searchParams) {
@@ -181,7 +158,6 @@ export async function proxyCosmosRequest(opts: {
     }
   }
 
-  // Read before the headers are built: the admin credential presented depends on it.
   const method = opts.method.toUpperCase();
 
   const headers: Record<string, string> = {
@@ -191,11 +167,7 @@ export async function proxyCosmosRequest(opts: {
     "X-Cosmos-Internal": "1",
   };
   if (COSMOS_GATEWAY_SECRET) headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
-  if (opts.admin) {
-    const secret = adminSecretFor(method);
-    if (!secret) throw new CosmosApiError(ADMIN_SECRET_MISSING, 503);
-    headers["Authorization"] = `Bearer ${secret}`;
-  }
+  if (opts.adminRole) headers["X-Cosmos-Admin-Role"] = opts.adminRole;
   if (opts.extraHeaders) {
     for (const [k, v] of Object.entries(opts.extraHeaders)) headers[k] = v;
   }
