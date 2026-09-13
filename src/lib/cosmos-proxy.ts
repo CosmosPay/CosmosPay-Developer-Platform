@@ -106,9 +106,12 @@ export async function blindpayProxy(ctx: APIContext, prefix: string): Promise<Re
 /**
  * Generic dashboard → Payments proxy for the PLATFORM-ADMIN (owner) endpoints, used by
  * the `/api/admin/[...path].ts` catch-all. Only a platform owner/admin (NOT merely an org
- * member) may reach it — verified here against the account role — and it sets the trusted
- * platform-admin Bearer credential (COSMOS_ADMIN_API_SECRET) so the Payments service returns
- * global, cross-consumer data.
+ * member) may reach it, verified here against the account role — and THIS is the check
+ * that decides it, for reads as much as for writes. The Payments service keeps no admin
+ * credential of its own any more: it admits the call because it came from this backend
+ * (gateway secret + X-Cosmos-Internal) and records the role forwarded below on its audit
+ * trail. One place decides who is a platform admin, so the answer cannot differ between
+ * the screens that change a plan or a role and the ones that read cross-consumer data.
  */
 export async function adminProxy(ctx: APIContext): Promise<Response> {
   const authed = await getUserId(ctx.request);
@@ -132,7 +135,7 @@ export async function adminProxy(ctx: APIContext): Promise<Response> {
       method: ctx.request.method,
       searchParams: ctx.url.searchParams,
       request: ctx.request,
-      admin: true,
+      adminRole: role,
     });
     // The Payments service only knows a consumer by its APISIX username (cosmos_<userId>);
     // resolve those to real account names/emails so the admin UI never shows a bare "—".

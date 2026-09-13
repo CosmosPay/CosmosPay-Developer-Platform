@@ -43,7 +43,7 @@ export const POST: APIRoute = async (ctx) => {
       path: `admin/receivers/${encodeURIComponent(id)}/approve`,
       method: "POST",
       bodyJson: { redirect_url: body.data.redirect_url },
-      admin: true,
+      adminRole: role,
     });
 
     const url: string | undefined = json?.url;

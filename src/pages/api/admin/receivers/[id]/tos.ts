@@ -44,7 +44,7 @@ export const POST: APIRoute = async (ctx) => {
       path: `admin/receivers/${encodeURIComponent(id)}/tos`,
       method: "POST",
       bodyJson: { channel: "email", redirect_url: body.data.redirect_url },
-      admin: true,
+      adminRole: role,
       extraHeaders: tosCooldownHeaders(role),
     });
 

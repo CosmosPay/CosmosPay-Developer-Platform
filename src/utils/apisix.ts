@@ -278,15 +278,23 @@ end
           'Authorization',
           'apikey',
           'X-API-KEY',
-          // Internal-only markers -- never trust a client-supplied copy. The dev
-          // platform sets these server-to-server. X-Cosmos-Admin no longer gates anything --
-          // the Payments service replaced it with an Authorization Bearer credential -- but it
-          // stays in this list because a stripped dead header costs nothing and a resurrected
-          // one would be a client-settable marker again.
-          // X-Cosmos-Tos-Cooldown-Ms shortens the KYC email resend limit by dashboard
-          // role, so a client must never be able to set it either.
+          /* Internal-only markers -- never trust a client-supplied copy. The dev platform
+             sets these server-to-server, on calls that go straight to the Payments service
+             rather than through here.
+
+             X-Cosmos-Internal is the load-bearing one now: the Payments service has no
+             admin credential any more, so that marker (on top of the gateway secret it
+             also checks) is what separates a call from this console -- which may read and
+             act across every tenant -- from an API key, which may not. Dropping it from
+             this list would make /v1/admin reachable by any key holder who sets a header.
+             X-Cosmos-Admin gates nothing and is kept because a stripped dead header costs
+             nothing and a resurrected one would be client-settable again.
+             X-Cosmos-Admin-Role labels the Payments audit trail with the console account's
+             platform role, and X-Cosmos-Tos-Cooldown-Ms shortens the KYC email resend limit
+             by that role -- neither may come from a client. */
           'X-Cosmos-Internal',
           'X-Cosmos-Admin',
+          'X-Cosmos-Admin-Role',
           'X-Cosmos-Tos-Cooldown-Ms',
           /* The consumer identity, scrubbed HERE ONLY ON THE KEYLESS ROUTE.
 
