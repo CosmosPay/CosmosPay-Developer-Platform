@@ -12011,7 +12011,7 @@
     },
     "/v1/pollar/oauth/authorize": {
       "post": {
-        "description": "Mints a Pollar client session and returns a ready-to-open authorization URL. Open it in a browser; the bridge receives the user back and produces a single-use code for this handshake.",
+        "description": "Mints a Pollar client session and returns a ready-to-open authorization URL. Open it in a browser; the bridge receives the user back and produces a single-use code for this handshake. Only the account that owns the key can complete it: the login is redeemed only when the email it reports is the key's account email.",
         "operationId": "PollarOauthController_authorize_v1",
         "parameters": [],
         "requestBody": {
@@ -12056,7 +12056,7 @@
             }
           },
           "403": {
-            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "description": "`pollar_identity_required`: the gateway forwarded no account email for this key, so no login can be tied to it. Every tenant shares one Pollar application, so a session only goes back to the account that owns the key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12508,7 +12508,7 @@
     },
     "/v1/pollar/oauth/token": {
       "post": {
-        "description": "Trades the single-use code for Pollar's end-user tokens and the wallet it resolved. May take a moment on a first login: Pollar creates the Stellar account, funds its reserve and adds the trustlines first. A 409 means it is still working — retry the same code.",
+        "description": "Trades the single-use code for Pollar's end-user tokens and the wallet it resolved. May take a moment on a first login: Pollar creates the Stellar account, funds its reserve and adds the trustlines first. A 409 means it is still working — retry the same code. The session is only returned when the login's email is the key's account email.",
         "operationId": "PollarOauthController_exchange_v1",
         "parameters": [],
         "requestBody": {
@@ -12553,7 +12553,7 @@
             }
           },
           "403": {
-            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "description": "`pollar_identity_required` when the key has no account email, or `pollar_identity_mismatch` when the email the login reports is not the key's account email. On a mismatch the session is revoked at Pollar, the handshake becomes `failed`, and no token is returned.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13389,7 +13389,7 @@
     },
     "/v1/pollar/users": {
       "post": {
-        "description": "The account then exists before the user ever sees a consent screen. Pollar does not publish the content shape of this route, so the response is a narrow projection of it rather than the provider payload.",
+        "description": "Elevated (admin) keys only. The account then exists before the user ever sees a consent screen. Pollar does not publish the content shape of this route, so the response is a narrow projection of it rather than the provider payload.",
         "operationId": "PollarWalletsController_registerUser_v1",
         "parameters": [],
         "requestBody": {
@@ -13434,7 +13434,7 @@
             }
           },
           "403": {
-            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "description": "`elevated_key_required`: only an elevated (admin) key may register Pollar users. The Pollar user directory is shared by every tenant, and a user registered here is the same one a later social login resolves by email.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13512,7 +13512,7 @@
     },
     "/v1/pollar/users/with-wallet": {
       "post": {
-        "description": "Same body as POST /v1/pollar/users, but the Stellar wallet is created in the same call instead of waiting for the first login to do it.",
+        "description": "Elevated (admin) keys only. Same body as POST /v1/pollar/users, but the Stellar wallet is created in the same call instead of waiting for the first login to do it.",
         "operationId": "PollarWalletsController_registerUserWithWallet_v1",
         "parameters": [],
         "requestBody": {
@@ -13557,7 +13557,7 @@
             }
           },
           "403": {
-            "description": "The API key lacks the required scope, or the request did not arrive through the gateway.",
+            "description": "`elevated_key_required`: only an elevated (admin) key may register Pollar users. The Pollar user directory is shared by every tenant, and a user registered here is the same one a later social login resolves by email.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20358,6 +20358,7 @@
               "no_authenticated_consumer",
               "gateway_required",
               "admin_console_only",
+              "elevated_key_required",
               "not_found",
               "validation_failed",
               "payload_too_large",
@@ -20385,6 +20386,8 @@
               "alias_signature_invalid",
               "alias_recovery_invalid",
               "alias_address_conflict",
+              "pollar_identity_required",
+              "pollar_identity_mismatch",
               "misconfigured",
               "internal_error"
             ],

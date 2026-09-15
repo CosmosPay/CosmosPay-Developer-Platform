@@ -28,17 +28,33 @@
    `state`, and it is the verifier — which never leaves the device — that decides who may
    redeem it. Without that, these public routes would be a code-collection service.
 
-   ## Trusting the email
+   ## Trusting the email — and why it is not enough for an existing account
 
-   An account is created (or linked) for the email the provider reports. That email is
-   verified by Google or GitHub, which is the same fact the existing link flow proves with
-   a six-digit code to the same inbox — so linking on it is not a weaker claim than the
-   flow already shipped. What it is NOT is proof of anything about the Stellar address:
-   that key lives in Pollar's KMS, and nobody here or in the wallet can sign with it.
+   The provider's email proves who CONSENTED, not who opened the login. The authorization
+   URL works in anyone's browser, so a stranger could start a login here, send the link to
+   someone, and collect what their consent produces: that person's Pollar session and, when
+   the email already had a CosmosPay account, that account's keys.
+
+   So the two cases differ. An email that already has an account gets NOTHING at claim
+   time: the session is sealed into a `social-link` registration (sealed-box.ts), a
+   six-digit code goes to that account's inbox, and `verifySocialLogin` hands over the
+   session and the keys only for that code. Whoever consented reads that inbox; a stranger
+   who sent them the link does not.
+
+   A brand-new email still gets its account at once, and the case that leaves open is
+   stated rather than hidden: someone phished before they ever used CosmosPay hands the
+   stranger a session for a wallet that holds nothing yet, but that they may fund later.
+
    A provider that returns no email gets a wallet and no account: the session still works
-   (Pollar signs for it), the gateway features stay off, and nothing is invented. */
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+   (Pollar signs for it), the gateway features stay off, and nothing is invented. What the
+   email is never proof of is the Stellar address: that key lives in Pollar's KMS, and
+   nobody here or in the wallet can sign with it. */
+import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
+import { BETTER_AUTH_SECRET } from "astro:env/server";
 import { prisma } from "@/lib/prisma";
+import { isMailConfigured, sendMail } from "@/lib/mailer";
+import { renderWalletLinkCodeEmail } from "@/lib/emails";
+import { openJson, sealJson } from "@/lib/sealed-box";
 import { createOrg, ensureDefaultOrg, listForUser } from "@/lib/organizations";
 import { createConsumer } from "@/utils/apisix";
 import { provisionAuthentikIdentity } from "@/lib/authentik";
@@ -73,6 +89,16 @@ const SOCIAL_AUTHORIZE_GLOBAL_LIMIT = { limit: 300, windowMs: WINDOW_MS };
 const SOCIAL_POLL_GLOBAL_LIMIT = { limit: 20_000, windowMs: WINDOW_MS };
 const SOCIAL_CLAIM_GLOBAL_LIMIT = { limit: 600, windowMs: WINDOW_MS };
 
+/* The emailed proof an existing account's login waits on. Same code shape, lifetime and
+   attempt cap as the wallet link flow, so a person meets one rule for "enter the code we
+   emailed you" whichever door they came in by. */
+const SOCIAL_PROOF_TTL_MS = 15 * 60 * 1000;
+const SOCIAL_PROOF_MAX_ATTEMPTS = 5;
+const SOCIAL_VERIFY_RATE_LIMIT = { limit: 30, windowMs: WINDOW_MS };
+const SOCIAL_VERIFY_GLOBAL_LIMIT = { limit: 600, windowMs: WINDOW_MS };
+/* Part of the sealing key's derivation, so a box sealed here opens nowhere else. */
+const HELD_LOGIN_PURPOSE = "social-login-held-session";
+
 export type SocialAuthorizeResult =
   | { status: "opened"; state: string; authorizationUrl: string; provider: string; expiresAt?: string }
   | { status: "rate_limited" }
@@ -95,9 +121,32 @@ export type SocialClaimResult =
       activated: boolean;
       activationAmount: string | null;
     }
+  | {
+      /* The email already has an account: nothing is handed over until the code sent to it
+         is entered. `claimToken` is what the wallet presents with that code. */
+      status: "verify_email";
+      claimToken: string;
+      expiresInSeconds: number;
+      activated: boolean;
+      activationAmount: string | null;
+    }
   | { status: "no_wallet" }
   | { status: "rate_limited" }
   | { status: "unavailable"; message: string };
+
+export type SocialVerifyResult =
+  | Extract<SocialClaimResult, { status: "ready" }>
+  | { status: "invalid"; attemptsLeft: number }
+  | { status: "expired" }
+  | { status: "locked" }
+  | { status: "rate_limited" };
+
+/** What a held login keeps, sealed, while the emailed code is outstanding. */
+interface HeldLogin {
+  session: PollarSession;
+  activated: boolean;
+  activationAmount: string | null;
+}
 
 /** Open a handshake and return the URL to send the user to. */
 export async function startSocialLogin(input: {
@@ -150,7 +199,8 @@ export async function pollSocialLogin(input: {
 }
 
 /**
- * Redeem the code, then give the person an account to go with the wallet.
+ * Redeem the code, then give the person an account to go with the wallet — at once for a
+ * new email, and only after the emailed code for one that already has an account.
  *
  * The order is deliberate. Redemption first, because everything after it depends on who
  * the provider says this is; activation next, because a deferred Pollar wallet is an
@@ -208,6 +258,32 @@ export async function completeSocialLogin(input: {
     };
   }
 
+  // An email that already has an account is where a phished login does its damage, so it
+  // gets nothing until that account's inbox answers. A lookup that fails is treated the
+  // same way rather than as "no account": the safe failure is a login to retry, not a
+  // session handed over unproven.
+  let existing: { id: string; name: string | null } | null;
+  try {
+    existing = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true, name: true },
+    });
+  } catch {
+    await revokeQuietly(input.env, session, input.clientIp);
+    return { status: "unavailable", message: "Could not complete the social login" };
+  }
+  if (existing) {
+    return holdForEmailProof({
+      env: input.env,
+      email,
+      userId: existing.id,
+      name: existing.name || displayName(session, input.name, email),
+      stellarAddress: address,
+      held: { session, activated, activationAmount },
+      clientIp: input.clientIp,
+    });
+  }
+
   const provisioned = await provisionSocialAccount({
     email,
     name: displayName(session, input.name, email),
@@ -223,6 +299,146 @@ export async function completeSocialLogin(input: {
     activated,
     activationAmount,
   };
+}
+
+/**
+ * Finish a login held for an emailed code: the code proves the account's inbox, and only
+ * then do the session and the account's keys leave this platform.
+ *
+ * The row is claimed before anything is opened or minted, and the claim is a compare-and-
+ * swap on `pending`, so two requests racing the same correct code cannot both receive the
+ * session. Every way out — claimed, locked, expired — clears the sealed session, because a
+ * box nobody will open is still a credential sitting in a table.
+ */
+export async function verifySocialLogin(input: {
+  claimToken: string;
+  code: string;
+  clientIp: string;
+}): Promise<SocialVerifyResult> {
+  if (!withinBudget("verify", input.clientIp, SOCIAL_VERIFY_RATE_LIMIT, SOCIAL_VERIFY_GLOBAL_LIMIT)) return { status: "rate_limited" };
+
+  const reg = await prisma.walletRegistration
+    .findFirst({ where: { claimHash: sha256(input.claimToken), kind: "social-link" } })
+    .catch(() => null);
+  if (!reg || reg.status !== "pending" || !reg.userId || !reg.sealedPayload) return { status: "expired" };
+  if (reg.expiresAt.getTime() < Date.now()) {
+    await discardHeldLogin(reg.id, "expired");
+    return { status: "expired" };
+  }
+
+  if (!reg.codeHash || sha256(input.code) !== reg.codeHash) {
+    const attempts = reg.attempts + 1;
+    if (attempts >= SOCIAL_PROOF_MAX_ATTEMPTS) {
+      await discardHeldLogin(reg.id, "locked", attempts);
+      return { status: "locked" };
+    }
+    await prisma.walletRegistration.update({ where: { id: reg.id }, data: { attempts } }).catch(() => null);
+    return { status: "invalid", attemptsLeft: SOCIAL_PROOF_MAX_ATTEMPTS - attempts };
+  }
+
+  const claimed = await prisma.walletRegistration
+    .updateMany({ where: { id: reg.id, status: "pending" }, data: { status: "claimed", sealedPayload: null } })
+    .catch(() => ({ count: 0 }));
+  if (claimed.count === 0) return { status: "expired" };
+
+  const held = openJson<HeldLogin>(reg.sealedPayload, BETTER_AUTH_SECRET, HELD_LOGIN_PURPOSE);
+  if (!held) return { status: "expired" };
+
+  const provisioned = await provisionSocialAccount({
+    email: reg.email,
+    name: reg.name || reg.email.split("@")[0] || "Cosmos user",
+    stellarAddress: reg.stellarAddress,
+  }).catch(() => null);
+
+  return {
+    status: "ready",
+    session: held.session,
+    account: provisioned?.account ?? "none",
+    organizationId: provisioned?.organizationId ?? null,
+    keys: provisioned?.keys ?? null,
+    activated: held.activated,
+    activationAmount: held.activationAmount,
+  };
+}
+
+/* Seal the session, email the code, and tell the wallet to ask for it. */
+async function holdForEmailProof(input: {
+  env: CosmosEnv;
+  email: string;
+  userId: string;
+  name: string;
+  stellarAddress: string;
+  held: HeldLogin;
+  clientIp: string;
+}): Promise<SocialClaimResult> {
+  const unsent = "This email already has a CosmosPay account, and the code that proves it could not be sent.";
+
+  // No mail means no proof, and no proof means no hand-over: the login is refused rather
+  // than linked on the provider's word.
+  if (!isMailConfigured()) {
+    await revokeQuietly(input.env, input.held.session, input.clientIp);
+    return { status: "unavailable", message: unsent };
+  }
+
+  const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+  const claimToken = randomBytes(32).toString("hex");
+  let rowId: string;
+  try {
+    const row = await prisma.walletRegistration.create({
+      data: {
+        email: input.email,
+        name: input.name,
+        stellarAddress: input.stellarAddress,
+        // Required and unique, and unused by this flow: the proof is the code.
+        verifyToken: randomBytes(32).toString("hex"),
+        claimHash: sha256(claimToken),
+        codeHash: sha256(code),
+        kind: "social-link",
+        status: "pending",
+        userId: input.userId,
+        environment: input.env,
+        sealedPayload: sealJson(input.held, BETTER_AUTH_SECRET, HELD_LOGIN_PURPOSE),
+        expiresAt: new Date(Date.now() + SOCIAL_PROOF_TTL_MS),
+      },
+      select: { id: true },
+    });
+    rowId = row.id;
+  } catch {
+    await revokeQuietly(input.env, input.held.session, input.clientIp);
+    return { status: "unavailable", message: "Could not complete the social login" };
+  }
+
+  try {
+    const msg = renderWalletLinkCodeEmail({ name: input.name, code, minutes: Math.floor(SOCIAL_PROOF_TTL_MS / 60000) });
+    await sendMail({ to: input.email, subject: msg.subject, html: msg.html, text: msg.text });
+  } catch {
+    await discardHeldLogin(rowId, "expired");
+    await revokeQuietly(input.env, input.held.session, input.clientIp);
+    return { status: "unavailable", message: unsent };
+  }
+
+  return {
+    status: "verify_email",
+    claimToken,
+    expiresInSeconds: Math.floor(SOCIAL_PROOF_TTL_MS / 1000),
+    activated: input.held.activated,
+    activationAmount: input.held.activationAmount,
+  };
+}
+
+/* Close a held login for good, and drop the sealed session with it. */
+async function discardHeldLogin(id: string, status: "expired" | "locked", attempts?: number): Promise<void> {
+  await prisma.walletRegistration
+    .updateMany({
+      where: { id, status: "pending" },
+      data: { status, sealedPayload: null, ...(attempts !== undefined ? { attempts } : {}) },
+    })
+    .catch(() => null);
+}
+
+/* Revoke a session this platform will not hand on. Best-effort: it never left this process. */
+async function revokeQuietly(env: CosmosEnv, session: PollarSession, clientIp: string): Promise<void> {
+  await cosmosPollar.logout(env, session.access_token, clientIp).catch(() => null);
 }
 
 /* Create the account, or attach to the one this email already has, and mint the wallet's

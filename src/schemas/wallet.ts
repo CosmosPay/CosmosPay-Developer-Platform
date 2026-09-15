@@ -79,12 +79,22 @@ export const walletSocialClaimBodySchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
 });
 
+/* Social login for an email that already has an account: the claim answered `verify_email`
+   with a claim token, and the code went to that account's inbox. The provider's email
+   proves who consented, not who opened the login, so an existing account is only handed
+   over for this code. */
+export const walletSocialVerifyBodySchema = z.object({
+  claimToken: z.string().trim().min(16).max(256),
+  code: z.string().trim().regex(/^\d{6}$/, "The access code is 6 digits."),
+});
+
 export const walletSocialStateParamSchema = z.object({
   state: z.string().trim().min(16).max(256).regex(/^[A-Za-z0-9_-]+$/, "Invalid handshake state."),
 });
 
 export type WalletSocialAuthorizeBody = z.infer<typeof walletSocialAuthorizeBodySchema>;
 export type WalletSocialClaimBody = z.infer<typeof walletSocialClaimBodySchema>;
+export type WalletSocialVerifyBody = z.infer<typeof walletSocialVerifyBodySchema>;
 
 export type WalletRegisterBody = z.infer<typeof walletRegisterBodySchema>;
 export type WalletClaimBody = z.infer<typeof walletClaimBodySchema>;

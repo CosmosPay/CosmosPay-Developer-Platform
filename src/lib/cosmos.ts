@@ -763,6 +763,16 @@ export const cosmosPollar = {
       body: { public_key: publicKey },
       clientIp,
     }),
+
+  /* Revoke a session this platform will not hand on — a login for an existing account whose
+     emailed proof could not be sent or recorded. The tokens never left this process;
+     revoking is so they stop working at Pollar too. */
+  logout: (env: CosmosEnv, accessToken: string, clientIp?: string) =>
+    cosmosFetch<{ revoked: number }>(SOCIAL_BOOTSTRAP_USER, env, "/v1/pollar/oauth/logout", {
+      method: "POST",
+      body: { access_token: accessToken, everywhere: false },
+      clientIp,
+    }),
 };
 
 /* ------------------------------ asset registry ----------------------------- */
