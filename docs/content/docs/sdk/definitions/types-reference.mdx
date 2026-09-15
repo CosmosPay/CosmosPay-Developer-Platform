@@ -74,7 +74,7 @@ type      UpdateCustomerOptions = Partial<CreateCustomerOptions>;
 - `WebhookEvent<T = PaymentIntentData>` — `{ id, type, createdAt, data }`.
 - `ProductData` — `id, name, description, amount, asset, kind, active, reference,
   createdAt, updatedAt`.
-- `CustomerData` — `id, consumerId, name, alias, note, email, account, reference,
+- `CustomerData` — `id, name, alias, note, email, account, reference,
   createdAt, updatedAt` (+ list-only `payments, succeeded, total`).
 - `AnalyticsBalancesData` — `{ data: { asset, amount, pending, count }[], total }`.
 - `ValidationOutcomeData` — `{ valid, status, reason?, paymentIntent? }`.

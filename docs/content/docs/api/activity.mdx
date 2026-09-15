@@ -1,10 +1,10 @@
 ---
 title: Activity
-description: >-
-  Report what your own client did — errors, timings, transactions — and read it
-  back. Unlike the API logs, which only ever see requests that reached this
-  service, these are the events that happen entirely on a device: a crash, a
-  cancelled signature, a screen that failed before any request left it.
+description: 'Report what your own client did — errors, timings, transactions —
+  and read it back. Unlike the API logs, which only ever see requests that
+  reached this service, these are the events that happen entirely on a device: a
+  crash, a cancelled signature, a screen that failed before any request left
+  it.'
 full: true
 _openapi:
   preload:
@@ -28,17 +28,15 @@ _openapi:
       - content: Counts, top event types, top errors and a daily series
         id: counts-top-event-types-top-errors-and-a-daily-series
     contents:
-      - content: >-
-          `level` is a floor, not an exact match: `level=warn` returns warnings
-          and errors.
+      - content: '`level` is a floor, not an exact match: `level=warn` returns warnings
+          and errors.'
         heading: recent-client-events-for-this-consumer-newest-first
-      - content: >-
-          Accepted, not created: the batch is written under the consumer the
+      - content: 'Accepted, not created: the batch is written under the consumer the
           gateway authenticated, and nothing in the body can change that
           attribution. Over-long messages are truncated and an over-sized
           `props` is replaced with a marker rather than failing the call —
           losing a whole batch to one malformed field is worst exactly when the
-          client is in a state it did not anticipate.
+          client is in a state it did not anticipate.'
         heading: report-a-batch-of-client-events-errors-metrics-transactions
 ---
 
