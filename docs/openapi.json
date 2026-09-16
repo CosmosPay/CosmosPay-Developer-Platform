@@ -6728,7 +6728,7 @@
             }
           },
           "409": {
-            "description": "Invalid KYC status transition (e.g. receiver is not in 'pending_review')"
+            "description": "`kyc_state_invalid` — the receiver is not in 'pending_review', or the KYC data changed after you read it (`expected_version` names a version that is no longer current). Re-read the receiver, review it again, and approve that version."
           },
           "429": {
             "description": "Rate limited (`rate_limited`). Only routes that declare a budget can return this — the ones whose cost an error cannot refund, such as creating or funding a Stellar account or broadcasting a transaction. Honour `Retry-After`.",
@@ -17834,6 +17834,17 @@
             "example": false,
             "description": "Owner/admin kill-switch: when true the account is blocked from onramp/offramp."
           },
+          "dossierVersion": {
+            "type": "number",
+            "example": 3,
+            "description": "Version of the submitted KYC data. Bumped on every edit while the receiver is still local. Send it back as `expected_version` when approving, so the approval is pinned to the dossier that was reviewed."
+          },
+          "reviewedVersion": {
+            "type": "number",
+            "nullable": true,
+            "example": 3,
+            "description": "The `dossierVersion` an elevated reviewer approved, or null if the receiver has not been approved. Enabling is refused unless it equals `dossierVersion`."
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -17850,6 +17861,7 @@
           "blindpayId",
           "type",
           "disabled",
+          "dossierVersion",
           "createdAt",
           "updatedAt"
         ]
@@ -17891,6 +17903,11 @@
             "type": "string",
             "example": "https://dev.cosmospay.lat/kyc/return/org/dev/clz9xreceiver01",
             "description": "Where BlindPay redirects the customer after they accept the terms. Must be https and on the consumer allow-list."
+          },
+          "expected_version": {
+            "type": "number",
+            "example": 3,
+            "description": "The receiver's `dossierVersion` as you read it. A 409 `kyc_state_invalid` if the KYC data changed since — re-read, review again, approve that version. Omitted approves whatever is stored now."
           }
         },
         "required": [
