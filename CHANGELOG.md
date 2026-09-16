@@ -2,6 +2,13 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.3.0] - 2026-09-16
+
+### Features
+- Implement social login email verification process (e04de5a)
+- Add expected_version to receiver approval process and update related schemas (cf202fb)
+- Add dossierVersion and reviewedVersion properties to Receiver documentation (5aeb5a0)
+
 ## [0.2.2] - 2026-09-13
 
 ### Miscellaneous
