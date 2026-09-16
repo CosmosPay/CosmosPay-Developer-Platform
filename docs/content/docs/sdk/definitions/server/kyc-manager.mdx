@@ -73,7 +73,7 @@ fetchReceiverRaw(id: string): Promise<ReceiverData>
 
 ### updateReceiver()
 
-Update a receiver — the same fields as creation, all optional.
+Update a receiver — the same fields as creation, all optional. Once the receiver exists at the provider, identity fields need an elevated key; see &#123;@link UpdateReceiverOptions&#125;.
 
 ```ts
 updateReceiver(id: string, options: UpdateReceiverOptions): Promise<Receiver>

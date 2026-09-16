@@ -8,6 +8,7 @@ import {
 } from "astro:env/server";
 import { randomBytes, randomUUID } from "node:crypto";
 import { orgSwapContext } from "@/lib/organizations";
+import { prisma } from "@/lib/prisma";
 
 export const keyPrefix = 'cosmos_';
 
@@ -186,6 +187,7 @@ const CONSUMER_HEADERS = [
   'X-Consumer-Org',
   'X-Consumer-Plan',
   'X-Plan-Swap-Fee-Bps',
+  'X-Consumer-Email',
 ];
 
 /* The plugin stack both routes share. `keyAuth: false` drops key-auth AND the header
@@ -486,7 +488,25 @@ type ForwardEntry = {
   o?: string;
   pl?: string;
   f?: number;
+  // The verified email of the account that owns the key. The Payments service only returns
+  // a Pollar login's session to the key whose account completed it — every tenant shares
+  // one Pollar application, so without it a key could redeem a stranger's wallet. Empty
+  // (forwarded as "") when the account has no verified email, which fails that check closed.
+  em?: string;
 };
+
+/* The account's verified email as the forwarder bakes it, or "" when there is none — the
+   synthetic public and bootstrap consumers have no user row — or when it is not a plain
+   lowercase address. The map is embedded in a Lua long string, so only a value that cannot
+   break out of it is admitted; anything else forwards as "no email" rather than as text
+   nobody checked. */
+async function accountEmail(userId: string): Promise<string> {
+  const user = await prisma.user
+    .findUnique({ where: { id: userId }, select: { email: true, emailVerified: true } })
+    .catch(() => null);
+  const email = user?.emailVerified ? user.email.trim().toLowerCase() : '';
+  return /^[a-z0-9._%+-]+@[a-z0-9.-]+$/.test(email) ? email : '';
+}
 
 /* A CONSUMER-level APISIX plugin that forwards each API key's authorization context to
    the upstream, so the community server's PermissionsGuard can enforce `resource:action`
@@ -521,6 +541,9 @@ return function(conf, ctx)
     ngx.req.set_header("X-Consumer-Org", entry.o or "")
     ngx.req.set_header("X-Consumer-Plan", entry.pl or "")
     ngx.req.set_header("X-Plan-Swap-Fee-Bps", (entry.f ~= nil) and tostring(entry.f) or "")
+    -- Always set, like the org headers: the Payments service binds a Pollar login to it, so
+    -- a client-supplied copy must never survive.
+    ngx.req.set_header("X-Consumer-Email", entry.em or "")
   end
 end
 `,
@@ -594,6 +617,9 @@ export async function syncConsumerForwarder(userId: string) {
     return orgCtxCache.get(orgId)!;
   };
 
+  // One account, one email: the same value goes into every credential's entry.
+  const email = await accountEmail(username.slice(keyPrefix.length));
+
   const map: Record<string, ForwardEntry> = {};
   for (const credential of sorted) {
     const id = credential?.value?.id;
@@ -618,6 +644,7 @@ export async function syncConsumerForwarder(userId: string) {
       o: org,
       pl: ctx?.plan ?? '',
       f: ctx ? ctx.swapFeeBps : undefined,
+      em: email,
     };
   }
 

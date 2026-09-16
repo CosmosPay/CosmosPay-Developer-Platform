@@ -82,6 +82,22 @@ True when the receiver is cut off from both ramps.
 disabled: boolean
 ```
 
+### dossierVersion
+
+How many times the submitted KYC data has been written.
+
+```ts
+dossierVersion: number
+```
+
+### reviewedVersion
+
+The version a reviewer approved, or null while unapproved.
+
+```ts
+reviewedVersion: number | null
+```
+
 ### createdAt
 
 ```ts
@@ -146,7 +162,7 @@ delete(): Promise<void>
 
 ### approve()
 
-Approve it out of review (admin-only).
+Approve it out of review (admin-only). Pinned to the dossier THIS instance holds: `expected_version` defaults to &#123;@link Receiver.dossierVersion&#125;, so approving a receiver that was edited since you read it is a `409 kyc_state_invalid` rather than a silent approval of data you never saw. Call &#123;@link Receiver.fetch&#125; and review again, or pass `expected_version` yourself — including `undefined`, which approves whatever is stored now.
 
 ```ts
 approve(options?: ApproveReceiverOptions): Promise<ReceiverData>

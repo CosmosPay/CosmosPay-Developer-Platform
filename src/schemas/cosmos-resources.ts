@@ -52,6 +52,22 @@ export const createCustomerBodySchema = z.object({
 
 export const updateCustomerBodySchema = createCustomerBodySchema.partial();
 
+/* Body for the two receiver-approval proxies (org-scoped Fiat and platform Admin).
+
+   `expected_version` is the receiver's `dossierVersion` as the reviewer read it. A review
+   is a person reading the KYC dossier and then approving it, and the tenant can edit that
+   dossier in between — the status stays `pending_review` through an edit, so without this
+   the approval lands on whatever is stored when the request arrives. The Payments API
+   answers 409 `kyc_state_invalid` when the version moved on. It is optional upstream for
+   compatibility, and optional here for the same reason: a receiver read from a Payments
+   deployment that predates the field carries no version to send. */
+export const approveReceiverBodySchema = z.object({
+  redirect_url: z.string().trim().url().max(2048),
+  expected_version: z.number().int().min(1).optional(),
+});
+
+export type ApproveReceiverBody = z.infer<typeof approveReceiverBodySchema>;
+
 export type CreateWebhookBody = z.infer<typeof createWebhookBodySchema>;
 export type UpdateWebhookBody = z.infer<typeof updateWebhookBodySchema>;
 export type CreateProductBody = z.infer<typeof createProductBodySchema>;

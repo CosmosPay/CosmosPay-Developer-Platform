@@ -5,7 +5,6 @@
    service link, which we email to the customer here (the Payments service has no mailer).
    The customer then accepts the terms (→ /kyc/return → enable), and BlindPay does the
    actual KYC approval. More specific than the generic /api/kyc/[...path] proxy. */
-import { z } from "zod";
 import type { APIRoute } from "astro";
 import { auth } from "@/lib/auth";
 import { ApiStatus, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
@@ -13,10 +12,9 @@ import { getMembership } from "@/lib/organizations";
 import { isManagerRole } from "@/lib/org-permissions";
 import { proxyCosmosRequest } from "@/lib/cosmos";
 import { cosmosErrorResponse, envFromQuery } from "@/lib/cosmos-proxy";
+import { approveReceiverBodySchema } from "@/schemas/cosmos-resources";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderTosEmail } from "@/lib/emails";
-
-const bodySchema = z.object({ redirect_url: z.string().trim().url().max(2048) });
 
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
@@ -34,7 +32,7 @@ export const POST: APIRoute = async (ctx) => {
     return jsonForbidden("Only an owner or admin can approve KYC verifications.");
   }
 
-  const body = await parseJson(ctx.request, bodySchema).catch(() => null);
+  const body = await parseJson(ctx.request, approveReceiverBodySchema).catch(() => null);
   if (!body || !body.ok) {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: ApiStatus.BAD_REQUEST });
   }
@@ -46,7 +44,12 @@ export const POST: APIRoute = async (ctx) => {
       env: envFromQuery(ctx.url),
       path: `kyc/receivers/${encodeURIComponent(id)}/approve`,
       method: "POST",
-      bodyJson: { redirect_url: body.data.redirect_url },
+      bodyJson: {
+        redirect_url: body.data.redirect_url,
+        // Omitted when the caller sent none, so the upstream keeps its own default
+        // (approve whatever is stored) rather than being handed an explicit null.
+        ...(body.data.expected_version === undefined ? {} : { expected_version: body.data.expected_version }),
+      },
     });
 
     const url: string | undefined = json?.url;

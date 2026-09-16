@@ -491,7 +491,9 @@ function ApproveReceiver({ r, receiver, orgId, env, onApproved }) {
   const approve = () => {
     if (busy) return;
     setBusy(true);
-    kycApi.post(`receivers/${receiver.id}/approve`, env, orgId, { redirect_url: redirectUrl })
+    // The version of the dossier shown in this modal: approving is a statement about
+    // what the reviewer just read, and an edit since then must fail rather than pass.
+    kycApi.post(`receivers/${receiver.id}/approve`, env, orgId, { redirect_url: redirectUrl, expected_version: receiver.dossierVersion })
       .then((rec) => { showToast(fmt(r.approvedSent, { email: (rec && rec.email) || receiver.email || "" })); onApproved(rec || { kycStatus: "pending_user" }); })
       .catch((err) => showToast((err && err.message) || r.approveError, "error"))
       .finally(() => setBusy(false));

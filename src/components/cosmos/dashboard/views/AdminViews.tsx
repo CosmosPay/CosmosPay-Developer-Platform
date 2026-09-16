@@ -151,7 +151,7 @@ function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved }) {
     e.stopPropagation();
     if (busy) return;
     setBusy("approve");
-    adminApi.approveReceiver(row.id, redirectUrl)
+    adminApi.approveReceiver(row.id, redirectUrl, row.dossierVersion)
       .then((res) => {
         const email = res && res.email;
         showToast((res && res.message) || (res && res.emailed && email ? fmt(af.termsSent, { email }) : af.approved));

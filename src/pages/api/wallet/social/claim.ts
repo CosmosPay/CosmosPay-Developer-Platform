@@ -2,9 +2,14 @@
    Pollar session PLUS the CosmosPay account and API keys that go with it.
 
    This is the step that closes the loop the wallet could not close on its own: the
-   provider has just proven an email address, so the account is created (or attached to
-   the one that email already has) without a signature or a confirmation link, and its
-   keys are minted with the `pollar:*` scopes the wallet needs from here on.
+   provider has just proven an email address, so a NEW account is created without a
+   signature or a confirmation link, and its keys are minted with the `pollar:*` scopes the
+   wallet needs from here on.
+
+   An email that already has an account answers `verify_email` instead, with nothing else:
+   the provider proved who consented, not who opened this login, and an existing account is
+   what a phished login would take over. The code goes to that account's inbox and
+   POST /api/wallet/social/verify hands over the session and the keys for it.
 
    The credential for this call is the PKCE verifier. It never left the wallet, the code
    is single-use, and the Payments service checks the pair — so possession of a `state`
@@ -12,7 +17,7 @@
 
    The keys are returned in this response and nowhere else, exactly as POST /api/wallet/claim
    does for the email flow. */
-import { ApiStatus, jsonCreated, jsonError, parseJson } from "@/lib/http";
+import { ApiStatus, jsonCreated, jsonError, jsonSuccess, parseJson } from "@/lib/http";
 import { clientIp } from "@/lib/geo";
 import { envFromQuery } from "@/lib/cosmos-proxy";
 import { completeSocialLogin } from "@/lib/social-onboarding";
@@ -55,6 +60,17 @@ export const POST: APIRoute = async (ctx) => {
             : result.account === "linked"
               ? "Signed in and linked to your existing CosmosPay account."
               : "Signed in and your CosmosPay account is ready.",
+      });
+    case "verify_email":
+      return jsonSuccess({
+        data: {
+          status: "verify_email",
+          claimToken: result.claimToken,
+          expiresInSeconds: result.expiresInSeconds,
+          activated: result.activated,
+          activationAmount: result.activationAmount,
+        },
+        message: "This email already has a CosmosPay account. Enter the code we sent to it to finish signing in.",
       });
     case "no_wallet":
       return jsonError({ message: "The provider returned no wallet for this account.", code: 502, status: ApiStatus.BAD_REQUEST });

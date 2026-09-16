@@ -183,7 +183,10 @@ export const admin = {
   setReceiverAccess: (id, disabled) => request(`/api/admin/receivers/${encodeURIComponent(id)}/access`, { method: "PATCH", body: JSON.stringify({ disabled }) }),
   // Global approve (pending_review → pending_user, emails the customer the terms link)
   // and activation (submits the tos_id) for any consumer's fiat receiver.
-  approveReceiver: (id, redirect_url) => request(`/api/admin/receivers/${encodeURIComponent(id)}/approve`, { method: "POST", body: JSON.stringify({ redirect_url }) }),
+  // `expected_version` pins the approval to the dossier the reviewer had on screen —
+  // the Payments API 409s when it changed since. Undefined is dropped by JSON.stringify,
+  // which is the right fallback for a row read before that field existed.
+  approveReceiver: (id, redirect_url, expected_version) => request(`/api/admin/receivers/${encodeURIComponent(id)}/approve`, { method: "POST", body: JSON.stringify({ redirect_url, expected_version }) }),
   enableReceiver: (id, tos_id) => request(`/api/admin/receivers/${encodeURIComponent(id)}/enable`, { method: "POST", body: JSON.stringify({ tos_id }) }),
   // Resend the KYC verification (terms-of-service) email for any consumer's pending_user receiver.
   resendReceiverTos: (id, redirect_url) => request(`/api/admin/receivers/${encodeURIComponent(id)}/tos`, { method: "POST", body: JSON.stringify({ redirect_url }) }),

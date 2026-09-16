@@ -266,12 +266,18 @@ model WalletRegistration {
   // pending → confirmed (account created, key awaiting claim) → claimed (key delivered).
   status         String   @default("pending")
   // "register" = email-link account creation; "link" = access-code linking to an EXISTING
-  // account (the email already has a user). Drives which flow verify/claim runs.
+  // account (the email already has a user); "social-link" = a social login for an email
+  // that already has an account, held until the emailed code proves the inbox (see
+  // social-onboarding.ts). Drives which flow verify/claim runs.
   kind           String   @default("register")
   // SHA-256 of the one-time access code emailed for the "link" flow (null for register).
   codeHash       String?
   // Failed access-code attempts for the "link" flow; the row locks past a small cap.
   attempts       Int      @default(0)
+  // "social-link" only: the Pollar session that login earned, sealed (sealed-box.ts) while
+  // the emailed code is outstanding. Cleared the moment the row is claimed, locked or
+  // expired — a session is a bearer credential for a custodial wallet.
+  sealedPayload  String?
   // Populated once confirmed; the API key is re-read from APISIX on claim (not stored).
   userId         String?
   organizationId String?

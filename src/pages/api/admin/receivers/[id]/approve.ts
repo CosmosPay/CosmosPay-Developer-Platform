@@ -7,17 +7,15 @@
    pending_user in the Payments API (via the admin endpoint, no consumer scoping) and emails
    the customer BlindPay's hosted terms-of-service link (the Payments service has no mailer).
    More specific than the generic /api/admin/[...path] proxy, so it wins for this path. */
-import { z } from "zod";
 import type { APIRoute } from "astro";
 import { auth } from "@/lib/auth";
 import { ApiStatus, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageUsers, getRole } from "@/lib/profile";
 import { proxyCosmosRequest } from "@/lib/cosmos";
 import { cosmosErrorResponse, envFromQuery } from "@/lib/cosmos-proxy";
+import { approveReceiverBodySchema } from "@/schemas/cosmos-resources";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderTosEmail } from "@/lib/emails";
-
-const bodySchema = z.object({ redirect_url: z.string().trim().url().max(2048) });
 
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
@@ -30,7 +28,7 @@ export const POST: APIRoute = async (ctx) => {
   const role = await getRole(session.user.id).catch(() => "user" as const);
   if (!canManageUsers(role)) return jsonForbidden("Platform admin access required.");
 
-  const body = await parseJson(ctx.request, bodySchema).catch(() => null);
+  const body = await parseJson(ctx.request, approveReceiverBodySchema).catch(() => null);
   if (!body || !body.ok) {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: ApiStatus.BAD_REQUEST });
   }
@@ -42,7 +40,11 @@ export const POST: APIRoute = async (ctx) => {
       env: envFromQuery(ctx.url),
       path: `admin/receivers/${encodeURIComponent(id)}/approve`,
       method: "POST",
-      bodyJson: { redirect_url: body.data.redirect_url },
+      bodyJson: {
+        redirect_url: body.data.redirect_url,
+        // See the org-scoped twin: absent means "approve what is stored".
+        ...(body.data.expected_version === undefined ? {} : { expected_version: body.data.expected_version }),
+      },
       adminRole: role,
     });
 
