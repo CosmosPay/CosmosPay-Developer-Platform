@@ -2,6 +2,24 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.3.0] - 2026-09-16
+
+### Features
+- Implement social login email verification process (e04de5a)
+- Add expected_version to receiver approval process and update related schemas (cf202fb)
+- Add dossierVersion and reviewedVersion properties to Receiver documentation (5aeb5a0)
+
+## [0.2.2] - 2026-09-13
+
+### Miscellaneous
+- Bump the minor-and-patch group in /docs with 12 updates (6b197e3)
+- Bump @asteasolutions/zod-to-openapi from 8.5.0 to 9.1.0 (9ea9adc)
+
+### Refactor
+- Remove deprecated admin API secrets and update proxy handling for Payments API (6e08f2c)
+- Remove deprecated Payments API admin secrets from environment example (46044a0)
+- Migrate search client from Orama to ZBSearch and update related functions (cf72b25)
+
 ## [0.2.1] - 2026-09-10
 
 ### Bug Fixes
