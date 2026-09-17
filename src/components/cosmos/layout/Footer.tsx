@@ -1,6 +1,6 @@
 import { useT } from "@/lib/i18n/index";
 import { HOME, PRICING, DASH } from "@/components/cosmos/lib/constants";
-import { CosmosMark } from "@/components/cosmos/icons";
+import { CosmosLockup } from "@/components/cosmos/icons";
 
 /* Hrefs are kept here (aligned by index to the catalog link order); labels come
    from the active locale. Most links are placeholders (#); two point to real routes. */
@@ -19,7 +19,7 @@ export function Footer() {
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <a className="brand" href={HOME}><CosmosMark size={28} /> Cosmos&nbsp;Pay</a>
+            <a className="brand" href={HOME}><CosmosLockup height={32} /></a>
             <p>{t.footer.tagline}</p>
           </div>
           {FOOT_GROUPS.map((g) => {

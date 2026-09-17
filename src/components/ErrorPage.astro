@@ -18,11 +18,7 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
   <main id="main" class="errp">
     <div class="errp-inner">
       <a class="errp-brand" href="/">
-        <span class="cosmos-mark" aria-hidden="true">
-          <img class="cm-dark" src="/logo-black.png" alt="" />
-          <img class="cm-light" src="/logo-white.png" alt="" />
-        </span>
-        Cosmos&nbsp;Pay
+        <span class="cosmos-lockup" role="img" aria-label="Cosmos Pay"></span>
       </a>
       <div class="errp-code">{code}</div>
       <h1 class="errp-title">{title}</h1>
@@ -40,9 +36,9 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
       display: grid;
       place-items: center;
       padding: 40px 20px;
-      background: var(--surface, #fbfbfb);
-      color: var(--ink, #161616);
-      font-family: "Hanken Grotesk", system-ui, sans-serif;
+      background: var(--bg, #ffffff);
+      color: var(--ink, #000000);
+      font-family: var(--ff-sans, 'Open Sauce One', system-ui, sans-serif);
     }
     .errp-inner {
       text-align: center;
@@ -51,37 +47,31 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
     .errp-brand {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
       margin-bottom: 30px;
-      font-weight: 800;
-      font-size: 19px;
-      letter-spacing: -0.03em;
-      color: var(--ink, #161616);
+      color: var(--ink, #000000);
       text-decoration: none;
     }
-    .errp-brand .cosmos-mark {
-      width: 28px;
-      height: 28px;
+    .errp-brand .cosmos-lockup {
+      height: 32px;
     }
     .errp-code {
-      font-family: "Poppins", system-ui, sans-serif;
-      font-weight: 700;
+      font-weight: 300;
       font-size: clamp(72px, 18vw, 128px);
       line-height: 1;
       letter-spacing: -0.04em;
-      color: var(--violet, #6b47ff);
+      color: var(--accent, #000877);
     }
     .errp-title {
       margin: 10px 0;
       font-size: 26px;
       font-weight: 700;
-      color: var(--ink, #161616);
+      color: var(--ink, #000000);
     }
     .errp-msg {
       margin: 0 0 30px;
       font-size: 15px;
       line-height: 1.6;
-      color: var(--ink-2, #565656);
+      color: var(--ink-2, rgba(0,0,0,.66));
     }
     .errp-actions {
       display: flex;
@@ -93,25 +83,25 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
       display: inline-flex;
       align-items: center;
       padding: 11px 20px;
-      border-radius: 12px;
-      border: 1px solid var(--line, #e2e2e2);
+      border-radius: var(--radius-btn, 999px);
+      border: 1px solid var(--line-2, rgba(0,0,0,.2));
       font-weight: 600;
       font-size: 14px;
-      color: var(--ink, #161616);
+      color: var(--ink, #000000);
       text-decoration: none;
       transition: background 0.15s ease, opacity 0.15s ease;
     }
     .errp-btn:hover {
-      background: var(--surface-2, #f2f2f2);
+      background: var(--surface-2, rgba(0,0,0,.04));
     }
     .errp-btn.primary {
-      background: var(--btn-bg, #161616);
-      border-color: var(--btn-bg, #161616);
-      color: #fff;
+      background: var(--btn-bg, #000877);
+      border-color: var(--btn-bg, #000877);
+      color: var(--btn-fg, #fff);
     }
     .errp-btn.primary:hover {
-      background: var(--btn-bg, #161616);
-      opacity: 0.9;
+      background: var(--btn-bg-h, #05064F);
+      border-color: var(--btn-bg-h, #05064F);
     }
   </style>
 </CosmosLayout>

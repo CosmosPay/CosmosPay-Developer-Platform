@@ -58,7 +58,7 @@ export function Solutions({ user }) {
             return (
               <div className={`sol-tile reveal ${m.gw}${m.feat ? " feat" : ""}`} key={m.i} style={{ transitionDelay: `${(i % 3) * 0.07}s` }}>
                 <button className="expand-c" onClick={() => setOpen(m.i)} aria-label={item.t}><IcExpand /></button>
-                <div className="blob" style={{ width: 180, height: 180, background: "var(--violet)", left: -50, bottom: -56 }} />
+                <div className="blob" style={{ width: 180, height: 180, background: "var(--cosmos-blue)", left: -50, bottom: -56 }} />
                 {m.feat && <PayMock />}
                 <div className="sti">{SOL_ICONS[m.i]}</div>
                 <div className="st-body"><h3>{item.t}</h3><p>{item.d}</p></div>

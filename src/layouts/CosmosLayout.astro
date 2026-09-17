@@ -77,8 +77,8 @@ const jsonLd = {
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FBFBFB" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0A" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
 
     <!-- Open Graph -->
     <meta property="og:type" content={type} />
@@ -101,12 +101,9 @@ const jsonLd = {
       <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
     )}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Tipografia de marca (Open Sauce One) servida desde /public/fonts; el @font-face
+         vive en cosmos.css. Se precarga el peso Regular, que esta en todas las paginas. -->
+    <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
 
     <script is:inline>
       // Apply persisted theme before paint to avoid a flash.
@@ -135,10 +132,10 @@ const jsonLd = {
         top: 0;
         z-index: 1000;
         padding: 10px 16px;
-        background: #6b47ff;
-        color: #fff;
-        font: 600 14px/1 "Hanken Grotesk", system-ui, sans-serif;
-        border-radius: 0 0 8px 0;
+        background: var(--accent, #000877);
+        color: var(--accent-fg, #fff);
+        font: 600 14px/1 var(--ff-sans, 'Open Sauce One', system-ui, sans-serif);
+        border-radius: 0 0 12px 0;
       }
       .skip-link:focus {
         left: 0;

@@ -20,11 +20,7 @@ const envLabel = import.meta.env.DEV ? "development" : "enabled";
 >
   <header class="swagger-bar">
     <a class="brand" href="/">
-      <span class="cosmos-mark" aria-hidden="true">
-        <img class="cm-dark" src="/logo-black.png" alt="" />
-        <img class="cm-light" src="/logo-white.png" alt="" />
-      </span>
-      Cosmos&nbsp;Pay
+      <span class="cosmos-lockup" role="img" aria-label="Cosmos Pay"></span>
     </a>
     <span class="swagger-tag">API reference · {envLabel}</span>
     <a class="btn btn-dark btn-sm" href="/dashboard">Dashboard</a>
@@ -57,17 +53,16 @@ const envLabel = import.meta.env.DEV ? "development" : "enabled";
       align-items: center;
       gap: 16px;
       padding: 12px 22px;
-      background: var(--surface, #fbfbfb);
+      background: var(--bg, #ffffff);
       border-bottom: 1px solid var(--line, #ececec);
     }
     .swagger-bar .swagger-tag {
       margin-inline-start: auto;
-      font: 600 13px/1 "Hanken Grotesk", system-ui, sans-serif;
+      font: 600 13px/1 var(--ff-sans, 'Open Sauce One', system-ui, sans-serif);
       color: var(--ink-2, #565656);
     }
-    .swagger-bar .cosmos-mark {
-      width: 26px;
-      height: 26px;
+    .swagger-bar .cosmos-lockup {
+      height: 28px;
     }
     #swagger-ui {
       max-width: 1180px;

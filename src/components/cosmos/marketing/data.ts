@@ -43,9 +43,9 @@ export const STAT_VALUES = [{ n: "99.99", u: "%" }, { n: "<70", u: "ms" }, { n: 
 export const SCALE_VALUES = ["500M+", "10k+", "~5s", "99.999%"];
 export const PATH_NUMS = ["01", "02", "03"];
 export const CASE_META = {
-  Northwind: { bg: "linear-gradient(135deg,#6B47FF,#A24DFF 50%,#FF8E6B)", g: 0, metric: "+38%" },
-  Lumio: { bg: "linear-gradient(135deg,#3D5AFE,#7C4DFF 55%,#C44DFF)", g: 3, metric: "6 wks" },
-  Helios: { bg: "linear-gradient(135deg,#12A2A6,#4B6BFF 55%,#7C4DFF)", g: 2, metric: "$2.4B" },
+  Northwind: { bg: "#05064F", g: 0, metric: "+38%" },
+  Lumio: { bg: "#000877", g: 3, metric: "6 wks" },
+  Helios: { bg: "#000000", g: 2, metric: "$2.4B" },
 };
 export const QUOTE_META = [{ av: "MC", n: "Maya Chen" }, { av: "DO", n: "Daniel Ortiz" }, { av: "PN", n: "Priya Nair" }];
 

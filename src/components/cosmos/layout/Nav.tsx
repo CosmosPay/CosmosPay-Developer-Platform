@@ -3,7 +3,7 @@ import { useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
 import { HOME, PRICING, DASH, DOCS } from "@/components/cosmos/lib/constants";
 import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
-import { CosmosMark, IcNChev, IcDocs } from "@/components/cosmos/icons";
+import { CosmosLockup, IcNChev, IcDocs } from "@/components/cosmos/icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangSelect } from "./LangSelect";
 import { NavUserMenu } from "./NavUserMenu";
@@ -68,7 +68,7 @@ export function Nav({ theme, setTheme, user = null }: { theme: Theme; setTheme: 
   return (
     <header className={`nav${scrolled ? " scrolled" : ""}`}>
       <div className="wrap nav-inner">
-        <a className="brand" href={HOME}><CosmosMark size={30} /><span className="brand-text"><span className="brand-name">Cosmos&nbsp;Pay</span><span className="brand-sub">Developers</span></span></a>
+        <a className="brand" href={HOME}><CosmosLockup height={36} label="Cosmos Pay" /><span className="brand-sub">Developers</span></a>
         <nav className="nav-center" onMouseLeave={scheduleClose}>
           {NAV_ITEMS.map((it) => it.cols ? (
             <div className="nav-item" key={it.key} onMouseEnter={() => open(it.key)}>

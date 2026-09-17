@@ -2,7 +2,7 @@
    server-side (and accepts it when the signed-in email matches); this island just renders
    the resulting state and, when needed, kicks off sign-in returning to this same link. */
 import { useT, fmt, initLang } from "@/lib/i18n/index";
-import { CosmosMark, IcArrow, IcCheck, startLogin } from "@/components/cosmos/shared";
+import { CosmosLockup, CosmosMark, IcArrow, IcCheck, startLogin } from "@/components/cosmos/shared";
 
 export default function Invite({ state = "invalid", org = "", email = "", token = "", lang }) {
   initLang(lang);
@@ -23,7 +23,7 @@ export default function Invite({ state = "invalid", org = "", email = "", token 
   return (
     <main id="main" className="invite-wrap">
       <div className="invite-card">
-        <a className="invite-brand" href="/"><CosmosMark size={28} /> <span>Cosmos&nbsp;Pay</span></a>
+        <a className="invite-brand" href="/"><CosmosLockup height={30} /></a>
         <div className="invite-eyebrow">{v.eyebrow}</div>
         <div className={`invite-icon${m.good ? " good" : ""}`}>{m.good ? <IcCheck /> : <CosmosMark size={26} />}</div>
         <h1>{m.title}</h1>
