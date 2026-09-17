@@ -6,7 +6,7 @@ description: "The smallest end-to-end flow: create a payment intent, complete it
 If you just want to see a payment work end to end, start here. The first example is the shortest possible integration; the second shows the realistic server-creates / browser-completes split.
 
 ```ts
-import { Client, Assets } from '@cosmosapp/pay_sdk';
+import { Client } from '@cosmosapp/pay_sdk';
 
 const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
 
@@ -14,7 +14,7 @@ const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
 const intent = await client.paymentIntents.createPay({
   destination: 'GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO',
   amount: '120.1234567',
-  asset: Assets.USDC, // fills the verified mainnet issuer for you
+  // Omitting asset fields uses native XLM on both testnet and mainnet.
   msg: 'Order #24',
 });
 
@@ -30,14 +30,14 @@ if (outcome.valid) console.log('Settled!', outcome.status);
 
 ```ts
 // ── server.ts ──────────────────────────────────────────────────────
-import { Client, Assets } from '@cosmosapp/pay_sdk';
+import { Client } from '@cosmosapp/pay_sdk';
 const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
 
 export async function createIntent() {
   const intent = await client.paymentIntents.createPay({
     destination: 'G...MERCHANT',
     amount: '10',
-    asset: Assets.USDC,
+    // Native XLM keeps this first example network-independent.
   });
   return intent.toJSON(); // send this payload to the browser
 }
@@ -63,7 +63,6 @@ await fetch('/api/confirm', {
 
 ## References
 
-- [Assets](/sdk/web/assets-wallets-addresses) — Typed asset / wallet catalog or address helper.
 - [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
 - [WebClient](/sdk/definitions/web/web-client) — The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction
 

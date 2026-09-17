@@ -1,7 +1,13 @@
 /* Zod schemas for the dashboard's webhook + product proxy routes. They mirror the
    community server's DTOs; the upstream re-validates, so these just give fast,
    friendly client-side errors. */
-import { z } from "zod";
+/* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   built before it runs has no `.openapi()` at all. These schemas are handed to the
+   OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
+   what guarantees the extension has run by the time they are constructed. It is the same
+   `z` otherwise, so validation is unchanged. */
+import { z } from "@/lib/openapi/zod";
 
 const WEBHOOK_EVENTS = [
   "PAYMENT_INTENT_CREATED",

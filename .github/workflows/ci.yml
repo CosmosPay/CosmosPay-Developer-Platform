@@ -42,6 +42,16 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
 
+      # Every route under src/pages/api must be in the OpenAPI document (or in the
+      # exclusion map, with a reason). The reference is only worth opening if it is
+      # complete, and "document the endpoint too" is the step that gets dropped under
+      # time pressure — this is what notices. It also exercises the spec GENERATION on a
+      # plain `node` run, which is the other half: a registration that throws makes
+      # /api/openapi.json a 500, and the route is gated off in production builds, so
+      # nothing else in CI would ever call it.
+      - name: OpenAPI coverage
+        run: npm run check:openapi
+
       # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
       # Dev-only tooling is excluded because it never reaches a user; a finding there is
       # Dependabot's errand, not a merge blocker.
