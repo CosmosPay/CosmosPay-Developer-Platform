@@ -664,7 +664,6 @@ export default {
       ]
     },
     marketplace: {
-      label: "Cosmos",
       title: "E se você também quiser vender?",
       lede: "Cosmos é o marketplace do mesmo ecossistema. Lá os comércios publicam o que vendem e recebem com a infraestrutura que você está integrando aqui. Mesmo universo, o outro lado do balcão.",
       btn: "Conhecer a Cosmos",

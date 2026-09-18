@@ -344,7 +344,6 @@ export default {
       ],
     },
     marketplace: {
-      label: "Cosmos",
       title: "Selling, not just building?",
       lede: "Cosmos is the marketplace side of the same ecosystem. Merchants list what they sell there and get paid through the very infrastructure you are integrating here. Same universe, other side of the counter.",
       btn: "Discover Cosmos",

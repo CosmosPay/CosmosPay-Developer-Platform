@@ -664,7 +664,6 @@ export default {
       ]
     },
     marketplace: {
-      label: "Cosmos",
       title: "Und wenn du auch verkaufen willst?",
       lede: "Cosmos ist der Marktplatz desselben Ökosystems. Dort stellen Händler ein, was sie verkaufen, und kassieren über genau die Infrastruktur, die du hier einbindest. Dasselbe Universum, die andere Seite der Theke.",
       btn: "Cosmos entdecken",

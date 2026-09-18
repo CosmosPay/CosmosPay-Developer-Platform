@@ -1107,9 +1107,10 @@ a.icon-mini { text-decoration: none; }
 /* ---- promocion cruzada: el marketplace, en panel navy ---- */
 .xp-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: center; }
 .xp-grid > * { min-width: 0; }
-.xp-label { font-weight: 500; font-size: .75rem; color: var(--ink-2); margin-bottom: 32px; }
-.xp-copy h2 { font-weight: 300; font-size: clamp(2.25rem, 4.5vw, 3.5rem); line-height: 1.05; letter-spacing: -0.02em; margin: 0; max-width: 16ch; }
-.xp-copy p { font-size: 1rem; color: var(--ink-2); margin: 28px 0 0; max-width: 46ch; }
+/* el titular no lleva escala propia: usa .section-head de cosmos.css, la misma
+   de los otros ocho capitulos. Aca adentro el encabezado convive con el boton,
+   asi que lo unico que se ajusta es el aire de abajo. */
+.xp-copy .section-head { margin-bottom: 0; }
 .xp-copy .btn { margin-top: 36px; }
 .xp-astro { justify-self: end; display: block; height: 300px; width: auto; max-width: 100%; }
 

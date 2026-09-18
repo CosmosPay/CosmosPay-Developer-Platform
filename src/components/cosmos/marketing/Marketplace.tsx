@@ -13,9 +13,13 @@ export function Marketplace() {
       <div className="wrap">
         <div className="xp-grid reveal">
           <div className="xp-copy">
-            <div className="xp-label">{m.label}</div>
-            <h2>{m.title}</h2>
-            <p>{m.lede}</p>
+            {/* mismo encabezado que los otros capitulos: titular Light grande y
+                la numeracion /0n en lugar de un rotulo de palabra. El nombre de
+                marca no se tipea nunca (BRAND.md, seccion 10). */}
+            <div className="section-head">
+              <h2>{m.title}<span className="num" aria-hidden="true">/09</span></h2>
+              <p>{m.lede}</p>
+            </div>
             <a className="btn btn-white" href={MARKETPLACE_URL} target="_blank" rel="noopener noreferrer">
               {m.btn} <IcArrow />
             </a>
