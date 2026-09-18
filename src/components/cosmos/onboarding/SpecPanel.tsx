@@ -45,6 +45,10 @@ export function SpecPanel({ t, viewId, setViewId, selectedId, recId, showRec }) 
             </div>
           </div>
         </div>
+        {/* una pose mas, la del que trabaja con la laptop: el onboarding es uno de
+            los lugares donde BRAND.md (seccion 5) pide al personaje */}
+        <img className="rp-astro" src="/brand/astronauta-laptop.svg" alt="" aria-hidden="true"
+             width="125" height="168" loading="lazy" decoding="async" />
         <div className="rp-foot">{I.shield} {ob.specFoot}</div>
       </div>
     </aside>

@@ -59,16 +59,6 @@
   /* la unica familia que no es Open Sauce One: el codigo necesita ancho fijo
      para que las columnas del terminal y de los mocks no bailen */
   --ff-mono:    ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-
-  /* alias de transicion: los nombres viejos siguen apareciendo en views.css y
-     onboarding.css (unos cien usos). Apuntan a los tokens nuevos; no usar en
-     codigo nuevo, se van a borrar cuando termine la migracion. */
-  --violet:    var(--accent);
-  --violet-d:  var(--accent-d);
-  --lav:       var(--accent-soft);
-  --lav-2:     var(--accent-soft-2);
-  --blue:      var(--accent);
-  --blue-soft: var(--accent-soft);
 }
 
 [data-theme="dark"] {
@@ -96,13 +86,6 @@
   --btn-bg:    var(--cosmos-white);
   --btn-fg:    var(--cosmos-black);
   --btn-bg-h:  rgba(255,255,255,.86);
-
-  /* los alias de transicion (--violet, --lav, --blue) tienen que seguir al
-     panel: si se resuelven en :root, un "-17 %" en Cosmic Blue queda invisible
-     sobre negro. */
-  --violet: var(--accent); --violet-d: var(--accent-d);
-  --lav: var(--accent-soft); --lav-2: var(--accent-soft-2);
-  --blue: var(--accent); --blue-soft: var(--accent-soft);
 }
 
 /* ============================================================
@@ -121,9 +104,6 @@
   --accent: var(--cosmos-white); --accent-d: rgba(255,255,255,.82); --accent-fg: var(--cosmos-black);
   --accent-soft: rgba(255,255,255,.08); --accent-soft-2: rgba(255,255,255,.14);
   --btn-bg: var(--cosmos-white); --btn-fg: var(--cosmos-black); --btn-bg-h: rgba(255,255,255,.86);
-  --violet: var(--accent); --violet-d: var(--accent-d);
-  --lav: var(--accent-soft); --lav-2: var(--accent-soft-2);
-  --blue: var(--accent); --blue-soft: var(--accent-soft);
   background: var(--bg); color: var(--ink);
 }
 [data-panel="navy"] {
@@ -133,9 +113,6 @@
   --accent: var(--cosmos-white); --accent-d: rgba(255,255,255,.82); --accent-fg: var(--cosmos-navy);
   --accent-soft: rgba(255,255,255,.08); --accent-soft-2: rgba(255,255,255,.14);
   --btn-bg: var(--cosmos-white); --btn-fg: var(--cosmos-navy); --btn-bg-h: rgba(255,255,255,.86);
-  --violet: var(--accent); --violet-d: var(--accent-d);
-  --lav: var(--accent-soft); --lav-2: var(--accent-soft-2);
-  --blue: var(--accent); --blue-soft: var(--accent-soft);
   background: var(--bg); color: var(--ink);
 }
 /* el panel blanco es el de pagina: blanco en claro, negro en oscuro. En oscuro
@@ -551,6 +528,9 @@ button { font-family: inherit; cursor: pointer; }
 .footer { border-top: 1px solid var(--line); padding: 80px 0 48px; }
 .foot-grid { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 40px; }
 .foot-brand p { color: var(--ink-2); font-size: .9375rem; max-width: 24em; margin: 16px 0 0; }
+/* el personaje del pie: figura, no icono (minimo 180px, BRAND.md seccion 5) */
+.foot-astro { display: block; height: 190px; width: auto; margin: 28px 0 0; }
+@media (max-width: 860px) { .foot-astro { display: none; } }
 .foot-col h5 { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 16px; }
 .foot-col a { display: block; color: var(--ink-2); font-size: .875rem; padding: 6px 0; transition: color .25s; }
 .foot-col a:hover { color: var(--accent); }

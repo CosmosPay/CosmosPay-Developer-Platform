@@ -68,5 +68,107 @@ const envLabel = import.meta.env.DEV ? "development" : "enabled";
       max-width: 1180px;
       margin: 0 auto;
     }
+
+  </style>
+
+  <!-- Overrides sobre la hoja del CDN de Swagger UI. Van en un <style is:global>
+       porque el DOM lo monta SwaggerUIBundle despues del build, y con !important
+       porque el <link> del CDN se sirve despues de los estilos de la pagina y
+       gana por orden de cascada en cuanto empatan en especificidad. Sin esto la
+       referencia queda en la piel de Swagger: en oscuro los titulos son #3b4151
+       sobre negro (2.06:1) y la barra de Servers es una franja blanca a sangre
+       en el medio de una pagina negra. -->
+  <style is:global>
+    .swagger-ui,
+    .swagger-ui .info .title,
+    .swagger-ui .opblock-tag,
+    .swagger-ui .opblock-tag a,
+    .swagger-ui section.models h4,
+    .swagger-ui .model-title,
+    .swagger-ui label,
+    .swagger-ui .tab li {
+      color: var(--ink) !important;
+      font-family: var(--ff-sans) !important;
+    }
+    .swagger-ui .opblock-tag small,
+    .swagger-ui .info li,
+    .swagger-ui .info p,
+    .swagger-ui .info table,
+    .swagger-ui .opblock .opblock-summary-description,
+    .swagger-ui .opblock-description-wrapper p,
+    .swagger-ui .opblock-external-docs-wrapper p,
+    .swagger-ui table thead tr td,
+    .swagger-ui table thead tr th,
+    .swagger-ui .parameter__name,
+    .swagger-ui .parameter__type,
+    .swagger-ui .parameter__in,
+    .swagger-ui .response-col_status,
+    .swagger-ui .response-col_links,
+    .swagger-ui .responses-inner h4,
+    .swagger-ui .responses-inner h5,
+    .swagger-ui .model,
+    .swagger-ui .model-toggle:after {
+      color: var(--ink-2) !important;
+      font-family: var(--ff-sans) !important;
+    }
+    /* la barra de Servers y Authorize es una superficie mas del sitio: se separa
+       por hairline y no por elevacion (BRAND.md, seccion 7) */
+    .swagger-ui .scheme-container {
+      background: var(--surface) !important;
+      border-top: 1px solid var(--line) !important;
+      box-shadow: none !important;
+    }
+    .swagger-ui .opblock,
+    .swagger-ui .opblock .opblock-summary,
+    .swagger-ui section.models,
+    .swagger-ui .highlight-code > .microlight,
+    .swagger-ui .responses-inner .response-col_description__inner div.markdown {
+      border-radius: var(--radius) !important;
+      box-shadow: none !important;
+    }
+    .swagger-ui .info a,
+    .swagger-ui .info hgroup.main a,
+    .swagger-ui .info .link,
+    .swagger-ui .info__tos a,
+    .swagger-ui a.nostyle,
+    .swagger-ui .opblock-summary-path a { color: var(--accent) !important; }
+    /* el badge de version y el de OAS: fuera el lima #89bf04, que no es de la marca */
+    .swagger-ui .info .title small,
+    .swagger-ui .info .title small.version-stamp,
+    .swagger-ui .info .title small pre {
+      background: var(--accent-soft) !important;
+      color: var(--ink) !important;
+      border-radius: 999px !important;
+    }
+    .swagger-ui .btn,
+    .swagger-ui .authorization__btn,
+    .swagger-ui .opblock-control-arrow {
+      border-radius: 999px !important;
+      box-shadow: none !important;
+      font-family: var(--ff-sans) !important;
+      color: var(--ink) !important;
+    }
+    .swagger-ui select,
+    .swagger-ui input[type=text],
+    .swagger-ui input[type=email],
+    .swagger-ui input[type=password],
+    .swagger-ui textarea {
+      border-radius: var(--radius) !important;
+      box-shadow: none !important;
+      font-family: var(--ff-sans) !important;
+      background: var(--surface) !important;
+      color: var(--ink) !important;
+      border: 1px solid var(--line-2) !important;
+    }
+    /* el codigo sigue en ancho fijo: las columnas del ejemplo no pueden bailar.
+       Los colores de GET/POST/DELETE se quedan, son semantica de metodo HTTP
+       (mismo criterio que las estrellas de rating, BRAND.md seccion 9). */
+    .swagger-ui .microlight,
+    .swagger-ui code,
+    .swagger-ui pre,
+    .swagger-ui .model-example,
+    .swagger-ui .prop-type,
+    .swagger-ui .opblock-summary-path,
+    .swagger-ui .opblock-summary-path__deprecated { font-family: var(--ff-mono) !important; }
   </style>
 </CosmosLayout>

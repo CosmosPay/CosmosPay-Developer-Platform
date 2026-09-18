@@ -12,6 +12,10 @@ interface Props {
 
 const { code, title, message, lang } = Astro.props;
 const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+
+// Una pose por pantalla: el que piensa para el 404 (no encontramos la pagina),
+// el acostado para el 500 (algo se cayo de nuestro lado).
+const astro = String(code) === "500" ? "astronauta-acostado.svg" : "astronauta-pensando.svg";
 ---
 
 <CosmosLayout title={`${code} — ${title} · Cosmos Pay`} noindex={true} lang={locale}>
@@ -23,6 +27,7 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
       <div class="errp-code">{code}</div>
       <h1 class="errp-title">{title}</h1>
       <p class="errp-msg">{message}</p>
+      <img class="errp-astro" src={`/brand/${astro}`} alt="" aria-hidden="true" loading="lazy" decoding="async" />
       <div class="errp-actions">
         <a class="errp-btn primary" href="/">Back to home</a>
         <a class="errp-btn" href="/dashboard">Go to dashboard</a>
@@ -68,11 +73,20 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
       color: var(--ink, #000000);
     }
     .errp-msg {
-      margin: 0 0 30px;
+      margin: 0 0 24px;
       font-size: 15px;
       line-height: 1.6;
       color: var(--ink-2, rgba(0,0,0,.66));
     }
+    /* el personaje va como figura con presencia (minimo 180px de alto, BRAND.md
+       seccion 5) y nunca recoloreado: su blanco y negro funciona sobre los dos temas */
+    .errp-astro {
+      display: block;
+      height: 200px;
+      width: auto;
+      margin: 0 auto 26px;
+    }
+    @media (max-width: 560px) { .errp-astro { height: 180px; } }
     .errp-actions {
       display: flex;
       gap: 12px;
