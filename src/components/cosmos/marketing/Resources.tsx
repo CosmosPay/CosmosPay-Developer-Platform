@@ -10,7 +10,7 @@ export function Resources() {
     <section className="lp-panel resources" data-panel="white" id="resources">
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{r.title}<span className="num" aria-hidden="true">/06</span></h2>
+          <h2>{r.title}<span className="num" aria-hidden="true">/08</span></h2>
           <p>{r.lede}</p>
         </div>
         <div className="news-list">

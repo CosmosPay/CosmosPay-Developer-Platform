@@ -10,7 +10,7 @@ export function Testimonials() {
     <section className="lp-panel testimonials" data-panel="black">
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{tt.title}<span className="num" aria-hidden="true">/05</span></h2>
+          <h2>{tt.title}<span className="num" aria-hidden="true">/07</span></h2>
         </div>
         <div className="q-grid">
           {QUOTE_META.map((q, i) => {

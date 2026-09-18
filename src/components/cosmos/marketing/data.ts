@@ -59,3 +59,47 @@ export const API_CARD_KEYS = ["payments", "stablecoin", "anchor"];
 // `@cosmosapp/pay_sdk` (server) and `@cosmosapp/pay_sdk/web` (browser wallets).
 export const SDK_KEYS = ["node", "web"];
 export const CASE_KEYS = ["Northwind", "Lumio", "Helios"];
+
+/* ============================================================
+   LA WALLET
+   La version vive aca y en ningun otro lado: los links de descarga se arman
+   con ella, asi que subir de version es tocar una sola constante.
+   ============================================================ */
+export const WALLET_VERSION = "1.8.0";
+const RELEASE = `https://github.com/CosmosPay/CosmosPay-Wallet/releases/download/v${WALLET_VERSION}`;
+
+/* Los tres caminos de arriba mas el resto de las plataformas. El zip de Chrome
+   del release no se enlaza: para Chrome el camino es la tienda, que ya trae
+   actualizaciones automaticas. Tampoco el apk de debug (463 MB) ni el .aab,
+   que es para la Play Console. */
+export const WALLET_LINKS = {
+  chrome: "https://chromewebstore.google.com/detail/cosmos-pay-%E2%80%94-stellar-wall/jibiahkbhhmddnahglhffkejcfhalbgj?hl=es",
+  webapp: "https://cosmospay.lat/wallet/",
+  android: `${RELEASE}/cosmos-pay-${WALLET_VERSION}.apk`,
+  firefox: `${RELEASE}/cosmos-pay-firefox-v${WALLET_VERSION}.zip`,
+  windows: `${RELEASE}/cosmos-pay-v${WALLET_VERSION}-windows-x86_64-setup.exe`,
+  macos: `${RELEASE}/cosmos-pay-v${WALLET_VERSION}-macos-arm64.dmg`,
+  linux: `${RELEASE}/cosmos-pay-v${WALLET_VERSION}-linux-x86_64.AppImage`,
+  deb: `${RELEASE}/cosmos-pay-v${WALLET_VERSION}-linux-x86_64.deb`,
+  rpm: `${RELEASE}/cosmos-pay-v${WALLET_VERSION}-linux-x86_64.rpm`,
+};
+
+/* Pesos reales de los assets del release v1.8.0, redondeados. No se traducen. */
+export const ANDROID_SIZE = "22 MB";
+export const WALLET_MORE = [
+  { k: "firefox", href: WALLET_LINKS.firefox, size: "0,8 MB" },
+  { k: "windows", href: WALLET_LINKS.windows, size: "2 MB" },
+  { k: "macos", href: WALLET_LINKS.macos, size: "2,4 MB" },
+  {
+    k: "linux", href: WALLET_LINKS.linux, size: "75 MB",
+    extra: [
+      { label: ".deb", href: WALLET_LINKS.deb, size: "2,9 MB" },
+      { label: ".rpm", href: WALLET_LINKS.rpm, size: "2,9 MB" },
+    ],
+  },
+];
+
+/* El comando del SDK y el indice en texto plano para los asistentes de codigo. */
+export const SDK_INSTALL = "npm i @cosmosapp/pay_sdk";
+export const LLMS_TXT = "https://cosmospay.lat/docs/llms.txt";
+export const MARKETPLACE_URL = "https://cosmosapp.lat";

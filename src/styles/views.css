@@ -1015,3 +1015,123 @@ a.icon-mini { text-decoration: none; }
 [data-theme="dark"] .chat-seen,
 [data-theme="dark"] .invite-icon.good,
 [data-theme="dark"] .ticket-head .th-online { color: #7EE0A8; }
+
+/* ============================================================
+   LANDING: la wallet al frente
+   Mismo lenguaje que el resto del deck: paneles a sangre, sin sombras,
+   superficies separadas por color o por hairline al 12 %.
+   ============================================================ */
+
+/* ---- /01 la wallet: tres caminos y el personaje ---- */
+.wallet-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: center; }
+.wallet-grid > * { min-width: 0; }
+/* el encabezado respira menos que en los capitulos tecnicos: aca lo que
+   importa son los botones que vienen abajo, no el aire */
+.wallet .section-head { margin-bottom: 40px; }
+.wallet .section-head h2 { max-width: 13ch; }
+.wallet-ways { display: grid; gap: 12px; }
+
+/* cada camino es una fila-boton: icono, texto y flecha. El primero va relleno
+   con el primario del panel (Cosmic Blue en claro, blanco en oscuro) porque es
+   el camino principal; los otros dos son borde al 20 %. */
+.wway {
+  display: flex; align-items: center; gap: 18px; padding: 18px 24px;
+  border: 1px solid var(--line-2); border-radius: var(--radius-lg);
+  color: var(--ink); transition: border-color .3s ease, background .3s ease;
+}
+.wway:hover { border-color: var(--ink); }
+.wway-main { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-fg); }
+.wway-main:hover { background: var(--btn-bg-h); border-color: var(--btn-bg-h); }
+.wway-ic { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 50%; border: 1px solid currentColor; display: grid; place-items: center; opacity: .9; }
+.wway-ic svg { width: 22px; height: 22px; display: block; }
+.wway-txt { display: block; min-width: 0; }
+.wway-txt b { font-size: 1.0625rem; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wway-txt > span { font-size: .875rem; opacity: .7; display: block; margin-top: 3px; }
+.wway-size { font-weight: 500; font-size: .75rem; opacity: .7; border: 1px solid currentColor; border-radius: var(--radius-btn); padding: 1px 9px; }
+.wway-go { margin-left: auto; display: inline-flex; transition: transform .25s; }
+.wway-go svg { width: 18px; height: 18px; }
+.wway:hover .wway-go { transform: translateX(4px); }
+
+/* el resto de las plataformas, plegado: esta para el que lo busca, no compite
+   con los tres de arriba */
+.wallet-more { margin-top: 28px; border-top: 1px solid var(--line); }
+.wallet-more summary {
+  display: flex; align-items: center; gap: 12px; padding: 20px 0; cursor: pointer;
+  font-weight: 500; font-size: .9375rem; color: var(--ink); list-style: none;
+}
+.wallet-more summary::-webkit-details-marker { display: none; }
+.wallet-more summary svg { width: 16px; height: 16px; color: var(--ink-2); transition: transform .3s ease; }
+.wallet-more[open] summary svg { transform: rotate(90deg); }
+.wm-ver { margin-left: auto; font-weight: 400; font-size: .8125rem; color: var(--ink-3); font-family: var(--ff-mono); }
+.wm-list { list-style: none; margin: 0; padding: 0 0 8px; }
+.wm-row { border-top: 1px solid var(--line); padding: 18px 0; }
+.wm-head { display: flex; align-items: baseline; gap: 16px; }
+.wm-head b { font-size: .9375rem; font-weight: 500; }
+.wm-row p { margin: 6px 0 0; font-size: .8125rem; color: var(--ink-2); max-width: 62ch; }
+.wm-dl { margin-left: auto; font-weight: 600; font-size: .8125rem; color: var(--accent); white-space: nowrap; }
+.wm-dl span { font-weight: 400; color: var(--ink-3); }
+.wm-dl:hover { text-decoration: underline; }
+.wm-extra { display: flex; gap: 20px; margin-top: 10px; }
+.wm-extra a { font-size: .8125rem; font-weight: 600; color: var(--accent); }
+.wm-extra a span { font-weight: 400; color: var(--ink-3); }
+.wm-extra a:hover { text-decoration: underline; }
+/* iOS no tiene descarga: una linea y nada mas, sin boton y sin prometer fecha */
+.wm-ios p { color: var(--ink-3); }
+
+/* el personaje: figura, nunca icono (minimo 180px de alto, BRAND.md seccion 5).
+   Dos archivos porque el panel claro se vuelve negro en tema oscuro: linea
+   negra sobre blanco, version sticker sobre negro. */
+.wallet-figure { position: relative; justify-self: end; }
+/* los PNG traen ~34 % de transparencia alrededor, asi que la caja va bien mas
+   alta que la figura para no bajar de los 180px utiles que pide BRAND.md */
+.wfig { display: block; width: auto; height: 420px; max-width: 100%; }
+.wfig-dark { display: none; }
+[data-theme="dark"] .wfig-light { display: none; }
+[data-theme="dark"] .wfig-dark { display: block; }
+
+/* ---- /02 el SDK para desarrolladores ---- */
+.dk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.dk-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 32px; display: flex; flex-direction: column; transition: border-color .3s ease;
+}
+.dk-card:hover { border-color: var(--line-2); }
+.dk-ic { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); color: var(--ink); display: grid; place-items: center; margin-bottom: 40px; }
+.dk-ic svg { width: 20px; height: 20px; }
+.dk-card h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: 0; margin: 0 0 10px; }
+.dk-card p { color: var(--ink-2); font-size: .875rem; margin: 0 0 24px; flex: 1; max-width: 40ch; }
+.dk-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dk-actions .copy-pill code { font-family: var(--ff-mono); font-size: .8125rem; }
+.dk-url { display: block; margin-top: 16px; font-family: var(--ff-mono); font-size: .75rem; color: var(--ink-3); word-break: break-all; }
+
+/* ---- promocion cruzada: el marketplace, en panel navy ---- */
+.xp-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: center; }
+.xp-grid > * { min-width: 0; }
+.xp-label { font-weight: 500; font-size: .75rem; color: var(--ink-2); margin-bottom: 32px; }
+.xp-copy h2 { font-weight: 300; font-size: clamp(2.25rem, 4.5vw, 3.5rem); line-height: 1.05; letter-spacing: -0.02em; margin: 0; max-width: 16ch; }
+.xp-copy p { font-size: 1rem; color: var(--ink-2); margin: 28px 0 0; max-width: 46ch; }
+.xp-copy .btn { margin-top: 36px; }
+.xp-astro { justify-self: end; display: block; height: 300px; width: auto; max-width: 100%; }
+
+@media (max-width: 1040px) {
+  .wallet-grid { grid-template-columns: 1fr; gap: 48px; }
+  .wallet-figure { justify-self: center; order: -1; }
+  .wfig { height: 320px; }
+  .dk-grid { grid-template-columns: 1fr; }
+  .xp-grid { grid-template-columns: 1fr; gap: 40px; }
+  .xp-astro { justify-self: center; height: 230px; }
+}
+@media (max-width: 720px) {
+  .wway { padding: 16px 18px; gap: 14px; }
+  .wway-ic { width: 38px; height: 38px; }
+  .wway-ic svg { width: 19px; height: 19px; }
+  .wway-txt b { font-size: 1rem; }
+  .wway-go { display: none; }
+  .wfig { height: 290px; }
+  .wm-head { flex-wrap: wrap; gap: 8px; }
+  .wm-dl { margin-left: 0; }
+  .wm-ver { display: none; }
+  .dk-card { padding: 24px; }
+  .dk-ic { margin-bottom: 24px; }
+  .xp-astro { height: 210px; }
+}

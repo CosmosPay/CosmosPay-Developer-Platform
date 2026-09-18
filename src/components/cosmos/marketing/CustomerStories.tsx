@@ -38,7 +38,7 @@ export function CustomerStories() {
         <div className="cases-layout">
           <div className="cases-col">
             <div className="section-head reveal">
-              <h2>{c.title}<span className="num" aria-hidden="true">/04</span></h2>
+              <h2>{c.title}<span className="num" aria-hidden="true">/06</span></h2>
               <p>{c.lede}</p>
             </div>
             <div className="case-list">

@@ -1,5 +1,8 @@
 /* index.js — barrel re-exporting the marketing section components used by the root. */
 export { Hero } from "./Hero";
+export { WalletSection } from "./WalletSection";
+export { DevKit } from "./DevKit";
+export { Marketplace } from "./Marketplace";
 export { ApiSection } from "./ApiSection";
 export { IntegrationPaths } from "./IntegrationPaths";
 export { Solutions } from "./Solutions";

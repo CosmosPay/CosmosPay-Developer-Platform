@@ -115,6 +115,13 @@ en chico, a la derecha del titulo. Ese es el rotulo de seccion de la marca;
 reemplaza a los "kickers" en mayusculas con tracking abierto que usan hoy los
 dos sitios.
 
+**Aviso sobre POI Aeronaut.** El kit oficial de la agencia incluye
+`Aeronaut.otf`, pero al inspeccionarlo declara familia "POI Aeronaut Trial" y
+licencia "License required for personal and commercial use" (Place of Interest
+Type Foundry, poitype.com/licensing). Es la version de prueba: NO se puede
+embeber en produccion. Hasta que se compre la licencia, los titulares van en
+Open Sauce One Light y el nombre de marca siempre como SVG.
+
 ## 5. Elementos graficos
 
 **La cinta.** Una linea continua, curva, de recorrido libre, en Cosmic Blue
@@ -131,16 +138,27 @@ seccion en claro, separadores, iconografia grande. Se pintan con
 `currentColor`: negro sobre blanco, blanco sobre negro, Cosmic Blue sobre
 blanco.
 
-**El astronauta.** Personaje de marca: ilustracion en linea, blanco con
-contorno negro, gestual, curioso, en movimiento. "Una forma mas humana de
-explorar lo digital". Las siete poses vienen juntas en `astronautas-todos.svg` (una hoja de
-366x356 unidades; sus siluetas se tocan y no se separan solas). Para usar
-una pose, copiar el archivo y ajustar el `viewBox` al rectangulo de esa
-pose, verificando con un render. Reglas: funciona sobre negro, blanco y navy; siempre
-en su blanco y negro (no se recolorea); nunca chico como icono, siempre como
-figura con presencia (minimo 180px de alto); una pose por pantalla; aparece en
-onboarding, estados vacios, secciones de "para quien", el 404, el pie. No
-aparece en tablas, formularios ni en el checkout.
+**El astronauta.** Personaje de marca: ilustracion en linea, gestual, curioso,
+en movimiento. "Una forma mas humana de explorar lo digital".
+
+La agencia entrega **siete poses** (con celular, de pie, flotando, OK, pensando,
+pose relajada, trabajando) y **siete variantes de cada una**. En
+`public/brand/personaje/` estan instaladas las tres que sirven para web:
+
+| Archivo | Que es | Donde va |
+| --- | --- | --- |
+| `<pose>-negro.png` | Linea negra limpia, sin contorno | Sobre blanco |
+| `<pose>-azul.png` | Linea en Cosmic Blue, sin contorno | Sobre blanco, cuando se quiere color |
+| `<pose>-sticker.png` | Relleno negro con contorno blanco grueso | Sobre negro, navy o una foto |
+
+CORRECCION respecto de la primera version de este documento: yo habia escrito
+que el personaje nunca se recolorea. Es falso. El kit oficial trae versiones en
+Cosmic Blue, y son parte del sistema. Lo que sigue valiendo: no se le inventan
+colores fuera de la paleta, no se usa chico como icono (minimo 180px de alto),
+una pose por pantalla, y no aparece en tablas, formularios ni checkout.
+
+En el deck ademas aparece sobre fondo navy a sangre completa (pagina 19), que
+es la version sticker.
 
 **Fotografia.** Retratos y calles en blanco y negro con luz azul (pantalla de
 telefono, neon, halo). Ambas webs hoy no tienen fotos; no hace falta agregar

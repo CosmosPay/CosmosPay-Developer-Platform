@@ -51,7 +51,7 @@ export function Solutions({ user }) {
       <span className="trazo-deco trazo-1" aria-hidden="true" />
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{s.title}<span className="num" aria-hidden="true">/03</span></h2>
+          <h2>{s.title}<span className="num" aria-hidden="true">/05</span></h2>
           <p>{s.lede}</p>
         </div>
         <div className="sol-bento">

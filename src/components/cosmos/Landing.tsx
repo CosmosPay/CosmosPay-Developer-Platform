@@ -4,8 +4,8 @@
 import { Nav, Footer, useTheme, useReveal } from "@/components/cosmos/shared";
 import { initLang } from "@/lib/i18n/index";
 import {
-  Hero, ApiSection, IntegrationPaths, Solutions, Stats,
-  CustomerStories, Testimonials, Resources, Cta,
+  Hero, WalletSection, DevKit, ApiSection, IntegrationPaths, Solutions, Stats,
+  CustomerStories, Testimonials, Resources, Marketplace, Cta,
 } from "./marketing";
 
 /* ---------------- root ---------------- */
@@ -18,6 +18,10 @@ export default function Landing({ user = null, lang }) {
       <Nav theme={theme} setTheme={setTheme} user={user} overPanel="black" />
       <main id="main">
         <Hero user={user} />
+        {/* la wallet primero: es lo que la mayoria viene a buscar. Lo tecnico
+            (API, docs, stats, casos) sigue abajo, sin cambios. */}
+        <WalletSection />
+        <DevKit />
         <ApiSection />
         <IntegrationPaths />
         <Solutions user={user} />
@@ -25,6 +29,7 @@ export default function Landing({ user = null, lang }) {
         <CustomerStories />
         <Testimonials />
         <Resources />
+        <Marketplace />
         <Cta user={user} />
       </main>
       <Footer />

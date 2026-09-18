@@ -35,7 +35,7 @@ export function IntegrationPaths() {
       <div className="wrap">
         <div className="ip-head">
           <div className="section-head reveal">
-            <h2>{ig.title}<span className="num" aria-hidden="true">/02</span></h2>
+            <h2>{ig.title}<span className="num" aria-hidden="true">/04</span></h2>
             <p>{ig.lede}</p>
           </div>
           <div className="ip-scale reveal">

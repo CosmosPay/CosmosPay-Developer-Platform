@@ -463,6 +463,33 @@ export default {
       getKeys: "Obtenir des clés API",
       trustedBy: "La confiance des équipes d’ingénierie de"
     },
+    wallet: {
+      title: "Votre monde numérique dans un wallet.",
+      lede: "Installez-le dans Chrome, essayez-le directement dans le navigateur ou emportez-le sur votre téléphone. Le même compte partout, sur Stellar.",
+      chrome: { t: "Installer sur Chrome", s: "Extension officielle sur le Chrome Web Store." },
+      web: { t: "Essayer dans le navigateur", s: "Ouvrez l’application web, rien à installer." },
+      android: { t: "Télécharger pour Android", s: "APK signé. Autorisez \"Installer des applications inconnues\" pour votre navigateur, ouvrez le fichier et installez." },
+      moreLabel: "Autres plateformes",
+      versionLabel: "Version",
+      download: "Télécharger",
+      more: {
+        firefox: { t: "Firefox", s: "Non signé. Allez dans about:debugging, choisissez \"Ce Firefox\", puis \"Charger un module temporaire\" et sélectionnez le manifest.json du zip." },
+        windows: { t: "Windows", s: "SmartScreen avertit la première fois : cliquez sur \"Informations complémentaires\", puis \"Exécuter quand même\"." },
+        macos: { t: "macOS (Apple Silicon)", s: "Gatekeeper bloque la première fois : clic droit sur l’application, puis \"Ouvrir\"." },
+        linux: { t: "Linux", s: "AppImage : lancez chmod +x avant. Nécessite glibc 2.39 ou plus récent." },
+      },
+      ios: "Il n’existe pas encore de version iOS.",
+    },
+    devs: {
+      title: "Envie d’intégrer Cosmos Pay Wallet à votre startup ?",
+      lede: "Une commande et un lien. Votre assistant de code fait le reste.",
+      installTitle: "Installez le SDK",
+      installDesc: "JavaScript et TypeScript, pour le serveur et pour le navigateur. Un paquet, deux points d’entrée.",
+      llmsTitle: "Donnez la doc à votre assistant",
+      llmsDesc: "Claude Code, Codex et Cursor lisent l’index en texte brut et savent aussitôt utiliser le SDK.",
+      llmsBtn: "Ouvrir llms.txt",
+      docsBtn: "Voir la documentation",
+    },
     api: {
       kicker: "// la plateforme",
       title: "Des API puissantes",
@@ -635,6 +662,12 @@ export default {
           d: "Au cœur de l’infrastructure qui propulse Cosmos Pay."
         }
       ]
+    },
+    marketplace: {
+      label: "Cosmos",
+      title: "Et si vous vouliez aussi vendre ?",
+      lede: "Cosmos est la place de marché du même écosystème. Les commerçants y publient ce qu’ils vendent et encaissent avec l’infrastructure que vous intégrez ici. Même univers, l’autre côté du comptoir.",
+      btn: "Découvrir Cosmos",
     },
     cta: {
       label: "Une nouvelle façon de faire bouger votre monde numérique.",

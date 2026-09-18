@@ -463,6 +463,33 @@ export default {
       getKeys: "Obter chaves de API",
       trustedBy: "Com a confiança de equipes de engenharia de"
     },
+    wallet: {
+      title: "O teu mundo digital numa wallet.",
+      lede: "Instale no Chrome, teste direto no navegador ou leve no celular. A mesma conta em todo lugar, sobre a Stellar.",
+      chrome: { t: "Instalar no Chrome", s: "Extensão oficial na Chrome Web Store." },
+      web: { t: "Testar no navegador", s: "Abra o web app agora, sem instalar nada." },
+      android: { t: "Baixar para Android", s: "APK assinado. Libere \"Instalar apps desconhecidos\" para o seu navegador, abra o arquivo e instale." },
+      moreLabel: "Outras plataformas",
+      versionLabel: "Versão",
+      download: "Baixar",
+      more: {
+        firefox: { t: "Firefox", s: "Sem assinatura. Acesse about:debugging, escolha \"Este Firefox\", depois \"Carregar extensão temporária\" e selecione o manifest.json do zip." },
+        windows: { t: "Windows", s: "O SmartScreen avisa na primeira vez: clique em \"Mais informações\" e depois em \"Executar assim mesmo\"." },
+        macos: { t: "macOS (Apple Silicon)", s: "O Gatekeeper bloqueia na primeira vez: clique com o botão direito no app e escolha \"Abrir\"." },
+        linux: { t: "Linux", s: "AppImage: rode chmod +x antes. Precisa de glibc 2.39 ou superior." },
+      },
+      ios: "Ainda não existe versão para iOS.",
+    },
+    devs: {
+      title: "Quer integrar a Cosmos Pay Wallet na sua startup?",
+      lede: "Um comando e um link. O seu assistente de código faz o resto.",
+      installTitle: "Instale o SDK",
+      installDesc: "JavaScript e TypeScript, para o servidor e para o navegador. Um pacote, dois pontos de entrada.",
+      llmsTitle: "Entregue as docs ao seu assistente",
+      llmsDesc: "Claude Code, Codex e Cursor leem o índice em texto puro e já sabem usar o SDK.",
+      llmsBtn: "Abrir llms.txt",
+      docsBtn: "Ver a documentação",
+    },
     api: {
       kicker: "// a plataforma",
       title: "APIs poderosas",
@@ -635,6 +662,12 @@ export default {
           d: "Por dentro da infraestrutura que impulsiona a Cosmos Pay."
         }
       ]
+    },
+    marketplace: {
+      label: "Cosmos",
+      title: "E se você também quiser vender?",
+      lede: "Cosmos é o marketplace do mesmo ecossistema. Lá os comércios publicam o que vendem e recebem com a infraestrutura que você está integrando aqui. Mesmo universo, o outro lado do balcão.",
+      btn: "Conhecer a Cosmos",
     },
     cta: {
       label: "Uma nova forma de mover o seu mundo digital.",

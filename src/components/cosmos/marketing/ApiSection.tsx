@@ -24,7 +24,7 @@ export function ApiSection() {
     <section className="lp-panel api" data-panel="white" id="api">
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{a.title}<span className="num" aria-hidden="true">/01</span></h2>
+          <h2>{a.title}<span className="num" aria-hidden="true">/03</span></h2>
           <p>{a.lede}</p>
         </div>
         <div className="api-cards">
