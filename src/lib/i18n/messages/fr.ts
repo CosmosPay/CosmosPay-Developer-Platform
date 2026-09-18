@@ -561,7 +561,7 @@ export default {
       }
     },
     stats: {
-      title: "Simple. Seguro. Sin límites.",
+      title: "Simple. Sûr. Sans limites.",
       items: ["SLA de disponibilité de l’API", "temps de réponse p99", "pays pris en charge", "appels API / mois"]
     },
     customers: {
@@ -636,7 +636,7 @@ export default {
       ]
     },
     cta: {
-      label: "Una nueva forma de mover tu mundo digital.",
+      label: "Une nouvelle façon de faire bouger votre monde numérique.",
       thanks: "Gracias por confiar.",
       title: "Commencez à développer dès aujourd’hui.",
       desc: "Lancez un sandbox testnet gratuit et passez en production sur Stellar dès que vous êtes prêt.",

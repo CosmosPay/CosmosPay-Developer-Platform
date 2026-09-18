@@ -96,6 +96,13 @@
   --btn-bg:    var(--cosmos-white);
   --btn-fg:    var(--cosmos-black);
   --btn-bg-h:  rgba(255,255,255,.86);
+
+  /* los alias de transicion (--violet, --lav, --blue) tienen que seguir al
+     panel: si se resuelven en :root, un "-17 %" en Cosmic Blue queda invisible
+     sobre negro. */
+  --violet: var(--accent); --violet-d: var(--accent-d);
+  --lav: var(--accent-soft); --lav-2: var(--accent-soft-2);
+  --blue: var(--accent); --blue-soft: var(--accent-soft);
 }
 
 /* ============================================================
@@ -114,6 +121,9 @@
   --accent: var(--cosmos-white); --accent-d: rgba(255,255,255,.82); --accent-fg: var(--cosmos-black);
   --accent-soft: rgba(255,255,255,.08); --accent-soft-2: rgba(255,255,255,.14);
   --btn-bg: var(--cosmos-white); --btn-fg: var(--cosmos-black); --btn-bg-h: rgba(255,255,255,.86);
+  --violet: var(--accent); --violet-d: var(--accent-d);
+  --lav: var(--accent-soft); --lav-2: var(--accent-soft-2);
+  --blue: var(--accent); --blue-soft: var(--accent-soft);
   background: var(--bg); color: var(--ink);
 }
 [data-panel="navy"] {
@@ -123,6 +133,9 @@
   --accent: var(--cosmos-white); --accent-d: rgba(255,255,255,.82); --accent-fg: var(--cosmos-navy);
   --accent-soft: rgba(255,255,255,.08); --accent-soft-2: rgba(255,255,255,.14);
   --btn-bg: var(--cosmos-white); --btn-fg: var(--cosmos-navy); --btn-bg-h: rgba(255,255,255,.86);
+  --violet: var(--accent); --violet-d: var(--accent-d);
+  --lav: var(--accent-soft); --lav-2: var(--accent-soft-2);
+  --blue: var(--accent); --blue-soft: var(--accent-soft);
   background: var(--bg); color: var(--ink);
 }
 /* el panel blanco es el de pagina: blanco en claro, negro en oscuro. En oscuro
@@ -183,8 +196,9 @@ button { font-family: inherit; cursor: pointer; }
    ============================================================ */
 .nav {
   position: sticky; top: 0; z-index: 50;
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter: blur(14px);
+  /* opaca, no translucida: un velo al 92 % sobre un panel negro daba una banda
+     gris a lo ancho de la pantalla, y en la marca no hay grises de superficie */
+  background: var(--bg);
   border-bottom: 1px solid transparent; transition: border-color .3s, background .3s, color .3s;
 }
 .nav.scrolled { border-color: var(--line); }
@@ -404,7 +418,7 @@ button { font-family: inherit; cursor: pointer; }
 .hero h1 { max-width: none; }
 .stats-title, .cta-panel h2 { max-width: 14ch; }
 .section-head h2 { max-width: 15ch; }
-.section-head h2 .num {
+.section-head h2 .num, .cta-panel h2 .num, .pricing-hero h1 .num, .compare h2 .num, .faq h2 .num {
   font-weight: 500; font-size: .75rem; color: var(--ink-3); letter-spacing: 0;
   white-space: nowrap; margin-left: .6em; vertical-align: baseline;
 }
@@ -429,14 +443,19 @@ button { font-family: inherit; cursor: pointer; }
 /* la cinta: el elemento hero de la marca, una sola vez en toda la landing.
    Va a sangre sobre el 58 % derecho, fundida hacia el texto y hacia abajo. */
 .hero-cinta {
-  position: absolute; top: 0; right: 0; height: 100%; width: 58%; z-index: 0;
-  object-fit: contain; object-position: right center;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 35%), linear-gradient(180deg, #000 70%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 35%), linear-gradient(180deg, #000 70%, transparent 100%);
-  -webkit-mask-composite: source-in; mask-composite: intersect;
+  position: absolute; top: 50%; right: 0; width: 58%; height: auto; z-index: 0;
+  transform: translate(0, -50%);
+  /* la caja toma la proporcion de la imagen (1672x941), asi que cover no
+     recorta ni estira nada y, sobre todo, los bordes de la caja son los
+     bordes del trazo: una sola mascara radial los desvanece a los cuatro.
+     Con dos capas lineales y la caja mas alta que la imagen, el canto de la
+     foto caia en una zona todavia opaca y la banda azul se cortaba a cuchillo. */
+  object-fit: cover;
+  -webkit-mask-image: radial-gradient(56% 56% at 54% 50%, #000 32%, transparent 100%);
+  mask-image: radial-gradient(56% 56% at 54% 50%, #000 32%, transparent 100%);
   animation: cintaDrift 24s ease-in-out infinite alternate;
 }
-@keyframes cintaDrift { to { transform: translateX(-24px); } }
+@keyframes cintaDrift { to { transform: translate(-24px, -50%); } }
 @media (prefers-reduced-motion: reduce) { .hero-cinta { animation: none; } }
 
 .clients { margin-top: 58px; }
@@ -560,13 +579,13 @@ button { font-family: inherit; cursor: pointer; }
   .hero { display: block; padding: 136px 0 0; min-height: 0; }
   .hero-grid { grid-template-columns: 1fr; }
   .hero-copy { grid-column: 1; max-width: none; }
-  /* la cinta deja de estar detras del texto y pasa a ser una banda al pie del hero */
+  /* la cinta deja de estar detras del texto y pasa a ser una banda al pie del
+     hero; misma idea que en escritorio, una sola mascara que apaga los bordes */
   .hero-cinta {
-    position: static; width: 100%; height: 220px; margin-top: 40px;
-    object-position: 70% 50%; animation: none;
-    -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
-    -webkit-mask-composite: source-over; mask-composite: add;
+    position: static; width: 100%; height: auto; margin-top: 40px;
+    transform: none; animation: none;
+    -webkit-mask-image: radial-gradient(64% 60% at 52% 48%, #000 30%, transparent 100%);
+    mask-image: radial-gradient(64% 60% at 52% 48%, #000 30%, transparent 100%);
   }
 
   .stats { padding: 72px 0; }

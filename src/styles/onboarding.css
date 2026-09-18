@@ -59,7 +59,9 @@
 
 /* step body */
 .ob-body { display: flex; flex-direction: column; }
-.ob-eyebrow { font-family: var(--ff-soft); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ob-accent); margin-bottom: 14px; }
+/* rotulo de paso: caja normal y sin tracking, el lenguaje viejo de kickers en
+   mayusculas se va con la marca nueva (BRAND.md, seccion 10) */
+.ob-eyebrow { font-family: var(--ff-soft); font-size: .75rem; font-weight: 500; letter-spacing: 0; color: var(--ink-3); margin-bottom: 14px; }
 .ob-body h1 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700; margin: 0 0 10px; text-wrap: balance; }
 .ob-body .sub { font-size: 16px; color: var(--ink-2); margin: 0 0 26px; max-width: 34em; line-height: 1.5; }
 .ob-fade { animation: obFade .42s cubic-bezier(.2,.7,.2,1) both; }

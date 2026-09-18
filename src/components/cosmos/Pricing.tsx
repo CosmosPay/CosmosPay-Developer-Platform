@@ -13,7 +13,7 @@ export default function Pricing({ user = null, lang }) {
   useReveal();
   return (
     <>
-      <Nav theme={theme} setTheme={setTheme} user={user} />
+      <Nav theme={theme} setTheme={setTheme} user={user} overPanel="black" />
       <main id="main">
         <PricingHero billing={billing} setBilling={setBilling} />
         <PlansSection user={user} billing={billing} />

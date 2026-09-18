@@ -65,7 +65,9 @@ export function Nav({ theme, setTheme, user = null, overPanel }: { theme: Theme;
     const h = () => {
       setScrolled(window.scrollY > 8);
       setActive(null);
-      const hero = document.querySelector<HTMLElement>(".hero");
+      /* el hero negro de la landing y el de /pricing; los dos llevan la barra
+         transparente mientras estan debajo */
+      const hero = document.querySelector<HTMLElement>(".hero, .pricing-hero");
       setOverInk(!!overPanel && !!hero && window.scrollY < hero.offsetHeight - 72);
     };
     h();

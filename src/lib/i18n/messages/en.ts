@@ -278,7 +278,7 @@ export default {
       payMock: { received: "Payment received", via: "via Stellar · 4.2s", fee: "fee $0.00001" },
     },
     stats: {
-      title: "Simple. Seguro. Sin límites.",
+      title: "Simple. Secure. Limitless.",
       items: ["API uptime SLA", "p99 response time", "countries supported", "API calls / month"],
     },
     customers: {
@@ -316,7 +316,7 @@ export default {
       ],
     },
     cta: {
-      label: "Una nueva forma de mover tu mundo digital.",
+      label: "A new way to move your digital world.",
       thanks: "Gracias por confiar.",
       title: "Start building today.",
       desc: "Spin up a free testnet sandbox and go live on Stellar the moment you’re ready.",
