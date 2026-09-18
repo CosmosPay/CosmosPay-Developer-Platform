@@ -17,6 +17,8 @@ export function CompareSection() {
     <section className="lp-panel compare-panel" data-panel="white">
       <div className="wrap compare">
       <h2>{p.compareTitle}<span className="num" aria-hidden="true">/02</span></h2>
+      {/* el .t-scroll se come el desborde: la tabla scrollea sola y la pagina no */}
+      <div className="t-scroll">
       <table className="cmp-table">
         <thead><tr>{p.compareHead.map((h, i) => <th key={h} style={i === 0 ? undefined : { textAlign: "center" }}>{h}</th>)}</tr></thead>
         <tbody>
@@ -30,6 +32,7 @@ export function CompareSection() {
           ))}
         </tbody>
       </table>
+      </div>
       </div>
     </section>
   );

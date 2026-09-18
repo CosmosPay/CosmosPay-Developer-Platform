@@ -29,7 +29,7 @@
 .ob-exit { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; font-size: 14px; font-weight: 600; color: var(--ink-3); border: 1px solid var(--line-2); background: transparent; border-radius: 10px; cursor: pointer; transition: color .18s, border-color .18s; }
 .ob-exit.icon { width: 38px; padding: 0; justify-content: center; }
 .ob-exit:hover { color: var(--ink); border-color: var(--ink-3); }
-.ob-exit svg { width: 16px; height: 16px; }
+.ob-exit svg, .ob-exit .ic-slot { width: 16px; height: 16px; }
 
 /* ---------------- step indicator (rebuilt) ----------------
    (1) Label  →  (2) Label  →  …   Reached steps are clickable to edit.

@@ -296,6 +296,9 @@ button { font-family: inherit; cursor: pointer; }
 }
 .theme-btn:hover { border-color: var(--ink); }
 .theme-btn svg { width: 19px; height: 19px; }
+/* hueco del icono del tema mientras el componente no monto: reserva el mismo
+   lugar que el svg para que el nav no salte al hidratar */
+.ic-slot { display: block; width: 19px; height: 19px; }
 
 /* language selector */
 .lang { position: relative; }
@@ -513,7 +516,10 @@ button { font-family: inherit; cursor: pointer; }
 .terminal-bar i { width: 11px; height: 11px; border-radius: 50%; display: block; opacity: .55; background: #6B6B6B; }
 .terminal-body { position: relative; padding: 4px 22px 24px; font-family: var(--ff-mono); font-size: .8125rem; line-height: 1.75; overflow-x: auto; }
 .terminal-body pre { margin: 0; color: #C9C9C9; white-space: pre; font-family: inherit; }
-.terminal-badge { position: absolute; right: 18px; bottom: 18px; font-family: var(--ff-mono); font-size: 11px; color: #909090; background: rgba(255,255,255,.08); padding: 4px 10px; border-radius: 999px; }
+/* fondo opaco a proposito: el badge esta fijo sobre .terminal-body, que scrollea
+   en horizontal, y a 390px el codigo le pasa por debajo. Translucido no se lee
+   ni el badge ni el codigo. */
+.terminal-badge { position: absolute; right: 18px; bottom: 18px; font-family: var(--ff-mono); font-size: 11px; color: #909090; background: #1C1C1C; padding: 4px 10px; border-radius: 999px; }
 /* colores de sintaxis: semantica de editor autorizada por BRAND.md, no corregir a Cosmic Blue */
 .tok-kw { color: #8FB4FF; } .tok-fn { color: #6FB7FF; } .tok-str { color: #7EE0A8; } .tok-num { color: #FFB86B; } .tok-com { color: #8A8A8A; font-style: italic; } .tok-prop { color: #E6E6E6; }
 

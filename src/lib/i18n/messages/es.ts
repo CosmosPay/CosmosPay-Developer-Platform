@@ -514,7 +514,8 @@ export default {
           a: "Leer la documentación"
         }
       ],
-      mockLink: "Enlace de pago · 19.99 USDC"
+      mockLink: "Enlace de pago · 19.99 USDC",
+      mockPay: "Pagar"
     },
     solutions: {
       kicker: "// soluciones",

@@ -202,7 +202,7 @@ export default {
   /* ---------------- landing ---------------- */
   landing: {
     hero: {
-      tagline: "Tu mundo digital en movimiento.",
+      tagline: "Your digital world, in motion.",
       headline: "Write less code -> move more money",
       lede: "The payments infrastructure for developers. One API to move money on the Stellar network — stablecoins and digital assets that settle in seconds, across 130+ countries, with fees in fractions of a cent.",
       getKeys: "Get API keys",
@@ -236,6 +236,7 @@ export default {
         { t: "Build your own", d: "Use our REST + GraphQL APIs, typed SDKs and CLI to craft a fully bespoke Stellar integration.", a: "Read the docs" },
       ],
       mockLink: "Payment link · 19.99 USDC",
+      mockPay: "Pay",
     },
     solutions: {
       kicker: "// solutions",
@@ -317,7 +318,7 @@ export default {
     },
     cta: {
       label: "A new way to move your digital world.",
-      thanks: "Gracias por confiar.",
+      thanks: "Thanks for trusting us.",
       title: "Start building today.",
       desc: "Spin up a free testnet sandbox and go live on Stellar the moment you’re ready.",
       getKeys: "Get API keys",

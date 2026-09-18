@@ -47,6 +47,8 @@ export function Solutions({ user }) {
   const [open, setOpen] = useState(null);
   return (
     <section className="lp-panel solutions" data-panel="white" id="solutions">
+      {/* trazo 2 de 3: ornamento del panel, con aire propio al lado del encabezado */}
+      <span className="trazo-deco trazo-1" aria-hidden="true" />
       <div className="wrap">
         <div className="section-head reveal">
           <h2>{s.title}<span className="num" aria-hidden="true">/03</span></h2>
@@ -60,8 +62,6 @@ export function Solutions({ user }) {
                    data-panel={m.feat ? "navy" : undefined}
                    style={{ transitionDelay: `${(i % 3) * 0.07}s` }}>
                 <button className="expand-c" onClick={() => setOpen(m.i)} aria-label={item.t}><IcExpand /></button>
-                {/* trazo 2 de 3: solo en la ficha destacada, recortado por su borde */}
-                {m.feat && <span className="trazo-deco trazo-1" aria-hidden="true" />}
                 {m.feat && <PayMock />}
                 <div className="sti">{SOL_ICONS[m.i]}</div>
                 <div className="st-body"><h3>{item.t}</h3><p>{item.d}</p></div>

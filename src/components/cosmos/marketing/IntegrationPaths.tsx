@@ -9,9 +9,19 @@ import { SCALE_VALUES, PATH_NUMS } from "./data";
 // Prebuilt UI → browser SDK, Build-your-own (the REST/SDK "API" path) → the docs.
 const PATH_HREFS = ["/dashboard", "/docs/sdk/web/web-client", "/docs"];
 
-function pathMock(n) {
+function pathMock(n, ig) {
   if (n === "01") return null; // filled by caller with translated link text
-  if (n === "02") return <div className="ip-mock"><div className="ip-logos">{[0, 1, 2, 3, 4, 5].map((k) => <i key={k} />)}</div></div>;
+  /* /02 muestra un pedazo de checkout armado con los componentes: monto, campo
+     y boton. Los circulos vacios de antes parecian un placeholder de carga. */
+  if (n === "02") return (
+    <div className="ip-mock">
+      <div className="ip-checkout">
+        <div className="ipc-amt">19.99 <span>USDC</span></div>
+        <div className="ipc-field">you@company.com</div>
+        <div className="ipc-btn">{ig.mockPay}</div>
+      </div>
+    </div>
+  );
   return <div className="ip-mock"><div className="ip-code"><span className="tok-kw">const</span> {"{ Client }"} = require(<span className="tok-str">'@cosmosapp/pay_sdk'</span>);<br />await client.paymentIntents.createPay(...)</div></div>;
 }
 
@@ -37,7 +47,7 @@ export function IntegrationPaths() {
             const num = PATH_NUMS[i];
             return (
               <div className="ip reveal" key={num} style={{ transitionDelay: `${i * 0.07}s` }}>
-                {num === "01" ? <div className="ip-mock"><div className="chip">{ig.mockLink}</div></div> : pathMock(num)}
+                {num === "01" ? <div className="ip-mock"><div className="chip">{ig.mockLink}</div></div> : pathMock(num, ig)}
                 <div className="ipn">{"/" + num}</div>
                 <h3>{p.t}</h3>
                 <p>{p.d}</p>
