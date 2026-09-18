@@ -202,6 +202,7 @@ export default {
   /* ---------------- landing ---------------- */
   landing: {
     hero: {
+      tagline: "Tu mundo digital en movimiento.",
       headline: "Write less code -> move more money",
       lede: "The payments infrastructure for developers. One API to move money on the Stellar network — stablecoins and digital assets that settle in seconds, across 130+ countries, with fees in fractions of a cent.",
       getKeys: "Get API keys",
@@ -277,6 +278,7 @@ export default {
       payMock: { received: "Payment received", via: "via Stellar · 4.2s", fee: "fee $0.00001" },
     },
     stats: {
+      title: "Simple. Seguro. Sin límites.",
       items: ["API uptime SLA", "p99 response time", "countries supported", "API calls / month"],
     },
     customers: {
@@ -314,6 +316,8 @@ export default {
       ],
     },
     cta: {
+      label: "Una nueva forma de mover tu mundo digital.",
+      thanks: "Gracias por confiar.",
       title: "Start building today.",
       desc: "Spin up a free testnet sandbox and go live on Stellar the moment you’re ready.",
       getKeys: "Get API keys",

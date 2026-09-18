@@ -13,7 +13,11 @@ export function MegaPanel({ item }: { item: any }) {
         ))}
       </div>
       {item.featured && (
-        <div className="mega-feat"><div className="thumb" /><div className="body"><strong>{item.featured.title}</strong><p>{item.featured.desc}</p><a href={item.featured.href || (item.key === "developers" ? "/docs/getting-started" : "#")}>{item.featured.cta} <IcChevSm /></a></div></div>
+        <div className="mega-feat">
+          {/* trazo 3 de 3: blanco sobre la miniatura navy, recortado por la caja */}
+          <div className="thumb"><span className="trazo-deco trazo-3" aria-hidden="true" /></div>
+          <div className="body"><strong>{item.featured.title}</strong><p>{item.featured.desc}</p><a href={item.featured.href || (item.key === "developers" ? "/docs/getting-started" : "#")}>{item.featured.cta} <IcChevSm /></a></div>
+        </div>
       )}
     </div>
   );

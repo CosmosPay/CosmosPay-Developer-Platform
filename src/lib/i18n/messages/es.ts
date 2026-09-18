@@ -457,6 +457,7 @@ export default {
   },
   landing: {
     hero: {
+      tagline: "Tu mundo digital en movimiento.",
       headline: "Escribe menos código -> mueve más dinero",
       lede: "La infraestructura de pagos para desarrolladores. Una API para mover dinero en la red Stellar: stablecoins y activos digitales que se liquidan en segundos, en más de 130 países, con comisiones de fracciones de centavo.",
       getKeys: "Obtener claves de API",
@@ -560,6 +561,7 @@ export default {
       }
     },
     stats: {
+      title: "Simple. Seguro. Sin límites.",
       items: ["SLA de disponibilidad de la API", "tiempo de respuesta p99", "países compatibles", "llamadas a la API / mes"]
     },
     customers: {
@@ -634,6 +636,8 @@ export default {
       ]
     },
     cta: {
+      label: "Una nueva forma de mover tu mundo digital.",
+      thanks: "Gracias por confiar.",
       title: "Empieza a construir hoy.",
       desc: "Crea un sandbox de testnet gratuito y entra en producción en Stellar en cuanto estés listo.",
       getKeys: "Obtener claves de API",

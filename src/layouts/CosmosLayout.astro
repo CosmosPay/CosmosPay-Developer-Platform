@@ -14,6 +14,8 @@ interface Props {
   noindex?: boolean;
   /** Open Graph type — "website" for marketing pages, "article" for posts. */
   type?: string;
+  /** Solo la landing: precarga la cinta del hero, la imagen mas grande sobre la linea de flotacion. */
+  preloadCinta?: boolean;
 }
 
 const {
@@ -23,6 +25,7 @@ const {
   image = "/og-image.png",
   noindex = false,
   type = "website",
+  preloadCinta = false,
 } = Astro.props;
 
 // Locale comes from the cookie (set by the in-app language switcher) so SSR and the
@@ -104,6 +107,11 @@ const jsonLd = {
     <!-- Tipografia de marca (Open Sauce One) servida desde /public/fonts; el @font-face
          vive en cosmos.css. Se precarga el peso Regular, que esta en todas las paginas. -->
     <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Light es el peso de todos los titulares; sin preload el h1 salta al llegar la fuente. -->
+    <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />
+    {preloadCinta && (
+      <link rel="preload" as="image" href="/brand/cinta.webp" fetchpriority="high" />
+    )}
 
     <script is:inline>
       // Apply persisted theme before paint to avoid a flash.

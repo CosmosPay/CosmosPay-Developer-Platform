@@ -15,7 +15,7 @@ export default function Landing({ user = null, lang }) {
   useReveal();
   return (
     <>
-      <Nav theme={theme} setTheme={setTheme} user={user} />
+      <Nav theme={theme} setTheme={setTheme} user={user} overPanel="black" />
       <main id="main">
         <Hero user={user} />
         <ApiSection />

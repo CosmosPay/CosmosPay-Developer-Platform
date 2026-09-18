@@ -1,4 +1,5 @@
-/* ApiSection.jsx — API section + terminal copy button. */
+/* ApiSection.tsx: /01 del deck, los tres modulos de la API mas el bloque de
+   documentacion con el terminal y los dos SDK. */
 import { useCopy, hl, IcArrow, IcChevSm, IcCheck, IcCopy } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { API_SNIPPET, API_CARD_KEYS, SDK_KEYS } from "./data";
@@ -20,11 +21,10 @@ export function ApiSection() {
   const t = useT();
   const a = t.landing.api;
   return (
-    <section className="api" id="api">
+    <section className="lp-panel api" data-panel="white" id="api">
       <div className="wrap">
         <div className="section-head reveal">
-          <span className="kicker">{a.kicker}</span>
-          <h2>{a.title}</h2>
+          <h2>{a.title}<span className="num" aria-hidden="true">/01</span></h2>
           <p>{a.lede}</p>
         </div>
         <div className="api-cards">
@@ -37,23 +37,23 @@ export function ApiSection() {
             </div>
           ))}
         </div>
-      </div>
-      <div className="api-docs">
-        <div className="wrap docs-grid">
-          <div className="terminal reveal">
-            <div className="terminal-bar"><i /><i /><i /><TermCopy text={API_SNIPPET} /></div>
-            <div className="terminal-body">
-              <pre dangerouslySetInnerHTML={{ __html: hl(API_SNIPPET) }} />
-              <span className="terminal-badge">@cosmosapp/pay_sdk</span>
+        <div className="api-docs">
+          <div className="docs-grid">
+            <div className="terminal reveal">
+              <div className="terminal-bar"><i /><i /><i /><TermCopy text={API_SNIPPET} /></div>
+              <div className="terminal-body">
+                <pre dangerouslySetInnerHTML={{ __html: hl(API_SNIPPET) }} />
+                <span className="terminal-badge">@cosmosapp/pay_sdk</span>
+              </div>
             </div>
-          </div>
-          <div className="docs-copy reveal" style={{ transitionDelay: ".08s" }}>
-            <h3>{a.docsTitle}</h3>
-            <p>{a.docsDesc}</p>
-            <div className="sdk-btns">
-              {SDK_KEYS.map((key) => (<a className="sdk-btn" href={SDK_HREF[key] || "/docs"} key={key}>{SDK_ICONS[key]}{a.sdkBtns[key]}</a>))}
+            <div className="docs-copy reveal" style={{ transitionDelay: ".08s" }}>
+              <h3>{a.docsTitle}</h3>
+              <p>{a.docsDesc}</p>
+              <div className="sdk-btns">
+                {SDK_KEYS.map((key) => (<a className="sdk-btn" href={SDK_HREF[key] || "/docs"} key={key}>{SDK_ICONS[key]}{a.sdkBtns[key]}</a>))}
+              </div>
+              <a className="docs-explore" href="/docs">{a.exploreDocs} <IcArrow /></a>
             </div>
-            <a className="docs-explore" href="/docs">{a.exploreDocs} <IcArrow /></a>
           </div>
         </div>
       </div>

@@ -32,20 +32,25 @@ export const SOL_EX = {
   ramp: ["client.webhooks.on(", "  'paymentIntentSucceeded',", "  (event) => settle(event.data),", ");"],
   wallet: ["import { WebClient } from", "  '@cosmosapp/pay_sdk/web';", "const { txHash } =", "  await new WebClient().pay(intent);"],
 };
+/* El bento no se pinta con gradientes: la ficha destacada es un panel navy y
+   las otras cuatro son superficie con borde al 12 %. Solo queda la key y cual
+   es la destacada. */
 export const SOL_META = [
-  { i: "pay", gw: "gw1", feat: true },
-  { i: "coin", gw: "gw2" },
-  { i: "globe", gw: "gw3" },
-  { i: "ramp", gw: "gw4" },
-  { i: "wallet", gw: "gw2" },
+  { i: "pay", feat: true },
+  { i: "coin" },
+  { i: "globe" },
+  { i: "ramp" },
+  { i: "wallet" },
 ];
 export const STAT_VALUES = [{ n: "99.99", u: "%" }, { n: "<70", u: "ms" }, { n: "130", u: "+" }, { n: "8.4", u: "B" }];
 export const SCALE_VALUES = ["500M+", "10k+", "~5s", "99.999%"];
 export const PATH_NUMS = ["01", "02", "03"];
+/* Los casos son filas separadas por hairline, sin cubierta de color ni glifo:
+   de la ficha vieja solo sobrevive la cifra. */
 export const CASE_META = {
-  Northwind: { bg: "#05064F", g: 0, metric: "+38%" },
-  Lumio: { bg: "#000877", g: 3, metric: "6 wks" },
-  Helios: { bg: "#000000", g: 2, metric: "$2.4B" },
+  Northwind: { metric: "+38%" },
+  Lumio: { metric: "6 wks" },
+  Helios: { metric: "$2.4B" },
 };
 export const QUOTE_META = [{ av: "MC", n: "Maya Chen" }, { av: "DO", n: "Daniel Ortiz" }, { av: "PN", n: "Priya Nair" }];
 

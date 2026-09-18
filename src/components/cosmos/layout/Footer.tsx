@@ -15,11 +15,11 @@ const FOOT_GROUPS = [
 export function Footer() {
   const t = useT();
   return (
-    <footer className="footer">
+    <footer className="footer" data-panel="white">
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <a className="brand" href={HOME}><CosmosLockup height={32} /></a>
+            <a className="brand" href={HOME}><CosmosLockup height={36} /></a>
             <p>{t.footer.tagline}</p>
           </div>
           {FOOT_GROUPS.map((g) => {
