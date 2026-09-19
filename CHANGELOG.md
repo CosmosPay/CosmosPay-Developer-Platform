@@ -2,6 +2,21 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.4.0] - 2026-09-19
+
+### Features
+- Tokens, tipografia y logo de la marca nueva (c169eb2)
+- Landing con los paneles, los titulares y los motivos del deck (9c2d0a7)
+- La wallet primero, y la barra y el idioma que no se veian (b400ba4)
+
+### Bug Fixes
+- Correcciones de la ronda 1 de revision sobre el landing (4b28d9f)
+- La promo cruzada entra en el sistema y el landing en ES pasa a voseo (c3cad78)
+
+### Miscellaneous
+- Arreglos de la ronda 2 de revision en el landing (d8ad0f7)
+- Barrido de los restos de la marca vieja fuera del landing (f25390e)
+
 ## [0.3.0] - 2026-09-16
 
 ### Features
@@ -55,6 +70,11 @@ Generated from [Conventional Commits](https://www.conventionalcommits.org) by [g
 ### CI/CD
 - Track dev as the working branch instead of fumadocs (5284276)
 
+## [0.1.2] - 2026-07-11
+
+### Miscellaneous
+- Bump the minor-and-patch group in /docs with 10 updates (3deafd9)
+
 ## [0.1.1] - 2026-07-11
 
 ### Miscellaneous
@@ -66,9 +86,6 @@ Generated from [Conventional Commits](https://www.conventionalcommits.org) by [g
 - Migrate to Prisma 7 (driver adapters) (3194a69)
 
 ## [0.0.2] - 2026-07-11
-
-### Miscellaneous
-- Bump the minor-and-patch group in /docs with 10 updates (3deafd9)
 
 ### CI/CD
 - Add CI, Dependabot, versioning and git-cliff changelog automation (3643b2e)
