@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.4.1] - 2026-09-19
+
+### Documentation
+- Skill de Cosmos Pay para agentes (skills.stellar.org) (4181499)
+
 ## [0.4.0] - 2026-09-19
 
 ### Features
