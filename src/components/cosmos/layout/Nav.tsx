@@ -65,10 +65,15 @@ export function Nav({ theme, setTheme, user = null, overPanel }: { theme: Theme;
     const h = () => {
       setScrolled(window.scrollY > 8);
       setActive(null);
-      /* el hero negro de la landing y el de /pricing; los dos llevan la barra
-         transparente mientras estan debajo */
-      const hero = document.querySelector<HTMLElement>(".hero, .pricing-hero");
-      setOverInk(!!overPanel && !!hero && window.scrollY < hero.offsetHeight - 72);
+      /* La barra se vuelve transparente y toma tinta clara solo mientras esta
+         sobre un panel oscuro. Antes miraba ".hero" dando por sentado que el
+         hero era la primera seccion; cuando la wallet paso arriba el hero dejo
+         de estar primero y la barra quedaba blanca sobre un panel blanco, o
+         sea invisible. Ahora pregunta por el panel que realmente tiene debajo. */
+      const first = document.querySelector<HTMLElement>("main section[data-panel]");
+      const panel = first?.dataset.panel;
+      const oscuro = panel === "black" || panel === "navy";
+      setOverInk(!!overPanel && !!first && oscuro && window.scrollY < first.offsetHeight - 72);
     };
     h();
     window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h);
@@ -122,6 +127,10 @@ export function Nav({ theme, setTheme, user = null, overPanel }: { theme: Theme;
       {mob && (
         <div className="mobile-menu">
           {NAV_ITEMS.map((it) => <a key={it.key} className="mm-link" href={it.href || "#"} onClick={() => setMob(false)}>{it.label}</a>)}
+          {/* Por debajo de 1100px el CSS esconde el selector de la barra y deja
+              solo la hamburguesa, pero el menu no lo repetia: en celular no
+              habia ninguna forma de cambiar el idioma. */}
+          <div className="mm-lang"><LangSelect /></div>
           <div className="mm-actions">
             {user ? (
               <>

@@ -28,7 +28,7 @@ export function Hero({ user }) {
      va y las dos mitades quedan como dos lineas del titulo Light */
   const parts = headline.split("->");
   return (
-    <section className="lp-panel hero" data-panel="black">
+    <section className="lp-panel hero" data-panel="navy">
       <div className="wrap">
         <div className="hero-grid">
           <div className="hero-copy reveal in">

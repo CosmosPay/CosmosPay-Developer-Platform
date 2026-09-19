@@ -15,12 +15,17 @@ export default function Landing({ user = null, lang }) {
   useReveal();
   return (
     <>
-      <Nav theme={theme} setTheme={setTheme} user={user} overPanel="black" />
+      {/* la barra hereda el color del primer panel: al pasar la wallet arriba
+          el panel de entrada es blanco, y con overPanel="black" los links
+          quedaban blancos sobre blanco. */}
+      <Nav theme={theme} setTheme={setTheme} user={user} overPanel="white" />
       <main id="main">
-        <Hero user={user} />
-        {/* la wallet primero: es lo que la mayoria viene a buscar. Lo tecnico
-            (API, docs, stats, casos) sigue abajo, sin cambios. */}
+        {/* La wallet es lo primero que se ve, sin scrollear: quien entra a
+            cosmospay.lat viene a conseguirla, no a leer sobre la API. El hero
+            de desarrolladores baja a la zona tecnica, pegado al SDK, que es
+            donde ese mensaje tiene sentido. */}
         <WalletSection />
+        <Hero user={user} />
         <DevKit />
         <ApiSection />
         <IntegrationPaths />

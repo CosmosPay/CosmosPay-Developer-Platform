@@ -444,6 +444,8 @@ select.field { cursor: pointer; }
   .nav-burger { display: grid; }
   .nav-right .lang, .nav-right .link-login, .nav-right .getkeys { display: none; }
   .mobile-menu { display: block; position: fixed; left: 0; right: 0; top: 72px; background: var(--bg); border-bottom: 1px solid var(--line); padding: 14px 16px 22px; z-index: 49; box-shadow: none; max-height: calc(100vh - 72px); overflow-y: auto; }
+  .mm-lang { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .mm-lang .lang-menu { left: 0; right: auto; }
   .mm-link { display: block; font-size: 18px; font-weight: 500; color: var(--ink); padding: 13px 0; border-bottom: 1px solid var(--line); }
   .mm-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
   .mm-actions .btn { width: 100%; }
@@ -1084,7 +1086,10 @@ a.icon-mini { text-decoration: none; }
 .wallet-figure { position: relative; justify-self: end; }
 /* los PNG traen ~34 % de transparencia alrededor, asi que la caja va bien mas
    alta que la figura para no bajar de los 180px utiles que pide BRAND.md */
-.wfig { display: block; width: auto; height: 420px; max-width: 100%; }
+/* Los PNG del personaje traen alrededor de un tercio de aire transparente,
+   asi que la caja siempre se ve mas grande que la figura: a 420px de caja
+   el astronauta medía unos 277px y quedaba chico al lado del titular. */
+.wfig { display: block; width: auto; height: 560px; max-width: 100%; }
 .wfig-dark { display: none; }
 [data-theme="dark"] .wfig-light { display: none; }
 [data-theme="dark"] .wfig-dark { display: block; }
@@ -1117,7 +1122,7 @@ a.icon-mini { text-decoration: none; }
 @media (max-width: 1040px) {
   .wallet-grid { grid-template-columns: 1fr; gap: 48px; }
   .wallet-figure { justify-self: center; order: -1; }
-  .wfig { height: 320px; }
+  .wfig { height: 420px; }
   .dk-grid { grid-template-columns: 1fr; }
   .xp-grid { grid-template-columns: 1fr; gap: 40px; }
   .xp-astro { justify-self: center; height: 230px; }
@@ -1128,7 +1133,7 @@ a.icon-mini { text-decoration: none; }
   .wway-ic svg { width: 19px; height: 19px; }
   .wway-txt b { font-size: 1rem; }
   .wway-go { display: none; }
-  .wfig { height: 290px; }
+  .wfig { height: 360px; }
   .wm-head { flex-wrap: wrap; gap: 8px; }
   .wm-dl { margin-left: 0; }
   .wm-ver { display: none; }
