@@ -371,3 +371,47 @@ model WalletBackup {
   @@index([stellarAddress])
   @@map("wallet_backup")
 }
+
+// ---------------- Account recovery (SEP-30) ----------------
+// See src/lib/recovery.ts. A deployment is ONE of the two recovery servers, and `role` is
+// on every row so that two of them sharing a database by accident still never share an
+// account. The signer this server holds for an account is DERIVED (recovery-config.ts), so
+// there is no key material here — only who may ask it to sign.
+
+model RecoveryAccount {
+  id        String   @id @default(cuid())
+  // "a" | "b" — which server registered this account.
+  role      String
+  // The Stellar account being protected.
+  address   String
+  // "public" | "testnet": a signer is an entry on ONE ledger.
+  network   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  methods RecoveryAuthMethod[]
+
+  @@unique([role, address])
+  @@map("recovery_account")
+}
+
+// One way of proving you may act for an account: an email, a phone, another Stellar account.
+// SEP-30 groups these under identities by role; they are stored flat so "which accounts can
+// this email recover?" is an index lookup rather than a scan of JSON.
+model RecoveryAuthMethod {
+  id           String   @id @default(cuid())
+  accountId    String
+  // SEP-30 identity role: "owner" | "sender" | "receiver".
+  identityRole String
+  // "email" | "phone_number" | "stellar_address".
+  type         String
+  // Normalised at write time: an email lowercased, an address as its G… form.
+  value        String
+  createdAt    DateTime @default(now())
+
+  account RecoveryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([type, value])
+  @@map("recovery_auth_method")
+}

@@ -93,8 +93,8 @@ reference on staging, build with the flag set.
 
 ### Current coverage
 
-**103 of 103 route operations are documented**, plus the external `/cosmos-api/{path}` gateway
-route — 81 paths, 117 operations. One route is deliberately excluded and named with its
+**114 of 114 route operations are documented**, plus the external `/cosmos-api/{path}` gateway
+route — 88 paths in the document. One route is deliberately excluded and named with its
 reason in `scripts/check-openapi-coverage.mjs`: `/api/auth/{all}`, which is Better Auth's own
 handler. Keep it that way: `npm run check:openapi` is the check that says so, and an endpoint
 is either documented or listed in that exclusion map with a reason — never just missing.
@@ -111,3 +111,46 @@ and renders in Swagger UI. Two habits keep it that way:
 - **Upstream shapes come from `src/lib/cosmos.ts`** (the TypeScript interfaces the client
   already declares) or from the Payments API's own spec in `docs/openapi.json`. Don't invent
   field names; both sources are in the repo.
+
+
+## A recovery deployment is this same app, configured to be one
+
+SEP-10 web auth (`/api/sep10/auth`) and SEP-30 account recovery (`/api/recovery/*`) answer
+only where `RECOVERY_ROLE` and the keys beside it are set; every other deployment returns
+503 there, which is not an error so much as "this host is not that server".
+
+**It takes TWO of them, and they must really be two.** Each holds one of the two signers an
+account is recovered with, at half the account's threshold, so that neither can act alone —
+`src/lib/recovery-setup.ts` has the arithmetic. Two deployments sharing `RECOVERY_SIGNER_MASTER`,
+or sitting behind one host, are one server wearing two names, and a single compromise is then
+a whole account. `RECOVERY_ROLE` is not cosmetic either: it goes into every key derived here,
+so changing it on a live server orphans every account already registered against the old one.
+
+Four rules the server side rests on:
+
+- **The signing key is derived per account, and never leaves.** `signerFor` (HKDF from the
+  master) means there is no key of ours anywhere but on the ledger, and `signRecovery` returns
+  a raw SIGNATURE, never a signed envelope — the wallet is collecting two and assembles the
+  transaction itself. A server that returned an envelope would be inviting the other one to be
+  dropped.
+- **`signRefusal` (`src/lib/recovery-core.ts`) is the whole of what a compromised identity can
+  ask for.** SEP-30 leaves the policy to the server, and the generous reading — sign whatever an
+  authenticated identity asks — makes each server a payment service for anyone who can receive
+  the person's email. The narrow reading is: the source is the registered account, the operations
+  are a signer/threshold change on it (with the sponsorship pair), the window is bounded, and the
+  signer is an ordinary key. It is pure, and `tests/unit/recovery.test.ts` is where it is pinned.
+- **Registering, and changing who may recover, need the ACCOUNT's own key** (a SEP-10 token).
+  An identity that could add itself would be a way in rather than a way back. The identity token
+  (`/api/recovery/identity`, minted from a wallet sign-in) can only read and ask for a signature,
+  and is scoped to one server's audience so the sibling's is refused.
+- **Sponsoring is the operator's offer, not either server's.** `/api/wallet/recovery/setup` lives
+  on the main platform, pays the two signer entries' reserve and signs as sponsor only. The
+  account's own signature is deliberately missing: the wallet adds it after its guard has decoded
+  every operation.
+
+Separately, and regardless of whether a deployment is a recovery server: a wallet that HAS been
+recovered signs with a key that replaced its account's master. `src/lib/account-signers.ts` is
+what lets it still sign in — the address first, with no network call, and only on failure the
+account's current signers from `STELLAR_HORIZON_URL`. Mainnet only, and the operator's URL rather
+than the request's, because an address on mainnet can also be created on testnet by anyone who
+could then put their own signer on it. Read that file's header before widening it.

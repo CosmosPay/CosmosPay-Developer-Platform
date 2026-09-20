@@ -244,6 +244,20 @@ export function backupMessage(stellarAddress: string, box: string, signedAt: str
   );
 }
 
+/**
+ * The challenge for asking the operator to sponsor an account's recovery signers
+ * (src/pages/api/wallet/recovery/setup.ts). Its own line, like every other, so a signature
+ * made for a sign-in cannot be spent on a sponsorship and the other way round.
+ */
+export function recoverySetupMessage(stellarAddress: string, signers: readonly string[], signedAt: string): string {
+  return (
+    `Cosmos Pay Wallet recovery setup\n` +
+    `account: ${stellarAddress}\n` +
+    `signers: ${[...signers].join(",")}\n` +
+    `at: ${signedAt}`
+  );
+}
+
 /** Is a signed ISO timestamp close enough to now to accept? */
 export function signedAtFresh(signedAt: string, now = Date.now()): boolean {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/.test(signedAt)) return false;

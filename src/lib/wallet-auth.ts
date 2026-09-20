@@ -40,6 +40,7 @@
 import {
   BETTER_AUTH_SECRET,
   BETTER_AUTH_URL,
+  STELLAR_HORIZON_URL,
   WALLET_GITHUB_CLIENT_ID,
   WALLET_GITHUB_CLIENT_SECRET,
   WALLET_GOOGLE_CLIENT_ID,
@@ -50,6 +51,7 @@ import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderWalletLoginCodeEmail } from "@/lib/emails";
 import { withinBudget, type RatePolicy } from "@/lib/rate-limit";
 import { verifyStellarSignature } from "@/lib/stellar-verify";
+import { fetchAccountSigners, signedByCurrentSigner } from "@/lib/account-signers";
 import { provisionWalletAccount, type WalletKeys } from "@/lib/wallet-provisioning";
 import {
   HANDSHAKE_TTL_MS,
@@ -512,6 +514,30 @@ export async function verifyEmailLogin(input: { claimToken: string; code: string
 /* ---------------------------------- finish ---------------------------------- */
 
 /**
+ * Was this message signed by someone who can act for `address`?
+ *
+ * The master key first, with no network call: that is what every wallet that has not been
+ * recovered signs with, and it must not depend on Horizon being up. Only when that fails
+ * does this ask the ledger who the account's signers are NOW — because a wallet recovered
+ * through SEP-30 signs with a key that replaced the address's own, and refusing it would
+ * lock the owner out of the platform that recorded the recovery.
+ *
+ * A Horizon failure is a refusal, never an acceptance. And the URL is the operator's, never
+ * the request's — see `lib/account-signers.ts` for why that distinction is the whole safety
+ * of this function.
+ */
+async function signedByAccount(address: string, message: string, signature: string): Promise<boolean> {
+  if (verifyStellarSignature(address, message, signature)) return true;
+  if (!STELLAR_HORIZON_URL) return false;
+  try {
+    const account = await fetchAccountSigners(STELLAR_HORIZON_URL, address);
+    return account ? signedByCurrentSigner(account, message, signature) : false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Attach the proven email to the key the device holds: create or link the account, keep the
  * backup if one came with it, and mint the wallet's keys.
  *
@@ -534,7 +560,7 @@ export async function finishWalletSignIn(input: {
   if (!identity) return { status: "unauthorized" };
   if (!signedAtFresh(input.signedAt)) return { status: "invalid_signature" };
   const message = finishMessage(identity.email, input.stellarAddress, input.signedAt);
-  if (!verifyStellarSignature(input.stellarAddress, message, input.signature)) return { status: "invalid_signature" };
+  if (!(await signedByAccount(input.stellarAddress, message, input.signature))) return { status: "invalid_signature" };
   if (input.backup !== undefined && !isBackupBox(input.backup)) return { status: "invalid_backup" };
 
   // The conflict is decided BEFORE anything is created, so a refused finish leaves nothing
@@ -592,7 +618,7 @@ export async function updateWalletBackup(input: {
   if (!isBackupBox(input.box)) return { status: "invalid_backup" };
   if (!signedAtFresh(input.signedAt)) return { status: "invalid_signature" };
   const message = backupMessage(input.stellarAddress, input.box, input.signedAt);
-  if (!verifyStellarSignature(input.stellarAddress, message, input.signature)) return { status: "invalid_signature" };
+  if (!(await signedByAccount(input.stellarAddress, message, input.signature))) return { status: "invalid_signature" };
 
   const updated = await prisma.walletBackup.updateMany({
     where: { stellarAddress: input.stellarAddress },
