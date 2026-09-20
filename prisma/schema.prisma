@@ -30,6 +30,7 @@ model User {
   supportTickets  SupportTicket[]
   ownedOrgs       Organization[]       @relation("OrgOwner")
   orgMemberships  OrganizationMember[] @relation("OrgMembership")
+  walletBackup    WalletBackup?
 
   @@map("user")
 }
@@ -291,4 +292,82 @@ model WalletRegistration {
   @@index([stellarAddress])
   @@index([claimHash])
   @@map("wallet_registration")
+}
+
+// ---------------- Wallet sign-in (own social login) ----------------
+// See src/lib/wallet-auth.ts. Three tables, because the flow has three things that must
+// outlive one request: a provider handshake the wallet polls, an emailed code waiting to
+// be typed, and the encrypted seed a person restores on their next device.
+
+// One "Continue with Google/GitHub" from a wallet. The wallet opens `state` in a browser,
+// the provider redirects to our callback, and the wallet polls until the identity is in.
+model WalletAuthHandshake {
+  id            String   @id @default(cuid())
+  // Random, unique, and the only thing the browser carries. Knowing it lets you POLL, not
+  // redeem: redemption needs the PKCE verifier behind `codeChallenge`.
+  state         String   @unique
+  // "google" | "github"
+  provider      String
+  // base64url(SHA-256(verifier)) — RFC 7636 S256, the only method accepted.
+  codeChallenge String
+  // pending → authorized (identity read at the callback) → redeemed; or failed / expired.
+  status        String   @default("pending")
+  // What the provider proved, filled at the callback. `email` is always a VERIFIED one.
+  email         String?
+  name          String?
+  avatar        String?
+  // The provider's own user id, kept for support and audit.
+  subject       String?
+  // A machine-readable reason when status = failed ("email_unverified", "denied", …).
+  error         String?
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("wallet_auth_handshake")
+}
+
+// A six-digit code emailed to prove an inbox. Two ways in: an email sign-in (`via` =
+// "email"), and a provider sign-in for an email that already has an account (`via` =
+// "google" | "github") — the provider proves who consented, the inbox proves who opened
+// the login.
+model WalletLoginCode {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  avatar    String?
+  via       String   @default("email")
+  // SHA-256 of the claim token the wallet keeps. The raw token never touches the DB.
+  claimHash String   @unique
+  // SHA-256 of the emailed code.
+  codeHash  String
+  attempts  Int      @default(0)
+  // pending → claimed; or locked (too many wrong codes) / expired.
+  status    String   @default("pending")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@map("wallet_login_code")
+}
+
+// The wallet's seed, encrypted ON THE DEVICE under a key derived from the person's
+// password. This platform stores it and hands it back after a sign-in; it has no way to
+// open it. One per account: it is the wallet a sign-in restores.
+model WalletBackup {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  // The address the box restores to — and the key that must sign any later change to it.
+  stellarAddress String
+  // Opaque to this server: the wallet's own sealed-box JSON (salt, KDF cost, IV, ciphertext).
+  box            String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stellarAddress])
+  @@map("wallet_backup")
 }

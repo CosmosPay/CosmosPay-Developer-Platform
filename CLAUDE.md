@@ -93,8 +93,8 @@ reference on staging, build with the flag set.
 
 ### Current coverage
 
-**94 of 94 route operations are documented**, plus the external `/cosmos-api/{path}` gateway
-route — 72 paths, 108 operations. One route is deliberately excluded and named with its
+**103 of 103 route operations are documented**, plus the external `/cosmos-api/{path}` gateway
+route — 81 paths, 117 operations. One route is deliberately excluded and named with its
 reason in `scripts/check-openapi-coverage.mjs`: `/api/auth/{all}`, which is Better Auth's own
 handler. Keep it that way: `npm run check:openapi` is the check that says so, and an endpoint
 is either documented or listed in that exclusion map with a reason — never just missing.

@@ -106,6 +106,15 @@ export default defineConfig({
       // created and will link to Authentik on first OAuth sign-in (account linking is on).
       AUTHENTIK_API_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       AUTHENTIK_API_TOKEN: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      // The wallet's own sign-in (src/lib/wallet-auth.ts): one OAuth app per provider, each
+      // registered with the redirect URI `<BETTER_AUTH_URL>/api/wallet/auth/oauth/callback/<provider>`
+      // (…/callback/google, …/callback/github). Separate from Authentik on purpose — these
+      // prove an email to the WALLET, they do not sign anyone in to the dashboard. Optional:
+      // a provider whose pair is unset answers 503 and the wallet still offers the email code.
+      WALLET_GOOGLE_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      WALLET_GOOGLE_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      WALLET_GITHUB_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      WALLET_GITHUB_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       APISIX_URL: envField.string({ context: 'server', access: 'secret' }),
       APISIX_ADMIN_KEY: envField.string({ context: 'server', access: 'secret' }),
       APISSIX_ROUTE_ID: envField.string({ context: 'server', access: 'secret' }),

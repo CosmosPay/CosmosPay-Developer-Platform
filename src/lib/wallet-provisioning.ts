@@ -421,3 +421,87 @@ export async function verifyWalletLink(input: {
 
   return { status: "ready", organizationId, keys: { dev: keys.dev, prod: keys.prod } };
 }
+
+/**
+ * Give a PROVEN email an account — create it, or attach to the one it already has — and
+ * mint the wallet's key pair either way.
+ *
+ * Shared by the two sign-ins that prove an email without the register/confirm round trip:
+ * the Pollar-brokered social login (social-onboarding.ts, kept for migrating existing
+ * wallets) and the wallet's own sign-in (wallet-auth.ts). It mirrors
+ * confirmWalletRegistration + verifyWalletLink minus the parts that only existed to prove
+ * the email — the caller did that, and calling this without having done it is the one way
+ * to misuse it.
+ *
+ * `kind` is written on the WalletRegistration row that records it, already "claimed" —
+ * the keys go back in the caller's response and there is nothing left to collect. That row
+ * is also what makes the dashboard treat the account like the other wallet ones
+ * (isWalletProvisionedUser): no additional keys, rotate the existing pair instead.
+ */
+export async function provisionWalletAccount(input: {
+  email: string;
+  name: string;
+  stellarAddress: string;
+  kind: string;
+  provisionedBy: string;
+}): Promise<{ account: "created" | "linked"; userId: string; organizationId: string; keys: WalletKeys }> {
+  const existing = await prisma.user
+    .findFirst({ where: { email: { equals: input.email, mode: "insensitive" } }, select: { id: true } })
+    .catch(() => null);
+
+  const userId = existing?.id ?? randomUUID();
+  const account: "created" | "linked" = existing ? "linked" : "created";
+
+  if (!existing) {
+    // emailVerified: the caller is the one asserting it, and that assertion is the whole
+    // basis of calling this at all.
+    await prisma.user.create({ data: { id: userId, email: input.email, name: input.name, emailVerified: true } });
+    await prisma.profile.create({ data: { userId, plan: "community" } }).catch(() => null);
+  }
+
+  let organizationId: string;
+  if (existing) {
+    const orgs = await listForUser(userId).catch(() => []);
+    let org = orgs.find((o) => o.role === "owner") ?? orgs[0];
+    if (!org) org = (await ensureDefaultOrg(userId, input.name).catch(() => []))[0];
+    organizationId = org?.id ?? "";
+  } else {
+    const created = await createOrg(userId, `${input.name}'s organization`, true, {
+      provisionedBy: input.provisionedBy,
+      stellarAddress: input.stellarAddress,
+    });
+    organizationId = created.org?.id ?? "";
+  }
+
+  await createConsumer(userId).catch(() => null);
+  const minted = await mintWalletKeys(userId, organizationId);
+  if (!minted.dev && !minted.prod) throw new Error("Failed to mint wallet API keys");
+
+  await prisma.walletRegistration
+    .create({
+      data: {
+        email: input.email,
+        name: input.name,
+        stellarAddress: input.stellarAddress,
+        // Required and unique, and unused here: there is no email to send.
+        verifyToken: randomBytes(32).toString("hex"),
+        claimHash: sha256(randomBytes(32).toString("hex")),
+        kind: input.kind,
+        status: "claimed",
+        userId,
+        organizationId,
+        credentialId: minted.ids.join(","),
+        environment: "both",
+        expiresAt: new Date(),
+      },
+    })
+    .catch(() => null);
+
+  if (!existing) {
+    // So they can also sign in at auth.cosmospay.lat. Best-effort, exactly as the
+    // email-link flow treats it.
+    await provisionAuthentikIdentity({ email: input.email, name: input.name }).catch(() => null);
+  }
+
+  return { account, userId, organizationId, keys: { dev: minted.dev, prod: minted.prod } };
+}

@@ -1,6 +1,15 @@
 /* social-onboarding.ts — sign in with Google or GitHub, and come out the other side
    with a Stellar wallet AND a CosmosPay account.
 
+   ## LEGACY: new wallets no longer come through here
+
+   The wallet's own sign-in (wallet-auth.ts) replaced this for every NEW wallet: the key is
+   generated on the device instead of in Pollar's KMS. What keeps this module alive is the
+   wallets it already made. Moving their funds out needs Pollar to sign one last time, and a
+   Pollar session that expired while the app sat unused can only be renewed through this
+   handshake — so the wallet reaches it from its migration screen, and from nowhere else.
+   Delete it once no Pollar wallet holds a balance.
+
    ## The problem this exists to solve
 
    The Payments service's Pollar bridge is scoped (`pollar:read` / `pollar:write`), so
@@ -49,16 +58,13 @@
    (Pollar signs for it), the gateway features stay off, and nothing is invented. What the
    email is never proof of is the Stellar address: that key lives in Pollar's KMS, and
    nobody here or in the wallet can sign with it. */
-import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { BETTER_AUTH_SECRET } from "astro:env/server";
 import { prisma } from "@/lib/prisma";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderWalletLinkCodeEmail } from "@/lib/emails";
 import { openJson, sealJson } from "@/lib/sealed-box";
-import { createOrg, ensureDefaultOrg, listForUser } from "@/lib/organizations";
-import { createConsumer } from "@/utils/apisix";
-import { provisionAuthentikIdentity } from "@/lib/authentik";
-import { mintWalletKeys, type WalletKeys } from "@/lib/wallet-provisioning";
+import { provisionWalletAccount, type WalletKeys } from "@/lib/wallet-provisioning";
 import { cosmosPollar, type CosmosEnv, type PollarSession } from "@/lib/cosmos";
 // The in-process first line, shared with the other unauthenticated route
 // (wallet telemetry) rather than copied into it. See @/lib/rate-limit.
@@ -441,76 +447,9 @@ async function revokeQuietly(env: CosmosEnv, session: PollarSession, clientIp: s
   await cosmosPollar.logout(env, session.access_token, clientIp).catch(() => null);
 }
 
-/* Create the account, or attach to the one this email already has, and mint the wallet's
-   key pair either way. Mirrors confirmWalletRegistration + verifyWalletLink, minus the
-   parts that only existed to prove the email — the provider did that. */
-async function provisionSocialAccount(input: {
-  email: string;
-  name: string;
-  stellarAddress: string;
-}): Promise<{ account: "created" | "linked"; organizationId: string; keys: WalletKeys }> {
-  const existing = await prisma.user
-    .findFirst({ where: { email: { equals: input.email, mode: "insensitive" } }, select: { id: true } })
-    .catch(() => null);
-
-  const userId = existing?.id ?? randomUUID();
-  const account: "created" | "linked" = existing ? "linked" : "created";
-
-  if (!existing) {
-    // emailVerified: the provider is the one asserting it, and that assertion is the
-    // whole basis of this flow.
-    await prisma.user.create({ data: { id: userId, email: input.email, name: input.name, emailVerified: true } });
-    await prisma.profile.create({ data: { userId, plan: "community" } }).catch(() => null);
-  }
-
-  let organizationId: string;
-  if (existing) {
-    const orgs = await listForUser(userId).catch(() => []);
-    let org = orgs.find((o) => o.role === "owner") ?? orgs[0];
-    if (!org) org = (await ensureDefaultOrg(userId, input.name).catch(() => []))[0];
-    organizationId = org?.id ?? "";
-  } else {
-    const created = await createOrg(userId, `${input.name}'s organization`, true, {
-      provisionedBy: "wallet-social",
-      stellarAddress: input.stellarAddress,
-    });
-    organizationId = created.org?.id ?? "";
-  }
-
-  await createConsumer(userId).catch(() => null);
-  const minted = await mintWalletKeys(userId, organizationId);
-  if (!minted.dev && !minted.prod) throw new Error("Failed to mint social-login API keys");
-
-  // Recorded as a wallet-provisioned registration so the dashboard treats this account
-  // like the other wallet ones: no additional keys, rotate the existing pair instead.
-  // Already "claimed" — the keys went back in this response, there is nothing to collect.
-  await prisma.walletRegistration
-    .create({
-      data: {
-        email: input.email,
-        name: input.name,
-        stellarAddress: input.stellarAddress,
-        // Required and unique, and unused by this flow: there is no email to send.
-        verifyToken: randomBytes(32).toString("hex"),
-        claimHash: sha256(randomBytes(32).toString("hex")),
-        kind: "social",
-        status: "claimed",
-        userId,
-        organizationId,
-        credentialId: minted.ids.join(","),
-        environment: "both",
-        expiresAt: new Date(),
-      },
-    })
-    .catch(() => null);
-
-  if (!existing) {
-    // So they can also sign in at auth.cosmospay.lat. Best-effort, exactly as the
-    // email-link flow treats it.
-    await provisionAuthentikIdentity({ email: input.email, name: input.name }).catch(() => null);
-  }
-
-  return { account, organizationId, keys: { dev: minted.dev, prod: minted.prod } };
+/* The shared account step, with this flow's own label on the row it records. */
+async function provisionSocialAccount(input: { email: string; name: string; stellarAddress: string }) {
+  return provisionWalletAccount({ ...input, kind: "social", provisionedBy: "wallet-social" });
 }
 
 function displayName(session: PollarSession, fallback: string | undefined, email: string): string {

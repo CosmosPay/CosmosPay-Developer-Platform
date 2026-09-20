@@ -4,6 +4,7 @@
 import invitationHtml from "@/emails/invitation.html?raw";
 import walletVerifyHtml from "@/emails/wallet-verify.html?raw";
 import walletLinkCodeHtml from "@/emails/wallet-link-code.html?raw";
+import walletLoginCodeHtml from "@/emails/wallet-login-code.html?raw";
 import tosHtml from "@/emails/tos.html?raw";
 
 function escapeHtml(s: string): string {
@@ -81,6 +82,32 @@ export function renderWalletLinkCodeEmail(v: { name: string; code: string; minut
     "",
     `This code expires in ${v.minutes} minutes and can be used once. If you didn't request this,`,
     `ignore this email — no access is granted without the code.`,
+    "",
+    "— CosmosPay",
+  ].join("\n");
+  return { subject, html, text };
+}
+
+/* One-time code for the wallet's own sign-in (src/lib/wallet-auth.ts): an email sign-in, or a
+   Google/GitHub sign-in for an email that already has an account. Worded for both — the
+   person asked to sign in either way, and the code is what finishes it. */
+export function renderWalletLoginCodeEmail(v: { name: string; code: string; minutes: number }): RenderedEmail {
+  const html = fill(walletLoginCodeHtml, {
+    name: escapeHtml(v.name),
+    code: escapeHtml(v.code),
+    minutes: String(v.minutes),
+  });
+  // Not in the subject: a subject is what a locked phone shows on its notification.
+  const subject = "Your CosmosPay wallet sign-in code";
+  const text = [
+    `Hi ${v.name},`,
+    "",
+    `Use this code to sign in to the CosmosPay Wallet:`,
+    "",
+    `    ${v.code}`,
+    "",
+    `This code expires in ${v.minutes} minutes and can be used once. If you didn't try to sign in,`,
+    `ignore this email — nobody gets in without the code.`,
     "",
     "— CosmosPay",
   ].join("\n");

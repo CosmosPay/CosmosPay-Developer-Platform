@@ -10,7 +10,7 @@
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
 
-const stellarAddress = z
+export const stellarAddress = z
   .string()
   .trim()
   .regex(/^G[A-Z2-7]{55}$/, "Must be a valid Stellar public key (G...56 chars).");
@@ -57,14 +57,14 @@ export const walletLinkVerifyBodySchema = z.object({
    `codeChallenge` is REQUIRED here even though the Payments service treats it as optional.
    The poll route hands the code to whoever knows the `state`, so a handshake without a
    challenge is one anybody who saw that state can redeem. */
-const pkceChallenge = z
+export const pkceChallenge = z
   .string()
   .trim()
   .min(43)
   .max(128)
   .regex(/^[A-Za-z0-9_-]+$/, "code_challenge must be base64url (RFC 7636).");
 
-const pkceVerifier = z
+export const pkceVerifier = z
   .string()
   .trim()
   .min(43)
