@@ -143,6 +143,35 @@ Four rules the server side rests on:
   An identity that could add itself would be a way in rather than a way back. The identity token
   (`/api/recovery/identity`, minted from a wallet sign-in) can only read and ask for a signature,
   and is scoped to one server's audience so the sibling's is refused.
+- **The standard endpoints answer in the standard's shape, not in this API's envelope.**
+  `/api/sep10/auth` and `/api/recovery/accounts/**` return the bare body their spec describes and
+  `{ "error": "..." }` on failure — `src/lib/sep-http.ts`, which also says where the line falls.
+  These are endpoints somebody else's wallet calls: a client that reads `signers[0].key` off the
+  body gets `undefined` when it is wrapped in `data`, and the failure surfaces as "this server
+  returned no signer". Three routes in the same namespace keep the envelope because they are ours
+  rather than a standard's: `/api/recovery/info`, `/api/recovery/identity` and the sponsored
+  `/api/wallet/recovery/setup`. When adding a route here, the question is not which folder it is
+  in — it is whether a spec describes its body.
+- **`POST /accounts/{address}` is 409 on an account already registered**, and PUT is how identities
+  change. A POST that quietly replaced them would let a client that believes it is creating an
+  account change who may recover an existing one and never find out. `DELETE` answers with the
+  account it deleted, per SEP-30 — the last moment a client can be told which signer it still has
+  to take off the ledger.
+- **`GET /accounts` is paged with SEP-30's `after` cursor**, keyset over the address and ordered by
+  it. The order is the load-bearing half: this query used to take 100 rows in whatever order the
+  database gave them, so there was no page two and no way to ask for one, and an identity with
+  more accounts than that had some of them permanently invisible — which reads, to the person
+  looking, exactly like an account that was never registered. `listWhere` (pure, in
+  `recovery-core.ts`) ANDs the cursor with the caller's scope rather than merging it, so a cursor
+  off the URL can narrow what is visible and never widen it.
+- **`/.well-known/stellar.toml` is how anyone who is not our wallet discovers this server.**
+  SEP-30 defines no discovery at all; SEP-10 does, and `SIGNING_KEY` is the field that makes the
+  challenge exchange a proof rather than a ritual — a client that cannot check it knows the
+  challenge is safe to sign but not who asked. It is derived from the signing secret, never
+  configured beside it. `HOME_DOMAIN` is published because the two servers are different hosts
+  that deliberately name the SAME wallet: a client is meant to require both to agree on it, and
+  one that assumed the home domain was just the host it fetched the file from would see the pair
+  disagree by construction and refuse every configuration.
 - **Sponsoring is the operator's offer, not either server's.** `/api/wallet/recovery/setup` lives
   on the main platform, pays the two signer entries' reserve and signs as sponsor only. The
   account's own signature is deliberately missing: the wallet adds it after its guard has decoded
