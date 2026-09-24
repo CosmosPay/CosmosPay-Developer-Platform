@@ -14,6 +14,12 @@ export const sep10TokenBodySchema = z.object({ transaction: envelope });
 
 export const recoveryAddressParamSchema = z.object({ address: stellarAddress });
 
+/* SEP-30's cursor for `GET /accounts`: the address of the last account on the page
+   before. Keyset, not an offset — a caller paging through a list that is being written
+   to must not have rows shift under it, and an address is the only key both sides of the
+   protocol can name. Absent means the first page. */
+export const recoveryListQuerySchema = z.object({ after: stellarAddress.optional() });
+
 export const recoverySignParamSchema = z.object({
   address: stellarAddress,
   /* The signer the caller wants a signature from. SEP-30 puts it in the path so a server

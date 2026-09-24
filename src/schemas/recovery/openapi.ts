@@ -2,14 +2,22 @@
    recovery (src/pages/api/recovery/**), plus the operator's sponsored setup
    (src/pages/api/wallet/recovery/setup.ts).
 
-   These are STANDARD endpoints with a house layout: the bodies and answers follow SEP-10 and
-   SEP-30, but they ride in this API's `{ data, code, status, message }` envelope like
-   everything else here. A third-party SEP-30 client would need a deployment that maps its
-   root to /api/recovery and unwraps `data`; ours is the wallet, which speaks the envelope.
+   These are STANDARD endpoints and they answer in the standard's shape — the bare body
+   SEP-10 and SEP-30 describe, with `{ "error": "..." }` on failure, NOT this API's
+   `{ data, code, status, message }` envelope. The wrapper stops here on purpose: these are
+   endpoints someone else's wallet calls, and a client that reads `signers[0].key` off the
+   body gets undefined when it is wrapped. The runtime half of that decision, and where
+   exactly the line falls, is in src/lib/sep-http.ts.
+
+   Three routes in this file are NOT standard and keep the envelope, because they are this
+   operator's own: `/api/recovery/info` and `/api/recovery/identity` (SEP-30 allows
+   "External" authentication without describing it, and defines no discovery at all) and
+   the sponsored `/api/wallet/recovery/setup`. What a third-party client discovers us with
+   is /.well-known/stellar.toml.
 
    Only a deployment configured as a recovery server answers them at all — every one can
    return 503, and that is not an error so much as "this host is not that server". */
-import { errors, jsonCreated, jsonOk, registerRoutes } from '@/lib/openapi/route-helpers';
+import { errors, jsonOk, registerRoutes } from '@/lib/openapi/route-helpers';
 import { z } from '@/lib/openapi/zod';
 import {
   recoveryIdentitiesBodySchema,
@@ -29,6 +37,25 @@ const notAServer = {
 };
 const rateLimited = { description: 'Rate limited — wait before retrying', content: errors.badRequest.content };
 const unauthorized = (what: string) => ({ description: what, content: errors.unauthorized.content });
+
+/* The SEP shapes. `sepOk` is a response with nothing around it, and `sepFail` is the one
+   error body both specs define — which is why the enveloped `errors.*` helpers below are
+   used only by the three routes that are ours rather than a standard's. */
+const sepErrorSchema = z
+  .object({ error: z.string().openapi({ example: 'Not found.', description: 'For a human reading a log; never branch on it.' }) })
+  .openapi('SepError', { description: 'The error body SEP-10 and SEP-30 define.' });
+
+const sepFail = (description: string) => ({ description, content: { 'application/json': { schema: sepErrorSchema } } });
+const sepOk = (schema: Parameters<typeof jsonOk>[0], description: string) => ({
+  description,
+  content: { 'application/json': { schema } },
+});
+
+/* The refusals every SEP route here can produce, in the spec's shape. */
+const sepRateLimited = sepFail('Rate limited — wait before retrying');
+const sepNotAServer = sepFail('This deployment is not a recovery server');
+const sepNotFound = sepFail('No such account, or not one this caller may see — SEP-30 folds those together');
+const sepNotTheKeyHolder = sepFail('This needs the account\u2019s own key');
 
 const accountSchema = z
   .object({
@@ -69,19 +96,18 @@ registerRoutes([
       }),
     },
     responses: {
-      200: jsonOk(
+      200: sepOk(
         z
           .object({
             transaction: z.string().openapi({ example: XDR }),
             network_passphrase: z.string().openapi({ example: 'Public Global Stellar Network ; September 2015' }),
           })
           .openapi('Sep10Challenge'),
-        'Sep10ChallengeResponse',
         'Sign this challenge and post it back',
       ),
-      400: errors.badRequest,
-      429: rateLimited,
-      503: notAServer,
+      400: sepFail('Not a Stellar account'),
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {
@@ -93,11 +119,11 @@ registerRoutes([
       'Checks the challenge structurally, then weighs its signatures against the account’s own signers and medium threshold — so an account recovered onto a new key authenticates with that key, not with the one it lost.',
     request: jsonBody(sep10TokenBodySchema.openapi('Sep10TokenBody')),
     responses: {
-      200: jsonOk(tokenSchema, 'Sep10TokenResponse', 'Authenticated'),
-      400: errors.badRequest,
-      401: unauthorized('The challenge is not valid for this account'),
-      429: rateLimited,
-      503: notAServer,
+      200: sepOk(tokenSchema, 'Authenticated'),
+      400: sepFail('Not a readable challenge'),
+      401: sepFail('The challenge is not valid for this account'),
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {
@@ -149,16 +175,22 @@ registerRoutes([
     tags: [TAG],
     summary: 'SEP-30: every account this caller may recover',
     description:
-      'The listing someone who lost their device needs: the address is exactly what they no longer have. Authenticated with either token.',
+      'The listing someone who lost their device needs: the address is exactly what they no longer have. Authenticated with either token. Paged with SEP-30\u2019s `after` cursor \u2014 pass the address of the last account on the page before, and keep going until a page comes back empty. A client that reads only the first page shows someone SOME of their accounts and tells them it is all of them.',
+    request: {
+      query: z.object({
+        after: z.string().optional().openapi({
+          param: { name: 'after', in: 'query' },
+          description: 'The address of the last account on the previous page. Omit for the first page.',
+          example: ADDRESS,
+        }),
+      }),
+    },
     responses: {
-      200: jsonOk(
-        z.object({ accounts: z.array(accountSchema) }).openapi('RecoveryAccountList'),
-        'RecoveryAccountListResponse',
-        'OK',
-      ),
-      401: unauthorized('No token, or one for another server'),
-      429: rateLimited,
-      503: notAServer,
+      200: sepOk(z.object({ accounts: z.array(accountSchema) }).openapi('RecoveryAccountList'), 'One page of accounts'),
+      400: sepFail('The cursor is not a Stellar address'),
+      401: sepFail('No token, or one for another server'),
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {
@@ -173,12 +205,13 @@ registerRoutes([
       ...jsonBody(recoveryIdentitiesBodySchema.openapi('RecoveryIdentitiesBody')),
     },
     responses: {
-      201: jsonCreated(accountSchema, 'RecoveryRegisterResponse', 'Registered for recovery'),
-      400: errors.badRequest,
-      401: unauthorized('No token'),
-      403: { description: 'This needs the account’s own key', content: errors.forbidden.content },
-      429: rateLimited,
-      503: notAServer,
+      201: sepOk(accountSchema, 'Registered for recovery'),
+      400: sepFail('The identities are not well formed'),
+      401: sepFail('No token'),
+      403: sepNotTheKeyHolder,
+      409: sepFail('Already registered — change its identities with PUT, which says so'),
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {
@@ -191,12 +224,12 @@ registerRoutes([
       ...jsonBody(recoveryIdentitiesBodySchema.openapi('RecoveryIdentitiesUpdateBody')),
     },
     responses: {
-      200: jsonOk(accountSchema, 'RecoveryUpdateResponse', 'Identities updated'),
-      400: errors.badRequest,
-      401: unauthorized('No token'),
-      403: { description: 'This needs the account’s own key', content: errors.forbidden.content },
-      429: rateLimited,
-      503: notAServer,
+      200: sepOk(accountSchema, 'Identities updated'),
+      400: sepFail('The identities are not well formed'),
+      401: sepFail('No token'),
+      403: sepNotTheKeyHolder,
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {
@@ -207,11 +240,11 @@ registerRoutes([
     description: 'Either token. Answers 404 rather than 403 to a caller who may not act for it.',
     request: { params: pathParam('address', ADDRESS, 'The protected account.') },
     responses: {
-      200: jsonOk(accountSchema, 'RecoveryAccountResponse', 'OK'),
-      401: unauthorized('No token'),
-      404: errors.notFound,
-      429: rateLimited,
-      503: notAServer,
+      200: sepOk(accountSchema, 'OK'),
+      401: sepFail('No token'),
+      404: sepNotFound,
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {
@@ -223,16 +256,14 @@ registerRoutes([
       'This server stops answering for the account. The signer it holds stays on chain until the account removes it — which only the account can do.',
     request: { params: pathParam('address', ADDRESS, 'The protected account.') },
     responses: {
-      200: jsonOk(
-        z.object({ address: z.string().openapi({ example: ADDRESS }), deleted: z.literal(true) }).openapi('RecoveryForgotten'),
-        'RecoveryDeleteResponse',
-        'Forgotten',
-      ),
-      401: unauthorized('No token'),
-      403: { description: 'This needs the account’s own key', content: errors.forbidden.content },
-      404: errors.notFound,
-      429: rateLimited,
-      503: notAServer,
+      // The account it just deleted, per SEP-30 — the last moment a client can be told
+      // which signer it still has to take off the ledger.
+      200: sepOk(accountSchema, 'Forgotten, and this is what was forgotten'),
+      401: sepFail('No token'),
+      403: sepNotTheKeyHolder,
+      404: sepNotFound,
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {
@@ -252,22 +283,21 @@ registerRoutes([
       ...jsonBody(recoverySignBodySchema.openapi('RecoverySignBody')),
     },
     responses: {
-      200: jsonOk(
+      200: sepOk(
         z
           .object({
             signature: z.string().openapi({ example: 'd2hhdCBhIHNpZ25hdHVyZQ==' }),
             network_passphrase: z.string().openapi({ example: 'Public Global Stellar Network ; September 2015' }),
           })
           .openapi('RecoverySignature'),
-        'RecoverySignResponse',
         'Signed',
       ),
-      400: errors.badRequest,
-      401: unauthorized('No token'),
-      403: { description: 'This server only signs account recovery', content: errors.forbidden.content },
-      404: errors.notFound,
-      429: rateLimited,
-      503: notAServer,
+      400: sepFail('Not a transaction on this network'),
+      401: sepFail('No token'),
+      403: sepFail('This server only signs account recovery, and the answer names the rule that was broken'),
+      404: sepNotFound,
+      429: sepRateLimited,
+      503: sepNotAServer,
     },
   },
   {

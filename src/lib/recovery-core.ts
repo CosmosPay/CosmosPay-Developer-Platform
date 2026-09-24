@@ -28,6 +28,35 @@
    to this server's audience, so a token from the sibling server is refused here. */
 import { FeeBumpTransaction, Transaction } from "@stellar/stellar-sdk";
 
+/* ------------------------------ the listing ------------------------------- */
+
+/** How many accounts one page of `GET /accounts` carries. */
+export const RECOVERY_PAGE_SIZE = 100;
+
+/**
+ * Which accounts a caller may see, and where their page starts — the `where` for
+ * SEP-30's `GET /accounts`.
+ *
+ * Pure, and separate from the query that runs it, because the two halves fail
+ * differently and only one of them is testable against a database this suite does not
+ * have. What can go wrong here is not a slow query: it is a cursor that widens what the
+ * caller may see. `after` arrives from the URL, so it is the caller's, and it is combined
+ * with an AND rather than merged over the scope — a merge lets a key in the cursor
+ * overwrite the same key in the scope, which is how a pagination parameter turns into a
+ * way to read another identity's accounts.
+ *
+ * The cursor is keyset, on the address: an OFFSET over a list that is being written to
+ * skips rows as earlier ones are inserted, and an address is the only key both halves of
+ * the protocol can name.
+ */
+export function listWhere(role: string, actor: Actor, after?: string): Record<string, unknown> {
+  const scope =
+    actor.kind === "address"
+      ? { role, OR: [{ address: actor.address }, { methods: { some: { type: "stellar_address", value: actor.address } } }] }
+      : { role, methods: { some: { type: actor.type, value: actor.value } } };
+  return after ? { AND: [scope, { address: { gt: after } }] } : scope;
+}
+
 /** SEP-30 identity roles. The wallet only ever registers `owner`. */
 export const IDENTITY_ROLES = ["owner", "sender", "receiver"] as const;
 export type IdentityRole = (typeof IDENTITY_ROLES)[number];

@@ -9,7 +9,7 @@ import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import { Account, Asset, Keypair, Networks, Operation, TransactionBuilder } from "@stellar/stellar-sdk";
 
-import { signRefusal, normalizeMethodValue } from "@/lib/recovery-core";
+import { listWhere, RECOVERY_PAGE_SIZE, signRefusal, normalizeMethodValue } from "@/lib/recovery-core";
 import { buildRecoverySetup, DEVICE_WEIGHT, SERVER_WEIGHT } from "@/lib/recovery-setup";
 import { issueJwt, readJwt } from "@/lib/jwt";
 import { signedByCurrentSigner } from "@/lib/account-signers";
@@ -233,4 +233,57 @@ test("a stranger's signature is refused however the account is configured", () =
     signedByCurrentSigner(account, message, stranger.sign(Buffer.from(message, "utf8")).toString("base64")),
     false,
   );
+});
+
+
+/* ------------------------------- the listing -------------------------------- */
+
+/* SEP-30's `GET /accounts` is what someone who lost their device reads to find out which
+   accounts were theirs — the address is precisely what they no longer have written down.
+   It is paged with an `after` cursor, and the two ways to get that wrong are opposite:
+   truncate and an account becomes unfindable, or let the cursor widen the query and one
+   identity reads another's. */
+
+const EMAIL = { kind: "identity", type: "email", value: "person@example.com" } as const;
+const BY_ADDRESS = { kind: "address", address: account } as const;
+
+test("the first page is the caller's own scope, with no cursor in it", () => {
+  const where = listWhere("a", EMAIL) as { role: string; methods: unknown };
+  assert.equal(where.role, "a");
+  assert.deepEqual(where.methods, { some: { type: "email", value: "person@example.com" } });
+  assert.ok(!("AND" in where), "no cursor was asked for, so none is applied");
+});
+
+test("a cursor narrows the page and leaves the scope intact", () => {
+  const where = listWhere("a", EMAIL, account) as { AND: Record<string, unknown>[] };
+  // AND, not a merge: the scope survives verbatim as its own clause.
+  assert.equal(where.AND.length, 2);
+  assert.deepEqual(where.AND[0], listWhere("a", EMAIL));
+  assert.deepEqual(where.AND[1], { address: { gt: account } });
+});
+
+test("a cursor cannot widen what the caller may see", () => {
+  // `after` comes off the URL. Merged over the scope, an `address` key in the cursor
+  // would replace the one that confines an address-scoped caller to their own account —
+  // which is a pagination parameter turned into a way to read someone else's listing.
+  const stranger = Keypair.random().publicKey();
+  const where = listWhere("a", BY_ADDRESS, stranger) as { AND: Record<string, unknown>[] };
+  const scope = where.AND[0] as { OR: unknown[] };
+  assert.deepEqual(where.AND[0], listWhere("a", BY_ADDRESS));
+  assert.equal(scope.OR.length, 2, "the caller is still confined to their own account");
+  assert.deepEqual(where.AND[1], { address: { gt: stranger } });
+});
+
+test("the role scopes every page, so the sibling server's rows are never listed", () => {
+  // Both deployments share a database. The role is what separates them, and a cursor
+  // must not be a way around it.
+  for (const where of [listWhere("b", EMAIL), listWhere("b", EMAIL, account)]) {
+    assert.ok(JSON.stringify(where).includes('"role":"b"'));
+  }
+});
+
+test("a page is bounded, which is why the cursor has to exist at all", () => {
+  // The cap is the reason: without a cursor, an identity with more registered accounts
+  // than this could never see past the first page, and there would be no way to ask.
+  assert.ok(RECOVERY_PAGE_SIZE > 0 && Number.isInteger(RECOVERY_PAGE_SIZE));
 });

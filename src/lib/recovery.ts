@@ -31,6 +31,8 @@ import { prisma } from "@/lib/prisma";
 import { signerFor, type RecoveryConfig } from "@/lib/recovery-config";
 import {
   IDENTITY_ROLES,
+  listWhere,
+  RECOVERY_PAGE_SIZE,
   signRefusal,
   normalizeMethodValue,
   type AccountResponse,
@@ -90,6 +92,18 @@ async function findAccount(cfg: RecoveryConfig, address: string) {
   });
 }
 
+/**
+ * Is this account already registered here?
+ *
+ * Asked by POST, which SEP-30 separates from PUT precisely so that "register" and
+ * "change who may recover" cannot be the same request by accident. Deliberately reads
+ * nothing about the caller: whether the row exists is not a fact about who is asking,
+ * and the route has already established that only the key holder gets this far.
+ */
+export async function accountExists(cfg: RecoveryConfig, address: string): Promise<boolean> {
+  return (await prisma.recoveryAccount.count({ where: { role_address: { role: cfg.role, address } } })) > 0;
+}
+
 /** The account as SEP-30 describes it, or null when this server does not know it. */
 export async function getAccount(cfg: RecoveryConfig, address: string, actor: Actor): Promise<AccountResponse | null> {
   const account = await findAccount(cfg, address);
@@ -113,13 +127,27 @@ export async function deleteAccount(cfg: RecoveryConfig, address: string): Promi
   return true;
 }
 
-/** Every account this caller may act for — SEP-30's `GET /accounts`. */
-export async function listAccounts(cfg: RecoveryConfig, actor: Actor): Promise<AccountResponse[]> {
-  const where =
-    actor.kind === "address"
-      ? { role: cfg.role, OR: [{ address: actor.address }, { methods: { some: { type: "stellar_address", value: actor.address } } }] }
-      : { role: cfg.role, methods: { some: { type: actor.type, value: actor.value } } };
-  const accounts = await prisma.recoveryAccount.findMany({ where, include: { methods: true }, take: 100 });
+/**
+ * Every account this caller may act for — SEP-30's `GET /accounts`, one page of it.
+ *
+ * `after` is the spec's cursor: the address of the last account on the previous page.
+ * `listWhere` decides what that means; what is added here is the ORDER, and it is the
+ * half that was missing. This query used to take the first hundred rows in whatever
+ * order the database returned them, so there was no page two to ask for and no way to
+ * ask for it. An account past that hundred was unreachable — which, to the person
+ * reading, is indistinguishable from an account that was never registered here at all.
+ * This listing is what someone who lost their device reads to find out which accounts
+ * were theirs, so a silent truncation here costs a wallet.
+ */
+export async function listAccounts(cfg: RecoveryConfig, actor: Actor, after?: string): Promise<AccountResponse[]> {
+  const accounts = await prisma.recoveryAccount.findMany({
+    where: listWhere(cfg.role, actor, after),
+    include: { methods: true },
+    // Deterministic, and the same key the cursor is expressed in: an order the cursor
+    // does not follow would skip rows rather than page through them.
+    orderBy: { address: "asc" },
+    take: RECOVERY_PAGE_SIZE,
+  });
   return accounts.map((a) => ({
     address: a.address,
     identities: toIdentities(a.methods).map((i) => ({ role: i.role, authenticated: authenticatesAs(actor, a.address, a.methods, i.role) || undefined })),
