@@ -37,11 +37,11 @@ const EXCLUDED = new Map([
     "Better Auth's own handler (sign-in, callback, session). Its surface is the library's, documented upstream, and it is not part of this platform's API.",
   ],
   [
-    '/api/wallet-auth/login-code',
+    '/api/wallet/console/login-code',
     'A console leg, not integrator surface: the community server calls it to have a sign-in code delivered, authenticated by a shared secret plus the internal marker APISIX strips. It answers 404 to everyone else, so publishing it would advertise an endpoint no reader of this spec can call. Its contract lives with the caller, in the community server.',
   ],
   [
-    '/api/wallet-auth/provision',
+    '/api/wallet/console/provision',
     'The sibling console leg, and the same reasoning: the community server calls it to have an account and its keys minted. A documented endpoint that mints two live API keys is an invitation to find the hole in the secret check.',
   ],
 ]);

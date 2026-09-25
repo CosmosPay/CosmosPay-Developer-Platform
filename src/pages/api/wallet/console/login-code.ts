@@ -1,4 +1,4 @@
-/* POST /api/wallet-auth/login-code — email a sign-in code the community server minted.
+/* POST /api/wallet/console/login-code — email a sign-in code the community server minted.
 
    Called by the community server, never by a client. The wallet's sign-in runs there now;
    that service owns no mailer, so it mints the code and hands it here to be delivered — the

@@ -1,4 +1,4 @@
-/* POST /api/wallet-auth/provision — create or link the account behind a finished sign-in,
+/* POST /api/wallet/console/provision — create or link the account behind a finished sign-in,
    and mint its gateway keys.
 
    Called by the community server, never by a client. Minting a key needs APISIX admin, and
