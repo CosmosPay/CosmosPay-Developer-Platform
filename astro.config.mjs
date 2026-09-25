@@ -115,6 +115,12 @@ export default defineConfig({
       WALLET_GOOGLE_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       WALLET_GITHUB_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       WALLET_GITHUB_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      // Proves a call to the two console legs came from the community server, which
+      // is where the wallet's sign-in runs (src/lib/wallet-auth-console.ts). Unset
+      // means those two routes serve nobody — the right state for a platform whose
+      // community server is not calling it, and it fails closed rather than
+      // comparing an absent header against an empty secret.
+      WALLET_AUTH_CONSOLE_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       // --- Account recovery (SEP-30) + its SEP-10 auth: src/lib/recovery-config.ts ---
       // A deployment is ONE of the two recovery servers, or none at all (every field empty,
       // and the routes answer 503). Deploy it twice, with a different role, a different pair

@@ -6228,6 +6228,876 @@
         ]
       }
     },
+    "/v1/wallet/auth/providers": {
+      "get": {
+        "description": "Render buttons from this rather than from a compiled-in list. A deployment with no Google credentials should not show a Google button that dies at the consent screen.",
+        "operationId": "WalletAuthController_providers_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletAuthProvidersEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Which sign-in doors this deployment has",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/wallet/auth/oauth/authorize": {
+      "post": {
+        "description": "Returns the URL to open in a browser. Keep the PKCE verifier on the device: the `state` travels through the browser and buys only polling, while the verifier is what redeems the handshake.",
+        "operationId": "WalletAuthController_startOauth_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartWalletOauthDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletOauthStartedEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`wallet_provider_unavailable` — That provider is unknown, or not configured on this deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_provider_unavailable": {
+                    "summary": "wallet_provider_unavailable — That provider is unknown, or not configured on this deployment",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_provider_unavailable",
+                      "error": "Bad Request",
+                      "message": "google sign-in is not configured on this deployment.",
+                      "path": "/v1/wallet/auth/oauth/authorize",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`wallet_provider_unavailable` — That provider is unknown, or not configured on this deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_provider_unavailable": {
+                    "summary": "wallet_provider_unavailable — That provider is unknown, or not configured on this deployment",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "wallet_provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "google sign-in is not configured on this deployment.",
+                      "path": "/v1/wallet/auth/oauth/authorize",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Open a provider sign-in",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-auth-authorize",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/auth/oauth/callback/{provider}": {
+      "get": {
+        "description": "Not called by your code — the person’s browser lands here. Public by necessity: a navigation carries no API key and no gateway consumer. It renders a page and nothing else; the identity is collected by the device that holds the PKCE verifier. Register `{WALLET_AUTH_PUBLIC_BASE_URL}/v1/wallet/auth/oauth/callback/{provider}` with each provider.",
+        "operationId": "WalletAuthController_callback_v1",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "google",
+                "github"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "error",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "code",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A \"you can go back to your wallet\" page. It never contains the identity or a token.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Where the provider returns the browser after consent",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public": true
+      }
+    },
+    "/v1/wallet/auth/oauth/session/{state}": {
+      "get": {
+        "description": "Answers on the `state` alone, and never returns the identity at any status. Poll until it leaves `pending`, then redeem with the verifier.",
+        "operationId": "WalletAuthController_pollStatus_v1",
+        "parameters": [
+          {
+            "name": "state",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletAuthStatusEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Poll a sign-in",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-auth-poll",
+            "limit": 600,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/auth/oauth/claim": {
+      "post": {
+        "description": "A NEW email ends here, with a session token. An email that ALREADY has an account gets `verify_email` instead and a code in its inbox: a provider proves who consented, not who opened the sign-in, and an existing account is where the backup worth stealing is.",
+        "operationId": "WalletAuthController_claimOauth_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimWalletOauthDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/WalletAuthReadyEntity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WalletAuthVerifyEmailEntity"
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`wallet_verifier_invalid` — The PKCE verifier does not match the handshake",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_verifier_invalid": {
+                    "summary": "wallet_verifier_invalid — The PKCE verifier does not match the handshake",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_verifier_invalid",
+                      "error": "Bad Request",
+                      "message": "The verifier does not match this handshake.",
+                      "path": "/v1/wallet/auth/oauth/claim",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Redeem a handshake with the PKCE verifier",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-auth-claim",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/auth/email/start": {
+      "post": {
+        "operationId": "WalletAuthController_startEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartWalletEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletEmailStartedEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`wallet_login_code_cooldown` — Another code was sent to this mailbox moments ago",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_login_code_cooldown": {
+                    "summary": "wallet_login_code_cooldown — Another code was sent to this mailbox moments ago",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_login_code_cooldown",
+                      "error": "Bad Request",
+                      "message": "A code was just sent to that address. Wait a moment before asking for another.",
+                      "path": "/v1/wallet/auth/email/start",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Send a sign-in code to a mailbox",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-auth-email",
+            "limit": 5,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/auth/email/verify": {
+      "post": {
+        "description": "Wrong codes are counted on the row, not by the client. Five burns it, and a burned code is replaced by asking for another.",
+        "operationId": "WalletAuthController_verifyEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyWalletEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/WalletAuthReadyEntity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WalletCodeInvalidEntity"
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Answer a sign-in code",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-auth-claim",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/auth/finish": {
+      "post": {
+        "description": "Send the session token as `Authorization: Bearer`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {stellarAddress}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.",
+        "operationId": "WalletAuthController_finish_v1",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer {sessionToken}, from the sign-in that just finished.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinishWalletSignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/WalletSignInFinishedEntity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WalletBackupConflictEntity"
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`wallet_signature_invalid` — The signature does not verify, or its timestamp is out of window\n\n`wallet_backup_invalid` — Not a backup box this service will keep",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_signature_invalid": {
+                    "summary": "wallet_signature_invalid — The signature does not verify, or its timestamp is out of window",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_signature_invalid",
+                      "error": "Bad Request",
+                      "message": "The signature does not verify against that account.",
+                      "path": "/v1/wallet/auth/finish",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "wallet_backup_invalid": {
+                    "summary": "wallet_backup_invalid — Not a backup box this service will keep",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_backup_invalid",
+                      "error": "Bad Request",
+                      "message": "That is not a backup box this service will keep.",
+                      "path": "/v1/wallet/backup",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`wallet_session_invalid` — The sign-in token is missing, expired, or was not minted here",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_session_invalid": {
+                    "summary": "wallet_session_invalid — The sign-in token is missing, expired, or was not minted here",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "wallet_session_invalid",
+                      "error": "Unauthorized",
+                      "message": "This sign-in has expired. Start again.",
+                      "path": "/v1/wallet/auth/finish",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Attach the proven identity to the account this device signs for",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-auth-finish",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/backup": {
+      "put": {
+        "description": "What `changePassword` on the device sends. No session: the signature is the credential, and it covers the SHA-256 of the box — so one signature stores exactly one box and cannot be replayed to store another. The bytes are:\n\n```\nCosmos Pay Wallet backup\naccount: {stellarAddress}\nbox: {sha256 hex of box}\nat: {signedAt}\n```",
+        "operationId": "WalletBackupController_replaceBackup_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceWalletBackupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletBackupUpdatedEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`wallet_signature_invalid` — The signature does not verify, or its timestamp is out of window\n\n`wallet_backup_invalid` — Not a backup box this service will keep",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_signature_invalid": {
+                    "summary": "wallet_signature_invalid — The signature does not verify, or its timestamp is out of window",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_signature_invalid",
+                      "error": "Bad Request",
+                      "message": "The signature does not verify against that account.",
+                      "path": "/v1/wallet/auth/finish",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "wallet_backup_invalid": {
+                    "summary": "wallet_backup_invalid — Not a backup box this service will keep",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_backup_invalid",
+                      "error": "Bad Request",
+                      "message": "That is not a backup box this service will keep.",
+                      "path": "/v1/wallet/backup",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "`wallet_account_mismatch` — No backup is stored for the account that signed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_account_mismatch": {
+                    "summary": "wallet_account_mismatch — No backup is stored for the account that signed",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "wallet_account_mismatch",
+                      "error": "Not Found",
+                      "message": "No backup is stored for that account.",
+                      "path": "/v1/wallet/backup",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Replace the sealed box stored for an account",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-auth-finish",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
     "/v1/onramp/quotes": {
       "post": {
         "operationId": "OnrampController_createQuote_v1",
@@ -14513,6 +15383,466 @@
           "signature"
         ]
       },
+      "WalletAuthIdentityEntity": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "someone@example.com"
+          },
+          "name": {
+            "type": "object",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "object",
+            "nullable": true
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "google",
+              "github",
+              "email"
+            ],
+            "description": "How the email was proven."
+          }
+        },
+        "required": [
+          "email",
+          "method"
+        ]
+      },
+      "WalletBackupEntity": {
+        "type": "object",
+        "properties": {
+          "stellarAddress": {
+            "type": "string",
+            "description": "The account this box restores to."
+          },
+          "box": {
+            "type": "string",
+            "description": "The sealed box, verbatim. Opaque to this service: only the password opens it, and the password never arrives here."
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stellarAddress",
+          "box",
+          "updatedAt"
+        ]
+      },
+      "WalletAuthReadyEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready"
+            ]
+          },
+          "identity": {
+            "$ref": "#/components/schemas/WalletAuthIdentityEntity"
+          },
+          "account": {
+            "type": "string",
+            "enum": [
+              "existing",
+              "new"
+            ],
+            "description": "Whether this email already had an account here. A marker, never an id: it is what a client branches its onboarding on."
+          },
+          "backup": {
+            "nullable": true,
+            "description": "The box this account last stored, if any.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WalletBackupEntity"
+              }
+            ]
+          },
+          "sessionToken": {
+            "type": "string",
+            "description": "Short-lived, sealed, and accepted by exactly one route: `/auth/finish`. It is the only credential that can create an account or put a backup under one, so it is never refreshed — a person who takes longer signs in again."
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "example": 1800
+          }
+        },
+        "required": [
+          "status",
+          "identity",
+          "account",
+          "sessionToken",
+          "expiresInSeconds"
+        ]
+      },
+      "WalletAuthVerifyEmailEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "verify_email"
+            ]
+          },
+          "claimToken": {
+            "type": "string",
+            "description": "Send this back with the code."
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "example": 900
+          },
+          "email": {
+            "type": "string",
+            "description": "The mailbox the code went to."
+          }
+        },
+        "required": [
+          "status",
+          "claimToken",
+          "expiresInSeconds",
+          "email"
+        ]
+      },
+      "WalletCodeInvalidEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "invalid"
+            ]
+          },
+          "attemptsLeft": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": [
+          "status",
+          "attemptsLeft"
+        ]
+      },
+      "WalletProvisionedKeysEntity": {
+        "type": "object",
+        "properties": {
+          "dev": {
+            "type": "object",
+            "nullable": true
+          },
+          "prod": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "WalletSignInFinishedEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready"
+            ]
+          },
+          "account": {
+            "type": "string",
+            "enum": [
+              "created",
+              "linked"
+            ],
+            "description": "Whether this call created the account or attached the identity to one that already existed. A different vocabulary from `ready.account`, deliberately — they answer two different questions."
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/WalletProvisionedKeysEntity"
+          }
+        },
+        "required": [
+          "status",
+          "account",
+          "organizationId",
+          "keys"
+        ]
+      },
+      "WalletBackupConflictEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "backup_conflict"
+            ]
+          },
+          "stellarAddress": {
+            "type": "string",
+            "description": "The address the stored box restores to."
+          }
+        },
+        "required": [
+          "status",
+          "stellarAddress"
+        ]
+      },
+      "WalletAuthProvidersEntity": {
+        "type": "object",
+        "properties": {
+          "providers": {
+            "example": [
+              "google",
+              "github"
+            ],
+            "description": "Which providers this deployment has credentials for. Render buttons from this rather than from a compiled-in list, so a deployment that configured neither does not show two buttons that die at the consent screen.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "email": {
+            "type": "boolean",
+            "description": "Whether the email-code door works here. False when no console is configured to deliver the mail."
+          }
+        },
+        "required": [
+          "providers",
+          "email"
+        ]
+      },
+      "StartWalletOauthDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "github"
+            ],
+            "example": "google"
+          },
+          "codeChallenge": {
+            "type": "string",
+            "description": "base64url(SHA-256(verifier)) — RFC 7636 S256. Keep the verifier on the device: it is what makes a `state` seen in a browser worthless to anyone else, and it is the only thing that can redeem this handshake.",
+            "example": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "enum": [
+              "S256"
+            ],
+            "description": "RFC 7636 S256, the only method accepted. Declared rather than ignored: the wallet sends it, and an undeclared field is a 400 under `forbidNonWhitelisted`. Pinned rather than defaulted, because `plain` is the one value that would make the verifier no secret at all."
+          }
+        },
+        "required": [
+          "provider",
+          "codeChallenge",
+          "codeChallengeMethod"
+        ]
+      },
+      "WalletOauthStartedEntity": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "description": "The handshake handle. Public by construction — it travels in a URL bar. Knowing it buys polling, never redemption."
+          },
+          "authorizationUrl": {
+            "type": "string",
+            "description": "Open this in a browser."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "authorizationUrl",
+          "expiresAt"
+        ]
+      },
+      "WalletAuthStatusEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "authorized",
+              "redeemed",
+              "failed",
+              "expired"
+            ],
+            "description": "Poll until this leaves `pending`. `authorized` means the person came back and the identity is waiting for the PKCE verifier. The identity itself is never in this response, at any status."
+          },
+          "error": {
+            "type": "string",
+            "enum": [
+              "denied",
+              "email_unverified",
+              "profile_invalid",
+              "failed"
+            ],
+            "description": "Present only on `failed`. A token to map to a sentence — never prose, which cannot be translated on the device."
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ClaimWalletOauthDto": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "description": "The handshake handle, from /oauth/authorize."
+          },
+          "codeVerifier": {
+            "type": "string",
+            "description": "The PKCE verifier this device kept. Never sent anywhere else, and never stored by this service."
+          }
+        },
+        "required": [
+          "state",
+          "codeVerifier"
+        ]
+      },
+      "StartWalletEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "someone@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "WalletEmailStartedEntity": {
+        "type": "object",
+        "properties": {
+          "claimToken": {
+            "type": "string",
+            "description": "Identifies WHICH code is being answered, so a second request for the same mailbox cannot be answered with the first code. Only its SHA-256 is stored here."
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "example": 900
+          }
+        },
+        "required": [
+          "claimToken",
+          "expiresInSeconds"
+        ]
+      },
+      "VerifyWalletEmailDto": {
+        "type": "object",
+        "properties": {
+          "claimToken": {
+            "type": "string",
+            "description": "The claim token returned by /auth/email/start."
+          },
+          "code": {
+            "type": "string",
+            "example": "048213",
+            "description": "The six digits emailed."
+          }
+        },
+        "required": [
+          "claimToken",
+          "code"
+        ]
+      },
+      "FinishWalletSignInDto": {
+        "type": "object",
+        "properties": {
+          "stellarAddress": {
+            "type": "string",
+            "description": "The Stellar ACCOUNT this identity is attached to. Not necessarily the key that signs: a recovered account keeps its address and changes its signer.",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+          },
+          "signedAt": {
+            "type": "string",
+            "example": "2026-01-02T03:04:05Z"
+          },
+          "signature": {
+            "type": "string",
+            "description": "base64 ed25519 signature over the sign-in challenge. The exact bytes are documented on the operation; a client that rebuilds them from prose is one field-order change away from producing signatures nothing accepts."
+          },
+          "backup": {
+            "type": "string",
+            "description": "The device's sealed seed box, to keep for the next device. Opaque here: it is sealed under a key derived from a password this service never sees."
+          },
+          "replaceBackup": {
+            "type": "boolean",
+            "description": "Replace the backup this account already has, discarding it. The \"forgot the password\" door: the box being discarded may be the only copy of a funded wallet, so it is never implied — a client sends it only after the person has acknowledged what it gives up.",
+            "default": false
+          }
+        },
+        "required": [
+          "stellarAddress",
+          "signedAt",
+          "signature"
+        ]
+      },
+      "ReplaceWalletBackupDto": {
+        "type": "object",
+        "properties": {
+          "stellarAddress": {
+            "type": "string",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+          },
+          "box": {
+            "type": "string",
+            "description": "The re-sealed box. Opaque to this service."
+          },
+          "signedAt": {
+            "type": "string",
+            "example": "2026-01-02T03:04:05Z"
+          },
+          "signature": {
+            "type": "string",
+            "description": "base64 ed25519 signature over the backup challenge, which covers the box's SHA-256 — so one signature stores exactly one box."
+          }
+        },
+        "required": [
+          "stellarAddress",
+          "box",
+          "signedAt",
+          "signature"
+        ]
+      },
+      "WalletBackupUpdatedEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "stellarAddress": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "stellarAddress",
+          "updatedAt"
+        ]
+      },
       "PayerRulesDto": {
         "type": "object",
         "properties": {
@@ -15776,6 +17106,15 @@
               "alias_address_conflict",
               "pollar_identity_required",
               "pollar_identity_mismatch",
+              "wallet_handshake_invalid",
+              "wallet_verifier_invalid",
+              "wallet_login_code_invalid",
+              "wallet_login_code_cooldown",
+              "wallet_session_invalid",
+              "wallet_signature_invalid",
+              "wallet_backup_invalid",
+              "wallet_account_mismatch",
+              "wallet_provider_unavailable",
               "misconfigured",
               "internal_error"
             ],

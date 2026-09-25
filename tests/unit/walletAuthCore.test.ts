@@ -9,6 +9,8 @@ import { test } from 'node:test';
 
 import {
   BACKUP_MIN_ITERATIONS,
+  CONSOLE_INTERNAL_HEADER,
+  CONSOLE_SECRET_HEADER,
   SESSION_TTL_MS,
   SIGNED_AT_SKEW_MS,
   authorizationUrl,
@@ -18,6 +20,7 @@ import {
   githubIdentity,
   googleIdentity,
   isBackupBox,
+  isConsoleCall,
   issueSessionToken,
   pkceMatches,
   readSessionToken,
@@ -182,4 +185,59 @@ test('anything that is not the wallet box is refused', () => {
 
 test('codes are six digits', () => {
   for (let i = 0; i < 50; i++) assert.match(sixDigitCode(), /^\d{6}$/);
+});
+
+/* ---------------------------- the console legs ---------------------------- */
+
+/*
+ * `isConsoleCall` decides who may make this platform send a stranger an email and mint an
+ * account with two live API keys. The permissive direction is the dangerous one, so it is
+ * the side asserted — and the first case below is the one that would have been a hole on
+ * every deployment that had never heard of the community server.
+ */
+const CONSOLE_SECRET = 'a-console-secret-long-enough-to-be-real';
+
+function headers(values: Record<string, string>): Headers {
+  return new Headers(values);
+}
+
+const goodHeaders = () =>
+  headers({ [CONSOLE_INTERNAL_HEADER]: '1', [CONSOLE_SECRET_HEADER]: CONSOLE_SECRET });
+
+test('an unconfigured secret admits nobody, not everybody', () => {
+  assert.equal(isConsoleCall(goodHeaders(), ''), false);
+  assert.equal(isConsoleCall(goodHeaders(), '   '), false);
+  // The shape that would match if an empty secret were compared to an empty header.
+  assert.equal(isConsoleCall(headers({ [CONSOLE_INTERNAL_HEADER]: '1' }), ''), false);
+});
+
+test('the community server is admitted', () => {
+  assert.equal(isConsoleCall(goodHeaders(), CONSOLE_SECRET), true);
+  assert.equal(isConsoleCall(headers({ [CONSOLE_INTERNAL_HEADER]: 'true', [CONSOLE_SECRET_HEADER]: CONSOLE_SECRET }), CONSOLE_SECRET), true);
+});
+
+test('both signals are required — each answers a different question', () => {
+  // A leaked secret presented without the stripped marker: a client through the gateway.
+  assert.equal(isConsoleCall(headers({ [CONSOLE_SECRET_HEADER]: CONSOLE_SECRET }), CONSOLE_SECRET), false);
+  // The marker with no secret: a forged header from anywhere.
+  assert.equal(isConsoleCall(headers({ [CONSOLE_INTERNAL_HEADER]: '1' }), CONSOLE_SECRET), false);
+});
+
+test('a marker that says "not internal" is not a marker', () => {
+  for (const value of ['0', 'false', 'no', '']) {
+    assert.equal(
+      isConsoleCall(headers({ [CONSOLE_INTERNAL_HEADER]: value, [CONSOLE_SECRET_HEADER]: CONSOLE_SECRET }), CONSOLE_SECRET),
+      false,
+      `marker ${JSON.stringify(value)} must not grant`,
+    );
+  }
+});
+
+test('a wrong secret is refused, including a prefix of the right one', () => {
+  const wrong = (v: string) =>
+    isConsoleCall(headers({ [CONSOLE_INTERNAL_HEADER]: '1', [CONSOLE_SECRET_HEADER]: v }), CONSOLE_SECRET);
+  assert.equal(wrong(CONSOLE_SECRET.slice(0, -1)), false);
+  assert.equal(wrong(`${CONSOLE_SECRET}x`), false);
+  assert.equal(wrong(CONSOLE_SECRET.toUpperCase()), false);
+  assert.equal(wrong(''), false);
 });

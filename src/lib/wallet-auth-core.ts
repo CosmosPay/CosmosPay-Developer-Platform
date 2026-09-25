@@ -311,3 +311,45 @@ export function isBackupBox(box: string): boolean {
 export function fallbackName(email: string, name?: string | null): string {
   return name?.trim() || email.split("@")[0] || "Cosmos user";
 }
+
+/* ---------------------------- the console legs ---------------------------- */
+
+/**
+ * The header APISIX strips from everything it proxies, so only a backend can present it,
+ * and the header carrying the shared secret. Both are read by
+ * `src/lib/wallet-auth-console.ts`; they live here so the decision below is reachable from
+ * a unit test, which is the rule the whole of this file exists to follow.
+ */
+export const CONSOLE_INTERNAL_HEADER = "x-cosmos-internal";
+export const CONSOLE_SECRET_HEADER = "x-gateway-secret";
+
+/** Values that mean "not internal" even when the marker is present. */
+const CONSOLE_FALSY = new Set(["", "0", "false", "no"]);
+
+/**
+ * Is this call from the community server, which is where the wallet's sign-in now runs?
+ *
+ * Both signals are required and each answers a different question: the secret says WHO, and
+ * the stripped marker says the call did not arrive from a client through the gateway. One
+ * without the other is not a weaker check but a different one — a leaked secret presented
+ * by a browser still fails, and a forged marker with no secret still fails.
+ *
+ * It FAILS CLOSED on an unconfigured secret. That is the case worth stating: with `configured`
+ * empty, a length-and-bytes comparison against an absent header would be a match, and a
+ * platform that had never heard of the community server would be minting accounts for
+ * anyone who found the route.
+ *
+ * Constant time, because the comparison is over a secret and the timing of a byte-wise early
+ * exit is exactly what that leaks.
+ */
+export function isConsoleCall(headers: Headers, configured: string): boolean {
+  const secret = configured.trim();
+  if (!secret) return false;
+
+  const marker = headers.get(CONSOLE_INTERNAL_HEADER)?.trim().toLowerCase() ?? "";
+  if (!marker || CONSOLE_FALSY.has(marker)) return false;
+
+  const presented = Buffer.from(headers.get(CONSOLE_SECRET_HEADER)?.trim() ?? "");
+  const expected = Buffer.from(secret);
+  return presented.length === expected.length && timingSafeEqual(presented, expected);
+}
