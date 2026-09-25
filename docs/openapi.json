@@ -7098,6 +7098,893 @@
         ]
       }
     },
+    "/v1/wallet/recovery/setup": {
+      "post": {
+        "description": "Send the session token as `Authorization: Bearer`. The signature covers exactly:\n\n```\nCosmos Pay Wallet recovery setup\naccount: {stellarAddress}\nsigners: {signerA},{signerB}\nat: {signedAt}\n```\n\nThe envelope comes back signed by the sponsor only. Once per account: refused when the account already has a signer besides its master key.",
+        "operationId": "WalletBackupController_sponsorRecoverySetup_v1",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer {sessionToken}",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SponsorRecoverySetupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletRecoverySetupEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`wallet_signature_invalid` — The signature does not verify, or its timestamp is out of window",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_signature_invalid": {
+                    "summary": "wallet_signature_invalid — The signature does not verify, or its timestamp is out of window",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_signature_invalid",
+                      "error": "Bad Request",
+                      "message": "The signature does not verify against that account.",
+                      "path": "/v1/wallet/auth/finish",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`wallet_session_invalid` — The sign-in token is missing, expired, or was not minted here",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_session_invalid": {
+                    "summary": "wallet_session_invalid — The sign-in token is missing, expired, or was not minted here",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "wallet_session_invalid",
+                      "error": "Unauthorized",
+                      "message": "This sign-in has expired. Start again.",
+                      "path": "/v1/wallet/auth/finish",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "`wallet_recovery_setup_refused` — The account cannot be sponsored: missing, or already has signers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "wallet_recovery_setup_refused": {
+                    "summary": "wallet_recovery_setup_refused — The account cannot be sponsored: missing, or already has signers",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "wallet_recovery_setup_refused",
+                      "error": "Conflict",
+                      "message": "This account already has signers besides its own key; sponsorship is for a first setup only.",
+                      "path": "/v1/wallet/recovery/setup",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Sponsor the reserve of an account's two recovery signers",
+        "tags": [
+          "wallet-auth"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "wallet-recovery-setup",
+            "limit": 5,
+            "windowMs": 600000
+          },
+          {
+            "name": "wallet-recovery-setup-global",
+            "limit": 200,
+            "windowMs": 600000,
+            "per": "consumer"
+          }
+        ]
+      }
+    },
+    "/.well-known/stellar.toml": {
+      "get": {
+        "description": "WEB_AUTH_ENDPOINT and SIGNING_KEY (SEP-10), HOME_DOMAIN, and a [[RECOVERY_SERVERS]] entry with the SEP-30 ENDPOINT, the ROLE and the identity methods. 404 on a deployment that is not a recovery server.",
+        "operationId": "StellarTomlController_toml",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "SEP-1 discovery for this recovery server",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true
+      }
+    },
+    "/v1/sep10/auth": {
+      "get": {
+        "description": "Sequence 0: unsubmittable by construction.",
+        "operationId": "Sep10Controller_challenge_v1",
+        "parameters": [
+          {
+            "name": "account",
+            "required": true,
+            "in": "query",
+            "description": "The Stellar account (G…) to authenticate.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "A challenge for an account",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep10-challenge",
+            "limit": 60,
+            "windowMs": 600000
+          }
+        ]
+      },
+      "post": {
+        "description": "Weighed against the account's CURRENT signers and medium threshold, so a recovered account authenticates with the key that replaced its master.",
+        "operationId": "Sep10Controller_token_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sep10TokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Exchange a signed challenge for a token",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep10-token",
+            "limit": 60,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/sep30/identity": {
+      "post": {
+        "description": "SEP-30 \"external\" authentication. The ID token is verified against the provider's published keys, must stand for a login in the last 15 minutes, must carry a VERIFIED email, and is accepted once per server.",
+        "operationId": "Sep30Controller_exchange_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryIdTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Exchange an OIDC ID token for this server's identity token",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "recovery-identity",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/sep30/identity/email/start": {
+      "post": {
+        "description": "The same answer whether or not the address recovers anything here; a code is only sent to one that does.",
+        "operationId": "Sep30Controller_startEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryEmailStartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Email a code that proves an inbox to this server",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "recovery-email",
+            "limit": 5,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/sep30/identity/email/verify": {
+      "post": {
+        "description": "Five wrong answers burn it.",
+        "operationId": "Sep30Controller_verifyEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryEmailVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Answer an emailed code",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "recovery-code",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/sep30/accounts": {
+      "get": {
+        "operationId": "Sep30Controller_list_v1",
+        "parameters": [
+          {
+            "name": "after",
+            "required": false,
+            "in": "query",
+            "description": "The last address of the previous page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Accounts this caller may recover (paged by `after`)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep30-read",
+            "limit": 120,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/sep30/accounts/{address}": {
+      "post": {
+        "operationId": "Sep30Controller_register_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sep30IdentitiesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Register an account (SEP-10 token of that account)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep30-write",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Sep30Controller_update_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sep30IdentitiesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Replace who may recover an account (SEP-10 token of that account)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep30-write",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Sep30Controller_get_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Describe an account",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep30-read",
+            "limit": 120,
+            "windowMs": 600000
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Sep30Controller_remove_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Forget an account (SEP-10 token of that account)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep30-write",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/sep30/accounts/{address}/sign/{signer}": {
+      "post": {
+        "description": "Returns the SIGNATURE, not an envelope. Only an account-control change on the registered account, sourced by it, with no memo, valid for at most 15 minutes.",
+        "operationId": "Sep30Controller_sign_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sep30SignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Co-sign a recovery transaction",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "sep30-sign",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
     "/v1/onramp/quotes": {
       "post": {
         "operationId": "OnrampController_createQuote_v1",
@@ -15401,6 +16288,7 @@
           "method": {
             "type": "string",
             "enum": [
+              "authentik",
               "google",
               "github",
               "email"
@@ -15471,6 +16359,10 @@
           "expiresInSeconds": {
             "type": "number",
             "example": 1800
+          },
+          "idToken": {
+            "type": "string",
+            "description": "The OIDC provider's ID token, present ONLY when the sign-in went through Authentik AND the inbox was proven with an emailed code after it (a claim with `purpose: 'recovery'`, or an existing account). It is what the SEP-30 recovery servers accept as the person's identity, each verifying it against the provider's keys. Never stored by the wallet."
           }
         },
         "required": [
@@ -15597,6 +16489,7 @@
         "properties": {
           "providers": {
             "example": [
+              "authentik",
               "google",
               "github"
             ],
@@ -15622,6 +16515,7 @@
           "provider": {
             "type": "string",
             "enum": [
+              "authentik",
               "google",
               "github"
             ],
@@ -15707,6 +16601,15 @@
           "codeVerifier": {
             "type": "string",
             "description": "The PKCE verifier this device kept. Never sent anywhere else, and never stored by this service."
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "sign-in",
+              "recovery"
+            ],
+            "default": "sign-in",
+            "description": "`recovery` when the proven identity is going to be presented to the SEP-30 recovery servers. It always routes through an emailed code, even for an email with no account, and only then does the answer carry the provider's `idToken` — a provider proves who consented, not who opened the sign-in, and a recovery identity is worth a wallet."
           }
         },
         "required": [
@@ -15841,6 +16744,177 @@
           "status",
           "stellarAddress",
           "updatedAt"
+        ]
+      },
+      "SponsorRecoverySetupDto": {
+        "type": "object",
+        "properties": {
+          "stellarAddress": {
+            "type": "string",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+          },
+          "signers": {
+            "description": "The two recovery servers' signers for this account, in role order.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "signedAt": {
+            "type": "string",
+            "example": "2026-01-02T03:04:05Z"
+          },
+          "signature": {
+            "type": "string",
+            "description": "base64 ed25519 signature over the recovery-setup challenge."
+          }
+        },
+        "required": [
+          "stellarAddress",
+          "signers",
+          "signedAt",
+          "signature"
+        ]
+      },
+      "WalletRecoverySetupEntity": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "type": "string",
+            "description": "base64 XDR, signed by the sponsor and NOT by the account: the wallet adds its signature only after its own guard has decoded every operation."
+          },
+          "sponsor": {
+            "type": "string",
+            "description": "The account paying the two signer reserves."
+          },
+          "network_passphrase": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "transaction",
+          "sponsor",
+          "network_passphrase"
+        ]
+      },
+      "Sep10TokenDto": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "type": "string",
+            "description": "The challenge, signed by the account."
+          }
+        },
+        "required": [
+          "transaction"
+        ]
+      },
+      "RecoveryIdTokenDto": {
+        "type": "object",
+        "properties": {
+          "id_token": {
+            "type": "string",
+            "description": "An OIDC ID token from the provider this server names as OIDC_ISSUER in its stellar.toml. Accepted once per server."
+          }
+        },
+        "required": [
+          "id_token"
+        ]
+      },
+      "RecoveryEmailStartDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "person@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "RecoveryEmailVerifyDto": {
+        "type": "object",
+        "properties": {
+          "claim_token": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "claim_token",
+          "code"
+        ]
+      },
+      "AuthMethodDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "email"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "example": "person@example.com"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      },
+      "IdentityDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "sender",
+              "receiver"
+            ]
+          },
+          "auth_methods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthMethodDto"
+            }
+          }
+        },
+        "required": [
+          "role",
+          "auth_methods"
+        ]
+      },
+      "Sep30IdentitiesDto": {
+        "type": "object",
+        "properties": {
+          "identities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentityDto"
+            }
+          }
+        },
+        "required": [
+          "identities"
+        ]
+      },
+      "Sep30SignDto": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "type": "string",
+            "description": "The transaction to co-sign, base64 XDR."
+          }
+        },
+        "required": [
+          "transaction"
         ]
       },
       "PayerRulesDto": {
@@ -17115,6 +18189,7 @@
               "wallet_backup_invalid",
               "wallet_account_mismatch",
               "wallet_provider_unavailable",
+              "wallet_recovery_setup_refused",
               "misconfigured",
               "internal_error"
             ],

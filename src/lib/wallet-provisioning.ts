@@ -428,7 +428,8 @@ export async function verifyWalletLink(input: {
  *
  * Shared by the two sign-ins that prove an email without the register/confirm round trip:
  * the Pollar-brokered social login (social-onboarding.ts, kept for migrating existing
- * wallets) and the wallet's own sign-in (wallet-auth.ts). It mirrors
+ * wallets) and the wallet's own sign-in (run by the community server, which reaches this
+ * through the provision console leg in wallet-auth-console.ts). It mirrors
  * confirmWalletRegistration + verifyWalletLink minus the parts that only existed to prove
  * the email — the caller did that, and calling this without having done it is the one way
  * to misuse it.

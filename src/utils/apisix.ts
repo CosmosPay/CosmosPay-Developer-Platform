@@ -9,6 +9,7 @@ import {
 import { randomBytes, randomUUID } from "node:crypto";
 import { orgSwapContext } from "@/lib/organizations";
 import { prisma } from "@/lib/prisma";
+import { rewriteLeavesPath, routeHost, upstreamNodes } from "@/lib/apisix-upstream";
 
 export const keyPrefix = 'cosmos_';
 
@@ -91,26 +92,6 @@ function parseRewriteRegex(): [string, string] {
   return ['^/cosmos-api/(.*)', '/$1'];
 }
 
-function normalizeUpstreamHost(upstreamHost: string): string {
-  const trimmed = upstreamHost.trim().replace(/^["']|["']$/g, '');
-
-  try {
-    const { hostname, port, protocol } = new URL(
-      trimmed.includes('://') ? trimmed : `http://${trimmed}`,
-    );
-
-    if (!hostname) {
-      return trimmed;
-    }
-
-    const defaultPort = protocol === 'https:' ? '443' : '80';
-
-    return port ? `${hostname}:${port}` : `${hostname}:${defaultPort}`;
-  } catch {
-    return trimmed;
-  }
-}
-
 //Base router
 
 export async function getRoute(routeId: string) {
@@ -137,41 +118,94 @@ export async function routeExists(routeId: string): Promise<boolean> {
 }
 
 /* -- The Cosmos API routes in APISIX --------------------------------------------
-   Two routes, and the second one is what makes social login possible at all.
-
    Everything under COSMOS_API_ENTRY carries `key-auth`: an API key is the price of
-   admission, which is right for every path the wallet or an integrator calls. The
-   Pollar OAuth callback is the exception, and not by preference -- the user's BROWSER
-   lands there after consenting at Google or GitHub, carrying no key and no way to be
-   handed one. Behind key-auth that navigation is a 401 at the gateway: the handshake
-   never completes, and the wallet polls a login that can never finish. The community
-   server declares that one route `@Public()` for the same reason (the unguessable
-   `state` is the credential, and the transition it drives is single-shot).
+   admission, which is right for every path the wallet or an integrator calls. Three kinds
+   of path are the exception, and none by preference -- each is called by something that
+   holds no key of ours and has no way to be handed one:
 
-   So the callback gets its own route -- higher priority, no key-auth, matching the
-   exact callback path rather than a prefix of the API, so nothing else loses its
-   authentication alongside it. */
+   1. OAUTH CALLBACKS. The user's BROWSER lands there after consenting at Google or GitHub.
+      Behind key-auth that navigation is a 401 at the gateway: the handshake never
+      completes, and the wallet polls a login that can never finish. There are two: the
+      Pollar bridge's (kept while existing Pollar wallets migrate off it) and the wallet's
+      own sign-in. The community server declares both `@Public()` for the same reason (the
+      unguessable `state` is the credential, and the transition it drives is single-shot).
 
-/* Where the community server serves the callback, relative to the gateway entry. Keep
-   it equal to POLLAR_BRIDGE_CALLBACK_URL over there (the URL also registered with
-   Pollar); the bridge appends `/{state}`, which is what the trailing `*` covers. */
+   2. THE STANDARDS. SEP-1 discovery (`/.well-known/stellar.toml`), SEP-10 web auth and
+      SEP-30 recovery are called by any Stellar wallet, not only ours, and they authenticate
+      with their OWN bearer token -- a SEP-10 JWT or a recovery identity token the community
+      server minted. So this route forwards `Authorization` untouched, which is the one
+      thing no other route here does.
+
+   3. THE SAME STANDARDS ON A RECOVERY HOST. Each of the two recovery servers is a separate
+      community-server deployment with its own database and keys, reached on its own host.
+      When one is configured (COSMOS_RECOVERY_{A,B}_HOST + _UPSTREAM) it gets its own copy of
+      route 2, bound to that host and pointed at that upstream.
+
+   Each keyless route matches exact paths or narrow prefixes, never a prefix of the API, so
+   nothing else loses its authentication alongside it; and each outranks the key-auth
+   route, because APISIX resolves overlapping URIs by priority, highest first. */
+
+/* Where the community server serves each callback, relative to the gateway entry.
+   POLLAR: keep it equal to POLLAR_BRIDGE_CALLBACK_URL over there (the URL also registered
+   with Pollar); the bridge appends `/{state}`. WALLET: `/v1/wallet/auth/oauth/callback/
+   {provider}`, the redirect URI registered with each provider (WALLET_AUTH_PUBLIC_BASE_URL
+   over there). The trailing `*` in the URI covers the path segment each one appends. */
 const POLLAR_CALLBACK_PATH = '/v1/pollar/oauth/callback';
+const WALLET_AUTH_CALLBACK_PATH = '/v1/wallet/auth/oauth/callback/';
 
-/* `/cosmos-api/*` -> `/cosmos-api`. The entry is a wildcard URI; the sibling route
-   builds its own path under the same prefix. */
+/* SEP-1 fixes discovery at the root of the host, OUTSIDE the gateway entry -- which is why
+   the SEP routes check the rewrite pattern leaves it alone (sepRouteUris). */
+export const STELLAR_TOML_PATH = '/.well-known/stellar.toml';
+
+/* `/cosmos-api/*` -> `/cosmos-api`. The entry is a wildcard URI; the sibling routes
+   build their own paths under the same prefix. */
 function entryPrefix(entry: string): string {
   return entry.trim().replace(/["']/g, '').replace(/\/+\*?$/, '');
 }
 
-/* Route id for the public callback. Derived from the main one so a deployment needs no
-   extra env var, and so the pair is obvious in the APISIX admin listing. */
+/* Route ids for the keyless siblings. Derived from the main one so a deployment needs no
+   extra env var, and so the set is obvious in the APISIX admin listing. */
 export function callbackRouteId(routeId: string): string {
+  return `${routeId}-oauth-callbacks`;
+}
+
+/* What the callback route was called while it only served Pollar. The sync removes it once
+   its replacement is in place: two keyless routes on one URI would leave which of them
+   answers up to a priority tie. */
+export function legacyCallbackRouteId(routeId: string): string {
   return `${routeId}-pollar-callback`;
 }
 
-/* The gateway URI the callback (and its `/{state}` form) is served on. */
-export function callbackRouteUri(entry: string): string {
-  return `${entryPrefix(entry)}${POLLAR_CALLBACK_PATH}*`;
+export function sepRouteId(routeId: string): string {
+  return `${routeId}-sep`;
+}
+
+export type RecoveryRole = 'a' | 'b';
+
+export function recoveryRouteId(routeId: string, role: RecoveryRole): string {
+  return `${routeId}-sep-recovery-${role}`;
+}
+
+/* The gateway URIs the callback route is served on -- both callbacks, and each one's
+   appended segment. */
+export function callbackRouteUris(entry: string): string[] {
+  const prefix = entryPrefix(entry);
+  return [`${prefix}${POLLAR_CALLBACK_PATH}*`, `${prefix}${WALLET_AUTH_CALLBACK_PATH}*`];
+}
+
+/* The gateway URIs the standards are served on. Throws when the configured rewrite would
+   touch the TOML's path: a route that sent discovery somewhere else is worse than no route,
+   because SEP-10 clients read the resulting 404 as "no recovery server here" rather than as
+   a misconfiguration. */
+export function sepRouteUris(entry: string): string[] {
+  const [pattern] = parseRewriteRegex();
+  if (!rewriteLeavesPath(pattern, STELLAR_TOML_PATH)) {
+    throw new Error(
+      `COSMOS_API_REWRITE pattern ${JSON.stringify(pattern)} matches ${STELLAR_TOML_PATH}; anchor it to the gateway entry`,
+    );
+  }
+  const prefix = entryPrefix(entry);
+  return [STELLAR_TOML_PATH, `${prefix}/v1/sep10/*`, `${prefix}/v1/sep30/*`];
 }
 
 /* The consumer identity the gateway establishes and the upstream trusts. A client must
@@ -190,41 +224,57 @@ const CONSUMER_HEADERS = [
   'X-Consumer-Email',
 ];
 
-/* The plugin stack both routes share. `keyAuth: false` drops key-auth AND the header
-   normalizer that only exists to feed it -- everything else (CORS, the rewrite, the
-   gateway secret, the internal-header scrub, the access log) is identical, so the two
-   routes cannot drift into disagreeing about what reaches the upstream. */
-function cosmosRoutePlugins(opts: { keyAuth: boolean }) {
+interface RoutePluginOptions {
+  /* key-auth AND the header normalizer that only exists to feed it. */
+  keyAuth: boolean;
+  /* APISIX's cors plugin. Off where the upstream answers CORS itself (the SEP routes):
+     two Access-Control-Allow-Origin headers on one response make a browser refuse it. */
+  cors: boolean;
+  /* Leave `Authorization` for the upstream instead of stripping it. Only for routes whose
+     upstream authenticates the caller by a bearer token of its own (SEP-10 / SEP-30) --
+     on the key-auth route that header may BE the API key, and it must never travel on. */
+  forwardAuthorization: boolean;
+}
+
+/* The plugin stack every Cosmos route shares, with the three differences above as options
+   rather than as copies. Everything else (the rewrite, the gateway secret, the internal-
+   header scrub, the access log) is identical, so the routes cannot drift into disagreeing
+   about what reaches the upstream. */
+function cosmosRoutePlugins(opts: RoutePluginOptions) {
   const [rewritePattern, rewriteTemplate] = parseRewriteRegex();
 
   return {
-    // CORS: let the wallet/site (cosmospay.lat) call the gateway from the browser.
-    // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
-    // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
-    cors: {
-      allow_origins: COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat',
-      allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-      // Idempotency-Key is read by the swap / liquidity / payout routes; a browser
-      // cannot send a non-safelisted request header unless preflight allows it here.
-      //
-      // X-Cosmos-Trace-Id is the wallet's per-request correlation id (TRACE_HEADER in its
-      // src/constants/telemetry.ts). It has to be listed for the same reason: omitted, the
-      // PREFLIGHT fails and the browser never sends the request at all -- so adding a
-      // trace id to the client would take out every call it was meant to help diagnose,
-      // in the web and Tauri builds. The extension would keep working, because
-      // host_permissions exempt it from CORS entirely, which is exactly the shape of bug
-      // that ships: green where it is developed, dead everywhere else.
-      allow_headers: 'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id',
-      // A browser hides every response header that is not safelisted, so without this
-      // the throttling headers the API already sends are invisible to a web client: it
-      // sees a 429 with no idea when to come back, and has to guess an interval against
-      // a fixed-window limiter. The Pollar login path is where 429s are ORDINARY --
-      // `authorize` is capped because each handshake can fund a Stellar account -- so
-      // this is the difference between "retry in 47s" and a retry storm.
-      expose_headers: 'Retry-After,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset',
-      allow_credential: true,
-      max_age: 86400,
-    },
+    ...(opts.cors
+      ? {
+          // CORS: let the wallet/site (cosmospay.lat) call the gateway from the browser.
+          // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
+          // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
+          cors: {
+            allow_origins: COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat',
+            allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+            // Idempotency-Key is read by the swap / liquidity / payout routes; a browser
+            // cannot send a non-safelisted request header unless preflight allows it here.
+            //
+            // X-Cosmos-Trace-Id is the wallet's per-request correlation id (TRACE_HEADER in its
+            // src/constants/telemetry.ts). It has to be listed for the same reason: omitted, the
+            // PREFLIGHT fails and the browser never sends the request at all -- so adding a
+            // trace id to the client would take out every call it was meant to help diagnose,
+            // in the web and Tauri builds. The extension would keep working, because
+            // host_permissions exempt it from CORS entirely, which is exactly the shape of bug
+            // that ships: green where it is developed, dead everywhere else.
+            allow_headers: 'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id',
+            // A browser hides every response header that is not safelisted, so without this
+            // the throttling headers the API already sends are invisible to a web client: it
+            // sees a 429 with no idea when to come back, and has to guess an interval against
+            // a fixed-window limiter. The Pollar login path is where 429s are ORDINARY --
+            // `authorize` is capped because each handshake can fund a Stellar account -- so
+            // this is the difference between "retry in 47s" and a retry storm.
+            expose_headers: 'Retry-After,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset',
+            allow_credential: true,
+            max_age: 86400,
+          },
+        }
+      : {}),
 
     ...(opts.keyAuth
       ? {
@@ -277,7 +327,9 @@ end
           ? { set: { 'X-Gateway-Secret': COSMOS_GATEWAY_SECRET } }
           : {}),
         remove: [
-          'Authorization',
+          /* The SEP routes keep it: there it carries the SEP-10 / identity JWT the upstream
+             authenticates with, and no API key of ours is ever sent on those paths. */
+          ...(opts.forwardAuthorization ? [] : ['Authorization']),
           'apikey',
           'X-API-KEY',
           /* Internal-only markers -- never trust a client-supplied copy. The dev platform
@@ -298,7 +350,7 @@ end
           'X-Cosmos-Admin',
           'X-Cosmos-Admin-Role',
           'X-Cosmos-Tos-Cooldown-Ms',
-          /* The consumer identity, scrubbed HERE ONLY ON THE KEYLESS ROUTE.
+          /* The consumer identity, scrubbed HERE ONLY ON THE KEYLESS ROUTES.
 
              It must be scrubbed somewhere: without it a client could hand the upstream
              its own `X-Consumer-Role: admin`. But `proxy-rewrite` is the wrong place to
@@ -318,9 +370,9 @@ end
              map arrives with no headers at all rather than with the client's. Fails
              closed either way.
 
-             The keyless callback route has no serverless-pre-function -- it is dropped
-             along with key-auth, since it only exists to feed it -- and no key-auth step
-             to re-inject anything, so removing them here is both correct and the only
+             The keyless routes have no serverless-pre-function -- it is dropped along
+             with key-auth, since it only exists to feed it -- and no key-auth step to
+             re-inject anything, so removing them here is both correct and the only
              option left. */
           ...(opts.keyAuth ? [] : CONSUMER_HEADERS),
         ],
@@ -346,6 +398,16 @@ end
       ],
     },
   };
+}
+
+/* Every route here balances across the same shape of upstream: `upstreamNodes` turns one
+   `host:port` -- or a comma-separated list of replicas -- into equal-weight nodes. */
+function roundRobin(upstreamHost: string) {
+  const nodes = upstreamNodes(upstreamHost);
+  if (Object.keys(nodes).length === 0) {
+    throw new Error('empty upstream');
+  }
+  return { type: 'roundrobin', nodes };
 }
 
 /* Why a call to the APISIX admin API failed, in one short line fit for a log.
@@ -399,38 +461,70 @@ export async function createRoute(
 ) {
   return putRoute(routeId, {
     uri,
-    // Explicit, because the callback route below outranks it: APISIX resolves
+    // Explicit, because the keyless routes below outrank it: APISIX resolves
     // overlapping URIs by priority, highest first.
     priority: 0,
-    plugins: cosmosRoutePlugins({ keyAuth: true }),
-    upstream: {
-      type: 'roundrobin',
-      nodes: {
-        [normalizeUpstreamHost(upstreamHost)]: 1,
-      },
-    },
+    plugins: cosmosRoutePlugins({ keyAuth: true, cors: true, forwardAuthorization: false }),
+    upstream: roundRobin(upstreamHost),
   });
 }
 
-/* The keyless sibling, for the Pollar OAuth callback only. GET plus the preflight:
-   it serves one browser navigation and nothing else, so anything that is not that
-   navigation still meets the authenticated route. */
+/* The keyless sibling for the OAuth callbacks -- Pollar's and the wallet sign-in's, one
+   route with an `uris` array rather than a route each, since they share everything but the
+   path. GET plus the preflight: each serves one browser navigation and nothing else, so
+   anything that is not that navigation still meets the authenticated route. */
 export async function createCallbackRoute(
   routeId: string,
   entry: string,
   upstreamHost: string,
 ) {
   return putRoute(callbackRouteId(routeId), {
-    uri: callbackRouteUri(entry),
+    uris: callbackRouteUris(entry),
     priority: 10,
     methods: ['GET', 'OPTIONS'],
-    plugins: cosmosRoutePlugins({ keyAuth: false }),
-    upstream: {
-      type: 'roundrobin',
-      nodes: {
-        [normalizeUpstreamHost(upstreamHost)]: 1,
-      },
-    },
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: true, forwardAuthorization: false }),
+    upstream: roundRobin(upstreamHost),
+  });
+}
+
+/* The keyless route for SEP-1/10/30 on the main host. No cors plugin (the community server
+   answers CORS itself with `*` for these prefixes, src/recovery/sep-cors.ts over there) and
+   `Authorization` forwarded, because the SEP tokens ARE the authentication here. OPTIONS is
+   listed so the preflight reaches the upstream that answers it. */
+const SEP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
+
+export async function createSepRoute(
+  routeId: string,
+  entry: string,
+  upstreamHost: string,
+) {
+  return putRoute(sepRouteId(routeId), {
+    uris: sepRouteUris(entry),
+    priority: 10,
+    methods: SEP_METHODS,
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: false, forwardAuthorization: true }),
+    upstream: roundRobin(upstreamHost),
+  });
+}
+
+/* The same route for one recovery server, bound to its own host and its own deployment.
+   Outranks the unbound SEP route: both match a request on that host, and the host-bound one
+   is the one that names the right database -- a recovery server answering for the other's
+   accounts would be one server holding both shares. */
+export async function createRecoveryRoute(
+  routeId: string,
+  role: RecoveryRole,
+  entry: string,
+  host: string,
+  upstreamHost: string,
+) {
+  return putRoute(recoveryRouteId(routeId, role), {
+    uris: sepRouteUris(entry),
+    host: routeHost(host),
+    priority: 20,
+    methods: SEP_METHODS,
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: false, forwardAuthorization: true }),
+    upstream: roundRobin(upstreamHost),
   });
 }
 

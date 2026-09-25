@@ -106,51 +106,35 @@ export default defineConfig({
       // created and will link to Authentik on first OAuth sign-in (account linking is on).
       AUTHENTIK_API_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       AUTHENTIK_API_TOKEN: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      // The wallet's own sign-in (src/lib/wallet-auth.ts): one OAuth app per provider, each
-      // registered with the redirect URI `<BETTER_AUTH_URL>/api/wallet/auth/oauth/callback/<provider>`
-      // (…/callback/google, …/callback/github). Separate from Authentik on purpose — these
-      // prove an email to the WALLET, they do not sign anyone in to the dashboard. Optional:
-      // a provider whose pair is unset answers 503 and the wallet still offers the email code.
-      WALLET_GOOGLE_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      WALLET_GOOGLE_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      WALLET_GITHUB_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      WALLET_GITHUB_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      // Proves a call to the two console legs came from the community server, which
-      // is where the wallet's sign-in runs (src/lib/wallet-auth-console.ts). Unset
+      // Proves a call to the two sign-in console legs (login-code, provision) came from
+      // the community server, which is where the wallet's sign-in, SEP-10 and SEP-30
+      // account recovery all run now (src/lib/wallet-auth-console.ts). Unset
       // means those two routes serve nobody — the right state for a platform whose
       // community server is not calling it, and it fails closed rather than
       // comparing an absent header against an empty secret.
       WALLET_AUTH_CONSOLE_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      // --- Account recovery (SEP-30) + its SEP-10 auth: src/lib/recovery-config.ts ---
-      // A deployment is ONE of the two recovery servers, or none at all (every field empty,
-      // and the routes answer 503). Deploy it twice, with a different role, a different pair
-      // of keys and a different web-auth domain — never both roles in one process.
-      //
-      // RECOVERY_SIGNER_MASTER derives the per-account signers this server holds ON CHAIN.
-      // It can never be rotated while an account still names one of them: back it up like
-      // the money it guards.
-      RECOVERY_ROLE: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      RECOVERY_SIGNER_MASTER: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      SEP10_SIGNING_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      RECOVERY_WEB_AUTH_DOMAIN: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      RECOVERY_HOME_DOMAIN: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      // One network per deployment: a signer is an entry on ONE ledger. Mainnet by default.
-      RECOVERY_NETWORK_PASSPHRASE: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      RECOVERY_HORIZON_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      /* Horizon for the MAINNET ledger, used by wallet-auth to accept a signature from a
-         RECOVERED account's current signer — see src/lib/account-signers.ts, which explains
-         why this is the operator's setting and never the caller's. Empty disables the
-         widening entirely: signatures are then only accepted from the address itself. */
-      STELLAR_HORIZON_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://horizon.stellar.org' }),
-      // Optional: the operator account that pays the reserve for an account that cannot.
-      // Without it, recovery is only offered to accounts that can pay their own.
-      RECOVERY_SPONSOR_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      // Proves a recovery-code delivery came from one of the two SEP-30 recovery servers
+      // (the community server deployed as role a and role b), checked against the
+      // `x-cosmos-recovery-secret` header by POST /api/wallet/console/recovery-code.
+      // Comma-separated, one entry per server, so each operator holds its own and neither
+      // can impersonate the other; entries under 32 characters are ignored. Unset means
+      // the route serves nobody (404), failing closed like the secret above.
+      WALLET_RECOVERY_CONSOLE_SECRETS: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       APISIX_URL: envField.string({ context: 'server', access: 'secret' }),
       APISIX_ADMIN_KEY: envField.string({ context: 'server', access: 'secret' }),
       APISSIX_ROUTE_ID: envField.string({ context: 'server', access: 'secret' }),
       COSMOS_API_URL: envField.string({ context: 'server', access: 'secret' }),
       COSMOS_API_ENTRY: envField.string({ context: 'server', access: 'secret' }),
       COSMOS_API_REWRITE: envField.string({ context: 'server', access: 'secret' }),
+      // Optional recovery hosts. Each SEP-30 recovery server is its OWN community-server
+      // deployment (own database, own keys), reached on its own host. With both halves of
+      // a pair set, the route sync adds a keyless SEP route (stellar.toml, /v1/sep10/*,
+      // /v1/sep30/*) bound to that HOST and pointed at that UPSTREAM; an upstream may be a
+      // comma-separated list of host:port replicas. Unset: no such route (src/lib/apisix-route.ts).
+      COSMOS_RECOVERY_A_HOST: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      COSMOS_RECOVERY_A_UPSTREAM: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      COSMOS_RECOVERY_B_HOST: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      COSMOS_RECOVERY_B_UPSTREAM: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       // Shared secret APISIX injects on every proxied request (X-Gateway-Secret).
       // The dashboard reaches the Cosmos Payments API server-to-server, so it presents
       // this secret + the consumer identity itself, exactly as the gateway would.

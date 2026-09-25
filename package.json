@@ -19,6 +19,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "sync:route": "node scripts/sync-apisix-route.mjs",
+    "export:wallet-data": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/export-wallet-data.mjs",
     "test:unit": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs --test \"tests/unit/**/*.test.ts\"",
     "test:smoke": "node scripts/smoke-server.mjs",
     "check:openapi": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs scripts/check-openapi-coverage.mjs",

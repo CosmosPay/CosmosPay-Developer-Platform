@@ -113,73 +113,31 @@ and renders in Swagger UI. Two habits keep it that way:
   field names; both sources are in the repo.
 
 
-## A recovery deployment is this same app, configured to be one
+## Wallet sign-in and account recovery live on the community server
 
-SEP-10 web auth (`/api/sep10/auth`) and SEP-30 account recovery (`/api/recovery/*`) answer
-only where `RECOVERY_ROLE` and the keys beside it are set; every other deployment returns
-503 there, which is not an error so much as "this host is not that server".
+The wallet's own sign-in (`/v1/wallet/auth/*`, the backup box), SEP-10 web auth, SEP-30 account
+recovery and `/.well-known/stellar.toml` are served by the community server, not by this app —
+it is the piece that runs as load-balanced replicas behind APISIX, and each recovery server is a
+separate deployment of it with its own database and keys. Do not add routes for them here.
 
-**It takes TWO of them, and they must really be two.** Each holds one of the two signers an
-account is recovered with, at half the account's threshold, so that neither can act alone —
-`src/lib/recovery-setup.ts` has the arithmetic. Two deployments sharing `RECOVERY_SIGNER_MASTER`,
-or sitting behind one host, are one server wearing two names, and a single compromise is then
-a whole account. `RECOVERY_ROLE` is not cosmetic either: it goes into every key derived here,
-so changing it on a live server orphans every account already registered against the old one.
+What this app still does for them:
 
-Four rules the server side rests on:
-
-- **The signing key is derived per account, and never leaves.** `signerFor` (HKDF from the
-  master) means there is no key of ours anywhere but on the ledger, and `signRecovery` returns
-  a raw SIGNATURE, never a signed envelope — the wallet is collecting two and assembles the
-  transaction itself. A server that returned an envelope would be inviting the other one to be
-  dropped.
-- **`signRefusal` (`src/lib/recovery-core.ts`) is the whole of what a compromised identity can
-  ask for.** SEP-30 leaves the policy to the server, and the generous reading — sign whatever an
-  authenticated identity asks — makes each server a payment service for anyone who can receive
-  the person's email. The narrow reading is: the source is the registered account, the operations
-  are a signer/threshold change on it (with the sponsorship pair), the window is bounded, and the
-  signer is an ordinary key. It is pure, and `tests/unit/recovery.test.ts` is where it is pinned.
-- **Registering, and changing who may recover, need the ACCOUNT's own key** (a SEP-10 token).
-  An identity that could add itself would be a way in rather than a way back. The identity token
-  (`/api/recovery/identity`, minted from a wallet sign-in) can only read and ask for a signature,
-  and is scoped to one server's audience so the sibling's is refused.
-- **The standard endpoints answer in the standard's shape, not in this API's envelope.**
-  `/api/sep10/auth` and `/api/recovery/accounts/**` return the bare body their spec describes and
-  `{ "error": "..." }` on failure — `src/lib/sep-http.ts`, which also says where the line falls.
-  These are endpoints somebody else's wallet calls: a client that reads `signers[0].key` off the
-  body gets `undefined` when it is wrapped in `data`, and the failure surfaces as "this server
-  returned no signer". Three routes in the same namespace keep the envelope because they are ours
-  rather than a standard's: `/api/recovery/info`, `/api/recovery/identity` and the sponsored
-  `/api/wallet/recovery/setup`. When adding a route here, the question is not which folder it is
-  in — it is whether a spec describes its body.
-- **`POST /accounts/{address}` is 409 on an account already registered**, and PUT is how identities
-  change. A POST that quietly replaced them would let a client that believes it is creating an
-  account change who may recover an existing one and never find out. `DELETE` answers with the
-  account it deleted, per SEP-30 — the last moment a client can be told which signer it still has
-  to take off the ledger.
-- **`GET /accounts` is paged with SEP-30's `after` cursor**, keyset over the address and ordered by
-  it. The order is the load-bearing half: this query used to take 100 rows in whatever order the
-  database gave them, so there was no page two and no way to ask for one, and an identity with
-  more accounts than that had some of them permanently invisible — which reads, to the person
-  looking, exactly like an account that was never registered. `listWhere` (pure, in
-  `recovery-core.ts`) ANDs the cursor with the caller's scope rather than merging it, so a cursor
-  off the URL can narrow what is visible and never widen it.
-- **`/.well-known/stellar.toml` is how anyone who is not our wallet discovers this server.**
-  SEP-30 defines no discovery at all; SEP-10 does, and `SIGNING_KEY` is the field that makes the
-  challenge exchange a proof rather than a ritual — a client that cannot check it knows the
-  challenge is safe to sign but not who asked. It is derived from the signing secret, never
-  configured beside it. `HOME_DOMAIN` is published because the two servers are different hosts
-  that deliberately name the SAME wallet: a client is meant to require both to agree on it, and
-  one that assumed the home domain was just the host it fetched the file from would see the pair
-  disagree by construction and refuse every configuration.
-- **Sponsoring is the operator's offer, not either server's.** `/api/wallet/recovery/setup` lives
-  on the main platform, pays the two signer entries' reserve and signs as sponsor only. The
-  account's own signature is deliberately missing: the wallet adds it after its guard has decoded
-  every operation.
-
-Separately, and regardless of whether a deployment is a recovery server: a wallet that HAS been
-recovered signs with a key that replaced its account's master. `src/lib/account-signers.ts` is
-what lets it still sign in — the address first, with no network call, and only on failure the
-account's current signers from `STELLAR_HORIZON_URL`. Mainnet only, and the operator's URL rather
-than the request's, because an address on mainnet can also be created on testnet by anyone who
-could then put their own signer on it. Read that file's header before widening it.
+- **Three console legs** (`src/pages/api/wallet/console/`, `src/lib/wallet-auth-console.ts`):
+  `login-code` and `provision` for the sign-in, admitted by `WALLET_AUTH_CONSOLE_SECRET` plus the
+  `x-cosmos-internal` marker APISIX strips; and `recovery-code`, admitted by
+  `x-cosmos-recovery-secret` against `WALLET_RECOVERY_CONSOLE_SECRETS` (one entry per recovery
+  server, so neither holds the credential that mints accounts). Each answers 404 to anyone else
+  and fails closed when its secret is unset. The decisions are pure, in `src/lib/console-call.ts`,
+  and pinned by `tests/unit/consoleCall.test.ts`. None of them is in the OpenAPI document, on
+  purpose — see the exclusions in `scripts/check-openapi-coverage.mjs`.
+- **The keyless APISIX routes** (`src/utils/apisix.ts`, synced by `src/lib/apisix-route.ts`): the
+  OAuth callbacks (Pollar's and the wallet sign-in's), and the SEP route
+  (`/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`) — which carries NO `cors` plugin,
+  because the community server answers CORS itself for those prefixes and two
+  `Access-Control-Allow-Origin` headers make a browser refuse the response, and which forwards
+  `Authorization`, because there it is the SEP-10 / identity JWT. Optional host-bound copies per
+  recovery server come from `COSMOS_RECOVERY_{A,B}_HOST` + `_UPSTREAM`.
+- **Its old tables, until exported.** `wallet_backup` (encrypted seeds people restore from),
+  `wallet_auth_handshake`, `wallet_login_code`, `recovery_account` and `recovery_auth_method` are
+  RETIRED but kept. Never drop them before `npm run export:wallet-data`
+  (`scripts/export-wallet-data.mjs`) has been run and its output imported on the community server.

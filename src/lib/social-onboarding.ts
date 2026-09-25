@@ -3,8 +3,8 @@
 
    ## LEGACY: new wallets no longer come through here
 
-   The wallet's own sign-in (wallet-auth.ts) replaced this for every NEW wallet: the key is
-   generated on the device instead of in Pollar's KMS. What keeps this module alive is the
+   The wallet's own sign-in (run by the community server now) replaced this for every NEW
+   wallet: the key is generated on the device instead of in Pollar's KMS. What keeps this module alive is the
    wallets it already made. Moving their funds out needs Pollar to sign one last time, and a
    Pollar session that expired while the app sat unused can only be renewed through this
    handshake — so the wallet reaches it from its migration screen, and from nowhere else.

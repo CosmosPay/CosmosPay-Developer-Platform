@@ -84,11 +84,6 @@ export const openApiConfig: OpenAPIObjectConfig = {
       description: 'Support tickets, for customers and for staff',
     },
     {
-      name: 'Recovery',
-      description:
-        'SEP-10 web auth and SEP-30 account recovery: the two servers that co-sign a new key onto an account whose device was lost',
-    },
-    {
       name: 'Wallet',
       description:
         'Public account-provisioning flows for the Cosmos Pay Wallet (Stellar signature, one-time claim token or PKCE)',

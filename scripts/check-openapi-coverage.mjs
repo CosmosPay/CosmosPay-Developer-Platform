@@ -44,6 +44,10 @@ const EXCLUDED = new Map([
     '/api/wallet/console/provision',
     'The sibling console leg, and the same reasoning: the community server calls it to have an account and its keys minted. A documented endpoint that mints two live API keys is an invitation to find the hole in the secret check.',
   ],
+  [
+    '/api/wallet/console/recovery-code',
+    "The third console leg: the community server's two SEP-30 recovery servers call it to have a recovery code emailed, authenticated by their own x-cosmos-recovery-secret. It answers 404 to everyone else; publishing it would advertise a way to make this platform send 'recover your wallet' mail. Its contract lives with the caller, in the community server's recovery module.",
+  ],
 ]);
 
 const METHOD_RE = /export\s+const\s+(GET|POST|PUT|PATCH|DELETE|ALL|OPTIONS|HEAD)\b/g;
