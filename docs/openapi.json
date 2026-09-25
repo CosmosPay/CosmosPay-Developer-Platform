@@ -30,7 +30,8 @@
         "tags": [
           "health"
         ],
-        "x-cosmos-public": true
+        "x-cosmos-public": true,
+        "security": []
       }
     },
     "/v1/health/readiness": {
@@ -105,7 +106,8 @@
         "tags": [
           "health"
         ],
-        "x-cosmos-public": true
+        "x-cosmos-public": true,
+        "security": []
       }
     },
     "/v1/payment-intents/tx": {
@@ -6444,7 +6446,8 @@
         "tags": [
           "wallet-auth"
         ],
-        "x-cosmos-public": true
+        "x-cosmos-public": true,
+        "security": []
       }
     },
     "/v1/wallet/auth/oauth/session/{state}": {
@@ -7280,7 +7283,8 @@
         "tags": [
           "recovery"
         ],
-        "x-cosmos-public": true
+        "x-cosmos-public": true,
+        "security": []
       }
     },
     "/v1/sep10/auth": {
@@ -7346,7 +7350,8 @@
             "limit": 60,
             "windowMs": 600000
           }
-        ]
+        ],
+        "security": []
       },
       "post": {
         "description": "Weighed against the account's CURRENT signers and medium threshold, so a recovered account authenticates with the key that replaced its master.",
@@ -7410,7 +7415,8 @@
             "limit": 60,
             "windowMs": 600000
           }
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/sep30/identity": {
@@ -7476,7 +7482,8 @@
             "limit": 30,
             "windowMs": 600000
           }
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/sep30/identity/email/start": {
@@ -7542,7 +7549,8 @@
             "limit": 5,
             "windowMs": 600000
           }
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/sep30/identity/email/verify": {
@@ -7608,7 +7616,8 @@
             "limit": 30,
             "windowMs": 600000
           }
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/sep30/accounts": {
@@ -7662,6 +7671,11 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
         "summary": "Accounts this caller may recover (paged by `after`)",
         "tags": [
           "recovery"
@@ -7730,6 +7744,11 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
         "summary": "Register an account (SEP-10 token of that account)",
         "tags": [
           "recovery"
@@ -7796,6 +7815,11 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
         "summary": "Replace who may recover an account (SEP-10 token of that account)",
         "tags": [
           "recovery"
@@ -7849,6 +7873,11 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
         "summary": "Describe an account",
         "tags": [
           "recovery"
@@ -7902,6 +7931,11 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
         "summary": "Forget an account (SEP-10 token of that account)",
         "tags": [
           "recovery"
@@ -7971,6 +8005,11 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
         "summary": "Co-sign a recovery transaction",
         "tags": [
           "recovery"
@@ -9222,7 +9261,8 @@
         ],
         "x-cosmos-upstream": [
           "Pollar"
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/pollar/oauth/callback": {
@@ -9333,7 +9373,8 @@
         ],
         "x-cosmos-upstream": [
           "Pollar"
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/pollar/oauth/sessions/{state}": {
@@ -10731,6 +10772,14 @@
       "description": "Deposit into and withdraw from Stellar AMM pools, and track your positions."
     },
     {
+      "name": "assets",
+      "description": "The asset registry: which (code, issuer) pairs exist per network and who issues them. `verified` is a claim about the issuer’s identity, not about quality."
+    },
+    {
+      "name": "aliases",
+      "description": "Payment handles: resolve a name to its addresses, and claim or manage one with a signature by each address it points at."
+    },
+    {
       "name": "onramp",
       "description": "Fiat in: quotes, payins, virtual accounts, and the trustline for the asset delivered."
     },
@@ -10741,6 +10790,14 @@
     {
       "name": "kyc",
       "description": "Receivers, KYC documents, blockchain wallets, bank accounts, and the rail catalogue."
+    },
+    {
+      "name": "wallet-auth",
+      "description": "The Cosmos Wallet’s own sign-in: Authentik (OpenID Connect), Google, GitHub or an emailed code. It proves who a person is and never touches a key; the seed backup it stores is sealed on the device under a password this service never sees."
+    },
+    {
+      "name": "recovery",
+      "description": "Served by the two recovery deployments only. Standard SEP-10 web authentication and SEP-30 account recovery: each server holds half of what a recovery signature needs, and proves the person’s inbox on its own."
     },
     {
       "name": "pollar",
@@ -10773,13 +10830,8 @@
   ],
   "servers": [
     {
-      "url": "http://localhost:{port}",
-      "description": "This service directly — send the two APISIX headers yourself",
-      "variables": {
-        "port": {
-          "default": "3000"
-        }
-      }
+      "url": "https://api.cosmospay.lat/cosmos-api",
+      "description": "Cosmos Pay API"
     }
   ],
   "components": {
@@ -10789,6 +10841,12 @@
         "scheme": "bearer",
         "bearerFormat": "API key",
         "description": "Your Cosmos Pay secret API key, sent as `Authorization: Bearer <apiKey>`."
+      },
+      "sep-token": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "description": "A token from THIS recovery server: `POST /v1/sep10/auth` (the account's key) or `POST /v1/sep30/identity` / `/identity/email/verify` (an inbox). The sibling server never accepts it."
       }
     },
     "schemas": {

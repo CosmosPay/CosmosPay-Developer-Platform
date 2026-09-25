@@ -1,0 +1,167 @@
+---
+title: Wallet auth
+description: 'The Cosmos Wallet’s own sign-in: Authentik (OpenID Connect),
+  Google, GitHub or an emailed code. It proves who a person is and never touches
+  a key; the seed backup it stores is sealed on the device under a password this
+  service never sees.'
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: Which sign-in doors this deployment has
+      url: '#which-sign-in-doors-this-deployment-has'
+    - depth: 2
+      title: Open a provider sign-in
+      url: '#open-a-provider-sign-in'
+    - depth: 2
+      title: Where the provider returns the browser after consent
+      url: '#where-the-provider-returns-the-browser-after-consent'
+    - depth: 2
+      title: Poll a sign-in
+      url: '#poll-a-sign-in'
+    - depth: 2
+      title: Redeem a handshake with the PKCE verifier
+      url: '#redeem-a-handshake-with-the-pkce-verifier'
+    - depth: 2
+      title: Send a sign-in code to a mailbox
+      url: '#send-a-sign-in-code-to-a-mailbox'
+    - depth: 2
+      title: Answer a sign-in code
+      url: '#answer-a-sign-in-code'
+    - depth: 2
+      title: Attach the proven identity to the account this device signs for
+      url: '#attach-the-proven-identity-to-the-account-this-device-signs-for'
+    - depth: 2
+      title: Replace the sealed box stored for an account
+      url: '#replace-the-sealed-box-stored-for-an-account'
+    - depth: 2
+      title: Sponsor the reserve of an account's two recovery signers
+      url: '#sponsor-the-reserve-of-an-accounts-two-recovery-signers'
+  structuredData:
+    headings:
+      - content: Which sign-in doors this deployment has
+        id: which-sign-in-doors-this-deployment-has
+      - content: Open a provider sign-in
+        id: open-a-provider-sign-in
+      - content: Where the provider returns the browser after consent
+        id: where-the-provider-returns-the-browser-after-consent
+      - content: Poll a sign-in
+        id: poll-a-sign-in
+      - content: Redeem a handshake with the PKCE verifier
+        id: redeem-a-handshake-with-the-pkce-verifier
+      - content: Send a sign-in code to a mailbox
+        id: send-a-sign-in-code-to-a-mailbox
+      - content: Answer a sign-in code
+        id: answer-a-sign-in-code
+      - content: Attach the proven identity to the account this device signs for
+        id: attach-the-proven-identity-to-the-account-this-device-signs-for
+      - content: Replace the sealed box stored for an account
+        id: replace-the-sealed-box-stored-for-an-account
+      - content: Sponsor the reserve of an account's two recovery signers
+        id: sponsor-the-reserve-of-an-accounts-two-recovery-signers
+    contents:
+      - content: Render buttons from this rather than from a compiled-in list. A
+          deployment with no Google credentials should not show a Google button
+          that dies at the consent screen.
+        heading: which-sign-in-doors-this-deployment-has
+      - content: 'Returns the URL to open in a browser. Keep the PKCE verifier on the
+          device: the `state` travels through the browser and buys only polling,
+          while the verifier is what redeems the handshake.'
+        heading: open-a-provider-sign-in
+      - content: 'Not called by your code — the person’s browser lands here. Public by
+          necessity: a navigation carries no API key and no gateway consumer. It
+          renders a page and nothing else; the identity is collected by the
+          device that holds the PKCE verifier. Register
+          `{WALLET_AUTH_PUBLIC_BASE_URL}/v1/wallet/auth/oauth/callback/{provider}`
+          with each provider.'
+        heading: where-the-provider-returns-the-browser-after-consent
+      - content: Answers on the `state` alone, and never returns the identity at any
+          status. Poll until it leaves `pending`, then redeem with the verifier.
+        heading: poll-a-sign-in
+      - content: 'A NEW email ends here, with a session token. An email that ALREADY has
+          an account gets `verify_email` instead and a code in its inbox: a
+          provider proves who consented, not who opened the sign-in, and an
+          existing account is where the backup worth stealing is.'
+        heading: redeem-a-handshake-with-the-pkce-verifier
+      - content: Wrong codes are counted on the row, not by the client. Five burns it,
+          and a burned code is replaced by asking for another.
+        heading: answer-a-sign-in-code
+      - content: >-
+          Send the session token as `Authorization: Bearer`. The signature
+          covers exactly:
+
+
+          ```
+
+          Cosmos Pay Wallet sign-in
+
+          email: {lowercased email}
+
+          account: {stellarAddress}
+
+          at: {signedAt}
+
+          ```
+
+
+          signed over those raw UTF-8 bytes with the account key, base64. The
+          first line is one no Stellar transaction envelope can begin with,
+          which is what makes signing it safe.
+        heading: attach-the-proven-identity-to-the-account-this-device-signs-for
+      - content: >-
+          What `changePassword` on the device sends. No session: the signature
+          is the credential, and it covers the SHA-256 of the box — so one
+          signature stores exactly one box and cannot be replayed to store
+          another. The bytes are:
+
+
+          ```
+
+          Cosmos Pay Wallet backup
+
+          account: {stellarAddress}
+
+          box: {sha256 hex of box}
+
+          at: {signedAt}
+
+          ```
+        heading: replace-the-sealed-box-stored-for-an-account
+      - content: >-
+          Send the session token as `Authorization: Bearer`. The signature
+          covers exactly:
+
+
+          ```
+
+          Cosmos Pay Wallet recovery setup
+
+          account: {stellarAddress}
+
+          signers: {signerA},{signerB}
+
+          at: {signedAt}
+
+          ```
+
+
+          The envelope comes back signed by the sponsor only. Once per account:
+          refused when the account already has a signer besides its master key.
+        heading: sponsor-the-reserve-of-an-accounts-two-recovery-signers
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { APIPage, OpenAPIPage } = props.components ?? {};
+  // "APIPage" is the old name from v10, this allows both for backward compatibility
+  const Comp = OpenAPIPage ?? APIPage;
+  return (
+    <>
+      {props.children}
+      <Comp document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/wallet/auth/providers","method":"get"},{"path":"/v1/wallet/auth/oauth/authorize","method":"post"},{"path":"/v1/wallet/auth/oauth/callback/{provider}","method":"get"},{"path":"/v1/wallet/auth/oauth/session/{state}","method":"get"},{"path":"/v1/wallet/auth/oauth/claim","method":"post"},{"path":"/v1/wallet/auth/email/start","method":"post"},{"path":"/v1/wallet/auth/email/verify","method":"post"},{"path":"/v1/wallet/auth/finish","method":"post"},{"path":"/v1/wallet/backup","method":"put"},{"path":"/v1/wallet/recovery/setup","method":"post"}]} showTitle />
+    </>
+  );
+}

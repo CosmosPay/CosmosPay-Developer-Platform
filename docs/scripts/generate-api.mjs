@@ -1,8 +1,8 @@
 // Generate the Payments API reference from the community server's OpenAPI spec.
 //
-// The NestJS server emits openapi/openapi.json with NO root `tags` definitions and NO
-// `servers`, so we inject both (titles/descriptions per tag + the gateway base URL) before
-// handing it to fumadocs-openapi, which writes one MDX page per tag into content/docs/api.
+// The spec is the server's, passed through transform-spec.mjs (tag headings, the public
+// gateway URL, public-facing auth) before fumadocs-openapi writes one MDX page per tag into
+// content/docs/api.
 //
 // Must run with cwd = the docs/ project (the `input: ['./openapi.json']` here must match
 // the one in src/lib/openapi.ts so generated <APIPage document> ids resolve at render).
@@ -10,79 +10,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createOpenAPI } from 'fumadocs-openapi/server';
 import { generateFiles } from 'fumadocs-openapi';
+import { GATEWAY_DEFAULT, TAGS, transformSpec } from './transform-spec.mjs';
 
 const SRC =
   process.env.OPENAPI_SRC ||
   path.resolve(import.meta.dirname, '../../..', 'comos-pay-community-server/openapi/openapi.json');
 const SPEC_OUT = path.resolve(import.meta.dirname, '..', 'openapi.json');
 const OUT = path.resolve(import.meta.dirname, '..', 'content/docs/api');
-const GATEWAY = process.env.COSMOS_API_BASE || 'https://api.cosmospay.lat/cosmos-api';
-
-// Tag order + human titles/descriptions. The source spec only references these names in
-// operations; we supply the definitions so each tag page has a proper heading.
-const TAGS = [
-  {
-    name: 'payment-intents',
-    title: 'Payment Intents',
-    description: 'Create, fetch, update, cancel and validate Stellar (SEP-7) payment intents.',
-  },
-  {
-    name: 'swaps',
-    title: 'Swaps',
-    description: 'Quote, create, sign and submit Stellar path-payment swaps.',
-  },
-  {
-    name: 'liquidity-pools',
-    title: 'Liquidity Pools',
-    description: 'Deposit into and withdraw from Stellar AMM pools, and track your positions.',
-  },
-  {
-    name: 'onramp',
-    title: 'On-ramp',
-    description: 'Fiat in: quotes, payins, virtual accounts, and the trustline for the asset delivered.',
-  },
-  {
-    name: 'offramp',
-    title: 'Off-ramp',
-    description: 'Fiat out: quotes, payout authorization, and payout tracking.',
-  },
-  {
-    name: 'kyc',
-    title: 'KYC',
-    description:
-      'Receivers, KYC documents, blockchain wallets, bank accounts, and the rail catalogue.',
-  },
-  {
-    name: 'pollar',
-    title: 'Social Login',
-    description:
-      'Sign in with Google or GitHub and get a Stellar wallet Pollar custodies. The bridge ' +
-      'opens the login, receives the user back, and redeems a single-use code for a session; ' +
-      'the operator routes fund the reserve and manage trustlines.',
-  },
-  {
-    name: 'webhooks',
-    title: 'Webhooks',
-    description: 'Register endpoints, manage them, and inspect delivery attempts for payment events.',
-  },
-  { name: 'products', title: 'Products', description: 'CRUD for your product catalog.' },
-  { name: 'customers', title: 'Customers', description: 'CRUD for customers and their payment stats.' },
-  {
-    name: 'analytics',
-    title: 'Analytics',
-    description: 'Account summary, balances and operational logs.',
-  },
-  {
-    name: 'activity',
-    title: 'Client Activity',
-    description:
-      'Report what your own client did — errors, timings, transactions — and read it back. ' +
-      'Unlike the API logs, which only ever see requests that reached this service, these are ' +
-      'the events that happen entirely on a device: a crash, a cancelled signature, a screen ' +
-      'that failed before any request left it.',
-  },
-  { name: 'health', title: 'Health', description: 'Liveness and readiness probes.' },
-];
+const GATEWAY = process.env.COSMOS_API_BASE || GATEWAY_DEFAULT;
 
 // The API reference is GENERATED from the external community-server's openapi.json. That repo is
 // only on dev/build machines; on a production box it's absent and we don't want the docs to depend
@@ -92,59 +27,11 @@ if (!fs.existsSync(SRC)) {
   process.exit(0);
 }
 
-const spec = JSON.parse(fs.readFileSync(SRC, 'utf8'));
-spec.tags = TAGS.map((t) => ({ name: t.name, description: t.description }));
-if (!Array.isArray(spec.servers) || spec.servers.length === 0) {
-  spec.servers = [{ url: GATEWAY, description: 'Cosmos Pay API' }];
-}
-
-// Public-facing auth only. The source spec documents the INTERNAL gateway handshake
-// (`X-Gateway-Secret` + `X-Consumer-Username`), which APISIX injects and external callers never
-// see. Replace it with the single scheme developers actually use: their secret API key in the
-// `Authorization: Bearer <apiKey>` header. Also strip any internal header params / per-op
-// security so nothing about the gateway leaks into the reference, even if the spec adds more.
-const INTERNAL_SCHEMES = new Set(['gateway-secret', 'consumer']);
-const INTERNAL_HEADERS = new Set(['x-gateway-secret', 'x-consumer-username']);
-spec.components = spec.components || {};
-spec.components.securitySchemes = {
-  apiKey: {
-    type: 'http',
-    scheme: 'bearer',
-    bearerFormat: 'API key',
-    description: 'Your Cosmos Pay secret API key, sent as `Authorization: Bearer <apiKey>`.',
-  },
-};
-spec.security = [{ apiKey: [] }];
-
-// The server's top-level `info.description` also narrates the internal gateway handshake; drop
-// any sentence that mentions it and state the public auth instead. (Rendered atop every tag page.)
-if (spec.info && typeof spec.info.description === 'string') {
-  const kept = spec.info.description
-    .split(/(?<=\.)\s+/)
-    .filter((s) => !/x-gateway-secret|x-consumer-username|apisix|gateway/i.test(s));
-  spec.info.description = [
-    ...kept,
-    'Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.',
-  ]
-    .join(' ')
-    .trim();
-}
-
-for (const methods of Object.values(spec.paths || {})) {
-  for (const op of Object.values(methods)) {
-    if (!op || typeof op !== 'object') continue;
-    if (Array.isArray(op.security)) {
-      op.security = op.security.filter((s) => !Object.keys(s).some((k) => INTERNAL_SCHEMES.has(k)));
-      if (op.security.length === 0) delete op.security;
-    }
-    if (Array.isArray(op.parameters)) {
-      op.parameters = op.parameters.filter(
-        (p) => !(p && p.in === 'header' && INTERNAL_HEADERS.has(String(p.name).toLowerCase())),
-      );
-    }
-  }
-}
-fs.writeFileSync(SPEC_OUT, JSON.stringify(spec, null, 2));
+// Every change to the server's spec lives in transform-spec.mjs, which the check script
+// (scripts/check-api-spec.mjs) runs too — so what is written here is exactly what CI
+// expects to find committed.
+const spec = transformSpec(JSON.parse(fs.readFileSync(SRC, 'utf8')), { gateway: GATEWAY });
+fs.writeFileSync(SPEC_OUT, `${JSON.stringify(spec, null, 2)}\n`);
 console.log(`[generate-api] wrote spec -> ${SPEC_OUT} (from ${SRC})`);
 
 fs.rmSync(OUT, { recursive: true, force: true });

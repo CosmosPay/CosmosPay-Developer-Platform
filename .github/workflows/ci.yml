@@ -52,6 +52,15 @@ jobs:
       - name: OpenAPI coverage
         run: npm run check:openapi
 
+      # docs/openapi.json (the Payments API reference) must be the community server's
+      # CURRENT spec through docs/scripts/transform-spec.mjs. It is committed, so nothing
+      # else notices when the server changes; this compares against the spec the server
+      # publishes on the matching branch. Fix with `npm run docs:api` and commit.
+      - name: Payments API spec matches the community server
+        env:
+          SERVER_BRANCH: ${{ (github.base_ref || github.ref_name) == 'main' && 'main' || 'dev' }}
+        run: OPENAPI_SRC="https://raw.githubusercontent.com/CosmosPay/CosmosPay-Community-Server/${SERVER_BRANCH}/openapi/openapi.json" npm run check:api-spec
+
       # Zero-tolerance on shipped deps: audit only runtime deps, fail on any advisory.
       # Dev-only tooling is excluded because it never reaches a user; a finding there is
       # Dependabot's errand, not a merge blocker.
