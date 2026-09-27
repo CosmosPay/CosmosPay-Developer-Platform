@@ -72,8 +72,9 @@ _openapi:
         heading: open-a-provider-sign-in
       - content: 'Not called by your code — the person’s browser lands here. Public by
           necessity: a navigation carries no API key and no gateway consumer. It
-          renders a page and nothing else; the identity is collected by the
-          device that holds the PKCE verifier. Register
+          renders a page — or, when the handshake was opened with a `returnTo`,
+          redirects to it with the `state` — and nothing else; the identity is
+          collected by the device that holds the PKCE verifier. Register
           `{WALLET_AUTH_PUBLIC_BASE_URL}/v1/wallet/auth/oauth/callback/{provider}`
           with each provider.'
         heading: where-the-provider-returns-the-browser-after-consent
