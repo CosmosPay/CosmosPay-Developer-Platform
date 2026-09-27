@@ -1,0 +1,48 @@
+---
+title: "AssetManager"
+description: "The server's asset registry — `client.assets`: which `(code, issuer)` pairs it knows per network, and who issues each. A code is not an identifier — mainnet carries dozens of"
+---
+
+The server's asset registry — `client.assets`: which `(code, issuer)` pairs it knows per network, and who issues each. A code is not an identifier — mainnet carries dozens of accounts issuing `USDC` — so this is where to learn WHICH one. `verified` is a claim about the issuer's identity (checked against `issuerName`), not about quality; the unverified rows are returned too, and a UI should show them below a warning rather than hide them. The static &#123;@link Assets&#125; catalog is the offline fallback; this is the current list, and its `version` says which is newer.
+
+## Constructor
+
+### AssetManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### list()
+
+The registry for a network.
+
+```ts
+list(options?: ListRegistryAssetsOptions): Promise<AssetRegistryData>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListRegistryAssetsOptions`
+
+**Returns** `Promise<AssetRegistryData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

@@ -49,6 +49,20 @@ fetch(id: string): Promise<PaymentIntent>
 
 **Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
 
+### transitions()
+
+Every status change an intent went through, oldest first — who moved it (`api`, `validate`, `observer`, `system`), when, and with which transaction.
+
+```ts
+transitions(id: string): Promise<PaymentIntentTransitionData[]>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** `Promise<PaymentIntentTransitionData[]>`
+
 ### list()
 
 List the consumer's payment intents (paginated).

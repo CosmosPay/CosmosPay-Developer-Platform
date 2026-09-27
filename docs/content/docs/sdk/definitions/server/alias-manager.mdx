@@ -1,0 +1,183 @@
+---
+title: "AliasManager"
+description: "Payment handles — `client.aliases`. A handle names one or more Stellar addresses, so a payer can send to `@ada` instead of a 56-character key. Every address on a handle proved"
+---
+
+Payment handles — `client.aliases`. A handle names one or more Stellar addresses, so a payer can send to `@ada` instead of a 56-character key. Every address on a handle proved control of itself: claiming a handle or pointing it somewhere new takes a signature, by that address, over a challenge the server issued. The SDK never holds the key — ask for a challenge, sign its `message` where the key lives, and send the signature back.
+
+## Constructor
+
+### AliasManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+### resolve
+
+Where to pay a handle: its verified addresses on a network, primary first.
+
+```ts
+resolve(name: string, options?: { network?: string
+```
+
+### member
+
+```ts
+}): Promise<AliasResolutionData>
+```
+
+### byAddress
+
+Which handles point at an address — the reverse lookup.
+
+```ts
+byAddress(address: string, options?: { network?: string
+```
+
+### member
+
+```ts
+}): Promise<AliasByAddressData>
+```
+
+### list
+
+The handles this consumer owns (paginated).
+
+```ts
+list(options?: { take?: number
+```
+
+### skip
+
+```ts
+skip?: number
+```
+
+### member
+
+```ts
+}): Promise<AliasListData>
+```
+
+## Methods
+
+### availability()
+
+Whether a handle can be claimed, and if not, why not.
+
+```ts
+availability(name: string): Promise<AliasAvailabilityData>
+```
+
+**Parameters**
+
+- `name` — `string`
+
+**Returns** `Promise<AliasAvailabilityData>`
+
+### createChallenge()
+
+A nonce and the exact message to sign, for a claim, a new address or a recovery.
+
+```ts
+createChallenge(options: CreateAliasChallengeOptions): Promise<AliasChallengeData>
+```
+
+**Parameters**
+
+- `options` — `CreateAliasChallengeOptions`
+
+**Returns** `Promise<AliasChallengeData>`
+
+### claim()
+
+Claim a handle with a signature over a CLAIM challenge.
+
+```ts
+claim(options: ClaimAliasOptions): Promise<OwnedAliasData>
+```
+
+**Parameters**
+
+- `options` — `ClaimAliasOptions`
+
+**Returns** `Promise<OwnedAliasData>`
+
+### addAddress()
+
+Point a handle at another address, signed by that address (ADD_ADDRESS challenge).
+
+```ts
+addAddress(name: string, options: AddAliasAddressOptions): Promise<AliasAddressData>
+```
+
+**Parameters**
+
+- `name` — `string`
+- `options` — `AddAliasAddressOptions`
+
+**Returns** `Promise<AliasAddressData>`
+
+### removeAddress()
+
+Remove one address from a handle.
+
+```ts
+removeAddress(name: string, addressId: string): Promise<AliasDeletedData>
+```
+
+**Parameters**
+
+- `name` — `string`
+- `addressId` — `string`
+
+**Returns** `Promise<AliasDeletedData>`
+
+### release()
+
+Release a handle back to the namespace.
+
+```ts
+release(name: string): Promise<AliasDeletedData>
+```
+
+**Parameters**
+
+- `name` — `string`
+
+**Returns** `Promise<AliasDeletedData>`
+
+### completeRecovery()
+
+Take a handle over with a new address after losing the old one: the token the owner received by email, plus a signature by the new address over a RECOVER challenge.
+
+```ts
+completeRecovery(name: string, options: CompleteAliasRecoveryOptions): Promise<OwnedAliasData>
+```
+
+**Parameters**
+
+- `name` — `string`
+- `options` — `CompleteAliasRecoveryOptions`
+
+**Returns** `Promise<OwnedAliasData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
