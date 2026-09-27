@@ -2,6 +2,39 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.5.0] - 2026-09-27
+
+### Features
+- Implement OAuth authentication flow for wallet sign-in (0acb506)
+- Implement SEP-10 Stellar Web Authentication and SEP-30 account recovery (7d89383)
+- Add AGENTS.md for API documentation and development guidelines (cb372b2)
+- Implement pagination for accounts listing and add SEP-30 response handling (94886e2)
+- Enhance recovery API with SEP-30 compliance and improve error handling (1c2e72f)
+- Serve the two console legs the community server hands back (e31d960)
+- Implement recovery code API endpoint and associated schema (670267a)
+- Enhance OpenAPI spec with security definitions and public routes (409455e)
+- Add AliasManager and AssetManager documentation; update Client and PaymentIntentManager with new methods (284b005)
+- Update wallet auth API descriptions to clarify session token usage and email verification process (f8b1e3b)
+- Update description for sealed box to clarify password and passkey usage (408a7ad)
+- Enhance wallet auth API descriptions to include return URL handling and new error responses (013c4c5)
+
+### Bug Fixes
+- Await the llms.txt index (fumadocs-core 16.15.13) (b100770)
+
+### Miscellaneous
+- Bump the minor-and-patch group across 1 directory with 8 updates (d988ec9)
+- Bump the minor-and-patch group across 1 directory with 5 updates (7f04b35)
+- Sync ./package-lock with dev (6a1bc6c)
+- Sync docs/package-lock with dev (8207db0)
+
+### Refactor
+- Update Zod imports to use extended version from openapi library (25b156b)
+- Move the console legs under api/wallet/ (bec268d)
+- Retire the Pollar social login (305ee5c)
+
+### Dependencies
+- Update dependencies to latest (5b0f01d)
+
 ## [0.4.1] - 2026-09-19
 
 ### Documentation
