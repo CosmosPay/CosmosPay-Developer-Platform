@@ -23,18 +23,15 @@ import { renderWalletVerifyEmail, renderWalletLinkCodeEmail } from "@/lib/emails
 import { provisionAuthentikIdentity } from "@/lib/authentik";
 import { linkMessage, registrationMessage, verifyStellarSignature } from "@/lib/stellar-verify";
 
-// Scopes granted to wallet-provisioned keys. Beyond swaps, the wallet now also creates
-// pay links (payments), runs the BlindPay fiat flow (kyc receivers + onramp/offramp),
-// and drives the Pollar social-login bridge.
+// Scopes granted to wallet-provisioned keys. Beyond swaps, the wallet also creates pay
+// links (payments) and runs the BlindPay fiat flow (kyc receivers + onramp/offramp).
 //
-// `pollar:*` is what makes "Continue with Google" possible at all. The bridge routes
-// (`POST /v1/pollar/oauth/authorize`, `GET /v1/pollar/oauth/sessions/{state}`,
-// `POST /v1/pollar/oauth/token`, `POST /v1/pollar/wallets/activate`) are scoped, and the
-// wallet's only gateway credential is the key minted here — so without these two scopes
-// the login died on its first call with `insufficient_scope`, which reads to the user
-// like a broken install. Exported because the rotate path (api-keys) re-applies this set
-// to a wallet key: accounts provisioned before a scope was added would otherwise keep a
-// key that can never reach the new surface.
+// The wallet's only gateway credential is the key minted here, so a scope missing from
+// this list is a feature that dies on its first call with `insufficient_scope`, which
+// reads to the user like a broken install. Exported because the rotate path (api-keys)
+// re-applies this set to a wallet key: accounts provisioned before a scope was added
+// would otherwise keep a key that can never reach the new surface — and one removed
+// here (`pollar:*`, with the server's Pollar bridge) is dropped on the next rotate.
 export const WALLET_KEY_SCOPES = [
   "swaps:read",
   "swaps:write",
@@ -48,8 +45,6 @@ export const WALLET_KEY_SCOPES = [
   "onramp:write",
   "offramp:read",
   "offramp:write",
-  "pollar:read",
-  "pollar:write",
   // Telemetry. `write` is what lets the wallet report its own errors, timings and
   // transactions instead of losing them on the device; `read` is what lets the
   // person who owns that wallet see them in the dashboard, since a
@@ -426,10 +421,9 @@ export async function verifyWalletLink(input: {
  * Give a PROVEN email an account — create it, or attach to the one it already has — and
  * mint the wallet's key pair either way.
  *
- * Shared by the two sign-ins that prove an email without the register/confirm round trip:
- * the Pollar-brokered social login (social-onboarding.ts, kept for migrating existing
- * wallets) and the wallet's own sign-in (run by the community server, which reaches this
- * through the provision console leg in wallet-auth-console.ts). It mirrors
+ * Used by the sign-in that proves an email without the register/confirm round trip: the
+ * wallet's own sign-in, run by the community server, which reaches this through the
+ * provision console leg in wallet-auth-console.ts. It mirrors
  * confirmWalletRegistration + verifyWalletLink minus the parts that only existed to prove
  * the email — the caller did that, and calling this without having done it is the one way
  * to misuse it.
