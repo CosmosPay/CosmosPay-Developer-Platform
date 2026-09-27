@@ -3,7 +3,9 @@ import { llms } from 'fumadocs-core/source';
 
 export const revalidate = false;
 
-export function GET() {
+export async function GET() {
   // Prefix the basePath (/docs) onto the relative links so they resolve when fetched.
-  return new Response(llms(source).index().replace(/\]\(\//g, '](/docs/'));
+  // `index()` returns a promise since fumadocs-core 16.15.13.
+  const index = await llms(source).index();
+  return new Response(index.replace(/\]\(\//g, '](/docs/'));
 }

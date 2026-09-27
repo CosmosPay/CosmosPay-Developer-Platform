@@ -6,7 +6,13 @@
    the bounds below are what keeps an UNAUTHENTICATED caller from turning the
    telemetry endpoint into free storage, so applying them to only one of the two
    would leave the hole exactly where it matters. */
-import { z } from "zod";
+/* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   built before it runs has no `.openapi()` at all. These schemas are handed to the
+   OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
+   what guarantees the extension has run by the time they are constructed. It is the same
+   `z` otherwise, so validation is unchanged. */
+import { z } from "@/lib/openapi/zod";
 
 /** Upstream accepts 100 per call; a larger batch would be rejected whole. */
 export const ACTIVITY_MAX_BATCH = 100;

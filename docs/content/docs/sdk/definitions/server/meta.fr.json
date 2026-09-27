@@ -1,7 +1,9 @@
 {
   "title": "Serveur",
   "pages": [
+    "alias-manager",
     "analytics-manager",
+    "asset-manager",
     "base",
     "customer",
     "rest",

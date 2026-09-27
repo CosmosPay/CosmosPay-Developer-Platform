@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  CosmosPay Wallet RECOVERY code email (SEP-30 account recovery, sent on behalf of one of the
+  two recovery servers the community server runs).
+  Placeholders are filled by src/lib/emails.ts → renderWalletRecoveryCodeEmail():
+    {{server}}   which recovery server minted this code: "A" or "B"
+    {{code}}     the one-time 6-digit code to type into the wallet
+    {{minutes}}  how many minutes until the code expires
+  The person gets TWO of these, one per server, and needs both: the copy says so, so a second
+  email with a different code reads as expected rather than as a mistake or an attack.
+  This file is a plain HTML template — edit it freely to restyle the email.
+-->
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Cosmos Pay - Your wallet recovery code</title>
+</head>
+
+<body style="margin:0;background:#f6f6fb;font-family:'Poppins',Arial,sans-serif;color:#1a1830;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #ececf3;">
+          <tr>
+            <td style="padding:30px 34px 28px;">
+              <div style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#6b47ff;font-weight:600;">
+                Cosmos&nbsp;Pay &middot; Recovery server&nbsp;{{server}}</div>
+              <h1 style="font-size:22px;margin:14px 0 6px;color:#13112a;">Your wallet recovery code</h1>
+              <p style="font-size:15px;line-height:1.6;color:#4a4862;margin:0 0 22px;">Someone asked to
+                <b>recover a Cosmos wallet</b> registered to this email address. This code is from
+                <b>recovery server&nbsp;{{server}}</b>. Recovery uses two independent servers and each one sends its own
+                code, so you will receive a second email with a different code — the wallet needs both.</p>
+              <div
+                style="font-size:34px;font-weight:700;letter-spacing:.32em;text-align:center;background:#f3f1ff;color:#13112a;padding:18px 0;border-radius:12px;border:1px solid #e4def9;">
+                {{code}}</div>
+              <p style="font-size:13px;line-height:1.6;color:#8a89a0;margin:22px 0 0;">This code expires in
+                {{minutes}}&nbsp;minutes and can be used once. <b>If you did not ask to recover a wallet, ignore this
+                email and do not share the code</b> with anyone — including anyone claiming to be CosmosPay.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>

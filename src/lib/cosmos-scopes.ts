@@ -5,12 +5,11 @@
 
 /* Every resource the gateway enforces today. The list was six for a long time
    while the server had grown to ten, and a resource missing here is a scope the
-   dashboard cannot grant at all — the matrix IS the picker. That gap is why the
-   wallet's social login could not work: `/v1/pollar/**` is scoped
-   `pollar:read` / `pollar:write`, so every key minted from this dashboard (and
-   every wallet-provisioned key, see wallet-provisioning.ts) was refused by the
-   bridge with `insufficient_scope` before the user ever saw a consent screen.
-   Keep this in step with the server's @RequirePermissions decorators. */
+   dashboard cannot grant at all — the matrix IS the picker, so every key minted
+   from this dashboard (and every wallet-provisioned key, see
+   wallet-provisioning.ts) is refused with `insufficient_scope` on whatever it
+   leaves out. Keep this in step with the server's @RequirePermissions
+   decorators; `pollar` left with the server's Pollar bridge. */
 export const COSMOS_RESOURCES = [
   "payments",
   "swaps",
@@ -21,7 +20,6 @@ export const COSMOS_RESOURCES = [
   "kyc",
   "onramp",
   "offramp",
-  "pollar",
   "activity",
 ] as const;
 export const COSMOS_ACTIONS = ["read", "write"] as const;

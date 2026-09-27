@@ -37,3 +37,6 @@ pnpm-debug.log*
 
 # MaxMind GeoLite2 database (large binary; download separately)
 data/geoip/*.mmdb
+
+# scripts/export-wallet-data.mjs output: encrypted seed backups + emails. Never commit it.
+wallet-data-export*.json

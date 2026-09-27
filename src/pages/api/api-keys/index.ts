@@ -189,9 +189,8 @@ export const POST: APIRoute = async (ctx) => {
     }
     // Rotate onto the CURRENT wallet scope set, not the labels the key was minted with.
     // These accounts cannot create additional keys, so a key minted before a scope
-    // existed (`pollar:*` for social login, for one) could never be granted it — the
-    // rotate they are offered instead was handing back the same limitation with a new
-    // secret.
+    // existed could never be granted it — the rotate they are offered instead was
+    // handing back the same limitation with a new secret.
     const rotated = await rotateApiKey(
       rotatable[0].value.id,
       session.user.id,
