@@ -1,7 +1,7 @@
 /* cosmosScopes.test.ts — the scope catalog IS the API-key picker: a resource missing
-   here is a scope the dashboard cannot grant at all. That gap is what refused every
-   wallet-minted key at `/v1/pollar/**` with `insufficient_scope`, so the resources are
-   pinned by name and not merely counted. */
+   here is a scope the dashboard cannot grant at all — a key is then refused with
+   `insufficient_scope` on that resource — so the resources are pinned by name and not
+   merely counted. */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
@@ -10,7 +10,7 @@ import { COSMOS_ACTIONS, COSMOS_RESOURCES, COSMOS_SCOPES, cosmosScopeKey } from 
 test('every resource the gateway enforces is grantable', () => {
   for (const resource of [
     'payments', 'swaps', 'liquidity', 'webhooks', 'products',
-    'customers', 'kyc', 'onramp', 'offramp', 'pollar', 'activity',
+    'customers', 'kyc', 'onramp', 'offramp', 'activity',
   ]) {
     assert.ok((COSMOS_RESOURCES as readonly string[]).includes(resource), `${resource} is not grantable`);
   }

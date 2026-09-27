@@ -11,9 +11,9 @@
    fine for a first line; neither would be fine as the only one, which is why it
    is not.
 
-   It lived inside social-onboarding.ts, which is where it was written, and the
-   second unauthenticated route (wallet telemetry) needed exactly the same thing
-   — so it is here rather than copied. The counters are keyed by bucket name, so
+   It was written for the (since retired) Pollar social login, and the next
+   unauthenticated route (wallet telemetry) needed exactly the same thing — so it
+   is here rather than copied. The counters are keyed by bucket name, so
    sharing the map between callers shares nothing else. */
 
 export interface RatePolicy {

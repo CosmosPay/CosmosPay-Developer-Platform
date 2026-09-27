@@ -528,7 +528,7 @@ export default {
         roles: { user: "User", admin: "Admin" },
         permsLabel: "Permissions",
         permResource: "Resource",
-        scopeResources: { payments: "Payments", swaps: "Swaps", liquidity: "Liquidity", webhooks: "Webhooks", products: "Products", customers: "Customers", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", pollar: "Social login", activity: "Activity" },
+        scopeResources: { payments: "Payments", swaps: "Swaps", liquidity: "Liquidity", webhooks: "Webhooks", products: "Products", customers: "Customers", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", activity: "Activity" },
         adminHint: "Admin keys have full access to every resource.",
         perms: { read: "Read", write: "Write" },
         create: "Create key", save: "Save changes",

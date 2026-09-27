@@ -10,6 +10,8 @@
     "dev": "astro dev --host",
     "build": "prisma generate && npm run docs:build && astro build",
     "docs:build": "node scripts/build-docs.mjs",
+    "docs:api": "npm run generate:api --prefix docs && npm run apply:i18n --prefix docs",
+    "check:api-spec": "node scripts/check-api-spec.mjs",
     "prestart": "node scripts/ensure-docs.mjs",
     "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview",
@@ -19,8 +21,10 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "sync:route": "node scripts/sync-apisix-route.mjs",
+    "export:wallet-data": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/export-wallet-data.mjs",
     "test:unit": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs --test \"tests/unit/**/*.test.ts\"",
     "test:smoke": "node scripts/smoke-server.mjs",
+    "check:openapi": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs scripts/check-openapi-coverage.mjs",
     "test": "npm run test:unit"
   },
   "dependencies": {
@@ -29,6 +33,7 @@
     "@astrojs/react": "^6.0.5",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@stellar/stellar-sdk": "^16.3.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "astro": "^7.3.4",

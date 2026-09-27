@@ -24,7 +24,7 @@ constructor(options: ClientOptions)
 Library version.
 
 ```ts
-static readonly version = "1.1.0"
+static readonly version = "2.0.0"
 ```
 
 ### shared
@@ -191,6 +191,26 @@ readonly health: HealthManager
 
 **Type** [`HealthManager`](/sdk/definitions/server/health-manager)
 
+### aliases
+
+Payment handles: resolve, claim and manage `@name` aliases.
+
+```ts
+readonly aliases: AliasManager
+```
+
+**Type** [`AliasManager`](/sdk/definitions/server/alias-manager)
+
+### assets
+
+The asset registry: which `(code, issuer)` pairs exist per network, and who issues them.
+
+```ts
+readonly assets: AssetManager
+```
+
+**Type** [`AssetManager`](/sdk/definitions/server/asset-manager)
+
 ## Methods
 
 ### setApiKey()
@@ -237,3 +257,5 @@ setWebhookSecret(secret: string): this
 - [CustomerManager](/sdk/definitions/server/customer-manager)
 - [AnalyticsManager](/sdk/definitions/server/analytics-manager)
 - [HealthManager](/sdk/definitions/server/health-manager)
+- [AliasManager](/sdk/definitions/server/alias-manager)
+- [AssetManager](/sdk/definitions/server/asset-manager)
