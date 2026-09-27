@@ -6533,7 +6533,7 @@
     },
     "/v1/wallet/auth/oauth/claim": {
       "post": {
-        "description": "A NEW email ends here, with a session token. An email that ALREADY has an account gets `verify_email` instead and a code in its inbox: a provider proves who consented, not who opened the sign-in, and an existing account is where the backup worth stealing is.",
+        "description": "A NEW email ends here, with a session token. An email that ALREADY has an account gets `verify_email` instead and a code in its inbox: a provider proves who consented, not who opened the sign-in, and an existing account is where the backup worth stealing is. An Authentik email the provider has not confirmed also gets `verify_email`, account or not, under the same per-address cooldown as `email/start`.",
         "operationId": "WalletAuthController_claimOauth_v1",
         "parameters": [],
         "requestBody": {
@@ -6588,7 +6588,7 @@
             }
           },
           "400": {
-            "description": "`wallet_verifier_invalid` — The PKCE verifier does not match the handshake",
+            "description": "`wallet_verifier_invalid` — The PKCE verifier does not match the handshake\n\n`wallet_login_code_cooldown` — Another code was sent to this mailbox moments ago",
             "content": {
               "application/json": {
                 "schema": {
@@ -6603,6 +6603,17 @@
                       "error": "Bad Request",
                       "message": "The verifier does not match this handshake.",
                       "path": "/v1/wallet/auth/oauth/claim",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "wallet_login_code_cooldown": {
+                    "summary": "wallet_login_code_cooldown — Another code was sent to this mailbox moments ago",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "wallet_login_code_cooldown",
+                      "error": "Bad Request",
+                      "message": "A code was just sent to that address. Wait a moment before asking for another.",
+                      "path": "/v1/wallet/auth/email/start",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   }
@@ -6823,13 +6834,13 @@
     },
     "/v1/wallet/auth/finish": {
       "post": {
-        "description": "Send the session token as `Authorization: Bearer`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {stellarAddress}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.",
+        "description": "Send the session token as `X-Wallet-Session: {sessionToken}` — the gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {stellarAddress}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.",
         "operationId": "WalletAuthController_finish_v1",
         "parameters": [
           {
-            "name": "Authorization",
+            "name": "X-Wallet-Session",
             "in": "header",
-            "description": "Bearer {sessionToken}, from the sign-in that just finished.",
+            "description": "{sessionToken}, from the sign-in that just finished. `Authorization: Bearer {sessionToken}` is read too, but only on a direct call: APISIX strips it.",
             "required": true,
             "schema": {
               "type": "string"
@@ -7103,13 +7114,13 @@
     },
     "/v1/wallet/recovery/setup": {
       "post": {
-        "description": "Send the session token as `Authorization: Bearer`. The signature covers exactly:\n\n```\nCosmos Pay Wallet recovery setup\naccount: {stellarAddress}\nsigners: {signerA},{signerB}\nat: {signedAt}\n```\n\nThe envelope comes back signed by the sponsor only. Once per account: refused when the account already has a signer besides its master key.",
+        "description": "Send the session token as `X-Wallet-Session: {sessionToken}` — the gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet recovery setup\naccount: {stellarAddress}\nsigners: {signerA},{signerB}\nat: {signedAt}\n```\n\nThe envelope comes back signed by the sponsor only. Once per account: refused when the account already has a signer besides its master key.",
         "operationId": "WalletBackupController_sponsorRecoverySetup_v1",
         "parameters": [
           {
-            "name": "Authorization",
+            "name": "X-Wallet-Session",
             "in": "header",
-            "description": "Bearer {sessionToken}",
+            "description": "{sessionToken}. `Authorization: Bearer {sessionToken}` is read too, but only on a direct call: APISIX strips it.",
             "required": true,
             "schema": {
               "type": "string"

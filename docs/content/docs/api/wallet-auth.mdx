@@ -83,14 +83,16 @@ _openapi:
       - content: 'A NEW email ends here, with a session token. An email that ALREADY has
           an account gets `verify_email` instead and a code in its inbox: a
           provider proves who consented, not who opened the sign-in, and an
-          existing account is where the backup worth stealing is.'
+          existing account is where the backup worth stealing is. An Authentik
+          email the provider has not confirmed also gets `verify_email`, account
+          or not, under the same per-address cooldown as `email/start`.'
         heading: redeem-a-handshake-with-the-pkce-verifier
       - content: Wrong codes are counted on the row, not by the client. Five burns it,
           and a burned code is replaced by asking for another.
         heading: answer-a-sign-in-code
       - content: >-
-          Send the session token as `Authorization: Bearer`. The signature
-          covers exactly:
+          Send the session token as `X-Wallet-Session: {sessionToken}` — the
+          gateway strips `Authorization`. The signature covers exactly:
 
 
           ```
@@ -130,8 +132,8 @@ _openapi:
           ```
         heading: replace-the-sealed-box-stored-for-an-account
       - content: >-
-          Send the session token as `Authorization: Bearer`. The signature
-          covers exactly:
+          Send the session token as `X-Wallet-Session: {sessionToken}` — the
+          gateway strips `Authorization`. The signature covers exactly:
 
 
           ```
