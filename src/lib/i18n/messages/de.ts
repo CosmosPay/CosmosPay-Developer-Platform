@@ -969,7 +969,7 @@ export default {
         },
         permsLabel: "Berechtigungen",
         permResource: "Ressource",
-        scopeResources: { payments: "Zahlungen", swaps: "Swaps", liquidity: "Liquidität", webhooks: "Webhooks", products: "Produkte", customers: "Kunden", kyc: "KYC", onramp: "On-Ramp", offramp: "Off-Ramp", pollar: "Social Login", activity: "Aktivität" },
+        scopeResources: { payments: "Zahlungen", swaps: "Swaps", liquidity: "Liquidität", webhooks: "Webhooks", products: "Produkte", customers: "Kunden", kyc: "KYC", onramp: "On-Ramp", offramp: "Off-Ramp", activity: "Aktivität" },
         adminHint: "Admin-Schlüssel haben vollen Zugriff auf alle Ressourcen.",
         perms: {
           read: "Lesen",

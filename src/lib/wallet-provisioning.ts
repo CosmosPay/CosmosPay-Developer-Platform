@@ -23,18 +23,15 @@ import { renderWalletVerifyEmail, renderWalletLinkCodeEmail } from "@/lib/emails
 import { provisionAuthentikIdentity } from "@/lib/authentik";
 import { linkMessage, registrationMessage, verifyStellarSignature } from "@/lib/stellar-verify";
 
-// Scopes granted to wallet-provisioned keys. Beyond swaps, the wallet now also creates
-// pay links (payments), runs the BlindPay fiat flow (kyc receivers + onramp/offramp),
-// and drives the Pollar social-login bridge.
+// Scopes granted to wallet-provisioned keys. Beyond swaps, the wallet also creates pay
+// links (payments) and runs the BlindPay fiat flow (kyc receivers + onramp/offramp).
 //
-// `pollar:*` is what makes "Continue with Google" possible at all. The bridge routes
-// (`POST /v1/pollar/oauth/authorize`, `GET /v1/pollar/oauth/sessions/{state}`,
-// `POST /v1/pollar/oauth/token`, `POST /v1/pollar/wallets/activate`) are scoped, and the
-// wallet's only gateway credential is the key minted here — so without these two scopes
-// the login died on its first call with `insufficient_scope`, which reads to the user
-// like a broken install. Exported because the rotate path (api-keys) re-applies this set
-// to a wallet key: accounts provisioned before a scope was added would otherwise keep a
-// key that can never reach the new surface.
+// The wallet's only gateway credential is the key minted here, so a scope missing from
+// this list is a feature that dies on its first call with `insufficient_scope`, which
+// reads to the user like a broken install. Exported because the rotate path (api-keys)
+// re-applies this set to a wallet key: accounts provisioned before a scope was added
+// would otherwise keep a key that can never reach the new surface — and one removed
+// here (`pollar:*`, with the server's Pollar bridge) is dropped on the next rotate.
 export const WALLET_KEY_SCOPES = [
   "swaps:read",
   "swaps:write",
@@ -48,8 +45,6 @@ export const WALLET_KEY_SCOPES = [
   "onramp:write",
   "offramp:read",
   "offramp:write",
-  "pollar:read",
-  "pollar:write",
   // Telemetry. `write` is what lets the wallet report its own errors, timings and
   // transactions instead of losing them on the device; `read` is what lets the
   // person who owns that wallet see them in the dashboard, since a
@@ -420,4 +415,88 @@ export async function verifyWalletLink(input: {
     .catch(() => null);
 
   return { status: "ready", organizationId, keys: { dev: keys.dev, prod: keys.prod } };
+}
+
+/**
+ * Give a PROVEN email an account — create it, or attach to the one it already has — and
+ * mint the wallet's key pair either way.
+ *
+ * Used by the sign-in that proves an email without the register/confirm round trip: the
+ * wallet's own sign-in, run by the community server, which reaches this through the
+ * provision console leg in wallet-auth-console.ts. It mirrors
+ * confirmWalletRegistration + verifyWalletLink minus the parts that only existed to prove
+ * the email — the caller did that, and calling this without having done it is the one way
+ * to misuse it.
+ *
+ * `kind` is written on the WalletRegistration row that records it, already "claimed" —
+ * the keys go back in the caller's response and there is nothing left to collect. That row
+ * is also what makes the dashboard treat the account like the other wallet ones
+ * (isWalletProvisionedUser): no additional keys, rotate the existing pair instead.
+ */
+export async function provisionWalletAccount(input: {
+  email: string;
+  name: string;
+  stellarAddress: string;
+  kind: string;
+  provisionedBy: string;
+}): Promise<{ account: "created" | "linked"; userId: string; organizationId: string; keys: WalletKeys }> {
+  const existing = await prisma.user
+    .findFirst({ where: { email: { equals: input.email, mode: "insensitive" } }, select: { id: true } })
+    .catch(() => null);
+
+  const userId = existing?.id ?? randomUUID();
+  const account: "created" | "linked" = existing ? "linked" : "created";
+
+  if (!existing) {
+    // emailVerified: the caller is the one asserting it, and that assertion is the whole
+    // basis of calling this at all.
+    await prisma.user.create({ data: { id: userId, email: input.email, name: input.name, emailVerified: true } });
+    await prisma.profile.create({ data: { userId, plan: "community" } }).catch(() => null);
+  }
+
+  let organizationId: string;
+  if (existing) {
+    const orgs = await listForUser(userId).catch(() => []);
+    let org = orgs.find((o) => o.role === "owner") ?? orgs[0];
+    if (!org) org = (await ensureDefaultOrg(userId, input.name).catch(() => []))[0];
+    organizationId = org?.id ?? "";
+  } else {
+    const created = await createOrg(userId, `${input.name}'s organization`, true, {
+      provisionedBy: input.provisionedBy,
+      stellarAddress: input.stellarAddress,
+    });
+    organizationId = created.org?.id ?? "";
+  }
+
+  await createConsumer(userId).catch(() => null);
+  const minted = await mintWalletKeys(userId, organizationId);
+  if (!minted.dev && !minted.prod) throw new Error("Failed to mint wallet API keys");
+
+  await prisma.walletRegistration
+    .create({
+      data: {
+        email: input.email,
+        name: input.name,
+        stellarAddress: input.stellarAddress,
+        // Required and unique, and unused here: there is no email to send.
+        verifyToken: randomBytes(32).toString("hex"),
+        claimHash: sha256(randomBytes(32).toString("hex")),
+        kind: input.kind,
+        status: "claimed",
+        userId,
+        organizationId,
+        credentialId: minted.ids.join(","),
+        environment: "both",
+        expiresAt: new Date(),
+      },
+    })
+    .catch(() => null);
+
+  if (!existing) {
+    // So they can also sign in at auth.cosmospay.lat. Best-effort, exactly as the
+    // email-link flow treats it.
+    await provisionAuthentikIdentity({ email: input.email, name: input.name }).catch(() => null);
+  }
+
+  return { account, userId, organizationId, keys: { dev: minted.dev, prod: minted.prod } };
 }

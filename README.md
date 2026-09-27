@@ -53,8 +53,11 @@ Browser ──▶ Cloudflare ──▶ nginx ──▶ Astro SSR app (this repo,
 - The dashboard talks to the **Payments API server-to-server** (`src/lib/cosmos.ts`),
   presenting the gateway secret + the signed-in user's consumer identity — exactly as a
   real API key would after passing through APISIX.
-- It (re)syncs an APISIX route to the current `COSMOS_API_URL` on startup
-  (`src/lib/apisix-route.ts`) so external API-key traffic is proxied to the Payments API.
+- It (re)syncs the APISIX routes to the current `COSMOS_API_URL` on startup
+  (`src/lib/apisix-route.ts`): the key-auth route external API-key traffic is proxied through,
+  plus keyless routes for the OAuth callbacks and for SEP-1/10/30 (stellar.toml, web auth and
+  account recovery, all served by the community server). `COSMOS_API_URL` may list several
+  `host:port` replicas, balanced round-robin.
 
 **Stack:** Astro 6 (SSR, `@astrojs/node` standalone) · React 19 islands · Better Auth ·
 Prisma + PostgreSQL · APISIX · Resend/SMTP (email) · Zod + zod-to-openapi · GSAP.
@@ -130,9 +133,11 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `BETTER_AUTH_URL` / `PUBLIC_BETTER_AUTH_URL` | Public app URL (server + browser). **Must match the deployed domain** |
 | `AUTHENTIK_CLIENT_ID` / `_SECRET` / `_DISCOVERY_URL` | Authentik OAuth2 provider |
 | `APISIX_URL` / `APISIX_ADMIN_KEY` / `APISSIX_ROUTE_ID` | APISIX admin API + the synced route id |
-| `COSMOS_API_URL` | Upstream Payments API the route proxies to |
+| `COSMOS_API_URL` | Upstream Payments API the routes proxy to (comma-separated replicas allowed) |
+| `COSMOS_RECOVERY_{A,B}_HOST` / `_UPSTREAM` | Optional: a host-bound SEP route per recovery server deployment |
 | `COSMOS_API_ENTRY` / `COSMOS_API_REWRITE` | Public route path + rewrite (`/cosmos-api/* → /$1`) |
 | `COSMOS_GATEWAY_SECRET` | `X-Gateway-Secret` for direct server-to-server calls |
+| `WALLET_AUTH_CONSOLE_SECRET` / `WALLET_RECOVERY_CONSOLE_SECRETS` | Admit the community server's console legs (sign-in codes + provisioning / recovery codes) |
 | `RESEND_API_KEY` | Resend HTTP email (preferred). Falls back to `SMTP_*` if unset |
 | `SMTP_HOST/PORT/USER/PASS/SECURE` / `SMTP_FROM` | SMTP transport + verified sender |
 | `ONBOARDING_ENABLED` / `PLANS_ENABLED` / `ALLOW_USER_PLAN_CHANGES` / `ENABLED_PLANS` | Feature flags |
@@ -161,7 +166,8 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `npm run preview` | Preview the build locally |
 | `npm run db:generate` | Regenerate the Prisma client |
 | `npm run db:push` | Push the Prisma schema to the database |
-| `npm run sync:route` | Manually (re)sync the APISIX route |
+| `npm run sync:route` | Manually re-point the APISIX routes' upstreams |
+| `npm run export:wallet-data` | Export the retired wallet backup / recovery tables to JSON for the community server |
 
 ---
 

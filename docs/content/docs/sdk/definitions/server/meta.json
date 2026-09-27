@@ -2,7 +2,9 @@
   "title": "Server",
   "description": "Server-side classes.",
   "pages": [
+    "alias-manager",
     "analytics-manager",
+    "asset-manager",
     "base",
     "customer",
     "rest",

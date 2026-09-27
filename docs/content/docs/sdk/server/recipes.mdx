@@ -8,8 +8,14 @@ Copy-paste solutions for common scenarios, assembled from the pieces documented 
 Copy-paste end-to-end patterns. All server snippets assume:
 
 ```ts
-import { Client, Assets } from '@cosmosapp/pay_sdk';
-const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+import { Assets, Client, TestnetAssets } from '@cosmosapp/pay_sdk';
+
+const apiKey = process.env.COSMOS_PAY_API_KEY;
+const merchantAccount = process.env.MERCHANT_ACCOUNT;
+if (!apiKey || !merchantAccount) throw new Error('Missing Cosmos Pay configuration');
+
+const client = new Client({ apiKey });
+const usdc = apiKey.startsWith('prod_') ? Assets.USDC : TestnetAssets.USDC;
 ```
 
 ## 1. Checkout (server creates, browser pays, webhook confirms)
@@ -18,12 +24,12 @@ const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
 // server: create the intent for an order
 export async function startCheckout(orderId: string, total: string) {
   const intent = await client.paymentIntents.createPay({
-    destination: process.env.MERCHANT_ACCOUNT,
+    destination: merchantAccount,
     amount: total,
-    asset: Assets.USDC,
-    reference: orderId,           // ties the intent to your order
+    asset: usdc,
     msg: `Order ${orderId}`,
   });
+  await intent.edit({ reference: orderId }); // reference is set through PATCH
   return intent.toJSON();         // → send to the browser
 }
 ```
@@ -46,8 +52,8 @@ client.webhooks.on('paymentIntentSucceeded', async (event) => {
 
 ```ts
 const intent = await client.paymentIntents.createPay({
-  destination: process.env.MERCHANT_ACCOUNT,
-  asset: Assets.USDC,   // no amount → the wallet asks the user
+  destination: merchantAccount,
+  asset: usdc,   // no amount → the wallet asks the user
   msg: 'Support us 💜',
 });
 // browser: await new WebClient().pay(intent, { amount: enteredAmount });
@@ -80,7 +86,7 @@ if (!outcome.valid) {
 import { Assets, TestnetAssets } from '@cosmosapp/pay_sdk';
 // dv_ key → testnet → use TestnetAssets.USDC
 // prod_ key → mainnet → use Assets.USDC
-const asset = process.env.COSMOS_PAY_API_KEY.startsWith('prod_') ? Assets.USDC : TestnetAssets.USDC;
+const asset = apiKey.startsWith('prod_') ? Assets.USDC : TestnetAssets.USDC;
 ```
 
 ## 6. Catalog: products + customers

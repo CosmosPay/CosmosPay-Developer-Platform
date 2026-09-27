@@ -30,6 +30,7 @@ model User {
   supportTickets  SupportTicket[]
   ownedOrgs       Organization[]       @relation("OrgOwner")
   orgMemberships  OrganizationMember[] @relation("OrgMembership")
+  walletBackup    WalletBackup?
 
   @@map("user")
 }
@@ -291,4 +292,157 @@ model WalletRegistration {
   @@index([stellarAddress])
   @@index([claimHash])
   @@map("wallet_registration")
+}
+
+// ---------------- Wallet sign-in (own social login) — RETIRED ----------------
+// The sign-in moved to the community server (its src/wallet-auth/), and so did the code that
+// used these tables. They are KEPT, not dropped: `wallet_backup` holds the encrypted seeds
+// people restore their wallets from, and a migration that dropped it before the export had
+// been imported would destroy the only copy of some of them.
+// Three tables, because the flow had three things that must outlive one request: a
+// provider handshake the wallet polls, an emailed code waiting to be typed, and the
+// encrypted seed a person restores on their next device.
+
+// RETIRED — served by the community server now (src/wallet-auth/ over there). Nothing
+// in this repo reads or writes this table any more; the model is kept ONLY so the rows
+// survive until they are exported. Drop it in a later migration, and only after
+// `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
+// output imported over there.
+// One "Continue with Google/GitHub" from a wallet. The wallet opens `state` in a browser,
+// the provider redirects to our callback, and the wallet polls until the identity is in.
+model WalletAuthHandshake {
+  id            String   @id @default(cuid())
+  // Random, unique, and the only thing the browser carries. Knowing it lets you POLL, not
+  // redeem: redemption needs the PKCE verifier behind `codeChallenge`.
+  state         String   @unique
+  // "google" | "github"
+  provider      String
+  // base64url(SHA-256(verifier)) — RFC 7636 S256, the only method accepted.
+  codeChallenge String
+  // pending → authorized (identity read at the callback) → redeemed; or failed / expired.
+  status        String   @default("pending")
+  // What the provider proved, filled at the callback. `email` is always a VERIFIED one.
+  email         String?
+  name          String?
+  avatar        String?
+  // The provider's own user id, kept for support and audit.
+  subject       String?
+  // A machine-readable reason when status = failed ("email_unverified", "denied", …).
+  error         String?
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("wallet_auth_handshake")
+}
+
+// RETIRED — served by the community server now (src/wallet-auth/ over there). Nothing
+// in this repo reads or writes this table any more; the model is kept ONLY so the rows
+// survive until they are exported. Drop it in a later migration, and only after
+// `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
+// output imported over there.
+// A six-digit code emailed to prove an inbox. Two ways in: an email sign-in (`via` =
+// "email"), and a provider sign-in for an email that already has an account (`via` =
+// "google" | "github") — the provider proves who consented, the inbox proves who opened
+// the login.
+model WalletLoginCode {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  avatar    String?
+  via       String   @default("email")
+  // SHA-256 of the claim token the wallet keeps. The raw token never touches the DB.
+  claimHash String   @unique
+  // SHA-256 of the emailed code.
+  codeHash  String
+  attempts  Int      @default(0)
+  // pending → claimed; or locked (too many wrong codes) / expired.
+  status    String   @default("pending")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@map("wallet_login_code")
+}
+
+// RETIRED — served by the community server now (src/wallet-auth/ over there). Nothing
+// in this repo reads or writes this table any more; the model is kept ONLY so the rows
+// survive until they are exported. Drop it in a later migration, and only after
+// `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
+// output imported over there.
+// THIS is the table the export exists for: each row may be the only copy of a funded wallet.
+// The wallet's seed, encrypted ON THE DEVICE under a key derived from the person's
+// password. This platform stores it and hands it back after a sign-in; it has no way to
+// open it. One per account: it is the wallet a sign-in restores.
+model WalletBackup {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  // The address the box restores to — and the key that must sign any later change to it.
+  stellarAddress String
+  // Opaque to this server: the wallet's own sealed-box JSON (salt, KDF cost, IV, ciphertext).
+  box            String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stellarAddress])
+  @@map("wallet_backup")
+}
+
+// ---------------- Account recovery (SEP-30) — RETIRED ----------------
+// SEP-10/SEP-30 moved to the community server (its src/recovery/), each role a separate
+// deployment with its own database. A deployment was ONE of the two recovery servers,
+// and `role` is on every row so that two of them sharing a database by accident still
+// never shared an account. The signer this server held for an account was DERIVED from RECOVERY_SIGNER_MASTER,
+// so there is no key material here — only who may ask it to sign.
+
+// RETIRED — served by the community server now (src/recovery/ over there). Nothing
+// in this repo reads or writes this table any more; the model is kept ONLY so the rows
+// survive until they are exported. Drop it in a later migration, and only after
+// `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
+// output imported over there.
+model RecoveryAccount {
+  id        String   @id @default(cuid())
+  // "a" | "b" — which server registered this account.
+  role      String
+  // The Stellar account being protected.
+  address   String
+  // "public" | "testnet": a signer is an entry on ONE ledger.
+  network   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  methods RecoveryAuthMethod[]
+
+  @@unique([role, address])
+  @@map("recovery_account")
+}
+
+// RETIRED — served by the community server now (src/recovery/ over there). Nothing
+// in this repo reads or writes this table any more; the model is kept ONLY so the rows
+// survive until they are exported. Drop it in a later migration, and only after
+// `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
+// output imported over there.
+// One way of proving you may act for an account: an email, a phone, another Stellar account.
+// SEP-30 groups these under identities by role; they are stored flat so "which accounts can
+// this email recover?" is an index lookup rather than a scan of JSON.
+model RecoveryAuthMethod {
+  id           String   @id @default(cuid())
+  accountId    String
+  // SEP-30 identity role: "owner" | "sender" | "receiver".
+  identityRole String
+  // "email" | "phone_number" | "stellar_address".
+  type         String
+  // Normalised at write time: an email lowercased, an address as its G… form.
+  value        String
+  createdAt    DateTime @default(now())
+
+  account RecoveryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([type, value])
+  @@map("recovery_auth_method")
 }
