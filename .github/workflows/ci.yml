@@ -80,6 +80,12 @@ jobs:
       # The docs subproject keeps its own lockfile, so the root audit cannot see it — and
       # its build output is served from public/docs by the same origin as the dashboard.
       # `--prefix` audits it straight from docs/package-lock.json; no install needed.
+      #
+      # docs/package.json overrides `undici` for the same reason as the root overrides above:
+      # fumadocs-openapi 12 reaches it through @scalar/json-magic, which pins undici 7.24.4
+      # exactly — inside the advisory range. The override moves it to a patched 7.x; only the
+      # build's spec loader runs it (the docs ship as a static export). Drop it once
+      # @scalar/json-magic stops pinning a vulnerable release.
       - name: Security audit (docs)
         run: npm audit --prefix docs --omit=dev --audit-level=low
 

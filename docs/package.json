@@ -17,12 +17,12 @@
     "apply:i18n": "node scripts/apply-translations.mjs"
   },
   "dependencies": {
-    "better-auth": "^1.7.5",
-    "fumadocs-core": "16.15.13",
-    "fumadocs-mdx": "15.4.3",
-    "fumadocs-openapi": "^11.4.1",
-    "fumadocs-ui": "16.15.13",
-    "lucide-react": "^1.20.0",
+    "better-auth": "^1.7.6",
+    "fumadocs-core": "16.15.15",
+    "fumadocs-mdx": "15.4.5",
+    "fumadocs-openapi": "^12.0.4",
+    "fumadocs-ui": "16.15.15",
+    "lucide-react": "^1.48.0",
     "next": "16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -32,12 +32,15 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/mdx": "^2.0.14",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "postcss": "^8.5.28",
     "serve": "^14.2.6",
-    "tailwindcss": "^4.3.1",
-    "typescript": "^6.0.3"
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "undici": "^7.30.0"
   }
 }
