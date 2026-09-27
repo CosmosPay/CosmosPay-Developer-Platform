@@ -45,8 +45,10 @@ await generateFiles({
 });
 
 // Build our own meta.json (ordered) + an index landing page with cards.
-const order = TAGS.map((t) => t.name);
-const titleOf = Object.fromEntries(TAGS.map((t) => [t.name, t.title]));
+// fumadocs writes each page under its tag lowercased, so match the table the same way —
+// a tag the server spells in capitals (`DeFindex`) would otherwise lose its title and place.
+const order = TAGS.map((t) => t.name.toLowerCase());
+const titleOf = Object.fromEntries(TAGS.map((t) => [t.name.toLowerCase(), t.title]));
 const generated = fs
   .readdirSync(OUT)
   .filter((f) => f.endsWith('.mdx'))

@@ -2644,6 +2644,257 @@
         ]
       }
     },
+    "/v1/defindex/vaults": {
+      "get": {
+        "operationId": "DefindexController_vaults_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Discover DeFindex vaults",
+        "tags": [
+          "DeFindex"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/defindex/vaults/{vault}": {
+      "get": {
+        "operationId": "DefindexController_info_v1",
+        "parameters": [
+          {
+            "name": "vault",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a DeFindex vault",
+        "tags": [
+          "DeFindex"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/defindex/vaults/{vault}/balance": {
+      "get": {
+        "operationId": "DefindexController_balance_v1",
+        "parameters": [
+          {
+            "name": "vault",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "account",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read an account balance in a DeFindex vault",
+        "tags": [
+          "DeFindex"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/defindex/vaults/{vault}/deposit": {
+      "post": {
+        "operationId": "DefindexController_deposit_v1",
+        "parameters": [
+          {
+            "name": "vault",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefindexDepositDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Build an unsigned DeFindex deposit",
+        "tags": [
+          "DeFindex"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/defindex/vaults/{vault}/withdraw": {
+      "post": {
+        "operationId": "DefindexController_withdraw_v1",
+        "parameters": [
+          {
+            "name": "vault",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefindexWithdrawDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Build an unsigned DeFindex share withdrawal",
+        "tags": [
+          "DeFindex"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/defindex/submit": {
+      "post": {
+        "operationId": "DefindexController_submit_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefindexSubmitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Submit a signed DeFindex transaction",
+        "tags": [
+          "DeFindex"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
     "/v1/assets": {
       "get": {
         "description": "The wallet ships a bundled copy of this list and prefers whichever of the two carries the higher `version`, so a client that cannot reach this endpoint still resolves assets correctly — it just misses the newest additions.",
@@ -8202,7 +8453,41 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/ValidationFailed"
+            "description": "`validation_failed` — The body, query or headers failed validation\n\n`quote_expired` — The quote is ours and yours, but past its expiry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "quote_expired": {
+                    "summary": "quote_expired — The quote is ours and yours, but past its expiry",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "quote_expired",
+                      "error": "Bad Request",
+                      "message": "This BlindPay quote has expired. Request a new quote.",
+                      "path": "/v1/onramp/payins",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -8673,6 +8958,13 @@
         "responses": {
           "201": {
             "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizedPayoutEntity"
+                }
+              }
+            },
             "headers": {
               "ratelimit-limit": {
                 "description": "Requests allowed in the current window.",
@@ -8698,7 +8990,41 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/ValidationFailed"
+            "description": "`validation_failed` — The body, query or headers failed validation\n\n`quote_expired` — The quote is ours and yours, but past its expiry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "quote_expired": {
+                    "summary": "quote_expired — The quote is ours and yours, but past its expiry",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "quote_expired",
+                      "error": "Bad Request",
+                      "message": "This BlindPay quote has expired. Request a new quote.",
+                      "path": "/v1/onramp/payins",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -8793,7 +9119,41 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/ValidationFailed"
+            "description": "`validation_failed` — The body, query or headers failed validation\n\n`quote_expired` — The quote is ours and yours, but past its expiry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "quote_expired": {
+                    "summary": "quote_expired — The quote is ours and yours, but past its expiry",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "quote_expired",
+                      "error": "Bad Request",
+                      "message": "This BlindPay quote has expired. Request a new quote.",
+                      "path": "/v1/onramp/payins",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -9092,16 +9452,16 @@
       "description": "Receivers, KYC documents, blockchain wallets, bank accounts, and the rail catalogue."
     },
     {
+      "name": "DeFindex",
+      "description": "Yield vaults on DeFindex: discover vaults, read a balance, and build the unsigned deposit or withdrawal the account signs before it is submitted."
+    },
+    {
       "name": "wallet-auth",
       "description": "The Cosmos Wallet’s own sign-in: Authentik (OpenID Connect), Google, GitHub or an emailed code. It proves who a person is and never touches a key; the seed backup it stores is sealed on the device under a password this service never sees."
     },
     {
       "name": "recovery",
       "description": "Served by the two recovery deployments only. Standard SEP-10 web authentication and SEP-30 account recovery: each server holds half of what a recovery signature needs, and proves the person’s inbox on its own."
-    },
-    {
-      "name": "pollar",
-      "description": "Sign in with Google or GitHub and get a Stellar wallet Pollar custodies. The bridge opens the login, receives the user back, and redeems a single-use code for a session; the operator routes fund the reserve and manage trustlines."
     },
     {
       "name": "webhooks",
@@ -11461,6 +11821,70 @@
         "required": [
           "data",
           "cursor"
+        ]
+      },
+      "DefindexDepositDto": {
+        "type": "object",
+        "properties": {
+          "amounts": {
+            "example": [
+              "10000000"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "caller": {
+            "type": "string"
+          },
+          "invest": {
+            "type": "boolean",
+            "default": true
+          },
+          "slippageBps": {
+            "type": "number",
+            "default": 100,
+            "minimum": 0,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "amounts",
+          "caller"
+        ]
+      },
+      "DefindexWithdrawDto": {
+        "type": "object",
+        "properties": {
+          "shares": {
+            "type": "string",
+            "example": "1000000"
+          },
+          "caller": {
+            "type": "string"
+          },
+          "slippageBps": {
+            "type": "number",
+            "default": 100,
+            "minimum": 0,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "shares",
+          "caller"
+        ]
+      },
+      "DefindexSubmitDto": {
+        "type": "object",
+        "properties": {
+          "xdr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "xdr"
         ]
       },
       "AssetIssuerFlagsEntity": {
@@ -14861,17 +15285,17 @@
             "type": "boolean",
             "description": "Whether the email-code door works here. False when no console is configured to deliver the mail."
           },
-          "securityKeySetupUrl": {
+          "mfaSettingsUrl": {
             "type": "string",
             "nullable": true,
-            "example": "https://auth.example.com/if/flow/default-authenticator-webauthn-setup/",
-            "description": "Where a person can enroll a security key or passkey on their Cosmos Pay (Authentik) account, to open in a browser. Registering one is optional — the sign-in never requires it — so offer it as a setting. Null when this deployment has no Authentik."
+            "example": "https://auth.example.com/if/user/#/settings;{\"page\":\"page-credentials\"}",
+            "description": "The page of the person’s Cosmos Pay (Authentik) account where they add or remove a second factor — a security key or passkey, an authenticator app, recovery codes — to open in a browser. It goes through the Authentik login first when there is no session. A second factor is optional — the sign-in only offers one — so offer this as a setting. Null when this deployment has no Authentik."
           }
         },
         "required": [
           "providers",
           "email",
-          "securityKeySetupUrl"
+          "mfaSettingsUrl"
         ]
       },
       "StartWalletOauthDto": {
@@ -15740,6 +16164,19 @@
           "chain"
         ]
       },
+      "AuthorizedPayoutEntity": {
+        "type": "object",
+        "properties": {
+          "unsigned_transaction": {
+            "type": "string",
+            "example": "AAAAAgAAAAB…",
+            "description": "The unsigned transaction the customer signs before `POST /v1/offramp/payouts`. Empty when BlindPay returned none."
+          }
+        },
+        "required": [
+          "unsigned_transaction"
+        ]
+      },
       "CreatePayoutDto": {
         "type": "object",
         "properties": {
@@ -15910,6 +16347,7 @@
               "provider_error",
               "provider_unavailable",
               "quote_not_found",
+              "quote_expired",
               "kyc_state_invalid",
               "kyc_review_required",
               "account_disabled",

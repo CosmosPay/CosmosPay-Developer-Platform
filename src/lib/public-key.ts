@@ -54,8 +54,7 @@ const PUBLIC_EMAIL = "public-key@cosmospay.invalid";
  *
  * Notably absent: `activity:read` (it would replay every anonymous wallet's
  * telemetry), every `kyc:*` / `onramp:*` / `offramp:*` scope (identity documents
- * and bank accounts are per-person by definition), `pollar:*` (social login mints
- * a wallet — behind a shared credential that is an open faucet), and
+ * and bank accounts are per-person by definition), and
  * `webhooks:*` / `products:*` / `customers:*` (merchant configuration).
  *
  * `activity:write` IS here, and it matters: a wallet with no account still

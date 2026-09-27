@@ -3,10 +3,10 @@
    Useful to fix a stale route immediately without restarting the app.
 
    EVERY route is patched: the main one, and the keyless siblings — `-oauth-callbacks` (the
-   Pollar and wallet sign-in callbacks a browser lands on), `-sep` (stellar.toml, SEP-10,
+   wallet sign-in callback a browser lands on), `-sep` (stellar.toml, SEP-10,
    SEP-30), and `-sep-recovery-{a,b}` when COSMOS_RECOVERY_{A,B}_UPSTREAM is set, each to its
    OWN upstream (see src/utils/apisix.ts). Patching only the first is how a tunnel change
-   leaves social login or recovery pointing at an upstream that moved — with the rest of the
+   leaves sign-in or recovery pointing at an upstream that moved — with the rest of the
    API working perfectly, so nothing says which half is stale. The siblings are created by
    the app at boot; a 404 here just means one does not exist yet.
 

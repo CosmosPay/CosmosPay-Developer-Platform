@@ -125,10 +125,10 @@ export async function routeExists(routeId: string): Promise<boolean> {
 
    1. OAUTH CALLBACKS. The user's BROWSER lands there after consenting at Google or GitHub.
       Behind key-auth that navigation is a 401 at the gateway: the handshake never
-      completes, and the wallet polls a login that can never finish. There are two: the
-      Pollar bridge's (kept while existing Pollar wallets migrate off it) and the wallet's
-      own sign-in. The community server declares both `@Public()` for the same reason (the
-      unguessable `state` is the credential, and the transition it drives is single-shot).
+      completes, and the wallet polls a login that can never finish. Today there is one:
+      the wallet's own sign-in (the Pollar bridge's left with the server's Pollar module).
+      The community server declares it `@Public()` (the unguessable `state` is the
+      credential, and the transition it drives is single-shot).
 
    2. THE STANDARDS. SEP-1 discovery (`/.well-known/stellar.toml`), SEP-10 web auth and
       SEP-30 recovery are called by any Stellar wallet, not only ours, and they authenticate
@@ -145,12 +145,10 @@ export async function routeExists(routeId: string): Promise<boolean> {
    nothing else loses its authentication alongside it; and each outranks the key-auth
    route, because APISIX resolves overlapping URIs by priority, highest first. */
 
-/* Where the community server serves each callback, relative to the gateway entry.
-   POLLAR: keep it equal to POLLAR_BRIDGE_CALLBACK_URL over there (the URL also registered
-   with Pollar); the bridge appends `/{state}`. WALLET: `/v1/wallet/auth/oauth/callback/
-   {provider}`, the redirect URI registered with each provider (WALLET_AUTH_PUBLIC_BASE_URL
-   over there). The trailing `*` in the URI covers the path segment each one appends. */
-const POLLAR_CALLBACK_PATH = '/v1/pollar/oauth/callback';
+/* Where the community server serves the callback, relative to the gateway entry:
+   `/v1/wallet/auth/oauth/callback/{provider}`, the redirect URI registered with each
+   provider (WALLET_AUTH_PUBLIC_BASE_URL over there). The trailing `*` in the URI covers the
+   segment it appends. */
 const WALLET_AUTH_CALLBACK_PATH = '/v1/wallet/auth/oauth/callback/';
 
 /* SEP-1 fixes discovery at the root of the host, OUTSIDE the gateway entry -- which is why
@@ -169,9 +167,8 @@ export function callbackRouteId(routeId: string): string {
   return `${routeId}-oauth-callbacks`;
 }
 
-/* What the callback route was called while it only served Pollar. The sync removes it once
-   its replacement is in place: two keyless routes on one URI would leave which of them
-   answers up to a priority tie. */
+/* What the callback route was called while it only served Pollar. The sync still removes
+   it where it lingers: it is a keyless route onto a path the server no longer serves. */
 export function legacyCallbackRouteId(routeId: string): string {
   return `${routeId}-pollar-callback`;
 }
@@ -186,11 +183,11 @@ export function recoveryRouteId(routeId: string, role: RecoveryRole): string {
   return `${routeId}-sep-recovery-${role}`;
 }
 
-/* The gateway URIs the callback route is served on -- both callbacks, and each one's
-   appended segment. */
+/* The gateway URIs the callback route is served on -- the callback and its appended
+   segment. */
 export function callbackRouteUris(entry: string): string[] {
   const prefix = entryPrefix(entry);
-  return [`${prefix}${POLLAR_CALLBACK_PATH}*`, `${prefix}${WALLET_AUTH_CALLBACK_PATH}*`];
+  return [`${prefix}${WALLET_AUTH_CALLBACK_PATH}*`];
 }
 
 /* The gateway URIs the standards are served on. Throws when the configured rewrite would
@@ -266,9 +263,9 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
             // A browser hides every response header that is not safelisted, so without this
             // the throttling headers the API already sends are invisible to a web client: it
             // sees a 429 with no idea when to come back, and has to guess an interval against
-            // a fixed-window limiter. The Pollar login path is where 429s are ORDINARY --
-            // `authorize` is capped because each handshake can fund a Stellar account -- so
-            // this is the difference between "retry in 47s" and a retry storm.
+            // a fixed-window limiter. The sign-in paths are where 429s are ORDINARY -- they
+            // are capped per address -- so this is the difference between "retry in 47s" and
+            // a retry storm.
             expose_headers: 'Retry-After,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset',
             allow_credential: true,
             max_age: 86400,
@@ -469,10 +466,10 @@ export async function createRoute(
   });
 }
 
-/* The keyless sibling for the OAuth callbacks -- Pollar's and the wallet sign-in's, one
-   route with an `uris` array rather than a route each, since they share everything but the
-   path. GET plus the preflight: each serves one browser navigation and nothing else, so
-   anything that is not that navigation still meets the authenticated route. */
+/* The keyless sibling for the OAuth callback -- the wallet sign-in's, as an `uris` array so
+   another callback is one more entry rather than a route of its own. GET plus the
+   preflight: it serves one browser navigation and nothing else, so anything that is not
+   that navigation still meets the authenticated route. */
 export async function createCallbackRoute(
   routeId: string,
   entry: string,
@@ -582,10 +579,9 @@ type ForwardEntry = {
   o?: string;
   pl?: string;
   f?: number;
-  // The verified email of the account that owns the key. The Payments service only returns
-  // a Pollar login's session to the key whose account completed it — every tenant shares
-  // one Pollar application, so without it a key could redeem a stranger's wallet. Empty
-  // (forwarded as "") when the account has no verified email, which fails that check closed.
+  // The verified email of the account that owns the key, forwarded as X-Consumer-Email for
+  // any server check that binds a result to the account behind the key. Empty (forwarded
+  // as "") when the account has no verified email, which fails such a check closed.
   em?: string;
 };
 
@@ -635,7 +631,7 @@ return function(conf, ctx)
     ngx.req.set_header("X-Consumer-Org", entry.o or "")
     ngx.req.set_header("X-Consumer-Plan", entry.pl or "")
     ngx.req.set_header("X-Plan-Swap-Fee-Bps", (entry.f ~= nil) and tostring(entry.f) or "")
-    -- Always set, like the org headers: the Payments service binds a Pollar login to it, so
+    -- Always set, like the org headers: the Payments service may bind a result to it, so
     -- a client-supplied copy must never survive.
     ngx.req.set_header("X-Consumer-Email", entry.em or "")
   end
@@ -961,7 +957,7 @@ export async function deleteApiKey(
 
 /* Swap a credential's secret, keeping its identity. `permissions` is optional and
    exists for one case: a wallet-provisioned account whose keys were minted before a
-   scope existed (`pollar:*`, say). Rotation is the only lever those users have -- the
+   scope existed. Rotation is the only lever those users have -- the
    dashboard refuses them additional keys -- so re-applying the current scope set here
    is what lets an existing account reach a newly added surface instead of being stuck
    with a key that can never be granted it. Absent, the labels are kept verbatim. */

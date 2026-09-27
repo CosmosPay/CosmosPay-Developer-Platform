@@ -4,10 +4,10 @@
 
    Several routes are synced, not one. The main one carries key-auth and serves the whole
    API; the others are keyless, each for callers that hold no API key of ours: the OAuth
-   callbacks a browser lands on (Pollar's and the wallet sign-in's), the SEP-1/10/30
+   callback a browser lands on (the wallet sign-in's), the SEP-1/10/30
    standards any Stellar wallet calls, and -- when configured -- the same standards on each
    recovery server's own host. See the header over the route section in utils/apisix.ts:
-   without the callback route no social login can finish a single handshake, and without
+   without the callback route no sign-in can finish a single handshake, and without
    the SEP route no wallet can discover or reach account recovery.
 
    COSMOS_API_URL (and each recovery upstream) may be a comma-separated list of `host:port`
@@ -116,11 +116,12 @@ export async function syncCosmosRoute() {
     callbackId,
     describeUris(() => callbackRouteUris(COSMOS_API_ENTRY)),
     callback,
-    "social login (Pollar and the wallet sign-in) will not complete",
+    "the wallet sign-in will not complete",
   );
 
-  /* Retire the Pollar-only route this one replaced -- but only once its replacement is in
-     place, so a failed sync never leaves the Pollar callback with no route at all. */
+  /* Retire the Pollar-only route this one replaced, where it lingers: it is keyless and
+     points at a path the server no longer serves. After the callback route is in place, as
+     before, so a failed sync changes nothing. */
   if (!("error" in callback)) {
     const legacyId = legacyCallbackRouteId(APISSIX_ROUTE_ID);
     if (await routeExists(legacyId)) {

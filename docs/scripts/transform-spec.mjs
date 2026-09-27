@@ -70,6 +70,14 @@ export const TAGS = [
       'Receivers, KYC documents, blockchain wallets, bank accounts, and the rail catalogue.',
   },
   {
+    // The server tags this one in PascalCase, unlike the rest; the name must match it.
+    name: 'DeFindex',
+    title: 'DeFindex Vaults',
+    description:
+      'Yield vaults on DeFindex: discover vaults, read a balance, and build the unsigned ' +
+      'deposit or withdrawal the account signs before it is submitted.',
+  },
+  {
     name: 'wallet-auth',
     title: 'Wallet Sign-in',
     description:
@@ -84,14 +92,6 @@ export const TAGS = [
       'Served by the two recovery deployments only. Standard SEP-10 web authentication and ' +
       'SEP-30 account recovery: each server holds half of what a recovery signature needs, ' +
       'and proves the person’s inbox on its own.',
-  },
-  {
-    name: 'pollar',
-    title: 'Social Login',
-    description:
-      'Sign in with Google or GitHub and get a Stellar wallet Pollar custodies. The bridge ' +
-      'opens the login, receives the user back, and redeems a single-use code for a session; ' +
-      'the operator routes fund the reserve and manage trustlines.',
   },
   {
     name: 'webhooks',
