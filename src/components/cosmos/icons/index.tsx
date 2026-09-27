@@ -2,14 +2,19 @@
 
 /* ---------------- brand mark ---------------- */
 /* Black logo on light theme, white logo on dark theme — swapped in CSS via [data-theme]. */
-export function CosmosMark({ size = 30 }: { size?: number | string }) {
+/* Isotipo de marca (la C con el trazo que la atraviesa). Es un <span> con la
+   mascara del SVG mono y fondo currentColor, asi toma el color del texto y
+   sigue al tema sin duplicar archivos. `color` lo pisa cuando hace falta. */
+export function CosmosMark({ size = 30, color }: { size?: number | string; color?: string }) {
   const dim = typeof size === "number" ? `${size}px` : size;
-  return (
-    <span className="cosmos-mark" style={{ width: dim, height: dim }} aria-hidden="true">
-      <img className="cm-dark" src="/logo-black.png" alt="" />
-      <img className="cm-light" src="/logo-white.png" alt="" />
-    </span>
-  );
+  return <span className="cosmos-mark" style={{ width: dim, height: dim, color }} role="img" aria-label="Cosmos" />;
+}
+
+/* Lockup "cosmos pay" (isotipo + wordmark apilado): la marca de cosmospay.lat.
+   El nombre nunca se tipea con una fuente, siempre va este SVG. El ancho sale
+   del aspect-ratio del archivo, solo se fija la altura. */
+export function CosmosLockup({ height = 32, color, label = "Cosmos Pay" }: { height?: number; color?: string; label?: string }) {
+  return <span className="cosmos-lockup" style={{ height: `${height}px`, color }} role="img" aria-label={label} />;
 }
 
 /* ---------------- icons ---------------- */

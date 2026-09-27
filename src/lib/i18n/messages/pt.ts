@@ -457,10 +457,38 @@ export default {
   },
   landing: {
     hero: {
+      tagline: "O teu mundo digital em movimento.",
       headline: "Escreva menos código -> movimente mais dinheiro",
       lede: "A infraestrutura de pagamentos para desenvolvedores. Uma API para movimentar dinheiro na rede Stellar — stablecoins e ativos digitais que liquidam em segundos, em mais de 130 países, com taxas de frações de centavo.",
       getKeys: "Obter chaves de API",
       trustedBy: "Com a confiança de equipes de engenharia de"
+    },
+    wallet: {
+      title: "O teu mundo digital numa wallet.",
+      lede: "Instale no Chrome, teste direto no navegador ou leve no celular. A mesma conta em todo lugar, sobre a Stellar.",
+      chrome: { t: "Instalar no Chrome", s: "Extensão oficial na Chrome Web Store." },
+      web: { t: "Testar no navegador", s: "Abra o web app agora, sem instalar nada." },
+      android: { t: "Baixar para Android", s: "APK assinado. Libere \"Instalar apps desconhecidos\" para o seu navegador, abra o arquivo e instale." },
+      moreLabel: "Outras plataformas",
+      versionLabel: "Versão",
+      download: "Baixar",
+      more: {
+        firefox: { t: "Firefox", s: "Sem assinatura. Acesse about:debugging, escolha \"Este Firefox\", depois \"Carregar extensão temporária\" e selecione o manifest.json do zip." },
+        windows: { t: "Windows", s: "O SmartScreen avisa na primeira vez: clique em \"Mais informações\" e depois em \"Executar assim mesmo\"." },
+        macos: { t: "macOS (Apple Silicon)", s: "O Gatekeeper bloqueia na primeira vez: clique com o botão direito no app e escolha \"Abrir\"." },
+        linux: { t: "Linux", s: "AppImage: rode chmod +x antes. Precisa de glibc 2.39 ou superior." },
+      },
+      ios: "Ainda não existe versão para iOS.",
+    },
+    devs: {
+      title: "Quer integrar a Cosmos Pay Wallet na sua startup?",
+      lede: "Um comando e um link. O seu assistente de código faz o resto.",
+      installTitle: "Instale o SDK",
+      installDesc: "JavaScript e TypeScript, para o servidor e para o navegador. Um pacote, dois pontos de entrada.",
+      llmsTitle: "Entregue as docs ao seu assistente",
+      llmsDesc: "Claude Code, Codex e Cursor leem o índice em texto puro e já sabem usar o SDK.",
+      llmsBtn: "Abrir llms.txt",
+      docsBtn: "Ver a documentação",
     },
     api: {
       kicker: "// a plataforma",
@@ -513,7 +541,8 @@ export default {
           a: "Ler a documentação"
         }
       ],
-      mockLink: "Link de pagamento · 19.99 USDC"
+      mockLink: "Link de pagamento · 19.99 USDC",
+      mockPay: "Pagar"
     },
     solutions: {
       kicker: "// soluções",
@@ -560,6 +589,7 @@ export default {
       }
     },
     stats: {
+      title: "Simples. Seguro. Sem limites.",
       items: ["SLA de disponibilidade da API", "tempo de resposta p99", "países suportados", "chamadas de API / mês"]
     },
     customers: {
@@ -633,7 +663,14 @@ export default {
         }
       ]
     },
+    marketplace: {
+      title: "E se você também quiser vender?",
+      lede: "Cosmos é o marketplace do mesmo ecossistema. Lá os comércios publicam o que vendem e recebem com a infraestrutura que você está integrando aqui. Mesmo universo, o outro lado do balcão.",
+      btn: "Conhecer a Cosmos",
+    },
     cta: {
+      label: "Uma nova forma de mover o seu mundo digital.",
+      thanks: "Obrigado pela confiança.",
       title: "Comece a construir hoje.",
       desc: "Crie um sandbox gratuito na testnet e entre em produção na Stellar no momento em que estiver pronto.",
       getKeys: "Obter chaves de API",

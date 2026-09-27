@@ -23,7 +23,8 @@ export function PlansSection({ user, billing }) {
   const t = useT();
   const p = t.pricing;
   return (
-    <section className="wrap">
+    <section className="lp-panel plans-panel" data-panel="white">
+      <div className="wrap">
       <div className="plans">
         {p.plans.map((plan, i) => {
           const meta = PLAN_META[i];
@@ -59,9 +60,10 @@ export function PlansSection({ user, billing }) {
           </div>
         </div>
       </div>
-      <p style={{ textAlign: "center", color: "var(--ink-3)", fontSize: 14, maxWidth: "52em", margin: "26px auto 0", lineHeight: 1.6 }}>
+      <p style={{ color: "var(--ink-3)", fontSize: 14, maxWidth: "52em", margin: "26px 0 0", lineHeight: 1.6 }}>
         {p.footnote}
       </p>
+      </div>
     </section>
   );
 }

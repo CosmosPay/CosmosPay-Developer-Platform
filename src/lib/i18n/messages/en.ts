@@ -202,10 +202,38 @@ export default {
   /* ---------------- landing ---------------- */
   landing: {
     hero: {
+      tagline: "Your digital world, in motion.",
       headline: "Write less code -> move more money",
       lede: "The payments infrastructure for developers. One API to move money on the Stellar network — stablecoins and digital assets that settle in seconds, across 130+ countries, with fees in fractions of a cent.",
       getKeys: "Get API keys",
       trustedBy: "Trusted by engineering teams at",
+    },
+    wallet: {
+      title: "Your digital world, in one wallet.",
+      lede: "Install it in Chrome, try it right in your browser or take it with you on your phone. Same account everywhere, running on Stellar.",
+      chrome: { t: "Install on Chrome", s: "Official extension on the Chrome Web Store." },
+      web: { t: "Try it in your browser", s: "Open the web app now, nothing to install." },
+      android: { t: "Download for Android", s: "Signed APK. Allow \"Install unknown apps\" for your browser, then open the file and install." },
+      moreLabel: "Other platforms",
+      versionLabel: "Version",
+      download: "Download",
+      more: {
+        firefox: { t: "Firefox", s: "Unsigned build. Go to about:debugging, pick \"This Firefox\", then \"Load Temporary Add-on\" and choose the manifest.json inside the zip." },
+        windows: { t: "Windows", s: "SmartScreen warns the first time: click \"More info\", then \"Run anyway\"." },
+        macos: { t: "macOS (Apple Silicon)", s: "Gatekeeper blocks it the first time: right-click the app and choose \"Open\"." },
+        linux: { t: "Linux", s: "AppImage: run chmod +x on it first. Needs glibc 2.39 or newer." },
+      },
+      ios: "There is no iOS build yet.",
+    },
+    devs: {
+      title: "Want Cosmos Pay Wallet inside your startup?",
+      lede: "One command and one link. Your coding assistant does the rest.",
+      installTitle: "Install the SDK",
+      installDesc: "JavaScript and TypeScript, for the server and for the browser. One package, two entry points.",
+      llmsTitle: "Hand the docs to your assistant",
+      llmsDesc: "Claude Code, Codex and Cursor read the plain-text index and know how to use the SDK straight away.",
+      llmsBtn: "Open llms.txt",
+      docsBtn: "Read the docs",
     },
     api: {
       kicker: "// the platform",
@@ -235,6 +263,7 @@ export default {
         { t: "Build your own", d: "Use our REST + GraphQL APIs, typed SDKs and CLI to craft a fully bespoke Stellar integration.", a: "Read the docs" },
       ],
       mockLink: "Payment link · 19.99 USDC",
+      mockPay: "Pay",
     },
     solutions: {
       kicker: "// solutions",
@@ -277,6 +306,7 @@ export default {
       payMock: { received: "Payment received", via: "via Stellar · 4.2s", fee: "fee $0.00001" },
     },
     stats: {
+      title: "Simple. Secure. Limitless.",
       items: ["API uptime SLA", "p99 response time", "countries supported", "API calls / month"],
     },
     customers: {
@@ -313,7 +343,14 @@ export default {
         { tag: "Blog", t: "Scaling to 8B requests a month", d: "Inside the infrastructure that powers Cosmos Pay." },
       ],
     },
+    marketplace: {
+      title: "Selling, not just building?",
+      lede: "Cosmos is the marketplace side of the same ecosystem. Merchants list what they sell there and get paid through the very infrastructure you are integrating here. Same universe, other side of the counter.",
+      btn: "Discover Cosmos",
+    },
     cta: {
+      label: "A new way to move your digital world.",
+      thanks: "Thanks for trusting us.",
       title: "Start building today.",
       desc: "Spin up a free testnet sandbox and go live on Stellar the moment you’re ready.",
       getKeys: "Get API keys",

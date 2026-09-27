@@ -3,7 +3,7 @@ import { useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
 import { HOME, PRICING, DASH, DOCS } from "@/components/cosmos/lib/constants";
 import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
-import { CosmosMark, IcNChev, IcDocs } from "@/components/cosmos/icons";
+import { CosmosLockup, IcNChev, IcDocs } from "@/components/cosmos/icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangSelect } from "./LangSelect";
 import { NavUserMenu } from "./NavUserMenu";
@@ -46,29 +46,49 @@ function useNavItems(): any[] {
   ];
 }
 
-export function Nav({ theme, setTheme, user = null }: { theme: Theme; setTheme: SetTheme; user?: User | null }) {
+export function Nav({ theme, setTheme, user = null, overPanel }: { theme: Theme; setTheme: SetTheme; user?: User | null; overPanel?: "black" }) {
   const t = useT();
   const NAV_ITEMS = useNavItems();
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [mob, setMob] = useState(false);
+  /* Sobre el hero negro la barra va transparente y con tinta blanca. El estado
+     arranca en true cuando la pagina la pasa, asi el SSR ya pinta la barra
+     transparente y no hay parpadeo al hidratar. */
+  const [overInk, setOverInk] = useState(!!overPanel);
   /* Gate the session buttons until after hydration so they render once in the
      resolved language + auth state, instead of flashing through default →
      translated → signed-in variants on first load. */
   const [ready, setReady] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    const h = () => { setScrolled(window.scrollY > 8); setActive(null); };
+    const h = () => {
+      setScrolled(window.scrollY > 8);
+      setActive(null);
+      /* La barra se vuelve transparente y toma tinta clara solo mientras esta
+         sobre un panel oscuro. Antes miraba ".hero" dando por sentado que el
+         hero era la primera seccion; cuando la wallet paso arriba el hero dejo
+         de estar primero y la barra quedaba blanca sobre un panel blanco, o
+         sea invisible. Ahora pregunta por el panel que realmente tiene debajo. */
+      const first = document.querySelector<HTMLElement>("main section[data-panel]");
+      const panel = first?.dataset.panel;
+      const oscuro = panel === "black" || panel === "navy";
+      setOverInk(!!overPanel && !!first && oscuro && window.scrollY < first.offsetHeight - 72);
+    };
+    h();
     window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h);
-  }, []);
+  }, [overPanel]);
   useEffect(() => { setReady(true); }, []);
   const open = (k: string | null) => { if (timer.current) clearTimeout(timer.current); setActive(k); };
   const scheduleClose = () => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setActive(null), 150); };
   const activeItem = NAV_ITEMS.find((i) => i.key === active && i.cols);
+  /* con el menu mobile abierto la barra deja de ser transparente: el panel
+     que baja es solido y necesita el borde de la barra */
+  const inkNow = overInk && !mob;
   return (
-    <header className={`nav${scrolled ? " scrolled" : ""}`}>
+    <header className={`nav${scrolled ? " scrolled" : ""}${inkNow ? " over-ink" : ""}`}>
       <div className="wrap nav-inner">
-        <a className="brand" href={HOME}><CosmosMark size={30} /><span className="brand-text"><span className="brand-name">Cosmos&nbsp;Pay</span><span className="brand-sub">Developers</span></span></a>
+        <a className="brand" href={HOME}><CosmosLockup height={32} label="Cosmos Pay" /></a>
         <nav className="nav-center" onMouseLeave={scheduleClose}>
           {NAV_ITEMS.map((it) => it.cols ? (
             <div className="nav-item" key={it.key} onMouseEnter={() => open(it.key)}>
@@ -107,6 +127,10 @@ export function Nav({ theme, setTheme, user = null }: { theme: Theme; setTheme: 
       {mob && (
         <div className="mobile-menu">
           {NAV_ITEMS.map((it) => <a key={it.key} className="mm-link" href={it.href || "#"} onClick={() => setMob(false)}>{it.label}</a>)}
+          {/* Por debajo de 1100px el CSS esconde el selector de la barra y deja
+              solo la hamburguesa, pero el menu no lo repetia: en celular no
+              habia ninguna forma de cambiar el idioma. */}
+          <div className="mm-lang"><LangSelect /></div>
           <div className="mm-actions">
             {user ? (
               <>

@@ -1,6 +1,6 @@
 import { useT } from "@/lib/i18n/index";
 import { HOME, PRICING, DASH } from "@/components/cosmos/lib/constants";
-import { CosmosMark } from "@/components/cosmos/icons";
+import { CosmosLockup } from "@/components/cosmos/icons";
 
 /* Hrefs are kept here (aligned by index to the catalog link order); labels come
    from the active locale. Most links are placeholders (#); two point to real routes. */
@@ -15,12 +15,16 @@ const FOOT_GROUPS = [
 export function Footer() {
   const t = useT();
   return (
-    <footer className="footer">
+    <footer className="footer" data-panel="white">
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <a className="brand" href={HOME}><CosmosMark size={28} /> Cosmos&nbsp;Pay</a>
+            <a className="brand" href={HOME}><CosmosLockup height={36} /></a>
             <p>{t.footer.tagline}</p>
+            {/* el personaje cierra la pagina, como pide BRAND.md (seccion 5). Pose
+                propia: en la landing ya esta el que flota y en el 404 el que piensa. */}
+            <img className="foot-astro" src="/brand/astronauta-pulgar.svg" alt="" aria-hidden="true"
+                 width="120" height="150" loading="lazy" decoding="async" />
           </div>
           {FOOT_GROUPS.map((g) => {
             const grp = t.footer.groups[g.key];

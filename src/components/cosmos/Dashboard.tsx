@@ -3,7 +3,7 @@
    All UI copy comes from the i18n catalog (useT). */
 import { useState, useEffect } from "react";
 import {
-  CosmosMark, ConfirmModal, useTheme,
+  CosmosLockup, ConfirmModal, useTheme,
   IcSun, IcMoon, HOME, LangSelect, showToast,
   startTracking, setTrackEnv, track, trackView,
 } from "@/components/cosmos/shared";
@@ -317,7 +317,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       <aside className="side">
         <div className="side-top">
           <div className="side-brand-row">
-            <a className="brand" href={HOME}><CosmosMark size={26} color="var(--ink)" /> <span className="lbl">Cosmos&nbsp;Pay</span></a>
+            <a className="brand" href={HOME}><CosmosLockup height={28} color="var(--ink)" /></a>
             <button className="collapse-btn" title={t.dash.sidebar.collapse} aria-label={t.dash.sidebar.collapse} onClick={() => setCollapsed((c) => !c)}>{DI.collapse}</button>
           </div>
           <OrgSwitcher orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} />

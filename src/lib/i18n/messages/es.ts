@@ -457,10 +457,38 @@ export default {
   },
   landing: {
     hero: {
-      headline: "Escribe menos código -> mueve más dinero",
+      tagline: "Tu mundo digital en movimiento.",
+      headline: "Escribí menos código -> mové más dinero",
       lede: "La infraestructura de pagos para desarrolladores. Una API para mover dinero en la red Stellar: stablecoins y activos digitales que se liquidan en segundos, en más de 130 países, con comisiones de fracciones de centavo.",
       getKeys: "Obtener claves de API",
       trustedBy: "Con la confianza de equipos de ingeniería de"
+    },
+    wallet: {
+      title: "Tu mundo digital en una wallet.",
+      lede: "Instalala en Chrome, probala en el navegador o llevatela en el celular. La misma cuenta en todos lados, sobre Stellar.",
+      chrome: { t: "Instalar en Chrome", s: "Extensión oficial en la Chrome Web Store." },
+      web: { t: "Probar en el navegador", s: "Abrí la webapp ahora, sin instalar nada." },
+      android: { t: "Descargar para Android", s: "APK firmado. Permití \"Instalar apps desconocidas\" para tu navegador, abrí el archivo e instalá." },
+      moreLabel: "Otras plataformas",
+      versionLabel: "Versión",
+      download: "Descargar",
+      more: {
+        firefox: { t: "Firefox", s: "Sin firmar. Entrá a about:debugging, elegí \"Este Firefox\", después \"Cargar complemento temporal\" y seleccioná el manifest.json del zip." },
+        windows: { t: "Windows", s: "SmartScreen avisa la primera vez: tocá \"Más información\" y después \"Ejecutar de todas formas\"." },
+        macos: { t: "macOS (Apple Silicon)", s: "Gatekeeper la bloquea la primera vez: click derecho sobre la app y \"Abrir\"." },
+        linux: { t: "Linux", s: "AppImage: dale chmod +x antes de correrla. Necesita glibc 2.39 o mayor." },
+      },
+      ios: "Todavía no hay versión para iOS.",
+    },
+    devs: {
+      title: "¿Querés integrar Cosmos Pay Wallet a tu startup?",
+      lede: "Un comando y un link. Tu asistente de código hace el resto.",
+      installTitle: "Instalá el SDK",
+      installDesc: "JavaScript y TypeScript, para el servidor y para el navegador. Un paquete, dos puntos de entrada.",
+      llmsTitle: "Pasale las docs a tu asistente",
+      llmsDesc: "Claude Code, Codex y Cursor leen el índice en texto plano y ya saben usar el SDK.",
+      llmsBtn: "Abrir llms.txt",
+      docsBtn: "Ver la documentación",
     },
     api: {
       kicker: "// la plataforma",
@@ -470,15 +498,15 @@ export default {
       cards: {
         payments: {
           title: "Pagos",
-          desc: "Envía y recibe pagos en Stellar con finalidad en menos de 5 segundos y comisiones casi nulas."
+          desc: "Enviá y recibí pagos en Stellar con finalidad en menos de 5 segundos y comisiones casi nulas."
         },
         stablecoin: {
           title: "Stablecoins",
-          desc: "Liquida en USDC y otros activos de Stellar, on-chain y en tiempo real."
+          desc: "Liquidá en USDC y otros activos de Stellar, on-chain y en tiempo real."
         },
         anchor: {
           title: "Anchors",
-          desc: "Conéctate a los anchors de Stellar para rampas de entrada y salida de fiat en monedas locales."
+          desc: "Conectate a los anchors de Stellar para rampas de entrada y salida de fiat en monedas locales."
         }
       },
       docsTitle: "Documentación de primer nivel",
@@ -494,26 +522,27 @@ export default {
     integration: {
       kicker: "// desarrolladores",
       title: "Infraestructura fiable y extensible.",
-      lede: "Diseñada para gestionar las mayores cargas de trabajo del mundo y para integrarse en cualquier stack que ya utilices.",
+      lede: "Diseñada para gestionar las mayores cargas de trabajo del mundo y para integrarse en cualquier stack que ya uses.",
       scale: ["solicitudes de API / día", "solicitudes / s", "finalidad de Stellar", "disponibilidad"],
       paths: [
         {
           t: "Sin código",
-          d: "Crea enlaces de pago y facturación directamente desde tu panel, sin necesidad de ingeniería.",
+          d: "Creá enlaces de pago y facturación directamente desde tu panel, sin necesidad de ingeniería.",
           a: "Explorar sin código"
         },
         {
           t: "UI prediseñada",
-          d: "Integra Checkout o Elements y acepta pagos en Stellar en minutos, con componentes que se adaptan a tu marca.",
+          d: "Integrá Checkout o Elements y aceptá pagos en Stellar en minutos, con componentes que se adaptan a tu marca.",
           a: "Ver componentes"
         },
         {
-          t: "Crea la tuya",
-          d: "Usa nuestras APIs REST + GraphQL, los SDK tipados y la CLI para crear una integración con Stellar totalmente a medida.",
+          t: "Creá la tuya",
+          d: "Usá nuestras APIs REST + GraphQL, los SDK tipados y la CLI para crear una integración con Stellar totalmente a medida.",
           a: "Leer la documentación"
         }
       ],
-      mockLink: "Enlace de pago · 19.99 USDC"
+      mockLink: "Enlace de pago · 19.99 USDC",
+      mockPay: "Pagar"
     },
     solutions: {
       kicker: "// soluciones",
@@ -523,34 +552,34 @@ export default {
       startBuilding: "Empezar a construir",
       items: {
         pay: {
-          t: "Acepta pagos en Stellar",
-          d: "Envía y recibe pagos en la red Stellar con finalidad en menos de 5 segundos y comisiones de fracciones de centavo.",
-          long: "Acepta pagos de cualquier persona con un monedero Stellar. Los fondos alcanzan la finalidad en unos cinco segundos y se liquidan directamente en tu cuenta: sin contracargos, sin intermediarios y sin retenciones de varios días.",
-          points: ["Finalidad de liquidación en menos de 5 segundos", "Comisiones de fracciones de centavo", "Envía y recibe cualquier activo de Stellar", "Webhooks en tiempo real en cada pago"]
+          t: "Aceptá pagos en Stellar",
+          d: "Enviá y recibí pagos en la red Stellar con finalidad en menos de 5 segundos y comisiones de fracciones de centavo.",
+          long: "Aceptá pagos de cualquier persona con una billetera Stellar. Los fondos alcanzan la finalidad en unos cinco segundos y se liquidan directamente en tu cuenta: sin contracargos, sin intermediarios y sin retenciones de varios días.",
+          points: ["Finalidad de liquidación en menos de 5 segundos", "Comisiones de fracciones de centavo", "Enviá y recibí cualquier activo de Stellar", "Webhooks en tiempo real en cada pago"]
         },
         coin: {
           t: "Liquidación en stablecoins",
-          d: "Liquida en USDC y otros activos de Stellar, on-chain y en tiempo real.",
-          long: "Mantén y liquida saldos en USDC y otras stablecoins reguladas emitidas en Stellar. Cada transacción se registra on-chain y se concilia automáticamente en tu libro mayor en tiempo real.",
+          d: "Liquidá en USDC y otros activos de Stellar, on-chain y en tiempo real.",
+          long: "Mantené y liquidá saldos en USDC y otras stablecoins reguladas emitidas en Stellar. Cada transacción se registra on-chain y se concilia automáticamente en tu libro mayor en tiempo real.",
           points: ["Stablecoins reguladas respaldadas 1:1", "Liquidación on-chain y auditable", "Libro mayor multiactivo en tiempo real", "Conciliación automática"]
         },
         globe: {
           t: "Dinero transfronterizo",
-          d: "Llega a más de 130 países en una red global, sin bancos corresponsales.",
-          long: "Mueve dinero entre fronteras igual que lo mueves localmente. Stellar llega a más de 130 países sin bancos corresponsales, así que los pagos salientes llegan en segundos en lugar de días.",
-          points: ["Más de 130 países en una sola red", "Sin retrasos de banca corresponsal", "FX transparente y por adelantado", "Liquida en segundos"]
+          d: "Llegá a más de 130 países en una red global, sin bancos corresponsales.",
+          long: "Mové dinero entre fronteras igual que lo movés localmente. Stellar llega a más de 130 países sin bancos corresponsales, así que los pagos salientes llegan en segundos en lugar de días.",
+          points: ["Más de 130 países en una sola red", "Sin retrasos de banca corresponsal", "FX transparente y por adelantado", "Liquidá en segundos"]
         },
         ramp: {
           t: "Rampas de entrada y salida",
-          d: "Conéctate a los anchors de Stellar para depósitos y retiros en moneda local.",
-          long: "Permite a los usuarios moverse entre la moneda local y los activos digitales a través de anchors regulados de Stellar. Depósitos y retiros en docenas de monedas locales, gestionados íntegramente por los estándares SEP.",
+          d: "Conectate a los anchors de Stellar para depósitos y retiros en moneda local.",
+          long: "Permití a los usuarios moverse entre la moneda local y los activos digitales a través de anchors regulados de Stellar. Depósitos y retiros en docenas de monedas locales, gestionados íntegramente por los estándares SEP.",
           points: ["Red de anchors regulada", "Docenas de monedas locales", "Flujos estándar SEP-6 / SEP-24", "KYC gestionado por el anchor"]
         },
         wallet: {
-          t: "Monederos integrados",
-          d: "Crea monederos Stellar custodios o no custodios para tus usuarios.",
-          long: "Ofrece a cada usuario un monedero Stellar dentro de tu producto. Elige monederos custodios que tú gestionas, o monederos no custodios que controlan tus usuarios: ambos provisionados con una sola llamada a la API.",
-          points: ["Custodio o no custodio", "Provisión con una sola llamada", "Gestión de claves integrada", "Saldos multiactivo"]
+          t: "Billeteras integradas",
+          d: "Creá billeteras Stellar custodias o no custodias para tus usuarios.",
+          long: "Ofrecé a cada usuario una billetera Stellar dentro de tu producto. Elegí billeteras custodias que gestionás vos, o billeteras no custodias que controlan tus usuarios: unas y otras se provisionan con una sola llamada a la API.",
+          points: ["Custodia o no custodia", "Provisión con una sola llamada", "Gestión de claves integrada", "Saldos multiactivo"]
         }
       },
       payMock: {
@@ -560,6 +589,7 @@ export default {
       }
     },
     stats: {
+      title: "Simple. Seguro. Sin límites.",
       items: ["SLA de disponibilidad de la API", "tiempo de respuesta p99", "países compatibles", "llamadas a la API / mes"]
     },
     customers: {
@@ -572,8 +602,8 @@ export default {
       items: {
         Northwind: {
           label: "más rápida la liquidación transfronteriza tras pasar a Stellar.",
-          tags: ["Pagos", "Stablecoins", "Monederos"],
-          story: "Northwind trasladó su checkout global a Cosmos Pay y la red Stellar, reduciendo la liquidación de días a segundos y recortando los costes de FX en más de 30 mercados, todo manteniendo un único libro mayor conciliado."
+          tags: ["Pagos", "Stablecoins", "Billeteras"],
+          story: "Northwind trasladó su checkout global a Cosmos Pay y la red Stellar, reduciendo la liquidación de días a segundos y recortando los costos de FX en más de 30 mercados, todo manteniendo un único libro mayor conciliado."
         },
         Lumio: {
           label: "para lanzar suscripciones en USDC en 40 países.",
@@ -619,7 +649,7 @@ export default {
         {
           tag: "Changelog",
           t: "Los webhooks de liquidación de Stellar están en disponibilidad general",
-          d: "Recibe eventos en tiempo real en el momento en que un pago alcanza la finalidad."
+          d: "Recibí eventos en tiempo real en el momento en que un pago alcanza la finalidad."
         },
         {
           tag: "Guía",
@@ -633,19 +663,26 @@ export default {
         }
       ]
     },
+    marketplace: {
+      title: "¿Y si además querés vender?",
+      lede: "Cosmos es el marketplace del mismo ecosistema. Ahí los comercios publican lo que venden y cobran con la infraestructura que estás integrando acá. Mismo universo, el otro lado del mostrador.",
+      btn: "Conocer Cosmos",
+    },
     cta: {
-      title: "Empieza a construir hoy.",
-      desc: "Crea un sandbox de testnet gratuito y entra en producción en Stellar en cuanto estés listo.",
+      label: "Una nueva forma de mover tu mundo digital.",
+      thanks: "Gracias por confiar.",
+      title: "Empezá a construir hoy.",
+      desc: "Creá un sandbox de testnet gratuito y entrá en producción en Stellar cuando estés listo.",
       getKeys: "Obtener claves de API",
-      talk: "Habla con ingeniería",
+      talk: "Hablá con ingeniería",
       helpers: [
         {
-          b: "Mira lo que pagarás",
+          b: "Mirá lo que vas a pagar",
           s: "Precios transparentes basados en el uso, sin sorpresas."
         },
         {
           b: "Empezar a construir",
-          s: "Consigue tus claves de API y haz tu primer pago hoy."
+          s: "Conseguí tus claves de API y hacé tu primer pago hoy."
         }
       ]
     }
