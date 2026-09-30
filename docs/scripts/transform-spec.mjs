@@ -47,6 +47,21 @@ export const TAGS = [
       '`verified` is a claim about the issuer’s identity, not about quality.',
   },
   {
+    name: 'public-key',
+    title: 'Public Key',
+    description:
+      'The shared public API key, served without a key to wallets that have no account yet. ' +
+      'Not a secret: what it may call is confined server-side to routes that return no ' +
+      'per-consumer data.',
+  },
+  {
+    name: 'plugins',
+    title: 'Plugins',
+    description:
+      'Extensions served under a slug: list them, install one for your account, and call its ' +
+      'queries and commands.',
+  },
+  {
     name: 'aliases',
     title: 'Aliases',
     description:

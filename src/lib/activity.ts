@@ -1,14 +1,15 @@
 /* activity.ts — the platform's side of the client-activity feed.
 
-   Three writers land in the same place (`POST /v1/activity/events` on the
+   Two writers here land in the same place (`POST /v1/activity/events` on the
    Payments service, see its `activity/` module):
 
      - this app's own API surface, recorded by `src/middleware.ts` for every
        `/api/*` request;
      - the dashboard in the browser, which posts page views, clicked actions and
-       anything it throws to `/api/activity`;
-     - the wallet, which posts to `/api/telemetry` when it has no Cosmos Pay
-       account yet and therefore no key of its own to authenticate with.
+       anything it throws to `/api/activity`.
+
+   The wallet is the third writer, and it does not come through here: it posts to
+   the gateway itself, under its own key or the shared public one.
 
    WHY A QUEUE. Every one of those is fire-and-forget by definition: a request
    must never get slower, and must never fail, because telemetry could not be
@@ -20,9 +21,7 @@
    WHY ATTRIBUTION IS NOT A PARAMETER. `trackActivity` takes the signed-in user
    id and nothing else identifying: `cosmosFetch` turns it into the same
    `cosmos_<userId>` consumer the rest of the dashboard uses, and upstream scopes
-   the row to that. Anonymous wallet telemetry cannot use it — there is no user —
-   so it goes under one dedicated consumer instead of being attributed to a
-   guess. */
+   the row to that. */
 import { cosmosActivity, type CosmosEnv } from "@/lib/cosmos";
 
 /** Which client an event came from. Matches the upstream enum. */
@@ -49,12 +48,6 @@ export interface ActivityEventInput {
   /** The client's own id, which makes a retried flush idempotent upstream. */
   eventId?: string;
 }
-
-/* The consumer anonymous wallet telemetry belongs to. One row upstream, created
-   on first use, and deliberately NOT per-user: a wallet that has not registered
-   has no account to attribute to, and inventing one from an unauthenticated body
-   would let anyone file events against a stranger's dashboard. */
-const WALLET_TELEMETRY_USER = "wallet_telemetry";
 
 /* Batch bounds. `MAX_BATCH` matches the upstream cap (100) — a larger batch would
    be rejected whole, which is the one failure mode worth avoiding by construction. */
@@ -165,26 +158,3 @@ async function flushBucket(key: string): Promise<void> {
   }
 }
 
-/**
- * Anonymous wallet telemetry, forwarded under the dedicated consumer.
- *
- * `clientIp` is the end user's address, forwarded so the upstream rate limit
- * partitions per wallet instead of putting every wallet in the world into this
- * process's single bucket — the same reason the social-login bridge forwards it.
- *
- * Awaited rather than buffered: this one IS the request being served, so there
- * is no caller whose latency is at stake, and the wallet gets a real answer
- * about whether its batch landed.
- */
-export function trackWalletTelemetry(
-  env: CosmosEnv,
-  events: ActivityEventInput[],
-  clientIp?: string,
-): Promise<{ accepted: number; duplicates: number }> {
-  return cosmosActivity.ingest(
-    WALLET_TELEMETRY_USER,
-    env,
-    events.map((e) => ({ ...e, source: "wallet" as const })),
-    clientIp,
-  );
-}

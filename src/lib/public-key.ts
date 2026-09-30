@@ -22,8 +22,10 @@
      - It signs nothing. The wallet stays non-custodial — the gateway returns an
        unsigned envelope and the device holds the key that signs it.
 
-   Rotation is therefore cheap and expected: mint a new one, and wallets pick it up
-   from `/api/public-key` on their next fetch. Wallets that cannot reach that route
+   Rotation is therefore cheap and expected: mint a new one here
+   (`GET /api/admin/public-key`), set it on the community server
+   (`PUBLIC_API_KEY_DEV` / `_PROD`), and wallets pick it up from `GET /v1/public-key` on
+   their next fetch — this platform is not in that path. Wallets that cannot reach it
    fall back to the key compiled into their build, so rotating does not brick
    anything — it just stops being effective for old installs once the previous key
    is deleted. Delete deliberately. */
@@ -142,14 +144,14 @@ async function readPublicKeys(): Promise<PublicKeys> {
  * reads. A key with no forwarder still authenticates — so it looks provisioned from
  * here — and then arrives upstream with role `null` and no scopes, where PermissionsGuard
  * refuses it and PublicKeyGuard does not recognise it as public. Nothing about that
- * state heals on its own, and nothing about it is visible from `/api/public-key`, which
+ * state heals on its own, and nothing about it is visible from `GET /api/admin/public-key`, which
  * only ever asked whether a key existed.
  *
  * Both calls are idempotent and cheap: `createConsumer` returns early when the consumer
  * is there (a blind PUT would wipe the forwarder), and `syncConsumerForwarder` compares
  * the baked Lua against what is already deployed and skips the write when they match.
  * So the common path costs two GETs, which is what makes it safe to run on the cold
- * path of every `/api/public-key` fetch rather than only when minting.
+ * path of every `GET /api/admin/public-key` call rather than only when minting.
  */
 async function healPublicConsumer(userId: string): Promise<void> {
   await createConsumer(userId).catch(() => null);

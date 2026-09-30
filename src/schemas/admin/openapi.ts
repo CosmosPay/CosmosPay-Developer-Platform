@@ -87,6 +87,32 @@ const adminProxyResponses = {
 registerRoutes([
   {
     method: 'get',
+    path: '/api/admin/public-key',
+    tags: [TAG],
+    summary: 'Mint or read the shared public key',
+    description:
+      "Mints the shared public key (`role: 'public'`) on first call and returns it on every later one, for the operator to copy into the community server's `PUBLIC_API_KEY_DEV` / `PUBLIC_API_KEY_PROD`. Wallets never call this: they read the key from the community server at `GET /v1/public-key`, through the gateway.",
+    security: sessionSecurity,
+    responses: {
+      200: jsonOk(
+        z.object({
+          consumer: z.string().openapi({ example: 'cosmos_public' }),
+          keys: z.object({
+            dev: z.string().nullable().openapi({ example: 'dv_4f1c…' }),
+            prod: z.string().nullable().openapi({ example: 'prod_9a2e…' }),
+          }),
+          env: z.record(z.string(), z.string().nullable()),
+        }),
+        'AdminPublicKeyResponse',
+        'Public key ready',
+      ),
+      401: errors.unauthorized,
+      403: { description: 'Admin access required', content: errors.forbidden.content },
+      502: { description: 'The key could not be provisioned in APISIX', content: errors.internalError.content },
+    },
+  },
+  {
+    method: 'get',
     path: '/api/admin/users',
     tags: [TAG],
     summary: 'List accounts',

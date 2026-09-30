@@ -102,7 +102,7 @@ _openapi:
 
           email: {lowercased email}
 
-          account: {stellarAddress}
+          account: {address}
 
           at: {signedAt}
 
@@ -112,6 +112,11 @@ _openapi:
           signed over those raw UTF-8 bytes with the account key, base64. The
           first line is one no Stellar transaction envelope can begin with,
           which is what makes signing it safe.
+
+
+          On Solana and Monad (`chain`), a `chain: {chain}` line follows the
+          first one. Solana signs the bytes with ed25519 (`signMessage`; base64
+          or base58); Monad with EIP-191 `personal_sign` (0x-hex).
         heading: attach-the-proven-identity-to-the-account-this-device-signs-for
       - content: >-
           What `changePassword` on the device sends. No session: the signature
@@ -124,13 +129,17 @@ _openapi:
 
           Cosmos Pay Wallet backup
 
-          account: {stellarAddress}
+          account: {address}
 
           box: {sha256 hex of box}
 
           at: {signedAt}
 
           ```
+
+
+          On Solana and Monad a `chain: {chain}` line follows the first one, and
+          the bytes are signed as for sign-in.
         heading: replace-the-sealed-box-stored-for-an-account
       - content: >-
           Send the session token as `X-Wallet-Session: {sessionToken}` — the
