@@ -1,0 +1,109 @@
+---
+title: "DefindexManager"
+description: "DeFindex vaults on Stellar — `client.defindex`. Served only where the deployment enables the DeFindex native plugin (`PLUGINS_ENABLED=defindex`); elsewhere every call is a 404"
+---
+
+DeFindex vaults on Stellar — `client.defindex`. Served only where the deployment enables the DeFindex native plugin (`PLUGINS_ENABLED=defindex`); elsewhere every call is a 404. The payloads are DeFindex's own and are passed through untyped. Deposits and withdrawals come back as an unsigned transaction for the caller to sign and hand to &#123;@link submit&#125;.
+
+## Constructor
+
+### DefindexManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### vaults()
+
+```ts
+vaults<T = unknown>(): Promise<T>
+```
+
+**Returns** `Promise<T>`
+
+### vault()
+
+```ts
+vault<T = unknown>(vault: string): Promise<T>
+```
+
+**Parameters**
+
+- `vault` — `string`
+
+**Returns** `Promise<T>`
+
+### balance()
+
+An account's position in a vault.
+
+```ts
+balance<T = unknown>(vault: string, account: string): Promise<T>
+```
+
+**Parameters**
+
+- `vault` — `string`
+- `account` — `string`
+
+**Returns** `Promise<T>`
+
+### deposit()
+
+```ts
+deposit<T = unknown>(vault: string, options: DefindexDepositOptions): Promise<T>
+```
+
+**Parameters**
+
+- `vault` — `string`
+- `options` — `DefindexDepositOptions`
+
+**Returns** `Promise<T>`
+
+### withdraw()
+
+```ts
+withdraw<T = unknown>(vault: string, options: DefindexWithdrawOptions): Promise<T>
+```
+
+**Parameters**
+
+- `vault` — `string`
+- `options` — `DefindexWithdrawOptions`
+
+**Returns** `Promise<T>`
+
+### submit()
+
+Submit a signed DeFindex transaction (base64 XDR).
+
+```ts
+submit<T = unknown>(xdr: string): Promise<T>
+```
+
+**Parameters**
+
+- `xdr` — `string`
+
+**Returns** `Promise<T>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

@@ -1,9 +1,9 @@
 ---
 title: "SwapManager"
-description: "Manages Stellar swaps — `client.swaps`."
+description: "Same-chain swaps — `client.swaps`. No `chain` (or `'stellar'`) is a Stellar path payment and yields a {@link Swap}, exactly as before; `'solana'` goes through Jupiter and `'mo"
 ---
 
-Manages Stellar swaps — `client.swaps`.
+Same-chain swaps — `client.swaps`. No `chain` (or `'stellar'`) is a Stellar path payment and yields a &#123;@link Swap&#125;, exactly as before; `'solana'` goes through Jupiter and `'monad'` through Kuru Flow and yields a &#123;@link ChainSwap&#125;. Swaps between chains are `client.crossChainSwaps`.
 
 ## Methods
 
@@ -23,7 +23,19 @@ quote(options: QuoteSwapOptions): Promise<SwapQuoteData>
 
 ### create()
 
-Create a swap (unsigned XDR + SEP-7 URI + QR).
+Create a swap: an unsigned transaction for the source wallet to sign.
+
+```ts
+create(options: CreateSwapOptions & OnOtherChain): Promise<ChainSwap>
+```
+
+**Parameters**
+
+- `options` — `CreateSwapOptions & OnOtherChain`
+
+**Returns** [`Promise<ChainSwap>`](/sdk/definitions/server/chain-swap)
+
+### create()
 
 ```ts
 create(options: CreateSwapOptions): Promise<Swap>
@@ -37,38 +49,50 @@ create(options: CreateSwapOptions): Promise<Swap>
 
 ### fetch()
 
-Get a single swap by id.
+Get a single swap by id, on any chain.
 
 ```ts
-fetch(id: string): Promise<Swap>
+fetch(id: string): Promise<Swap | ChainSwap>
 ```
 
 **Parameters**
 
 - `id` — `string`
 
-**Returns** [`Promise<Swap>`](/sdk/definitions/server/swap)
+**Returns** `Promise<`[`Swap`](/sdk/definitions/server/swap)` | `[`ChainSwap`](/sdk/definitions/server/chain-swap)`>`
 
 ### list()
 
-List the consumer's swaps (paginated).
+List the consumer's swaps on one chain (Stellar when `chain` is omitted).
 
 ```ts
-list(options?: ListSwapsOptions): Promise<SwapPage>
+list(options: ListSwapsOptions & OnOtherChain): Promise<SwapPage<ChainSwap>>
+```
+
+**Parameters**
+
+- `options` — `ListSwapsOptions & OnOtherChain`
+
+**Returns** [`Promise<SwapPage<ChainSwap>>`](/sdk/definitions/server/chain-swap)
+
+### list()
+
+```ts
+list(options?: ListSwapsOptions): Promise<SwapPage<Swap>>
 ```
 
 **Parameters**
 
 - `options` _(optional)_ — `ListSwapsOptions`
 
-**Returns** `Promise<SwapPage>`
+**Returns** [`Promise<SwapPage<Swap>>`](/sdk/definitions/server/swap)
 
 ### submit()
 
-Relay a signed swap transaction to the network. Finalizes status server-side and returns the outcome with the refreshed swap materialized.
+Relay a signed swap transaction to its network: `{ signedXdr }` for a Stellar swap, `{ signedTransaction }` for a Solana or Monad one.
 
 ```ts
-submit(id: string, options: SubmitSwapOptions): Promise<SwapSubmitOutcome>
+submit(id: string, options: SubmitSwapOptions): Promise<SwapSubmitOutcome | ChainSwapSubmitOutcome>
 ```
 
 **Parameters**
@@ -76,9 +100,10 @@ submit(id: string, options: SubmitSwapOptions): Promise<SwapSubmitOutcome>
 - `id` — `string`
 - `options` — `SubmitSwapOptions`
 
-**Returns** `Promise<SwapSubmitOutcome>`
+**Returns** `Promise<SwapSubmitOutcome | ChainSwapSubmitOutcome>`
 
 ## Related
 
+- [ChainSwap](/sdk/definitions/server/chain-swap)
 - [Swap](/sdk/definitions/server/swap)
 - [BaseManager](/sdk/definitions/server/base-manager)

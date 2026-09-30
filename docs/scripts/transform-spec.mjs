@@ -32,7 +32,16 @@ export const TAGS = [
   {
     name: 'swaps',
     title: 'Swaps',
-    description: 'Quote, create, sign and submit Stellar path-payment swaps.',
+    description:
+      'Quote, create, sign and submit same-chain swaps: Stellar path payments by default, ' +
+      'Solana through Jupiter and Monad through Kuru Flow with `chain`.',
+  },
+  {
+    name: 'cross-chain-swaps',
+    title: 'Cross-chain Swaps',
+    description:
+      'Swaps between Stellar, Solana and Monad, settled by NEAR Intents: quote, get a deposit ' +
+      'address, pay it, and follow the swap to its outcome.',
   },
   {
     name: 'liquidity-pools',

@@ -25,8 +25,9 @@ function cosmosErrorResponse(err: unknown): Response {
   return jsonError({ message: "Swap request failed", code: 500, status: ApiStatus.INTERNAL_ERROR });
 }
 
-/* Relay a signed swap transaction to the network. The Payments API verifies the
-   signed envelope's hash against the swap it built before broadcasting. */
+/* Relay a signed swap transaction to its network — `signedXdr` for Stellar,
+   `signedTransaction` for Solana / Monad. The Payments API checks it is the transaction
+   it built before broadcasting. */
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");
@@ -48,7 +49,10 @@ export const POST: APIRoute = async (ctx) => {
   }
 
   try {
-    const outcome = await cosmosSwaps.submit(session.user.id, envFromQuery(ctx.url), org, id, body.data.signedXdr);
+    const signed = body.data.signedXdr !== undefined
+      ? { signedXdr: body.data.signedXdr }
+      : { signedTransaction: body.data.signedTransaction as string };
+    const outcome = await cosmosSwaps.submit(session.user.id, envFromQuery(ctx.url), org, id, signed);
     return jsonSuccess({ data: outcome, message: "Swap submitted" });
   } catch (err) {
     return cosmosErrorResponse(err);

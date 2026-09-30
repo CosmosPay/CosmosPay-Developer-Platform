@@ -1,0 +1,48 @@
+---
+title: "PublicKeyManager"
+description: "The shared public API key — `client.publicKey`. It is what an open-source wallet embeds to reach the few routes anonymous callers may use; the route that serves it takes no ke"
+---
+
+The shared public API key — `client.publicKey`. It is what an open-source wallet embeds to reach the few routes anonymous callers may use; the route that serves it takes no key at all. Mostly useful to tooling that ships such a wallet; a server with its own key has no need for it.
+
+## Constructor
+
+### PublicKeyManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### fetch()
+
+The public key for an environment (`dev` → testnet, `prod` → mainnet).
+
+```ts
+fetch(env?: 'dev' | 'prod'): Promise<PublicKeyData>
+```
+
+**Parameters**
+
+- `env` _(optional)_ — `'dev' | 'prod'`
+
+**Returns** `Promise<PublicKeyData>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

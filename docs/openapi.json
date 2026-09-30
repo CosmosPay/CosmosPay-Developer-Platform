@@ -1228,7 +1228,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_amount` — Not a Stellar amount, or not greater than zero\n\n`slippage_exceeded` — The requested slippage is above what this service allows\n\n`no_path_found` — Horizon found no payment path for this pair and amount",
+            "description": "`network_unsupported` — `chain: solana | monad` with a dev (testnet) key: Jupiter and Kuru Flow run on mainnet only. `asset_unsupported` — not an SPL mint / ERC-20 on that chain. `provider_error` — the aggregator found no route or refused the amount.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1281,6 +1281,39 @@
                       "path": "/v1/swaps/quote",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
+                  },
+                  "asset_unsupported": {
+                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "asset_unsupported",
+                      "error": "Bad Request",
+                      "message": "NEAR Intents does not support asset \"yXLM\" on stellar. GET /v1/cross-chain-swaps/assets lists the ones it does.",
+                      "path": "/v1/cross-chain-swaps/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported — Cross-chain swaps settle on mainnet only; a dev key cannot open one",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "Cross-chain swaps run on mainnet only — NEAR Intents has no test network. Use a prod API key.",
+                      "path": "/v1/cross-chain-swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error — The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The payment provider rejected the request.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
                   }
                 }
               }
@@ -1298,11 +1331,48 @@
           "500": {
             "$ref": "#/components/responses/InternalError"
           },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
           "503": {
-            "$ref": "#/components/responses/UpstreamUnavailable"
+            "description": "`misconfigured` — the plan charges a commission and the chain has no fee wallet configured (STELLAR_SWAP_FEE_WALLET, SOLANA_SWAP_FEE_WALLET, MONAD_SWAP_FEE_WALLET).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Could not reach the payment provider.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "BlindPay (prod) is not configured: set BLINDPAY_INSTANCE_ID_PROD.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Quote a swap (Horizon strict-send path search + fee/slippage); persists nothing",
+        "summary": "Quote a swap on one chain (Stellar DEX, Jupiter on Solana, Kuru Flow on Monad) + fee/slippage; persists nothing",
         "tags": [
           "swaps"
         ],
@@ -1315,7 +1385,11 @@
           }
         ],
         "x-cosmos-upstream": [
-          "Horizon"
+          "Horizon",
+          "Jupiter",
+          "Kuru Flow",
+          "Solana",
+          "Monad"
         ]
       }
     },
@@ -1346,11 +1420,18 @@
         },
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "A Stellar swap (no `chain`, or `stellar`), or a Solana / Monad swap.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SwapEntity"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SwapEntity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ChainSwapEntity"
+                    }
+                  ]
                 }
               }
             },
@@ -1379,7 +1460,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_amount` — Not a Stellar amount, or not greater than zero\n\n`slippage_exceeded` — The requested slippage is above what this service allows\n\n`no_path_found` — Horizon found no payment path for this pair and amount\n\n`trustline_missing` — The account must trust the asset before it can hold it\n\n`insufficient_balance` — The source account cannot cover the amount",
+            "description": "Stellar: `trustline_missing`, `insufficient_balance`, `no_path_found`. Solana / Monad: `network_unsupported` (a dev key), `asset_unsupported`, `provider_error` (no route, or the aggregator simulated a failure — usually a wallet that cannot cover the amount plus fees).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1454,6 +1535,39 @@
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
+                  },
+                  "asset_unsupported": {
+                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "asset_unsupported",
+                      "error": "Bad Request",
+                      "message": "NEAR Intents does not support asset \"yXLM\" on stellar. GET /v1/cross-chain-swaps/assets lists the ones it does.",
+                      "path": "/v1/cross-chain-swaps/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported — Cross-chain swaps settle on mainnet only; a dev key cannot open one",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "Cross-chain swaps run on mainnet only — NEAR Intents has no test network. Use a prod API key.",
+                      "path": "/v1/cross-chain-swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error — The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The payment provider rejected the request.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
                   }
                 }
               }
@@ -1505,11 +1619,48 @@
           "500": {
             "$ref": "#/components/responses/InternalError"
           },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
           "503": {
-            "$ref": "#/components/responses/UpstreamUnavailable"
+            "description": "`misconfigured` — the plan charges a commission and the chain has no fee wallet (or, on Solana, the fee wallet has no token account for the output mint yet).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Could not reach the payment provider.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "BlindPay (prod) is not configured: set BLINDPAY_INSTANCE_ID_PROD.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Create a swap → unsigned XDR + SEP-7 tx URI + QR for the wallet to sign",
+        "summary": "Create a swap → the unsigned transaction to sign (Stellar XDR + SEP-7 + QR; Solana / Monad transaction)",
         "tags": [
           "swaps"
         ],
@@ -1522,12 +1673,31 @@
           }
         ],
         "x-cosmos-upstream": [
-          "Horizon"
+          "Horizon",
+          "Jupiter",
+          "Kuru Flow",
+          "Solana",
+          "Monad"
         ]
       },
       "get": {
         "operationId": "SwapsController_findAll_v1",
         "parameters": [
+          {
+            "name": "chain",
+            "required": false,
+            "in": "query",
+            "description": "Which chain to list. Omitted means Stellar.",
+            "schema": {
+              "default": "stellar",
+              "type": "string",
+              "enum": [
+                "stellar",
+                "solana",
+                "monad"
+              ]
+            }
+          },
           {
             "name": "status",
             "required": false,
@@ -1565,11 +1735,18 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Stellar swaps (no `chain`), or those of the chain named.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SwapListEntity"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SwapListEntity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ChainSwapListEntity"
+                    }
+                  ]
                 }
               }
             }
@@ -1587,7 +1764,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "summary": "List the consumer's swaps",
+        "summary": "List the consumer's swaps on one chain",
         "tags": [
           "swaps"
         ]
@@ -1612,7 +1789,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SwapEntity"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SwapEntity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ChainSwapEntity"
+                    }
+                  ]
                 }
               }
             }
@@ -1633,7 +1817,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "summary": "Get a swap by id",
+        "summary": "Get a swap by id, on any chain",
         "tags": [
           "swaps"
         ]
@@ -1668,7 +1852,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SwapSubmitResultEntity"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SwapSubmitResultEntity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ChainSwapSubmitResultEntity"
+                    }
+                  ]
                 }
               }
             },
@@ -1697,7 +1888,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — `signedXdr` is not a transaction envelope, is not the envelope built for this swap, or carries no signatures. `invalid_state_transition` — the swap can no longer be submitted: it is EXPIRED, its transaction's time bounds have passed, or it was already resubmitted the maximum number of times after a rejection. Build a new swap.",
+            "description": "`validation_failed` — `signedXdr` (Stellar) / `signedTransaction` (Solana, Monad) is not a transaction, is not the one built for this swap, or carries no signature of its source. `transaction_rejected` — the Solana or Monad node refused the broadcast; the swap stays PENDING. `invalid_state_transition` — the swap can no longer be submitted: it is EXPIRED, its transaction's validity window has passed, or it was already resubmitted the maximum number of times after a rejection. Build a new swap.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1726,6 +1917,17 @@
                       "error": "Bad Request",
                       "message": "txHash cannot be changed on a SUCCEEDED payment intent: the status is terminal",
                       "path": "/v1/payment-intents/pi_7Yc3Qn0Kx2",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "transaction_rejected": {
+                    "summary": "transaction_rejected — The submitted transaction does not do what the route needs",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "transaction_rejected",
+                      "error": "Bad Request",
+                      "message": "The transaction does not settle this payment intent: the amount paid is below the amount requested",
+                      "path": "/v1/payment-intents/pi_7Yc3Qn0Kx2/validate",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   }
@@ -1798,11 +2000,17 @@
           "500": {
             "$ref": "#/components/responses/InternalError"
           },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
           "503": {
             "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Relay the signed swap transaction to the network (hash-checked); finalizes status",
+        "summary": "Relay the signed swap transaction to its network (checked against the one built); finalizes status",
         "tags": [
           "swaps"
         ],
@@ -1815,7 +2023,749 @@
           }
         ],
         "x-cosmos-upstream": [
+          "Horizon",
+          "Solana",
+          "Monad"
+        ]
+      }
+    },
+    "/v1/cross-chain-swaps/assets": {
+      "get": {
+        "operationId": "CrossChainSwapsController_assets_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrossChainAssetListEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "List the assets NEAR Intents can swap on Stellar, Solana and Monad",
+        "tags": [
+          "cross-chain-swaps"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-upstream": [
+          "NEAR Intents"
+        ]
+      }
+    },
+    "/v1/cross-chain-swaps/quote": {
+      "post": {
+        "operationId": "CrossChainSwapsController_quote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteCrossChainSwapDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrossChainQuoteEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`provider_error` — NEAR Intents refused the quote (an amount below its minimum, a route it cannot fill); `message` carries its reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_amount": {
+                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "Deposit amounts must be greater than zero",
+                      "path": "/v1/liquidity-pools/deposit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "slippage_exceeded": {
+                    "summary": "slippage_exceeded — The requested slippage is above what this service allows",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "slippage_exceeded",
+                      "error": "Bad Request",
+                      "message": "slippageBps 900 exceeds the maximum allowed (500)",
+                      "path": "/v1/swaps/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "asset_unsupported": {
+                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "asset_unsupported",
+                      "error": "Bad Request",
+                      "message": "NEAR Intents does not support asset \"yXLM\" on stellar. GET /v1/cross-chain-swaps/assets lists the ones it does.",
+                      "path": "/v1/cross-chain-swaps/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error — The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The payment provider rejected the request.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "description": "`provider_unavailable` — NEAR Intents is down or rate limiting this service; retry. `misconfigured` — the plan charges a commission and NEAR_INTENTS_FEE_RECIPIENT is not set, or NEAR Intents rejected NEAR_INTENTS_API_KEY.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Could not reach the payment provider.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "BlindPay (prod) is not configured: set BLINDPAY_INSTANCE_ID_PROD.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Quote a cross-chain swap through NEAR Intents (price, commission, minimum); persists nothing",
+        "tags": [
+          "cross-chain-swaps"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "cross-chain-swaps:quote",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "NEAR Intents"
+        ]
+      }
+    },
+    "/v1/cross-chain-swaps": {
+      "post": {
+        "operationId": "CrossChainSwapsController_create_v1",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional idempotency key. A retry with the same key and the same request returns the existing swap (same deposit address); the same key with a different request is 409 idempotency_conflict. Takes precedence over body.idempotencyKey.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "xswap-retry-2026-10-02-001"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCrossChainSwapDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrossChainSwapEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`network_unsupported` — a dev (testnet) key: NEAR Intents settles on mainnet only. `trustline_missing` — a Stellar recipient does not trust the destination asset. `provider_error` — NEAR Intents refused the quote.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_amount": {
+                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "Deposit amounts must be greater than zero",
+                      "path": "/v1/liquidity-pools/deposit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "slippage_exceeded": {
+                    "summary": "slippage_exceeded — The requested slippage is above what this service allows",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "slippage_exceeded",
+                      "error": "Bad Request",
+                      "message": "slippageBps 900 exceeds the maximum allowed (500)",
+                      "path": "/v1/swaps/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "asset_unsupported": {
+                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "asset_unsupported",
+                      "error": "Bad Request",
+                      "message": "NEAR Intents does not support asset \"yXLM\" on stellar. GET /v1/cross-chain-swaps/assets lists the ones it does.",
+                      "path": "/v1/cross-chain-swaps/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported — Cross-chain swaps settle on mainnet only; a dev key cannot open one",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "Cross-chain swaps run on mainnet only — NEAR Intents has no test network. Use a prod API key.",
+                      "path": "/v1/cross-chain-swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "trustline_missing": {
+                    "summary": "trustline_missing — The account must trust the asset before it can hold it",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "trustline_missing",
+                      "error": "Bad Request",
+                      "message": "Destination GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5 — it must trust the asset before it can receive the swap",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error — The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The payment provider rejected the request.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "This Idempotency-Key was already used for a different cross-chain swap request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "idempotency_conflict": {
+                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "idempotency_conflict",
+                      "error": "Conflict",
+                      "message": "A swap already exists for this Idempotency-Key",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "description": "`provider_unavailable` — NEAR Intents is down or rate limiting this service; retry. `misconfigured` — the plan charges a commission and NEAR_INTENTS_FEE_RECIPIENT is not set, or NEAR Intents rejected NEAR_INTENTS_API_KEY.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Could not reach the payment provider.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "BlindPay (prod) is not configured: set BLINDPAY_INSTANCE_ID_PROD.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Create a cross-chain swap → NEAR Intents deposit address + wallet link (SEP-7 / Solana Pay / EIP-681) + QR",
+        "tags": [
+          "cross-chain-swaps"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "cross-chain-swaps:create",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "NEAR Intents",
           "Horizon"
+        ]
+      },
+      "get": {
+        "operationId": "CrossChainSwapsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AWAITING_DEPOSIT",
+                "DEPOSIT_DETECTED",
+                "INCOMPLETE_DEPOSIT",
+                "PROCESSING",
+                "SUCCEEDED",
+                "REFUNDED",
+                "FAILED",
+                "EXPIRED"
+              ]
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrossChainSwapListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the consumer's cross-chain swaps",
+        "tags": [
+          "cross-chain-swaps"
+        ]
+      }
+    },
+    "/v1/cross-chain-swaps/{id}": {
+      "get": {
+        "operationId": "CrossChainSwapsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrossChainSwapEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Get a cross-chain swap by id",
+        "tags": [
+          "cross-chain-swaps"
+        ]
+      }
+    },
+    "/v1/cross-chain-swaps/{id}/deposit": {
+      "post": {
+        "operationId": "CrossChainSwapsController_submitDeposit_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitDepositDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrossChainSwapEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed` — txHash is not a transaction id of the origin chain. `invalid_state_transition` — the swap already SUCCEEDED, was REFUNDED or FAILED. `provider_error` — NEAR Intents refused the hash.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "txHash cannot be changed on a SUCCEEDED payment intent: the status is terminal",
+                      "path": "/v1/payment-intents/pi_7Yc3Qn0Kx2",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error — The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The payment provider rejected the request.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Report the deposit transaction to NEAR Intents so the swap starts without waiting for its indexer",
+        "tags": [
+          "cross-chain-swaps"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "cross-chain-swaps:deposit",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "NEAR Intents"
         ]
       }
     },
@@ -10311,7 +11261,11 @@
     },
     {
       "name": "swaps",
-      "description": "Quote, create, sign and submit Stellar path-payment swaps."
+      "description": "Quote, create, sign and submit same-chain swaps: Stellar path payments by default, Solana through Jupiter and Monad through Kuru Flow with `chain`."
+    },
+    {
+      "name": "cross-chain-swaps",
+      "description": "Swaps between Stellar, Solana and Monad, settled by NEAR Intents: quote, get a deposit address, pay it, and follow the swap to its outcome."
     },
     {
       "name": "liquidity-pools",
@@ -11410,146 +12364,6 @@
           "deleted"
         ]
       },
-      "QuoteSwapDto": {
-        "type": "object",
-        "properties": {
-          "sourceAssetCode": {
-            "type": "string",
-            "description": "Source asset code (the asset being sold). Native if omitted.",
-            "example": "XLM"
-          },
-          "sourceAssetIssuer": {
-            "type": "string",
-            "description": "Issuer account for a non-native source asset.",
-            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
-          },
-          "amount": {
-            "type": "string",
-            "description": "Gross amount of the source asset to swap (decimal, ≤ 7 places). The platform fee is deducted from this and the remainder is routed.",
-            "example": "100"
-          },
-          "destAssetCode": {
-            "type": "string",
-            "description": "Destination asset code (the asset being bought).",
-            "example": "USDC"
-          },
-          "destAssetIssuer": {
-            "type": "string",
-            "description": "Issuer account for the destination asset (required unless it is native).",
-            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
-          },
-          "slippageBps": {
-            "type": "number",
-            "description": "Slippage tolerance in basis points (50 = 0.5%) used to derive the on-chain minimum received. Defaults to the service setting; capped by it.",
-            "example": 50
-          }
-        },
-        "required": [
-          "amount",
-          "destAssetCode"
-        ]
-      },
-      "SwapAssetAmount": {
-        "type": "object",
-        "properties": {
-          "asset": {
-            "type": "string",
-            "example": "native",
-            "description": "Asset code, or \"native\"."
-          },
-          "issuer": {
-            "type": "object",
-            "nullable": true,
-            "example": null
-          },
-          "amount": {
-            "type": "string",
-            "example": "100"
-          }
-        },
-        "required": [
-          "asset",
-          "issuer",
-          "amount"
-        ]
-      },
-      "SwapFeeBreakdown": {
-        "type": "object",
-        "properties": {
-          "asset": {
-            "type": "string",
-            "example": "native"
-          },
-          "issuer": {
-            "type": "object",
-            "nullable": true,
-            "example": null
-          },
-          "amount": {
-            "type": "string",
-            "example": "0.5"
-          },
-          "bps": {
-            "type": "number",
-            "example": 50,
-            "description": "Fee in basis points (50 = 0.5%)."
-          },
-          "wallet": {
-            "type": "object",
-            "nullable": true,
-            "example": "GBFEE...WALLET",
-            "description": "Fee collector account (null when the fee is disabled)."
-          },
-          "label": {
-            "type": "string",
-            "example": "Cosmos Swap Commission",
-            "description": "Human-readable commission label, mirrored as the on-chain MEMO_TEXT when the caller supplies no memo."
-          }
-        },
-        "required": [
-          "asset",
-          "issuer",
-          "amount",
-          "bps",
-          "wallet",
-          "label"
-        ]
-      },
-      "SwapDestinationQuote": {
-        "type": "object",
-        "properties": {
-          "asset": {
-            "type": "string",
-            "example": "USDC"
-          },
-          "issuer": {
-            "type": "object",
-            "nullable": true,
-            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
-          },
-          "estimated": {
-            "type": "string",
-            "example": "24.81",
-            "description": "Quoted amount received for the routed (post-fee) input."
-          },
-          "minimum": {
-            "type": "string",
-            "example": "24.68595",
-            "description": "On-chain minimum (destMin) after slippage — swap reverts below it."
-          },
-          "slippageBps": {
-            "type": "number",
-            "example": 50
-          }
-        },
-        "required": [
-          "asset",
-          "issuer",
-          "estimated",
-          "minimum",
-          "slippageBps"
-        ]
-      },
       "SwapPathHop": {
         "type": "object",
         "properties": {
@@ -11570,110 +12384,219 @@
           "issuer"
         ]
       },
-      "SwapQuoteEntity": {
+      "ChainSwapEntity": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm1x2y3z4a5b6c7d8e9f0g1h2"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "solana",
+              "monad"
+            ],
+            "example": "solana"
+          },
           "network": {
             "type": "string",
-            "example": "testnet"
+            "example": "public",
+            "description": "Always mainnet."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "jupiter",
+              "kuru"
+            ],
+            "example": "jupiter"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
           },
           "source": {
-            "description": "Gross source input.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SwapAssetAmount"
-              }
-            ]
+            "type": "string",
+            "example": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK",
+            "description": "The wallet that signs, pays and receives."
           },
-          "fee": {
-            "$ref": "#/components/schemas/SwapFeeBreakdown"
+          "sendAsset": {
+            "type": "string",
+            "example": "native",
+            "description": "`native` (SOL / MON), or the SPL mint / ERC-20 address."
           },
-          "swap": {
-            "description": "Net amount routed (input − fee).",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SwapAssetAmount"
-              }
-            ]
+          "sendAmount": {
+            "type": "string",
+            "example": "0.1"
           },
-          "destination": {
-            "$ref": "#/components/schemas/SwapDestinationQuote"
+          "destAsset": {
+            "type": "string",
+            "example": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+          },
+          "destEstimated": {
+            "type": "string",
+            "example": "11.87",
+            "description": "Quoted output, net of the commission."
+          },
+          "destMin": {
+            "type": "string",
+            "example": "11.81",
+            "description": "On-chain minimum after slippage."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.059",
+            "description": "The commission, in the destination asset (taken from the output)."
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 50
           },
           "path": {
-            "description": "Intermediate hops (may be empty).",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SwapPathHop"
             }
-          }
-        },
-        "required": [
-          "network",
-          "source",
-          "fee",
-          "swap",
-          "destination",
-          "path"
-        ]
-      },
-      "CreateSwapDto": {
-        "type": "object",
-        "properties": {
-          "sourceAssetCode": {
-            "type": "string",
-            "description": "Source asset code (the asset being sold). Native if omitted.",
-            "example": "XLM"
           },
-          "sourceAssetIssuer": {
-            "type": "string",
-            "description": "Issuer account for a non-native source asset.",
-            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
+          "transaction": {
+            "type": "object",
+            "additionalProperties": true,
+            "example": {
+              "encoding": "base64",
+              "data": "AQAAAAAAAAAAAAAAA…"
+            },
+            "description": "What the wallet signs. Solana: `{ encoding: \"base64\", data, lastValidBlockHeight }`, an unsigned VersionedTransaction. Monad: `{ to, data, value, chainId }`, a call the wallet signs as an EIP-1559 transaction (it fills nonce and gas)."
           },
-          "amount": {
-            "type": "string",
-            "description": "Gross amount of the source asset to swap (decimal, ≤ 7 places). The platform fee is deducted from this and the remainder is routed.",
-            "example": "100"
+          "approval": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": null,
+            "description": "Monad only, selling an ERC-20 whose allowance is short: the exact `approve` call `{ to, data, value, chainId }` to send and confirm first. The wallet broadcasts it itself."
           },
-          "destAssetCode": {
-            "type": "string",
-            "description": "Destination asset code (the asset being bought).",
-            "example": "USDC"
-          },
-          "destAssetIssuer": {
-            "type": "string",
-            "description": "Issuer account for the destination asset (required unless it is native).",
-            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
-          },
-          "slippageBps": {
-            "type": "number",
-            "description": "Slippage tolerance in basis points (50 = 0.5%) used to derive the on-chain minimum received. Defaults to the service setting; capped by it.",
-            "example": 50
-          },
-          "source": {
-            "type": "string",
-            "description": "Account paying for (and signing) the swap — the tx source.",
-            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
-          },
-          "destination": {
-            "type": "string",
-            "description": "Account credited the destination asset. Defaults to `source` (a self-swap). Must already trust a non-native destination asset.",
-            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
-          },
-          "memo": {
-            "type": "string",
-            "description": "Optional MEMO_ID (numeric uint64) echoed on-chain for reconciliation.",
-            "example": "123456789"
+          "txHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "The Solana signature / EVM hash, once submitted."
           },
           "idempotencyKey": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "expiresAt": {
+            "format": "date-time",
             "type": "string",
-            "description": "Optional idempotency key. Prefer the `Idempotency-Key` request header; when both are set, the header wins. A retry with the same key and the same request returns the existing swap instead of building another transaction; the same key with a different request is 409 `idempotency_conflict`.",
-            "example": "swap-retry-2026-08-23-001"
+            "example": "2026-10-03T12:01:00.000Z",
+            "description": "Submit refuses the transaction after this; build a new swap."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
-          "amount",
-          "destAssetCode",
-          "source"
+          "id",
+          "chain",
+          "network",
+          "provider",
+          "status",
+          "source",
+          "sendAsset",
+          "sendAmount",
+          "destAsset",
+          "destEstimated",
+          "destMin",
+          "feeBps",
+          "feeAmount",
+          "slippageBps",
+          "path",
+          "transaction",
+          "approval",
+          "txHash",
+          "idempotencyKey",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ChainSwapListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChainSwapEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "ChainSwapSubmitResultEntity": {
+        "type": "object",
+        "properties": {
+          "submitted": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "SUBMITTED"
+          },
+          "txHash": {
+            "type": "string",
+            "example": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW"
+          },
+          "swap": {
+            "$ref": "#/components/schemas/ChainSwapEntity"
+          }
+        },
+        "required": [
+          "submitted",
+          "status",
+          "txHash",
+          "swap"
         ]
       },
       "SwapEntity": {
@@ -12023,19 +12946,6 @@
           "skip"
         ]
       },
-      "SubmitSwapDto": {
-        "type": "object",
-        "properties": {
-          "signedXdr": {
-            "type": "string",
-            "description": "The signed transaction envelope (base64 XDR).",
-            "example": "AAAAAgAAAABx…(signed base64 XDR)…AAAAAAAAAAA="
-          }
-        },
-        "required": [
-          "signedXdr"
-        ]
-      },
       "SwapSubmitResultEntity": {
         "type": "object",
         "properties": {
@@ -12085,6 +12995,1140 @@
           "submitted",
           "status",
           "swap"
+        ]
+      },
+      "QuoteSwapDto": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "default": "stellar",
+            "description": "The chain to swap on. Omitted means Stellar. solana → Jupiter, monad → Kuru Flow; both mainnet only. Swaps between chains are /v1/cross-chain-swaps."
+          },
+          "sourceAssetCode": {
+            "type": "string",
+            "description": "The asset being sold. Stellar: an asset code (native if omitted). Solana / Monad: SOL / MON, \"native\", or the mint / ERC-20 address.",
+            "example": "XLM"
+          },
+          "sourceAssetIssuer": {
+            "type": "string",
+            "description": "Stellar only: issuer account for a non-native source asset.",
+            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount of the source asset to swap, in its own units (decimal; at most 7 places on Stellar, the token decimals elsewhere). Stellar deducts the platform fee from it; Solana and Monad take it from the output.",
+            "example": "100"
+          },
+          "destAssetCode": {
+            "type": "string",
+            "description": "The asset being bought, spelled as for sourceAssetCode.",
+            "example": "USDC"
+          },
+          "destAssetIssuer": {
+            "type": "string",
+            "description": "Stellar only: issuer account for the destination asset (required unless it is native).",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "slippageBps": {
+            "type": "number",
+            "description": "Slippage tolerance in basis points (50 = 0.5%) used to derive the on-chain minimum received. Defaults to the service setting; capped by it.",
+            "example": 50
+          }
+        },
+        "required": [
+          "amount",
+          "destAssetCode"
+        ]
+      },
+      "SwapAssetAmount": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "example": "native",
+            "description": "Asset code, or \"native\"."
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amount": {
+            "type": "string",
+            "example": "100"
+          }
+        },
+        "required": [
+          "asset",
+          "issuer",
+          "amount"
+        ]
+      },
+      "SwapFeeBreakdown": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "example": "native"
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amount": {
+            "type": "string",
+            "example": "0.5"
+          },
+          "bps": {
+            "type": "number",
+            "example": 50,
+            "description": "Fee in basis points (50 = 0.5%)."
+          },
+          "wallet": {
+            "type": "object",
+            "nullable": true,
+            "example": "GBFEE...WALLET",
+            "description": "Fee collector account (null when the fee is disabled)."
+          },
+          "label": {
+            "type": "string",
+            "example": "Cosmos Swap Commission",
+            "description": "Human-readable commission label, mirrored as the on-chain MEMO_TEXT when the caller supplies no memo."
+          }
+        },
+        "required": [
+          "asset",
+          "issuer",
+          "amount",
+          "bps",
+          "wallet",
+          "label"
+        ]
+      },
+      "SwapDestinationQuote": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "issuer": {
+            "type": "object",
+            "nullable": true,
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "estimated": {
+            "type": "string",
+            "example": "24.81",
+            "description": "Quoted amount received for the routed (post-fee) input."
+          },
+          "minimum": {
+            "type": "string",
+            "example": "24.68595",
+            "description": "On-chain minimum (destMin) after slippage — swap reverts below it."
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 50
+          }
+        },
+        "required": [
+          "asset",
+          "issuer",
+          "estimated",
+          "minimum",
+          "slippageBps"
+        ]
+      },
+      "SwapQuoteEntity": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "solana",
+              "monad"
+            ],
+            "example": "solana",
+            "description": "Solana and Monad quotes only. Absent on Stellar, which answers as it always has."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "jupiter",
+              "kuru"
+            ],
+            "example": "jupiter",
+            "description": "The aggregator that priced a Solana or Monad swap."
+          },
+          "source": {
+            "description": "Gross source input.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapAssetAmount"
+              }
+            ]
+          },
+          "fee": {
+            "$ref": "#/components/schemas/SwapFeeBreakdown"
+          },
+          "swap": {
+            "description": "Net amount routed (input − fee).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapAssetAmount"
+              }
+            ]
+          },
+          "destination": {
+            "$ref": "#/components/schemas/SwapDestinationQuote"
+          },
+          "path": {
+            "description": "Intermediate hops (may be empty).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SwapPathHop"
+            }
+          }
+        },
+        "required": [
+          "network",
+          "source",
+          "fee",
+          "swap",
+          "destination",
+          "path"
+        ]
+      },
+      "CreateSwapDto": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "default": "stellar",
+            "description": "The chain to swap on. Omitted means Stellar. solana → Jupiter, monad → Kuru Flow; both mainnet only. Swaps between chains are /v1/cross-chain-swaps."
+          },
+          "sourceAssetCode": {
+            "type": "string",
+            "description": "The asset being sold. Stellar: an asset code (native if omitted). Solana / Monad: SOL / MON, \"native\", or the mint / ERC-20 address.",
+            "example": "XLM"
+          },
+          "sourceAssetIssuer": {
+            "type": "string",
+            "description": "Stellar only: issuer account for a non-native source asset.",
+            "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount of the source asset to swap, in its own units (decimal; at most 7 places on Stellar, the token decimals elsewhere). Stellar deducts the platform fee from it; Solana and Monad take it from the output.",
+            "example": "100"
+          },
+          "destAssetCode": {
+            "type": "string",
+            "description": "The asset being bought, spelled as for sourceAssetCode.",
+            "example": "USDC"
+          },
+          "destAssetIssuer": {
+            "type": "string",
+            "description": "Stellar only: issuer account for the destination asset (required unless it is native).",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "slippageBps": {
+            "type": "number",
+            "description": "Slippage tolerance in basis points (50 = 0.5%) used to derive the on-chain minimum received. Defaults to the service setting; capped by it.",
+            "example": 50
+          },
+          "source": {
+            "type": "string",
+            "description": "Account paying for (and signing) the swap — the tx source — on `chain`.",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Account credited the destination asset. Defaults to `source` (a self-swap). Must already trust a non-native destination asset. Stellar only: on Solana and Monad the output always goes to `source`.",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "memo": {
+            "type": "string",
+            "description": "Stellar only: optional MEMO_ID (numeric uint64) echoed on-chain for reconciliation.",
+            "example": "123456789"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "Optional idempotency key. Prefer the `Idempotency-Key` request header; when both are set, the header wins. A retry with the same key and the same request returns the existing swap instead of building another transaction; the same key with a different request is 409 `idempotency_conflict`.",
+            "example": "swap-retry-2026-08-23-001"
+          }
+        },
+        "required": [
+          "amount",
+          "destAssetCode",
+          "source"
+        ]
+      },
+      "SubmitSwapDto": {
+        "type": "object",
+        "properties": {
+          "signedXdr": {
+            "type": "string",
+            "description": "Stellar swaps: the signed transaction envelope (base64 XDR). Required unless signedTransaction is sent.",
+            "example": "AAAAAgAAAABx…(signed base64 XDR)…AAAAAAAAAAA="
+          },
+          "signedTransaction": {
+            "type": "string",
+            "description": "Solana and Monad swaps: the signed transaction — Solana: base64 wire bytes of the VersionedTransaction; Monad: the 0x-hex raw EIP-1559 transaction (the eth_sendRawTransaction input).",
+            "example": "0x02f8b1818f…"
+          }
+        }
+      },
+      "CrossChainAssetEntity": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "symbol": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "assetId": {
+            "type": "string",
+            "example": "nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+            "description": "NEAR Intents’ id for the asset."
+          },
+          "decimals": {
+            "type": "number",
+            "example": 7
+          },
+          "contract": {
+            "type": "object",
+            "nullable": true,
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+            "description": "SPL mint, ERC-20 address or Stellar issuer; null for the native coin."
+          }
+        },
+        "required": [
+          "chain",
+          "symbol",
+          "assetId",
+          "decimals",
+          "contract"
+        ]
+      },
+      "CrossChainAssetListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainAssetEntity"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "QuoteCrossChainSwapDto": {
+        "type": "object",
+        "properties": {
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "originAsset": {
+            "type": "string",
+            "description": "The asset sold: the native ticker (XLM, SOL, MON), a symbol listed once on the chain (USDC), a contract (SPL mint, ERC-20 address, Stellar issuer) or Stellar CODE:ISSUER. See GET /v1/cross-chain-swaps/assets.",
+            "example": "XLM"
+          },
+          "destinationChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "solana"
+          },
+          "destinationAsset": {
+            "type": "string",
+            "description": "The asset bought, spelled as for originAsset.",
+            "example": "USDC"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount of the origin asset, in its own units (decimal). The plan commission is taken out of it; the quoted output is net of it.",
+            "example": "100"
+          },
+          "recipient": {
+            "type": "string",
+            "description": "Who receives the output, on destinationChain.",
+            "example": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK"
+          },
+          "refundTo": {
+            "type": "string",
+            "description": "Where a failed or late deposit is refunded, on originChain — normally the paying wallet.",
+            "example": "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG"
+          },
+          "slippageBps": {
+            "type": "number",
+            "description": "Slippage tolerance in basis points (100 = 1%). Below the resulting minimum, NEAR Intents refunds instead of filling. Defaults to the service setting; capped by it.",
+            "example": 100
+          }
+        },
+        "required": [
+          "originChain",
+          "originAsset",
+          "destinationChain",
+          "destinationAsset",
+          "amount",
+          "recipient",
+          "refundTo"
+        ]
+      },
+      "CrossChainQuoteLeg": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "asset": {
+            "type": "string",
+            "example": "XLM"
+          },
+          "assetId": {
+            "type": "string",
+            "example": "nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz"
+          },
+          "contract": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amount": {
+            "type": "string",
+            "example": "100",
+            "description": "Origin: the gross amount sent. Destination: the quoted amount received, net of every fee."
+          },
+          "amountUsd": {
+            "type": "object",
+            "nullable": true,
+            "example": "22.57",
+            "description": "NEAR Intents’ USD valuation, informational only."
+          }
+        },
+        "required": [
+          "chain",
+          "asset",
+          "assetId",
+          "contract",
+          "amount",
+          "amountUsd"
+        ]
+      },
+      "CrossChainQuoteDestination": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "asset": {
+            "type": "string",
+            "example": "XLM"
+          },
+          "assetId": {
+            "type": "string",
+            "example": "nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz"
+          },
+          "contract": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amount": {
+            "type": "string",
+            "example": "100",
+            "description": "Origin: the gross amount sent. Destination: the quoted amount received, net of every fee."
+          },
+          "amountUsd": {
+            "type": "object",
+            "nullable": true,
+            "example": "22.57",
+            "description": "NEAR Intents’ USD valuation, informational only."
+          },
+          "minimum": {
+            "type": "string",
+            "example": "21.967571",
+            "description": "Minimum output after slippage; below it the swap is refunded."
+          }
+        },
+        "required": [
+          "chain",
+          "asset",
+          "assetId",
+          "contract",
+          "amount",
+          "amountUsd",
+          "minimum"
+        ]
+      },
+      "CrossChainFeeEntity": {
+        "type": "object",
+        "properties": {
+          "bps": {
+            "type": "number",
+            "example": 50,
+            "description": "Basis points of the input."
+          },
+          "amount": {
+            "type": "string",
+            "example": "0.5",
+            "description": "In the origin asset."
+          },
+          "asset": {
+            "type": "string",
+            "example": "XLM"
+          }
+        },
+        "required": [
+          "bps",
+          "amount",
+          "asset"
+        ]
+      },
+      "CrossChainQuoteEntity": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "Always public: NEAR Intents prices and settles on mainnet."
+          },
+          "origin": {
+            "$ref": "#/components/schemas/CrossChainQuoteLeg"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/CrossChainQuoteDestination"
+          },
+          "fee": {
+            "$ref": "#/components/schemas/CrossChainFeeEntity"
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 100
+          },
+          "timeEstimateSeconds": {
+            "type": "number",
+            "example": 22,
+            "description": "NEAR Intents’ estimate, in seconds after the deposit confirms."
+          }
+        },
+        "required": [
+          "network",
+          "origin",
+          "destination",
+          "fee",
+          "slippageBps",
+          "timeEstimateSeconds"
+        ]
+      },
+      "CreateCrossChainSwapDto": {
+        "type": "object",
+        "properties": {
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "originAsset": {
+            "type": "string",
+            "description": "The asset sold: the native ticker (XLM, SOL, MON), a symbol listed once on the chain (USDC), a contract (SPL mint, ERC-20 address, Stellar issuer) or Stellar CODE:ISSUER. See GET /v1/cross-chain-swaps/assets.",
+            "example": "XLM"
+          },
+          "destinationChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "solana"
+          },
+          "destinationAsset": {
+            "type": "string",
+            "description": "The asset bought, spelled as for originAsset.",
+            "example": "USDC"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount of the origin asset, in its own units (decimal). The plan commission is taken out of it; the quoted output is net of it.",
+            "example": "100"
+          },
+          "recipient": {
+            "type": "string",
+            "description": "Who receives the output, on destinationChain.",
+            "example": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK"
+          },
+          "refundTo": {
+            "type": "string",
+            "description": "Where a failed or late deposit is refunded, on originChain — normally the paying wallet.",
+            "example": "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG"
+          },
+          "slippageBps": {
+            "type": "number",
+            "description": "Slippage tolerance in basis points (100 = 1%). Below the resulting minimum, NEAR Intents refunds instead of filling. Defaults to the service setting; capped by it.",
+            "example": 100
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "Idempotency key. The Idempotency-Key header takes precedence over this field.",
+            "example": "xswap-2026-10-02-001"
+          }
+        },
+        "required": [
+          "originChain",
+          "originAsset",
+          "destinationChain",
+          "destinationAsset",
+          "amount",
+          "recipient",
+          "refundTo"
+        ]
+      },
+      "CrossChainTransactionEntity": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string",
+            "example": "0x9a…"
+          },
+          "explorerUrl": {
+            "type": "string",
+            "example": "https://solscan.io/tx/…"
+          }
+        },
+        "required": [
+          "hash",
+          "explorerUrl"
+        ]
+      },
+      "CrossChainSwapEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm1x2y3z4a5b6c7d8e9f0g1h2"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_DEPOSIT",
+              "DEPOSIT_DETECTED",
+              "INCOMPLETE_DEPOSIT",
+              "PROCESSING",
+              "SUCCEEDED",
+              "REFUNDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "AWAITING_DEPOSIT"
+          },
+          "providerStatus": {
+            "type": "string",
+            "example": "PENDING_DEPOSIT",
+            "description": "NEAR Intents’ own status word, verbatim."
+          },
+          "network": {
+            "type": "string",
+            "example": "public"
+          },
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "originAsset": {
+            "type": "string",
+            "example": "XLM"
+          },
+          "originContract": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "destinationChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "solana"
+          },
+          "destinationAsset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "destinationContract": {
+            "type": "object",
+            "nullable": true,
+            "example": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+          },
+          "amountIn": {
+            "type": "string",
+            "example": "100",
+            "description": "Gross, in the origin asset."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.5"
+          },
+          "amountOutEstimated": {
+            "type": "string",
+            "example": "22.189466"
+          },
+          "amountOutMin": {
+            "type": "string",
+            "example": "21.967571"
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 100
+          },
+          "recipient": {
+            "type": "string",
+            "example": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK"
+          },
+          "refundTo": {
+            "type": "string",
+            "example": "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG"
+          },
+          "depositAddress": {
+            "type": "string",
+            "example": "GDJ4JZXZELZD737NVFORH4PSSQDWFDZTKW3AIDKHYQG23ZXBPDGGQBJK",
+            "description": "Send exactly amountIn of the origin asset here."
+          },
+          "depositMemo": {
+            "type": "object",
+            "nullable": true,
+            "example": "188866795",
+            "description": "Stellar only, and required: attach it as a MEMO_TEXT or the deposit is lost to the swap."
+          },
+          "depositUri": {
+            "type": "string",
+            "example": "web+stellar:pay?destination=GDJ4…&amount=100&memo=188866795&memo_type=MEMO_TEXT",
+            "description": "The deposit as a wallet link on the origin chain: SEP-7 pay, Solana Pay or EIP-681."
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgo…"
+          },
+          "depositTxHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amountOut": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "Settled output, once NEAR Intents reports it."
+          },
+          "refundedAmount": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "originTxHashes": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "destinationTxHashes": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "timeEstimateSeconds": {
+            "type": "number",
+            "example": 22
+          },
+          "correlationId": {
+            "type": "string",
+            "example": "c5928abd-243c-4019-aebd-6cccc185cc96",
+            "description": "NEAR Intents’ id for the quote, for support requests."
+          },
+          "quoteSignature": {
+            "type": "string",
+            "example": "ed25519:Ze6U5JbqTTbXNvU5PW2g…",
+            "description": "NEAR Intents’ signature over the quote and deposit address. Keep it: it settles a dispute."
+          },
+          "idempotencyKey": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-02T12:30:00.000Z",
+            "description": "After this the deposit address refunds whatever arrives."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "providerStatus",
+          "network",
+          "originChain",
+          "originAsset",
+          "originContract",
+          "destinationChain",
+          "destinationAsset",
+          "destinationContract",
+          "amountIn",
+          "feeBps",
+          "feeAmount",
+          "amountOutEstimated",
+          "amountOutMin",
+          "slippageBps",
+          "recipient",
+          "refundTo",
+          "depositAddress",
+          "depositMemo",
+          "depositUri",
+          "qr",
+          "depositTxHash",
+          "amountOut",
+          "refundedAmount",
+          "originTxHashes",
+          "destinationTxHashes",
+          "timeEstimateSeconds",
+          "correlationId",
+          "quoteSignature",
+          "idempotencyKey",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CrossChainSwapListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm1x2y3z4a5b6c7d8e9f0g1h2"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_DEPOSIT",
+              "DEPOSIT_DETECTED",
+              "INCOMPLETE_DEPOSIT",
+              "PROCESSING",
+              "SUCCEEDED",
+              "REFUNDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "AWAITING_DEPOSIT"
+          },
+          "providerStatus": {
+            "type": "string",
+            "example": "PENDING_DEPOSIT",
+            "description": "NEAR Intents’ own status word, verbatim."
+          },
+          "network": {
+            "type": "string",
+            "example": "public"
+          },
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "originAsset": {
+            "type": "string",
+            "example": "XLM"
+          },
+          "originContract": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "destinationChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "solana"
+          },
+          "destinationAsset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "destinationContract": {
+            "type": "object",
+            "nullable": true,
+            "example": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+          },
+          "amountIn": {
+            "type": "string",
+            "example": "100",
+            "description": "Gross, in the origin asset."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.5"
+          },
+          "amountOutEstimated": {
+            "type": "string",
+            "example": "22.189466"
+          },
+          "amountOutMin": {
+            "type": "string",
+            "example": "21.967571"
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 100
+          },
+          "recipient": {
+            "type": "string",
+            "example": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK"
+          },
+          "refundTo": {
+            "type": "string",
+            "example": "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG"
+          },
+          "depositAddress": {
+            "type": "string",
+            "example": "GDJ4JZXZELZD737NVFORH4PSSQDWFDZTKW3AIDKHYQG23ZXBPDGGQBJK",
+            "description": "Send exactly amountIn of the origin asset here."
+          },
+          "depositMemo": {
+            "type": "object",
+            "nullable": true,
+            "example": "188866795",
+            "description": "Stellar only, and required: attach it as a MEMO_TEXT or the deposit is lost to the swap."
+          },
+          "depositUri": {
+            "type": "string",
+            "example": "web+stellar:pay?destination=GDJ4…&amount=100&memo=188866795&memo_type=MEMO_TEXT",
+            "description": "The deposit as a wallet link on the origin chain: SEP-7 pay, Solana Pay or EIP-681."
+          },
+          "depositTxHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amountOut": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "Settled output, once NEAR Intents reports it."
+          },
+          "refundedAmount": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "originTxHashes": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "destinationTxHashes": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "timeEstimateSeconds": {
+            "type": "number",
+            "example": 22
+          },
+          "correlationId": {
+            "type": "string",
+            "example": "c5928abd-243c-4019-aebd-6cccc185cc96",
+            "description": "NEAR Intents’ id for the quote, for support requests."
+          },
+          "quoteSignature": {
+            "type": "string",
+            "example": "ed25519:Ze6U5JbqTTbXNvU5PW2g…",
+            "description": "NEAR Intents’ signature over the quote and deposit address. Keep it: it settles a dispute."
+          },
+          "idempotencyKey": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-02T12:30:00.000Z",
+            "description": "After this the deposit address refunds whatever arrives."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "providerStatus",
+          "network",
+          "originChain",
+          "originAsset",
+          "originContract",
+          "destinationChain",
+          "destinationAsset",
+          "destinationContract",
+          "amountIn",
+          "feeBps",
+          "feeAmount",
+          "amountOutEstimated",
+          "amountOutMin",
+          "slippageBps",
+          "recipient",
+          "refundTo",
+          "depositAddress",
+          "depositMemo",
+          "depositUri",
+          "depositTxHash",
+          "amountOut",
+          "refundedAmount",
+          "originTxHashes",
+          "destinationTxHashes",
+          "timeEstimateSeconds",
+          "correlationId",
+          "quoteSignature",
+          "idempotencyKey",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CrossChainSwapListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainSwapListItem"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "SubmitDepositDto": {
+        "type": "object",
+        "properties": {
+          "txHash": {
+            "type": "string",
+            "description": "The transaction that paid the deposit address, on the origin chain: a Stellar hash (64 hex), a Solana signature (base58) or a Monad hash (0x + 64 hex).",
+            "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          }
+        },
+        "required": [
+          "txHash"
         ]
       },
       "DepositLiquidityDto": {
@@ -12969,7 +15013,13 @@
                 "LIQUIDITY_SUCCEEDED",
                 "LIQUIDITY_FAILED",
                 "SWAP_EXPIRED",
-                "LIQUIDITY_EXPIRED"
+                "LIQUIDITY_EXPIRED",
+                "CROSS_CHAIN_SWAP_CREATED",
+                "CROSS_CHAIN_SWAP_UPDATED",
+                "CROSS_CHAIN_SWAP_SUCCEEDED",
+                "CROSS_CHAIN_SWAP_REFUNDED",
+                "CROSS_CHAIN_SWAP_FAILED",
+                "CROSS_CHAIN_SWAP_EXPIRED"
               ]
             }
           }
@@ -13034,7 +15084,13 @@
                 "LIQUIDITY_SUCCEEDED",
                 "LIQUIDITY_FAILED",
                 "SWAP_EXPIRED",
-                "LIQUIDITY_EXPIRED"
+                "LIQUIDITY_EXPIRED",
+                "CROSS_CHAIN_SWAP_CREATED",
+                "CROSS_CHAIN_SWAP_UPDATED",
+                "CROSS_CHAIN_SWAP_SUCCEEDED",
+                "CROSS_CHAIN_SWAP_REFUNDED",
+                "CROSS_CHAIN_SWAP_FAILED",
+                "CROSS_CHAIN_SWAP_EXPIRED"
               ]
             }
           },
@@ -13122,7 +15178,13 @@
                 "LIQUIDITY_SUCCEEDED",
                 "LIQUIDITY_FAILED",
                 "SWAP_EXPIRED",
-                "LIQUIDITY_EXPIRED"
+                "LIQUIDITY_EXPIRED",
+                "CROSS_CHAIN_SWAP_CREATED",
+                "CROSS_CHAIN_SWAP_UPDATED",
+                "CROSS_CHAIN_SWAP_SUCCEEDED",
+                "CROSS_CHAIN_SWAP_REFUNDED",
+                "CROSS_CHAIN_SWAP_FAILED",
+                "CROSS_CHAIN_SWAP_EXPIRED"
               ]
             }
           },
@@ -13218,7 +15280,13 @@
                 "LIQUIDITY_SUCCEEDED",
                 "LIQUIDITY_FAILED",
                 "SWAP_EXPIRED",
-                "LIQUIDITY_EXPIRED"
+                "LIQUIDITY_EXPIRED",
+                "CROSS_CHAIN_SWAP_CREATED",
+                "CROSS_CHAIN_SWAP_UPDATED",
+                "CROSS_CHAIN_SWAP_SUCCEEDED",
+                "CROSS_CHAIN_SWAP_REFUNDED",
+                "CROSS_CHAIN_SWAP_FAILED",
+                "CROSS_CHAIN_SWAP_EXPIRED"
               ]
             }
           }
@@ -13301,7 +15369,13 @@
               "LIQUIDITY_SUCCEEDED",
               "LIQUIDITY_FAILED",
               "SWAP_EXPIRED",
-              "LIQUIDITY_EXPIRED"
+              "LIQUIDITY_EXPIRED",
+              "CROSS_CHAIN_SWAP_CREATED",
+              "CROSS_CHAIN_SWAP_UPDATED",
+              "CROSS_CHAIN_SWAP_SUCCEEDED",
+              "CROSS_CHAIN_SWAP_REFUNDED",
+              "CROSS_CHAIN_SWAP_FAILED",
+              "CROSS_CHAIN_SWAP_EXPIRED"
             ],
             "example": "PAYMENT_INTENT_SUCCEEDED"
           },
@@ -17857,6 +19931,8 @@
               "invalid_amount",
               "invalid_memo",
               "transaction_rejected",
+              "network_unsupported",
+              "asset_unsupported",
               "provider_error",
               "provider_unavailable",
               "quote_not_found",

@@ -1,0 +1,90 @@
+---
+title: "CrossChainSwapManager"
+description: "Swaps between Stellar, Solana and Monad, settled by NEAR Intents — `client.crossChainSwaps`. Mainnet only: a `dev` key can list assets and quote, but creating answers `400 net"
+---
+
+Swaps between Stellar, Solana and Monad, settled by NEAR Intents — `client.crossChainSwaps`. Mainnet only: a `dev` key can list assets and quote, but creating answers `400 network_unsupported`. Both legs on one chain is `client.swaps` with `chain`.
+
+## Methods
+
+### assets()
+
+The tokens NEAR Intents can swap on Stellar, Solana and Monad.
+
+```ts
+assets(): Promise<CrossChainAssetData[]>
+```
+
+**Returns** `Promise<CrossChainAssetData[]>`
+
+### quote()
+
+A dry quote: output, minimum and commission. Persists nothing.
+
+```ts
+quote(options: QuoteCrossChainSwapOptions): Promise<CrossChainQuoteData>
+```
+
+**Parameters**
+
+- `options` — `QuoteCrossChainSwapOptions`
+
+**Returns** `Promise<CrossChainQuoteData>`
+
+### create()
+
+A live quote: the deposit address, memo and wallet link that fund the swap.
+
+```ts
+create(options: CreateCrossChainSwapOptions): Promise<CrossChainSwap>
+```
+
+**Parameters**
+
+- `options` — `CreateCrossChainSwapOptions`
+
+**Returns** [`Promise<CrossChainSwap>`](/sdk/definitions/server/cross-chain-swap)
+
+### fetch()
+
+```ts
+fetch(id: string): Promise<CrossChainSwap>
+```
+
+**Parameters**
+
+- `id` — `string`
+
+**Returns** [`Promise<CrossChainSwap>`](/sdk/definitions/server/cross-chain-swap)
+
+### list()
+
+```ts
+list(options?: ListCrossChainSwapsOptions): Promise<CrossChainSwapPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_ — `ListCrossChainSwapsOptions`
+
+**Returns** `Promise<CrossChainSwapPage>`
+
+### reportDeposit()
+
+Report the transaction that paid the deposit address.
+
+```ts
+reportDeposit(id: string, txHash: string): Promise<CrossChainSwap>
+```
+
+**Parameters**
+
+- `id` — `string`
+- `txHash` — `string`
+
+**Returns** [`Promise<CrossChainSwap>`](/sdk/definitions/server/cross-chain-swap)
+
+## Related
+
+- [CrossChainSwap](/sdk/definitions/server/cross-chain-swap)
+- [BaseManager](/sdk/definitions/server/base-manager)
