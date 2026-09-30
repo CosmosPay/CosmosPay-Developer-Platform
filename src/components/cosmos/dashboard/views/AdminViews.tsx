@@ -18,7 +18,19 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 
 /* ---- shared helpers ---- */
 const PAY_FILTERS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
-const ADMIN_PILL = { SUCCEEDED: "ok", FAILED: "fail", EXPIRED: "fail", CANCELLED: "fail", PENDING: "ref", SUBMITTED: "ref" };
+const ADMIN_PILL = {
+  SUCCEEDED: "ok", FAILED: "fail", EXPIRED: "fail", CANCELLED: "fail", PENDING: "ref", SUBMITTED: "ref",
+  // Cross-chain swaps (NEAR Intents).
+  REFUNDED: "fail", AWAITING_DEPOSIT: "pend", DEPOSIT_DETECTED: "pend", INCOMPLETE_DEPOSIT: "pend", PROCESSING: "pend",
+};
+/* The swap tables the admin view reads: Stellar path payments, the two aggregator
+   chains, and swaps between chains. Only Stellar follows the live/test network — the
+   others run on mainnet only, so the environment switch does not filter them. */
+const SWAP_VENUES = ["stellar", "solana", "monad", "crossChain"];
+const CROSS_FILTERS = ["all", "AWAITING_DEPOSIT", "PROCESSING", "SUCCEEDED", "REFUNDED", "FAILED"];
+const NATIVE_TICKER = { stellar: "XLM", solana: "SOL", monad: "MON" };
+const shortAsset = (asset, chain) =>
+  !asset || asset === "native" ? NATIVE_TICKER[chain] || "XLM" : asset.length > 16 ? `${asset.slice(0, 4)}…${asset.slice(-4)}` : asset;
 const netFromEnv = (env) => (env === "prod" ? "public" : "testnet");
 const unwrapList = (res) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
 // Owning-org label for a LIST row (consumer nested under row.consumer): prefer the
@@ -260,6 +272,8 @@ export function AdminOverviewView({ env = "dev" }) {
 
   const pi = (sum && sum.paymentIntents) || {};
   const sw = (sum && sum.swaps) || {};
+  const csw = (sum && sum.chainSwaps) || {};
+  const xsw = (sum && sum.crossChainSwaps) || {};
   const fiat = (sum && sum.fiat) || {};
 
   return (
@@ -281,6 +295,12 @@ export function AdminOverviewView({ env = "dev" }) {
             </div>
             <div className="panel"><div className="panel-head"><h3>{ao.swaps}</h3></div>
               <div style={{ padding: "0 16px 16px" }}><div className="mv" style={{ marginBottom: 10 }}>{sw.total ?? 0}</div><Breakdown obj={sw.byStatus} pillOf={(k) => ADMIN_PILL[k] || "ref"} /></div>
+            </div>
+            <div className="panel"><div className="panel-head"><h3>{ao.chainSwaps}</h3></div>
+              <div style={{ padding: "0 16px 16px" }}><div className="mv" style={{ marginBottom: 10 }}>{csw.total ?? 0}</div><Breakdown obj={csw.byStatus} pillOf={(k) => ADMIN_PILL[k] || "ref"} /></div>
+            </div>
+            <div className="panel"><div className="panel-head"><h3>{ao.crossChainSwaps}</h3></div>
+              <div style={{ padding: "0 16px 16px" }}><div className="mv" style={{ marginBottom: 10 }}>{xsw.total ?? 0}</div><Breakdown obj={xsw.byStatus} pillOf={(k) => ADMIN_PILL[k] || "ref"} /></div>
             </div>
           </div>
 
@@ -356,27 +376,39 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
   const as = a.swaps;
   const network = netFromEnv(env);
   const consumer = adminFilter && adminFilter.consumer;
-  const { rows, loading, error } = useAdminRows(() => adminApi.swaps({ network, consumer, take: 200 }), [network, consumer]);
+  const [venue, setVenue] = useState("stellar");
+  const fetcher =
+    venue === "stellar" ? () => adminApi.swaps({ network, consumer, take: 200 })
+      : venue === "crossChain" ? () => adminApi.crossChainSwaps({ consumer, take: 200 })
+        : () => adminApi.chainSwaps({ chain: venue, consumer, take: 200 });
+  const { rows, loading, error } = useAdminRows(fetcher, [network, consumer, venue]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
+  const filters = venue === "crossChain" ? CROSS_FILTERS : PAY_FILTERS;
   const statusFiltered = rows.filter((s) => filter === "all" || s.status === filter);
-  const route = (s) => `${s.sendAmount ?? "—"} ${assetOf(s.sendAsset)} → ${s.destEstimated ?? s.swapAmount ?? "—"} ${s.destAsset || ""}`.trim();
+  const route = (s) =>
+    venue === "crossChain"
+      ? `${s.amountIn} ${s.originAsset} (${s.originChain}) → ${s.amountOut || s.amountOutEstimated} ${s.destinationAsset} (${s.destinationChain})`
+      : venue === "stellar"
+        ? `${s.sendAmount ?? "—"} ${assetOf(s.sendAsset)} → ${s.destEstimated ?? s.swapAmount ?? "—"} ${s.destAsset || ""}`.trim()
+        : `${s.sendAmount ?? "—"} ${shortAsset(s.sendAsset, venue)} → ${s.destEstimated ?? "—"} ${shortAsset(s.destAsset, venue)}`;
   const onOrgFilter = (row) => goToAdmin && goToAdmin("adminSwaps", { consumer: row.consumerId, label: orgOf(row) });
 
   return (
     <>
       <ViewHead title={as.title} sub={as.sub} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminSwaps", null)} />}
-      <div className="filter-tabs">{PAY_FILTERS.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{a.filters[k]}</button>)}</div>
+      <div className="filter-tabs" style={{ marginBottom: 8 }}>{SWAP_VENUES.map((k) => <button key={k} className={venue === k ? "on" : ""} onClick={() => { setVenue(k); setFilter("all"); }}>{as.venues[k]}</button>)}</div>
+      <div className="filter-tabs">{filters.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{(a.filters && a.filters[k]) || as.crossStatus[k] || k}</button>)}</div>
       <AdminTable
-        a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={as.searchPlaceholder} tag={network} resetKey={filter}
+        a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={as.searchPlaceholder} tag={venue === "stellar" ? network : "public"} resetKey={filter + venue}
         heads={[as.tableHead.id, as.tableHead.org, as.tableHead.route, as.tableHead.status, as.tableHead.created]}
         rows={statusFiltered}
-        haystack={(s) => `${s.id || ""} ${s.txHash || ""} ${orgOf(s)} ${s.source || ""} ${s.destination || ""} ${s.sendAsset || ""} ${s.destAsset || ""} ${s.status || ""}`}
+        haystack={(s) => `${s.id || ""} ${s.txHash || ""} ${orgOf(s)} ${s.source || ""} ${s.destination || ""} ${s.sendAsset || ""} ${s.destAsset || ""} ${s.recipient || ""} ${s.refundTo || ""} ${s.depositAddress || ""} ${s.status || ""}`}
         empty={as.empty}
         renderRow={(s) => (
           <tr key={s.id}>
-            <IdTd id={s.id} secondary={s.txHash} />
+            <IdTd id={s.id} secondary={s.txHash || s.depositTxHash || s.correlationId} />
             <OrgTd row={s} onFilter={onOrgFilter} />
             <td className="amt">{route(s)}</td>
             <td><Pill st={ADMIN_PILL[s.status] || "ref"} label={s.status || "—"} /></td>
@@ -554,7 +586,11 @@ export function AdminConsumersView({ goToAdmin }) {
   const ac = a.consumers;
   const { rows, loading, error } = useAdminRows(() => adminApi.consumers({ take: 200 }), []);
   const [q, setQ] = useState("");
-  const cnt = (row, k) => (row && row._count && row._count[k]) ?? 0;
+  // "swaps" counts every chain: Stellar path payments, Solana/Monad swaps and cross-chain.
+  const cnt = (row, k) =>
+    k === "swaps"
+      ? ["swaps", "chainSwaps", "crossChainSwaps"].reduce((n, key) => n + ((row && row._count && row._count[key]) ?? 0), 0)
+      : (row && row._count && row._count[k]) ?? 0;
   // A clickable count cell that drills into the target admin view, filtered by this org.
   const countTd = (c, k, view, tab) => {
     const n = cnt(c, k);

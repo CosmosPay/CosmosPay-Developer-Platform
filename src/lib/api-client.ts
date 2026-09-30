@@ -155,6 +155,7 @@ export const account = {
 function adminQs(query = {}) {
   const qs = new URLSearchParams();
   if (query.network) qs.set("network", query.network);
+  if (query.chain) qs.set("chain", query.chain);
   if (query.status) qs.set("status", query.status);
   if (query.consumer) qs.set("consumer", query.consumer);
   if (query.take != null) qs.set("take", String(query.take));
@@ -174,6 +175,9 @@ export const admin = {
   consumers: (query = {}) => request(`/api/admin/consumers${adminQs(query)}`),
   paymentIntents: (query = {}) => request(`/api/admin/payment-intents${adminQs(query)}`),
   swaps: (query = {}) => request(`/api/admin/swaps${adminQs(query)}`),
+  // Solana (Jupiter) / Monad (Kuru Flow) swaps, and swaps between chains (NEAR Intents).
+  chainSwaps: (query = {}) => request(`/api/admin/chain-swaps${adminQs(query)}`),
+  crossChainSwaps: (query = {}) => request(`/api/admin/cross-chain-swaps${adminQs(query)}`),
   customers: (query = {}) => request(`/api/admin/customers${adminQs(query)}`),
   products: (query = {}) => request(`/api/admin/products${adminQs(query)}`),
   receivers: (query = {}) => request(`/api/admin/receivers${adminQs(query)}`),

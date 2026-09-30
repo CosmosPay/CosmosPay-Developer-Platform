@@ -1379,13 +1379,13 @@ export default {
       overview: {
         title: "Resumen de la plataforma", sub: "Actividad global en todas las organizaciones",
         cards: { consumers: "Organizaciones", customers: "Clientes", products: "Productos", webhooks: "Endpoints de webhook" },
-        payments: "Intentos de pago", swaps: "Swaps", fiat: "Fiat (KYC/KYB)",
+        payments: "Intentos de pago", swaps: "Swaps", chainSwaps: "Swaps en Solana y Monad", crossChainSwaps: "Swaps entre redes", fiat: "Fiat (KYC/KYB)",
         receivers: "Receptores", payins: "Payins", payouts: "Payouts",
         volume: "Volumen liquidado",
         volHead: { asset: "Activo", amount: "Cantidad", count: "Recuento" },
       },
       payments: { title: "Intentos de pago", sub: "Todos los intentos de pago de las organizaciones", searchPlaceholder: "Buscar por ID, destino, organización…", empty: "No hay intentos de pago.", tableHead: { id: "ID", org: "Organización", destination: "Destino", amount: "Cantidad", status: "Estado", created: "Creado" } },
-      swaps: { title: "Swaps", sub: "Todos los swaps de las organizaciones", searchPlaceholder: "Buscar por ID, cuenta, organización…", empty: "No hay swaps.", tableHead: { id: "Swap", org: "Organización", route: "Enviado → recibido", status: "Estado", created: "Creado" } },
+      swaps: { venues: { stellar: "Stellar", solana: "Solana · Jupiter", monad: "Monad · Kuru Flow", crossChain: "Entre redes" }, crossStatus: { AWAITING_DEPOSIT: "Esperando depósito", PROCESSING: "Procesando", REFUNDED: "Reembolsado" }, title: "Swaps", sub: "Todos los swaps de las organizaciones", searchPlaceholder: "Buscar por ID, cuenta, organización…", empty: "No hay swaps.", tableHead: { id: "Swap", org: "Organización", route: "Enviado → recibido", status: "Estado", created: "Creado" } },
       fiat: {
         title: "Fiat", sub: "Receptores, payins y payouts de las organizaciones",
         tabs: { receivers: "Receptores", payins: "Payins", payouts: "Payouts" },
