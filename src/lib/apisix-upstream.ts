@@ -34,6 +34,26 @@ export function normalizeUpstreamHost(upstreamHost: string): string {
 }
 
 /**
+ * The base URLs a direct server-to-server caller may use for an upstream env value: one per
+ * comma-separated entry, scheme kept (`http://` assumed when absent), trailing slash dropped.
+ *
+ * `COSMOS_API_URL` names the replicas APISIX balances across, and the dashboard also calls
+ * that service directly. Read as ONE URL, a two-replica value became
+ * `http://a:3000,http://b:3001/v1/...` and every dashboard call failed while the gateway
+ * kept working — so the list is split here, in the same place `upstreamNodes` splits it.
+ */
+export function upstreamBaseUrls(value: string): string[] {
+  const out: string[] = [];
+  for (const part of value.replace(/^["']|["']$/g, "").split(",")) {
+    const trimmed = part.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, "");
+    if (!trimmed) continue;
+    const url = trimmed.includes("://") ? trimmed : `http://${trimmed}`;
+    if (!out.includes(url)) out.push(url);
+  }
+  return out;
+}
+
+/**
  * The APISIX `nodes` map for an upstream env value: one entry per comma-separated
  * `host:port`, each at weight 1, so `roundrobin` spreads requests evenly across replicas.
  *

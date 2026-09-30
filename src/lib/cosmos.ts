@@ -11,6 +11,7 @@
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
+import { upstreamBaseUrls } from "@/lib/apisix-upstream";
 
 export type CosmosEnv = "dev" | "prod";
 
@@ -19,8 +20,15 @@ function consumerUsername(userId: string): string {
   return userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 }
 
+/* Round-robin across the replicas `COSMOS_API_URL` lists, the same set APISIX balances
+   across. A single entry — every deployment until replicas — always returns itself. */
+const BASE_URLS = upstreamBaseUrls(COSMOS_API_URL);
+let nextBase = 0;
 function baseUrl(): string {
-  return COSMOS_API_URL.replace(/\/+$/, "");
+  if (BASE_URLS.length === 0) return "";
+  const url = BASE_URLS[nextBase % BASE_URLS.length];
+  nextBase = (nextBase + 1) % BASE_URLS.length;
+  return url;
 }
 
 export class CosmosApiError extends Error {
