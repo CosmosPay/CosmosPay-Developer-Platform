@@ -7810,6 +7810,197 @@
         ]
       }
     },
+    "/v1/sep30/shares/{address}": {
+      "put": {
+        "description": "Replaces any half filed before: a re-sealed backup has a new key. The email is who may take the half back.",
+        "operationId": "RecoverySharesController_put_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryShareDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
+        "summary": "File this server's half of a backup's recovery key (SEP-10 token of that account)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "recovery-share-write",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      },
+      "get": {
+        "description": "The account's SEP-10 token, or this server's identity token for the email the half was filed under. Absent and not-yours are the same 404.",
+        "operationId": "RecoverySharesController_get_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
+        "summary": "Take this server's half back (the account's key, or its proven inbox)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "recovery-share-read",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "RecoverySharesController_remove_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
+        "summary": "Forget this server's half (SEP-10 token of that account)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "recovery-share-write",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
     "/v1/plugins": {
       "get": {
         "operationId": "PluginsController_list_v1",
@@ -17672,6 +17863,25 @@
         },
         "required": [
           "transaction"
+        ]
+      },
+      "RecoveryShareDto": {
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "string",
+            "description": "This server's half of the backup's recovery key: 32 random-looking bytes, base64. Useless without the other server's half.",
+            "example": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA="
+          },
+          "email": {
+            "type": "string",
+            "description": "The inbox that may take the half back, proven to THIS server with its identity token.",
+            "example": "person@example.com"
+          }
+        },
+        "required": [
+          "share",
+          "email"
         ]
       },
       "PluginConfigFieldEntity": {
