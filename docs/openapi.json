@@ -7049,7 +7049,16 @@
       "get": {
         "description": "WEB_AUTH_ENDPOINT and SIGNING_KEY (SEP-10), HOME_DOMAIN, and a [[RECOVERY_SERVERS]] entry with the SEP-30 ENDPOINT, the ROLE and the identity methods. 404 on a deployment that is not a recovery server.",
         "operationId": "StellarTomlController_toml",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "network",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -7060,6 +7069,9 @@
               }
             },
             "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -17604,6 +17616,14 @@
             "type": "boolean",
             "description": "Accepted for older wallets and ignored. Backups are kept per wallet: a box for another address is added beside the ones the account keeps, and a box for the same wallet replaces its own — nothing is ever discarded to make room.",
             "default": false
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "description": "The ledger the account's signers are read from (a recovered account's key signs for it on the ledger it was re-keyed on). Omit for the default."
           }
         },
         "required": [
@@ -17646,6 +17666,14 @@
           "signature": {
             "type": "string",
             "description": "Signature over the backup challenge (encoded as for sign-in), which covers the box's SHA-256 — so one signature stores exactly one box."
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "description": "The ledger the account's signers are read from (a recovered account's key signs for it on the ledger it was re-keyed on). Omit for the default."
           }
         },
         "required": [
@@ -17715,6 +17743,14 @@
           "signature": {
             "type": "string",
             "description": "base64 ed25519 signature over the recovery-setup challenge."
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "description": "The ledger the account's signers are read from (a recovered account's key signs for it on the ledger it was re-keyed on). Omit for the default."
           }
         },
         "required": [
