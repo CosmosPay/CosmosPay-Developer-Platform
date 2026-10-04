@@ -2,6 +2,25 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.6.0] - 2026-10-04
+
+### Features
+- Add upstreamBaseUrls function for handling multiple base URLs (8780cdb)
+- Add email recovery endpoint for alias management (e311da9)
+- Add CrossChainSwapsView component and related API endpoints (a0e3fd4)
+- Add support for cross-chain and chain swaps in admin views and API (f0d2056)
+- Add recovery share endpoints for managing backup keys (06d26f7)
+- Add network parameter to recovery endpoints for ledger specification (8c9cf55)
+
+### Bug Fixes
+- Update component references for backward compatibility in API documentation (ea0a8d1)
+
+### Miscellaneous
+- Regenerate API reference pages with fumadocs-openapi 12.3 (5c5f71f)
+
+### Dependencies
+- Apply Dependabot minor-and-patch bumps for portal and docs (6f55ce3)
+
 ## [0.5.0] - 2026-09-27
 
 ### Features
