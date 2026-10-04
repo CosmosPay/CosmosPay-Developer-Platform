@@ -47,12 +47,11 @@ function applyCors(headers: Headers, origin: string, request: Request): void {
    handlers that would each have to remember.
 
    Only for a signed-in user: a row is attributed to that account's consumer
-   upstream, and an anonymous caller has none. The public wallet routes are not
-   lost by that — the wallet reports its own side to /api/telemetry.
+   upstream, and an anonymous caller has none.
 
-   The two telemetry routes are skipped, or the feed would be mostly a record of
+   The activity route itself is skipped, or the feed would be mostly a record of
    itself. */
-const ACTIVITY_SKIP_PREFIXES = ["/api/activity", "/api/telemetry"];
+const ACTIVITY_SKIP_PREFIXES = ["/api/activity"];
 
 function trackApiRequest(context: {
   url: URL;

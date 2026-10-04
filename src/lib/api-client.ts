@@ -155,6 +155,7 @@ export const account = {
 function adminQs(query = {}) {
   const qs = new URLSearchParams();
   if (query.network) qs.set("network", query.network);
+  if (query.chain) qs.set("chain", query.chain);
   if (query.status) qs.set("status", query.status);
   if (query.consumer) qs.set("consumer", query.consumer);
   if (query.take != null) qs.set("take", String(query.take));
@@ -174,6 +175,9 @@ export const admin = {
   consumers: (query = {}) => request(`/api/admin/consumers${adminQs(query)}`),
   paymentIntents: (query = {}) => request(`/api/admin/payment-intents${adminQs(query)}`),
   swaps: (query = {}) => request(`/api/admin/swaps${adminQs(query)}`),
+  // Solana (Jupiter) / Monad (Kuru Flow) swaps, and swaps between chains (NEAR Intents).
+  chainSwaps: (query = {}) => request(`/api/admin/chain-swaps${adminQs(query)}`),
+  crossChainSwaps: (query = {}) => request(`/api/admin/cross-chain-swaps${adminQs(query)}`),
   customers: (query = {}) => request(`/api/admin/customers${adminQs(query)}`),
   products: (query = {}) => request(`/api/admin/products${adminQs(query)}`),
   receivers: (query = {}) => request(`/api/admin/receivers${adminQs(query)}`),
@@ -198,18 +202,21 @@ export const invites = {
   accept: (id) => request("/api/invitations/accept", { method: "POST", body: JSON.stringify({ id }) }),
 };
 
-/* Asset swaps (Stellar path payments) — proxied to the Cosmos Payments API and
-   scoped to the active organization. `env` is 'dev' (testnet) or 'prod' (public).
-   There is NO fee parameter: the commission is the org plan's rate, resolved
-   server-side. The quote's `fee` is display-only.
-   quote body: { org, environment, amount, sourceAssetCode?, sourceAssetIssuer?,
+/* Same-chain swaps — proxied to the Cosmos Payments API and scoped to the active
+   organization. `env` is 'dev' (testnet) or 'prod' (public). `chain` picks the venue:
+   omitted / 'stellar' is the Stellar DEX, 'solana' Jupiter, 'monad' Kuru Flow (the last
+   two mainnet only). There is NO fee parameter: the commission is the org plan's rate,
+   resolved server-side. The quote's `fee` is display-only.
+   quote body: { org, environment, chain?, amount, sourceAssetCode?, sourceAssetIssuer?,
      destAssetCode, destAssetIssuer?, slippageBps? } → a quote.
-   create body: quote fields + { source, destination?, memo? } → a Swap.
-   submit body: { signedXdr } → { submitted, status, txHash?, reason?, resultCodes?, swap }. */
+   create body: quote fields + { source, destination?, memo? } → a Swap (Stellar) or a
+     ChainSwap (Solana / Monad: `transaction` to sign, `approval` on Monad when needed).
+   submit: { signedXdr } for Stellar, { signedTransaction } for Solana / Monad. */
 export const swaps = {
   list: (org, env, query = {}) => {
     const qs = new URLSearchParams({ env: env || "dev" });
     if (org) qs.set("org", org);
+    if (query.chain) qs.set("chain", query.chain);
     if (query.status) qs.set("status", query.status);
     if (query.take) qs.set("take", String(query.take));
     if (query.skip) qs.set("skip", String(query.skip));
@@ -218,7 +225,26 @@ export const swaps = {
   get: (id, org, env) => request(`/api/swaps/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
   quote: (body) => request("/api/swaps/quote", { method: "POST", body: JSON.stringify(body) }),
   create: (body) => request("/api/swaps", { method: "POST", body: JSON.stringify(body) }),
-  submit: (id, org, env, signedXdr) => request(`/api/swaps/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ signedXdr }) }),
+  /* `signed` is { signedXdr } or { signedTransaction }; a bare string is a Stellar XDR. */
+  submit: (id, org, env, signed) => request(`/api/swaps/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify(typeof signed === "string" ? { signedXdr: signed } : signed) }),
+};
+
+/* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents) — proxied to the Payments
+   API. Mainnet only upstream: in test mode assets and quotes work, creating is refused. */
+export const crossChainSwaps = {
+  assets: (org, env) => request(`/api/cross-chain-swaps/assets?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    if (query.skip) qs.set("skip", String(query.skip));
+    return request(`/api/cross-chain-swaps?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/cross-chain-swaps/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  quote: (body) => request("/api/cross-chain-swaps/quote", { method: "POST", body: JSON.stringify(body) }),
+  create: (body) => request("/api/cross-chain-swaps", { method: "POST", body: JSON.stringify(body) }),
+  reportDeposit: (id, org, env, txHash) => request(`/api/cross-chain-swaps/${encodeURIComponent(id)}/deposit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ txHash }) }),
 };
 
 /* Liquidity pools (Stellar AMM) — proxied to the Cosmos Payments API and scoped

@@ -100,26 +100,6 @@ export default defineConfig({
       AUTHENTIK_CLIENT_ID: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_DISCOVERY_URL: envField.string({ context: 'server', access: 'secret' }),
-      // Authentik admin API (e.g. https://auth.cosmospay.lat) + a token, used to create an
-      // Authentik identity when a wallet user provisions an account, so they can later log
-      // in at auth.cosmospay.lat. Optional: when unset, the dev-platform account is still
-      // created and will link to Authentik on first OAuth sign-in (account linking is on).
-      AUTHENTIK_API_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      AUTHENTIK_API_TOKEN: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      // Proves a call to the two sign-in console legs (login-code, provision) came from
-      // the community server, which is where the wallet's sign-in, SEP-10 and SEP-30
-      // account recovery all run now (src/lib/wallet-auth-console.ts). Unset
-      // means those two routes serve nobody — the right state for a platform whose
-      // community server is not calling it, and it fails closed rather than
-      // comparing an absent header against an empty secret.
-      WALLET_AUTH_CONSOLE_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
-      // Proves a recovery-code delivery came from one of the two SEP-30 recovery servers
-      // (the community server deployed as role a and role b), checked against the
-      // `x-cosmos-recovery-secret` header by POST /api/wallet/console/recovery-code.
-      // Comma-separated, one entry per server, so each operator holds its own and neither
-      // can impersonate the other; entries under 32 characters are ignored. Unset means
-      // the route serves nobody (404), failing closed like the secret above.
-      WALLET_RECOVERY_CONSOLE_SECRETS: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
       APISIX_URL: envField.string({ context: 'server', access: 'secret' }),
       APISIX_ADMIN_KEY: envField.string({ context: 'server', access: 'secret' }),
       APISSIX_ROUTE_ID: envField.string({ context: 'server', access: 'secret' }),

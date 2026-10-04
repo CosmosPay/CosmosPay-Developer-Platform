@@ -35,6 +35,9 @@ _openapi:
       title: Release the alias back to the namespace
       url: '#release-the-alias-back-to-the-namespace'
     - depth: 2
+      title: 'Start email recovery: the token is emailed to the owner'
+      url: '#start-email-recovery-the-token-is-emailed-to-the-owner'
+    - depth: 2
       title: 'Finish recovery: take ownership with a new address'
       url: '#finish-recovery-take-ownership-with-a-new-address'
   structuredData:
@@ -57,6 +60,8 @@ _openapi:
         id: remove-one-address-from-the-alias
       - content: Release the alias back to the namespace
         id: release-the-alias-back-to-the-namespace
+      - content: 'Start email recovery: the token is emailed to the owner'
+        id: start-email-recovery-the-token-is-emailed-to-the-owner
       - content: 'Finish recovery: take ownership with a new address'
         id: finish-recovery-take-ownership-with-a-new-address
     contents:
@@ -67,6 +72,11 @@ _openapi:
       - content: 'Needs two proofs: the caller owns the alias, and the NEW address signs
           for itself. One alias may hold many addresses across many networks.'
         heading: point-the-alias-at-another-address
+      - content: 'Always `{ accepted: true }`, whether or not the alias exists and the
+          mailbox matched — a handle is public and the mailbox behind it is not.
+          When both match, the token is emailed to the mailbox on record (at
+          most once a minute per alias); it never appears in the response.'
+        heading: start-email-recovery-the-token-is-emailed-to-the-owner
       - content: Needs the emailed token AND a signature from the new key. Every
           previous address is dropped — recovery exists because the old keys are
           gone, and leaving them resolvable would keep whoever holds them
@@ -81,7 +91,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/aliases/resolve/{name}","method":"get"},{"path":"/v1/aliases/availability/{name}","method":"get"},{"path":"/v1/aliases/by-address/{address}","method":"get"},{"path":"/v1/aliases/challenges","method":"post"},{"path":"/v1/aliases","method":"get"},{"path":"/v1/aliases","method":"post"},{"path":"/v1/aliases/{name}/addresses","method":"post"},{"path":"/v1/aliases/{name}/addresses/{addressId}","method":"delete"},{"path":"/v1/aliases/{name}","method":"delete"},{"path":"/v1/aliases/{name}/recovery/complete","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/aliases/resolve/{name}","method":"get"},{"path":"/v1/aliases/availability/{name}","method":"get"},{"path":"/v1/aliases/by-address/{address}","method":"get"},{"path":"/v1/aliases/challenges","method":"post"},{"path":"/v1/aliases","method":"get"},{"path":"/v1/aliases","method":"post"},{"path":"/v1/aliases/{name}/addresses","method":"post"},{"path":"/v1/aliases/{name}/addresses/{addressId}","method":"delete"},{"path":"/v1/aliases/{name}","method":"delete"},{"path":"/v1/aliases/{name}/recovery","method":"post"},{"path":"/v1/aliases/{name}/recovery/complete","method":"post"}]} showTitle />
     </>
   );
 }

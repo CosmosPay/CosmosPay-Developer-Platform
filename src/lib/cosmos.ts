@@ -11,6 +11,7 @@
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
+import { upstreamBaseUrls } from "@/lib/apisix-upstream";
 
 export type CosmosEnv = "dev" | "prod";
 
@@ -19,8 +20,15 @@ function consumerUsername(userId: string): string {
   return userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 }
 
+/* Round-robin across the replicas `COSMOS_API_URL` lists, the same set APISIX balances
+   across. A single entry — every deployment until replicas — always returns itself. */
+const BASE_URLS = upstreamBaseUrls(COSMOS_API_URL);
+let nextBase = 0;
 function baseUrl(): string {
-  return COSMOS_API_URL.replace(/\/+$/, "");
+  if (BASE_URLS.length === 0) return "";
+  const url = BASE_URLS[nextBase % BASE_URLS.length];
+  nextBase = (nextBase + 1) % BASE_URLS.length;
+  return url;
 }
 
 export class CosmosApiError extends Error {
@@ -376,10 +384,12 @@ export const cosmosCustomers = {
     cosmosFetch<{ id: string; deleted: boolean }>(userId, env, `/v1/customers/${encodeURIComponent(id)}`, { method: "DELETE" }),
 };
 
-/* ---- Stellar native swaps (path payments). The Payments API quotes, builds the
-   unsigned XDR, and submits the signed tx. The swap commission is the calling org's
+/* ---- Same-chain swaps: Stellar path payments by default, Solana through Jupiter and
+   Monad through Kuru Flow with `chain`. The Payments API quotes, builds the unsigned
+   transaction, and relays the signed one. The swap commission is the calling org's
    plan rate — passed via the trusted X-Plan-Swap-Fee-Bps header (orgSwapContext),
    never in the body, so it can't be bypassed. ---- */
+export type SwapChain = "stellar" | "solana" | "monad";
 export interface SwapAssetAmount {
   asset: string;
   issuer: string | null;
@@ -387,6 +397,9 @@ export interface SwapAssetAmount {
 }
 export interface SwapQuote {
   network: string;
+  /** Solana and Monad quotes only. */
+  chain?: "solana" | "monad";
+  provider?: "jupiter" | "kuru";
   source: SwapAssetAmount;
   fee: { asset: string; issuer: string | null; amount: string; bps: number; wallet: string | null };
   swap: SwapAssetAmount;
@@ -421,8 +434,36 @@ export interface Swap {
   createdAt: string;
   updatedAt: string;
 }
+/** A Solana (Jupiter) or Monad (Kuru Flow) swap. */
+export interface ChainSwap {
+  id: string;
+  chain: "solana" | "monad";
+  network: string;
+  provider: "jupiter" | "kuru";
+  status: Swap["status"];
+  source: string;
+  sendAsset: string;
+  sendAmount: string;
+  destAsset: string;
+  destEstimated: string;
+  destMin: string;
+  feeBps: number;
+  /** In the destination asset: taken from the output. */
+  feeAmount: string;
+  slippageBps: number;
+  path: { code: string; issuer: string | null }[];
+  /** Solana: { encoding: "base64", data }; Monad: { to, data, value, chainId }. */
+  transaction: Record<string, unknown>;
+  /** Monad ERC-20 sales with a short allowance: the approve call to send first. */
+  approval: Record<string, unknown> | null;
+  txHash: string | null;
+  idempotencyKey: string | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
 export interface SwapList {
-  data: Swap[];
+  data: (Swap | ChainSwap)[];
   total: number;
   take: number;
   skip: number;
@@ -433,9 +474,10 @@ export interface SwapSubmitOutcome {
   txHash?: string;
   reason?: string;
   resultCodes?: string[];
-  swap: Swap;
+  swap: Swap | ChainSwap;
 }
 export interface QuoteSwapInput {
+  chain?: SwapChain;
   amount: string;
   sourceAssetCode?: string;
   sourceAssetIssuer?: string;
@@ -455,13 +497,100 @@ export const cosmosSwaps = {
   quote: (userId: string, env: CosmosEnv, org: string, swapFeeBps: number, body: QuoteSwapInput) =>
     cosmosFetch<SwapQuote>(userId, env, "/v1/swaps/quote", { method: "POST", body, org, swapFeeBps }),
   create: (userId: string, env: CosmosEnv, org: string, swapFeeBps: number, body: CreateSwapInput) =>
-    cosmosFetch<Swap>(userId, env, "/v1/swaps", { method: "POST", body, org, swapFeeBps }),
-  list: (userId: string, env: CosmosEnv, org: string, query: { status?: string; take?: number; skip?: number } = {}) =>
-    cosmosFetch<SwapList>(userId, env, "/v1/swaps", { query: { status: query.status, take: query.take, skip: query.skip }, org }),
+    cosmosFetch<Swap | ChainSwap>(userId, env, "/v1/swaps", { method: "POST", body, org, swapFeeBps }),
+  list: (userId: string, env: CosmosEnv, org: string, query: { chain?: SwapChain; status?: string; take?: number; skip?: number } = {}) =>
+    cosmosFetch<SwapList>(userId, env, "/v1/swaps", { query: { chain: query.chain, status: query.status, take: query.take, skip: query.skip }, org }),
   get: (userId: string, env: CosmosEnv, org: string, id: string) =>
-    cosmosFetch<Swap>(userId, env, `/v1/swaps/${encodeURIComponent(id)}`, { org }),
-  submit: (userId: string, env: CosmosEnv, org: string, id: string, signedXdr: string) =>
-    cosmosFetch<SwapSubmitOutcome>(userId, env, `/v1/swaps/${encodeURIComponent(id)}/submit`, { method: "POST", body: { signedXdr }, org }),
+    cosmosFetch<Swap | ChainSwap>(userId, env, `/v1/swaps/${encodeURIComponent(id)}`, { org }),
+  /** `{ signedXdr }` for a Stellar swap, `{ signedTransaction }` for Solana / Monad. */
+  submit: (userId: string, env: CosmosEnv, org: string, id: string, body: { signedXdr: string } | { signedTransaction: string }) =>
+    cosmosFetch<SwapSubmitOutcome>(userId, env, `/v1/swaps/${encodeURIComponent(id)}/submit`, { method: "POST", body, org }),
+};
+
+/* ---- Cross-chain swaps between Stellar, Solana and Monad, settled by NEAR Intents.
+   Mainnet only upstream: a dev key can list assets and quote, creating is refused.
+   The commission is the org plan's rate, via the same trusted header as swaps. ---- */
+export interface CrossChainAsset {
+  chain: SwapChain;
+  symbol: string;
+  assetId: string;
+  decimals: number;
+  contract: string | null;
+}
+export interface CrossChainQuote {
+  network: string;
+  origin: { chain: SwapChain; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null };
+  destination: { chain: SwapChain; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null; minimum: string };
+  fee: { bps: number; amount: string; asset: string };
+  slippageBps: number;
+  timeEstimateSeconds: number;
+}
+export interface CrossChainSwap {
+  id: string;
+  status: "AWAITING_DEPOSIT" | "DEPOSIT_DETECTED" | "INCOMPLETE_DEPOSIT" | "PROCESSING" | "SUCCEEDED" | "REFUNDED" | "FAILED" | "EXPIRED";
+  providerStatus: string;
+  network: string;
+  originChain: SwapChain;
+  originAsset: string;
+  originContract: string | null;
+  destinationChain: SwapChain;
+  destinationAsset: string;
+  destinationContract: string | null;
+  amountIn: string;
+  feeBps: number;
+  feeAmount: string;
+  amountOutEstimated: string;
+  amountOutMin: string;
+  slippageBps: number;
+  recipient: string;
+  refundTo: string;
+  depositAddress: string;
+  depositMemo: string | null;
+  depositUri: string;
+  qr?: string;
+  depositTxHash: string | null;
+  amountOut: string | null;
+  refundedAmount: string | null;
+  originTxHashes: { hash: string; explorerUrl: string }[] | null;
+  destinationTxHashes: { hash: string; explorerUrl: string }[] | null;
+  timeEstimateSeconds: number;
+  correlationId: string;
+  quoteSignature: string;
+  idempotencyKey: string | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface CrossChainSwapList {
+  data: CrossChainSwap[];
+  total: number;
+  take: number;
+  skip: number;
+}
+export interface CrossChainSwapInput {
+  originChain: SwapChain;
+  originAsset: string;
+  destinationChain: SwapChain;
+  destinationAsset: string;
+  amount: string;
+  recipient: string;
+  refundTo: string;
+  slippageBps?: number;
+}
+
+export const cosmosCrossChainSwaps = {
+  assets: (userId: string, env: CosmosEnv, org: string) =>
+    cosmosFetch<{ data: CrossChainAsset[] }>(userId, env, "/v1/cross-chain-swaps/assets", { org }),
+  quote: (userId: string, env: CosmosEnv, org: string, swapFeeBps: number, body: CrossChainSwapInput) =>
+    cosmosFetch<CrossChainQuote>(userId, env, "/v1/cross-chain-swaps/quote", { method: "POST", body, org, swapFeeBps }),
+  create: (userId: string, env: CosmosEnv, org: string, swapFeeBps: number, body: CrossChainSwapInput) =>
+    cosmosFetch<CrossChainSwap>(userId, env, "/v1/cross-chain-swaps", { method: "POST", body, org, swapFeeBps }),
+  list: (userId: string, env: CosmosEnv, org: string, query: { status?: string; take?: number; skip?: number } = {}) =>
+    cosmosFetch<CrossChainSwapList>(userId, env, "/v1/cross-chain-swaps", { query: { status: query.status, take: query.take, skip: query.skip }, org }),
+  get: (userId: string, env: CosmosEnv, org: string, id: string) =>
+    cosmosFetch<CrossChainSwap>(userId, env, `/v1/cross-chain-swaps/${encodeURIComponent(id)}`, { org }),
+  reportDeposit: (userId: string, env: CosmosEnv, org: string, id: string, txHash: string) =>
+    cosmosFetch<CrossChainSwap>(userId, env, `/v1/cross-chain-swaps/${encodeURIComponent(id)}/deposit`, { method: "POST", body: { txHash }, org }),
 };
 
 /* ---- Stellar AMM liquidity pools. Non-custodial like swaps: the Payments API
@@ -651,45 +780,3 @@ export const cosmosActivity = {
 
 /* ------------------------------ asset registry ----------------------------- */
 
-/**
- * The Payments service's asset catalog — which (code, issuer) pairs the platform
- * vouches for on a network, and who issues them.
- *
- * Read through the same server-to-server channel as everything else rather than
- * copied into this repo. A second hand-maintained copy of an issuer list is a
- * second place to be wrong about which of the twenty accounts issuing `USDC` is
- * Circle's, and the two would drift silently — both would keep serving 200s.
- *
- * `SYSTEM_USER` is a synthetic consumer id: the catalog carries no tenant data
- * and the upstream route requires no scope, so the call needs an identity only
- * because every gateway request has one.
- */
-const SYSTEM_USER = "system";
-
-export interface RegistryAssetPayload {
-  code: string;
-  issuer: string | null;
-  name: string;
-  issuerName: string;
-  issuerDomain: string;
-  verified: boolean;
-  contract: string | null;
-  flags: { authRevocable: boolean; clawback: boolean };
-}
-
-export interface AssetRegistryPayload {
-  network: string;
-  version: number;
-  data: RegistryAssetPayload[];
-}
-
-export async function fetchAssetRegistry(
-  network: "public" | "testnet",
-): Promise<AssetRegistryPayload> {
-  // The network is a query parameter upstream, not a function of the key's
-  // environment, so either env resolves the same catalog. `prod` is passed for
-  // determinism rather than significance.
-  return cosmosFetch<AssetRegistryPayload>(SYSTEM_USER, "prod", "/v1/assets", {
-    query: { network },
-  });
-}

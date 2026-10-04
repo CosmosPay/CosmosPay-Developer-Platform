@@ -2,8 +2,8 @@
    Every form that asks for an asset + issuer offers these as a dropdown plus a
    "Custom…" escape hatch (and, where the asset is optional, an "Any" option).
 
-   THE CANONICAL LIST IS `GET /v1/assets` on the Payments service, mirrored
-   unauthenticated at `/api/assets`. This table is the synchronous copy the
+   THE CANONICAL LIST IS `GET /v1/assets` on the Payments service. This table is
+   the synchronous copy the
    pickers render before any fetch resolves, and it is deliberately short: the
    fewer rows here, the less there is to drift.
 

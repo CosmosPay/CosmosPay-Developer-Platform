@@ -1,0 +1,242 @@
+---
+title: "ChainSwap"
+description: "A same-chain swap on Solana (built by Jupiter) or Monad (built by Kuru Flow), from `client.swaps` with `chain: 'solana' | 'monad'`. Non-custodial like a Stellar {@link Swap}:"
+---
+
+A same-chain swap on Solana (built by Jupiter) or Monad (built by Kuru Flow), from `client.swaps` with `chain: 'solana' | 'monad'`. Non-custodial like a Stellar &#123;@link Swap&#125;: sign &#123;@link transaction&#125; in the wallet that owns &#123;@link source&#125;, then `await swap.submit({ signedTransaction })`. The server checks it is the transaction it built before broadcasting it. On Monad, when &#123;@link approval&#125; is set, send and confirm that `approve` call first.
+
+## Constructor
+
+### ChainSwap
+
+```ts
+constructor(client: Client, data: ChainSwapData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `ChainSwapData`
+
+## Properties
+
+### chain
+
+```ts
+chain: OtherSwapChain
+```
+
+### network
+
+```ts
+network: string
+```
+
+### provider
+
+The aggregator that built it.
+
+```ts
+provider: 'jupiter' | 'kuru'
+```
+
+### status
+
+```ts
+status: SwapStatus
+```
+
+### source
+
+The wallet that signs, pays and receives.
+
+```ts
+source: string
+```
+
+### sendAsset
+
+`native`, or the SPL mint / ERC-20 address.
+
+```ts
+sendAsset: string
+```
+
+### sendAmount
+
+```ts
+sendAmount: string
+```
+
+### destAsset
+
+```ts
+destAsset: string
+```
+
+### destEstimated
+
+```ts
+destEstimated: string
+```
+
+### destMin
+
+```ts
+destMin: string
+```
+
+### feeBps
+
+```ts
+feeBps: number
+```
+
+### feeAmount
+
+The commission, in the destination asset.
+
+```ts
+feeAmount: string
+```
+
+### slippageBps
+
+```ts
+slippageBps: number
+```
+
+### path
+
+```ts
+path: { code: string
+```
+
+### issuer
+
+```ts
+issuer: string | null
+```
+
+### member
+
+```ts
+}[]
+```
+
+### transaction
+
+What the wallet signs.
+
+```ts
+transaction: ChainSwapTransaction
+```
+
+### approval
+
+Monad ERC-20 sales with a short allowance: the `approve` call to send first.
+
+```ts
+approval: EvmCallData | null
+```
+
+### txHash
+
+```ts
+txHash: string | null
+```
+
+### idempotencyKey
+
+```ts
+idempotencyKey: string | null
+```
+
+### expiresAt
+
+Submit refuses the transaction after this.
+
+```ts
+expiresAt: Date
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: ChainSwapData): this
+```
+
+### get
+
+Whether the swap has settled on-chain.
+
+```ts
+get isSucceeded(): boolean
+```
+
+### get
+
+Whether the swap is still awaiting submission.
+
+```ts
+get isPending(): boolean
+```
+
+### get
+
+Whether the built transaction can no longer be submitted.
+
+```ts
+get isStale(): boolean
+```
+
+### submit
+
+Relay the signed transaction. Mutates this instance from the refreshed swap in the outcome and returns the outcome.
+
+```ts
+submit(options: { signedTransaction: string
+```
+
+### member
+
+```ts
+}): Promise<ChainSwapSubmitOutcome>
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch this swap from the API.
+
+```ts
+fetch(): Promise<ChainSwap>
+```
+
+**Returns** `Promise<ChainSwap>`
+
+### toJSON()
+
+```ts
+toJSON(): ChainSwapData
+```
+
+**Returns** `ChainSwapData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)
