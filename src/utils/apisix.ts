@@ -151,6 +151,14 @@ export async function routeExists(routeId: string): Promise<boolean> {
    segment it appends. */
 const WALLET_AUTH_CALLBACK_PATH = '/v1/wallet/auth/oauth/callback/';
 
+/* Where the community server serves the shared public key to a wallet with no account
+   (`GET /v1/public-key`, `@Public()` over there). Keyless by definition: the caller holds no
+   key yet. It rides the callback route because it wants exactly that route's shape — GET,
+   CORS for the wallet's origins, consumer headers scrubbed — and it is an exact path, so
+   nothing under it loses its authentication. It used to be served from this platform
+   (the old `/api/public-key`), which put the platform in front of every anonymous wallet. */
+const PUBLIC_KEY_PATH = '/v1/public-key';
+
 /* SEP-1 fixes discovery at the root of the host, OUTSIDE the gateway entry -- which is why
    the SEP routes check the rewrite pattern leaves it alone (sepRouteUris). */
 export const STELLAR_TOML_PATH = '/.well-known/stellar.toml';
@@ -184,10 +192,10 @@ export function recoveryRouteId(routeId: string, role: RecoveryRole): string {
 }
 
 /* The gateway URIs the callback route is served on -- the callback and its appended
-   segment. */
+   segment, and the public-key read. */
 export function callbackRouteUris(entry: string): string[] {
   const prefix = entryPrefix(entry);
-  return [`${prefix}${WALLET_AUTH_CALLBACK_PATH}*`];
+  return [`${prefix}${WALLET_AUTH_CALLBACK_PATH}*`, `${prefix}${PUBLIC_KEY_PATH}`];
 }
 
 /* The gateway URIs the standards are served on. Throws when the configured rewrite would

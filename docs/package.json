@@ -17,17 +17,17 @@
     "apply:i18n": "node scripts/apply-translations.mjs"
   },
   "dependencies": {
-    "better-auth": "^1.7.6",
-    "fumadocs-core": "16.15.15",
+    "better-auth": "^1.7.7",
+    "fumadocs-core": "16.15.17",
     "fumadocs-mdx": "15.4.5",
-    "fumadocs-openapi": "^12.0.4",
-    "fumadocs-ui": "16.15.15",
-    "lucide-react": "^1.48.0",
-    "next": "16.3.6",
+    "fumadocs-openapi": "^12.3.0",
+    "fumadocs-ui": "16.15.17",
+    "lucide-react": "^1.52.0",
+    "next": "16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.7.0",
-    "zbsearch": "^4.0.0"
+    "zbsearch": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

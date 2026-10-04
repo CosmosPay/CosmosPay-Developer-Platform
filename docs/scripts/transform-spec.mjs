@@ -32,7 +32,16 @@ export const TAGS = [
   {
     name: 'swaps',
     title: 'Swaps',
-    description: 'Quote, create, sign and submit Stellar path-payment swaps.',
+    description:
+      'Quote, create, sign and submit same-chain swaps: Stellar path payments by default, ' +
+      'Solana through Jupiter and Monad through Kuru Flow with `chain`.',
+  },
+  {
+    name: 'cross-chain-swaps',
+    title: 'Cross-chain Swaps',
+    description:
+      'Swaps between Stellar, Solana and Monad, settled by NEAR Intents: quote, get a deposit ' +
+      'address, pay it, and follow the swap to its outcome.',
   },
   {
     name: 'liquidity-pools',
@@ -45,6 +54,21 @@ export const TAGS = [
     description:
       'The asset registry: which (code, issuer) pairs exist per network and who issues them. ' +
       '`verified` is a claim about the issuer’s identity, not about quality.',
+  },
+  {
+    name: 'public-key',
+    title: 'Public Key',
+    description:
+      'The shared public API key, served without a key to wallets that have no account yet. ' +
+      'Not a secret: what it may call is confined server-side to routes that return no ' +
+      'per-consumer data.',
+  },
+  {
+    name: 'plugins',
+    title: 'Plugins',
+    description:
+      'Extensions served under a slug: list them, install one for your account, and call its ' +
+      'queries and commands.',
   },
   {
     name: 'aliases',

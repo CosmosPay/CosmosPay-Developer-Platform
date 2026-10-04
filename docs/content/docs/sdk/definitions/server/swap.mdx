@@ -1,9 +1,9 @@
 ---
 title: "Swap"
-description: "A Stellar path-payment swap. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it directly: `await swap.fetch()`, `await swap.subm"
+description: "A Stellar path-payment swap. Solana and Monad swaps are {@link ChainSwap}. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it di"
 ---
 
-A Stellar path-payment swap. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it directly: `await swap.fetch()`, `await swap.submit({ signedXdr })`.
+A Stellar path-payment swap. Solana and Monad swaps are &#123;@link ChainSwap&#125;. Wraps the raw API payload with typed accessors and atomic action methods so you can operate on it directly: `await swap.fetch()`, `await swap.submit({ signedXdr })`.
 
 ## Constructor
 
@@ -224,6 +224,20 @@ Human-readable destination asset label (`XLM` for native).
 get destAssetLabel(): string
 ```
 
+### submit
+
+Relay the signed transaction for this swap. Mutates this instance from the refreshed swap in the outcome and returns the outcome.
+
+```ts
+submit(options: { signedXdr: string
+```
+
+### member
+
+```ts
+}): Promise<SwapSubmitOutcome>
+```
+
 ## Methods
 
 ### fetch()
@@ -235,20 +249,6 @@ fetch(): Promise<Swap>
 ```
 
 **Returns** `Promise<Swap>`
-
-### submit()
-
-Relay the signed transaction for this swap. Mutates this instance from the refreshed swap in the outcome and returns the outcome.
-
-```ts
-submit(options: SubmitSwapOptions): Promise<SwapSubmitOutcome>
-```
-
-**Parameters**
-
-- `options` — `SubmitSwapOptions`
-
-**Returns** `Promise<SwapSubmitOutcome>`
 
 ### toJSON()
 

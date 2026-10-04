@@ -163,6 +163,21 @@ release(name: string): Promise<AliasDeletedData>
 
 **Returns** `Promise<AliasDeletedData>`
 
+### startRecovery()
+
+Start a recovery: the service emails a one-time token to the mailbox the handle was claimed with, if `email` is that mailbox. The answer is the same either way, so it says nothing about who owns the handle; the token only ever reaches the mailbox, never this response.
+
+```ts
+startRecovery(name: string, email: string): Promise<AliasRecoveryStartedData>
+```
+
+**Parameters**
+
+- `name` — `string`
+- `email` — `string`
+
+**Returns** `Promise<AliasRecoveryStartedData>`
+
 ### completeRecovery()
 
 Take a handle over with a new address after losing the old one: the token the owner received by email, plus a signature by the new address over a RECOVER challenge.

@@ -11,7 +11,15 @@ import {
 import { getMembership, orgSwapContext } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
 import { cosmosSwaps, CosmosApiError, type CosmosEnv } from "@/lib/cosmos";
-import { createSwapBodySchema } from "@/schemas/swaps";
+import { createSwapBodySchema, SWAP_CHAINS, type SwapChain } from "@/schemas/swaps";
+
+const NATIVE: Record<SwapChain, string> = { stellar: "XLM", solana: "SOL", monad: "MON" };
+
+/* "native" as the chain's ticker; a long mint / contract shortened for a notification. */
+function swapAssetLabel(asset: string, chain: SwapChain = "stellar"): string {
+  if (!asset || asset === "native") return NATIVE[chain];
+  return asset.length > 16 ? `${asset.slice(0, 4)}…${asset.slice(-4)}` : asset;
+}
 import { safeNotify } from "@/lib/notifications";
 import { geoLocate } from "@/lib/geo";
 import type { APIRoute } from "astro";
@@ -39,11 +47,13 @@ export const GET: APIRoute = async (ctx) => {
 
   const env = envFromQuery(ctx.url);
   const status = ctx.url.searchParams.get("status") || undefined;
+  const chainParam = ctx.url.searchParams.get("chain");
+  const chain = SWAP_CHAINS.includes(chainParam as SwapChain) ? (chainParam as SwapChain) : undefined;
   const take = Number(ctx.url.searchParams.get("take")) || undefined;
   const skip = Number(ctx.url.searchParams.get("skip")) || undefined;
 
   try {
-    const list = await cosmosSwaps.list(session.user.id, env, org, { status, take, skip });
+    const list = await cosmosSwaps.list(session.user.id, env, org, { chain, status, take, skip });
     return jsonSuccess({ data: list, message: "Swaps fetched successfully" });
   } catch (err) {
     return cosmosErrorResponse(err);
@@ -72,6 +82,7 @@ export const POST: APIRoute = async (ctx) => {
 
   try {
     const swap = await cosmosSwaps.create(session.user.id, environment, org, swapFeeBps, {
+      chain: rest.chain,
       amount: rest.amount,
       sourceAssetCode: rest.sourceAssetCode,
       sourceAssetIssuer: rest.sourceAssetIssuer,
@@ -88,7 +99,7 @@ export const POST: APIRoute = async (ctx) => {
       userId: session.user.id,
       type: "swap.created",
       title: "Swap created",
-      message: `${swap.sendAmount} ${swap.sendAsset === "native" ? "XLM" : swap.sendAsset} → ~${swap.destEstimated} ${swap.destAsset}`,
+      message: `${swap.sendAmount} ${swapAssetLabel(swap.sendAsset, rest.chain)} → ~${swap.destEstimated} ${swapAssetLabel(swap.destAsset, rest.chain)}`,
       origin: loc?.origin ?? null,
       country: loc?.country ?? null,
       region: loc?.region ?? null,

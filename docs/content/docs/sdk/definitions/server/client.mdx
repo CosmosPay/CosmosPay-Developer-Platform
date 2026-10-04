@@ -93,13 +93,23 @@ readonly products: ProductManager
 
 ### swaps
 
-Stellar swaps — quote/create/fetch/list/submit.
+Same-chain swaps: the Stellar DEX, Jupiter on Solana, Kuru Flow on Monad.
 
 ```ts
 readonly swaps: SwapManager
 ```
 
 **Type** [`SwapManager`](/sdk/definitions/server/swap-manager)
+
+### crossChainSwaps
+
+Swaps between Stellar, Solana and Monad, settled by NEAR Intents.
+
+```ts
+readonly crossChainSwaps: CrossChainSwapManager
+```
+
+**Type** [`CrossChainSwapManager`](/sdk/definitions/server/cross-chain-swap-manager)
 
 ### liquidity
 
@@ -151,16 +161,6 @@ readonly kyc: KycManager
 
 **Type** [`KycManager`](/sdk/definitions/server/kyc-manager)
 
-### pollar
-
-Pollar: social login, its sessions, and the custodial wallets behind them.
-
-```ts
-readonly pollar: PollarManager
-```
-
-**Type** [`PollarManager`](/sdk/definitions/server/pollar-manager)
-
 ### customers
 
 Customers.
@@ -211,6 +211,36 @@ readonly assets: AssetManager
 
 **Type** [`AssetManager`](/sdk/definitions/server/asset-manager)
 
+### plugins
+
+Plugins this deployment serves: install, query, command.
+
+```ts
+readonly plugins: PluginManager
+```
+
+**Type** [`PluginManager`](/sdk/definitions/server/plugin-manager)
+
+### defindex
+
+DeFindex vaults (when the deployment enables the native plugin).
+
+```ts
+readonly defindex: DefindexManager
+```
+
+**Type** [`DefindexManager`](/sdk/definitions/server/defindex-manager)
+
+### publicKey
+
+The shared public API key an open-source wallet embeds.
+
+```ts
+readonly publicKey: PublicKeyManager
+```
+
+**Type** [`PublicKeyManager`](/sdk/definitions/server/public-key-manager)
+
 ## Methods
 
 ### setApiKey()
@@ -248,14 +278,17 @@ setWebhookSecret(secret: string): this
 - [WebhookManager](/sdk/definitions/server/webhook-manager)
 - [ProductManager](/sdk/definitions/server/product-manager)
 - [SwapManager](/sdk/definitions/server/swap-manager)
+- [CrossChainSwapManager](/sdk/definitions/server/cross-chain-swap-manager)
 - [LiquidityManager](/sdk/definitions/server/liquidity-manager)
 - [OnrampManager](/sdk/definitions/server/onramp-manager)
 - [OfframpManager](/sdk/definitions/server/offramp-manager)
 - [ActivityManager](/sdk/definitions/server/activity-manager)
 - [KycManager](/sdk/definitions/server/kyc-manager)
-- [PollarManager](/sdk/definitions/server/pollar-manager)
 - [CustomerManager](/sdk/definitions/server/customer-manager)
 - [AnalyticsManager](/sdk/definitions/server/analytics-manager)
 - [HealthManager](/sdk/definitions/server/health-manager)
 - [AliasManager](/sdk/definitions/server/alias-manager)
 - [AssetManager](/sdk/definitions/server/asset-manager)
+- [PluginManager](/sdk/definitions/server/plugin-manager)
+- [DefindexManager](/sdk/definitions/server/defindex-manager)
+- [PublicKeyManager](/sdk/definitions/server/public-key-manager)

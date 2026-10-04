@@ -1,14 +1,11 @@
-/* OpenAPI registration for the client-activity feed (src/pages/api/activity/**) and the
-   wallet's public telemetry drop (src/pages/api/telemetry.ts).
+/* OpenAPI registration for the client-activity feed (src/pages/api/activity/**).
 
-   Two ways in, with very different trust, which is the thing the reference has to make
-   obvious: `/api/activity` is session-authenticated and every row is attributed to the
-   signed-in account's consumer — nothing in the body decides that — while `/api/telemetry`
-   takes no credential at all (a wallet install that never registered has none) and is
-   forwarded anonymously under one dedicated consumer, rate-limited per address. */
+   Session-authenticated: every row is attributed to the signed-in account's consumer —
+   nothing in the body decides that. The wallet does not report here; it posts to the
+   community server's `/v1/activity/events` through the gateway. */
 import { errors, jsonOk, registerRoutes, sessionSecurity } from '@/lib/openapi/route-helpers';
 import { z } from '@/lib/openapi/zod';
-import { activityBatchSchema, walletTelemetryBodySchema } from '@/schemas/activity';
+import { activityBatchSchema } from '@/schemas/activity';
 import { envQuery, jsonBody, skipQuery, takeQuery } from '@/schemas/shared/openapi-params';
 
 const TAG = 'Activity';
@@ -150,24 +147,6 @@ registerRoutes([
       200: jsonOk(activitySummarySchema, 'ActivitySummaryResponse', 'Activity summary fetched successfully'),
       400: errors.badRequest,
       401: errors.unauthorized,
-      500: errors.internalError,
-    },
-  },
-  {
-    method: 'post',
-    path: '/api/telemetry',
-    tags: [TAG],
-    summary: 'Report wallet telemetry (public)',
-    description:
-      'Telemetry from the Cosmos Pay Wallet. PUBLIC — no credential, because a wallet install that never registered an account has none; batches are forwarded anonymously under one dedicated consumer, with the wallet address carried as the client IP so upstream budgets partition per device. Rate-limited per address and globally: 429 when the budget is spent. A batch that cannot be forwarded is discarded with 200 and `accepted: 0` rather than retried by the caller.',
-    request: jsonBody(walletTelemetryBodySchema.openapi('WalletTelemetryBody')),
-    responses: {
-      200: jsonOk(ingestResultSchema, 'ReportTelemetryResponse', 'Events accepted'),
-      400: errors.badRequest,
-      429: {
-        description: 'Too many telemetry batches — the per-address or global budget is spent',
-        content: errors.badRequest.content,
-      },
       500: errors.internalError,
     },
   },

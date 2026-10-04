@@ -1,0 +1,113 @@
+---
+title: "PluginManager"
+description: "Plugins this deployment serves — `client.plugins`. A plugin runs only for a consumer that installed it, and installing is consenting to exactly the capabilities it declares: p"
+---
+
+Plugins this deployment serves — `client.plugins`. A plugin runs only for a consumer that installed it, and installing is consenting to exactly the capabilities it declares: pass them back as `grantCapabilities`.
+
+## Constructor
+
+### PluginManager
+
+```ts
+constructor(client: Client)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+
+## Properties
+
+### client
+
+```ts
+readonly client: Client
+```
+
+**Type** [`Client`](/sdk/definitions/server/client)
+
+## Methods
+
+### list()
+
+```ts
+list(): Promise<PluginData[]>
+```
+
+**Returns** `Promise<PluginData[]>`
+
+### fetch()
+
+```ts
+fetch(slug: string): Promise<PluginData>
+```
+
+**Parameters**
+
+- `slug` — `string`
+
+**Returns** `Promise<PluginData>`
+
+### install()
+
+Install (or re-consent to) a plugin.
+
+```ts
+install(slug: string, options: InstallPluginOptions): Promise<PluginData>
+```
+
+**Parameters**
+
+- `slug` — `string`
+- `options` — `InstallPluginOptions`
+
+**Returns** `Promise<PluginData>`
+
+### uninstall()
+
+```ts
+uninstall(slug: string): Promise<PluginUninstalledData>
+```
+
+**Parameters**
+
+- `slug` — `string`
+
+**Returns** `Promise<PluginUninstalledData>`
+
+### query()
+
+Run a read-only action the plugin declares.
+
+```ts
+query<T = unknown>(slug: string, action: string, input?: Record<string, unknown>): Promise<PluginActionResultData<T>>
+```
+
+**Parameters**
+
+- `slug` — `string`
+- `action` — `string`
+- `input` _(optional)_ — `Record<string, unknown>`
+
+**Returns** `Promise<PluginActionResultData<T>>`
+
+### command()
+
+Run an action that may change the plugin's state.
+
+```ts
+command<T = unknown>(slug: string, action: string, input?: Record<string, unknown>): Promise<PluginActionResultData<T>>
+```
+
+**Parameters**
+
+- `slug` — `string`
+- `action` — `string`
+- `input` _(optional)_ — `Record<string, unknown>`
+
+**Returns** `Promise<PluginActionResultData<T>>`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)

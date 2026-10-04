@@ -14,6 +14,9 @@ import {
 import { z } from "@/lib/openapi/zod";
 
 const env = z.enum(["dev", "prod"]).openapi({ example: "dev" });
+const chain = z
+  .enum(["stellar", "solana", "monad"])
+  .openapi({ example: "stellar", description: "Omitted means Stellar. solana → Jupiter, monad → Kuru Flow (mainnet only)." });
 
 const assetAmount = z.object({
   asset: z.string().openapi({ example: "native" }),
@@ -76,11 +79,42 @@ const swapSchema = z
     createdAt: z.string().openapi({ example: "2026-06-29T12:34:56.000Z" }),
     updatedAt: z.string().openapi({ example: "2026-06-29T12:34:56.000Z" }),
   })
-  .openapi("Swap", { description: "A persisted swap (unsigned tx to sign + QR)." });
+  .openapi("Swap", { description: "A persisted Stellar swap (unsigned tx to sign + QR)." });
+
+const chainSwapSchema = z
+  .object({
+    id: z.string().openapi({ example: "cm1x2y3z4a5b6c7d8e9f0g1h2" }),
+    chain: z.enum(["solana", "monad"]).openapi({ example: "solana" }),
+    network: z.string().openapi({ example: "public" }),
+    provider: z.enum(["jupiter", "kuru"]).openapi({ example: "jupiter" }),
+    status: z.enum(["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "EXPIRED"]).openapi({ example: "PENDING" }),
+    source: z.string().openapi({ example: "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK" }),
+    sendAsset: z.string().openapi({ example: "native" }),
+    sendAmount: z.string().openapi({ example: "0.1" }),
+    destAsset: z.string().openapi({ example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" }),
+    destEstimated: z.string().openapi({ example: "11.87" }),
+    destMin: z.string().openapi({ example: "11.81" }),
+    feeBps: z.number().openapi({ example: 50 }),
+    feeAmount: z.string().openapi({ example: "0.059", description: "In the destination asset (taken from the output)." }),
+    slippageBps: z.number().openapi({ example: 50 }),
+    path: z.array(pathHop),
+    transaction: z.record(z.string(), z.unknown()).openapi({
+      example: { encoding: "base64", data: "AQAAAA..." },
+      description: "What the wallet signs. Solana: { encoding, data }; Monad: { to, data, value, chainId } (EIP-1559).",
+    }),
+    approval: z.record(z.string(), z.unknown()).nullable().openapi({ example: null, description: "Monad ERC-20 sales with a short allowance: the approve call to send first." }),
+    txHash: z.string().nullable().openapi({ example: null }),
+    expiresAt: z.string().openapi({ example: "2026-10-03T12:01:00.000Z" }),
+    createdAt: z.string().openapi({ example: "2026-10-03T12:00:00.000Z" }),
+    updatedAt: z.string().openapi({ example: "2026-10-03T12:00:00.000Z" }),
+  })
+  .openapi("ChainSwap", { description: "A Solana (Jupiter) or Monad (Kuru Flow) swap: the transaction to sign." });
+
+const anySwap = z.union([swapSchema, chainSwapSchema]);
 
 const swapListSchema = z
   .object({
-    data: z.array(swapSchema),
+    data: z.array(anySwap),
     total: z.number().openapi({ example: 1 }),
     take: z.number().openapi({ example: 20 }),
     skip: z.number().openapi({ example: 0 }),
@@ -94,7 +128,7 @@ const swapSubmitOutcomeSchema = z
     txHash: z.string().optional().openapi({ example: "3389e9f0...64hex" }),
     reason: z.string().optional().openapi({ example: "Transaction rejected by the network" }),
     resultCodes: z.array(z.string()).optional().openapi({ example: ["op_under_dest_min"] }),
-    swap: swapSchema,
+    swap: anySwap,
   })
   .openapi("SwapSubmitOutcome", { description: "Result of relaying the signed swap." });
 
@@ -102,7 +136,8 @@ const quoteBody = z
   .object({
     org: z.string().openapi({ example: "org_123" }),
     environment: env.optional(),
-    amount: z.string().openapi({ example: "100", description: "Gross source amount (fee is deducted from it)." }),
+    chain: chain.optional(),
+    amount: z.string().openapi({ example: "100", description: "Gross source amount, in its own units." }),
     sourceAssetCode: z.string().optional().openapi({ example: "XLM" }),
     sourceAssetIssuer: z.string().optional(),
     destAssetCode: z.string().openapi({ example: "USDC" }),
@@ -115,6 +150,7 @@ const createBody = z
   .object({
     org: z.string().openapi({ example: "org_123" }),
     environment: env.optional(),
+    chain: chain.optional(),
     amount: z.string().openapi({ example: "100" }),
     sourceAssetCode: z.string().optional(),
     sourceAssetIssuer: z.string().optional(),
@@ -128,8 +164,11 @@ const createBody = z
   .openapi("CreateSwapBody");
 
 const submitBody = z
-  .object({ signedXdr: z.string().openapi({ example: "AAAAAgAAAAB...(signed base64 XDR)..." }) })
-  .openapi("SubmitSwapBody");
+  .object({
+    signedXdr: z.string().optional().openapi({ example: "AAAAAgAAAAB...(signed base64 XDR)...", description: "Stellar swaps." }),
+    signedTransaction: z.string().optional().openapi({ description: "Solana (base64 wire bytes) or Monad (0x raw EIP-1559) swaps." }),
+  })
+  .openapi("SubmitSwapBody", { description: "Exactly one of signedXdr / signedTransaction." });
 
 const orgQuery = z.string().openapi({ param: { name: "org", in: "query" }, example: "org_123" });
 const envQuery = z.enum(["dev", "prod"]).optional().openapi({ param: { name: "env", in: "query" }, example: "dev" });
@@ -146,7 +185,7 @@ registerRoutes([
     tags: ["Swaps"],
     summary: "Quote a swap",
     description:
-      "Prices a Stellar swap via Horizon's strict-send path search. The commission shown is the calling organization's plan rate (enforced server-side; never a request parameter).",
+      "Prices a same-chain swap: Stellar via Horizon's strict-send path search, Solana via Jupiter, Monad via Kuru Flow. The commission shown is the calling organization's plan rate (enforced server-side; never a request parameter).",
     security: sessionSecurity,
     request: jsonBody(quoteBody),
     responses: {
@@ -163,11 +202,11 @@ registerRoutes([
     tags: ["Swaps"],
     summary: "Create a swap",
     description:
-      "Builds the unsigned swap transaction (fee payment + path payment) and returns the XDR + SEP-7 tx URI + QR for the customer's wallet to sign.",
+      "Builds the unsigned swap transaction for the customer's wallet to sign: on Stellar the XDR + SEP-7 tx URI + QR; on Solana / Monad the aggregator's transaction (and, on Monad, an approve call when an ERC-20 allowance is short).",
     security: sessionSecurity,
     request: jsonBody(createBody),
     responses: {
-      201: jsonCreated(swapSchema, "CreateSwapResponse", "Swap created successfully"),
+      201: jsonCreated(anySwap, "CreateSwapResponse", "Swap created successfully"),
       400: errors.badRequest,
       401: errors.unauthorized,
       403: errors.forbidden,
@@ -185,6 +224,7 @@ registerRoutes([
       query: z.object({
         org: orgQuery,
         env: envQuery,
+        chain: chain.optional().openapi({ param: { name: "chain", in: "query" } }),
         status: z.string().optional().openapi({ param: { name: "status", in: "query" } }),
         take: z.number().int().optional().openapi({ param: { name: "take", in: "query" } }),
         skip: z.number().int().optional().openapi({ param: { name: "skip", in: "query" } }),
@@ -207,7 +247,7 @@ registerRoutes([
     security: sessionSecurity,
     request: { params: idParam, query: z.object({ org: orgQuery, env: envQuery }) },
     responses: {
-      200: jsonOk(swapSchema, "GetSwapResponse", "Swap fetched successfully"),
+      200: jsonOk(anySwap, "GetSwapResponse", "Swap fetched successfully"),
       401: errors.unauthorized,
       403: errors.forbidden,
       404: errors.notFound,
@@ -220,7 +260,7 @@ registerRoutes([
     tags: ["Swaps"],
     summary: "Submit a signed swap",
     description:
-      "Relays the signed transaction to the network. The Payments API verifies the signed envelope's hash against the swap it built before broadcasting.",
+      "Relays the signed transaction to its network (signedXdr on Stellar, signedTransaction on Solana / Monad). The Payments API checks it is the transaction it built before broadcasting.",
     security: sessionSecurity,
     request: { params: idParam, query: z.object({ org: orgQuery, env: envQuery }), ...jsonBody(submitBody) },
     responses: {

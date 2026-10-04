@@ -6,7 +6,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
-import { normalizeUpstreamHost, rewriteLeavesPath, routeHost, upstreamNodes } from '@/lib/apisix-upstream';
+import { normalizeUpstreamHost, rewriteLeavesPath, routeHost, upstreamBaseUrls, upstreamNodes } from '@/lib/apisix-upstream';
 
 test('one upstream produces exactly the node it always did', () => {
   assert.deepEqual(upstreamNodes('http://localhost:3000'), { 'localhost:3000': 1 });
@@ -39,4 +39,11 @@ test('a route host is a bare lowercase hostname, whatever was pasted', () => {
   assert.equal(routeHost('https://Recovery-A.example.com/cosmos-api'), 'recovery-a.example.com');
   assert.equal(routeHost('recovery-b.example.com:8443'), 'recovery-b.example.com');
   assert.equal(routeHost('recovery-b.example.com'), 'recovery-b.example.com');
+});
+
+test('a replica list becomes one base URL per replica, never one joined URL', () => {
+  assert.deepEqual(upstreamBaseUrls('http://192.168.1.103:3000'), ['http://192.168.1.103:3000']);
+  assert.deepEqual(upstreamBaseUrls('http://a:3000, b:3001/ ,http://a:3000'), ['http://a:3000', 'http://b:3001']);
+  assert.deepEqual(upstreamBaseUrls('"https://api.example.com/"'), ['https://api.example.com']);
+  assert.deepEqual(upstreamBaseUrls(''), []);
 });

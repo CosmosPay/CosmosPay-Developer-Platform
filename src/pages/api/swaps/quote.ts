@@ -40,6 +40,7 @@ export const POST: APIRoute = async (ctx) => {
 
   try {
     const quote = await cosmosSwaps.quote(session.user.id, environment, org, swapFeeBps, {
+      chain: rest.chain,
       amount: rest.amount,
       sourceAssetCode: rest.sourceAssetCode,
       sourceAssetIssuer: rest.sourceAssetIssuer,

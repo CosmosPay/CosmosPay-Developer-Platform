@@ -45,7 +45,12 @@ export const openApiConfig: OpenAPIObjectConfig = {
     },
     {
       name: 'Swaps',
-      description: 'Quote, create and submit Stellar swaps for an organization',
+      description:
+        'Quote, create and submit same-chain swaps for an organization: Stellar by default, Solana (Jupiter) and Monad (Kuru Flow) with `chain`',
+    },
+    {
+      name: 'Cross-chain Swaps',
+      description: 'Swaps between Stellar, Solana and Monad, settled by NEAR Intents',
     },
     {
       name: 'Liquidity',

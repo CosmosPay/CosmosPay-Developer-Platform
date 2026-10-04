@@ -1,0 +1,284 @@
+---
+title: "CrossChainSwap"
+description: "A swap between two chains, settled by NEAR Intents — `client.crossChainSwaps`. Pay exactly {@link amountIn} of the origin asset to {@link depositAddress} (with {@link depositM"
+---
+
+A swap between two chains, settled by NEAR Intents — `client.crossChainSwaps`. Pay exactly &#123;@link amountIn&#125; of the origin asset to &#123;@link depositAddress&#125; (with &#123;@link depositMemo&#125; on Stellar, as a MEMO_TEXT) — &#123;@link depositUri&#125; is that payment as a wallet link. NEAR Intents pays &#123;@link recipient&#125; on the destination chain, or refunds &#123;@link refundTo&#125;. The server follows it; poll with `await swap.fetch()` or subscribe to the `CROSS_CHAIN_SWAP_*` webhooks.
+
+## Constructor
+
+### CrossChainSwap
+
+```ts
+constructor(client: Client, data: CrossChainSwapData)
+```
+
+**Parameters**
+
+- `client` — [`Client`](/sdk/definitions/server/client)
+- `data` — `CrossChainSwapData`
+
+## Properties
+
+### status
+
+```ts
+status: CrossChainSwapStatus
+```
+
+### providerStatus
+
+NEAR Intents' own status word.
+
+```ts
+providerStatus: string
+```
+
+### network
+
+```ts
+network: string
+```
+
+### originChain
+
+```ts
+originChain: SwapChain
+```
+
+### originAsset
+
+```ts
+originAsset: string
+```
+
+### originContract
+
+```ts
+originContract: string | null
+```
+
+### destinationChain
+
+```ts
+destinationChain: SwapChain
+```
+
+### destinationAsset
+
+```ts
+destinationAsset: string
+```
+
+### destinationContract
+
+```ts
+destinationContract: string | null
+```
+
+### amountIn
+
+```ts
+amountIn: string
+```
+
+### feeBps
+
+```ts
+feeBps: number
+```
+
+### feeAmount
+
+```ts
+feeAmount: string
+```
+
+### amountOutEstimated
+
+```ts
+amountOutEstimated: string
+```
+
+### amountOutMin
+
+```ts
+amountOutMin: string
+```
+
+### slippageBps
+
+```ts
+slippageBps: number
+```
+
+### recipient
+
+```ts
+recipient: string
+```
+
+### refundTo
+
+```ts
+refundTo: string
+```
+
+### depositAddress
+
+```ts
+depositAddress: string
+```
+
+### depositMemo
+
+```ts
+depositMemo: string | null
+```
+
+### depositUri
+
+```ts
+depositUri: string
+```
+
+### qr
+
+QR of &#123;@link depositUri&#125;; list rows do not carry it.
+
+```ts
+qr: string | null
+```
+
+### depositTxHash
+
+```ts
+depositTxHash: string | null
+```
+
+### amountOut
+
+```ts
+amountOut: string | null
+```
+
+### refundedAmount
+
+```ts
+refundedAmount: string | null
+```
+
+### originTxHashes
+
+```ts
+originTxHashes: CrossChainTransactionData[] | null
+```
+
+### destinationTxHashes
+
+```ts
+destinationTxHashes: CrossChainTransactionData[] | null
+```
+
+### timeEstimateSeconds
+
+```ts
+timeEstimateSeconds: number
+```
+
+### correlationId
+
+```ts
+correlationId: string
+```
+
+### quoteSignature
+
+Keep it: NEAR Intents' signature over the quote settles a dispute.
+
+```ts
+quoteSignature: string
+```
+
+### idempotencyKey
+
+```ts
+idempotencyKey: string | null
+```
+
+### expiresAt
+
+```ts
+expiresAt: Date
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: CrossChainSwapData): this
+```
+
+### get
+
+Whether the swap has reached an outcome that will not change.
+
+```ts
+get isFinal(): boolean
+```
+
+### get
+
+```ts
+get isSucceeded(): boolean
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch from the API, updating this instance in place.
+
+```ts
+fetch(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### reportDeposit()
+
+Report the transaction that paid the deposit address so NEAR Intents starts without waiting for its indexer. Updates this instance in place.
+
+```ts
+reportDeposit(txHash: string): Promise<this>
+```
+
+**Parameters**
+
+- `txHash` — `string`
+
+**Returns** `Promise<this>`
+
+### toJSON()
+
+```ts
+toJSON(): CrossChainSwapData
+```
+
+**Returns** `CrossChainSwapData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

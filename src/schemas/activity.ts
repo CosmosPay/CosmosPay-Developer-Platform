@@ -58,10 +58,4 @@ export const activityBatchSchema = z.object({
   events: z.array(activityEventSchema).min(1).max(ACTIVITY_MAX_BATCH),
 });
 
-/* The wallet reports which network it was on; that decides which environment's
-   consumer the batch lands under, exactly as every other wallet call does. */
-export const walletTelemetryBodySchema = activityBatchSchema.extend({
-  env: z.enum(["dev", "prod"]).optional(),
-});
-
 export type ActivityEventBody = z.infer<typeof activityEventSchema>;
