@@ -12,6 +12,7 @@ import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
 import { upstreamBaseUrls } from "@/lib/apisix-upstream";
+import { consoleMarker } from "@/lib/console-marker";
 
 export type CosmosEnv = "dev" | "prod";
 
@@ -90,13 +91,16 @@ async function cosmosFetch<T>(
     // own org-permissions before reaching here, so it acts with full scope. The
     // separate API-key scopes (read/write) only restrict external key holders.
     "X-Consumer-Role": "admin",
-    // Mark as an internal management-console call so it's excluded from the API
-    // request log (which should only show real API-key usage, not dashboard traffic).
-    "X-Cosmos-Internal": "1",
   };
   // Only sent when configured — but the community server always enforces it now, so
-  // COSMOS_GATEWAY_SECRET must be set (and match) for these calls to succeed.
-  if (COSMOS_GATEWAY_SECRET) headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
+  // COSMOS_GATEWAY_SECRET must be set (and match) for these calls to succeed. The
+  // console marker is keyed by the same secret: it flags this as management-console
+  // traffic (excluded from the tenant's API request log, exempt from per-consumer rate
+  // limits), and the service verifies it, so it means nothing without the secret.
+  if (COSMOS_GATEWAY_SECRET) {
+    headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
+    headers["X-Cosmos-Internal"] = consoleMarker(COSMOS_GATEWAY_SECRET);
+  }
   // Swap context. The fee is the org plan's rate, enforced server-side — presented here
   // exactly as the APISIX consumer forwarder would for an API-key caller.
   if (init.org) headers["X-Consumer-Org"] = init.org;
@@ -148,12 +152,14 @@ export async function proxyCosmosRequest(opts: {
   // owner-only admin endpoints. Callers MUST have verified the account holds it first --
   // this only forwards the label for the Payments service's audit trail, it neither
   // decides nor unlocks anything. What admits the call there is the pair every request
-  // from this service already carries: the gateway secret plus X-Cosmos-Internal, which
-  // APISIX strips from client requests. There is no separate admin secret any more.
+  // from this service already carries: the gateway secret plus X-Cosmos-Internal, a
+  // fresh MAC keyed by that secret (see console-marker.ts). There is no separate admin
+  // secret any more.
   adminRole?: string;
   // Extra trusted, server-to-server headers (e.g. role-derived cooldowns). These are only
-  // honored upstream alongside X-Cosmos-Internal, which APISIX strips from client requests,
-  // so an external API key can never forge them. Never use for caller-controlled values.
+  // honored upstream alongside a verified X-Cosmos-Internal, which only a holder of the
+  // gateway secret can mint, so an external API key can never forge them. Never use for
+  // caller-controlled values.
   extraHeaders?: Record<string, string>;
 }): Promise<{ status: number; json: any }> {
   assertNoTraversal(opts.path);
@@ -172,9 +178,11 @@ export async function proxyCosmosRequest(opts: {
     "X-Consumer-Username": consumerUsername(opts.userId),
     "X-Consumer-Env": opts.env,
     "X-Consumer-Role": "admin",
-    "X-Cosmos-Internal": "1",
   };
-  if (COSMOS_GATEWAY_SECRET) headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
+  if (COSMOS_GATEWAY_SECRET) {
+    headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
+    headers["X-Cosmos-Internal"] = consoleMarker(COSMOS_GATEWAY_SECRET);
+  }
   if (opts.adminRole) headers["X-Cosmos-Admin-Role"] = opts.adminRole;
   if (opts.extraHeaders) {
     for (const [k, v] of Object.entries(opts.extraHeaders)) headers[k] = v;
