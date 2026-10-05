@@ -45,6 +45,9 @@ _openapi:
       title: Co-sign a recovery transaction
       url: '#co-sign-a-recovery-transaction'
     - depth: 2
+      title: Every half this server holds for the proven inbox (paged by `after`)
+      url: '#every-half-this-server-holds-for-the-proven-inbox-paged-by-after'
+    - depth: 2
       title: Take this server's half back (the account's key, or its proven inbox)
       url: '#take-this-servers-half-back-the-accounts-key-or-its-proven-inbox'
     - depth: 2
@@ -80,6 +83,8 @@ _openapi:
         id: replace-who-may-recover-an-account-sep-10-token-of-that-account
       - content: Co-sign a recovery transaction
         id: co-sign-a-recovery-transaction
+      - content: Every half this server holds for the proven inbox (paged by `after`)
+        id: every-half-this-server-holds-for-the-proven-inbox-paged-by-after
       - content: Take this server's half back (the account's key, or its proven inbox)
         id: take-this-servers-half-back-the-accounts-key-or-its-proven-inbox
       - content: Forget this server's half (SEP-10 token of that account)
@@ -111,6 +116,9 @@ _openapi:
           on the registered account, sourced by it, with no memo, valid for at
           most 15 minutes.
         heading: co-sign-a-recovery-transaction
+      - content: This server's identity token for an email. One proof brings back the
+          halves of every wallet backed up under it.
+        heading: every-half-this-server-holds-for-the-proven-inbox-paged-by-after
       - content: The account's SEP-10 token, or this server's identity token for the
           email the half was filed under. Absent and not-yours are the same 404.
         heading: take-this-servers-half-back-the-accounts-key-or-its-proven-inbox
@@ -126,7 +134,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/.well-known/stellar.toml","method":"get"},{"path":"/v1/sep10/auth","method":"get"},{"path":"/v1/sep10/auth","method":"post"},{"path":"/v1/sep30/identity","method":"post"},{"path":"/v1/sep30/identity/email/start","method":"post"},{"path":"/v1/sep30/identity/email/verify","method":"post"},{"path":"/v1/sep30/accounts","method":"get"},{"path":"/v1/sep30/accounts/{address}","method":"get"},{"path":"/v1/sep30/accounts/{address}","method":"post"},{"path":"/v1/sep30/accounts/{address}","method":"delete"},{"path":"/v1/sep30/accounts/{address}","method":"put"},{"path":"/v1/sep30/accounts/{address}/sign/{signer}","method":"post"},{"path":"/v1/sep30/shares/{address}","method":"get"},{"path":"/v1/sep30/shares/{address}","method":"delete"},{"path":"/v1/sep30/shares/{address}","method":"put"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/.well-known/stellar.toml","method":"get"},{"path":"/v1/sep10/auth","method":"get"},{"path":"/v1/sep10/auth","method":"post"},{"path":"/v1/sep30/identity","method":"post"},{"path":"/v1/sep30/identity/email/start","method":"post"},{"path":"/v1/sep30/identity/email/verify","method":"post"},{"path":"/v1/sep30/accounts","method":"get"},{"path":"/v1/sep30/accounts/{address}","method":"get"},{"path":"/v1/sep30/accounts/{address}","method":"post"},{"path":"/v1/sep30/accounts/{address}","method":"delete"},{"path":"/v1/sep30/accounts/{address}","method":"put"},{"path":"/v1/sep30/accounts/{address}/sign/{signer}","method":"post"},{"path":"/v1/sep30/shares","method":"get"},{"path":"/v1/sep30/shares/{address}","method":"get"},{"path":"/v1/sep30/shares/{address}","method":"delete"},{"path":"/v1/sep30/shares/{address}","method":"put"}]} showTitle />
     </>
   );
 }
