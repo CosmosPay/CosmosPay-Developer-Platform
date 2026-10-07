@@ -110,16 +110,25 @@ export function rewriteLeavesPath(pattern: string, path: string): boolean {
    `null` is the Origin of a MetaMask Snap (it runs in a sandboxed iframe), and of
    any other sandboxed or file:// page. APISIX accepts `null` in allow_origins only
    as the WHOLE value -- its schema is `^(\*|\*\*|null|\w+://[^,]+(,\w+://[^,]+)*)$`
-   -- so inside a list it rejects the route and the sync fails. It goes to
-   allow_origins_by_regex instead, matched exactly. Allowing it exposes no
-   credential: every route here authenticates by header (apikey, X-Wallet-Session),
-   never by cookie, so a null-origin page can read only what it could already ask for
-   with a key it holds. */
+   -- so inside a list it rejects the route and the sync fails.
+
+   The way in is allow_origins_by_regex, but once that is set APISIX matches the
+   origin against it ONLY and ignores allow_origins (cors.lua: "If
+   allow_origins_by_regex is not nil, should be matched to it only"). So with `null`
+   in the list, EVERY origin goes in as an exact, escaped, anchored regex; sending
+   just `^null$` would lock every named origin out.
+
+   Allowing `null` exposes no credential: every route here authenticates by header
+   (apikey, X-Wallet-Session), never by cookie, so a null-origin page can read only
+   what it could already ask for with a key it holds. */
 export function corsOrigins(list: string): { allow_origins: string; allow_origins_by_regex?: string[] } {
-  const origins = list.split(',').map((o) => o.trim()).filter(Boolean);
+  const origins = [...new Set(list.split(',').map((o) => o.trim()).filter(Boolean))];
   const named = origins.filter((o) => o !== 'null');
+  const allow_origins = named.join(',') || 'https://cosmospay.lat';
+  if (named.length === origins.length) return { allow_origins };
   return {
-    allow_origins: named.join(',') || 'https://cosmospay.lat',
-    ...(named.length !== origins.length ? { allow_origins_by_regex: ['^null$'] } : {}),
+    allow_origins,
+    // PCRE on APISIX's side: escape its metacharacters so `.` in a host is a dot.
+    allow_origins_by_regex: origins.map((o) => `^${o.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`),
   };
 }
