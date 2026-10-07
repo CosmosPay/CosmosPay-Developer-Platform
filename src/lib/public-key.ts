@@ -100,7 +100,7 @@ async function ensurePublicAccount(): Promise<string> {
     });
   }
   // The plan is what sets the commission: the forwarder bakes the org owner's
-  // plan rate into every request this key makes, so `community` here IS the 1.5%.
+  // plan rate into every request this key makes, so `community` here IS its swap rate (0.5%).
   await prisma.profile
     .upsert({
       where: { userId: PUBLIC_USER_ID },

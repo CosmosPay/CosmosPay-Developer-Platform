@@ -184,7 +184,7 @@ export default {
       growth: {
         desc: "Niedrigere Tarife für wachsende Teams",
         sub: "/Monat · ab",
-        pnote: "ab · 0,35% + 0,5¢ pro Txn",
+        pnote: "ab · 0,2% + 5¢ pro Txn",
         team: "Unbegrenzt",
         feats: ["Alles aus Starter", "Niedrigere Transaktionsgebühr", "Unbegrenzte Mitglieder", "Radar-Betrugstools", "Mengenrabatte", "Prioritäts-Support"]
       }
@@ -711,7 +711,7 @@ export default {
       {
         name: "Starter",
         desc: "Nehmen Sie echte Zahlungen mit integrierter Zahlungsabsicherung an.",
-        amt: "1.5%",
+        amt: "1%",
         txt: "+ 0.25¢ pro Transaktion *",
         cta: "Kostenlos starten",
         feats: ["Alles aus Community", "Live-Zahlungen", "Zahlungsabsicherung", "Teilweiser API-Zugriff", "Standard-Support", "Streitfalllösung", "Karten & Banküberweisungen"]
@@ -726,9 +726,9 @@ export default {
       {
         name: "Growth",
         desc: "Niedrigere Tarife und mehr Leistung für wachsende Teams.",
-        txt: "+ 0.35% + 5¢ pro Transaktion *",
+        txt: "+ 0.2% + 5¢ pro Transaktion *",
         cta: "Kostenlose Testphase starten",
-        feats: ["Alles aus Essentials", "Transaktionstarif von 0.35% + 5¢", "Unbegrenzte Teammitglieder", "Erweiterte Betrugserkennung", "Mengenrabatte", "Bevorzugter Support", "Intelligentes Payment-Routing"]
+        feats: ["Alles aus Essentials", "Transaktionstarif von 0.2% + 5¢", "Unbegrenzte Teammitglieder", "Erweiterte Betrugserkennung", "Mengenrabatte", "Bevorzugter Support", "Intelligentes Payment-Routing"]
       }
     ],
     enterprise: {
@@ -752,7 +752,7 @@ export default {
       },
       {
         l: "Gebühr pro Transaktion",
-        v: ["—", "1.5% + 0.25¢", "0.5% + 10¢", "0.35% + 5¢", "Individuell"]
+        v: ["—", "1% + 0.25¢", "0.5% + 10¢", "0.2% + 5¢", "Individuell"]
       },
       {
         l: "Abwicklungsgeschwindigkeit",
@@ -803,7 +803,7 @@ export default {
       },
       {
         q: "Was kostet eine Transaktion?",
-        a: "Starter kostet 1.5% + 0.25¢ pro erfolgreicher Transaktion. Essentials kostet $33/mo (oder $27.50/mo bei jährlicher Abrechnung) und senkt den Tarif auf 0.5% + 10¢, während Growth $99/mo kostet und ihn auf 0.35% + 5¢ senkt. Jede Transaktion verursacht zusätzlich eine kleine Netzwerkgebühr."
+        a: "Starter kostet 1% + 0.25¢ pro erfolgreicher Transaktion. Essentials kostet $33/mo (oder $27.50/mo bei jährlicher Abrechnung) und senkt den Tarif auf 0.5% + 10¢, während Growth $99/mo kostet und ihn auf 0.2% + 5¢ senkt. Jede Transaktion verursacht zusätzlich eine kleine Netzwerkgebühr."
       },
       {
         q: "Welche Zahlungsmethoden unterstützen Sie?",

@@ -34,9 +34,9 @@ export interface PlanSpec {
 
 export const PLAN_SPECS: Record<PlanId, PlanSpec> = {
   community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "—",             settle: "~5 sec", swapFeeBps: 50 },
-  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1.5% + 0.25¢", perTx: "1.5% + 0.25¢",  settle: "~5 sec", swapFeeBps: 25 },
+  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1% + 0.25¢", perTx: "1% + 0.25¢",  settle: "~5 sec", swapFeeBps: 25 },
   essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "0.5% + 10¢",    settle: "~5 sec", swapFeeBps: 10  },
-  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.35% + 5¢",    settle: "~5 sec", swapFeeBps: 5  },
+  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.2% + 5¢",    settle: "~5 sec", swapFeeBps: 5  },
   enterprise: { id: "enterprise", maxApiKeys: null, maxOrgs: null, maxSeats: null, mainnet: true, api: "full",          price: "Custom",       perTx: "Custom",        settle: "~5 sec", swapFeeBps: 3   },
 };
 
