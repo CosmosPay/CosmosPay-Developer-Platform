@@ -782,6 +782,32 @@ export async function syncConsumerForwarder(userId: string) {
   return response ? { username } : null;
 }
 
+/* Re-bakes every platform consumer's forwarder, so a change to a plan's rate (or to any
+   other baked value) reaches keys minted before it. syncConsumerForwarder only runs when a
+   user's own keys change or are listed, which leaves everyone else on the old rate.
+
+   Only consumers whose plugins are exactly the forwarder are touched: the sync PUTs the
+   consumer with that one plugin, so a legacy consumer still carrying an inline key-auth
+   would lose its key. `cosmos_wallet_*` consumers belong to the community server, which
+   bakes its own entries. Idempotent (unchanged consumers are skipped) and best-effort. */
+export async function syncAllConsumerForwarders() {
+  const consumers = (await listApiKeys().catch(() => null)) ?? [];
+  let synced = 0;
+  let skipped = 0;
+  for (const item of consumers) {
+    const value = item?.value ?? {};
+    const username: string = value.username ?? '';
+    const plugins = Object.keys(value.plugins ?? {});
+    const forwarderOnly = plugins.length === 1 && plugins[0] === 'serverless-pre-function';
+    if (!username.startsWith(keyPrefix) || username.startsWith(`${keyPrefix}wallet_`) || !forwarderOnly) {
+      skipped++;
+      continue;
+    }
+    if (await syncConsumerForwarder(username).catch(() => null)) synced++;
+  }
+  return { synced, skipped };
+}
+
 export async function createApiKey(
   userId: string,
   environment: Environment,
