@@ -85,7 +85,7 @@ export default {
     plans: {
       community: { desc: "Free at launch · Stellar only", sub: "Stellar only", pnote: "free during launch · Stellar", team: "1", feats: ["Payment webhooks", "Test API keys", "1 project"] },
       starter: { desc: "Take real payments on Stellar", sub: "+ 10¢ / txn", pnote: "0.5% + 10¢ per transaction", team: "Up to 5", feats: ["Full payments API", "Live & test keys", "USDC settlement", "Up to 5 members"] },
-      growth: { desc: "Lower rates for scaling teams", sub: "/mo · from", pnote: "from · 0.35% + 5¢ per txn", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Radar fraud tooling", "Volume discounts", "Priority support"] },
+      growth: { desc: "Lower rates for scaling teams", sub: "/mo · from", pnote: "from · 0.2% + 5¢ per txn", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Radar fraud tooling", "Volume discounts", "Priority support"] },
     },
   },
   /* ---------------- shared: nav ---------------- */
@@ -377,12 +377,12 @@ export default {
     plans: [
       { name: "Community", tag: "Free", desc: "Start accepting payments with no monthly cost.", amt: "Free", txt: "no monthly fee", cta: "Start for free",
         feats: ["Accept payments", "Test API keys", "1 project", "Community support", "Payment protection", "Dispute resolution", "Cards & bank transfers"] },
-      { name: "Starter", desc: "Take real payments with built-in payment protection.", amt: "1.5%", txt: "+ 0.25¢ per transaction *", cta: "Start for free",
+      { name: "Starter", desc: "Take real payments with built-in payment protection.", amt: "1%", txt: "+ 0.25¢ per transaction *", cta: "Start for free",
         feats: ["Everything in Community", "Live payments", "Payment protection", "Partial API access", "Standard support", "Dispute resolution", "Cards & bank transfers"] },
       { name: "Essentials", desc: "Full platform access with disputes and every payment method.", txt: "+ 0.5% + 10¢ per transaction *", cta: "Start free trial",
         feats: ["Everything in Starter", "Full API access", "Payment protection", "Dispute resolution", "Cards & bank transfers", "Priority email support", "Volume discounts"] },
-      { name: "Growth", desc: "Lower rates and more power for scaling teams.", txt: "+ 0.35% + 5¢ per transaction *", cta: "Start free trial",
-        feats: ["Everything in Essentials", "0.35% + 5¢ transaction rate", "Unlimited team members", "Advanced fraud tools", "Volume discounts", "Priority support", "Smart payment routing"] },
+      { name: "Growth", desc: "Lower rates and more power for scaling teams.", txt: "+ 0.2% + 5¢ per transaction *", cta: "Start free trial",
+        feats: ["Everything in Essentials", "0.2% + 5¢ transaction rate", "Unlimited team members", "Advanced fraud tools", "Volume discounts", "Priority support", "Smart payment routing"] },
     ],
     enterprise: {
       name: "Enterprise",
@@ -400,7 +400,7 @@ export default {
     compareHead: ["Feature", "Community", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       { l: "Monthly fee", v: ["—", "—", "$33 / mo", "$99 / mo", "Custom"] },
-      { l: "Per-transaction fee", v: ["—", "1.5% + 0.25¢", "0.5% + 10¢", "0.35% + 5¢", "Custom"] },
+      { l: "Per-transaction fee", v: ["—", "1% + 0.25¢", "0.5% + 10¢", "0.2% + 5¢", "Custom"] },
       { l: "Settlement speed", v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec", "~5 sec"] },
       { l: "API access", v: ["Notifications", "Partial", "Full", "Full", "Full"] },
       { l: "Live payments", v: [1, 1, 1, 1, 1] },
@@ -415,7 +415,7 @@ export default {
     faqTitle: "Frequently asked questions",
     faqs: [
       { q: "Is there really a free plan?", a: "Yes. The Community plan is free and includes everything you need to start accepting payments right away. Starter is also free monthly; you only pay a small fee per successful transaction." },
-      { q: "What does a transaction cost?", a: "Starter is 1.5% + 0.25¢ per successful transaction. Essentials is $33/mo (or $27.50/mo billed annually) and lowers the rate to 0.5% + 10¢, while Growth is $99/mo and brings it down to 0.35% + 5¢. A small network fee also applies to every transaction." },
+      { q: "What does a transaction cost?", a: "Starter is 1% + 0.25¢ per successful transaction. Essentials is $33/mo (or $27.50/mo billed annually) and lowers the rate to 0.5% + 10¢, while Growth is $99/mo and brings it down to 0.2% + 5¢. A small network fee also applies to every transaction." },
       { q: "Which payment methods do you support?", a: "Community and Starter cover our core payment methods. From Essentials up you can also accept cards, bank transfers and other local payment methods through a single integration." },
       { q: "How fast does money settle?", a: "Payments reach finality in roughly five seconds, on every plan — there are no multi-day payout delays." },
       { q: "Can I change plans later?", a: "Absolutely. Upgrade or downgrade at any time from your dashboard. Changes take effect immediately — no calls required." },
