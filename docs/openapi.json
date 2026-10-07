@@ -6862,6 +6862,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Attach the proven identity to the account this device signs for",
@@ -6875,6 +6878,9 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ]
       }
     },
@@ -6995,6 +7001,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Replace the sealed box stored for an account",
@@ -7008,6 +7017,9 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ]
       }
     },
@@ -7147,6 +7159,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Sponsor the reserve of an account's two recovery signers",
@@ -7166,6 +7181,9 @@
             "windowMs": 600000,
             "per": "consumer"
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ]
       }
     },
@@ -7324,6 +7342,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Exchange a signed challenge for a token",
@@ -7337,6 +7358,9 @@
             "limit": 60,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ],
         "security": []
       }
