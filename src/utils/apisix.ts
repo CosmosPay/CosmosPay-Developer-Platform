@@ -9,7 +9,7 @@ import {
 import { randomBytes, randomUUID } from "node:crypto";
 import { orgSwapContext } from "@/lib/organizations";
 import { prisma } from "@/lib/prisma";
-import { rewriteLeavesPath, routeHost, upstreamNodes } from "@/lib/apisix-upstream";
+import { corsOrigins, rewriteLeavesPath, routeHost, upstreamNodes } from "@/lib/apisix-upstream";
 
 export const keyPrefix = 'cosmos_';
 
@@ -255,7 +255,7 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
           // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
           // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
           cors: {
-            allow_origins: COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat',
+            ...corsOrigins(COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat'),
             allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
             // Idempotency-Key is read by the swap / liquidity / payout routes; a browser
             // cannot send a non-safelisted request header unless preflight allows it here.
