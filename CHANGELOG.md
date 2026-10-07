@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.6.2] - 2026-10-07
+
+### Bug Fixes
+- Allow X-Wallet-Session and X-Trace-Id in the gateway's CORS (6e4976d)
+
 ## [0.6.1] - 2026-10-07
 
 ### Features
