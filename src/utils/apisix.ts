@@ -341,11 +341,11 @@ end
              sets these server-to-server, on calls that go straight to the Payments service
              rather than through here.
 
-             X-Cosmos-Internal is the load-bearing one now: the Payments service has no
-             admin credential any more, so that marker (on top of the gateway secret it
-             also checks) is what separates a call from this console -- which may read and
-             act across every tenant -- from an API key, which may not. Dropping it from
-             this list would make /v1/admin reachable by any key holder who sets a header.
+             X-Cosmos-Internal separates a call from this console -- which may read and
+             act across every tenant -- from an API key, which may not. The Payments
+             service verifies it as a MAC keyed by the gateway secret (lib/console-marker.ts),
+             so a client copy is refused there even if this strip were missing; it stays
+             here as defence in depth.
              X-Cosmos-Admin gates nothing and is kept because a stripped dead header costs
              nothing and a resurrected one would be client-settable again.
              X-Cosmos-Admin-Role labels the Payments audit trail with the console account's

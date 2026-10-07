@@ -6,11 +6,18 @@ Astro SSR portal + its own REST API under `src/pages/api/`).
 ## Commands
 
 ```bash
-npm run dev          # astro dev --host (predev runs prisma migrate deploy + ensure-docs)
-npm run build        # prisma generate -> docs:build (Fumadocs export) -> astro build
-npm test             # unit suite (node:test over src/lib, no DB, no astro:env)
-npm run test:smoke   # boots dist/ and makes one real request — catches broken external imports
-npm run check:openapi # fails if any src/pages/api route is missing from the OpenAPI document
+npm run dev               # astro dev --host; predev runs `prisma migrate deploy` + scripts/ensure-docs.mjs
+npm run build             # prisma generate -> docs:build (Fumadocs export into public/docs) -> astro build
+npm start                 # node dist/server/entry.mjs; prestart runs ensure-docs. Production runs under PM2
+npm test                  # = test:unit — node:test over tests/unit/**/*.test.ts (no DB, no astro:env)
+npm run test:smoke        # boots dist/ and makes one real request — catches broken external imports
+npm run check:openapi     # fails if any src/pages/api route is missing from this app's OpenAPI document
+npm run check:api-spec    # fails if docs/openapi.json differs from the community server's spec
+                          #   (OPENAPI_SRC, else the sibling checkout; exits 0 when neither exists)
+npm run docs:api          # regenerates docs/openapi.json + the API pages inside docs/
+npm run db:migrate        # prisma migrate dev (db:deploy = migrate deploy, db:generate, db:push)
+npm run sync:route        # re-points every APISIX route's upstream at COSMOS_API_URL, no restart
+npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
 ```
 
 ## Rule: every API endpoint MUST be documented in OpenAPI/Swagger
@@ -77,9 +84,9 @@ registerRoutes([
 - **A new tag needs a line in the `tags` array of `src/lib/openapi/document.ts`.** An
   undeclared tag still renders, but ungrouped and undescribed at the bottom of the page.
 - **Give realistic `example` values.** The examples are what people copy into their first call.
-- **Intentionally undocumented routes must say so in a comment** at the top of the route file
-  (e.g. `src/pages/api/auth/[...all]/index.ts`, Better Auth's own handler). Silence reads as
-  an oversight; a one-line reason reads as a decision.
+- **Intentionally undocumented routes are named, with their reason, in the `EXCLUDED` map of
+  `scripts/check-openapi-coverage.mjs`** (today one entry: `/api/auth/{all}`, Better Auth's own
+  handler). Silence reads as an oversight; a one-line reason reads as a decision.
 
 ### Verify before you call it done
 
@@ -93,11 +100,13 @@ reference on staging, build with the flag set.
 
 ### Current coverage
 
-**114 of 114 route operations are documented**, plus the external `/cosmos-api/{path}` gateway
-route — 88 paths in the document. One route is deliberately excluded and named with its
-reason in `scripts/check-openapi-coverage.mjs`: `/api/auth/{all}`, which is Better Auth's own
-handler. Keep it that way: `npm run check:openapi` is the check that says so, and an endpoint
-is either documented or listed in that exclusion map with a reason — never just missing.
+**Every route operation is documented**, plus the external `/cosmos-api/{path}` gateway route.
+Don't quote a count from here — quote the line `npm run check:openapi` prints
+(`OpenAPI coverage: N/N route operations documented (1 explicitly excluded), M paths in the
+document.`); a number frozen in this file was wrong within weeks. The one exclusion is
+`/api/auth/{all}`, Better Auth's own handler, named with its reason in the `EXCLUDED` map of
+`scripts/check-openapi-coverage.mjs`. Keep it that way: an endpoint is either documented or
+listed in that map with a reason — never just missing.
 
 ### Known-good shape of the generated document
 
@@ -122,22 +131,78 @@ separate deployment of it with its own database and keys. Do not add routes for 
 
 What this app still does for them:
 
-- **Three console legs** (`src/pages/api/wallet/console/`, `src/lib/wallet-auth-console.ts`):
-  `login-code` and `provision` for the sign-in, admitted by `WALLET_AUTH_CONSOLE_SECRET` plus the
-  `x-cosmos-internal` marker APISIX strips; and `recovery-code`, admitted by
-  `x-cosmos-recovery-secret` against `WALLET_RECOVERY_CONSOLE_SECRETS` (one entry per recovery
-  server, so neither holds the credential that mints accounts). Each answers 404 to anyone else
-  and fails closed when its secret is unset. The decisions are pure, in `src/lib/console-call.ts`,
-  and pinned by `tests/unit/consoleCall.test.ts`. None of them is in the OpenAPI document, on
-  purpose — see the exclusions in `scripts/check-openapi-coverage.mjs`.
-- **The keyless APISIX routes** (`src/utils/apisix.ts`, synced by `src/lib/apisix-route.ts`): the
-  OAuth callbacks (Pollar's and the wallet sign-in's), and the SEP route
-  (`/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`) — which carries NO `cors` plugin,
-  because the community server answers CORS itself for those prefixes and two
-  `Access-Control-Allow-Origin` headers make a browser refuse the response, and which forwards
-  `Authorization`, because there it is the SEP-10 / identity JWT. Optional host-bound copies per
-  recovery server come from `COSMOS_RECOVERY_{A,B}_HOST` + `_UPSTREAM`.
-- **Its old tables, until exported.** `wallet_backup` (encrypted seeds people restore from),
+- **Nothing on the request path.** The community server emails the sign-in code and mints the
+  wallet's keys in APISIX itself, so no wallet request passes through this platform. The console
+  legs it used to call here (`/api/wallet/console/*`) are deleted, and so are their secrets —
+  `WALLET_AUTH_CONSOLE_SECRET` and `WALLET_RECOVERY_CONSOLE_SECRETS` no longer exist in
+  `astro.config.mjs`. Do not bring them back.
+- **The keys it provisioned before that** (`src/lib/wallet-provisioning.ts`): accounts this
+  platform provisioned for the wallet still hold dashboard keys, and `src/pages/api/api-keys`
+  rotates them with `WALLET_KEY_SCOPES` instead of minting more.
+- **The keyless APISIX routes** (`src/utils/apisix.ts`, synced at boot by
+  `src/lib/apisix-route.ts`, upstreams re-pointed by `npm run sync:route`):
+  - `<route>-oauth-callbacks` — the wallet sign-in's OAuth callback
+    (`/v1/wallet/auth/oauth/callback/*`) plus the shared public-key read (`/v1/public-key`). The
+    old `<route>-pollar-callback` route is only ever DELETED at boot, never created.
+  - `<route>-sep` — `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
+    `cors` plugin, because the community server answers CORS itself for those prefixes and two
+    `Access-Control-Allow-Origin` headers make a browser refuse the response, and it forwards
+    `Authorization`, because there it is the SEP-10 / identity JWT.
+  - `<route>-sep-recovery-{a,b}` — optional host-bound copies of the SEP route, one per recovery
+    server, from `COSMOS_RECOVERY_{A,B}_HOST` + `_UPSTREAM` (both halves or neither).
+- **Its old tables.** `wallet_backup` (encrypted seeds people restore from),
   `wallet_auth_handshake`, `wallet_login_code`, `recovery_account` and `recovery_auth_method` are
-  RETIRED but kept. Never drop them before `npm run export:wallet-data`
-  (`scripts/export-wallet-data.mjs`) has been run and its output imported on the community server.
+  RETIRED but kept: nothing here reads or writes them. Never drop them before
+  `npm run export:wallet-data` (`scripts/export-wallet-data.mjs`) has been run and its output
+  imported on the community server. `wallet_registration` is retired too — nothing writes it —
+  but it is NOT in the export and it is still READ: `isWalletProvisionedUser` uses it to keep
+  legacy wallet accounts on the rotate-only key path. Dropping it changes that behaviour, so it
+  needs its own decision, not a ride along with the others.
+
+## Talking to the Payments API
+
+This app reaches the Payments API (the community server) server-to-server, not through APISIX
+(`src/lib/cosmos.ts`), so it presents what the gateway would have: `X-Gateway-Secret` and the
+consumer headers.
+
+- **`COSMOS_GATEWAY_SECRET` must equal the server's `APISIX_GATEWAY_SECRET`.** The server always
+  enforces it; empty or mismatched, every Payments API call answers 403. APISIX sets the same
+  value on proxied requests (`src/utils/apisix.ts`).
+- **`X-Cosmos-Internal` is a MAC, not a flag.** `src/lib/console-marker.ts` mints
+  `v1.<unix seconds>.<hex HMAC-SHA256(COSMOS_GATEWAY_SECRET, label + ts)>` per request; the
+  server accepts it for five minutes either side of its clock. It used to be the literal `1`,
+  trusted only because APISIX strips the header from clients — one forgotten strip from handing
+  any API key the cross-tenant admin surface. APISIX still strips it, as defence in depth.
+- **The format is one contract across two repositories.** `tests/unit/consoleMarker.test.ts`
+  pins a test vector that the server's `src/admin/console-marker.spec.ts` pins too. Change the
+  label, the format or the MAC on one side and both tests must change, or every admin screen
+  answers 403.
+- **`/api/admin/*` is decided HERE, by the signed-in account's role** (`adminProxy` in
+  `src/lib/cosmos-proxy.ts`, the same check that gates assigning plans and roles). The server
+  holds no admin credential of its own any more; it admits the call on the secret plus the
+  marker and audits it under the role this app forwards. There is no admin secret to set.
+
+## Build and deploy gotchas
+
+- **Prisma 7.** The CLI's `DATABASE_URL` lives in `prisma.config.ts`, not in `schema.prisma`'s
+  datasource. At runtime the client is built on `@prisma/adapter-pg` in `src/lib/prisma.ts`, fed
+  from `astro:env`. The client is generated into `generated/prisma/` (git-ignored) — import
+  from there, never from `@prisma/client`.
+- **`access: 'public'` env vars are inlined at build.** That covers every `PUBLIC_*` client var
+  and the public server flags (`API_DOCS_ENABLED`, `ONBOARDING_ENABLED`, `PLANS_ENABLED`, …):
+  changing them in `.env` takes a rebuild, not a restart. `PUBLIC_BETTER_AUTH_URL` must equal
+  `BETTER_AUTH_URL` and be in `.env` with its production value BEFORE `npm run build`.
+- **Deploy with `npm ci && npm run build`, never `npm install`.** Dependencies are external to
+  `dist/`, so a caret that resolves a new minor against an old build only fails when the server
+  boots (`does not provide an export named …`, PM2 restart-looping). `npm run test:smoke` is
+  the guard for that class. Rebuild after every install.
+- **PM2: `devplat` (production, `scripts/start-prod.mjs`) and `devplat-dev` (`astro dev`) both
+  bind port 4321** (`ecosystem.config.cjs`). Start one with `--only`, never both.
+- **`docs/` is a separate Next.js + Fumadocs app** with its own `package.json` and lockfile. It
+  is exported statically into `public/docs`, served at `/docs`. `scripts/ensure-docs.mjs`
+  (predev, prestart, and `start-prod.mjs`) rebuilds it only when `public/docs` is missing or a
+  docs source is newer than the last build.
+- **Two OpenAPI documents, not one.** `docs/openapi.json` is the community server's Payments API
+  spec, committed and checked by `npm run check:api-spec`. `/api/openapi.json` is THIS app's own
+  API, generated from `src/schemas/**/openapi.ts` and checked by `npm run check:openapi`. The
+  rule above about documenting endpoints is about the second.

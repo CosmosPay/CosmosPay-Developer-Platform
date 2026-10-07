@@ -136,8 +136,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `COSMOS_API_URL` | Upstream Payments API the routes proxy to (comma-separated replicas allowed) |
 | `COSMOS_RECOVERY_{A,B}_HOST` / `_UPSTREAM` | Optional: a host-bound SEP route per recovery server deployment |
 | `COSMOS_API_ENTRY` / `COSMOS_API_REWRITE` | Public route path + rewrite (`/cosmos-api/* → /$1`) |
-| `COSMOS_GATEWAY_SECRET` | `X-Gateway-Secret` for direct server-to-server calls |
-| `WALLET_AUTH_CONSOLE_SECRET` / `WALLET_RECOVERY_CONSOLE_SECRETS` | Admit the community server's console legs (sign-in codes + provisioning / recovery codes) |
+| `COSMOS_GATEWAY_SECRET` | `X-Gateway-Secret` for direct server-to-server calls, and the key of the `X-Cosmos-Internal` marker. **Must equal the community server's `APISIX_GATEWAY_SECRET`** |
 | `RESEND_API_KEY` | Resend HTTP email (preferred). Falls back to `SMTP_*` if unset |
 | `SMTP_HOST/PORT/USER/PASS/SECURE` / `SMTP_FROM` | SMTP transport + verified sender |
 | `ONBOARDING_ENABLED` / `PLANS_ENABLED` / `ALLOW_USER_PLAN_CHANGES` / `ENABLED_PLANS` | Feature flags |

@@ -734,13 +734,35 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`operation_in_flight` — the status changed under this update. Re-read the intent and retry.",
+            "description": "`transaction_already_settled`: the transaction already settled, or also pays an older, payment intent of any consumer, and one payment settles at most one intent, the oldest it pays; this intent is not paid by it. `idempotency_conflict`: the hash is already recorded on another of your intents. `operation_in_flight`: the status changed under this request; re-read the intent and retry.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiErrorBodyEntity"
                 },
                 "examples": {
+                  "transaction_already_settled": {
+                    "summary": "transaction_already_settled — That transaction settles another payment intent",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "transaction_already_settled",
+                      "error": "Conflict",
+                      "message": "This transaction settles another payment intent. One payment settles at most one intent: the oldest it pays.",
+                      "path": "/v1/payment-intents/pi_7Yc3Qn0Kx2/validate",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "idempotency_conflict": {
+                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "idempotency_conflict",
+                      "error": "Conflict",
+                      "message": "A swap already exists for this Idempotency-Key",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
                   "operation_in_flight": {
                     "summary": "operation_in_flight — A conflicting operation is still settling",
                     "value": {
@@ -803,7 +825,41 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/ValidationFailed"
+            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_state_transition` — The resource cannot move to that state from the one it is in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "txHash cannot be changed on a SUCCEEDED payment intent: the status is terminal",
+                      "path": "/v1/payment-intents/pi_7Yc3Qn0Kx2",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -813,6 +869,29 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`operation_in_flight`: the status changed under this delete — the intent may have just been paid. Re-read it before retrying.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "path": "/v1/liquidity-pools/withdraw",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -914,6 +993,51 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`transaction_already_settled`: the transaction already settled, or also pays an older, payment intent of any consumer, and one payment settles at most one intent, the oldest it pays; this intent is not paid by it. `idempotency_conflict`: the hash is already recorded on another of your intents. `operation_in_flight`: the status changed under this request; re-read the intent and retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "transaction_already_settled": {
+                    "summary": "transaction_already_settled — That transaction settles another payment intent",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "transaction_already_settled",
+                      "error": "Conflict",
+                      "message": "This transaction settles another payment intent. One payment settles at most one intent: the oldest it pays.",
+                      "path": "/v1/payment-intents/pi_7Yc3Qn0Kx2/validate",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "idempotency_conflict": {
+                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "idempotency_conflict",
+                      "error": "Conflict",
+                      "message": "A swap already exists for this Idempotency-Key",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "path": "/v1/liquidity-pools/withdraw",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -6738,6 +6862,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Attach the proven identity to the account this device signs for",
@@ -6751,6 +6878,9 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ]
       }
     },
@@ -6871,6 +7001,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Replace the sealed box stored for an account",
@@ -6884,6 +7017,9 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ]
       }
     },
@@ -7023,6 +7159,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Sponsor the reserve of an account's two recovery signers",
@@ -7042,6 +7181,9 @@
             "windowMs": 600000,
             "per": "consumer"
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ]
       }
     },
@@ -7200,6 +7342,9 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Exchange a signed challenge for a token",
@@ -7213,6 +7358,9 @@
             "limit": 60,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon"
         ],
         "security": []
       }
@@ -7816,6 +7964,77 @@
         "x-cosmos-rate-limit": [
           {
             "name": "sep30-sign",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/sep30/shares": {
+      "get": {
+        "description": "This server's identity token for an email. One proof brings back the halves of every wallet backed up under it.",
+        "operationId": "RecoverySharesController_list_v1",
+        "parameters": [
+          {
+            "name": "after",
+            "required": false,
+            "in": "query",
+            "description": "The last address of the previous page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "sep-token": []
+          }
+        ],
+        "summary": "Every half this server holds for the proven inbox (paged by `after`)",
+        "tags": [
+          "recovery"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "recovery-share-read",
             "limit": 20,
             "windowMs": 600000
           }
@@ -13177,7 +13396,7 @@
             "type": "string",
             "nullable": true,
             "example": null,
-            "description": "Why submission failed, when `submitted` is false."
+            "description": "Why submission failed, when `submitted` is false. With `status` FAILED the ledger confirms the failure; with `status` SUBMITTED the network refused this broadcast but the transaction may still be on the ledger, and its outcome arrives as a terminal webhook."
           },
           "resultCodes": {
             "nullable": true,
@@ -14967,7 +15186,7 @@
             "type": "string",
             "nullable": true,
             "example": null,
-            "description": "Why submission failed, when `submitted` is false."
+            "description": "Why submission failed, when `submitted` is false. With `status` FAILED the ledger confirms the failure; with `status` SUBMITTED the network refused this broadcast but the transaction may still be on the ledger, and its outcome arrives as a terminal webhook."
           },
           "resultCodes": {
             "nullable": true,
@@ -18271,7 +18490,9 @@
           },
           "date_of_birth": {
             "type": "string",
-            "example": "1985-04-12T00:00:00.000Z"
+            "example": "1985-04-12T00:00:00.000Z",
+            "format": "date-time",
+            "description": "ISO 8601 date-time with an offset (BlindPay rejects date-only values)."
           },
           "tax_id": {
             "type": "string",
@@ -18279,7 +18500,9 @@
           },
           "country": {
             "type": "string",
-            "example": "US"
+            "example": "US",
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 country code, upper case"
           },
           "address_line_1": {
             "type": "string",
@@ -18303,6 +18526,8 @@
           "ownership_percentage": {
             "type": "number",
             "example": 25.5,
+            "minimum": 0,
+            "maximum": 100,
             "description": "Ownership percentage"
           },
           "title": {
@@ -18311,7 +18536,9 @@
           },
           "id_doc_country": {
             "type": "string",
-            "example": "US"
+            "example": "US",
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 country code, upper case"
           },
           "id_doc_type": {
             "type": "string",
@@ -18365,7 +18592,8 @@
           "country": {
             "type": "string",
             "example": "US",
-            "description": "ISO 3166-1 alpha-2 country code"
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 country code, upper case"
           },
           "first_name": {
             "type": "string",
@@ -18378,7 +18606,8 @@
           "date_of_birth": {
             "type": "string",
             "example": "1985-04-12T00:00:00.000Z",
-            "description": "ISO 8601 datetime (BlindPay rejects date-only values)."
+            "format": "date-time",
+            "description": "ISO 8601 date-time with an offset (BlindPay rejects date-only values)."
           },
           "tax_id": {
             "type": "string",
@@ -18390,7 +18619,9 @@
           },
           "id_doc_country": {
             "type": "string",
-            "example": "US"
+            "example": "US",
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 country code, upper case"
           },
           "id_doc_type": {
             "type": "string",
@@ -18467,7 +18698,9 @@
           },
           "formation_date": {
             "type": "string",
-            "example": "2015-01-01T00:00:00.000Z"
+            "example": "2015-01-01T00:00:00.000Z",
+            "format": "date-time",
+            "description": "ISO 8601 date-time with an offset (BlindPay rejects date-only values)."
           },
           "estimated_annual_revenue": {
             "type": "string",
@@ -18479,7 +18712,9 @@
           },
           "website": {
             "type": "string",
-            "example": "https://acme.com"
+            "example": "https://acme.com",
+            "description": "Absolute http(s) URL, without credentials.",
+            "maxLength": 2048
           },
           "incorporation_doc_file": {
             "type": "string"
@@ -18788,7 +19023,8 @@
           "country": {
             "type": "string",
             "example": "US",
-            "description": "ISO 3166-1 alpha-2 country code"
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 country code, upper case"
           },
           "first_name": {
             "type": "string",
@@ -18801,7 +19037,8 @@
           "date_of_birth": {
             "type": "string",
             "example": "1985-04-12T00:00:00.000Z",
-            "description": "ISO 8601 datetime (BlindPay rejects date-only values)."
+            "format": "date-time",
+            "description": "ISO 8601 date-time with an offset (BlindPay rejects date-only values)."
           },
           "tax_id": {
             "type": "string",
@@ -18813,7 +19050,9 @@
           },
           "id_doc_country": {
             "type": "string",
-            "example": "US"
+            "example": "US",
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 country code, upper case"
           },
           "id_doc_type": {
             "type": "string",
@@ -18890,7 +19129,9 @@
           },
           "formation_date": {
             "type": "string",
-            "example": "2015-01-01T00:00:00.000Z"
+            "example": "2015-01-01T00:00:00.000Z",
+            "format": "date-time",
+            "description": "ISO 8601 date-time with an offset (BlindPay rejects date-only values)."
           },
           "estimated_annual_revenue": {
             "type": "string",
@@ -18902,7 +19143,9 @@
           },
           "website": {
             "type": "string",
-            "example": "https://acme.com"
+            "example": "https://acme.com",
+            "description": "Absolute http(s) URL, without credentials.",
+            "maxLength": 2048
           },
           "incorporation_doc_file": {
             "type": "string"
@@ -20177,6 +20420,7 @@
               "invalid_amount",
               "invalid_memo",
               "transaction_rejected",
+              "transaction_already_settled",
               "network_unsupported",
               "asset_unsupported",
               "provider_error",

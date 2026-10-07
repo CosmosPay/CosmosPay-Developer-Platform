@@ -248,8 +248,16 @@ model OrganizationMember {
   @@map("organization_member")
 }
 
-// ---------------- Wallet account provisioning ----------------
-// A pending CosmosPay account request initiated by the (public, open-source) CosmosPay
+// ---------------- Wallet account provisioning — RETIRED ----------------
+// RETIRED — wallet accounts are provisioned by the community server now (it emails the
+// sign-in code and mints the keys in APISIX itself), and the flows that wrote this table
+// were deleted. Unlike the tables below it is still READ: isWalletProvisionedUser
+// (src/lib/wallet-provisioning.ts) uses a confirmed/claimed row to keep a legacy wallet
+// account on the rotate-only API-key path. It is NOT part of `npm run export:wallet-data`,
+// so dropping it loses no wallet data, but it does change that behaviour — decide it on
+// its own, not as part of dropping the tables below.
+//
+// What it held: a pending CosmosPay account request initiated by the (public, open-source) CosmosPay
 // Wallet. Because the wallet can hold no server secret, the request is authenticated by
 // a Stellar key signature (proves control of the account) and the account is only
 // created after the user confirms ownership of their email via a one-time link. The
@@ -268,16 +276,16 @@ model WalletRegistration {
   status         String   @default("pending")
   // "register" = email-link account creation; "link" = access-code linking to an EXISTING
   // account (the email already has a user); "social-link" = a social login for an email
-  // that already has an account, held until the emailed code proves the inbox (see
-  // social-onboarding.ts). Drives which flow verify/claim runs.
+  // that already has an account, held until the emailed code proves the inbox (the
+  // since-deleted social onboarding). Drove which flow verify/claim ran.
   kind           String   @default("register")
   // SHA-256 of the one-time access code emailed for the "link" flow (null for register).
   codeHash       String?
   // Failed access-code attempts for the "link" flow; the row locks past a small cap.
   attempts       Int      @default(0)
-  // "social-link" only: the Pollar session that login earned, sealed (sealed-box.ts) while
-  // the emailed code is outstanding. Cleared the moment the row is claimed, locked or
-  // expired — a session is a bearer credential for a custodial wallet.
+  // "social-link" only: the session of the retired Pollar (custodial) login, sealed while the
+  // emailed code was outstanding, by a sealed-box helper deleted with that flow. That flow
+  // cleared it when the row was claimed, locked or expired.
   sealedPayload  String?
   // Populated once confirmed; the API key is re-read from APISIX on claim (not stored).
   userId         String?

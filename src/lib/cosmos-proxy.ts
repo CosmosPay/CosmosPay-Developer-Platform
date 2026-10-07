@@ -44,7 +44,7 @@ export async function enforceOrgPermission(url: URL, userId: string, permission:
  * the trusted header the Payments service reads for internal/dashboard calls. Owners resend
  * immediately (0 ms), admins once per minute (60 s); any other role returns undefined so the
  * Payments service applies its default (24 h). The header only takes effect alongside
- * X-Cosmos-Internal (stripped from client requests by APISIX), so it can't be forged.
+ * a verified X-Cosmos-Internal (a MAC keyed by the gateway secret), so it can't be forged.
  */
 export function tosCooldownHeaders(role: string | undefined | null): Record<string, string> | undefined {
   const ms = role === "owner" ? 0 : role === "admin" ? 60_000 : undefined;

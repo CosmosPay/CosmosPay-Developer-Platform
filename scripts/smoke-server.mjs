@@ -14,9 +14,8 @@
 //
 // It accepts 200 OR 404, and that is deliberate. `apiDocsEnabled` is
 // `import.meta.env.DEV || API_DOCS_ENABLED`, and API_DOCS_ENABLED is an astro:env field
-// with `access: 'public'` — INLINED AT BUILD, not read at runtime (the comment in
-// src/lib/api-docs.ts saying a built server can opt in via env is wrong about this). So
-// a production build serves 404 here and no runtime env can change it. Both statuses
+// with `access: 'public'` — INLINED AT BUILD, not read at runtime (see src/lib/api-docs.ts).
+// So a production build serves 404 here and no runtime env can change it. Both statuses
 // prove the same thing: the entry and its chunks resolved and the router ran. Gating on
 // 200 would only mean CI had to build with a flag production does not use, making the
 // artifact under test differ from the artifact that ships. When the spec IS served, the
