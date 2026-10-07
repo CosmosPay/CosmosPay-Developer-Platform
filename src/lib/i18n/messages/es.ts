@@ -184,7 +184,7 @@ export default {
       growth: {
         desc: "Tarifas más bajas para equipos en crecimiento",
         sub: "/mes · desde",
-        pnote: "desde · 0.35% + 5¢ por txn",
+        pnote: "desde · 0.2% + 5¢ por txn",
         team: "Ilimitado",
         feats: ["Todo lo de Starter", "Tarifa por transacción más baja", "Miembros ilimitados", "Herramientas antifraude Radar", "Descuentos por volumen", "Soporte prioritario"]
       }
@@ -711,7 +711,7 @@ export default {
       {
         name: "Starter",
         desc: "Acepta pagos reales con protección de pagos integrada.",
-        amt: "1.5%",
+        amt: "1%",
         txt: "+ 0.25¢ por transacción *",
         cta: "Empezar gratis",
         feats: ["Todo lo de Community", "Pagos reales", "Protección de pagos", "Acceso parcial a la API", "Soporte estándar", "Resolución de disputas", "Tarjetas y transferencias bancarias"]
@@ -726,9 +726,9 @@ export default {
       {
         name: "Growth",
         desc: "Tarifas más bajas y más potencia para equipos en crecimiento.",
-        txt: "+ 0.35% + 5¢ por transacción *",
+        txt: "+ 0.2% + 5¢ por transacción *",
         cta: "Empezar prueba gratuita",
-        feats: ["Todo lo de Essentials", "Tarifa de 0.35% + 5¢ por transacción", "Miembros del equipo ilimitados", "Herramientas antifraude avanzadas", "Descuentos por volumen", "Soporte prioritario", "Enrutamiento inteligente de pagos"]
+        feats: ["Todo lo de Essentials", "Tarifa de 0.2% + 5¢ por transacción", "Miembros del equipo ilimitados", "Herramientas antifraude avanzadas", "Descuentos por volumen", "Soporte prioritario", "Enrutamiento inteligente de pagos"]
       }
     ],
     enterprise: {
@@ -752,7 +752,7 @@ export default {
       },
       {
         l: "Comisión por transacción",
-        v: ["—", "1.5% + 0.25¢", "0.5% + 10¢", "0.35% + 5¢", "Personalizado"]
+        v: ["—", "1% + 0.25¢", "0.5% + 10¢", "0.2% + 5¢", "Personalizado"]
       },
       {
         l: "Velocidad de liquidación",
@@ -803,7 +803,7 @@ export default {
       },
       {
         q: "¿Cuánto cuesta una transacción?",
-        a: "Starter cuesta 1.5% + 0.25¢ por transacción exitosa. Essentials cuesta $33/mes (o $27.50/mes facturado anualmente) y reduce la tarifa a 0.5% + 10¢, mientras que Growth cuesta $99/mes y la baja hasta 0.35% + 5¢. Cada transacción también conlleva una pequeña comisión de red."
+        a: "Starter cuesta 1% + 0.25¢ por transacción exitosa. Essentials cuesta $33/mes (o $27.50/mes facturado anualmente) y reduce la tarifa a 0.5% + 10¢, mientras que Growth cuesta $99/mes y la baja hasta 0.2% + 5¢. Cada transacción también conlleva una pequeña comisión de red."
       },
       {
         q: "¿Qué métodos de pago admitís?",

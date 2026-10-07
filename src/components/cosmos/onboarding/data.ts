@@ -15,6 +15,6 @@ import { PLAN_SPECS } from "@/lib/plans";
 const orgsLabel = (n: number | null) => (n == null ? "∞" : String(n));
 export const PLAN_DATA = {
   community: { amt: "Free", price: "Free", per: "", perTx: PLAN_SPECS.community.perTx, settle: PLAN_SPECS.community.settle, orgs: orgsLabel(PLAN_SPECS.community.maxOrgs), live: PLAN_SPECS.community.mainnet },
-  starter: { amt: "1.5%", price: "$0", per: "/mo", perTx: PLAN_SPECS.starter.perTx, settle: PLAN_SPECS.starter.settle, orgs: orgsLabel(PLAN_SPECS.starter.maxOrgs), live: PLAN_SPECS.starter.mainnet },
+  starter: { amt: "1%", price: "$0", per: "/mo", perTx: PLAN_SPECS.starter.perTx, settle: PLAN_SPECS.starter.settle, orgs: orgsLabel(PLAN_SPECS.starter.maxOrgs), live: PLAN_SPECS.starter.mainnet },
   growth: { amt: "$99", price: "$99", per: "/mo", perTx: PLAN_SPECS.growth.perTx, settle: PLAN_SPECS.growth.settle, orgs: orgsLabel(PLAN_SPECS.growth.maxOrgs), live: PLAN_SPECS.growth.mainnet },
 };
