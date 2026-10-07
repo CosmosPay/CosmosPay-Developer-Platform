@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.7.0] - 2026-10-07
+
+### Features
+- Lower swap commissions to 0.5% → 0.03% by plan, and re-bake existing keys (df39a7c)
+
 ## [0.6.4] - 2026-10-07
 
 ### Bug Fixes
