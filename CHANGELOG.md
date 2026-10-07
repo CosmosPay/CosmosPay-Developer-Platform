@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.8.0] - 2026-10-07
+
+### Features
+- Payment rates at twice the swap rate — Starter 1%, Growth 0.2% (40527be)
+
 ## [0.7.0] - 2026-10-07
 
 ### Features
