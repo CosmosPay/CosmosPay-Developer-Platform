@@ -267,7 +267,13 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
             // in the web and Tauri builds. The extension would keep working, because
             // host_permissions exempt it from CORS entirely, which is exactly the shape of bug
             // that ships: green where it is developed, dead everywhere else.
-            allow_headers: 'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id',
+            //
+            // X-Wallet-Session carries the sealed sign-in session to /v1/wallet/auth/finish and
+            // the backup routes (the wallet's src/lib/cosmospay.ts), and X-Trace-Id rides on its
+            // DeFindex calls (src/lib/defindex.ts). Same failure when missing: the sign-in dies
+            // at /finish with a CORS error on cosmospay.lat/wallet and in Tauri.
+            allow_headers:
+              'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id,X-Wallet-Session,X-Trace-Id',
             // A browser hides every response header that is not safelisted, so without this
             // the throttling headers the API already sends are invisible to a web client: it
             // sees a 429 with no idea when to come back, and has to guess an interval against
