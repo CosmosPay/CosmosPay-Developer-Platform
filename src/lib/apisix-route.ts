@@ -26,6 +26,7 @@ import {
   routeExists,
   sepRouteId,
   sepRouteUris,
+  syncAllConsumerForwarders,
   type RecoveryRole,
 } from "@/utils/apisix";
 import {
@@ -140,6 +141,13 @@ export async function syncCosmosRoute() {
 
   await syncRecoveryRoute("a", COSMOS_RECOVERY_A_HOST ?? "", COSMOS_RECOVERY_A_UPSTREAM ?? "");
   await syncRecoveryRoute("b", COSMOS_RECOVERY_B_HOST ?? "", COSMOS_RECOVERY_B_UPSTREAM ?? "");
+
+  // Keys minted before a plan's rate changed still carry the old rate in their consumer's
+  // forwarder; re-bake them all once per start so a new rate reaches every key.
+  const consumers = await syncAllConsumerForwarders().catch(() => null);
+  if (consumers) {
+    console.info(`[apisix] Consumer forwarders checked: ${consumers.synced} synced, ${consumers.skipped} left alone`);
+  }
 
   return "error" in result ? null : result;
 }
