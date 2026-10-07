@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.6.3] - 2026-10-07
+
+### Bug Fixes
+- Allow the MetaMask Snap's null origin without breaking the route sync (b4d06db)
+
 ## [0.6.2] - 2026-10-07
 
 ### Bug Fixes
