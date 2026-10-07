@@ -2,6 +2,22 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.6.1] - 2026-10-07
+
+### Features
+- Add new endpoint for retrieving recovery shares and enhance error descriptions (e93b704)
+- Add 503 response for upstream unavailability and include x-cosmos-upstream header (fd943f7)
+
+### Bug Fixes
+- Send a gateway-secret MAC as the X-Cosmos-Internal marker (97cfbec)
+- Patch sharp and other runtime advisories in portal and docs (e98d9f4)
+
+### Refactor
+- Update AGENTS.md and README.md for clarity and accuracy; retire wallet provisioning references in schema.prisma (68ccbf5)
+
+### Dependencies
+- Update brace-expansion to version 1.1.21 and fast-uri to version 3.1.8 (4d3a419)
+
 ## [0.6.0] - 2026-10-04
 
 ### Features
