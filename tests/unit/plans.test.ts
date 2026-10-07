@@ -53,8 +53,13 @@ test('swap commission never increases as the plan gets more expensive', () => {
   for (let i = 1; i < bps.length; i++) {
     assert.ok(bps[i] <= bps[i - 1], `${PLAN_IDS[i]} (${bps[i]}) charges more than ${PLAN_IDS[i - 1]} (${bps[i - 1]})`);
   }
-  assert.equal(planSwapFeeBps('community'), 150);
-  assert.equal(planSwapFeeBps('enterprise'), 0);
+  // 0.5% down to 0.03%: whole bps only (the Payments API and the aggregators refuse
+  // fractions), and never 0 — every plan pays something on a swap.
+  assert.equal(planSwapFeeBps('community'), 50);
+  assert.equal(planSwapFeeBps('enterprise'), 3);
+  for (const [i, b] of bps.entries()) {
+    assert.ok(Number.isInteger(b) && b > 0, `${PLAN_IDS[i]} must charge whole, non-zero bps (got ${b})`);
+  }
 });
 
 test('planSwapFeeBps charges the community rate for an unknown plan', () => {
