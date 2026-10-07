@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.6.4] - 2026-10-07
+
+### Bug Fixes
+- With null in the CORS list, send every origin as an exact regex (997814d)
+
 ## [0.6.3] - 2026-10-07
 
 ### Bug Fixes
