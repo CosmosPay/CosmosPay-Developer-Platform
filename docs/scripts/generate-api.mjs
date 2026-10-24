@@ -73,7 +73,7 @@ title: API Reference
 description: The Cosmos Pay Payments REST API (OpenAPI). Endpoints are versioned under /v1 and authenticated with your secret API key.
 ---
 
-The **Payments API** is a REST API for Stellar payment intents and the resources around them.
+The **Payments API** is a REST API for payment intents and swaps on Stellar, Solana and Monad, and the resources around them.
 All paths are versioned (\`/v1/...\`). Authenticate every request with your secret API key in the
 \`Authorization\` header:
 

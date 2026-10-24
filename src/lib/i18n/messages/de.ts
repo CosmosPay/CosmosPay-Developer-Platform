@@ -144,7 +144,7 @@ export default {
     termsMid: " und der ",
     termsB: "Richtlinie zur akzeptablen Nutzung",
     termsPost: " von Cosmos Pay zu.",
-    specTagline: "Eine API. Alle Stellar-Rails.",
+    specTagline: "Eine API. Stellar, Solana und Monad.",
     specTaglineSub: "Akzeptieren und bewegen Sie Geld in USDC mit Abwicklung in ~5 Sekunden. Wählen Sie den passenden Tarif — jederzeit änderbar.",
     selectedPlan: "Ausgewählter Tarif",
     recommendedForYou: "Für Sie empfohlen",
@@ -168,14 +168,14 @@ export default {
     },
     plans: {
       community: {
-        desc: "Kostenlos zum Launch · nur Stellar",
-        sub: "nur Stellar",
-        pnote: "kostenlos während des Launches · Stellar",
+        desc: "Kostenlos zum Launch · alle Netzwerke",
+        sub: "Stellar, Solana & Monad",
+        pnote: "kostenlos während des Launches · Stellar, Solana & Monad",
         team: "1",
         feats: ["Zahlungs-Webhooks", "Test-API-Schlüssel", "1 Projekt"]
       },
       starter: {
-        desc: "Echte Zahlungen auf Stellar annehmen",
+        desc: "Echte Zahlungen auf Stellar, Solana & Monad annehmen",
         sub: "+ 10¢ / Txn",
         pnote: "0,5% + 10¢ pro Transaktion",
         team: "Bis zu 5",
@@ -205,7 +205,7 @@ export default {
             links: [
               {
                 t: "Payments",
-                s: "Zahlungen über das Stellar-Netzwerk"
+                s: "Stellar, Solana & Monad"
               },
               {
                 t: "Checkout",
@@ -247,7 +247,7 @@ export default {
             links: [
               {
                 t: "Stablecoins",
-                s: "USDC & Stellar-Assets"
+                s: "USDC & Multi-Chain-Assets"
               },
               {
                 t: "Wallets",
@@ -459,13 +459,13 @@ export default {
     hero: {
       tagline: "Deine digitale Welt in Bewegung.",
       headline: "Weniger Code schreiben -> mehr Geld bewegen",
-      lede: "Die Zahlungsinfrastruktur für Entwickler. Eine API, um Geld über das Stellar-Netzwerk zu bewegen — Stablecoins und digitale Assets, die in Sekunden abgewickelt werden, in über 130 Ländern, mit Gebühren im Bruchteil eines Cents.",
+      lede: "Die Zahlungsinfrastruktur für Entwickler. Eine API, um Geld über Stellar, Solana und Monad zu bewegen — Stablecoins und digitale Assets, die in Sekunden abgewickelt werden, in über 130 Ländern, mit Gebühren im Bruchteil eines Cents.",
       getKeys: "API-Schlüssel erhalten",
       trustedBy: "Vertraut von Engineering-Teams bei"
     },
     wallet: {
       title: "Deine digitale Welt in einer Wallet.",
-      lede: "Installiere sie in Chrome, probiere sie direkt im Browser aus oder nimm sie aufs Handy mit. Überall dasselbe Konto, auf Stellar.",
+      lede: "Installiere sie in Chrome, probiere sie direkt im Browser aus oder nimm sie aufs Handy mit. Überall dasselbe Konto, auf Stellar, Solana und Monad.",
       chrome: { t: "In Chrome installieren", s: "Offizielle Erweiterung im Chrome Web Store." },
       web: { t: "Im Browser ausprobieren", s: "Web-App jetzt öffnen, ohne Installation." },
       android: { t: "Für Android herunterladen", s: "Signiertes APK. Erlaube \"Unbekannte Apps installieren\" für deinen Browser, öffne die Datei und installiere sie." },
@@ -498,11 +498,11 @@ export default {
       cards: {
         payments: {
           title: "Payments",
-          desc: "Senden und empfangen Sie Zahlungen auf Stellar mit Finalität in unter 5 Sekunden und nahezu null Gebühren."
+          desc: "Senden und empfangen Sie Zahlungen auf Stellar, Solana und Monad mit Finalität in Sekunden und nahezu null Gebühren."
         },
         stablecoin: {
           title: "Stablecoins",
-          desc: "Wickeln Sie in USDC und anderen Stellar-Assets ab — on-chain und in Echtzeit."
+          desc: "Wickeln Sie in USDC und anderen Assets auf Stellar, Solana und Monad ab — on-chain und in Echtzeit."
         },
         anchor: {
           title: "Anchors",
@@ -523,7 +523,7 @@ export default {
       kicker: "// Entwickler",
       title: "Zuverlässige, erweiterbare Infrastruktur.",
       lede: "Gebaut, um die größten Workloads der Welt zu bewältigen — und sich in jeden Stack einzufügen, den Sie bereits nutzen.",
-      scale: ["API-Anfragen / Tag", "Anfragen / Sek.", "Stellar-Finalität", "Verfügbarkeit"],
+      scale: ["API-Anfragen / Tag", "Anfragen / Sek.", "On-Chain-Finalität", "Verfügbarkeit"],
       paths: [
         {
           t: "No-Code",
@@ -532,12 +532,12 @@ export default {
         },
         {
           t: "Vorgefertigte UI",
-          d: "Binden Sie Checkout oder Elements ein und nehmen Sie in Minuten Stellar-Zahlungen an — mit Komponenten, die zu Ihrer Marke passen.",
+          d: "Binden Sie Checkout oder Elements ein und nehmen Sie in Minuten Zahlungen auf Stellar, Solana und Monad an — mit Komponenten, die zu Ihrer Marke passen.",
           a: "Komponenten ansehen"
         },
         {
           t: "Selbst entwickeln",
-          d: "Nutzen Sie unsere REST- + GraphQL-APIs, typisierten SDKs und die CLI, um eine vollständig maßgeschneiderte Stellar-Integration zu erstellen.",
+          d: "Nutzen Sie unsere REST- + GraphQL-APIs, typisierten SDKs und die CLI, um eine vollständig maßgeschneiderte Multi-Chain-Integration zu erstellen.",
           a: "Dokumentation lesen"
         }
       ],
@@ -547,27 +547,27 @@ export default {
     solutions: {
       kicker: "// Lösungen",
       title: "Für jedes Geschäftsmodell gebaut.",
-      lede: "Von der ersten Transaktion bis zu Milliarden an Volumen — Cosmos Pay passt sich daran an, wie Ihr Unternehmen Geld auf Stellar bewegt.",
+      lede: "Von der ersten Transaktion bis zu Milliarden an Volumen — Cosmos Pay passt sich daran an, wie Ihr Unternehmen Geld auf Stellar, Solana und Monad bewegt.",
       eyebrow: "Lösung",
       startBuilding: "Jetzt entwickeln",
       items: {
         pay: {
-          t: "Stellar-Zahlungen annehmen",
-          d: "Senden und empfangen Sie Zahlungen über das Stellar-Netzwerk mit Finalität in unter 5 Sekunden und Gebühren im Bruchteil eines Cents.",
-          long: "Nehmen Sie Zahlungen von jedem mit einer Stellar-Wallet an. Gelder erreichen in etwa fünf Sekunden Finalität und werden direkt auf Ihr Konto abgewickelt — keine Rückbuchungen, keine Zwischenhändler und keine tagelangen Sperren.",
-          points: ["Abwicklungsfinalität in unter 5 Sekunden", "Gebühren im Bruchteil eines Cents", "Beliebige Stellar-Assets senden & empfangen", "Echtzeit-Webhooks bei jeder Zahlung"]
+          t: "Multi-Chain-Zahlungen annehmen",
+          d: "Senden und empfangen Sie Zahlungen auf Stellar, Solana und Monad mit Finalität in Sekunden und Gebühren im Bruchteil eines Cents.",
+          long: "Nehmen Sie Zahlungen von jedem mit einer Stellar-, Solana- oder Monad-Wallet an. Gelder erreichen in Sekunden Finalität und werden direkt auf Ihr Konto abgewickelt — keine Rückbuchungen, keine Zwischenhändler und keine tagelangen Sperren.",
+          points: ["Abwicklungsfinalität in Sekunden", "Gebühren im Bruchteil eines Cents", "Senden & empfangen auf Stellar, Solana und Monad", "Echtzeit-Webhooks bei jeder Zahlung"]
         },
         coin: {
           t: "Stablecoin-Abwicklung",
-          d: "Wickeln Sie in USDC und anderen Stellar-Assets ab — on-chain und in Echtzeit.",
-          long: "Halten und wickeln Sie Guthaben in USDC und anderen regulierten, auf Stellar ausgegebenen Stablecoins ab. Jede Transaktion wird on-chain erfasst und automatisch mit Ihrem Echtzeit-Ledger abgeglichen.",
+          d: "Wickeln Sie in USDC und anderen Assets auf Stellar, Solana und Monad ab — on-chain und in Echtzeit.",
+          long: "Halten und wickeln Sie Guthaben in USDC und anderen regulierten Stablecoins auf Stellar, Solana und Monad ab. Jede Transaktion wird on-chain erfasst und automatisch mit Ihrem Echtzeit-Ledger abgeglichen.",
           points: ["1:1 gedeckte, regulierte Stablecoins", "On-chain, prüfbare Abwicklung", "Echtzeit-Ledger für mehrere Assets", "Automatischer Abgleich"]
         },
         globe: {
           t: "Grenzüberschreitendes Geld",
-          d: "Erreichen Sie über 130 Länder in einem globalen Netzwerk — ohne Korrespondenzbanken.",
-          long: "Bewegen Sie Geld über Grenzen hinweg genauso wie lokal. Stellar erreicht über 130 Länder ohne Korrespondenzbanken, sodass Auszahlungen in Sekunden statt Tagen ankommen.",
-          points: ["Über 130 Länder in einem Netzwerk", "Keine Verzögerungen durch Korrespondenzbanken", "Transparenter FX im Voraus", "Abwicklung in Sekunden"]
+          d: "Erreichen Sie über 130 Länder über offene, globale Netzwerke — ohne Korrespondenzbanken.",
+          long: "Bewegen Sie Geld über Grenzen hinweg genauso wie lokal. Stellar, Solana und Monad erreichen über 130 Länder ohne Korrespondenzbanken, sodass Auszahlungen in Sekunden statt Tagen ankommen.",
+          points: ["Über 130 Länder, eine API", "Keine Verzögerungen durch Korrespondenzbanken", "Transparenter FX im Voraus", "Abwicklung in Sekunden"]
         },
         ramp: {
           t: "Ein- & Auszahlungen",
@@ -577,8 +577,8 @@ export default {
         },
         wallet: {
           t: "Eingebettete Wallets",
-          d: "Erstellen Sie verwahrte oder nicht verwahrte Stellar-Wallets für Ihre Nutzer.",
-          long: "Geben Sie jedem Nutzer eine Stellar-Wallet in Ihrem Produkt. Wählen Sie verwahrte Wallets, die Sie verwalten, oder nicht verwahrte Wallets, die Ihre Nutzer kontrollieren — beide mit einem einzigen API-Aufruf bereitgestellt.",
+          d: "Erstellen Sie verwahrte oder nicht verwahrte Wallets auf Stellar, Solana und Monad für Ihre Nutzer.",
+          long: "Geben Sie jedem Nutzer eine Multi-Chain-Wallet (Stellar, Solana und Monad) in Ihrem Produkt. Wählen Sie verwahrte Wallets, die Sie verwalten, oder nicht verwahrte Wallets, die Ihre Nutzer kontrollieren — beide mit einem einzigen API-Aufruf bereitgestellt.",
           points: ["Verwahrt oder nicht verwahrt", "Bereitstellung mit einem Aufruf", "Integrierte Schlüsselverwaltung", "Guthaben in mehreren Assets"]
         }
       },
@@ -601,9 +601,9 @@ export default {
       readFull: "Vollständigen Bericht lesen",
       items: {
         Northwind: {
-          label: "schnellere grenzüberschreitende Abwicklung nach dem Wechsel zu Stellar.",
+          label: "schnellere grenzüberschreitende Abwicklung nach dem Wechsel zu Cosmos Pay.",
           tags: ["Payments", "Stablecoins", "Wallets"],
-          story: "Northwind verlagerte seinen globalen Checkout auf Cosmos Pay und das Stellar-Netzwerk, verkürzte die Abwicklung von Tagen auf Sekunden und senkte die FX-Kosten in über 30 Märkten — und das alles mit einem einzigen abgeglichenen Ledger."
+          story: "Northwind verlagerte seinen globalen Checkout auf Cosmos Pay mit Stellar, Solana und Monad, verkürzte die Abwicklung von Tagen auf Sekunden und senkte die FX-Kosten in über 30 Märkten — und das alles mit einem einzigen abgeglichenen Ledger."
         },
         Lumio: {
           label: "um USDC-Abonnements in 40 Ländern zu starten.",
@@ -611,9 +611,9 @@ export default {
           story: "Lumio ersetzte ein Flickwerk regionaler Zahlungsdienstleister durch Cosmos Pay und startete in nur sechs Wochen USDC-denominierte Abonnements in 40 Ländern mithilfe von Anchors für lokale Ein- und Auszahlungen."
         },
         Helios: {
-          label: "über das Stellar-Netzwerk weltweit an Verkäufer abgewickelt.",
+          label: "über Stellar, Solana und Monad weltweit an Verkäufer abgewickelt.",
           tags: ["Payouts", "Connect", "Ramps"],
-          story: "Helios zahlt vollständig über Stellar an eine globale Verkäuferbasis aus. Im letzten Jahr wickelte das Unternehmen 2,4 Mrd. $ an Verkäufer in 58 Ländern ab — mit Geldern, die in Sekunden ankommen, und vollständiger On-Chain-Transparenz."
+          story: "Helios zahlt vollständig on-chain an eine globale Verkäuferbasis aus. Im letzten Jahr wickelte das Unternehmen 2,4 Mrd. $ an Verkäufer in 58 Ländern ab — mit Geldern, die in Sekunden ankommen, und vollständiger On-Chain-Transparenz."
         }
       }
     },
@@ -622,7 +622,7 @@ export default {
       title: "Geschätzt von Entwicklern und Finanzteams.",
       items: {
         MC: {
-          q: "Cosmos Pay ermöglichte es uns, Geld in Sekunden über Grenzen hinweg zu bewegen. Wir ersetzten drei Anbieter durch eine einzige Stellar-API.",
+          q: "Cosmos Pay ermöglichte es uns, Geld in Sekunden über Grenzen hinweg zu bewegen. Wir ersetzten drei Anbieter durch eine einzige Multi-Chain-API.",
           r: "VP Engineering, Vertexa"
         },
         DO: {
@@ -630,7 +630,7 @@ export default {
           r: "Founder, Quanta"
         },
         PN: {
-          q: "Der Abgleich dauerte früher eine Woche. Die On-Chain-Abwicklung auf Stellar erledigt das jetzt in Echtzeit für uns.",
+          q: "Der Abgleich dauerte früher eine Woche. Die On-Chain-Abwicklung erledigt das jetzt in Echtzeit für uns.",
           r: "Head of Finance, Riverstone"
         }
       }
@@ -644,11 +644,11 @@ export default {
         {
           tag: "Report",
           t: "The 2026 State of Stablecoin Payments",
-          d: "Wie Teams Geld auf Stellar im globalen Maßstab bewegen."
+          d: "Wie Teams Geld auf Stellar, Solana und Monad im globalen Maßstab bewegen."
         },
         {
           tag: "Changelog",
-          t: "Stellar-Abwicklungs-Webhooks sind allgemein verfügbar",
+          t: "Multi-Chain-Abwicklungs-Webhooks sind allgemein verfügbar",
           d: "Erhalten Sie Echtzeit-Ereignisse in dem Moment, in dem eine Zahlung Finalität erreicht."
         },
         {
@@ -672,7 +672,7 @@ export default {
       label: "Eine neue Art, deine digitale Welt zu bewegen.",
       thanks: "Danke für dein Vertrauen.",
       title: "Beginnen Sie noch heute zu entwickeln.",
-      desc: "Erstellen Sie eine kostenlose Testnet-Sandbox und gehen Sie auf Stellar live, sobald Sie bereit sind.",
+      desc: "Erstellen Sie eine kostenlose Testnet-Sandbox und gehen Sie auf Stellar, Solana und Monad live, sobald Sie bereit sind.",
       getKeys: "API-Schlüssel erhalten",
       talk: "Mit dem Engineering-Team sprechen",
       helpers: [
@@ -1014,7 +1014,7 @@ export default {
     },
     payments: {
       title: "Zahlungen",
-      sub: "{n} Zahlungen · sofort auf Stellar abgewickelt",
+      sub: "{n} Zahlungen · sofort on-chain abgewickelt",
       filters: {
         all: "Alle",
         ok: "Erfolgreich",
@@ -1034,7 +1034,7 @@ export default {
       modal: {
         eyebrow: "Zahlung",
         title: "Zahlung erstellen",
-        desc: "Zahlungen werden sofort über das Stellar-Netzwerk abgewickelt — ohne Haltefrist.",
+        desc: "Zahlungen werden sofort auf Stellar, Solana oder Monad abgewickelt — ohne Haltefrist.",
         amount: "Betrag",
         asset: "Asset",
         customer: "Kunde",
@@ -1099,8 +1099,8 @@ export default {
     },
     balances: {
       title: "Guthaben",
-      sub: "In Echtzeit direkt auf Ihr Stellar-Konto abgewickelt",
-      note: "Cosmos Pay hält Ihre Gelder niemals — jede Zahlung wird in dem Moment, in dem sie getätigt wird, direkt auf Ihr eigenes Stellar-Konto abgewickelt.",
+      sub: "In Echtzeit direkt in Ihre eigene Wallet abgewickelt",
+      note: "Cosmos Pay hält Ihre Gelder niemals — jede Zahlung wird in dem Moment, in dem sie getätigt wird, direkt in Ihre eigene Wallet (auf Stellar, Solana oder Monad) abgewickelt.",
       total: "GESAMTGUTHABEN",
       across: "über 3 Assets",
       explorer: "Im Explorer ansehen",
@@ -1193,7 +1193,7 @@ export default {
     },
     webhooks: {
       title: "Webhooks",
-      sub: "Echtzeit-Ereignisse, wenn Zahlungen auf Stellar abgewickelt werden",
+      sub: "Echtzeit-Ereignisse, wenn Zahlungen auf Stellar, Solana oder Monad abgewickelt werden",
       add: "Endpunkt hinzufügen",
       endpoints: "Endpunkte",
       recent: "Aktuelle Zustellungen",
@@ -1509,7 +1509,7 @@ export default {
     },
     swaps: {
       title: "Swaps",
-      sub: "{n} swaps · cross-asset on Stellar",
+      sub: "{n} Swaps · auf Stellar, Solana und Monad",
       create: "Create swap",
       readOnly: "You have read-only access to swaps in this organization.",
       searchPlaceholder: "Search by account, asset or ID…",

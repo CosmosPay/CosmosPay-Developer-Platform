@@ -3,9 +3,9 @@ title: Primeiros passos
 description: Tudo o que você precisa antes do seu primeiro pagamento Cosmos Pay — o que é, como um pagamento flui e as duas formas de integração.
 ---
 
-O **Cosmos Pay** permite que você aceite pagamentos na rede [Stellar](https://stellar.org) usando
-**intenções de pagamento** SEP-7: você descreve um pagamento, o pagador o conclui a partir da própria
-carteira e você o confirma on-chain. Em torno desse núcleo você também tem **webhooks**, **produtos**,
+O **Cosmos Pay** permite que você aceite pagamentos na [Stellar](https://stellar.org),
+[Solana](https://solana.com) e [Monad](https://monad.xyz) usando **intenções de pagamento**: você descreve um pagamento, o pagador o conclui a partir da própria
+carteira e você o confirma on-chain. Em torno desse núcleo você também tem **swaps** (em cada rede e entre elas), **webhooks**, **produtos**,
 **clientes** e **análises**.
 
 Há duas formas de integração, e a maioria dos aplicativos usa ambas em conjunto:
@@ -17,11 +17,15 @@ Há duas formas de integração, e a maioria dos aplicativos usa ambas em conjun
 
 ## Como funciona um pagamento
 
-Todo pagamento passa pelas mesmas três etapas:
+Todo pagamento passa pelas mesmas três etapas (aqui com o SDK, na Stellar):
 
 1. **Seu servidor cria uma intenção** com sua chave de API secreta — por exemplo, `client.paymentIntents.createPay({ ... })`. Você recebe de volta um `uri` SEP-7 e um `qr` para mostrar ao pagador.
 2. **O pagador a conclui** na sua carteira Stellar (Freighter, xBull, Rabet, LOBSTR ou Albedo). No navegador isso é uma única chamada: `new WebClient().pay(intent)`, que retorna um `txHash` on-chain.
 3. **Seu servidor valida** esse hash — `intent.validate(txHash)` — o que atualiza o status do pagamento e dispara um webhook para seus endpoints.
+
+Na Solana e na Monad, crie a intenção pela [API REST](/api/payment-intents) informando `chain`:
+você recebe um link Solana Pay ou EIP-681 em vez de um SEP-7, o pagador paga de qualquer carteira
+dessa rede, e a API de Pagamentos detecta o pagamento on-chain e dispara os mesmos webhooks.
 
 <Callout title="Testnet vs mainnet">
 Você nunca escolhe a rede no código — ela é decidida pelo **prefixo da sua chave de API**: chaves `dv_` rodam

@@ -1,9 +1,10 @@
 ---
 title: Introdução
-description: Integre pagamentos Stellar (SEP-7) com o Cosmos Pay — o SDK JavaScript/TypeScript e a API REST de Pagamentos.
+description: Integre pagamentos multichain na Stellar, Solana e Monad com o Cosmos Pay — o SDK JavaScript/TypeScript e a API REST de Pagamentos.
 ---
 
-O **Cosmos Pay** permite que você aceite pagamentos Stellar (intenções de pagamento SEP-7), gerencie webhooks,
+O **Cosmos Pay** permite que você aceite pagamentos na Stellar, Solana e Monad (intenções de pagamento com links
+SEP-7, Solana Pay e EIP-681), faça swaps nessas redes e entre elas, e gerencie webhooks,
 produtos, clientes e análises. Esta documentação cobre as duas formas de integração:
 
 <Cards>
@@ -15,10 +16,14 @@ produtos, clientes e análises. Esta documentação cobre as duas formas de inte
 
 ## O fluxo de pagamento
 
-Um pagamento tem três etapas:
+Um pagamento tem três etapas (aqui com o SDK, na Stellar):
 
 1. O **servidor** cria uma intenção com sua chave de API secreta (`client.paymentIntents.createPay`/`createTx`).
 2. O **navegador** a conclui com a carteira Stellar do usuário (`new WebClient().pay(intent)`), produzindo um `txHash` on-chain.
 3. O **servidor** valida esse hash (`intent.validate(txHash)`), o que atualiza o status e dispara um webhook.
 
 A rede é escolhida pelo tipo de chave de API: chaves `dv_` usam a **testnet**, chaves `prod_` usam a **mainnet**.
+
+Na Solana e na Monad, crie a intenção pela [API REST](/api/payment-intents) informando `chain`:
+ela retorna um link Solana Pay ou EIP-681, o pagador paga de qualquer carteira dessa rede, e a
+API de Pagamentos detecta o pagamento on-chain e dispara os mesmos webhooks.

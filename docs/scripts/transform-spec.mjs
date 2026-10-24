@@ -27,7 +27,7 @@ export const TAGS = [
   {
     name: 'payment-intents',
     title: 'Payment Intents',
-    description: 'Create, fetch, update, cancel and validate Stellar (SEP-7) payment intents.',
+    description: 'Create, fetch, update, cancel and validate payment intents on Stellar (SEP-7), Solana (Solana Pay) and Monad (EIP-681).',
   },
   {
     name: 'swaps',

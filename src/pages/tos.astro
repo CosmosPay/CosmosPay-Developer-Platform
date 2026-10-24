@@ -1,7 +1,7 @@
 ---
 /* /tos — General Terms & Conditions covering BOTH Cosmos Pay products:
  *   1. the crypto payment gateway (payments API, swaps, fiat on/off-ramp), and
- *   2. the Cosmos Pay non-custodial Stellar wallet (app + browser extension).
+ *   2. the Cosmos Pay non-custodial wallet for Stellar, Solana and Monad (app + browser extension).
  *
  * Public page; language follows the site cookie (EN default, full ES version).
  * The wallet links here from its onboarding consent checkbox (TERMS_URL).
@@ -12,19 +12,19 @@ import CosmosLayout from "@/layouts/CosmosLayout.astro";
 const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const es = lang === "es";
 
-const LAST_UPDATED = "2026-07-04";
+const LAST_UPDATED = "2026-10-09";
 
 type Section = { h: string; ps: string[] };
 
 const en: { title: string; intro: string; sections: Section[] } = {
   title: "Terms and Conditions of Use",
   intro:
-    "These Terms govern your use of Cosmos Pay: the crypto payment gateway (payments API, swaps and fiat on/off-ramp) and the Cosmos Pay non-custodial Stellar wallet (mobile app, web app and browser extension). By using any of them you accept these Terms. If you do not agree, do not use the services.",
+    "These Terms govern your use of Cosmos Pay: the crypto payment gateway (payments API, swaps and fiat on/off-ramp) and the Cosmos Pay non-custodial wallet for Stellar, Solana and Monad (mobile app, web app and browser extension). By using any of them you accept these Terms. If you do not agree, do not use the services.",
   sections: [
     {
       h: "1. Who we are",
       ps: [
-        "“Cosmos Pay” (“we”) provides open payment infrastructure on the Stellar network: a developer platform (dev.cosmospay.lat), a payments gateway (api.cosmospay.lat) and a non-custodial wallet. Contact: cosmosapplat@gmail.com.",
+        "“Cosmos Pay” (“we”) provides open, multi-chain payment infrastructure on the Stellar, Solana and Monad networks: a developer platform (dev.cosmospay.lat), a payments gateway (api.cosmospay.lat) and a non-custodial wallet. Contact: cosmosapplat@gmail.com.",
       ],
     },
     {
@@ -32,13 +32,13 @@ const en: { title: string; intro: string; sections: Section[] } = {
       ps: [
         "The wallet generates and encrypts your keys locally on your device. We never receive, store or can recover your recovery phrase, secret key or password.",
         "You are solely and exclusively responsible for safekeeping your recovery phrase and password, and for all funds in your wallet. If you lose the phrase and forget the password, the funds are irrecoverable — by anyone, including us.",
-        "All transactions you sign are executed on the public Stellar network and are irreversible. Verify addresses and amounts before confirming; we cannot cancel, reverse or refund on-chain transactions.",
+        "All transactions you sign are executed on the public blockchain network they belong to (Stellar, Solana or Monad) and are irreversible. Verify addresses and amounts before confirming; we cannot cancel, reverse or refund on-chain transactions.",
       ],
     },
     {
       h: "3. Payment gateway & developer platform",
       ps: [
-        "The gateway lets registered users and developers create payment intents, quotes and swaps on Stellar via API keys issued by the developer platform. You are responsible for keeping your API keys secret and for all activity performed with them.",
+        "The gateway lets registered users and developers create payment intents, quotes and swaps on Stellar, Solana and Monad via API keys issued by the developer platform. You are responsible for keeping your API keys secret and for all activity performed with them.",
         "Swap quotes are estimates; the executed price may differ within the disclosed slippage tolerance. Network fees and, where applicable, service fees are shown before you confirm.",
         "We may throttle, suspend or revoke API access that abuses the service, breaks the law or harms other users.",
       ],
@@ -77,7 +77,7 @@ const en: { title: string; intro: string; sections: Section[] } = {
     {
       h: "9. No warranty & limitation of liability",
       ps: [
-        "The services are provided “as is”, without warranties of any kind. To the maximum extent permitted by law, we are not liable for lost funds resulting from lost phrases/passwords, user error, on-chain behaviour, third-party services (Stellar network, Horizon, price feeds, fiat partners), force majeure, or indirect or consequential damages. Nothing here excludes liability that cannot be excluded by law.",
+        "The services are provided “as is”, without warranties of any kind. To the maximum extent permitted by law, we are not liable for lost funds resulting from lost phrases/passwords, user error, on-chain behaviour, third-party services (the Stellar, Solana and Monad networks and their nodes, Horizon, swap aggregators, price feeds, fiat partners), force majeure, or indirect or consequential damages. Nothing here excludes liability that cannot be excluded by law.",
       ],
     },
     {
@@ -96,12 +96,12 @@ const en: { title: string; intro: string; sections: Section[] } = {
 const esC: typeof en = {
   title: "Términos y Condiciones de Uso",
   intro:
-    "Estos Términos regulan tu uso de Cosmos Pay: la pasarela de pagos cripto (API de pagos, swaps y on/off-ramp fiat) y la wallet no custodial de Stellar (app móvil, web y extensión de navegador). Al usar cualquiera de ellos aceptas estos Términos. Si no estás de acuerdo, no uses los servicios.",
+    "Estos Términos regulan tu uso de Cosmos Pay: la pasarela de pagos cripto (API de pagos, swaps y on/off-ramp fiat) y la wallet no custodial para Stellar, Solana y Monad (app móvil, web y extensión de navegador). Al usar cualquiera de ellos aceptas estos Términos. Si no estás de acuerdo, no uses los servicios.",
   sections: [
     {
       h: "1. Quiénes somos",
       ps: [
-        "“Cosmos Pay” (“nosotros”) ofrece infraestructura abierta de pagos sobre la red Stellar: una plataforma para desarrolladores (dev.cosmospay.lat), una pasarela de pagos (api.cosmospay.lat) y una wallet no custodial. Contacto: cosmosapplat@gmail.com.",
+        "“Cosmos Pay” (“nosotros”) ofrece infraestructura abierta de pagos multichain sobre las redes Stellar, Solana y Monad: una plataforma para desarrolladores (dev.cosmospay.lat), una pasarela de pagos (api.cosmospay.lat) y una wallet no custodial. Contacto: cosmosapplat@gmail.com.",
       ],
     },
     {
@@ -109,13 +109,13 @@ const esC: typeof en = {
       ps: [
         "La wallet genera y cifra tus claves localmente en tu dispositivo. Nunca recibimos, guardamos ni podemos recuperar tu frase de recuperación, tu clave secreta ni tu contraseña.",
         "Eres única y exclusivamente responsable de custodiar tu frase de recuperación y tu contraseña, y de todos los fondos de tu wallet. Si pierdes la frase y olvidas la contraseña, los fondos son irrecuperables — para cualquiera, incluidos nosotros.",
-        "Toda transacción que firmes se ejecuta en la red pública de Stellar y es irreversible. Verifica direcciones e importes antes de confirmar; no podemos cancelar, revertir ni reembolsar transacciones on-chain.",
+        "Toda transacción que firmes se ejecuta en la red blockchain pública a la que pertenece (Stellar, Solana o Monad) y es irreversible. Verifica direcciones e importes antes de confirmar; no podemos cancelar, revertir ni reembolsar transacciones on-chain.",
       ],
     },
     {
       h: "3. Pasarela de pagos y plataforma de desarrolladores",
       ps: [
-        "La pasarela permite a usuarios y desarrolladores registrados crear intentos de pago, cotizaciones y swaps en Stellar mediante claves API emitidas por la plataforma. Eres responsable de mantener en secreto tus claves API y de toda la actividad realizada con ellas.",
+        "La pasarela permite a usuarios y desarrolladores registrados crear intentos de pago, cotizaciones y swaps en Stellar, Solana y Monad mediante claves API emitidas por la plataforma. Eres responsable de mantener en secreto tus claves API y de toda la actividad realizada con ellas.",
         "Las cotizaciones de swap son estimaciones; el precio ejecutado puede variar dentro de la tolerancia de slippage mostrada. Las comisiones de red y, en su caso, de servicio se muestran antes de confirmar.",
         "Podemos limitar, suspender o revocar el acceso API que abuse del servicio, incumpla la ley o dañe a otros usuarios.",
       ],
@@ -154,7 +154,7 @@ const esC: typeof en = {
     {
       h: "9. Sin garantías y limitación de responsabilidad",
       ps: [
-        "Los servicios se prestan “tal cual”, sin garantías de ningún tipo. En la máxima medida permitida por la ley, no respondemos por fondos perdidos por pérdida de frases/contraseñas, error del usuario, comportamiento on-chain, servicios de terceros (red Stellar, Horizon, feeds de precios, socios fiat), fuerza mayor, ni por daños indirectos o consecuenciales. Nada de lo anterior excluye responsabilidades que la ley no permita excluir.",
+        "Los servicios se prestan “tal cual”, sin garantías de ningún tipo. En la máxima medida permitida por la ley, no respondemos por fondos perdidos por pérdida de frases/contraseñas, error del usuario, comportamiento on-chain, servicios de terceros (las redes Stellar, Solana y Monad y sus nodos, Horizon, agregadores de swaps, feeds de precios, socios fiat), fuerza mayor, ni por daños indirectos o consecuenciales. Nada de lo anterior excluye responsabilidades que la ley no permita excluir.",
       ],
     },
     {
@@ -176,7 +176,7 @@ const t = es ? esC : en;
 <CosmosLayout
   title={`${t.title} · Cosmos Pay`}
   lang={lang}
-  description="Cosmos Pay Terms and Conditions — crypto payment gateway and non-custodial Stellar wallet."
+  description="Cosmos Pay Terms and Conditions — crypto payment gateway and non-custodial wallet for Stellar, Solana and Monad."
 >
   <main class="tos-wrap">
     <article class="tos">

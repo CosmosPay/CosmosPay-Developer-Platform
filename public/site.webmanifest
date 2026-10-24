@@ -1,7 +1,7 @@
 {
   "name": "Cosmos Pay — Developer Platform",
   "short_name": "Cosmos Pay",
-  "description": "Mint API keys and operate the Cosmos Pay Payments API: Stellar SEP-7 payment intents, webhooks, products, customers and analytics.",
+  "description": "Mint API keys and operate the Cosmos Pay Payments API: multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers and analytics.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

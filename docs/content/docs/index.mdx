@@ -1,10 +1,11 @@
 ---
 title: Introduction
-description: Integrate Stellar (SEP-7) payments with Cosmos Pay — the JavaScript/TypeScript SDK and the Payments REST API.
+description: Integrate multi-chain payments on Stellar, Solana and Monad with Cosmos Pay — the JavaScript/TypeScript SDK and the Payments REST API.
 ---
 
-**Cosmos Pay** lets you accept Stellar payments (SEP-7 payment intents), manage webhooks,
-products, customers and analytics. These docs cover both ways to integrate:
+**Cosmos Pay** lets you accept payments on Stellar, Solana and Monad (payment intents with SEP-7,
+Solana Pay and EIP-681 links), swap on and between those chains, and manage webhooks, products,
+customers and analytics. These docs cover both ways to integrate:
 
 <Cards>
   <Card title="SDK · Overview" href="/sdk/server/overview" description="What @cosmosapp/pay_sdk is, the server + browser entry points, and the mental model." />
@@ -15,10 +16,14 @@ products, customers and analytics. These docs cover both ways to integrate:
 
 ## The payment flow
 
-A payment has three steps:
+A payment has three steps (shown here with the SDK, on Stellar):
 
 1. **Server** creates an intent with your secret API key (`client.paymentIntents.createPay`/`createTx`).
 2. **Browser** completes it with the user's Stellar wallet (`new WebClient().pay(intent)`), producing an on-chain `txHash`.
 3. **Server** validates that hash (`intent.validate(txHash)`), which updates the status and fires a webhook.
 
 The network is chosen by the API key type: `dv_` keys hit **testnet**, `prod_` keys hit **mainnet**.
+
+On Solana and Monad, create the intent through the [REST API](/api/payment-intents) with `chain`:
+it returns a Solana Pay or EIP-681 link, the payer pays it from any wallet on that chain, and the
+Payments API detects the payment on-chain and fires the same webhooks.

@@ -2,7 +2,8 @@
 
 The developer dashboard for **Cosmos Pay**: a self-service console where developers sign in,
 manage their organization, mint API keys, and operate against the Cosmos Pay Payments API
-(Stellar SEP-7 payment intents, webhooks, products, customers and analytics).
+(multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers
+and analytics).
 
 It is an **Astro** SSR app (Node adapter) that authenticates users through **Authentik**
 (OAuth2 via Better Auth), provisions per-user credentials in the **APISIX** gateway, and
@@ -222,7 +223,8 @@ served at **`/api/openapi.json`** (schemas live in `src/schemas/`). Highlights:
 Part of the Cosmos Pay ecosystem:
 
 - **[CosmosPay Community Server](https://github.com/CosmosPay/CosmosPay-Community-Server)** —
-  the NestJS Payments API (Stellar SEP-7 intents, webhooks, products, customers, analytics).
+  the NestJS Payments API (payment intents and swaps on Stellar, Solana and Monad, webhooks,
+  products, customers, analytics).
   This is the **upstream** that the dashboard proxies through APISIX.
 - **[CosmosJS SDK](https://github.com/CosmosPay/CosmosJS_SDK)** — the object-oriented JS/TS
   client developers use to call the public API with their API keys.

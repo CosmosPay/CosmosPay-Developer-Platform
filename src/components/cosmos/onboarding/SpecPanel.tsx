@@ -33,7 +33,7 @@ export function SpecPanel({ t, viewId, setViewId, selectedId, recId, showRec }) 
             <div className="spec-grid">
               <SpecRow icon={I.coin} k={ob.spec.perTx} v={d.perTx} />
               <SpecRow icon={I.bolt} k={ob.spec.settle} v={d.settle} />
-              <SpecRow icon={I.net} k={ob.spec.network} v="Stellar" />
+              <SpecRow icon={I.net} k={ob.spec.network} v="Stellar · Solana · Monad" />
               <SpecRow icon={I.team} k={ob.spec.team} v={p.team} />
               <SpecRow icon={I.org} k={ob.spec.orgs} v={d.orgs} />
               <SpecRow icon={I.life} k={ob.spec.support} v={ob.supportLevels[SUPPORT_FOR[id]]} />
