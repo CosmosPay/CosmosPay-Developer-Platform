@@ -56,6 +56,14 @@ export const TAGS = [
       '`verified` is a claim about the issuer’s identity, not about quality.',
   },
   {
+    name: 'payment-links',
+    title: 'Payment Links',
+    description:
+      'The payer’s view of one payment link, served without a key to the hosted checkout ' +
+      'on payments.cosmospay.lat. The link id is the capability: anyone holding it can read ' +
+      'the amount, the address to pay and the live status, and nothing about the merchant.',
+  },
+  {
     name: 'public-key',
     title: 'Public Key',
     description:

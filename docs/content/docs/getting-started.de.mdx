@@ -3,9 +3,9 @@ title: Erste Schritte
 description: Alles, was Sie vor Ihrer ersten Cosmos-Pay-Zahlung brauchen — was es ist, wie eine Zahlung abläuft und die beiden Integrationswege.
 ---
 
-Mit **Cosmos Pay** akzeptieren Sie Zahlungen im [Stellar](https://stellar.org)-Netzwerk über
-SEP-7-**Zahlungsabsichten**: Sie beschreiben eine Zahlung, der Zahler schließt sie aus seinem eigenen
-Wallet ab, und Sie bestätigen sie On-Chain. Rund um diesen Kern erhalten Sie außerdem **Webhooks**, **Produkte**,
+Mit **Cosmos Pay** akzeptieren Sie Zahlungen auf [Stellar](https://stellar.org),
+[Solana](https://solana.com) und [Monad](https://monad.xyz) über **Zahlungsabsichten**: Sie beschreiben eine Zahlung, der Zahler schließt sie aus seinem eigenen
+Wallet ab, und Sie bestätigen sie On-Chain. Rund um diesen Kern erhalten Sie außerdem **Swaps** (auf jeder Chain und zwischen ihnen), **Webhooks**, **Produkte**,
 **Kunden** und **Analysen**.
 
 Es gibt zwei Integrationswege, und die meisten Anwendungen nutzen beide gemeinsam:
@@ -17,11 +17,15 @@ Es gibt zwei Integrationswege, und die meisten Anwendungen nutzen beide gemeinsa
 
 ## So funktioniert eine Zahlung
 
-Jede Zahlung durchläuft dieselben drei Schritte:
+Jede Zahlung durchläuft dieselben drei Schritte (hier mit dem SDK, auf Stellar):
 
 1. **Ihr Server erstellt eine Absicht** mit Ihrem geheimen API-Schlüssel — z. B. `client.paymentIntents.createPay({ ... })`. Sie erhalten eine SEP-7-`uri` und einen `qr`, die Sie dem Zahler anzeigen.
 2. **Der Zahler schließt sie ab** in seinem Stellar-Wallet (Freighter, xBull, Rabet, LOBSTR oder Albedo). Im Browser ist das ein einziger Aufruf: `new WebClient().pay(intent)`, der einen On-Chain-`txHash` zurückgibt.
 3. **Ihr Server validiert** diesen Hash — `intent.validate(txHash)` —, wodurch der Status der Zahlung aktualisiert und ein Webhook an Ihre Endpunkte ausgelöst wird.
+
+Auf Solana und Monad erstellen Sie die Absicht über die [REST-API](/api/payment-intents) mit `chain`:
+Sie erhalten einen Solana-Pay- oder EIP-681-Link statt eines SEP-7-Links, der Zahler bezahlt ihn aus einem
+beliebigen Wallet dieser Chain, und die Payments-API erkennt die Zahlung on-chain und löst dieselben Webhooks aus.
 
 <Callout title="Testnet vs. Mainnet">
 Sie wählen das Netzwerk niemals im Code — es wird durch Ihr **API-Schlüssel-Präfix** bestimmt: `dv_`-Schlüssel laufen

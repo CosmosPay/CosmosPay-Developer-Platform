@@ -8,6 +8,7 @@
     "cross-chain-swaps",
     "liquidity-pools",
     "assets",
+    "payment-links",
     "public-key",
     "plugins",
     "aliases",

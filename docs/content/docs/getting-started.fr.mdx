@@ -3,9 +3,9 @@ title: Pour commencer
 description: Tout ce dont vous avez besoin avant votre premier paiement Cosmos Pay — ce que c'est, comment se déroule un paiement, et les deux façons d'intégrer.
 ---
 
-**Cosmos Pay** vous permet d'accepter des paiements sur le réseau [Stellar](https://stellar.org) à l'aide
-des **intentions de paiement** SEP-7 : vous décrivez un paiement, le payeur le complète depuis son propre
-portefeuille, et vous le confirmez sur la chaîne. Autour de ce cœur, vous bénéficiez aussi de **webhooks**, **produits**,
+**Cosmos Pay** vous permet d'accepter des paiements sur [Stellar](https://stellar.org),
+[Solana](https://solana.com) et [Monad](https://monad.xyz) à l'aide des **intentions de paiement** : vous décrivez un paiement, le payeur le complète depuis son propre
+portefeuille, et vous le confirmez sur la chaîne. Autour de ce cœur, vous bénéficiez aussi de **swaps** (sur chaque réseau et entre eux), de **webhooks**, **produits**,
 **clients** et **analyses**.
 
 Il existe deux façons d'intégrer, et la plupart des applications utilisent les deux ensemble :
@@ -17,11 +17,15 @@ Il existe deux façons d'intégrer, et la plupart des applications utilisent les
 
 ## Comment fonctionne un paiement
 
-Chaque paiement passe par les trois mêmes étapes :
+Chaque paiement passe par les trois mêmes étapes (ici avec le SDK, sur Stellar) :
 
 1. **Votre serveur crée une intention** avec votre clé API secrète — par ex. `client.paymentIntents.createPay({ ... })`. Vous récupérez un `uri` SEP-7 et un `qr` à présenter au payeur.
 2. **Le payeur la complète** dans son portefeuille Stellar (Freighter, xBull, Rabet, LOBSTR ou Albedo). Dans le navigateur, c'est un seul appel : `new WebClient().pay(intent)`, qui renvoie un `txHash` sur la chaîne.
 3. **Votre serveur valide** ce hash — `intent.validate(txHash)` — ce qui met à jour le statut du paiement et déclenche un webhook vers vos points de terminaison.
+
+Sur Solana et Monad, créez l'intention via l'[API REST](/api/payment-intents) en indiquant `chain` :
+vous obtenez un lien Solana Pay ou EIP-681 au lieu d'un lien SEP-7, le payeur le règle depuis n'importe quel
+portefeuille de ce réseau, et l'API Payments détecte le paiement sur la chaîne et déclenche les mêmes webhooks.
 
 <Callout title="Testnet vs mainnet">
 Vous ne choisissez jamais le réseau dans le code — il est déterminé par le **préfixe de votre clé API** : les clés `dv_` s'exécutent

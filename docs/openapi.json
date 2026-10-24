@@ -1063,6 +1063,111 @@
         ]
       }
     },
+    "/v1/payment-links/{id}": {
+      "get": {
+        "description": "For a hosted checkout page: amount, asset, network, the address to pay (`payTo`), the link and its QR, and the live status, so the page can poll until the payment settles. Reachable without an API key or the gateway secret.\n\n**The id is the capability.** Anyone who holds a payment link can read it here, which is what a payment link is for. Nothing about the owning merchant account, the payer’s own account, the envelope, the merchant’s `reference` or `callback`, or the status history is returned. `uri` is the link verbatim, so whatever the wallet needs from it is in it.\n\nAnswered with `Cache-Control: no-store`. Budgeted per client address (`x-cosmos-rate-limit`): poll at most every few seconds and honour `Retry-After`.",
+        "operationId": "PaymentLinksController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id (a cuid), as in the link `https://payments.cosmospay.lat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              },
+              "Cache-Control": {
+                "description": "Always `no-store`: the status changes live.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              }
+            },
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPaymentLinkEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "description": "No payment intent has this id — it never existed or it was deleted. The two are the same answer, and the same one `GET /v1/payment-intents/{id}` gives its owner.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found — No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a payment link as its payer sees it (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:read",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
     "/v1/customers": {
       "post": {
         "operationId": "CustomersController_create_v1",
@@ -11698,6 +11803,10 @@
       "description": "The asset registry: which (code, issuer) pairs exist per network and who issues them. `verified` is a claim about the issuer’s identity, not about quality."
     },
     {
+      "name": "payment-links",
+      "description": "The payer’s view of one payment link, served without a key to the hosted checkout on payments.cosmospay.lat. The link id is the capability: anyone holding it can read the amount, the address to pay and the live status, and nothing about the merchant."
+    },
+    {
       "name": "public-key",
       "description": "The shared public API key, served without a key to wallets that have no account yet. Not a secret: what it may call is confined server-side to routes that return no per-consumer data."
     },
@@ -12546,6 +12655,142 @@
         "required": [
           "id",
           "deleted"
+        ]
+      },
+      "PublicPaymentLinkEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmh4x2k9a0001l70g8v5q3z2w",
+            "description": "The payment intent id. It is also the capability: anyone holding it can read this."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TX",
+              "PAY"
+            ],
+            "example": "PAY",
+            "description": "`PAY`: a link the wallet builds the payment from. `TX`: a Stellar envelope built for one known payer, carried inside `uri`."
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "public",
+            "description": "Network tier: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet)."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "example": "PENDING",
+            "description": "The stored status. An unpaid intent past `expiresAt` reads `PENDING` until the observer expires it, and `EXPIRED` is not final: a payment verified on-chain later still moves it to `SUCCEEDED`."
+          },
+          "payTo": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "The address the payer sends to — always the one inside `uri`. Stellar and Solana: the merchant’s account. Monad with a relayer: the intent’s own deposit address, which forwards the payment to the merchant less `networkFee`."
+          },
+          "amount": {
+            "type": "string",
+            "nullable": true,
+            "example": "25.5",
+            "description": "Decimal, in the asset’s units. Null: the payer chooses."
+          },
+          "asset": {
+            "type": "string",
+            "example": "native",
+            "description": "Asset code, or `native` for the chain’s coin (XLM, SOL, MON)."
+          },
+          "assetIssuer": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Stellar: the issuer. Solana: the SPL mint. Monad: the ERC-20 contract. Null for the native coin."
+          },
+          "memo": {
+            "type": "string",
+            "example": "4127759120438726917",
+            "description": "The intent’s MEMO_ID. On Stellar the payment must carry it, and the link does."
+          },
+          "msg": {
+            "type": "string",
+            "nullable": true,
+            "example": "Order #24",
+            "description": "The message the merchant attached for the payer."
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=25.5&memo=4127759120438726917&memo_type=MEMO_ID&msg=Order+%2324",
+            "description": "The payment link, exactly as the wallet opens it: SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad. It is the same link the merchant handed out, so it carries what the wallet needs — a SEP-7 `callback` the merchant set and, for a `TX` intent, the unsigned envelope."
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…",
+            "description": "QR code of `uri` (PNG data URL), derived on read."
+          },
+          "txHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The transaction reported or verified for this intent."
+          },
+          "networkFee": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad deposit. Null when nothing is."
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2026-10-24T13:34:56.000Z",
+            "description": "When an unpaid intent expires. A payment verified later still settles it."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-24T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "chain",
+          "network",
+          "status",
+          "payTo",
+          "amount",
+          "asset",
+          "assetIssuer",
+          "memo",
+          "msg",
+          "uri",
+          "qr",
+          "txHash",
+          "networkFee",
+          "expiresAt",
+          "createdAt"
         ]
       },
       "CreateCustomerDto": {
