@@ -765,6 +765,8 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .login-card h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.035em; margin: 20px 0 12px; }
 .login-card > p { color: var(--ink-2); font-size: 16px; line-height: 1.6; margin: 0 0 28px; }
 .login-card .btn { width: 100%; }
+.login-card .login-back { display: inline-block; margin-top: 14px; font-size: 14px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.login-card .login-back:hover { color: var(--ink); }
 .login-card .login-note { display: block; margin-top: 18px; font-family: var(--ff-soft); font-size: 12px; color: var(--ink-3); letter-spacing: .02em; }
 .modal-body .cmetric { font-size: 2.75rem; font-weight: 300; letter-spacing: -0.04em; line-height: 1; color: var(--ink); margin-bottom: 8px; }
 

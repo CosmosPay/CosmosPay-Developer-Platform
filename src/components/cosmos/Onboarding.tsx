@@ -2,7 +2,7 @@
    Ported from the Cosmos Pay Design "onboarding" handoff; restyled to the project's
    own tokens (acento de marca, sin monospace) and fully i18n'd. */
 import { useState, useEffect } from "react";
-import { CosmosLockup, IcArrow, IcSun, IcMoon, useTheme, useMounted, LangSelect } from "@/components/cosmos/shared";
+import { CosmosLockup, IcArrow, IcSun, IcMoon, useTheme, useMounted, LangSelect, HOME } from "@/components/cosmos/shared";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { organizations, account } from "@/lib/api-client";
 import { VOL_REC } from "./onboarding/data";
@@ -17,7 +17,7 @@ import { ReviewStep } from "./onboarding/steps/ReviewStep";
 export default function Onboarding({ lang, features }) {
   initLang(lang);
   const [theme, setTheme] = useTheme();
-  /* mismo motivo que en ThemeToggle: el icono del tema no se pinta en el SSR */
+  /* el icono del tema depende de localStorage, que el servidor no ve: no se pinta en el SSR */
   const mounted = useMounted();
   const t = useT();
   const ob = t.onboarding;
@@ -72,11 +72,11 @@ export default function Onboarding({ lang, features }) {
     <div className="ob">
       <section className="ob-left">
         <div className="ob-top">
-          <a className="ob-brand" href="/"><CosmosLockup height={28} color="var(--ink)" /></a>
+          <a className="ob-brand" href={HOME}><CosmosLockup height={28} color="var(--ink)" /></a>
           <div className="ob-top-r">
             <LangSelect />
             <button className="ob-exit icon" title="Toggle theme" aria-label="Toggle theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{mounted ? (theme === "dark" ? <IcSun /> : <IcMoon />) : <span className="ic-slot" aria-hidden="true" />}</button>
-            <a className="ob-exit" href="/">{I.x} <span className="ob-exit-tx">{ob.cancel}</span></a>
+            <a className="ob-exit" href={HOME}>{I.x} <span className="ob-exit-tx">{ob.cancel}</span></a>
           </div>
         </div>
 

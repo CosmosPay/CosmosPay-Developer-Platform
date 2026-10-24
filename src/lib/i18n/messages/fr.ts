@@ -190,6 +190,16 @@ export default {
       }
     }
   },
+
+  /* ---------------- /login ---------------- */
+  login: {
+    title: "Connectez-vous à Cosmos Pay",
+    sub: "Votre compte ouvre le tableau de bord développeur : clés API, liens de paiement, webhooks et statistiques.",
+    cta: "Continuer vers la connexion",
+    redirecting: "Redirection vers la connexion…",
+    note: "Connexion sécurisée avec votre compte Cosmos Pay.",
+  },
+
   nav: {
     login: "Se connecter",
     getKeys: "Obtenir mes clés",
@@ -421,6 +431,7 @@ export default {
       }
     }
   },
+
   profile: {
     account: "Paramètres du compte",
     billing: "Facturation",
@@ -1087,6 +1098,7 @@ export default {
         submit: "Créer le lien",
       },
       detail: {
+        checkout: "Page de paiement", openCheckout: "Ouvrir la page de paiement",
         eyebrow: "Lien de paiement", title: "Lien de paiement prêt",
         scan: "Scannez pour payer", downloadQr: "Télécharger le QR",
         uri: "URI SEP-7", xdr: "XDR non signé",

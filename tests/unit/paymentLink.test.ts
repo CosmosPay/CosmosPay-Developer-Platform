@@ -1,0 +1,184 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  amountLabel,
+  canPayWithExtension,
+  explorerTxUrl,
+  fetchPaymentLink,
+  isPaymentLinkId,
+  nextPollDelay,
+  parsePaymentLink,
+  phaseOf,
+  shortAddress,
+  webWalletUrl,
+} from '@/lib/payments/payment-link';
+
+const QR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const STELLAR_DEST = 'GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO';
+
+/* The body the community server answers for a Stellar `pay` link (its PublicPaymentLinkEntity). */
+function stellarBody(over: Record<string, unknown> = {}) {
+  return {
+    id: 'cmh4x2k9a0001l70g8v5q3z2w',
+    kind: 'PAY',
+    chain: 'stellar',
+    network: 'testnet',
+    status: 'PENDING',
+    payTo: STELLAR_DEST,
+    amount: '25.5',
+    asset: 'native',
+    assetIssuer: null,
+    memo: '4127759120438726917',
+    msg: 'Order #24',
+    uri: `web+stellar:pay?destination=${STELLAR_DEST}&amount=25.5&memo=4127759120438726917&memo_type=MEMO_ID`,
+    qr: QR,
+    txHash: null,
+    networkFee: null,
+    expiresAt: '2026-10-24T13:34:56.000Z',
+    createdAt: '2026-10-24T12:34:56.000Z',
+    ...over,
+  };
+}
+
+test('isPaymentLinkId accepts cuids and nothing else', () => {
+  assert.equal(isPaymentLinkId('cmh4x2k9a0001l70g8v5q3z2w'), true);
+  for (const bad of ['', 'pay', 'favicon.ico', 'CMH4X2K9A0001L70G8V5Q3Z2W', '../etc/passwd', 'cmh4x2k9a0001l70g8v5q3z2w/x', undefined, null]) {
+    assert.equal(isPaymentLinkId(bad as string), false, String(bad));
+  }
+});
+
+test('parsePaymentLink keeps a valid body field for field', () => {
+  const link = parsePaymentLink(stellarBody());
+  assert.ok(link);
+  assert.equal(link.payTo, STELLAR_DEST);
+  assert.equal(link.amount, '25.5');
+  assert.equal(link.memo, '4127759120438726917');
+});
+
+test('parsePaymentLink drops fields the contract does not have', () => {
+  const link = parsePaymentLink(stellarBody({ consumerId: 'leak', source: 'GABC' }));
+  assert.ok(link);
+  assert.equal('consumerId' in link, false);
+  assert.equal('source' in link, false);
+});
+
+test('parsePaymentLink refuses a URI with a foreign or script scheme', () => {
+  assert.equal(parsePaymentLink(stellarBody({ uri: 'javascript:alert(1)' })), null);
+  assert.equal(parsePaymentLink(stellarBody({ uri: 'https://evil.example/pay' })), null);
+  // A Solana URI on a Stellar link is just as wrong.
+  assert.equal(parsePaymentLink(stellarBody({ uri: `solana:${STELLAR_DEST}` })), null);
+});
+
+test('parsePaymentLink refuses a QR that is not a PNG data URL', () => {
+  assert.equal(parsePaymentLink(stellarBody({ qr: 'https://evil.example/qr.png' })), null);
+  assert.equal(parsePaymentLink(stellarBody({ qr: 'data:image/svg+xml;base64,PHN2Zz4=' })), null);
+});
+
+test('parsePaymentLink refuses unknown chains, statuses and missing fields', () => {
+  assert.equal(parsePaymentLink(stellarBody({ chain: 'bitcoin' })), null);
+  assert.equal(parsePaymentLink(stellarBody({ status: 'PAID' })), null);
+  assert.equal(parsePaymentLink(stellarBody({ payTo: '' })), null);
+  assert.equal(parsePaymentLink(stellarBody({ amount: 25.5 })), null);
+  assert.equal(parsePaymentLink(null), null);
+  assert.equal(parsePaymentLink('nope'), null);
+});
+
+test('parsePaymentLink accepts Solana Pay and EIP-681 links', () => {
+  const sol = parsePaymentLink(stellarBody({
+    chain: 'solana', payTo: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', asset: 'USDC',
+    assetIssuer: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    uri: 'solana:7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU?amount=25.5&spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  }));
+  assert.ok(sol);
+  const monad = parsePaymentLink(stellarBody({
+    chain: 'monad', payTo: '0xC830f2b7A1d1F8F5e9fA7E0b0B5d1e4A3c2bc52F', asset: 'native',
+    uri: 'ethereum:0xC830f2b7A1d1F8F5e9fA7E0b0B5d1e4A3c2bc52F@143?value=1000000000000000000', networkFee: '0.02',
+  }));
+  assert.ok(monad);
+});
+
+test('amountLabel names the chain coin for native, the code otherwise, null for any amount', () => {
+  assert.equal(amountLabel({ chain: 'stellar', asset: 'native', amount: '10' }), '10 XLM');
+  assert.equal(amountLabel({ chain: 'solana', asset: 'native', amount: '1.5' }), '1.5 SOL');
+  assert.equal(amountLabel({ chain: 'monad', asset: 'native', amount: '2' }), '2 MON');
+  assert.equal(amountLabel({ chain: 'stellar', asset: 'USDC', amount: '3' }), '3 USDC');
+  assert.equal(amountLabel({ chain: 'stellar', asset: 'native', amount: null }), null);
+});
+
+test('phaseOf maps statuses, and calls a pending link past its deadline expired', () => {
+  const now = Date.parse('2026-10-24T13:00:00.000Z');
+  assert.equal(phaseOf({ status: 'PENDING', expiresAt: '2026-10-24T13:34:56.000Z' }, now), 'open');
+  assert.equal(phaseOf({ status: 'PENDING', expiresAt: '2026-10-24T12:00:00.000Z' }, now), 'expired');
+  assert.equal(phaseOf({ status: 'PENDING', expiresAt: null }, now), 'open');
+  assert.equal(phaseOf({ status: 'SUBMITTED', expiresAt: null }, now), 'processing');
+  assert.equal(phaseOf({ status: 'SUCCEEDED', expiresAt: null }, now), 'paid');
+  assert.equal(phaseOf({ status: 'FAILED', expiresAt: null }, now), 'failed');
+  assert.equal(phaseOf({ status: 'CANCELLED', expiresAt: null }, now), 'cancelled');
+  assert.equal(phaseOf({ status: 'EXPIRED', expiresAt: null }, now), 'expired');
+});
+
+test('nextPollDelay keeps reading open, processing and expired links, and stops on final ones', () => {
+  assert.equal(nextPollDelay('open'), 5_000);
+  assert.equal(nextPollDelay('processing'), 3_000);
+  // EXPIRED is not final on the server: a late payment can still settle it.
+  assert.equal(nextPollDelay('expired'), 30_000);
+  assert.equal(nextPollDelay('paid'), null);
+  assert.equal(nextPollDelay('failed'), null);
+  assert.equal(nextPollDelay('cancelled'), null);
+});
+
+test('explorerTxUrl uses each chain explorer and refuses malformed hashes', () => {
+  const hex = 'a'.repeat(64);
+  assert.equal(explorerTxUrl({ chain: 'stellar', network: 'public', txHash: hex }), `https://stellar.expert/explorer/public/tx/${hex}`);
+  assert.equal(explorerTxUrl({ chain: 'stellar', network: 'testnet', txHash: hex }), `https://stellar.expert/explorer/testnet/tx/${hex}`);
+  const sig = '5'.repeat(88);
+  assert.equal(explorerTxUrl({ chain: 'solana', network: 'testnet', txHash: sig }), `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
+  assert.equal(explorerTxUrl({ chain: 'monad', network: 'public', txHash: `0x${hex}` }), `https://monadscan.com/tx/0x${hex}`);
+  assert.equal(explorerTxUrl({ chain: 'stellar', network: 'public', txHash: '../../evil' }), null);
+  assert.equal(explorerTxUrl({ chain: 'stellar', network: 'public', txHash: null }), null);
+});
+
+test('only Stellar pay links go to the extension or the web wallet', () => {
+  const uri = `web+stellar:pay?destination=${STELLAR_DEST}`;
+  assert.equal(canPayWithExtension({ chain: 'stellar', kind: 'PAY', uri }), true);
+  assert.equal(canPayWithExtension({ chain: 'stellar', kind: 'TX', uri: 'web+stellar:tx?xdr=AAAA' }), false);
+  assert.equal(canPayWithExtension({ chain: 'solana', kind: 'PAY', uri: 'solana:abc' }), false);
+  const web = new URL(webWalletUrl('https://cosmospay.lat/wallet/', { chain: 'stellar', uri }) ?? '');
+  assert.equal(web.origin + web.pathname, 'https://cosmospay.lat/wallet/');
+  assert.equal(web.searchParams.get('uri'), uri);
+  assert.equal(webWalletUrl('https://cosmospay.lat/wallet/', { chain: 'monad', uri: 'ethereum:0x1' }), null);
+});
+
+test('shortAddress keeps both ends', () => {
+  assert.equal(shortAddress(STELLAR_DEST), 'GCALNQ…AX7AOO');
+  assert.equal(shortAddress('short'), 'short');
+});
+
+/* A fetch stand-in that answers one canned response. */
+function fakeFetch(status: number, body: unknown, headers: Record<string, string> = {}): typeof fetch {
+  return (async () => new Response(JSON.stringify(body), { status, headers })) as typeof fetch;
+}
+
+test('fetchPaymentLink maps every gateway answer to a renderable result', async () => {
+  const id = 'cmh4x2k9a0001l70g8v5q3z2w';
+  const ok = await fetchPaymentLink('https://api.example/cosmos-api/', id, fakeFetch(200, stellarBody()));
+  assert.equal(ok.kind, 'ok');
+  assert.equal((await fetchPaymentLink('https://api.example', id, fakeFetch(404, {}))).kind, 'not-found');
+  const limited = await fetchPaymentLink('https://api.example', id, fakeFetch(429, {}, { 'retry-after': '46' }));
+  assert.deepEqual(limited, { kind: 'rate-limited', retryAfterMs: 46_000 });
+  assert.equal((await fetchPaymentLink('https://api.example', id, fakeFetch(500, {}))).kind, 'error');
+  // A body for a different id is not this link.
+  assert.equal((await fetchPaymentLink('https://api.example', 'cmh4x2k9a0009l70gneverwas0', fakeFetch(200, stellarBody()))).kind, 'error');
+  const thrown = (async () => { throw new TypeError('offline'); }) as typeof fetch;
+  assert.equal((await fetchPaymentLink('https://api.example', id, thrown)).kind, 'error');
+});
+
+test('fetchPaymentLink calls the gateway path for the id', async () => {
+  let called = '';
+  const spy = (async (url: string | URL | Request) => {
+    called = String(url);
+    return new Response('{}', { status: 404 });
+  }) as typeof fetch;
+  await fetchPaymentLink('https://api.cosmospay.lat/cosmos-api/', 'cmh4x2k9a0001l70g8v5q3z2w', spy);
+  assert.equal(called, 'https://api.cosmospay.lat/cosmos-api/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w');
+});

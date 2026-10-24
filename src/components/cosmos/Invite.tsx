@@ -2,7 +2,7 @@
    server-side (and accepts it when the signed-in email matches); this island just renders
    the resulting state and, when needed, kicks off sign-in returning to this same link. */
 import { useT, fmt, initLang } from "@/lib/i18n/index";
-import { CosmosLockup, CosmosMark, IcArrow, IcCheck, startLogin } from "@/components/cosmos/shared";
+import { CosmosLockup, CosmosMark, IcArrow, IcCheck, signInWithAuthentik, HOME } from "@/components/cosmos/shared";
 
 export default function Invite({ state = "invalid", org = "", email = "", token = "", lang }) {
   initLang(lang);
@@ -23,16 +23,16 @@ export default function Invite({ state = "invalid", org = "", email = "", token 
   return (
     <main id="main" className="invite-wrap">
       <div className="invite-card">
-        <a className="invite-brand" href="/"><CosmosLockup height={30} /></a>
+        <a className="invite-brand" href={HOME}><CosmosLockup height={30} /></a>
         <div className="invite-eyebrow">{v.eyebrow}</div>
         <div className={`invite-icon${m.good ? " good" : ""}`}>{m.good ? <IcCheck /> : <CosmosMark size={26} />}</div>
         <h1>{m.title}</h1>
         <p>{m.body}</p>
         {email && (state === "needsLogin" || state === "mismatch") && <div className="invite-meta">{fmt(v.invitedAs, { email })}</div>}
         <div className="invite-actions">
-          {m.kind === "login" && <button className="btn btn-violet" onClick={() => startLogin(`/invite/${token}`)}>{v.signInBtn} <IcArrow /></button>}
+          {m.kind === "login" && <button className="btn btn-violet" onClick={() => signInWithAuthentik(`/invite/${token}`)}>{v.signInBtn} <IcArrow /></button>}
           {m.kind === "dash" && <a className="btn btn-violet" href="/dashboard">{v.goToDashboard} <IcArrow /></a>}
-          {m.kind === "home" && <a className="btn btn-soft" href="/">{v.backHome}</a>}
+          {m.kind === "home" && <a className="btn btn-soft" href={HOME}>{v.backHome}</a>}
         </div>
       </div>
     </main>

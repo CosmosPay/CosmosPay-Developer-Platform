@@ -84,8 +84,8 @@ function cosmosDocsDevStatic() {
 
 // https://astro.build/config
 export default defineConfig({
-  // Canonical public origin — used for SEO canonical/OG URLs and the sitemap. Change this
-  // if the public site moves to another domain.
+  // The platform's origin. This one app also answers cosmospay.lat and payments.cosmospay.lat
+  // (src/lib/hosts.ts); canonical URLs follow the domain a page is served as (CosmosLayout).
   site: 'https://dev.cosmospay.lat',
   env: {
     schema: {
@@ -95,8 +95,21 @@ export default defineConfig({
       // Same URL as BETTER_AUTH_URL, but exposed to the browser bundle so the
       // auth client (src/lib/auth-client.ts) points at the deployed domain in
       // production instead of a hardcoded localhost. Client env vars must be
-      // PUBLIC_-prefixed; keep this in sync with BETTER_AUTH_URL.
+      // PUBLIC_-prefixed; keep this in sync with BETTER_AUTH_URL. It is also the platform's
+      // domain in the host routing (src/lib/hosts.ts).
       PUBLIC_BETTER_AUTH_URL: envField.string({ context: 'client', access: 'public' }),
+      // The two other domains this app answers (src/lib/hosts.ts): the company site (landing,
+      // /pricing, /tos) and the payments site (hosted checkout per payment link, the SEP-7
+      // handler). Each route renders only on its own domain and redirects there from the
+      // others. Inlined at build.
+      PUBLIC_SITE_URL: envField.string({ context: 'client', access: 'public', optional: true, default: 'https://cosmospay.lat' }),
+      PUBLIC_PAYMENTS_URL: envField.string({ context: 'client', access: 'public', optional: true, default: 'https://payments.cosmospay.lat' }),
+      // The APISIX gateway INCLUDING its entry prefix. The checkout reads
+      // `${PUBLIC_PAYMENTS_API_URL}/v1/payment-links/{id}` from the payer's browser: the server
+      // budgets that public read per client address, so it must not be proxied through here.
+      PUBLIC_PAYMENTS_API_URL: envField.string({ context: 'client', access: 'public', optional: true, default: 'https://api.cosmospay.lat/cosmos-api' }),
+      // The web wallet; it reads `?uri=web+stellar:…` and prefills the payment.
+      PUBLIC_WALLET_WEB_URL: envField.string({ context: 'client', access: 'public', optional: true, default: 'https://cosmospay.lat/wallet/' }),
       AUTHENTIK_CLIENT_ID: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
       AUTHENTIK_DISCOVERY_URL: envField.string({ context: 'server', access: 'secret' }),
@@ -126,9 +139,10 @@ export default defineConfig({
       // localhost, and Capacitor/Ionic webview origins for the CosmosPay Wallet). Handled by
       // src/middleware.ts. Leave empty to use only the defaults.
       CORS_ALLOWED_ORIGINS: envField.string({ context: 'server', access: 'public', optional: true, default: '' }),
-      // Origins the APISIX swap/data-plane route allows cross-origin (comma-separated), so
-      // the wallet's in-browser swap calls to the gateway aren't blocked. Used by createRoute.
-      COSMOS_API_CORS_ORIGINS: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://cosmospay.lat,https://dev.cosmospay.lat' }),
+      // Origins the APISIX routes allow cross-origin (comma-separated), so the wallet's
+      // in-browser calls and the hosted checkout's payment-link read (payments.cosmospay.lat)
+      // aren't blocked. Used by createRoute and createCallbackRoute.
+      COSMOS_API_CORS_ORIGINS: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://cosmospay.lat,https://dev.cosmospay.lat,https://payments.cosmospay.lat' }),
       // NOTE: the dashboard's /api/admin/* proxy needs NO admin secret of its own. The
       // Payments service used to demand one (COSMOS_ADMIN_API_SECRET, matched against its
       // ADMIN_API_CREDENTIALS) and failed closed without it, so every admin screen answered
@@ -192,7 +206,7 @@ export default defineConfig({
       // Hosts allowed to reach the dev server. Without this, Vite rejects
       // requests whose Host header isn't localhost (e.g. when the dev server is
       // proxied behind the dev.cosmospay.lat domain) with a "host not allowed" error.
-      allowedHosts: ['dev.cosmospay.lat'],
+      allowedHosts: ['dev.cosmospay.lat', 'cosmospay.lat', 'www.cosmospay.lat', 'payments.cosmospay.lat'],
     },
     resolve: {
       alias: {

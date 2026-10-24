@@ -1,0 +1,87 @@
+---
+// The brand skin is the platform's (cosmos.css); payments.css adds the checkout's own layout.
+import "@/styles/cosmos.css";
+import "@/styles/payments.css";
+import { LOCALES, MESSAGES } from "@/lib/payments/i18n";
+import { PAYMENTS, SITE, TERMS } from "@/lib/payments/urls";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "" } = Astro.props;
+const lang = Astro.locals.lang ?? "en";
+const t = MESSAGES[lang];
+
+// The language picker is a plain GET form, so it must carry the page's own query along
+// (/pay?uri=… would otherwise lose the payment it is showing).
+const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <!-- Payment pages are personal and short-lived: never indexed. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="generator" content={Astro.generator} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+
+    <!-- Link previews (chat apps unfurl payment links): generic on purpose, the amount
+         and the address are not in the HTML until the browser reads them. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cosmos Pay" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:image" content={`${PAYMENTS}/og-image.png`} />
+
+    <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />
+
+    <script is:inline>
+      // Follow the system theme, set before paint so there is no flash.
+      (function () {
+        var mq = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+        var apply = function () { document.documentElement.setAttribute("data-theme", mq && mq.matches ? "dark" : "light"); };
+        apply();
+        if (mq && mq.addEventListener) mq.addEventListener("change", apply);
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t.skip}</a>
+    <header class="pp-header">
+      <a class="brand" href={SITE}>
+        <span class="cosmos-lockup" role="img" aria-label="Cosmos Pay"></span>
+      </a>
+      <slot name="header" />
+    </header>
+
+    <slot />
+
+    <footer class="pp-footer">
+      <span>{t.footer.by}</span>
+      <a href={TERMS}>{t.footer.terms}</a>
+      <form class="pp-lang" method="get">
+        {keep.map(([name, value]) => <input type="hidden" name={name} value={value} />)}
+        <label for="pp-lang-select">{t.footer.language}</label>
+        <select id="pp-lang-select" name="lang">
+          {LOCALES.map((l) => <option value={l.code} selected={l.code === lang} lang={l.code}>{l.name}</option>)}
+        </select>
+        <button class="btn btn-outline-w btn-sm" type="submit">{t.footer.change}</button>
+      </form>
+    </footer>
+  </body>
+</html>

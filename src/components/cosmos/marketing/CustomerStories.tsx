@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Modal, IcArrow, IcChevSm } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { CASE_META, CASE_KEYS } from "./data";
+import { CASE_META, CASE_KEYS } from "@/components/cosmos/marketing/data";
 
 function CaseModal({ brand, onClose }) {
   const t = useT();

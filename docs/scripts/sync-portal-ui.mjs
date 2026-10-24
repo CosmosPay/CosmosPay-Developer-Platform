@@ -3,8 +3,8 @@
 // across the project boundary (which would drag in the portal's Astro middleware).
 //
 // The portal stays the single source of truth — these copies are generated, like the
-// SDK/API content, and are git-ignored. The only edit applied is rewriting the lone
-// `astro:env/client` import (Astro virtual module) to a Next-compatible shim.
+// SDK/API content, and are git-ignored. The only edit applied is rewriting the
+// `astro:env/client` imports (Astro virtual module) to a Next-compatible shim.
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -16,6 +16,9 @@ const COPIES = [
   ['components/cosmos', 'components/cosmos'],
   ['lib/i18n', 'lib/i18n'],
   ['lib/auth-client.ts', 'lib/auth-client.ts'],
+  // The route constants build absolute links with these (pure, no Astro imports).
+  ['lib/urls.ts', 'lib/urls.ts'],
+  ['lib/safe-next.ts', 'lib/safe-next.ts'],
   ['styles/cosmos.css', 'styles/cosmos.css'],
 ];
 
@@ -64,11 +67,18 @@ for (const [from, to] of COPIES) {
   count++;
 }
 
-// Rewrite the one Astro virtual-module import so it resolves in the Next build.
-const authClient = path.join(DOCS_SRC, 'lib/auth-client.ts');
-const before = fs.readFileSync(authClient, 'utf8');
-const after = before.replace(/from\s+["']astro:env\/client["']/g, 'from "@/shims/astro-env-client"');
-if (after !== before) fs.writeFileSync(authClient, after, 'utf8');
+// Rewrite every Astro virtual-module import in the copies so they resolve in the Next build:
+// the auth client, and the route constants that read the company/payments site URLs.
+function shimAstroEnv(p) {
+  if (fs.statSync(p).isDirectory()) return fs.readdirSync(p).reduce((n, e) => n + shimAstroEnv(path.join(p, e)), 0);
+  if (!/\.(ts|tsx)$/.test(p)) return 0;
+  const before = fs.readFileSync(p, 'utf8');
+  const after = before.replace(/from\s+["']astro:env\/client["']/g, 'from "@/shims/astro-env-client"');
+  if (after === before) return 0;
+  fs.writeFileSync(p, after, 'utf8');
+  return 1;
+}
+const shimmed = COPIES.reduce((n, [, to]) => n + shimAstroEnv(path.join(DOCS_SRC, to)), 0);
 
 // The docs (Next) and portal (Astro) are separate bundles, so the i18n store may not be a
 // shared singleton — a nav language switch wouldn't reach the Fumadocs Provider. Patch the
@@ -86,4 +96,4 @@ if (fs.existsSync(i18nIndex)) {
 }
 
 console.log(`[sync-portal-ui] copied ${count} portal targets -> ${DOCS_SRC} (from ${PORTAL_SRC})`);
-console.log(`[sync-portal-ui] rewrote astro:env/client import in lib/auth-client.ts: ${after !== before}`);
+console.log(`[sync-portal-ui] rewrote astro:env/client imports in ${shimmed} copied file(s)`);

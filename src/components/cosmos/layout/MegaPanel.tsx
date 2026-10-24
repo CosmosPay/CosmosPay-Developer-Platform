@@ -1,4 +1,5 @@
 import { IcChevSm } from "@/components/cosmos/icons";
+import { DOCS } from "@/components/cosmos/lib/constants";
 
 /* Mega-menu dropdown panel for a nav item (columns of links + optional feature). */
 export function MegaPanel({ item }: { item: any }) {
@@ -16,7 +17,7 @@ export function MegaPanel({ item }: { item: any }) {
         <div className="mega-feat">
           {/* trazo 3 de 3: blanco sobre la miniatura navy, recortado por la caja */}
           <div className="thumb"><span className="trazo-deco trazo-3" aria-hidden="true" /></div>
-          <div className="body"><strong>{item.featured.title}</strong><p>{item.featured.desc}</p><a href={item.featured.href || (item.key === "developers" ? "/docs/getting-started" : "#")}>{item.featured.cta} <IcChevSm /></a></div>
+          <div className="body"><strong>{item.featured.title}</strong><p>{item.featured.desc}</p><a href={item.featured.href || (item.key === "developers" ? `${DOCS}/getting-started` : "#")}>{item.featured.cta} <IcChevSm /></a></div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 /* Stats.tsx: el momento de marca a mitad de pagina. Panel navy liso a sangre,
    el rotulo del deck a la izquierda y las cuatro cifras en 2x2 a la derecha. */
 import { useT } from "@/lib/i18n/index";
-import { STAT_VALUES } from "./data";
+import { STAT_VALUES } from "@/components/cosmos/marketing/data";
 
 export function Stats() {
   const t = useT();

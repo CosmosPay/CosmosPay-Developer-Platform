@@ -1,0 +1,18 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import Login from "@/components/cosmos/Login.tsx";
+import { safeNextPath } from "@/lib/safe-next";
+
+// Sign-in entry: the company site's "Log in" / "Get API keys" and every signed-out visit
+// to the dashboard land here. `next` is where to go afterwards (same-origin paths only).
+const next = safeNextPath(Astro.url.searchParams.get("next"));
+if (Astro.locals.user) {
+  return Astro.redirect(next);
+}
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+---
+
+<CosmosLayout title="Sign in — Cosmos Pay" lang={lang} noindex>
+  <Login client:load lang={lang} next={next} />
+</CosmosLayout>

@@ -7,12 +7,11 @@ import { planFeatures, ONBOARDING_ENABLED } from "@/lib/features";
 
 // Auth guard — the dashboard is only for logged-in developers.
 // Astro.locals.user is populated by src/middleware.ts from the Authentik session.
-// There is no login page: unauthenticated visitors are sent home, where the nav's
-// "Log in" / "Get API keys" actions kick off the OAuth flow directly.
+// Signed-out visitors go to /login, which starts the OAuth flow and lands back here.
 const user = Astro.locals.user;
 
 if (!user) {
-  return Astro.redirect("/");
+  return Astro.redirect("/login");
 }
 
 // Onboarding gate — a user with no organization must create their first one first.

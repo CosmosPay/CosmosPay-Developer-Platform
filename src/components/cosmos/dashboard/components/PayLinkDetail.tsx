@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Modal, showToast, IcCopy, IcCheck } from "@/components/cosmos/shared";
+import { Modal, showToast, IcCopy, IcCheck, checkoutUrl } from "@/components/cosmos/shared";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { useT } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
@@ -140,9 +140,17 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
           {data.qr && <a className="btn btn-soft btn-sm" href={data.qr} download={`paylink-${data.id}.png`}>{DI.download} {d.downloadQr}</a>}
         </div>
 
+        {/* The hosted page on payments.cosmospay.lat: what to send a payer who has no
+            wallet open on this screen. It reads the link itself and follows its status. */}
+        <CopyBlock label={d.checkout} value={checkoutUrl(data.id)}>
+          <div className="paylink-actions">
+            <a className="btn btn-dark btn-sm" href={checkoutUrl(data.id)} target="_blank" rel="noopener noreferrer">{DI.link} {d.openCheckout}</a>
+          </div>
+        </CopyBlock>
+
         <CopyBlock label={d.uri} value={data.uri}>
           <div className="paylink-actions">
-            <a className="btn btn-dark btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
+            <a className="btn btn-soft btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
             {/* No transaction exists until the payment is submitted/paid. */}
             {hasTransaction(data) && <a className="btn btn-soft btn-sm" href={explorerUrl(data)} target="_blank" rel="noopener noreferrer">{DI.network} {t.dash.balances.explorer}</a>}
           </div>

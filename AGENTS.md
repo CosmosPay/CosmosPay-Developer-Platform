@@ -20,6 +20,82 @@ npm run sync:route        # re-points every APISIX route's upstream at COSMOS_AP
 npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
 ```
 
+## Three domains, one app
+
+| Domain | Area | Pages |
+| :--- | :--- | :--- |
+| `cosmospay.lat` | `site` | `src/pages/site/` — landing, `/pricing`, `/tos` |
+| `dev.cosmospay.lat` | `dev` | everything else in `src/pages/` — `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/` — `/{id}` hosted checkout, `/pay` SEP-7 handler |
+
+One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
+`src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
+
+- **A route renders only on its own domain.** Elsewhere it is a 301 to its owner with the query
+  (308 for non-GET); a path nobody owns is a 404 on `site` and `payments` and passes through
+  on `dev`. **A new top-level platform route belongs in `DEV_PREFIXES`**, or the other
+  domains answer 404 for it instead of redirecting. A new site or payments route needs its
+  entry in `ownerOf` and a page under its mount.
+- **`/site` and `/payments` are internal mounts**, reached by a rewrite (`next(url)`), never
+  by address: asked directly they redirect to the public URL. Inside those pages
+  `Astro.url` is the internal path; use `Astro.locals.publicPath` (and `Astro.locals.area`)
+  for anything public, as `CosmosLayout` does for canonical URLs.
+- **The origins are `PUBLIC_SITE_URL`, `PUBLIC_BETTER_AUTH_URL` (the platform) and
+  `PUBLIC_PAYMENTS_URL`**, inlined at build. An unknown host (IP, health check, smoke test) is
+  the platform. Links that may render on another domain than their target are absolute, from
+  `src/components/cosmos/lib/constants.ts`.
+- **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
+  answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
+  platform domain by nginx (README → nginx).
+- **`robots.txt` and `sitemap.xml` are per-domain endpoints**; never add them to `public/`.
+
+### One auth for all three domains
+
+- Better Auth runs here and its session cookie stays **host-only on the platform domain**.
+  Do not scope it to the parent domain (`crossSubDomainCookies`): it would travel to every
+  `*.cosmospay.lat` host — the gateway, Authentik, the wallet landing. Pages on the company
+  site get `Astro.locals.user` only when served from the platform's own host (local single-host
+  setups); otherwise `useDevSession` reads `/api/auth/get-session` cross-origin and the nav
+  holds its skeleton (`sessionReady`) until it answers.
+- **Sign-in happens on the platform domain only:** `startLogin()` navigates to `/login` there,
+  which starts the flow (`signInWithAuthentik`) on mount and marks its history entry first
+  (`?manual=1`) so Back from the provider shows the card. `next` must be a same-origin path
+  (`src/lib/safe-next.ts`). Sign-out from the company site is a credentialed cross-origin call
+  to `/api/auth/sign-out`: keep `https://cosmospay.lat` in `src/lib/allowed-origins.ts`.
+
+### The payments domain
+
+- **The checkout reads its link from the payer's browser**:
+  `GET ${PUBLIC_PAYMENTS_API_URL}/v1/payment-links/{id}` through the gateway's keyless route
+  (`/v1/payment-links/*` on `<route>-oauth-callbacks`, CORS from `COSMOS_API_CORS_ORIGINS`).
+  Never proxy or server-render it: the community server budgets that `@Public()` read per
+  client address, and this server would put every payer behind one.
+- **`parsePaymentLink` (`src/lib/payments/payment-link.ts`) is the trust boundary**: every
+  field is checked, the URI scheme must match the chain, the QR must be a PNG data URL; DOM
+  writes are `textContent` or validated attributes, never HTML. Change `PaymentLink`, the
+  parser and `tests/unit/paymentLink.test.ts` together with the server's entity.
+- **`/pay` never hands a URI to the wallet on arrival.** The URI comes from the query string,
+  which any site can choose; the page shows the whole request (issuer, network, `origin_domain`,
+  callback host) and calls `requestPayment` only on the payer's click. `parseSep7Pay` refuses what
+  it cannot describe AND what a wallet could read differently — a key given twice, a case variant,
+  a key SEP-7 does not define — because the wallet gets the URI as received (its `signature`
+  covers that exact string).
+- **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
+  stops on paid, failed and cancelled (`nextPollDelay`).
+- **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
+  to every payments response. Payments pages are `noindex`, have their own five-language
+  catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`)
+  and resolve the language as ?lang → cookie → Accept-Language → en.
+
+### Other split-related notes
+
+- **Every payment link's checkout URL** is `checkoutUrl(id)`, shown in `PayLinkDetail`.
+- **`astro:env/client` in a component** reaches the docs build too (`sync-portal-ui.mjs` copies
+  `src/components/cosmos` and the libs it needs), which cannot resolve it: the sync rewrites
+  every such import to `docs/src/shims/astro-env-client.ts`. A new `PUBLIC_*` variable read by
+  a component needs an export in that shim, and a new `@/lib/*` module those components
+  import needs an entry in the sync's `COPIES`.
+
 ## Rule: every API endpoint MUST be documented in OpenAPI/Swagger
 
 The portal serves its own Swagger UI at `/swagger`, backed by `/api/openapi.json`
@@ -142,8 +218,11 @@ What this app still does for them:
 - **The keyless APISIX routes** (`src/utils/apisix.ts`, synced at boot by
   `src/lib/apisix-route.ts`, upstreams re-pointed by `npm run sync:route`):
   - `<route>-oauth-callbacks` — the wallet sign-in's OAuth callback
-    (`/v1/wallet/auth/oauth/callback/*`) plus the shared public-key read (`/v1/public-key`). The
-    old `<route>-pollar-callback` route is only ever DELETED at boot, never created.
+    (`/v1/wallet/auth/oauth/callback/*`) plus the two public reads: the shared public key
+    (`/v1/public-key`) and one payment link (`/v1/payment-links/*`, the hosted checkout's read,
+    made from the payer's browser — `COSMOS_API_CORS_ORIGINS` must list
+    `https://payments.cosmospay.lat`). The old `<route>-pollar-callback` route is only ever
+    DELETED at boot, never created.
   - `<route>-sep` — `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
     `cors` plugin, because the community server answers CORS itself for those prefixes and two
     `Access-Control-Allow-Origin` headers make a browser refuse the response, and it forwards

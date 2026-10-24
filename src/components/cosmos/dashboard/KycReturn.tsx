@@ -6,7 +6,7 @@
 import { useState, useEffect } from "react";
 import { useT, initLang } from "@/lib/i18n/index";
 import { kyc as kycApi, admin as adminApi } from "@/lib/api-client";
-import { CosmosLockup, CosmosMark, IcArrow, IcCheck } from "@/components/cosmos/shared";
+import { CosmosLockup, CosmosMark, IcArrow, IcCheck, HOME } from "@/components/cosmos/shared";
 
 export default function KycReturn({ org, env, receiver, lang }) {
   initLang(lang);
@@ -58,7 +58,7 @@ export default function KycReturn({ org, env, receiver, lang }) {
   return (
     <main id="main" className="invite-wrap">
       <div className="invite-card">
-        <a className="invite-brand" href="/"><CosmosLockup height={30} /></a>
+        <a className="invite-brand" href={HOME}><CosmosLockup height={30} /></a>
         <div className="invite-eyebrow">{k.eyebrow}</div>
         <div className={`invite-icon${good ? " good" : ""}`}>{good ? <IcCheck /> : <CosmosMark size={26} />}</div>
         <h1>{title}</h1>

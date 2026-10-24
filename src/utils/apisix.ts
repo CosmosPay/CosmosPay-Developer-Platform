@@ -159,6 +159,14 @@ const WALLET_AUTH_CALLBACK_PATH = '/v1/wallet/auth/oauth/callback/';
    (the old `/api/public-key`), which put the platform in front of every anonymous wallet. */
 const PUBLIC_KEY_PATH = '/v1/public-key';
 
+/* Where the community server serves the payer's view of one payment link
+   (`GET /v1/payment-links/{id}`, `@Public()` over there). The hosted checkout on
+   payments.cosmospay.lat reads it from the payer's BROWSER, with no key: the server budgets
+   that read per client address, so it cannot be proxied through one server. Same route shape
+   as the public-key read (GET, CORS, consumer headers scrubbed); the prefix holds no route
+   that needs a consumer, and one added later still fails closed at the server's guard. */
+const PAYMENT_LINKS_PATH = '/v1/payment-links/';
+
 /* SEP-1 fixes discovery at the root of the host, OUTSIDE the gateway entry -- which is why
    the SEP routes check the rewrite pattern leaves it alone (sepRouteUris). */
 export const STELLAR_TOML_PATH = '/.well-known/stellar.toml';
@@ -192,10 +200,10 @@ export function recoveryRouteId(routeId: string, role: RecoveryRole): string {
 }
 
 /* The gateway URIs the callback route is served on -- the callback and its appended
-   segment, and the public-key read. */
+   segment, the public-key read, and the public payment-link read. */
 export function callbackRouteUris(entry: string): string[] {
   const prefix = entryPrefix(entry);
-  return [`${prefix}${WALLET_AUTH_CALLBACK_PATH}*`, `${prefix}${PUBLIC_KEY_PATH}`];
+  return [`${prefix}${WALLET_AUTH_CALLBACK_PATH}*`, `${prefix}${PUBLIC_KEY_PATH}`, `${prefix}${PAYMENT_LINKS_PATH}*`];
 }
 
 /* The gateway URIs the standards are served on. Throws when the configured rewrite would
@@ -255,7 +263,7 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
           // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
           // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
           cors: {
-            ...corsOrigins(COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat'),
+            ...corsOrigins(COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat,https://payments.cosmospay.lat'),
             allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
             // Idempotency-Key is read by the swap / liquidity / payout routes; a browser
             // cannot send a non-safelisted request header unless preflight allows it here.
@@ -481,9 +489,9 @@ export async function createRoute(
 }
 
 /* The keyless sibling for the OAuth callback -- the wallet sign-in's, as an `uris` array so
-   another callback is one more entry rather than a route of its own. GET plus the
-   preflight: it serves one browser navigation and nothing else, so anything that is not
-   that navigation still meets the authenticated route. */
+   another callback is one more entry rather than a route of its own -- plus the two public
+   reads (the shared public key, one payment link). GET plus the preflight: anything that is
+   not one of those reads still meets the authenticated route. */
 export async function createCallbackRoute(
   routeId: string,
   entry: string,

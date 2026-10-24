@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Modal, IcArrow, IcCheck, ctaProps } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { SOL_EX, SOL_META } from "./data";
-import { IcExpand, SOL_ICONS } from "./icons";
+import { SOL_EX, SOL_META } from "@/components/cosmos/marketing/data";
+import { IcExpand, SOL_ICONS } from "@/components/cosmos/marketing/icons";
 
 function PayMock() {
   const t = useT();

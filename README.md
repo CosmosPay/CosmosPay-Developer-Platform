@@ -9,6 +9,36 @@ It is an **Astro** SSR app (Node adapter) that authenticates users through **Aut
 (OAuth2 via Better Auth), provisions per-user credentials in the **APISIX** gateway, and
 proxies the Cosmos Pay Payments API on the developer's behalf.
 
+### Three domains, one app
+
+This one Astro app — one build, one PM2 process, one `.env`, one Better Auth — answers three
+domains. `src/middleware.ts` routes every request by host with the table in
+`src/lib/hosts.ts`:
+
+| Domain | Renders | Pages |
+| :--- | :--- | :--- |
+| `cosmospay.lat` | The company site: landing, `/pricing`, `/tos` | `src/pages/site/` |
+| `dev.cosmospay.lat` | Sign-in (`/login`), dashboard, onboarding, invitations, `/docs`, `/swagger`, `/api/*` | the rest of `src/pages/` |
+| `payments.cosmospay.lat` | The hosted checkout of every payment link (`/{id}`) and the `web+stellar:` handler (`/pay`) | `src/pages/payments/` |
+
+- **A route renders only on the domain that owns it.** Asked on another domain it is a
+  **301** to its owner, query kept (308 for non-GET): `cosmospay.lat/dashboard` →
+  `dev.cosmospay.lat/dashboard`, `dev.cosmospay.lat/pricing` → `cosmospay.lat/pricing`,
+  `dev.cosmospay.lat/pay?uri=…` → `payments.cosmospay.lat/pay?uri=…` (browsers registered the old
+  address as their `web+stellar:` handler). A path no domain owns is a 404 on the company and
+  payments domains. `www.cosmospay.lat` goes to the apex.
+- **The site and payments pages render through an internal rewrite** from `/site/*` and
+  `/payments/*`, so their public URLs have no prefix; asked directly, those mounts redirect to
+  the public address.
+- **One sign-in for everything, one cookie on one host.** Better Auth runs on
+  `dev.cosmospay.lat` and its session cookie stays host-only there — never scoped to
+  `.cosmospay.lat`, where it would reach the gateway, Authentik and the wallet landing too.
+  The company site reads the session with a credentialed call to `/api/auth/get-session`
+  (same site, allowed by the CORS layer) and signs out the same way. Signing in always happens
+  on `dev.cosmospay.lat/login` (the Authentik callback lives there).
+- **`robots.txt` and `sitemap.xml` answer per domain** (`src/pages/robots.txt.ts`,
+  `sitemap.xml.ts`).
+
 > Looking for the JS/TS client that calls the public API? See the **[CosmosJS SDK](https://github.com/CosmosPay/CosmosJS_SDK)**.
 > Hitting deploy/runtime issues? See **[COMMON_ISSUES.md](./COMMON_ISSUES.md)**.
 
@@ -21,7 +51,10 @@ proxies the Cosmos Pay Payments API on the developer's behalf.
   (magic links) with per-plan seat limits.
 - **API keys** — create/rotate/revoke keys backed by APISIX consumers & credentials, with
   per-key scopes (read/write), role and environment (testnet/mainnet) forwarded downstream.
-- **Payments** — create and manage SEP-7 payment intents (`pay`/`tx`), validate transactions.
+- **Payments** — create and manage payment intents (`pay`/`tx`), validate transactions; every
+  link has a hosted checkout page on payments.cosmospay.lat (amount, QR, open-in-wallet, live
+  status), linked from its detail modal.
+- **Company site** — the landing, pricing and terms on cosmospay.lat, from the same app.
 - **Webhooks** — register endpoints, inspect deliveries, redeliver, rotate signing secrets.
 - **Products & customers** — catalog items / price links and merchant-managed customers.
 - **Analytics** — summary, balances, API & webhook logs.
@@ -56,8 +89,10 @@ Browser ──▶ Cloudflare ──▶ nginx ──▶ Astro SSR app (this repo,
   real API key would after passing through APISIX.
 - It (re)syncs the APISIX routes to the current `COSMOS_API_URL` on startup
   (`src/lib/apisix-route.ts`): the key-auth route external API-key traffic is proxied through,
-  plus keyless routes for the OAuth callbacks and for SEP-1/10/30 (stellar.toml, web auth and
-  account recovery, all served by the community server). `COSMOS_API_URL` may list several
+  plus keyless routes for the OAuth callbacks, the two public reads (the shared public key and
+  one payment link, `/v1/payment-links/*`, which the hosted checkout calls from the payer's
+  browser) and SEP-1/10/30 (stellar.toml, web auth and account recovery, all served by the
+  community server). `COSMOS_API_URL` may list several
   `host:port` replicas, balanced round-robin.
 
 **Stack:** Astro 6 (SSR, `@astrojs/node` standalone) · React 19 islands · Better Auth ·
@@ -75,7 +110,12 @@ src/
 │   │                     # notifications, cosmos proxy, auth catch-all, openapi.json)
 │   ├── dashboard.astro   # main app shell
 │   ├── onboarding.astro  # onboarding wizard
-│   ├── pricing.astro · docs/ · invite/[token].astro · index.astro
+│   ├── login.astro       # sign-in entry (starts the Authentik OAuth flow)
+│   ├── index.astro       # → /dashboard or /login
+│   ├── invite/[token].astro · kyc/ · swagger.astro
+│   ├── site/             # cosmospay.lat: index (landing), pricing, tos
+│   ├── payments/         # payments.cosmospay.lat: [id] (hosted checkout), pay (SEP-7 handler)
+│   └── robots.txt.ts · sitemap.xml.ts   # per domain
 ├── components/           # UI (cosmos/dashboard views, widgets, modals) + React islands
 ├── layouts/              # CosmosLayout etc.
 ├── lib/                  # auth, cosmos (Payments API client), activity (telemetry
@@ -132,11 +172,14 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `DATABASE_URL` | PostgreSQL connection (Prisma) |
 | `BETTER_AUTH_SECRET` | Session signing secret |
 | `BETTER_AUTH_URL` / `PUBLIC_BETTER_AUTH_URL` | Public app URL (server + browser). **Must match the deployed domain** |
+| `PUBLIC_SITE_URL` / `PUBLIC_PAYMENTS_URL` | The two other domains this app answers (host routing, absolute links, each link's checkout URL). Default to the production domains |
+| `PUBLIC_PAYMENTS_API_URL` / `PUBLIC_WALLET_WEB_URL` | The gateway the checkout reads links from (with its entry prefix) and the web wallet it hands Stellar links to |
 | `AUTHENTIK_CLIENT_ID` / `_SECRET` / `_DISCOVERY_URL` | Authentik OAuth2 provider |
 | `APISIX_URL` / `APISIX_ADMIN_KEY` / `APISSIX_ROUTE_ID` | APISIX admin API + the synced route id |
 | `COSMOS_API_URL` | Upstream Payments API the routes proxy to (comma-separated replicas allowed) |
 | `COSMOS_RECOVERY_{A,B}_HOST` / `_UPSTREAM` | Optional: a host-bound SEP route per recovery server deployment |
 | `COSMOS_API_ENTRY` / `COSMOS_API_REWRITE` | Public route path + rewrite (`/cosmos-api/* → /$1`) |
+| `COSMOS_API_CORS_ORIGINS` | Browser origins the gateway routes allow. **Must include `https://payments.cosmospay.lat`**, or the hosted checkout cannot read its link; applied by `npm run sync:route` |
 | `COSMOS_GATEWAY_SECRET` | `X-Gateway-Secret` for direct server-to-server calls, and the key of the `X-Cosmos-Internal` marker. **Must equal the community server's `APISIX_GATEWAY_SECRET`** |
 | `RESEND_API_KEY` | Resend HTTP email (preferred). Falls back to `SMTP_*` if unset |
 | `SMTP_HOST/PORT/USER/PASS/SECURE` / `SMTP_FROM` | SMTP transport + verified sender |
@@ -170,6 +213,34 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `npm run export:wallet-data` | Export the retired wallet backup / recovery tables to JSON for the community server |
 
 ---
+
+## 🌐 nginx: three domains, one upstream
+
+All three domains proxy to the same process (`127.0.0.1:4321`) and **must pass the original
+`Host`** — it is what the app routes on. Two things stay outside the app:
+
+```nginx
+# cosmospay.lat — the web wallet and the passkey files stay on disk (the passkey RP ID is
+# cosmospay.lat); everything else is the app.
+location /wallet/      { alias /var/www/cosmos-wallet-releases/current/; }   # as today
+location /.well-known/ { root  /var/www/...; }                               # as today
+location /docs         { return 301 https://dev.cosmospay.lat$request_uri; }
+
+# payments.cosmospay.lat
+location /docs         { return 301 https://dev.cosmospay.lat$request_uri; }
+
+# all three
+location / {
+  proxy_pass http://127.0.0.1:4321;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+The `/docs` rules are there because the docs are a static export the Node server hands out
+before the middleware runs — on every host. Everything else is routed by the app. Point
+`www.cosmospay.lat` at the same upstream too (the app redirects it to the apex).
 
 ## 🏗️ Production deployment (PM2)
 
@@ -228,6 +299,8 @@ Part of the Cosmos Pay ecosystem:
   This is the **upstream** that the dashboard proxies through APISIX.
 - **[CosmosJS SDK](https://github.com/CosmosPay/CosmosJS_SDK)** — the object-oriented JS/TS
   client developers use to call the public API with their API keys.
+- **[cosmos-wallet-landing](https://github.com/CosmosPay/cosmos-wallet-landing)** —
+  wallet.cosmospay.lat: the wallet's own marketing site.
 
 Built on top of:
 

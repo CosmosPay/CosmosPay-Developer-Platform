@@ -1,8 +1,8 @@
 import { IcCheck, IcArrow, ctaProps } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { PLAN_IDS, PLAN_SPECS } from "@/lib/plans.ts";
-import { PLAN_META } from "./data";
-import { Price } from "./Price";
+import { PLAN_META } from "@/components/cosmos/pricing/data";
+import { Price } from "@/components/cosmos/pricing/Price";
 
 const fmtLimit = (n) => (n == null ? "∞" : String(n));
 

@@ -1,0 +1,122 @@
+---
+/* /{id} — the hosted checkout for one payment link.
+ *
+ * The HTML is a shell: the link itself is read by the browser from the gateway
+ * (GET /v1/payment-links/{id}) and then polled until it settles. Reading it here, on the
+ * server, would put every payer behind this server's single address, and the gateway's
+ * budget for that public read is per address (see src/scripts/checkout.ts).
+ */
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { isPaymentLinkId } from "@/lib/payments/payment-link";
+import { API_BASE, WALLET_WEB } from "@/lib/payments/urls";
+
+const { id } = Astro.params;
+if (!isPaymentLinkId(id)) {
+  return Astro.rewrite("/404");
+}
+
+const lang = Astro.locals.lang;
+const t = MESSAGES[lang].checkout;
+// Only the strings the script swaps in at runtime; the rest is rendered here.
+const runtime = {
+  phase: t.phase,
+  body: t.body,
+  anyAmount: t.anyAmount,
+  mainnet: t.mainnet,
+  testnetTier: t.testnetTier,
+  copy: t.copy,
+  copied: t.copied,
+  extOpening: t.extOpening,
+  extSent: t.extSent,
+  extFailed: t.extFailed,
+  errorBody: t.errorBody,
+  rateLimited: t.rateLimited,
+};
+// `<` escaped so no string can close the JSON <script> block early.
+const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
+---
+
+<PaymentsLayout title={t.title} description={t.description}>
+  <main id="main" class="pp-main">
+    <section class="pp-card" id="checkout" data-id={id} data-api={API_BASE} data-wallet-web={WALLET_WEB} data-lang={lang} aria-labelledby="pp-title">
+      <p class="pp-eyebrow">{t.eyebrow}</p>
+
+      <div data-state="loading" class="pp-loading" role="status">
+        <span class="pp-spinner" aria-hidden="true"></span>{t.loading}
+      </div>
+
+      <div data-state="not-found" hidden>
+        <h1 class="pp-title">{t.notFoundTitle}</h1>
+        <p class="pp-body">{t.notFoundBody}</p>
+      </div>
+
+      <div data-state="error" hidden>
+        <h1 class="pp-title">{t.errorTitle}</h1>
+        <p class="pp-body" data-slot="error-body" role="status" aria-live="polite">{t.errorBody}</p>
+        <button class="btn btn-dark btn-sm" type="button" data-action="retry">{t.retry}</button>
+      </div>
+
+      <div data-state="link" hidden>
+        <p class="pp-testnet" data-slot="testnet" hidden>{t.testnet}</p>
+        <h1 class="pp-amount" id="pp-title" data-slot="amount"></h1>
+        <p class="pp-hint" data-slot="amount-hint" hidden>{t.anyAmountHint}</p>
+        <p class="pp-msg" data-slot="msg" hidden></p>
+
+        <div class="pp-status" role="status" aria-live="polite">
+          <span class="pp-pill" data-slot="phase"></span>
+          <p class="pp-body" data-slot="phase-body"></p>
+        </div>
+
+        <div class="pp-pay" data-slot="pay-area">
+          <img class="pp-qr" data-slot="qr" alt={t.qrAlt} width="240" height="240" />
+          <div class="pp-actions">
+            <a class="btn btn-dark" data-slot="open-wallet">{t.openWallet}</a>
+            <button class="btn btn-outline-w" type="button" data-action="pay-extension" hidden>{t.payExtension}</button>
+            <a class="btn btn-outline-w" data-slot="web-wallet" target="_blank" rel="noopener" hidden>{t.webWallet}</a>
+          </div>
+          <p class="pp-hint" data-slot="ext-status" role="status" aria-live="polite"></p>
+          <p class="pp-hint" data-slot="tx-note" hidden>{t.txNote}</p>
+        </div>
+
+        <dl class="pp-details">
+          <div class="pp-row">
+            <dt>{t.payTo}</dt>
+            <dd>
+              <code class="pp-code" data-slot="pay-to"></code>
+              <button class="pp-copy" type="button" data-copy="pay-to" aria-label={`${t.copy}: ${t.payTo}`}>{t.copy}</button>
+            </dd>
+          </div>
+          <div class="pp-row" data-row="memo" hidden>
+            <dt>{t.memo}</dt>
+            <dd>
+              <code class="pp-code" data-slot="memo"></code>
+              <button class="pp-copy" type="button" data-copy="memo" aria-label={`${t.copy}: ${t.memo}`}>{t.copy}</button>
+              <p class="pp-hint pp-row-hint">{t.memoHint}</p>
+            </dd>
+          </div>
+          <div class="pp-row">
+            <dt>{t.network}</dt>
+            <dd data-slot="network"></dd>
+          </div>
+          <div class="pp-row" data-row="expires" hidden>
+            <dt>{t.expires}</dt>
+            <dd><time data-slot="expires"></time></dd>
+          </div>
+          <div class="pp-row" data-row="tx" hidden>
+            <dt>{t.transaction}</dt>
+            <dd><a class="pp-link" data-slot="tx" target="_blank" rel="noopener noreferrer">{t.explorer}</a></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <script type="application/json" id="checkout-i18n" set:html={runtimeJson} />
+</PaymentsLayout>
+
+<script>
+  import { startCheckout } from "@/scripts/payments/checkout";
+
+  startCheckout();
+</script>

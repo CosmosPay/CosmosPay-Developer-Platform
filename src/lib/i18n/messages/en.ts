@@ -88,6 +88,16 @@ export default {
       growth: { desc: "Lower rates for scaling teams", sub: "/mo · from", pnote: "from · 0.2% + 5¢ per txn", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Radar fraud tooling", "Volume discounts", "Priority support"] },
     },
   },
+
+  /* ---------------- /login ---------------- */
+  login: {
+    title: "Sign in to Cosmos Pay",
+    sub: "Your account opens the developer dashboard: API keys, payment links, webhooks and analytics.",
+    cta: "Continue to sign in",
+    redirecting: "Taking you to sign in…",
+    note: "Secure sign-in with your Cosmos Pay account.",
+  },
+
   /* ---------------- shared: nav ---------------- */
   nav: {
     login: "Log in",
@@ -609,6 +619,7 @@ export default {
         submit: "Create link",
       },
       detail: {
+        checkout: "Checkout page", openCheckout: "Open checkout",
         eyebrow: "Payment link", title: "Payment link ready",
         scan: "Scan to pay", downloadQr: "Download QR",
         uri: "SEP-7 URI", xdr: "Unsigned XDR",

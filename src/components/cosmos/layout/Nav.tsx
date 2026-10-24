@@ -4,19 +4,19 @@ import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
 import { HOME, PRICING, DASH, DOCS } from "@/components/cosmos/lib/constants";
 import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
 import { CosmosLockup, IcNChev, IcDocs } from "@/components/cosmos/icons";
-import { ThemeToggle } from "./ThemeToggle";
-import { LangSelect } from "./LangSelect";
-import { NavUserMenu } from "./NavUserMenu";
-import { MegaPanel } from "./MegaPanel";
+import { ThemeToggle } from "@/components/cosmos/layout/ThemeToggle";
+import { LangSelect } from "@/components/cosmos/layout/LangSelect";
+import { NavUserMenu } from "@/components/cosmos/layout/NavUserMenu";
+import { MegaPanel } from "@/components/cosmos/layout/MegaPanel";
 import { Avatar } from "@/components/cosmos/ui/Avatar";
 
-/* Deep links into the docs site (served at /docs) for the mega-menu columns. The message
+/* Deep links into the docs site (served by the developer platform at /docs) for the mega-menu columns. The message
    catalogs only carry translated labels, not hrefs, so the targets are defined here once
    (they're identical in every language) and overlaid onto the catalog by position. Keyed by
    nav item → column index → link index; a missing entry leaves that link's own href intact. */
 const NAV_DOC_HREFS: Record<string, Record<number, (string | undefined)[]>> = {
-  developers: { 0: ["/docs/api", "/docs/sdk/server/overview", "/docs/sdk/server/webhooks", "/docs/getting-started"] },
-  resources: { 0: ["/docs", "/docs/getting-started"] },
+  developers: { 0: [`${DOCS}/api`, `${DOCS}/sdk/server/overview`, `${DOCS}/sdk/server/webhooks`, `${DOCS}/getting-started`] },
+  resources: { 0: [DOCS, `${DOCS}/getting-started`] },
 };
 
 /* Overlay the doc hrefs above onto an item's columns without mutating the catalog. */
@@ -46,7 +46,7 @@ function useNavItems(): any[] {
   ];
 }
 
-export function Nav({ theme, setTheme, user = null, overPanel }: { theme: Theme; setTheme: SetTheme; user?: User | null; overPanel?: "black" }) {
+export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white" }) {
   const t = useT();
   const NAV_ITEMS = useNavItems();
   const [scrolled, setScrolled] = useState(false);
@@ -56,10 +56,12 @@ export function Nav({ theme, setTheme, user = null, overPanel }: { theme: Theme;
      arranca en true cuando la pagina la pasa, asi el SSR ya pinta la barra
      transparente y no hay parpadeo al hidratar. */
   const [overInk, setOverInk] = useState(!!overPanel);
-  /* Gate the session buttons until after hydration so they render once in the
-     resolved language + auth state, instead of flashing through default →
-     translated → signed-in variants on first load. */
-  const [ready, setReady] = useState(false);
+  /* Gate the session buttons until after hydration AND until the session is known
+     (sessionReady: the company site reads it cross-origin), so they render once in the
+     resolved language + auth state, instead of flashing through default → translated →
+     signed-in variants on first load. */
+  const [hydrated, setHydrated] = useState(false);
+  const ready = hydrated && sessionReady;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const h = () => {
@@ -78,7 +80,7 @@ export function Nav({ theme, setTheme, user = null, overPanel }: { theme: Theme;
     h();
     window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h);
   }, [overPanel]);
-  useEffect(() => { setReady(true); }, []);
+  useEffect(() => { setHydrated(true); }, []);
   const open = (k: string | null) => { if (timer.current) clearTimeout(timer.current); setActive(k); };
   const scheduleClose = () => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setActive(null), 150); };
   const activeItem = NAV_ITEMS.find((i) => i.key === active && i.cols);

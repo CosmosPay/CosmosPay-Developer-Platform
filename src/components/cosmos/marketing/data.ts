@@ -7,6 +7,8 @@
    names ever appear. Add your own as plain strings, e.g.:
      export const CLIENTS = ["Acme", "Globex", "Initech"];
    To show logos instead of names, swap the <Marquee> render in Hero.tsx. */
+import { DOCS } from "@/components/cosmos/lib/constants";
+
 export const CLIENTS: string[] = [];
 
 export const API_SNIPPET = `import { Client } from '@cosmosapp/pay_sdk';
@@ -101,5 +103,5 @@ export const WALLET_MORE = [
 
 /* El comando del SDK y el indice en texto plano para los asistentes de codigo. */
 export const SDK_INSTALL = "npm i @cosmosapp/pay_sdk";
-export const LLMS_TXT = "https://cosmospay.lat/docs/llms.txt";
+export const LLMS_TXT = `${DOCS}/llms.txt`;
 export const MARKETPLACE_URL = "https://cosmosapp.lat";

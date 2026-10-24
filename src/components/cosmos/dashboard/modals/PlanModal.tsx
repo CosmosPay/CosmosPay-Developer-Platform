@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, IcCheck, IcArrow } from "@/components/cosmos/shared";
+import { Modal, IcCheck, IcArrow, PRICING } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { PLAN_IDS, PLAN_SPECS, PLAN_PRICE } from "@/lib/plans.ts";
 
@@ -91,7 +91,7 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
         {isSame
           ? <button className="btn btn-soft" disabled>{p.current}</button>
           : <button className="btn btn-violet" onClick={() => { onSelect(target); onClose(); }}>{fmt(p.switchTo, { plan: names[target] })} <IcArrow /></button>}
-        <a className="btn btn-soft" href="/pricing">{t.dash.common.viewPlans}</a>
+        <a className="btn btn-soft" href={PRICING}>{t.dash.common.viewPlans}</a>
         <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
       </div>
     </div></Modal>

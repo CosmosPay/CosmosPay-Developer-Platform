@@ -1,5 +1,6 @@
 /* PlanStep.jsx — step 2: plan picker. */
 import { PLAN_IDS, POPULAR, PLAN_DATA } from "@/components/cosmos/onboarding/data";
+import { PRICING } from "@/components/cosmos/lib/constants";
 
 export function PlanStep({ ob, t, plan, pickPlan, showRec, recId, plans }) {
   const ids = plans && plans.length ? plans : PLAN_IDS;
@@ -23,7 +24,7 @@ export function PlanStep({ ob, t, plan, pickPlan, showRec, recId, plans }) {
           </button>
         ))}
       </div>
-      <p className="ob-input-note" style={{ marginTop: 14 }}>{ob.enterpriseNote} <a href="/pricing" style={{ color: "var(--ob-accent)", fontWeight: 600 }}>{ob.enterpriseLink}</a></p>
+      <p className="ob-input-note" style={{ marginTop: 14 }}>{ob.enterpriseNote} <a href={PRICING} style={{ color: "var(--ob-accent)", fontWeight: 600 }}>{ob.enterpriseLink}</a></p>
     </div>
   );
 }

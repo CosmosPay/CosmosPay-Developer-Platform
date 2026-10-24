@@ -15,9 +15,16 @@ export const auth = betterAuth({
   secret: BETTER_AUTH_SECRET,
   baseURL: BETTER_AUTH_URL,
   // Better Auth trusts only baseURL (dev.cosmospay.lat) by default and 403s any request
-  // from another Origin. The public site + wallet sign in from cosmospay.lat cross-origin,
-  // so trust the same origins the CORS layer allows (shared list keeps them in sync).
+  // from another Origin. The company site signs out from cosmospay.lat cross-origin, and so
+  // does the wallet, so trust the same origins the CORS layer allows (shared list keeps them
+  // in sync).
   trustedOrigins: ALLOWED_ORIGINS,
+  /* The session cookie stays HOST-ONLY on the platform's domain, although this app also
+     answers cosmospay.lat and payments.cosmospay.lat. Scoped to the parent domain it would
+     travel to every *.cosmospay.lat host — the gateway, Authentik, the wallet landing —
+     none of which needs it. The company site reads the session with a credentialed call to
+     /api/auth/get-session instead (useDevSession), and the payments pages need none. Do not
+     turn on crossSubDomainCookies to save that call. */
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

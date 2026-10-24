@@ -1,5 +1,5 @@
 import { useT } from "@/lib/i18n/index";
-import { FaqItem } from "./FaqItem";
+import { FaqItem } from "@/components/cosmos/pricing/FaqItem";
 
 /* Las preguntas son el respiro negro de la pagina: sin un panel oscuro en el
    medio, /pricing quedaba blanca de punta a punta y no se leia como la home. */

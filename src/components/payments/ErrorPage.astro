@@ -1,0 +1,31 @@
+---
+// Error page (404 / 500) for the payments domain, in its layout and languages. Static — no
+// client script — so it renders even when something else is broken. src/pages/404.astro
+// and 500.astro pick it when the request is served as the payments area.
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { SITE } from "@/lib/payments/urls";
+
+interface Props {
+  code: 404 | 500;
+}
+
+const { code } = Astro.props;
+const t = MESSAGES[Astro.locals.lang ?? "en"].errors;
+const title = code === 500 ? t.serverTitle : t.notFoundTitle;
+const body = code === 500 ? t.serverBody : t.notFoundBody;
+// One pose per screen, as on the other Cosmos Pay sites: thinking for 404, lying down for 500.
+const figure = code === 500 ? "astronauta-acostado.svg" : "astronauta-pensando.svg";
+---
+
+<PaymentsLayout title={`${code} — ${title} · Cosmos Pay`}>
+  <main id="main" class="pp-main">
+    <section class="pp-card pp-error" aria-labelledby="err-title">
+      <p class="pp-eyebrow">{code}</p>
+      <h1 class="pp-title" id="err-title">{title}</h1>
+      <p class="pp-body">{body}</p>
+      <img class="pp-figure" src={`/brand/${figure}`} alt="" width="180" height="180" loading="lazy" decoding="async" />
+      <a class="btn btn-dark" href={SITE}>{t.home}</a>
+    </section>
+  </main>
+</PaymentsLayout>

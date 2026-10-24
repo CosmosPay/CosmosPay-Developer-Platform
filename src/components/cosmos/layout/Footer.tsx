@@ -1,15 +1,15 @@
 import { useT } from "@/lib/i18n/index";
-import { HOME, PRICING, DASH } from "@/components/cosmos/lib/constants";
+import { HOME, PRICING, DASH, TERMS } from "@/components/cosmos/lib/constants";
 import { CosmosLockup } from "@/components/cosmos/icons";
 
 /* Hrefs are kept here (aligned by index to the catalog link order); labels come
-   from the active locale. Most links are placeholders (#); two point to real routes. */
+   from the active locale. Most links are placeholders (#); a few point to real routes. */
 const FOOT_GROUPS = [
   { key: "products", href: ["#", "#", "#", "#", "#", "#", "#", PRICING] },
   { key: "solutions", href: ["#", "#", "#", "#", "#", "#", "#"] },
   { key: "developers", href: ["#", "#", "#", "#", "#", "#", DASH] },
   { key: "resources", href: ["#", "#", "#", "#", "#", "#"] },
-  { key: "company", href: ["#", "#", "#", "#", "#", "#"] },
+  { key: "company", href: ["#", "#", "#", "#", TERMS, "#"] },
 ];
 
 export function Footer() {

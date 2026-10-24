@@ -7,7 +7,7 @@ import { planFeatures, ONBOARDING_ENABLED } from "@/lib/features";
 // Only for signed-in users without an organization yet.
 const user = Astro.locals.user;
 if (!user) {
-  return Astro.redirect("/");
+  return Astro.redirect("/login?next=/onboarding");
 }
 
 // Onboarding turned off → the dashboard auto-provisions the org; send them there.

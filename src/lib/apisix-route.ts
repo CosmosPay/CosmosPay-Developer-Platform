@@ -117,7 +117,7 @@ export async function syncCosmosRoute() {
     callbackId,
     describeUris(() => callbackRouteUris(COSMOS_API_ENTRY)),
     callback,
-    "the wallet sign-in will not complete",
+    "the wallet sign-in will not complete and hosted checkout pages cannot read their link",
   );
 
   /* Retire the Pollar-only route this one replaced, where it lingers: it is keyless and
