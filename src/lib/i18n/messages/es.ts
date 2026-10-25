@@ -427,7 +427,7 @@ export default {
   },
   footer: {
     tagline: "La infraestructura de pagos para desarrolladores. Una API, todos los rieles.",
-    copyright: "© 2026 Cosmos Pay, Inc. (Plataforma para desarrolladores)",
+    copyright: "© 2026 Cosmos Pay (Plataforma para desarrolladores)",
     groups: {
       products: {
         title: "Productos",

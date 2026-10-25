@@ -191,7 +191,7 @@ export default {
   /* ---------------- shared: footer ---------------- */
   footer: {
     tagline: "The payments infrastructure for developers. One API, every rail.",
-    copyright: "© 2026 Cosmos Pay, Inc. (Developer Platform)",
+    copyright: "© 2026 Cosmos Pay (Developer Platform)",
     groups: {
       products: { title: "Products", links: ["Payments", "Stablecoins", "Payouts", "Anchors", "Wallets", "Checkout", "Payment Links", "Pricing"] },
       solutions: { title: "Solutions", links: ["SaaS & subscriptions", "Marketplaces", "E-commerce", "Platforms", "Embedded finance", "AI & agents", "Enterprise"] },

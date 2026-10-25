@@ -146,7 +146,7 @@
 .pl-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; align-items: start; }
 .pl-split > .pl-head { margin: 0; }
 .pl-head-sticky { position: sticky; top: 112px; }
-.pl-head-row { max-width: none; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: end; }
+.pl-head-row { max-width: none; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
 .pl-head-row .pl-section-lede { margin: 0; justify-self: end; }
 
 /* benefits: a bento of four, each over a piece of the product that shows it (Mock.astro);
