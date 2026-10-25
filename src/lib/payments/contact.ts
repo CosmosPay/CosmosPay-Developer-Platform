@@ -81,6 +81,11 @@ export class ContactRateLimit {
     return true;
   }
 
+  /** Gives back the last message counted for `key` (it was refused further on). */
+  release(key: string): void {
+    this.hits.get(key)?.pop();
+  }
+
   private prune(now: number): void {
     for (const [key, times] of this.hits) if (times.every((t) => now - t >= this.windowMs)) this.hits.delete(key);
   }

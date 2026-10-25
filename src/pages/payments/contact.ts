@@ -8,7 +8,10 @@
  * off, so it is checked here); the body is read up to 20 KB, whatever Content-Length says; a
  * script is told "sent" and nothing goes out (the honeypot, a post faster than a person); one
  * network (cf-connecting-ip, never a header the client controls) may send five messages per 15
- * minutes, and all of them together sixty an hour. The rules are in src/lib/payments/contact.ts. */
+ * minutes; past sixty an hour from everyone together, visitors are pointed at the public address
+ * instead (a circuit breaker, so forged keys cannot lock the team out of mail). For a firm
+ * per-network limit, the origin should accept only Cloudflare's addresses (then
+ * cf-connecting-ip cannot be forged). The rules are in src/lib/payments/contact.ts. */
 import type { APIRoute } from "astro";
 import { CONTACT_EMAIL } from "astro:env/server";
 import { PAYMENTS } from "@/lib/payments/urls";
@@ -55,7 +58,16 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   const parsed = parseContact(fields);
   if (!parsed.ok) return answer("invalid", parsed.errors);
   const now = Date.now();
-  if (!perNetwork.take(rateKey(request.headers, clientAddress), now) || !overall.take("all", now)) return answer("limited");
+  const key = rateKey(request.headers, clientAddress);
+  if (!perNetwork.take(key, now)) return answer("limited");
+  // The overall cap is a circuit breaker, not a lockout: past it the visitor is pointed at the
+  // public address (the "failed" answer names it), their own allowance is given back, and the
+  // log says so, so a flood of forged keys costs the form, never the way to reach the team.
+  if (!overall.take("all", now)) {
+    perNetwork.release(key);
+    console.warn("[contact] the overall cap (60 messages an hour) is reached; visitors are shown the public address");
+    return answer("failed");
+  }
   if (!isMailConfigured()) {
     console.error("[contact] mail is not configured (RESEND_API_KEY or SMTP_*, and SMTP_FROM)");
     return answer("failed");

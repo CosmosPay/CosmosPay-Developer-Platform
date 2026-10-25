@@ -61,3 +61,11 @@ test('readCapped reads the bytes that arrive and stops past the cap, whatever Co
   assert.equal(await readCapped(stream('x'.repeat(60), 'y'.repeat(60)), 100), null);
   assert.equal((await readCapped(null, 100))!.byteLength, 0);
 });
+
+test('ContactRateLimit gives back a message refused further on', () => {
+  const limit = new ContactRateLimit(1, 1000);
+  assert.equal(limit.take('1.2.3.4', 0), true);
+  limit.release('1.2.3.4');
+  assert.equal(limit.take('1.2.3.4', 10), true);
+  assert.equal(limit.take('1.2.3.4', 20), false);
+});
