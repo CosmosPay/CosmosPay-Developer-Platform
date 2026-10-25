@@ -53,8 +53,8 @@ export const openApiConfig: OpenAPIObjectConfig = {
       description: 'Swaps between every network NEAR Intents reaches, settled by NEAR Intents',
     },
     {
-      name: 'ZK Payments',
-      description: 'Confidential payments on Stellar (amounts hidden on-chain), offered as a service for a 0.01% commission per transaction',
+      name: 'Private Payments',
+      description: 'Payments on Stellar whose amount stays hidden on-chain (zero-knowledge proofs), offered as a service for a 0.01% commission per transaction',
     },
     {
       name: 'Liquidity',

@@ -15,5 +15,5 @@ export function zkErrorResponse(err: unknown): Response {
     const status = err.status === 404 ? ApiStatus.NOT_FOUND : ApiStatus.BAD_REQUEST;
     return jsonError({ message: err.message, code: err.status, status });
   }
-  return jsonError({ message: "ZK payment request failed", code: 500, status: ApiStatus.INTERNAL_ERROR });
+  return jsonError({ message: "Private payment request failed", code: 500, status: ApiStatus.INTERNAL_ERROR });
 }

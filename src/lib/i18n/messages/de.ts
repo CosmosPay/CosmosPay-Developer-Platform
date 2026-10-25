@@ -2,7 +2,7 @@
 export default {
   ui: { close: "Schließen", dialog: "Dialog", copyToClipboard: "In die Zwischenablage kopieren", search: "Suchen", searchEllipsis: "Suchen…", select: "Auswählen…", account: "Konto", onboardingSteps: "Schritte der Einrichtung", skipToContent: "Zum Inhalt springen" },
   zk: {
-    title: "ZK-Zahlungen",
+    title: "Private Zahlungen",
     commission: "Provision",
     commissionRate: "0,01 % pro Transaktion",
     amount: "Betrag",
@@ -13,7 +13,7 @@ export default {
       SUCCEEDED: "Bezahlt",
       EXPIRED: "Abgelaufen",
     },
-    unavailable: "ZK-Zahlungen sind in diesem Netzwerk noch nicht verfügbar.",
+    unavailable: "Private Zahlungen sind in diesem Netzwerk noch nicht verfügbar.",
     notIsolated: "Dieser Browser kann die Beweise nicht erzeugen. Öffnen Sie die Seite in Chrome, Edge oder Firefox.",
     freighter: {
       missing: "Installieren Sie Freighter, um fortzufahren.",
@@ -27,10 +27,10 @@ export default {
       waiting: "Warten auf das Netzwerk…",
     },
     view: {
-      create: "ZK-Zahlung erstellen",
+      create: "Private Zahlung erstellen",
       account: "Vertrauliches Konto",
-      empty: "Noch keine ZK-Zahlungen.",
-      loadError: "ZK-Zahlungen konnten nicht geladen werden.",
+      empty: "Noch keine privaten Zahlungen.",
+      loadError: "Private Zahlungen konnten nicht geladen werden.",
       tableHead: {
         id: "Zahlung",
         amount: "Betrag",
@@ -44,7 +44,7 @@ export default {
       searchPlaceholder: "Nach ID, Konto oder Betrag suchen…",
     },
     modal: {
-      title: "Neue ZK-Zahlung",
+      title: "Neue private Zahlung",
       recipient: "Empfangskonto",
       recipientHint: "Es braucht ein vertrauliches Konto: Erstellen Sie es unter Vertrauliches Konto.",
       description: "Beschreibung",
@@ -56,7 +56,7 @@ export default {
       },
       submit: "Erstellen",
       submitting: "Wird erstellt…",
-      created: "ZK-Zahlung erstellt",
+      created: "Private Zahlung erstellt",
       link: "Zahlungslink",
     },
     account: {
@@ -915,7 +915,7 @@ export default {
     search: { label: "Dashboard durchsuchen", placeholder: "Suchen", pages: "Seiten", searchGroup: "Suchen", searchIn: "{place} mit „{q}“", empty: "Nichts passt zu „{q}“." },
     viewLabels: {
       overview: "Übersicht",
-      payments: "Zahlungen", zkPayments: "ZK-Zahlungen",
+      payments: "Zahlungen", zkPayments: "Private Zahlungen",
       balances: "Guthaben",
       customers: "Kunden",
       products: "Produkte & Links",
@@ -955,7 +955,7 @@ export default {
       },
       items: {
         overview: "Übersicht",
-        payments: "Zahlungen", zkPayments: "ZK-Zahlungen",
+        payments: "Zahlungen", zkPayments: "Private Zahlungen",
         balances: "Guthaben",
         customers: "Kunden",
         products: "Produkte",
@@ -1141,7 +1141,7 @@ export default {
     },
     cosmos: {
       loading: "Wird geladen…", loadError: "Daten konnten nicht geladen werden.", empty: "Hier ist noch nichts.",
-      eventLabels: { PAYMENT_INTENT_CREATED: "Zahlung erstellt", PAYMENT_INTENT_UPDATED: "Zahlung aktualisiert", PAYMENT_INTENT_SUCCEEDED: "Zahlung erfolgreich", PAYMENT_INTENT_FAILED: "Zahlung fehlgeschlagen", PAYMENT_INTENT_CANCELLED: "Zahlung storniert", PAYMENT_INTENT_DELETED: "Zahlung gelöscht", ZK_PAYMENT_SUCCEEDED: "ZK-Zahlung erfolgreich" },
+      eventLabels: { PAYMENT_INTENT_CREATED: "Zahlung erstellt", PAYMENT_INTENT_UPDATED: "Zahlung aktualisiert", PAYMENT_INTENT_SUCCEEDED: "Zahlung erfolgreich", PAYMENT_INTENT_FAILED: "Zahlung fehlgeschlagen", PAYMENT_INTENT_CANCELLED: "Zahlung storniert", PAYMENT_INTENT_DELETED: "Zahlung gelöscht", ZK_PAYMENT_SUCCEEDED: "Private Zahlung erfolgreich" },
       active: "Aktiv", inactive: "Deaktiviert",
       reveal: "Geheimnis anzeigen", secret: "Signatur-Geheimnis", secretNote: "Nur einmal angezeigt. Sicher aufbewahren.",
       rotate: "Geheimnis erneuern", ping: "Test senden", pingOk: "Testereignis zugestellt", pingFail: "Testereignis fehlgeschlagen",

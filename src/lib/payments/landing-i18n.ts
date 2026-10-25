@@ -183,7 +183,7 @@ const en = {
   pricing: {
     title: "Pay",
     titleBold: "per payment.",
-    lede: "Each plan has its own rate per payment; escrow adds 0.5% per payment. The payer’s wallet pays the network fee; on Monad, the deposit relay’s fee is deducted and shown on the checkout.",
+    lede: "Each plan has its own rate per payment; escrow adds 0.5% per payment. The payer’s wallet pays the network fee; on Monad, the deposit relay’s fee is deducted and shown on the checkout. Private payments, with the amount hidden on-chain, cost 0.01% per transaction.",
     perPayment: "per payment",
     perMonth: "per month",
     free: "No monthly fee",
@@ -211,7 +211,7 @@ const en = {
       a: "Your customer pays as usual, but the payment waits in an on-chain contract instead of reaching you at once. You release it to your address when you dispatch the order; if you don’t within the deadline you set for the link, it goes back to the buyer. Escrow costs 0.5% per payment on top of your plan’s rate.",
     },
     zk: {
-      q: "What are ZK payments? ZK payments, with the amount private on-chain, cost 0.01% per transaction.",
+      q: "What are private payments?",
       a: "Payments where the amount stays private on-chain: the network checks a zero-knowledge proof instead of reading the amount. They run on OpenZeppelin’s confidential token for Stellar, cost 0.01% per transaction and are available on testnet for now.",
     },
     expiry: { q: "What happens when a link expires?", a: "The checkout says so and stops asking for the payment. If a payment still arrives and the network confirms it, the link is marked as paid." },
@@ -489,7 +489,7 @@ const es: LandingMessages = {
   pricing: {
     title: "Paga",
     titleBold: "por pago.",
-    lede: "Cada plan tiene su propia tarifa por pago; el escrow suma un 0,5 % por pago. La wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío del depósito se descuenta y se muestra en el checkout.",
+    lede: "Cada plan tiene su propia tarifa por pago; el escrow suma un 0,5 % por pago. La wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío del depósito se descuenta y se muestra en el checkout. Los pagos privados, con el monto oculto en la cadena, cuestan 0,01 % por transacción.",
     perPayment: "por pago",
     perMonth: "al mes",
     free: "Sin cuota mensual",
@@ -517,7 +517,7 @@ const es: LandingMessages = {
       a: "Tu cliente paga como siempre, pero el pago espera en un contrato on-chain en lugar de llegarte al momento. Lo liberas a tu dirección cuando despachas el pedido; si no lo haces dentro del plazo que fijas para el enlace, vuelve al comprador. El escrow cuesta un 0,5 % por pago, además de la tarifa de tu plan.",
     },
     zk: {
-      q: "¿Qué son los pagos ZK? Los pagos ZK, con el monto privado en la cadena, cuestan 0,01 % por transacción.",
+      q: "¿Qué son los pagos privados?",
       a: "Pagos en los que el monto queda privado en la cadena: la red verifica una prueba de conocimiento cero en lugar de leer el monto. Funcionan sobre el token confidencial de OpenZeppelin para Stellar, cuestan 0,01 % por transacción y por ahora están disponibles en testnet.",
     },
     expiry: { q: "¿Qué pasa cuando vence un enlace?", a: "El checkout lo indica y deja de pedir el pago. Si aun así llega un pago y la red lo confirma, el enlace queda como pagado." },
@@ -794,7 +794,7 @@ const pt: LandingMessages = {
   pricing: {
     title: "Pague",
     titleBold: "por pagamento.",
-    lede: "Cada plano tem a própria tarifa por pagamento; o escrow soma 0,5% por pagamento. A carteira de quem paga cobre a taxa de rede; na Monad, a taxa do repasse do depósito é descontada e mostrada no checkout.",
+    lede: "Cada plano tem a própria tarifa por pagamento; o escrow soma 0,5% por pagamento. A carteira de quem paga cobre a taxa de rede; na Monad, a taxa do repasse do depósito é descontada e mostrada no checkout. Os pagamentos privados, com o valor oculto na blockchain, custam 0,01% por transação.",
     perPayment: "por pagamento",
     perMonth: "por mês",
     free: "Sem mensalidade",
@@ -822,7 +822,7 @@ const pt: LandingMessages = {
       a: "Seu cliente paga normalmente, mas o pagamento espera num contrato on-chain em vez de chegar na hora. Você libera para o seu endereço quando despacha o pedido; se não fizer isso dentro do prazo que define para o link, ele volta para o comprador. O escrow custa 0,5% por pagamento, além da tarifa do seu plano.",
     },
     zk: {
-      q: "O que são pagamentos ZK? Os pagamentos ZK, com o valor privado na blockchain, custam 0,01% por transação.",
+      q: "O que são pagamentos privados?",
       a: "Pagamentos em que o valor fica privado na blockchain: a rede verifica uma prova de conhecimento zero em vez de ler o valor. Funcionam sobre o token confidencial da OpenZeppelin para Stellar, custam 0,01% por transação e, por enquanto, estão disponíveis na testnet.",
     },
     expiry: { q: "O que acontece quando um link expira?", a: "O checkout avisa e deixa de pedir o pagamento. Se ainda assim chegar um pagamento e a rede confirmar, o link fica como pago." },
@@ -1099,7 +1099,7 @@ const fr: LandingMessages = {
   pricing: {
     title: "Payez",
     titleBold: "au paiement.",
-    lede: "Chaque offre a son propre tarif par paiement ; l’escrow ajoute 0,5 % par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais de dépôt sont déduits et affichés sur le checkout.",
+    lede: "Chaque offre a son propre tarif par paiement ; l’escrow ajoute 0,5 % par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais de dépôt sont déduits et affichés sur le checkout. Les paiements privés, au montant caché sur la blockchain, coûtent 0,01 % par transaction.",
     perPayment: "par paiement",
     perMonth: "par mois",
     free: "Sans abonnement mensuel",
@@ -1127,7 +1127,7 @@ const fr: LandingMessages = {
       a: "Votre client paie comme d’habitude, mais le paiement attend dans un contrat on-chain au lieu de vous parvenir aussitôt. Vous le libérez vers votre adresse à l’expédition de la commande ; sinon, passé le délai que vous fixez pour le lien, il retourne à l’acheteur. L’escrow coûte 0,5 % par paiement en plus du tarif de votre offre.",
     },
     zk: {
-      q: "Que sont les paiements ZK ? Les paiements ZK, au montant privé sur la blockchain, coûtent 0,01 % par transaction.",
+      q: "Que sont les paiements privés ?",
       a: "Des paiements dont le montant reste privé sur la blockchain : le réseau vérifie une preuve à divulgation nulle de connaissance au lieu de lire le montant. Ils reposent sur le jeton confidentiel d’OpenZeppelin pour Stellar, coûtent 0,01 % par transaction et sont pour l’instant disponibles sur le testnet.",
     },
     expiry: { q: "Que se passe-t-il quand un lien expire ?", a: "Le checkout l’indique et cesse de demander le paiement. Si un paiement arrive quand même et que le réseau le confirme, le lien est marqué comme payé." },
@@ -1404,7 +1404,7 @@ const de: LandingMessages = {
   pricing: {
     title: "Zahle",
     titleBold: "pro Zahlung.",
-    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung; Escrow kostet zusätzlich 0,5 % pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt.",
+    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung; Escrow kostet zusätzlich 0,5 % pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt. Private Zahlungen, deren Betrag auf der Blockchain verborgen bleibt, kosten 0,01 % pro Transaktion.",
     perPayment: "pro Zahlung",
     perMonth: "pro Monat",
     free: "Keine Monatsgebühr",
@@ -1432,7 +1432,7 @@ const de: LandingMessages = {
       a: "Dein Kunde zahlt wie gewohnt, aber die Zahlung wartet in einem On-Chain-Vertrag, statt sofort bei dir anzukommen. Du gibst sie an deine Adresse frei, wenn du die Bestellung versendest; tust du das nicht innerhalb der Frist, die du für den Link festlegst, geht sie an den Käufer zurück. Escrow kostet 0,5 % pro Zahlung zusätzlich zum Satz deines Tarifs.",
     },
     zk: {
-      q: "Was sind ZK-Zahlungen? ZK-Zahlungen, deren Betrag auf der Blockchain privat bleibt, kosten 0,01 % pro Transaktion.",
+      q: "Was sind private Zahlungen?",
       a: "Zahlungen, deren Betrag auf der Blockchain privat bleibt: Das Netzwerk prüft einen Zero-Knowledge-Beweis, statt den Betrag zu lesen. Sie laufen auf dem vertraulichen Token von OpenZeppelin für Stellar, kosten 0,01 % pro Transaktion und sind vorerst im Testnet verfügbar.",
     },
     expiry: { q: "Was passiert, wenn ein Link abläuft?", a: "Der Checkout zeigt es an und fordert die Zahlung nicht mehr an. Kommt trotzdem eine Zahlung an und bestätigt das Netzwerk sie, gilt der Link als bezahlt." },
@@ -1709,7 +1709,7 @@ const hi: LandingMessages = {
   pricing: {
     title: "प्रति भुगतान",
     titleBold: "शुल्क।",
-    lede: "हर प्लान की प्रति भुगतान अपनी दर है; एस्क्रो पर हर भुगतान में 0.5% अतिरिक्त लगता है। नेटवर्क शुल्क भुगतान करने वाले का वॉलेट चुकाता है; Monad पर डिपॉज़िट रिले का शुल्क काटा जाता है और चेकआउट पर दिखाया जाता है।",
+    lede: "हर प्लान की प्रति भुगतान अपनी दर है; एस्क्रो पर हर भुगतान में 0.5% अतिरिक्त लगता है। नेटवर्क शुल्क भुगतान करने वाले का वॉलेट चुकाता है; Monad पर डिपॉज़िट रिले का शुल्क काटा जाता है और चेकआउट पर दिखाया जाता है। निजी भुगतान, जिनमें राशि ऑन-चेन छिपी रहती है, प्रति लेन-देन 0.01% लेते हैं।",
     perPayment: "प्रति भुगतान",
     perMonth: "प्रति माह",
     free: "कोई मासिक शुल्क नहीं",
@@ -1737,7 +1737,7 @@ const hi: LandingMessages = {
       a: "आपका ग्राहक हमेशा की तरह भुगतान करता है, लेकिन भुगतान तुरंत आप तक पहुँचने के बजाय ऑन-चेन कॉन्ट्रैक्ट में रुका रहता है। ऑर्डर डिस्पैच करने पर आप उसे अपने पते पर रिलीज़ करते हैं; अगर आप लिंक के लिए तय की गई समय-सीमा में ऐसा नहीं करते, तो वह खरीदार को लौट जाता है। एस्क्रो की लागत आपके प्लान की दर के ऊपर हर भुगतान पर 0.5% है।",
     },
     zk: {
-      q: "ZK भुगतान क्या हैं? ZK भुगतान, जिनमें राशि ऑन-चेन निजी रहती है, प्रति लेन-देन 0.01% लेते हैं।",
+      q: "निजी भुगतान क्या हैं?",
       a: "ऐसे भुगतान जिनमें राशि ऑन-चेन निजी रहती है: नेटवर्क राशि पढ़ने के बजाय एक ज़ीरो-नॉलेज प्रूफ़ की जाँच करता है। ये Stellar के लिए OpenZeppelin के गोपनीय टोकन पर चलते हैं, प्रति लेन-देन 0.01% लगता है और फ़िलहाल ये टेस्टनेट पर उपलब्ध हैं।",
     },
     expiry: { q: "लिंक की समय-सीमा समाप्त होने पर क्या होता है?", a: "चेकआउट यह बता देता है और भुगतान माँगना बंद कर देता है। अगर इसके बाद भी कोई भुगतान आता है और नेटवर्क उसकी पुष्टि करता है, तो लिंक को भुगतान हुआ मार्क कर दिया जाता है।" },
@@ -2014,7 +2014,7 @@ const zh: LandingMessages = {
   pricing: {
     title: "费用",
     titleBold: "按笔计算。",
-    lede: "每个套餐都有各自的单笔费率；担保交易每笔额外收取 0.5%。网络费由付款人的钱包支付；在 Monad 上，存款中继的费用会被扣除，并显示在收银台上。",
+    lede: "每个套餐都有各自的单笔费率；担保交易每笔额外收取 0.5%。网络费由付款人的钱包支付；在 Monad 上，存款中继的费用会被扣除，并显示在收银台上。隐私支付在链上隐藏金额，每笔交易收取 0.01%。",
     perPayment: "每笔",
     perMonth: "每月",
     free: "无月费",
@@ -2042,7 +2042,7 @@ const zh: LandingMessages = {
       a: "客户照常付款，但款项不会立即到达您手中，而是暂存在链上合约中。您在发货时将其释放到您的地址；如果您未在为该链接设定的期限内释放，款项将退还给买家。担保交易每笔收取 0.5%，在您的套餐费率之外另计。",
     },
     zk: {
-      q: "什么是 ZK 支付？ZK 支付在链上隐藏金额，每笔交易收取 0.01%。",
+      q: "什么是隐私支付？",
       a: "金额在链上保持私密的支付：网络验证零知识证明，而不是读取金额。它基于 OpenZeppelin 为 Stellar 打造的保密代币，每笔交易收取 0.01%，目前在测试网上提供。",
     },
     expiry: { q: "链接过期后会怎样？", a: "收银台会提示链接已过期，并停止请求付款。如果之后仍有支付到达并经网络确认，该链接会被标记为已支付。" },

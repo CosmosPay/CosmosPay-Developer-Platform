@@ -585,6 +585,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 ### ZK payments as a service
 
+- **People see "private payments", never "ZK"** (product owner, 2026-10-25: people don't know what
+  ZK payments are): every catalog string, page title, API message, Swagger tag and docs heading says
+  private payments (pagos privados, pagamentos privados, paiements privés, private Zahlungen, निजी
+  भुगतान, 隐私支付). `zk` stays only in identifiers: routes, keys, file names, the
+  `ZK_PAYMENT_SUCCEEDED` event and code comments.
 - **What it is**: confidential payments on Stellar, the amount hidden on-chain (Pedersen
   commitments, UltraHonk proofs verified on-chain), built on OpenZeppelin's Confidential Token
   (`stellar-confidential` 0.8.0) and the TypeScript SDK `stellar-confidential-token-sdk` (MIT,
@@ -622,7 +627,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   prefix because nothing under it needs a consumer; every authenticated ZK route stays under
   `/v1/zk-payments`. `src/lib/zk/checkout-api.ts` is the trust boundary (every field checked, the
   RPC must be https; tested).
-- The landing presents it in the pricing lede and the FAQ ("What are ZK payments?").
+- The landing presents it in the pricing lede and the FAQ ("What are private payments?").
 
 ### Other split-related notes
 

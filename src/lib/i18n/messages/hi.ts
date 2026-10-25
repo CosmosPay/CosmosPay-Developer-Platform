@@ -2,7 +2,7 @@
 export default {
   ui: { close: "बंद करें", dialog: "संवाद", copyToClipboard: "क्लिपबोर्ड पर कॉपी करें", search: "खोजें", searchEllipsis: "खोजें…", select: "चुनें…", account: "खाता", onboardingSteps: "शुरुआत के चरण", skipToContent: "सामग्री पर जाएँ" },
   zk: {
-    title: "ZK भुगतान",
+    title: "निजी भुगतान",
     commission: "कमीशन",
     commissionRate: "प्रति लेन-देन 0.01%",
     amount: "राशि",
@@ -13,7 +13,7 @@ export default {
       SUCCEEDED: "भुगतान हो गया",
       EXPIRED: "समाप्त",
     },
-    unavailable: "ZK भुगतान अभी इस नेटवर्क पर उपलब्ध नहीं हैं।",
+    unavailable: "निजी भुगतान अभी इस नेटवर्क पर उपलब्ध नहीं हैं।",
     notIsolated: "यह ब्राउज़र प्रूफ़ नहीं बना सकता। पेज को Chrome, Edge या Firefox में खोलें।",
     freighter: {
       missing: "जारी रखने के लिए Freighter इंस्टॉल करें।",
@@ -27,10 +27,10 @@ export default {
       waiting: "नेटवर्क की प्रतीक्षा…",
     },
     view: {
-      create: "ZK भुगतान बनाएँ",
+      create: "निजी भुगतान बनाएँ",
       account: "गोपनीय खाता",
-      empty: "अभी कोई ZK भुगतान नहीं है।",
-      loadError: "ZK भुगतान लोड नहीं हो सके।",
+      empty: "अभी कोई निजी भुगतान नहीं है।",
+      loadError: "निजी भुगतान लोड नहीं हो सके।",
       tableHead: {
         id: "भुगतान",
         amount: "राशि",
@@ -44,7 +44,7 @@ export default {
       searchPlaceholder: "ID, खाते या राशि से खोजें…",
     },
     modal: {
-      title: "नया ZK भुगतान",
+      title: "नया निजी भुगतान",
       recipient: "प्राप्त करने वाला खाता",
       recipientHint: "इसके लिए गोपनीय खाता चाहिए: गोपनीय खाता से इसे बनाएँ।",
       description: "विवरण",
@@ -56,7 +56,7 @@ export default {
       },
       submit: "बनाएँ",
       submitting: "बनाया जा रहा है…",
-      created: "ZK भुगतान बनाया गया",
+      created: "निजी भुगतान बनाया गया",
       link: "भुगतान लिंक",
     },
     account: {
@@ -527,14 +527,14 @@ export default {
   dash: {
     examples: { order: "ऑर्डर #24", firstName: "प्रिया", lastName: "शर्मा", fullName: "प्रिया शर्मा", jobTitle: "निदेशक", customerName: "Acme बिलिंग", payoutsName: "Acme भुगतान (USD)", productName: "Pro प्लान (मासिक)" },
     search: { label: "डैशबोर्ड में खोजें", placeholder: "खोजें", pages: "पेज", searchGroup: "खोजें", searchIn: "{place} में “{q}” से मेल खाने वाले", empty: "“{q}” से कुछ भी मेल नहीं खाता।" },
-    viewLabels: { overview: "अवलोकन", payments: "भुगतान", zkPayments: "ZK भुगतान", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट और लिंक", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन स्वैप", liquidity: "लिक्विडिटी पूल", blindpay: "फ़िएट", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "API लॉग", weblogs: "वेबहुक लॉग", activityLog: "क्लाइंट गतिविधि", activity: "गतिविधि", support: "सहायता", inbox: "सहायता इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "प्लेटफ़ॉर्म अवलोकन", adminPayments: "भुगतान (सभी संगठन)", adminSwaps: "स्वैप (सभी संगठन)", adminFiat: "फ़िएट (सभी संगठन)", adminCustomers: "ग्राहक (सभी संगठन)", adminProducts: "प्रोडक्ट (सभी संगठन)", adminConsumers: "संगठन" },
+    viewLabels: { overview: "अवलोकन", payments: "भुगतान", zkPayments: "निजी भुगतान", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट और लिंक", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन स्वैप", liquidity: "लिक्विडिटी पूल", blindpay: "फ़िएट", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "API लॉग", weblogs: "वेबहुक लॉग", activityLog: "क्लाइंट गतिविधि", activity: "गतिविधि", support: "सहायता", inbox: "सहायता इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "प्लेटफ़ॉर्म अवलोकन", adminPayments: "भुगतान (सभी संगठन)", adminSwaps: "स्वैप (सभी संगठन)", adminFiat: "फ़िएट (सभी संगठन)", adminCustomers: "ग्राहक (सभी संगठन)", adminProducts: "प्रोडक्ट (सभी संगठन)", adminConsumers: "संगठन" },
     sidebar: {
       label: "डैशबोर्ड",
       menu: { main: "मुख्य मेन्यू", preferences: "प्राथमिकताएँ" },
       groups: { payments: "भुगतान", swaps: "स्वैप", developers: "डेवलपर", settings: "सेटिंग्स", help: "मदद", admin: "एडमिन" },
       notifications: "सूचनाएँ",
       sections: { Platform: "प्लेटफ़ॉर्म", Build: "बनाएँ", Account: "खाता", Support: "सहायता", Admin: "एडमिन" },
-      items: { overview: "अवलोकन", payments: "भुगतान", zkPayments: "ZK भुगतान", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन", liquidity: "लिक्विडिटी", blindpay: "फ़िएट", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "लॉग", weblogs: "वेबहुक लॉग", activityLog: "गतिविधि लॉग", activity: "गतिविधि", support: "सहायता", inbox: "इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "अवलोकन", adminPayments: "भुगतान", adminSwaps: "स्वैप", adminFiat: "फ़िएट", adminCustomers: "ग्राहक", adminProducts: "प्रोडक्ट", adminConsumers: "संगठन" },
+      items: { overview: "अवलोकन", payments: "भुगतान", zkPayments: "निजी भुगतान", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन", liquidity: "लिक्विडिटी", blindpay: "फ़िएट", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "लॉग", weblogs: "वेबहुक लॉग", activityLog: "गतिविधि लॉग", activity: "गतिविधि", support: "सहायता", inbox: "इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "अवलोकन", adminPayments: "भुगतान", adminSwaps: "स्वैप", adminFiat: "फ़िएट", adminCustomers: "ग्राहक", adminProducts: "प्रोडक्ट", adminConsumers: "संगठन" },
       collapse: "साइडबार छोटा करें",
     },
     admin: {
@@ -670,7 +670,7 @@ export default {
     },
     cosmos: {
       loading: "लोड हो रहा है…", loadError: "डेटा लोड नहीं हो सका।", empty: "यहाँ अभी कुछ नहीं है।",
-      eventLabels: { PAYMENT_INTENT_CREATED: "भुगतान बनाया गया", PAYMENT_INTENT_UPDATED: "भुगतान अपडेट किया गया", PAYMENT_INTENT_SUCCEEDED: "भुगतान सफल", PAYMENT_INTENT_FAILED: "भुगतान विफल", PAYMENT_INTENT_CANCELLED: "भुगतान रद्द किया गया", PAYMENT_INTENT_DELETED: "भुगतान हटाया गया", ZK_PAYMENT_SUCCEEDED: "ZK भुगतान सफल" },
+      eventLabels: { PAYMENT_INTENT_CREATED: "भुगतान बनाया गया", PAYMENT_INTENT_UPDATED: "भुगतान अपडेट किया गया", PAYMENT_INTENT_SUCCEEDED: "भुगतान सफल", PAYMENT_INTENT_FAILED: "भुगतान विफल", PAYMENT_INTENT_CANCELLED: "भुगतान रद्द किया गया", PAYMENT_INTENT_DELETED: "भुगतान हटाया गया", ZK_PAYMENT_SUCCEEDED: "निजी भुगतान सफल" },
       active: "सक्रिय", inactive: "अक्षम",
       reveal: "सीक्रेट दिखाएँ", secret: "साइनिंग सीक्रेट", secretNote: "सिर्फ़ एक बार दिखाया जाता है। इसे सुरक्षित रखें।",
       rotate: "सीक्रेट रोटेट करें", ping: "टेस्ट भेजें", pingOk: "टेस्ट इवेंट डिलीवर हुआ", pingFail: "टेस्ट इवेंट विफल रहा",

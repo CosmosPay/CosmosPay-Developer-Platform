@@ -4,7 +4,7 @@
 export default {
   ui: { close: "Close", dialog: "Dialog", copyToClipboard: "Copy to clipboard", search: "Search", searchEllipsis: "Search…", select: "Select…", account: "Account", onboardingSteps: "Onboarding steps", skipToContent: "Skip to content" },
   zk: {
-    title: "ZK payments",
+    title: "Private payments",
     commission: "Commission",
     commissionRate: "0.01% per transaction",
     amount: "Amount",
@@ -15,7 +15,7 @@ export default {
       SUCCEEDED: "Paid",
       EXPIRED: "Expired",
     },
-    unavailable: "ZK payments are not available on this network yet.",
+    unavailable: "Private payments are not available on this network yet.",
     notIsolated: "This browser cannot generate the proofs. Open the page in Chrome, Edge or Firefox.",
     freighter: {
       missing: "Install Freighter to continue.",
@@ -29,10 +29,10 @@ export default {
       waiting: "Waiting for the network…",
     },
     view: {
-      create: "Create ZK payment",
+      create: "Create private payment",
       account: "Confidential account",
-      empty: "No ZK payments yet.",
-      loadError: "Couldn't load ZK payments.",
+      empty: "No private payments yet.",
+      loadError: "Couldn't load private payments.",
       tableHead: {
         id: "Payment",
         amount: "Amount",
@@ -46,7 +46,7 @@ export default {
       searchPlaceholder: "Search by ID, account or amount…",
     },
     modal: {
-      title: "New ZK payment",
+      title: "New private payment",
       recipient: "Receiving account",
       recipientHint: "It needs a confidential account: create it from Confidential account.",
       description: "Description",
@@ -58,7 +58,7 @@ export default {
       },
       submit: "Create",
       submitting: "Creating…",
-      created: "ZK payment created",
+      created: "Private payment created",
       link: "Checkout link",
     },
     account: {
@@ -529,14 +529,14 @@ export default {
   dash: {
     examples: { order: "Order #24", firstName: "Jane", lastName: "Doe", fullName: "Jane Doe", jobTitle: "Director", customerName: "Acme billing", payoutsName: "Acme payouts (USD)", productName: "Pro plan (monthly)" },
     search: { label: "Search the dashboard", placeholder: "Search", pages: "Pages", searchGroup: "Search", searchIn: "{place} matching “{q}”", empty: "Nothing matches “{q}”." },
-    viewLabels: { overview: "Overview", payments: "Payments", zkPayments: "ZK payments", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", crossChainSwaps: "Cross-chain swaps", liquidity: "Liquidity pools", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activityLog: "Client activity", activity: "Activity", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments (all orgs)", adminSwaps: "Swaps (all orgs)", adminFiat: "Fiat (all orgs)", adminCustomers: "Customers (all orgs)", adminProducts: "Products (all orgs)", adminConsumers: "Organizations" },
+    viewLabels: { overview: "Overview", payments: "Payments", zkPayments: "Private payments", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", crossChainSwaps: "Cross-chain swaps", liquidity: "Liquidity pools", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activityLog: "Client activity", activity: "Activity", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments (all orgs)", adminSwaps: "Swaps (all orgs)", adminFiat: "Fiat (all orgs)", adminCustomers: "Customers (all orgs)", adminProducts: "Products (all orgs)", adminConsumers: "Organizations" },
     sidebar: {
       label: "Dashboard",
       menu: { main: "Main menu", preferences: "Preferences" },
       groups: { payments: "Payments", swaps: "Swaps", developers: "Developers", settings: "Settings", help: "Help", admin: "Admin" },
       notifications: "Notifications",
       sections: { Platform: "Platform", Build: "Build", Account: "Account", Support: "Support", Admin: "Admin" },
-      items: { overview: "Overview", payments: "Payments", zkPayments: "ZK payments", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", crossChainSwaps: "Cross-chain", liquidity: "Liquidity", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activityLog: "Activity log", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
+      items: { overview: "Overview", payments: "Payments", zkPayments: "Private payments", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", crossChainSwaps: "Cross-chain", liquidity: "Liquidity", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activityLog: "Activity log", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
       collapse: "Collapse sidebar",
     },
     admin: {
@@ -672,7 +672,7 @@ export default {
     },
     cosmos: {
       loading: "Loading…", loadError: "Couldn't load data.", empty: "Nothing here yet.",
-      eventLabels: { PAYMENT_INTENT_CREATED: "Payment created", PAYMENT_INTENT_UPDATED: "Payment updated", PAYMENT_INTENT_SUCCEEDED: "Payment succeeded", PAYMENT_INTENT_FAILED: "Payment failed", PAYMENT_INTENT_CANCELLED: "Payment cancelled", PAYMENT_INTENT_DELETED: "Payment deleted", ZK_PAYMENT_SUCCEEDED: "ZK payment succeeded" },
+      eventLabels: { PAYMENT_INTENT_CREATED: "Payment created", PAYMENT_INTENT_UPDATED: "Payment updated", PAYMENT_INTENT_SUCCEEDED: "Payment succeeded", PAYMENT_INTENT_FAILED: "Payment failed", PAYMENT_INTENT_CANCELLED: "Payment cancelled", PAYMENT_INTENT_DELETED: "Payment deleted", ZK_PAYMENT_SUCCEEDED: "Private payment succeeded" },
       active: "Active", inactive: "Disabled",
       reveal: "Reveal secret", secret: "Signing secret", secretNote: "Shown once. Store it securely.",
       rotate: "Rotate secret", ping: "Send test", pingOk: "Test event delivered", pingFail: "Test event failed",

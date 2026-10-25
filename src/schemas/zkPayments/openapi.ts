@@ -9,7 +9,7 @@ import { errors, jsonCreated, jsonOk, registerRoutes, sessionSecurity } from "@/
 import { z } from "@/lib/openapi/zod";
 import { createZkPaymentBodySchema } from "@/schemas/zk-payments";
 
-const tags = ["ZK Payments"];
+const tags = ["Private Payments"];
 const orgQuery = z.string().openapi({ param: { name: "org", in: "query" }, example: "org_123" });
 const envQuery = z.enum(["dev", "prod"]).optional().openapi({ param: { name: "env", in: "query" }, example: "dev" });
 
@@ -68,29 +68,29 @@ registerRoutes([
     method: "get",
     path: "/api/zk-payments/config",
     tags,
-    summary: "ZK payments configuration",
+    summary: "Private payments configuration",
     description: "The confidential token's setup on the environment's network: contracts, RPC, auditor id, the 0.01% commission and its account.",
     security: sessionSecurity,
     request: { query: z.object({ org: orgQuery, env: envQuery }) },
-    responses: { 200: jsonOk(configSchema, "GetZkPaymentsConfigResponse", "ZK payments configuration fetched successfully"), 400: errors.badRequest, ...common },
+    responses: { 200: jsonOk(configSchema, "GetZkPaymentsConfigResponse", "Private payments configuration fetched successfully"), 400: errors.badRequest, ...common },
   },
   {
     method: "post",
     path: "/api/zk-payments",
     tags,
-    summary: "Create a ZK payment",
+    summary: "Create a private payment",
     description:
-      "A confidential payment the payer completes on the ZK checkout. The recipient must hold a confidential account on the token. The merchant receives the amount minus the 0.01% commission.",
+      "A payment whose amount stays hidden on-chain, completed by the payer on the private checkout. The recipient must hold a confidential account on the token. The merchant receives the amount minus the 0.01% commission.",
     security: sessionSecurity,
     request: { body: { content: { "application/json": { schema: createZkPaymentBodySchema.openapi("CreateZkPaymentBody") } }, required: true } },
-    responses: { 201: jsonCreated(paymentSchema, "CreateZkPaymentResponse", "ZK payment created successfully"), 400: errors.badRequest, ...common },
+    responses: { 201: jsonCreated(paymentSchema, "CreateZkPaymentResponse", "Private payment created successfully"), 400: errors.badRequest, ...common },
   },
   {
     method: "get",
     path: "/api/zk-payments",
     tags,
-    summary: "List ZK payments",
-    description: "The organization's ZK payments, newest first.",
+    summary: "List private payments",
+    description: "The organization's private payments, newest first.",
     security: sessionSecurity,
     request: {
       query: z.object({
@@ -101,16 +101,16 @@ registerRoutes([
         skip: z.number().int().optional().openapi({ param: { name: "skip", in: "query" } }),
       }),
     },
-    responses: { 200: jsonOk(listSchema, "ListZkPaymentsResponse", "ZK payments fetched successfully"), 400: errors.badRequest, ...common },
+    responses: { 200: jsonOk(listSchema, "ListZkPaymentsResponse", "Private payments fetched successfully"), 400: errors.badRequest, ...common },
   },
   {
     method: "get",
     path: "/api/zk-payments/{id}",
     tags,
-    summary: "Get a ZK payment",
-    description: "One ZK payment, as the Payments API last saw it.",
+    summary: "Get a private payment",
+    description: "One private payment, as the Payments API last saw it.",
     security: sessionSecurity,
     request: { params: z.object({ id: z.string().openapi({ param: { name: "id", in: "path" } }) }), query: z.object({ org: orgQuery, env: envQuery }) },
-    responses: { 200: jsonOk(paymentSchema, "GetZkPaymentResponse", "ZK payment fetched successfully"), 404: errors.notFound, ...common },
+    responses: { 200: jsonOk(paymentSchema, "GetZkPaymentResponse", "Private payment fetched successfully"), 404: errors.notFound, ...common },
   },
 ]);

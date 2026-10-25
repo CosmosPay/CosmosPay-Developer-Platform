@@ -14,7 +14,7 @@ export const GET: APIRoute = async (ctx) => {
   const skip = Number(ctx.url.searchParams.get("skip")) || undefined;
   try {
     const list = await cosmosZkPayments.list(gate.userId, envFromQuery(ctx.url), gate.org, { status, take, skip });
-    return jsonSuccess({ data: list, message: "ZK payments fetched successfully" });
+    return jsonSuccess({ data: list, message: "Private payments fetched successfully" });
   } catch (err) {
     return zkErrorResponse(err);
   }
@@ -35,7 +35,7 @@ export const POST: APIRoute = async (ctx) => {
   }
   try {
     const payment = await cosmosZkPayments.create(gate.userId, environment, org, input);
-    return jsonCreated({ data: payment, message: "ZK payment created successfully" });
+    return jsonCreated({ data: payment, message: "Private payment created successfully" });
   } catch (err) {
     return zkErrorResponse(err);
   }

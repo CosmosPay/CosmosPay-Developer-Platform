@@ -2,7 +2,7 @@
 export default {
   ui: { close: "关闭", dialog: "对话框", copyToClipboard: "复制到剪贴板", search: "搜索", searchEllipsis: "搜索…", select: "请选择…", account: "账户", onboardingSteps: "开通步骤", skipToContent: "跳到主要内容" },
   zk: {
-    title: "ZK 支付",
+    title: "隐私支付",
     commission: "佣金",
     commissionRate: "每笔交易 0.01%",
     amount: "金额",
@@ -13,7 +13,7 @@ export default {
       SUCCEEDED: "已支付",
       EXPIRED: "已过期",
     },
-    unavailable: "此网络暂不支持 ZK 支付。",
+    unavailable: "此网络暂不支持隐私支付。",
     notIsolated: "此浏览器无法生成证明。请在 Chrome、Edge 或 Firefox 中打开此页面。",
     freighter: {
       missing: "请安装 Freighter 后继续。",
@@ -27,10 +27,10 @@ export default {
       waiting: "正在等待网络…",
     },
     view: {
-      create: "创建 ZK 支付",
+      create: "创建隐私支付",
       account: "保密账户",
-      empty: "暂无 ZK 支付。",
-      loadError: "无法加载 ZK 支付。",
+      empty: "暂无隐私支付。",
+      loadError: "无法加载隐私支付。",
       tableHead: {
         id: "支付",
         amount: "金额",
@@ -44,7 +44,7 @@ export default {
       searchPlaceholder: "按 ID、账户或金额搜索…",
     },
     modal: {
-      title: "新建 ZK 支付",
+      title: "新建隐私支付",
       recipient: "收款账户",
       recipientHint: "该账户需要保密账户：请在“保密账户”中创建。",
       description: "描述",
@@ -56,7 +56,7 @@ export default {
       },
       submit: "创建",
       submitting: "正在创建…",
-      created: "ZK 支付已创建",
+      created: "隐私支付已创建",
       link: "支付链接",
     },
     account: {
@@ -527,14 +527,14 @@ export default {
   dash: {
     examples: { order: "订单 #24", firstName: "伟", lastName: "王", fullName: "王伟", jobTitle: "总监", customerName: "Acme 财务", payoutsName: "Acme 出金 (USD)", productName: "Pro 套餐（月付）" },
     search: { label: "搜索控制台", placeholder: "搜索", pages: "页面", searchGroup: "搜索", searchIn: "在{place}中搜索“{q}”", empty: "没有与“{q}”匹配的结果。" },
-    viewLabels: { overview: "概览", payments: "支付", zkPayments: "ZK 支付", balances: "余额", customers: "客户", products: "产品与链接", swaps: "兑换", crossChainSwaps: "跨链兑换", liquidity: "流动性池", blindpay: "法币", developers: "API 密钥", webhook: "Webhook", logs: "API 日志", weblogs: "Webhook 日志", activityLog: "客户端活动", activity: "活动", support: "支持", inbox: "客服收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "平台概览", adminPayments: "支付（所有组织）", adminSwaps: "兑换（所有组织）", adminFiat: "法币（所有组织）", adminCustomers: "客户（所有组织）", adminProducts: "产品（所有组织）", adminConsumers: "组织" },
+    viewLabels: { overview: "概览", payments: "支付", zkPayments: "隐私支付", balances: "余额", customers: "客户", products: "产品与链接", swaps: "兑换", crossChainSwaps: "跨链兑换", liquidity: "流动性池", blindpay: "法币", developers: "API 密钥", webhook: "Webhook", logs: "API 日志", weblogs: "Webhook 日志", activityLog: "客户端活动", activity: "活动", support: "支持", inbox: "客服收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "平台概览", adminPayments: "支付（所有组织）", adminSwaps: "兑换（所有组织）", adminFiat: "法币（所有组织）", adminCustomers: "客户（所有组织）", adminProducts: "产品（所有组织）", adminConsumers: "组织" },
     sidebar: {
       label: "控制台",
       menu: { main: "主菜单", preferences: "偏好设置" },
       groups: { payments: "支付", swaps: "兑换", developers: "开发者", settings: "设置", help: "帮助", admin: "管理" },
       notifications: "通知",
       sections: { Platform: "平台", Build: "构建", Account: "账户", Support: "支持", Admin: "管理" },
-      items: { overview: "概览", payments: "支付", zkPayments: "ZK 支付", balances: "余额", customers: "客户", products: "产品", swaps: "兑换", crossChainSwaps: "跨链", liquidity: "流动性", blindpay: "法币", developers: "API 密钥", webhook: "Webhook", logs: "日志", weblogs: "Webhook 日志", activityLog: "活动日志", activity: "活动", support: "支持", inbox: "收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "概览", adminPayments: "支付", adminSwaps: "兑换", adminFiat: "法币", adminCustomers: "客户", adminProducts: "产品", adminConsumers: "组织" },
+      items: { overview: "概览", payments: "支付", zkPayments: "隐私支付", balances: "余额", customers: "客户", products: "产品", swaps: "兑换", crossChainSwaps: "跨链", liquidity: "流动性", blindpay: "法币", developers: "API 密钥", webhook: "Webhook", logs: "日志", weblogs: "Webhook 日志", activityLog: "活动日志", activity: "活动", support: "支持", inbox: "收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "概览", adminPayments: "支付", adminSwaps: "兑换", adminFiat: "法币", adminCustomers: "客户", adminProducts: "产品", adminConsumers: "组织" },
       collapse: "收起侧边栏",
     },
     admin: {
@@ -670,7 +670,7 @@ export default {
     },
     cosmos: {
       loading: "加载中…", loadError: "无法加载数据。", empty: "暂无内容。",
-      eventLabels: { PAYMENT_INTENT_CREATED: "支付已创建", PAYMENT_INTENT_UPDATED: "支付已更新", PAYMENT_INTENT_SUCCEEDED: "支付成功", PAYMENT_INTENT_FAILED: "支付失败", PAYMENT_INTENT_CANCELLED: "支付已取消", PAYMENT_INTENT_DELETED: "支付已删除", ZK_PAYMENT_SUCCEEDED: "ZK 支付成功" },
+      eventLabels: { PAYMENT_INTENT_CREATED: "支付已创建", PAYMENT_INTENT_UPDATED: "支付已更新", PAYMENT_INTENT_SUCCEEDED: "支付成功", PAYMENT_INTENT_FAILED: "支付失败", PAYMENT_INTENT_CANCELLED: "支付已取消", PAYMENT_INTENT_DELETED: "支付已删除", ZK_PAYMENT_SUCCEEDED: "隐私支付成功" },
       active: "已启用", inactive: "已停用",
       reveal: "显示密钥", secret: "签名密钥", secretNote: "仅显示一次。请妥善保存。",
       rotate: "轮换密钥", ping: "发送测试", pingOk: "测试事件已送达", pingFail: "测试事件发送失败",

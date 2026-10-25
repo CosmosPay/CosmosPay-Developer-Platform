@@ -11,7 +11,7 @@ export const GET: APIRoute = async (ctx) => {
   if (!gate.ok) return gate.response;
   try {
     const config = await cosmosZkPayments.config(gate.userId, envFromQuery(ctx.url), gate.org);
-    return jsonSuccess({ data: config, message: "ZK payments configuration fetched successfully" });
+    return jsonSuccess({ data: config, message: "Private payments configuration fetched successfully" });
   } catch (err) {
     return zkErrorResponse(err);
   }
