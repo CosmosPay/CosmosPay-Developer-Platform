@@ -81,9 +81,11 @@ const DOT_SEGMENT = /^(?:\.|%2e){1,2}$/i;
  * The path as the router will match it: percent-decoded, backslashes as slashes, repeated
  * slashes collapsed, no trailing slash. Routing on the raw pathname would let `/%70ayments/…`
  * or `//site/…` slip past the mount check and render a page on a domain that does not own it.
- * Null when the encoding is malformed, and when a segment is still a dot segment after the
- * decode (`%252e%252e` arrives as `%2e%2e`): a rewrite resolves it with `new URL`, which would
- * climb out of the mount (`/payments/zk/%2e%2e/%2e%2e/site/tos` is `/site/tos`).
+ * Null when the encoding is malformed, and when the decoded path holds anything the URL parser
+ * would read differently from this router: a segment that is still a dot segment
+ * (`%252e%252e` arrives as `%2e%2e`), a control character (the parser drops tabs and newlines,
+ * so `.%09.` becomes `..`), `?` or `#`. A rewrite resolves its target with `new URL`, which
+ * would otherwise climb out of the mount (`/payments/zk/%2e%2e/%2e%2e/site/tos` is `/site/tos`).
  */
 export function canonicalPath(pathname: string): string | null {
   let decoded: string;
@@ -92,6 +94,7 @@ export function canonicalPath(pathname: string): string | null {
   } catch {
     return null;
   }
+  if (/[\x00-\x1f\x7f?#]/.test(decoded)) return null;
   if (decoded.split(/[\\/]/).some((segment) => DOT_SEGMENT.test(segment))) return null;
   const collapsed = decoded.replace(/\\/g, "/").replace(/\/{2,}/g, "/");
   return collapsed.length > 1 ? collapsed.replace(/\/+$/, "") || "/" : collapsed || "/";
@@ -152,14 +155,16 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
 
   if (SHARED_PATHS.has(path)) return { kind: "pass", area: primary };
 
-  const serve = (area: Area): RouteDecision =>
-    area === "dev"
-      ? { kind: "pass", area }
-      : { kind: "rewrite", area, path: path === "/" ? MOUNTS[area] : `${MOUNTS[area]}${path}` };
+  /* A rewrite into a mount, re-encoded so the middleware's `new URL` reads nothing in it a second
+     time, and refused (404) unless it still resolves inside that mount. */
+  const rewrite = (area: Area, mount: string, rest: string): RouteDecision => {
+    const target = encodeURI(rest === "/" ? mount : `${mount}${rest}`);
+    const resolved = new URL(target, "http://route.invalid").pathname;
+    return resolved === mount || resolved.startsWith(`${mount}/`) ? { kind: "rewrite", area, path: target } : { kind: "not-found", area: primary };
+  };
+  const serve = (area: Area): RouteDecision => (area === "dev" ? { kind: "pass", area } : rewrite(area, MOUNTS[area], path));
 
-  if (PROVER_FILE.test(path) && areas.has("dev") && !areas.has("payments")) {
-    return { kind: "rewrite", area: "dev", path: `${MOUNTS.payments}${path}` };
-  }
+  if (PROVER_FILE.test(path) && areas.has("dev") && !areas.has("payments")) return rewrite("dev", MOUNTS.payments, path);
 
   const owner = ownerOf(path);
   if (owner === "home") {

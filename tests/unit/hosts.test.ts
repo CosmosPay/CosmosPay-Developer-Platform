@@ -97,6 +97,12 @@ test('a dot segment that survives the decode is a 404, never a way out of a moun
     assert.deepEqual(route('payments.cosmospay.lat', p), { kind: 'not-found', area: 'payments' }, p);
   }
   assert.equal(canonicalPath('/zk/bb/%252e%252e'), null);
+  // What the URL parser reads differently from the router: it drops tabs and newlines (`.%09.` is
+  // `..` to it), and a decoded `?` or `#` would end the path.
+  for (const p of ['/zk/bb/.%09./.%0a./site/tos', '/zk/bb/0.87.0/a%3f', '/zk/bb/0.87.0/a%23b', '/zk/%00x']) {
+    assert.equal(canonicalPath(p), null, p);
+    assert.equal(route('dev.cosmospay.lat', p).kind, 'not-found', p);
+  }
   assert.equal(canonicalPath('/docs/v1.2/guide'), '/docs/v1.2/guide');
 });
 
