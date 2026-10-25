@@ -244,29 +244,62 @@
 .pl-steps h3 { margin: 22px 0 8px; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
 .pl-steps p { margin: 0; color: var(--ink-2); line-height: 1.6; font-size: 1rem; }
 
-/* integration options: five tabs over one panel (text and snippet, and the mock-up) */
+/* integration options: a grid, the two live demos in wide cells, the rest in a row of four;
+   each card is its visual, its name, what it costs to set up, and its code folded away */
 .pl-anchor { position: absolute; }
-.pl-int-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
-.pl-int-tab {
-  display: grid; align-content: start; gap: 4px; padding: 16px 18px; text-align: left; cursor: pointer;
-  font: inherit; color: var(--ink); background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px;
-  transition: border-color .3s ease, background-color .3s ease;
+.pl-int-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; }
+/* each card spans two subgrid rows (visual, body), so the visuals of a row match in height */
+.pl-int-card { grid-column: span 3; grid-row: span 2; display: grid; grid-template-rows: subgrid; row-gap: 0; padding: 10px 10px 26px; background: var(--surface); border-radius: var(--radius-lg); }
+.pl-int-card.is-live { grid-column: span 6; }
+.pl-int-visual {
+  position: relative; display: grid; place-items: center; min-height: 250px; padding: 20px; margin-bottom: 22px;
+  background: var(--bg); border-radius: calc(var(--radius-lg) - 8px); overflow: hidden;
 }
-.pl-int-tab:hover { border-color: var(--line-2); }
-.pl-int-tab[aria-selected="true"] { border-color: var(--ink); }
-.pl-int-tab-title { font-weight: 600; font-size: 1rem; line-height: 1.3; }
-.pl-int-tab-tag { font-size: .8125rem; line-height: 1.35; color: var(--ink-3); }
-.pl-int-panel[hidden] { display: none; }
-.pl-int-panel:not([hidden]) {
-  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: center;
-  padding: clamp(24px, 3.5vw, 44px); background: var(--surface); border-radius: var(--radius-lg);
-  animation: pl-panel .45s cubic-bezier(.2, .7, .2, 1);
+.pl-int-card.is-live .pl-int-visual { min-height: 460px; padding: 28px; }
+/* the live checkout drawn a little smaller, so its cell does not tower over the button's */
+.pl-demo-embed cosmos-pay-checkout { zoom: .86; }
+/* under the live button, the window it opens */
+.pl-demo-window { width: 100%; margin-top: 8px; }
+.pl-demo-window .pl-mk { zoom: .78; }
+.pl-int-card:not(.is-live) .pl-int-visual .pl-mk { zoom: .82; }
+.pl-int-body { display: flex; flex-direction: column; flex: 1; padding: 0 14px; }
+.pl-int-body h3 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.25; color: var(--ink); }
+.pl-int-card.is-live .pl-int-body h3 { font-size: 1.375rem; }
+.pl-int-tag { margin: 6px 0 12px; font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+.pl-int-text { margin: 0; max-width: 54ch; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+.pl-int-body .pl-textlink { align-self: flex-start; margin-top: auto; padding-top: 18px; }
+/* the code, folded: a summary that turns its plus, the snippet sliding open */
+.pl-int-code { margin-top: 16px; interpolate-size: allow-keywords; }
+.pl-int-code summary {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+  font-size: .9375rem; font-weight: 600; color: var(--ink);
 }
-.pl-int-text h3 { margin: 0 0 12px; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
-.pl-int-text > p { margin: 0; max-width: 52ch; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); }
-.pl-int-text .pl-textlink { margin-top: 24px; }
-.pl-int-visual { display: grid; place-items: center; min-height: 380px; padding: 28px; background: var(--bg); border-radius: 20px; }
-.pl-int .pl-footnote { margin-top: 16px; }
+.pl-int-code summary::-webkit-details-marker { display: none; }
+.pl-int-code summary::before {
+  content: "+"; content: "+" / ""; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  font-size: 1rem; line-height: 1; border: 1.5px solid var(--line-2); transition: rotate .3s cubic-bezier(.2, .7, .2, 1), border-color .25s;
+}
+.pl-int-code[open] summary::before { rotate: 45deg; border-color: var(--ink); }
+.pl-int-code::details-content { block-size: 0; overflow: hidden; transition: block-size .4s cubic-bezier(.2, .7, .2, 1), content-visibility .4s allow-discrete; }
+.pl-int-code[open]::details-content { block-size: auto; }
+.pl-int-code .pl-snippet { margin-top: 14px; }
+/* the live pay button, on a store's checkout line */
+.pl-demo-store { display: grid; justify-items: center; gap: 18px; width: 100%; max-width: 380px; }
+.pl-demo-product { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.pl-demo-product b { display: block; font-weight: 600; color: var(--ink); }
+.pl-demo-price { display: block; margin-top: 2px; font-size: .875rem; color: var(--ink-3); }
+.pl-demo-thumb { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 12px; background: var(--accent-soft-2); }
+.pl-demo-hint { margin: 0; font-size: .8125rem; line-height: 1.45; text-align: center; color: var(--ink-3); }
+.pl-int-visual cosmos-pay-button { display: block; }
+/* the live embedded checkout, and the events it sends to the page */
+.pl-demo-embed { display: grid; gap: 14px; width: 100%; max-width: 380px; }
+.pl-demo-log { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin: 0; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: .8125rem; color: var(--ink-3); }
+.pl-demo-log code { font: 12px/1.4 var(--ff-mono); color: var(--tk-key); }
+/* plugins, coming soon: the platforms' glyphs */
+.pl-int-logos { display: flex; gap: 28px; color: var(--ink); }
+.pl-int-logo { display: grid; justify-items: center; gap: 10px; font-size: .8125rem; font-weight: 600; color: var(--ink-2); }
+.pl-int-logo svg { width: 52px; height: 52px; padding: 18px; box-sizing: content-box; background: var(--surface); border: 1px solid var(--line); border-radius: 50%; color: var(--ink); }
+.pl-int-plugins .pl-int-tag { color: var(--tertiary); }
 /* a snippet to paste: language, copy button, highlighted code */
 .pl-snippet { margin-top: 24px; background: var(--bg); border-radius: 16px; overflow: hidden; }
 .pl-snippet-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 18px; border-bottom: 1px solid var(--line); }
@@ -288,7 +321,7 @@
 .pl-uses-panel:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 48px; align-items: center; }
 /* the business's photo, with its paid order over the corner */
 .pl-uses-visual { position: relative; padding-bottom: 28px; }
-.pl-uses-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 20px; }
+.pl-uses-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 20px; filter: grayscale(1) contrast(1.06); }
 .pl-uses-visual .pl-mk { position: absolute; left: -36px; bottom: 0; width: calc(100% - 20px); }
 .pl-uses-visual .pl-mk-card { margin-inline: 0; max-width: 300px; }
 .pl-uses-panel[hidden] { display: none; }
@@ -495,7 +528,7 @@
 .pl-head-art { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
 .pl-head-art h2 { max-width: 720px; }
 .pl-how-body { position: relative; }
-.pl-how-art { position: absolute; right: 0; bottom: 100%; width: clamp(96px, 11vw, 150px); margin-bottom: 12px; z-index: 2; }
+.pl-benefits-art { flex: 0 0 auto; width: clamp(110px, 12vw, 170px); margin: -40px 3% -36px 0; }
 /* the comparison's astronaut lies on the table's top edge */
 .pl-compare-art { flex: 0 0 auto; width: clamp(180px, 19vw, 260px); margin: 0 4% -62px 0; position: relative; z-index: 1; }
 .pl-faq-art { width: clamp(170px, 18vw, 250px); margin-top: 40px; }
@@ -731,7 +764,7 @@
 .is-in .pl-mk-node-hold .pl-mk-ico { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both, pl-mk-hold 5s ease-in-out infinite; }
 /* the pay button is pressed, then the checkout window opens over the store */
 @keyframes pl-mk-window { from { opacity: 0; scale: .85; translate: 0 12px; } }
-.is-in .pl-mk-popup, .pl-int-panel:not([hidden]) .pl-mk-popup { animation: pl-mk-window .6s cubic-bezier(.3, 1.3, .5, 1) .9s both; transform-origin: 70% 100%; }
+.is-in .pl-mk-popup { animation: pl-mk-window .6s cubic-bezier(.3, 1.3, .5, 1) .9s both; transform-origin: 70% 100%; }
 /* the approve button keeps calling for the tap */
 @keyframes pl-mk-ring { from { scale: 1; opacity: .55; } to { scale: 1.25 1.6; opacity: 0; } }
 .pl-mk-pulse::after { animation: pl-mk-ring 1.8s cubic-bezier(.2, .7, .2, 1) infinite; }
@@ -742,7 +775,7 @@
 @keyframes pl-float { 50% { translate: 0 -10px; rotate: -2deg; } }
 @keyframes pl-bob { 50% { translate: 0 -9px; } }
 .pl-art { animation: pl-float 6s ease-in-out infinite; }
-.pl-how-art { animation-duration: 7s; animation-delay: -2s; }
+.pl-benefits-art { animation-duration: 7s; animation-delay: -2s; }
 .pl-compare-art { animation: pl-bob 5s ease-in-out infinite; }
 .pl-faq-art { animation-duration: 8s; animation-delay: -1s; }
 .pl-3d {
@@ -785,7 +818,16 @@
 /* ---- pinned sections (data-pin, wired by the page script): a runway of --n steps; the stage
    sticks under the nav (73px) while the page scrolls through it ---- */
 .pl-section.is-pinned { padding: 0; }
-.is-pinned .pl-pin { height: calc(100svh + (var(--n) - 1) * 65svh); }
+.is-pinned .pl-pin { height: calc(100svh + (var(--n) - 1) * 35svh); }
+/* the counter and the bar beside the heading, only while pinned */
+.pl-pin-head { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.pl-pin-head h2 { max-width: 720px; }
+.pl-pin-meter { display: none; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 10px; padding-bottom: 6px; }
+.is-pinned .pl-pin-meter { display: flex; }
+.pl-pin-count { font-size: .9375rem; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-pin-bar { display: flex; gap: 6px; }
+.pl-pin-bar i { position: relative; width: 44px; height: 4px; border-radius: 4px; background: var(--line-2); overflow: hidden; }
+.pl-pin-bar i::after { content: ""; position: absolute; inset: 0; background: var(--btn-bg); transform-origin: left; scale: var(--f, 0) 1; }
 .is-pinned .pl-pin-stage { position: sticky; top: 73px; height: calc(100svh - 73px); display: flex; flex-direction: column; justify-content: center; }
 .is-pinned .pl-head { margin-bottom: 32px; }
 /* the stage is a flex column: without this its centred .wrap would shrink to its content */
@@ -801,11 +843,13 @@
 .pl-how.is-pinned .pl-steps p { grid-column: 2; max-width: 40ch; }
 .pl-how.is-pinned .pl-step-visual {
   position: absolute; top: 0; right: 0; bottom: 0; width: 52%; min-height: 0; margin: 0;
-  transition: opacity .55s ease, translate .65s cubic-bezier(.2, .7, .2, 1), scale .65s cubic-bezier(.2, .7, .2, 1);
+  transition: opacity .5s ease, translate .8s cubic-bezier(.2, .8, .2, 1), scale .8s cubic-bezier(.2, .8, .2, 1);
 }
 /* the screen fills its stage: the mock-up drawn larger */
 .pl-how.is-pinned .pl-step-visual .pl-mk { zoom: 1.35; }
-.pl-how.is-pinned li:not(.is-current) .pl-step-visual { opacity: 0; translate: 0 28px; scale: .97; pointer-events: none; }
+/* the next screen rises in from below, zooming up; the one before leaves upwards */
+.pl-how.is-pinned li:not(.is-reached) .pl-step-visual { opacity: 0; translate: 0 90px; scale: .86; pointer-events: none; }
+.pl-how.is-pinned li.is-reached:not(.is-current) .pl-step-visual { opacity: 0; translate: 0 -70px; scale: .92; pointer-events: none; }
 .pl-how.is-pinned .pl-steps :is(h3, p) { transition: opacity .5s ease, translate .6s cubic-bezier(.2, .7, .2, 1); }
 .pl-how.is-pinned li:not(.is-reached) :is(h3, p) { opacity: 0; translate: 0 14px; }
 .pl-how.is-pinned li.is-reached:not(.is-current) :is(h3, p) { opacity: .45; }
@@ -818,17 +862,15 @@
 }
 .pl-how.is-pinned .pl-steps::before { background: var(--line-2); }
 .pl-how.is-pinned .pl-steps::after { background: var(--btn-bg); transform-origin: top; scale: 1 var(--p, 0); }
-.pl-how.is-pinned .pl-how-art { right: -24px; top: -64px; bottom: auto; margin: 0; width: clamp(110px, 10vw, 150px); }
 
 /* use cases, pinned: the panel steadier and shorter, a progress line under the tabs */
 .pl-uses-section.is-pinned .pl-uses-photo { aspect-ratio: 1; }
+/* each business slides up into place, its photo settling from a closer zoom */
+@keyframes pl-panel-in { from { opacity: 0; translate: 0 60px; scale: .96; } }
+@keyframes pl-photo-in { from { opacity: .3; scale: 1.16; } }
+.pl-uses-section.is-pinned .pl-uses-panel:not([hidden]) { animation: pl-panel-in .7s cubic-bezier(.2, .8, .2, 1); }
+.pl-uses-section.is-pinned .pl-uses-panel:not([hidden]) .pl-uses-photo { animation: pl-photo-in 1.1s cubic-bezier(.2, .8, .2, 1); }
 .pl-uses-section.is-pinned .pl-uses-panel { padding: clamp(24px, 3vw, 40px); }
-.pl-uses-section.is-pinned .pl-uses-tabs { position: relative; padding-bottom: 18px; }
-.pl-uses-section.is-pinned .pl-uses-tabs::before, .pl-uses-section.is-pinned .pl-uses-tabs::after {
-  content: ""; content: "" / ""; position: absolute; left: 20px; right: 20px; bottom: 0; height: 2px; border-radius: 2px;
-}
-.pl-uses-section.is-pinned .pl-uses-tabs::before { background: var(--line-2); }
-.pl-uses-section.is-pinned .pl-uses-tabs::after { background: var(--btn-bg); transform-origin: left; scale: var(--p, 0) 1; }
 
 /* ---- figures that count up (data-odo): each digit a strip of 0–9 spinning into place; the
    strips start one after another, each speeding up and settling ---- */
@@ -838,9 +880,24 @@
 .pl-odo-s > span { display: block; height: 1.2em; line-height: 1.2em; }
 .pl-odo.is-on .pl-odo-s { translate: 0 calc(var(--to, 0) * -1.2em); }
 
-/* ---- dark mode: depth from hairlines and the blue, never from shadows ---- */
-[data-theme="dark"] :is(.pl-bento-card, .pl-settle-card, .pl-paths, .pl-plans, .pl-calc, .pl-compare-card, .pl-uses-panel, .pl-int-panel, .pl-code, .pl-final, .pl-snippet) {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07);
+/* ---- dark mode: depth from hairlines and the blue, never from shadows. The landing's own
+   canvas takes a navy tint (the product owner wanted more colour in dark), so its tokens are
+   redefined inside .pl only; the nav, footer and other pages keep the neutral dark. ---- */
+[data-theme="dark"] .pl {
+  --bg: #090B14; --surface: #121729; --surface-2: #181E33;
+  --line: rgba(143, 163, 255, .13); --line-2: rgba(143, 163, 255, .24);
+  --accent-soft: rgba(143, 163, 255, .09); --accent-soft-2: rgba(143, 163, 255, .18);
+}
+[data-theme="dark"] .pl-section, [data-theme="dark"] .pl-final-wrap { background: #090B14; }
+[data-theme="dark"] :is(.pl-section-alt, .pl-closing, .pl-marks) { background: #0E1222; }
+[data-theme="dark"] .pl-mk-ok, [data-theme="dark"] .pl-how.is-pinned li.is-current .pl-step-num { background: var(--tertiary); color: #090B14; }
+[data-theme="dark"] .pl-textlink::after { background: var(--tertiary); }
+[data-theme="dark"] .pl-faq summary:hover { color: var(--tertiary); }
+[data-theme="dark"] .pl-pin-bar i::after { background: var(--tertiary); }
+[data-theme="dark"] .pl-pin-count { color: var(--tertiary); }
+[data-theme="dark"] .pl-int-card.is-live { box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .28); }
+[data-theme="dark"] :is(.pl-bento-card, .pl-settle-card, .pl-paths, .pl-plans, .pl-calc, .pl-compare-card, .pl-uses-panel, .pl-int-card, .pl-code, .pl-final, .pl-snippet) {
+  box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .12);
 }
 [data-theme="dark"] :is(.pl-bento-visual, .pl-path-visual, .pl-step-visual, .pl-int-visual) { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); }
 [data-theme="dark"] .pl-section + .pl-section { border-top: 1px solid rgba(255, 255, 255, .05); }
@@ -850,10 +907,10 @@
 [data-theme="dark"] .pl-compare tbody tr:hover > .pl-compare-us { background-color: rgba(143, 163, 255, .14); }
 [data-theme="dark"] .pl-plan-best { background: rgba(143, 163, 255, .1); box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .35); }
 [data-theme="dark"] .pl-calc-table tr.is-best > * { background: rgba(143, 163, 255, .1); }
-[data-theme="dark"] .pl-int-tab[aria-selected="true"] { border-color: var(--tertiary); }
+
 [data-theme="dark"] .pl-uses-tab[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--tertiary); }
 [data-theme="dark"] .pl-code-tab::after { background: var(--tertiary); }
-[data-theme="dark"] .pl-how.is-pinned .pl-steps::after, [data-theme="dark"] .pl-uses-section.is-pinned .pl-uses-tabs::after { background: var(--tertiary); }
+[data-theme="dark"] .pl-how.is-pinned .pl-steps::after { background: var(--tertiary); }
 [data-theme="dark"] .pl-bento-card { transition: box-shadow .3s ease; }
 [data-theme="dark"] .pl-bento-card:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
 
@@ -873,8 +930,8 @@
 }
 @media (max-width: 1100px) {
   .pl-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pl-int-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pl-int-panel:not([hidden]) { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .pl-int-card.is-live { grid-column: 1 / -1; }
+  .pl-int-card { grid-column: span 6; }
   .pl-bento-card:nth-child(n) { grid-column: span 6; }
   .pl-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 48px; }
   .pl-steps li:nth-child(2n) .pl-step-line { visibility: hidden; }
@@ -909,8 +966,8 @@
 }
 @media (max-width: 720px) {
   .pl-steps, .pl-facts-list, .pl-settle-grid { grid-template-columns: 1fr; }
-  .pl-int-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pl-int-visual { min-height: 0; padding: 18px; }
+  .pl-int-card, .pl-int-card.is-live { grid-column: 1 / -1; }
+  .pl-int-visual, .pl-int-card.is-live .pl-int-visual { min-height: 0; padding: 18px; }
   .pl-plans { grid-template-columns: 1fr; }
   .pl-bento-card:nth-child(n) { grid-column: 1 / -1; }
   .pl-path-visual, .pl-step-visual { min-height: 0; }
@@ -920,7 +977,7 @@
   .pl-head-art { flex-wrap: wrap; gap: 8px; }
   .pl-head-art h2 { flex: 1 0 100%; }
   .pl-head-art .pl-art { margin-left: auto; }
-  .pl-how-art { width: 84px; }
+  .pl-benefits-art { width: 90px; margin: 0; }
   .pl-compare-art { width: 150px; margin-right: 0; }
   .pl-security-3d { width: 150px; }
   .pl-security-visual { padding-top: 96px; }

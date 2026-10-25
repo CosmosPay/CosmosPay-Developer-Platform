@@ -188,21 +188,29 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   integration options, use cases by business (WAI-ARIA tabs), security, developers, pricing, and
   the FAQ with the final call.
 - **Integration options** (`#integrations`; `#designs` stays as an anchor inside it for old
-  links) replaced the checkout-designs gallery at the product owner's request: hosted checkout,
-  pay button, embedded checkout, payment links and QR, API and SDK — tabs over one panel with
-  the option's snippet (copy button) and a mock-up of it on a site. The pay button and the
+  links) replaced the checkout-designs gallery at the product owner's request: a grid (no tabs)
+  where the pay button and the embedded checkout run for real in wide cells (the embed's `demo`
+  mode: a sample nothing can pay, no API request; the embedded one logs its events under it),
+  then hosted checkout, payment links and QR, API and SDK, and e-commerce plugins (WooCommerce,
+  Shopify — "coming soon", not built). Code is folded behind "view code" with a copy button. The pay button and the
   embedded checkout are the embed script's elements (see "Embedding a payment"). The four
   checkout designs still exist (dashboard, `/preview/{design}`); only the gallery left.
 - **"How it works" and the use cases are pinned** on screens of at least 1000×700 (`data-pin`,
   wired by the page script): the section's stage is `position: sticky` under the nav inside a
-  runway of `--n` steps of plain height, and the scroll position picks the step, so nothing
-  hijacks the wheel or the keyboard; a use-case tab scrolls to its own step. Smaller screens get
+  runway of `--n` steps of plain height (35svh per step), and the scroll position picks the
+  step, so nothing hijacks the wheel or the keyboard; a use-case tab scrolls to its own step.
+  While pinned, a "Step 2 of 4" counter and a segmented bar sit beside the heading, and each
+  screen rises in zooming while the previous one leaves upwards. Smaller screens get
   the plain grid / tabs.
 - **Code is highlighted** in the page's palette by `src/lib/payments/highlight.ts` (a small
   tokenizer for bash, TypeScript, JSON and HTML; tested) through `Code.astro`, which keeps the
   raw code in `data-raw` for the copy buttons. No highlighting library and no HTML strings.
 - **The FAQ and the final call share one canvas** (`.pl-closing`): the product owner asked for
   no band of another tone between them.
+- **The landing's dark mode has more colour** (product owner): inside `.pl` the dark tokens take a
+  navy tint (canvas `#090B14`, alternate sections `#0E1222`, cards `#121729`, blue-tinted lines)
+  and the tertiary blue marks progress, checks, the current step, the best plan and links. The
+  nav, the footer and every other page keep the neutral dark of institutional.css.
 - **The sections show the product, not only text** (the product owner found text-only sections
   flat): as those gateways do, each one carries a piece of the interface —
   `src/components/payments/landing/Mock.astro` draws them with the page's tokens (a confirmed
@@ -215,12 +223,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (rates parsed from `plans.ts`, escrow's 0.5% as a checkbox, a logarithmic slider); the final
   call carries the brand's astronaut (`public/brand/astronauta-telefono.svg`, inverted in dark
   mode). **Images too, not only drawn UI** (the product owner asked for images after the
-  mock-ups): the brand's astronauts by the comparison, how it works, the developers, the FAQ and
-  the final call (`.pl-art`, inverted in dark mode); 3D clay renders from 3dicons (CC0,
+  mock-ups): the brand's astronauts by the benefits heading, on the comparison table, by the
+  FAQ and in the final call (`.pl-art`, inverted in dark mode; none in pinned sections or by
+  code, where they crowded the content); 3D clay renders from 3dicons (CC0,
   github.com/realvjy/3dicons) behind the benefit cards, in security and by the calculator
   (`.pl-3d`; white clay vanishes on a white card, so there it sits on a canvas-tone tile); and a
   CC0 photo per use case (StockSnap, found through Openverse; the IDs are in the page's
-  frontmatter), with that business's paid order over it. They live in `public/media/landing`.
+  frontmatter), in black and white (the product owner's choice), with that business's paid
+  order over it. They live in `public/media/landing`.
   Use only CC0 / public-domain material or the brand's own (no attribution-bound licences, no
   third-party logos in a photo); Unsplash and Pexels sit behind bot checks, so search Openverse
   (`api.openverse.org`, `license=cc0`). Each mock-up is a size container, so its parts rearrange for the room it gets (the
@@ -284,7 +294,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   UI hints, and the merchant confirms payment server-side (webhook or API).
 - The inline checkout validates with `parsePaymentLink` and writes text only. Its strings copy
   the checkout's wording (`src/embed/i18n.ts`, enforced by `embedI18n.test.ts`): change both
-  together. Element fields must not shadow `HTMLElement` properties (`lang`, `id`).
+  together. Element fields must not shadow `HTMLElement` properties (`lang`, `id`). A `demo`
+  attribute shows a sample nothing can pay, with no request (the button opens
+  `/preview/classic`; the inline checkout plays open → confirming → paid): the landing's live
+  demos use it.
 - Locally, load the script from a `*.cosmospay.localhost` page: Vite's dev server refuses a
   cross-site `<script>` from `localhost` (403). Production serves it without that check. It
   carries no SRI hash because it is updated in place.
