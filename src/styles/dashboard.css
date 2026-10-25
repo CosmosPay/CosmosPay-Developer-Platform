@@ -319,6 +319,9 @@ body.inst:has(.dash) { background: var(--surface); }
   background: rgba(70, 75, 86, .94); color: #fff; font-size: 12px; box-shadow: var(--shadow-lg);
 }
 .bars-tip.left { transform: translateX(calc(-100% - 14px)); }
+/* the tip fades in when the pointer reaches the chart and glides from bucket to bucket */
+.bars-tip { animation: tipIn .14s ease-out both; transition: left .16s cubic-bezier(.2, .7, .2, 1); }
+@keyframes tipIn { from { opacity: 0; } }
 .bars-tip b { font-size: 12.5px; }
 .bars-tip span { display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, .78); }
 .bars-tip em { margin-left: auto; font-style: normal; font-weight: 700; color: #fff; }
@@ -803,3 +806,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .tk-prio-urgent { color: #D64545; }
 .inst .link-btn { padding: 0; color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .inst .link-btn:hover { text-decoration-thickness: 2px; }
+
+/* A section's tabs (Liquidity, Fiat, the admin's fiat lists) swap their panel in with the
+   content's rise: the panel mounts fresh on each switch, so its first paint plays it. */
+.inst .filter-tabs ~ * { animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }

@@ -461,7 +461,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   swaps between (`NETWORK_IDS` with a logo, plus a few stablecoins and wrapped BTC), and the
   wallets, Pollar among them (its brand kit's blue mark on light pages, the white one on dark, and
   only ever beside its name, as the kit asks).
-  Two identical sets slide by half the track; the moving copy is `aria-hidden`, and a visually
+  **Every row runs at the same speed** (product owner): `landing.ts` sets each row's duration
+  from the width of one set (48 px/s), so a longer row loops more slowly instead of moving
+  faster. Two identical sets slide by half the track; the moving copy is `aria-hidden`, and a visually
   hidden title, row labels and list carry the names. Hovering a row holds it; like the hero
   video they run for everyone, reduced motion included (the product owner's call). **Logos are official artwork only**, full colour, in
   `public/media/brands`: USDC, XLM, SOL from cryptocurrency-icons; Freighter, LOBSTR, xBull,

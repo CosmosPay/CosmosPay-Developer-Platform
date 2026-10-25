@@ -132,7 +132,7 @@
   mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 .pl-marquee-track { display: flex; width: max-content; animation: pl-marquee 46s linear infinite; }
-.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; animation-duration: 52s; }
+.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; }
 .pl-marquee-set { display: flex; align-items: center; gap: 52px; padding-right: 52px; }
 .pl-marquee:hover .pl-marquee-track { animation-play-state: paused; }
 @keyframes pl-marquee { to { translate: -50% 0; } }

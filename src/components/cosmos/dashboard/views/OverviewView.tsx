@@ -20,7 +20,7 @@ import { BarChart } from "@/components/cosmos/dashboard/components/BarChart";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { Sk, ListSkeleton, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { CHAINS, CHAIN_NAMES, networkName } from "@/lib/chains";
+import { CHAINS, CHAIN_NAMES, networkName, isChain, assetLabel as chainAsset } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
@@ -54,6 +54,9 @@ function OrgIdField({ id, label }) {
     </button>
   );
 }
+
+/* A balance's symbol: the chain's coin for "native", the code of a CODE:ISSUER asset. */
+const balSymbol = (x) => (isChain(x.chain) ? chainAsset(x.chain, x.asset) : String(x.asset).split(":")[0]);
 
 /* A payment's menu: copy its id, open it on its chain's explorer (once it has a transaction),
    or in the Payments view. A disclosure: Escape and a click elsewhere close it. */
@@ -224,8 +227,8 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
               ? [0, 1, 2].map((i) => <li key={i} className="hub-bal"><Sk className="round" w="32px" /><span className="hub-bal-t"><Sk w="7em" /><Sk w="4em" /></span></li>)
               : (bals || []).slice(0, 4).map((x) => (
                 <li key={`${x.chain}:${x.asset}`} className="hub-bal arrive">
-                  <TokenMark symbol={String(x.asset).split(":")[0]} chain={x.chain} chainName={networkName(x.chain)} size={32} />
-                  <span className="hub-bal-t"><b>{amount(x.amount)} {String(x.asset).split(":")[0]}</b><span>{networkName(x.chain)}</span></span>
+                  <TokenMark symbol={balSymbol(x)} chain={x.chain} chainName={networkName(x.chain)} size={32} />
+                  <span className="hub-bal-t"><b>{amount(x.amount)} {balSymbol(x)}</b><span>{networkName(x.chain)}</span></span>
                 </li>
               ))}
             {Array.isArray(bals) && !bals.length && <li className="hub-bal-empty">{h.noBalances}</li>}

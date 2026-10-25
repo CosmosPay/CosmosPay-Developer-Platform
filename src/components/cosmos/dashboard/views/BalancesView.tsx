@@ -7,7 +7,7 @@ import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { networkName } from "@/lib/chains";
+import { assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
@@ -56,8 +56,9 @@ export function BalancesView({ canManage = false, env = "dev" }) {
   const max = Math.max(1, ...bals.map((x) => num(x.amount)));
   const totalSettlements = bals.reduce((a, x) => a + (x.count || 0), 0);
   const networks = new Set(bals.map((x) => x.chain)).size;
-  // A Stellar asset other than XLM is labelled CODE:ISSUER; its mark and name go by the code.
-  const code = (asset) => String(asset).split(":")[0];
+  // A balance names its asset by the chain's coin for "native" and by the code of a CODE:ISSUER
+  // asset; its mark and name go by that.
+  const code = (bal) => (isChain(bal.chain) ? chainAsset(bal.chain, bal.asset) : String(bal.asset).split(":")[0]);
 
   return (
     <>
@@ -69,8 +70,8 @@ export function BalancesView({ canManage = false, env = "dev" }) {
             <div className="bal-card" key={`${bal.chain || "stellar"}:${bal.asset}`}>
               {/* The asset with its logo and the network it settles on, as text (no chip). */}
               <div className="bal-asset">
-                <TokenMark symbol={code(bal.asset)} chain={bal.chain || "stellar"} chainName={networkName(bal.chain || "stellar")} size={28} />
-                <span className="bal-asset-name"><b>{code(bal.asset)}</b> {networkName(bal.chain || "stellar")}</span>
+                <TokenMark symbol={code(bal)} chain={bal.chain || "stellar"} chainName={networkName(bal.chain || "stellar")} size={28} />
+                <span className="bal-asset-name"><b>{code(bal)}</b> {networkName(bal.chain || "stellar")}</span>
               </div>
               <div className="bal-amt">{bal.amount}</div>
               <div className="bal-fiat">{num(bal.pending) > 0 ? `${cx.pending}: ${bal.pending}` : `${bal.count}× ${cx.received}`}</div>
