@@ -1,0 +1,40 @@
+---
+// The floating "back to top" button, on every page of the three domains (both layouts render
+// it). It shows once the page has moved down most of a screen and smooth-scrolls to the top,
+// then hands focus to the top of the page so a keyboard user continues from there. Its label
+// lives here in the five languages because the two layouts read two different catalogs.
+// Styles: .to-top in cosmos.css (a .btn, so it takes the snap's ink fill).
+interface Props {
+  lang?: string;
+}
+
+const LABELS: Record<string, string> = {
+  en: "Back to top",
+  es: "Volver arriba",
+  pt: "Voltar ao topo",
+  fr: "Retour en haut",
+  de: "Nach oben",
+};
+const { lang = "en" } = Astro.props;
+const label = LABELS[lang] ?? LABELS.en;
+---
+
+<button type="button" class="btn btn-dark to-top" aria-label={label} title={label} data-to-top>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" /></svg>
+</button>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>("[data-to-top]");
+  if (button) {
+    let frame = 0;
+    const sync = () => { frame = 0; button.classList.toggle("is-on", window.scrollY > window.innerHeight * 0.8); };
+    window.addEventListener("scroll", () => { if (!frame) frame = requestAnimationFrame(sync); }, { passive: true });
+    button.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      // the skip link (or the page itself) is the start of the page for the keyboard
+      const start = document.querySelector<HTMLElement>(".skip-link") ?? document.body;
+      start.focus({ preventScroll: true });
+    });
+    sync();
+  }
+</script>

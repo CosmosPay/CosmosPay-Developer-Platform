@@ -5,6 +5,7 @@ import "@/styles/cosmos.css";
 import "@/styles/institutional.css";
 import "@/styles/payments.css";
 import SiteNav from "@/components/cosmos/layout/SiteNav";
+import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 import { LOCALES, MESSAGES } from "@/lib/payments/i18n";
 import { PAYMENTS, TERMS } from "@/lib/payments/urls";
 
@@ -111,5 +112,6 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
 
       installInk();
     </script>
+    <BackToTop lang={lang} />
   </body>
 </html>

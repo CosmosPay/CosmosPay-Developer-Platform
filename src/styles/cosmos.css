@@ -593,6 +593,24 @@ button { font-family: inherit; cursor: pointer; }
 .foot-col a:hover { color: var(--accent); }
 .foot-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 56px; padding-top: 26px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .8125rem; flex-wrap: wrap; gap: 14px; }
 .foot-bottom .badge { display: inline-flex; align-items: center; gap: 8px; }
+/* the social profiles: round outlined icons, painted blue under the pointer like light buttons */
+.foot-social { display: flex; gap: 10px; list-style: none; margin: 20px 0 0; padding: 0; }
+.foot-social a {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%;
+  color: var(--ink-2); border: 1.5px solid var(--line-2); transition: color .25s, background-color .25s, border-color .25s;
+}
+.foot-social a:hover, .foot-social a:focus-visible { color: var(--out-ink-fg, #fff); background: var(--out-ink, #2346F4); border-color: var(--out-ink, #2346F4); }
+
+/* back to top (BackToTop.astro, every page): a round black button bottom-right, shown once the
+   page has moved down a screen; hidden it is also out of the tab order (visibility) */
+.to-top {
+  position: fixed; right: 20px; bottom: 20px; z-index: 60; width: 48px; height: 48px; padding: 0; border-radius: 50%;
+  opacity: 0; translate: 0 14px; visibility: hidden;
+  transition: opacity .3s ease, translate .35s cubic-bezier(.2, .7, .2, 1), visibility 0s linear .35s, color .2s ease, border-color .2s ease;
+}
+.to-top.is-on { opacity: 1; translate: none; visibility: visible; transition-delay: 0s; }
+.to-top svg { width: 18px; height: 18px; }
+@media (max-width: 720px) { .to-top { right: 14px; bottom: 14px; width: 44px; height: 44px; } }
 .foot-bottom .badge i { width: 8px; height: 8px; border-radius: 50%; background: #2ECC71; }
 
 /* ============================================================

@@ -18,6 +18,15 @@ export const DASH = `${DEV}/dashboard`;
 export const DOCS = `${DEV}/docs`;
 export const LOGIN = loginUrl(DEV);
 
+/* The company's social profiles (the footer's icons). LinkedIn has no URL yet. */
+export const SOCIAL = {
+  x: "https://x.com/CosmosPay",
+  instagram: "https://www.instagram.com/cosmospay.lat/",
+  discord: "https://discord.gg/Yb5MNcqQsp",
+  whatsapp: "https://wa.me/5493874732727",
+  // linkedin: "",
+} as const;
+
 /** The domain a nav or footer is drawn on (src/lib/hosts.ts names the same three areas). */
 export type Area = "site" | "dev" | "payments";
 

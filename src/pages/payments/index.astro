@@ -1,9 +1,9 @@
 ---
 /* / on payments.cosmospay.lat — the payments landing.
  *
- * Server-rendered, with no client JavaScript but the general nav island, a few lines for
- * the hero video and the use-case tabs. The copy is src/lib/payments/landing-i18n.ts; the
- * checkout design names are the payments catalog's; the rates come from src/lib/plans.ts.
+ * Server-rendered, with no client JavaScript but the general nav island and the page script
+ * below (hero video, reveals, pinned sections, counters, tabs, calculator, copy buttons). The
+ * copy is src/lib/payments/landing-i18n.ts; the rates come from src/lib/plans.ts.
  * Its structure follows how crypto gateways present themselves (supported networks, assets
  * and wallets; benefits; a comparison with cards; integration paths; how it works; use cases
  * by business; security; developers; pricing; FAQ), with only claims a visitor can check.
@@ -18,16 +18,14 @@ import SiteFooter from "@/components/cosmos/layout/SiteFooter";
 import Icon from "@/components/payments/landing/Icon.astro";
 import Mark from "@/components/payments/landing/Mark.astro";
 import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
 import type { ComponentProps } from "astro/types";
-import { MESSAGES } from "@/lib/payments/i18n";
 import { LANDING } from "@/lib/payments/landing-i18n";
-import { CHECKOUT_THEMES, themeThumbnail } from "@/lib/payments/checkout-themes";
 import { PLAN_SPECS } from "@/lib/plans";
 import { DOCS, PRICING, loginTo } from "@/components/cosmos/lib/constants";
 
 const lang = Astro.locals.lang ?? "en";
 const t = LANDING[lang];
-const designs = MESSAGES[lang].designs;
 
 const CREATE_LINK = loginTo("/dashboard?view=payments");
 const CONTACT = "mailto:cosmosapplat@gmail.com";
@@ -98,11 +96,15 @@ const compareRows = (["chargebacks", "protection", "settlement", "hours", "borde
 });
 const paths = [
   { key: "nocode", href: CREATE_LINK, mock: "link" },
-  { key: "hosted", href: "#designs", mock: "checkout" },
+  { key: "hosted", href: "#integrations", mock: "checkout" },
   { key: "api", href: DOCS, mock: "code" },
 ] as const;
 const stepMocks = ["step-create", "step-share", "step-pay", "step-confirm"] as const;
 const steps = (["create", "share", "pay", "confirm"] as const).map((key) => t.how[key]);
+// Integration options, each with the mock-up that shows it and, where there is code, the
+// snippet to paste. The snippets name the production origin whatever host renders the page.
+const PAY_ORIGIN = "https://payments.cosmospay.lat";
+const EMBED_TAG = `<script src="${PAY_ORIGIN}/embed/cosmos-pay.js" defer></script>`;
 const useCases = (["stores", "services", "digital", "donations"] as const).map((key) => ({ key, ...t.useCases[key] }));
 const security = ([
   ["onchain", "chain"],
@@ -171,9 +173,25 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
     "checkoutTheme": "ticket"
   }'`;
 const codeTabs = [
-  { key: "curl", code: CODE },
-  { key: "sdk", code: SDK_CODE },
-  { key: "webhook", code: WEBHOOK_CODE },
+  { key: "curl", code: CODE, lang: "bash" },
+  { key: "sdk", code: SDK_CODE, lang: "ts" },
+  { key: "webhook", code: WEBHOOK_CODE, lang: "json" },
+] as const;
+const integrations = [
+  { key: "hosted", mock: "browser-hosted", lang: "html", code: `<a href="${PAY_ORIGIN}/cmh9a1">Pay with Cosmos Pay</a>` },
+  { key: "button", mock: "site-button", lang: "html", code: `${EMBED_TAG}
+
+<cosmos-pay-button link="cmh9a1"></cosmos-pay-button>
+
+<script>
+  document.querySelector("cosmos-pay-button")
+    .addEventListener("cosmospay:paid", showThanks);
+</script>` },
+  { key: "embedded", mock: "site-embedded", lang: "html", code: `${EMBED_TAG}
+
+<cosmos-pay-checkout link="cmh9a1" lang="es"></cosmos-pay-checkout>` },
+  { key: "links", mock: "link", lang: null, code: "" },
+  { key: "api", mock: "code", lang: "ts", code: SDK_CODE },
 ] as const;
 ---
 
@@ -209,7 +227,7 @@ const codeTabs = [
             <a class="btn btn-dark" href={CREATE_LINK}>{t.hero.primary}</a>
             <a class="btn btn-outline-w" href={DOCS}>{t.hero.secondary}</a>
           </div>
-          <a class="pl-textlink" href="#designs">{t.hero.designs}</a>
+          <a class="pl-textlink" href="#integrations">{t.hero.designs}</a>
         </div>
       </div>
       <button class="pl-motion" type="button" data-motion data-pause={t.hero.pause} data-play={t.hero.play}>
@@ -348,52 +366,88 @@ const codeTabs = [
       </div>
     </section>
 
-    <section class="pl-section pl-section-alt" aria-labelledby="pl-how">
-      <div class="wrap">
-        <div class="pl-head pl-head-art" data-reveal>
-          <h2 id="pl-how">{t.how.title} {t.how.titleBold}</h2>
-          <img class="pl-art pl-how-art" src="/brand/astronauta-flotando.svg" alt="" width="180" height="176" loading="lazy" decoding="async" />
+    <!-- How it works. On a large enough screen the section pins under the nav and the four
+         steps play one at a time as the page scrolls, then it lets go (the script below, data-pin);
+         elsewhere they are a plain grid. -->
+    <section class="pl-section pl-section-alt pl-how" aria-labelledby="pl-how" data-pin style="--n: 4">
+      <div class="pl-pin">
+        <div class="pl-pin-stage">
+          <div class="wrap">
+            <div class="pl-head" data-reveal>
+              <h2 id="pl-how">{t.how.title} {t.how.titleBold}</h2>
+            </div>
+            <div class="pl-how-body">
+            <ol class="pl-steps" role="list">
+              {steps.map((s, i) => (
+                <li data-reveal data-pin-item style={`--i: ${i}`}>
+                  <div class="pl-step-visual"><Mock name={stepMocks[i]} ui={t.ui} /></div>
+                  <div class="pl-step-top" aria-hidden="true"><span class="pl-step-num">{i + 1}</span><span class="pl-step-line" /></div>
+                  <h3>{s.title}</h3>
+                  <p>{s.body}</p>
+                </li>
+              ))}
+            </ol>
+            <img class="pl-art pl-how-art" src="/brand/astronauta-flotando.svg" alt="" width="180" height="176" loading="lazy" decoding="async" />
+            </div>
+          </div>
         </div>
-        <ol class="pl-steps" role="list">
-          {steps.map((s, i) => (
-            <li data-reveal style={`--i: ${i}`}>
-              <div class="pl-step-visual"><Mock name={stepMocks[i]} ui={t.ui} /></div>
-              <div class="pl-step-top" aria-hidden="true"><span class="pl-step-num">{i + 1}</span><span class="pl-step-line" /></div>
-              <h3>{s.title}</h3>
-              <p>{s.body}</p>
-            </li>
-          ))}
-        </ol>
       </div>
     </section>
 
-    <section class="pl-section" id="designs" aria-labelledby="pl-designs">
+    <!-- Integration options: how the payment shows up on the merchant's site. #designs stays as
+         an anchor here for the links that still point at the old designs gallery. -->
+    <section class="pl-section" id="integrations" aria-labelledby="pl-integrations">
+      <span id="designs" class="pl-anchor" aria-hidden="true"></span>
       <div class="wrap">
         <div class="pl-head pl-head-row" data-reveal>
-          <h2 id="pl-designs">{t.designs.title} {t.designs.titleBold}</h2>
-          <p class="pl-section-lede">{t.designs.lede}</p>
+          <h2 id="pl-integrations">{t.integrations.title} {t.integrations.titleBold}</h2>
+          <p class="pl-section-lede">{t.integrations.lede}</p>
         </div>
-        <ul class="pl-designs" role="list">
-          {CHECKOUT_THEMES.map((d, i) => (
-            <li class="pl-design" data-reveal style={`--i: ${i}`}>
-              <a href={`/preview/${d}`} class="pl-design-link">
-                <span class="pl-design-shot"><img src={themeThumbnail(d)} alt="" width="320" height="220" loading="lazy" decoding="async" /></span>
-                <span class="pl-design-name">{designs[d].name}</span>
-                <span class="pl-design-desc">{designs[d].desc}</span>
-              </a>
-            </li>
+        <div class="pl-int" data-tabs data-reveal>
+          <div class="pl-int-tabs" role="tablist" aria-label={t.integrations.label}>
+            {integrations.map((it, i) => (
+              <button type="button" class="pl-int-tab" role="tab" id={`pl-int-tab-${it.key}`} aria-controls={`pl-int-${it.key}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>
+                <span class="pl-int-tab-title">{t.integrations[it.key].title}</span>
+                <span class="pl-int-tab-tag">{t.integrations[it.key].tag}</span>
+              </button>
+            ))}
+          </div>
+          {integrations.map((it, i) => (
+            <div class="pl-int-panel" role="tabpanel" id={`pl-int-${it.key}`} aria-labelledby={`pl-int-tab-${it.key}`} hidden={i !== 0}>
+              <div class="pl-int-text">
+                <h3>{t.integrations[it.key].title}</h3>
+                <p>{t.integrations[it.key].body}</p>
+                {it.lang && (
+                  <div class="pl-snippet">
+                    <div class="pl-snippet-bar">
+                      <span class="pl-snippet-lang">{it.lang === "html" ? "HTML" : "TypeScript"}</span>
+                      <button type="button" class="pl-copy" data-copy={`pl-int-code-${it.key}`} data-copied={t.code.copied}><span data-copy-label>{t.code.copy}</span></button>
+                    </div>
+                    <Code code={it.code} lang={it.lang} id={`pl-int-code-${it.key}`} />
+                  </div>
+                )}
+                {it.key === "links" && <a class="pl-textlink" href={CREATE_LINK}>{t.paths.nocode.link}</a>}
+                {(it.key === "button" || it.key === "embedded") && <a class="pl-textlink" href={`${DOCS}/embed`}>{t.paths.api.link}</a>}
+                {it.key === "api" && <a class="pl-textlink" href={DOCS}>{t.paths.api.link}</a>}
+              </div>
+              <div class="pl-int-visual"><Mock name={it.mock} ui={t.ui} /></div>
+            </div>
           ))}
-        </ul>
+          <p class="pl-footnote">{t.integrations.note}</p>
+        </div>
       </div>
     </section>
 
-    <!-- Use cases by business, as tabs (the script below wires the keyboard). -->
-    <section class="pl-section pl-section-alt" aria-labelledby="pl-uses">
+    <!-- Use cases by business, as tabs (the script below wires the keyboard). Pinned like
+         "how it works": scrolling walks through the four businesses, a tab jumps to its own. -->
+    <section class="pl-section pl-section-alt pl-uses-section" aria-labelledby="pl-uses" data-pin style="--n: 4">
+      <div class="pl-pin">
+      <div class="pl-pin-stage">
       <div class="wrap">
         <div class="pl-head" data-reveal>
           <h2 id="pl-uses">{t.useCases.title} {t.useCases.titleBold}</h2>
         </div>
-        <div class="pl-uses" data-tabs data-reveal>
+        <div class="pl-uses" data-tabs data-reveal data-pin-tabs>
           <div class="pl-uses-tabs" role="tablist" aria-label={t.useCases.label} aria-orientation="vertical">
             {useCases.map((u, i) => (
               <button
@@ -428,6 +482,8 @@ const codeTabs = [
             </div>
           ))}
         </div>
+      </div>
+      </div>
       </div>
     </section>
 
@@ -468,19 +524,22 @@ const codeTabs = [
             <a class="btn btn-dark" href={DOCS}>{t.developers.docs}</a>
             <a class="btn btn-outline-w" href={`${DOCS}/api`}>{t.developers.reference}</a>
           </div>
-          <img class="pl-art pl-dev-art" src="/brand/astronauta-laptop.svg" alt="" width="150" height="201" loading="lazy" decoding="async" />
         </div>
         <div class="pl-code" data-reveal style="--i: 2" data-tabs>
-          <div class="pl-code-tabs" role="tablist" aria-label={t.devTabs.label}>
-            {codeTabs.map((c, i) => (
-              <button type="button" class="pl-code-tab" role="tab" id={`pl-code-tab-${c.key}`} aria-controls={`pl-code-${c.key}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>
-                {t.devTabs[c.key]}
-              </button>
-            ))}
+          <div class="pl-code-bar">
+            <span class="pl-code-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <div class="pl-code-tabs" role="tablist" aria-label={t.devTabs.label}>
+              {codeTabs.map((c, i) => (
+                <button type="button" class="pl-code-tab" role="tab" id={`pl-code-tab-${c.key}`} aria-controls={`pl-code-${c.key}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>
+                  {t.devTabs[c.key]}
+                </button>
+              ))}
+            </div>
+            <button type="button" class="pl-copy" data-copy-panel data-copied={t.code.copied}><span data-copy-label>{t.code.copy}</span></button>
           </div>
           {codeTabs.map((c, i) => (
             <div class="pl-code-panel" role="tabpanel" id={`pl-code-${c.key}`} aria-labelledby={`pl-code-tab-${c.key}`} hidden={i !== 0}>
-              <pre tabindex="0" translate="no"><code>{c.code}</code></pre>
+              <Code code={c.code} lang={c.lang} numbered />
             </div>
           ))}
           <p class="pl-code-note"># {t.developers.codeComment}</p>
@@ -498,9 +557,9 @@ const codeTabs = [
           {plans.map((p, i) => (
             <li class:list={["pl-plan", { "pl-plan-best": p.id === "growth" }]} data-reveal style={`--i: ${i}`}>
               <span class="pl-plan-name">{p.name}</span>
-              <span class="pl-plan-rate">{p.rate}</span>
+              <span class="pl-plan-rate" data-odo>{p.rate}</span>
               {p.unit && <span class="pl-plan-sub">{p.unit}</span>}
-              {p.monthly && <span class="pl-plan-price">{p.monthly}</span>}
+              {p.monthly && <span class="pl-plan-price" data-odo>{p.monthly}</span>}
             </li>
           ))}
         </ul>
@@ -530,8 +589,8 @@ const codeTabs = [
                 {calcPlans.map((p) => (
                   <tr class:list={[{ "is-best": p.id === "growth" }]} data-calc-plan data-pct={p.pct ?? ""} data-cents={p.cents ?? ""}>
                     <th scope="row">{p.name}{p.monthly && <small>{p.monthly}</small>}</th>
-                    <td data-calc-fee>{p.pct === null ? t.calc.custom : "—"}</td>
-                    <td data-calc-net>{p.pct === null ? t.calc.custom : "—"}</td>
+                    <td data-calc-fee data-odo>{p.pct === null ? t.calc.custom : "—"}</td>
+                    <td data-calc-net data-odo>{p.pct === null ? t.calc.custom : "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -542,7 +601,9 @@ const codeTabs = [
       </div>
     </section>
 
-    <section class="pl-section pl-section-alt" aria-labelledby="pl-faq">
+    <!-- The FAQ and the final call share one canvas: no band of another tone between them. -->
+    <div class="pl-closing">
+    <section class="pl-section pl-faq-section" aria-labelledby="pl-faq">
       <div class="wrap pl-split">
         <div class="pl-head pl-head-sticky" data-reveal>
           <h2 id="pl-faq">{t.faq.title} {t.faq.titleBold}</h2>
@@ -559,7 +620,7 @@ const codeTabs = [
       </div>
     </section>
 
-    <section class="pl-section pl-final-wrap" aria-labelledby="pl-final">
+    <section class="pl-final-wrap" aria-labelledby="pl-final">
       <div class="wrap">
         <div class="pl-final" data-reveal>
           <div class="pl-final-copy">
@@ -574,6 +635,7 @@ const codeTabs = [
         </div>
       </div>
     </section>
+    </div>
   </main>
 
   <SiteFooter slot="footer" lang={lang} area="payments" />
@@ -614,6 +676,51 @@ const codeTabs = [
   for (const el of document.querySelectorAll("[data-reveal]")) reveal.observe(el);
   (window as Window & { __plReveal?: boolean }).__plReveal = true;
 
+  /* Figures count up digit by digit the first time they come into view: each digit is a
+     strip of 0–9 that spins a few turns and settles, the strips easing in one after another
+     from left to right. The figure's text stays readable to assistive tech (a visually hidden
+     copy); the strips are hidden from it. Figures whose text changes later (the calculator)
+     simply get the new text. */
+  const ODO_TURNS = 2;
+  const odometer = (el: HTMLElement) => {
+    const text = el.textContent ?? "";
+    if (!/\d/.test(text)) return;
+    const reader = document.createElement("span");
+    reader.className = "pl-sr";
+    reader.textContent = text;
+    const face = document.createElement("span");
+    face.className = "pl-odo";
+    face.setAttribute("aria-hidden", "true");
+    let n = 0;
+    for (const ch of text) {
+      // every character is its own box: a bare space in a flex row would collapse
+      if (!/\d/.test(ch)) { const glyph = document.createElement("span"); glyph.textContent = ch; face.append(glyph); continue; }
+      const cell = document.createElement("span");
+      cell.className = "pl-odo-d";
+      const strip = document.createElement("span");
+      strip.className = "pl-odo-s";
+      const target = ODO_TURNS * 10 + Number(ch);
+      for (let d = 0; d <= target; d++) {
+        const digit = document.createElement("span");
+        digit.textContent = String(d % 10);
+        strip.append(digit);
+      }
+      strip.style.setProperty("--to", String(target));
+      strip.style.setProperty("--k", String(n++));
+      cell.append(strip);
+      face.append(cell);
+    }
+    el.replaceChildren(reader, face);
+    requestAnimationFrame(() => requestAnimationFrame(() => face.classList.add("is-on")));
+  };
+  const counted = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      odometer(entry.target as HTMLElement);
+      counted.unobserve(entry.target);
+    }
+  }, { threshold: 0.6 });
+
   /* Fee calculator: the amount (typed or slid) times each plan's rate, plus its fixed cents,
      plus escrow's 0.5% when ticked; what the merchant keeps is the rest. Rates come from the
      rows' data attributes (plans.ts); a custom plan keeps its label. The slider is logarithmic
@@ -649,12 +756,67 @@ const codeTabs = [
     escrow.addEventListener("change", render);
     render();
   }
+  for (const el of document.querySelectorAll("[data-odo]")) counted.observe(el);
 
-  /* Tabs — use cases and code samples (WAI-ARIA tabs, automatic activation): a click or an arrow key selects a
-     tab and shows its panel; Home and End jump to the first and last. Only the selected tab
-     is in the tab order. */
+  /* Pinned sections (data-pin): on a screen big enough to hold one whole, the section's stage
+     sticks under the nav while the page scrolls through a runway of --n steps, and the scroll
+     position picks the current step; past the last one the page scrolls on. The runway is
+     plain CSS height and the stage plain position: sticky, so nothing hijacks the wheel or the
+     keyboard. A tab inside a pinned section scrolls to its own step instead. */
+  const NAV_H = 73;
+  const pinQuery = matchMedia("(min-width: 1000px) and (min-height: 700px)");
+  type Pin = { section: HTMLElement; runway: HTMLElement; stage: HTMLElement; n: number; at: number; onStep?: (i: number) => void };
+  const pinned: Pin[] = [];
+  for (const section of document.querySelectorAll<HTMLElement>("[data-pin]")) {
+    const runway = section.querySelector<HTMLElement>(".pl-pin")!;
+    const stage = section.querySelector<HTMLElement>(".pl-pin-stage")!;
+    const n = Number(getComputedStyle(section).getPropertyValue("--n")) || 1;
+    pinned.push({ section, runway, stage, n, at: -1 });
+  }
+  const stepOf = (pin: Pin) => {
+    const travel = pin.runway.offsetHeight - pin.stage.offsetHeight;
+    const p = travel > 0 ? Math.min(1, Math.max(0, (NAV_H - pin.runway.getBoundingClientRect().top) / travel)) : 0;
+    return { p, step: Math.min(pin.n - 1, Math.floor(p * pin.n)) };
+  };
+  const scrollToStep = (pin: Pin, i: number) => {
+    const travel = pin.runway.offsetHeight - pin.stage.offsetHeight;
+    const top = pin.runway.getBoundingClientRect().top + window.scrollY - NAV_H;
+    window.scrollTo({ top: top + travel * ((i + 0.5) / pin.n), behavior: "smooth" });
+  };
+  const paintPins = () => {
+    for (const pin of pinned) {
+      if (!pin.section.classList.contains("is-pinned")) continue;
+      const { p, step } = stepOf(pin);
+      pin.section.style.setProperty("--p", p.toFixed(4));
+      if (step === pin.at) continue;
+      pin.at = step;
+      pin.section.querySelectorAll<HTMLElement>("[data-pin-item]").forEach((item, i) => {
+        item.classList.toggle("is-reached", i <= step);
+        item.classList.toggle("is-current", i === step);
+      });
+      pin.onStep?.(step);
+    }
+  };
+  const setPinMode = () => {
+    for (const pin of pinned) {
+      pin.section.classList.toggle("is-pinned", pinQuery.matches);
+      pin.at = -1;
+      if (!pinQuery.matches) pin.section.querySelectorAll("[data-pin-item]").forEach((item) => item.classList.remove("is-reached", "is-current"));
+    }
+    paintPins();
+  };
+  let pinFrame = 0;
+  window.addEventListener("scroll", () => { if (!pinFrame) pinFrame = requestAnimationFrame(() => { pinFrame = 0; paintPins(); }); }, { passive: true });
+  window.addEventListener("resize", paintPins);
+  pinQuery.addEventListener("change", setPinMode);
+
+  /* Tabs — integration options, use cases, code samples (WAI-ARIA tabs, automatic activation):
+     a click or an arrow key selects a tab and shows its panel; Home and End jump to the first
+     and last. Only the selected tab is in the tab order. Inside a pinned section the scroll
+     position drives them too, and choosing one scrolls to its step. */
   for (const root of document.querySelectorAll<HTMLElement>("[data-tabs]")) {
     const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const pin = pinned.find((x) => x.section.contains(root) && root.hasAttribute("data-pin-tabs"));
     const select = (tab: HTMLButtonElement, focus: boolean) => {
       for (const other of tabs) {
         const on = other === tab;
@@ -665,9 +827,14 @@ const codeTabs = [
       }
       if (focus) tab.focus();
     };
+    const choose = (tab: HTMLButtonElement, focus: boolean) => {
+      select(tab, focus);
+      if (pin && pin.section.classList.contains("is-pinned")) scrollToStep(pin, tabs.indexOf(tab));
+    };
+    if (pin) pin.onStep = (i) => { if (tabs[i] && tabs[i].getAttribute("aria-selected") !== "true") select(tabs[i], false); };
     root.addEventListener("click", (event) => {
       const tab = (event.target as Element).closest<HTMLButtonElement>('[role="tab"]');
-      if (tab) select(tab, false);
+      if (tab) choose(tab, false);
     });
     root.addEventListener("keydown", (event) => {
       const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
@@ -675,7 +842,32 @@ const codeTabs = [
       const next = { ArrowDown: at + 1, ArrowRight: at + 1, ArrowUp: at - 1, ArrowLeft: at - 1, Home: 0, End: tabs.length - 1 }[event.key];
       if (next === undefined) return;
       event.preventDefault();
-      select(tabs[(next + tabs.length) % tabs.length], true);
+      choose(tabs[(next + tabs.length) % tabs.length], true);
+    });
+  }
+  setPinMode();
+
+  /* Copy buttons: data-copy names the code block to copy; data-copy-panel copies the block in
+     the selected panel of its tabs. The label says it worked for two seconds; a live region
+     reads it out. */
+  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy], [data-copy-panel]")) {
+    const label = button.querySelector<HTMLElement>("[data-copy-label]")!;
+    const idle = label.textContent ?? "";
+    label.setAttribute("aria-live", "polite");
+    let timer = 0;
+    button.addEventListener("click", async () => {
+      const block = button.dataset.copy
+        ? document.getElementById(button.dataset.copy)
+        : button.closest("[data-tabs]")?.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden]) [data-raw]');
+      const raw = block?.dataset.raw;
+      if (!raw) return;
+      try {
+        await navigator.clipboard.writeText(raw);
+        label.textContent = button.dataset.copied ?? idle;
+        button.classList.add("is-done");
+        clearTimeout(timer);
+        timer = window.setTimeout(() => { label.textContent = idle; button.classList.remove("is-done"); }, 2000);
+      } catch { /* clipboard refused (permissions, insecure context): the code stays selectable */ }
     });
   }
 </script>

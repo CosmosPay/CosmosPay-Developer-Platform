@@ -6,6 +6,7 @@ import "@/styles/institutional.css";
 import { PUBLIC_GA_ID, PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 import SiteNav from "@/components/cosmos/layout/SiteNav";
+import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 
 interface Props {
   title?: string;
@@ -180,5 +181,6 @@ const jsonLd = {
 
       installInk();
     </script>
+    <BackToTop lang={locale} />
   </body>
 </html>

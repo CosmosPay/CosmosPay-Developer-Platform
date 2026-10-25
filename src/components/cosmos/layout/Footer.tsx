@@ -1,6 +1,7 @@
 import { useT } from "@/lib/i18n/index";
 import { PRICING, DASH, DOCS, TERMS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
 import { CosmosLockup } from "@/components/cosmos/icons";
+import { SocialLinks } from "@/components/cosmos/layout/Social";
 
 /* The footer's links, by catalog group and the label's index in it (labels come from the
    active locale; hrefs are the same in every language). Only links that lead somewhere are
@@ -15,7 +16,7 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
       // { i: 2, href: "#" }, // Payouts — no page yet
       // { i: 3, href: "#" }, // Anchors — no page yet
       // { i: 4, href: "#" }, // Wallets — no page yet
-      { i: 5, href: `${PAYMENTS}/#designs` }, // Checkout
+      { i: 5, href: `${PAYMENTS}/#integrations` }, // Checkout
       { i: 6, href: `${PAYMENTS}/#integration` }, // Payment Links
       { i: 7, href: PRICING }, // Pricing
     ],
@@ -69,6 +70,7 @@ export function Footer({ area }: { area?: Area } = {}) {
           <div className="foot-brand">
             <a className="brand" href={homeFor(area)}><CosmosLockup height={36} /></a>
             <p>{t.footer.tagline}</p>
+            <SocialLinks />
             {/* el personaje cierra la pagina, como pide BRAND.md (seccion 5). Pose
                 propia: en la landing ya esta el que flota y en el 404 el que piensa. */}
             <img className="foot-astro" src="/brand/astronauta-pulgar.svg" alt="" aria-hidden="true"

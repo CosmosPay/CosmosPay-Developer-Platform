@@ -15,6 +15,7 @@ npm run check:openapi     # fails if any src/pages/api route is missing from thi
 npm run check:api-spec    # fails if docs/openapi.json differs from the community server's spec
                           #   (OPENAPI_SRC, else the sibling checkout; exits 0 when neither exists)
 npm run docs:api          # regenerates docs/openapi.json + the API pages inside docs/
+npm run embed:build       # bundles src/embed into public/embed/cosmos-pay.js (run by build and predev)
 npm run db:migrate        # prisma migrate dev (db:deploy = migrate deploy, db:generate, db:push)
 npm run sync:route        # re-points every APISIX route's upstream at COSMOS_API_URL, no restart
 npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
@@ -74,12 +75,16 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 - **The checkout reads its link from the payer's browser**:
   `GET ${PUBLIC_PAYMENTS_API_URL}/v1/payment-links/{id}` through the gateway's keyless route
-  (`/v1/payment-links/*` on `<route>-oauth-callbacks`, CORS from `COSMOS_API_CORS_ORIGINS`).
+  `<route>-payment-links` (GET/OPTIONS, CORS `*` without credentials, priority 15 — any
+  merchant's site reads it for the embedded checkout; `src/lib/apisix-keyless.ts`). The
+  community server writes no CORS there; if it ever does, drop the plugin on that route, as on
+  the SEP route, or browsers get two `Access-Control-Allow-Origin` headers and refuse it.
   Never proxy or server-render it: the community server budgets that `@Public()` read per
   client address, and this server would put every payer behind one.
 - **`parsePaymentLink` (`src/lib/payments/payment-link.ts`) is the trust boundary**: every
   field is checked, the URI scheme must match the chain, the QR must be a PNG data URL; DOM
-  writes are `textContent` or validated attributes, never HTML. Change `PaymentLink`, the
+  writes are `textContent` or validated attributes, never HTML. A deadline (`expiresAt`) must
+  be a readable date or null. Change `PaymentLink`, the
   parser and `tests/unit/paymentLink.test.ts` together with the server's entity.
 - **`/pay` never hands a URI to the wallet on arrival.** The URI comes from the query string,
   which any site can choose; the page shows the whole request (issuer, network, `origin_domain`,
@@ -106,6 +111,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   draws the bar the same way. **At the very top of a page the bar has no surface** (no fill,
   border or blur: `.nav:not(.scrolled):not(.menu-open)`); it takes one back once the page moves
   or the mobile menu opens.
+- **Every page also has the footer's social profiles and a back-to-top button.** The profiles
+  (X, Instagram, Discord, WhatsApp) are `SOCIAL` in `src/components/cosmos/lib/constants.ts`,
+  drawn by `Social.tsx` with Simple Icons' official glyphs (CC0); LinkedIn stays commented out
+  until it has a URL. `BackToTop.astro` (both layouts) appears once the page has moved down a
+  screen; it keeps its own five-language label because the layouts read two catalogs.
 - **No ghost links.** A menu or footer link renders only when it leads somewhere. The targets are
   listed by catalog position in `NAV_LINKS` / `FEATURED_HREFS` (Nav.tsx) and `FOOT_GROUPS`
   (Footer.tsx); a label whose page does not exist yet stays there commented out. Never ship
@@ -175,7 +185,24 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   NOWPayments, Triple-A, BVNK, Cryptomus, CoinPayments, Coinbase Business, MoonPay Commerce,
   Alchemy Pay, Fireblocks): hero, the networks / assets / wallets strip, benefits, a comparison
   with cards and bank transfers, three integration paths (no code, hosted, API), how it works,
-  checkout designs, use cases by business (WAI-ARIA tabs), security, developers, pricing, FAQ.
+  integration options, use cases by business (WAI-ARIA tabs), security, developers, pricing, and
+  the FAQ with the final call.
+- **Integration options** (`#integrations`; `#designs` stays as an anchor inside it for old
+  links) replaced the checkout-designs gallery at the product owner's request: hosted checkout,
+  pay button, embedded checkout, payment links and QR, API and SDK — tabs over one panel with
+  the option's snippet (copy button) and a mock-up of it on a site. The pay button and the
+  embedded checkout are the embed script's elements (see "Embedding a payment"). The four
+  checkout designs still exist (dashboard, `/preview/{design}`); only the gallery left.
+- **"How it works" and the use cases are pinned** on screens of at least 1000×700 (`data-pin`,
+  wired by the page script): the section's stage is `position: sticky` under the nav inside a
+  runway of `--n` steps of plain height, and the scroll position picks the step, so nothing
+  hijacks the wheel or the keyboard; a use-case tab scrolls to its own step. Smaller screens get
+  the plain grid / tabs.
+- **Code is highlighted** in the page's palette by `src/lib/payments/highlight.ts` (a small
+  tokenizer for bash, TypeScript, JSON and HTML; tested) through `Code.astro`, which keeps the
+  raw code in `data-raw` for the copy buttons. No highlighting library and no HTML strings.
+- **The FAQ and the final call share one canvas** (`.pl-closing`): the product owner asked for
+  no band of another tone between them.
 - **The sections show the product, not only text** (the product owner found text-only sections
   flat): as those gateways do, each one carries a piece of the interface —
   `src/components/payments/landing/Mock.astro` draws them with the page's tokens (a confirmed
@@ -231,10 +258,36 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (`--i` staggers siblings), the steps' track draws, checks pop, tabs and FAQ answers slide open,
   the logos run, and each mock-up plays when its block arrives (rows one after the other, ticks
   pop, bars fill; the flows and the approve button keep moving). A mock-up's resting state is its
-  finished one. Reveals hide content only under `html.pl-anim`, set by an inline head script
+  finished one. **Every figure counts up digit by digit** the first time it comes into view
+  (`data-odo`: each digit a strip of 0–9 that spins and settles, left to right, accelerating;
+  a visually hidden copy keeps the figure readable to assistive tech). Reveals hide content only under `html.pl-anim`, set by an inline head script
   that removes it again after 2.5 s if the page script never loads, so the page is complete
   without JavaScript. Only opacity, translate and scale animate, and **all of it runs for
   everyone, reduced-motion settings included** (the product owner's call, as for the video).
+
+### Embedding a payment (pay button and embedded checkout)
+
+- Merchants paste `<script src="https://payments.cosmospay.lat/embed/cosmos-pay.js" defer>` and
+  `<cosmos-pay-button link="…">` (opens the hosted checkout in a popup, no iframe) or
+  `<cosmos-pay-checkout link="…">` (draws a compact checkout inline, in shadow DOM, from the
+  public read). Attributes: `link`, `lang` (en/es/pt/fr/de), `theme` (light/dark/auto). Docs:
+  `docs/content/docs/embed.mdx` (+ es/pt/fr/de). The payments pages still refuse framing.
+- `src/embed/` is bundled by `scripts/build-embed.mjs` (esbuild, one IIFE) into
+  `public/embed/cosmos-pay.js`, git-ignored and built before `astro build` (and in `predev`).
+  It inlines `PUBLIC_PAYMENTS_URL` and `PUBLIC_PAYMENTS_API_URL`: another environment means
+  another build. The smoke test requires the file to be served.
+- **The contract is `src/lib/payments/embed-protocol.ts`:** the hosted checkout posts
+  `{ source: "cosmos-pay", type: "status", id, status }` to `window.opener` (targetOrigin `*`,
+  allowed only because id and status are public) and nothing else — never the URI, address or
+  amount. The button accepts a message only from the payments origin, from the popup it
+  opened, for its own link. It re-dispatches `cosmospay:status` / `cosmospay:paid`; those are
+  UI hints, and the merchant confirms payment server-side (webhook or API).
+- The inline checkout validates with `parsePaymentLink` and writes text only. Its strings copy
+  the checkout's wording (`src/embed/i18n.ts`, enforced by `embedI18n.test.ts`): change both
+  together. Element fields must not shadow `HTMLElement` properties (`lang`, `id`).
+- Locally, load the script from a `*.cosmospay.localhost` page: Vite's dev server refuses a
+  cross-site `<script>` from `localhost` (403). Production serves it without that check. It
+  carries no SRI hash because it is updated in place.
 
 ### Checkout designs
 
@@ -261,6 +314,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   every such import to `docs/src/shims/astro-env-client.ts`. A new `PUBLIC_*` variable read by
   a component needs an export in that shim, and a new `@/lib/*` module those components
   import needs an entry in the sync's `COPIES`.
+
+## Plans
+
+- `src/lib/plans.ts` is the source of truth. **The free plan ("community") is no longer offered**
+  (product owner, 2026-10-25): `PLAN_IDS` lists the plans offered today (starter, essentials,
+  growth, enterprise) and drives every picker, the pricing page and self-service changes;
+  `ALL_PLAN_IDS` adds the legacy community plan for stored values, limits, admin assignment and
+  upgrade order. New accounts start on `DEFAULT_PLAN_ID` (starter; also `profile.plan`'s
+  database default). Existing community rows were not migrated, and the shared public wallet key
+  stays on community on purpose (its swap rate must stay the highest; see `public-key.ts`).
+- Starter is 1% + 25¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
+  or must match it.
 
 ## Rule: every API endpoint MUST be documented in OpenAPI/Swagger
 
@@ -384,10 +449,11 @@ What this app still does for them:
 - **The keyless APISIX routes** (`src/utils/apisix.ts`, synced at boot by
   `src/lib/apisix-route.ts`, upstreams re-pointed by `npm run sync:route`):
   - `<route>-oauth-callbacks` — the wallet sign-in's OAuth callback
-    (`/v1/wallet/auth/oauth/callback/*`) plus the two public reads: the shared public key
-    (`/v1/public-key`) and one payment link (`/v1/payment-links/*`, the hosted checkout's read,
-    made from the payer's browser — `COSMOS_API_CORS_ORIGINS` must list
-    `https://payments.cosmospay.lat`). The old `<route>-pollar-callback` route is only ever
+    (`/v1/wallet/auth/oauth/callback/*`) plus the shared public key (`/v1/public-key`), with
+    CORS from `COSMOS_API_CORS_ORIGINS`.
+  - `<route>-payment-links` — the public payment-link read (`/v1/payment-links/*`, GET/OPTIONS),
+    made from payers' browsers by the hosted and the embedded checkout, so its CORS is `*`
+    without credentials. No other keyless route lists that URI. The old `<route>-pollar-callback` route is only ever
     DELETED at boot, never created.
   - `<route>-sep` — `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
     `cors` plugin, because the community server answers CORS itself for those prefixes and two
