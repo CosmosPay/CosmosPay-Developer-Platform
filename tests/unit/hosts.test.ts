@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areasOf, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
+import { areasOf, canonicalPath, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
 
 const PROD: Origins = {
   site: 'https://cosmospay.lat',
@@ -81,8 +81,23 @@ test("the prover's files answer on the platform as well, where the dashboard pro
   assert.deepEqual(route('payments.cosmospay.lat', file), { kind: 'rewrite', area: 'payments', path: `/payments${file}` });
   assert.deepEqual(route('dev.cosmospay.lat', file), { kind: 'rewrite', area: 'dev', path: `/payments${file}` });
   assert.deepEqual(route('cosmospay.lat', file), { kind: 'redirect', location: `https://payments.cosmospay.lat${file}`, status: 301 });
-  // Only the prover's files: the rest of /zk stays on the payments domain.
+  // Only the prover's files, exactly /zk/bb/{version}/{file}: the rest of /zk stays on the payments domain.
   assert.deepEqual(route('dev.cosmospay.lat', '/zk/bbx'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/zk/bbx', status: 301 });
+  assert.deepEqual(route('dev.cosmospay.lat', '/zk/bb/0.87.0/a/b.js'), {
+    kind: 'redirect', location: 'https://payments.cosmospay.lat/zk/bb/0.87.0/a/b.js', status: 301,
+  });
+});
+
+test('a dot segment that survives the decode is a 404, never a way out of a mount', () => {
+  // `%252e%252e` decodes to `%2e%2e`, which `new URL` resolves as `..` when the rewrite is applied.
+  for (const p of ['/zk/bb/%252e%252e/%252e%252e/site/tos', '/zk/bb/0.87.0/%252E%252e', '/zk/bb/.%252e/x', '/zk/bb/%252e/x']) {
+    assert.deepEqual(route('dev.cosmospay.lat', p), { kind: 'not-found', area: 'dev' }, p);
+  }
+  for (const p of ['/zk/%252e%252e/%252e%252e/site/tos', '/preview/%252e%252e/%252e%252e/dashboard']) {
+    assert.deepEqual(route('payments.cosmospay.lat', p), { kind: 'not-found', area: 'payments' }, p);
+  }
+  assert.equal(canonicalPath('/zk/bb/%252e%252e'), null);
+  assert.equal(canonicalPath('/docs/v1.2/guide'), '/docs/v1.2/guide');
 });
 
 test('the internal mounts are never served as addresses', () => {
