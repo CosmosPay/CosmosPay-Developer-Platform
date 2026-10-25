@@ -37,7 +37,7 @@ SDK, then regenerate.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/tos` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` landing, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/faq`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -106,7 +106,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   stops on paid, failed and cancelled (`nextPollDelay`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
   to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` (the
-  landing is the one indexed page), and the domain has its own five-language
+  home and the content pages are the indexed ones), and the domain has its own five-language
   catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`)
   and resolves the language as ?lang → cookie → Accept-Language → en.
 
@@ -174,9 +174,29 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 ### The payments landing
 
+- **The gateway is several pages** (multi-page layout, product owner, 2026-10-25: "so not
+  everything is in one place"). `/` is the home a cold visitor converts from: the hero with two
+  risk reducers under its buttons (no monthly fee on Starter, testnet with no real money), the
+  logos, what changes, how it works, the three ways to start, the plans, four security facts,
+  the first four questions and the final call, with the main call to action repeated after
+  "what changes" and "how it works" (`InlineCta.astro`). Each topic in full has its page,
+  listed once in `src/lib/payments/site-pages.ts` (routing in `hosts.ts`, `robots.txt`,
+  `sitemap.xml`): `/integrations` (options with the live demos, the developers' code, the
+  three paths), `/use-cases` (businesses, the comparison with cards), `/security`, `/fees`
+  (plans and calculator; `/pricing` is the company site's) and `/faq`. A sticky section bar
+  (`Subnav.astro`) under the general nav links them and ends with the main call to action;
+  each content page opens with `PageHeader.astro` (its h1, one line, a clay render).
+- **Every section is a component** in `src/components/payments/landing/sections/`, reading
+  `landingData(lang, layout)` (`data.ts`); `layout` "multi" turns topic anchors into page links
+  (`links`). Teaser variants: `<Pricing compact>` (no calculator), `<Security compact>` (four
+  facts), `<Faq limit={4}>`, `<Faq bare>` (heading for assistive tech only, under a page
+  header). The page behaviour is `src/scripts/payments/landing.ts` (`startLanding()`), the head
+  extras `LandingHead.astro`. Pinned stages stick under the nav and the section bar
+  (`--subnav-h`); the script reads where each stage sticks.
+
 - `/` on payments is `src/pages/payments/index.astro`: server-rendered, copy in
   `src/lib/payments/landing-i18n.ts` (five languages, parity-tested), rates read from
-  `src/lib/plans.ts`. It is the one indexable payments page (robots `Allow: /$`, sitemap).
+  `src/lib/plans.ts`. It and the content pages are the indexable payments pages (robots `Allow` per page, sitemap).
 - **A highlighted word uses the Stellar Snap's highlighter, in black** (`.pl-hl`, the product
   owner's choice over lime or the corporate blue): a solid block behind the words, painted left
   to right, white ink on it; inverted in dark mode (white block, black ink). A pseudo-element,
@@ -217,8 +237,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Code is highlighted** in the page's palette by `src/lib/payments/highlight.ts` (a small
   tokenizer for bash, TypeScript, JSON and HTML; tested) through `Code.astro`, which keeps the
   raw code in `data-raw` for the copy buttons. No highlighting library and no HTML strings.
-- **The FAQ and the final call share one canvas** (`.pl-closing`): the product owner asked for
-  no band of another tone between them.
+- **The FAQ and the final call are separate sections** in the multi-page layout (the product
+  owner asked to see them apart); `.pl-closing` (one canvas for both) remains for the single page.
 - **The landing's dark mode has more colour** (product owner): inside `.pl` the dark tokens take a
   navy tint (canvas `#090B14`, alternate sections `#0E1222`, cards `#121729`, blue-tinted lines)
   and the tertiary blue marks progress, checks, the current step, the best plan and links. The
