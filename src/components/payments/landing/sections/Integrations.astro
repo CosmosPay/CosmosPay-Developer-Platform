@@ -1,0 +1,81 @@
+---
+// Integrations section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+}
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<!-- Integration options: how the payment shows up on the merchant's site. #designs stays as
+     an anchor here for the links that still point at the old designs gallery. -->
+<section class="pl-section" id="integrations" aria-labelledby="pl-integrations">
+  <span id="designs" class="pl-anchor" aria-hidden="true"></span>
+  <div class="wrap">
+    <div class="pl-head pl-head-row" data-reveal>
+      <h2 id="pl-integrations">{t.integrations.title} {t.integrations.titleBold}</h2>
+      <p class="pl-section-lede">{t.integrations.lede}</p>
+    </div>
+    <ul class="pl-int-grid" role="list">
+      {integrations.map((it, i) => (
+        <li class:list={["pl-int-card", `pl-int-${it.key}`, { "is-live": it.live }]} data-reveal style={`--i: ${i}`}>
+          <div class="pl-int-visual">
+            {it.key === "button" && (
+              <div class="pl-demo-store">
+                <div class="pl-demo-product">
+                  <span class="pl-demo-thumb" aria-hidden="true"></span>
+                  <span><b>{t.ui.product}</b><span class="pl-demo-price">25.00 USDC</span></span>
+                </div>
+                <cosmos-pay-button demo lang={lang} data-demo-theme></cosmos-pay-button>
+                <p class="pl-demo-hint">{t.integrations.tryIt}</p>
+                <div class="pl-demo-window"><Mock name="browser-hosted" ui={t.ui} /></div>
+              </div>
+            )}
+            {it.key === "embedded" && (
+              <div class="pl-demo-embed">
+                <cosmos-pay-checkout demo lang={lang} data-demo-theme data-demo-events></cosmos-pay-checkout>
+                <p class="pl-demo-log"><span>{t.integrations.events}</span><code data-demo-log>cosmospay:status · PENDING</code></p>
+              </div>
+            )}
+            {it.key === "plugins" && (
+              <div class="pl-int-logos" aria-hidden="true">
+                {PLUGINS.map((p) => (
+                  <span class="pl-int-logo"><svg viewBox="0 0 24 24" width="34" height="34"><path fill="currentColor" d={p.path} /></svg><span>{p.name}</span></span>
+                ))}
+              </div>
+            )}
+            {it.mock && <Mock name={it.mock} ui={t.ui} />}
+          </div>
+          <div class="pl-int-body">
+            <h3>{t.integrations[it.key].title}</h3>
+            <p class="pl-int-tag">{t.integrations[it.key].tag}</p>
+            <p class="pl-int-text">{t.integrations[it.key].body}</p>
+            {it.lang && (
+              <details class="pl-int-code">
+                <summary>{t.integrations.viewCode}</summary>
+                <div class="pl-snippet">
+                  <div class="pl-snippet-bar">
+                    <span class="pl-snippet-lang">{it.lang === "html" ? "HTML" : "TypeScript"}</span>
+                    <button type="button" class="pl-copy" data-copy={`pl-int-code-${it.key}`} data-copied={t.code.copied}><span data-copy-label>{t.code.copy}</span></button>
+                  </div>
+                  <Code code={it.code} lang={it.lang} id={`pl-int-code-${it.key}`} />
+                </div>
+              </details>
+            )}
+            {it.key === "links" && <a class="pl-textlink" href={CREATE_LINK}>{t.paths.nocode.link}</a>}
+            {it.live && <a class="pl-textlink" href={`${DOCS}/embed`}>{t.paths.api.link}</a>}
+            {it.key === "api" && <a class="pl-textlink" href={DOCS}>{t.paths.api.link}</a>}
+          </div>
+        </li>
+      ))}
+    </ul>
+    <p class="pl-footnote">{t.integrations.note}</p>
+  </div>
+</section>

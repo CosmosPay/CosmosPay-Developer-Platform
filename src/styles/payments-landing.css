@@ -916,6 +916,53 @@
 [data-theme="dark"] .pl-bento-card { transition: box-shadow .3s ease; }
 [data-theme="dark"] .pl-bento-card:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
 
+/* ---- multi-page layout (the gateway home and its content pages) ---- */
+/* the section navigation: a sticky row under the general nav, the current page underlined in
+   ink, the main call to action at its end */
+.pl-multi { --subnav-h: 56px; }
+.pl-subnav {
+  position: sticky; top: 73px; z-index: 40; height: var(--subnav-h);
+  background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.pl-subnav-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 100%; }
+.pl-subnav-links { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; overflow-x: auto; scrollbar-width: none; }
+.pl-subnav-links::-webkit-scrollbar { display: none; }
+.pl-subnav-links a {
+  position: relative; display: block; padding: 8px 12px; white-space: nowrap; border-radius: 10px;
+  font-size: .9375rem; font-weight: 600; color: var(--ink-3); transition: color .2s, background-color .2s;
+}
+.pl-subnav-links a:hover { color: var(--ink); background: var(--accent-soft); }
+.pl-subnav-links a[aria-current="page"] { color: var(--ink); }
+.pl-subnav-links a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -9px; height: 2px; background: var(--btn-bg); }
+.pl-subnav-cta { flex: 0 0 auto; }
+/* pinned stages stick under the nav and the section bar */
+.pl-multi .is-pinned .pl-pin-stage { top: calc(73px + var(--subnav-h)); height: calc(100svh - 73px - var(--subnav-h)); }
+
+/* a content page's header: title, one line on the page, a render */
+.pl-page-head { padding: clamp(48px, 7vw, 96px) 0 clamp(24px, 4vw, 48px); background: var(--bg); }
+.pl-page-head-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.pl-page-title { margin: 0; font-weight: 600; font-size: clamp(2.25rem, 3.6vw + .5rem, 3.5rem); line-height: 1.05; letter-spacing: -.035em; color: var(--ink); text-wrap: balance; }
+.pl-page-head .pl-lede { margin-top: 18px; font-size: 1.125rem; max-width: 60ch; }
+.pl-page-art { flex: 0 0 auto; width: clamp(120px, 15vw, 210px); animation: pl-bob 5.5s ease-in-out infinite; }
+.pl-page-head + .pl-section { padding-top: clamp(32px, 4vw, 56px); }
+
+/* the main call to action again, between sections */
+.pl-inline-cta { padding: 0 0 clamp(40px, 5vw, 64px); background: var(--bg); }
+.pl-inline-cta.pl-section-alt { background: var(--surface); padding-top: clamp(32px, 4vw, 48px); }
+.pl-inline-cta-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 28px; }
+.pl-inline-cta .btn { min-height: 50px; padding: 13px 24px; }
+
+/* the two facts that lower the risk, under the hero's buttons */
+.pl-hero-notes { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; margin: 22px 0 0; padding: 0; animation: pl-rise .9s cubic-bezier(.2, .7, .2, 1) .44s both; }
+.pl-hero-notes li { display: flex; align-items: center; gap: 8px; font-size: .9375rem; font-weight: 500; color: var(--ink-2); }
+.pl-hero-notes .pl-icon { width: 16px; height: 16px; }
+
+/* "see more" links at the end of a teaser */
+.pl-more { display: inline-block; margin-top: 24px; }
+.pl-plans-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.pl-plans-actions .pl-plans-more { margin-top: 0; }
+
 /* ---- responsive ---- */
 /* Very wide screens (1440p and up): the hero copy grows with them instead of floating small. */
 @media (min-width: 2200px) {
@@ -987,6 +1034,8 @@
   .pl-calc-table th, .pl-calc-table td { padding: 14px 8px; font-size: .9375rem; }
   .pl-final { grid-template-columns: 1fr; }
   .pl-final-art { width: 170px; grid-row: 1; }
+  .pl-subnav .pl-subnav-cta { display: none; }
+  .pl-page-art { width: 96px; }
   .pl-uses-tabs { grid-template-columns: 1fr; }
   /* The comparison becomes one block per topic, each value under its column's name. */
   .pl-compare, .pl-compare tbody, .pl-compare tr, .pl-compare th, .pl-compare td { display: block; width: auto; }

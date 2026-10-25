@@ -1,0 +1,36 @@
+---
+/* /security on payments.cosmospay.lat: how a payment can be checked and why it cannot be
+ * faked or framed. */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import InlineCta from "@/components/payments/landing/InlineCta.astro";
+import { landingData } from "@/components/payments/landing/data";
+import Compare from "@/components/payments/landing/sections/Compare.astro";
+import Security from "@/components/payments/landing/sections/Security.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.pages.security.meta} description={d.t.pages.security.lede} indexable>
+  <LandingHead slot="head" />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="security" />
+    <PageHeader d={d} page="security" art="3d-lock" />
+    <Security d={d} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

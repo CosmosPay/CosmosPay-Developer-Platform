@@ -1,0 +1,39 @@
+---
+/* /integrations on payments.cosmospay.lat: every way to take a payment with Cosmos Pay, the
+ * pay button and the embedded checkout running live, and the developer's code. */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import InlineCta from "@/components/payments/landing/InlineCta.astro";
+import { landingData } from "@/components/payments/landing/data";
+import Paths from "@/components/payments/landing/sections/Paths.astro";
+import Integrations from "@/components/payments/landing/sections/Integrations.astro";
+import Developers from "@/components/payments/landing/sections/Developers.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.pages.integrations.meta} description={d.t.pages.integrations.lede} indexable>
+  <LandingHead slot="head" />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="integrations" />
+    <PageHeader d={d} page="integrations" art="3d-link" />
+    <Integrations d={d} />
+    <Developers d={d} />
+    <Paths d={d} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

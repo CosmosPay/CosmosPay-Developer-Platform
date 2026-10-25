@@ -19,8 +19,8 @@ type NavLink = [col: number, link: number, href: string];
 const NAV_LINKS: Record<string, NavLink[]> = {
   products: [
     [0, 0, PAYMENTS], // Payments
-    [0, 1, `${PAYMENTS}/#integrations`], // Checkout
-    [0, 2, `${PAYMENTS}/#integration`], // Payment Links
+    [0, 1, `${PAYMENTS}/integrations`], // Checkout
+    [0, 2, `${PAYMENTS}/integrations`], // Payment Links
     // [0, 3, "#"], // Invoicing (no page yet)
     // [1, 0, "#"], // Payouts (no page yet)
     // [1, 1, "#"], // Cross-border (no page yet)

@@ -4,7 +4,8 @@
  *
  *   cosmospay.lat           "site"      /, /pricing, /tos          (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
- *   payments.cosmospay.lat  "payments"  /, /pay, /{payment link id}, /preview/{design}
+ *   payments.cosmospay.lat  "payments"  /, its content pages (/integrations, /use-cases, /security,
+ *                                       /fees, /faq), /pay, /{payment link id}, /preview/{design}
  *                                       (pages under src/pages/payments/)
  *
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
@@ -41,7 +42,12 @@ export type RouteDecision =
 /** Where the site and payments pages live in src/pages. */
 export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", payments: "/payments" };
 
+import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
+
 const SITE_PATHS = new Set(["/pricing", "/tos"]);
+/* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
+   because /pricing is the company site's. */
+const PAYMENTS_PATHS = new Set(PAYMENTS_PAGE_PATHS);
 /* Checkout design previews (src/pages/payments/preview/[design].astro). */
 const PAYMENTS_PREFIXES = ["/preview"];
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
@@ -85,7 +91,7 @@ function underPrefix(path: string, prefix: string): boolean {
 export function ownerOf(path: string): Area | "home" | null {
   if (path === "/") return "home";
   if (SITE_PATHS.has(path)) return "site";
-  if (path === "/pay" || PAYMENT_LINK_PATH.test(path)) return "payments";
+  if (path === "/pay" || PAYMENTS_PATHS.has(path) || PAYMENT_LINK_PATH.test(path)) return "payments";
   if (PAYMENTS_PREFIXES.some((p) => underPrefix(path, p))) return "payments";
   if (DEV_PREFIXES.some((p) => underPrefix(path, p))) return "dev";
   return null;

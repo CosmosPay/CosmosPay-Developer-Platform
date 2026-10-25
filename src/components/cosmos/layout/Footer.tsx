@@ -16,8 +16,8 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
       // { i: 2, href: "#" }, // Payouts (no page yet)
       // { i: 3, href: "#" }, // Anchors (no page yet)
       // { i: 4, href: "#" }, // Wallets (no page yet)
-      { i: 5, href: `${PAYMENTS}/#integrations` }, // Checkout
-      { i: 6, href: `${PAYMENTS}/#integration` }, // Payment Links
+      { i: 5, href: `${PAYMENTS}/integrations` }, // Checkout
+      { i: 6, href: `${PAYMENTS}/integrations` }, // Payment Links
       { i: 7, href: PRICING }, // Pricing
     ],
   },

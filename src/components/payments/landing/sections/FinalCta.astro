@@ -1,0 +1,31 @@
+---
+// FinalCta section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+}
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<section class="pl-final-wrap" aria-labelledby="pl-final">
+  <div class="wrap">
+    <div class="pl-final" data-reveal>
+      <div class="pl-final-copy">
+        <h2 id="pl-final">{t.cta.title} <mark class="pl-hl">{ctaMark.words}</mark>{ctaMark.stop}</h2>
+        <p>{t.cta.body}</p>
+        <div class="pl-cta">
+          <a class="btn btn-dark" href={CREATE_LINK}>{t.cta.primary}</a>
+          <a class="btn btn-outline-w" href={CONTACT}>{t.cta.secondary}</a>
+        </div>
+      </div>
+      <img class="pl-art pl-final-art" src="/brand/astronauta-telefono.svg" alt="" width="280" height="236" loading="lazy" decoding="async" />
+    </div>
+  </div>
+</section>

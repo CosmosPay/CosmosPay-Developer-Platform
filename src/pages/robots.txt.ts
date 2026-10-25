@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
+import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
 
 /* robots.txt per domain (one app answers all three, so a static file would say the same
    thing everywhere). src/lib/hosts.ts lets this path through on every domain. */
@@ -27,10 +28,11 @@ Disallow: /api/
 
 Sitemap: ${DEV}/sitemap.xml
 `,
-  payments: `# Cosmos Pay payments: only the landing is content. Payment links are personal and
-# short-lived, and the design previews are samples.
+  payments: `# Cosmos Pay payments: the landing and its content pages are content. Payment links
+# are personal and short-lived, and the design previews are samples.
 User-agent: *
 Allow: /$
+${PAYMENTS_PAGE_PATHS.map((p) => `Allow: ${p}$`).join("\n")}
 Disallow: /
 
 Sitemap: ${PAYMENTS}/sitemap.xml

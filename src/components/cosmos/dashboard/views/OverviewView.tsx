@@ -154,7 +154,7 @@ export function OverviewView({ org, notifications, onViewActivity, onGo = (v) =>
               <button type="button" className="btn btn-dark" onClick={() => onGo("payments")}>{DI.plus} {h.createLink}</button>
               <div className="hub-links">
                 <a href={DOCS}>{h.docs}</a>
-                <a href={`${PAYMENTS}/#designs`} target="_blank" rel="noopener">{h.designs}</a>
+                <a href={`${PAYMENTS}/integrations`} target="_blank" rel="noopener">{h.designs}</a>
               </div>
             </div>
           </div>

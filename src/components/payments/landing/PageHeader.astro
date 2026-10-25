@@ -1,0 +1,27 @@
+---
+// The header of a gateway content page (multi-page layout): its title as the page's h1, one
+// line on what it covers, and a 3D clay render on the right (3dicons, CC0). The general nav and
+// the section navigation sit above it.
+import type { LandingData } from "@/components/payments/landing/data";
+
+type PageKey = "integrations" | "useCases" | "security" | "fees" | "faq";
+interface Props {
+  d: LandingData;
+  page: PageKey;
+  /** A render from public/media/landing, e.g. "3d-security". */
+  art: string;
+}
+
+const { d, page, art } = Astro.props;
+const copy = d.t.pages[page] as { title: string; lede: string };
+---
+
+<header class="pl-page-head">
+  <div class="wrap pl-page-head-inner">
+    <div class="pl-page-head-copy">
+      <h1 class="pl-page-title">{copy.title}</h1>
+      <p class="pl-lede">{copy.lede}</p>
+    </div>
+    <img class="pl-3d pl-page-art" src={`/media/landing/${art}.webp`} alt="" width="400" height="400" decoding="async" />
+  </div>
+</header>

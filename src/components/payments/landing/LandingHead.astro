@@ -1,0 +1,15 @@
+---
+// The payments landing's <head> extras (every page built from its sections renders this in
+// PaymentsLayout's head slot): the hero poster preload, the merchant embed for the live
+// demos, and the class that lets scroll reveals start hidden.
+---
+
+<link rel="preload" as="image" href="/media/coin-ramp-poster.webp" fetchpriority="high" />
+<!-- The merchant embed, for the live demos of the integration options. -->
+<script is:inline src="/embed/cosmos-pay.js" defer></script>
+<!-- Scroll reveals start hidden only when this runs; if the page script never arrives,
+     the class comes off after 2.5 s and everything shows. -->
+<script is:inline>
+  document.documentElement.classList.add("pl-anim");
+  setTimeout(function () { if (!window.__plReveal) document.documentElement.classList.remove("pl-anim"); }, 2500);
+</script>

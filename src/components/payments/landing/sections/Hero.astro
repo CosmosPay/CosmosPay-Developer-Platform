@@ -1,0 +1,48 @@
+---
+// Hero section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+}
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<!-- Hero. The coin-ramp video is the header's background, anchored to its right half
+     and starting there. It is drawn on white: in light mode it multiplies onto the page,
+     in dark mode it is inverted (hue kept) and lightens onto it. -->
+<section class="pl-hero" aria-labelledby="pl-hero-title">
+  <div class="pl-hero-media" aria-hidden="true">
+    <video class="pl-video" autoplay muted loop playsinline preload="auto" poster="/media/coin-ramp-poster.webp" disablepictureinpicture data-hero-video>
+      <source src="/media/coin-ramp-1280.webm" type="video/webm" media="(max-width: 900px)" />
+      <source src="/media/coin-ramp-1280.mp4" type="video/mp4" media="(max-width: 900px)" />
+      <source src="/media/coin-ramp.webm" type="video/webm" />
+      <source src="/media/coin-ramp.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="wrap pl-hero-inner">
+    <div class="pl-hero-copy">
+      <h1 id="pl-hero-title" class="pl-hero-title"><span class="pl-hero-line">{t.hero.titleA} <mark class="pl-hl">{heroMark.words}</mark>{heroMark.stop}</span> <span class="pl-hero-line">{t.hero.titleB}</span></h1>
+      <p class="pl-lede">{t.hero.lede}</p>
+      <div class="pl-cta">
+        <a class="btn btn-dark" href={CREATE_LINK}>{t.hero.primary}</a>
+        <a class="btn btn-outline-w" href={DOCS}>{t.hero.secondary}</a>
+      </div>
+      {layout === "multi" && (
+        <ul class="pl-hero-notes" role="list">
+          {t.pages.notes.map((note) => <li><span class="pl-check"><Icon name="check" /></span>{note}</li>)}
+        </ul>
+      )}
+      <a class="pl-textlink" href={links.integrations}>{t.hero.designs}</a>
+    </div>
+  </div>
+  <button class="pl-motion" type="button" data-motion data-pause={t.hero.pause} data-play={t.hero.play}>
+    <span class="pl-motion-icon" aria-hidden="true"></span><span data-motion-label>{t.hero.pause}</span>
+  </button>
+</section>

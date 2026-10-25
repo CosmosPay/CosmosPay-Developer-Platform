@@ -1,0 +1,35 @@
+---
+/* /fees on payments.cosmospay.lat: the plans and the fee calculator (/pricing is the company
+ * site's page). */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import InlineCta from "@/components/payments/landing/InlineCta.astro";
+import { landingData } from "@/components/payments/landing/data";
+import Pricing from "@/components/payments/landing/sections/Pricing.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.pages.fees.meta} description={d.t.pages.fees.lede} indexable>
+  <LandingHead slot="head" />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="fees" />
+    <PageHeader d={d} page="fees" art="3d-calc" />
+    <Pricing d={d} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

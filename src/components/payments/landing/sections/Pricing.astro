@@ -1,0 +1,77 @@
+---
+// Pricing section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+  /** The home's teaser: the plans, and a link to the page with the calculator. */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<section class="pl-section" id="pricing" aria-labelledby="pl-pricing">
+  <div class="wrap">
+    <div class="pl-head pl-head-row" data-reveal>
+      <h2 id="pl-pricing">{t.pricing.title} {t.pricing.titleBold}</h2>
+      <p class="pl-section-lede">{t.pricing.lede}</p>
+    </div>
+    <ul class="pl-plans" role="list">
+      {plans.map((p, i) => (
+        <li class:list={["pl-plan", { "pl-plan-best": p.id === "growth" }]} data-reveal style={`--i: ${i}`}>
+          <span class="pl-plan-name">{p.name}</span>
+          <span class="pl-plan-rate" data-odo>{p.rate}</span>
+          {p.unit && <span class="pl-plan-sub">{p.unit}</span>}
+          {p.monthly && <span class="pl-plan-price" data-odo>{p.monthly}</span>}
+        </li>
+      ))}
+    </ul>
+    {!compact && (
+    <div class="pl-calc" data-calc data-reveal data-escrow-pct={ESCROW_PCT}>
+      <div class="pl-calc-controls">
+        <div class="pl-calc-head">
+          <h3>{t.calc.title}</h3>
+          <img class="pl-3d pl-calc-3d" src="/media/landing/3d-calc.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
+        </div>
+        <label class="pl-calc-label" for="pl-calc-amount">{t.calc.amount}</label>
+        <div class="pl-calc-amount"><input id="pl-calc-amount" type="number" min="1" max="1000000" step="1" value="250" inputmode="decimal" data-calc-amount /><span>USDC</span></div>
+        <div class="pl-calc-slider" style="--pos: .6">
+          <span class="pl-calc-fill" aria-hidden="true"></span>
+          <input class="pl-calc-range" type="range" min="0" max="100" step="0.5" value="60" aria-label={t.calc.amount} aria-valuetext="250 USDC" data-calc-range />
+        </div>
+        <label class="pl-calc-escrow">
+          <input class="pl-calc-switch-input" type="checkbox" role="switch" data-calc-escrow />
+          <span class="pl-calc-switch" aria-hidden="true"></span>
+          <span>{t.calc.escrow}</span>
+        </label>
+        <p class="pl-footnote">{t.calc.note}</p>
+      </div>
+      <div class="pl-calc-result">
+        <table class="pl-calc-table">
+          <thead><tr><th scope="col">{t.calc.plan}</th><th scope="col">{t.calc.fee}</th><th scope="col">{t.calc.youGet}</th></tr></thead>
+          <tbody>
+            {calcPlans.map((p) => (
+              <tr class:list={[{ "is-best": p.id === "growth" }]} data-calc-plan data-pct={p.pct ?? ""} data-cents={p.cents ?? ""}>
+                <th scope="row">{p.name}{p.monthly && <small>{p.monthly}</small>}</th>
+                <td data-calc-fee data-odo>{p.pct === null ? t.calc.custom : "-"}</td>
+                <td data-calc-net data-odo>{p.pct === null ? t.calc.custom : "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    )}
+    <div class="pl-plans-actions">
+      {compact && <a class="btn btn-dark pl-plans-more" href={links.fees}>{t.pages.more.fees}</a>}
+      <a class="btn btn-outline-w pl-plans-more" href={PRICING}>{t.pricing.compare}</a>
+    </div>
+  </div>
+</section>
