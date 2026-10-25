@@ -509,6 +509,7 @@ export interface CreateSwapInput extends QuoteSwapInput {
   source: string;
   destination?: string;
   memo?: string;
+  idempotencyKey?: string;
 }
 
 /* Each method takes the org + the org plan's swapFeeBps (resolved by the route via
@@ -596,6 +597,8 @@ export interface CrossChainSwapInput {
   recipient: string;
   refundTo: string;
   slippageBps?: number;
+  /** Create only: a retry with the same key and request returns the swap already opened. */
+  idempotencyKey?: string;
 }
 
 export const cosmosCrossChainSwaps = {
@@ -738,8 +741,14 @@ export const cosmosLiquidity = {
 };
 
 /* ---- Read-only dashboard aggregates. ---- */
+/** How the overview chart groups payments (the Payments API's /v1/summary/series). */
+export const SERIES_PERIODS = ["day", "week", "month", "year"] as const;
+export type SeriesPeriod = (typeof SERIES_PERIODS)[number];
 export const cosmosAnalytics = {
   summary: (userId: string, env: CosmosEnv) => cosmosFetch<any>(userId, env, "/v1/summary"),
+  /** The overview chart: payments grouped by day, week, month or year, and the window before. */
+  series: (userId: string, env: CosmosEnv, period: SeriesPeriod) =>
+    cosmosFetch<any>(userId, env, "/v1/summary/series", { query: { period } }),
   balances: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/balances"),
   apiLogs: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/logs"),
   webhookLogs: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/logs/webhooks"),

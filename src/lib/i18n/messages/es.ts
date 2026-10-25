@@ -844,6 +844,10 @@ export default {
       adminConsumers: "Organizaciones"
     },
     sidebar: {
+      label: "Panel",
+      menu: { main: "Menú principal", preferences: "Preferencias" },
+      groups: { payments: "Pagos", swaps: "Swaps", developers: "Desarrolladores", settings: "Ajustes", help: "Ayuda", admin: "Admin" },
+      notifications: "Notificaciones",
       sections: {
         Platform: "Plataforma",
         Build: "Construir",
@@ -908,6 +912,7 @@ export default {
       Delivered: "Entregado"
     },
     common: {
+      actions: "Acciones",
       cancel: "Cancelar",
       copy: "Copiar",
       copyLink: "Copiar enlace",
@@ -978,7 +983,7 @@ export default {
       }
     },
     overview: {
-      hub: { crumb: "Resumen", active: "Activa", since: "Desde {date}", settled: "Volumen liquidado", noVolume: "Aún no hay pagos liquidados", moreAssets: "+{n} más", rate: "Tarifa", plan: "Plan", orgId: "ID de la organización", createLink: "Crear enlace de pago", docs: "Documentación", designs: "Diseños de checkout", kpiTotal: "Pagos totales", kpiSucceeded: "Completados", kpiFailed: "Fallidos", kpiRate: "Tasa de éxito", activity: "Actividad de pagos", period7: "7 días", period30: "30 días", periods: { today: "Hoy", week: "Semana", month: "Mes", year: "Año" }, noPeriodTx: "No hay pagos liquidados en este período.", sumVolume: "Volumen liquidado", sumCount: "Pagos", sumPayers: "Pagadores", sumWebhooks: "Entregas de webhooks", sumWebhooksFailed: "{n} fallidas", growthVs: "{pct} frente a los {n} días anteriores", legendVolume: "Volumen", legendCount: "Pagos", chartLabel: "Pagos creados y volumen liquidado por día en los últimos {n} días.", transactions: "Últimos pagos liquidados", viewAll: "Ver todos los pagos", thId: "Pago", thDate: "Fecha", thAmount: "Importe", thNetwork: "Red", thTo: "Pagado a", thStatus: "Estado" },
+      hub: { crumb: "Resumen", active: "Activa", since: "Desde {date}", settled: "Volumen liquidado", noVolume: "Aún no hay pagos liquidados", moreAssets: "+{n} más", rate: "Tarifa", plan: "Plan", orgId: "ID de la organización", createLink: "Crear enlace de pago", docs: "Documentación", designs: "Diseños de checkout", kpiTotal: "Pagos totales", kpiSucceeded: "Completados", kpiFailed: "Fallidos", kpiRate: "Tasa de éxito", activity: "Actividad de pagos", period7: "7 días", period30: "30 días", periods: { today: "Hoy", week: "Semana", month: "Mes", year: "Año" }, noPeriodTx: "No hay pagos liquidados en este período.", sumVolume: "Volumen liquidado", sumCount: "Pagos", sumPayers: "Pagadores", sumWebhooks: "Entregas de webhooks", sumWebhooksFailed: "{n} fallidas", growthVs: "{pct} frente a los {n} días anteriores", legendVolume: "Volumen", legendCount: "Pagos", chartLabel: "Pagos creados y volumen liquidado por día en los últimos {n} días.", transactions: "Últimos pagos liquidados", viewAll: "Ver todos los pagos", thId: "Pago", thDate: "Fecha", thAmount: "Importe", thNetwork: "Red", thTo: "Pagado a", thStatus: "Estado", chartPeriods: { day: "Diario", week: "Semanal", month: "Mensual", year: "Anual" }, chartLabels: { day: "Pagos creados y volumen liquidado por día en los últimos 30 días.", week: "Pagos creados y volumen liquidado por semana en las últimas 12 semanas.", month: "Pagos creados y volumen liquidado por mes en los últimos 12 meses.", year: "Pagos creados y volumen liquidado por año en los últimos 5 años." }, sumFailed: "Fallidos", sumGrowth: "Crecimiento", growthTitle: "Frente al período anterior", growthVolume: "Volumen", growthCount: "Pagos", prevOrg: "Organización anterior", nextOrg: "Organización siguiente", created: "Creada el {date}", fee: "Comisión", txTitle: "Transacciones", thFrom: "Pagado por", thMemo: "Memo", onlySettled: "Solo liquidados", network: "Red", allNetworks: "Todas las redes", wallet: "Wallet", applyFilters: "Filtrar la lista", filtersLabel: "Filtrar transacciones", noTx: "No hay pagos en este período.", noMatch: "Ningún pago coincide con estos filtros.", shown: "{n} de {total} pagos", rowMenu: "Acciones del pago {id}", copyId: "Copiar ID", explorer: "Ver en el explorador", openPayments: "Abrir en Pagos", status: { SUCCEEDED: "Liquidado", FAILED: "Fallido", CANCELLED: "Cancelado", EXPIRED: "Vencido", PENDING: "Pendiente", SUBMITTED: "Confirmando" } },
       greeting: "Buenos días, {name}",
       sub: "Esto es lo que está pasando hoy en {org}.",
       metrics: {
@@ -1507,8 +1512,8 @@ export default {
       create: "Crear swap",
       readOnly: "Tienes acceso de solo lectura a los swaps en esta organización.",
       searchPlaceholder: "Buscar por cuenta, activo o ID…",
-      filters: { all: "Todos", PENDING: "Pendiente", SUBMITTED: "Enviado", SUCCEEDED: "Completado", FAILED: "Fallido" },
-      status: { PENDING: "Pendiente", SUBMITTED: "Enviado", SUCCEEDED: "Completado", FAILED: "Fallido" },
+      filters: { all: "Todos", PENDING: "Pendiente", SUBMITTED: "Enviado", SUCCEEDED: "Completado", FAILED: "Fallido", EXPIRED: "Vencido" },
+      status: { PENDING: "Pendiente", SUBMITTED: "Enviado", SUCCEEDED: "Completado", FAILED: "Fallido", EXPIRED: "Vencido" },
       tableHead: { id: "Swap", route: "Enviado → recibido", status: "Estado", created: "Creado" },
       empty: "Aún no hay swaps. Crea uno para obtener una transacción sin firmar.",
       loading: "Cargando swaps…",
@@ -1539,12 +1544,15 @@ export default {
         eyebrow: "Swap", title: "Crear swap",
         desc: "Cambia un activo de Stellar por otro mediante un pago por ruta. Cotiza y luego firma la transacción.",
         source: "Cuenta de origen", sourceHint: "Cuenta de Stellar que envía el swap (G…).",
-        amount: "Cantidad a enviar", amountHint: "Cantidad del activo de origen (XLM) a cambiar.",
+        sourceAsset: "Activo a enviar", sourceIssuer: "Emisor de origen", sourceAssetHint: "XLM, o un activo que tenga esta cuenta.",
+        amount: "Cantidad a enviar", amountHint: "Cantidad del activo de origen a cambiar.",
         destAsset: "Activo de destino", destAssetHint: "Código del activo a recibir (p. ej. USDC).",
         destIssuer: "Emisor de destino", destIssuerHint: "Requerido para activos no nativos (G…).",
         slippage: "Slippage (bps)", slippageHint: "Slippage máx. en puntos básicos (opcional, p. ej. 50).",
+        destination: "Cuenta de destino", destinationHint: "Opcional. Recibe el resultado; déjala vacía para recibir en la cuenta de origen. Debe confiar en el activo.", memo: "Memo", memoHint: "Opcional. Un número (MEMO_ID) que queda en la cadena para tu conciliación.",
         getQuote: "Cotizar", quoting: "Cotizando…",
         quoteTitle: "Cotización",
+        swapped: "Se cambia tras la comisión",
         estimated: "Recibido estimado", minimum: "Recibido mínimo",
         fee: "Comisión", bps: "bps",
         feeNote: "La comisión es la tarifa del plan de tu organización y se aplica automáticamente.",
@@ -1572,7 +1580,7 @@ export default {
       readOnly: "Tienes acceso de solo lectura a los swaps en esta organización.",
       mainnetOnly: "NEAR Intents solo liquida en mainnet. En modo de prueba puedes ver activos y cotizar; cambia al modo en vivo para abrir un swap.",
       searchPlaceholder: "Buscar por dirección, activo o ID…",
-      filters: { all: "Todos", open: "En curso", SUCCEEDED: "Completados", REFUNDED: "Reembolsados", FAILED: "Fallidos" },
+      filters: { all: "Todos", open: "En curso", SUCCEEDED: "Completados", REFUNDED: "Reembolsados", FAILED: "Fallidos", EXPIRED: "Vencido" },
       status: { AWAITING_DEPOSIT: "Esperando depósito", DEPOSIT_DETECTED: "Depósito detectado", INCOMPLETE_DEPOSIT: "Depósito incompleto", PROCESSING: "Procesando", SUCCEEDED: "Completado", REFUNDED: "Reembolsado", FAILED: "Fallido", EXPIRED: "Vencido" },
       tableHead: { id: "Swap", route: "Enviado → recibido", status: "Estado", created: "Creado" },
       empty: "Aún no hay swaps entre redes.",
@@ -1602,9 +1610,10 @@ export default {
         reportTitle: "Informar el depósito",
         reportDesc: "Pega la transacción que pagó la dirección de depósito para que el swap arranque enseguida. Opcional: NEAR Intents vigila la dirección de todos modos.",
         reportPlaceholder: "Hash de la transacción de depósito…",
-        report: "Informar", reporting: "Informando…", reported: "Depósito informado",
+        report: "Informar", reporting: "Informando…", reported: "Depósito informado", reportError: "No se pudo informar el depósito.",
       },
     },
+    wallet: { signTitle: "Firma con tu wallet", signDesc: "Freighter muestra la transacción; apruébala ahí y el swap se envía al instante. Tus claves nunca salen de la wallet.", freighter: "Firmar con Freighter", signing: "Esperando a Freighter…", submitting: "Enviando…", missing: "Freighter no está instalada en este navegador. Escanea el QR con otra wallet o pega abajo la transacción firmada.", declined: "Freighter no firmó la transacción.", wrongAccount: "Freighter está en otra cuenta. Cámbiala a {account} y vuelve a intentarlo.", wrongNetwork: "Freighter está en otra red. Cámbiala a {network} y vuelve a intentarlo.", networks: { testnet: "Testnet", public: "Red pública" } },
     liquidity: {
       title: "Pools de liquidez",
       sub: "{n} operaciones · pools AMM en Stellar",

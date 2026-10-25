@@ -23,6 +23,20 @@ export function fmtDateTime(v) {
   return isNaN(d.getTime()) ? "" : d.toLocaleString();
 }
 
+/* The idempotency key of one intended operation: the same terms keep their key, so a retry
+   (a double click, a dropped answer) gets the operation already built instead of a second one;
+   new terms get a new key. Call `keyFor(terms)` right before the create request. */
+export function idempotencyKeys() {
+  let last = { terms: "", key: "" };
+  return {
+    keyFor(terms) {
+      const s = JSON.stringify(terms);
+      if (s !== last.terms) last = { terms: s, key: crypto.randomUUID() };
+      return last.key;
+    },
+  };
+}
+
 /* Icon + relative date helpers for activity notifications. */
 export function notifIcon(type) {
   if (type === "auth.login") return DI.user;

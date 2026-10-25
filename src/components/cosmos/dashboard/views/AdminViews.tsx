@@ -224,7 +224,7 @@ function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads,
         {tag ? <span className="env-tag">{DI.network} {tag}</span> : null}
       </Toolbar>
       {!loading && !error && view.length > 0 && (
-        <div className="t-scroll" ref={tref}><table className="tx"><thead><tr>{heads.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{heads.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
           <tbody>{pg.slice.map(renderRow)}</tbody>
         </table></div>
       )}
@@ -317,7 +317,7 @@ export function AdminOverviewView({ env = "dev" }) {
 
           <div className="panel" style={{ marginTop: 16 }}><div className="panel-head"><h3>{ao.volume}</h3></div>
             {Array.isArray(sum.volume) && sum.volume.length > 0 ? (
-              <div className="t-scroll"><table className="tx"><thead><tr><th>{ao.volHead.asset}</th><th>{ao.volHead.amount}</th><th>{ao.volHead.count}</th></tr></thead>
+              <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{ao.volHead.asset}</th><th>{ao.volHead.amount}</th><th>{ao.volHead.count}</th></tr></thead>
                 <tbody>{sum.volume.map((v, i) => (
                   <tr key={i}><td>{assetOf(v.asset)}</td><td className="amt">{v.amount}</td><td className="cust">{v.count}</td></tr>
                 ))}</tbody>

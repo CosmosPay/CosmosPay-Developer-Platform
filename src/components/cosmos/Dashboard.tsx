@@ -12,16 +12,14 @@ import { apiKeys as apiKeysApi, notifications as notificationsApi, account as ac
 import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { SIDE, STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
+import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
 import {
   OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, CrossChainSwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
 import { OrgSwitcher } from "@/components/cosmos/dashboard/widgets/OrgSwitcher";
-import { EnvSwitcher } from "@/components/cosmos/dashboard/widgets/EnvSwitcher";
-import { ProfileMenu } from "@/components/cosmos/dashboard/widgets/ProfileMenu";
-import { NotificationsMenu } from "@/components/cosmos/dashboard/widgets/NotificationsMenu";
+import { Sidebar } from "@/components/cosmos/dashboard/widgets/Sidebar";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
@@ -73,7 +71,6 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   useEffect(() => { startTracking(live ? "prod" : "dev"); track("dashboard.open", { category: "lifecycle" }); }, []);
   useEffect(() => { setTrackEnv(live ? "prod" : "dev"); }, [live]);
   useEffect(() => { trackView(view); }, [view]);
-  const [collapsed, setCollapsed] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   // Real organizations (API-backed). The active org is persisted to localStorage.
   const [orgs, setOrgs] = useState([]);
@@ -140,6 +137,14 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
     notificationsApi.markRead().catch(() => {});
   };
+  useEffect(() => { if (view === "activity") markNotifsRead(); }, [view, unreadNotifs]);
+  // The sidebar opens over the page on a phone: Escape closes it.
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e) => { if (e.key === "Escape") setNavOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [navOpen]);
   const isStaff = STAFF_ROLES.includes(user && user.role);
   const isManager = MANAGER_ROLES.includes(user && user.role);
   // Mock billing plan (changeable in Settings). Limits drive the real restrictions.
@@ -280,6 +285,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   };
 
   const renderView = () => {
+    const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} env={live ? "prod" : "dev"} />;
     switch (view) {
       case "payments": return <PaymentsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} />;
@@ -296,50 +302,55 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "activityLog": return <ActivityLogView env={live ? "prod" : "dev"} />;
       case "activity": return <NotificationsView notifications={visibleNotifs} loading={notifsLoading} error={notifsError} />;
       case "support": return <SupportView />;
-      case "inbox": return isStaff ? <SupportInboxView /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "users": return isManager ? <UsersView currentUserId={user.id} currentRole={user.role} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminOverview": return isManager ? <AdminOverviewView env={live ? "prod" : "dev"} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminPayments": return isManager ? <AdminPaymentsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminSwaps": return isManager ? <AdminSwapsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminFiat": return isManager ? <AdminFiatView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
+      case "inbox": return isStaff ? <SupportInboxView /> : overview;
+      case "users": return isManager ? <UsersView currentUserId={user.id} currentRole={user.role} /> : overview;
+      case "adminOverview": return isManager ? <AdminOverviewView env={live ? "prod" : "dev"} /> : overview;
+      case "adminPayments": return isManager ? <AdminPaymentsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminSwaps": return isManager ? <AdminSwapsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminFiat": return isManager ? <AdminFiatView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : overview;
       case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
       case "account": return <AccountView user={user} theme={theme} setTheme={setTheme} planId={plan} limits={limits} orgCount={orgs.length} onChangePlan={canChangePlan ? () => setModal("plan") : null} plansEnabled={feat.plansEnabled} onSaveProfile={saveProfile} />;
-      default: return <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
+      default: return overview;
     }
   };
 
-  return (
-    <>
-    {/* The general nav, as on every view: theme, language and the account menu live there. */}
-    <Nav theme={theme} setTheme={setTheme} user={user} sessionReady />
-    <div className={`dash${collapsed ? " collapsed" : ""}${navOpen ? " nav-open" : ""}`}>
-      <div className="nav-scrim" onClick={() => setNavOpen(false)} />
-      <aside className="side">
-        <div className="side-top">
-          <div className="side-brand-row">
-            <button className="collapse-btn" title={t.dash.sidebar.collapse} aria-label={t.dash.sidebar.collapse} onClick={() => setCollapsed((c) => !c)}>{DI.collapse}</button>
-          </div>
-          <OrgSwitcher orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} />
-          <EnvSwitcher live={live} setLive={setLive} />
-        </div>
-        <nav className="side-nav">
-          {SIDE.map((g) => { const items = g.items.filter((k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k))); if (!items.length) return null; return (<div key={g.sec}><div className="side-sec lbl">{t.dash.sidebar.sections[g.sec]}</div>{items.map((k) => (<div key={k} role="button" tabIndex={0} aria-current={view === k ? "page" : undefined} aria-label={t.dash.sidebar.items[k]} className={`side-link${view === k ? " active" : ""}`} title={t.dash.sidebar.items[k]} onClick={() => go(k)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(k); } }}>{DI[k]}<span className="lbl">{t.dash.sidebar.items[k]}</span>{k === "support" && supportUnread > 0 && <span className="side-dot" />}{k === "activity" && unreadNotifs > 0 && <span className="side-count lbl">{unreadNotifs}</span>}</div>))}</div>); })}
-        </nav>
-        <ProfileMenu user={user} onAccount={() => go("account")} />
-      </aside>
+  // What this viewer's role may see in the sidebar.
+  const visibleView = (k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k));
 
-      <div className="dash-main">
-        <header className="topbar">
-          <button className="icon-btn burger" title={t.nav.menu} aria-label={t.nav.menu} onClick={() => setNavOpen(true)}>{DI.menu}</button>
-          <h1 className="page-title">{t.dash.viewLabels[view]}<span className="page-crumb" aria-hidden="true">→</span><span className="page-org">{org.name}</span></h1>
-          <div className="search">{DI.search}<input placeholder={t.dash.topbar.search} aria-label={t.dash.topbar.search} /></div>
-          <div className="top-actions">
-            <NotificationsMenu items={visibleNotifs} loading={notifsLoading} error={notifsError} unread={unreadNotifs} onOpen={markNotifsRead} onViewAll={() => go("activity")} />
+  return (
+    <div className={`dash${navOpen ? " nav-open" : ""}`}>
+      {/* The product owner's gateway-dashboard reference: the whole dashboard is one white frame on
+          the canvas, the sidebar (logo, main menu, preferences) on its left. */}
+      <div className="dash-frame">
+        <div className="nav-scrim" onClick={() => setNavOpen(false)} />
+        <aside className="side" id="dash-side">
+          <Sidebar view={view} go={go} visible={visibleView} unread={unreadNotifs} supportUnread={supportUnread} />
+        </aside>
+
+        <div className="dash-main">
+          {/* The general nav, as on every view, adapted to the frame (Nav inDash). */}
+          <Nav theme={theme} setTheme={setTheme} user={user} sessionReady inDash />
+          {/* The page head opens the main landmark (the nav above is the page banner), so the
+              view's h1 and the environment switch belong to the content they title. */}
+          <main id="main" className="dash-content">
+          <div className="topbar">
+            <button type="button" className="icon-btn burger" aria-label={t.nav.menu} aria-expanded={navOpen} aria-controls="dash-side" onClick={() => setNavOpen(true)}>{DI.menu}</button>
+            <div className="page-title">
+              <h1>{t.dash.viewLabels[view]}</h1>
+              <span className="page-crumb" aria-hidden="true">→</span>
+              <OrgSwitcher variant="crumb" orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} />
+            </div>
+            <div className="top-actions">
+              <div className="env-seg" role="group" aria-label={t.dash.env.heading}>
+                <button type="button" aria-pressed={!live} onClick={() => setLive(false)}>{t.dash.env.sandbox}</button>
+                <button type="button" aria-pressed={live} onClick={() => setLive(true)}>{t.dash.env.production}</button>
+              </div>
+              <button type="button" className="btn btn-outline-w btn-sm top-add" onClick={() => setModal("org")}>{DI.plus}<span className="top-add-t">{t.dash.org.create}</span></button>
+            </div>
           </div>
-        </header>
         {myInvites.length > 0 && (
           <div className="invite-bar">
             {myInvites.map((iv) => (
@@ -354,7 +365,9 @@ export default function Dashboard({ user: initialUser, lang, features }) {
             ))}
           </div>
         )}
-        <main id="main" className="dash-body" key={view}>{renderView()}</main>
+          <div className="dash-body" key={view}>{renderView()}</div>
+          </main>
+        </div>
       </div>
 
       {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} />}
@@ -365,6 +378,5 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       {reveal && <RevealKeyModal k={reveal} onClose={() => setReveal(null)} />}
       {confirm && <ConfirmModal title={confirm.title} body={confirm.body} confirmLabel={confirm.confirmLabel} cancelLabel={t.dash.common.cancel} onConfirm={confirm.onConfirm} onClose={() => setConfirm(null)} />}
     </div>
-    </>
   );
 }

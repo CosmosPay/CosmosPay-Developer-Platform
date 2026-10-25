@@ -144,10 +144,9 @@
 
 /* Floating panels (the mega menu, the mobile menu, the language list, menus, modals, toasts)
    reset to cosmos.css's page tokens, the blue brand's, so they never inherit a panel's or the
-   bar's colours. On the payments site they take this skin's instead (black primary, as the
-   page), so the mobile menu's button is the page's black, not navy. The dashboard keeps the
-   reset until its own review. */
-.inst[data-area="payments"] :is(.mega, .lang-menu, .nav-user-menu, .notif-menu, .modal, .mobile-menu, .toast) {
+   bar's colours. In this skin (the payments site and the dashboard) they take its tokens instead
+   (black primary, neutral greys, as the page), so a modal's button is the page's black, not navy. */
+body.inst :is(.mega, .lang-menu, .nav-user-menu, .notif-menu, .modal, .mobile-menu, .toast) {
   --bg: inherit; --surface: inherit; --surface-2: inherit;
   --ink: inherit; --ink-2: inherit; --ink-3: inherit; --line: inherit; --line-2: inherit;
   --accent: inherit; --accent-d: inherit; --accent-fg: inherit; --accent-soft: inherit; --accent-soft-2: inherit;

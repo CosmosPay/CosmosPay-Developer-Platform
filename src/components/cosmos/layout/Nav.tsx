@@ -90,7 +90,9 @@ function useNavItems(area?: Area): any[] {
 
 /* `area` is the domain the bar is drawn on: on the payments gateway the logo, Pricing and the
    product links stay on it (constants.ts, localHref). */
-export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area }) {
+/* `inDash`: the bar inside the dashboard's frame (Dashboard.tsx), restyled to its reference: it
+   spans the content column only, and the logo lives in the sidebar instead (dashboard.css). */
+export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area, inDash = false }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area; inDash?: boolean }) {
   const t = useT();
   const NAV_ITEMS = useNavItems(area);
   const [scrolled, setScrolled] = useState(false);
@@ -178,7 +180,7 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
      scroll under the links, so the bar takes its own background back. */
   const paperNow = overPaper && !mob && !scrolled;
   return (
-    <header className={`nav${scrolled ? " scrolled" : ""}${mob ? " menu-open" : ""}${inkNow ? " over-ink" : ""}${paperNow ? " over-paper" : ""}`}>
+    <header className={`nav${inDash ? " nav-dash" : ""}${scrolled ? " scrolled" : ""}${mob ? " menu-open" : ""}${inkNow ? " over-ink" : ""}${paperNow ? " over-paper" : ""}`}>
       <div className="wrap nav-inner">
         <a className="brand" href={homeFor(area)}><CosmosLockup height={32} label="Cosmos Pay" /></a>
         {/* Every panel is in the page from the first render, hidden until its trigger opens it,

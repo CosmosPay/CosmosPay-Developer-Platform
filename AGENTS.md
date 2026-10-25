@@ -133,9 +133,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   are h2.
 - **The bar answers the pointer as the buttons do:** theme, docs, language and burger take the
   snap's ink in the outline colour (`--out-ink`, placed by `ink.ts`), the text items and sign-in
-  sweep an underline. Floating panels (mega, mobile menu, menus, modals, toasts) reset to cosmos.css's tokens; on the payments site they take
-  the skin's instead (`.inst[data-area="payments"]` in institutional.css), so the mobile menu's
-  button is the page's black. The dashboard keeps the reset until its own review.
+  sweep an underline. Floating panels (mega, mobile menu, menus, modals, toasts) reset to
+  cosmos.css's tokens, except in the institutional skin (the payments site and the dashboard),
+  where they take the skin's (`body.inst :is(...)` in institutional.css): a modal's or the mobile
+  menu's button is the page's black, never the old navy. Modals are portaled to `<body>`, so they
+  read the body's tokens.
 - **Every page also has the footer's social profiles and a back-to-top button.** The profiles
   (X, Instagram, Discord, WhatsApp, LinkedIn) are `SOCIAL` in
   `src/components/cosmos/lib/constants.ts`, drawn by `Social.tsx` with Simple Icons' official
@@ -178,14 +180,61 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   button's own colour** (product owner): a black button paints white (`--btn-ink`, keeping its
   black outline), a white or outlined light one paints the corporate blue (`--out-ink`, its
   outline turning blue with it). Dark mode swaps them, since there the filled button is white.
-- The dashboard's restyle is `src/styles/dashboard.css` (sidebar, page title with breadcrumb,
-  the overview's account card, period tabs, `BarChart`, design picker).
-  Status is coloured text with a dot, never a capsule; section labels are plain sentence case;
-  every overview block keeps `min-width: 0`, so tables scroll inside their box on phones. To see
-  it locally, sign in through local Authentik with the `.env` test account (`DEV_TEST_*`).
-  The latest settled payments have Today / Week / Month / Year tabs, read from
-  `GET /api/payment-intents?status=SUCCEEDED&createdFrom=…` (the community server's
-  `createdFrom` filter); the summary's growth line compares the 7-day window with the one before.
+- **The dashboard follows the product owner's gateway-dashboard reference strictly** (Dribbble
+  "Gateway dashboard", 2026-10-25), on `src/styles/dashboard.css`:
+  - **The shell is one white frame on the canvas** (`.dash-frame`, 28px radius): the sidebar on
+    its left (`widgets/Sidebar.tsx`: logo, "Main menu" and "Preferences" split by a hairline, plain
+    links whose current one is bold, groups that open into a dashed tree with a dot on the current
+    view; a group with one visible view renders as a plain link), the general nav inside the
+    content column (`Nav inDash` gives `.nav-dash`: no logo, no surface at the top; the logo comes
+    back on screens where the sidebar is off-canvas), then the page head: the view's name as the h1,
+    an arrow and the organization as a breadcrumb menu (`OrgSwitcher variant="crumb"`), Sandbox /
+    Production and the outlined "create organization" (icon only on phones). A view's own h2 stays
+    for assistive tech only. The sidebar entries are `SIDE` in `dashboard/data.ts`.
+  - **The overview** (`views/OverviewView.tsx`): a black account card (its up and down arrows step
+    through the organizations; name, plan, Active in the reference's orange, created date, settled
+    volume, the plan's rate and the network as text split by a hairline) on a grey panel
+    (`--slate`, white text at AA: four totals, the organization ID to copy with the docs link, the
+    main button with the checkout designs link); "Payments activity" with Daily / Weekly / Monthly /
+    Yearly tabs over a five-column strip (volume, payments, failed, payers, growth: tertiary blue up,
+    red down, against the window before) and the paired bars; then "Transactions" with Today /
+    Week / Month / Year, a filter row (only-settled switch, ID, amount, date, network, wallet, applied
+    by the search button) and one line per payment (status icon, label over value, a menu to copy
+    the ID, open the explorer or the Payments view).
+  - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
+    server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
+    from Monday), with the window's totals (distinct payers too) and the window before it. Its volume
+    adds every asset's amount, as the daily summary does. The list reads
+    `GET /api/payment-intents?createdFrom=…`.
+  - Status is coloured text with a dot or an icon, never a capsule; section labels are plain
+    sentence case; every overview block keeps `min-width: 0`, so nothing pushes the page wider on
+    phones. To see it locally, sign in through local Authentik with the `.env` test account
+    (`DEV_TEST_*`).
+
+### Swaps from the dashboard
+
+- **Stellar swaps, Solana / Monad swaps, cross-chain swaps and liquidity are non-custodial**: the
+  Payments API builds the transaction, the person signs it in a wallet, the dashboard submits the
+  signed envelope. Nobody's key ever reaches this app.
+- **Freighter signs in one click** (`components/FreighterSign.tsx` over
+  `src/lib/wallets/freighter.ts`, the SDF's `@stellar/freighter-api`, pinned and loaded on the
+  first click): it checks the extension answers (2.5 s), the account matches the transaction's
+  source and Freighter is on the transaction's network before asking it to sign, and says which
+  one to switch otherwise. The QR (SEP-7) and the paste box stay for every other wallet. Used by the
+  Stellar swap and the liquidity details; only a PENDING operation can be signed, and the swap's QR,
+  link and unsigned XDR disappear once it was sent.
+- **Every create carries an idempotency key** (`idempotencyKeys()` in `dashboard/helpers.ts`): the
+  same terms keep their key, so a double click or a retry gets the swap already built (the server
+  answers 409 to the same key with other terms). The proxies forward `idempotencyKey` in the body.
+- **The Stellar form** sends the source asset (XLM unless another one with its issuer), the
+  destination account (empty: the source) and a numeric memo (MEMO_ID).
+- **Cross-chain (NEAR Intents) is mainnet only**: the sandbox lists assets and prices (a dry quote);
+  opening a swap needs Production. Solana (Jupiter) and Monad (Kuru Flow) swaps are mainnet only too.
+  Never fund one to test it: Stellar testnet with a Friendbot account is the end-to-end check.
+- **Locally, a plan commission needs its recipient** (`NEAR_INTENTS_FEE_RECIPIENT`,
+  `SOLANA_SWAP_FEE_WALLET`, `MONAD_SWAP_FEE_WALLET` on the community server) or the server answers
+  503 misconfigured. A local server can set `SWAP_COMMISSION_DEV_WAIVER=true` instead: it waives
+  (and logs) the commission; the boot refuses it in production.
 
 ### The payments landing
 

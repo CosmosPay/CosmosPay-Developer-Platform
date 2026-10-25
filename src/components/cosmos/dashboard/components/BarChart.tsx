@@ -1,5 +1,6 @@
-/* BarChart: daily payments and settled volume as paired bars (volume on the left axis,
-   count on the right), with a tooltip on hover. The figures are also in a visually hidden
+/* BarChart: payments and settled volume per day, week, month or year as paired bars (volume
+   on the left axis, count on the right), with a tooltip on hover; the hovered bucket's label
+   turns bold, as in the gateway-dashboard reference. The figures are also in a visually hidden
    table, so the chart is never the only way to read them. */
 import { useState } from "react";
 
@@ -16,6 +17,8 @@ interface Props {
   countLabel: string;
   dateLabel: string;
   lang: string;
+  /** What one bar is; labels and the tooltip follow it. */
+  period?: "day" | "week" | "month" | "year";
 }
 
 const H = 220;
@@ -31,7 +34,7 @@ function niceMax(v: number): number {
   return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
 }
 
-export function BarChart({ data, label, volumeLabel, countLabel, dateLabel, lang }: Props) {
+export function BarChart({ data, label, volumeLabel, countLabel, dateLabel, lang, period = "day" }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const w = Math.max(data.length, 1) * GROUP;
   const plotH = H - PAD_TOP - PAD_BOTTOM;
@@ -40,7 +43,20 @@ export function BarChart({ data, label, volumeLabel, countLabel, dateLabel, lang
   const y = (v: number, max: number) => PAD_TOP + plotH - (v / max) * plotH;
   const num = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 });
   const day = new Intl.DateTimeFormat(lang, { day: "numeric", month: "short", timeZone: "UTC" });
-  // Dates are labelled counting back from the newest day, so it always has one and no label crowds it.
+  const fullDay = new Intl.DateTimeFormat(lang, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  const monthFmt = new Intl.DateTimeFormat(lang, { month: "short", timeZone: "UTC" });
+  const monthYear = new Intl.DateTimeFormat(lang, { month: "long", year: "numeric", timeZone: "UTC" });
+  const yearFmt = new Intl.DateTimeFormat(lang, { year: "numeric", timeZone: "UTC" });
+  const at = (d: string) => new Date(`${d}T00:00:00Z`);
+  // The axis label of a bucket, and the tooltip's title (a week is its first and last day).
+  const short = (d: string) => (period === "month" ? monthFmt : period === "year" ? yearFmt : day).format(at(d));
+  const title = (d: string) => {
+    if (period === "month") return monthYear.format(at(d));
+    if (period === "year") return yearFmt.format(at(d));
+    if (period === "week") return day.formatRange(at(d), new Date(at(d).getTime() + 6 * 86400000));
+    return fullDay.format(at(d));
+  };
+  // Labels count back from the newest bucket, so it always has one and no label crowds it.
   const every = data.length > 14 ? 5 : 1;
   const tip = hover !== null ? data[hover] : null;
 
@@ -66,11 +82,11 @@ export function BarChart({ data, label, volumeLabel, countLabel, dateLabel, lang
           })}
         </svg>
         <div className="bars-x" aria-hidden="true">
-          {data.map((d, i) => <span key={d.date}>{(data.length - 1 - i) % every === 0 ? day.format(new Date(`${d.date}T00:00:00Z`)) : ""}</span>)}
+          {data.map((d, i) => <span key={d.date} className={hover === i ? "on" : undefined}>{(data.length - 1 - i) % every === 0 || hover === i ? short(d.date) : ""}</span>)}
         </div>
         {tip && hover !== null && (
           <div className={`bars-tip${hover > data.length / 2 ? " left" : ""}`} style={{ left: `${((hover + 0.5) / data.length) * 100}%` }} aria-hidden="true">
-            <b>{day.format(new Date(`${tip.date}T00:00:00Z`))}</b>
+            <b>{title(tip.date)}</b>
             <span><i className="dot-vol" />{volumeLabel}<em>{num.format(tip.volume)}</em></span>
             <span><i className="dot-cnt" />{countLabel}<em>{tip.count}</em></span>
           </div>

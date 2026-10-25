@@ -4590,6 +4590,57 @@
         ]
       }
     },
+    "/v1/summary/series": {
+      "get": {
+        "operationId": "AnalyticsController_series_v1",
+        "parameters": [
+          {
+            "name": "period",
+            "required": false,
+            "in": "query",
+            "description": "day: 30 days, week: 12 weeks, month: 12 months, year: 5 years.",
+            "schema": {
+              "default": "day",
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsSeriesEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Payments grouped by day, week, month or year, with the window before for growth",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
     "/v1/balances": {
       "get": {
         "operationId": "AnalyticsController_balances_v1",
@@ -16447,6 +16498,146 @@
           "customers",
           "series",
           "recent"
+        ]
+      },
+      "SeriesBucketEntity": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "The first day of the bucket (UTC; weeks start on Monday).",
+            "example": "2026-10-01"
+          },
+          "count": {
+            "type": "number",
+            "description": "Payments created in the bucket, any status.",
+            "example": 31
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 27
+          },
+          "failed": {
+            "type": "number",
+            "description": "Failed, cancelled or expired.",
+            "example": 3
+          },
+          "volume": {
+            "type": "string",
+            "description": "Settled volume, every asset added.",
+            "example": "1842.5"
+          }
+        },
+        "required": [
+          "start",
+          "count",
+          "succeeded",
+          "failed",
+          "volume"
+        ]
+      },
+      "SeriesTotalsEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 284
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 251
+          },
+          "failed": {
+            "type": "number",
+            "example": 19
+          },
+          "volume": {
+            "type": "string",
+            "example": "17410.25"
+          },
+          "payers": {
+            "type": "number",
+            "description": "Distinct paying accounts in the window.",
+            "example": 96
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "failed",
+          "volume",
+          "payers"
+        ]
+      },
+      "SeriesWindowEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 284
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 251
+          },
+          "failed": {
+            "type": "number",
+            "example": 19
+          },
+          "volume": {
+            "type": "string",
+            "example": "17410.25"
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "failed",
+          "volume"
+        ]
+      },
+      "AnalyticsSeriesEntity": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "example": "month"
+          },
+          "buckets": {
+            "description": "30 days, 12 weeks, 12 months or 5 years, oldest first, pre-seeded so a quiet bucket is a zero.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesBucketEntity"
+            }
+          },
+          "totals": {
+            "description": "The window the buckets cover.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesTotalsEntity"
+              }
+            ]
+          },
+          "previous": {
+            "description": "The window of the same length just before it, for growth.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesWindowEntity"
+              }
+            ]
+          }
+        },
+        "required": [
+          "period",
+          "buckets",
+          "totals",
+          "previous"
         ]
       },
       "AssetBalanceEntity": {

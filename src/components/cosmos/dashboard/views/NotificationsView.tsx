@@ -17,7 +17,7 @@ export function NotificationsView({ notifications, loading, error }) {
       <ViewHead title={nt.title} sub={nt.subtitle} />
       <div className="panel">
         {show && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{t.dash.webhooks.tableHead.event}</th><th>{nt.location}</th><th>{nt.ip}</th><th>{nt.device}</th><th>{t.dash.overview.tableHead.date}</th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{t.dash.webhooks.tableHead.event}</th><th>{nt.location}</th><th>{nt.ip}</th><th>{nt.device}</th><th>{t.dash.overview.tableHead.date}</th></tr></thead>
             <tbody>{pg.slice.map((n) => (
               <tr key={n.id}>
                 <td><div className="cust-cell"><span className="am-sq">{notifIcon(n.type)}</span><div><b>{(nt.types && nt.types[n.type]) || n.title}</b>{n.message ? <div className="as" style={{ marginTop: 2 }}>{humanizeLocal(n.message)}</div> : null}</div></div></td>

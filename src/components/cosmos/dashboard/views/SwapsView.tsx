@@ -3,7 +3,7 @@ import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { swaps as swapsApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
 import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
@@ -11,10 +11,15 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { needsIssuer as assetNeedsIssuer } from "@/lib/stellar-assets";
 
-const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
+const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "EXPIRED"];
 const TERMINAL = ["SUCCEEDED", "FAILED"];
+/* A swap stops changing once it settled, failed, or expired without a transaction (an expired
+   Solana or Monad swap with a hash is still looked for on-chain). */
+const settled = (s) => TERMINAL.includes(s.status) || (s.status === "EXPIRED" && !s.txHash);
 const CHAINS = ["stellar", "solana", "monad"];
 const NATIVE = { stellar: "XLM", solana: "SOL", monad: "MON" };
 /* Where each chain's swaps land when the chain (not the swap) is named. */
@@ -101,7 +106,7 @@ export function SwapsView({ canManage = true, orgId, env = "dev" }) {
           <span className="env-tag">{DI.network} {env === "prod" ? sw.network.prod : sw.network.dev}</span>
         </Toolbar>
         {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
             <tbody>{pg.slice.map((s) => (
               <tr key={s.id} className="row-click" onClick={() => setDetail(s)}>
                 <td className="tid">{s.id}</td>
@@ -129,23 +134,33 @@ export function SwapsView({ canManage = true, orgId, env = "dev" }) {
 function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
   const t = useT();
   const m = sw.modal;
+  const network = env === "prod" ? "public" : "testnet";
   const [source, setSource] = useState("");
   const [amount, setAmount] = useState("");
+  const [sourceAssetCode, setSourceAssetCode] = useState("XLM");
+  const [sourceAssetIssuer, setSourceAssetIssuer] = useState("");
   const [destAssetCode, setDestAssetCode] = useState("USDC");
   const [destAssetIssuer, setDestAssetIssuer] = useState("");
+  const [destination, setDestination] = useState("");
+  const [memo, setMemo] = useState("");
   const [slippageBps, setSlippageBps] = useState("");
   const [quote, setQuote] = useState(null);
   const [quoting, setQuoting] = useState(false);
   const [busy, setBusy] = useState(false);
+  const keys = useRef(idempotencyKeys()).current;
 
-  const needsIssuer = !!destAssetCode.trim() && !["xlm", "native"].includes(destAssetCode.trim().toLowerCase());
-  const baseValid = amount.trim() && destAssetCode.trim() && (!needsIssuer || destAssetIssuer.trim());
-  const canCreate = baseValid && source.trim();
+  const sourceNeedsIssuer = !!sourceAssetCode.trim() && assetNeedsIssuer(sourceAssetCode.trim());
+  const needsIssuer = !!destAssetCode.trim() && assetNeedsIssuer(destAssetCode.trim());
+  const memoValid = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
+  const baseValid = amount.trim() && sourceAssetCode.trim() && (!sourceNeedsIssuer || sourceAssetIssuer.trim()) && destAssetCode.trim() && (!needsIssuer || destAssetIssuer.trim());
+  const canCreate = baseValid && source.trim() && memoValid;
 
   const quoteBody = () => ({
     org: orgId,
     environment: env,
     amount: amount.trim(),
+    // XLM is the default source; another asset travels with its issuer.
+    ...(sourceNeedsIssuer ? { sourceAssetCode: sourceAssetCode.trim(), sourceAssetIssuer: sourceAssetIssuer.trim() } : {}),
     destAssetCode: destAssetCode.trim(),
     ...(needsIssuer && destAssetIssuer.trim() ? { destAssetIssuer: destAssetIssuer.trim() } : {}),
     ...(slippageBps.trim() ? { slippageBps: Number(slippageBps.trim()) } : {}),
@@ -166,7 +181,13 @@ function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
   const submit = () => {
     if (!canCreate || busy) return;
     setBusy(true);
-    swapsApi.create({ ...quoteBody(), source: source.trim() })
+    const body = {
+      ...quoteBody(),
+      source: source.trim(),
+      ...(destination.trim() ? { destination: destination.trim() } : {}),
+      ...(memo.trim() ? { memo: memo.trim() } : {}),
+    };
+    swapsApi.create({ ...body, idempotencyKey: keys.keyFor(body) })
       .then((swap) => onCreated(swap))
       .catch((err) => showToast((err && err.message) || sw.createError, "error"))
       .finally(() => setBusy(false));
@@ -182,6 +203,15 @@ function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
         <h3>{m.title}</h3>
         <p>{m.desc}</p>
         <Field label={m.source} hint={m.sourceHint} value={source} onChange={onChange(setSource)} placeholder="G…" autoFocus />
+        <AssetSelect
+          network={network}
+          label={m.sourceAsset} codeLabel={m.sourceAsset} issuerLabel={m.sourceIssuer}
+          hint={m.sourceAssetHint} issuerHint={m.destIssuerHint}
+          code={sourceAssetCode} issuer={sourceAssetIssuer}
+          onCode={(v) => { setSourceAssetCode(v); setQuote(null); }}
+          onIssuer={(v) => { setSourceAssetIssuer(v); setQuote(null); }}
+          customText={t.dash.common.assetCustom} codePlaceholder="XLM"
+        />
         <Field label={m.amount} hint={m.amountHint} value={amount} onChange={onChange(setAmount)} placeholder="100.00" inputMode="decimal" />
         <AssetSelect
           network={env === "prod" ? "public" : "testnet"}
@@ -192,6 +222,8 @@ function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
           onIssuer={(v) => { setDestAssetIssuer(v); setQuote(null); }}
           customText={t.dash.common.assetCustom} codePlaceholder="USDC"
         />
+        <Field label={m.destination} hint={m.destinationHint} value={destination} onChange={onChange(setDestination)} placeholder="G…" />
+        <Field label={m.memo} hint={m.memoHint} value={memo} onChange={onChange(setMemo)} placeholder="123456789" inputMode="numeric" aria-invalid={!memoValid || undefined} />
         <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={onChange(setSlippageBps)} placeholder="50" inputMode="numeric" />
 
         <div className="paylink-actions" style={{ marginBottom: 14 }}>
@@ -201,6 +233,7 @@ function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
         {quote && (
           <div className="paylink-fields" style={{ marginBottom: 16 }}>
             <div className="modal-eyebrow" style={{ marginBottom: 8 }}>{m.quoteTitle}</div>
+            {quote.swap && <CopyField label={m.swapped} value={`${quote.swap.amount} ${assetLabel(quote.swap.asset)}`} />}
             {dest && <CopyField label={m.estimated} value={`${dest.estimated} ${destAssetCode.trim().toUpperCase()}`} />}
             {dest && dest.minimum != null && <CopyField label={m.minimum} value={`${dest.minimum} ${destAssetCode.trim().toUpperCase()}`} />}
             {fee && <CopyField label={m.fee} value={`${fee.amount} ${assetLabel(fee.asset)} (${fee.bps} ${m.bps})`} />}
@@ -230,6 +263,7 @@ function CreateChainSwapModal({ sw, chain, orgId, env, onClose, onCreated }) {
   const [quote, setQuote] = useState(null);
   const [quoting, setQuoting] = useState(false);
   const [busy, setBusy] = useState(false);
+  const keys = useRef(idempotencyKeys()).current;
 
   const baseValid = amount.trim() && sourceAssetCode.trim() && destAssetCode.trim();
   const canCreate = baseValid && source.trim();
@@ -257,7 +291,8 @@ function CreateChainSwapModal({ sw, chain, orgId, env, onClose, onCreated }) {
   const submit = () => {
     if (!canCreate || busy) return;
     setBusy(true);
-    swapsApi.create({ ...quoteBody(), source: source.trim() })
+    const body = { ...quoteBody(), source: source.trim() };
+    swapsApi.create({ ...body, idempotencyKey: keys.keyFor(body) })
       .then((swap) => onCreated(swap))
       .catch((err) => showToast((err && err.message) || sw.createError, "error"))
       .finally(() => setBusy(false));
@@ -312,14 +347,14 @@ function useSwapRecord(swap, orgId, env, complete) {
     return () => { alive = false; };
   }, [swap.id, orgId, env]);
   useEffect(() => {
-    if (TERMINAL.includes(data.status)) return;
+    if (settled(data)) return;
     let alive = true;
     const h = setInterval(() => {
       if (document.hidden) return;
       swapsApi.get(swap.id, orgId, env).then((full) => { if (alive && full) setData(full); }).catch(() => {});
     }, 5000);
     return () => { alive = false; clearInterval(h); };
-  }, [swap.id, orgId, env, data.status]);
+  }, [swap.id, orgId, env, data.status, data.txHash]);
   return [data, setData];
 }
 
@@ -332,11 +367,12 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState(null);
 
-  const submit = () => {
-    if (!signed.trim() || busy) return;
+  // The signed envelope comes from Freighter or from the paste box.
+  const submit = (signedXdr = signed.trim()) => {
+    if (!signedXdr || busy) return;
     setBusy(true);
     setOutcome(null);
-    swapsApi.submit(swap.id, orgId, env, { signedXdr: signed.trim() })
+    swapsApi.submit(swap.id, orgId, env, { signedXdr })
       .then((res) => {
         setOutcome(res || {});
         if (res && res.swap) setData((cur) => ({ ...cur, ...res.swap }));
@@ -363,7 +399,10 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
     [F.created, fmtDateTime(data.createdAt)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
-  const isTerminal = TERMINAL.includes(data.status);
+  // Only a built, unsigned swap can be signed: a submitted one is on its way, an expired one's
+  // time bounds have passed.
+  const signable = canManage && !!data.xdr && data.status === "PENDING";
+  const w = useT().dash.wallet;
 
   return (
     <Modal onClose={onClose}>
@@ -371,7 +410,16 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
         <div className="modal-eyebrow">{d.eyebrow}</div>
         <h3>{d.title}</h3>
 
-        {data.qr && (
+        {signable && (
+          <div className="paylink-block">
+            <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
+            <p className="field-note">{w.signDesc}</p>
+            <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
+          </div>
+        )}
+
+        {/* What other wallets sign from, while the swap waits for its signature. */}
+        {data.status === "PENDING" && data.qr && (
           <div className="paylink-qr-wrap">
             <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
             <div className="paylink-qr-cap">{d.scan}</div>
@@ -379,29 +427,35 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
           </div>
         )}
 
-        {data.uri && (
+        {data.status === "PENDING" && data.uri && (
           <CopyBlock label={d.uri} value={data.uri}>
             <div className="paylink-actions">
               <a className="btn btn-dark btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
-              {data.txHash && <a className="btn btn-soft btn-sm" href={explorerTx(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>}
             </div>
           </CopyBlock>
         )}
 
-        {data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
+        {data.status === "PENDING" && data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
+
+        {/* The hash exists before signing; the explorer only knows it once it was sent. */}
+        {data.txHash && data.status !== "PENDING" && (
+          <div className="paylink-actions" style={{ marginBottom: 12 }}>
+            <a className="btn btn-soft btn-sm" href={explorerTx(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
+          </div>
+        )}
 
         <div className="paylink-fields">
           {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
         </div>
 
-        {/* Submit the signed transaction (only while the swap is not yet terminal). */}
-        {canManage && data.xdr && !isTerminal && (
+        {/* Or a transaction signed in another wallet, pasted back. */}
+        {signable && (
           <div className="paylink-block">
-            <div className="paylink-block-head"><label className="field-l">{d.submitTitle}</label></div>
+            <div className="paylink-block-head"><label className="field-l" htmlFor={`swap-signed-${data.id}`}>{d.submitTitle}</label></div>
             <p className="field-note">{d.submitDesc}</p>
-            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
+            <textarea id={`swap-signed-${data.id}`} className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
             <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={submit}>{busy ? d.submitting : d.submit}</button>
+              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={() => submit()}>{busy ? d.submitting : d.submit}</button>
             </div>
           </div>
         )}

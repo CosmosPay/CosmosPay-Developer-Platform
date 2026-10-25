@@ -51,7 +51,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={cv.searchPlaceholder} />
         {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{cv.tableHead.name}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{cv.tableHead.name}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th></th></tr></thead>
             <tbody>{pg.slice.map((c) => (
               <tr key={c.id} className="row-click" onClick={() => setDetail(c)}>
                 <td><div className="cust-cell"><span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>{c.alias || c.name}</div></td>
@@ -179,7 +179,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
             {pays === null && <div className="empty">{cx.loading}</div>}
             {pays !== null && pays.length === 0 && <div className="empty">{cd.noPayments}</div>}
             {pays !== null && pays.length > 0 && (
-              <div className="t-scroll"><table className="tx"><tbody>
+              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>
                 {pays.map((p) => (
                   <tr key={p.id}>
                     <td className="tid">{p.id}</td>

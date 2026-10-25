@@ -52,7 +52,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={lv.searchPlaceholder} />
         {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx logs"><thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx logs"><thead>
             {isApi
               ? <tr><th></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.time}</th><th>{lv.tableHead.timestamp}</th></tr>
               : <tr><th></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.timestamp}</th></tr>}

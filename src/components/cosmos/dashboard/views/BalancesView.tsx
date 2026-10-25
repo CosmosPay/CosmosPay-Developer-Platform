@@ -76,7 +76,7 @@ export function BalancesView({ canManage = false, env = "dev" }) {
       )}
       <div className="panel"><div className="panel-head"><h3>{b.recent}</h3></div>
         {!loading && recent.length > 0 && (
-          <div className="t-scroll"><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th></th></tr></thead>
             <tbody>{recent.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 <td className="tid">{p.id}</td>

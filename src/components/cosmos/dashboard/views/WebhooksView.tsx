@@ -69,7 +69,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
       <div className="panel" style={{ marginBottom: 16 }}>
         <div className="panel-head"><h3>{wv.endpoints}</h3><span className="env-tag">{DI.network} {env === "prod" ? "Public" : "Testnet"}</span></div>
         {!loading && !error && eps.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th></th></tr></thead>
             <tbody>{pg.slice.map((w) => (
               <tr key={w.id} className={`row-click${selected && selected.id === w.id ? " row-on" : ""}`} onClick={() => setSelected(w)}>
                 <td className="tid">{w.url}</td>
@@ -117,7 +117,7 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
       {loading && <div className="empty">{cx.loading}</div>}
       {!loading && !rows.length && <div className="empty">{cx.noDeliveries}</div>}
       {!loading && rows.length > 0 && (
-        <div className="t-scroll"><table className="tx"><thead><tr><th>{wv.tableHead.event}</th><th>{wv.tableHead.response}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.when}</th><th></th></tr></thead>
+        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{wv.tableHead.event}</th><th>{wv.tableHead.response}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.when}</th><th></th></tr></thead>
           <tbody>{rows.map((d) => (
             <tr key={d.id}>
               <td className="tid">{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</td>

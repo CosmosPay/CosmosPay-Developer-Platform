@@ -87,12 +87,35 @@ export const ROLE_OPTIONS = ["user", "support", "admin", "owner"];
 export const PLAN_OPTIONS = PLAN_IDS;
 
 /* ---------------- shell config ---------------- */
-export const SIDE = [
-  { sec: "Platform", items: ["overview", "payments", "balances", "customers", "products", "swaps", "crossChainSwaps", "liquidity", "blindpay"] },
-  { sec: "Build", items: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
-  { sec: "Support", items: ["support", "inbox"] },
-  { sec: "Account", items: ["activity", "settings", "account"] },
-  { sec: "Admin", items: ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"] },
+/* The sidebar, after the product owner's gateway-dashboard reference: a main menu and a
+   preferences section. An entry is a view (`view`) or a group (`group`, with its views as a
+   tree under it; the group's first view is where its own label leads). Labels are
+   t.dash.sidebar.items[view] and t.dash.sidebar.groups[group]. */
+export type SideEntry = { view: string } | { group: string; views: string[] };
+export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[] }[] = [
+  {
+    sec: "main",
+    entries: [
+      { view: "overview" },
+      { group: "payments", views: ["payments", "customers", "products"] },
+      { view: "balances" },
+      { group: "swaps", views: ["swaps", "crossChainSwaps", "liquidity"] },
+      { view: "blindpay" },
+      { group: "developers", views: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
+    ],
+  },
+  {
+    sec: "preferences",
+    entries: [
+      { group: "settings", views: ["settings", "account"] },
+      { view: "activity" },
+      { group: "help", views: ["support", "inbox"] },
+    ],
+  },
+  {
+    sec: "Admin",
+    entries: [{ group: "admin", views: ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"] }],
+  },
 ];
 export const STAFF_ROLES = ["owner", "admin", "support"];
 export const MANAGER_ROLES = ["owner", "admin"];

@@ -43,6 +43,10 @@ export const DI = {
   users: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="8.5" cy="8" r="3" /><circle cx="17" cy="9.5" r="2.2" /><path d="M2.5 19a6 6 0 0112 0" /><path d="M15 19a4.5 4.5 0 016.5-3.6" /></svg>,
 };
 
+/* The sidebar's help entry and a group's open/closed chevron. */
+DI.help = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>;
+DI.chevD = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>;
+
 /* Platform-admin sidebar items reuse sensible existing glyphs. */
 DI.adminOverview = DI.overview;
 DI.adminPayments = DI.payments;

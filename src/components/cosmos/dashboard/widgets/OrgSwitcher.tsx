@@ -5,7 +5,9 @@ import { DI, IcLock } from "@/components/cosmos/dashboard/icons";
 import { initials } from "@/components/cosmos/dashboard/helpers";
 import { useOutside } from "@/components/cosmos/dashboard/hooks";
 
-export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds }) {
+/* `variant="crumb"`: the organization as the grey half of the page title's breadcrumb (the
+   reference's "Gateways → Gateways Profile"), opening the same menu. */
+export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, variant }: { orgs: any[]; current: any; onSwitch: (id: string) => void; onCreate: () => void; lockedIds?: Set<string>; variant?: "crumb" }) {
   const t = useT();
   const og = t.dash.org;
   const [open, setOpen] = useState(false);
@@ -23,11 +25,18 @@ export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds }) {
     );
   };
   return (
-    <div className="org-wrap" ref={ref}>
-      <button className={`org-switch${open ? " open" : ""}`} aria-haspopup="menu" aria-expanded={open} aria-label={current.name} onClick={() => setOpen((o) => !o)}>
-        <span className="org-av">{initials(current.name)}</span><span className="org-nm lbl">{current.name}</span>
-        <svg className="org-chev lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
-      </button>
+    <div className={`org-wrap${variant === "crumb" ? " crumb" : ""}`} ref={ref}>
+      {variant === "crumb" ? (
+        <button type="button" className={`org-crumb${open ? " open" : ""}`} aria-haspopup="menu" aria-expanded={open} aria-label={`${og.heading}: ${current.name}`} onClick={() => setOpen((o) => !o)}>
+          <span className="org-crumb-nm">{current.name}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+      ) : (
+        <button className={`org-switch${open ? " open" : ""}`} aria-haspopup="menu" aria-expanded={open} aria-label={current.name} onClick={() => setOpen((o) => !o)}>
+          <span className="org-av">{initials(current.name)}</span><span className="org-nm lbl">{current.name}</span>
+          <svg className="org-chev lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
+        </button>
+      )}
       {open && (<div className="org-menu">
         <div className="org-menu-h">{og.owned}</div>
         {owned.map(renderOpt)}

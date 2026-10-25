@@ -45,6 +45,9 @@ const decimalString = z.string().trim().regex(/^\d+(\.\d+)?$/, "Amount must be a
 const assetString = z.string().trim().min(1).max(64);
 const memoString = z.string().trim().regex(/^\d+$/, "Memo must be a numeric MEMO_ID.").max(20);
 const slippageBps = z.number().int().min(0).max(10000);
+/* One key per intended swap: a retry with the same key and request answers the swap already
+   built instead of building a second one (the Payments API keeps it per consumer). */
+const idempotencyKey = z.string().trim().min(1).max(255);
 
 export const cosmosEnvSchema = z.enum(["dev", "prod"]).default("dev");
 export const swapChainSchema = z.enum(SWAP_CHAINS);
@@ -121,6 +124,7 @@ export const createSwapBodySchema = z
     source: z.string().trim().min(1).max(64),
     destination: z.string().trim().min(1).max(64).optional(),
     memo: memoString.optional(),
+    idempotencyKey: idempotencyKey.optional(),
   })
   .superRefine(checkChain);
 
@@ -175,7 +179,9 @@ function checkCrossChain(
 }
 
 export const quoteCrossChainSwapBodySchema = z.object(crossChainShape).superRefine(checkCrossChain);
-export const createCrossChainSwapBodySchema = z.object(crossChainShape).superRefine(checkCrossChain);
+export const createCrossChainSwapBodySchema = z
+  .object({ ...crossChainShape, idempotencyKey: idempotencyKey.optional() })
+  .superRefine(checkCrossChain);
 
 /* The deposit transaction id, in the origin chain's own spelling. */
 export const reportDepositBodySchema = z.object({

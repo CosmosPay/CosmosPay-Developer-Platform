@@ -225,7 +225,7 @@ function ReceiversTab({ bp, orgId, env, canManage, isManager }) {
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {r.create}</button>}
       </Toolbar>
       {!loading && !error && view.length > 0 && (
-        <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{r.tableHead.name}</th><th>{r.tableHead.type}</th><th>{r.tableHead.status}</th><th>{r.tableHead.created}</th></tr></thead>
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{r.tableHead.name}</th><th>{r.tableHead.type}</th><th>{r.tableHead.status}</th><th>{r.tableHead.created}</th></tr></thead>
           <tbody>{pg.slice.map((rec) => (
             <tr key={rec.id} className="row-click" onClick={() => setDetail(rec)}>
               <td>{rec.name || rec.email || rec.id}</td>
@@ -453,7 +453,7 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
             {wallets === null && <div className="empty">{bp.loading}</div>}
             {wallets !== null && wallets.length === 0 && <div className="empty">{dt.noWallets}</div>}
             {wallets !== null && wallets.length > 0 && (
-              <div className="t-scroll"><table className="tx"><tbody>{wallets.map((w) => (
+              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{wallets.map((w) => (
                 <tr key={w.id}><td className="cust">{w.name || w.id}</td><td className="cust">{w.network}</td><td className="tid">{w.address || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
@@ -466,7 +466,7 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
             {banks === null && <div className="empty">{bp.loading}</div>}
             {banks !== null && banks.length === 0 && <div className="empty">{dt.noBanks}</div>}
             {banks !== null && banks.length > 0 && (
-              <div className="t-scroll"><table className="tx"><tbody>{banks.map((b) => (
+              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{banks.map((b) => (
                 <tr key={b.id}><td className="cust">{b.name || b.id}</td><td className="cust">{b.rail}</td><td className="cust">{b.country || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
@@ -657,7 +657,7 @@ function OnrampTab({ bp, orgId, env, canManage }) {
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {o.create}</button>}
       </Toolbar>
       {!loading && !error && view.length > 0 && (
-        <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.method}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.method}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
           <tbody>{pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>
@@ -791,7 +791,7 @@ function OfframpTab({ bp, orgId, env, canManage }) {
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {o.create}</button>}
       </Toolbar>
       {!loading && !error && view.length > 0 && (
-        <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.rail}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.rail}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
           <tbody>{pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>

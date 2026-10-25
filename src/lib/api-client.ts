@@ -94,6 +94,8 @@ export const customers = {
 /* Read-only dashboard aggregates derived from payments + webhooks + request logs. */
 export const metrics = {
   summary: (env) => request(`/api/cosmos/summary?env=${env || "dev"}`),
+  /* The overview chart: payments grouped by day, week, month or year, with the window before. */
+  series: (env, period = "day") => request(`/api/cosmos/series?env=${env || "dev"}&period=${encodeURIComponent(period)}`),
   balances: (env) => request(`/api/cosmos/balances?env=${env || "dev"}`),
   apiLogs: (env) => request(`/api/cosmos/logs?env=${env || "dev"}`),
   webhookLogs: (env) => request(`/api/cosmos/webhook-logs?env=${env || "dev"}`),

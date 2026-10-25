@@ -92,6 +92,7 @@ export const POST: APIRoute = async (ctx) => {
       source: rest.source,
       destination: rest.destination,
       memo: rest.memo,
+      idempotencyKey: rest.idempotencyKey,
     });
 
     const loc = await geoLocate(ctx.request.headers, ctx.clientAddress).catch(() => null);

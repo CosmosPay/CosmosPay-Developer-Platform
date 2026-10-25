@@ -104,7 +104,7 @@ export function ActivityLogView({ env = "dev" }) {
         </Toolbar>
 
         {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx logs"><thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx logs"><thead>
             <tr>
               <th></th>
               <th>{av.tableHead.level}</th>
@@ -157,7 +157,7 @@ export function ActivityLogView({ env = "dev" }) {
       {summary && Array.isArray(summary.topErrors) && summary.topErrors.length > 0 && (
         <div className="panel">
           <div className="panel-head"><h3>{av.topErrors}</h3></div>
-          <div className="t-scroll"><table className="tx"><thead>
+          <div className="t-scroll" tabIndex={0}><table className="tx"><thead>
             <tr><th>{av.tableHead.detail}</th><th>{av.tableHead.count}</th></tr>
           </thead>
             <tbody>{summary.topErrors.map((e) => (

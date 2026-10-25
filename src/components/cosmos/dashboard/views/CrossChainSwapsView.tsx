@@ -3,7 +3,7 @@ import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { crossChainSwaps as api } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
 import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
@@ -17,7 +17,7 @@ const CHAIN_NAMES = { stellar: "Stellar", solana: "Solana", monad: "Monad" };
 const PLACEHOLDER = { stellar: "G…", solana: "Base58…", monad: "0x…" };
 const FINAL = ["SUCCEEDED", "REFUNDED", "FAILED"];
 const OPEN = ["AWAITING_DEPOSIT", "DEPOSIT_DETECTED", "INCOMPLETE_DEPOSIT", "PROCESSING"];
-const FILTER_KEYS = ["all", "open", "SUCCEEDED", "REFUNDED", "FAILED"];
+const FILTER_KEYS = ["all", "open", "SUCCEEDED", "REFUNDED", "FAILED", "EXPIRED"];
 /* Status → the pill styles the dashboard already has. */
 const PILL = {
   AWAITING_DEPOSIT: "pend", DEPOSIT_DETECTED: "pend", INCOMPLETE_DEPOSIT: "pend", PROCESSING: "pend",
@@ -72,7 +72,7 @@ export function CrossChainSwapsView({ canManage = true, orgId, env = "dev" }) {
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={cc.searchPlaceholder} />
         {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{cc.tableHead.id}</th><th>{cc.tableHead.route}</th><th>{cc.tableHead.status}</th><th>{cc.tableHead.created}</th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{cc.tableHead.id}</th><th>{cc.tableHead.route}</th><th>{cc.tableHead.status}</th><th>{cc.tableHead.created}</th></tr></thead>
             <tbody>{pg.slice.map((s) => (
               <tr key={s.id} className="row-click" onClick={() => setDetail(s)}>
                 <td className="tid">{s.id}</td>
@@ -135,6 +135,8 @@ function CreateModal({ cc, orgId, env, onClose, onCreated }) {
   const [quote, setQuote] = useState(null);
   const [quoting, setQuoting] = useState(false);
   const [busy, setBusy] = useState(false);
+  // One deposit address per intended swap, however many times the button is pressed.
+  const keys = useRef(idempotencyKeys()).current;
 
   useEffect(() => {
     let alive = true;
@@ -175,7 +177,8 @@ function CreateModal({ cc, orgId, env, onClose, onCreated }) {
   const create = () => {
     if (!baseValid || busy) return;
     setBusy(true);
-    api.create(body()).then(onCreated)
+    const b = body();
+    api.create({ ...b, idempotencyKey: keys.keyFor(b) }).then(onCreated)
       .catch((err) => showToast((err && err.message) || cc.createError, "error"))
       .finally(() => setBusy(false));
   };
@@ -244,7 +247,7 @@ function DetailModal({ cc, swap, orgId, env, canManage, onClose }) {
     setBusy(true);
     api.reportDeposit(swap.id, orgId, env, txHash.trim())
       .then((fresh) => { if (fresh) setData(fresh); showToast(d.reported); setTxHash(""); })
-      .catch((err) => showToast((err && err.message) || d.reported, "error"))
+      .catch((err) => showToast((err && err.message) || d.reportError, "error"))
       .finally(() => setBusy(false));
   };
 

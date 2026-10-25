@@ -116,6 +116,15 @@ const body = z
   })
   .openapi("CrossChainSwapBody");
 
+const createBody = body
+  .extend({
+    idempotencyKey: z.string().optional().openapi({
+      example: "xswap-2026-10-25-001",
+      description: "One key per intended swap: a retry with the same key and request returns the swap already opened (no second deposit address); the same key with another request is refused (409).",
+    }),
+  })
+  .openapi("CreateCrossChainSwapBody");
+
 const depositBody = z
   .object({ txHash: z.string().openapi({ description: "The deposit transaction id, in the origin chain's spelling." }) })
   .openapi("ReportDepositBody");
@@ -170,7 +179,7 @@ registerRoutes([
     description:
       "Opens the swap: NEAR Intents issues a deposit address (and a memo on Stellar) that the payer funds. Mainnet only: a dev environment is refused.",
     security: sessionSecurity,
-    request: jsonBody(body),
+    request: jsonBody(createBody),
     responses: {
       201: jsonCreated(swapSchema, "CreateCrossChainSwapResponse", "Cross-chain swap created successfully"),
       400: errors.badRequest,

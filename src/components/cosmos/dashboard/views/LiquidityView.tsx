@@ -11,6 +11,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
 const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
@@ -92,7 +93,7 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
               <span className="env-tag">{DI.network} {env === "prod" ? lq.network.prod : lq.network.dev}</span>
             </Toolbar>
             {!loading && !error && view.length > 0 && (
-              <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th></tr></thead>
+              <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th></tr></thead>
                 <tbody>{pg.slice.map((o) => (
                   <tr key={o.id} className="row-click" onClick={() => setDetail(o)}>
                     <td className="tid">{o.id}</td>
@@ -183,7 +184,7 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
         </div>
       </div>
       {loaded && pools.length > 0 && (
-        <div className="t-scroll"><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th>{canManage && <th />}</tr></thead>
+        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th>{canManage && <th />}</tr></thead>
           <tbody>{pools.map((pool) => (
             <tr key={pool.id}>
               <td className="tid" title={pool.id}>{pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id)}</td>
@@ -230,7 +231,7 @@ function PositionsPanel({ lq, orgId, env, canManage, onWithdraw }) {
         </div>
       </div>
       {loaded && positions.length > 0 && (
-        <div className="t-scroll"><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th>{canManage && <th />}</tr></thead>
+        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th>{canManage && <th />}</tr></thead>
           <tbody>{positions.map((pos) => (
             <tr key={pos.poolId}>
               <td className="tid" title={pos.poolId}>{pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId)}</td>
@@ -390,11 +391,12 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
     return () => { alive = false; clearInterval(h); };
   }, [op.id, orgId, env, data.status]);
 
-  const submit = () => {
-    if (!signed.trim() || busy) return;
+  // The signed envelope comes from Freighter or from the paste box.
+  const submit = (signedXdr = signed.trim()) => {
+    if (!signedXdr || busy) return;
     setBusy(true);
     setOutcome(null);
-    liquidityApi.submit(op.id, orgId, env, signed.trim())
+    liquidityApi.submit(op.id, orgId, env, signedXdr)
       .then((res) => {
         setOutcome(res || {});
         if (res && res.operation) setData((cur) => ({ ...cur, ...res.operation }));
@@ -422,13 +424,23 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
     [F.created, fmtDateTime(data.createdAt)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
-  const isTerminal = TERMINAL.includes(data.status);
+  // Only a built, unsigned operation can be signed.
+  const signable = canManage && !!data.xdr && data.status === "PENDING";
+  const w = useT().dash.wallet;
 
   return (
     <Modal onClose={onClose}>
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{d.eyebrow}</div>
         <h3>{data.kind === "WITHDRAW" ? d.titleWithdraw : d.titleDeposit}</h3>
+
+        {signable && (
+          <div className="paylink-block">
+            <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
+            <p className="field-note">{w.signDesc}</p>
+            <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
+          </div>
+        )}
 
         {data.qr && (
           <div className="paylink-qr-wrap">
@@ -453,14 +465,14 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
           {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
         </div>
 
-        {/* Submit the signed transaction (only while the operation is not yet terminal). */}
-        {canManage && data.xdr && !isTerminal && (
+        {/* Or a transaction signed in another wallet, pasted back. */}
+        {signable && (
           <div className="paylink-block">
-            <div className="paylink-block-head"><label className="field-l">{d.submitTitle}</label></div>
+            <div className="paylink-block-head"><label className="field-l" htmlFor={`liq-signed-${data.id}`}>{d.submitTitle}</label></div>
             <p className="field-note">{d.submitDesc}</p>
-            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
+            <textarea id={`liq-signed-${data.id}`} className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
             <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={submit}>{busy ? d.submitting : d.submit}</button>
+              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={() => submit()}>{busy ? d.submitting : d.submit}</button>
             </div>
           </div>
         )}

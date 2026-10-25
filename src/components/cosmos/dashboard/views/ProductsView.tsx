@@ -44,7 +44,7 @@ export function ProductsView({ canManage = true, orgId, env = "dev" }) {
       <ViewHead title={pr.title} sub={pr.sub}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button>}</ViewHead>
       <div className="panel">
         {!loading && !error && items.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th></th></tr></thead>
             <tbody>{pg.slice.map((p) => (
               <tr key={p.id}>
                 <td><div className="cust-cell"><span className="am-sq">{DI.products}</span>{p.name}</div></td>

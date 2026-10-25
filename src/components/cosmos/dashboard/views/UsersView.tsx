@@ -38,7 +38,7 @@ export function UsersView({ currentUserId, currentRole }) {
         {loading && <div className="empty">…</div>}
         {!loading && error && <div className="empty">{u.loadError}</div>}
         {!loading && !error && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{u.name}</th><th>{u.email}</th><th>{u.role}</th><th>{u.plan}</th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{u.name}</th><th>{u.email}</th><th>{u.role}</th><th>{u.plan}</th></tr></thead>
             <tbody>{pg.slice.map((r) => {
               const isSelf = r.id === currentUserId;
               // Can't change your own role, or that of a peer/superior.

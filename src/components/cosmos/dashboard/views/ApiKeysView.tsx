@@ -28,7 +28,7 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
       {canCreate && reached && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.key}<span>{ak.limitReached}</span></div>}
       <div className="panel">
         {showTable && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{ak.tableHead.name}</th><th>{ak.tableHead.id}</th><th>{ak.tableHead.role}</th><th>{ak.tableHead.permissions}</th><th>{ak.tableHead.created}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{ak.tableHead.name}</th><th>{ak.tableHead.id}</th><th>{ak.tableHead.role}</th><th>{ak.tableHead.permissions}</th><th>{ak.tableHead.created}</th><th></th></tr></thead>
             <tbody>{pg.slice.map((k) => { const locked = !!(lockedIds && lockedIds.has(k.id)); return (
               <tr key={k.id} className={locked ? "row-locked" : ""}>
                 <td><b>{k.name || ak.unnamed}</b>{locked && <span className="lock-badge">{ak.locked}</span>}{k.description ? <div className="as" style={{ marginTop: 2 }}>{k.description}</div> : null}</td>
