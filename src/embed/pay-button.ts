@@ -9,22 +9,23 @@
    merchant learns the outcome where it always should: the webhook or the API.
 
    Attributes: `link` (required, the payment link id), `lang` (en/es/pt/fr/de; the button's
-   label, and the checkout's language when set), `theme` (light/dark/auto). The element's own
-   text, if any, replaces the label. */
+   label, and the checkout's language when set), `theme` (light/dark/auto), `demo` (no link
+   needed: opens the payments site's sample checkout, which nothing can pay, and reports
+   nothing). The element's own text, if any, replaces the label. */
 import { readStatusMessage } from "@/lib/payments/embed-protocol";
 import type { LinkStatus } from "@/lib/payments/payment-link";
 import { PAYMENTS_ORIGIN } from "@/embed/config";
 import { browserLanguages } from "@/embed/dom";
 import { emitStatus } from "@/embed/events";
 import { EMBED_MESSAGES } from "@/embed/i18n";
-import { checkoutUrl, parseLinkId, parseTheme, popupFeatures, popupName, resolveLang, supportedLang } from "@/embed/options";
+import { checkoutUrl, isDemo, parseLinkId, parseTheme, popupFeatures, popupName, previewUrl, resolveLang, supportedLang } from "@/embed/options";
 import { adoptStyles, BUTTON_CSS } from "@/embed/styles";
 
 /* How often to check whether the payer closed the popup, to stop listening. */
 const CLOSED_POLL_MS = 500;
 
 export class CosmosPayButton extends HTMLElement {
-  static observedAttributes = ["link", "lang", "theme"];
+  static observedAttributes = ["link", "lang", "theme", "demo"];
 
   private readonly button: HTMLButtonElement;
   private readonly label: HTMLSlotElement;
@@ -80,7 +81,7 @@ export class CosmosPayButton extends HTMLElement {
     this.description.textContent = t.newWindow;
 
     const raw = this.getAttribute("link");
-    if (parseLinkId(raw)) {
+    if (parseLinkId(raw) || isDemo(this.getAttribute("demo"))) {
       this.button.removeAttribute("aria-disabled");
     } else {
       // Focusable but inert, so it can still be found and its state read out.
@@ -93,6 +94,11 @@ export class CosmosPayButton extends HTMLElement {
   }
 
   private onClick = (event: MouseEvent): void => {
+    if (isDemo(this.getAttribute("demo"))) {
+      const url = previewUrl(PAYMENTS_ORIGIN, supportedLang(this.getAttribute("lang")));
+      if (!window.open(url, "cosmospay-demo", popupFeatures(window))) window.location.assign(url);
+      return;
+    }
     const id = parseLinkId(this.getAttribute("link"));
     if (!id) {
       event.preventDefault();

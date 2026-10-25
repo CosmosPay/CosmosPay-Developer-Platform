@@ -12,7 +12,9 @@
    URL, the URI whose scheme matches the chain). Never HTML.
 
    Attributes: `link` (required), `lang` (en/es/pt/fr/de; default from the browser, then
-   English), `theme` (light/dark/auto; default light). */
+   English), `theme` (light/dark/auto; default light), `demo` (no link and no request: it
+   draws the payments site's sample, which nothing can pay, says so on top, and plays its
+   states — open, confirming, paid — firing the usual events, for showcases). */
 import {
   amountLabel,
   assetSymbol,
@@ -25,11 +27,12 @@ import {
   type PaymentLink,
   type Phase,
 } from "@/lib/payments/payment-link";
-import { PAYMENTS_API_URL } from "@/embed/config";
+import { previewLink } from "@/lib/payments/preview";
+import { PAYMENTS_API_URL, PAYMENTS_ORIGIN } from "@/embed/config";
 import { browserLanguages, el } from "@/embed/dom";
 import { emitStatus } from "@/embed/events";
 import { EMBED_MESSAGES, type EmbedLocale, type EmbedMessages } from "@/embed/i18n";
-import { parseLinkId, parseTheme, resolveLang } from "@/embed/options";
+import { DEMO_SEQUENCE, isDemo, parseLinkId, parseTheme, resolveLang } from "@/embed/options";
 import { adoptStyles, CHECKOUT_CSS } from "@/embed/styles";
 
 type State = "loading" | "not-found" | "error" | "link";
@@ -49,12 +52,13 @@ interface Row {
 }
 
 export class CosmosPayCheckout extends HTMLElement {
-  static observedAttributes = ["link", "lang", "theme"];
+  static observedAttributes = ["link", "lang", "theme", "demo"];
 
   private readonly card: HTMLElement;
   private readonly states = {} as Record<State, HTMLElement>;
   private readonly ui: {
     eyebrow: HTMLElement;
+    demoNote: HTMLElement;
     loadingText: HTMLElement;
     notFoundTitle: HTMLElement;
     notFoundBody: HTMLElement;
@@ -90,6 +94,8 @@ export class CosmosPayCheckout extends HTMLElement {
   private shownPhase: Phase | null = null;
   private emittedStatus: LinkStatus | null = null;
   private warnedFor: string | null = null;
+  private demo = false;
+  private demoStep = 0;
 
   constructor() {
     super();
@@ -101,6 +107,8 @@ export class CosmosPayCheckout extends HTMLElement {
     card.setAttribute("aria-labelledby", "cp-title");
     const eyebrow = el("p", "eyebrow", card);
     eyebrow.id = "cp-title";
+    const demoNote = el("p", "demo", card);
+    demoNote.hidden = true;
 
     // Loading
     const loading = el("div", "state", card);
@@ -157,7 +165,7 @@ export class CosmosPayCheckout extends HTMLElement {
     this.states.link = view;
     this.card = card;
     this.ui = {
-      eyebrow, loadingText, notFoundTitle, notFoundBody, errorTitle, errorBody, retry, testnet,
+      eyebrow, demoNote, loadingText, notFoundTitle, notFoundBody, errorTitle, errorBody, retry, testnet,
       amount, hint, msg, status, statusBody, pay, qr, wallet, network, asset, expires, expiresTime, by,
     };
     shadow.append(card);
@@ -187,6 +195,7 @@ export class CosmosPayCheckout extends HTMLElement {
     if (!this.isConnected) return;
     if (name === "theme") this.applyTheme();
     else if (name === "lang") this.applyLang();
+    else if (name === "demo") this.restart();
     else if (name === "link" && parseLinkId(this.getAttribute("link")) !== this.linkId) this.restart();
   }
 
@@ -199,6 +208,14 @@ export class CosmosPayCheckout extends HTMLElement {
     this.shownPhase = null;
     this.emittedStatus = null;
     this.errorDelay = FIRST_ERROR_DELAY_MS;
+    this.demo = isDemo(this.getAttribute("demo"));
+    this.ui.demoNote.hidden = !this.demo;
+    if (this.demo) {
+      this.linkId = null;
+      this.demoStep = 0;
+      this.playDemo();
+      return;
+    }
     const raw = this.getAttribute("link");
     this.linkId = parseLinkId(raw);
     if (!this.linkId) {
@@ -211,6 +228,23 @@ export class CosmosPayCheckout extends HTMLElement {
     }
     this.show("loading");
     void this.load();
+  }
+
+  /* The demo: the sample link (src/lib/payments/preview.ts; its URI is empty, so the wallet
+     button stays inert) in each state of DEMO_SEQUENCE in turn, forever. Never a request. */
+  private playDemo(): void {
+    const generation = this.generation;
+    const step = DEMO_SEQUENCE[this.demoStep % DEMO_SEQUENCE.length];
+    const sample = previewLink("classic");
+    const link: PaymentLink = { ...sample, status: step.status, qr: new URL(sample.qr, PAYMENTS_ORIGIN).href };
+    this.link = link;
+    this.render(link);
+    window.clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => {
+      if (generation !== this.generation || !this.isConnected) return;
+      this.demoStep++;
+      this.playDemo();
+    }, step.ms);
   }
 
   private schedule(ms: number): void {
@@ -250,6 +284,7 @@ export class CosmosPayCheckout extends HTMLElement {
   }
 
   private onVisibility = (): void => {
+    if (this.demo) return;
     if (!document.hidden && this.link && nextPollDelay(phaseOf(this.link)) !== null) void this.load();
   };
 
@@ -277,6 +312,7 @@ export class CosmosPayCheckout extends HTMLElement {
     const ui = this.ui;
     this.card.lang = this.locale;
     ui.eyebrow.textContent = t.eyebrow;
+    ui.demoNote.textContent = this.t.demo;
     ui.loadingText.textContent = t.loading;
     ui.notFoundTitle.textContent = t.notFoundTitle;
     ui.notFoundBody.textContent = t.notFoundBody;
@@ -322,7 +358,14 @@ export class CosmosPayCheckout extends HTMLElement {
     // cancelled must not invite a payment the merchant no longer expects.
     ui.pay.hidden = phase !== "open";
     if (ui.qr.getAttribute("src") !== l.qr) ui.qr.src = l.qr;
-    ui.wallet.href = l.uri;
+    // The demo's sample has no URI: the button stays, but leads nowhere and says so.
+    if (l.uri) {
+      ui.wallet.href = l.uri;
+      ui.wallet.removeAttribute("aria-disabled");
+    } else {
+      ui.wallet.removeAttribute("href");
+      ui.wallet.setAttribute("aria-disabled", "true");
+    }
 
     const tier = l.network === "public" ? t.mainnet : t.testnetTier;
     ui.network.value.textContent = `${chainName(l.chain)} · ${tier}`;
@@ -342,6 +385,8 @@ export class CosmosPayCheckout extends HTMLElement {
       emitStatus(this, l.id, l.status);
     }
 
+    // The demo plays its own states; nothing is read.
+    if (this.demo) return;
     const delay = nextPollDelay(phase);
     if (delay === null) {
       window.clearTimeout(this.timer);

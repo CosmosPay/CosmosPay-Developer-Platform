@@ -7,7 +7,8 @@
    tests/unit/embedI18n.test.ts fails when the two drift. The exceptions are the strings that
    only exist here (`button.*`) and one sentence that does not fit inline: the hosted page's
    "paid" line tells the payer they may close the page, and inline there is no page to close
-   (`checkout.body.paid`). `by` is the hosted page's footer line. */
+   (`checkout.body.paid`). `by` is the hosted page's footer line; `demo` is the line a `demo`
+   checkout shows on top. */
 
 export const EMBED_LOCALES = ["en", "es", "pt", "fr", "de"] as const;
 export type EmbedLocale = (typeof EMBED_LOCALES)[number];
@@ -18,6 +19,7 @@ const en = {
     newWindow: "Opens in a new window",
   },
   by: "Payments by Cosmos Pay",
+  demo: "Demo: a sample payment that can’t be paid.",
   checkout: {
     eyebrow: "Payment request",
     loading: "Loading payment…",
@@ -63,6 +65,7 @@ const es: EmbedMessages = {
     newWindow: "Se abre en una ventana nueva",
   },
   by: "Pagos por Cosmos Pay",
+  demo: "Demo: un pago de ejemplo que no se puede pagar.",
   checkout: {
     eyebrow: "Solicitud de pago",
     loading: "Cargando el pago…",
@@ -107,6 +110,7 @@ const pt: EmbedMessages = {
     newWindow: "Abre em uma nova janela",
   },
   by: "Pagamentos por Cosmos Pay",
+  demo: "Demo: um pagamento de exemplo que não pode ser pago.",
   checkout: {
     eyebrow: "Solicitação de pagamento",
     loading: "Carregando o pagamento…",
@@ -151,6 +155,7 @@ const fr: EmbedMessages = {
     newWindow: "S’ouvre dans une nouvelle fenêtre",
   },
   by: "Paiements par Cosmos Pay",
+  demo: "Démo : un paiement d’exemple qui ne peut pas être réglé.",
   checkout: {
     eyebrow: "Demande de paiement",
     loading: "Chargement du paiement…",
@@ -195,6 +200,7 @@ const de: EmbedMessages = {
     newWindow: "Öffnet sich in einem neuen Fenster",
   },
   by: "Zahlungen von Cosmos Pay",
+  demo: "Demo: eine Beispielzahlung, die nicht bezahlt werden kann.",
   checkout: {
     eyebrow: "Zahlungsanforderung",
     loading: "Zahlung wird geladen…",

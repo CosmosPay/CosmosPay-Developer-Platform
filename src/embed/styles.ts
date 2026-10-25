@@ -67,6 +67,8 @@ export const CHECKOUT_CSS = `${BASE}
 }
 .eyebrow { margin: 0 0 6px; font-size: 13px; color: var(--cp-ink-2); }
 .testnet { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+.demo { margin: 0 0 10px; padding: 8px 10px; font-size: 12.5px; line-height: 1.4; color: var(--cp-ink-2); background: var(--cp-surface-2); border-radius: 10px; }
+.btn[aria-disabled="true"] { cursor: default; }
 .amount { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .hint { margin: 4px 0 0; font-size: 13.5px; color: var(--cp-ink-2); }
 .msg { margin: 8px 0 0; }

@@ -4,6 +4,9 @@ import { test } from 'node:test';
 
 import {
   checkoutUrl,
+  DEMO_SEQUENCE,
+  isDemo,
+  previewUrl,
   parseLinkId,
   parseTheme,
   popupFeatures,
@@ -65,4 +68,16 @@ test('the popup is 480x780, centred on the window, never off the top-left', () =
   // No `noopener`: the button needs the window it opened, the checkout needs its opener.
   assert.doesNotMatch(popupFeatures({ screenX: 0, screenY: 0, outerWidth: 0, outerHeight: 0 }), /noopener|noreferrer/);
   assert.equal(popupName(ID), `cosmospay-${ID}`);
+});
+
+test("demo: a boolean attribute, the sample checkout it opens, the states it plays", () => {
+  assert.equal(isDemo(""), true);
+  assert.equal(isDemo("demo"), true);
+  assert.equal(isDemo("false"), false);
+  assert.equal(isDemo(null), false);
+  assert.equal(previewUrl("https://payments.cosmospay.lat"), "https://payments.cosmospay.lat/preview/classic");
+  assert.equal(previewUrl("https://payments.cosmospay.lat", "es"), "https://payments.cosmospay.lat/preview/classic?lang=es");
+  // open, then confirming, then paid: a demo never shows a failure or a refund
+  assert.deepEqual(DEMO_SEQUENCE.map((s) => s.status), ["PENDING", "SUBMITTED", "SUCCEEDED"]);
+  assert.ok(DEMO_SEQUENCE.every((s) => s.ms >= 1000));
 });

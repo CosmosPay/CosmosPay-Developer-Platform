@@ -65,6 +65,7 @@ et s'arrête quand le paiement est payé, échoué ou annulé.
 | `link` | les deux | L'id du lien de paiement | Obligatoire |
 | `lang` | les deux | `en`, `es`, `pt`, `fr`, `de` (une balise régionale comme `fr-CA` fonctionne aussi) | La langue du navigateur du payeur, sinon `en` |
 | `theme` | les deux | `light`, `dark`, `auto` (suit le réglage système du payeur) | `light` |
+| `demo` | les deux | Présent, affiche un exemple qui ne peut pas être réglé, sans lien ni requête (pour les vitrines) : le bouton ouvre le checkout d’exemple ; le checkout intégré parcourt ses états et déclenche ses événements | Désactivé |
 
 Sur le bouton, `lang` fixe le libellé et, quand vous l'indiquez, aussi la langue du checkout hébergé.
 Sans lui, le checkout utilise la langue du payeur.
