@@ -43,9 +43,10 @@ The product owner forbids the em dash (U+2014) in every context: UI copy in ever
 code comments, docs, commit messages and pull requests. Use a full stop, comma, colon,
 parentheses or a conjunction; never an en dash or a spaced hyphen in its place (en dashes stay
 only in numeric ranges). An empty table cell shows "-" or a word. Page titles separate with
-" | ". The only em dashes left in the repo come from generated files (`docs/openapi.json`,
-`docs/content/docs/api/`, `docs/content/docs/sdk/`): fix them in the community server and the
-SDK, then regenerate.
+" | ". The only em dashes left in the repo come from the SDK's generated reference
+(`docs/content/docs/sdk/`): fix them in the SDK, then regenerate. The API reference
+(`docs/openapi.json`, `docs/content/docs/api/`) has none since the community server dropped them
+from every message and spec text (2026-10-25); a regenerated spec that brings one back is a server bug.
 
 ## Three domains, one app
 

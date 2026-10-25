@@ -70,10 +70,10 @@ _openapi:
           device: the `state` travels through the browser and buys only polling,
           while the verifier is what redeems the handshake.'
         heading: open-a-provider-sign-in
-      - content: 'Not called by your code — the person’s browser lands here. Public by
+      - content: 'Not called by your code: the person’s browser lands here. Public by
           necessity: a navigation carries no API key and no gateway consumer. It
-          renders a page — or, when the handshake was opened with a `returnTo`,
-          redirects to it with the `state` — and nothing else; the identity is
+          renders a page (or, when the handshake was opened with a `returnTo`,
+          redirects to it with the `state`) and nothing else; the identity is
           collected by the device that holds the PKCE verifier. Register
           `{WALLET_AUTH_PUBLIC_BASE_URL}/v1/wallet/auth/oauth/callback/{provider}`
           with each provider.'
@@ -92,7 +92,7 @@ _openapi:
           and a burned code is replaced by asking for another.
         heading: answer-a-sign-in-code
       - content: >-
-          Send the session token as `X-Wallet-Session: {sessionToken}` — the
+          Send the session token as `X-Wallet-Session: {sessionToken}`. The
           gateway strips `Authorization`. The signature covers exactly:
 
 
@@ -120,7 +120,7 @@ _openapi:
         heading: attach-the-proven-identity-to-the-account-this-device-signs-for
       - content: >-
           What `changePassword` on the device sends. No session: the signature
-          is the credential, and it covers the SHA-256 of the box — so one
+          is the credential, and it covers the SHA-256 of the box, so one
           signature stores exactly one box and cannot be replayed to store
           another. The bytes are:
 
@@ -142,7 +142,7 @@ _openapi:
           the bytes are signed as for sign-in.
         heading: replace-the-sealed-box-stored-for-an-account
       - content: >-
-          Send the session token as `X-Wallet-Session: {sessionToken}` — the
+          Send the session token as `X-Wallet-Session: {sessionToken}`. The
           gateway strips `Authorization`. The signature covers exactly:
 
 

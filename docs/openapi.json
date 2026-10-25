@@ -79,7 +79,7 @@
             "$ref": "#/components/responses/InternalError"
           },
           "503": {
-            "description": "An indicator is down — today that means Postgres did not answer the ping. Which one, and why, is logged; the body says only that the service is not ready, because this route is served without credentials and the indicator report names internal hosts.",
+            "description": "An indicator is down: today that means Postgres did not answer the ping. Which one, and why, is logged; the body says only that the service is not ready, because this route is served without credentials and the indicator report names internal hosts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -87,7 +87,7 @@
                 },
                 "examples": {
                   "provider_unavailable": {
-                    "summary": "provider_unavailable — an indicator is down",
+                    "summary": "provider_unavailable: an indicator is down",
                     "value": {
                       "statusCode": 503,
                       "code": "provider_unavailable",
@@ -159,7 +159,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_amount` — Not a Stellar amount, or not greater than zero\n\n`invalid_memo` — The memo is not the type this route requires\n\n`trustline_missing` — The account must trust the asset before it can hold it\n\n`insufficient_balance` — The source account cannot cover the amount",
+            "description": "`trustline_missing`: the destination does not trust the issued asset being paid. The payer signs this transaction and the destination signs nothing, so only the destination account can add the trustline.",
             "content": {
               "application/json": {
                 "schema": {
@@ -167,7 +167,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -181,7 +181,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -192,7 +192,7 @@
                     }
                   },
                   "invalid_memo": {
-                    "summary": "invalid_memo — The memo is not the type this route requires",
+                    "summary": "invalid_memo: The memo is not the type this route requires",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_memo",
@@ -203,18 +203,18 @@
                     }
                   },
                   "trustline_missing": {
-                    "summary": "trustline_missing — The account must trust the asset before it can hold it",
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
                     "value": {
                       "statusCode": 400,
                       "code": "trustline_missing",
                       "error": "Bad Request",
-                      "message": "Destination GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5 — it must trust the asset before it can receive the swap",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5, so it cannot receive the swap. Only that account can add the trustline, by signing a transaction of its own: ask its owner to add it, then try again.",
                       "path": "/v1/swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   },
                   "insufficient_balance": {
-                    "summary": "insufficient_balance — The source account cannot cover the amount",
+                    "summary": "insufficient_balance: The source account cannot cover the amount, or the XLM reserve the transaction needs",
                     "value": {
                       "statusCode": 400,
                       "code": "insufficient_balance",
@@ -243,7 +243,7 @@
                 },
                 "examples": {
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -254,12 +254,12 @@
                     }
                   },
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another: the commission on a withdrawal depends on the position it leaves behind.",
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -344,7 +344,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_amount` — Not a Stellar amount, or not greater than zero\n\n`invalid_memo` — The memo is not the type this route requires",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_amount`: Not a Stellar amount, or not greater than zero\n\n`invalid_memo`: The memo is not the type this route requires",
             "content": {
               "application/json": {
                 "schema": {
@@ -352,7 +352,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -366,7 +366,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -377,7 +377,7 @@
                     }
                   },
                   "invalid_memo": {
-                    "summary": "invalid_memo — The memo is not the type this route requires",
+                    "summary": "invalid_memo: The memo is not the type this route requires",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_memo",
@@ -406,7 +406,7 @@
                 },
                 "examples": {
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -417,12 +417,12 @@
                     }
                   },
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another: the commission on a withdrawal depends on the position it leaves behind.",
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -688,7 +688,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_state_transition` — The resource cannot move to that state from the one it is in\n\n`transaction_rejected` — The submitted transaction does not do what the route needs",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_state_transition`: The resource cannot move to that state from the one it is in\n\n`transaction_rejected`: The submitted transaction does not do what the route needs",
             "content": {
               "application/json": {
                 "schema": {
@@ -696,7 +696,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -710,7 +710,7 @@
                     }
                   },
                   "invalid_state_transition": {
-                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_state_transition",
@@ -721,7 +721,7 @@
                     }
                   },
                   "transaction_rejected": {
-                    "summary": "transaction_rejected — The submitted transaction does not do what the route needs",
+                    "summary": "transaction_rejected: The submitted transaction does not do what the route needs",
                     "value": {
                       "statusCode": 400,
                       "code": "transaction_rejected",
@@ -753,7 +753,7 @@
                 },
                 "examples": {
                   "transaction_already_settled": {
-                    "summary": "transaction_already_settled — That transaction settles another payment intent",
+                    "summary": "transaction_already_settled: That transaction settles another payment intent",
                     "value": {
                       "statusCode": 409,
                       "code": "transaction_already_settled",
@@ -764,7 +764,7 @@
                     }
                   },
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -775,12 +775,12 @@
                     }
                   },
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another: the commission on a withdrawal depends on the position it leaves behind.",
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -836,7 +836,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_state_transition` — The resource cannot move to that state from the one it is in",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_state_transition`: The resource cannot move to that state from the one it is in",
             "content": {
               "application/json": {
                 "schema": {
@@ -844,7 +844,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -858,7 +858,7 @@
                     }
                   },
                   "invalid_state_transition": {
-                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_state_transition",
@@ -882,7 +882,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`operation_in_flight`: the status changed under this delete — the intent may have just been paid. Re-read it before retrying.",
+            "description": "`operation_in_flight`: the status changed under this delete. The intent may have just been paid. Re-read it before retrying.",
             "content": {
               "application/json": {
                 "schema": {
@@ -890,12 +890,12 @@
                 },
                 "examples": {
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another: the commission on a withdrawal depends on the position it leaves behind.",
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -949,7 +949,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`transaction_rejected` — The submitted transaction does not do what the route needs\n\n`invalid_state_transition` — The resource cannot move to that state from the one it is in",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`transaction_rejected`: The submitted transaction does not do what the route needs\n\n`invalid_state_transition`: The resource cannot move to that state from the one it is in",
             "content": {
               "application/json": {
                 "schema": {
@@ -957,7 +957,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -971,7 +971,7 @@
                     }
                   },
                   "transaction_rejected": {
-                    "summary": "transaction_rejected — The submitted transaction does not do what the route needs",
+                    "summary": "transaction_rejected: The submitted transaction does not do what the route needs",
                     "value": {
                       "statusCode": 400,
                       "code": "transaction_rejected",
@@ -982,7 +982,7 @@
                     }
                   },
                   "invalid_state_transition": {
-                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_state_transition",
@@ -1014,7 +1014,7 @@
                 },
                 "examples": {
                   "transaction_already_settled": {
-                    "summary": "transaction_already_settled — That transaction settles another payment intent",
+                    "summary": "transaction_already_settled: That transaction settles another payment intent",
                     "value": {
                       "statusCode": 409,
                       "code": "transaction_already_settled",
@@ -1025,7 +1025,7 @@
                     }
                   },
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -1036,12 +1036,12 @@
                     }
                   },
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another: the commission on a withdrawal depends on the position it leaves behind.",
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -1135,7 +1135,7 @@
             "$ref": "#/components/responses/ValidationFailed"
           },
           "404": {
-            "description": "No payment intent has this id — it never existed or it was deleted. The two are the same answer, and the same one `GET /v1/payment-intents/{id}` gives its owner.",
+            "description": "No payment intent has this id: it never existed or it was deleted. The two are the same answer, and the same one `GET /v1/payment-intents/{id}` gives its owner.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1143,7 +1143,7 @@
                 },
                 "examples": {
                   "not_found": {
-                    "summary": "not_found — No payment intent has this id",
+                    "summary": "not_found: No payment intent has this id",
                     "value": {
                       "statusCode": 404,
                       "code": "not_found",
@@ -1468,7 +1468,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported` — `chain: solana | monad` with a dev (testnet) key: Jupiter and Kuru Flow run on mainnet only. `asset_unsupported` — not an SPL mint / ERC-20 on that chain. `provider_error` — the aggregator found no route or refused the amount.",
+            "description": "`network_unsupported`: `chain: solana | monad` with a dev (testnet) key: Jupiter and Kuru Flow run on mainnet only. `asset_unsupported`: not an SPL mint / ERC-20 on that chain. `provider_error`: the aggregator found no route or refused the amount.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1476,7 +1476,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -1490,7 +1490,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -1501,7 +1501,7 @@
                     }
                   },
                   "slippage_exceeded": {
-                    "summary": "slippage_exceeded — The requested slippage is above what this service allows",
+                    "summary": "slippage_exceeded: The requested slippage is above what this service allows",
                     "value": {
                       "statusCode": 400,
                       "code": "slippage_exceeded",
@@ -1512,7 +1512,7 @@
                     }
                   },
                   "no_path_found": {
-                    "summary": "no_path_found — Horizon found no payment path for this pair and amount",
+                    "summary": "no_path_found: Horizon found no payment path for this pair and amount",
                     "value": {
                       "statusCode": 400,
                       "code": "no_path_found",
@@ -1523,7 +1523,7 @@
                     }
                   },
                   "asset_unsupported": {
-                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "summary": "asset_unsupported: NEAR Intents cannot swap this asset on the named chain",
                     "value": {
                       "statusCode": 400,
                       "code": "asset_unsupported",
@@ -1534,18 +1534,18 @@
                     }
                   },
                   "network_unsupported": {
-                    "summary": "network_unsupported — Cross-chain swaps settle on mainnet only; a dev key cannot open one",
+                    "summary": "network_unsupported: Cross-chain swaps settle on mainnet only; a dev key cannot open one",
                     "value": {
                       "statusCode": 400,
                       "code": "network_unsupported",
                       "error": "Bad Request",
-                      "message": "Cross-chain swaps run on mainnet only — NEAR Intents has no test network. Use a prod API key.",
+                      "message": "Cross-chain swaps run on mainnet only: NEAR Intents has no test network. Use a prod API key.",
                       "path": "/v1/cross-chain-swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   },
                   "provider_error": {
-                    "summary": "provider_error — The upstream provider refused the request",
+                    "summary": "provider_error: The upstream provider refused the request",
                     "value": {
                       "statusCode": 400,
                       "code": "provider_error",
@@ -1575,7 +1575,7 @@
             "$ref": "#/components/responses/UpstreamError"
           },
           "503": {
-            "description": "`misconfigured` — the plan charges a commission and the chain has no fee wallet configured (STELLAR_SWAP_FEE_WALLET, SOLANA_SWAP_FEE_WALLET, MONAD_SWAP_FEE_WALLET).",
+            "description": "`misconfigured`: the plan charges a commission and the chain has no fee wallet configured (STELLAR_SWAP_FEE_WALLET, SOLANA_SWAP_FEE_WALLET, MONAD_SWAP_FEE_WALLET).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1583,7 +1583,7 @@
                 },
                 "examples": {
                   "provider_unavailable": {
-                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
                     "value": {
                       "statusCode": 503,
                       "code": "provider_unavailable",
@@ -1594,7 +1594,7 @@
                     }
                   },
                   "misconfigured": {
-                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
                     "value": {
                       "statusCode": 503,
                       "code": "misconfigured",
@@ -1700,7 +1700,7 @@
             }
           },
           "400": {
-            "description": "Stellar: `trustline_missing`, `insufficient_balance`, `no_path_found`. Solana / Monad: `network_unsupported` (a dev key), `asset_unsupported`, `provider_error` (no route, or the aggregator simulated a failure — usually a wallet that cannot cover the amount plus fees).",
+            "description": "Stellar: `trustline_missing` (the destination is another account that does not trust the bought asset, and only it can add the trustline; a source that receives the swap gets the trustline in the same transaction instead), `insufficient_balance` (the source cannot keep the 0.5 XLM reserve that trustline locks, after what the transaction sends and its fee), `no_path_found`. Solana / Monad: `network_unsupported` (a dev key), `asset_unsupported`, `provider_error` (no route, or the aggregator simulated a failure, usually a wallet that cannot cover the amount plus fees).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1708,7 +1708,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -1722,7 +1722,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -1733,7 +1733,7 @@
                     }
                   },
                   "slippage_exceeded": {
-                    "summary": "slippage_exceeded — The requested slippage is above what this service allows",
+                    "summary": "slippage_exceeded: The requested slippage is above what this service allows",
                     "value": {
                       "statusCode": 400,
                       "code": "slippage_exceeded",
@@ -1744,7 +1744,7 @@
                     }
                   },
                   "no_path_found": {
-                    "summary": "no_path_found — Horizon found no payment path for this pair and amount",
+                    "summary": "no_path_found: Horizon found no payment path for this pair and amount",
                     "value": {
                       "statusCode": 400,
                       "code": "no_path_found",
@@ -1755,18 +1755,18 @@
                     }
                   },
                   "trustline_missing": {
-                    "summary": "trustline_missing — The account must trust the asset before it can hold it",
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
                     "value": {
                       "statusCode": 400,
                       "code": "trustline_missing",
                       "error": "Bad Request",
-                      "message": "Destination GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5 — it must trust the asset before it can receive the swap",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5, so it cannot receive the swap. Only that account can add the trustline, by signing a transaction of its own: ask its owner to add it, then try again.",
                       "path": "/v1/swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   },
                   "insufficient_balance": {
-                    "summary": "insufficient_balance — The source account cannot cover the amount",
+                    "summary": "insufficient_balance: The source account cannot cover the amount, or the XLM reserve the transaction needs",
                     "value": {
                       "statusCode": 400,
                       "code": "insufficient_balance",
@@ -1777,7 +1777,7 @@
                     }
                   },
                   "asset_unsupported": {
-                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "summary": "asset_unsupported: NEAR Intents cannot swap this asset on the named chain",
                     "value": {
                       "statusCode": 400,
                       "code": "asset_unsupported",
@@ -1788,18 +1788,18 @@
                     }
                   },
                   "network_unsupported": {
-                    "summary": "network_unsupported — Cross-chain swaps settle on mainnet only; a dev key cannot open one",
+                    "summary": "network_unsupported: Cross-chain swaps settle on mainnet only; a dev key cannot open one",
                     "value": {
                       "statusCode": 400,
                       "code": "network_unsupported",
                       "error": "Bad Request",
-                      "message": "Cross-chain swaps run on mainnet only — NEAR Intents has no test network. Use a prod API key.",
+                      "message": "Cross-chain swaps run on mainnet only: NEAR Intents has no test network. Use a prod API key.",
                       "path": "/v1/cross-chain-swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   },
                   "provider_error": {
-                    "summary": "provider_error — The upstream provider refused the request",
+                    "summary": "provider_error: The upstream provider refused the request",
                     "value": {
                       "statusCode": 400,
                       "code": "provider_error",
@@ -1820,7 +1820,7 @@
             "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "`idempotency_conflict` — this Idempotency-Key was already used for a different request, or an identical swap was already built without a key (retry with an Idempotency-Key, or wait for the prior swap to settle or expire). `operation_in_flight` — STELLAR_SWAP_SINGLE_INFLIGHT is on and this source account already has a PENDING swap.",
+            "description": "`idempotency_conflict`: this Idempotency-Key was already used for a different request, or an identical swap was already built without a key (retry with an Idempotency-Key, or wait for the prior swap to settle or expire). `operation_in_flight`: STELLAR_SWAP_SINGLE_INFLIGHT is on and this source account already has a PENDING swap.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1828,7 +1828,7 @@
                 },
                 "examples": {
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -1839,12 +1839,12 @@
                     }
                   },
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another: the commission on a withdrawal depends on the position it leaves behind.",
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -1863,7 +1863,7 @@
             "$ref": "#/components/responses/UpstreamError"
           },
           "503": {
-            "description": "`misconfigured` — the plan charges a commission and the chain has no fee wallet (or, on Solana, the fee wallet has no token account for the output mint yet).",
+            "description": "`misconfigured`: the plan charges a commission and the chain has no fee wallet (or, on Solana, the fee wallet has no token account for the output mint yet).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1871,7 +1871,7 @@
                 },
                 "examples": {
                   "provider_unavailable": {
-                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
                     "value": {
                       "statusCode": 503,
                       "code": "provider_unavailable",
@@ -1882,7 +1882,7 @@
                     }
                   },
                   "misconfigured": {
-                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
                     "value": {
                       "statusCode": 503,
                       "code": "misconfigured",
@@ -2128,7 +2128,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — `signedXdr` (Stellar) / `signedTransaction` (Solana, Monad) is not a transaction, is not the one built for this swap, or carries no signature of its source. `transaction_rejected` — the Solana or Monad node refused the broadcast; the swap stays PENDING. `invalid_state_transition` — the swap can no longer be submitted: it is EXPIRED, its transaction's validity window has passed, or it was already resubmitted the maximum number of times after a rejection. Build a new swap.",
+            "description": "`validation_failed`: `signedXdr` (Stellar) / `signedTransaction` (Solana, Monad) is not a transaction, is not the one built for this swap, or carries no signature of its source. `transaction_rejected`: the Solana or Monad node refused the broadcast; the swap stays PENDING. `invalid_state_transition`: the swap can no longer be submitted, because it is EXPIRED, its transaction's validity window has passed, or it was already resubmitted the maximum number of times after a rejection. Build a new swap.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2136,7 +2136,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -2150,7 +2150,7 @@
                     }
                   },
                   "invalid_state_transition": {
-                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_state_transition",
@@ -2161,7 +2161,7 @@
                     }
                   },
                   "transaction_rejected": {
-                    "summary": "transaction_rejected — The submitted transaction does not do what the route needs",
+                    "summary": "transaction_rejected: The submitted transaction does not do what the route needs",
                     "value": {
                       "statusCode": 400,
                       "code": "transaction_rejected",
@@ -2188,7 +2188,7 @@
             "description": "Rate limited (`rate_limited`), per consumer and client address. Honour `Retry-After`: the window is shorter than the envelope lifetime, so a retry after it still lands in time.",
             "headers": {
               "retry-after": {
-                "description": "Seconds to wait before retrying. The only one a browser or a naive retry loop honours — prefer it.",
+                "description": "Seconds to wait before retrying. The only one a browser or a naive retry loop honours: prefer it.",
                 "schema": {
                   "type": "integer",
                   "example": 42
@@ -2223,7 +2223,7 @@
                 },
                 "examples": {
                   "rate_limited": {
-                    "summary": "rate_limited — This route’s budget for this caller is spent",
+                    "summary": "rate_limited: This route’s budget for this caller is spent",
                     "value": {
                       "statusCode": 429,
                       "code": "rate_limited",
@@ -2362,7 +2362,7 @@
             }
           },
           "400": {
-            "description": "`provider_error` — NEAR Intents refused the quote (an amount below its minimum, a route it cannot fill); `message` carries its reason.",
+            "description": "`provider_error`: NEAR Intents refused the quote (an amount below its minimum, a route it cannot fill); `message` carries its reason.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2370,7 +2370,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -2384,7 +2384,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -2395,7 +2395,7 @@
                     }
                   },
                   "slippage_exceeded": {
-                    "summary": "slippage_exceeded — The requested slippage is above what this service allows",
+                    "summary": "slippage_exceeded: The requested slippage is above what this service allows",
                     "value": {
                       "statusCode": 400,
                       "code": "slippage_exceeded",
@@ -2406,7 +2406,7 @@
                     }
                   },
                   "asset_unsupported": {
-                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "summary": "asset_unsupported: NEAR Intents cannot swap this asset on the named chain",
                     "value": {
                       "statusCode": 400,
                       "code": "asset_unsupported",
@@ -2417,7 +2417,7 @@
                     }
                   },
                   "provider_error": {
-                    "summary": "provider_error — The upstream provider refused the request",
+                    "summary": "provider_error: The upstream provider refused the request",
                     "value": {
                       "statusCode": 400,
                       "code": "provider_error",
@@ -2447,7 +2447,7 @@
             "$ref": "#/components/responses/UpstreamError"
           },
           "503": {
-            "description": "`provider_unavailable` — NEAR Intents is down or rate limiting this service; retry. `misconfigured` — the plan charges a commission and NEAR_INTENTS_FEE_RECIPIENT is not set, or NEAR Intents rejected NEAR_INTENTS_API_KEY.",
+            "description": "`provider_unavailable`: NEAR Intents is down or rate limiting this service; retry. `misconfigured`: the plan charges a commission and NEAR_INTENTS_FEE_RECIPIENT is not set, or NEAR Intents rejected NEAR_INTENTS_API_KEY.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2455,7 +2455,7 @@
                 },
                 "examples": {
                   "provider_unavailable": {
-                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
                     "value": {
                       "statusCode": 503,
                       "code": "provider_unavailable",
@@ -2466,7 +2466,7 @@
                     }
                   },
                   "misconfigured": {
-                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
                     "value": {
                       "statusCode": 503,
                       "code": "misconfigured",
@@ -2561,7 +2561,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported` — a dev (testnet) key: NEAR Intents settles on mainnet only. `trustline_missing` — a Stellar recipient does not trust the destination asset. `provider_error` — NEAR Intents refused the quote.",
+            "description": "`network_unsupported`: a dev (testnet) key, and NEAR Intents settles on mainnet only. `trustline_missing`: a Stellar recipient does not trust the destination asset, and only that account can add the trustline. `provider_error`: NEAR Intents refused the quote.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2569,7 +2569,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -2583,7 +2583,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -2594,7 +2594,7 @@
                     }
                   },
                   "slippage_exceeded": {
-                    "summary": "slippage_exceeded — The requested slippage is above what this service allows",
+                    "summary": "slippage_exceeded: The requested slippage is above what this service allows",
                     "value": {
                       "statusCode": 400,
                       "code": "slippage_exceeded",
@@ -2605,7 +2605,7 @@
                     }
                   },
                   "asset_unsupported": {
-                    "summary": "asset_unsupported — NEAR Intents cannot swap this asset on the named chain",
+                    "summary": "asset_unsupported: NEAR Intents cannot swap this asset on the named chain",
                     "value": {
                       "statusCode": 400,
                       "code": "asset_unsupported",
@@ -2616,29 +2616,29 @@
                     }
                   },
                   "network_unsupported": {
-                    "summary": "network_unsupported — Cross-chain swaps settle on mainnet only; a dev key cannot open one",
+                    "summary": "network_unsupported: Cross-chain swaps settle on mainnet only; a dev key cannot open one",
                     "value": {
                       "statusCode": 400,
                       "code": "network_unsupported",
                       "error": "Bad Request",
-                      "message": "Cross-chain swaps run on mainnet only — NEAR Intents has no test network. Use a prod API key.",
+                      "message": "Cross-chain swaps run on mainnet only: NEAR Intents has no test network. Use a prod API key.",
                       "path": "/v1/cross-chain-swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   },
                   "trustline_missing": {
-                    "summary": "trustline_missing — The account must trust the asset before it can hold it",
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
                     "value": {
                       "statusCode": 400,
                       "code": "trustline_missing",
                       "error": "Bad Request",
-                      "message": "Destination GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5 — it must trust the asset before it can receive the swap",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5, so it cannot receive the swap. Only that account can add the trustline, by signing a transaction of its own: ask its owner to add it, then try again.",
                       "path": "/v1/swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   },
                   "provider_error": {
-                    "summary": "provider_error — The upstream provider refused the request",
+                    "summary": "provider_error: The upstream provider refused the request",
                     "value": {
                       "statusCode": 400,
                       "code": "provider_error",
@@ -2667,7 +2667,7 @@
                 },
                 "examples": {
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -2691,7 +2691,7 @@
             "$ref": "#/components/responses/UpstreamError"
           },
           "503": {
-            "description": "`provider_unavailable` — NEAR Intents is down or rate limiting this service; retry. `misconfigured` — the plan charges a commission and NEAR_INTENTS_FEE_RECIPIENT is not set, or NEAR Intents rejected NEAR_INTENTS_API_KEY.",
+            "description": "`provider_unavailable`: NEAR Intents is down or rate limiting this service; retry. `misconfigured`: the plan charges a commission and NEAR_INTENTS_FEE_RECIPIENT is not set, or NEAR Intents rejected NEAR_INTENTS_API_KEY.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2699,7 +2699,7 @@
                 },
                 "examples": {
                   "provider_unavailable": {
-                    "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
                     "value": {
                       "statusCode": 503,
                       "code": "provider_unavailable",
@@ -2710,7 +2710,7 @@
                     }
                   },
                   "misconfigured": {
-                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
                     "value": {
                       "statusCode": 503,
                       "code": "misconfigured",
@@ -2920,7 +2920,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — txHash is not a transaction id of the origin chain. `invalid_state_transition` — the swap already SUCCEEDED, was REFUNDED or FAILED. `provider_error` — NEAR Intents refused the hash.",
+            "description": "`validation_failed`: txHash is not a transaction id of the origin chain. `invalid_state_transition`: the swap already SUCCEEDED, was REFUNDED or FAILED. `provider_error`: NEAR Intents refused the hash.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2928,7 +2928,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -2942,7 +2942,7 @@
                     }
                   },
                   "invalid_state_transition": {
-                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_state_transition",
@@ -2953,7 +2953,7 @@
                     }
                   },
                   "provider_error": {
-                    "summary": "provider_error — The upstream provider refused the request",
+                    "summary": "provider_error: The upstream provider refused the request",
                     "value": {
                       "statusCode": 400,
                       "code": "provider_error",
@@ -3069,7 +3069,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_amount` — Not a Stellar amount, or not greater than zero\n\n`trustline_missing` — The account must trust the asset before it can hold it\n\n`insufficient_balance` — The source account cannot cover the amount",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_amount`: Not a Stellar amount, or not greater than zero\n\n`trustline_missing`: An account does not trust the asset, and this request cannot add the trustline for it\n\n`insufficient_balance`: The source account cannot cover the amount, or the XLM reserve the transaction needs",
             "content": {
               "application/json": {
                 "schema": {
@@ -3077,7 +3077,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -3091,7 +3091,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -3102,18 +3102,18 @@
                     }
                   },
                   "trustline_missing": {
-                    "summary": "trustline_missing — The account must trust the asset before it can hold it",
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
                     "value": {
                       "statusCode": 400,
                       "code": "trustline_missing",
                       "error": "Bad Request",
-                      "message": "Destination GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5 — it must trust the asset before it can receive the swap",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5, so it cannot receive the swap. Only that account can add the trustline, by signing a transaction of its own: ask its owner to add it, then try again.",
                       "path": "/v1/swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   },
                   "insufficient_balance": {
-                    "summary": "insufficient_balance — The source account cannot cover the amount",
+                    "summary": "insufficient_balance: The source account cannot cover the amount, or the XLM reserve the transaction needs",
                     "value": {
                       "statusCode": 400,
                       "code": "insufficient_balance",
@@ -3134,7 +3134,7 @@
             "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "`idempotency_conflict` — this Idempotency-Key was already used for a different request, or an identical deposit was already built without a key (retry with an Idempotency-Key, or wait for the prior operation to settle or expire).",
+            "description": "`idempotency_conflict`: this Idempotency-Key was already used for a different request, or an identical deposit was already built without a key (retry with an Idempotency-Key, or wait for the prior operation to settle or expire).",
             "content": {
               "application/json": {
                 "schema": {
@@ -3142,7 +3142,7 @@
                 },
                 "examples": {
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -3243,7 +3243,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`invalid_amount` — Not a Stellar amount, or not greater than zero\n\n`insufficient_balance` — The source account cannot cover the amount",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_amount`: Not a Stellar amount, or not greater than zero\n\n`insufficient_balance`: The source account cannot cover the amount, or the XLM reserve the transaction needs",
             "content": {
               "application/json": {
                 "schema": {
@@ -3251,7 +3251,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -3265,7 +3265,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — Not a Stellar amount, or not greater than zero",
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -3276,7 +3276,7 @@
                     }
                   },
                   "insufficient_balance": {
-                    "summary": "insufficient_balance — The source account cannot cover the amount",
+                    "summary": "insufficient_balance: The source account cannot cover the amount, or the XLM reserve the transaction needs",
                     "value": {
                       "statusCode": 400,
                       "code": "insufficient_balance",
@@ -3297,7 +3297,7 @@
             "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "`idempotency_conflict` — this Idempotency-Key was already used for a different request, or an identical withdrawal was already built without a key. `operation_in_flight` — a withdrawal from this pool is already in flight for this account; wait for it to settle or expire.",
+            "description": "`idempotency_conflict`: this Idempotency-Key was already used for a different request, or an identical withdrawal was already built without a key. `operation_in_flight`: a withdrawal from this pool is already in flight for this account; wait for it to settle or expire.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3305,7 +3305,7 @@
                 },
                 "examples": {
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -3316,12 +3316,12 @@
                     }
                   },
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another — the commission on a withdrawal depends on the position it leaves behind.",
+                      "message": "A withdrawal from this pool is already in flight for this account. Wait for it to settle or expire before starting another: the commission on a withdrawal depends on the position it leaves behind.",
                       "path": "/v1/liquidity-pools/withdraw",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -3594,7 +3594,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — `signedXdr` is not a transaction envelope, is not the envelope built for this operation, or carries no signatures. `invalid_state_transition` — the operation can no longer be submitted: it is EXPIRED, its transaction's time bounds have passed, or it was already resubmitted the maximum number of times after a rejection. Build a new deposit or withdrawal.",
+            "description": "`validation_failed`: `signedXdr` is not a transaction envelope, is not the envelope built for this operation, or carries no signatures. `invalid_state_transition`: the operation can no longer be submitted, because it is EXPIRED, its transaction's time bounds have passed, or it was already resubmitted the maximum number of times after a rejection. Build a new deposit or withdrawal.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3602,7 +3602,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -3616,7 +3616,7 @@
                     }
                   },
                   "invalid_state_transition": {
-                    "summary": "invalid_state_transition — The resource cannot move to that state from the one it is in",
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_state_transition",
@@ -3643,7 +3643,7 @@
             "description": "Rate limited (`rate_limited`), per consumer and client address, in a bucket separate from the swaps submit route. Honour `Retry-After`: the window is shorter than the envelope lifetime, so a retry after it still lands in time.",
             "headers": {
               "retry-after": {
-                "description": "Seconds to wait before retrying. The only one a browser or a naive retry loop honours — prefer it.",
+                "description": "Seconds to wait before retrying. The only one a browser or a naive retry loop honours: prefer it.",
                 "schema": {
                   "type": "integer",
                   "example": 42
@@ -3678,7 +3678,7 @@
                 },
                 "examples": {
                   "rate_limited": {
-                    "summary": "rate_limited — This route’s budget for this caller is spent",
+                    "summary": "rate_limited: This route’s budget for this caller is spent",
                     "value": {
                       "statusCode": 429,
                       "code": "rate_limited",
@@ -3879,7 +3879,7 @@
     },
     "/v1/assets": {
       "get": {
-        "description": "The wallet ships a bundled copy of this list and prefers whichever of the two carries the higher `version`, so a client that cannot reach this endpoint still resolves assets correctly — it just misses the newest additions.",
+        "description": "The wallet ships a bundled copy of this list and prefers whichever of the two carries the higher `version`, so a client that cannot reach this endpoint still resolves assets correctly. It just misses the newest additions.",
         "operationId": "AssetsController_list_v1",
         "parameters": [
           {
@@ -3974,7 +3974,7 @@
             "$ref": "#/components/responses/InternalError"
           },
           "503": {
-            "description": "`misconfigured` — A server-side configuration error — retrying will not help",
+            "description": "`misconfigured`: A server-side configuration error: retrying will not help",
             "content": {
               "application/json": {
                 "schema": {
@@ -3982,7 +3982,7 @@
                 },
                 "examples": {
                   "misconfigured": {
-                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
                     "value": {
                       "statusCode": 503,
                       "code": "misconfigured",
@@ -4043,7 +4043,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "summary": "Register a webhook endpoint (returns the signing secret — shown once)",
+        "summary": "Register a webhook endpoint (returns the signing secret, shown once)",
         "tags": [
           "webhooks"
         ]
@@ -4517,7 +4517,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`payload_expired` — the delivery is past its retention window. The event body was cleared, so there is nothing left to re-send; the delivery row itself stays as an audit record.",
+            "description": "`payload_expired`: the delivery is past its retention window. The event body was cleared, so there is nothing left to re-send; the delivery row itself stays as an audit record.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4525,7 +4525,7 @@
                 },
                 "examples": {
                   "payload_expired": {
-                    "summary": "payload_expired — The delivery body is past retention and cannot be re-sent",
+                    "summary": "payload_expired: The delivery body is past retention and cannot be re-sent",
                     "value": {
                       "statusCode": 409,
                       "code": "payload_expired",
@@ -4786,7 +4786,7 @@
     },
     "/v1/activity/events": {
       "post": {
-        "description": "Accepted, not created: the batch is written under the consumer the gateway authenticated, and nothing in the body can change that attribution. Over-long messages are truncated and an over-sized `props` is replaced with a marker rather than failing the call — losing a whole batch to one malformed field is worst exactly when the client is in a state it did not anticipate.",
+        "description": "Accepted, not created: the batch is written under the consumer the gateway authenticated, and nothing in the body can change that attribution. Over-long messages are truncated and an over-sized `props` is replaced with a marker rather than failing the call: losing a whole batch to one malformed field is worst exactly when the client is in a state it did not anticipate.",
         "operationId": "ActivityController_ingest_v1",
         "parameters": [],
         "requestBody": {
@@ -5531,7 +5531,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`alias_name_invalid` — Reserved, malformed, or the wrong length",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`alias_name_invalid`: Reserved, malformed, or the wrong length",
             "content": {
               "application/json": {
                 "schema": {
@@ -5539,7 +5539,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -5553,7 +5553,7 @@
                     }
                   },
                   "alias_name_invalid": {
-                    "summary": "alias_name_invalid — Reserved, malformed, or the wrong length",
+                    "summary": "alias_name_invalid: Reserved, malformed, or the wrong length",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_name_invalid",
@@ -5619,7 +5619,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`alias_name_invalid` — Reserved, malformed, or the wrong length\n\n`alias_challenge_invalid` — No challenge, expired, already spent, or issued for other details\n\n`alias_signature_invalid` — The signature does not verify against the claiming address\n\n`alias_address_conflict` — The address is already on the alias, or the alias is at its cap",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`alias_name_invalid`: Reserved, malformed, or the wrong length\n\n`alias_challenge_invalid`: No challenge, expired, already spent, or issued for other details\n\n`alias_signature_invalid`: The signature does not verify against the claiming address\n\n`alias_address_conflict`: The address is already on the alias, or the alias is at its cap",
             "content": {
               "application/json": {
                 "schema": {
@@ -5627,7 +5627,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -5641,7 +5641,7 @@
                     }
                   },
                   "alias_name_invalid": {
-                    "summary": "alias_name_invalid — Reserved, malformed, or the wrong length",
+                    "summary": "alias_name_invalid: Reserved, malformed, or the wrong length",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_name_invalid",
@@ -5652,7 +5652,7 @@
                     }
                   },
                   "alias_challenge_invalid": {
-                    "summary": "alias_challenge_invalid — No challenge, expired, already spent, or issued for other details",
+                    "summary": "alias_challenge_invalid: No challenge, expired, already spent, or issued for other details",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_challenge_invalid",
@@ -5663,7 +5663,7 @@
                     }
                   },
                   "alias_signature_invalid": {
-                    "summary": "alias_signature_invalid — The signature does not verify against the claiming address",
+                    "summary": "alias_signature_invalid: The signature does not verify against the claiming address",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_signature_invalid",
@@ -5674,7 +5674,7 @@
                     }
                   },
                   "alias_address_conflict": {
-                    "summary": "alias_address_conflict — The address is already on the alias, or the alias is at its cap",
+                    "summary": "alias_address_conflict: The address is already on the alias, or the alias is at its cap",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_address_conflict",
@@ -5695,7 +5695,7 @@
             "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "`alias_taken` — someone claimed the handle first. There is no queue and no reservation: pick another name.",
+            "description": "`alias_taken`: someone claimed the handle first. There is no queue and no reservation: pick another name.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5703,7 +5703,7 @@
                 },
                 "examples": {
                   "alias_taken": {
-                    "summary": "alias_taken — The handle is already claimed — first claim wins",
+                    "summary": "alias_taken: The handle is already claimed: first claim wins",
                     "value": {
                       "statusCode": 409,
                       "code": "alias_taken",
@@ -5814,7 +5814,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`alias_challenge_invalid` — No challenge, expired, already spent, or issued for other details\n\n`alias_signature_invalid` — The signature does not verify against the claiming address\n\n`alias_address_conflict` — The address is already on the alias, or the alias is at its cap",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`alias_challenge_invalid`: No challenge, expired, already spent, or issued for other details\n\n`alias_signature_invalid`: The signature does not verify against the claiming address\n\n`alias_address_conflict`: The address is already on the alias, or the alias is at its cap",
             "content": {
               "application/json": {
                 "schema": {
@@ -5822,7 +5822,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -5836,7 +5836,7 @@
                     }
                   },
                   "alias_challenge_invalid": {
-                    "summary": "alias_challenge_invalid — No challenge, expired, already spent, or issued for other details",
+                    "summary": "alias_challenge_invalid: No challenge, expired, already spent, or issued for other details",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_challenge_invalid",
@@ -5847,7 +5847,7 @@
                     }
                   },
                   "alias_signature_invalid": {
-                    "summary": "alias_signature_invalid — The signature does not verify against the claiming address",
+                    "summary": "alias_signature_invalid: The signature does not verify against the claiming address",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_signature_invalid",
@@ -5858,7 +5858,7 @@
                     }
                   },
                   "alias_address_conflict": {
-                    "summary": "alias_address_conflict — The address is already on the alias, or the alias is at its cap",
+                    "summary": "alias_address_conflict: The address is already on the alias, or the alias is at its cap",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_address_conflict",
@@ -5924,7 +5924,7 @@
             }
           },
           "400": {
-            "description": "`alias_address_conflict` — an alias must keep at least one address. Release the alias instead.",
+            "description": "`alias_address_conflict`: an alias must keep at least one address. Release the alias instead.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5932,7 +5932,7 @@
                 },
                 "examples": {
                   "alias_address_conflict": {
-                    "summary": "alias_address_conflict — The address is already on the alias, or the alias is at its cap",
+                    "summary": "alias_address_conflict: The address is already on the alias, or the alias is at its cap",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_address_conflict",
@@ -6013,7 +6013,7 @@
     },
     "/v1/aliases/{name}/recovery": {
       "post": {
-        "description": "Always `{ accepted: true }`, whether or not the alias exists and the mailbox matched — a handle is public and the mailbox behind it is not. When both match, the token is emailed to the mailbox on record (at most once a minute per alias); it never appears in the response.",
+        "description": "Always `{ accepted: true }`, whether or not the alias exists and the mailbox matched: a handle is public and the mailbox behind it is not. When both match, the token is emailed to the mailbox on record (at most once a minute per alias); it never appears in the response.",
         "operationId": "AliasesController_startRecovery_v1",
         "parameters": [
           {
@@ -6085,7 +6085,7 @@
             "$ref": "#/components/responses/InternalError"
           },
           "503": {
-            "description": "`misconfigured` — A server-side configuration error — retrying will not help",
+            "description": "`misconfigured`: A server-side configuration error: retrying will not help",
             "content": {
               "application/json": {
                 "schema": {
@@ -6093,7 +6093,7 @@
                 },
                 "examples": {
                   "misconfigured": {
-                    "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
                     "value": {
                       "statusCode": 503,
                       "code": "misconfigured",
@@ -6125,7 +6125,7 @@
     },
     "/v1/aliases/{name}/recovery/complete": {
       "post": {
-        "description": "Needs the emailed token AND a signature from the new key. Every previous address is dropped — recovery exists because the old keys are gone, and leaving them resolvable would keep whoever holds them receiving payments.",
+        "description": "Needs the emailed token AND a signature from the new key. Every previous address is dropped: recovery exists because the old keys are gone, and leaving them resolvable would keep whoever holds them receiving payments.",
         "operationId": "AliasesController_completeRecovery_v1",
         "parameters": [
           {
@@ -6182,7 +6182,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`alias_recovery_invalid` — The recovery token is unknown, expired or already spent\n\n`alias_signature_invalid` — The signature does not verify against the claiming address\n\n`alias_address_conflict` — The address is already on the alias, or the alias is at its cap",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`alias_recovery_invalid`: The recovery token is unknown, expired or already spent\n\n`alias_signature_invalid`: The signature does not verify against the claiming address\n\n`alias_address_conflict`: The address is already on the alias, or the alias is at its cap",
             "content": {
               "application/json": {
                 "schema": {
@@ -6190,7 +6190,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -6204,7 +6204,7 @@
                     }
                   },
                   "alias_recovery_invalid": {
-                    "summary": "alias_recovery_invalid — The recovery token is unknown, expired or already spent",
+                    "summary": "alias_recovery_invalid: The recovery token is unknown, expired or already spent",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_recovery_invalid",
@@ -6215,7 +6215,7 @@
                     }
                   },
                   "alias_signature_invalid": {
-                    "summary": "alias_signature_invalid — The signature does not verify against the claiming address",
+                    "summary": "alias_signature_invalid: The signature does not verify against the claiming address",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_signature_invalid",
@@ -6226,7 +6226,7 @@
                     }
                   },
                   "alias_address_conflict": {
-                    "summary": "alias_address_conflict — The address is already on the alias, or the alias is at its cap",
+                    "summary": "alias_address_conflict: The address is already on the alias, or the alias is at its cap",
                     "value": {
                       "statusCode": 400,
                       "code": "alias_address_conflict",
@@ -6352,7 +6352,7 @@
             }
           },
           "400": {
-            "description": "`wallet_provider_unavailable` — That provider is unknown, or not configured on this deployment\n\n`wallet_return_url_not_allowed` — The return URL is not one this deployment redirects to",
+            "description": "`wallet_provider_unavailable`: That provider is unknown, or not configured on this deployment\n\n`wallet_return_url_not_allowed`: The return URL is not one this deployment redirects to",
             "content": {
               "application/json": {
                 "schema": {
@@ -6360,7 +6360,7 @@
                 },
                 "examples": {
                   "wallet_provider_unavailable": {
-                    "summary": "wallet_provider_unavailable — That provider is unknown, or not configured on this deployment",
+                    "summary": "wallet_provider_unavailable: That provider is unknown, or not configured on this deployment",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_provider_unavailable",
@@ -6371,7 +6371,7 @@
                     }
                   },
                   "wallet_return_url_not_allowed": {
-                    "summary": "wallet_return_url_not_allowed — The return URL is not one this deployment redirects to",
+                    "summary": "wallet_return_url_not_allowed: The return URL is not one this deployment redirects to",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_return_url_not_allowed",
@@ -6398,7 +6398,7 @@
             "$ref": "#/components/responses/InternalError"
           },
           "503": {
-            "description": "`wallet_provider_unavailable` — That provider is unknown, or not configured on this deployment",
+            "description": "`wallet_provider_unavailable`: That provider is unknown, or not configured on this deployment",
             "content": {
               "application/json": {
                 "schema": {
@@ -6406,7 +6406,7 @@
                 },
                 "examples": {
                   "wallet_provider_unavailable": {
-                    "summary": "wallet_provider_unavailable — That provider is unknown, or not configured on this deployment",
+                    "summary": "wallet_provider_unavailable: That provider is unknown, or not configured on this deployment",
                     "value": {
                       "statusCode": 503,
                       "code": "wallet_provider_unavailable",
@@ -6437,7 +6437,7 @@
     },
     "/v1/wallet/auth/oauth/callback/{provider}": {
       "get": {
-        "description": "Not called by your code — the person’s browser lands here. Public by necessity: a navigation carries no API key and no gateway consumer. It renders a page — or, when the handshake was opened with a `returnTo`, redirects to it with the `state` — and nothing else; the identity is collected by the device that holds the PKCE verifier. Register `{WALLET_AUTH_PUBLIC_BASE_URL}/v1/wallet/auth/oauth/callback/{provider}` with each provider.",
+        "description": "Not called by your code: the person’s browser lands here. Public by necessity: a navigation carries no API key and no gateway consumer. It renders a page (or, when the handshake was opened with a `returnTo`, redirects to it with the `state`) and nothing else; the identity is collected by the device that holds the PKCE verifier. Register `{WALLET_AUTH_PUBLIC_BASE_URL}/v1/wallet/auth/oauth/callback/{provider}` with each provider.",
         "operationId": "WalletAuthController_callback_v1",
         "parameters": [
           {
@@ -6650,7 +6650,7 @@
             }
           },
           "400": {
-            "description": "`wallet_verifier_invalid` — The PKCE verifier does not match the handshake\n\n`wallet_login_code_cooldown` — Another code was sent to this mailbox moments ago",
+            "description": "`wallet_verifier_invalid`: The PKCE verifier does not match the handshake\n\n`wallet_login_code_cooldown`: Another code was sent to this mailbox moments ago",
             "content": {
               "application/json": {
                 "schema": {
@@ -6658,7 +6658,7 @@
                 },
                 "examples": {
                   "wallet_verifier_invalid": {
-                    "summary": "wallet_verifier_invalid — The PKCE verifier does not match the handshake",
+                    "summary": "wallet_verifier_invalid: The PKCE verifier does not match the handshake",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_verifier_invalid",
@@ -6669,7 +6669,7 @@
                     }
                   },
                   "wallet_login_code_cooldown": {
-                    "summary": "wallet_login_code_cooldown — Another code was sent to this mailbox moments ago",
+                    "summary": "wallet_login_code_cooldown: Another code was sent to this mailbox moments ago",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_login_code_cooldown",
@@ -6759,7 +6759,7 @@
             }
           },
           "400": {
-            "description": "`wallet_login_code_cooldown` — Another code was sent to this mailbox moments ago",
+            "description": "`wallet_login_code_cooldown`: Another code was sent to this mailbox moments ago",
             "content": {
               "application/json": {
                 "schema": {
@@ -6767,7 +6767,7 @@
                 },
                 "examples": {
                   "wallet_login_code_cooldown": {
-                    "summary": "wallet_login_code_cooldown — Another code was sent to this mailbox moments ago",
+                    "summary": "wallet_login_code_cooldown: Another code was sent to this mailbox moments ago",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_login_code_cooldown",
@@ -6896,7 +6896,7 @@
     },
     "/v1/wallet/auth/finish": {
       "post": {
-        "description": "Send the session token as `X-Wallet-Session: {sessionToken}` — the gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {address}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.\n\nOn Solana and Monad (`chain`), a `chain: {chain}` line follows the first one. Solana signs the bytes with ed25519 (`signMessage`; base64 or base58); Monad with EIP-191 `personal_sign` (0x-hex).",
+        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {address}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.\n\nOn Solana and Monad (`chain`), a `chain: {chain}` line follows the first one. Solana signs the bytes with ed25519 (`signMessage`; base64 or base58); Monad with EIP-191 `personal_sign` (0x-hex).",
         "operationId": "WalletAuthController_finish_v1",
         "parameters": [
           {
@@ -6954,7 +6954,7 @@
             }
           },
           "400": {
-            "description": "`wallet_signature_invalid` — The signature does not verify, or its timestamp is out of window\n\n`wallet_backup_invalid` — Not a backup box this service will keep\n\n`wallet_backup_limit` — The account already keeps as many wallet backups as it may",
+            "description": "`wallet_signature_invalid`: The signature does not verify, or its timestamp is out of window\n\n`wallet_backup_invalid`: Not a backup box this service will keep\n\n`wallet_backup_limit`: The account already keeps as many wallet backups as it may",
             "content": {
               "application/json": {
                 "schema": {
@@ -6962,7 +6962,7 @@
                 },
                 "examples": {
                   "wallet_signature_invalid": {
-                    "summary": "wallet_signature_invalid — The signature does not verify, or its timestamp is out of window",
+                    "summary": "wallet_signature_invalid: The signature does not verify, or its timestamp is out of window",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_signature_invalid",
@@ -6973,7 +6973,7 @@
                     }
                   },
                   "wallet_backup_invalid": {
-                    "summary": "wallet_backup_invalid — Not a backup box this service will keep",
+                    "summary": "wallet_backup_invalid: Not a backup box this service will keep",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_backup_invalid",
@@ -6984,7 +6984,7 @@
                     }
                   },
                   "wallet_backup_limit": {
-                    "summary": "wallet_backup_limit — The account already keeps as many wallet backups as it may",
+                    "summary": "wallet_backup_limit: The account already keeps as many wallet backups as it may",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_backup_limit",
@@ -6999,7 +6999,7 @@
             }
           },
           "401": {
-            "description": "`wallet_session_invalid` — The sign-in token is missing, expired, or was not minted here",
+            "description": "`wallet_session_invalid`: The sign-in token is missing, expired, or was not minted here",
             "content": {
               "application/json": {
                 "schema": {
@@ -7007,7 +7007,7 @@
                 },
                 "examples": {
                   "wallet_session_invalid": {
-                    "summary": "wallet_session_invalid — The sign-in token is missing, expired, or was not minted here",
+                    "summary": "wallet_session_invalid: The sign-in token is missing, expired, or was not minted here",
                     "value": {
                       "statusCode": 401,
                       "code": "wallet_session_invalid",
@@ -7053,7 +7053,7 @@
     },
     "/v1/wallet/backup": {
       "put": {
-        "description": "What `changePassword` on the device sends. No session: the signature is the credential, and it covers the SHA-256 of the box — so one signature stores exactly one box and cannot be replayed to store another. The bytes are:\n\n```\nCosmos Pay Wallet backup\naccount: {address}\nbox: {sha256 hex of box}\nat: {signedAt}\n```\n\nOn Solana and Monad a `chain: {chain}` line follows the first one, and the bytes are signed as for sign-in.",
+        "description": "What `changePassword` on the device sends. No session: the signature is the credential, and it covers the SHA-256 of the box, so one signature stores exactly one box and cannot be replayed to store another. The bytes are:\n\n```\nCosmos Pay Wallet backup\naccount: {address}\nbox: {sha256 hex of box}\nat: {signedAt}\n```\n\nOn Solana and Monad a `chain: {chain}` line follows the first one, and the bytes are signed as for sign-in.",
         "operationId": "WalletBackupController_replaceBackup_v1",
         "parameters": [],
         "requestBody": {
@@ -7101,7 +7101,7 @@
             }
           },
           "400": {
-            "description": "`wallet_signature_invalid` — The signature does not verify, or its timestamp is out of window\n\n`wallet_backup_invalid` — Not a backup box this service will keep",
+            "description": "`wallet_signature_invalid`: The signature does not verify, or its timestamp is out of window\n\n`wallet_backup_invalid`: Not a backup box this service will keep",
             "content": {
               "application/json": {
                 "schema": {
@@ -7109,7 +7109,7 @@
                 },
                 "examples": {
                   "wallet_signature_invalid": {
-                    "summary": "wallet_signature_invalid — The signature does not verify, or its timestamp is out of window",
+                    "summary": "wallet_signature_invalid: The signature does not verify, or its timestamp is out of window",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_signature_invalid",
@@ -7120,7 +7120,7 @@
                     }
                   },
                   "wallet_backup_invalid": {
-                    "summary": "wallet_backup_invalid — Not a backup box this service will keep",
+                    "summary": "wallet_backup_invalid: Not a backup box this service will keep",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_backup_invalid",
@@ -7141,7 +7141,7 @@
             "$ref": "#/components/responses/Forbidden"
           },
           "404": {
-            "description": "`wallet_account_mismatch` — No backup is stored for the account that signed",
+            "description": "`wallet_account_mismatch`: No backup is stored for the account that signed",
             "content": {
               "application/json": {
                 "schema": {
@@ -7149,7 +7149,7 @@
                 },
                 "examples": {
                   "wallet_account_mismatch": {
-                    "summary": "wallet_account_mismatch — No backup is stored for the account that signed",
+                    "summary": "wallet_account_mismatch: No backup is stored for the account that signed",
                     "value": {
                       "statusCode": 404,
                       "code": "wallet_account_mismatch",
@@ -7192,7 +7192,7 @@
     },
     "/v1/wallet/recovery/setup": {
       "post": {
-        "description": "Send the session token as `X-Wallet-Session: {sessionToken}` — the gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet recovery setup\naccount: {stellarAddress}\nsigners: {signerA},{signerB}\nat: {signedAt}\n```\n\nThe envelope comes back signed by the sponsor only. Once per account: refused when the account already has a signer besides its master key.",
+        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet recovery setup\naccount: {stellarAddress}\nsigners: {signerA},{signerB}\nat: {signedAt}\n```\n\nThe envelope comes back signed by the sponsor only. Once per account: refused when the account already has a signer besides its master key.",
         "operationId": "WalletBackupController_sponsorRecoverySetup_v1",
         "parameters": [
           {
@@ -7250,7 +7250,7 @@
             }
           },
           "400": {
-            "description": "`wallet_signature_invalid` — The signature does not verify, or its timestamp is out of window",
+            "description": "`wallet_signature_invalid`: The signature does not verify, or its timestamp is out of window",
             "content": {
               "application/json": {
                 "schema": {
@@ -7258,7 +7258,7 @@
                 },
                 "examples": {
                   "wallet_signature_invalid": {
-                    "summary": "wallet_signature_invalid — The signature does not verify, or its timestamp is out of window",
+                    "summary": "wallet_signature_invalid: The signature does not verify, or its timestamp is out of window",
                     "value": {
                       "statusCode": 400,
                       "code": "wallet_signature_invalid",
@@ -7273,7 +7273,7 @@
             }
           },
           "401": {
-            "description": "`wallet_session_invalid` — The sign-in token is missing, expired, or was not minted here",
+            "description": "`wallet_session_invalid`: The sign-in token is missing, expired, or was not minted here",
             "content": {
               "application/json": {
                 "schema": {
@@ -7281,7 +7281,7 @@
                 },
                 "examples": {
                   "wallet_session_invalid": {
-                    "summary": "wallet_session_invalid — The sign-in token is missing, expired, or was not minted here",
+                    "summary": "wallet_session_invalid: The sign-in token is missing, expired, or was not minted here",
                     "value": {
                       "statusCode": 401,
                       "code": "wallet_session_invalid",
@@ -7299,7 +7299,7 @@
             "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "`wallet_recovery_setup_refused` — The account cannot be sponsored: missing, or already has signers",
+            "description": "`wallet_recovery_setup_refused`: The account cannot be sponsored: missing, or already has signers",
             "content": {
               "application/json": {
                 "schema": {
@@ -7307,7 +7307,7 @@
                 },
                 "examples": {
                   "wallet_recovery_setup_refused": {
-                    "summary": "wallet_recovery_setup_refused — The account cannot be sponsored: missing, or already has signers",
+                    "summary": "wallet_recovery_setup_refused: The account cannot be sponsored: missing, or already has signers",
                     "value": {
                       "statusCode": 409,
                       "code": "wallet_recovery_setup_refused",
@@ -8515,7 +8515,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`plugin_consent_mismatch` — grantCapabilities must list exactly the capabilities the plugin declares",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`plugin_consent_mismatch`: grantCapabilities must list exactly the capabilities the plugin declares",
             "content": {
               "application/json": {
                 "schema": {
@@ -8523,7 +8523,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -8536,7 +8536,7 @@
                     }
                   },
                   "plugin_consent_mismatch": {
-                    "summary": "plugin_consent_mismatch — grantCapabilities must list exactly the capabilities the plugin declares",
+                    "summary": "plugin_consent_mismatch: grantCapabilities must list exactly the capabilities the plugin declares",
                     "value": {
                       "statusCode": 400,
                       "code": "plugin_consent_mismatch",
@@ -8685,7 +8685,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`plugin_rejected` — The plugin refused the input; the message is the plugin’s own",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`plugin_rejected`: The plugin refused the input; the message is the plugin’s own",
             "content": {
               "application/json": {
                 "schema": {
@@ -8693,7 +8693,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -8704,7 +8704,7 @@
                     }
                   },
                   "plugin_rejected": {
-                    "summary": "plugin_rejected — The plugin refused the input; the message is the plugin’s own",
+                    "summary": "plugin_rejected: The plugin refused the input; the message is the plugin’s own",
                     "value": {
                       "statusCode": 400,
                       "code": "plugin_rejected",
@@ -8728,7 +8728,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`plugin_not_installed` — The plugin is not installed for this key, or its consent is out of date",
+            "description": "`plugin_not_installed`: The plugin is not installed for this key, or its consent is out of date",
             "content": {
               "application/json": {
                 "schema": {
@@ -8736,7 +8736,7 @@
                 },
                 "examples": {
                   "plugin_not_installed": {
-                    "summary": "plugin_not_installed — The plugin is not installed for this key, or its consent is out of date",
+                    "summary": "plugin_not_installed: The plugin is not installed for this key, or its consent is out of date",
                     "value": {
                       "statusCode": 409,
                       "code": "plugin_not_installed",
@@ -8757,7 +8757,7 @@
             "$ref": "#/components/responses/InternalError"
           },
           "502": {
-            "description": "`plugin_failed` — The plugin failed or timed out — the detail is logged, never returned",
+            "description": "`plugin_failed`: The plugin failed or timed out (the detail is logged, never returned)",
             "content": {
               "application/json": {
                 "schema": {
@@ -8765,7 +8765,7 @@
                 },
                 "examples": {
                   "plugin_failed": {
-                    "summary": "plugin_failed — The plugin failed or timed out — the detail is logged, never returned",
+                    "summary": "plugin_failed: The plugin failed or timed out (the detail is logged, never returned)",
                     "value": {
                       "statusCode": 502,
                       "code": "plugin_failed",
@@ -8780,7 +8780,7 @@
             }
           },
           "504": {
-            "description": "`plugin_failed` — The plugin failed or timed out — the detail is logged, never returned",
+            "description": "`plugin_failed`: The plugin failed or timed out (the detail is logged, never returned)",
             "content": {
               "application/json": {
                 "schema": {
@@ -8788,7 +8788,7 @@
                 },
                 "examples": {
                   "plugin_failed": {
-                    "summary": "plugin_failed — The plugin ran out of time",
+                    "summary": "plugin_failed: The plugin ran out of time",
                     "value": {
                       "statusCode": 504,
                       "code": "plugin_failed",
@@ -8887,7 +8887,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`plugin_rejected` — The plugin refused the input; the message is the plugin’s own",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`plugin_rejected`: The plugin refused the input; the message is the plugin’s own",
             "content": {
               "application/json": {
                 "schema": {
@@ -8895,7 +8895,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -8906,7 +8906,7 @@
                     }
                   },
                   "plugin_rejected": {
-                    "summary": "plugin_rejected — The plugin refused the input; the message is the plugin’s own",
+                    "summary": "plugin_rejected: The plugin refused the input; the message is the plugin’s own",
                     "value": {
                       "statusCode": 400,
                       "code": "plugin_rejected",
@@ -8930,7 +8930,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`plugin_not_installed` — The plugin is not installed for this key, or its consent is out of date\n\n`plugin_quota_exceeded` — The installation holds as many records as it may",
+            "description": "`plugin_not_installed`: The plugin is not installed for this key, or its consent is out of date\n\n`plugin_quota_exceeded`: The installation holds as many records as it may",
             "content": {
               "application/json": {
                 "schema": {
@@ -8938,7 +8938,7 @@
                 },
                 "examples": {
                   "plugin_not_installed": {
-                    "summary": "plugin_not_installed — The plugin is not installed for this key, or its consent is out of date",
+                    "summary": "plugin_not_installed: The plugin is not installed for this key, or its consent is out of date",
                     "value": {
                       "statusCode": 409,
                       "code": "plugin_not_installed",
@@ -8949,7 +8949,7 @@
                     }
                   },
                   "plugin_quota_exceeded": {
-                    "summary": "plugin_quota_exceeded — The installation holds as many records as it may",
+                    "summary": "plugin_quota_exceeded: The installation holds as many records as it may",
                     "value": {
                       "statusCode": 409,
                       "code": "plugin_quota_exceeded",
@@ -8970,7 +8970,7 @@
             "$ref": "#/components/responses/InternalError"
           },
           "502": {
-            "description": "`plugin_failed` — The plugin failed or timed out — the detail is logged, never returned",
+            "description": "`plugin_failed`: The plugin failed or timed out (the detail is logged, never returned)",
             "content": {
               "application/json": {
                 "schema": {
@@ -8978,7 +8978,7 @@
                 },
                 "examples": {
                   "plugin_failed": {
-                    "summary": "plugin_failed — The plugin failed or timed out — the detail is logged, never returned",
+                    "summary": "plugin_failed: The plugin failed or timed out (the detail is logged, never returned)",
                     "value": {
                       "statusCode": 502,
                       "code": "plugin_failed",
@@ -8993,7 +8993,7 @@
             }
           },
           "504": {
-            "description": "`plugin_failed` — The plugin failed or timed out — the detail is logged, never returned",
+            "description": "`plugin_failed`: The plugin failed or timed out (the detail is logged, never returned)",
             "content": {
               "application/json": {
                 "schema": {
@@ -9001,7 +9001,7 @@
                 },
                 "examples": {
                   "plugin_failed": {
-                    "summary": "plugin_failed — The plugin ran out of time",
+                    "summary": "plugin_failed: The plugin ran out of time",
                     "value": {
                       "statusCode": 504,
                       "code": "plugin_failed",
@@ -9245,7 +9245,7 @@
                 },
                 "examples": {
                   "kyc_review_required": {
-                    "summary": "kyc_review_required — The change has to be signed off with an elevated (admin) key",
+                    "summary": "kyc_review_required: The change has to be signed off with an elevated (admin) key",
                     "value": {
                       "statusCode": 403,
                       "code": "kyc_review_required",
@@ -9381,7 +9381,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`kyc_review_required` — the API key is not elevated (admin role). A key may submit KYC data or approve it, not both.",
+            "description": "`kyc_review_required`: the API key is not elevated (admin role). A key may submit KYC data or approve it, not both.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9389,7 +9389,7 @@
                 },
                 "examples": {
                   "kyc_review_required": {
-                    "summary": "kyc_review_required — The change has to be signed off with an elevated (admin) key",
+                    "summary": "kyc_review_required: The change has to be signed off with an elevated (admin) key",
                     "value": {
                       "statusCode": 403,
                       "code": "kyc_review_required",
@@ -9400,7 +9400,7 @@
                     }
                   },
                   "insufficient_scope": {
-                    "summary": "insufficient_scope — The API key does not hold the scope this route requires",
+                    "summary": "insufficient_scope: The API key does not hold the scope this route requires",
                     "value": {
                       "statusCode": 403,
                       "code": "insufficient_scope",
@@ -9418,7 +9418,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`kyc_state_invalid` — the receiver is not in 'pending_review', or the KYC data changed after you read it (`expected_version` names a version that is no longer current). Re-read the receiver, review it again, and approve that version.",
+            "description": "`kyc_state_invalid`: the receiver is not in 'pending_review', or the KYC data changed after you read it (`expected_version` names a version that is no longer current). Re-read the receiver, review it again, and approve that version.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9426,7 +9426,7 @@
                 },
                 "examples": {
                   "kyc_state_invalid": {
-                    "summary": "kyc_state_invalid — An illegal KYC state transition — not a duplicate request",
+                    "summary": "kyc_state_invalid: An illegal KYC state transition, not a duplicate request",
                     "value": {
                       "statusCode": 409,
                       "code": "kyc_state_invalid",
@@ -9577,7 +9577,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`kyc_state_invalid` — an invalid KYC status transition (e.g. the receiver is not in 'pending_user').",
+            "description": "`kyc_state_invalid`: an invalid KYC status transition (e.g. the receiver is not in 'pending_user').",
             "content": {
               "application/json": {
                 "schema": {
@@ -9585,7 +9585,7 @@
                 },
                 "examples": {
                   "kyc_state_invalid": {
-                    "summary": "kyc_state_invalid — An illegal KYC state transition — not a duplicate request",
+                    "summary": "kyc_state_invalid: An illegal KYC state transition, not a duplicate request",
                     "value": {
                       "statusCode": 409,
                       "code": "kyc_state_invalid",
@@ -9670,7 +9670,7 @@
                 },
                 "examples": {
                   "insufficient_scope": {
-                    "summary": "insufficient_scope — The API key does not hold the scope this route requires",
+                    "summary": "insufficient_scope: The API key does not hold the scope this route requires",
                     "value": {
                       "statusCode": 403,
                       "code": "insufficient_scope",
@@ -10220,7 +10220,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -10252,7 +10252,7 @@
                 },
                 "examples": {
                   "payload_too_large": {
-                    "summary": "payload_too_large — The upload is larger than the route accepts",
+                    "summary": "payload_too_large: The upload is larger than the route accepts",
                     "value": {
                       "statusCode": 413,
                       "code": "payload_too_large",
@@ -10627,7 +10627,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`quote_expired` — The quote is ours and yours, but past its expiry",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`quote_expired`: The quote is ours and yours, but past its expiry",
             "content": {
               "application/json": {
                 "schema": {
@@ -10635,7 +10635,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -10649,7 +10649,7 @@
                     }
                   },
                   "quote_expired": {
-                    "summary": "quote_expired — The quote is ours and yours, but past its expiry",
+                    "summary": "quote_expired: The quote is ours and yours, but past its expiry",
                     "value": {
                       "statusCode": 400,
                       "code": "quote_expired",
@@ -11164,7 +11164,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`quote_expired` — The quote is ours and yours, but past its expiry",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`quote_expired`: The quote is ours and yours, but past its expiry",
             "content": {
               "application/json": {
                 "schema": {
@@ -11172,7 +11172,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -11186,7 +11186,7 @@
                     }
                   },
                   "quote_expired": {
-                    "summary": "quote_expired — The quote is ours and yours, but past its expiry",
+                    "summary": "quote_expired: The quote is ours and yours, but past its expiry",
                     "value": {
                       "statusCode": 400,
                       "code": "quote_expired",
@@ -11293,7 +11293,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed` — The body, query or headers failed validation\n\n`quote_expired` — The quote is ours and yours, but past its expiry",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`quote_expired`: The quote is ours and yours, but past its expiry",
             "content": {
               "application/json": {
                 "schema": {
@@ -11301,7 +11301,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -11315,7 +11315,7 @@
                     }
                   },
                   "quote_expired": {
-                    "summary": "quote_expired — The quote is ours and yours, but past its expiry",
+                    "summary": "quote_expired: The quote is ours and yours, but past its expiry",
                     "value": {
                       "statusCode": 400,
                       "code": "quote_expired",
@@ -11937,7 +11937,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -11951,7 +11951,7 @@
                     }
                   },
                   "invalid_amount": {
-                    "summary": "invalid_amount — The merchant would receive nothing after the commission",
+                    "summary": "invalid_amount: The merchant would receive nothing after the commission",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_amount",
@@ -11962,7 +11962,7 @@
                     }
                   },
                   "recipient_not_registered": {
-                    "summary": "recipient_not_registered — The recipient holds no confidential account on Cosmos Pay's token under auditor 0",
+                    "summary": "recipient_not_registered: The recipient holds no confidential account on Cosmos Pay's token under auditor 0",
                     "value": {
                       "statusCode": 400,
                       "code": "recipient_not_registered",
@@ -11973,7 +11973,7 @@
                     }
                   },
                   "network_unsupported": {
-                    "summary": "network_unsupported — Private payments do not run on this network yet (mainnet today)",
+                    "summary": "network_unsupported: Private payments do not run on this network yet (mainnet today)",
                     "value": {
                       "statusCode": 400,
                       "code": "network_unsupported",
@@ -12002,7 +12002,7 @@
                 },
                 "examples": {
                   "idempotency_conflict": {
-                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
                     "value": {
                       "statusCode": 409,
                       "code": "idempotency_conflict",
@@ -12013,7 +12013,7 @@
                     }
                   },
                   "operation_in_flight": {
-                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
@@ -12312,7 +12312,7 @@
                 },
                 "examples": {
                   "network_unsupported": {
-                    "summary": "network_unsupported — The payment's network no longer runs private payments here",
+                    "summary": "network_unsupported: The payment's network no longer runs private payments here",
                     "value": {
                       "statusCode": 400,
                       "code": "network_unsupported",
@@ -12335,7 +12335,7 @@
                 },
                 "examples": {
                   "not_found": {
-                    "summary": "not_found — No private payment has this id",
+                    "summary": "not_found: No private payment has this id",
                     "value": {
                       "statusCode": 404,
                       "code": "not_found",
@@ -12447,7 +12447,7 @@
                 },
                 "examples": {
                   "validation_failed": {
-                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "summary": "validation_failed: The body, query or headers failed validation",
                     "value": {
                       "statusCode": 400,
                       "code": "validation_failed",
@@ -12461,7 +12461,7 @@
                     }
                   },
                   "transaction_not_found": {
-                    "summary": "transaction_not_found — No such transaction on the network yet, or it is older than the RPC keeps",
+                    "summary": "transaction_not_found: No such transaction on the network yet, or it is older than the RPC keeps",
                     "value": {
                       "statusCode": 400,
                       "code": "transaction_not_found",
@@ -12472,7 +12472,7 @@
                     }
                   },
                   "transaction_rejected": {
-                    "summary": "transaction_rejected — The transaction failed on-chain",
+                    "summary": "transaction_rejected: The transaction failed on-chain",
                     "value": {
                       "statusCode": 400,
                       "code": "transaction_rejected",
@@ -12483,7 +12483,7 @@
                     }
                   },
                   "payment_transfer_mismatch": {
-                    "summary": "payment_transfer_mismatch — The payment transaction does not pay this payment's net amount to its recipient",
+                    "summary": "payment_transfer_mismatch: The payment transaction does not pay this payment's net amount to its recipient",
                     "value": {
                       "statusCode": 400,
                       "code": "payment_transfer_mismatch",
@@ -12494,7 +12494,7 @@
                     }
                   },
                   "fee_transfer_mismatch": {
-                    "summary": "fee_transfer_mismatch — The fee transaction does not pay this payment's commission to the fee account",
+                    "summary": "fee_transfer_mismatch: The fee transaction does not pay this payment's commission to the fee account",
                     "value": {
                       "statusCode": 400,
                       "code": "fee_transfer_mismatch",
@@ -12505,7 +12505,7 @@
                     }
                   },
                   "payer_mismatch": {
-                    "summary": "payer_mismatch — The payment and fee transfers come from different accounts",
+                    "summary": "payer_mismatch: The payment and fee transfers come from different accounts",
                     "value": {
                       "statusCode": 400,
                       "code": "payer_mismatch",
@@ -12516,7 +12516,7 @@
                     }
                   },
                   "expired": {
-                    "summary": "expired — A transfer of the private payment closed after the payment expired",
+                    "summary": "expired: A transfer of the private payment closed after the payment expired",
                     "value": {
                       "statusCode": 400,
                       "code": "expired",
@@ -12527,7 +12527,7 @@
                     }
                   },
                   "invalid_state_transition": {
-                    "summary": "invalid_state_transition — Already settled, by other transactions",
+                    "summary": "invalid_state_transition: Already settled, by other transactions",
                     "value": {
                       "statusCode": 400,
                       "code": "invalid_state_transition",
@@ -12538,7 +12538,7 @@
                     }
                   },
                   "network_unsupported": {
-                    "summary": "network_unsupported — The payment's network no longer runs private payments here",
+                    "summary": "network_unsupported: The payment's network no longer runs private payments here",
                     "value": {
                       "statusCode": 400,
                       "code": "network_unsupported",
@@ -12561,7 +12561,7 @@
                 },
                 "examples": {
                   "not_found": {
-                    "summary": "not_found — No private payment has this id",
+                    "summary": "not_found: No private payment has this id",
                     "value": {
                       "statusCode": 404,
                       "code": "not_found",
@@ -12584,7 +12584,7 @@
                 },
                 "examples": {
                   "transaction_already_settled": {
-                    "summary": "transaction_already_settled — A transaction already settled another private payment",
+                    "summary": "transaction_already_settled: A transaction already settled another private payment",
                     "value": {
                       "statusCode": 409,
                       "code": "transaction_already_settled",
@@ -12628,8 +12628,8 @@
     }
   },
   "info": {
-    "title": "Cosmos Pay — Payments API",
-    "description": "Payments microservice (Stellar payment intents, swaps, liquidity pools, fiat on/offramp). Paths already include the version (`/v1/...`). Pick the matching server and security scheme below. **Every failure returns the same envelope** (`ApiErrorBodyEntity`), and `code` is the part to branch on — `message` is prose and may be reworded. Each operation documents only the statuses it can really return: `429` appears where a budget is declared (the budget itself is published as `x-cosmos-rate-limit`), `502`/`503`/`504` where the route calls a provider (`x-cosmos-upstream`), and neither `401` nor `403` on the probes that need no credentials (`x-cosmos-public`). Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.",
+    "title": "Cosmos Pay Payments API",
+    "description": "Payments microservice (Stellar payment intents, swaps, liquidity pools, fiat on/offramp). Paths already include the version (`/v1/...`). Pick the matching server and security scheme below. **Every failure returns the same envelope** (`ApiErrorBodyEntity`), and `code` is the part to branch on: `message` is prose and may be reworded. Each operation documents only the statuses it can really return: `429` appears where a budget is declared (the budget itself is published as `x-cosmos-rate-limit`), `502`/`503`/`504` where the route calls a provider (`x-cosmos-upstream`), and neither `401` nor `403` on the probes that need no credentials (`x-cosmos-public`). Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.",
     "version": "1.0",
     "contact": {}
   },
@@ -12754,7 +12754,7 @@
         "properties": {
           "source": {
             "type": "string",
-            "description": "Payer's Stellar account — the transaction source.",
+            "description": "Payer's Stellar account: the transaction source.",
             "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
           },
           "destination": {
@@ -12851,7 +12851,7 @@
           "network": {
             "type": "string",
             "example": "testnet",
-            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet) — the one the API key is for."
+            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet), the one the API key is for."
           },
           "source": {
             "type": "string",
@@ -12999,7 +12999,7 @@
           },
           "amount": {
             "type": "string",
-            "description": "Amount the destination should receive, in the asset’s own units (XLM, SOL, MON, or the token). Omit to let the user enter it (e.g. donations) — not on Monad, where the amount is part of how the payment is recognised. At most 7 decimals on Stellar; elsewhere, at most the asset’s own decimals.",
+            "description": "Amount the destination should receive, in the asset’s own units (XLM, SOL, MON, or the token). Omit to let the user enter it (e.g. donations), but not on Monad, where the amount is part of how the payment is recognised. At most 7 decimals on Stellar; elsewhere, at most the asset’s own decimals.",
             "example": "120.1234567"
           },
           "assetCode": {
@@ -13084,7 +13084,7 @@
           "network": {
             "type": "string",
             "example": "testnet",
-            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet) — the one the API key is for."
+            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet), the one the API key is for."
           },
           "source": {
             "type": "object",
@@ -13256,7 +13256,7 @@
           "network": {
             "type": "string",
             "example": "testnet",
-            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet) — the one the API key is for."
+            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet), the one the API key is for."
           },
           "source": {
             "type": "object",
@@ -13639,7 +13639,7 @@
           "payTo": {
             "type": "string",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "The address the payer sends to — always the one inside `uri`. Stellar and Solana: the merchant’s account. Monad with a relayer: the intent’s own deposit address, which forwards the payment to the merchant less `networkFee`."
+            "description": "The address the payer sends to, always the one inside `uri`. Stellar and Solana: the merchant’s account. Monad with a relayer: the intent’s own deposit address, which forwards the payment to the merchant less `networkFee`."
           },
           "amount": {
             "type": "string",
@@ -13672,7 +13672,7 @@
           "uri": {
             "type": "string",
             "example": "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=25.5&memo=4127759120438726917&memo_type=MEMO_ID&msg=Order+%2324",
-            "description": "The payment link, exactly as the wallet opens it: SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad. It is the same link the merchant handed out, so it carries what the wallet needs — a SEP-7 `callback` the merchant set and, for a `TX` intent, the unsigned envelope."
+            "description": "The payment link, exactly as the wallet opens it: SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad. It is the same link the merchant handed out, so it carries what the wallet needs: a SEP-7 `callback` the merchant set and, for a `TX` intent, the unsigned envelope."
           },
           "qr": {
             "type": "string",
@@ -13745,7 +13745,7 @@
           },
           "alias": {
             "type": "string",
-            "example": "Acme — billing"
+            "example": "Acme (billing)"
           },
           "note": {
             "type": "string",
@@ -13783,7 +13783,7 @@
           "alias": {
             "type": "object",
             "nullable": true,
-            "example": "Acme — billing"
+            "example": "Acme (billing)"
           },
           "email": {
             "type": "object",
@@ -13838,7 +13838,7 @@
           "alias": {
             "type": "object",
             "nullable": true,
-            "example": "Acme — billing"
+            "example": "Acme (billing)"
           },
           "email": {
             "type": "object",
@@ -13908,7 +13908,7 @@
           },
           "total": {
             "type": "number",
-            "description": "Total matching rows — not the page length.",
+            "description": "Total matching rows, not the page length.",
             "example": 137
           },
           "take": {
@@ -13936,7 +13936,7 @@
           },
           "alias": {
             "type": "string",
-            "example": "Acme — billing"
+            "example": "Acme (billing)"
           },
           "note": {
             "type": "string",
@@ -14209,6 +14209,23 @@
           "swap"
         ]
       },
+      "SwapTrustline": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "issuer": {
+            "type": "string",
+            "example": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
+          }
+        },
+        "required": [
+          "code",
+          "issuer"
+        ]
+      },
       "SwapEntity": {
         "type": "object",
         "properties": {
@@ -14310,6 +14327,17 @@
             "example": "Cosmos Swap Commission",
             "description": "On-chain MEMO_TEXT label stamped when a commission is collected and no caller memo was supplied (null otherwise)."
           },
+          "trustline": {
+            "nullable": true,
+            "example": null,
+            "description": "The bought asset, when the source receives it and does not trust it yet: the transaction then starts with a `changeTrust` for it, so the one signature adds the trustline and makes the swap. Adding it locks another 0.5 XLM base reserve in the account, which a wallet should tell its user before they sign. Null when no trustline is added (XLM bought, the account already trusts the asset, or the destination is another account). Read from the transaction itself.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapTrustline"
+              }
+            ]
+          },
           "xdr": {
             "type": "string",
             "description": "Unsigned transaction envelope (base64 XDR) to sign.",
@@ -14365,6 +14393,7 @@
           "path",
           "memo",
           "commissionMemo",
+          "trustline",
           "xdr",
           "uri",
           "txHash",
@@ -14742,7 +14771,7 @@
           "minimum": {
             "type": "string",
             "example": "24.68595",
-            "description": "On-chain minimum (destMin) after slippage — swap reverts below it."
+            "description": "On-chain minimum (destMin) after slippage: swap reverts below it."
           },
           "slippageBps": {
             "type": "number",
@@ -14866,12 +14895,12 @@
           },
           "source": {
             "type": "string",
-            "description": "Account paying for (and signing) the swap — the tx source — on `chain`.",
+            "description": "Account paying for (and signing) the swap (the tx source) on `chain`.",
             "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
           },
           "destination": {
             "type": "string",
-            "description": "Account credited the destination asset. Defaults to `source` (a self-swap). Must already trust a non-native destination asset. Stellar only: on Solana and Monad the output always goes to `source`.",
+            "description": "Account credited the destination asset. Defaults to `source` (a self-swap). On Stellar, when it is `source` and does not trust a non-native destination asset yet, the transaction adds that trustline first (see `trustline` on the response); any other account must already trust the asset, because only it can add the trustline. Stellar only: on Solana and Monad the output always goes to `source`.",
             "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
           },
           "memo": {
@@ -14901,7 +14930,7 @@
           },
           "signedTransaction": {
             "type": "string",
-            "description": "Solana and Monad swaps: the signed transaction — Solana: base64 wire bytes of the VersionedTransaction; Monad: the 0x-hex raw EIP-1559 transaction (the eth_sendRawTransaction input).",
+            "description": "Solana and Monad swaps: the signed transaction. Solana: base64 wire bytes of the VersionedTransaction; Monad: the 0x-hex raw EIP-1559 transaction (the eth_sendRawTransaction input).",
             "example": "0x02f8b1818f…"
           }
         }
@@ -15115,7 +15144,7 @@
           },
           "refundTo": {
             "type": "string",
-            "description": "Where a failed or late deposit is refunded, on originChain — normally the paying wallet.",
+            "description": "Where a failed or late deposit is refunded, on originChain: normally the paying wallet.",
             "example": "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG"
           },
           "slippageBps": {
@@ -15465,7 +15494,7 @@
           },
           "refundTo": {
             "type": "string",
-            "description": "Where a failed or late deposit is refunded, on originChain — normally the paying wallet.",
+            "description": "Where a failed or late deposit is refunded, on originChain: normally the paying wallet.",
             "example": "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG"
           },
           "slippageBps": {
@@ -16119,7 +16148,7 @@
         "properties": {
           "source": {
             "type": "string",
-            "description": "Account funding (and signing) the deposit — the tx source.",
+            "description": "Account funding (and signing) the deposit: the tx source.",
             "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
           },
           "assetACode": {
@@ -16370,7 +16399,7 @@
         "properties": {
           "source": {
             "type": "string",
-            "description": "Account holding the pool shares (and signing) — the tx source.",
+            "description": "Account holding the pool shares (and signing): the tx source.",
             "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
           },
           "poolId": {
@@ -16877,12 +16906,12 @@
           "issuerDomain": {
             "type": "string",
             "example": "circle.com",
-            "description": "The issuer's on-chain home_domain, or empty when it publishes none — which is the case for USDT0 and every testnet issuer. Never a domain attributed by a third party: rendered next to a token, that reads as the issuer's own claim."
+            "description": "The issuer's on-chain home_domain, or empty when it publishes none, which is the case for USDT0 and every testnet issuer. Never a domain attributed by a third party: rendered next to a token, that reads as the issuer's own claim."
           },
           "verified": {
             "type": "boolean",
             "example": true,
-            "description": "Whether the issuing account was checked against the named organization. A claim about identity, not about quality — render unverified rows differently rather than hiding them."
+            "description": "Whether the issuing account was checked against the named organization. A claim about identity, not about quality: render unverified rows differently rather than hiding them."
           },
           "contract": {
             "type": "object",
@@ -17091,7 +17120,7 @@
           },
           "secret": {
             "type": "string",
-            "description": "HMAC signing secret — shown once. Store it securely.",
+            "description": "HMAC signing secret, shown once. Store it securely.",
             "example": "whsec_3f9a1c…"
           }
         },
@@ -18190,7 +18219,7 @@
           },
           "total": {
             "type": "number",
-            "description": "Total matching rows — not the page length.",
+            "description": "Total matching rows, not the page length.",
             "example": 41203
           },
           "take": {
@@ -18283,7 +18312,7 @@
           },
           "total": {
             "type": "number",
-            "description": "Total matching rows — not the page length.",
+            "description": "Total matching rows, not the page length.",
             "example": 1204
           },
           "take": {
@@ -18343,7 +18372,7 @@
           },
           "message": {
             "type": "string",
-            "description": "Human-readable detail. Truncated rather than rejected when long — a telemetry call must not fail on the size of an error string.",
+            "description": "Human-readable detail. Truncated rather than rejected when long: a telemetry call must not fail on the size of an error string.",
             "example": "op_no_trust"
           },
           "sessionId": {
@@ -18511,7 +18540,7 @@
           "receivedAt": {
             "format": "date-time",
             "type": "string",
-            "description": "When this service received it — later for a queued batch.",
+            "description": "When this service received it (later for a queued batch).",
             "example": "2026-09-06T12:35:10.000Z"
           }
         },
@@ -18536,7 +18565,7 @@
           },
           "total": {
             "type": "number",
-            "description": "Total matching rows — not the page length.",
+            "description": "Total matching rows, not the page length.",
             "example": 4120
           },
           "take": {
@@ -18604,12 +18633,12 @@
           },
           "sessions": {
             "type": "number",
-            "description": "Distinct `sessionId`s in the window — app runs, not accounts.",
+            "description": "Distinct `sessionId`s in the window: app runs, not accounts.",
             "example": 318
           },
           "devices": {
             "type": "number",
-            "description": "Distinct `distinctId`s in the window — installs, not accounts.",
+            "description": "Distinct `distinctId`s in the window: installs, not accounts.",
             "example": 96
           },
           "levels": {
@@ -18641,7 +18670,7 @@
             }
           },
           "topErrors": {
-            "description": "Most frequent error messages — what to fix first.",
+            "description": "Most frequent error messages: what to fix first.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ActivityCountEntity"
@@ -18672,7 +18701,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "Pro plan — monthly"
+            "example": "Pro plan (monthly)"
           },
           "description": {
             "type": "string",
@@ -18719,7 +18748,7 @@
           },
           "name": {
             "type": "string",
-            "example": "Pro plan — monthly"
+            "example": "Pro plan (monthly)"
           },
           "description": {
             "type": "object",
@@ -18811,7 +18840,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "Pro plan — monthly"
+            "example": "Pro plan (monthly)"
           },
           "description": {
             "type": "string",
@@ -19071,7 +19100,7 @@
           },
           "message": {
             "type": "string",
-            "description": "The EXACT string to sign — digested first on Stellar, signed as text on Solana and Monad. Returned rather than described so a client never rebuilds it from prose — a client that assembles the fields itself is one field-order change away from producing signatures nothing accepts."
+            "description": "The EXACT string to sign: digested first on Stellar, signed as text on Solana and Monad. Returned rather than described so a client never rebuilds it from prose. A client that assembles the fields itself is one field-order change away from producing signatures nothing accepts."
           },
           "domain": {
             "type": "string",
@@ -19139,7 +19168,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Normalized handle — the form uniqueness is decided on."
+            "description": "Normalized handle: the form uniqueness is decided on."
           },
           "displayName": {
             "type": "string",
@@ -19287,7 +19316,7 @@
           "accepted": {
             "type": "boolean",
             "example": true,
-            "description": "Always true, whether or not anything matched. The token, when there is one, is emailed to the mailbox on record — never returned here."
+            "description": "Always true, whether or not anything matched. The token, when there is one, is emailed to the mailbox on record, never returned here."
           }
         },
         "required": [
@@ -19385,7 +19414,7 @@
           },
           "stellarAddress": {
             "type": "string",
-            "description": "Same as `address` — the field’s original name, kept for older wallets.",
+            "description": "Same as `address` (the field’s original name, kept for older wallets).",
             "deprecated": true
           },
           "box": {
@@ -19425,7 +19454,7 @@
             "description": "Whether this email already had an account here. A marker, never an id: it is what a client branches its onboarding on."
           },
           "backups": {
-            "description": "Every wallet this account keeps a backup of, newest first — one box per (chain, address). A new device opens each with the password (or passkey) it was sealed under; a box sealed under another password stays closed.",
+            "description": "Every wallet this account keeps a backup of, newest first: one box per (chain, address). A new device opens each with the password (or passkey) it was sealed under; a box sealed under another password stays closed.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WalletBackupEntity"
@@ -19444,7 +19473,7 @@
           },
           "sessionToken": {
             "type": "string",
-            "description": "Short-lived, sealed, and accepted by exactly one route: `/auth/finish`. It is the only credential that can create an account or put a backup under one, so it is never refreshed — a person who takes longer signs in again."
+            "description": "Short-lived, sealed, and accepted by exactly one route: `/auth/finish`. It is the only credential that can create an account or put a backup under one, so it is never refreshed: a person who takes longer signs in again."
           },
           "expiresInSeconds": {
             "type": "number",
@@ -19540,7 +19569,7 @@
               "created",
               "linked"
             ],
-            "description": "Whether this call created the account or attached the identity to one that already existed. A different vocabulary from `ready.account`, deliberately — they answer two different questions."
+            "description": "Whether this call created the account or attached the identity to one that already existed. A different vocabulary from `ready.account`, deliberately: they answer two different questions."
           },
           "organizationId": {
             "type": "string"
@@ -19579,7 +19608,7 @@
             "type": "string",
             "nullable": true,
             "example": "https://auth.example.com/if/user/#/settings;{\"page\":\"page-credentials\"}",
-            "description": "The page of the person’s Cosmos Pay (Authentik) account where they add or remove a second factor — a security key or passkey, an authenticator app, recovery codes — to open in a browser. It goes through the Authentik login first when there is no session. A second factor is optional — the sign-in only offers one — so offer this as a setting. Null when this deployment has no Authentik."
+            "description": "The page of the person’s Cosmos Pay (Authentik) account where they add or remove a second factor (a security key or passkey, an authenticator app, recovery codes), to open in a browser. It goes through the Authentik login first when there is no session. A second factor is optional (the sign-in only offers one), so offer this as a setting. Null when this deployment has no Authentik."
           }
         },
         "required": [
@@ -19602,7 +19631,7 @@
           },
           "codeChallenge": {
             "type": "string",
-            "description": "base64url(SHA-256(verifier)) — RFC 7636 S256. Keep the verifier on the device: it is what makes a `state` seen in a browser worthless to anyone else, and it is the only thing that can redeem this handshake.",
+            "description": "base64url(SHA-256(verifier)), RFC 7636 S256. Keep the verifier on the device: it is what makes a `state` seen in a browser worthless to anyone else, and it is the only thing that can redeem this handshake.",
             "example": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
           },
           "codeChallengeMethod": {
@@ -19614,7 +19643,7 @@
           },
           "returnTo": {
             "type": "string",
-            "description": "A native wallet’s own URL — a custom scheme, a universal/app link, or `http://127.0.0.1:<port>/…` from a desktop app. When set, the callback answers `302` to it with `?state=…` (plus `&error=<reason>` on failure) instead of rendering a page, which is what closes the platform’s auth session. Must be listed in the deployment’s `WALLET_AUTH_RETURN_URLS` (a loopback entry matches any port). Only the `state` travels: the handshake is still redeemed with the verifier.",
+            "description": "A native wallet’s own URL: a custom scheme, a universal/app link, or `http://127.0.0.1:<port>/…` from a desktop app. When set, the callback answers `302` to it with `?state=…` (plus `&error=<reason>` on failure) instead of rendering a page, which is what closes the platform’s auth session. Must be listed in the deployment’s `WALLET_AUTH_RETURN_URLS` (a loopback entry matches any port). Only the `state` travels: the handshake is still redeemed with the verifier.",
             "example": "cosmoswallet://auth/done"
           }
         },
@@ -19629,7 +19658,7 @@
         "properties": {
           "state": {
             "type": "string",
-            "description": "The handshake handle. Public by construction — it travels in a URL bar. Knowing it buys polling, never redemption."
+            "description": "The handshake handle. Public by construction: it travels in a URL bar. Knowing it buys polling, never redemption."
           },
           "authorizationUrl": {
             "type": "string",
@@ -19668,7 +19697,7 @@
               "profile_invalid",
               "failed"
             ],
-            "description": "Present only on `failed`. A token to map to a sentence — never prose, which cannot be translated on the device."
+            "description": "Present only on `failed`. A token to map to a sentence, never prose, which cannot be translated on the device."
           }
         },
         "required": [
@@ -19693,7 +19722,7 @@
               "recovery"
             ],
             "default": "sign-in",
-            "description": "`recovery` when the proven identity is going to be presented to the SEP-30 recovery servers. It always routes through an emailed code, even for an email with no account, and only then does the answer carry the provider's `idToken` — a provider proves who consented, not who opened the sign-in, and a recovery identity is worth a wallet."
+            "description": "`recovery` when the proven identity is going to be presented to the SEP-30 recovery servers. It always routes through an emailed code, even for an email with no account, and only then does the answer carry the provider's `idToken`: a provider proves who consented, not who opened the sign-in, and a recovery identity is worth a wallet."
           }
         },
         "required": [
@@ -19768,7 +19797,7 @@
           },
           "stellarAddress": {
             "type": "string",
-            "description": "The Stellar account — the field’s original name, still accepted for Stellar. New clients send `address`.",
+            "description": "The Stellar account (the field’s original name, still accepted for Stellar). New clients send `address`.",
             "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
             "deprecated": true
           },
@@ -19782,11 +19811,11 @@
           },
           "backup": {
             "type": "string",
-            "description": "The device's sealed seed box, to keep for the next device — one per (chain, address), up to 20 per account. Opaque here: it is sealed under a key derived from a password this service never sees."
+            "description": "The device's sealed seed box, to keep for the next device: one per (chain, address), up to 20 per account. Opaque here: it is sealed under a key derived from a password this service never sees."
           },
           "replaceBackup": {
             "type": "boolean",
-            "description": "Accepted for older wallets and ignored. Backups are kept per wallet: a box for another address is added beside the ones the account keeps, and a box for the same wallet replaces its own — nothing is ever discarded to make room.",
+            "description": "Accepted for older wallets and ignored. Backups are kept per wallet: a box for another address is added beside the ones the account keeps, and a box for the same wallet replaces its own. Nothing is ever discarded to make room.",
             "default": false
           },
           "network": {
@@ -19823,7 +19852,7 @@
           },
           "stellarAddress": {
             "type": "string",
-            "description": "The Stellar account — the field’s original name, still accepted for Stellar. New clients send `address`.",
+            "description": "The Stellar account (the field’s original name, still accepted for Stellar). New clients send `address`.",
             "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
             "deprecated": true
           },
@@ -19837,7 +19866,7 @@
           },
           "signature": {
             "type": "string",
-            "description": "Signature over the backup challenge (encoded as for sign-in), which covers the box's SHA-256 — so one signature stores exactly one box."
+            "description": "Signature over the backup challenge (encoded as for sign-in), which covers the box's SHA-256, so one signature stores exactly one box."
           },
           "network": {
             "type": "string",
@@ -19878,7 +19907,7 @@
           },
           "stellarAddress": {
             "type": "string",
-            "description": "Same as `address` — the field’s original name, kept for older wallets.",
+            "description": "Same as `address` (the field’s original name, kept for older wallets).",
             "deprecated": true
           },
           "updatedAt": {
@@ -20844,7 +20873,7 @@
           "expected_version": {
             "type": "number",
             "example": 3,
-            "description": "The receiver's `dossierVersion` as you read it. A 409 `kyc_state_invalid` if the KYC data changed since — re-read, review again, approve that version. Omitted approves whatever is stored now."
+            "description": "The receiver's `dossierVersion` as you read it. A 409 `kyc_state_invalid` if the KYC data changed since: re-read, review again, approve that version. Omitted approves whatever is stored now."
           }
         },
         "required": [
@@ -21323,7 +21352,7 @@
           },
           "name": {
             "type": "string",
-            "example": "Acme payouts — USD"
+            "example": "Acme payouts (USD)"
           },
           "account_class": {
             "type": "string",
@@ -21564,7 +21593,7 @@
           },
           "name": {
             "type": "object",
-            "example": "Acme payouts — USD"
+            "example": "Acme payouts (USD)"
           },
           "country": {
             "type": "object",
@@ -22777,7 +22806,7 @@
           },
           "code": {
             "type": "string",
-            "description": "Stable machine-readable code. Branch on this, never on the message — messages are human-facing and may be reworded; codes are never renamed once published. Each response documents the subset it can return.",
+            "description": "Stable machine-readable code. Branch on this, never on the message: messages are human-facing and may be reworded; codes are never renamed once published. Each response documents the subset it can return.",
             "enum": [
               "insufficient_scope",
               "no_authenticated_consumer",
@@ -22887,7 +22916,7 @@
     },
     "responses": {
       "ValidationFailed": {
-        "description": "The body, query or path failed validation. `message` is an array of the individual failures.\n\nRoutes that reject a *valid* request for a reason of their own — an amount, a memo, a state — document the code for it on their own 400.",
+        "description": "The body, query or path failed validation. `message` is an array of the individual failures.\n\nRoutes that reject a *valid* request for a reason of their own (an amount, a memo, a state) document the code for it on their own 400.",
         "content": {
           "application/json": {
             "schema": {
@@ -22895,7 +22924,7 @@
             },
             "examples": {
               "validation_failed": {
-                "summary": "validation_failed — The body, query or headers failed validation",
+                "summary": "validation_failed: The body, query or headers failed validation",
                 "value": {
                   "statusCode": 400,
                   "code": "validation_failed",
@@ -22913,7 +22942,7 @@
         }
       },
       "Unauthorized": {
-        "description": "`no_authenticated_consumer` — The gateway forwarded no API key identity",
+        "description": "`no_authenticated_consumer`: The gateway forwarded no API key identity",
         "content": {
           "application/json": {
             "schema": {
@@ -22921,7 +22950,7 @@
             },
             "examples": {
               "no_authenticated_consumer": {
-                "summary": "no_authenticated_consumer — The gateway forwarded no API key identity",
+                "summary": "no_authenticated_consumer: The gateway forwarded no API key identity",
                 "value": {
                   "statusCode": 401,
                   "code": "no_authenticated_consumer",
@@ -22936,7 +22965,7 @@
         }
       },
       "Forbidden": {
-        "description": "`insufficient_scope` — the API key does not hold the scope this route requires. The shared public API key also gets this on every route that is not marked `x-cosmos-public-key`, with a message saying so; more scopes will not help, the key is the wrong one.\n\n`gateway_required` — the request did not arrive through APISIX.",
+        "description": "`insufficient_scope`: the API key does not hold the scope this route requires. The shared public API key also gets this on every route that is not marked `x-cosmos-public-key`, with a message saying so; more scopes will not help, the key is the wrong one.\n\n`gateway_required`: the request did not arrive through APISIX.",
         "content": {
           "application/json": {
             "schema": {
@@ -22944,7 +22973,7 @@
             },
             "examples": {
               "insufficient_scope": {
-                "summary": "insufficient_scope — The API key does not hold the scope this route requires",
+                "summary": "insufficient_scope: The API key does not hold the scope this route requires",
                 "value": {
                   "statusCode": 403,
                   "code": "insufficient_scope",
@@ -22955,7 +22984,7 @@
                 }
               },
               "gateway_required": {
-                "summary": "gateway_required — The request did not arrive through the APISIX gateway",
+                "summary": "gateway_required: The request did not arrive through the APISIX gateway",
                 "value": {
                   "statusCode": 403,
                   "code": "gateway_required",
@@ -22970,7 +22999,7 @@
         }
       },
       "NotFound": {
-        "description": "No such resource — or it exists and belongs to another consumer. The two are deliberately the same answer: \"exists but not yours\" is an ownership oracle.",
+        "description": "No such resource, or it exists and belongs to another consumer. The two are deliberately the same answer: \"exists but not yours\" is an ownership oracle.",
         "content": {
           "application/json": {
             "schema": {
@@ -22978,7 +23007,7 @@
             },
             "examples": {
               "not_found": {
-                "summary": "not_found — No such resource — or it belongs to another consumer",
+                "summary": "not_found: No such resource, or it belongs to another consumer",
                 "value": {
                   "statusCode": 404,
                   "code": "not_found",
@@ -22996,7 +23025,7 @@
         "description": "The budget in `x-cosmos-rate-limit` is spent for this caller. Honour `Retry-After`.\n\nThe `ratelimit-*` triple rides along on successful responses too, so a client can pace itself instead of being refused. If the counter store itself is unreachable the guard fails closed and answers `503 provider_unavailable`.",
         "headers": {
           "retry-after": {
-            "description": "Seconds to wait before retrying. The only one a browser or a naive retry loop honours — prefer it.",
+            "description": "Seconds to wait before retrying. The only one a browser or a naive retry loop honours: prefer it.",
             "schema": {
               "type": "integer",
               "example": 42
@@ -23031,7 +23060,7 @@
             },
             "examples": {
               "rate_limited": {
-                "summary": "rate_limited — This route’s budget for this caller is spent",
+                "summary": "rate_limited: This route’s budget for this caller is spent",
                 "value": {
                   "statusCode": 429,
                   "code": "rate_limited",
@@ -23046,7 +23075,7 @@
         }
       },
       "InternalError": {
-        "description": "Unexpected server error. The detail is logged server-side and never returned — there is nothing in the body to branch on beyond the code.",
+        "description": "Unexpected server error. The detail is logged server-side and never returned: there is nothing in the body to branch on beyond the code.",
         "content": {
           "application/json": {
             "schema": {
@@ -23054,7 +23083,7 @@
             },
             "examples": {
               "internal_error": {
-                "summary": "internal_error — Unexpected server error — the detail is logged, never returned",
+                "summary": "internal_error: Unexpected server error (the detail is logged, never returned)",
                 "value": {
                   "statusCode": 500,
                   "code": "internal_error",
@@ -23077,7 +23106,7 @@
             },
             "examples": {
               "provider_error": {
-                "summary": "provider_error — The upstream provider refused the request",
+                "summary": "provider_error: The upstream provider refused the request",
                 "value": {
                   "statusCode": 502,
                   "code": "provider_error",
@@ -23088,7 +23117,7 @@
                 }
               },
               "provider_unavailable": {
-                "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
                 "value": {
                   "statusCode": 502,
                   "code": "provider_unavailable",
@@ -23103,7 +23132,7 @@
         }
       },
       "UpstreamUnavailable": {
-        "description": "`provider_unavailable` — the provider in `x-cosmos-upstream` is down or unreachable; the message names it. Retry.\n\n`misconfigured` — this deployment is missing configuration the route needs (a provider instance, a fee wallet, the plan header the gateway must forward). Retrying will not help; it is an operator problem.",
+        "description": "`provider_unavailable`: the provider in `x-cosmos-upstream` is down or unreachable; the message names it. Retry.\n\n`misconfigured`: this deployment is missing configuration the route needs (a provider instance, a fee wallet, the plan header the gateway must forward). Retrying will not help; it is an operator problem.",
         "content": {
           "application/json": {
             "schema": {
@@ -23111,7 +23140,7 @@
             },
             "examples": {
               "provider_unavailable": {
-                "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
                 "value": {
                   "statusCode": 503,
                   "code": "provider_unavailable",
@@ -23122,7 +23151,7 @@
                 }
               },
               "misconfigured": {
-                "summary": "misconfigured — A server-side configuration error — retrying will not help",
+                "summary": "misconfigured: A server-side configuration error: retrying will not help",
                 "value": {
                   "statusCode": 503,
                   "code": "misconfigured",
@@ -23137,7 +23166,7 @@
         }
       },
       "UpstreamTimeout": {
-        "description": "The provider in `x-cosmos-upstream` did not answer in time. Whether it acted on the request is unknown — retry with the same `Idempotency-Key`, never with a fresh one.",
+        "description": "The provider in `x-cosmos-upstream` did not answer in time. Whether it acted on the request is unknown. Retry with the same `Idempotency-Key`, never with a fresh one.",
         "content": {
           "application/json": {
             "schema": {
@@ -23145,7 +23174,7 @@
             },
             "examples": {
               "provider_unavailable": {
-                "summary": "provider_unavailable — The upstream provider could not be reached, or timed out",
+                "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
                 "value": {
                   "statusCode": 504,
                   "code": "provider_unavailable",
