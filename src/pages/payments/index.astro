@@ -35,9 +35,9 @@ const d = landingData(lang, "multi");
   <LandingHead slot="head" />
 
   <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="home" />
     <Hero d={d} />
     <Marks d={d} />
-    <Subnav d={d} current="home" />
     <Benefits d={d} />
     <InlineCta d={d} more={{ href: d.links.useCases, label: d.t.pages.more.useCases }} />
     <How d={d} />

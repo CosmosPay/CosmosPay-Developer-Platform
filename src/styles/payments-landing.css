@@ -938,6 +938,10 @@
 .pl-subnav-cta { flex: 0 0 auto; }
 /* pinned stages stick under the nav and the section bar */
 .pl-multi .is-pinned .pl-pin-stage { top: calc(73px + var(--subnav-h)); height: calc(100svh - 73px - var(--subnav-h)); }
+/* The home opens with the section bar, so the hero starts under it instead of sliding up
+   under the nav, and still fills the first screen. */
+.pl-subnav + .pl-hero { margin-top: 0; padding-top: 0; min-height: calc(100svh - 73px - var(--subnav-h)); }
+@media (max-width: 900px) { .pl-subnav + .pl-hero { min-height: 0; } }
 
 /* a content page's header: title, one line on the page, a render */
 .pl-page-head { padding: clamp(48px, 7vw, 96px) 0 clamp(24px, 4vw, 48px); background: var(--bg); }
@@ -952,6 +956,8 @@
 .pl-inline-cta.pl-section-alt { background: var(--surface); padding-top: clamp(32px, 4vw, 48px); }
 .pl-inline-cta-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 28px; }
 .pl-inline-cta .btn { min-height: 50px; padding: 13px 24px; }
+/* in one row with the button, so it drops the space it keeps above it elsewhere */
+.pl-inline-cta .pl-textlink { margin-top: 0; }
 
 /* the two facts that lower the risk, under the hero's buttons */
 .pl-hero-notes { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; margin: 22px 0 0; padding: 0; animation: pl-rise .9s cubic-bezier(.2, .7, .2, 1) .44s both; }

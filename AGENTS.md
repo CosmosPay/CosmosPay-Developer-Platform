@@ -184,7 +184,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `sitemap.xml`): `/integrations` (options with the live demos, the developers' code, the
   three paths), `/use-cases` (businesses, the comparison with cards), `/security`, `/fees`
   (plans and calculator; `/pricing` is the company site's) and `/faq`. A sticky section bar
-  (`Subnav.astro`) under the general nav links them and ends with the main call to action;
+  (`Subnav.astro`) under the general nav links them and ends with the main call to action.
+  It is the first thing under the nav on every page, the home included (product owner: no
+  waiting for it), so there the hero starts under it instead of running up under the nav;
   each content page opens with `PageHeader.astro` (its h1, one line, a clay render).
 - **Every section is a component** in `src/components/payments/landing/sections/`, reading
   `landingData(lang, layout)` (`data.ts`); `layout` "multi" turns topic anchors into page links
