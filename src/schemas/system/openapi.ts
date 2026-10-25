@@ -55,7 +55,7 @@ registerRoutes([
     tags: ['Analytics'],
     summary: 'Dashboard aggregate',
     description:
-      'Read-only rollups from the Payments API for the signed-in consumer. `metric` is one of `summary`, `series` (payments grouped by `period`, the overview chart), `balances`, `logs` or `webhook-logs`; anything else is 404. Each has its own shape, forwarded unchanged.',
+      'Read-only rollups from the Payments API for the signed-in consumer. `metric` is one of `summary`, `series` (payments grouped by `period` for the overview chart, plus the swaps, liquidity operations and webhook deliveries of the same window), `balances`, `logs` or `webhook-logs`; anything else is 404. Each has its own shape, forwarded unchanged.',
     security: sessionSecurity,
     request: {
       params: z.object({

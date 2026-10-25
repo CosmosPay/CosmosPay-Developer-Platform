@@ -8,6 +8,8 @@ import { LANDING } from "@/lib/payments/landing-i18n";
 import { PLAN_SPECS } from "@/lib/plans";
 import { DOCS, PRICING, loginTo } from "@/components/cosmos/lib/constants";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
+import { NETWORK_IDS, networkName } from "@/lib/chains";
+import { networkLogo, tokenLogo } from "@/lib/token-logos";
 import type { Locale } from "@/lib/payments/i18n";
 
 /* "single" is the one long landing; "multi" spreads it over the home and the content pages
@@ -38,8 +40,16 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
   // adapters), Monad and EURC from Trust Wallet's assets, Stellar's mark in currentColor so it
   // follows the theme (Mark.astro), Cosmos from public/brand. Files in public/media/brands.
   type MarkName = ComponentProps<typeof Mark>["name"];
-  type Brand = { name: string; src?: string; mark?: MarkName };
-  const brand = (name: string, file: string): Brand => ({ name, src: `/media/brands/${file}` });
+  type Brand = { name: string; src?: string; srcDark?: string; mark?: MarkName };
+  const brand = (name: string, file: string, dark?: string): Brand => ({ name, src: `/media/brands/${file}`, srcDark: dark && `/media/brands/${dark}` });
+  // The networks NEAR Intents swaps between (beyond the three a payment settles on) and the
+  // tokens people hold most there, each with its official logo (src/lib/token-logos.ts).
+  const SETTLE = ["stellar", "solana", "monad"];
+  const SWAP_TOKENS = ["USDT", "USDT0", "DAI", "WBTC", "cbBTC"];
+  const swapRow: Brand[] = [
+    ...NETWORK_IDS.filter((id) => !SETTLE.includes(id) && networkLogo(id)).map((id) => ({ name: networkName(id), src: networkLogo(id) })),
+    ...SWAP_TOKENS.filter((sym) => tokenLogo(sym)).map((sym) => ({ name: sym, src: tokenLogo(sym) })),
+  ];
   const marquees: { label: string; items: Brand[] }[] = [
     {
       label: t.marks.chains,
@@ -54,6 +64,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
         brand("MON", "monad.webp"),
       ],
     },
+    { label: t.marks.swaps, items: swapRow },
     {
       label: t.marks.wallets,
       items: [
@@ -65,6 +76,9 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
         brand("Rabet", "rabet.webp"),
         brand("Phantom", "phantom.svg"),
         brand("Solflare", "solflare.svg"),
+        // Pollar's brand kit: the blue mark on light, the white one on dark (its icon mark only
+        // ever appears with the name beside it, as the kit asks).
+        brand("Pollar", "pollar.webp", "pollar-dark.webp"),
       ],
     },
   ];

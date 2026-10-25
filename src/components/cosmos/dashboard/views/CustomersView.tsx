@@ -13,9 +13,15 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { matchesQuery } from "@/lib/dashboard-filters";
+import { CHAINS, assetLabel, explorerAccountUrl, isAddress, isChain } from "@/lib/chains";
 
 const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
-const acctExplorer = (account, env) => `https://stellar.expert/explorer/${env === "prod" ? "public" : "testnet"}/account/${account}`;
+/* A customer's account may be on Stellar, Solana or Monad: its explorer is the one of the chain its
+   address belongs to, on the environment's network. */
+const acctExplorer = (account, env) => {
+  const chain = CHAINS.find((c) => isAddress(c, account || ""));
+  return chain ? explorerAccountUrl(chain, env === "prod" ? "public" : "testnet", account) : null;
+};
 
 export function CustomersView({ canManage = true, orgId, env = "dev" }) {
   const t = useT();
@@ -49,7 +55,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={cv.title} sub={fmt(cv.sub, { n: rows.length })}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button>}</ViewHead>
+      <ViewHead title={cv.title}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button>}</ViewHead>
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={cv.searchPlaceholder} />
         {!loading && !error && view.length > 0 && (
@@ -102,11 +108,10 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
         <Field label={m.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Inc." autoFocus />
         <Field label={cx.custDetail.alias} hint={t.dash.common.optional} value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="Acme billing" />
         <Field label={m.email} hint={t.dash.common.optional} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@acme.com" />
-        <Field label={cx.custDetail.account} hint={t.dash.common.optional} value={account} onChange={(e) => setAccount(e.target.value)} placeholder="G…" />
+        <Field label={cx.custDetail.account} hint={t.dash.common.optional} value={account} onChange={(e) => setAccount(e.target.value)} placeholder={cx.custDetail.accountPlaceholder} />
         <div className="modal-actions">
           <button className="btn btn-violet" disabled={!name.trim() || busy} onClick={submit}>{m.add}</button>
           <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
@@ -157,7 +162,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
             <Field label={m.name} value={form.name} onChange={set("name")} autoFocus />
             <Field label={cd.alias} hint={t.dash.common.optional} value={form.alias} onChange={set("alias")} placeholder="Acme billing" />
             <Field label={m.email} hint={t.dash.common.optional} type="email" value={form.email} onChange={set("email")} />
-            <Field label={cd.account} hint={t.dash.common.optional} value={form.account} onChange={set("account")} placeholder="G…" />
+            <Field label={cd.account} hint={t.dash.common.optional} value={form.account} onChange={set("account")} placeholder={cd.accountPlaceholder} />
             <Field label={cd.note} hint={t.dash.common.optional} value={form.note} onChange={set("note")} />
             <div className="modal-actions">
               <button className="btn btn-violet" disabled={!form.name.trim() || busy} onClick={save}>{cd.save}</button>
@@ -173,7 +178,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
             </div>
             <div className="paylink-actions" style={{ marginBottom: 18 }}>
               {canManage && <button className="btn btn-dark btn-sm" onClick={() => setEdit(true)}>{DI.edit} {cd.edit}</button>}
-              {customer.account && <a className="btn btn-soft btn-sm" href={acctExplorer(customer.account, env)} target="_blank" rel="noopener noreferrer">{DI.network} {cd.onChain}</a>}
+              {customer.account && acctExplorer(customer.account, env) && <a className="btn btn-soft btn-sm" href={acctExplorer(customer.account, env)} target="_blank" rel="noopener noreferrer">{DI.network} {cd.onChain}</a>}
               {canManage && <button className="btn btn-soft danger-soft" onClick={onDelete}>{DI.trash} {cx.delete}</button>}
             </div>
 
@@ -185,7 +190,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
                 {pays.map((p) => (
                   <tr key={p.id}>
                     <td className="tid">{p.id}</td>
-                    <td className="amt">{p.amount || "-"} {p.asset === "native" ? "XLM" : p.asset}</td>
+                    <td className="amt">{p.amount || "-"} {assetLabel(isChain(p.chain) ? p.chain : "stellar", p.asset)}</td>
                     <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>
                   </tr>

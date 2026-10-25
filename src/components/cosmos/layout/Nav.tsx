@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FocusEvent } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, type FocusEvent, type ReactNode } from "react";
 import { useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
 import { DASH, DOCS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
@@ -93,7 +93,7 @@ function useNavItems(area?: Area): any[] {
 /* `inDash`: the bar inside the dashboard (Dashboard.tsx), restyled to its reference: it spans the
    content column only, the logo lives in the sidebar instead (dashboard.css), and it drops the
    "Dashboard" button, which would lead to the page it is on. */
-export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area, inDash = false }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area; inDash?: boolean }) {
+export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area, inDash = false, search }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area; inDash?: boolean; search?: ReactNode }) {
   const t = useT();
   const NAV_ITEMS = useNavItems(area);
   const [scrolled, setScrolled] = useState(false);
@@ -114,6 +114,33 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
   const [hydrated, setHydrated] = useState(false);
   const ready = hydrated && sessionReady;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* A panel hangs from its own trigger and grows out of it: when it opens, it is pulled back
+     inside the window if it would cross the right edge, and its transform origin is set under
+     the trigger. Closing keeps the panel a moment (`leaving`) so it can play its exit. */
+  const [leaving, setLeaving] = useState<string | null>(null);
+  const prevActive = useRef<string | null>(null);
+  useEffect(() => {
+    const was = prevActive.current;
+    prevActive.current = active;
+    if (!was || active) { setLeaving(null); return; }
+    setLeaving(was);
+    const id = setTimeout(() => setLeaving(null), 150);
+    return () => clearTimeout(id);
+  }, [active]);
+  useLayoutEffect(() => {
+    if (!active) return;
+    const wrap = document.getElementById(`mega-${active}`);
+    const panel = wrap?.querySelector<HTMLElement>(".mega");
+    const trigger = document.querySelector<HTMLElement>(`[aria-controls="mega-${active}"]`);
+    if (!wrap || !panel || !trigger) return;
+    wrap.style.removeProperty("--mega-shift");
+    const box = panel.getBoundingClientRect();
+    const overflow = Math.max(0, box.right - (document.documentElement.clientWidth - 16));
+    const shift = Math.min(overflow, Math.max(0, box.left - 16));
+    wrap.style.setProperty("--mega-shift", `${-shift}px`);
+    const t = trigger.getBoundingClientRect();
+    panel.style.transformOrigin = `${t.left + t.width / 2 - (box.left - shift)}px 0`;
+  }, [active]);
   useEffect(() => {
     const h = () => {
       setScrolled(window.scrollY > 8);
@@ -191,13 +218,15 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
           {NAV_ITEMS.map((it) => it.cols ? (
             <div className="nav-item" key={it.key} onMouseEnter={() => open(it.key)} onBlur={closeOnBlur}>
               <button type="button" className={`nav-trigger${active === it.key ? " on" : ""}`} aria-expanded={active === it.key} aria-controls={`mega-${it.key}`} onClick={() => setActive((a) => a === it.key ? null : it.key)}>{it.label}<IcNChev /></button>
-              <div className="mega-wrap" id={`mega-${it.key}`} hidden={active !== it.key} onMouseEnter={() => open(it.key)} onMouseLeave={scheduleClose}><MegaPanel item={it} /></div>
+              <div className="mega-wrap" id={`mega-${it.key}`} hidden={active !== it.key && leaving !== it.key} data-state={active === it.key ? "open" : "closing"} onMouseEnter={() => open(it.key)} onMouseLeave={scheduleClose}><MegaPanel item={it} /></div>
             </div>
           ) : (
             <a className="nav-trigger" href={it.href} key={it.key} onMouseEnter={() => open(null)}>{it.label}</a>
           ))}
         </nav>
         <div className="nav-right">
+          {/* The dashboard puts its search at the start of the bar's right side. */}
+          {search}
           <ThemeToggle theme={theme} setTheme={setTheme} />
           <a className="theme-btn docs-btn" href={DOCS} aria-label={t.nav.docs} title={t.nav.docs}><IcDocs /></a>
           <LangSelect />

@@ -51,7 +51,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={title} sub={lv.sub} />
+      <ViewHead title={title} />
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={lv.searchPlaceholder} />
         {!loading && !error && view.length > 0 && (

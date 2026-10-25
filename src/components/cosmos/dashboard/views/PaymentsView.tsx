@@ -95,7 +95,7 @@ export function PaymentsView({ canManage = true, orgId, env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={pl.title} sub={fmt(pl.sub, { n: inEnv.length })}>
+      <ViewHead title={pl.title}>
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pl.create}</button>}
       </ViewHead>
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{pl.readOnly}</span></div>}
@@ -232,7 +232,6 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
       <div className="modal-body paylink-form">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
 
         <div className="fld">
           <span className="field-l" id="paylink-chain-l">{m.chain}</span>
@@ -244,7 +243,6 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
               </button>
             ))}
           </div>
-          <p className="field-help">{tier === "public" ? fmt(m.chainLive, { chain: CHAIN_NAMES[chain] }) : fmt(m.chainTest, { chain: CHAIN_NAMES[chain], network: TEST_NETWORKS[chain] })}</p>
         </div>
 
         {stellar && (
@@ -255,7 +253,6 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
                 <button key={k} type="button" className={kind === k ? "on" : ""} aria-pressed={kind === k} onClick={() => setKind(k)}>{k === "pay" ? m.kindPay : m.kindTx}</button>
               ))}
             </div>
-            <p className="field-help">{isTx ? m.kindTxHint : m.kindPayHint}</p>
           </div>
         )}
 
@@ -264,7 +261,7 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
           <div className="sp pl-amount">
             <div className="sp-top"><label htmlFor="paylink-amount">{m.amount}</label></div>
             <div className="sp-row">
-              <input id="paylink-amount" className="sp-amount" inputMode="decimal" autoComplete="off" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value.replace(",", "."))} aria-describedby="paylink-amount-h" aria-invalid={amountOk ? undefined : true} />
+              <input id="paylink-amount" className="sp-amount" inputMode="decimal" autoComplete="off" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value.replace(",", "."))} aria-describedby={isTx && chain !== "monad" ? undefined : "paylink-amount-h"} aria-invalid={amountOk ? undefined : true} />
               <Select
                 className="asset-dd" label={m.asset} value={assetKey} onChange={setAssetKey}
                 options={[
@@ -274,17 +271,17 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
               />
             </div>
           </div>
-          <p className="field-help" id="paylink-amount-h">{chain === "monad" ? m.amountMonad : isTx ? m.amountTx : m.amountHint}</p>
+          {(chain === "monad" || !isTx) && <p className="field-help" id="paylink-amount-h">{chain === "monad" ? m.amountMonad : m.amountHint}</p>}
         </div>
         {custom && (
           <div className="field-row arrive">
-            <Field label={stellar ? m.asset : tk.ticker} hint={stellar ? undefined : tk.tickerHint} value={customCode} onChange={(e) => setCustomCode(e.target.value)} placeholder="USDC" />
-            <Field label={stellar ? m.assetIssuer : tk.address[chain]} hint={stellar ? m.assetIssuerHint : tk.addressHint[chain]} value={customIssuer} onChange={(e) => setCustomIssuer(e.target.value)} placeholder={ADDRESS_PLACEHOLDERS[chain]} />
+            <Field label={stellar ? m.asset : tk.ticker} value={customCode} onChange={(e) => setCustomCode(e.target.value)} placeholder="USDC" />
+            <Field label={stellar ? m.assetIssuer : tk.address[chain]} hint={stellar ? m.assetIssuerHint : undefined} value={customIssuer} onChange={(e) => setCustomIssuer(e.target.value)} placeholder={ADDRESS_PLACEHOLDERS[chain]} />
           </div>
         )}
 
-        <Field label={m.destination} hint={m.destinationHints[chain]} value={destination} onChange={(e) => setDestination(e.target.value)} placeholder={ADDRESS_PLACEHOLDERS[chain]} aria-invalid={invalid(destOk, destination)} autoComplete="off" spellCheck={false} />
-        {isTx && <Field label={m.source} hint={m.sourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" aria-invalid={invalid(sourceOk, source)} autoComplete="off" spellCheck={false} />}
+        <Field label={m.destination} value={destination} onChange={(e) => setDestination(e.target.value)} placeholder={ADDRESS_PLACEHOLDERS[chain]} aria-invalid={invalid(destOk, destination)} autoComplete="off" spellCheck={false} />
+        {isTx && <Field label={m.source} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" aria-invalid={invalid(sourceOk, source)} autoComplete="off" spellCheck={false} />}
 
         <button type="button" className="swap-more" aria-expanded={more} aria-controls="paylink-more" onClick={() => setMore((v) => !v)}>
           {m.more}

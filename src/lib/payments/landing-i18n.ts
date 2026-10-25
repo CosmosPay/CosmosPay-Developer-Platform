@@ -32,6 +32,7 @@ const en = {
   marks: {
     title: "Accept the networks, assets and wallets your customers already use.",
     chains: "Networks and assets",
+    swaps: "Networks and tokens to swap between",
     wallets: "Wallets",
   },
   benefits: {
@@ -333,6 +334,7 @@ const es: LandingMessages = {
   marks: {
     title: "Acepta las redes, activos y wallets que tus clientes ya usan.",
     chains: "Redes y activos",
+    swaps: "Redes y tokens entre los que hacer swaps",
     wallets: "Wallets",
   },
   benefits: {
@@ -633,6 +635,7 @@ const pt: LandingMessages = {
   marks: {
     title: "Aceite as redes, os ativos e as carteiras que seus clientes já usam.",
     chains: "Redes e ativos",
+    swaps: "Redes e tokens para fazer swaps",
     wallets: "Carteiras",
   },
   benefits: {
@@ -933,6 +936,7 @@ const fr: LandingMessages = {
   marks: {
     title: "Acceptez les réseaux, actifs et wallets que vos clients utilisent déjà.",
     chains: "Réseaux et actifs",
+    swaps: "Réseaux et jetons à échanger",
     wallets: "Wallets",
   },
   benefits: {
@@ -1233,6 +1237,7 @@ const de: LandingMessages = {
   marks: {
     title: "Akzeptiere die Netzwerke, Assets und Wallets, die deine Kunden schon nutzen.",
     chains: "Netzwerke und Assets",
+    swaps: "Netzwerke und Token für Swaps",
     wallets: "Wallets",
   },
   benefits: {

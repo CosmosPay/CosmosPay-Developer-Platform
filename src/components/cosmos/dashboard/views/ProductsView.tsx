@@ -42,7 +42,7 @@ export function ProductsView({ canManage = true, orgId, env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={pr.title} sub={pr.sub}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button>}</ViewHead>
+      <ViewHead title={pr.title}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button>}</ViewHead>
       <div className="panel">
         {!loading && !error && items.length > 0 && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
@@ -95,7 +95,6 @@ function CreateProductModal({ pr, env, orgId, onClose, onCreated }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
         <Field label={m.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Pro plan (monthly)" autoFocus />
         <Field label={m.price} hint={m.priceHint} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="49.00" inputMode="decimal" />
         <Field label={t.dash.paylinks.modal.asset} value={asset} onChange={(e) => setAsset(e.target.value)} placeholder="XLM" />

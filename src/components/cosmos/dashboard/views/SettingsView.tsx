@@ -108,7 +108,7 @@ function OrgMembersPanel({ org, orgLimits }) {
     <div className="panel set-panel">
       <div className="panel-head">
         <h3>{sv.team.title}{canManage && <span className="seat-usage">{members.length} / {seatLimit == null ? "∞" : seatLimit}</span>}</h3>
-        {canManage && <button className="link-btn" onClick={() => setInviting((a) => !a)}>{og.inviteMember}</button>}
+        {canManage && <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setInviting((a) => !a)}>{og.inviteMember}</button>}
       </div>
       <div className="set-body">
         {canManage && inviting && (
@@ -189,9 +189,9 @@ export function SettingsView({ org, orgCount, limits, keyCount, onRenameOrg, onD
   const isOrgOwner = org.role === "owner";
   return (
     <>
-      <ViewHead title={sv.title} sub={fmt(sv.sub, { org: org.name })} />
+      <ViewHead title={sv.title} />
       <div className="set-grid">
-        <div className="panel set-panel"><div className="panel-head"><h3>{sv.org.title}</h3>{canManageOrg && org.id && <button className="link-btn" onClick={() => onRenameOrg(org)}>{og.rename}</button>}</div><div className="set-body">
+        <div className="panel set-panel"><div className="panel-head"><h3>{sv.org.title}</h3>{canManageOrg && org.id && <button type="button" className="btn btn-outline-w btn-sm" onClick={() => onRenameOrg(org)}>{og.rename}</button>}</div><div className="set-body">
           <div className="set-row"><div className="set-l">{sv.org.name}</div><div className="set-v">{org.name}</div></div>
           <div className="set-row"><div className="set-l">{sv.org.id}</div><div className="set-v tid">{org.id || "-"}</div></div>
           <div className="set-row"><div className="set-l">{sv.org.created}</div><div className="set-v">{org.createdAt ? fmtDate(org.createdAt) : "-"}</div></div>

@@ -89,7 +89,7 @@ export function ActivityLogView({ env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={t.dash.viewLabels.activityLog} sub={av.sub} />
+      <ViewHead title={t.dash.viewLabels.activityLog} />
 
       {summary && (
         <div className="metrics">

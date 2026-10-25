@@ -4635,7 +4635,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "summary": "Payments grouped by day, week, month or year, with the window before for growth",
+        "summary": "Payments, swaps, liquidity and webhooks grouped by day, week, month or year, with the window before for growth",
         "tags": [
           "analytics"
         ]
@@ -12960,7 +12960,7 @@
           "account": {
             "type": "string",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "Optional Stellar account to associate the customer with."
+            "description": "Optional account to associate the customer with, on any chain: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). Payment intents whose payer (`source`) is this account count toward the customer, whatever their chain."
           },
           "reference": {
             "type": "string",
@@ -12995,8 +12995,8 @@
           "account": {
             "type": "object",
             "nullable": true,
-            "description": "Stellar account associated with this customer, if any.",
-            "example": "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            "description": "The account associated with this customer, if any: a Stellar account (G...), a Solana address or a Monad address, the last stored EIP-55 checksummed.",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
           },
           "note": {
             "type": "object",
@@ -13050,8 +13050,8 @@
           "account": {
             "type": "object",
             "nullable": true,
-            "description": "Stellar account associated with this customer, if any.",
-            "example": "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            "description": "The account associated with this customer, if any: a Stellar account (G...), a Solana address or a Monad address, the last stored EIP-55 checksummed.",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
           },
           "note": {
             "type": "object",
@@ -13075,7 +13075,7 @@
           },
           "payments": {
             "type": "number",
-            "description": "Payment intents attributed to this customer.",
+            "description": "Payment intents, on any chain, whose payer (`source`) is this customer’s account, on the network the API key targets.",
             "example": 12
           },
           "succeeded": {
@@ -13151,7 +13151,7 @@
           "account": {
             "type": "string",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "Optional Stellar account to associate the customer with."
+            "description": "Optional account to associate the customer with, on any chain: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). Payment intents whose payer (`source`) is this account count toward the customer, whatever their chain."
           },
           "reference": {
             "type": "string",
@@ -16969,6 +16969,226 @@
           "volume"
         ]
       },
+      "SeriesSwapBucketEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Created in the bucket or window, any status.",
+            "example": 42
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 37
+          },
+          "failed": {
+            "type": "number",
+            "description": "Given up on: failed or expired (and, for a cross-chain swap, refunded).",
+            "example": 3
+          },
+          "start": {
+            "type": "string",
+            "description": "The first day of the bucket (UTC; weeks start on Monday), the same as the payments bucket at that index.",
+            "example": "2026-10-01"
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "failed",
+          "start"
+        ]
+      },
+      "SeriesSwapsByKindEntity": {
+        "type": "object",
+        "properties": {
+          "dex": {
+            "type": "number",
+            "description": "Stellar DEX swaps.",
+            "example": 30
+          },
+          "chain": {
+            "type": "number",
+            "description": "Solana (Jupiter) and Monad (Kuru Flow) swaps. Mainnet only.",
+            "example": 8
+          },
+          "crossChain": {
+            "type": "number",
+            "description": "Swaps between networks through NEAR Intents. Mainnet only.",
+            "example": 4
+          }
+        },
+        "required": [
+          "dex",
+          "chain",
+          "crossChain"
+        ]
+      },
+      "SeriesSwapTotalsEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Created in the bucket or window, any status.",
+            "example": 42
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 37
+          },
+          "failed": {
+            "type": "number",
+            "description": "Given up on: failed or expired (and, for a cross-chain swap, refunded).",
+            "example": 3
+          },
+          "inProgress": {
+            "type": "number",
+            "description": "Not final yet: unsigned, submitted, or a cross-chain swap awaiting or processing its deposit.",
+            "example": 2
+          },
+          "byKind": {
+            "description": "The window’s swaps per kind, any status.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesSwapsByKindEntity"
+              }
+            ]
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "failed",
+          "inProgress",
+          "byKind"
+        ]
+      },
+      "SeriesOutcomeCountsEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Created in the bucket or window, any status.",
+            "example": 42
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 37
+          },
+          "failed": {
+            "type": "number",
+            "description": "Given up on: failed or expired (and, for a cross-chain swap, refunded).",
+            "example": 3
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "failed"
+        ]
+      },
+      "SeriesSwapsEntity": {
+        "type": "object",
+        "properties": {
+          "buckets": {
+            "description": "Swaps of every kind per bucket, on the same buckets as the payments, pre-seeded so a quiet bucket is a zero.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesSwapBucketEntity"
+            }
+          },
+          "totals": {
+            "description": "The window the buckets cover.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesSwapTotalsEntity"
+              }
+            ]
+          },
+          "previous": {
+            "description": "The window of the same length just before it, for growth.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesOutcomeCountsEntity"
+              }
+            ]
+          }
+        },
+        "required": [
+          "buckets",
+          "totals",
+          "previous"
+        ]
+      },
+      "SeriesLiquidityEntity": {
+        "type": "object",
+        "properties": {
+          "totals": {
+            "description": "Liquidity pool deposits and withdrawals in the window.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesOutcomeCountsEntity"
+              }
+            ]
+          },
+          "previous": {
+            "description": "The window of the same length just before it, for growth.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesOutcomeCountsEntity"
+              }
+            ]
+          }
+        },
+        "required": [
+          "totals",
+          "previous"
+        ]
+      },
+      "SeriesWebhookCountsEntity": {
+        "type": "object",
+        "properties": {
+          "deliveries": {
+            "type": "number",
+            "description": "Deliveries created in the window, any status.",
+            "example": 310
+          },
+          "failed": {
+            "type": "number",
+            "description": "Of those, the ones whose last attempt failed, as GET /v1/summary counts them (the sweeper may still redeliver one).",
+            "example": 4
+          }
+        },
+        "required": [
+          "deliveries",
+          "failed"
+        ]
+      },
+      "SeriesWebhooksEntity": {
+        "type": "object",
+        "properties": {
+          "totals": {
+            "description": "Deliveries to every endpoint of the consumer in the window. Not scoped by network: an endpoint belongs to none.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesWebhookCountsEntity"
+              }
+            ]
+          },
+          "previous": {
+            "description": "The window of the same length just before it, for growth.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesWebhookCountsEntity"
+              }
+            ]
+          }
+        },
+        "required": [
+          "totals",
+          "previous"
+        ]
+      },
       "AnalyticsSeriesEntity": {
         "type": "object",
         "properties": {
@@ -17004,13 +17224,40 @@
                 "$ref": "#/components/schemas/SeriesWindowEntity"
               }
             ]
+          },
+          "swaps": {
+            "description": "Swaps of every kind (Stellar DEX, Solana and Monad, cross-chain) on the network the key targets: a sandbox key counts no Solana, Monad or cross-chain swap, which run on mainnet only.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesSwapsEntity"
+              }
+            ]
+          },
+          "liquidity": {
+            "description": "Liquidity pool operations on the network the key targets.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesLiquidityEntity"
+              }
+            ]
+          },
+          "webhooks": {
+            "description": "Webhook deliveries to the consumer’s endpoints.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesWebhooksEntity"
+              }
+            ]
           }
         },
         "required": [
           "period",
           "buckets",
           "totals",
-          "previous"
+          "previous",
+          "swaps",
+          "liquidity",
+          "webhooks"
         ]
       },
       "AssetBalanceEntity": {

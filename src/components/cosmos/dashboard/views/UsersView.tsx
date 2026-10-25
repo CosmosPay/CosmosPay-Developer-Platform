@@ -33,7 +33,7 @@ export function UsersView({ currentUserId, currentRole }) {
   const tref = useRef(null); useGsapRows(tref, pg.page);
   return (
     <>
-      <ViewHead title={u.title} sub={u.subtitle} />
+      <ViewHead title={u.title} />
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={u.search} />
         {loading && <TableSkeleton label={t.dash.cosmos.loading} />}

@@ -112,7 +112,6 @@ export function CrossChainSwapDetailModal({ swap, orgId, env, canManage, onClose
         {canManage && awaiting && (
           <div className="paylink-block">
             <div className="paylink-block-head"><label className="field-l" htmlFor={`xswap-deposit-${data.id}`}>{d.reportTitle}</label></div>
-            <p className="field-note">{d.reportDesc}</p>
             <input id={`xswap-deposit-${data.id}`} className="field" value={txHash} onChange={(e) => setTxHash(e.target.value)} placeholder={d.reportPlaceholder} />
             <div className="modal-actions">
               <button className="btn btn-violet" disabled={!txHash.trim() || busy} onClick={report}>{busy ? d.reporting : d.report}</button>

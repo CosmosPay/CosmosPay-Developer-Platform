@@ -141,6 +141,9 @@
 .inst .lang-btn, .inst .theme-btn { background: var(--surface); }
 .inst ::selection { background: var(--accent-soft-2); }
 .inst :focus-visible { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+/* A text field shows focus itself (its line darkens and takes the ring, or its well does with
+   :focus-within), so the square outline above would draw a second box inside the rounded one. */
+.inst :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select):focus-visible { outline: none; }
 
 /* Floating panels (the mega menu, the mobile menu, the language list, menus, modals, toasts)
    reset to cosmos.css's page tokens, the blue brand's, so they never inherit a panel's or the

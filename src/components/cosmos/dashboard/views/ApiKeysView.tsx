@@ -24,7 +24,7 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
   const readOnly = !canCreate && !canEdit && !canDelete;
   return (
     <>
-      <ViewHead title={ak.title} sub={`${usage} · ${ak.sub}`}>{canCreate && <button className="btn btn-dark btn-sm" onClick={onCreate} disabled={reached}>{DI.plus} {ak.create}</button>}</ViewHead>
+      <ViewHead title={ak.title} sub={usage}>{canCreate && <button className="btn btn-dark btn-sm" onClick={onCreate} disabled={reached}>{DI.plus} {ak.create}</button>}</ViewHead>
       {readOnly && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.key}<span>{ak.readOnly}</span></div>}
       {canCreate && reached && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.key}<span>{ak.limitReached}</span></div>}
       <div className="panel">

@@ -7,7 +7,8 @@ import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { CHAIN_NAMES, isChain } from "@/lib/chains";
+import { networkName } from "@/lib/chains";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 const num = (s) => { const n = Number(s); return Number.isFinite(n) ? n : 0; };
@@ -54,26 +55,33 @@ export function BalancesView({ canManage = false, env = "dev" }) {
 
   const max = Math.max(1, ...bals.map((x) => num(x.amount)));
   const totalSettlements = bals.reduce((a, x) => a + (x.count || 0), 0);
+  const networks = new Set(bals.map((x) => x.chain)).size;
+  // A Stellar asset other than XLM is labelled CODE:ISSUER; its mark and name go by the code.
+  const code = (asset) => String(asset).split(":")[0];
 
   return (
     <>
-      <ViewHead title={b.title} sub={b.sub} />
+      <ViewHead title={b.title} />
       {loading && <TableSkeleton label={cx.loading} />}
       {!loading && (
         <div className="bal-grid">
           {bals.map((bal) => (
             <div className="bal-card" key={`${bal.chain || "stellar"}:${bal.asset}`}>
-              {/* The asset and the chain it settles on, as text (no chip). */}
-              <div className="bal-asset"><span className="bal-asset-name"><b>{bal.asset}</b> {CHAIN_NAMES[isChain(bal.chain) ? bal.chain : "stellar"]}</span></div>
+              {/* The asset with its logo and the network it settles on, as text (no chip). */}
+              <div className="bal-asset">
+                <TokenMark symbol={code(bal.asset)} chain={bal.chain || "stellar"} chainName={networkName(bal.chain || "stellar")} size={28} />
+                <span className="bal-asset-name"><b>{code(bal.asset)}</b> {networkName(bal.chain || "stellar")}</span>
+              </div>
               <div className="bal-amt">{bal.amount}</div>
               <div className="bal-fiat">{num(bal.pending) > 0 ? `${cx.pending}: ${bal.pending}` : `${bal.count}× ${cx.received}`}</div>
               <div className="bal-bar"><span style={{ width: Math.round((num(bal.amount) / max) * 100) + "%" }} /></div>
             </div>
           ))}
+          {/* Amounts in different assets do not add up: the black card counts settlements instead. */}
           <div className="bal-card total">
-            <div className="bal-asset"><span style={{ color: "rgba(255,255,255,.7)", fontSize: 13, fontWeight: 600 }}>{b.total}</span></div>
+            <div className="bal-asset"><span className="bal-total-k">{b.total}</span></div>
             <div className="bal-amt">{totalSettlements}</div>
-            <div className="bal-fiat">{bals.length ? `${bals.length} ${cx.events}` : cx.empty}</div>
+            <div className="bal-fiat">{bals.length ? fmt(b.across, { assets: bals.length, networks }) : cx.empty}</div>
           </div>
         </div>
       )}

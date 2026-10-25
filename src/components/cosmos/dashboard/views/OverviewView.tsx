@@ -1,15 +1,15 @@
-/* OverviewView: the organization's payments at a glance, strictly after the product owner's
-   gateway-dashboard reference: a dark account card (its arrows step through the organizations)
-   beside a grey panel with the totals, the organization ID and the main action; the payments
-   activity by day, week, month or year (a five-column strip over paired bars); and the
-   transaction list with the dashboard's filter bar and a menu per payment. Every figure comes
-   from the Payments API (/v1/summary, /v1/summary/series and the payment list); nothing is
-   sample data. While a figure loads, a skeleton holds its place. */
+/* OverviewView: the organization at a glance, after the product owner's gateway-dashboard
+   reference: a dark account card (its arrows step through the organizations) beside a white
+   panel with its balances (each token with its logo), the organization ID and the main actions;
+   the activity by day, week, month or year (a strip over paired bars); and the transaction list
+   with the dashboard's filter bar and a menu per payment. Every figure comes from the Payments
+   API (/v1/summary, /v1/summary/series, /v1/balances and the payment list); nothing is sample
+   data. While a figure loads, a skeleton holds its place. */
 import { useState, useEffect } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { planSpec } from "@/lib/plans";
-import { DOCS, PAYMENTS } from "@/components/cosmos/lib/constants";
+import { DOCS } from "@/components/cosmos/lib/constants";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { showToast } from "@/components/cosmos/shared";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
@@ -20,7 +20,8 @@ import { BarChart } from "@/components/cosmos/dashboard/components/BarChart";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { Sk, ListSkeleton, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { CHAINS, CHAIN_NAMES } from "@/lib/chains";
+import { CHAINS, CHAIN_NAMES, networkName } from "@/lib/chains";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
@@ -95,6 +96,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const fl = t.dash.filters;
   // undefined while loading, null when the request failed.
   const [sum, setSum] = useState(undefined);
+  const [bals, setBals] = useState(undefined);
   const [chartPeriod, setChartPeriod] = useState("month");
   const [series, setSeries] = useState(undefined);
   const [seriesLoading, setSeriesLoading] = useState(true);
@@ -106,6 +108,8 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
     let alive = true;
     setSum(undefined);
     metricsApi.summary(env).then((d) => { if (alive) setSum(d); }).catch(() => { if (alive) setSum(null); });
+    setBals(undefined);
+    metricsApi.balances(env).then((d) => { if (alive) setBals(Array.isArray(d?.data) ? d.data : []); }).catch(() => { if (alive) setBals(null); });
     return () => { alive = false; };
   }, [env]);
   useEffect(() => {
@@ -130,35 +134,37 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   // Amounts arrive as exact decimal strings; grouped for reading, never re-rounded below 7 places.
   const amount = (v) => { const n = Number(v); return Number.isFinite(n) ? new Intl.NumberFormat(lang, { minimumFractionDigits: 2, maximumFractionDigits: 7 }).format(n) : v; };
   const sumLoading = sum === undefined;
-  const totals = (sum && sum.totals) || {};
   const volume = (sum && sum.volume) || [];
   const primary = volume[0];
   const plan = planSpec(org.plan);
   const created = org.createdAt ? new Date(org.createdAt).toLocaleDateString(lang, { day: "numeric", month: "short", year: "numeric" }) : null;
-  const tier = env === "prod" ? t.dash.paylinks.network.prod : t.dash.paylinks.network.dev;
+  const tier = env === "prod" ? t.dash.env.production : t.dash.env.sandbox;
 
   // The organizations the arrows step through (the shell passes the usable ones).
   const at = orgs.findIndex((o) => o.id === org.id);
   const step = (d) => { if (orgs.length > 1) onSwitchOrg(orgs[(at + d + orgs.length) % orgs.length].id); };
 
-  const kpis = [
-    { k: h.kpiTotal, v: num.format(totals.all ?? 0) },
-    { k: h.kpiSucceeded, v: num.format(totals.succeeded ?? 0) },
-    { k: h.kpiFailed, v: num.format((totals.failed ?? 0) + (totals.cancelled ?? 0) + (totals.expired ?? 0)) },
-    { k: h.kpiRate, v: `${num.format(totals.successRate ?? 0)}%` },
-  ];
 
   // The chart's window and the one before it, for growth.
   const firstSeries = series === undefined;
   const win = (series && series.totals) || { count: 0, succeeded: 0, failed: 0, volume: "0", payers: 0 };
   const before = (series && series.previous) || { count: 0, volume: "0" };
+  // Beyond payments (the same window): every swap (on one chain and between chains), liquidity
+  // operations and webhook deliveries. A server without them yet shows zeros.
+  const swaps = (series && series.swaps && series.swaps.totals) || { count: 0, succeeded: 0, failed: 0 };
+  const liq = (series && series.liquidity && series.liquidity.totals) || { count: 0, succeeded: 0, failed: 0 };
+  const hooks = (series && series.webhooks && series.webhooks.totals) || { deliveries: 0, failed: 0 };
   const growth = (cur, prev) => (prev > 0 ? ((cur - prev) / prev) * 100 : null);
   const gVolume = growth(Number(win.volume) || 0, Number(before.volume) || 0);
   const gCount = growth(win.count || 0, before.count || 0);
   const pct = (g) => `${g >= 0 ? "↑" : "↓"} ${num.format(Math.round(Math.abs(g) * 10) / 10)}%`;
   const bars = ((series && series.buckets) || []).map((b) => ({ date: b.start, volume: Number(b.volume) || 0, count: b.count || 0 }));
   // A figure of the strip, or its skeleton while its period loads.
-  const fig = (v) => (seriesLoading ? <Sk className="lg" w="64%" /> : <b className="arrive">{v}</b>);
+  // A window that could not be read shows a dash, never zeros that look like data.
+  const fig = (v, sub = null) => (seriesLoading
+    ? <Sk className="lg" w="64%" />
+    : series === null ? <b className="arrive">-</b>
+    : <><b className="arrive">{v}</b>{sub && <small className="hub-sub arrive">{sub}</small>}</>);
 
   // The list, as the filter bar narrows it; each control counts what the others leave.
   const all = rows || [];
@@ -207,12 +213,24 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             </div>
           </div>
         </div>
+        {/* Beside the card: what the organization holds, its ID and the two main actions. */}
         <div className="hub-side">
-          <div className="hub-kpis" aria-busy={sumLoading || undefined}>
-            {kpis.map((m) => (
-              <div className="hub-kpi" key={m.k}><span>{m.k}</span>{sumLoading ? <Sk className="lg sk-on-slate" w="55%" /> : <b className="arrive">{m.v}</b>}</div>
-            ))}
+          <div className="hub-side-head">
+            <h2 className="hub-side-t">{h.balances}</h2>
+            <button type="button" className="hub-link" onClick={() => onGo("balances")}>{h.allBalances}</button>
           </div>
+          <ul className="hub-bals" role="list" aria-busy={bals === undefined || undefined}>
+            {bals === undefined
+              ? [0, 1, 2].map((i) => <li key={i} className="hub-bal"><Sk className="round" w="32px" /><span className="hub-bal-t"><Sk w="7em" /><Sk w="4em" /></span></li>)
+              : (bals || []).slice(0, 4).map((x) => (
+                <li key={`${x.chain}:${x.asset}`} className="hub-bal arrive">
+                  <TokenMark symbol={String(x.asset).split(":")[0]} chain={x.chain} chainName={networkName(x.chain)} size={32} />
+                  <span className="hub-bal-t"><b>{amount(x.amount)} {String(x.asset).split(":")[0]}</b><span>{networkName(x.chain)}</span></span>
+                </li>
+              ))}
+            {Array.isArray(bals) && !bals.length && <li className="hub-bal-empty">{h.noBalances}</li>}
+            {bals === null && <li className="hub-bal-empty" role="alert">{t.dash.admin.loadError}</li>}
+          </ul>
           <div className="hub-actions">
             <div className="hub-field">
               <OrgIdField id={org.id} label={h.orgId} />
@@ -220,7 +238,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             </div>
             <div className="hub-cta">
               <button type="button" className="btn btn-dark" onClick={() => onGo("payments")}>{h.createLink}</button>
-              <a className="hub-link" href={`${PAYMENTS}/integrations`} target="_blank" rel="noopener">{h.designs}</a>
+              <button type="button" className="btn btn-outline-w" onClick={() => onGo("swaps")}>{h.newSwap}</button>
             </div>
           </div>
         </div>
@@ -238,10 +256,11 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
         </div>
         <div className="panel hub-panel" aria-busy={seriesLoading || undefined}>
           <div className="hub-summary">
-            <div><span>{h.sumVolume}</span>{fig(num.format(Number(win.volume) || 0))}</div>
-            <div><span>{h.sumCount}</span>{fig(num.format(win.count || 0))}</div>
-            <div><span>{h.sumFailed}</span>{fig(num.format(win.failed || 0))}</div>
-            <div><span>{h.sumPayers}</span>{fig(num.format(win.payers || 0))}</div>
+            <div><span>{h.sumVolume}</span>{fig(num.format(Number(win.volume) || 0), fmt(h.payersN, { n: num.format(win.payers || 0) }))}</div>
+            <div><span>{h.sumCount}</span>{fig(num.format(win.count || 0), fmt(h.sumWebhooksFailed, { n: num.format(win.failed || 0) }))}</div>
+            <div><span>{h.sumSwaps}</span>{fig(num.format(swaps.count || 0), fmt(h.doneN, { n: num.format(swaps.succeeded || 0) }))}</div>
+            <div><span>{h.sumLiquidity}</span>{fig(num.format(liq.count || 0), fmt(h.doneN, { n: num.format(liq.succeeded || 0) }))}</div>
+            <div><span>{h.sumWebhooks}</span>{fig(num.format(hooks.deliveries || 0), fmt(h.sumWebhooksFailed, { n: num.format(hooks.failed || 0) }))}</div>
             <div title={h.growthTitle}>
               <span>{h.sumGrowth}</span>
               {seriesLoading ? <Sk className="lg" w="70%" /> : (

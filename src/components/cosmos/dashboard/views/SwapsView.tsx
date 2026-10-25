@@ -112,7 +112,7 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
 
   return (
     <>
-      <ViewHead title={sw.title} sub={fmt(sw.sub, { n: rows.length })} />
+      <ViewHead title={sw.title} />
       {canManage ? <SwapWidget orgId={orgId} env={env} onCreated={onCreated} /> : <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
       <div className="hub-section-head swaps-list-head"><h2 id="swaps-list-h">{sw.listTitle}</h2></div>
       <FilterBar
@@ -240,7 +240,6 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
         {signable && (
           <div className="paylink-block">
             <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
-            <p className="field-note">{w.signDesc}</p>
             <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
           </div>
         )}

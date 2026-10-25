@@ -51,7 +51,7 @@ export function SupportInboxView() {
 
   return (
     <>
-      <ViewHead title={s.inboxTitle} sub={s.inboxSubtitle} />
+      <ViewHead title={s.inboxTitle} />
       <div className="fbar">
         <Select variant="filter" label={t.dash.filters.status} placeholder={t.dash.filters.status} active={filter !== "all"} value={filter} onChange={setFilter} options={["all", ...TICKET_STATUSES].map((k) => ({ value: k, label: k === "all" ? s.all : s.statuses[k] }))} />
       </div>

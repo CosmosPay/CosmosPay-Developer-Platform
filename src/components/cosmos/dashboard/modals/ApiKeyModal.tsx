@@ -52,7 +52,6 @@ export function ApiKeyModal({ mode, initial, onClose, onSubmit }) {
   };
   return (
     <Modal onClose={onClose}><div className="modal-body"><div className="modal-eyebrow">{m.eyebrow}</div><h3>{isEdit ? m.editTitle : m.title}</h3>
-      <p>{isEdit ? m.editDesc : m.desc}</p>
       <label className="field-l" htmlFor={nameId}>{m.nameLabel}</label><input id={nameId} className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={m.namePlaceholder} autoFocus />
       <label className="field-l" htmlFor={descId} style={{ marginTop: 14 }}>{m.descLabel} <span className="field-hint">{t.dash.common.optional}</span></label><input id={descId} className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={m.descPlaceholder} />
       <label className="field-l" style={{ marginTop: 14 }}>{m.roleLabel}</label>

@@ -20,6 +20,8 @@ import {
 } from "@/components/cosmos/dashboard/views/index";
 import { OrgSwitcher } from "@/components/cosmos/dashboard/widgets/OrgSwitcher";
 import { Sidebar } from "@/components/cosmos/dashboard/widgets/Sidebar";
+import { DashSearch } from "@/components/cosmos/dashboard/widgets/DashSearch";
+import { tierOf } from "@/lib/chains";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
@@ -132,11 +134,11 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   }, []);
   // The server emits notifications asynchronously after key actions, so refetch shortly after.
   const refreshNotifsSoon = () => { setTimeout(loadNotifs, 900); };
-  // Payment notifications are tagged with their Stellar network; surface only those
-  // matching the active environment (test → testnet, live → public). Notifications
-  // without a network (sign-ins, API keys, support) always show.
+  // Payment notifications are tagged with their network (on any chain); surface only those
+  // matching the active environment (test networks in Sandbox, mainnets in Production).
+  // Notifications without a network (sign-ins, API keys, support) always show.
   const curNet = live ? "public" : "testnet";
-  const visibleNotifs = notifs.filter((n) => { const net = n && n.metadata && n.metadata.network; return !net || net === curNet; });
+  const visibleNotifs = notifs.filter((n) => { const net = n && n.metadata && n.metadata.network; return !net || tierOf(net) === curNet; });
   const unreadNotifs = visibleNotifs.filter((n) => !n.read).length;
   const markNotifsRead = () => {
     if (!unreadNotifs) return;
@@ -348,7 +350,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
 
         <div className="dash-main">
           {/* The general nav, as on every view, adapted to the frame (Nav inDash). */}
-          <Nav theme={theme} setTheme={setTheme} user={user} sessionReady inDash />
+          <Nav theme={theme} setTheme={setTheme} user={user} sessionReady inDash search={<DashSearch go={go} view={view} visible={visibleView} />} />
           {/* The page head opens the main landmark (the nav above is the page banner), so the
               view's h1 and the environment switch belong to the content they title. */}
           <main id="main" className="dash-content">

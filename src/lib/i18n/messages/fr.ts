@@ -815,6 +815,7 @@ export default {
     openDashboard: "Ouvrir le tableau de bord"
   },
   dash: {
+    search: { label: "Rechercher dans le tableau de bord", placeholder: "Rechercher", pages: "Pages", searchGroup: "Rechercher", searchIn: "{place} contenant « {q} »", empty: "Aucun résultat pour « {q} »." },
     viewLabels: {
       overview: "Aperçu",
       payments: "Paiements",
@@ -984,7 +985,7 @@ export default {
       }
     },
     overview: {
-      hub: { crumb: "Vue d’ensemble", active: "Active", since: "Depuis le {date}", settled: "Volume réglé", noVolume: "Aucun paiement réglé pour l’instant", moreAssets: "+{n} autres", rate: "Tarif", plan: "Offre", orgId: "ID de l’organisation", createLink: "Créer un lien de paiement", docs: "Documentation", designs: "Designs de checkout", kpiTotal: "Paiements au total", kpiSucceeded: "Réussis", kpiFailed: "Échoués", kpiRate: "Taux de réussite", activity: "Activité des paiements", period7: "7 jours", period30: "30 jours", periods: { today: "Aujourd’hui", week: "Semaine", month: "Mois", year: "Année" }, noPeriodTx: "Aucun paiement réglé sur cette période.", sumVolume: "Volume réglé", sumCount: "Paiements", sumPayers: "Payeurs", sumWebhooks: "Livraisons de webhooks", sumWebhooksFailed: "{n} en échec", growthVs: "{pct} par rapport aux {n} jours précédents", legendVolume: "Volume", legendCount: "Paiements", chartLabel: "Paiements créés et volume réglé par jour sur les {n} derniers jours.", transactions: "Derniers paiements réglés", viewAll: "Voir tous les paiements", thId: "Paiement", thDate: "Date", thAmount: "Montant", thNetwork: "Réseau", thTo: "Payé à", thStatus: "Statut", chartPeriods: { day: "Quotidien", week: "Hebdomadaire", month: "Mensuel", year: "Annuel" }, chartLabels: { day: "Paiements créés et volume réglé par jour sur les 30 derniers jours.", week: "Paiements créés et volume réglé par semaine sur les 12 dernières semaines.", month: "Paiements créés et volume réglé par mois sur les 12 derniers mois.", year: "Paiements créés et volume réglé par an sur les 5 dernières années." }, sumFailed: "Échoués", sumGrowth: "Croissance", growthTitle: "Par rapport à la période précédente", growthVolume: "Volume", growthCount: "Paiements", prevOrg: "Organisation précédente", nextOrg: "Organisation suivante", created: "Créée le {date}", fee: "Frais", txTitle: "Transactions", thFrom: "Payé par", thMemo: "Mémo", onlySettled: "Réglés uniquement", network: "Réseau", allNetworks: "Tous les réseaux", wallet: "Wallet", applyFilters: "Filtrer la liste", filtersLabel: "Filtrer les transactions", noTx: "Aucun paiement sur cette période.", noMatch: "Aucun paiement ne correspond à ces filtres.", shown: "{n} sur {total} paiements", rowMenu: "Actions du paiement {id}", copyId: "Copier l’ID", explorer: "Voir dans l’explorateur", openPayments: "Ouvrir dans Paiements", status: { SUCCEEDED: "Réglé", FAILED: "Échoué", CANCELLED: "Annulé", EXPIRED: "Expiré", PENDING: "En attente", SUBMITTED: "Confirmation" }, searchPlaceholder: "Rechercher par ID, adresse, montant ou actif…", groups: { settled: "Réglés", open: "En cours", failed: "Échoués" } },
+      hub: { sumSwaps: "Swaps", sumLiquidity: "Liquidité", payersN: "{n} payeurs", doneN: "{n} terminés", balances: "Soldes", allBalances: "Tous les soldes", noBalances: "Rien de réglé pour l’instant.", newSwap: "Swap", crumb: "Vue d’ensemble", active: "Active", since: "Depuis le {date}", settled: "Volume réglé", noVolume: "Aucun paiement réglé pour l’instant", moreAssets: "+{n} autres", rate: "Tarif", plan: "Offre", orgId: "ID de l’organisation", createLink: "Créer un lien de paiement", docs: "Documentation", designs: "Designs de checkout", kpiTotal: "Paiements au total", kpiSucceeded: "Réussis", kpiFailed: "Échoués", kpiRate: "Taux de réussite", activity: "Activité", period7: "7 jours", period30: "30 jours", periods: { today: "Aujourd’hui", week: "Semaine", month: "Mois", year: "Année" }, noPeriodTx: "Aucun paiement réglé sur cette période.", sumVolume: "Volume réglé", sumCount: "Paiements", sumPayers: "Payeurs", sumWebhooks: "Livraisons de webhooks", sumWebhooksFailed: "{n} en échec", growthVs: "{pct} par rapport aux {n} jours précédents", legendVolume: "Volume", legendCount: "Paiements", chartLabel: "Paiements créés et volume réglé par jour sur les {n} derniers jours.", transactions: "Derniers paiements réglés", viewAll: "Voir tous les paiements", thId: "Paiement", thDate: "Date", thAmount: "Montant", thNetwork: "Réseau", thTo: "Payé à", thStatus: "Statut", chartPeriods: { day: "Quotidien", week: "Hebdomadaire", month: "Mensuel", year: "Annuel" }, chartLabels: { day: "Paiements créés et volume réglé par jour sur les 30 derniers jours.", week: "Paiements créés et volume réglé par semaine sur les 12 dernières semaines.", month: "Paiements créés et volume réglé par mois sur les 12 derniers mois.", year: "Paiements créés et volume réglé par an sur les 5 dernières années." }, sumFailed: "Échoués", sumGrowth: "Croissance", growthTitle: "Par rapport à la période précédente", growthVolume: "Volume", growthCount: "Paiements", prevOrg: "Organisation précédente", nextOrg: "Organisation suivante", created: "Créée le {date}", fee: "Frais", txTitle: "Transactions", thFrom: "Payé par", thMemo: "Mémo", onlySettled: "Réglés uniquement", network: "Réseau", allNetworks: "Tous les réseaux", wallet: "Wallet", applyFilters: "Filtrer la liste", filtersLabel: "Filtrer les transactions", noTx: "Aucun paiement sur cette période.", noMatch: "Aucun paiement ne correspond à ces filtres.", shown: "{n} sur {total} paiements", rowMenu: "Actions du paiement {id}", copyId: "Copier l’ID", explorer: "Voir dans l’explorateur", openPayments: "Ouvrir dans Paiements", status: { SUCCEEDED: "Réglé", FAILED: "Échoué", CANCELLED: "Annulé", EXPIRED: "Expiré", PENDING: "En attente", SUBMITTED: "Confirmation" }, searchPlaceholder: "Rechercher par ID, adresse, montant ou actif…", groups: { settled: "Réglés", open: "En cours", failed: "Échoués" } },
       greeting: "Bonjour, {name}",
       sub: "Voici ce qui se passe chez {org} aujourd’hui.",
       metrics: {
@@ -1051,11 +1052,11 @@ export default {
       enable: "Activer", disable: "Désactiver",
       delete: "Supprimer", deleteConfirm: "Supprimer", confirmDelete: "Action irréversible.",
       customerSet: "Montant libre", allEvents: "Tous les événements", events: "Événements",
-      received: "Reçu", pending: "En attente", settledNote: "Réglé directement sur votre compte, en temps réel.",
-      custDetail: { title: "Client", edit: "Modifier", save: "Enregistrer", alias: "Alias", note: "Note", account: "Compte Stellar", payments: "Paiements", onChain: "On-chain", noPayments: "Aucun paiement pour l'instant." },
+      received: "Reçu", pending: "En attente",
+      custDetail: { title: "Client", edit: "Modifier", save: "Enregistrer", alias: "Alias", note: "Note", account: "Adresse du wallet", accountPlaceholder: "Adresse Stellar, Solana ou Monad", payments: "Paiements", onChain: "On-chain", noPayments: "Aucun paiement pour l'instant." },
     },
     filters: { label: "Filtrer la liste", status: "Statut", network: "Réseau", kind: "Type", allStatuses: "Tous", allNetworks: "Tous les réseaux", allKinds: "Tous les types", date: "Date", dates: { any: "Toutes les dates", today: "Aujourd’hui", "7d": "7 derniers jours", "30d": "30 derniers jours", "90d": "90 derniers jours" }, shown: "{n} sur {total}", clear: "Effacer les filtres", noMatch: "Rien ne correspond à ces filtres." },
-    tokens: { custom: "Autre jeton…", ticker: "Symbole du jeton", tickerHint: "Le nom du jeton, par ex. USDC.", address: { solana: "Mint du jeton", monad: "Contrat du jeton" }, addressHint: { solana: "L’adresse du mint SPL du jeton.", monad: "L’adresse du contrat ERC-20 du jeton." } },
+    tokens: { custom: "Autre jeton…", ticker: "Symbole du jeton", address: { solana: "Mint du jeton", monad: "Contrat du jeton" } },
     paylinks: {
       design: { label: "Design du checkout", hint: "L’apparence du checkout hébergé de ce lien. Vous pouvez la changer à tout moment.", preview: "Aperçu", saved: "Design du checkout mis à jour", saveError: "Impossible de changer le design du checkout", current: "Actuel" },
       title: "Liens de paiement",
@@ -1076,17 +1077,15 @@ export default {
       modal: {
         eyebrow: "Lien de paiement", title: "Créer un lien de paiement",
         desc: "Un lien et un QR que votre client paie depuis son wallet, sur Stellar, Solana ou Monad.",
-        kind: "Type", kindPay: "Lien de paiement (le client paie)", kindTx: "Transaction (source connue)",
-        kindPayHint: "Pas de compte source : renvoie une URI de paiement + QR.",
-        kindTxHint: "Source connue : renvoie une transaction non signée à signer.",
+        kind: "Type", kindPay: "Lien de paiement", kindTx: "Transaction",
         destination: "Destination", destinationHint: "Compte Stellar qui reçoit les fonds (G…).",
         source: "Source", sourceHint: "Compte Stellar du payeur (G…).",
         amount: "Montant", amountHint: "Laissez vide pour que le payeur choisisse (dons).",
         asset: "Actif", assetIssuer: "Émetteur de l'actif", assetIssuerHint: "Requis pour les actifs non natifs (G…).",
         memo: "Mémo", memoHint: "MEMO_ID numérique, généré automatiquement si vide.",
         message: "Message", messageHint: "Affiché au payeur dans son portefeuille (≤ 300 caractères).",
-        chain: "Réseau", chainTest: "En Sandbox, il est réglé sur {chain} {network}, avec des fonds de test.", chainLive: "Il est réglé sur le mainnet {chain}, avec des fonds réels.", destinationHints: { stellar: "Compte Stellar qui reçoit les fonds (G…).", solana: "Adresse Solana qui reçoit les fonds (base58).", monad: "Adresse Monad qui reçoit les fonds (0x…)." }, amountMonad: "Obligatoire sur Monad : le montant exact est ce qui identifie le paiement.", memoHintOther: "Un nombre qui empêche une nouvelle tentative de créer un second lien ; généré s’il est vide.", submitting: "Création…",
-        mainnet: "Mainnet", amountTx: "Le montant que le payeur envoie.", more: "Plus d’options",
+        chain: "Réseau", amountMonad: "Obligatoire sur Monad : le montant exact est ce qui identifie le paiement.", memoHintOther: "Un nombre qui empêche une nouvelle tentative de créer un second lien ; généré s’il est vide.", submitting: "Création…",
+        mainnet: "Mainnet", more: "Plus d’options",
         submit: "Créer le lien",
       },
       detail: {
@@ -1104,10 +1103,8 @@ export default {
     },
     balances: {
       title: "Soldes",
-      sub: "Réglés directement sur votre propre wallet, en temps réel",
-      note: "Cosmos Pay ne détient jamais vos fonds : chaque paiement est réglé directement sur votre propre wallet (sur Stellar, Solana ou Monad) dès qu’il est effectué.",
-      total: "SOLDE TOTAL",
-      across: "réparti sur 3 actifs",
+      total: "Règlements",
+      across: "{assets} actifs sur {networks} réseaux",
       explorer: "Voir sur l’explorateur",
       recent: "Règlements récents",
       payment: "Paiement",
@@ -1282,7 +1279,7 @@ export default {
         mainnet: "Paiements en direct",
         settle: "Règlement",
         apiAccess: "Accès API",
-        apiLevels: { notifications: "Notifications de paiement", partial: "API partielle", full: "API complète" }, perOrgNote: "Les clés API et les membres se gèrent dans chaque organisation."
+        apiLevels: { notifications: "Notifications de paiement", partial: "API partielle", full: "API complète" }
       },
       appearance: {
         title: "Apparence",
@@ -1435,8 +1432,7 @@ export default {
         displayName: "Nom affiché", displayNamePlaceholder: "Votre nom", bio: "Bio", bioPlaceholder: "Une ligne sur vous ou votre entreprise",
         edit: "Modifier", save: "Enregistrer", saving: "Enregistrement…", uploadPhoto: "Importer une photo", changePhoto: "Changer la photo", removePhoto: "Retirer",
         photoHint: "PNG, JPG ou WebP. Carrée de préférence.", saved: "Profil mis à jour", saveError: "Impossible de mettre à jour votre profil.",
-        photoTooLarge: "Cette image est trop volumineuse. Choisissez-en une de moins de 8 Mo.", photoInvalid: "Ce fichier n’est pas une image prise en charge.",
-        editNote: "L’e-mail et le rôle proviennent de votre connexion Cosmos Pay." },
+        photoTooLarge: "Cette image est trop volumineuse. Choisissez-en une de moins de 8 Mo.", photoInvalid: "Ce fichier n’est pas une image prise en charge." },
       session: { title: "Session", desc: "Déconnectez-vous du tableau de bord Cosmos Pay sur cet appareil.", signOut: "Se déconnecter" },
     },
     users: {
@@ -1518,7 +1514,7 @@ export default {
       create: "Nouveau swap",
       readOnly: "Vous avez un accès en lecture seule aux swaps dans cette organisation.",
       listTitle: "Vos swaps",
-      widget: { title: "Swap", pay: "Vous payez", receive: "Vous recevez", selectToken: "Choisir un jeton", changeToken: "{token} sur {chain}, changer le jeton", flip: "Inverser ce que vous payez et ce que vous recevez", pickPay: "Payer avec", pickReceive: "Recevoir", details: "Détails du devis", invertRate: "Inverser le taux", eta: "Durée estimée", seconds: "{n} s", slippage: "Tolérance de slippage", slippageAuto: "Auto", slippageHint: "Sous le minimum qu’elle fixe, le swap n’a pas lieu (un swap entre chaînes est remboursé).", settings: "Réglages du swap", route: "Route", venueNear: "NEAR Intents", estimateNote: "Une estimation d’après les prix de référence. Saisissez les deux adresses pour un devis ferme.", accountLabel: "Votre compte {chain}", accountHint: "Il paie et signe le swap.", refundLabel: "Adresse de remboursement sur {chain}", refundHint: "Si le swap ne peut pas avoir lieu, le dépôt revient ici.", recipientLabel: "Recevoir sur {chain}", recipientHint: "L’adresse qui reçoit ce que vous obtenez.", another: "Envoyer vers un autre compte", ctaSelect: "Choisissez un jeton", ctaSame: "Choisissez deux jetons différents", ctaProduction: "Disponible en Production", ctaUnsupported: "Ces jetons ne s’échangent pas entre eux", ctaAmount: "Saisissez un montant", ctaAmountBad: "Vérifiez le montant", ctaAccount: "Saisissez votre compte {chain}", ctaRefund: "Saisissez l’adresse de remboursement sur {chain}", ctaRecipient: "Saisissez l’adresse sur {chain}", ctaMemo: "Vérifiez le mémo", ctaQuoting: "Devis en cours…", ctaRetry: "Relancer le devis", ctaProductionOpen: "Ouvrir un swap demande Production", ctaOpen: "Ouvrir le swap", ctaSwap: "Swap sur {venue}", ctaBusy: "Préparation…" },
+      widget: { title: "Swap", pay: "Vous payez", receive: "Vous recevez", selectToken: "Choisir un jeton", changeToken: "{token} sur {chain}, changer le jeton", flip: "Inverser ce que vous payez et ce que vous recevez", pickPay: "Payer avec", pickReceive: "Recevoir", details: "Détails du devis", invertRate: "Inverser le taux", eta: "Durée estimée", seconds: "{n} s", slippage: "Tolérance de slippage", slippageAuto: "Auto", slippageHint: "Sous le minimum qu’elle fixe, le swap n’a pas lieu (un swap entre chaînes est remboursé).", settings: "Réglages du swap", route: "Route", venueNear: "NEAR Intents", accountLabel: "Votre compte {chain}", accountHint: "Il paie et signe le swap.", refundLabel: "Adresse de remboursement sur {chain}", recipientLabel: "Recevoir sur {chain}", another: "Envoyer vers un autre compte", ctaSelect: "Choisissez un jeton", ctaSame: "Choisissez deux jetons différents", ctaProduction: "Disponible en Production", ctaUnsupported: "Ces jetons ne s’échangent pas entre eux", ctaAmount: "Saisissez un montant", ctaAmountBad: "Vérifiez le montant", ctaAccount: "Saisissez votre compte {chain}", ctaRefund: "Saisissez l’adresse de remboursement sur {chain}", ctaRecipient: "Saisissez l’adresse sur {chain}", ctaMemo: "Vérifiez le mémo", ctaQuoting: "Devis en cours…", ctaRetry: "Relancer le devis", ctaProductionOpen: "Ouvrir un swap demande Production", ctaOpen: "Ouvrir le swap", ctaSwap: "Swap sur {venue}", ctaBusy: "Préparation…" },
       picker: { search: "Chercher un jeton, un réseau ou une adresse", network: "Réseau", allNetworks: "Tous les réseaux", count: "{n} jetons", useToken: "Utiliser {token}", none: "Aucun jeton ne correspond. Collez l’adresse d’un jeton sur Stellar, Solana ou Monad pour l’utiliser.", more: "{n} de plus : cherchez pour affiner la liste." },
       groups: { open: "En cours", succeeded: "Réussis", refunded: "Remboursés", failed: "Échoués", expired: "Expirés" },
       typeLabel: "Type",
@@ -1537,7 +1533,6 @@ export default {
       chainLabel: "Chaîne",
       chains: { stellar: "Stellar", solana: "Solana", monad: "Monad" },
       venues: { stellar: "DEX Stellar", solana: "Jupiter", monad: "Kuru Flow" },
-      mainnetOnly: "Les swaps sur Solana et Monad fonctionnent uniquement sur le mainnet. Passez en mode live pour les utiliser.",
       chainModal: {
         desc: "Échangez deux actifs sur {chain} via {venue}, qui parcourt toutes les sources de liquidité de la chaîne. Obtenez une cotation, puis signez la transaction dans le portefeuille.",
         sourceHint: { solana: "Portefeuille Solana qui signe, paie et reçoit (base58).", monad: "Portefeuille Monad qui signe, paie et reçoit (0x…)." },
@@ -1591,7 +1586,6 @@ export default {
       sub: "{n} swaps · Stellar ⇄ Solana ⇄ Monad via NEAR Intents",
       create: "Nouveau swap inter-chaînes",
       readOnly: "Tu as un accès en lecture seule aux swaps de cette organisation.",
-      mainnetOnly: "NEAR Intents règle uniquement sur le mainnet. En mode test tu peux voir les actifs et coter ; passe en mode live pour ouvrir un swap.",
       searchPlaceholder: "Rechercher par adresse, actif ou ID…",
       filters: { all: "Tous", open: "En cours", SUCCEEDED: "Réussis", REFUNDED: "Remboursés", FAILED: "Échoués", EXPIRED: "Expiré" },
       status: { AWAITING_DEPOSIT: "En attente du dépôt", DEPOSIT_DETECTED: "Dépôt détecté", INCOMPLETE_DEPOSIT: "Dépôt incomplet", PROCESSING: "En cours", SUCCEEDED: "Réussi", REFUNDED: "Remboursé", FAILED: "Échoué", EXPIRED: "Expiré" },
@@ -1605,8 +1599,8 @@ export default {
         eyebrow: "Swap inter-chaînes", title: "Nouveau swap inter-chaînes",
         desc: "Envoie un actif sur une chaîne et reçois-en un autre sur une chaîne différente. NEAR Intents règle ; rien ne passe par Cosmos Pay.",
         from: "De", to: "Vers", chain: "Chaîne", asset: "Actif", assetsLoading: "Chargement des actifs…",
-        amount: "Montant à envoyer", recipient: "Destinataire", recipientHint: "Adresse sur la chaîne de destination qui reçoit la sortie.",
-        refundTo: "Adresse de remboursement", refundToHint: "Adresse sur la chaîne d'origine qui récupère le dépôt si le swap échoue.",
+        amount: "Montant à envoyer", recipient: "Destinataire",
+        refundTo: "Adresse de remboursement",
         slippage: "Slippage (bps)", slippageHint: "Optionnel, p. ex. 100. Sous le minimum, NEAR Intents rembourse.",
         getQuote: "Coter", quoting: "Cotation…", quoteTitle: "Cotation",
         estimated: "Tu reçois (estimé)", minimum: "Minimum reçu", fee: "Commission", eta: "Durée estimée", seconds: "s",
@@ -1621,12 +1615,11 @@ export default {
         fields: { id: "ID", status: "Statut", route: "Route", depositAddress: "Adresse de dépôt", depositMemo: "Mémo", amountIn: "Envoyer", estimated: "Recevoir (est.)", minimum: "Minimum", fee: "Commission", recipient: "Destinataire", refundTo: "Adresse de remboursement", amountOut: "Reçu", refunded: "Remboursé", expires: "Déposer avant", quoteSignature: "Signature de la cotation", created: "Créé" },
         txs: "Transactions",
         reportTitle: "Signaler le dépôt",
-        reportDesc: "Colle la transaction qui a payé l'adresse de dépôt pour que le swap démarre tout de suite. Optionnel : NEAR Intents surveille l'adresse de toute façon.",
         reportPlaceholder: "Hash de la transaction de dépôt…",
         report: "Signaler", reporting: "Signalement…", reported: "Dépôt signalé", reportError: "Le dépôt n’a pas pu être signalé.", noLink: "Payez l’adresse de dépôt (et le mémo, s’il apparaît) depuis n’importe quel wallet {chain}, ou scannez le QR.",
       },
     },
-    wallet: { signTitle: "Signez avec votre wallet", signDesc: "Freighter affiche la transaction ; approuvez-la et le swap part aussitôt. Vos clés ne quittent jamais le wallet.", freighter: "Signer avec Freighter", signing: "En attente de Freighter…", submitting: "Envoi…", missing: "Freighter n’est pas installé dans ce navigateur. Scannez le QR avec un autre wallet ou collez ci-dessous la transaction signée.", declined: "Freighter n’a pas signé la transaction.", wrongAccount: "Freighter est sur un autre compte. Passez à {account} et réessayez.", wrongNetwork: "Freighter est sur un autre réseau. Passez à {network} et réessayez.", networks: { testnet: "Testnet", public: "Réseau public" } },
+    wallet: { signTitle: "Signez avec votre wallet", freighter: "Signer avec Freighter", signing: "En attente de Freighter…", submitting: "Envoi…", missing: "Freighter n’est pas installé dans ce navigateur. Scannez le QR avec un autre wallet ou collez ci-dessous la transaction signée.", declined: "Freighter n’a pas signé la transaction.", wrongAccount: "Freighter est sur un autre compte. Passez à {account} et réessayez.", wrongNetwork: "Freighter est sur un autre réseau. Passez à {network} et réessayez.", networks: { testnet: "Testnet", public: "Réseau public" } },
     liquidity: {
       title: "Pools de liquidité",
       sub: "{n} opérations · pools AMM sur Stellar",
@@ -1676,10 +1669,8 @@ export default {
         poolId: "ID du pool", poolIdHint: "ID hexadécimal de 64 caractères du pool de liquidité.",
         shares: "Parts", sharesHint: "Nombre de parts du pool à brûler.",
         slippage: "Slippage (bps)", slippageHint: "Slippage max. en points de base (facultatif, p. ex. 50).",
-        trustNote: "Si le compte ne fait pas encore confiance aux parts du pool, la transaction ajoute la trustline automatiquement.",
         create: "Générer la transaction", creating: "Génération…",
         createError: "Impossible de générer la transaction.",
-        commissionNote: "La commission du plan s’applique uniquement à vos gains (ce que vous avez gagné au-delà de votre dépôt), jamais à votre capital. Les positions ouvertes en dehors de Cosmos Pay ne sont pas facturées.",
       },
       detail: {
         eyebrow: "Liquidité",
@@ -1803,7 +1794,7 @@ export default {
         },
         wallet: {
           name: "Name", network: "Network",
-          address: "Address", addressHint: "Wallet address (G… for Stellar).",
+          address: "Address",
           aa: "Account abstraction", add: "Add wallet",
           error: "Couldn't add the wallet.",
         },

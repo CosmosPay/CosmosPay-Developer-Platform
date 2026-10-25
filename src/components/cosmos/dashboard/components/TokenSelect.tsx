@@ -59,12 +59,12 @@ export function TokenSelect({ chain, tier, label, code, issuer, onChange, withTi
         />
       </div>
       {sel === CUSTOM && !withTicker && (
-        <Field label={tk.address[chain]} hint={tk.addressHint[chain]} value={issuer} onChange={(e) => onChange({ code, issuer: e.target.value })} placeholder={ADDRESS_PLACEHOLDERS[chain]} />
+        <Field label={tk.address[chain]} value={issuer} onChange={(e) => onChange({ code, issuer: e.target.value })} placeholder={ADDRESS_PLACEHOLDERS[chain]} />
       )}
       {sel === CUSTOM && withTicker && (
         <div className="field-row">
-          <Field label={tk.ticker} hint={tk.tickerHint} value={code} onChange={(e) => onChange({ code: e.target.value, issuer })} placeholder="USDC" />
-          <Field label={tk.address[chain]} hint={tk.addressHint[chain]} value={issuer} onChange={(e) => onChange({ code, issuer: e.target.value })} placeholder={ADDRESS_PLACEHOLDERS[chain]} />
+          <Field label={tk.ticker} value={code} onChange={(e) => onChange({ code: e.target.value, issuer })} placeholder="USDC" />
+          <Field label={tk.address[chain]} value={issuer} onChange={(e) => onChange({ code, issuer: e.target.value })} placeholder={ADDRESS_PLACEHOLDERS[chain]} />
         </div>
       )}
     </>

@@ -27,7 +27,6 @@ export function CheckoutDesignPicker({ value, onChange, disabled = false, bare =
       {!bare && (
         <legend className="design-picker-legend">
           <span>{d.label}</span>
-          <span className="field-hint">{d.hint}</span>
         </legend>
       )}
       <div className="design-grid">

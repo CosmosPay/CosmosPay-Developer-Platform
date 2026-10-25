@@ -25,6 +25,8 @@ const PAYOUT_NETWORKS = ["stellar", "stellar_testnet", "ethereum", "base", "arbi
 const RAILS = ["ach", "wire", "rtp", "pix", "pix_safe", "ted", "spei_bitso", "transfers_bitso", "ach_cop_bitso", "international_swift", "sepa"];
 const PAYIN_METHODS = ["ach", "wire", "pix", "ted", "spei", "transfers", "pse", "international_swift", "rtp"];
 
+// The shape of an address on each wallet network, as the field's placeholder.
+const addressPlaceholder = (net) => (net && net.indexOf("stellar") === 0 ? "G…" : net === "solana" ? "Base58…" : net === "tron" ? "T…" : "0x…");
 const chainOf = (net) => (net && net.indexOf("stellar") === 0 ? "stellar" : net && net.indexOf("solana") === 0 ? "solana" : "evm");
 
 /* Map a provider status to a status-pill class. */
@@ -180,7 +182,7 @@ export function BlindPayView({ canManage = true, orgId, orgRole, env = "dev" }) 
 
   return (
     <>
-      <ViewHead title={bp.title} sub={bp.sub} />
+      <ViewHead title={bp.title} />
       <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{canManage ? bp.gate : bp.readOnly}</span></div>
       <div className="filter-tabs">{tabs.map((k) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{bp.tabs[k]}</button>)}</div>
       {tab === "receivers" && <ReceiversTab bp={bp} orgId={orgId} env={env} canManage={canManage} isManager={isManager} />}
@@ -335,7 +337,6 @@ function CreateReceiverModal({ bp, orgId, env, onClose, onCreated }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
         <Sel label={m.type} value={type} onChange={setType} options={RECEIVER_TYPES} labels={{ individual: m.individual, business: m.business }} />
         <Sel label={m.kycType} value={kycType} onChange={setKycType} options={KYC_TYPES} />
         <Field label={f.email} type="email" value={get("email")} onChange={setE("email")} placeholder="jane@acme.com" autoFocus />
@@ -578,7 +579,7 @@ function AddWalletForm({ bp, receiver, orgId, env, onClose, onAdded }) {
     <div className="paylink-block" style={{ marginBottom: 18 }}>
       <Field label={w.name} value={name} onChange={(e) => setName(e.target.value)} />
       <Sel label={w.network} value={network} onChange={setNetwork} options={WALLET_NETWORKS} />
-      <Field label={w.address} hint={w.addressHint} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="G…" />
+      <Field label={w.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={addressPlaceholder(network)} />
       <Sel label={w.aa} value={aa} onChange={setAa} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
       <div className="modal-actions">
         <button className="btn btn-violet btn-sm" disabled={!valid || busy} onClick={submit}>{w.add}</button>
@@ -720,7 +721,6 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
         {!payin && (
           <>
             <Field label={m.walletId} hint={m.walletIdHint} value={walletId} onChange={(e) => { setWalletId(e.target.value); setQuote(null); }} placeholder="clz9x… / bw_…" autoFocus />
@@ -876,7 +876,6 @@ function NewPayoutModal({ bp, orgId, env, onClose, onDone }) {
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
         <Field label={m.bankId} hint={m.bankIdHint} value={bankId} onChange={(e) => { setBankId(e.target.value); setQuote(null); setAuthTx(null); }} placeholder="clz9x… / ba_…" autoFocus />
         <Sel label={m.network} value={network} onChange={(v) => { setNetwork(v); setQuote(null); setAuthTx(null); }} options={PAYOUT_NETWORKS} />
         <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); }} options={TOKENS} />

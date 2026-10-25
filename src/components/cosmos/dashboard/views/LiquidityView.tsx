@@ -76,7 +76,7 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={lq.title} sub={fmt(lq.sub, { n: rows.length })}>
+      <ViewHead title={lq.title}>
         {canManage && (
           <>
             <button className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>
@@ -324,7 +324,6 @@ function DepositModal({ lq, orgId, env, prefill, onClose, onCreated }) {
         <Field label={m.maxAmountA} hint={m.maxAmountAHint} value={maxAmountA} onChange={(e) => setMaxAmountA(e.target.value)} placeholder="1000" inputMode="decimal" />
         <Field label={m.maxAmountB} hint={m.maxAmountBHint} value={maxAmountB} onChange={(e) => setMaxAmountB(e.target.value)} placeholder="100" inputMode="decimal" />
         <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
-        <p className="field-note">{m.trustNote}</p>
         <div className="modal-actions">
           <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
           <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
@@ -372,7 +371,6 @@ function WithdrawModal({ lq, orgId, env, prefill, onClose, onCreated }) {
         <Field label={m.poolId} hint={m.poolIdHint} value={poolId} onChange={(e) => setPoolId(e.target.value)} placeholder="dd7b1ab8…" />
         <Field label={m.shares} hint={m.sharesHint} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="50" inputMode="decimal" />
         <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
-        <p className="field-note">{m.commissionNote}</p>
         <div className="modal-actions">
           <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
           <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
@@ -455,7 +453,6 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
         {signable && (
           <div className="paylink-block">
             <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
-            <p className="field-note">{w.signDesc}</p>
             <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
           </div>
         )}

@@ -45,7 +45,7 @@ export function SupportView() {
 
   return (
     <>
-      <ViewHead title={s.title} sub={s.subtitle}><button className="btn btn-dark btn-sm" onClick={startNew}>{DI.plus} {s.newTicket}</button></ViewHead>
+      <ViewHead title={s.title}><button className="btn btn-dark btn-sm" onClick={startNew}>{DI.plus} {s.newTicket}</button></ViewHead>
       <div className="inbox">
         <div className="panel inbox-list">
           <div className="inbox-list-h">{s.myTickets}</div>

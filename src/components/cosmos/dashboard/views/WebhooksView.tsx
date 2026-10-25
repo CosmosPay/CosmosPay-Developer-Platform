@@ -66,7 +66,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={wv.title} sub={wv.sub}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button>}</ViewHead>
+      <ViewHead title={wv.title}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button>}</ViewHead>
       <div className="panel" style={{ marginBottom: 16 }}>
         <div className="panel-head"><h3>{wv.endpoints}</h3><span className="env-tag">{DI.network} {env === "prod" ? "Public" : "Testnet"}</span></div>
         {!loading && !error && eps.length > 0 && (
@@ -126,7 +126,7 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
               <td className="cust">{d.responseStatus ?? "-"}</td>
               <td><Pill st={DELIVERY_PILL[d.status] || "ref"} label={d.status} /></td>
               <td className="cust">{fmtDateTime(d.lastAttemptAt || d.createdAt)}</td>
-              <td style={{ textAlign: "right" }}>{canManage && <button className="link-btn" onClick={() => redeliver(d)}>{cx.redeliver}</button>}</td>
+              <td style={{ textAlign: "right" }}>{canManage && <button type="button" className="btn btn-outline-w btn-sm" onClick={() => redeliver(d)}>{cx.redeliver}</button>}</td>
             </tr>
           ))}</tbody>
         </table></div>
@@ -155,7 +155,6 @@ function CreateWebhookModal({ wv, cx, env, orgId, onClose, onCreated }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
         <Field label={m.urlLabel} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://api.acme.com/hooks/cosmos" autoFocus />
         <label className="field-l" style={{ marginTop: 14 }}>{m.eventsLabel}</label>
         <div className="chk-list">{EVENT_TYPES.map((e) => (

@@ -58,12 +58,19 @@ export function usePaged(rows, resetKey, pageSize = PAGE_SIZE) {
 /* A list's filters, kept in the URL so a reload or a shared link shows the same list. Values the
    view does not accept fall back to their defaults (src/lib/dashboard-filters.ts); the shell
    drops them when another view opens. */
+/* Dispatched on window after something outside a list wrote its filters to the URL (the top
+   bar's search does): a list already on screen reads them again. */
+export const FILTERS_EVENT = "dash:filters";
+
 export function useListFilters(defaults: Filters, allowed: Allowed = {}) {
   // The first render matches the server's (no URL there): the URL's filters arrive right after.
   const [filters, setFilters] = useState<Filters>(defaults);
   const skipFirstWrite = useRef(true);
   useEffect(() => {
-    try { setFilters(readFilters(window.location.search, defaults, allowed)); } catch (e) {}
+    const read = () => { try { setFilters(readFilters(window.location.search, defaults, allowed)); } catch (e) {} };
+    read();
+    window.addEventListener(FILTERS_EVENT, read);
+    return () => window.removeEventListener(FILTERS_EVENT, read);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {

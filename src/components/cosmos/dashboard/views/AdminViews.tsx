@@ -44,7 +44,8 @@ const orgOf = (row) => {
 };
 // Label for a CONSUMER row (AdminConsumersView), where the fields are top-level.
 const consumerLabel = (c) => (c && (c.displayName || stripUser(c.apisixUsername) || c.id)) || "-";
-const assetOf = (asset) => (!asset || asset === "native" ? "XLM" : asset);
+// "native" is the coin of the row's chain; a row that names no chain is a Stellar one.
+const assetOf = (asset, chain) => (!asset || asset === "native" ? NATIVE_TICKER[chain] || NATIVE_TICKER.stellar : asset);
 const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : (a || "-"));
 function fiatPill(status) {
   const s = (status || "").toLowerCase();
@@ -284,7 +285,7 @@ export function AdminOverviewView({ env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={ao.title} sub={ao.sub} />
+      <ViewHead title={ao.title} />
       {loading && <div className="panel"><TableSkeleton label={a.loading} /></div>}
       {!loading && error && <div className="panel"><div className="empty">{a.loadError}</div></div>}
       {!loading && !error && sum && (
@@ -325,7 +326,7 @@ export function AdminOverviewView({ env = "dev" }) {
             {Array.isArray(sum.volume) && sum.volume.length > 0 ? (
               <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{ao.volHead.asset}</th><th>{ao.volHead.amount}</th><th>{ao.volHead.count}</th></tr></thead>
                 <tbody>{sum.volume.map((v, i) => (
-                  <tr key={i}><td>{assetOf(v.asset)}</td><td className="amt">{v.amount}</td><td className="cust">{v.count}</td></tr>
+                  <tr key={i}><td>{assetOf(v.asset, v.chain)}</td><td className="amt">{v.amount}</td><td className="cust">{v.count}</td></tr>
                 ))}</tbody>
               </table></div>
             ) : <div className="empty">{a.empty}</div>}
@@ -351,7 +352,7 @@ export function AdminPaymentsView({ env = "dev", adminFilter, goToAdmin }) {
 
   return (
     <>
-      <ViewHead title={ap.title} sub={ap.sub} />
+      <ViewHead title={ap.title} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminPayments", null)} />}
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ap.searchPlaceholder} tag={network} resetKey={filter}
@@ -365,7 +366,7 @@ export function AdminPaymentsView({ env = "dev", adminFilter, goToAdmin }) {
             <IdTd id={p.id} secondary={p.txHash} />
             <OrgTd row={p} onFilter={onOrgFilter} />
             <td className="cust">{shortAcct(p.destination)}</td>
-            <td className="amt">{p.amount || "-"} {assetOf(p.asset)}</td>
+            <td className="amt">{p.amount || "-"} {assetOf(p.asset, p.chain)}</td>
             <td><Pill st={ADMIN_PILL[p.status] || "ref"} label={p.status || "-"} /></td>
             <td className="cust">{fmtDateTime(p.createdAt)}</td>
           </tr>
@@ -396,13 +397,13 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
     venue === "crossChain"
       ? `${s.amountIn} ${s.originAsset} (${s.originChain}) → ${s.amountOut || s.amountOutEstimated} ${s.destinationAsset} (${s.destinationChain})`
       : venue === "stellar"
-        ? `${s.sendAmount ?? "-"} ${assetOf(s.sendAsset)} → ${s.destEstimated ?? s.swapAmount ?? "-"} ${s.destAsset || ""}`.trim()
+        ? `${s.sendAmount ?? "-"} ${assetOf(s.sendAsset, "stellar")} → ${s.destEstimated ?? s.swapAmount ?? "-"} ${s.destAsset || ""}`.trim()
         : `${s.sendAmount ?? "-"} ${shortAsset(s.sendAsset, venue)} → ${s.destEstimated ?? "-"} ${shortAsset(s.destAsset, venue)}`;
   const onOrgFilter = (row) => goToAdmin && goToAdmin("adminSwaps", { consumer: row.consumerId, label: orgOf(row) });
 
   return (
     <>
-      <ViewHead title={as.title} sub={as.sub} />
+      <ViewHead title={as.title} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminSwaps", null)} />}
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={as.searchPlaceholder} tag={venue === "stellar" ? network : "public"} resetKey={filter + venue}
@@ -516,7 +517,7 @@ export function AdminFiatView({ env = "dev", adminFilter, goToAdmin }) {
   const onOrgFilter = (row) => goToAdmin && goToAdmin("adminFiat", { consumer: row.consumerId, label: orgOf(row), tab: sub });
   return (
     <>
-      <ViewHead title={af.title} sub={af.sub} />
+      <ViewHead title={af.title} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminFiat", null)} />}
       <div className="filter-tabs">{subs.map((k) => <button key={k} className={sub === k ? "on" : ""} onClick={() => setSub(k)}>{af.tabs[k]}</button>)}</div>
       <FiatList key={`${sub}|${consumer || ""}`} sub={sub} a={a} consumer={consumer} onOrgFilter={onOrgFilter} env={env} />
@@ -535,7 +536,7 @@ export function AdminCustomersView({ adminFilter, goToAdmin }) {
   const onOrgFilter = (row) => goToAdmin && goToAdmin("adminCustomers", { consumer: row.consumerId, label: orgOf(row) });
   return (
     <>
-      <ViewHead title={ac.title} sub={ac.sub} />
+      <ViewHead title={ac.title} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminCustomers", null)} />}
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ac.searchPlaceholder}
@@ -567,7 +568,7 @@ export function AdminProductsView({ adminFilter, goToAdmin }) {
   const onOrgFilter = (row) => goToAdmin && goToAdmin("adminProducts", { consumer: row.consumerId, label: orgOf(row) });
   return (
     <>
-      <ViewHead title={ap.title} sub={ap.sub} />
+      <ViewHead title={ap.title} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminProducts", null)} />}
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ap.searchPlaceholder}
@@ -578,7 +579,7 @@ export function AdminProductsView({ adminFilter, goToAdmin }) {
           <tr key={p.id}>
             <NameTd name={p.name || p.id} ids={[p.id]} />
             <OrgTd row={p} onFilter={onOrgFilter} />
-            <td className="amt">{p.amount ? `${p.amount} ${assetOf(p.asset)}` : "-"}</td>
+            <td className="amt">{p.amount ? `${p.amount} ${assetOf(p.asset, p.chain)}` : "-"}</td>
             <td className="cust">{p.kind || "-"}</td>
             <td className="cust">{fmtDateTime(p.createdAt)}</td>
           </tr>
@@ -610,8 +611,7 @@ export function AdminConsumersView({ goToAdmin }) {
   const accountLine = (c) => [c.accountName, c.accountEmail].filter(Boolean).join(" · ");
   return (
     <>
-      <ViewHead title={ac.title} sub={ac.sub} />
-      <p className="field-note" style={{ marginTop: -8, marginBottom: 12 }}>{ac.note}</p>
+      <ViewHead title={ac.title} />
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ac.searchPlaceholder}
         heads={[ac.tableHead.org, ac.tableHead.payments, ac.tableHead.swaps, ac.tableHead.products, ac.tableHead.customers, ac.tableHead.receivers, ac.tableHead.payins, ac.tableHead.payouts, ac.tableHead.webhooks, ac.tableHead.created]}

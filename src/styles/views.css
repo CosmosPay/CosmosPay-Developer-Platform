@@ -298,15 +298,14 @@
 .bal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
 .bal-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
 .bal-card.total {
-  background: var(--cosmos-navy);
+  background: var(--navy);
   --ink: var(--cosmos-white); --ink-2: rgba(255,255,255,.66); --ink-3: rgba(255,255,255,.66);
   --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.20); --surface-2: rgba(255,255,255,.14);
   --accent: var(--cosmos-white); --accent-soft: rgba(255,255,255,.08); --accent-soft-2: rgba(255,255,255,.14);
   color: var(--ink);
 }
-/* en oscuro --surface ya es navy, asi que la destacada se invierte a negro para
-   que el enfasis no desaparezca contra sus tres hermanas. */
-[data-theme="dark"] .bal-card.total { background: var(--cosmos-black); border-color: rgba(255,255,255,.20); }
+/* the black card, as the overview's account card (--navy is black, a dark grey in dark mode) */
+[data-theme="dark"] .bal-card.total { border-color: rgba(255,255,255,.16); }
 .bal-chip { font-family: var(--ff-soft); font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent-soft-2); padding: 3px 9px; border-radius: 999px; }
 [data-theme="dark"] .bal-chip { color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); border-color: transparent; }
 .bal-amt { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; margin: 14px 0 4px; }

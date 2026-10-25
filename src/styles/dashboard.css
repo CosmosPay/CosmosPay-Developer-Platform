@@ -49,8 +49,10 @@ body.inst:has(.dash) { background: var(--surface); }
 .inst .side-chev svg { width: 16px; height: 16px; }
 .side-group.open .side-chev { rotate: 180deg; }
 /* an open group's views hang from a dotted branch; the current one ends it in a dot */
-.side-tree { position: relative; margin: 0 0 6px 10px; padding-left: 26px; }
-.side-tree::before { content: ""; content: "" / ""; position: absolute; left: 0; top: 0; bottom: 17px; border-left: 1px dashed var(--line-2); }
+.side-tree { position: relative; margin: 0 0 0 10px; padding: 0 0 0 26px; }
+/* the space under an open tree is its last view's margin, inside the tree, so it closes with it */
+.side-tree > li:last-child { margin-bottom: 6px; }
+.side-tree::before { content: ""; content: "" / ""; position: absolute; left: 0; top: 0; bottom: 23px; border-left: 1px dashed var(--line-2); }
 .side-tree > li { position: relative; }
 .side-tree > li::before { content: ""; content: "" / ""; position: absolute; left: -26px; top: 50%; width: 16px; border-top: 1px dashed var(--line-2); }
 .side-tree > li:has(.active)::after { content: ""; content: "" / ""; position: absolute; left: -9px; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: var(--ink); translate: -50% -50%; }
@@ -150,16 +152,12 @@ body.inst:has(.dash) { background: var(--surface); }
 .inst .tx tbody tr:hover td { background: var(--surface-2); }
 .inst .modal { border-radius: 22px; }
 
-/* ---- overview: the account card on its grey panel (the reference's gateway profile) ---- */
-.hub { display: flex; flex-direction: column; gap: 34px; --slate: #5E636E; --slate-line: rgba(255, 255, 255, .26); --slate-fill: rgba(0, 0, 0, .12); --slate-fill-h: rgba(0, 0, 0, .2); }
-[data-theme="dark"] .hub { --slate: #2E2F38; --slate-line: rgba(255, 255, 255, .16); --slate-fill: rgba(255, 255, 255, .07); --slate-fill-h: rgba(255, 255, 255, .12); }
-.hub-hero {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); border-radius: 20px; overflow: hidden;
-  background: var(--slate); color: #fff;
-}
+/* ---- overview: the black account card beside a white panel (balances, the organization ID, the actions) ---- */
+.hub { display: flex; flex-direction: column; gap: 34px; }
+.hub-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 16px; }
 .hub-card {
   display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 22px; padding: 22px 26px 22px 22px;
-  background: var(--navy); border-radius: 20px;
+  background: var(--navy); color: #fff; border-radius: var(--r-card);
 }
 /* the arrows step through the organizations: one at the top, one at the bottom */
 .hub-steps { display: flex; flex-direction: column; justify-content: space-between; }
@@ -196,28 +194,35 @@ body.inst:has(.dash) { background: var(--surface); }
 .hub-terms b { color: #fff; font-weight: 700; }
 .hub-terms > span + span { margin-left: 12px; padding-left: 12px; border-left: 1px solid rgba(255, 255, 255, .28); }
 .hub-terms-net { color: #fff; font-weight: 600; }
-.hub-side { display: flex; flex-direction: column; justify-content: space-between; gap: 26px; padding: 22px 26px; min-width: 0; }
-.hub-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.hub-kpi { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 9px; border: 1px solid var(--slate-line); min-width: 0; }
-.hub-kpi span { font-size: 12px; color: rgba(255, 255, 255, .84); }
-.hub-kpi b { font-size: 17px; font-weight: 700; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hub-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 28px; align-items: start; }
-.hub-field, .hub-cta { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.hub-code {
-  display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 44px; padding: 10px 14px; border-radius: 9px; cursor: pointer;
-  border: 0; background: var(--slate-fill); color: #fff; font: inherit; text-align: left; transition: background-color .2s ease;
+.hub-side {
+  display: flex; flex-direction: column; gap: 18px; padding: 22px 24px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); color: var(--ink);
 }
-/* the field is darker than the panel, so its text keeps AA (white 7:1, the id 5.5:1) */
-.hub-code:hover { background: var(--slate-fill-h); }
+.hub-side-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.hub-side-t { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.hub-bals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.hub-bal { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-field); }
+.hub-bal-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hub-bal-t b { font-size: 15px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.hub-bal-t span { font-size: 12.5px; color: var(--ink-3); }
+.hub-bal-empty { grid-column: 1 / -1; padding: 12px 0; font-size: 14px; color: var(--ink-3); }
+.hub-actions { display: flex; flex-wrap: wrap; gap: 14px 16px; align-items: flex-start; margin-top: auto; }
+.hub-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1 1 240px; }
+.hub-cta { display: flex; flex-wrap: wrap; gap: 10px; flex: 0 1 auto; }
+.hub-cta .btn { min-height: 44px; padding: 10px 22px; font-size: 14.5px; justify-content: center; white-space: nowrap; }
+.hub-code {
+  display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 44px; padding: 10px 14px; border-radius: var(--r-field); cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: inherit; text-align: left; transition: border-color .2s ease;
+}
+.hub-code:hover { border-color: var(--ink-3); }
 .hub-code-k { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-.hub-code code { flex: 1; min-width: 0; font-family: var(--ff-mono); font-size: 11.5px; color: rgba(255, 255, 255, .82); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hub-code-ic { display: grid; }
+.hub-code code { flex: 1; min-width: 0; font-family: var(--ff-mono); font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-code-ic { display: grid; color: var(--ink-3); }
 .hub-code-ic svg { width: 16px; height: 16px; }
-/* the plain links under the field and the button, underlined as in the reference */
-.hub-link { align-self: flex-end; font-size: 12px; font-weight: 600; color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+/* plain underlined links, as in the reference */
+.hub-link { align-self: flex-end; padding: 0; border: 0; background: none; cursor: pointer; font: 600 12.5px/1.3 var(--ff-sans); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .hub-link:hover { text-decoration-thickness: 2px; }
-.hub-cta .btn { min-height: 44px; padding: 10px 26px; font-size: 14.5px; justify-content: center; }
-.hub-side :focus-visible, .hub-card :focus-visible { outline-color: #fff; }
+.hub-card :focus-visible { outline-color: #fff; }
 
 /* ---- overview: sections ---- */
 .hub-section-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 16px; flex-wrap: wrap; }
@@ -231,12 +236,13 @@ body.inst:has(.dash) { background: var(--surface); }
 .seg-tabs button.on { background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; }
 .hub-panel { overflow: visible; }
 /* the window's five figures, split by short rules */
-.hub-summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 22px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.hub-summary { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0 22px; padding: 18px 0; border-bottom: 1px solid var(--line); }
 .hub-summary > div { display: flex; flex-direction: column; gap: 6px; padding: 2px 20px; min-width: 0; }
 .hub-summary > div:first-child { padding-left: 0; }
 .hub-summary > div + div { border-left: 1px solid var(--line); }
 .hub-summary > div > span:first-child { font-size: 12.5px; color: var(--ink-3); }
 .hub-summary b { font-size: 17px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.hub-sub { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .hub-growth { display: flex; gap: 14px; flex-wrap: wrap; }
 .hub-growth em { font-style: normal; font-size: 14px; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
 /* growth against the window before: the tertiary blue up, red down */
@@ -343,11 +349,9 @@ body.inst:has(.dash) { background: var(--surface); }
   .hub-cells { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 10px; }
 }
 @media (max-width: 900px) {
-  .hub-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hub-bals { grid-template-columns: minmax(0, 1fr); }
   .hub-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
   .hub-summary > div { padding-left: 0; border-left: 0 !important; }
-  .hub-summary > div:last-child { grid-column: 1 / -1; }
-  .hub-actions { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 600px) {
   .hub-card { padding: 18px; gap: 14px; }
@@ -642,8 +646,13 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .mini-select:focus-visible { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px var(--tertiary-soft); }
 .bal-asset-name { font-size: 13px; color: var(--ink-3); }
 .bal-asset-name b { font-weight: 700; color: var(--ink); margin-right: 4px; }
-/* a sidebar group opening: its views come in as the content does */
-.side-tree:not([hidden]) { animation: arrive .22s cubic-bezier(.2, .7, .2, 1) both; }
+/* a sidebar group slides open and closed: its height animates (grid rows 0fr to 1fr) and its
+   views fade in one after the other, so the entries below move instead of jumping */
+.side-tree-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s cubic-bezier(.2, .7, .2, 1); }
+.side-group.open > .side-tree-wrap { grid-template-rows: 1fr; }
+.side-tree-wrap > .side-tree { min-height: 0; overflow: hidden; }
+.side-tree > li { opacity: 0; translate: 0 -4px; transition: opacity .16s ease, translate .2s ease; }
+.side-group.open .side-tree > li { opacity: 1; translate: 0 0; transition-delay: calc(60ms + var(--i, 0) * 35ms); }
 /* phones: a record's long id is cut, so the columns that tell rows apart keep their room */
 @media (max-width: 700px) {
   .inst .tx td.tid { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -694,3 +703,103 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .country-list .dd-opt { width: 100%; border: 0; background: transparent; text-align: left; font: inherit; font-size: 14px; }
 .country-list .dd-opt:hover { background: var(--surface-2); }
 .country-list .dd-opt:focus-visible { background: var(--surface-2); outline: 2px solid var(--tertiary); outline-offset: -2px; }
+
+/* ---- the top bar's search (DashSearch): a pill like the bar's other controls, with its
+   results popping under it ---- */
+.dsearch { position: relative; display: flex; align-items: center; width: 260px; height: 40px; border: 1px solid var(--line-2); border-radius: var(--radius-btn); background: var(--surface); transition: border-color .15s ease, box-shadow .15s ease, width .25s cubic-bezier(.2, .7, .2, 1); }
+.dsearch:hover { border-color: var(--ink-3); }
+.dsearch:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px var(--tertiary-soft); width: 320px; }
+.dsearch-glyph { display: grid; place-items: center; width: 40px; flex: 0 0 auto; color: var(--ink-3); }
+.dsearch-glyph svg { width: 17px; height: 17px; }
+.dsearch-input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; color: var(--ink); font: 400 14px/1 var(--ff-sans); padding: 0; }
+.dsearch-input:focus, .dsearch-input:focus-visible { outline: none; }
+.dsearch-input::placeholder { color: var(--ink-3); }
+.dsearch-input::-webkit-search-cancel-button { display: none; }
+.dsearch-kbd { margin-right: 10px; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--radius-btn); font: 500 11px/1.2 var(--ff-sans); color: var(--ink-3); white-space: nowrap; }
+.dsearch:focus-within .dsearch-kbd { opacity: 0; }
+.dsearch-pop {
+  position: absolute; z-index: 90; top: calc(100% + 8px); right: 0; width: min(380px, calc(100vw - 32px)); max-height: 420px; overflow: auto;
+  padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  transform-origin: top right; animation: popIn .16s cubic-bezier(.2, .7, .2, 1) both;
+}
+.dsearch-pop[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
+.dsearch-list, .dsearch-list ul { list-style: none; margin: 0; padding: 0; }
+.dsearch-group { margin: 8px 10px 4px; font-size: 12px; font-weight: 500; color: var(--ink-3); }
+.dsearch-opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; color: var(--ink); font-size: 14px; cursor: pointer; }
+.dsearch-opt.cur { background: var(--surface-2); }
+.dsearch-ic { display: grid; place-items: center; width: 18px; color: var(--ink-3); flex: 0 0 auto; }
+.dsearch-ic svg { width: 16px; height: 16px; }
+.dsearch-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dsearch-h { font-size: 12px; color: var(--ink-3); }
+.dsearch-empty { margin: 0; padding: 14px 10px; font-size: 14px; color: var(--ink-3); }
+/* narrower screens: the field shrinks to its glyph and opens over the bar when focused */
+@media (max-width: 1280px) { .dsearch { width: 200px; } .dsearch-kbd { display: none; } }
+@media (max-width: 700px) {
+  .dsearch { width: 40px; }
+  .dsearch-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .dsearch:focus-within { position: absolute; right: 16px; width: min(320px, calc(100vw - 32px)); z-index: 95; }
+  .dsearch:focus-within .dsearch-input { position: static; opacity: 1; cursor: text; }
+}
+
+/* ---- one shape for everything (product owner: "the same rounded pattern everywhere, no button
+   outside that style"). Controls (every button, icon button, segment, toolbar field and filter)
+   are pills; form fields and small boxes 12px; options inside a list or menu 10px; popovers,
+   menus and wells inside a card 16px; cards and panels 20px; modals 24px. A new component
+   takes one of these, never its own radius. ---- */
+.inst { --r-field: 12px; --r-item: 10px; --r-pop: 16px; --r-card: 20px; --r-modal: 24px; }
+
+/* controls */
+.inst :is(.org-crumb, .env-seg, .env-seg button, .seg-tabs button, .filter-tabs button, .slip-pop .seg-tabs, .seg-fill, .seg-fill button,
+  .tb-search, .fbar-search .field, .dd-filter .dd-btn, .mini-select, .msel-btn, .pager-btn, .term-copy, .copy-inline, .copy-mini,
+  .env-switch, .org-switch, .collapse-btn, .icon-btn, .icon-mini, .hub-step, .hub-gear, .hub-kebab, .swap-flip-btn, .modal-x) { border-radius: var(--radius-btn); }
+/* fields and small boxes */
+.inst :is(.field, .dd-btn, .chat-input, .key-field, .reveal-key, .hub-code, .hub-bal, .design-opt img, .bars-tip) { border-radius: var(--r-field); }
+.inst .dd-filter .dd-btn, .inst .fbar-search .field { border-radius: var(--radius-btn); }
+/* options inside lists and menus */
+.inst :is(.dd-opt, .dsearch-opt, .tpick-row, .org-opt, .prof-opt, .msel-opt, .hub-menu :is(a, button), .side-link:focus-visible) { border-radius: var(--r-item); }
+/* popovers, menus and the wells inside a card */
+.inst :is(.dd-list, .dsearch-pop, .hub-menu, .org-menu, .prof-menu, .msel-menu, .slip-pop, .sp, .sq, .design-opt, .net-opt) { border-radius: var(--r-pop); }
+/* cards and panels */
+.inst :is(.panel, .metric, .bal-card, .swapper, .hub-side, .hub-card) { border-radius: var(--r-card); }
+.inst .modal { border-radius: var(--r-modal); }
+
+/* The dashboard's icon buttons and small outlined buttons are the snap's buttons too: a pill (a
+   circle when square) with a light outline, and the outline ink (the corporate blue) growing
+   from where the pointer enters (src/scripts/ink.ts places it), as in the general nav. */
+.inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn) {
+  --ink-fill: var(--out-ink, var(--cosmos-blue)); --ink-fg: var(--out-ink-fg, var(--cosmos-white));
+  position: relative; isolation: isolate; overflow: hidden;
+  transition: color .2s ease, border-color .2s ease;
+}
+.inst :is(.hub-step, .hub-gear, .modal-x) {
+  --ink-fill: var(--out-ink, var(--cosmos-blue)); --ink-fg: var(--out-ink-fg, var(--cosmos-white));
+  isolation: isolate; overflow: hidden; transition: color .2s ease, border-color .2s ease;
+}
+.inst :is(.hub-step, .hub-gear) { position: relative; --ink-fill: #fff; --ink-fg: var(--navy); }
+.inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn, .hub-step, .hub-gear, .modal-x)::before {
+  content: ""; content: "" / "";
+  position: absolute; left: var(--ink-x, 50%); top: var(--ink-y, 50%); z-index: -1;
+  width: var(--ink-size, 150%); aspect-ratio: 1; border-radius: 50%;
+  background: var(--ink-fill); translate: -50% -50%; scale: 0;
+  transition: scale .55s cubic-bezier(.2, .7, .2, 1); pointer-events: none;
+}
+.inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn, .hub-step, .hub-gear, .modal-x):focus-visible:not(:disabled) { color: var(--ink-fg); border-color: var(--ink-fill); }
+.inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn, .hub-step, .hub-gear, .modal-x):focus-visible:not(:disabled)::before { scale: 1; }
+@media (hover: hover) {
+  .inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn, .hub-step, .hub-gear, .modal-x):hover:not(:disabled) { color: var(--ink-fg); border-color: var(--ink-fill); background-color: transparent; }
+  .inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn, .hub-step, .hub-gear, .modal-x):hover:not(:disabled)::before { scale: 1; }
+}
+
+/* balances: each asset with its logo; the black card counts settlements */
+.bal-asset { display: flex; align-items: center; gap: 10px; }
+.bal-total-k { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .74); }
+.inst .bal-card.total { color: #fff; border-color: transparent; }
+
+/* No chips (product owner): plan, role, seat, lock, environment and ticket labels are coloured
+   text, never a capsule. A text action inside a table or a section is an underlined link. */
+.inst :is(.kg, .seat-usage, .lock-badge, .env-tag, .tk-status, .tk-prio, .pcm-badge) {
+  background: none; border: 0; padding: 0; border-radius: 0; text-transform: none; font-size: 12.5px; font-weight: 600;
+}
+.inst .tk-prio-urgent { color: #D64545; }
+.inst .link-btn { padding: 0; color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.inst .link-btn:hover { text-decoration-thickness: 2px; }

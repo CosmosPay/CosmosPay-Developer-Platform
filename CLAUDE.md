@@ -143,6 +143,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `src/components/cosmos/lib/constants.ts`, drawn by `Social.tsx` with Simple Icons' official
   glyphs (CC0). `BackToTop.astro` (both layouts) appears once the page has moved down a
   screen; it keeps its own five-language label because the layouts read two catalogs.
+- **A mega panel hangs from its own trigger** (product owner: it opened "from the middle"): sized
+  to its content, pulled back inside the window when it would cross the edge, and growing out of
+  the trigger (Nav.tsx sets the transform origin); it closes with a short exit.
 - **No ghost links.** A menu or footer link renders only when it leads somewhere. The targets are
   listed by catalog position in `NAV_LINKS` / `FEATURED_HREFS` (Nav.tsx) and `FOOT_GROUPS`
   (Footer.tsx); a label whose page does not exist yet stays there commented out. Never ship
@@ -190,21 +193,33 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     back on screens where the sidebar is off-canvas), then the page head: the view's name as the h1,
     an arrow and the organization as a breadcrumb menu (`OrgSwitcher variant="crumb"`), Sandbox /
     Production and the outlined "create organization" (icon only on phones). A view's own h2 stays
-    for assistive tech only. The sidebar entries are `SIDE` in `dashboard/data.ts`.
+    for assistive tech only and no view has a visible subtitle. The sidebar entries are `SIDE` in
+    `dashboard/data.ts`; a group slides open and closed (its height animates; closed, it is inert).
+  - **The bar carries the dashboard's search** (`widgets/DashSearch.tsx`, passed to `Nav` as
+    `search`; Ctrl K / Cmd K or "/" focus it): a combobox that finds the pages by name (and by
+    their group's) and, with a query, searches payments, swaps and liquidity by writing their `q`
+    filter to the URL; `FILTERS_EVENT` (`dashboard/hooks.ts`) makes a list already on screen read
+    it again. On phones it shrinks to its glyph and opens over the bar.
   - **The overview** (`views/OverviewView.tsx`): a black account card (its up and down arrows step
     through the organizations; name, plan, Active in the reference's orange, created date, settled
-    volume, the plan's rate and the network as text split by a hairline) on a grey panel
-    (`--slate`, white text at AA: four totals, the organization ID to copy with the docs link, the
-    main button with the checkout designs link); "Payments activity" with Daily / Weekly / Monthly /
-    Yearly tabs over a five-column strip (volume, payments, failed, payers, growth: tertiary blue up,
-    red down, against the window before) and the paired bars; then "Transactions" with Today /
+    volume, the plan's rate and the environment as text split by a hairline) beside a white panel
+    like every other one (product owner: no grey panel): the balances, each token with its logo
+    (`/v1/balances`), the organization ID to copy with the docs link, "Create payment link" and
+    "Swap"; "Activity" with Daily / Weekly / Monthly / Yearly tabs over a six-figure strip (settled
+    volume with its payers, payments with the failed, swaps of every kind and liquidity operations
+    with the completed, webhook deliveries with the failed, growth: tertiary blue up, red down,
+    against the window before; product owner: the metrics are not payments only) and the paired
+    bars of payments and volume; then "Transactions" with Today /
     Week / Month / Year, the shared filter bar (settled / in progress / failed, network, search) and
     one line per payment (status icon, label over value, a menu to copy the ID, open the explorer on
     its chain or the Payments view).
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
-    from Monday), with the window's totals (distinct payers too) and the window before it. Its volume
-    adds every asset's amount, as the daily summary does. The list reads
+    from Monday), with the window's totals (distinct payers too) and the window before it, plus
+    `swaps` (Stellar DEX, Solana / Monad and cross-chain), `liquidity` and `webhooks` for the same
+    window (consumer and network; cross-chain counts zero in the sandbox). Its volume adds every
+    asset's amount, as the daily summary does. A window or a balance list that fails to load shows
+    a dash or says so, never zeros that look like data. The list reads
     `GET /api/payment-intents?createdFrom=…`.
   - **One filter row for every list** (`components/FilterBar.tsx`, the logic pure and tested in
     `src/lib/dashboard-filters.ts`): the search, then a dropdown per filter (status, network, type,
@@ -226,9 +241,24 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   - **Motion runs for everyone in the dashboard and the nav, reduced-motion settings included**
     (product owner, as on the payments landing; their own Windows has reduced motion on). Keep it
     short and small; do not add `prefers-reduced-motion` switches that turn it off.
-  - **Fields are plain** (`.inst .field`): white, a 1px grey line, 10px corners, the label above and
+  - **Fields are plain** (`.inst .field`): white, a 1px grey line, 12px corners, the label above and
     the help under the input (`Field` / `Sel` link it with aria-describedby), focus darkening the
-    line with the tertiary ring.
+    line with the tertiary ring. A text field never draws the square focus outline inside its rounded
+    line (the product owner saw it as a stray box): `.inst :focus-visible`'s outline is off for text
+    fields, which show focus themselves (their line and ring, or their well's `:focus-within`).
+  - **One shape for everything** (product owner: "the same rounded pattern, no button outside that
+    style"), tokens on `.inst` at the end of `dashboard.css`: every button, icon button, segment,
+    toolbar search and filter is a pill; form fields and small boxes `--r-field` (12px); options in
+    a list or menu `--r-item` (10px); popovers, menus and the wells inside a card `--r-pop` (16px);
+    cards and panels `--r-card` (20px); modals `--r-modal` (24px). A new component takes one of
+    these. Icon buttons and small outlined buttons take the snap's ink too (`ink.ts` lists them); an
+    action in a panel's head is a small outlined button, a text action inside a table an underlined
+    link.
+  - **No chips**: plan, role, seat, lock, environment and ticket labels are coloured text.
+  - **Copy says only what the screen needs** (product owner, 2026-10-25: no AI-style
+    clarifications): no subtitles under view names, no note that restates a label, a placeholder,
+    the network cards or the button (the swap button already names what is missing). A hint stays
+    only when it prevents a mistake: a format, a requirement, a security warning.
   - **What loads has a standard skeleton** (`components/Skeleton.tsx`: `TableSkeleton`,
     `ListSkeleton`, `ChartSkeleton`, `Sk`): grey shapes of the content (rows, a status mark with
     label-over-value pairs, bars) with a light band sweeping across them, a solid blurred band rather
@@ -425,8 +455,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   figures until they are real. Every product claim in the copy is checked against the dashboard
   and the community server (e.g. the dashboard sets amount, memo and message, not an expiry).
   The card column of the comparison states the usual case and carries a footnote saying so.
-- **Networks, assets and wallets run as two marquees, and only the marquees show** (the
-  product owner removed the visible title, row labels, the SEP-7 note and the pause button).
+- **Networks, assets and wallets run as three marquees, and only the marquees show** (the
+  product owner removed the visible title, row labels, the SEP-7 note and the pause button): what a
+  payment settles on (Stellar, Solana, Monad and their assets), the networks and tokens NEAR Intents
+  swaps between (`NETWORK_IDS` with a logo, plus a few stablecoins and wrapped BTC), and the
+  wallets, Pollar among them (its brand kit's blue mark on light pages, the white one on dark, and
+  only ever beside its name, as the kit asks).
   Two identical sets slide by half the track; the moving copy is `aria-hidden`, and a visually
   hidden title, row labels and list carry the names. Hovering a row holds it; like the hero
   video they run for everyone, reduced motion included (the product owner's call). **Logos are official artwork only**, full colour, in
@@ -434,7 +468,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Albedo, Rabet from the Stellar Wallets Kit; Phantom and Solflare from their Solana
   wallet-adapter icons; Monad and EURC from Trust Wallet's assets. Single-colour marks (Stellar,
   the Cosmos isotype) are inline in currentColor (`Mark.astro`) so they follow the theme. Never
-  draw an approximation of someone else's logo.
+  draw an approximation of someone else's logo. **Every token and network logo** (the landing's
+  swap row, the dashboard's `TokenMark` everywhere an asset shows) comes from the generated manifest
+  `src/lib/token-logos.ts` (`tokenLogo` / `networkLogo`, tested in `tests/unit/tokenLogos.test.ts`):
+  96x96 WebP files in `public/media/{tokens,networks}`, each with its source and licence in that
+  folder's `SOURCES.md` (Trust Wallet's assets, MIT; the projects' own brand kits; token lists
+  that name an official icon). `scripts/fetch-token-logos.mjs` refreshes the set (never during the
+  build) and refuses CoinGecko and CoinMarketCap images. A token without official artwork keeps a
+  neutral monogram.
 - **Typography and structure stay quiet** (design-skill pass, 2026-10-24): no labels above
   headings, headings in one colour with no accent word, no all-caps labels, numbering only for
   real sequences ("how it works"), no arrows on buttons or links, no rows of icon cards (an icon

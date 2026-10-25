@@ -213,7 +213,6 @@ export function SwapWidget({ orgId, env, onCreated }) {
           </output>
           {tokenButton("to", to)}
         </div>
-        {estimate !== null && !out && <p className="sp-note">{w.estimateNote}</p>}
       </div>
 
       {rate !== null && from && to && (
@@ -245,7 +244,6 @@ export function SwapWidget({ orgId, env, onCreated }) {
         <div className="swap-accounts">
           <Field
             label={fmt(isNear ? w.refundLabel : w.accountLabel, { chain: from.chainName })}
-            hint={isNear ? w.refundHint : w.accountHint}
             value={account} onChange={(e) => setAccount(e.target.value)}
             placeholder={placeholderFor(from.chain)}
             aria-invalid={account.trim() && !accountValid ? true : undefined}
@@ -254,7 +252,6 @@ export function SwapWidget({ orgId, env, onCreated }) {
           {isNear && (
             <Field
               label={fmt(w.recipientLabel, { chain: to.chainName })}
-              hint={w.recipientHint}
               value={recipient} onChange={(e) => setRecipient(e.target.value)}
               placeholder={placeholderFor(to.chain)}
               aria-invalid={recipient.trim() && !recipientValid ? true : undefined}
@@ -279,8 +276,6 @@ export function SwapWidget({ orgId, env, onCreated }) {
       )}
 
       <button type="button" className="btn btn-dark swap-cta" disabled={!cta.ok || busy} onClick={create}>{busy ? w.ctaBusy : cta.label}</button>
-      {route?.kind === "none" && route.reason === "production-only" && <p className="swap-hint">{t.dash.swaps.mainnetOnly}</p>}
-      {isNear && env !== "prod" && <p className="swap-hint">{t.dash.crossChain.mainnetOnly}</p>}
       {quote.status === "error" && quote.data && <p className="swap-hint is-error" role="alert">{quote.data}</p>}
 
       {picker && (
@@ -320,7 +315,6 @@ function SlippageMenu({ value, onChange }) {
               </button>
             ))}
           </div>
-          <p className="slip-h">{w.slippageHint}</p>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { useT } from "@/lib/i18n/index";
 import { CosmosLockup } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -87,9 +87,12 @@ export function Sidebar({ view, go, visible, unread, supportUnread }: Props) {
                         {!isOpen && anyBadge && <span className="side-dot" aria-hidden="true" />}
                         <span className="side-chev" aria-hidden="true">{DI.chevD}</span>
                       </button>
-                      <ul className="side-tree" id={`side-g-${e.group}`} role="list" hidden={!isOpen}>
-                        {e.views.map((v) => <li key={v}>{link(v, label(v), null, "side-link side-sub")}</li>)}
-                      </ul>
+                      {/* The tree slides open and closed (its height animates); closed, it is inert. */}
+                      <div className="side-tree-wrap" id={`side-g-${e.group}`} inert={!isOpen}>
+                        <ul className="side-tree" role="list">
+                          {e.views.map((v, i) => <li key={v} style={{ "--i": i } as CSSProperties}>{link(v, label(v), null, "side-link side-sub")}</li>)}
+                        </ul>
+                      </div>
                     </li>
                   );
                 })}

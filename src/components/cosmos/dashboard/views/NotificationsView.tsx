@@ -15,7 +15,7 @@ export function NotificationsView({ notifications, loading, error }) {
   const show = !loading && !error && rows.length > 0;
   return (
     <>
-      <ViewHead title={nt.title} sub={nt.subtitle} />
+      <ViewHead title={nt.title} />
       <div className="panel">
         {show && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{t.dash.webhooks.tableHead.event}</th><th>{nt.location}</th><th>{nt.ip}</th><th>{nt.device}</th><th>{t.dash.overview.tableHead.date}</th></tr></thead>
