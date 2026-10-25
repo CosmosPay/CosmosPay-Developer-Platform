@@ -1,4 +1,5 @@
 ---
+import { messages } from "@/lib/i18n/messages/index";
 import "@/styles/cosmos.css";
 import "@/styles/views.css";
 import "@/styles/onboarding.css";
@@ -42,6 +43,7 @@ const {
 // Locale comes from the cookie (set by the in-app language switcher) so SSR and the
 // first client render agree. Defaults to English.
 const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const skipLabel = ((messages as Record<string, typeof messages.en>)[locale] ?? messages.en).ui.skipToContent;
 
 // Absolute URLs for canonical + social cards, on the domain this page is served as and at
 // its public path: the company pages render from /site/* behind a rewrite (src/lib/hosts.ts).
@@ -164,7 +166,7 @@ const jsonLd = {
     </style>
   </head>
   <body class={bodyClass}>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">{skipLabel}</a>
     {nav && (
       <SiteNav
         client:load

@@ -290,7 +290,7 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
         <div className={`swap-another${more ? " open" : ""}`} id="paylink-more" inert={!more}>
           <div className="swap-another-in">
             <Field label={m.memo} hint={stellar ? m.memoHint : m.memoHintOther} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />
-            {chain !== "monad" && <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Order #24" />}
+            {chain !== "monad" && <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
           </div>
         </div>
 

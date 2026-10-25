@@ -44,3 +44,4 @@ data/geoip/*.mmdb
 
 # scripts/export-wallet-data.mjs output: encrypted seed backups + emails. Never commit it.
 wallet-data-export*.json
+

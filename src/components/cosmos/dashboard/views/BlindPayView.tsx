@@ -158,13 +158,13 @@ function OwnerRow({ owner, index, f, bp, orgId, env, t, onChange, onRemove }) {
         <label className="field-l">{fmt(bp.receivers.modal.ownerN, { n: index + 1 })}</label>
         <button type="button" className="btn btn-soft btn-sm danger-soft" onClick={() => onRemove(index)}>{bp.receivers.modal.removeOwner}</button>
       </div>
-      <Field label={f.first_name} value={g("first_name")} onChange={setE("first_name")} placeholder="Jane" />
-      <Field label={f.last_name} value={g("last_name")} onChange={setE("last_name")} placeholder="Doe" />
+      <Field label={f.first_name} value={g("first_name")} onChange={setE("first_name")} placeholder={t.dash.examples.firstName} />
+      <Field label={f.last_name} value={g("last_name")} onChange={setE("last_name")} placeholder={t.dash.examples.lastName} />
       <Field label={f.date_of_birth} type="date" value={g("date_of_birth")} onChange={setE("date_of_birth")} />
       <Field label={f.tax_id} value={g("tax_id")} onChange={setE("tax_id")} />
       <CountrySelect label={f.country} value={g("country")} onChange={setV("country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
       <Field label={f.ownership_percentage} hint={t.dash.common.optional} value={g("ownership_percentage")} onChange={setE("ownership_percentage")} inputMode="numeric" placeholder="25" />
-      <Field label={f.title} hint={t.dash.common.optional} value={g("title")} onChange={setE("title")} placeholder="Director" />
+      <Field label={f.title} hint={t.dash.common.optional} value={g("title")} onChange={setE("title")} placeholder={t.dash.examples.jobTitle} />
       <CountrySelect label={f.id_doc_country} value={g("id_doc_country")} onChange={setV("id_doc_country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
       <Sel label={f.id_doc_type} value={g("id_doc_type")} onChange={setV("id_doc_type")} options={ID_DOC_TYPES} labels={ID_DOC_TYPE_LABELS} />
       <UploadField label={f.id_doc_front_file} value={g("id_doc_front_file")} onChange={setV("id_doc_front_file")} orgId={orgId} env={env} bp={bp} />
@@ -614,8 +614,8 @@ function AddBankForm({ bp, receiver, orgId, env, onClose, onAdded }) {
   return (
     <div className="paylink-block">
       <Sel label={b.rail} value={type} onChange={setType} options={RAILS} />
-      <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme payouts (USD)" />
-      <Field label={b.beneficiary} hint={t.dash.common.optional} value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} placeholder="Jane Doe" />
+      <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.dash.examples.payoutsName} />
+      <Field label={b.beneficiary} hint={t.dash.common.optional} value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} placeholder={t.dash.examples.fullName} />
       <CountrySelect label={b.country} hint={t.dash.common.optional} value={country} onChange={setCountry} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
       <Field label={b.accountNumber} hint={t.dash.common.optional} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789" />
       <Field label={b.routingNumber} hint={t.dash.common.optional} value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="021000021" />

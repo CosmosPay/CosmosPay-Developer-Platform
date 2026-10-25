@@ -1,0 +1,23 @@
+---
+/* /zk/account: the merchant's confidential account, the Stellar account that receives ZK
+ * payments (register it on the confidential token, see its balances, withdraw). Wallet-based,
+ * no session: Freighter connects the account and everything is proven in the browser, so it lives
+ * on the cross-origin isolated payments domain with the checkout. `?network=public` for
+ * Production; the sandbox's testnet otherwise. */
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import { ZkAccount } from "@/components/cosmos/zk/ZkAccount";
+import { messages } from "@/lib/i18n/messages/index";
+import { API_BASE } from "@/lib/payments/urls";
+import { DASH } from "@/components/cosmos/lib/constants";
+import "@/styles/zk.css";
+
+const lang = Astro.locals.lang ?? "en";
+const t = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
+const network = Astro.url.searchParams.get("network") === "public" ? "public" : "testnet";
+---
+
+<PaymentsLayout title={t.zk.account.title} description={t.zk.title}>
+  <main id="main" class="zk-page">
+    <ZkAccount client:only="react" apiBase={API_BASE} lang={lang} network={network} dashboardUrl={`${DASH}?view=zkPayments`} />
+  </main>
+</PaymentsLayout>

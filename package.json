@@ -48,6 +48,7 @@
     "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "stellar-confidential-token-sdk": "github:brozorec/stellar-confidential-token-sdk#aad17069714713bcb36fa376d0f2a87743e8e2a7",
     "zod": "^4.6.5"
   },
   "devDependencies": {

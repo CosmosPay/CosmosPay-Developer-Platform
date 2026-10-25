@@ -28,7 +28,7 @@ export function SpecPanel({ t, viewId, setViewId, selectedId, recId, showRec }) 
               : isRec ? <span className="spec-badge rec">{I.bolt} {ob.recommendedForYou}</span>
                 : <span className="spec-badge rec">{p.desc}</span>}
             <div className="spec-name">{t.dash.planNames[id]}</div>
-            <div className="spec-price"><span className="amt">{d.price}</span>{d.per && <span className="per">{d.per}</span>}</div>
+            <div className="spec-price"><span className="amt">{d.price}</span>{d.per && <span className="per">{t.pricing.perMo}</span>}</div>
             <div className="spec-pnote">{p.pnote}</div>
             <div className="spec-grid">
               <SpecRow icon={I.coin} k={ob.spec.perTx} v={d.perTx} />

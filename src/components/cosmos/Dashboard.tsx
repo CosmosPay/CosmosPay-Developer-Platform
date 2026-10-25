@@ -14,7 +14,7 @@ import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
 import {
-  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
+  OverviewView, PaymentsView, ZkPaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
@@ -309,6 +309,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       // Swaps between chains live in the swaps list; the old deep link opens it filtered to them.
       case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "liquidity": return <LiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;

@@ -109,7 +109,7 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
         <Field label={m.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Inc." autoFocus />
-        <Field label={cx.custDetail.alias} hint={t.dash.common.optional} value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="Acme billing" />
+        <Field label={cx.custDetail.alias} hint={t.dash.common.optional} value={alias} onChange={(e) => setAlias(e.target.value)} placeholder={t.dash.examples.customerName} />
         <Field label={m.email} hint={t.dash.common.optional} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@acme.com" />
         <Field label={cx.custDetail.account} hint={t.dash.common.optional} value={account} onChange={(e) => setAccount(e.target.value)} placeholder={cx.custDetail.accountPlaceholder} />
         <div className="modal-actions">
@@ -160,7 +160,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
         {edit ? (
           <>
             <Field label={m.name} value={form.name} onChange={set("name")} autoFocus />
-            <Field label={cd.alias} hint={t.dash.common.optional} value={form.alias} onChange={set("alias")} placeholder="Acme billing" />
+            <Field label={cd.alias} hint={t.dash.common.optional} value={form.alias} onChange={set("alias")} placeholder={t.dash.examples.customerName} />
             <Field label={m.email} hint={t.dash.common.optional} type="email" value={form.email} onChange={set("email")} />
             <Field label={cd.account} hint={t.dash.common.optional} value={form.account} onChange={set("account")} placeholder={cd.accountPlaceholder} />
             <Field label={cd.note} hint={t.dash.common.optional} value={form.note} onChange={set("note")} />

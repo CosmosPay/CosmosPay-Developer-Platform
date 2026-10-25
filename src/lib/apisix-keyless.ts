@@ -72,6 +72,34 @@ export const PAYMENT_LINKS_METHODS = ['GET', 'OPTIONS'];
 
    `Retry-After` and the RateLimit-* headers are exposed so a 429 tells the page when to come
    back (fetchPaymentLink reads `Retry-After`). */
+/* The ZK checkout (payments.cosmospay.lat/zk/{id}): the payer's browser reads one ZK payment
+   (`GET /v1/zk-checkout/{id}`) and reports the two confidential transfers that pay it
+   (`POST /v1/zk-checkout/{id}/confirm`), both `@Public()` and budgeted per client address on the
+   community server, so they cannot go through one server either. Its own prefix, because nothing
+   under it needs a consumer: every authenticated ZK route stays under `/v1/zk-payments`, which a
+   keyless prefix route would otherwise swallow. The confirm call proves nothing by itself: the
+   server checks both transactions on-chain before it marks a payment paid. */
+export const ZK_CHECKOUT_PATH = '/v1/zk-checkout/';
+
+/* The gateway URI of the ZK checkout's public read and confirm. */
+export function zkCheckoutRouteUris(entry: string): string[] {
+  return [`${entryPrefix(entry)}${ZK_CHECKOUT_PATH}*`];
+}
+
+export const ZK_CHECKOUT_METHODS = ['GET', 'POST', 'OPTIONS'];
+
+/* Any origin, no credentials, for the same reasons as PAYMENT_LINKS_CORS: keyless, nothing
+   secret in the answer (the payer's view of one ZK payment), and the confirm POST carries only
+   transaction hashes the chain already made public. Content-Type is allowed for the JSON body. */
+export const ZK_CHECKOUT_CORS = {
+  allow_origins: '*',
+  allow_methods: ZK_CHECKOUT_METHODS.join(','),
+  allow_headers: 'Accept,Content-Type',
+  expose_headers: 'Retry-After,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset',
+  allow_credential: false,
+  max_age: 86400,
+} as const;
+
 export const PAYMENT_LINKS_CORS = {
   allow_origins: '*',
   allow_methods: PAYMENT_LINKS_METHODS.join(','),

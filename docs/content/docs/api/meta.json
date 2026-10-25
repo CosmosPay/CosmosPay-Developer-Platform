@@ -6,6 +6,8 @@
     "payment-intents",
     "swaps",
     "cross-chain-swaps",
+    "zk-payments",
+    "zk-checkout",
     "liquidity-pools",
     "assets",
     "payment-links",

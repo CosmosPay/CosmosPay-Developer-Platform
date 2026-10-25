@@ -50,7 +50,11 @@ export const openApiConfig: OpenAPIObjectConfig = {
     },
     {
       name: 'Cross-chain Swaps',
-      description: 'Swaps between Stellar, Solana and Monad, settled by NEAR Intents',
+      description: 'Swaps between every network NEAR Intents reaches, settled by NEAR Intents',
+    },
+    {
+      name: 'ZK Payments',
+      description: 'Confidential payments on Stellar (amounts hidden on-chain), offered as a service for a 0.01% commission per transaction',
     },
     {
       name: 'Liquidity',

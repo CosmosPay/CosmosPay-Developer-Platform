@@ -2,12 +2,14 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { COUNTRIES } from "@/lib/countries";
 import { CountryFlag } from "@/components/cosmos/dashboard/components/CountryFlag";
 import { useOutside, usePresence } from "@/components/cosmos/dashboard/hooks";
+import { useT } from "@/lib/i18n/index";
 
 /* A searchable country/region picker, drawn as the dashboard's dropdown (`.dd`, popping open
    and closed like Select). Each option shows a flag, the country name and its 2-letter code,
    but the VALUE handed to onChange is just the code. The search box takes focus on open; the
    arrow keys move from it into the list, Escape closes and returns focus to the button. */
 export function CountrySelect({ label, hint, value, onChange, placeholder, searchPlaceholder }) {
+  const t = useT();
   const id = useId();
   const listId = `${id}-list`;
   const [open, setOpen] = useState(false);
@@ -56,14 +58,14 @@ export function CountrySelect({ label, hint, value, onChange, placeholder, searc
         >
           {selected
             ? <span className="dd-val"><span className="country-opt"><CountryFlag code={selected.code} /> {selected.name} ({selected.code})</span></span>
-            : <span className="dd-val dd-placeholder">{placeholder || "Select…"}</span>}
+            : <span className="dd-val dd-placeholder">{placeholder || t.ui.select}</span>}
           <svg className="dd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
         </button>
         {mounted && (
           <div className="dd-list country-list" data-state={state} ref={list}>
             <input
               className="field country-search" autoFocus value={q} onChange={(e) => setQ(e.target.value)}
-              placeholder={searchPlaceholder || placeholder || "Search…"} aria-label={searchPlaceholder || "Search"} aria-controls={listId}
+              placeholder={searchPlaceholder || placeholder || t.ui.searchEllipsis} aria-label={searchPlaceholder || t.ui.search} aria-controls={listId}
             />
             <div role="listbox" id={listId} aria-label={label}>
               {filtered.map((c) => (

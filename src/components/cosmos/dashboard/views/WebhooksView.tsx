@@ -18,9 +18,10 @@ const EVENT_TYPES = [
   "PAYMENT_INTENT_FAILED",
   "PAYMENT_INTENT_CANCELLED",
   "PAYMENT_INTENT_DELETED",
+  "ZK_PAYMENT_SUCCEEDED",
 ];
-/* PAYMENT_INTENT_SUCCEEDED → payment_intent.succeeded */
-const humanize = (e) => e.toLowerCase().replace("payment_intent_", "payment_intent.");
+/* PAYMENT_INTENT_SUCCEEDED → payment_intent.succeeded, ZK_PAYMENT_SUCCEEDED → zk_payment.succeeded */
+const humanize = (e) => e.toLowerCase().replace(/^(payment_intent|zk_payment)_/, "$1.");
 const DELIVERY_PILL = { SUCCEEDED: "ok", FAILED: "fail", PENDING: "ref" };
 
 export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
@@ -68,7 +69,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
     <>
       <ViewHead title={wv.title}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button>}</ViewHead>
       <div className="panel" style={{ marginBottom: 16 }}>
-        <div className="panel-head"><h3>{wv.endpoints}</h3><span className="env-tag">{DI.network} {env === "prod" ? "Public" : "Testnet"}</span></div>
+        <div className="panel-head"><h3>{wv.endpoints}</h3><span className="env-tag">{DI.network} {t.dash.paylinks.network[env === "prod" ? "prod" : "dev"]}</span></div>
         {!loading && !error && eps.length > 0 && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{pg.slice.map((w) => (

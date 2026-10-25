@@ -1,5 +1,100 @@
 /* es.js: Spanish message catalog. Mirrors en.js exactly in shape. */
 export default {
+  ui: { close: "Cerrar", dialog: "Diálogo", copyToClipboard: "Copiar al portapapeles", search: "Buscar", searchEllipsis: "Buscar…", select: "Seleccionar…", account: "Cuenta", onboardingSteps: "Pasos de la incorporación", skipToContent: "Saltar al contenido" },
+  zk: {
+    title: "Pagos ZK",
+    commission: "Comisión",
+    commissionRate: "0,01% por transacción",
+    amount: "Monto",
+    merchantGets: "Recibe el comercio",
+    youPay: "Pagas",
+    status: {
+      PENDING: "Pendiente",
+      SUCCEEDED: "Pagado",
+      EXPIRED: "Vencido",
+    },
+    unavailable: "Los pagos ZK todavía no están disponibles en esta red.",
+    notIsolated: "Este navegador no puede generar las pruebas. Abre la página en Chrome, Edge o Firefox.",
+    freighter: {
+      missing: "Instala Freighter para continuar.",
+      declined: "Freighter rechazó la solicitud.",
+      wrongNetwork: "Cambia Freighter a {network}.",
+    },
+    phases: {
+      keys: "Firma dos veces en Freighter para derivar tu clave privada",
+      proving: "Generando la prueba…",
+      signing: "Aprueba en Freighter…",
+      waiting: "Esperando a la red…",
+    },
+    view: {
+      create: "Crear pago ZK",
+      account: "Cuenta confidencial",
+      empty: "Todavía no hay pagos ZK.",
+      loadError: "No se pudieron cargar los pagos ZK.",
+      tableHead: {
+        id: "Pago",
+        amount: "Monto",
+        net: "Recibe el comercio",
+        fee: "Comisión",
+        status: "Estado",
+        created: "Creado",
+      },
+      copyLink: "Copiar enlace de pago",
+      openCheckout: "Abrir el checkout",
+      searchPlaceholder: "Buscar por ID, cuenta o monto…",
+    },
+    modal: {
+      title: "Nuevo pago ZK",
+      recipient: "Cuenta que recibe",
+      recipientHint: "Necesita una cuenta confidencial: créala desde Cuenta confidencial.",
+      description: "Descripción",
+      expires: "Vence en",
+      expiries: {
+        m60: "1 hora",
+        m1440: "24 horas",
+        m10080: "7 días",
+      },
+      submit: "Crear",
+      submitting: "Creando…",
+      created: "Pago ZK creado",
+      link: "Enlace de pago",
+    },
+    account: {
+      title: "Cuenta confidencial",
+      connect: "Conectar Freighter",
+      connected: "Conectado como {account}",
+      register: "Crear cuenta confidencial",
+      registered: "Cuenta confidencial activa",
+      spendable: "Disponible",
+      receiving: "Entrante",
+      merge: "Pasar lo entrante a disponible",
+      withdraw: "Retirar a XLM público",
+      deposit: "Depositar XLM",
+      amountLabel: "Monto",
+      refresh: "Actualizar",
+      done: "Listo",
+      back: "Volver al panel",
+    },
+    checkout: {
+      title: "Pago privado",
+      to: "Para",
+      payPrivately: "Pagar en privado",
+      steps: {
+        register: "Crear tu cuenta confidencial",
+        fund: "Pasar XLM a tu saldo confidencial",
+        pay: "Enviar el pago",
+        fee: "Enviar la comisión",
+        confirm: "Confirmar el pago",
+      },
+      paid: "Pago completado",
+      paidBody: "El monto queda privado en la cadena.",
+      expired: "Este pago venció.",
+      notFound: "Este pago no existe.",
+      loadError: "No se pudo cargar este pago.",
+      retry: "Reintentar",
+      transactions: "Transacciones",
+    },
+  },
   invite: {
     eyebrow: "Invitación",
     joinTitle: "Únete a {org}",
@@ -606,6 +701,7 @@ export default {
           story: "Northwind trasladó su checkout global a Cosmos Pay sobre Stellar, Solana y Monad, reduciendo la liquidación de días a segundos y recortando los costos de FX en más de 30 mercados, todo manteniendo un único libro mayor conciliado."
         },
         Lumio: {
+          metric: "6 sem.",
           label: "para lanzar suscripciones en USDC en 40 países.",
           tags: ["Facturación", "USDC", "Anchors"],
           story: "Lumio sustituyó un mosaico de procesadores regionales por Cosmos Pay, lanzando suscripciones denominadas en USDC en 40 países en tan solo seis semanas usando anchors para rampas locales de entrada y salida."
@@ -815,10 +911,11 @@ export default {
     openDashboard: "Abrir panel"
   },
   dash: {
+    examples: { order: "Pedido #24", firstName: "Ana", lastName: "Pérez", fullName: "Ana Pérez", jobTitle: "Directora", customerName: "Facturación Acme", payoutsName: "Pagos de Acme (USD)", productName: "Plan Pro (mensual)" },
     search: { label: "Buscar en el dashboard", placeholder: "Buscar", pages: "Páginas", searchGroup: "Buscar", searchIn: "{place} con “{q}”", empty: "Nada coincide con “{q}”." },
     viewLabels: {
       overview: "Resumen",
-      payments: "Pagos",
+      payments: "Pagos", zkPayments: "Pagos ZK",
       balances: "Saldos",
       customers: "Clientes",
       products: "Productos y enlaces",
@@ -858,7 +955,7 @@ export default {
       },
       items: {
         overview: "Resumen",
-        payments: "Pagos",
+        payments: "Pagos", zkPayments: "Pagos ZK",
         balances: "Saldos",
         customers: "Clientes",
         products: "Productos",
@@ -938,7 +1035,7 @@ export default {
       org: {
         eyebrow: "Organización",
         title: "Crear organización",
-        atLimit: "Tu plan {plan} permite hasta {limit} organización{s}. Mejora tu plan para crear más.",
+        atLimitOne: "Tu plan {plan} permite una organización. Mejora tu plan para crear más.", atLimit: "Tu plan {plan} permite hasta {limit} organizaciones. Mejora tu plan para crear más.",
         body: "Las organizaciones mantienen los pagos, clientes y claves de API totalmente separados. Puedes crear {n} más con tu plan {plan}.",
         bodyUnlimited: "Las organizaciones mantienen los pagos, clientes y claves de API totalmente separados. Puedes crear ilimitadas más con tu plan {plan}.",
         nameLabel: "Nombre de la organización",
@@ -1044,7 +1141,7 @@ export default {
     },
     cosmos: {
       loading: "Cargando…", loadError: "No se pudieron cargar los datos.", empty: "Aún no hay nada aquí.",
-      eventLabels: { PAYMENT_INTENT_CREATED: "Pago creado", PAYMENT_INTENT_UPDATED: "Pago actualizado", PAYMENT_INTENT_SUCCEEDED: "Pago completado", PAYMENT_INTENT_FAILED: "Pago fallido", PAYMENT_INTENT_CANCELLED: "Pago cancelado", PAYMENT_INTENT_DELETED: "Pago eliminado" },
+      eventLabels: { PAYMENT_INTENT_CREATED: "Pago creado", PAYMENT_INTENT_UPDATED: "Pago actualizado", PAYMENT_INTENT_SUCCEEDED: "Pago completado", PAYMENT_INTENT_FAILED: "Pago fallido", PAYMENT_INTENT_CANCELLED: "Pago cancelado", PAYMENT_INTENT_DELETED: "Pago eliminado", ZK_PAYMENT_SUCCEEDED: "Pago ZK completado" },
       active: "Activo", inactive: "Desactivado",
       reveal: "Mostrar secreto", secret: "Secreto de firma", secretNote: "Se muestra una sola vez. Guárdalo de forma segura.",
       rotate: "Rotar secreto", ping: "Enviar prueba", pingOk: "Evento de prueba entregado", pingFail: "Falló el evento de prueba",

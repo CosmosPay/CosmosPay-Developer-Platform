@@ -1,5 +1,6 @@
 export { OverviewView } from "./OverviewView";
 export { PaymentsView } from "./PaymentsView";
+export { ZkPaymentsView } from "@/components/cosmos/dashboard/views/ZkPaymentsView";
 export { BalancesView } from "./BalancesView";
 export { CustomersView } from "./CustomersView";
 export { ProductsView } from "./ProductsView";

@@ -97,7 +97,7 @@ export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[]
     sec: "main",
     entries: [
       { view: "overview" },
-      { group: "payments", views: ["payments", "customers", "products"] },
+      { group: "payments", views: ["payments", "zkPayments", "customers", "products"] },
       { view: "balances" },
       { group: "swaps", views: ["swaps", "liquidity"] },
       { view: "blindpay" },

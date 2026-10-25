@@ -1,5 +1,100 @@
 /* de.js: German message catalog. Mirrors en.js exactly in shape. */
 export default {
+  ui: { close: "Schließen", dialog: "Dialog", copyToClipboard: "In die Zwischenablage kopieren", search: "Suchen", searchEllipsis: "Suchen…", select: "Auswählen…", account: "Konto", onboardingSteps: "Schritte der Einrichtung", skipToContent: "Zum Inhalt springen" },
+  zk: {
+    title: "ZK-Zahlungen",
+    commission: "Provision",
+    commissionRate: "0,01 % pro Transaktion",
+    amount: "Betrag",
+    merchantGets: "Händler erhält",
+    youPay: "Sie zahlen",
+    status: {
+      PENDING: "Ausstehend",
+      SUCCEEDED: "Bezahlt",
+      EXPIRED: "Abgelaufen",
+    },
+    unavailable: "ZK-Zahlungen sind in diesem Netzwerk noch nicht verfügbar.",
+    notIsolated: "Dieser Browser kann die Beweise nicht erzeugen. Öffnen Sie die Seite in Chrome, Edge oder Firefox.",
+    freighter: {
+      missing: "Installieren Sie Freighter, um fortzufahren.",
+      declined: "Freighter hat die Anfrage abgelehnt.",
+      wrongNetwork: "Stellen Sie Freighter auf {network} um.",
+    },
+    phases: {
+      keys: "Signieren Sie zweimal in Freighter, um Ihren privaten Schlüssel abzuleiten",
+      proving: "Beweis wird erzeugt…",
+      signing: "In Freighter bestätigen…",
+      waiting: "Warten auf das Netzwerk…",
+    },
+    view: {
+      create: "ZK-Zahlung erstellen",
+      account: "Vertrauliches Konto",
+      empty: "Noch keine ZK-Zahlungen.",
+      loadError: "ZK-Zahlungen konnten nicht geladen werden.",
+      tableHead: {
+        id: "Zahlung",
+        amount: "Betrag",
+        net: "Händler erhält",
+        fee: "Provision",
+        status: "Status",
+        created: "Erstellt",
+      },
+      copyLink: "Zahlungslink kopieren",
+      openCheckout: "Checkout öffnen",
+      searchPlaceholder: "Nach ID, Konto oder Betrag suchen…",
+    },
+    modal: {
+      title: "Neue ZK-Zahlung",
+      recipient: "Empfangskonto",
+      recipientHint: "Es braucht ein vertrauliches Konto: Erstellen Sie es unter Vertrauliches Konto.",
+      description: "Beschreibung",
+      expires: "Läuft ab in",
+      expiries: {
+        m60: "1 Stunde",
+        m1440: "24 Stunden",
+        m10080: "7 Tagen",
+      },
+      submit: "Erstellen",
+      submitting: "Wird erstellt…",
+      created: "ZK-Zahlung erstellt",
+      link: "Zahlungslink",
+    },
+    account: {
+      title: "Vertrauliches Konto",
+      connect: "Freighter verbinden",
+      connected: "Verbunden als {account}",
+      register: "Vertrauliches Konto erstellen",
+      registered: "Vertrauliches Konto aktiv",
+      spendable: "Verfügbar",
+      receiving: "Eingehend",
+      merge: "Eingehendes verfügbar machen",
+      withdraw: "In öffentliche XLM abheben",
+      deposit: "XLM einzahlen",
+      amountLabel: "Betrag",
+      refresh: "Aktualisieren",
+      done: "Fertig",
+      back: "Zurück zum Dashboard",
+    },
+    checkout: {
+      title: "Private Zahlung",
+      to: "An",
+      payPrivately: "Privat bezahlen",
+      steps: {
+        register: "Ihr vertrauliches Konto erstellen",
+        fund: "XLM auf Ihr vertrauliches Guthaben bringen",
+        pay: "Zahlung senden",
+        fee: "Provision senden",
+        confirm: "Zahlung bestätigen",
+      },
+      paid: "Zahlung abgeschlossen",
+      paidBody: "Der Betrag bleibt auf der Blockchain privat.",
+      expired: "Diese Zahlung ist abgelaufen.",
+      notFound: "Diese Zahlung existiert nicht.",
+      loadError: "Diese Zahlung konnte nicht geladen werden.",
+      retry: "Erneut versuchen",
+      transactions: "Transaktionen",
+    },
+  },
   invite: {
     eyebrow: "Einladung",
     joinTitle: "{org} beitreten",
@@ -203,7 +298,7 @@ export default {
             head: "Geld annehmen",
             links: [
               {
-                t: "Payments",
+                t: "Zahlungen",
                 s: "Stellar, Solana & Monad"
               },
               {
@@ -211,11 +306,11 @@ export default {
                 s: "Gehostete Zahlungsseite"
               },
               {
-                t: "Payment Links",
+                t: "Zahlungslinks",
                 s: "Zahlungslinks ohne Code"
               },
               {
-                t: "Invoicing",
+                t: "Rechnungsstellung",
                 s: "In Stablecoins abrechnen"
               }
             ]
@@ -224,11 +319,11 @@ export default {
             head: "Geld bewegen",
             links: [
               {
-                t: "Payouts",
+                t: "Auszahlungen",
                 s: "Weltweit Gelder senden"
               },
               {
-                t: "Cross-border",
+                t: "Grenzüberschreitend",
                 s: "Grenzenlose Abwicklung"
               },
               {
@@ -253,7 +348,7 @@ export default {
                 s: "Verwahrt & nicht verwahrt"
               },
               {
-                t: "Ledger",
+                t: "Hauptbuch",
                 s: "On-Chain-Ledger in Echtzeit"
               },
               {
@@ -323,7 +418,7 @@ export default {
             head: "Entwickeln",
             links: [
               {
-                t: "API reference",
+                t: "API-Referenz",
                 s: "REST & GraphQL"
               },
               {
@@ -348,7 +443,7 @@ export default {
                 s: "Parität von Lokal zu Produktion"
               },
               {
-                t: "Status",
+                t: "Systemstatus",
                 s: "Verfügbarkeit & Störungen"
               },
               {
@@ -363,7 +458,7 @@ export default {
           }
         ],
         featured: {
-          title: "Quickstart",
+          title: "Schnellstart",
           desc: "In unter fünf Minuten von null zur ersten Zahlung.",
           cta: "Jetzt entwickeln"
         }
@@ -375,7 +470,7 @@ export default {
             head: "Lernen",
             links: [
               {
-                t: "Documentation",
+                t: "Dokumentation",
                 s: "Anleitungen & Referenzen"
               },
               {
@@ -424,7 +519,7 @@ export default {
   profile: {
     account: "Kontoeinstellungen",
     billing: "Abrechnung",
-    docs: "Documentation",
+    docs: "Dokumentation",
     backToSite: "Zurück zur Website",
     logout: "Abmelden",
     openDashboard: "Dashboard öffnen"
@@ -435,7 +530,7 @@ export default {
     groups: {
       products: {
         title: "Produkte",
-        links: ["Payments", "Stablecoins", "Payouts", "Anchors", "Wallets", "Checkout", "Payment Links", "Preise"]
+        links: ["Zahlungen", "Stablecoins", "Auszahlungen", "Anchors", "Wallets", "Checkout", "Zahlungslinks", "Preise"]
       },
       solutions: {
         title: "Lösungen",
@@ -443,7 +538,7 @@ export default {
       },
       developers: {
         title: "Entwickler",
-        links: ["Documentation", "API reference", "SDKs & Bibliotheken", "Webhooks", "API-Status", "Changelog", "Dashboard"]
+        links: ["Dokumentation", "API-Referenz", "SDKs & Bibliotheken", "Webhooks", "API-Status", "Changelog", "Dashboard"]
       },
       resources: {
         title: "Ressourcen",
@@ -451,7 +546,7 @@ export default {
       },
       company: {
         title: "Unternehmen",
-        links: ["Über uns", "Karriere", "Newsroom", "Sicherheit", "Datenschutz & AGB", "Compliance"]
+        links: ["Über uns", "Karriere", "Pressebereich", "Sicherheit", "Datenschutz & AGB", "Compliance"]
       }
     }
   },
@@ -497,7 +592,7 @@ export default {
       docsLink: "API-Dokumentation ansehen",
       cards: {
         payments: {
-          title: "Payments",
+          title: "Zahlungen",
           desc: "Senden und empfangen Sie Zahlungen auf Stellar, Solana und Monad mit Finalität in Sekunden und nahezu null Gebühren."
         },
         stablecoin: {
@@ -512,8 +607,8 @@ export default {
       docsTitle: "Erstklassige Dokumentation",
       docsDesc: "Von Entwicklern für Entwickler. Interaktive Anleitungen, eine detaillierte OpenAPI-Referenz und ein vollständig typisiertes JavaScript-/TypeScript-SDK für Server und Browser.",
       sdkBtns: {
-        node: "Node.js / TypeScript SDK",
-        web: "Browser / Web SDK"
+        node: "SDK für Node.js / TypeScript",
+        web: "SDK für Browser / Web"
       },
       exploreDocs: "Gesamte Dokumentation erkunden",
       copy: "Kopieren",
@@ -602,17 +697,18 @@ export default {
       items: {
         Northwind: {
           label: "schnellere grenzüberschreitende Abwicklung nach dem Wechsel zu Cosmos Pay.",
-          tags: ["Payments", "Stablecoins", "Wallets"],
+          tags: ["Zahlungen", "Stablecoins", "Wallets"],
           story: "Northwind verlagerte seinen globalen Checkout auf Cosmos Pay mit Stellar, Solana und Monad, verkürzte die Abwicklung von Tagen auf Sekunden und senkte die FX-Kosten in über 30 Märkten, und das alles mit einem einzigen abgeglichenen Ledger."
         },
         Lumio: {
+          metric: "6 Wo.",
           label: "um USDC-Abonnements in 40 Ländern zu starten.",
-          tags: ["Billing", "USDC", "Anchors"],
+          tags: ["Abrechnung", "USDC", "Anchors"],
           story: "Lumio ersetzte ein Flickwerk regionaler Zahlungsdienstleister durch Cosmos Pay und startete in nur sechs Wochen USDC-denominierte Abonnements in 40 Ländern mithilfe von Anchors für lokale Ein- und Auszahlungen."
         },
         Helios: {
           label: "über Stellar, Solana und Monad weltweit an Verkäufer abgewickelt.",
-          tags: ["Payouts", "Connect", "Ramps"],
+          tags: ["Auszahlungen", "Connect", "Fiat-Rampen"],
           story: "Helios zahlt vollständig on-chain an eine globale Verkäuferbasis aus. Im letzten Jahr wickelte das Unternehmen 2,4 Mrd. $ an Verkäufer in 58 Ländern ab, mit Geldern, die in Sekunden ankommen, und vollständiger On-Chain-Transparenz."
         }
       }
@@ -623,15 +719,15 @@ export default {
       items: {
         MC: {
           q: "Cosmos Pay ermöglichte es uns, Geld in Sekunden über Grenzen hinweg zu bewegen. Wir ersetzten drei Anbieter durch eine einzige Multi-Chain-API.",
-          r: "VP Engineering, Vertexa"
+          r: "VP Entwicklung, Vertexa"
         },
         DO: {
           q: "Die Dokumentation ist die beste, die ich je genutzt habe. Wir wickelten unsere erste USDC-Zahlung am ersten Tag noch vor dem Mittagessen ab.",
-          r: "Founder, Quanta"
+          r: "Gründer, Quanta"
         },
         PN: {
           q: "Der Abgleich dauerte früher eine Woche. Die On-Chain-Abwicklung erledigt das jetzt in Echtzeit für uns.",
-          r: "Head of Finance, Riverstone"
+          r: "Leiter Finanzen, Riverstone"
         }
       }
     },
@@ -642,8 +738,8 @@ export default {
       readMore: "Mehr lesen",
       items: [
         {
-          tag: "Report",
-          t: "The 2026 State of Stablecoin Payments",
+          tag: "Bericht",
+          t: "Der Stand der Stablecoin-Zahlungen 2026",
           d: "Wie Teams Geld auf Stellar, Solana und Monad im globalen Maßstab bewegen."
         },
         {
@@ -652,7 +748,7 @@ export default {
           d: "Erhalten Sie Echtzeit-Ereignisse in dem Moment, in dem eine Zahlung Finalität erreicht."
         },
         {
-          tag: "Guide",
+          tag: "Leitfaden",
           t: "Idempotente Webhooks entwerfen",
           d: "Muster für zuverlässige Ereignisverarbeitung mit garantierter Einmaligkeit."
         },
@@ -815,10 +911,11 @@ export default {
     openDashboard: "Dashboard öffnen"
   },
   dash: {
+    examples: { order: "Bestellung #24", firstName: "Anna", lastName: "Schmidt", fullName: "Anna Schmidt", jobTitle: "Geschäftsführerin", customerName: "Acme Buchhaltung", payoutsName: "Acme Auszahlungen (USD)", productName: "Pro-Tarif (monatlich)" },
     search: { label: "Dashboard durchsuchen", placeholder: "Suchen", pages: "Seiten", searchGroup: "Suchen", searchIn: "{place} mit „{q}“", empty: "Nichts passt zu „{q}“." },
     viewLabels: {
       overview: "Übersicht",
-      payments: "Zahlungen",
+      payments: "Zahlungen", zkPayments: "ZK-Zahlungen",
       balances: "Guthaben",
       customers: "Kunden",
       products: "Produkte & Links",
@@ -836,13 +933,13 @@ export default {
       support: "Support",
       inbox: "Support-Postfach",
       users: "Benutzer",
-      adminOverview: "Platform overview",
-      adminPayments: "Payments (all orgs)",
-      adminSwaps: "Swaps (all orgs)",
-      adminFiat: "Fiat (all orgs)",
-      adminCustomers: "Customers (all orgs)",
-      adminProducts: "Products (all orgs)",
-      adminConsumers: "Organizations"
+      adminOverview: "Plattformübersicht",
+      adminPayments: "Zahlungen (alle Orgs)",
+      adminSwaps: "Swaps (alle Orgs)",
+      adminFiat: "Fiat (alle Orgs)",
+      adminCustomers: "Kunden (alle Orgs)",
+      adminProducts: "Produkte (alle Orgs)",
+      adminConsumers: "Organisationen"
     },
     sidebar: {
       label: "Dashboard",
@@ -858,7 +955,7 @@ export default {
       },
       items: {
         overview: "Übersicht",
-        payments: "Zahlungen",
+        payments: "Zahlungen", zkPayments: "ZK-Zahlungen",
         balances: "Guthaben",
         customers: "Kunden",
         products: "Produkte",
@@ -876,13 +973,13 @@ export default {
         support: "Support",
         inbox: "Postfach",
         users: "Benutzer",
-        adminOverview: "Overview",
-        adminPayments: "Payments",
+        adminOverview: "Übersicht",
+        adminPayments: "Zahlungen",
         adminSwaps: "Swaps",
         adminFiat: "Fiat",
-        adminCustomers: "Customers",
-        adminProducts: "Products",
-        adminConsumers: "Organizations"
+        adminCustomers: "Kunden",
+        adminProducts: "Produkte",
+        adminConsumers: "Organisationen"
       },
       collapse: "Seitenleiste einklappen"
     },
@@ -930,7 +1027,7 @@ export default {
     profileMenu: {
       account: "Kontoeinstellungen",
       billing: "Abrechnung",
-      docs: "Documentation",
+      docs: "Dokumentation",
       backToSite: "Zurück zur Website",
       logout: "Abmelden"
     },
@@ -938,7 +1035,7 @@ export default {
       org: {
         eyebrow: "Organisation",
         title: "Organisation erstellen",
-        atLimit: "Ihr {plan}-Plan erlaubt bis zu {limit} Organisation{s}. Führen Sie ein Upgrade durch, um weitere zu erstellen.",
+        atLimitOne: "Ihr {plan}-Plan erlaubt eine Organisation. Führen Sie ein Upgrade durch, um weitere zu erstellen.", atLimit: "Ihr {plan}-Plan erlaubt bis zu {limit} Organisationen. Führen Sie ein Upgrade durch, um weitere zu erstellen.",
         body: "Organisationen halten Zahlungen, Kunden und API-Schlüssel vollständig getrennt. Sie können in Ihrem {plan}-Plan {n} weitere erstellen.",
         bodyUnlimited: "Organisationen halten Zahlungen, Kunden und API-Schlüssel vollständig getrennt. Sie können in Ihrem {plan}-Plan unbegrenzt weitere erstellen.",
         nameLabel: "Organisationsname",
@@ -1044,7 +1141,7 @@ export default {
     },
     cosmos: {
       loading: "Wird geladen…", loadError: "Daten konnten nicht geladen werden.", empty: "Hier ist noch nichts.",
-      eventLabels: { PAYMENT_INTENT_CREATED: "Zahlung erstellt", PAYMENT_INTENT_UPDATED: "Zahlung aktualisiert", PAYMENT_INTENT_SUCCEEDED: "Zahlung erfolgreich", PAYMENT_INTENT_FAILED: "Zahlung fehlgeschlagen", PAYMENT_INTENT_CANCELLED: "Zahlung storniert", PAYMENT_INTENT_DELETED: "Zahlung gelöscht" },
+      eventLabels: { PAYMENT_INTENT_CREATED: "Zahlung erstellt", PAYMENT_INTENT_UPDATED: "Zahlung aktualisiert", PAYMENT_INTENT_SUCCEEDED: "Zahlung erfolgreich", PAYMENT_INTENT_FAILED: "Zahlung fehlgeschlagen", PAYMENT_INTENT_CANCELLED: "Zahlung storniert", PAYMENT_INTENT_DELETED: "Zahlung gelöscht", ZK_PAYMENT_SUCCEEDED: "ZK-Zahlung erfolgreich" },
       active: "Aktiv", inactive: "Deaktiviert",
       reveal: "Geheimnis anzeigen", secret: "Signatur-Geheimnis", secretNote: "Nur einmal angezeigt. Sicher aufbewahren.",
       rotate: "Geheimnis erneuern", ping: "Test senden", pingOk: "Testereignis zugestellt", pingFail: "Testereignis fehlgeschlagen",
@@ -1372,45 +1469,45 @@ export default {
       statuses: { open: "Offen", pending: "Ausstehend", resolved: "Gelöst", closed: "Geschlossen" }
     },
     admin: {
-      loading: "Loading…",
-      loadError: "Couldn't load data.",
-      empty: "Nothing here yet.",
-      orgFilter: "Organization",
-      clearFilter: "Clear filter",
-      filters: { all: "All", PENDING: "Pending", SUBMITTED: "Submitted", SUCCEEDED: "Succeeded", FAILED: "Failed" },
+      loading: "Wird geladen…",
+      loadError: "Daten konnten nicht geladen werden.",
+      empty: "Hier ist noch nichts.",
+      orgFilter: "Organisation",
+      clearFilter: "Filter zurücksetzen",
+      filters: { all: "Alle", PENDING: "Ausstehend", SUBMITTED: "Übermittelt", SUCCEEDED: "Erfolgreich", FAILED: "Fehlgeschlagen" },
       overview: {
-        title: "Platform overview", sub: "Global activity across every organization",
-        cards: { consumers: "Organizations", customers: "Customers", products: "Products", webhooks: "Webhook endpoints" },
-        payments: "Payment intents", swaps: "Swaps", chainSwaps: "Swaps auf Solana & Monad", crossChainSwaps: "Cross-Chain-Swaps", fiat: "Fiat (KYC/KYB)",
-        receivers: "Receivers", payins: "Payins", payouts: "Payouts",
-        volume: "Settled volume",
-        volHead: { asset: "Asset", amount: "Amount", count: "Count" },
+        title: "Plattformübersicht", sub: "Globale Aktivität aller Organisationen",
+        cards: { consumers: "Organisationen", customers: "Kunden", products: "Produkte", webhooks: "Webhook-Endpunkte" },
+        payments: "Zahlungsabsichten", swaps: "Swaps", chainSwaps: "Swaps auf Solana & Monad", crossChainSwaps: "Cross-Chain-Swaps", fiat: "Fiat (KYC/KYB)",
+        receivers: "Empfänger", payins: "Payins", payouts: "Payouts",
+        volume: "Abgewickeltes Volumen",
+        volHead: { asset: "Asset", amount: "Betrag", count: "Anzahl" },
       },
-      payments: { title: "Payment intents", sub: "All payment intents across organizations", searchPlaceholder: "Search by ID, destination, organization…", empty: "No payment intents.", tableHead: { id: "ID", org: "Organization", destination: "Destination", amount: "Amount", status: "Status", created: "Created" } },
-      swaps: { venues: { stellar: "Stellar", solana: "Solana · Jupiter", monad: "Monad · Kuru Flow", crossChain: "Cross-Chain" }, crossStatus: { AWAITING_DEPOSIT: "Wartet auf Einzahlung", PROCESSING: "In Bearbeitung", REFUNDED: "Erstattet" }, title: "Swaps", sub: "All swaps across organizations", searchPlaceholder: "Search by ID, account, organization…", empty: "No swaps.", tableHead: { id: "Swap", org: "Organization", route: "Sent → received", status: "Status", created: "Created" } },
+      payments: { title: "Zahlungsabsichten", sub: "Alle Zahlungsabsichten aller Organisationen", searchPlaceholder: "Nach ID, Ziel, Organisation suchen…", empty: "Keine Zahlungsabsichten.", tableHead: { id: "ID", org: "Organisation", destination: "Ziel", amount: "Betrag", status: "Status", created: "Erstellt" } },
+      swaps: { venues: { stellar: "Stellar", solana: "Solana · Jupiter", monad: "Monad · Kuru Flow", crossChain: "Cross-Chain" }, crossStatus: { AWAITING_DEPOSIT: "Wartet auf Einzahlung", PROCESSING: "In Bearbeitung", REFUNDED: "Erstattet" }, title: "Swaps", sub: "Alle Swaps aller Organisationen", searchPlaceholder: "Nach ID, Konto, Organisation suchen…", empty: "Keine Swaps.", tableHead: { id: "Swap", org: "Organisation", route: "Gesendet → empfangen", status: "Status", created: "Erstellt" } },
       fiat: {
-        title: "Fiat", sub: "Receivers, payins and payouts across organizations",
-        tabs: { receivers: "Receivers", payins: "Payins", payouts: "Payouts" },
-        searchReceivers: "Search receivers…", searchPayins: "Search payins…", searchPayouts: "Search payouts…",
-        emptyReceivers: "No receivers.", emptyPayins: "No payins.", emptyPayouts: "No payouts.",
-        statusUnknown: "Unknown",
-        disabled: "Disabled", disable: "Disable", enable: "Enable",
-        accountDisabled: "Fiat account disabled", accountEnabled: "Fiat account enabled",
-        accessError: "Couldn't update the fiat account.",
-        approve: "Approve", approved: "Approved",
-        termsSent: "Terms of service sent to {email}",
-        approveError: "Couldn't approve the receiver.",
-        resendVerification: "Resend verification email",
-        verificationSent: "Verification email sent to {email}",
-        resendError: "Couldn't resend the verification email.",
-        sending: "Sending…",
-        receiverHead: { name: "Name", org: "Organization", type: "Type", status: "KYC status", created: "Created" },
-        payinHead: { id: "Payin", org: "Organization", asset: "Asset", method: "Method", amount: "Sent → received", status: "Status", created: "Created" },
-        payoutHead: { id: "Payout", org: "Organization", asset: "Asset", rail: "Rail", amount: "Sent → received", status: "Status", created: "Created" },
+        title: "Fiat", sub: "Empfänger, Payins und Payouts aller Organisationen",
+        tabs: { receivers: "Empfänger", payins: "Payins", payouts: "Payouts" },
+        searchReceivers: "Empfänger suchen…", searchPayins: "Payins suchen…", searchPayouts: "Payouts suchen…",
+        emptyReceivers: "Keine Empfänger.", emptyPayins: "Keine Payins.", emptyPayouts: "Keine Payouts.",
+        statusUnknown: "Unbekannt",
+        disabled: "Deaktiviert", disable: "Deaktivieren", enable: "Aktivieren",
+        accountDisabled: "Fiat-Konto deaktiviert", accountEnabled: "Fiat-Konto aktiviert",
+        accessError: "Das Fiat-Konto konnte nicht aktualisiert werden.",
+        approve: "Genehmigen", approved: "Genehmigt",
+        termsSent: "Nutzungsbedingungen an {email} gesendet",
+        approveError: "Der Empfänger konnte nicht genehmigt werden.",
+        resendVerification: "Bestätigungs-E-Mail erneut senden",
+        verificationSent: "Bestätigungs-E-Mail an {email} gesendet",
+        resendError: "Die Bestätigungs-E-Mail konnte nicht erneut gesendet werden.",
+        sending: "Wird gesendet…",
+        receiverHead: { name: "Name", org: "Organisation", type: "Typ", status: "KYC-Status", created: "Erstellt" },
+        payinHead: { id: "Payin", org: "Organisation", asset: "Asset", method: "Methode", amount: "Gesendet → empfangen", status: "Status", created: "Erstellt" },
+        payoutHead: { id: "Payout", org: "Organisation", asset: "Asset", rail: "Zahlungsweg", amount: "Gesendet → empfangen", status: "Status", created: "Erstellt" },
       },
-      customers: { title: "Customers", sub: "All customers across organizations", searchPlaceholder: "Search customers…", empty: "No customers.", tableHead: { name: "Name", org: "Organization", email: "Email", account: "Account", created: "Created" } },
-      products: { title: "Products", sub: "All products across organizations", searchPlaceholder: "Search products…", empty: "No products.", tableHead: { name: "Name", org: "Organization", price: "Price", kind: "Type", created: "Created" } },
-      consumers: { title: "Organizations", sub: "Every API consumer and its activity", searchPlaceholder: "Search organizations…", empty: "No organizations.", account: "Account", moreOrgs: "+{n} more", note: "Totals are per developer account (an account may own several organizations).", tableHead: { org: "Organization", payments: "Payments", swaps: "Swaps", products: "Products", customers: "Customers", receivers: "Receivers", payins: "Payins", payouts: "Payouts", webhooks: "Webhooks", created: "Created" } },
+      customers: { title: "Kunden", sub: "Alle Kunden aller Organisationen", searchPlaceholder: "Kunden suchen…", empty: "Keine Kunden.", tableHead: { name: "Name", org: "Organisation", email: "E-Mail", account: "Konto", created: "Erstellt" } },
+      products: { title: "Produkte", sub: "Alle Produkte aller Organisationen", searchPlaceholder: "Produkte suchen…", empty: "Keine Produkte.", tableHead: { name: "Name", org: "Organisation", price: "Preis", kind: "Typ", created: "Erstellt" } },
+      consumers: { title: "Organisationen", sub: "Jeder API-Nutzer und seine Aktivität", searchPlaceholder: "Organisationen suchen…", empty: "Keine Organisationen.", account: "Konto", moreOrgs: "+{n} weitere", note: "Die Summen gelten pro Entwicklerkonto (ein Konto kann mehrere Organisationen besitzen).", tableHead: { org: "Organisation", payments: "Zahlungen", swaps: "Swaps", products: "Produkte", customers: "Kunden", receivers: "Empfänger", payins: "Payins", payouts: "Payouts", webhooks: "Webhooks", created: "Erstellt" } },
     },
     planNames: {
       community: "Community",
@@ -1690,171 +1787,171 @@ export default {
     },
     blindpay: {
       title: "Fiat",
-      sub: "Onramp & Offramp · KYC/KYB",
-      gate: "KYC/KYB verification is required before any onramp or offramp. Create a receiver and complete verification first.",
-      readOnly: "You have read-only access to Fiat in this organization.",
-      selectCountry: "Select country",
-      searchCountry: "Search countries…",
-      upload: "Upload", uploading: "Uploading…", replace: "Replace", uploaded: "Uploaded", uploadError: "Couldn't upload the file.", linkMode: "Link", clearFile: "Clear",
-      loading: "Loading…",
-      loadError: "Couldn't load data.",
-      txStatuses: { pending: "Pending", processing: "Processing", on_hold: "On hold", funds_received: "Funds received", completed: "Completed", refunded: "Refunded", partial_refund: "Partially refunded", failed: "Failed", cancelled: "Cancelled", canceled: "Cancelled", expired: "Expired", reversed: "Reversed" },
+      sub: "Onramp und Offramp · KYC/KYB",
+      gate: "Vor jedem Onramp oder Offramp ist eine KYC/KYB-Verifizierung erforderlich. Erstellen Sie zuerst einen Empfänger und schließen Sie die Verifizierung ab.",
+      readOnly: "Sie haben in dieser Organisation nur Lesezugriff auf Fiat.",
+      selectCountry: "Land auswählen",
+      searchCountry: "Länder suchen…",
+      upload: "Hochladen", uploading: "Wird hochgeladen…", replace: "Ersetzen", uploaded: "Hochgeladen", uploadError: "Die Datei konnte nicht hochgeladen werden.", linkMode: "Link", clearFile: "Entfernen",
+      loading: "Wird geladen…",
+      loadError: "Daten konnten nicht geladen werden.",
+      txStatuses: { pending: "Ausstehend", processing: "In Bearbeitung", on_hold: "Angehalten", funds_received: "Gelder erhalten", completed: "Abgeschlossen", refunded: "Erstattet", partial_refund: "Teilweise erstattet", failed: "Fehlgeschlagen", cancelled: "Storniert", canceled: "Storniert", expired: "Abgelaufen", reversed: "Rückgebucht" },
       kycReturn: {
-        eyebrow: "Fiat: activation",
-        activating: "Activating your account…",
-        activatingBody: "Please wait while we confirm your acceptance.",
-        successTitle: "Your account is now active",
-        successBody: "You can now add wallets and bank accounts and use onramp & offramp.",
-        errorTitle: "Activation failed",
-        errorBody: "We couldn't activate your account. Please try again.",
-        noTosId: "No terms-of-service id was returned. Please try activating again.",
-        backToDashboard: "Back to dashboard",
+        eyebrow: "Fiat: Aktivierung",
+        activating: "Ihr Konto wird aktiviert…",
+        activatingBody: "Bitte warten Sie, während wir Ihre Zustimmung bestätigen.",
+        successTitle: "Ihr Konto ist jetzt aktiv",
+        successBody: "Sie können jetzt Wallets und Bankkonten hinzufügen und Onramp und Offramp nutzen.",
+        errorTitle: "Aktivierung fehlgeschlagen",
+        errorBody: "Wir konnten Ihr Konto nicht aktivieren. Bitte versuchen Sie es erneut.",
+        noTosId: "Es wurde keine ID der Nutzungsbedingungen zurückgegeben. Bitte versuchen Sie die Aktivierung erneut.",
+        backToDashboard: "Zurück zum Dashboard",
       },
-      tabs: { receivers: "Receivers", onramp: "Onramp", offramp: "Offramp" },
+      tabs: { receivers: "Empfänger", onramp: "Onramp", offramp: "Offramp" },
       receivers: {
-        create: "Create receiver",
-        searchPlaceholder: "Search receivers…",
-        tableHead: { name: "Name", type: "Type", status: "KYC status", created: "Created" },
-        empty: "No receivers yet. Create one to start KYC/KYB.",
-        statusUnknown: "Unknown",
-        inactive: "Inactive",
-        statuses: { inactive: "Inactive", pending_review: "Pending review", pending_user: "Pending customer terms", verifying: "Verifying", approved: "Approved", rejected: "Rejected" },
-        disabled: "Disabled",
-        disableAccount: "Disable account",
-        enableAccount: "Enable account",
-        disabledNote: "This fiat account is disabled: onramp/offramp are blocked until re-enabled.",
-        accountDisabled: "Fiat account disabled",
-        accountEnabled: "Fiat account enabled",
-        accessError: "Couldn't update the fiat account.",
-        inactiveNote: "Registration only: no KYC data submitted yet.",
-        awaitingReview: "Awaiting owner/admin review.",
-        reviewTitle: "Review KYC",
-        reviewHint: "Review the submitted KYC data, then approve to email the customer the terms of service.",
-        approve: "Approve & send terms",
-        approving: "Approving…",
-        approvedSent: "Approved: terms sent to {email}",
-        approveError: "Couldn't approve the receiver.",
-        termsSentTitle: "Terms sent",
-        termsSentBody: "Awaiting customer acceptance. Terms sent to {email}.",
-        termsSentBodyNoEmail: "Awaiting customer acceptance of the terms of service.",
-        resendTerms: "Resend terms email",
-        resendVerification: "Resend verification email",
-        verificationSent: "Verification email sent to {email}",
-        refresh: "Refresh status",
-        refreshing: "Refreshing…",
-        refreshError: "Couldn't refresh the KYC status from BlindPay.",
-        sending: "Sending…",
-        types: { individual: "Individual", business: "Business" },
-        createError: "Couldn't create the receiver.",
-        tosTitle: "Activate account",
-        tosHint: "This receiver is inactive. Accept the terms of service to activate it.",
-        activate: "Activate account",
-        redirecting: "Redirecting…",
-        getTos: "Get terms of service",
-        emailTos: "Email terms of service",
-        tosUrl: "Terms URL",
-        openTerms: "Open terms",
-        tosIdLabel: "Terms-of-service ID",
-        tosIdHintEnable: "Paste the tos_id from the URL you were redirected to after accepting.",
-        enable: "Enable account",
-        enabled: "Account enabled",
-        tosSent: "Terms of service sent to {email}",
-        getTosError: "Couldn't get the terms of service.",
-        emailTosError: "Couldn't email the terms of service.",
-        enableError: "Couldn't enable the account.",
+        create: "Empfänger erstellen",
+        searchPlaceholder: "Empfänger suchen…",
+        tableHead: { name: "Name", type: "Typ", status: "KYC-Status", created: "Erstellt" },
+        empty: "Noch keine Empfänger. Erstellen Sie einen, um KYC/KYB zu starten.",
+        statusUnknown: "Unbekannt",
+        inactive: "Inaktiv",
+        statuses: { inactive: "Inaktiv", pending_review: "Prüfung ausstehend", pending_user: "Wartet auf Zustimmung des Kunden", verifying: "Wird verifiziert", approved: "Genehmigt", rejected: "Abgelehnt" },
+        disabled: "Deaktiviert",
+        disableAccount: "Konto deaktivieren",
+        enableAccount: "Konto aktivieren",
+        disabledNote: "Dieses Fiat-Konto ist deaktiviert: Onramp und Offramp sind gesperrt, bis es wieder aktiviert wird.",
+        accountDisabled: "Fiat-Konto deaktiviert",
+        accountEnabled: "Fiat-Konto aktiviert",
+        accessError: "Das Fiat-Konto konnte nicht aktualisiert werden.",
+        inactiveNote: "Nur Registrierung: noch keine KYC-Daten übermittelt.",
+        awaitingReview: "Wartet auf Prüfung durch Inhaber oder Admin.",
+        reviewTitle: "KYC prüfen",
+        reviewHint: "Prüfen Sie die übermittelten KYC-Daten und genehmigen Sie sie, um dem Kunden die Nutzungsbedingungen per E-Mail zu senden.",
+        approve: "Genehmigen und Bedingungen senden",
+        approving: "Wird genehmigt…",
+        approvedSent: "Genehmigt: Bedingungen an {email} gesendet",
+        approveError: "Der Empfänger konnte nicht genehmigt werden.",
+        termsSentTitle: "Bedingungen gesendet",
+        termsSentBody: "Wartet auf Zustimmung des Kunden. Bedingungen an {email} gesendet.",
+        termsSentBodyNoEmail: "Wartet darauf, dass der Kunde die Nutzungsbedingungen akzeptiert.",
+        resendTerms: "E-Mail mit den Bedingungen erneut senden",
+        resendVerification: "Bestätigungs-E-Mail erneut senden",
+        verificationSent: "Bestätigungs-E-Mail an {email} gesendet",
+        refresh: "Status aktualisieren",
+        refreshing: "Wird aktualisiert…",
+        refreshError: "Der KYC-Status konnte nicht von BlindPay aktualisiert werden.",
+        sending: "Wird gesendet…",
+        types: { individual: "Privatperson", business: "Unternehmen" },
+        createError: "Der Empfänger konnte nicht erstellt werden.",
+        tosTitle: "Konto aktivieren",
+        tosHint: "Dieser Empfänger ist inaktiv. Akzeptieren Sie die Nutzungsbedingungen, um ihn zu aktivieren.",
+        activate: "Konto aktivieren",
+        redirecting: "Weiterleitung…",
+        getTos: "Nutzungsbedingungen abrufen",
+        emailTos: "Nutzungsbedingungen per E-Mail senden",
+        tosUrl: "URL der Bedingungen",
+        openTerms: "Bedingungen öffnen",
+        tosIdLabel: "ID der Nutzungsbedingungen",
+        tosIdHintEnable: "Fügen Sie die tos_id aus der URL ein, zu der Sie nach dem Akzeptieren weitergeleitet wurden.",
+        enable: "Konto aktivieren",
+        enabled: "Konto aktiviert",
+        tosSent: "Nutzungsbedingungen an {email} gesendet",
+        getTosError: "Die Nutzungsbedingungen konnten nicht abgerufen werden.",
+        emailTosError: "Die Nutzungsbedingungen konnten nicht per E-Mail gesendet werden.",
+        enableError: "Das Konto konnte nicht aktiviert werden.",
         modal: {
-          eyebrow: "Receiver", title: "Create receiver",
-          desc: "A receiver is the KYC (individual) or KYB (business) entity required for onramp/offramp.",
-          type: "Type", individual: "Individual (KYC)", business: "Business (KYB)",
-          kycType: "Verification level",
-          ownersTitle: "Owners (UBO)", ownerN: "Owner {n}", addOwner: "Add owner", removeOwner: "Remove",
+          eyebrow: "Empfänger", title: "Empfänger erstellen",
+          desc: "Ein Empfänger ist die für Onramp/Offramp erforderliche KYC-Einheit (Privatperson) oder KYB-Einheit (Unternehmen).",
+          type: "Typ", individual: "Privatperson (KYC)", business: "Unternehmen (KYB)",
+          kycType: "Verifizierungsstufe",
+          ownersTitle: "Eigentümer (UBO)", ownerN: "Eigentümer {n}", addOwner: "Eigentümer hinzufügen", removeOwner: "Entfernen",
           fields: {
-            email: "Email", country: "Country",
-            first_name: "First name", last_name: "Last name", date_of_birth: "Date of birth", tax_id: "Tax ID", phone_number: "Phone number",
-            address_line_1: "Address", city: "City", state_province_region: "State / province / region", postal_code: "Postal code",
-            id_doc_country: "ID document country", id_doc_type: "ID document type", id_doc_front_file: "ID document (front)", id_doc_back_file: "ID document (back)",
-            selfie_file: "Selfie", proof_of_address_doc_type: "Proof of address type", proof_of_address_doc_file: "Proof of address",
-            occupation: "Occupation", account_purpose: "Account purpose", source_of_funds_doc_type: "Source of funds type", source_of_funds_doc_file: "Source of funds document",
-            source_of_wealth: "Source of wealth", purpose_of_transactions: "Purpose of transactions", purpose_of_transactions_explanation: "Purpose of transactions (explanation)",
-            legal_name: "Legal name", alternate_name: "Alternate name", business_type: "Business type", business_industry: "Business industry", business_description: "Business description",
-            formation_date: "Formation date", estimated_annual_revenue: "Estimated annual revenue", website: "Website",
-            incorporation_doc_file: "Incorporation document", proof_of_ownership_doc_file: "Proof of ownership document",
-            ownership_percentage: "Ownership %", title: "Title",
+            email: "E-Mail", country: "Land",
+            first_name: "Vorname", last_name: "Nachname", date_of_birth: "Geburtsdatum", tax_id: "Steuernummer", phone_number: "Telefonnummer",
+            address_line_1: "Adresse", city: "Stadt", state_province_region: "Bundesland / Provinz / Region", postal_code: "Postleitzahl",
+            id_doc_country: "Ausstellungsland des Ausweises", id_doc_type: "Art des Ausweisdokuments", id_doc_front_file: "Ausweisdokument (Vorderseite)", id_doc_back_file: "Ausweisdokument (Rückseite)",
+            selfie_file: "Selfie", proof_of_address_doc_type: "Art des Adressnachweises", proof_of_address_doc_file: "Adressnachweis",
+            occupation: "Beruf", account_purpose: "Kontozweck", source_of_funds_doc_type: "Art der Mittelherkunft", source_of_funds_doc_file: "Nachweis der Mittelherkunft",
+            source_of_wealth: "Herkunft des Vermögens", purpose_of_transactions: "Zweck der Transaktionen", purpose_of_transactions_explanation: "Zweck der Transaktionen (Erläuterung)",
+            legal_name: "Firmenname", alternate_name: "Handelsname", business_type: "Unternehmensart", business_industry: "Branche", business_description: "Geschäftsbeschreibung",
+            formation_date: "Gründungsdatum", estimated_annual_revenue: "Geschätzter Jahresumsatz", website: "Website",
+            incorporation_doc_file: "Gründungsurkunde", proof_of_ownership_doc_file: "Eigentumsnachweis",
+            ownership_percentage: "Beteiligung in %", title: "Position",
           },
-          create: "Create receiver", creating: "Creating…",
+          create: "Empfänger erstellen", creating: "Wird erstellt…",
         },
         detail: {
-          eyebrow: "Receiver",
-          id: "ID", blindpayId: "Provider ID", kycStatus: "KYC status", kycType: "Verification level", email: "Email", country: "Country",
-          terms: "Terms of service",
-          tosOpened: "Terms-of-service flow started.",
-          tosError: "Couldn't start the terms-of-service flow.",
-          wallets: "Blockchain wallets", noWallets: "No wallets yet.", addWallet: "Add wallet",
-          banks: "Bank accounts", noBanks: "No bank accounts yet.", addBank: "Add bank account",
+          eyebrow: "Empfänger",
+          id: "ID", blindpayId: "Anbieter-ID", kycStatus: "KYC-Status", kycType: "Verifizierungsstufe", email: "E-Mail", country: "Land",
+          terms: "Nutzungsbedingungen",
+          tosOpened: "Ablauf für die Nutzungsbedingungen gestartet.",
+          tosError: "Der Ablauf für die Nutzungsbedingungen konnte nicht gestartet werden.",
+          wallets: "Blockchain-Wallets", noWallets: "Noch keine Wallets.", addWallet: "Wallet hinzufügen",
+          banks: "Bankkonten", noBanks: "Noch keine Bankkonten.", addBank: "Bankkonto hinzufügen",
         },
         wallet: {
-          name: "Name", network: "Network",
-          address: "Address",
-          aa: "Account abstraction", add: "Add wallet",
-          error: "Couldn't add the wallet.",
+          name: "Name", network: "Netzwerk",
+          address: "Adresse",
+          aa: "Kontoabstraktion", add: "Wallet hinzufügen",
+          error: "Die Wallet konnte nicht hinzugefügt werden.",
         },
         bank: {
-          rail: "Rail", name: "Name", beneficiary: "Beneficiary name", country: "Country",
-          accountNumber: "Account number", routingNumber: "Routing number",
-          add: "Add bank account",
-          error: "Couldn't add the bank account.",
+          rail: "Zahlungsweg", name: "Name", beneficiary: "Name des Begünstigten", country: "Land",
+          accountNumber: "Kontonummer", routingNumber: "Routing-Nummer",
+          add: "Bankkonto hinzufügen",
+          error: "Das Bankkonto konnte nicht hinzugefügt werden.",
         },
       },
       onramp: {
-        create: "New payin",
-        searchPlaceholder: "Search payins…",
-        tableHead: { id: "Payin", asset: "Asset", method: "Method", amount: "Sent → received", status: "Status", created: "Created" },
-        empty: "No payins yet.",
-        statusUnknown: "Unknown",
-        quoteError: "Couldn't price the payin.",
-        createError: "Couldn't create the payin.",
-        created: "Payin created",
+        create: "Neuer Payin",
+        searchPlaceholder: "Payins suchen…",
+        tableHead: { id: "Payin", asset: "Asset", method: "Methode", amount: "Gesendet → empfangen", status: "Status", created: "Erstellt" },
+        empty: "Noch keine Payins.",
+        statusUnknown: "Unbekannt",
+        quoteError: "Der Payin konnte nicht bepreist werden.",
+        createError: "Der Payin konnte nicht erstellt werden.",
+        created: "Payin erstellt",
         modal: {
-          eyebrow: "Onramp", title: "New payin",
-          desc: "Fiat → stablecoin. Price a quote, then create the payin to get funding instructions.",
-          walletId: "Wallet ID", walletIdHint: "Receiver wallet that receives the stablecoin.",
-          method: "Payment method", token: "Token",
-          currencyType: "Amount in", curSender: "Sender", curReceiver: "Receiver",
-          amount: "Amount", amountHint: "Minor units (integer), e.g. 10000 = 100.00.",
-          getQuote: "Get quote", quoting: "Pricing…",
-          quoteId: "Quote ID", youSend: "You send", youReceive: "You receive", expires: "Expires",
-          create: "Create payin", creating: "Creating…",
-          payinId: "Payin ID", status: "Status",
-          instructions: "Funding instructions", done: "Done",
+          eyebrow: "Onramp", title: "Neuer Payin",
+          desc: "Fiat → Stablecoin. Quote holen, dann den Payin erstellen, um die Zahlungsanweisungen zu erhalten.",
+          walletId: "Wallet-ID", walletIdHint: "Wallet des Empfängers, die den Stablecoin erhält.",
+          method: "Zahlungsmethode", token: "Token",
+          currencyType: "Betrag in", curSender: "Absender", curReceiver: "Empfänger",
+          amount: "Betrag", amountHint: "Kleinste Einheiten (Ganzzahl), z. B. 10000 = 100,00.",
+          getQuote: "Quote holen", quoting: "Wird bepreist…",
+          quoteId: "Quote-ID", youSend: "Sie senden", youReceive: "Sie erhalten", expires: "Läuft ab",
+          create: "Payin erstellen", creating: "Wird erstellt…",
+          payinId: "Payin-ID", status: "Status",
+          instructions: "Zahlungsanweisungen", done: "Fertig",
         },
       },
       offramp: {
-        create: "New payout",
-        searchPlaceholder: "Search payouts…",
-        tableHead: { id: "Payout", asset: "Asset", rail: "Rail", amount: "Sent → received", status: "Status", created: "Created" },
-        empty: "No payouts yet.",
-        statusUnknown: "Unknown",
-        quoteError: "Couldn't price the payout.",
-        authError: "Couldn't build the transaction to sign.",
-        createError: "Couldn't create the payout.",
-        created: "Payout created",
+        create: "Neuer Payout",
+        searchPlaceholder: "Payouts suchen…",
+        tableHead: { id: "Payout", asset: "Asset", rail: "Zahlungsweg", amount: "Gesendet → empfangen", status: "Status", created: "Erstellt" },
+        empty: "Noch keine Payouts.",
+        statusUnknown: "Unbekannt",
+        quoteError: "Der Payout konnte nicht bepreist werden.",
+        authError: "Die zu signierende Transaktion konnte nicht erstellt werden.",
+        createError: "Der Payout konnte nicht erstellt werden.",
+        created: "Payout erstellt",
         modal: {
-          eyebrow: "Offramp", title: "New payout",
-          desc: "Stablecoin → fiat. Price a quote; for Stellar, authorize to get the tx, sign it, then submit.",
-          bankId: "Bank account ID", bankIdHint: "Receiver bank account that receives the fiat.",
-          network: "Network", token: "Token",
-          currencyType: "Amount in", curSender: "Sender", curReceiver: "Receiver",
-          coverFees: "Cover fees",
-          amount: "Amount", amountHint: "Minor units (integer), e.g. 10000 = 100.00.",
-          getQuote: "Get quote",
-          quoteId: "Quote ID", youSend: "You send", youReceive: "You receive (fiat)", expires: "Expires",
-          senderWallet: "Sender wallet", senderWalletHint: "Wallet that holds the stablecoin (G… / 0x…).",
-          authorize: "Authorize",
-          unsignedTx: "Unsigned transaction",
-          signedTx: "Signed transaction", signedTxHint: "Paste the signed transaction returned by the wallet.",
-          signedTxPlaceholder: "Signed transaction…",
-          evmNote: "For EVM networks, sign the quote's approve contract via the API before creating the payout.",
-          create: "Create payout", creating: "Creating…",
+          eyebrow: "Offramp", title: "Neuer Payout",
+          desc: "Stablecoin → Fiat. Quote holen; bei Stellar autorisieren, um die Tx zu erhalten, signieren und dann übermitteln.",
+          bankId: "Bankkonto-ID", bankIdHint: "Bankkonto des Empfängers, auf das das Fiat-Geld eingeht.",
+          network: "Netzwerk", token: "Token",
+          currencyType: "Betrag in", curSender: "Absender", curReceiver: "Empfänger",
+          coverFees: "Gebühren übernehmen",
+          amount: "Betrag", amountHint: "Kleinste Einheiten (Ganzzahl), z. B. 10000 = 100,00.",
+          getQuote: "Quote holen",
+          quoteId: "Quote-ID", youSend: "Sie senden", youReceive: "Sie erhalten (Fiat)", expires: "Läuft ab",
+          senderWallet: "Absender-Wallet", senderWalletHint: "Wallet, die den Stablecoin hält (G… / 0x…).",
+          authorize: "Autorisieren",
+          unsignedTx: "Unsignierte Transaktion",
+          signedTx: "Signierte Transaktion", signedTxHint: "Fügen Sie die von der Wallet zurückgegebene signierte Transaktion ein.",
+          signedTxPlaceholder: "Signierte Transaktion…",
+          evmNote: "Signieren Sie bei EVM-Netzwerken den approve-Vertrag der Quote über die API, bevor Sie den Payout erstellen.",
+          create: "Payout erstellen", creating: "Wird erstellt…",
         },
       },
     }

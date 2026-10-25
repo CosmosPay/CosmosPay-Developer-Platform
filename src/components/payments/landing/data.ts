@@ -29,7 +29,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
   // The snap's highlighter marks one phrase in the hero and in the final call; a closing full
   // stop stays outside the mark.
   const marked = (text: string) => {
-    const [, words = text, stop = ""] = text.match(/^(.*?)([.!?]*)$/) ?? [];
+    const [, words = text, stop = ""] = text.match(/^(.*?)([.!?。！？।]*)$/) ?? [];
     return { words, stop };
   };
   const heroMark = marked(t.hero.titleMark);
@@ -142,7 +142,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
     return { id, name: id[0].toUpperCase() + id.slice(1), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, monthly };
   });
   const ESCROW_PCT = 0.5;
-  const faq = (["wallet", "account", "wallets", "custody", "escrow", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
+  const faq = (["wallet", "account", "wallets", "custody", "escrow", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
 
   // The code the developers section shows, by tab. Plain text: it is not translated. The SDK and
   // webhook shapes are the real ones (@cosmosapp/pay_sdk's Client, the { id, type, createdAt, data }

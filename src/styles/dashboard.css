@@ -811,3 +811,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 /* A section's tabs (Liquidity, Fiat, the admin's fiat lists) swap their panel in with the
    content's rise: the panel mounts fresh on each switch, so its first paint plays it. */
 .inst .filter-tabs ~ * { animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
+
+/* ZK payments: the asset beside the amount (XLM only for now) and the payment's split */
+.sp-unit { flex: 0 0 auto; font-size: 16px; font-weight: 700; color: var(--ink); padding: 0 6px; }
+.zk-split { margin: 10px 0 0; padding: 0 2px; }
+.zk-split > div:first-child { margin-top: 0; border-top: 0; padding-top: 7px; }

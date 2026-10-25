@@ -274,7 +274,7 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
         <div className="mm-actions">
           {user ? (
             <>
-              <div className="mm-user"><Avatar user={user} size={34} /><div className="nav-user-id"><b>{user.name || "Account"}</b>{user.email && <span>{user.email}</span>}</div></div>
+              <div className="mm-user"><Avatar user={user} size={34} /><div className="nav-user-id"><b>{user.name || t.ui.account}</b>{user.email && <span>{user.email}</span>}</div></div>
               {!inDash && <a className="btn btn-dark" href={DASH}>{t.nav.dashboard}</a>}
               <button type="button" className="link-login as-link mm-login" onClick={() => startLogout()}>{t.profile.logout}</button>
             </>

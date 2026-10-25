@@ -7,14 +7,8 @@ import { messages } from "@/lib/i18n/messages/index";
 
 export const DEFAULT_LOCALE = "en";
 
-/* code → { label (nav chip), name (native), flag (Flag svg key) } */
-export const LOCALES = [
-  { code: "en", label: "EN", name: "English", flag: "EN" },
-  { code: "es", label: "ES", name: "Español", flag: "ES" },
-  { code: "pt", label: "PT", name: "Português", flag: "PT" },
-  { code: "fr", label: "FR", name: "Français", flag: "FR" },
-  { code: "de", label: "DE", name: "Deutsch", flag: "DE" },
-];
+/* The languages the picker offers (src/lib/i18n/locales.ts, a plain module so tests can read it). */
+export { LOCALES } from "@/lib/i18n/locales";
 
 const STORAGE_KEY = "cosmospay-lang";
 

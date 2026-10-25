@@ -235,6 +235,20 @@ export const swaps = {
 
 /* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents), proxied to the Payments
    API. Mainnet only upstream: in test mode assets and quotes work, creating is refused. */
+/* ZK payments (confidential, amount hidden on-chain; 0.01% commission). See src/pages/api/zk-payments. */
+export const zkPayments = {
+  config: (org, env) => request(`/api/zk-payments/config?env=${env || "dev"}&org=${encodeURIComponent(org)}`),
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    return request(`/api/zk-payments?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/zk-payments/${encodeURIComponent(id)}?env=${env || "dev"}&org=${encodeURIComponent(org)}`),
+  create: (body) => request("/api/zk-payments", { method: "POST", body: JSON.stringify(body) }),
+};
+
 export const crossChainSwaps = {
   assets: (org, env) => request(`/api/cross-chain-swaps/assets?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
   list: (org, env, query = {}) => {

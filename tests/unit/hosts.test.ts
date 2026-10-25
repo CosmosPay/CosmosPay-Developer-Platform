@@ -20,6 +20,7 @@ test('ownerOf assigns every public path to one domain', () => {
   assert.equal(ownerOf('/contact'), 'payments');
   assert.equal(ownerOf(LINK), 'payments');
   assert.equal(ownerOf('/preview/ticket'), 'payments');
+  for (const p of ['/zk/account', '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/zk/bb/0.87.0/index.js']) assert.equal(ownerOf(p), 'payments', p);
   for (const p of ['/integrations', '/use-cases', '/security', '/fees', '/faq']) assert.equal(ownerOf(p), 'payments', p);
   for (const p of ['/login', '/dashboard', '/onboarding', '/invite/abc', '/kyc/return/o/e/r', '/swagger', '/docs', '/docs/api', '/api/auth/get-session']) {
     assert.equal(ownerOf(p), 'dev', p);
@@ -64,6 +65,8 @@ test('payments.cosmospay.lat renders its landing and the checkout pages', () => 
   assert.deepEqual(route('payments.cosmospay.lat', '/contact', '', 'POST'), { kind: 'rewrite', area: 'payments', path: '/payments/contact' });
   assert.deepEqual(route('cosmospay.lat', '/faq'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/faq', status: 301 });
   assert.deepEqual(route('cosmospay.lat', '/preview/split'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/preview/split', status: 301 });
+  assert.deepEqual(route('payments.cosmospay.lat', '/zk/account'), { kind: 'rewrite', area: 'payments', path: '/payments/zk/account' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/zk/account'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/zk/account', status: 301 });
   assert.deepEqual(route('payments.cosmospay.lat', '/login', '?next=%2Fdashboard'), {
     kind: 'redirect', location: 'https://dev.cosmospay.lat/login?next=%2Fdashboard', status: 301,
   });

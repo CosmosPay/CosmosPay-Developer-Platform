@@ -21,6 +21,22 @@ npm run sync:route        # re-points every APISIX route's upstream at COSMOS_AP
 npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
 ```
 
+## Languages: seven, everywhere
+
+- **The product speaks English, Spanish, Portuguese, French, German, Hindi and Simplified Chinese**
+  (`en es pt fr de hi zh`) on every surface: the platform's catalog (`src/lib/i18n/messages/*.ts`,
+  the languages and their flags in `src/lib/i18n/locales.ts`), the payments catalogs
+  (`src/lib/payments/i18n.ts`, `landing-i18n.ts`), the embed (`src/embed/i18n.ts`), Open Graph
+  locales (`src/lib/payments/seo.ts`), `BackToTop.astro` and `src/lib/geo.ts`. A new language goes
+  into all of them. The docs (Fumadocs) stay in five.
+- **Nothing on screen is hardcoded English**: every label, placeholder, aria-label and example value
+  comes from the catalog (`ui.*` for shared bits such as close, search and select; `dash.examples.*`
+  for sample data in placeholders). **Never build a plural with a suffix** (`{s}`): give the
+  singular and the plural their own strings (`atLimitOne` / `atLimit`).
+- **Every catalog mirrors English key for key** with the same `{placeholders}` and no empty string:
+  `tests/unit/dashboardI18n.test.ts` (the platform), `paymentsI18n.test.ts` and `embedI18n.test.ts`
+  enforce it. URLs are not copy: links live in the components (`NAV_LINKS`), not the catalogs.
+
 ## Writing rule: no em dashes
 
 The product owner forbids the em dash (U+2014) in every context: UI copy in every language,
@@ -106,7 +122,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   stops on paid, failed and cancelled (`nextPollDelay`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
   to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` (the
-  home and the content pages are the indexed ones), and the domain has its own five-language
+  home and the content pages are the indexed ones), and the domain has its own seven-language
   catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`)
   and resolves the language as ?lang → cookie → Accept-Language → en.
 
@@ -142,7 +158,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (X, Instagram, Discord, WhatsApp, LinkedIn) are `SOCIAL` in
   `src/components/cosmos/lib/constants.ts`, drawn by `Social.tsx` with Simple Icons' official
   glyphs (CC0). `BackToTop.astro` (both layouts) appears once the page has moved down a
-  screen; it keeps its own five-language label because the layouts read two catalogs.
+  screen; it keeps its own label per language because the layouts read two catalogs.
 - **A mega panel hangs from its own trigger** (product owner: it opened "from the middle"): sized
   to its content, pulled back inside the window when it would cross the edge, and growing out of
   the trigger (Nav.tsx sets the transform origin); it closes with a short exit.
@@ -369,7 +385,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Only what the page says: no ratings, prices or claims beyond its copy.
 
 - `/` on payments is `src/pages/payments/index.astro`: server-rendered, copy in
-  `src/lib/payments/landing-i18n.ts` (five languages, parity-tested), rates read from
+  `src/lib/payments/landing-i18n.ts` (seven languages, parity-tested), rates read from
   `src/lib/plans.ts`. It and the content pages are the indexable payments pages (robots `Allow` per page, sitemap).
 - **A highlighted word uses the Stellar Snap's highlighter, in black** (`.pl-hl`, the product
   owner's choice over lime or the corporate blue): a solid block behind the words, painted left
@@ -566,6 +582,47 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   can be paid (the QR encodes a "sample" notice, the URI is empty, wallet buttons are inert).
 - The dashboard picks the design when a link is created and changes it from the link's detail
   (`CheckoutDesignPicker`, through the PATCH proxy).
+
+### ZK payments as a service
+
+- **What it is**: confidential payments on Stellar, the amount hidden on-chain (Pedersen
+  commitments, UltraHonk proofs verified on-chain), built on OpenZeppelin's Confidential Token
+  (`stellar-confidential` 0.8.0) and the TypeScript SDK `stellar-confidential-token-sdk` (MIT,
+  unaudited; pinned to commit `aad1706`, the product owner approved the dependency). Cosmos Pay
+  operates its own confidential token (wrapping XLM) with its own auditor registry, so it holds the
+  auditor key every account on the token is registered under. **Commission: 0.01% per transaction**
+  (1 basis point, `src/lib/zk/amounts.ts`, tested; the Payments API is the authority), taken from
+  the payment: the payer pays the amount, the merchant receives it minus the commission, Cosmos Pay
+  the commission. **Testnet only for now**; a network without it answers "not available".
+- **Flow**: the dashboard's ZK payments view (`views/ZkPaymentsView.tsx`, Payments group) creates a
+  payment through `/api/zk-payments` (OpenAPI-registered); the payer pays on the ZK checkout
+  `payments.cosmospay.lat/zk/{id}` (`components/cosmos/zk/ZkCheckout.tsx`): Freighter connects, the
+  confidential key is derived from two SEP-53 signatures (`src/lib/zk/derive-key.ts`, never stored
+  beyond the tab's sessionStorage), the account registers if needed, public XLM is deposited and
+  merged if the confidential balance is short, then two confidential transfers (the net amount to
+  the merchant, the commission to Cosmos Pay's fee account) and `POST /v1/zk-checkout/{id}/confirm`
+  with both hashes. The server decrypts both amounts with the auditor key and marks it paid.
+  Retries never pay twice (the sent hashes are kept). The merchant's receiving account is a
+  confidential account managed on `payments.cosmospay.lat/zk/account` (register, balances, merge,
+  deposit, withdraw; `ZkAccount.tsx`).
+- **Both pages prove in the browser and are cross-origin isolated** (COOP same-origin, COEP
+  credentialless, set by the middleware on every `/zk` path of the payments domain, which owns the
+  `/zk` prefix). bb.js is **served by a route, not public/**: `/zk/bb/{version}/{file}`
+  (`src/lib/zk/bb-assets.ts`) reads `node_modules/@aztec/bb.js/dest/browser` at the SDK's pinned
+  version (`src/lib/zk/bb-version.ts`, `tests/unit/zkBbAssets.test.ts`) and adds the isolation
+  headers its Web Worker needs (static files skip the middleware). Astro leaves `params` empty for
+  that rewritten path, so the route reads the path. `@aztec/bb.js` is aliased to a stub in Vite and
+  loaded as native ESM by `src/lib/zk/bb-loader.ts`; noir's wasm packages are excluded from
+  dependency pre-bundling. A browser that cannot isolate (Safari) is told to use Chrome, Edge or
+  Firefox. The development build exposes `window.__zkSelfTest(token, account)` on the account page:
+  a real register proof with throwaway keys, no wallet or network (it takes about 20 s headless).
+- **What the pages read comes through the gateway, never this server**: the keyless route
+  `<route>-zk-checkout` (`/v1/zk-checkout/*`: the payment's public view, the confirm call and the
+  network's config; any origin, no credentials; `src/lib/apisix-keyless.ts`, tested). It has its own
+  prefix because nothing under it needs a consumer; every authenticated ZK route stays under
+  `/v1/zk-payments`. `src/lib/zk/checkout-api.ts` is the trust boundary (every field checked, the
+  RPC must be https; tested).
+- The landing presents it in the pricing lede and the FAQ ("What are ZK payments?").
 
 ### Other split-related notes
 

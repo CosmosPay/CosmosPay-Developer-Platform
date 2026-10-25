@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { IcX } from "@/components/cosmos/icons";
+import { useT } from "@/lib/i18n/index";
 
 /* Accessible modal: role=dialog + aria-modal, an accessible name via `label`, Escape to
    close, a focus trap (Tab cycles inside), initial focus moved into the dialog, and focus
    returned to the triggering element on close. Closing from inside (X, the backdrop, Escape)
    plays a short exit before `onClose` unmounts it; a parent closing it directly skips that. */
 const EXIT_MS = 160;
-export function Modal({ onClose, children, label = "Dialog" }: { onClose: () => void; children: ReactNode; label?: string }) {
+export function Modal({ onClose, children, label }: { onClose: () => void; children: ReactNode; label?: string }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
   const closeRef = useRef(onClose);
@@ -58,12 +60,12 @@ export function Modal({ onClose, children, label = "Dialog" }: { onClose: () => 
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-label={label}
+        aria-label={label || t.ui.dialog}
         tabIndex={-1}
         ref={ref}
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="modal-x" onClick={requestClose} aria-label="Close"><IcX /></button>
+        <button className="modal-x" onClick={requestClose} aria-label={t.ui.close}><IcX /></button>
         {children}
       </div>
     </div>

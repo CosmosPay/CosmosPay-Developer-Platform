@@ -628,6 +628,72 @@ export const cosmosCrossChainSwaps = {
     cosmosFetch<CrossChainSwap>(userId, env, `/v1/cross-chain-swaps/${encodeURIComponent(id)}/deposit`, { method: "POST", body: { txHash }, org }),
 };
 
+/* ---- ZK payments as a service: confidential payments on Cosmos Pay's confidential token
+   (OpenZeppelin's stellar-confidential), where the amount stays hidden on-chain. The payer
+   proves and pays in the browser; the Payments API holds the token's auditor key, checks both
+   confidential transfers (the merchant's net amount and the 0.01% commission) and marks the
+   payment paid. Testnet only for now. ---- */
+export interface ZkConfig {
+  enabled: boolean;
+  network: string;
+  rpcUrl: string;
+  networkPassphrase: string;
+  token: { contractId: string; symbol: string; decimals: number; underlying: string; deployedAtLedger: number };
+  verifier: string;
+  auditorRegistry: string;
+  auditorId: number;
+  feeBps: number;
+  feeAccount: string;
+}
+
+export type ZkPaymentStatus = "PENDING" | "SUCCEEDED" | "EXPIRED";
+
+export interface ZkPayment {
+  id: string;
+  status: ZkPaymentStatus;
+  network: string;
+  tokenContract: string;
+  amount: string;
+  netAmount: string;
+  feeAmount: string;
+  feeBps: number;
+  recipient: string;
+  feeAccount: string;
+  payer: string | null;
+  paymentTxHash: string | null;
+  feeTxHash: string | null;
+  description: string | null;
+  expiresAt: string;
+  settledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ZkPaymentList {
+  data: ZkPayment[];
+  total: number;
+  take: number;
+  skip: number;
+}
+
+export interface ZkPaymentInput {
+  amount: string;
+  recipient: string;
+  description?: string;
+  expiresInMinutes?: number;
+  idempotencyKey?: string;
+}
+
+export const cosmosZkPayments = {
+  config: (userId: string, env: CosmosEnv, org: string) => cosmosFetch<ZkConfig>(userId, env, "/v1/zk-payments/config", { org }),
+  create: (userId: string, env: CosmosEnv, org: string, body: ZkPaymentInput) =>
+    cosmosFetch<ZkPayment>(userId, env, "/v1/zk-payments", { method: "POST", body, org }),
+  list: (userId: string, env: CosmosEnv, org: string, query: { status?: string; take?: number; skip?: number } = {}) =>
+    cosmosFetch<ZkPaymentList>(userId, env, "/v1/zk-payments", { query: { status: query.status, take: query.take, skip: query.skip }, org }),
+  get: (userId: string, env: CosmosEnv, org: string, id: string) =>
+    cosmosFetch<ZkPayment>(userId, env, `/v1/zk-payments/${encodeURIComponent(id)}`, { org }),
+};
+
 /* ---- Stellar AMM liquidity pools. Non-custodial like swaps: the Payments API
    prices a deposit/withdraw against the pool's on-chain reserves, builds the
    unsigned XDR (plus a pool-share changeTrust when needed) and relays the signed

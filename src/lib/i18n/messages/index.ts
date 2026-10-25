@@ -4,5 +4,7 @@ import es from "@/lib/i18n/messages/es";
 import pt from "@/lib/i18n/messages/pt";
 import fr from "@/lib/i18n/messages/fr";
 import de from "@/lib/i18n/messages/de";
+import hi from "@/lib/i18n/messages/hi";
+import zh from "@/lib/i18n/messages/zh";
 
-export const messages = { en, es, pt, fr, de };
+export const messages = { en, es, pt, fr, de, hi, zh };

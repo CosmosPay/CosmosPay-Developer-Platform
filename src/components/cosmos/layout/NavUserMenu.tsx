@@ -14,7 +14,7 @@ export function NavUserMenu({ user }: { user: User }) {
   const [open, setOpen] = useState(false);
   const { mounted, state } = usePresence(open, 120);
   const ref = useOutside(() => setOpen(false));
-  const name = (user && user.name) || "Account";
+  const name = (user && user.name) || t.ui.account;
   const email = (user && user.email) || "";
   return (
     <div className="nav-user" ref={ref}>

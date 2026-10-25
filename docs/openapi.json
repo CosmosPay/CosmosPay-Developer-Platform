@@ -11835,6 +11835,796 @@
         ],
         "x-cosmos-public-key": true
       }
+    },
+    "/v1/zk-payments/config": {
+      "get": {
+        "description": "What a dashboard needs to set a merchant up on the confidential token (register, read the balance, withdraw). `enabled` is false on a network where ZK payments do not run yet (mainnet today). The same shape as the keyless `GET /v1/zk-checkout/config?network=`.",
+        "operationId": "ZkPaymentsController_getConfig_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZkPaymentsConfigEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "The ZK payments setup of the API key's network: token, registries, auditor id, commission, fee account",
+        "tags": [
+          "zk-payments"
+        ]
+      }
+    },
+    "/v1/zk-payments": {
+      "post": {
+        "description": "Prices the payment (`amount` = `netAmount` + `feeAmount`, the fee rounded up and at least one stroop) and checks on-chain that the recipient holds a confidential account on the token under auditor 0. The payer then makes two confidential transfers (net to the merchant, fee to the fee account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`.",
+        "operationId": "ZkPaymentsController_create_v1",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional idempotency key. A retry with the same key and the same request returns the existing payment; the same key with a different request is 409 idempotency_conflict. Takes precedence over body.idempotencyKey.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "order-24"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateZkPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZkPaymentEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_amount`: after the commission the merchant would receive nothing. `recipient_not_registered`: the recipient has no confidential account on the token under auditor 0. `network_unsupported`: ZK payments do not run on this network yet (mainnet today; use a dev key).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_amount": {
+                    "summary": "invalid_amount — The merchant would receive nothing after the commission",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "The amount is too small: after the 0.01% commission (at least one stroop) the merchant would receive nothing.",
+                      "path": "/v1/zk-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "recipient_not_registered": {
+                    "summary": "recipient_not_registered — The recipient holds no confidential account on Cosmos Pay's token under auditor 0",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "recipient_not_registered",
+                      "error": "Bad Request",
+                      "message": "The recipient GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO is not registered on Cosmos Pay's confidential token. Register it with the wallet first, under auditor id 0.",
+                      "path": "/v1/zk-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported — ZK payments do not run on this network yet (mainnet today)",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "ZK payments are not available on public yet. They run on testnet only for now: use a dev API key.",
+                      "path": "/v1/zk-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "`idempotency_conflict`: this key was already used for a different payment. `operation_in_flight`: a concurrent create with the same key changed it while this one ran; retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "idempotency_conflict": {
+                    "summary": "idempotency_conflict — This Idempotency-Key was already used for a different request",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "idempotency_conflict",
+                      "error": "Conflict",
+                      "message": "A ZK payment with this idempotency key already exists for a different request. Retry with the original request unchanged, or use a new key.",
+                      "path": "/v1/zk-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight — A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "A concurrent request for this idempotency key changed it while this one was being created. Retry the request.",
+                      "path": "/v1/zk-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          }
+        },
+        "summary": "Create a ZK payment: a confidential payment to a merchant registered on the token, minus the 0.01% commission",
+        "tags": [
+          "zk-payments"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "zk-payments:create",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Soroban RPC"
+        ]
+      },
+      "get": {
+        "operationId": "ZkPaymentsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Only payments in this status, as it reads now: `EXPIRED` includes a PENDING payment past `expiresAt`, and `PENDING` excludes one.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "SUCCEEDED",
+                "EXPIRED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZkPaymentListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the consumer's ZK payments",
+        "tags": [
+          "zk-payments"
+        ]
+      }
+    },
+    "/v1/zk-payments/{id}": {
+      "get": {
+        "operationId": "ZkPaymentsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZkPaymentEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Get a ZK payment by id",
+        "tags": [
+          "zk-payments"
+        ]
+      }
+    },
+    "/v1/zk-checkout/config": {
+      "get": {
+        "description": "The same shape as `GET /v1/zk-payments/config`, built by the same code, for a page with no API key: the merchant's confidential-account page (register, balance, withdraw) and the checkout read the contracts they prove against here. Everything in it is public on-chain data. `enabled` is false, and the rest null, on a network where ZK payments do not run yet (mainnet today).",
+        "operationId": "ZkCheckoutController_config_v1",
+        "parameters": [
+          {
+            "name": "network",
+            "required": true,
+            "in": "query",
+            "description": "The network to describe. Named by the caller, since a keyless page has no API key to take it from.",
+            "schema": {
+              "example": "testnet",
+              "type": "string",
+              "enum": [
+                "testnet",
+                "public"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZkPaymentsConfigEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "A network's ZK payments setup, keyless: token, registries, auditor id, commission, fee account",
+        "tags": [
+          "zk-checkout"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "zk-payments:public-read",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/zk-checkout/{id}": {
+      "get": {
+        "description": "For a checkout: the gross amount, the net and the commission, the merchant and the fee account to transfer to, the token and the RPC to prove and submit with, and the live status to poll.\n\n**The id is the capability.** Nothing about the owning merchant account, the idempotency key or the settling transactions is returned.",
+        "operationId": "ZkCheckoutController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ZK payment id (a cuid), as the merchant shared it.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              },
+              "Cache-Control": {
+                "description": "Always `no-store`: the status changes live.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              }
+            },
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicZkPaymentEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`network_unsupported`: the payment's network or token is no longer served by this deployment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "network_unsupported": {
+                    "summary": "network_unsupported — The payment's network no longer runs ZK payments here",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "ZK payments are not available on public yet. They run on testnet only for now: use a dev API key.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No ZK payment has this id. The same answer the owner gets from `GET /v1/zk-payments/{id}` for one that never existed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found — No ZK payment has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "ZK payment cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a ZK payment as its payer sees it (no API key)",
+        "tags": [
+          "zk-checkout"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "zk-payments:public-read",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/zk-checkout/{id}/confirm": {
+      "post": {
+        "description": "Reads both transactions back through the Soroban RPC and settles the payment only when: both succeeded and each is a single `confidential_transfer` on the token; both closed while the payment was open (not before it was created, not after `expiresAt`); both come from the same payer; the payment transfer goes to the recipient and the fee transfer to the fee account; and each decrypts with the auditor key, on both auditor channels and against the transfer's commitment, to exactly `netAmount` / `feeAmount`. Neither transaction may have settled another ZK payment.\n\nIdempotent: the same hashes on a settled payment answer it again. A refusal leaves the payment PENDING, and never says what an amount decrypted to.",
+        "operationId": "ZkCheckoutController_confirm_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ZK payment id (a cuid), as the merchant shared it.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmZkPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              },
+              "Cache-Control": {
+                "description": "Always `no-store`: the status changes live.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              }
+            },
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicZkPaymentEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`transaction_not_found`: the RPC has no such transaction yet (retry in a few seconds) or no longer. `transaction_rejected`: it failed on-chain. `payment_transfer_mismatch` / `fee_transfer_mismatch`: that transaction is not the confidential transfer this payment needs (wrong token, shape, recipient, amount, or it closed before the payment existed). `payer_mismatch`: the two transfers come from different accounts. `expired`: a transfer closed after `expiresAt`. `invalid_state_transition`: already settled by other transactions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed — The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "transaction_not_found": {
+                    "summary": "transaction_not_found — No such transaction on the network yet, or it is older than the RPC keeps",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "transaction_not_found",
+                      "error": "Bad Request",
+                      "message": "Transaction 5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a was not found on testnet: it has not closed yet, or it is older than the RPC keeps. Retry in a few seconds.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "transaction_rejected": {
+                    "summary": "transaction_rejected — The transaction failed on-chain",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "transaction_rejected",
+                      "error": "Bad Request",
+                      "message": "The payment transaction 5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a failed on-chain and moved nothing.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "payment_transfer_mismatch": {
+                    "summary": "payment_transfer_mismatch — The payment transaction does not pay this payment's net amount to its recipient",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "payment_transfer_mismatch",
+                      "error": "Bad Request",
+                      "message": "The payment transaction does not settle this ZK payment: it is not a confidential transfer of the payment's net amount to its recipient.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "fee_transfer_mismatch": {
+                    "summary": "fee_transfer_mismatch — The fee transaction does not pay this payment's commission to the fee account",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "fee_transfer_mismatch",
+                      "error": "Bad Request",
+                      "message": "The fee transaction does not settle this ZK payment: it is not a confidential transfer of the commission to the fee account.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "payer_mismatch": {
+                    "summary": "payer_mismatch — The payment and fee transfers come from different accounts",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "payer_mismatch",
+                      "error": "Bad Request",
+                      "message": "The payment and fee transfers must come from the same account; they come from two different ones.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "expired": {
+                    "summary": "expired — A transfer of the ZK payment closed after the payment expired",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "expired",
+                      "error": "Bad Request",
+                      "message": "The payment transaction closed at 2026-10-25T14:05:12.000Z, after this ZK payment expired at 2026-10-25T14:00:00.000Z.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition — Already settled, by other transactions",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "This ZK payment is already settled, by other transactions.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported — The payment's network no longer runs ZK payments here",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "ZK payments are not available on public yet. They run on testnet only for now: use a dev API key.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No ZK payment has this id. The same answer the owner gets from `GET /v1/zk-payments/{id}` for one that never existed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found — No ZK payment has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "ZK payment cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`transaction_already_settled`: one of the transactions already settled another ZK payment, of any merchant. One transaction settles at most one payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "transaction_already_settled": {
+                    "summary": "transaction_already_settled — A transaction already settled another ZK payment",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "transaction_already_settled",
+                      "error": "Conflict",
+                      "message": "One of these transactions already settled another ZK payment. One transaction settles at most one payment.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          }
+        },
+        "summary": "Confirm a ZK payment with its two confidential transfers, verified on-chain (no API key)",
+        "tags": [
+          "zk-checkout"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "zk-payments:confirm",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Soroban RPC"
+        ],
+        "security": []
+      }
     }
   },
   "info": {
@@ -11854,7 +12644,15 @@
     },
     {
       "name": "cross-chain-swaps",
-      "description": "Swaps between Stellar, Solana and Monad, settled by NEAR Intents: quote, get a deposit address, pay it, and follow the swap to its outcome."
+      "description": "Swaps between every network NEAR Intents reaches, settled by NEAR Intents: quote, get a deposit address, pay it, and follow the swap to its outcome."
+    },
+    {
+      "name": "zk-payments",
+      "description": "Confidential payments on Stellar: the amount stays private on-chain. Create a ZK payment, list and read them; the merchant receives the amount minus the 0.01% commission."
+    },
+    {
+      "name": "zk-checkout",
+      "description": "What the payer's browser reads and calls without a key: one ZK payment, the network's confidential-token setup, and the confirmation of the two confidential transfers that pay it."
     },
     {
       "name": "liquidity-pools",
@@ -16204,7 +17002,8 @@
                 "CROSS_CHAIN_SWAP_SUCCEEDED",
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
-                "CROSS_CHAIN_SWAP_EXPIRED"
+                "CROSS_CHAIN_SWAP_EXPIRED",
+                "ZK_PAYMENT_SUCCEEDED"
               ]
             }
           }
@@ -16275,7 +17074,8 @@
                 "CROSS_CHAIN_SWAP_SUCCEEDED",
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
-                "CROSS_CHAIN_SWAP_EXPIRED"
+                "CROSS_CHAIN_SWAP_EXPIRED",
+                "ZK_PAYMENT_SUCCEEDED"
               ]
             }
           },
@@ -16369,7 +17169,8 @@
                 "CROSS_CHAIN_SWAP_SUCCEEDED",
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
-                "CROSS_CHAIN_SWAP_EXPIRED"
+                "CROSS_CHAIN_SWAP_EXPIRED",
+                "ZK_PAYMENT_SUCCEEDED"
               ]
             }
           },
@@ -16471,7 +17272,8 @@
                 "CROSS_CHAIN_SWAP_SUCCEEDED",
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
-                "CROSS_CHAIN_SWAP_EXPIRED"
+                "CROSS_CHAIN_SWAP_EXPIRED",
+                "ZK_PAYMENT_SUCCEEDED"
               ]
             }
           }
@@ -16560,7 +17362,8 @@
               "CROSS_CHAIN_SWAP_SUCCEEDED",
               "CROSS_CHAIN_SWAP_REFUNDED",
               "CROSS_CHAIN_SWAP_FAILED",
-              "CROSS_CHAIN_SWAP_EXPIRED"
+              "CROSS_CHAIN_SWAP_EXPIRED",
+              "ZK_PAYMENT_SUCCEEDED"
             ],
             "example": "PAYMENT_INTENT_SUCCEEDED"
           },
@@ -21541,6 +22344,429 @@
           "xdr"
         ]
       },
+      "ZkTokenEntity": {
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "example": "CBQU5SGVPPYI5MVBVV5GYTYNHENHBY7J44WYYVDPTZ5UNK6JDEY232QX",
+            "description": "The confidential token contract (C...)."
+          },
+          "symbol": {
+            "type": "string",
+            "example": "XLM",
+            "description": "What it wraps: native XLM."
+          },
+          "decimals": {
+            "type": "number",
+            "example": 7
+          },
+          "underlying": {
+            "type": "string",
+            "example": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+            "description": "Native XLM's Stellar Asset Contract on this network."
+          },
+          "deployedAtLedger": {
+            "type": "number",
+            "example": 5387137,
+            "description": "The ledger the token was deployed at: where a wallet replays its confidential balance from."
+          }
+        },
+        "required": [
+          "contractId",
+          "symbol",
+          "decimals",
+          "underlying",
+          "deployedAtLedger"
+        ]
+      },
+      "ZkPaymentsConfigEntity": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether ZK payments run on this network. False until the operator deploys the token there (mainnet today); every other field but `network`, `networkPassphrase`, `auditorId` and `feeBps` is then null."
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "testnet",
+            "description": "The network the API key's environment selects."
+          },
+          "rpcUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://soroban-testnet.stellar.org",
+            "description": "The Soroban RPC to build and submit transactions through."
+          },
+          "networkPassphrase": {
+            "type": "string",
+            "example": "Test SDF Network ; September 2015"
+          },
+          "token": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZkTokenEntity"
+              }
+            ]
+          },
+          "verifier": {
+            "type": "string",
+            "nullable": true,
+            "example": "CAN45PFA5CVUCU3JB77IE2JNWNTRCDWMRNG55U452L3N2IOCAGOLTUVQ",
+            "description": "The UltraHonk verifier registry the token checks proofs with."
+          },
+          "auditorRegistry": {
+            "type": "string",
+            "nullable": true,
+            "example": "CDKWSGQER4KNDTMZS2W7V4E32KSL7BVM3LBY7EBTPWZZ3SFG5CDAOLF2",
+            "description": "The auditor registry holding Cosmos Pay's key."
+          },
+          "auditorId": {
+            "type": "number",
+            "example": 0,
+            "description": "The auditor id every account on the token registers under."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 1,
+            "description": "The commission: 1 bps = 0.01%."
+          },
+          "feeAccount": {
+            "type": "string",
+            "nullable": true,
+            "example": "GDUYXOQZFVPDVIVBTJNUCGYQEC3XSI2LQOQ3SJWJJ6ZY4JLCJZZFGTNQ",
+            "description": "Cosmos Pay's account the commission is transferred to."
+          }
+        },
+        "required": [
+          "enabled",
+          "network",
+          "rpcUrl",
+          "networkPassphrase",
+          "token",
+          "verifier",
+          "auditorRegistry",
+          "auditorId",
+          "feeBps",
+          "feeAccount"
+        ]
+      },
+      "CreateZkPaymentDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "What the payer pays in total, in XLM (up to 7 decimal places). The merchant receives it minus the 0.01% commission (`netAmount`); the commission (`feeAmount`, rounded up, at least one stroop) goes to Cosmos Pay's fee account. An amount whose net would be zero is refused.",
+            "example": "25.5"
+          },
+          "recipient": {
+            "type": "string",
+            "description": "The merchant's Stellar account (G...). It must already hold a confidential account on Cosmos Pay's token, registered under auditor id 0; otherwise the payment is refused with `recipient_not_registered`.",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
+          },
+          "description": {
+            "type": "string",
+            "description": "Shown to the payer by the checkout. Not secret, and not on-chain: the public read returns it to anyone holding the payment id.",
+            "example": "Order #24",
+            "maxLength": 280
+          },
+          "expiresInMinutes": {
+            "type": "number",
+            "description": "How long the payment stays payable, in minutes. Both transfers must close before it ends.",
+            "default": 60,
+            "minimum": 1,
+            "maximum": 10080
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "Idempotency key. A retry with the same key and the same request returns the existing payment; the same key with a different request is 409 idempotency_conflict. The Idempotency-Key header takes precedence over this field. One is generated when neither is sent.",
+            "example": "order-24",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "amount",
+          "recipient"
+        ]
+      },
+      "ZkPaymentEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmh4x2k9a0001l70g8v5q3z2w"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUCCEEDED",
+              "EXPIRED"
+            ],
+            "example": "PENDING",
+            "description": "As it reads now: a PENDING payment past `expiresAt` reads EXPIRED. It can still settle: transfers that closed before `expiresAt` paid it."
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "testnet"
+          },
+          "tokenContract": {
+            "type": "string",
+            "example": "CBQU5SGVPPYI5MVBVV5GYTYNHENHBY7J44WYYVDPTZ5UNK6JDEY232QX",
+            "description": "The confidential token both transfers must be made on."
+          },
+          "amount": {
+            "type": "string",
+            "example": "25.5",
+            "description": "What the payer pays in total, in XLM."
+          },
+          "netAmount": {
+            "type": "string",
+            "example": "25.49745",
+            "description": "What the merchant receives: `amount - feeAmount`."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.00255",
+            "description": "The commission: `ceil(amount * feeBps / 10000)` in stroops, at least one."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 1
+          },
+          "recipient": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "The merchant (G...)."
+          },
+          "feeAccount": {
+            "type": "string",
+            "example": "GDUYXOQZFVPDVIVBTJNUCGYQEC3XSI2LQOQ3SJWJJ6ZY4JLCJZZFGTNQ"
+          },
+          "payer": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The account both transfers came from, once settled."
+          },
+          "paymentTxHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "feeTxHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Order #24"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "order-24"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T15:00:00.000Z"
+          },
+          "settledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "When the later of the two transfers closed, once settled."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T14:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T14:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "network",
+          "tokenContract",
+          "amount",
+          "netAmount",
+          "feeAmount",
+          "feeBps",
+          "recipient",
+          "feeAccount",
+          "payer",
+          "paymentTxHash",
+          "feeTxHash",
+          "description",
+          "idempotencyKey",
+          "expiresAt",
+          "settledAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ZkPaymentListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZkPaymentEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "PublicZkPaymentEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmh4x2k9a0001l70g8v5q3z2w"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUCCEEDED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "amount": {
+            "type": "string",
+            "example": "25.5"
+          },
+          "netAmount": {
+            "type": "string",
+            "example": "25.49745"
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.00255"
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 1
+          },
+          "recipient": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "Transfer `netAmount` here."
+          },
+          "feeAccount": {
+            "type": "string",
+            "example": "GDUYXOQZFVPDVIVBTJNUCGYQEC3XSI2LQOQ3SJWJJ6ZY4JLCJZZFGTNQ",
+            "description": "Transfer `feeAmount` here, from the same account."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Order #24"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T15:00:00.000Z"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "testnet"
+          },
+          "rpcUrl": {
+            "type": "string",
+            "example": "https://soroban-testnet.stellar.org"
+          },
+          "networkPassphrase": {
+            "type": "string",
+            "example": "Test SDF Network ; September 2015"
+          },
+          "token": {
+            "$ref": "#/components/schemas/ZkTokenEntity"
+          },
+          "auditorId": {
+            "type": "number",
+            "example": 0,
+            "description": "The auditor id the transfers are encrypted to: Cosmos Pay reads the amount with it to confirm the payment."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "amount",
+          "netAmount",
+          "feeAmount",
+          "feeBps",
+          "recipient",
+          "feeAccount",
+          "description",
+          "expiresAt",
+          "network",
+          "rpcUrl",
+          "networkPassphrase",
+          "token",
+          "auditorId"
+        ]
+      },
+      "ConfirmZkPaymentDto": {
+        "type": "object",
+        "properties": {
+          "paymentTxHash": {
+            "type": "string",
+            "description": "The transaction of the confidential transfer that paid the merchant the payment's `netAmount` (64 hex).",
+            "example": "0bd74f4b2725dc4f5b1c4ddabd7f66d66ac5a613c20f8175f2893eb33e757477"
+          },
+          "feeTxHash": {
+            "type": "string",
+            "description": "The transaction of the confidential transfer that paid the fee account the payment's `feeAmount` (64 hex), from the same account.",
+            "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          }
+        },
+        "required": [
+          "paymentTxHash",
+          "feeTxHash"
+        ]
+      },
       "ApiErrorBodyEntity": {
         "type": "object",
         "properties": {
@@ -21571,6 +22797,12 @@
               "invalid_memo",
               "transaction_rejected",
               "transaction_already_settled",
+              "recipient_not_registered",
+              "payment_transfer_mismatch",
+              "fee_transfer_mismatch",
+              "payer_mismatch",
+              "transaction_not_found",
+              "expired",
               "network_unsupported",
               "asset_unsupported",
               "provider_error",

@@ -50,7 +50,7 @@ export function clientCity(headers: Headers): string | null {
   return v ? decodeURIComponent(v) : null;
 }
 
-const SUPPORTED_LANGS = ["en", "es", "pt", "fr", "de"];
+const SUPPORTED_LANGS = ["en", "es", "pt", "fr", "de", "hi", "zh"];
 export function clientLanguage(headers: Headers): string | null {
   const al = headers.get("accept-language");
   if (!al) return null;

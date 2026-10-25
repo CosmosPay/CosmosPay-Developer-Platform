@@ -49,8 +49,10 @@ const SITE_PATHS = new Set(["/pricing", "/tos"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
    because /pricing is the company site's. */
 const PAYMENTS_PATHS = new Set(PAYMENTS_PAGE_PATHS);
-/* Checkout design previews (src/pages/payments/preview/[design].astro). */
-const PAYMENTS_PREFIXES = ["/preview"];
+/* Checkout design previews (src/pages/payments/preview/[design].astro) and the ZK payment pages
+   (src/pages/payments/zk/: the checkout, the merchant's confidential account and the prover's
+   files), the only cross-origin isolated pages. */
+const PAYMENTS_PREFIXES = ["/preview", "/zk"];
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];

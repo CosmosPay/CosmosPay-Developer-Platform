@@ -5,6 +5,7 @@ import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
 import { MOUNTS, routeRequest } from "@/lib/hosts";
+import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 import { LANG_COOKIE, resolveLocale } from "@/lib/payments/i18n";
 
@@ -195,6 +196,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // leave without these, whatever path reached it.
   if (decision.area === "payments" || underPaymentsMount(context.routePattern)) {
     for (const [name, value] of Object.entries(PAYMENTS_SECURITY_HEADERS)) response.headers.set(name, value);
+    // The ZK payment pages prove in the browser: bb.js needs SharedArrayBuffer, so they are
+    // cross-origin isolated (src/lib/zk/bb-assets.ts).
+    if (context.url.pathname === "/zk" || context.url.pathname.startsWith("/zk/")) {
+      for (const [name, value] of Object.entries(ZK_ISOLATION_HEADERS)) response.headers.set(name, value);
+    }
   }
   if (corsOk) applyCors(response.headers, origin, context.request);
   trackApiRequest(context, response.status, startedAt);

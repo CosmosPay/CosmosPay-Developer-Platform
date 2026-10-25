@@ -2,6 +2,101 @@
    Only natural-language UI copy lives here. Icons, brand names, code snippets,
    numeric stats, asset codes and mock API records stay in the components. */
 export default {
+  ui: { close: "Close", dialog: "Dialog", copyToClipboard: "Copy to clipboard", search: "Search", searchEllipsis: "Search…", select: "Select…", account: "Account", onboardingSteps: "Onboarding steps", skipToContent: "Skip to content" },
+  zk: {
+    title: "ZK payments",
+    commission: "Commission",
+    commissionRate: "0.01% per transaction",
+    amount: "Amount",
+    merchantGets: "Merchant receives",
+    youPay: "You pay",
+    status: {
+      PENDING: "Pending",
+      SUCCEEDED: "Paid",
+      EXPIRED: "Expired",
+    },
+    unavailable: "ZK payments are not available on this network yet.",
+    notIsolated: "This browser cannot generate the proofs. Open the page in Chrome, Edge or Firefox.",
+    freighter: {
+      missing: "Install Freighter to continue.",
+      declined: "Freighter declined the request.",
+      wrongNetwork: "Switch Freighter to {network}.",
+    },
+    phases: {
+      keys: "Sign twice in Freighter to derive your private key",
+      proving: "Generating the proof…",
+      signing: "Approve in Freighter…",
+      waiting: "Waiting for the network…",
+    },
+    view: {
+      create: "Create ZK payment",
+      account: "Confidential account",
+      empty: "No ZK payments yet.",
+      loadError: "Couldn't load ZK payments.",
+      tableHead: {
+        id: "Payment",
+        amount: "Amount",
+        net: "Merchant receives",
+        fee: "Commission",
+        status: "Status",
+        created: "Created",
+      },
+      copyLink: "Copy checkout link",
+      openCheckout: "Open checkout",
+      searchPlaceholder: "Search by ID, account or amount…",
+    },
+    modal: {
+      title: "New ZK payment",
+      recipient: "Receiving account",
+      recipientHint: "It needs a confidential account: create it from Confidential account.",
+      description: "Description",
+      expires: "Expires in",
+      expiries: {
+        m60: "1 hour",
+        m1440: "24 hours",
+        m10080: "7 days",
+      },
+      submit: "Create",
+      submitting: "Creating…",
+      created: "ZK payment created",
+      link: "Checkout link",
+    },
+    account: {
+      title: "Confidential account",
+      connect: "Connect Freighter",
+      connected: "Connected as {account}",
+      register: "Create confidential account",
+      registered: "Confidential account active",
+      spendable: "Available",
+      receiving: "Incoming",
+      merge: "Move incoming to available",
+      withdraw: "Withdraw to public XLM",
+      deposit: "Deposit XLM",
+      amountLabel: "Amount",
+      refresh: "Refresh",
+      done: "Done",
+      back: "Back to the dashboard",
+    },
+    checkout: {
+      title: "Private payment",
+      to: "To",
+      payPrivately: "Pay privately",
+      steps: {
+        register: "Create your confidential account",
+        fund: "Move XLM into your confidential balance",
+        pay: "Send the payment",
+        fee: "Send the commission",
+        confirm: "Confirm the payment",
+      },
+      paid: "Payment complete",
+      paidBody: "The amount stays private on-chain.",
+      expired: "This payment expired.",
+      notFound: "This payment does not exist.",
+      loadError: "Couldn't load this payment.",
+      retry: "Try again",
+      transactions: "Transactions",
+    },
+  },
   invite: {
     eyebrow: "Invitation",
     joinTitle: "Join {org}",
@@ -147,10 +242,10 @@ export default {
         label: "Developers",
         cols: [
           { head: "Build", links: [
-            { t: "API reference", s: "REST & GraphQL", href: "/docs/api" },
-            { t: "SDKs & libraries", s: "Typed JS / TS SDK", href: "/docs/sdk/server/overview" },
-            { t: "Webhooks", s: "Real-time events", href: "/docs/sdk/server/webhooks" },
-            { t: "Sandbox", s: "Test everything safely", href: "/docs/getting-started" },
+            { t: "API reference", s: "REST & GraphQL" },
+            { t: "SDKs & libraries", s: "Typed JS / TS SDK" },
+            { t: "Webhooks", s: "Real-time events" },
+            { t: "Sandbox", s: "Test everything safely" },
           ] },
           { head: "Operate", links: [
             { t: "CLI", s: "Local-to-prod parity" },
@@ -165,8 +260,8 @@ export default {
         label: "Resources",
         cols: [
           { head: "Learn", links: [
-            { t: "Documentation", s: "Guides & references", href: "/docs" },
-            { t: "Tutorials", s: "Step-by-step walkthroughs", href: "/docs/getting-started" },
+            { t: "Documentation", s: "Guides & references" },
+            { t: "Tutorials", s: "Step-by-step walkthroughs" },
             { t: "Blog", s: "Engineering & product" },
             { t: "Customer stories", s: "Built on Cosmos Pay" },
           ] },
@@ -324,7 +419,7 @@ export default {
       readFull: "Read full story",
       items: {
         Northwind: { label: "faster cross-border settlement after moving to Cosmos Pay.", tags: ["Payments", "Stablecoins", "Wallets"], story: "Northwind moved its global checkout onto Cosmos Pay across Stellar, Solana and Monad, cutting settlement from days to seconds and slashing FX costs across 30+ markets, all while keeping a single reconciled ledger." },
-        Lumio: { label: "to launch USDC subscriptions across 40 countries.", tags: ["Billing", "USDC", "Anchors"], story: "Lumio replaced a patchwork of regional processors with Cosmos Pay, launching USDC-denominated subscriptions in 40 countries in just six weeks using anchors for local on- and off-ramps." },
+        Lumio: { metric: "6 wks", label: "to launch USDC subscriptions across 40 countries.", tags: ["Billing", "USDC", "Anchors"], story: "Lumio replaced a patchwork of regional processors with Cosmos Pay, launching USDC-denominated subscriptions in 40 countries in just six weeks using anchors for local on- and off-ramps." },
         Helios: { label: "settled to sellers worldwide over Stellar, Solana and Monad.", tags: ["Payouts", "Connect", "Ramps"], story: "Helios pays out to a global seller base entirely on-chain. Last year it settled $2.4B to sellers in 58 countries, with funds landing in seconds and full on-chain transparency." },
       },
     },
@@ -432,15 +527,16 @@ export default {
 
   /* ---------------- dashboard ---------------- */
   dash: {
+    examples: { order: "Order #24", firstName: "Jane", lastName: "Doe", fullName: "Jane Doe", jobTitle: "Director", customerName: "Acme billing", payoutsName: "Acme payouts (USD)", productName: "Pro plan (monthly)" },
     search: { label: "Search the dashboard", placeholder: "Search", pages: "Pages", searchGroup: "Search", searchIn: "{place} matching “{q}”", empty: "Nothing matches “{q}”." },
-    viewLabels: { overview: "Overview", payments: "Payments", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", crossChainSwaps: "Cross-chain swaps", liquidity: "Liquidity pools", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activityLog: "Client activity", activity: "Activity", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments (all orgs)", adminSwaps: "Swaps (all orgs)", adminFiat: "Fiat (all orgs)", adminCustomers: "Customers (all orgs)", adminProducts: "Products (all orgs)", adminConsumers: "Organizations" },
+    viewLabels: { overview: "Overview", payments: "Payments", zkPayments: "ZK payments", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", crossChainSwaps: "Cross-chain swaps", liquidity: "Liquidity pools", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activityLog: "Client activity", activity: "Activity", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments (all orgs)", adminSwaps: "Swaps (all orgs)", adminFiat: "Fiat (all orgs)", adminCustomers: "Customers (all orgs)", adminProducts: "Products (all orgs)", adminConsumers: "Organizations" },
     sidebar: {
       label: "Dashboard",
       menu: { main: "Main menu", preferences: "Preferences" },
       groups: { payments: "Payments", swaps: "Swaps", developers: "Developers", settings: "Settings", help: "Help", admin: "Admin" },
       notifications: "Notifications",
       sections: { Platform: "Platform", Build: "Build", Account: "Account", Support: "Support", Admin: "Admin" },
-      items: { overview: "Overview", payments: "Payments", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", crossChainSwaps: "Cross-chain", liquidity: "Liquidity", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activityLog: "Activity log", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
+      items: { overview: "Overview", payments: "Payments", zkPayments: "ZK payments", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", crossChainSwaps: "Cross-chain", liquidity: "Liquidity", blindpay: "Fiat", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activityLog: "Activity log", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
       collapse: "Collapse sidebar",
     },
     admin: {
@@ -519,7 +615,7 @@ export default {
     modals: {
       org: {
         eyebrow: "Organization", title: "Create organization",
-        atLimit: "Your {plan} plan allows up to {limit} organization{s}. Upgrade your plan to create more.",
+        atLimitOne: "Your {plan} plan allows one organization. Upgrade your plan to create more.", atLimit: "Your {plan} plan allows up to {limit} organizations. Upgrade your plan to create more.",
         body: "Organizations keep payments, customers and API keys fully separate. You can create {n} more on your {plan} plan.",
         bodyUnlimited: "Organizations keep payments, customers and API keys fully separate. You can create unlimited more on your {plan} plan.",
         nameLabel: "Organization name", namePlaceholder: "Acme Inc.", create: "Create organization",
@@ -576,7 +672,7 @@ export default {
     },
     cosmos: {
       loading: "Loading…", loadError: "Couldn't load data.", empty: "Nothing here yet.",
-      eventLabels: { PAYMENT_INTENT_CREATED: "Payment created", PAYMENT_INTENT_UPDATED: "Payment updated", PAYMENT_INTENT_SUCCEEDED: "Payment succeeded", PAYMENT_INTENT_FAILED: "Payment failed", PAYMENT_INTENT_CANCELLED: "Payment cancelled", PAYMENT_INTENT_DELETED: "Payment deleted" },
+      eventLabels: { PAYMENT_INTENT_CREATED: "Payment created", PAYMENT_INTENT_UPDATED: "Payment updated", PAYMENT_INTENT_SUCCEEDED: "Payment succeeded", PAYMENT_INTENT_FAILED: "Payment failed", PAYMENT_INTENT_CANCELLED: "Payment cancelled", PAYMENT_INTENT_DELETED: "Payment deleted", ZK_PAYMENT_SUCCEEDED: "ZK payment succeeded" },
       active: "Active", inactive: "Disabled",
       reveal: "Reveal secret", secret: "Signing secret", secretNote: "Shown once. Store it securely.",
       rotate: "Rotate secret", ping: "Send test", pingOk: "Test event delivered", pingFail: "Test event failed",
