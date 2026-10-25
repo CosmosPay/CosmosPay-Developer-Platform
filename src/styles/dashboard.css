@@ -800,7 +800,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 
 /* No chips (product owner): plan, role, seat, lock, environment and ticket labels are coloured
    text, never a capsule. A text action inside a table or a section is an underlined link. */
-.inst :is(.kg, .seat-usage, .lock-badge, .env-tag, .tk-status, .tk-prio, .pcm-badge) {
+/* listing the coloured variants lifts the rule above their own backgrounds (`.kg.pub` and the like) */
+.inst :is(.kg, .kg.pub, .kg.test, .kg.live, .seat-usage, .lock-badge, .env-tag, .tk-status, .tk-status[class*="tk-"], .tk-prio, .tk-prio[class*="tk-prio-"], .pcm-badge, .pcm-badge.up, .pcm-badge.down, .pcm-badge.cur) {
   background: none; border: 0; padding: 0; border-radius: 0; text-transform: none; font-size: 12.5px; font-weight: 600;
 }
 .inst .tk-prio-urgent { color: #D64545; }
