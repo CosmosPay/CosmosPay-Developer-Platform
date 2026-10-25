@@ -31,7 +31,9 @@
   --ff-display: "Cosmos Lazos", var(--ff-sans);
   /* Palette, by rank (product owner): black is primary — buttons, links, figures, the account
      card; neutral greys are secondary — canvas, surfaces, lines, tints; the corporate blue is
-     tertiary — only the buttons' hover ink, the chart's volume and focus rings. */
+     tertiary — only the light buttons' hover ink, the chart's volume and focus rings.
+     Hover inks go by the button's own colour: a black button paints white (--btn-ink), a white
+     or outlined light one paints blue (--out-ink); dark mode swaps them with the colours. */
   --bg:            #F6F6F7;
   --surface:       #FFFFFF;
   --surface-2:     #F1F1F3;
@@ -49,8 +51,10 @@
   --btn-bg:        #13131A;
   --btn-fg:        #FFFFFF;
   --btn-bg-h:      #2A2A33;
-  --btn-ink:       #2346F4;
-  --btn-ink-fg:    #FFFFFF;
+  --btn-ink:       #FFFFFF;
+  --btn-ink-fg:    #13131A;
+  --out-ink:       #2346F4;
+  --out-ink-fg:    #FFFFFF;
   --tertiary:      #2346F4;
   --tertiary-soft: #D3DCFD;
 
@@ -88,8 +92,10 @@
   --btn-bg:        #FFFFFF;
   --btn-fg:        #13131A;
   --btn-bg-h:      #E6E6EA;
-  --btn-ink:       #8FA3FF;
-  --btn-ink-fg:    #0C0C10;
+  --btn-ink:       #2346F4;
+  --btn-ink-fg:    #FFFFFF;
+  --out-ink:       #FFFFFF;
+  --out-ink-fg:    #13131A;
   --tertiary:      #8FA3FF;
   --tertiary-soft: rgba(143, 163, 255, .28);
 
@@ -110,7 +116,7 @@
   --accent: #13131A; --accent-d: #000000; --accent-fg: #FFFFFF;
   --accent-soft: #EEEEF1; --accent-soft-2: #DDDDE2;
   --btn-bg: #13131A; --btn-fg: #FFFFFF; --btn-bg-h: #2A2A33;
-  --btn-ink: #2346F4; --btn-ink-fg: #FFFFFF;
+  --btn-ink: #FFFFFF; --btn-ink-fg: #13131A; --out-ink: #2346F4; --out-ink-fg: #FFFFFF;
   --tertiary: #2346F4; --tertiary-soft: #D3DCFD;
   --shadow-sm: 0 1px 2px rgba(19, 19, 26, .06);
   --shadow:    0 1px 2px rgba(19, 19, 26, .05), 0 10px 28px -12px rgba(19, 19, 26, .14);
@@ -118,8 +124,15 @@
 }
 
 /* ---- shared components in this skin ---- */
-/* Buttons are the snap's pills (cosmos.css); soft buttons take the same ink. */
-.inst .btn-soft { --ink-fill: var(--ink); --ink-fg: var(--surface); }
+/* Buttons are the snap's pills (cosmos.css). A filled button keeps its outline in its own
+   colour, so painted white it still reads as a button on the light page; outlined and soft
+   (light) buttons paint blue, and their outline turns with the ink. */
+.inst :is(.btn-dark, .btn-primary, .btn-violet) { border-color: var(--btn-bg); }
+.inst :is(.btn-outline-w, .btn-ghost-pill, .btn-soft) { --ink-fill: var(--out-ink); --ink-fg: var(--out-ink-fg); }
+@media (hover: hover) {
+  .inst :is(.btn-outline-w, .btn-ghost-pill):hover:not(:disabled) { border-color: var(--out-ink); }
+}
+.inst :is(.btn-outline-w, .btn-ghost-pill):focus-visible { border-color: var(--out-ink); }
 .inst .btn-soft.danger-soft { --ink-fill: #D64545; --ink-fg: #FFFFFF; }
 .inst .nav { background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: saturate(1.4) blur(12px); }
 .inst .nav.over-paper { background: transparent; backdrop-filter: none; }

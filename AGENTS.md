@@ -125,7 +125,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   black is primary** (buttons, links, figures, the account card — `--btn-bg`, `--accent`,
   `--navy`, all `#13131A`, inverted to white in dark mode), **neutral greys are secondary**
   (canvas, surfaces, lines, tints — no blue cast), and **the corporate blue is tertiary**
-  (`--tertiary`: the buttons' hover ink, the dashboard chart, focus rings). Don't bring blue back
+  (`--tertiary`: the light buttons' hover ink, the dashboard chart, focus rings). Don't bring blue back
   as a primary colour. It follows the product owner's reference shots; BRAND.md is the
   direction (logo, Open Sauce One), not a hard limit. The checkout designs follow it too:
   Receipt's page is a neutral grey, Card's is black.
@@ -139,7 +139,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   tracking). Don't spread it to section titles.
 - **Buttons are the Stellar Snap's** (`.btn` in cosmos.css): pills with a 1.5px outline and an
   ink fill that grows from where the pointer enters, placed by `src/scripts/ink.ts` (both layouts
-  load it). A variant names its ink with `--ink-fill` / `--ink-fg`.
+  load it). A variant names its ink with `--ink-fill` / `--ink-fg`. **The ink goes by the
+  button's own colour** (product owner): a black button paints white (`--btn-ink`, keeping its
+  black outline), a white or outlined light one paints the corporate blue (`--out-ink`, its
+  outline turning blue with it). Dark mode swaps them, since there the filled button is white.
 - The dashboard's restyle is `src/styles/dashboard.css` (sidebar, page title with breadcrumb,
   the overview's account card, period tabs, `BarChart`, design picker).
   Status is coloured text with a dot, never a capsule; section labels are plain sentence case;
@@ -184,7 +187,16 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Webhook tabs (the same `[data-tabs]` script as the use cases); pricing has a fee calculator
   (rates parsed from `plans.ts`, escrow's 0.5% as a checkbox, a logarithmic slider); the final
   call carries the brand's astronaut (`public/brand/astronauta-telefono.svg`, inverted in dark
-  mode). Each mock-up is a size container, so its parts rearrange for the room it gets (the
+  mode). **Images too, not only drawn UI** (the product owner asked for images after the
+  mock-ups): the brand's astronauts by the comparison, how it works, the developers, the FAQ and
+  the final call (`.pl-art`, inverted in dark mode); 3D clay renders from 3dicons (CC0,
+  github.com/realvjy/3dicons) behind the benefit cards, in security and by the calculator
+  (`.pl-3d`; white clay vanishes on a white card, so there it sits on a canvas-tone tile); and a
+  CC0 photo per use case (StockSnap, found through Openverse; the IDs are in the page's
+  frontmatter), with that business's paid order over it. They live in `public/media/landing`.
+  Use only CC0 / public-domain material or the brand's own (no attribution-bound licences, no
+  third-party logos in a photo); Unsplash and Pexels sit behind bot checks, so search Openverse
+  (`api.openverse.org`, `license=cc0`). Each mock-up is a size container, so its parts rearrange for the room it gets (the
   escrow states stack when narrow). Their wrapper class is `pl-mk--<name>` — a modifier, so it
   never clashes with a part's `pl-mk-*` class.
 - **Two settlement modes, as the product owner offers them: instant** (straight to the merchant's

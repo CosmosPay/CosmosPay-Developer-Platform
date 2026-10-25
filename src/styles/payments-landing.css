@@ -156,9 +156,12 @@
 .pl-bento-card:nth-child(4n + 1), .pl-bento-card:nth-child(4n + 4) { grid-column: span 7; }
 .pl-bento-card:nth-child(4n + 2), .pl-bento-card:nth-child(4n + 3) { grid-column: span 5; }
 .pl-bento-visual {
-  display: grid; place-items: center; min-height: 232px; padding: 28px 24px; margin-bottom: 26px;
-  background: var(--bg); border-radius: calc(var(--radius-lg) - 8px);
+  position: relative; display: grid; align-items: end; justify-items: start; min-height: 300px; padding: 28px; margin-bottom: 26px;
+  overflow: hidden; background: var(--bg); border-radius: calc(var(--radius-lg) - 8px);
 }
+.pl-bento-3d { position: absolute; top: 12px; right: 12px; width: clamp(140px, 40%, 220px); }
+.pl-bento-visual .pl-mk { position: relative; max-width: 360px; }
+.pl-bento-visual .pl-mk-card { margin-inline: 0; }
 .pl-bento-card h3 { margin: 0 22px 10px; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); text-wrap: balance; }
 .pl-bento-card p { margin: 0 22px; max-width: 54ch; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
 
@@ -266,7 +269,12 @@
 .pl-uses-tab:hover { color: var(--ink); }
 .pl-uses-tab[aria-selected="true"] { color: var(--ink); background: var(--bg); }
 .pl-uses-panel { padding: clamp(28px, 4vw, 48px); background: var(--bg); border-radius: var(--radius-lg); }
-.pl-uses-panel:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 40px; align-items: center; }
+.pl-uses-panel:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 48px; align-items: center; }
+/* the business's photo, with its paid order over the corner */
+.pl-uses-visual { position: relative; padding-bottom: 28px; }
+.pl-uses-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 20px; }
+.pl-uses-visual .pl-mk { position: absolute; left: -36px; bottom: 0; width: calc(100% - 20px); }
+.pl-uses-visual .pl-mk-card { margin-inline: 0; max-width: 300px; }
 .pl-uses-panel[hidden] { display: none; }
 .pl-uses-panel h3 { margin: 0 0 14px; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); }
 .pl-uses-body { margin: 0 0 28px; max-width: 58ch; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); }
@@ -274,7 +282,9 @@
 
 /* security: a two-column list beside its heading; the heading carries an explorer card,
    each fact a line icon */
-.pl-security-visual { margin-top: 40px; max-width: 360px; }
+.pl-security-visual { position: relative; margin-top: 32px; max-width: 380px; padding-top: 120px; }
+.pl-security-3d { position: absolute; top: 0; right: 0; width: 190px; }
+.pl-security-visual .pl-mk { position: relative; }
 .pl-security-visual .pl-mk-card { margin-inline: 0; }
 .pl-fact-icon { display: block; margin-bottom: 14px; color: var(--ink); }
 .pl-fact-icon .pl-icon { width: 24px; height: 24px; }
@@ -321,22 +331,66 @@
   margin-top: 24px; padding: clamp(28px, 4vw, 48px); background: var(--surface); border-radius: var(--radius-lg);
 }
 .pl-calc h3 { margin: 0 0 24px; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.pl-calc-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.pl-calc-head h3 { margin: 0; }
+/* the render sits on a tile of the canvas tone: white clay would vanish on the white card */
+.pl-calc-3d { width: 72px; padding: 6px; background: var(--bg); border-radius: 18px; }
 .pl-calc-label { display: block; margin-bottom: 8px; font-size: .875rem; font-weight: 600; color: var(--ink-2); }
+/* the amount: a quiet tinted field that takes an outline in ink while it is being typed in */
 .pl-calc-amount {
-  display: flex; align-items: baseline; gap: 10px; padding: 10px 18px;
-  border: 1.5px solid var(--line-2); border-radius: var(--radius-ctl); transition: border-color .2s;
+  display: flex; align-items: baseline; gap: 10px; padding: 14px 20px;
+  background: var(--bg); border: 1.5px solid transparent; border-radius: 16px;
+  transition: border-color .2s, background-color .2s;
 }
-.pl-calc-amount:hover { border-color: var(--ink-3); }
-.pl-calc-amount:focus-within { border-color: var(--ink); outline: 2px solid var(--tertiary); outline-offset: 2px; }
+.pl-calc-amount:hover { border-color: var(--line-2); }
+.pl-calc-amount:focus-within { background: var(--surface); border-color: var(--ink); }
 .pl-calc-amount input {
   flex: 1; min-width: 0; padding: 0; border: 0; background: none; outline: none; appearance: textfield;
-  font: inherit; font-size: 1.75rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums;
+  font: inherit; font-size: 2rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums;
 }
+.pl-calc-amount input:focus-visible { outline: none; }
 .pl-calc-amount input::-webkit-inner-spin-button, .pl-calc-amount input::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .pl-calc-amount span { font-weight: 600; color: var(--ink-3); }
-.pl-calc-range { display: block; width: 100%; margin: 22px 0 6px; accent-color: var(--btn-bg); cursor: pointer; }
-.pl-calc-escrow { display: flex; align-items: center; gap: 12px; margin-top: 18px; font-weight: 500; color: var(--ink); cursor: pointer; }
-.pl-calc-escrow input { width: 18px; height: 18px; margin: 0; accent-color: var(--btn-bg); cursor: pointer; }
+/* the slider: a thin track, an ink fill up to the thumb's centre (--pos, set by the script),
+   and a black thumb ringed in the card's colour */
+.pl-calc-slider { position: relative; height: 28px; margin: 24px 0 4px; }
+.pl-calc-slider::before, .pl-calc-fill {
+  content: ""; position: absolute; left: 0; top: 50%; height: 4px; margin-top: -2px; border-radius: 99px;
+}
+.pl-calc-slider::before { right: 0; background: var(--line-2); }
+.pl-calc-fill { width: calc(11px + (100% - 22px) * var(--pos, 0)); background: var(--btn-bg); }
+.pl-calc-range { position: relative; display: block; width: 100%; height: 28px; margin: 0; background: transparent; appearance: none; cursor: pointer; }
+.pl-calc-range::-webkit-slider-runnable-track { height: 28px; background: transparent; }
+.pl-calc-range::-moz-range-track { height: 28px; background: transparent; }
+.pl-calc-range::-webkit-slider-thumb {
+  appearance: none; box-sizing: border-box; width: 22px; height: 22px; margin-top: 3px; border-radius: 50%;
+  background: var(--btn-bg); border: 4px solid var(--surface); box-shadow: 0 0 0 1.5px var(--btn-bg);
+  transition: scale .2s cubic-bezier(.3, 1.5, .5, 1);
+}
+.pl-calc-range::-moz-range-thumb {
+  box-sizing: border-box; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--btn-bg); border: 4px solid var(--surface); box-shadow: 0 0 0 1.5px var(--btn-bg);
+  transition: scale .2s cubic-bezier(.3, 1.5, .5, 1);
+}
+.pl-calc-range:is(:hover, :active)::-webkit-slider-thumb { scale: 1.15; }
+.pl-calc-range:is(:hover, :active)::-moz-range-thumb { scale: 1.15; }
+.pl-calc .pl-calc-range:focus-visible { outline: none; }
+.pl-calc-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+.pl-calc-range:focus-visible::-moz-range-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+/* escrow: a switch — outlined when off, filled in ink when on, the knob sliding across */
+.pl-calc-escrow { position: relative; display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 22px; font-weight: 500; color: var(--ink); cursor: pointer; }
+.pl-calc-switch-input { position: absolute; left: 0; top: 50%; width: 40px; height: 24px; margin: -12px 0 0; opacity: 0; cursor: pointer; }
+.pl-calc-switch {
+  position: relative; flex: 0 0 auto; width: 40px; height: 24px; border-radius: 99px;
+  border: 1.5px solid var(--ink-3); transition: background-color .25s, border-color .25s;
+}
+.pl-calc-switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--ink-3); transition: translate .3s cubic-bezier(.3, 1.4, .5, 1), background-color .25s;
+}
+.pl-calc-switch-input:checked + .pl-calc-switch { background: var(--btn-bg); border-color: var(--btn-bg); }
+.pl-calc-switch-input:checked + .pl-calc-switch::after { translate: 16px 0; background: var(--btn-fg); }
+.pl-calc-switch-input:focus-visible + .pl-calc-switch { outline: 2px solid var(--tertiary); outline-offset: 3px; }
 .pl-calc-table { width: 100%; border-collapse: collapse; font-size: 1rem; font-variant-numeric: tabular-nums; }
 .pl-calc-table th, .pl-calc-table td { padding: 16px 14px; text-align: right; vertical-align: top; border-top: 1px solid var(--line); }
 .pl-calc-table th:first-child { text-align: left; }
@@ -370,9 +424,21 @@
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center;
   border-radius: 28px; padding: clamp(40px, 6vw, 80px); background: var(--accent-soft);
 }
-/* the brand's astronaut (black outline, white fill), inverted in dark mode like the logo marks */
-.pl-final-art { display: block; width: clamp(180px, 20vw, 280px); height: auto; }
-[data-theme="dark"] .pl-final-art { filter: invert(1); }
+.pl-final-art { width: clamp(180px, 20vw, 280px); }
+
+/* ---- images: the brand's astronauts, 3D renders and photos ---- */
+/* Astronauts are black outline on white fill; inverted in dark mode like the logo marks. The
+   renders are matte white clay, which reads on both canvases as they are. */
+.pl-art, .pl-3d { display: block; height: auto; pointer-events: none; user-select: none; }
+[data-theme="dark"] .pl-art { filter: invert(1); }
+/* a heading with an astronaut beside it */
+.pl-head-art { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
+.pl-head-art h2 { max-width: 720px; }
+.pl-how-art { flex: 0 0 auto; width: clamp(120px, 13vw, 176px); margin: -48px 2% -20px 0; }
+/* the comparison's astronaut lies on the table's top edge */
+.pl-compare-art { flex: 0 0 auto; width: clamp(180px, 19vw, 260px); margin: 0 4% -62px 0; position: relative; z-index: 1; }
+.pl-dev-art { width: clamp(120px, 11vw, 150px); margin-top: 40px; }
+.pl-faq-art { width: clamp(150px, 15vw, 200px); margin-top: 40px; }
 .pl-final h2 { max-width: 20ch; }
 .pl-final p { margin: 20px 0 0; max-width: 52ch; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); }
 
@@ -429,6 +495,11 @@
 .pl-mk-fast { background: var(--btn-bg); }
 .pl-mk-slow { background: var(--line-2); scale: .3 1; }
 .pl-mk-race .pl-mk-muted { font-weight: 500; }
+/* narrow: tighter columns, and the card payout time may take two lines */
+@container (max-width: 330px) {
+  .pl-mk-race { grid-template-columns: 76px minmax(28px, 1fr) auto; gap: 8px; }
+  .pl-mk-race b { max-width: 88px; white-space: normal; text-align: right; }
+}
 /* escrow: paid, held, shipped, released */
 .pl-mk-states { list-style: none; margin: 0; padding: 16px 0 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .pl-mk-states li { position: relative; display: grid; justify-items: center; align-content: start; gap: 10px; text-align: center; font-size: .8125rem; font-weight: 600; color: var(--ink); }
@@ -575,9 +646,26 @@
 .pl-mk-pulse::after { animation: pl-mk-ring 1.8s cubic-bezier(.2, .7, .2, 1) infinite; }
 /* the cards lift a little under the pointer */
 .pl-bento-card:hover .pl-mk-card, .pl-path:hover .pl-mk-card, .pl-steps li:hover .pl-mk-card { translate: 0 -4px; }
-/* the astronaut floats */
+/* the astronauts drift and the renders bob, each on its own beat; the renders also grow in
+   with their block */
 @keyframes pl-float { 50% { translate: 0 -10px; rotate: -2deg; } }
-.pl-final-art { animation: pl-float 6s ease-in-out infinite; }
+@keyframes pl-bob { 50% { translate: 0 -9px; } }
+.pl-art { animation: pl-float 6s ease-in-out infinite; }
+.pl-how-art { animation-duration: 7s; animation-delay: -2s; }
+.pl-compare-art { animation: pl-bob 5s ease-in-out infinite; }
+.pl-dev-art { animation-delay: -3s; }
+.pl-faq-art { animation-duration: 8s; animation-delay: -1s; }
+.pl-3d {
+  animation: pl-bob 5.5s ease-in-out infinite;
+  transition: scale .8s cubic-bezier(.3, 1.3, .5, 1) calc(var(--i, 0) * 80ms + .15s), opacity .6s ease calc(var(--i, 0) * 80ms + .15s);
+}
+.pl-bento-card:nth-child(2) .pl-3d { animation-delay: -1.4s; }
+.pl-bento-card:nth-child(3) .pl-3d { animation-delay: -2.8s; }
+.pl-bento-card:nth-child(4) .pl-3d { animation-delay: -4.1s; }
+.pl-anim [data-reveal]:not(.is-in) .pl-3d { scale: .55; opacity: 0; }
+/* a use case's photo settles in when its tab opens */
+@keyframes pl-photo { from { scale: 1.06; opacity: .4; } }
+.pl-uses-panel:not([hidden]) .pl-uses-photo { animation: pl-photo 1s cubic-bezier(.2, .7, .2, 1); }
 
 /* the selected business slides in when its tab is chosen */
 .pl-uses-panel:not([hidden]) { animation: pl-panel .45s cubic-bezier(.2, .7, .2, 1); }
@@ -620,7 +708,9 @@
   .pl-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 48px; }
   .pl-steps li:nth-child(2n) .pl-step-line { visibility: hidden; }
   .pl-uses-panel:not([hidden]) { grid-template-columns: 1fr; gap: 32px; }
-  .pl-uses-visual .pl-mk-card { margin-inline: 0; }
+  .pl-uses-visual { max-width: 560px; padding-bottom: 0; }
+  .pl-uses-photo { aspect-ratio: 3 / 2; }
+  .pl-uses-visual .pl-mk { position: relative; left: auto; bottom: auto; width: calc(100% - 40px); margin: -64px 0 0 20px; }
   .pl-calc { grid-template-columns: 1fr; gap: 32px; }
   .pl-hero-copy { max-width: 520px; }
   .pl-hero-media { width: 54%; }
@@ -650,11 +740,21 @@
   .pl-designs, .pl-steps, .pl-facts-list, .pl-settle-grid { grid-template-columns: 1fr; }
   .pl-plans { grid-template-columns: 1fr; }
   .pl-bento-card:nth-child(n) { grid-column: 1 / -1; }
-  .pl-bento-visual, .pl-path-visual, .pl-step-visual { min-height: 0; }
+  .pl-path-visual, .pl-step-visual { min-height: 0; }
+  .pl-bento-visual { min-height: 310px; padding: 20px; }
+  .pl-bento-3d { width: 46%; }
+  /* the title takes the whole line; the astronaut goes under it, on the right */
+  .pl-head-art { flex-wrap: wrap; gap: 8px; }
+  .pl-head-art h2 { flex: 1 0 100%; }
+  .pl-head-art .pl-art { margin-left: auto; }
+  .pl-how-art { width: 96px; margin: 0 0 -8px; }
+  .pl-compare-art { width: 150px; margin-right: 0; }
+  .pl-security-3d { width: 150px; }
+  .pl-security-visual { padding-top: 96px; }
   .pl-steps li .pl-step-line { visibility: hidden; }
   .pl-calc-table th, .pl-calc-table td { padding: 14px 8px; font-size: .9375rem; }
   .pl-final { grid-template-columns: 1fr; }
-  .pl-final-art { width: 160px; grid-row: 1; }
+  .pl-final-art { width: 170px; grid-row: 1; }
   .pl-uses-tabs { grid-template-columns: 1fr; }
   /* The comparison becomes one block per topic, each value under its column's name. */
   .pl-compare, .pl-compare tbody, .pl-compare tr, .pl-compare th, .pl-compare td { display: block; width: auto; }

@@ -716,7 +716,7 @@ export default {
         name: "Starter",
         desc: "Nehmen Sie echte Zahlungen mit integrierter Zahlungsabsicherung an.",
         amt: "1%",
-        txt: "+ 0.25¢ pro Transaktion *",
+        txt: "+ 25¢ pro Transaktion *",
         cta: "Kostenlos starten",
         feats: ["Alles aus Community", "Live-Zahlungen", "Zahlungsabsicherung", "Teilweiser API-Zugriff", "Standard-Support", "Streitfalllösung", "Karten & Banküberweisungen"]
       },
@@ -756,7 +756,7 @@ export default {
       },
       {
         l: "Gebühr pro Transaktion",
-        v: ["—", "1% + 0.25¢", "0.5% + 10¢", "0.2% + 5¢", "Individuell"]
+        v: ["—", "1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Individuell"]
       },
       {
         l: "Abwicklungsgeschwindigkeit",
@@ -807,7 +807,7 @@ export default {
       },
       {
         q: "Was kostet eine Transaktion?",
-        a: "Starter kostet 1% + 0.25¢ pro erfolgreicher Transaktion. Essentials kostet $33/mo (oder $27.50/mo bei jährlicher Abrechnung) und senkt den Tarif auf 0.5% + 10¢, während Growth $99/mo kostet und ihn auf 0.2% + 5¢ senkt. Jede Transaktion verursacht zusätzlich eine kleine Netzwerkgebühr."
+        a: "Starter kostet 1% + 25¢ pro erfolgreicher Transaktion. Essentials kostet $33/mo (oder $27.50/mo bei jährlicher Abrechnung) und senkt den Tarif auf 0.5% + 10¢, während Growth $99/mo kostet und ihn auf 0.2% + 5¢ senkt. Jede Transaktion verursacht zusätzlich eine kleine Netzwerkgebühr."
       },
       {
         q: "Welche Zahlungsmethoden unterstützen Sie?",

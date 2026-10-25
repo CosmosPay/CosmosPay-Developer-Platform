@@ -716,7 +716,7 @@ export default {
         name: "Starter",
         desc: "Receba pagamentos reais com proteção de pagamentos integrada.",
         amt: "1%",
-        txt: "+ 0.25¢ por transação *",
+        txt: "+ 25¢ por transação *",
         cta: "Começar grátis",
         feats: ["Tudo do Community", "Pagamentos reais", "Proteção de pagamentos", "Acesso parcial à API", "Suporte padrão", "Resolução de disputas", "Cartões e transferências bancárias"]
       },
@@ -756,7 +756,7 @@ export default {
       },
       {
         l: "Taxa por transação",
-        v: ["—", "1% + 0.25¢", "0.5% + 10¢", "0.2% + 5¢", "Personalizado"]
+        v: ["—", "1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Personalizado"]
       },
       {
         l: "Velocidade de liquidação",
@@ -807,7 +807,7 @@ export default {
       },
       {
         q: "Quanto custa uma transação?",
-        a: "O Starter é 1% + 0.25¢ por transação bem-sucedida. O Essentials é $33/mês (ou $27.50/mês cobrado anualmente) e reduz a taxa para 0.5% + 10¢, enquanto o Growth é $99/mês e a reduz para 0.2% + 5¢. Uma pequena taxa de rede também se aplica a cada transação."
+        a: "O Starter é 1% + 25¢ por transação bem-sucedida. O Essentials é $33/mês (ou $27.50/mês cobrado anualmente) e reduz a taxa para 0.5% + 10¢, enquanto o Growth é $99/mês e a reduz para 0.2% + 5¢. Uma pequena taxa de rede também se aplica a cada transação."
       },
       {
         q: "Quais métodos de pagamento vocês suportam?",

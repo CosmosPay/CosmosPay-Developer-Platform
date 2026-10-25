@@ -77,7 +77,13 @@ const marquees: { label: string; items: Brand[] }[] = [
     ],
   },
 ];
-// Each benefit with the mock-up that shows it (Mock.astro).
+// Images (public/media/landing): the 3D renders are the clay set of 3dicons (CC0,
+// github.com/realvjy/3dicons); the use-case photos are CC0 photos from StockSnap, found through
+// Openverse (stores WP1KHDXGOY, services N14GO3XZE6, digital WKR3QXHW3U, donations YA3HZPUFYL);
+// the astronauts are the brand's own (public/brand). All decorative: the text says it all.
+// Where each use-case photo keeps its subject when cropped.
+const USE_PHOTO_FOCUS = { stores: "30% 50%", services: "50% 35%", digital: "78% 50%", donations: "35% 40%" } as const;
+// Each benefit with its 3D render and the mock-up that shows it (Mock.astro).
 const benefits = ([
   ["final", "final"],
   ["instant", "race"],
@@ -248,7 +254,10 @@ const codeTabs = [
         <ul class="pl-bento" role="list">
           {benefits.map((b, i) => (
             <li class="pl-bento-card" data-reveal style={`--i: ${i}`}>
-              <div class="pl-bento-visual"><Mock name={b.mock} ui={t.ui} /></div>
+              <div class="pl-bento-visual">
+                <img class="pl-3d pl-bento-3d" src={`/media/landing/3d-${b.key}.webp`} alt="" width="400" height="400" loading="lazy" decoding="async" />
+                <Mock name={b.mock} ui={t.ui} />
+              </div>
               <h3>{b.title}</h3>
               <p>{b.body}</p>
             </li>
@@ -280,8 +289,9 @@ const codeTabs = [
 
     <section class="pl-section pl-section-alt" aria-labelledby="pl-compare">
       <div class="wrap">
-        <div class="pl-head" data-reveal>
+        <div class="pl-head pl-head-art" data-reveal>
           <h2 id="pl-compare">{t.compare.title} {t.compare.titleBold}</h2>
+          <img class="pl-art pl-compare-art" src="/brand/astronauta-acostado.svg" alt="" width="260" height="141" loading="lazy" decoding="async" />
         </div>
         <div class="pl-compare-card">
           <table class="pl-compare">
@@ -340,8 +350,9 @@ const codeTabs = [
 
     <section class="pl-section pl-section-alt" aria-labelledby="pl-how">
       <div class="wrap">
-        <div class="pl-head" data-reveal>
+        <div class="pl-head pl-head-art" data-reveal>
           <h2 id="pl-how">{t.how.title} {t.how.titleBold}</h2>
+          <img class="pl-art pl-how-art" src="/brand/astronauta-flotando.svg" alt="" width="180" height="176" loading="lazy" decoding="async" />
         </div>
         <ol class="pl-steps" role="list">
           {steps.map((s, i) => (
@@ -410,7 +421,10 @@ const codeTabs = [
                 </ul>
                 <p class="pl-uses-built">{t.useCases.built} {u.uses}</p>
               </div>
-              <div class="pl-uses-visual"><Mock name={`use-${u.key}`} ui={t.ui} /></div>
+              <div class="pl-uses-visual">
+                <img class="pl-uses-photo" src={`/media/landing/use-${u.key}.webp`} alt="" width="960" height="641" loading="lazy" decoding="async" style={`object-position: ${USE_PHOTO_FOCUS[u.key]}`} />
+                <Mock name={`use-${u.key}`} ui={t.ui} />
+              </div>
             </div>
           ))}
         </div>
@@ -421,7 +435,10 @@ const codeTabs = [
       <div class="wrap pl-split">
         <div class="pl-head pl-head-sticky" data-reveal>
           <h2 id="pl-security">{t.security.title} {t.security.titleBold}</h2>
-          <div class="pl-security-visual"><Mock name="explorer" ui={t.ui} /></div>
+          <div class="pl-security-visual">
+            <img class="pl-3d pl-security-3d" src="/media/landing/3d-security.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
+            <Mock name="explorer" ui={t.ui} />
+          </div>
         </div>
         <ul class="pl-facts-list" role="list">
           {security.map((s, i) => (
@@ -451,6 +468,7 @@ const codeTabs = [
             <a class="btn btn-dark" href={DOCS}>{t.developers.docs}</a>
             <a class="btn btn-outline-w" href={`${DOCS}/api`}>{t.developers.reference}</a>
           </div>
+          <img class="pl-art pl-dev-art" src="/brand/astronauta-laptop.svg" alt="" width="150" height="201" loading="lazy" decoding="async" />
         </div>
         <div class="pl-code" data-reveal style="--i: 2" data-tabs>
           <div class="pl-code-tabs" role="tablist" aria-label={t.devTabs.label}>
@@ -488,11 +506,21 @@ const codeTabs = [
         </ul>
         <div class="pl-calc" data-calc data-reveal data-escrow-pct={ESCROW_PCT}>
           <div class="pl-calc-controls">
-            <h3>{t.calc.title}</h3>
+            <div class="pl-calc-head">
+              <h3>{t.calc.title}</h3>
+              <img class="pl-3d pl-calc-3d" src="/media/landing/3d-calc.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
+            </div>
             <label class="pl-calc-label" for="pl-calc-amount">{t.calc.amount}</label>
             <div class="pl-calc-amount"><input id="pl-calc-amount" type="number" min="1" max="1000000" step="1" value="250" inputmode="decimal" data-calc-amount /><span>USDC</span></div>
-            <input class="pl-calc-range" type="range" min="0" max="100" step="0.5" value="60" aria-label={t.calc.amount} aria-valuetext="250 USDC" data-calc-range />
-            <label class="pl-calc-escrow"><input type="checkbox" data-calc-escrow /> <span>{t.calc.escrow}</span></label>
+            <div class="pl-calc-slider" style="--pos: .6">
+              <span class="pl-calc-fill" aria-hidden="true"></span>
+              <input class="pl-calc-range" type="range" min="0" max="100" step="0.5" value="60" aria-label={t.calc.amount} aria-valuetext="250 USDC" data-calc-range />
+            </div>
+            <label class="pl-calc-escrow">
+              <input class="pl-calc-switch-input" type="checkbox" role="switch" data-calc-escrow />
+              <span class="pl-calc-switch" aria-hidden="true"></span>
+              <span>{t.calc.escrow}</span>
+            </label>
             <p class="pl-footnote">{t.calc.note}</p>
           </div>
           <div class="pl-calc-result">
@@ -518,6 +546,7 @@ const codeTabs = [
       <div class="wrap pl-split">
         <div class="pl-head pl-head-sticky" data-reveal>
           <h2 id="pl-faq">{t.faq.title} {t.faq.titleBold}</h2>
+          <img class="pl-art pl-faq-art" src="/brand/astronauta-pensando.svg" alt="" width="200" height="237" loading="lazy" decoding="async" />
         </div>
         <div class="pl-faq">
           {faq.map((f, i) => (
@@ -541,7 +570,7 @@ const codeTabs = [
               <a class="btn btn-outline-w" href={CONTACT}>{t.cta.secondary}</a>
             </div>
           </div>
-          <img class="pl-final-art" src="/brand/astronauta-telefono.svg" alt="" width="260" height="260" loading="lazy" decoding="async" />
+          <img class="pl-art pl-final-art" src="/brand/astronauta-telefono.svg" alt="" width="280" height="236" loading="lazy" decoding="async" />
         </div>
       </div>
     </section>
@@ -610,9 +639,13 @@ const codeTabs = [
       const value = 10 ** (position / 25);
       return value < 100 ? Math.round(value) : value < 1000 ? Math.round(value / 5) * 5 : Math.round(value / 50) * 50;
     };
-    const describe = () => range.setAttribute("aria-valuetext", `${amount.value || 0} USDC`);
-    amount.addEventListener("input", () => { range.value = toRange(Number(amount.value) || 0); describe(); render(); });
-    range.addEventListener("input", () => { amount.value = String(fromRange(Number(range.value))); describe(); render(); });
+    // the slider's fill follows the thumb; its spoken value is the amount, not the position
+    const sync = () => {
+      range.setAttribute("aria-valuetext", `${amount.value || 0} USDC`);
+      range.parentElement!.style.setProperty("--pos", String(Number(range.value) / 100));
+    };
+    amount.addEventListener("input", () => { range.value = toRange(Number(amount.value) || 0); sync(); render(); });
+    range.addEventListener("input", () => { amount.value = String(fromRange(Number(range.value))); sync(); render(); });
     escrow.addEventListener("change", render);
     render();
   }
