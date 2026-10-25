@@ -22,6 +22,28 @@ export function TableSkeleton({ label, cols = 5, rows = 6 }) {
   );
 }
 
+/* A list whose rows are a status mark and label-over-value pairs (the overview's payments). */
+export function ListSkeleton({ label, rows = 5, pairs = 6 }) {
+  return (
+    <div className="sk-list" role="status" aria-busy="true">
+      <span className="sr-only">{label}</span>
+      {Array.from({ length: rows }, (_, r) => (
+        <div className="sk-item" key={r} aria-hidden="true">
+          <Sk className="round" r={r} />
+          <div className="sk-pairs" style={{ ["--n" as string]: pairs }}>
+            {Array.from({ length: pairs }, (_, c) => (
+              <div className="sk-pair" key={c}>
+                <Sk className="sm" r={r} w="44%" />
+                <Sk r={r} w={`${WIDTHS[(r * 3 + c) % WIDTHS.length]}%`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* A chart's bars while its series loads. */
 export function ChartSkeleton({ label, bars = 12 }) {
   return (

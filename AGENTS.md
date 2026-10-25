@@ -206,22 +206,34 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     from Monday), with the window's totals (distinct payers too) and the window before it. Its volume
     adds every asset's amount, as the daily summary does. The list reads
     `GET /api/payment-intents?createdFrom=…`.
-  - **One filter bar for every list** (`components/FilterBar.tsx`, the logic pure and tested in
-    `src/lib/dashboard-filters.ts`): the status segments with how many rows each holds (each
-    control counts what the others leave), the number shown, then a search where every word must
-    match, the view's selects (network, type…), a date range and "clear filters". The filters live in
+  - **One filter row for every list** (`components/FilterBar.tsx`, the logic pure and tested in
+    `src/lib/dashboard-filters.ts`): the search, then a dropdown per filter (status, network, type,
+    date), each showing its name until it is set and filled ink while it filters, with how many rows
+    each option would show (each control counts what the others leave); "clear filters" once any is on
+    and the count shown at the end. **Status is never a separate row of tabs** (product owner): the
+    admin lists and the support inbox put theirs in the same row as their search. The filters live in
     the URL (`useListFilters`, read after mount so the server render matches), so a filtered list
-    survives a reload and can be shared; switching views drops them. Payments, swaps, liquidity and
-    the overview's list use it; the other lists keep the plain toolbar search with the same matching.
-    Status and type tabs are segments (plain text, the current one filled), never chips.
+    survives a reload and can be shared; switching views drops them. Tabs remain only for sections
+    (Liquidity, Fiat) and periods (the overview), as segments, never chips.
+  - **Every dropdown is `components/Select.tsx`** (no native `<select>` in the dashboard): the
+    WAI-ARIA select-only combobox (arrow keys, Home / End, typeahead, Escape, a click outside), with
+    marks and hints on its options, opening upwards when there is no room. It and every menu (the
+    organization menu, a payment's menu, the toolbar `MiniSelect`, the swap settings, the nav's
+    language and account menus, the country picker) pop open and closed: `usePresence`
+    (`src/components/cosmos/hooks/`) keeps a popup while it plays its closing animation. Modals fade
+    their backdrop in and out; closing one from inside (X, the backdrop, Escape) plays its exit
+    before `onClose`, and Escape inside an open dropdown closes the dropdown only.
+  - **Motion runs for everyone in the dashboard and the nav, reduced-motion settings included**
+    (product owner, as on the payments landing; their own Windows has reduced motion on). Keep it
+    short and small; do not add `prefers-reduced-motion` switches that turn it off.
   - **Fields are plain** (`.inst .field`): white, a 1px grey line, 10px corners, the label above and
     the help under the input (`Field` / `Sel` link it with aria-describedby), focus darkening the
     line with the tertiary ring.
-  - **What loads has a skeleton** (`components/Skeleton.tsx`: `TableSkeleton`, `ChartSkeleton`,
-    `Sk`): grey bars in the list's or the figure's shape, pulsing in a solid colour (never a
-    gradient sweep), still under reduced motion, each a polite status naming what loads. Content then
-    arrives with a short rise (`.arrive`), table rows with their GSAP stagger, and the chart's bars
-    grow from the axis per period.
+  - **What loads has a standard skeleton** (`components/Skeleton.tsx`: `TableSkeleton`,
+    `ListSkeleton`, `ChartSkeleton`, `Sk`): grey shapes of the content (rows, a status mark with
+    label-over-value pairs, bars) with a light band sweeping across them, a solid blurred band rather
+    than a gradient, each a polite status naming what loads. Content then arrives with a short rise
+    (`.arrive`), table rows with their GSAP stagger, and the chart's bars grow from the axis.
   - Status is coloured text with a dot or an icon, never a capsule; section labels are plain
     sentence case; every overview block keeps `min-width: 0`, so nothing pushes the page wider on
     phones. To see it locally, sign in through local Authentik with the `.env` test account
@@ -230,7 +242,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 ### Payment links on every chain
 
 - **A payment link settles on Stellar, Solana or Monad**, on the environment's network (Solana
-  devnet and Monad testnet in the sandbox). The form picks the network first; transaction intents
+  devnet and Monad testnet in the sandbox). The form is composed, not a stack of fields: the network
+  as three choice cards, the amount with its asset dropdown in one well (as the swap widget), the
+  destination, and memo / message under "more options"; transaction intents
   (a known payer) are Stellar's only, Monad needs an amount and takes no wallet message. The schema
   (`src/schemas/payment-intents.ts`, tested) checks each chain's address shape and decimals; the
   Payments API checks the rest.
@@ -243,13 +257,26 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 ### Swaps from the dashboard
 
-- **One list and one form for every swap** (`views/SwapsView.tsx`): the list reads the swaps on each
-  chain and the cross-chain ones together, newest first, filtered by status group (in progress,
-  succeeded, refunded, failed, expired), type (on one chain / between chains), network and date. The
-  form picks what you send and what you receive (chain and asset each, with a switch between them):
-  the same chain goes through that chain's market (the Stellar DEX, Jupiter, Kuru Flow), two chains
-  through NEAR Intents (refund address on the first, recipient on the second). The old
-  `?view=crossChainSwaps` opens the list filtered to cross-chain; the sidebar has no separate entry.
+- **The swap form is the standard swap widget** (`components/SwapWidget.tsx`, inline at the top of
+  `views/SwapsView.tsx`; product owner: "stop making flat forms"): "You pay" and "You receive" wells
+  with a big amount and a token button naming its network, a flip between them, the quote updating on
+  its own (debounced) with its details folded under the rate, the accounts the route needs, one
+  button whose words say what is missing, and a slippage popover. The token picker
+  (`components/TokenPicker.tsx`) lists every token on every network, searchable, by network, with
+  official logos where they exist (`TokenMark`, else a neutral monogram).
+- **Tokens and routes are `src/lib/swap-catalog.ts`** (tested): NEAR Intents' list joined with the
+  environment's Stellar assets and the verified Solana / Monad presets. Within Stellar, Solana or
+  Monad a pair goes through that chain's market (the Stellar DEX in both environments, Jupiter and
+  Kuru Flow on mainnet); between networks, or within any other network, through NEAR Intents. Until
+  both addresses are in, a NEAR Intents pair shows an estimate from the listed prices (`priceUsd`,
+  indicative), then the firm quote.
+- **Every NEAR Intents network the Payments API validates is offered** (about 35: EVM chains,
+  Bitcoin-family, XRP, Tron, TON, NEAR, Sui, Aptos, Starknet, Cardano, Aleo...; `NETWORK_NAMES` in
+  `src/lib/chains.ts` names them). A deposit on a network with a wallet-link standard gets a link;
+  elsewhere `depositUri` is null and the detail shows the address, memo and QR.
+- **One list for every swap**: the swaps on each chain and the cross-chain ones together, newest
+  first, filtered by status group, type (on one chain / between chains), network and date. The old
+  `?view=crossChainSwaps` opens it filtered to cross-chain; the sidebar has no separate entry.
 - **Stellar swaps, Solana / Monad swaps, cross-chain swaps and liquidity are non-custodial**: the
   Payments API builds the transaction, the person signs it in a wallet, the dashboard submits the
   signed envelope. Nobody's key ever reaches this app.

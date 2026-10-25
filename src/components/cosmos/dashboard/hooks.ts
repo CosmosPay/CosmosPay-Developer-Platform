@@ -81,6 +81,9 @@ export function useListFilters(defaults: Filters, allowed: Allowed = {}) {
   return { filters, set, reset, active: activeCount(filters, defaults) };
 }
 
+/* The popups' closing animation: the shared hook (src/components/cosmos/hooks/usePresence.ts). */
+export { usePresence } from "@/components/cosmos/hooks/usePresence";
+
 /* ---------------- dropdown shell ---------------- */
 export function useOutside(cb) {
   const ref = useRef(null);

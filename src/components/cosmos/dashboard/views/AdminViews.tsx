@@ -16,6 +16,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { Select } from "@/components/cosmos/dashboard/components/Select";
 
 /* ---- shared helpers ---- */
 const PAY_FILTERS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
@@ -215,13 +216,17 @@ function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved }) {
 
 /* Generic searchable + paginated admin table. `rows` is already status-filtered by the
    caller; this adds the search box, pagination and row animation. */
-function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads, rows, haystack, renderRow, empty, resetKey }) {
+function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads, rows, haystack, renderRow, empty, resetKey, filters = [] }) {
   const view = q ? rows.filter((row) => haystack(row).toLowerCase().includes(q.toLowerCase())) : rows;
   const pg = usePaged(view, `${resetKey || ""}|${q}`);
   const tref = useRef(null); useGsapRows(tref, pg.page);
   return (
     <div className="panel">
       <Toolbar q={q} setQ={setQ} placeholder={searchPlaceholder}>
+        {/* the list's filters, beside its search (never a row of tabs above it) */}
+        {filters.map((f) => (
+          <Select key={f.key} variant="filter" label={f.label} placeholder={f.label} active={f.value !== f.options[0].value} value={f.value} onChange={f.onChange} options={f.options} />
+        ))}
         {tag ? <span className="env-tag">{DI.network} {tag}</span> : null}
       </Toolbar>
       {!loading && !error && view.length > 0 && (
@@ -348,9 +353,9 @@ export function AdminPaymentsView({ env = "dev", adminFilter, goToAdmin }) {
     <>
       <ViewHead title={ap.title} sub={ap.sub} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminPayments", null)} />}
-      <div className="filter-tabs">{PAY_FILTERS.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{a.filters[k]}</button>)}</div>
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ap.searchPlaceholder} tag={network} resetKey={filter}
+        filters={[{ key: "status", label: t.dash.filters.status, value: filter, onChange: setFilter, options: PAY_FILTERS.map((k) => ({ value: k, label: a.filters[k] })) }]}
         heads={[ap.tableHead.id, ap.tableHead.org, ap.tableHead.destination, ap.tableHead.amount, ap.tableHead.status, ap.tableHead.created]}
         rows={statusFiltered}
         haystack={(p) => `${p.id || ""} ${p.txHash || ""} ${orgOf(p)} ${p.destination || ""} ${p.amount || ""} ${p.asset || ""} ${p.status || ""}`}
@@ -399,10 +404,13 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
     <>
       <ViewHead title={as.title} sub={as.sub} />
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminSwaps", null)} />}
-      <div className="filter-tabs" style={{ marginBottom: 8 }}>{SWAP_VENUES.map((k) => <button key={k} className={venue === k ? "on" : ""} onClick={() => { setVenue(k); setFilter("all"); }}>{as.venues[k]}</button>)}</div>
-      <div className="filter-tabs">{filters.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{(a.filters && a.filters[k]) || as.crossStatus[k] || k}</button>)}</div>
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={as.searchPlaceholder} tag={venue === "stellar" ? network : "public"} resetKey={filter + venue}
+        filters={[
+          // the venue is the list itself, so it is never "unset": its first value is Stellar
+          { key: "venue", label: t.dash.filters.network, value: venue, onChange: (v) => { setVenue(v); setFilter("all"); }, options: SWAP_VENUES.map((k) => ({ value: k, label: as.venues[k] })) },
+          { key: "status", label: t.dash.filters.status, value: filter, onChange: setFilter, options: filters.map((k) => ({ value: k, label: (a.filters && a.filters[k]) || as.crossStatus[k] || k })) },
+        ]}
         heads={[as.tableHead.id, as.tableHead.org, as.tableHead.route, as.tableHead.status, as.tableHead.created]}
         rows={statusFiltered}
         haystack={(s) => `${s.id || ""} ${s.txHash || ""} ${orgOf(s)} ${s.source || ""} ${s.destination || ""} ${s.sendAsset || ""} ${s.destAsset || ""} ${s.recipient || ""} ${s.refundTo || ""} ${s.depositAddress || ""} ${s.status || ""}`}

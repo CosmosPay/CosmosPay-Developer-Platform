@@ -6,6 +6,7 @@
 import { useId, useState } from "react";
 import { useT } from "@/lib/i18n/index";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { NATIVE_CODES, TOKEN_PRESETS, ADDRESS_PLACEHOLDERS, type Chain, type Tier } from "@/lib/chains";
 
 const NATIVE = "native";
@@ -45,12 +46,17 @@ export function TokenSelect({ chain, tier, label, code, issuer, onChange, withTi
   return (
     <>
       <div className="fld">
-        <label className="field-l" htmlFor={id}>{label}</label>
-        <select id={id} className="field" value={sel} onChange={(e) => pick(e.target.value)}>
-          <option value={NATIVE}>{NATIVE_CODES[chain]}</option>
-          {presets.map((p) => <option key={p.issuer} value={`preset:${p.issuer}`}>{`${p.code} · ${short(p.issuer)}`}</option>)}
-          <option value={CUSTOM}>{tk.custom}</option>
-        </select>
+        <span className="field-l" id={`${id}-l`}>{label}</span>
+        <Select
+          value={sel}
+          onChange={pick}
+          labelledBy={`${id}-l`}
+          options={[
+            { value: NATIVE, label: NATIVE_CODES[chain] },
+            ...presets.map((p) => ({ value: `preset:${p.issuer}`, label: p.code, hint: short(p.issuer) })),
+            { value: CUSTOM, label: tk.custom },
+          ]}
+        />
       </div>
       {sel === CUSTOM && !withTicker && (
         <Field label={tk.address[chain]} hint={tk.addressHint[chain]} value={issuer} onChange={(e) => onChange({ code, issuer: e.target.value })} placeholder={ADDRESS_PLACEHOLDERS[chain]} />

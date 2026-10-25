@@ -15,10 +15,10 @@ import { showToast } from "@/components/cosmos/shared";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { useOutside, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { useOutside, useListFilters, usePresence } from "@/components/cosmos/dashboard/hooks";
 import { BarChart } from "@/components/cosmos/dashboard/components/BarChart";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
-import { Sk, TableSkeleton, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { Sk, ListSkeleton, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, CHAIN_NAMES } from "@/lib/chains";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
@@ -60,6 +60,7 @@ function RowMenu({ p, onGo }) {
   const t = useT();
   const h = t.dash.overview.hub;
   const [open, setOpen] = useState(false);
+  const menu = usePresence(open, 120);
   const ref = useOutside(() => setOpen(false));
   const id = `hub-menu-${p.id}`;
   const href = explorerUrl(p);
@@ -72,7 +73,7 @@ function RowMenu({ p, onGo }) {
       <button type="button" className="hub-kebab" aria-label={fmt(h.rowMenu, { id: short(p.id) })} aria-haspopup="true" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="19" r="1.7" /></svg>
       </button>
-      <ul className="hub-menu" id={id} role="list" hidden={!open}>
+      <ul className="hub-menu" id={id} role="list" hidden={!menu.mounted} data-state={menu.state}>
         <li><button type="button" onClick={copy}>{DI.link}{h.copyId}</button></li>
         {href && <li><a href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>{DI.network}{h.explorer}</a></li>}
         <li><button type="button" onClick={() => { setOpen(false); onGo("payments"); }}>{DI.payments}{h.openPayments}</button></li>
@@ -304,7 +305,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
         />
         <div className="panel hub-txlist">
           {rows === null ? (
-            <TableSkeleton label={t.dash.cosmos.loading} cols={6} rows={5} />
+            <ListSkeleton label={t.dash.cosmos.loading} rows={5} pairs={7} />
           ) : shown.length ? (
             <ul className="hub-rows arrive" role="list">
               {shown.slice(0, 20).map((p) => (

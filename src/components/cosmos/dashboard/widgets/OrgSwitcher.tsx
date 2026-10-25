@@ -3,7 +3,7 @@ import { IcCheck } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { DI, IcLock } from "@/components/cosmos/dashboard/icons";
 import { initials } from "@/components/cosmos/dashboard/helpers";
-import { useOutside } from "@/components/cosmos/dashboard/hooks";
+import { useOutside, usePresence } from "@/components/cosmos/dashboard/hooks";
 import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 
 /* `variant="crumb"`: the organization as the grey half of the page title's breadcrumb (the
@@ -12,6 +12,7 @@ export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, vari
   const t = useT();
   const og = t.dash.org;
   const [open, setOpen] = useState(false);
+  const menu = usePresence(open, 120);
   const ref = useOutside(() => setOpen(false));
   const owned = orgs.filter((o) => o.role === "owner");
   const invited = orgs.filter((o) => o.role !== "owner");
@@ -39,7 +40,7 @@ export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, vari
           <svg className="org-chev lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
         </button>
       )}
-      {open && (<div className="org-menu">
+      {menu.mounted && (<div className="org-menu" data-state={menu.state}>
         <div className="org-menu-h">{og.owned}</div>
         {owned.map(renderOpt)}
         {invited.length > 0 && (<><div className="org-menu-h">{og.invited}</div>{invited.map(renderOpt)}</>)}

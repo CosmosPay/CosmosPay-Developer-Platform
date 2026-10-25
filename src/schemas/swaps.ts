@@ -13,7 +13,7 @@
    what guarantees the extension has run by the time they are constructed. It is the same
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
-import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, CHAINS, type Chain } from "@/lib/chains";
+import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, CHAINS, NETWORK_IDS, isChain, type Chain } from "@/lib/chains";
 
 export const SWAP_CHAINS = CHAINS;
 export type SwapChain = Chain;
@@ -147,35 +147,47 @@ export type SubmitSwapBody = z.infer<typeof submitSwapBodySchema>;
 
 /* ---- Cross-chain swaps (NEAR Intents) ---- */
 
+/* Every network NEAR Intents reaches through the Payments API (src/lib/chains.ts NETWORK_IDS). */
+export const crossChainNetworkSchema = z.enum(NETWORK_IDS as [string, ...string[]]);
+/* An address on a network this app has no rule for: one word of address characters, the
+   Payments API checks the network's real format. */
+const LOOSE_ADDRESS = /^[A-Za-z0-9:._-]{2,128}$/;
+/* The most decimals any NEAR Intents token carries (wNEAR's 24). */
+const NEAR_MAX_PLACES = 24;
+
 const crossChainShape = {
   org: z.string().trim().min(1).max(64),
   environment: cosmosEnvSchema,
-  originChain: swapChainSchema,
+  originChain: crossChainNetworkSchema,
   originAsset: z.string().trim().min(1).max(128),
-  destinationChain: swapChainSchema,
+  destinationChain: crossChainNetworkSchema,
   destinationAsset: z.string().trim().min(1).max(128),
   amount: decimalString,
-  recipient: z.string().trim().min(1).max(64),
-  refundTo: z.string().trim().min(1).max(64),
+  recipient: z.string().trim().min(1).max(128),
+  refundTo: z.string().trim().min(1).max(128),
   slippageBps: slippageBps.optional(),
 };
 
 function checkCrossChain(
-  v: { originChain: SwapChain; destinationChain: SwapChain; recipient: string; refundTo: string; amount: string },
+  v: { originChain: string; destinationChain: string; recipient: string; refundTo: string; amount: string },
   ctx: z.RefinementCtx,
 ) {
-  if (v.originChain === v.destinationChain) {
-    ctx.addIssue({ code: "custom", path: ["destinationChain"], message: "Both legs on one chain is a swap, not a cross-chain swap." });
+  // Within Stellar, Solana or Monad their own market settles a swap (POST /api/swaps); within
+  // any other network NEAR Intents may.
+  if (v.originChain === v.destinationChain && isChain(v.originChain)) {
+    ctx.addIssue({ code: "custom", path: ["destinationChain"], message: `A swap within ${v.originChain} goes through its own market: use /api/swaps.` });
   }
-  if (!ADDRESS_RULES[v.destinationChain].re.test(v.recipient)) {
-    ctx.addIssue({ code: "custom", path: ["recipient"], message: ADDRESS_RULES[v.destinationChain].message });
-  }
-  if (!ADDRESS_RULES[v.originChain].re.test(v.refundTo)) {
-    ctx.addIssue({ code: "custom", path: ["refundTo"], message: ADDRESS_RULES[v.originChain].message });
-  }
+  const check = (chain: string, value: string, key: "recipient" | "refundTo") => {
+    if (isChain(chain) ? !ADDRESS_RULES[chain].re.test(value) : !LOOSE_ADDRESS.test(value)) {
+      ctx.addIssue({ code: "custom", path: [key], message: isChain(chain) ? ADDRESS_RULES[chain].message : `Must be an address on ${chain}.` });
+    }
+  };
+  check(v.destinationChain, v.recipient, "recipient");
+  check(v.originChain, v.refundTo, "refundTo");
   const places = v.amount.split(".")[1]?.length ?? 0;
-  if (places > AMOUNT_PLACES[v.originChain]) {
-    ctx.addIssue({ code: "custom", path: ["amount"], message: `Amount must have at most ${AMOUNT_PLACES[v.originChain]} decimals on ${v.originChain}.` });
+  const max = isChain(v.originChain) ? AMOUNT_PLACES[v.originChain] : NEAR_MAX_PLACES;
+  if (places > max) {
+    ctx.addIssue({ code: "custom", path: ["amount"], message: `Amount must have at most ${max} decimals on ${v.originChain}.` });
   }
 }
 

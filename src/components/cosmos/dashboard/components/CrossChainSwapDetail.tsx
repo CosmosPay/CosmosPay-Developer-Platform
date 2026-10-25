@@ -8,13 +8,13 @@ import { crossChainSwaps as api } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { CHAIN_NAMES } from "@/lib/chains";
+import { networkName } from "@/lib/chains";
 
 export const CROSS_FINAL = ["SUCCEEDED", "REFUNDED", "FAILED"];
 
 /* "100 XLM (Stellar) → ~0.08 SOL (Solana)". */
 export const crossRoute = (s) =>
-  `${s.amountIn} ${s.originAsset} (${CHAIN_NAMES[s.originChain] || s.originChain}) → ${s.amountOut || `~${s.amountOutEstimated}`} ${s.destinationAsset} (${CHAIN_NAMES[s.destinationChain] || s.destinationChain})`;
+  `${s.amountIn} ${s.originAsset} (${networkName(s.originChain)}) → ${s.amountOut || `~${s.amountOutEstimated}`} ${s.destinationAsset} (${networkName(s.destinationChain)})`;
 
 export function CrossChainSwapDetailModal({ swap, orgId, env, canManage, onClose }) {
   const t = useT();
@@ -87,9 +87,12 @@ export function CrossChainSwapDetailModal({ swap, orgId, env, canManage, onClose
             <CopyField label={F.depositAddress} value={data.depositAddress} />
             {data.depositMemo && <CopyField label={F.depositMemo} value={data.depositMemo} />}
             {data.depositMemo && <p className="field-note">{d.memoWarning}</p>}
-            <CopyBlock label={d.depositUri} value={data.depositUri}>
-              <div className="paylink-actions"><a className="btn btn-dark btn-sm" href={data.depositUri}>{DI.link} {d.openWallet}</a></div>
-            </CopyBlock>
+            {/* A wallet link where the network has a standard one; elsewhere the address (and memo) and the QR. */}
+            {data.depositUri ? (
+              <CopyBlock label={d.depositUri} value={data.depositUri}>
+                <div className="paylink-actions"><a className="btn btn-dark btn-sm" href={data.depositUri}>{DI.link} {d.openWallet}</a></div>
+              </CopyBlock>
+            ) : <p className="field-note">{fmt(d.noLink, { chain: networkName(data.originChain) })}</p>}
           </>
         )}
 

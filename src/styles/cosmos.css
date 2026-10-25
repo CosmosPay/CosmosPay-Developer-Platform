@@ -267,7 +267,6 @@ button { font-family: inherit; cursor: pointer; }
   animation: megaIn .2s cubic-bezier(.2,.7,.2,1) both;
 }
 @keyframes megaIn { from { transform: translateY(-8px); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .mega { animation: none; } }
 .mega-cols { display: grid; gap: 26px 22px; flex: 1; }
 .mega-head { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 6px 10px; }
 .mega-col ul, .mm-group ul, .lang-menu { list-style: none; margin: 0; padding: 0; }
@@ -350,7 +349,6 @@ html.nav-locked { overflow: hidden; }
 .btn-skel-link { width: 52px; height: 16px; border-radius: 999px; }
 .btn-skel-cta { width: 116px; height: 40px; }
 @keyframes navSkelPulse { 0%, 100% { opacity: .5; } 50% { opacity: .85; } }
-@media (prefers-reduced-motion: reduce) { .btn-skel { animation: none; } }
 
 /* theme toggle */
 .theme-btn {
@@ -380,7 +378,11 @@ html.nav-locked { overflow: hidden; }
   transform-origin: top right; animation: langMenuIn .18s cubic-bezier(.2,.7,.2,1) both;
 }
 @keyframes langMenuIn { from { transform: translateY(-7px) scale(.98); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .lang-menu, .nav-user-menu { animation: none; } }
+/* closing: the list leaves the way it came (usePresence keeps it while it plays) */
+.lang-menu[data-state="closing"], .nav-user-menu[data-state="closing"] { animation: langMenuOut .12s ease-in both; pointer-events: none; }
+@keyframes langMenuOut { to { opacity: 0; transform: translateY(-6px) scale(.98); } }
+/* Menus, panels, skeletons and toasts animate for everyone, reduced-motion settings included
+   (product owner): they are short, small and answer the person's own action. */
 .lang-opt { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: transparent; border: 0; border-radius: var(--radius-btn); padding: 9px 12px; font-size: 15px; font-weight: 500; color: var(--ink); }
 .lang-opt:hover { background: var(--surface-2); }
 .lang-opt .flag { display: inline-flex; }
@@ -449,7 +451,6 @@ html.nav-locked { overflow: hidden; }
 .toast.out { opacity: 0; transform: translateY(8px) scale(.98); }
 .toast svg { width: 18px; height: 18px; color: #2ECC71; flex: 0 0 auto; }
 .toast-error svg { color: #FF6B6B; }
-@media (prefers-reduced-motion: reduce) { .toast { transition: opacity .15s; transform: none; } .toast.out { transform: none; } }
 
 /* buttons, the Stellar Snap's pills: a 1.5px outline, a bold label, and an ink fill that
    grows from the point where the pointer enters until it paints the button, then shrinks back

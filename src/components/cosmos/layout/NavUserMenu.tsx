@@ -4,6 +4,7 @@ import type { User } from "@/components/cosmos/lib/types";
 import { DASH, DOCS } from "@/components/cosmos/lib/constants";
 import { startLogout } from "@/components/cosmos/lib/auth";
 import { useOutside } from "@/components/cosmos/hooks/useOutside";
+import { usePresence } from "@/components/cosmos/hooks/usePresence";
 import { Avatar } from "@/components/cosmos/ui/Avatar";
 import { IcGauge, IcUser, IcDocs, IcLogout } from "@/components/cosmos/icons";
 
@@ -11,6 +12,7 @@ import { IcGauge, IcUser, IcDocs, IcLogout } from "@/components/cosmos/icons";
 export function NavUserMenu({ user }: { user: User }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const { mounted, state } = usePresence(open, 120);
   const ref = useOutside(() => setOpen(false));
   const name = (user && user.name) || "Account";
   const email = (user && user.email) || "";
@@ -19,8 +21,8 @@ export function NavUserMenu({ user }: { user: User }) {
       <button className={`nav-user-btn${open ? " on" : ""}`} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} title={name}>
         <Avatar user={user} size={36} />
       </button>
-      {open && (
-        <div className="nav-user-menu" role="menu">
+      {mounted && (
+        <div className="nav-user-menu" role="menu" data-state={state}>
           <div className="nav-user-head">
             <Avatar user={user} size={38} />
             <div className="nav-user-id"><b>{name}</b>{email && <span>{email}</span>}</div>

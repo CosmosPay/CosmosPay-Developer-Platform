@@ -10,6 +10,7 @@ export type Tier = "public" | "testnet";
 
 export const CHAIN_NAMES: Record<Chain, string> = { stellar: "Stellar", solana: "Solana", monad: "Monad" };
 export const NATIVE_CODES: Record<Chain, string> = { stellar: "XLM", solana: "SOL", monad: "MON" };
+export const NATIVE_DECIMALS: Record<Chain, number> = { stellar: 7, solana: 9, monad: 18 };
 /* What each chain calls its test network (the sandbox), by its own name. */
 export const TEST_NETWORKS: Record<Chain, string> = { stellar: "Testnet", solana: "Devnet", monad: "Testnet" };
 
@@ -45,14 +46,15 @@ export function isAddress(chain: Chain, value: string): boolean {
 export interface TokenPreset {
   code: string;
   issuer: string;
+  decimals: number;
 }
 export const TOKEN_PRESETS: Record<Exclude<Chain, "stellar">, Record<Tier, TokenPreset[]>> = {
   solana: {
-    public: [{ code: "USDC", issuer: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" }],
-    testnet: [{ code: "USDC", issuer: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" }],
+    public: [{ code: "USDC", issuer: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", decimals: 6 }],
+    testnet: [{ code: "USDC", issuer: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", decimals: 6 }],
   },
   monad: {
-    public: [{ code: "USDC", issuer: "0x754704bc059f8c67012fed69bc8a327a5aafb603" }],
+    public: [{ code: "USDC", issuer: "0x754704bc059f8c67012fed69bc8a327a5aafb603", decimals: 6 }],
     testnet: [],
   },
 };
@@ -110,3 +112,31 @@ export function assetLabel(chain: Chain, asset: string | null | undefined): stri
   const code = asset.split(":")[0];
   return code.length > 12 ? `${code.slice(0, 4)}…${code.slice(-4)}` : code;
 }
+
+/* Every network cross-chain swaps (NEAR Intents) reach, by the id the Payments API names it with,
+   and how it is named to people: Stellar, Solana and Monad under their own ids, the others under
+   1Click's code. The assets endpoint also sends each name; this table names a stored swap's
+   networks without it. */
+export const NETWORK_NAMES: Record<string, string> = {
+  stellar: "Stellar", solana: "Solana", monad: "Monad",
+  eth: "Ethereum", base: "Base", arb: "Arbitrum", op: "Optimism", bsc: "BNB Chain", pol: "Polygon",
+  avax: "Avalanche", gnosis: "Gnosis", bera: "Berachain", scroll: "Scroll", xlayer: "X Layer",
+  abs: "Abstract", plasma: "Plasma", hood: "Robinhood Chain", hypercore: "Hyperliquid",
+  btc: "Bitcoin", ltc: "Litecoin", doge: "Dogecoin", bch: "Bitcoin Cash", dash: "Dash", zec: "Zcash",
+  xrp: "XRP Ledger", tron: "Tron", ton: "TON", near: "NEAR", sui: "Sui", aptos: "Aptos",
+  movement: "Movement", starknet: "Starknet", cardano: "Cardano", aleo: "Aleo", fogo: "Fogo",
+};
+export const NETWORK_IDS = Object.keys(NETWORK_NAMES);
+export const networkName = (id: string | null | undefined) => (id ? NETWORK_NAMES[id] || id.toUpperCase() : "");
+
+/* What an address looks like on each network, as a field's placeholder. */
+const EVM_HINT = "0x…";
+export const NETWORK_PLACEHOLDERS: Record<string, string> = {
+  ...ADDRESS_PLACEHOLDERS,
+  eth: EVM_HINT, base: EVM_HINT, arb: EVM_HINT, op: EVM_HINT, bsc: EVM_HINT, pol: EVM_HINT, avax: EVM_HINT,
+  gnosis: EVM_HINT, bera: EVM_HINT, scroll: EVM_HINT, xlayer: EVM_HINT, abs: EVM_HINT, plasma: EVM_HINT,
+  hood: EVM_HINT, hypercore: EVM_HINT, sui: EVM_HINT, aptos: EVM_HINT, movement: EVM_HINT, starknet: EVM_HINT,
+  btc: "bc1… / 1… / 3…", ltc: "ltc1… / L…", doge: "D…", bch: "bitcoincash:q…", dash: "X…", zec: "t1… / u1…",
+  xrp: "r…", tron: "T…", ton: "UQ… / EQ…", near: "name.near", cardano: "addr1…", aleo: "aleo1…", fogo: "Base58…",
+};
+export const placeholderFor = (id: string) => NETWORK_PLACEHOLDERS[id] || "";

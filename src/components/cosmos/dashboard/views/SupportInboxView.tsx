@@ -9,6 +9,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
 import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
 import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
+import { Select } from "@/components/cosmos/dashboard/components/Select";
 
 /* Staff support inbox: every customer ticket, filterable by status, with a reply pane
    and a status selector to move tickets through open → pending → resolved → closed. */
@@ -51,10 +52,8 @@ export function SupportInboxView() {
   return (
     <>
       <ViewHead title={s.inboxTitle} sub={s.inboxSubtitle} />
-      <div className="filter-tabs">
-        {["all", ...TICKET_STATUSES].map((k) => (
-          <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{k === "all" ? s.all : s.statuses[k]}</button>
-        ))}
+      <div className="fbar">
+        <Select variant="filter" label={t.dash.filters.status} placeholder={t.dash.filters.status} active={filter !== "all"} value={filter} onChange={setFilter} options={["all", ...TICKET_STATUSES].map((k) => ({ value: k, label: k === "all" ? s.all : s.statuses[k] }))} />
       </div>
       <div className="inbox">
         <div className="panel inbox-list">

@@ -429,7 +429,7 @@
 @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .metric, .panel, .bal-card { transition: transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s, border-color .25s; }
 .side-link.active { transition: background .2s, color .2s; }
-@media (prefers-reduced-motion: reduce) { .dash-body, .org-menu, .prof-menu, .side { animation: none !important; transition: none !important; } }
+/* The dashboard's motion runs for everyone, reduced-motion settings included (product owner). */
 
 /* form fields */
 .fld { margin-top: 14px; }
@@ -720,7 +720,13 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); backdrop-filter: blur(5px); display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; overscroll-behavior: contain; }
 .modal { position: relative; width: min(720px, 100%); margin: auto; background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius-lg); overflow: hidden; animation: modIn .26s cubic-bezier(.2,.7,.2,1) both; }
 @keyframes modIn { from { transform: translateY(18px) scale(.97); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .modal { animation: none; } }
+/* the backdrop fades in and out with the dialog; closing from inside plays the exit (Modal.tsx) */
+.modal-overlay { animation: ovIn .2s ease-out both; }
+.modal-overlay[data-state="closing"] { animation: ovOut .16s ease-in both; pointer-events: none; }
+.modal-overlay[data-state="closing"] .modal { animation: modOut .16s ease-in both; }
+@keyframes ovIn { from { opacity: 0; } }
+@keyframes ovOut { to { opacity: 0; } }
+@keyframes modOut { to { opacity: 0; transform: translateY(10px) scale(.98); } }
 .modal-x { position: absolute; top: 16px; right: 16px; z-index: 5; width: 38px; height: 38px; border-radius: var(--radius-btn); border: 1px solid var(--line-2); background: transparent; color: var(--ink); display: grid; place-items: center; }
 .modal-x:hover { border-color: var(--ink); }
 .modal-x svg { width: 18px; height: 18px; }

@@ -539,16 +539,20 @@ export const cosmosSwaps = {
    Mainnet only upstream: a dev key can list assets and quote, creating is refused.
    The commission is the org plan's rate, via the same trusted header as swaps. ---- */
 export interface CrossChainAsset {
-  chain: SwapChain;
+  /** The network id (stellar, solana, monad, or NEAR Intents' code: eth, btc…). */
+  chain: string;
+  chainName: string;
   symbol: string;
   assetId: string;
   decimals: number;
   contract: string | null;
+  /** NEAR Intents' reference price, indicative only (an estimate before a quote). */
+  priceUsd: number | null;
 }
 export interface CrossChainQuote {
   network: string;
-  origin: { chain: SwapChain; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null };
-  destination: { chain: SwapChain; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null; minimum: string };
+  origin: { chain: string; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null };
+  destination: { chain: string; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null; minimum: string };
   fee: { bps: number; amount: string; asset: string };
   slippageBps: number;
   timeEstimateSeconds: number;
@@ -558,10 +562,10 @@ export interface CrossChainSwap {
   status: "AWAITING_DEPOSIT" | "DEPOSIT_DETECTED" | "INCOMPLETE_DEPOSIT" | "PROCESSING" | "SUCCEEDED" | "REFUNDED" | "FAILED" | "EXPIRED";
   providerStatus: string;
   network: string;
-  originChain: SwapChain;
+  originChain: string;
   originAsset: string;
   originContract: string | null;
-  destinationChain: SwapChain;
+  destinationChain: string;
   destinationAsset: string;
   destinationContract: string | null;
   amountIn: string;
@@ -574,7 +578,8 @@ export interface CrossChainSwap {
   refundTo: string;
   depositAddress: string;
   depositMemo: string | null;
-  depositUri: string;
+  /** A wallet link where the network has a standard one; null: pay the address (and memo). */
+  depositUri: string | null;
   qr?: string;
   depositTxHash: string | null;
   amountOut: string | null;
@@ -596,9 +601,9 @@ export interface CrossChainSwapList {
   skip: number;
 }
 export interface CrossChainSwapInput {
-  originChain: SwapChain;
+  originChain: string;
   originAsset: string;
-  destinationChain: SwapChain;
+  destinationChain: string;
   destinationAsset: string;
   amount: string;
   recipient: string;

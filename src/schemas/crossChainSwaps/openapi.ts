@@ -11,18 +11,21 @@ import {
   registerRoutes,
   sessionSecurity,
 } from "@/lib/openapi/route-helpers";
+import { NETWORK_IDS } from "@/lib/chains";
 import { z } from "@/lib/openapi/zod";
 
-const chain = z.enum(["stellar", "solana", "monad"]).openapi({ example: "stellar" });
+const chain = z.enum(NETWORK_IDS as [string, ...string[]]).openapi({ example: "stellar", description: "A network NEAR Intents reaches: stellar, solana, monad, or its own code (eth, btc, ...)." });
 const env = z.enum(["dev", "prod"]).openapi({ example: "prod" });
 
 const assetSchema = z
   .object({
     chain,
+    chainName: z.string().openapi({ example: "Solana" }),
     symbol: z.string().openapi({ example: "USDC" }),
     assetId: z.string().openapi({ example: "nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near" }),
     decimals: z.number().openapi({ example: 6 }),
     contract: z.string().nullable().openapi({ example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" }),
+    priceUsd: z.number().nullable().openapi({ example: 1, description: "NEAR Intents' reference price in USD, indicative only; every amount comes from a quote." }),
   })
   .openapi("CrossChainAsset");
 
@@ -76,7 +79,7 @@ const swapSchema = z
     refundTo: z.string(),
     depositAddress: z.string().openapi({ description: "Send exactly amountIn of the origin asset here." }),
     depositMemo: z.string().nullable().openapi({ description: "Stellar only, required: attach as a MEMO_TEXT." }),
-    depositUri: z.string().openapi({ description: "The deposit as a wallet link: SEP-7 pay, Solana Pay or EIP-681." }),
+    depositUri: z.string().nullable().openapi({ description: "The deposit as a wallet link where the network has a standard one (SEP-7 pay, Solana Pay, EIP-681, BIP21, TON, CIP-13); null: pay the address (and memo) with any wallet of that network." }),
     qr: z.string().optional(),
     depositTxHash: z.string().nullable(),
     amountOut: z.string().nullable(),

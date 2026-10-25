@@ -69,7 +69,8 @@ body.inst:has(.dash) { background: var(--surface); }
 .inst .nav.nav-dash { top: 0; background: transparent; border-bottom-color: transparent; backdrop-filter: none; }
 .inst .nav.nav-dash.scrolled { background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(10px); border-bottom-color: var(--line); }
 .nav-dash .brand { display: none; }
-.nav-dash .wrap { max-width: none; margin: 0; padding: 0 36px 0 8px; }
+/* the content column keeps a gutter from the sidebar: nav, page head and view all start at 40px */
+.nav-dash .wrap { max-width: none; margin: 0; padding: 0 36px 0 40px; }
 .nav-dash .nav-center { margin-left: 0; }
 .nav-dash .nav-trigger { padding-left: 0; padding-right: 20px; }
 .nav-dash .nav-trigger::after { left: 0; right: 20px; }
@@ -78,7 +79,7 @@ body.inst:has(.dash) { background: var(--surface); }
    outlined action, as the reference's "Gateways → Gateways Profile" and "Add Gateway" */
 .inst .topbar {
   position: static; height: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 16px 20px;
-  padding: 14px 36px 26px 8px; background: transparent; backdrop-filter: none; border: 0;
+  padding: 14px 36px 26px 40px; background: transparent; backdrop-filter: none; border: 0;
 }
 .page-title { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 auto; }
 .page-title h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.025em; line-height: 1.15; color: var(--ink); white-space: nowrap; }
@@ -103,7 +104,7 @@ body.inst:has(.dash) { background: var(--surface); }
 .top-add svg { width: 16px; height: 16px; flex: 0 0 auto; }
 /* main holds the page head and the view, so it takes the column's height */
 .dash-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.inst .dash-body { padding: 0 36px 44px 8px; }
+.inst .dash-body { padding: 0 36px 44px 40px; }
 .inst .icon-btn { background: var(--surface); border-color: var(--line); border-radius: 12px; }
 
 /* tablet and phone: the frame fills the screen and the sidebar slides over it */
@@ -360,9 +361,6 @@ body.inst:has(.dash) { background: var(--surface); }
   .bars { grid-template-columns: 44px minmax(0, 1fr) 28px; padding: 8px 8px 14px; }
   .design-grid { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .design-opt { transition: none; }
-}
 
 /* ---- no chips: statuses and networks are coloured text ---- */
 .inst .pill-st { background: transparent; padding: 0; font-size: 13px; font-weight: 700; }
@@ -414,72 +412,228 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .paylink-fields > .modal-eyebrow { margin: 0; padding: 12px 16px 4px; }
 .inst .paylink-fields > .field-note { margin: 0; padding: 10px 16px 12px; }
 
-/* ---- the filter bar over a list: the status segments with their counts and the number shown on
-   the first row; search, network, date and the other choices on the second; "clear filters"
-   once any filter is on. ---- */
-.fbar { display: flex; flex-direction: column; gap: 12px; margin: 0 0 16px; }
-.fbar-top { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
-.fbar-status { flex-wrap: wrap; }
-.fbar-status button { display: inline-flex; align-items: center; gap: 7px; }
-.fbar-count { font-size: 12px; font-weight: 600; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.fbar-status button.on .fbar-count { color: inherit; opacity: .72; }
-.fbar-summary { margin: 0; font-size: 13px; color: var(--ink-3); white-space: nowrap; }
-.fbar-fields { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.fbar-search { flex: 1 1 260px; max-width: 420px; position: relative; display: flex; align-items: center; }
+/* ---- the filter bar over a list: one row. The search, a dropdown per filter (its name until it
+   is set, marked while it filters), "clear filters" once any is on, and the count of rows shown
+   at the end. ---- */
+.fbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; }
+.fbar-search { flex: 1 1 240px; max-width: 360px; position: relative; display: flex; align-items: center; }
 .fbar-search svg { position: absolute; left: 12px; width: 16px; height: 16px; color: var(--ink-3); pointer-events: none; }
-.inst .fbar-search .field { padding-left: 36px; }
-.inst .fbar .fbar-sel { width: auto; min-width: 150px; flex: 0 1 auto; }
-.fbar-reset { margin-left: auto; padding: 8px 4px; border: 0; background: transparent; color: var(--ink); font: 600 13px/1 var(--ff-sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.inst .fbar-search .field { height: 40px; padding-left: 36px; }
+.fbar-reset { padding: 8px 4px; border: 0; background: transparent; color: var(--ink); font: 600 13px/1 var(--ff-sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; animation: arrive .2s ease both; }
 .fbar-reset:hover { text-decoration-thickness: 2px; }
 .fbar-reset:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 2px; border-radius: 4px; }
+.fbar-summary { margin: 0 0 0 auto; font-size: 13px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 @media (max-width: 700px) {
   .fbar-search { flex-basis: 100%; max-width: none; }
-  .inst .fbar .fbar-sel { flex: 1 1 140px; min-width: 0; }
-  .fbar-status { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  .fbar-dd { flex: 1 1 140px; }
+  .fbar-summary { flex-basis: 100%; margin: 0; }
 }
 
-/* ---- skeletons: grey bars in the shape of what is loading, pulsing (a solid colour, never a
-   gradient sweep), each row a little after the one above. Reduced motion keeps them still. ---- */
-.sk { display: block; height: 12px; border-radius: 6px; background: var(--surface-2); animation: skPulse 1.4s ease-in-out infinite; animation-delay: calc(var(--r, 0) * 90ms); }
+/* ---- the dropdown (Select): a field-like button and a list that pops open and closed. In the
+   filter bar the button is lighter and turns ink while its filter is on. ---- */
+.dd { position: relative; min-width: 0; }
+.dd-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 42px; padding: 0 12px; text-align: left;
+  border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); color: var(--ink);
+  font: 400 14px/1.2 var(--ff-sans); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.dd-btn:hover:not(:disabled) { border-color: var(--ink-3); }
+.dd-btn:focus-visible, .dd.open .dd-btn { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px var(--tertiary-soft); }
+.dd-btn:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
+.dd-val { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-chev { width: 16px; height: 16px; flex: 0 0 auto; color: var(--ink-3); transition: rotate .2s cubic-bezier(.2, .7, .2, 1); }
+.dd.open .dd-chev { rotate: 180deg; }
+.dd-ic { display: grid; place-items: center; flex: 0 0 auto; }
+.dd-filter .dd-btn { height: 40px; width: auto; min-width: 128px; color: var(--ink-2); font-weight: 500; }
+.dd-filter.is-active .dd-btn { border-color: var(--btn-bg); background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; }
+.dd-filter.is-active .dd-chev { color: currentColor; }
+.dd-list {
+  position: absolute; z-index: 70; top: calc(100% + 6px); left: 0; min-width: 100%; width: max-content; max-width: min(360px, 90vw);
+  max-height: 320px; overflow: auto; margin: 0; padding: 6px; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg);
+  transform-origin: top left; animation: popIn .16s cubic-bezier(.2, .7, .2, 1) both;
+}
+.dd-list.up { top: auto; bottom: calc(100% + 6px); transform-origin: bottom left; }
+.dd-list[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
+.dd-opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--ink); font-size: 14px; cursor: pointer; }
+.dd-opt.cur { background: var(--surface-2); }
+.dd-opt[aria-disabled="true"] { color: var(--ink-3); cursor: not-allowed; }
+.dd-opt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dd-opt-l { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-opt-h { font-size: 12px; color: var(--ink-3); }
+.dd-opt-n { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.dd-check { width: 16px; height: 16px; flex: 0 0 auto; color: var(--ink); opacity: 0; transform: scale(.6); transition: opacity .15s ease, transform .15s ease; }
+.dd-opt[aria-selected="true"] { font-weight: 600; }
+.dd-opt[aria-selected="true"] .dd-check { opacity: 1; transform: none; }
+/* every popup in the dashboard opens and closes the same way */
+@keyframes popIn { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
+@keyframes popOut { to { opacity: 0; transform: translateY(-4px) scale(.97); } }
+
+/* ---- skeletons, as the standard ones: grey shapes of what is loading with a light band
+   sweeping across them. The band is a solid, blurred light (no gradient), each row a little after
+   the one above. ---- */
+.sk { position: relative; display: block; height: 12px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.sk::after {
+  content: ""; content: "" / ""; position: absolute; top: -50%; bottom: -50%; left: 0; width: 45%;
+  background: rgba(255, 255, 255, .75); filter: blur(12px); transform: translateX(-140%);
+  animation: skShine 1.5s ease-in-out infinite; animation-delay: calc(var(--r, 0) * 80ms);
+}
+[data-theme="dark"] .sk::after { background: rgba(255, 255, 255, .07); }
+@keyframes skShine { 60%, 100% { transform: translateX(260%); } }
 .sk.lg { height: 22px; border-radius: 8px; }
 .sk.sm { height: 9px; }
-/* on the black card and the grey panel the bars are light, so they read as placeholders there too */
-.sk-on-dark, .sk-on-slate { background: rgba(255, 255, 255, .14); animation-name: skPulseLight; }
-@keyframes skPulseLight { 50% { background: rgba(255, 255, 255, .26); } }
+.sk.round { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; }
+/* on the black card and the grey panel the shapes are light, so they read as placeholders there too */
+.sk-on-dark, .sk-on-slate { background: rgba(255, 255, 255, .14); }
+.sk-on-dark::after, .sk-on-slate::after { background: rgba(255, 255, 255, .22); }
 .hub-kpi .sk { margin-top: 2px; }
 /* a new period loading over the last one: the chart dims until it arrives */
 .hub-chart { transition: opacity .2s ease; }
 .hub-chart.is-loading { opacity: .45; }
-@keyframes skPulse { 50% { background: var(--line); } }
 .sk-table { padding: 6px 0; }
 .sk-row { display: grid; grid-template-columns: var(--sk-cols, repeat(5, minmax(0, 1fr))); gap: 20px; align-items: center; padding: 18px 20px; }
 .sk-row + .sk-row { border-top: 1px solid var(--line); }
+/* a list row: a mark, then label-over-value pairs, as the overview's payments read */
+.sk-item { display: flex; align-items: center; gap: 18px; padding: 16px 22px; }
+.sk-item + .sk-item { border-top: 1px solid var(--line); }
+.sk-pairs { flex: 1; display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 14px; }
+.sk-pair { display: flex; flex-direction: column; gap: 7px; }
 .sk-chart { display: flex; align-items: flex-end; gap: 3%; height: 220px; padding: 18px 64px 30px; }
 .sk-chart .sk { flex: 1; height: var(--h, 40%); border-radius: 4px 4px 0 0; }
 
-/* ---- motion that answers loading: content arriving fades up from where its skeleton was; the
-   bars grow from the axis, one after the other. ---- */
+/* ---- motion that answers loading: content arriving rises in where its skeleton was; the bars
+   grow from the axis, one after the other. Like the rest of Cosmos Pay's motion it runs for
+   everyone (product owner's call), kept short and small. ---- */
 .arrive { animation: arrive .32s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes arrive { from { opacity: 0; transform: translateY(6px); } }
 .bars-svg .bar-vol, .bars-svg .bar-cnt { transform-box: fill-box; transform-origin: 50% 100%; animation: barGrow .55s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
 @keyframes barGrow { from { transform: scaleY(0); } }
-@media (prefers-reduced-motion: reduce) {
-  .sk, .arrive, .bars-svg .bar-vol, .bars-svg .bar-cnt { animation: none; }
-}
 
-/* ---- the swap form: two legs (chain and asset each), the amount, and the switch between legs
-   with the route that will settle it ---- */
-.swap-leg { margin: 16px 0 0; padding: 0; border: 0; min-width: 0; }
-.swap-leg > legend { float: left; width: 100%; margin: 0 0 2px; padding: 0; font-size: 14px; }
-.swap-leg > legend + * { clear: both; }
-.swap-leg .fld { margin-top: 8px; }
-.swap-flip { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; }
-.swap-flip .icon-mini svg { width: 16px; height: 16px; }
-.swap-flip .field-help { margin: 0; }
-.inst .modal .note-bar { margin: 14px 0 0; }
+/* ---- the swap widget: the pattern every swap app uses. A card with two wells ("You pay", "You
+   receive"), each a big amount in tabular figures and a token button naming its network; a flip
+   between them that turns; the rate with its folded details; the accounts the route needs; one
+   full-width action. The memorable moment is the flip and the received amount arriving. ---- */
+.swapper {
+  max-width: 480px; margin: 0 auto 36px; padding: 16px; border: 1px solid var(--line); border-radius: 24px;
+  background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.swapper-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 12px; }
+.swapper-head h2 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.sp { padding: 14px 16px 16px; border: 1px solid transparent; border-radius: 18px; background: var(--surface-2); transition: border-color .15s ease, background-color .15s ease; }
+.sp:focus-within { border-color: var(--line-2); background: var(--surface); }
+.sp-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ink-3); }
+.sp-top label { color: var(--ink-3); }
+.sp-usd { font-variant-numeric: tabular-nums; animation: arrive .25s ease both; }
+.sp-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; min-height: 48px; }
+.sp-amount {
+  flex: 1; min-width: 0; padding: 0; border: 0; background: transparent; outline: none;
+  font: 600 34px/1.15 var(--ff-sans); letter-spacing: -.025em; color: var(--ink); font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sp-amount::placeholder, .sp-amount.is-empty { color: var(--ink-3); }
+.sp-amount[aria-invalid="true"] { color: #B42F2F; }
+[data-theme="dark"] .sp-amount[aria-invalid="true"] { color: #FF9B9B; }
+.sp-amount.is-estimate { color: var(--ink-2); }
+.sp-sk { height: 30px; margin: 4px 0; }
+.sp-note { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-3); }
+/* the flip sits across the seam between the wells and turns half a turn each time */
+.swap-flip-btn {
+  position: relative; z-index: 1; display: grid; place-items: center; width: 42px; height: 42px; margin: -12px auto;
+  border: 4px solid var(--surface); border-radius: 14px; background: var(--surface-2); color: var(--ink); cursor: pointer;
+  transition: background-color .15s ease, transform .15s ease;
+}
+.swap-flip-btn svg { width: 18px; height: 18px; transition: rotate .35s cubic-bezier(.2, .7, .2, 1); }
+.swap-flip-btn.turned svg { rotate: 180deg; }
+.swap-flip-btn:hover:not(:disabled) { background: var(--line); }
+.swap-flip-btn:active:not(:disabled) { transform: scale(.92); }
+.swap-flip-btn:disabled { color: var(--ink-3); cursor: default; }
+/* the token button: the token's mark, its symbol over its network */
+.token-btn {
+  display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; max-width: 52%; padding: 5px 10px 5px 5px;
+  border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink); cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.token-btn:hover { border-color: var(--ink-3); }
+.token-btn:active { transform: scale(.97); }
+.token-btn-t { display: flex; flex-direction: column; min-width: 0; text-align: left; line-height: 1.15; }
+.token-btn-t b { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.token-btn-t small { font-size: 11.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.token-btn-chev { width: 16px; height: 16px; flex: 0 0 auto; color: var(--ink-3); }
+.token-btn.empty { padding: 10px 14px; background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-fg); }
+.token-btn.empty .token-btn-chev { color: currentColor; }
+/* a token's mark with its network's in the corner; a neutral monogram where no artwork exists */
+.tmark { position: relative; display: inline-block; flex: 0 0 auto; width: var(--tm); height: var(--tm); }
+.tmark-img, .tmark-mono { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.tmark-mono { background: var(--line); color: var(--ink-2); font-size: calc(var(--tm) * .36); font-weight: 700; letter-spacing: -.02em; }
+.tmark-badge { position: absolute; right: -3px; bottom: -3px; display: grid; place-items: center; width: 15px; height: 15px; border: 2px solid var(--surface); border-radius: 50%; background: var(--surface); object-fit: cover; box-sizing: content-box; }
+.tmark-badge-mono { background: var(--ink-2); color: var(--surface); font-size: 7px; font-weight: 800; }
+/* the rate, and the quote's details folding open under it */
+.sq { margin-top: 12px; border-radius: 14px; }
+.sq-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 6px; }
+.sq-rate { padding: 4px 0; border: 0; background: transparent; color: var(--ink-2); font: 500 13px/1.3 var(--ff-sans); font-variant-numeric: tabular-nums; cursor: pointer; text-align: left; }
+.sq-rate:hover { color: var(--ink); }
+.sq-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: transparent; color: var(--ink-3); font: 500 12.5px/1 var(--ff-sans); cursor: pointer; }
+.sq-toggle svg { width: 15px; height: 15px; transition: rotate .2s ease; }
+.sq.open .sq-toggle svg { rotate: 180deg; }
+.sq-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .28s cubic-bezier(.2, .7, .2, 1); }
+.sq.open .sq-body { grid-template-rows: 1fr; }
+.sq-rows { min-height: 0; overflow: hidden; margin: 0; padding: 0 6px; }
+.sq-rows > div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 13px; }
+.sq-rows > div:first-child { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 10px; }
+.sq-rows dt { color: var(--ink-3); }
+.sq-rows dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+/* the accounts the route needs, under the quote */
+.swap-accounts { margin-top: 6px; padding: 0 2px; }
+.swap-accounts .fld { margin-top: 12px; }
+.swap-more { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 0; border: 0; background: transparent; color: var(--ink); font: 600 13px/1 var(--ff-sans); cursor: pointer; }
+.swap-more svg { width: 15px; height: 15px; transition: rotate .2s ease; }
+.swap-more[aria-expanded="true"] svg { rotate: 180deg; }
+.swap-another { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .28s cubic-bezier(.2, .7, .2, 1); }
+.swap-another.open { grid-template-rows: 1fr; }
+.swap-another-in { min-height: 0; overflow: hidden; }
+.btn.swap-cta { width: 100%; min-height: 54px; margin-top: 16px; justify-content: center; font-size: 16px; }
+.swap-hint { margin: 10px 4px 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-3); text-align: center; }
+.swap-hint.is-error { color: #B42F2F; }
+[data-theme="dark"] .swap-hint.is-error { color: #FF9B9B; }
+/* the slippage setting: a small popover from the gear */
+.slip { position: relative; }
+.slip-btn svg { width: 18px; height: 18px; }
+.slip-pop {
+  position: absolute; z-index: 60; top: calc(100% + 8px); right: 0; width: 280px; padding: 14px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-lg);
+  transform-origin: top right; animation: popIn .16s cubic-bezier(.2, .7, .2, 1) both;
+}
+.slip-pop[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
+.slip-t { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.slip-pop .seg-tabs { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2); }
+.slip-pop .seg-tabs button { flex: 1; padding: 8px 6px; }
+.slip-h { margin: 10px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-3); }
+.swaps-list-head { margin-top: 8px; }
 @media (max-width: 520px) {
+  .swapper { padding: 12px; border-radius: 20px; }
+  .sp-amount { font-size: 28px; }
   .inst .field-row { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---- the token picker: a search, a network filter, and one row per token ---- */
+.tpick h3 { margin-bottom: 14px; }
+.tpick-tools { display: flex; gap: 10px; flex-wrap: wrap; }
+.tpick-tools .fbar-search { flex: 1 1 220px; max-width: none; }
+.tpick-count { margin: 12px 2px 6px; font-size: 12.5px; color: var(--ink-3); }
+.tpick-list { list-style: none; margin: 0 -8px; padding: 0; max-height: min(56vh, 520px); overflow-y: auto; }
+.tpick-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 10px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--ink); text-align: left; cursor: pointer; transition: background-color .12s ease;
+}
+.tpick-row:hover, .tpick-row:focus-visible { background: var(--surface-2); }
+.tpick-row:focus-visible { outline: 2px solid var(--tertiary); outline-offset: -2px; }
+.tpick-row.on { background: var(--surface-2); }
+.tpick-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tpick-main b { font-size: 15px; font-weight: 700; }
+.tpick-main span { font-size: 12.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tpick-price { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tpick-empty { padding: 24px 10px; font-size: 13.5px; color: var(--ink-3); text-align: center; }
+
 /* the small selects in a toolbar (activity log sources and levels) match the plain field */
 .inst .mini-select {
   height: 40px; padding: 0 30px 0 12px; border: 1px solid var(--line-2); border-radius: 10px;
@@ -490,8 +644,53 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .bal-asset-name b { font-weight: 700; color: var(--ink); margin-right: 4px; }
 /* a sidebar group opening: its views come in as the content does */
 .side-tree:not([hidden]) { animation: arrive .22s cubic-bezier(.2, .7, .2, 1) both; }
-@media (prefers-reduced-motion: reduce) { .side-tree:not([hidden]) { animation: none; } }
 /* phones: a record's long id is cut, so the columns that tell rows apart keep their room */
 @media (max-width: 700px) {
   .inst .tx td.tid { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+/* the organization menu and a payment's menu open and close like the dropdowns */
+.hub-menu { transform-origin: top right; animation: popIn .16s cubic-bezier(.2, .7, .2, 1) both; }
+.org-menu[data-state="closing"], .hub-menu[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
+@media (max-width: 600px) { .sk-pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tpick-group { position: sticky; top: 0; z-index: 1; padding: 12px 10px 6px; background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink-3); }
+
+/* ---- the payment-link form: the network as three choice cards, the amount with its asset in
+   one field (as a swap panel), the rest folded under "more options" ---- */
+.net-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.net-opt {
+  display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; text-align: left;
+  border: 1px solid var(--line-2); border-radius: 14px; background: var(--surface); color: var(--ink); cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+}
+.net-opt:hover { border-color: var(--ink-3); }
+.net-opt:active { transform: scale(.98); }
+.net-opt.on { border-color: var(--btn-bg); box-shadow: inset 0 0 0 1px var(--btn-bg); }
+.net-opt-t { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.net-opt-t b { font-size: 14px; font-weight: 700; }
+.net-opt-t small { font-size: 12px; color: var(--ink-3); }
+.seg-fill { display: flex; padding: 3px; border-radius: 12px; background: var(--surface-2); }
+.seg-fill button { flex: 1; }
+.pl-amount { padding-bottom: 12px; }
+.asset-dd { flex: 0 0 auto; }
+.asset-dd .dd-btn { width: auto; height: 44px; padding: 0 10px 0 6px; border-radius: 999px; font-weight: 700; }
+.asset-dd .dd-list { left: auto; right: 0; transform-origin: top right; }
+.paylink-form .swap-more { margin-top: 16px; }
+@media (max-width: 520px) {
+  .net-pick { grid-template-columns: minmax(0, 1fr); }
+}
+.msel-menu { transform-origin: top left; animation: popIn .16s cubic-bezier(.2, .7, .2, 1) both; }
+.msel-menu[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
+/* the well carries the focus of the amount typed in it: its line darkens and takes the ring */
+.sp:focus-within { border-color: var(--ink-3); box-shadow: 0 0 0 3px var(--tertiary-soft); }
+.sp-amount:focus-visible { outline: none; }
+/* a dark logo keeps its edge on a dark surface */
+.tmark-img { box-shadow: 0 0 0 1px var(--line); }
+
+/* the country picker is the same dropdown with a search box at the top of its list */
+.dd-placeholder { color: var(--ink-3); }
+.country-opt { display: inline-flex; align-items: center; gap: 8px; }
+.country-list { width: 100%; max-width: none; max-height: 300px; }
+.inst .country-list .country-search { position: sticky; top: 0; z-index: 1; width: 100%; margin-bottom: 6px; }
+.country-list .dd-opt { width: 100%; border: 0; background: transparent; text-align: left; font: inherit; font-size: 14px; }
+.country-list .dd-opt:hover { background: var(--surface-2); }
+.country-list .dd-opt:focus-visible { background: var(--surface-2); outline: 2px solid var(--tertiary); outline-offset: -2px; }

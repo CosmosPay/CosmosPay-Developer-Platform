@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { IcCheck } from "@/components/cosmos/shared";
+import { usePresence } from "@/components/cosmos/hooks/usePresence";
 
 /* Compact custom dropdown matching the platform's menus (not a native <select>, whose
    option list can't be styled). The menu is portaled to <body> and positioned with
@@ -12,6 +13,8 @@ export function MiniSelect({ value, options, onChange, disabled = false }) {
   const btnRef = useRef(null);
   const menuRef = useRef(null);
   const cur = options.find((o) => o.value === value);
+  // The menu pops open and closed like every dropdown in the dashboard.
+  const menu = usePresence(open, 120);
 
   const toggle = () => {
     if (disabled) return;
@@ -47,8 +50,8 @@ export function MiniSelect({ value, options, onChange, disabled = false }) {
         <span>{cur ? cur.label : value}</span>
         <svg aria-hidden="true" className="msel-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
       </button>
-      {open && pos && createPortal(
-        <div ref={menuRef} className="msel-menu" role="listbox" style={{ top: pos.top, left: pos.left, minWidth: pos.minWidth }}>
+      {menu.mounted && pos && createPortal(
+        <div ref={menuRef} className="msel-menu" role="listbox" data-state={menu.state} style={{ top: pos.top, left: pos.left, minWidth: pos.minWidth }}>
           {options.map((o) => (
             <button key={o.value} type="button" className={`msel-opt${o.value === value ? " active" : ""}`} onClick={() => { onChange(o.value); setOpen(false); }}>
               <span>{o.label}</span>{o.value === value && <IcCheck />}
