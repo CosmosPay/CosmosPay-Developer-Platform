@@ -322,9 +322,6 @@ button { font-family: inherit; cursor: pointer; }
   .nav :is(.theme-btn, .lang-btn, .nav-burger):hover::before { scale: 1; }
 }
 .nav :is(.theme-btn, .lang-btn, .nav-burger):active { scale: .96; }
-/* the open burger and the open language list stay painted while their panel is out */
-.nav :is(.lang-btn, .nav-burger)[aria-expanded="true"] { color: var(--ink-fg); border-color: var(--ink-fill); }
-.nav :is(.lang-btn, .nav-burger)[aria-expanded="true"]::before { scale: 1; }
 /* While the mobile menu is open the page behind does not scroll (Nav.tsx makes it inert too). */
 html.nav-locked { overflow: hidden; }
 .nav-burger svg { width: 21px; height: 21px; }

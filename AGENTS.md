@@ -133,8 +133,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   are h2.
 - **The bar answers the pointer as the buttons do:** theme, docs, language and burger take the
   snap's ink in the outline colour (`--out-ink`, placed by `ink.ts`), the text items and sign-in
-  sweep an underline, and an open burger or language list stays painted. Floating panels (mega,
-  mobile menu, menus, modals, toasts) reset to cosmos.css's tokens; on the payments site they take
+  sweep an underline. Floating panels (mega, mobile menu, menus, modals, toasts) reset to cosmos.css's tokens; on the payments site they take
   the skin's instead (`.inst[data-area="payments"]` in institutional.css), so the mobile menu's
   button is the page's black. The dashboard keeps the reset until its own review.
 - **Every page also has the footer's social profiles and a back-to-top button.** The profiles
@@ -334,12 +333,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   that removes it again after 2.5 s if the page script never loads, so the page is complete
   without JavaScript. Only opacity, translate and scale animate, and **all of it runs for
   everyone, reduced-motion settings included** (the product owner's call, as for the video).
-- **Completions pop through the tertiary blue** (product owner: so they read clearly and draw the
-  eye): the paid tick, the escrow states, the flow's nodes and a step's number grow in blue with a
-  blue ring and settle in their own colour (`pl-pop-blue`, `pl-flash-blue`), the list checks and
-  the race's winner pop in blue ink (`pl-pop-ink`, `pl-ink-blue`), and "Copied" pops filled blue
-  and stays blue. The benefit cards, which carry the 3D renders, take a faint tertiary wash and a
-  blue hairline under the pointer, and their render leans in. Solid colours, never a gradient.
+- **Besides the buttons' ink, the only blue effect is a 3D render's own hover** (product owner,
+  after trying blue cards, blue entrance pops and a blue payment travelling the flows: "quita
+  los efectos azules, solo déjalo en el 3d"): its clay takes a faint tertiary blue (a filter) and it leans in; the card
+  around it does not change. Entrances, completions and the flows keep their own colours.
 
 ### Embedding a payment (pay button and embedded checkout)
 

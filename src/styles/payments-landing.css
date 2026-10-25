@@ -403,8 +403,7 @@
   box-shadow: 3px -3px 0 -1.5px var(--surface), 3px -3px 0 0 currentColor;
 }
 @media (hover: hover) { .pl-copy:hover { color: var(--out-ink-fg); background: var(--out-ink); border-color: var(--out-ink); } }
-/* copied: the button pops in the tertiary blue and stays outlined in it while the label says so */
-.pl-copy.is-done { color: var(--tertiary); border-color: var(--tertiary); background: var(--surface); animation: pl-pop-done .6s cubic-bezier(.3, 1.4, .5, 1); }
+.pl-copy.is-done { color: var(--ok); border-color: var(--ok); background: var(--surface); }
 
 /* pricing: one panel, a column per plan; the lowest rate sits on the accent tint */
 .pl-plans {
@@ -730,18 +729,19 @@
    other, ticks pop, bars fill. Their resting state is the finished one, so without the page
    script they simply show it. */
 @keyframes pl-mk-in { from { opacity: 0; translate: 0 10px; } }
+@keyframes pl-mk-pop { from { scale: 0; } }
 @keyframes pl-mk-grow { from { scale: 0 1; } }
 @keyframes pl-mk-grow-y { from { scale: 1 0; } }
 .is-in .pl-mk-card > *, .is-in .pl-mk-code { animation: pl-mk-in .6s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 80ms + .3s); }
 .is-in .pl-mk-card > :nth-child(2) { animation-delay: calc(var(--i, 0) * 80ms + .48s); }
 .is-in .pl-mk-card > :nth-child(3) { animation-delay: calc(var(--i, 0) * 80ms + .66s); }
 .is-in .pl-mk-card > :nth-child(4) { animation-delay: calc(var(--i, 0) * 80ms + .84s); }
-.is-in .pl-mk-ok { animation: pl-pop-blue .7s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both; }
+.is-in .pl-mk-ok { animation: pl-mk-pop .5s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both; }
 .is-in .pl-mk-fast { animation: pl-mk-grow .9s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms + .6s) both; }
 .is-in .pl-mk-slow { animation: pl-mk-grow 5s linear calc(var(--i, 0) * 80ms + .8s) both; }
-.is-in .pl-mk-race:first-child b { animation: pl-pop-ink .6s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + 1.4s) both; }
+.is-in .pl-mk-race:first-child b { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + 1.4s) both; }
 /* escrow: each state lights up in turn, the line to the next one drawing behind it */
-.is-in .pl-mk-states .pl-mk-dot { animation: pl-pop-blue .7s cubic-bezier(.3, 1.5, .5, 1) both; }
+.is-in .pl-mk-states .pl-mk-dot { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) both; }
 .is-in .pl-mk-states li::after { animation: pl-mk-grow .45s cubic-bezier(.2, .7, .2, 1) both; }
 .is-in .pl-mk-states li:nth-child(1) .pl-mk-dot { animation-delay: calc(var(--i, 0) * 80ms + .5s); }
 .is-in .pl-mk-states li:nth-child(1)::after { animation-delay: calc(var(--i, 0) * 80ms + .75s); }
@@ -751,7 +751,7 @@
 .is-in .pl-mk-states li:nth-child(3)::after { animation-delay: calc(var(--i, 0) * 80ms + 2.25s); }
 .is-in .pl-mk-states li:nth-child(4) .pl-mk-dot { animation-delay: calc(var(--i, 0) * 80ms + 2.55s); }
 /* the flow's nodes pop in order */
-.is-in .pl-mk-node .pl-mk-ico { animation: pl-pop-blue .7s cubic-bezier(.3, 1.5, .5, 1) both; animation-delay: calc(var(--i, 0) * 80ms + .4s); }
+.is-in .pl-mk-node .pl-mk-ico { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) both; animation-delay: calc(var(--i, 0) * 80ms + .4s); }
 .is-in .pl-mk-node:nth-child(3) .pl-mk-ico { animation-delay: calc(var(--i, 0) * 80ms + .6s); }
 .is-in .pl-mk-node:nth-child(5) .pl-mk-ico { animation-delay: calc(var(--i, 0) * 80ms + .8s); }
 /* a payment travels the wire, over and over; on escrow it waits at the contract first */
@@ -763,7 +763,7 @@
 .pl-mk--flow-escrow .pl-mk-wire i { animation: pl-mk-travel-in 5s cubic-bezier(.5, 0, .3, 1) infinite; }
 .pl-mk--flow-escrow .pl-mk-wire-late i { animation-name: pl-mk-travel-out; }
 .pl-mk-node-hold .pl-mk-ico { animation: pl-mk-hold 5s ease-in-out infinite; }
-.is-in .pl-mk-node-hold .pl-mk-ico { animation: pl-pop-blue .7s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both, pl-mk-hold 5s ease-in-out infinite; }
+.is-in .pl-mk-node-hold .pl-mk-ico { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both, pl-mk-hold 5s ease-in-out infinite; }
 /* the pay button is pressed, then the checkout window opens over the store */
 @keyframes pl-mk-window { from { opacity: 0; scale: .85; translate: 0 12px; } }
 .is-in .pl-mk-popup { animation: pl-mk-window .6s cubic-bezier(.3, 1.3, .5, 1) .9s both; transform-origin: 70% 100%; }
@@ -782,7 +782,14 @@
 .pl-faq-art { animation-duration: 8s; animation-delay: -1s; }
 .pl-3d {
   animation: pl-bob 5.5s ease-in-out infinite;
-  transition: scale .8s cubic-bezier(.3, 1.3, .5, 1) calc(var(--i, 0) * 80ms + .15s), opacity .6s ease calc(var(--i, 0) * 80ms + .15s);
+  transition: scale .8s cubic-bezier(.3, 1.3, .5, 1) calc(var(--i, 0) * 80ms + .15s), opacity .6s ease calc(var(--i, 0) * 80ms + .15s), filter .45s ease;
+}
+/* A 3D render answers the pointer itself (product owner): its clay takes a faint tertiary blue
+   and it leans in; the card around it does not change. A filter, so the render keeps its own
+   light and shade. The only blue effect on the page (the product owner kept it here alone). */
+.pl-3d { pointer-events: auto; }
+@media (hover: hover) {
+  .pl-3d:hover { filter: sepia(.45) hue-rotate(186deg) saturate(2.4); scale: 1.06; transition: filter .45s ease, scale .5s cubic-bezier(.3, 1.3, .5, 1); }
 }
 .pl-bento-card:nth-child(2) .pl-3d { animation-delay: -1.4s; }
 .pl-bento-card:nth-child(3) .pl-3d { animation-delay: -2.8s; }
@@ -808,47 +815,6 @@
 .pl-anim .pl-compare tbody tr[data-reveal] {
   transition: opacity .7s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms), translate .7s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms);
 }
-
-/* The benefit cards, each carrying a 3D render, answer the pointer with a faint wash of the
-   tertiary blue and a blue hairline (product owner: the hover should read as interactive), and
-   the render leans in. Solid colours; the reveal's transitions are restated so its stagger
-   delay never holds the tint back. */
-.pl-bento-card { transition: background-color .35s ease, box-shadow .35s ease; }
-.pl-anim .pl-bento-card[data-reveal] {
-  transition: opacity .7s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms), translate .7s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms), background-color .35s ease, box-shadow .35s ease;
-}
-@media (hover: hover) {
-  .pl-bento-card:hover {
-    background-color: color-mix(in srgb, var(--tertiary) 6%, var(--surface));
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tertiary) 32%, transparent);
-  }
-  .pl-bento-card:hover .pl-3d { scale: 1.07; transition: scale .5s cubic-bezier(.3, 1.3, .5, 1); }
-}
-
-/* A completion pops through the tertiary blue (product owner: so it reads clearly and draws
-   the eye): it grows in blue, a blue ring spreads from it and fades, and it settles in its own
-   colour. pl-pop-blue is for filled marks (the paid tick, the escrow states, a step's number),
-   pl-pop-ink for a mark drawn in its text colour (the list checks, the race's winner). */
-@keyframes pl-pop-blue {
-  0% { scale: 0; background-color: var(--tertiary); color: var(--tertiary-fg); box-shadow: 0 0 0 0 var(--tertiary-ring); }
-  55% { scale: 1.16; background-color: var(--tertiary); color: var(--tertiary-fg); box-shadow: 0 0 0 0 var(--tertiary-ring); }
-  100% { scale: 1; box-shadow: 0 0 0 12px transparent; }
-}
-@keyframes pl-pop-ink { 0% { scale: 0; color: var(--tertiary); } 55% { scale: 1.18; color: var(--tertiary); } 100% { scale: 1; } }
-@keyframes pl-flash-blue {
-  0%, 35% { background-color: var(--tertiary); color: var(--tertiary-fg); box-shadow: 0 0 0 0 var(--tertiary-ring); }
-  100% { box-shadow: 0 0 0 12px transparent; }
-}
-@keyframes pl-ink-blue { 0%, 45% { color: var(--tertiary); } }
-@keyframes pl-pop-done { 0% { scale: .9; background-color: var(--tertiary); color: var(--tertiary-fg); } 50% { scale: 1.06; background-color: var(--tertiary); color: var(--tertiary-fg); } }
-/* the list checks pop in blue as their row arrives, then take their own colour */
-.pl-anim [data-reveal].is-in .pl-check, .pl-anim .pl-path.is-in .pl-check { animation: pl-ink-blue 1.2s ease .25s backwards; }
-.pl-anim .pl-path.is-in .pl-checks li:nth-child(2) .pl-check { animation-delay: .35s; }
-.pl-anim .pl-path.is-in .pl-checks li:nth-child(3) .pl-check { animation-delay: .45s; }
-/* a step's number flashes blue as it pops in, and again each time it becomes the current step
-   of the pinned walkthrough */
-.pl-anim .pl-steps li.is-in .pl-step-num { animation: pl-flash-blue 1s ease calc(var(--i, 0) * 80ms + .1s) backwards; }
-.pl-how.is-pinned li.is-current .pl-step-num { animation: pl-flash-blue .9s ease both; }
 
 /* FAQ answers open smoothly where the browser can size to auto */
 .pl-faq { interpolate-size: allow-keywords; }
@@ -954,7 +920,8 @@
 [data-theme="dark"] .pl-uses-tab[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--tertiary); }
 [data-theme="dark"] .pl-code-tab::after { background: var(--tertiary); }
 [data-theme="dark"] .pl-how.is-pinned .pl-steps::after { background: var(--tertiary); }
-[data-theme="dark"] .pl-bento-card:hover { box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .42); }
+[data-theme="dark"] .pl-bento-card { transition: box-shadow .3s ease; }
+[data-theme="dark"] .pl-bento-card:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
 
 /* ---- multi-page layout (the gateway home and its content pages) ---- */
 /* the section navigation: a sticky row under the general nav, the current page underlined in
