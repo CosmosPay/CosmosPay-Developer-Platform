@@ -355,8 +355,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Only this origin may post** (Astro's `checkOrigin` is off app-wide, so the endpoint checks
   `Origin` itself). A script is answered "sent" and nothing goes out: the honeypot field
   (`website`) filled in, or a post under 3 s after the page rendered. One network sends at most
-  five messages per 15 minutes (in memory: one process). One-line fields refuse line breaks, so
-  nothing a visitor types can become a mail header.
+  five messages per 15 minutes, keyed on `cf-connecting-ip` (Cloudflare overwrites it) else the
+  connection, never X-Forwarded-For or X-Real-IP (a client writes those); all networks together
+  send at most sixty an hour, which bounds a forged key (in memory: one process). The body is read
+  up to 20 KB, whatever Content-Length says. One-line fields refuse line breaks, so nothing a
+  visitor types can become a mail header.
 - It emails `CONTACT_EMAIL` (else the gateway's public address, `CONTACT_ADDRESS`) through
   `src/lib/mailer.ts`, the visitor as the reply-to, their words as text (escaped in the HTML part).
   With no mail transport configured the visitor is told to write to that address instead.

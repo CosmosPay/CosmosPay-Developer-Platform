@@ -86,6 +86,42 @@ export class ContactRateLimit {
   }
 }
 
+/**
+ * The network to count a message against, from what a client cannot forge: Cloudflare's
+ * cf-connecting-ip (it overwrites any value a client sends; production is Cloudflare, nginx,
+ * this app), else the connection's own address. X-Forwarded-For, X-Real-IP and the like carry
+ * whatever the client wrote, so they are never read here. A request that skips Cloudflare could
+ * still set the header, which is why the endpoint also caps all sends together.
+ */
+export function rateKey(headers: Headers, peer: string | undefined): string {
+  return headers.get("cf-connecting-ip")?.trim() || peer || "unknown";
+}
+
+/** The body, read up to `max` bytes; null when it is longer (whatever Content-Length said). */
+export async function readCapped(body: ReadableStream<Uint8Array> | null, max: number): Promise<Uint8Array | null> {
+  if (!body) return new Uint8Array();
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.byteLength;
+  }
+  return out;
+}
+
 const TOPIC_NAMES: Record<ContactTopic, string> = {
   start: "Getting started",
   integration: "Integration",

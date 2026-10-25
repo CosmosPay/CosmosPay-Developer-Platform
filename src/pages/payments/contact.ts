@@ -5,20 +5,22 @@
  * It works without JavaScript: the form posts here and the page comes back with
  * ?contact=<outcome>#contact. The page script posts it in place instead (Accept: application/json)
  * and gets { status, errors }. Only this origin may post (the app runs with Astro's checkOrigin
- * off, so it is checked here); a script is told "sent" and nothing goes out (the honeypot, a post
- * faster than a person); one network may send five messages per 15 minutes. The rules are in
- * src/lib/payments/contact.ts. */
+ * off, so it is checked here); the body is read up to 20 KB, whatever Content-Length says; a
+ * script is told "sent" and nothing goes out (the honeypot, a post faster than a person); one
+ * network (cf-connecting-ip, never a header the client controls) may send five messages per 15
+ * minutes, and all of them together sixty an hour. The rules are in src/lib/payments/contact.ts. */
 import type { APIRoute } from "astro";
 import { CONTACT_EMAIL } from "astro:env/server";
 import { PAYMENTS } from "@/lib/payments/urls";
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
-import { CONTACT_ADDRESS, ContactRateLimit, contactEmail, looksAutomated, parseContact, type ContactField } from "@/lib/payments/contact";
+import { CONTACT_ADDRESS, ContactRateLimit, contactEmail, looksAutomated, parseContact, rateKey, readCapped, type ContactField } from "@/lib/payments/contact";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
-import { clientIp } from "@/lib/geo";
 
 type Outcome = "sent" | "invalid" | "limited" | "failed";
 
-const limit = new ContactRateLimit();
+const perNetwork = new ContactRateLimit();
+// Bounds what anyone can make the app send, even with a forged network key.
+const overall = new ContactRateLimit(60, 60 * 60_000);
 const PAGES = new Set(["/", ...PAYMENTS_PAGE_PATHS]);
 const MAX_BODY = 20_000;
 
@@ -27,11 +29,12 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     ? request.headers.get("origin") === new URL(PAYMENTS).origin
     : request.headers.get("sec-fetch-site") === "same-origin";
   if (!sameOrigin) return new Response("Forbidden", { status: 403 });
-  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return new Response("Payload Too Large", { status: 413 });
 
   let fields: Record<string, string>;
   try {
-    const form = await request.formData();
+    const body = await readCapped(request.body, MAX_BODY);
+    if (!body) return new Response("Payload Too Large", { status: 413 });
+    const form = await new Response(body, { headers: { "Content-Type": request.headers.get("content-type") ?? "" } }).formData();
     fields = Object.fromEntries([...form].filter(([, v]) => typeof v === "string")) as Record<string, string>;
   } catch {
     return new Response("Bad Request", { status: 400 });
@@ -51,7 +54,8 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   if (looksAutomated(fields, Date.now())) return answer("sent");
   const parsed = parseContact(fields);
   if (!parsed.ok) return answer("invalid", parsed.errors);
-  if (!limit.take(clientIp(request.headers, clientAddress) ?? "unknown", Date.now())) return answer("limited");
+  const now = Date.now();
+  if (!perNetwork.take(rateKey(request.headers, clientAddress), now) || !overall.take("all", now)) return answer("limited");
   if (!isMailConfigured()) {
     console.error("[contact] mail is not configured (RESEND_API_KEY or SMTP_*, and SMTP_FROM)");
     return answer("failed");

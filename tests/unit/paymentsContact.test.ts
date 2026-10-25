@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ContactRateLimit, MIN_FILL_MS, contactEmail, looksAutomated, parseContact } from '@/lib/payments/contact';
+import { ContactRateLimit, MIN_FILL_MS, contactEmail, looksAutomated, parseContact, rateKey, readCapped } from '@/lib/payments/contact';
 
 const GOOD = { name: 'Ana Pérez', email: 'ana@tienda.com', company: 'Tienda Sur', topic: 'pricing', message: 'Quiero saber qué plan me conviene.' };
 
@@ -47,4 +47,17 @@ test('contactEmail escapes the visitor\'s words in the HTML part', () => {
   assert.ok(!mail.html.includes('<script>'));
   assert.ok(mail.html.includes('&lt;script&gt;alert(1)&lt;/script&gt; &amp; más'));
   assert.ok(mail.text.includes('Email: ana@tienda.com'));
+});
+
+test('rateKey trusts the Cloudflare header or the connection, never X-Forwarded-For', () => {
+  assert.equal(rateKey(new Headers({ 'cf-connecting-ip': '203.0.113.7', 'x-forwarded-for': '1.1.1.1' }), '127.0.0.1'), '203.0.113.7');
+  assert.equal(rateKey(new Headers({ 'x-forwarded-for': '1.1.1.1', 'x-real-ip': '2.2.2.2' }), '127.0.0.1'), '127.0.0.1');
+  assert.equal(rateKey(new Headers(), undefined), 'unknown');
+});
+
+test('readCapped reads the bytes that arrive and stops past the cap, whatever Content-Length said', async () => {
+  const stream = (...parts: string[]) => new ReadableStream<Uint8Array>({ start(c) { for (const p of parts) c.enqueue(new TextEncoder().encode(p)); c.close(); } });
+  assert.equal(new TextDecoder().decode((await readCapped(stream('name=Ana', '&topic=other'), 100))!), 'name=Ana&topic=other');
+  assert.equal(await readCapped(stream('x'.repeat(60), 'y'.repeat(60)), 100), null);
+  assert.equal((await readCapped(null, 100))!.byteLength, 0);
 });
