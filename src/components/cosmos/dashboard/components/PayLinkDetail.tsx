@@ -5,6 +5,7 @@ import { useT } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 
 /* Map an upstream status to a status-pill class (reuses the existing ok/fail/ref pills). */
 export const STATUS_PILL = { SUCCEEDED: "ok", FAILED: "fail", EXPIRED: "fail", CANCELLED: "fail", PENDING: "ref", SUBMITTED: "ref" };
@@ -80,6 +81,7 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
   const [data, setData] = useState(intent);
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [savingTheme, setSavingTheme] = useState(false);
 
   useEffect(() => {
     if (data.qr) return;
@@ -106,6 +108,18 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
       .then(() => { showToast(d.deleteTitle); onDeleted(data.id); })
       .catch((err) => showToast((err && err.message) || pl.deleteError, "error"))
       .finally(() => setBusy(false));
+  };
+
+  // The checkout design can change at any time, paid links included: it only changes how
+  // payments.cosmospay.lat draws the page. Optimistic, rolled back if the server refuses.
+  const changeTheme = (checkoutTheme) => {
+    const before = data.checkoutTheme;
+    setData((x) => ({ ...x, checkoutTheme }));
+    setSavingTheme(true);
+    payApi.update(data.id, env, { checkoutTheme })
+      .then((updated) => { if (updated) setData((x) => ({ ...x, checkoutTheme: updated.checkoutTheme || checkoutTheme })); showToast(pl.design.saved); })
+      .catch(() => { setData((x) => ({ ...x, checkoutTheme: before })); showToast(pl.design.saveError, "error"); })
+      .finally(() => setSavingTheme(false));
   };
 
   const F = d.fields;
@@ -147,6 +161,13 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
             <a className="btn btn-dark btn-sm" href={checkoutUrl(data.id)} target="_blank" rel="noopener noreferrer">{DI.link} {d.openCheckout}</a>
           </div>
         </CopyBlock>
+
+        {canManage && (
+          <div className="paylink-block">
+            <div className="paylink-block-head"><span className="field-l">{pl.design.label}</span></div>
+            <CheckoutDesignPicker bare value={data.checkoutTheme || "classic"} disabled={savingTheme} onChange={changeTheme} />
+          </div>
+        )}
 
         <CopyBlock label={d.uri} value={data.uri}>
           <div className="paylink-actions">

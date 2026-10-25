@@ -437,20 +437,6 @@ select.field { cursor: pointer; }
 .seg2.wrap { flex-wrap: wrap; }
 .topbar .burger { display: none; }
 .nav-scrim { display: none; }
-.nav-burger { display: none; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); place-items: center; cursor: pointer; }
-.nav-burger svg { width: 21px; height: 21px; }
-.mobile-menu { display: none; }
-@media (max-width: 1100px) {
-  .nav-burger { display: grid; }
-  .nav-right .lang, .nav-right .link-login, .nav-right .getkeys { display: none; }
-  .mobile-menu { display: block; position: fixed; left: 0; right: 0; top: 72px; background: var(--bg); border-bottom: 1px solid var(--line); padding: 14px 16px 22px; z-index: 49; box-shadow: none; max-height: calc(100vh - 72px); overflow-y: auto; }
-  .mm-lang { padding: 14px 0; border-bottom: 1px solid var(--line); }
-  .mm-lang .lang-menu { left: 0; right: auto; }
-  .mm-link { display: block; font-size: 18px; font-weight: 500; color: var(--ink); padding: 13px 0; border-bottom: 1px solid var(--line); }
-  .mm-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
-  .mm-actions .btn { width: 100%; }
-  .mm-login { display: block !important; text-align: center; font-weight: 500; padding: 10px; }
-}
 
 .dash-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar { height: 64px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; padding: 0 28px; position: sticky; top: 0; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(12px); z-index: 20; }
@@ -757,17 +743,6 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .modal-body .mtags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
 .modal-body .mtags span { font-size: .75rem; font-weight: 500; color: var(--ink-2); background: transparent; border: 1px solid var(--line); padding: 4px 12px; border-radius: var(--radius-btn); }
 
-/* ============================================================
-   LOGIN SCREEN (OAuth2 / Authentik entry)
-   ============================================================ */
-.login-screen { min-height: calc(100vh - 72px); display: grid; place-items: center; padding: 60px 22px; }
-.login-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: 48px 44px; max-width: 460px; width: 100%; text-align: center; }
-.login-card h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.035em; margin: 20px 0 12px; }
-.login-card > p { color: var(--ink-2); font-size: 16px; line-height: 1.6; margin: 0 0 28px; }
-.login-card .btn { width: 100%; }
-.login-card .login-back { display: inline-block; margin-top: 14px; font-size: 14px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
-.login-card .login-back:hover { color: var(--ink); }
-.login-card .login-note { display: block; margin-top: 18px; font-family: var(--ff-soft); font-size: 12px; color: var(--ink-3); letter-spacing: .02em; }
 .modal-body .cmetric { font-size: 2.75rem; font-weight: 300; letter-spacing: -0.04em; line-height: 1; color: var(--ink); margin-bottom: 8px; }
 
 /* ---------------- account: profile editor ---------------- */

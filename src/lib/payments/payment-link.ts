@@ -2,6 +2,7 @@
    `GET /v1/payment-links/{id}` answers (the community server's PublicPaymentLinkEntity)
    and every decision the page makes from it. Pure, so it is unit-tested under plain
    node; the browser script only wires it to the DOM. */
+import { DEFAULT_CHECKOUT_THEME, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
 
 export const CHAINS = ["stellar", "solana", "monad"] as const;
 export type Chain = (typeof CHAINS)[number];
@@ -30,6 +31,8 @@ export interface PaymentLink {
   networkFee: string | null;
   expiresAt: string | null;
   createdAt: string;
+  /** The design the merchant picked for this page. */
+  checkoutTheme: CheckoutTheme;
 }
 
 /* Prisma `cuid()` (v1): "c" + lowercase base36. Checked before any request so a mistyped
@@ -89,6 +92,9 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
     networkFee: b.networkFee,
     expiresAt: b.expiresAt,
     createdAt: b.createdAt,
+    // Cosmetic, so it never invalidates a payment: a design this page does not know yet
+    // (or a server that predates the field) draws the classic one.
+    checkoutTheme: isCheckoutTheme(b.checkoutTheme) ? b.checkoutTheme : DEFAULT_CHECKOUT_THEME,
   };
 }
 
@@ -212,4 +218,19 @@ export async function fetchPaymentLink(
   } catch {
     return { kind: "error" };
   }
+}
+
+/**
+ * The checkout's countdown to `expiresAt`: "MM:SS" under an hour, "HH:MM:SS" from there,
+ * never negative. Null when the link has no deadline.
+ */
+export function countdown(expiresAt: string | null, now: number = Date.now()): { digits: string; seconds: number } | null {
+  const ends = expiresAt ? Date.parse(expiresAt) : NaN;
+  if (!Number.isFinite(ends)) return null;
+  const seconds = Math.max(0, Math.floor((ends - now) / 1000));
+  const two = (n: number) => String(n).padStart(2, "0");
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return { digits: h > 0 ? `${two(h)}:${two(m)}:${two(s)}` : `${two(m)}:${two(s)}`, seconds };
 }

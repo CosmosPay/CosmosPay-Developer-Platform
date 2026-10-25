@@ -45,9 +45,12 @@ export const GET: APIRoute = async (ctx) => {
   const status = ctx.url.searchParams.get("status") || undefined;
   const take = Number(ctx.url.searchParams.get("take")) || undefined;
   const skip = Number(ctx.url.searchParams.get("skip")) || undefined;
+  // Only a parseable instant is forwarded, normalised to ISO; anything else is ignored.
+  const createdFromRaw = ctx.url.searchParams.get("createdFrom");
+  const createdFrom = createdFromRaw && !Number.isNaN(Date.parse(createdFromRaw)) ? new Date(createdFromRaw).toISOString() : undefined;
 
   try {
-    const list = await cosmos.list(session.user.id, env, { status, take, skip });
+    const list = await cosmos.list(session.user.id, env, { status, createdFrom, take, skip });
     return jsonSuccess({ data: list, message: "Payment intents fetched successfully" });
   } catch (err) {
     return cosmosErrorResponse(err);
@@ -84,6 +87,7 @@ export const POST: APIRoute = async (ctx) => {
             memo: rest.memo,
             msg: rest.msg,
             callback: rest.callback,
+            checkoutTheme: rest.checkoutTheme,
           })
         : await cosmos.createPay(session.user.id, environment, {
             destination: rest.destination,
@@ -93,6 +97,7 @@ export const POST: APIRoute = async (ctx) => {
             memo: rest.memo,
             msg: rest.msg,
             callback: rest.callback,
+            checkoutTheme: rest.checkoutTheme,
           });
 
     // Activity notification (best-effort) — records origin + date of the action.

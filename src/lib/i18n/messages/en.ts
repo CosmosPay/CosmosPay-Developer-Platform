@@ -90,13 +90,6 @@ export default {
   },
 
   /* ---------------- /login ---------------- */
-  login: {
-    title: "Sign in to Cosmos Pay",
-    sub: "Your account opens the developer dashboard: API keys, payment links, webhooks and analytics.",
-    cta: "Continue to sign in",
-    redirecting: "Taking you to sign in…",
-    note: "Secure sign-in with your Cosmos Pay account.",
-  },
 
   /* ---------------- shared: nav ---------------- */
   nav: {
@@ -551,6 +544,7 @@ export default {
       },
     },
     overview: {
+      hub: { crumb: "Overview", active: "Active", since: "Since {date}", settled: "Settled volume", noVolume: "No settled payments yet", moreAssets: "+{n} more", rate: "Rate", plan: "Plan", orgId: "Organization ID", createLink: "Create payment link", docs: "Documentation", designs: "Checkout designs", kpiTotal: "Total payments", kpiSucceeded: "Succeeded", kpiFailed: "Failed", kpiRate: "Success rate", activity: "Payments activity", period7: "7 days", period30: "30 days", periods: { today: "Today", week: "Week", month: "Month", year: "Year" }, noPeriodTx: "No settled payments in this period.", sumVolume: "Settled volume", sumCount: "Payments", sumPayers: "Payers", sumWebhooks: "Webhook deliveries", sumWebhooksFailed: "{n} failed", growthVs: "{pct} vs the previous {n} days", legendVolume: "Volume", legendCount: "Payments", chartLabel: "Payments created and volume settled per day over the last {n} days.", transactions: "Latest settled payments", viewAll: "View all payments", thId: "Payment", thDate: "Date", thAmount: "Amount", thNetwork: "Network", thTo: "Paid to", thStatus: "Status" },
       greeting: "Good morning, {name}",
       sub: "Here’s what’s happening at {org} today.",
       metrics: { gross: "Gross volume", net: "Net volume", success: "Successful payments", newCust: "New customers" },
@@ -589,6 +583,7 @@ export default {
       custDetail: { title: "Customer", edit: "Edit", save: "Save changes", alias: "Alias", note: "Note", account: "Stellar account", payments: "Payments", onChain: "On-chain", noPayments: "No payments yet." },
     },
     paylinks: {
+      design: { label: "Checkout design", hint: "How the hosted checkout looks for this link. You can change it at any time.", preview: "Preview", saved: "Checkout design updated", saveError: "Couldn’t change the checkout design", current: "Current" },
       title: "Payment links",
       sub: "{n} links · Stellar SEP-7 payments",
       create: "Create payment link",

@@ -26,7 +26,7 @@ npm run export:wallet-data # dumps the retired wallet tables to JSON for the com
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/` — landing, `/pricing`, `/tos` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/` — `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/` — `/{id}` hosted checkout, `/pay` SEP-7 handler |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/` — `/` landing, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -57,10 +57,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   site get `Astro.locals.user` only when served from the platform's own host (local single-host
   setups); otherwise `useDevSession` reads `/api/auth/get-session` cross-origin and the nav
   holds its skeleton (`sessionReady`) until it answers.
-- **Sign-in happens on the platform domain only:** `startLogin()` navigates to `/login` there,
-  which starts the flow (`signInWithAuthentik`) on mount and marks its history entry first
-  (`?manual=1`) so Back from the provider shows the card. `next` must be a same-origin path
-  (`src/lib/safe-next.ts`). Sign-out from the company site is a credentialed cross-origin call
+- **Sign-in happens on the platform domain only, and there is no sign-in view:** `startLogin()`
+  navigates to `/login` there, which starts the Authentik flow on the server
+  (`auth.api.signInSocial`) and answers 302 straight to Authentik, forwarding the state cookie.
+  It renders something only when the provider cannot be reached (503). `next` must be a
+  same-origin path (`src/lib/safe-next.ts`).
+- **Authentik must list the callback of the host that serves `/login`:**
+  `<PUBLIC_BETTER_AUTH_URL>/api/auth/callback/ak` — `https://dev.cosmospay.lat/api/auth/callback/ak`
+  in production, `http://localhost:4321/api/auth/callback/ak` for the default local setup. A local
+  multi-domain run on other hosts needs its own callback registered there, or Authentik answers
+  "Redirect URI Error".
+- Sign-out from the company site is a credentialed cross-origin call
   to `/api/auth/sign-out`: keep `https://cosmospay.lat` in `src/lib/allowed-origins.ts`.
 
 ### The payments domain
@@ -83,9 +90,140 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
   stops on paid, failed and cancelled (`nextPollDelay`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
-  to every payments response. Payments pages are `noindex`, have their own five-language
+  to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` — the
+  landing is the one indexed page — and the domain has its own five-language
   catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`)
-  and resolve the language as ?lang → cookie → Accept-Language → en.
+  and resolves the language as ?lang → cookie → Accept-Language → en.
+
+### One nav on every view
+
+- **The general nav (`src/components/cosmos/layout/Nav.tsx`) is on every page of the three
+  domains.** `CosmosLayout` renders it through the `SiteNav` island unless the page's own React
+  tree does (`nav={false}`: Landing, Pricing, Dashboard). `PaymentsLayout` always renders it,
+  never reading the session (`session={false}`: the payments domain is not an allowed origin) and
+  reloading on a language change, because payments copy is server-rendered.
+- Its styles, burger and mobile menu included, live in `cosmos.css`, so any page that loads it
+  draws the bar the same way. **At the very top of a page the bar has no surface** (no fill,
+  border or blur: `.nav:not(.scrolled):not(.menu-open)`); it takes one back once the page moves
+  or the mobile menu opens.
+- **No ghost links.** A menu or footer link renders only when it leads somewhere. The targets are
+  listed by catalog position in `NAV_LINKS` / `FEATURED_HREFS` (Nav.tsx) and `FOOT_GROUPS`
+  (Footer.tsx); a label whose page does not exist yet stays there commented out. Never ship
+  `href="#"` — comment the link out instead.
+- **On the payments gateway its own links stay on it.** `Nav` and `Footer` take `area`
+  (`PaymentsLayout` and the landing pass `"payments"`): the logo goes to `/`, Pricing to the
+  landing's `/#pricing`, and any link into `PAYMENTS` becomes a same-origin path
+  (`localHref` / `homeFor` / `pricingFor` in `src/components/cosmos/lib/constants.ts`). Docs and
+  sign-in still lead to the platform, where they live. The payments error page's button goes
+  to `/` too: a payments page never sends the payer to the company site.
+
+### The institutional skin (payments site and dashboard)
+
+- `src/styles/institutional.css`, switched on by `class="inst"` on `<body>` (`PaymentsLayout`
+  always; `CosmosLayout bodyClass="inst"` for the dashboard), re-declares cosmos.css's tokens:
+  a light neutral canvas and white cards. **The palette has ranks, set by the product owner:
+  black is primary** (buttons, links, figures, the account card — `--btn-bg`, `--accent`,
+  `--navy`, all `#13131A`, inverted to white in dark mode), **neutral greys are secondary**
+  (canvas, surfaces, lines, tints — no blue cast), and **the corporate blue is tertiary**
+  (`--tertiary`: the buttons' hover ink, the dashboard chart, focus rings). Don't bring blue back
+  as a primary colour. It follows the product owner's reference shots; BRAND.md is the
+  direction (logo, Open Sauce One), not a hard limit. The checkout designs follow it too:
+  Receipt's page is a neutral grey, Card's is black.
+- Filled surfaces use `--btn-bg` / `--btn-fg`: in dark mode `--accent` is white, meant
+  for text and icons.
+- **Solid colours only:** no gradients (backgrounds, glows, thumbnails), no dark bands in light
+  mode — every section follows the theme — and no decorative chips (status and network are
+  coloured text). The product owner rejected all three as generic.
+- **Cosmos Lazos (`--ff-display`) is for the logo and very specific highlights only**; no page
+  sets it today. Titles, numbers and brand names are Open Sauce One (weight 600, tight
+  tracking). Don't spread it to section titles.
+- **Buttons are the Stellar Snap's** (`.btn` in cosmos.css): pills with a 1.5px outline and an
+  ink fill that grows from where the pointer enters, placed by `src/scripts/ink.ts` (both layouts
+  load it). A variant names its ink with `--ink-fill` / `--ink-fg`.
+- The dashboard's restyle is `src/styles/dashboard.css` (sidebar, page title with breadcrumb,
+  the overview's account card, period tabs, `BarChart`, design picker).
+  Status is coloured text with a dot, never a capsule; section labels are plain sentence case;
+  every overview block keeps `min-width: 0`, so tables scroll inside their box on phones. To see
+  it locally, sign in through local Authentik with the `.env` test account (`DEV_TEST_*`).
+  The latest settled payments have Today / Week / Month / Year tabs, read from
+  `GET /api/payment-intents?status=SUCCEEDED&createdFrom=…` (the community server's
+  `createdFrom` filter); the summary's growth line compares the 7-day window with the one before.
+
+### The payments landing
+
+- `/` on payments is `src/pages/payments/index.astro`: server-rendered, copy in
+  `src/lib/payments/landing-i18n.ts` (five languages, parity-tested), rates read from
+  `src/lib/plans.ts`. It is the one indexable payments page (robots `Allow: /$`, sitemap).
+- **A highlighted word uses the Stellar Snap's highlighter, in black** (`.pl-hl`, the product
+  owner's choice over lime or the corporate blue): a solid block behind the words, painted left
+  to right, white ink on it; inverted in dark mode (white block, black ink). A pseudo-element,
+  not a gradient. Today: the hero's "stablecoins" and the final call's.
+- The hero runs up under the nav (`margin-top: -73px`) and fills the first screen at every size;
+  below 900px the copy comes first and the video under it, and the title stays on two lines.
+  Check it at real viewports (screen minus browser bars and taskbar: 1920×947, 2560×1307,
+  1536×730, 1366×625, 1280×585, tablets, 390 and 360 phones), not only at a maximised window.
+- The hero's background is the coin-ramp video (`public/media/coin-ramp*.{webm,mp4}` + poster),
+  anchored right. It multiplies onto the light page; in dark mode it is inverted with its hue
+  turned back and lightens onto the page, so the hero follows the theme. It **plays on its own for
+  everyone** — the product owner's call, the one exception to reduced motion — pauses only off
+  screen, and always has its pause button (WCAG 2.2.2). Its container must not get a z-index: a
+  stacking context would cut the video off from the background it blends with.
+- Its sections follow how crypto gateways present themselves (reviewed: Stripe, CoinGate, BitPay,
+  NOWPayments, Triple-A, BVNK, Cryptomus, CoinPayments, Coinbase Business, MoonPay Commerce,
+  Alchemy Pay, Fireblocks): hero, the networks / assets / wallets strip, benefits, a comparison
+  with cards and bank transfers, three integration paths (no code, hosted, API), how it works,
+  checkout designs, use cases by business (WAI-ARIA tabs), security, developers, pricing, FAQ.
+- **Two settlement modes, as the product owner offers them: instant** (straight to the merchant's
+  address) **and escrow** (the payment is held until it is released, e.g. when the order ships).
+  As the product owner specified it: the payment waits in an on-chain contract (not with Cosmos
+  Pay), the merchant releases it when the order ships, it goes back to the buyer if not released
+  within the deadline the merchant sets for the link, and escrow costs 0.5% per payment on top
+  of the plan's rate. No escrow code exists in this repo, the community server, the SDK or the
+  wallet yet. "What changes" carries both modes (benefits + the "two ways to settle" cards), and
+  so do the comparison, the hero lede, pricing and the FAQ.
+- **Only checkable claims**: no customer logos, volumes, certifications, licences or uptime
+  figures until they are real. Every product claim in the copy is checked against the dashboard
+  and the community server (e.g. the dashboard sets amount, memo and message, not an expiry).
+  The card column of the comparison states the usual case and carries a footnote saying so.
+- **Networks, assets and wallets run as two marquees, and only the marquees show** (the
+  product owner removed the visible title, row labels, the SEP-7 note and the pause button).
+  Two identical sets slide by half the track; the moving copy is `aria-hidden`, and a visually
+  hidden title, row labels and list carry the names. Hovering a row holds it; like the hero
+  video they run for everyone, reduced motion included (the product owner's call). **Logos are official artwork only**, full colour, in
+  `public/media/brands`: USDC, XLM, SOL from cryptocurrency-icons; Freighter, LOBSTR, xBull,
+  Albedo, Rabet from the Stellar Wallets Kit; Phantom and Solflare from their Solana
+  wallet-adapter icons; Monad and EURC from Trust Wallet's assets. Single-colour marks (Stellar,
+  the Cosmos isotype) are inline in currentColor (`Mark.astro`) so they follow the theme. Never
+  draw an approximation of someone else's logo.
+- **Typography and structure stay quiet** (design-skill pass, 2026-10-24): no labels above
+  headings, headings in one colour with no accent word, no all-caps labels, numbering only for
+  real sequences ("how it works"), no arrows on buttons or links, no rows of icon cards, no
+  resting shadows; surfaces differ by tone (`--bg` / `--surface`), lines only where they carry
+  structure.
+- **Motion is wanted** (the product owner's call: "animate everything you can"): the hero comes
+  in line by line, every `data-reveal` block rises in the first time it scrolls into view
+  (`--i` staggers siblings), the steps' track draws, checks pop, tabs and FAQ answers slide open,
+  the logos run. Reveals hide content only under `html.pl-anim`, set by an inline head script
+  that removes it again after 2.5 s if the page script never loads, so the page is complete
+  without JavaScript. Only opacity, translate and scale animate, and **all of it runs for
+  everyone, reduced-motion settings included** (the product owner's call, as for the video).
+
+### Checkout designs
+
+- Four designs: `classic`, `split`, `ticket`, `card` (`src/lib/payments/checkout-themes.ts`).
+  The community server stores the choice per payment intent as `checkoutTheme` (create, `PATCH
+  /v1/payment-intents/{id}`, the public read). `parsePaymentLink` draws `classic` for a value it
+  does not know: the field is cosmetic and never invalidates a payment.
+- `src/components/payments/Checkout.astro` serves every design as a `<template>`;
+  `src/scripts/payments/checkout.ts` mounts the link's one and fills every `data-slot` occurrence,
+  with events delegated on `#checkout`. A new design is: a template in
+  `src/components/payments/checkout/`, its CSS in `checkout.css`, the value in `CHECKOUT_THEMES`
+  here and on the server, a thumbnail `public/media/designs/<name>.svg`, and its name and
+  description in the payments catalog's `designs`.
+- `/preview/{design}` draws a design with `src/lib/payments/preview.ts`'s sample: nothing on it
+  can be paid (the QR encodes a "sample" notice, the URI is empty, wallet buttons are inert).
+- The dashboard picks the design when a link is created and changes it from the link's detail
+  (`CheckoutDesignPicker`, through the PATCH proxy).
 
 ### Other split-related notes
 
@@ -244,6 +382,11 @@ This app reaches the Payments API (the community server) server-to-server, not t
 (`src/lib/cosmos.ts`), so it presents what the gateway would have: `X-Gateway-Secret` and the
 consumer headers.
 
+- **`COSMOS_API_URL` may list several replicas** (comma-separated) and `src/lib/cosmos.ts`
+  round-robins across them, as APISIX does. Locally, run every replica it lists (the server's
+  `npm run dev:local` starts `api` + `replica`) or point it at one: with one of two down, every
+  other call answers 502 "Could not reach the Payments service" — the server log names the
+  cause (`[cosmos] … failed: ECONNREFUSED`).
 - **`COSMOS_GATEWAY_SECRET` must equal the server's `APISIX_GATEWAY_SECRET`.** The server always
   enforces it; empty or mismatched, every Payments API call answers 403. APISIX sets the same
   value on proxied requests (`src/utils/apisix.ts`).

@@ -1,0 +1,431 @@
+/* ============================================================
+   Cosmos Pay — payments-landing.css
+   payments.cosmospay.lat's landing (src/pages/payments/index.astro), on the
+   institutional skin (institutional.css).
+
+   Type and structure stay quiet: one typeface (Open Sauce One) on five sizes,
+   headings in one colour, no labels above headings, no all-caps, no numbering
+   unless the content is a sequence, no arrows on links. Surfaces are told apart
+   by tone (--bg / --surface), not by outlines or resting shadows; lines appear
+   only where they carry structure (table rows, FAQ items, the steps' track).
+   Solid colours only, no dark bands in light mode. The motion is where the page
+   is loud (see "motion" below): the hero video, the logo marquees, the reveals.
+   Buttons are the snap's pills (cosmos.css).
+   ============================================================ */
+
+/* Reveals start shifted (the code block from the right): clip, so nothing widens the page.
+   clip, not hidden: it makes no scroll container, so the sticky headings keep working. */
+.pl { display: block; overflow-x: clip; }
+
+/* ---- type scale: 60 / 40 / 22 / 17 / 14 ---- */
+.pl-head { max-width: 720px; margin: 0 0 48px; }
+.pl-head h2, .pl-final h2 {
+  margin: 0; font-weight: 600; font-size: clamp(2rem, 3.3vw, 2.5rem); line-height: 1.12;
+  letter-spacing: -.025em; text-wrap: balance; color: var(--ink);
+}
+.pl-lede, .pl-section-lede { margin: 0; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); max-width: 54ch; }
+.pl-head .pl-section-lede { margin-top: 20px; }
+.pl-textlink {
+  position: relative; display: inline-flex; align-items: center; margin-top: 20px;
+  font-weight: 600; font-size: .9375rem; color: var(--accent);
+}
+/* The snap's underline sweep. */
+.pl-textlink::after {
+  content: ""; content: "" / "";
+  position: absolute; left: 0; right: 0; bottom: -3px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-textlink:is(:hover, :focus-visible)::after { scale: 1 1; }
+.pl-cta { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.pl-cta .btn { min-height: 50px; padding: 13px 24px; }
+.pl-icon { width: 22px; height: 22px; display: block; }
+.pl-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.pl-footnote { margin: 16px 0 0; font-size: .875rem; line-height: 1.55; color: var(--ink-3); max-width: 80ch; }
+.pl-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.pl-checks li { display: flex; align-items: flex-start; gap: 12px; font-size: 1rem; line-height: 1.5; color: var(--ink); }
+.pl-check { flex: 0 0 auto; margin-top: 2px; color: var(--accent); }
+.pl-check .pl-icon { width: 18px; height: 18px; }
+
+/* ---- hero ---- */
+/* The hero runs up under the nav (72px + its 1px border) — the bar is transparent at the top of
+   the page — so the video reaches the top edge, and it fills the first screen at any size. */
+.pl-hero {
+  position: relative; overflow: hidden; isolation: isolate; background: var(--bg);
+  margin-top: -73px; padding-top: 73px;
+  min-height: 100svh;
+  display: flex; align-items: center;
+}
+/* The video is the header's background, anchored right: the start of its frame sits at the
+   left edge of this area. Drawn on white, it multiplies onto the light page; in dark mode it
+   is inverted with its hue turned back (white becomes black, the coins keep their colours)
+   and lightens onto the page, so the hero follows the theme. Its left edge fades out, so the
+   ramp never starts at a hard line. */
+/* No z-index here: a stacking context would cut the video off from the hero's background,
+   which is what it has to blend with. The copy sits above it instead. */
+.pl-hero-media { position: absolute; top: 0; right: 0; bottom: 0; width: 58%; }
+.pl-video {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; object-position: 0% 62%;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 22%);
+}
+[data-theme="dark"] .pl-video { filter: invert(1) hue-rotate(180deg); mix-blend-mode: lighten; }
+.pl-hero-inner { position: relative; z-index: 1; width: 100%; }
+.pl-hero-copy { max-width: 620px; padding: 56px 0 80px; }
+.pl-hero-title {
+  /* two lines at every width: 32px on a phone, 60px from a laptop up */
+  margin: 0; font-weight: 600; font-size: clamp(2rem, 4.2vw + .5rem, 3.75rem); line-height: 1.04;
+  letter-spacing: -.035em; color: var(--ink); text-wrap: balance;
+}
+.pl-hero .pl-lede { margin-top: 28px; font-size: 1.125rem; }
+/* The snap's highlighter (packages/site in Cosmos-Metamask-Adapter), in black as the product
+   owner asked: a solid block behind the words, painted left to right, with white ink on it.
+   Dark mode inverts it (white block, black ink) so it still reads. A pseudo-element, not a
+   gradient. */
+.pl-hl {
+  --hl: #13131A; --hl-ink: #FFFFFF;
+  position: relative; isolation: isolate; color: var(--hl-ink); background: none; padding: 0 .08em;
+}
+[data-theme="dark"] .pl-hl { --hl: #FFFFFF; --hl-ink: #13131A; }
+.pl-hl::before {
+  content: ""; content: "" / "";
+  position: absolute; z-index: -1; inset: 6% 0 0; border-radius: .08em;
+  background: var(--hl); transform-origin: left; animation: pl-hl .8s cubic-bezier(.65, 0, .35, 1) .7s both;
+}
+@keyframes pl-hl { from { scale: 0 1; } }
+/* the ink turns white as the block arrives, so the word never sits white on the page */
+.pl-hl { animation: pl-hl-ink .8s cubic-bezier(.65, 0, .35, 1) .7s both; }
+@keyframes pl-hl-ink { from { color: var(--ink); } }
+/* in the final call the band waits until the panel has risen in */
+.pl-final .pl-hl::before { animation: none; transition: scale .8s cubic-bezier(.65, 0, .35, 1) .5s; }
+.pl-final .pl-hl { animation: none; transition: color .8s cubic-bezier(.65, 0, .35, 1) .5s; }
+.pl-anim .pl-final:not(.is-in) .pl-hl::before { scale: 0 1; }
+.pl-anim .pl-final:not(.is-in) .pl-hl { color: var(--ink); }
+.pl-motion {
+  position: absolute; right: 24px; bottom: 22px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 8px 16px;
+  border: 1.5px solid var(--ink); border-radius: 999px; background: var(--surface); color: var(--ink);
+  font: 700 .8125rem/1 var(--ff-sans); cursor: pointer;
+}
+.pl-motion-icon { width: 10px; height: 12px; border-left: 3px solid currentColor; border-right: 3px solid currentColor; }
+.pl-motion[data-state="paused"] .pl-motion-icon {
+  border: 0; width: 0; height: 0;
+  border-left: 10px solid currentColor; border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+}
+
+/* ---- marks: networks, assets and wallets as two marquees, where a gateway shows its logo wall.
+   Only the marquees show; they run for everyone (reduced motion included, the product
+   owner's call, like the hero video), and hovering a row holds it. ---- */
+.pl-marks { background: var(--surface); padding: 40px 0; overflow: hidden; }
+.pl-marks .pl-marks-title { padding-bottom: 26px; font-size: 1rem; font-weight: 600; line-height: 1.5; color: var(--ink-2); }
+.pl-marquee-row + .pl-marquee-row { margin-top: 26px; }
+/* The edges fade out through a mask (no colour is painted), so logos slide in and out softly. */
+.pl-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.pl-marquee-track { display: flex; width: max-content; animation: pl-marquee 46s linear infinite; }
+.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; animation-duration: 52s; }
+.pl-marquee-set { display: flex; align-items: center; gap: 52px; padding-right: 52px; }
+.pl-marquee:hover .pl-marquee-track { animation-play-state: paused; }
+@keyframes pl-marquee { to { translate: -50% 0; } }
+.pl-brand {
+  display: inline-flex; align-items: center; gap: 12px; white-space: nowrap;
+  font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; color: var(--ink);
+}
+.pl-brand img, .pl-brand .pl-mark { width: 32px; height: 32px; flex: 0 0 auto; display: block; border-radius: 8px; object-fit: contain; }
+
+/* ---- sections: tone steps, no rules between them ---- */
+.pl-section { padding: clamp(80px, 10vw, 136px) 0; background: var(--bg); }
+.pl-section-alt { background: var(--surface); }
+.pl-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; align-items: start; }
+.pl-split > .pl-head { margin: 0; }
+.pl-head-sticky { position: sticky; top: 112px; }
+.pl-head-row { max-width: none; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: end; }
+.pl-head-row .pl-section-lede { margin: 0; justify-self: end; }
+
+/* benefits: four plain statements in a row */
+.pl-benefits { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px; }
+.pl-benefits h3 { margin: 0 0 12px; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); text-wrap: balance; }
+.pl-benefits p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+
+/* settlement: instant or escrow, side by side, each with its three steps */
+.pl-settle { margin-top: clamp(64px, 8vw, 104px); }
+.pl-settle-head { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: end; margin-bottom: 32px; }
+.pl-settle-title { margin: 0; font-weight: 600; font-size: clamp(1.5rem, 2.4vw, 1.875rem); line-height: 1.2; letter-spacing: -.02em; color: var(--ink); text-wrap: balance; }
+.pl-settle-head .pl-section-lede { justify-self: end; }
+.pl-settle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.pl-settle-card { display: grid; gap: 14px; align-content: start; padding: clamp(28px, 4vw, 40px); background: var(--surface); border-radius: var(--radius-lg); }
+.pl-settle-card h4 { margin: 0; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.pl-settle-card > p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+.pl-settle-steps { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.pl-settle-steps li { position: relative; display: flex; gap: 14px; align-items: flex-start; padding-bottom: 20px; font-size: 1rem; line-height: 1.45; color: var(--ink); }
+.pl-settle-steps li:last-child { padding-bottom: 0; }
+/* the line from one step to the next */
+.pl-settle-steps li:not(:last-child)::after {
+  content: ""; content: "" / "";
+  position: absolute; left: 13px; top: 32px; bottom: 4px; width: 1.5px; background: var(--line-2);
+  transform-origin: top; transition: scale .6s cubic-bezier(.2, .7, .2, 1) calc(var(--j, 0) * 160ms + .4s);
+}
+.pl-settle-num {
+  flex: 0 0 auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--btn-bg); color: var(--btn-fg); font-size: .8125rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  transition: scale .5s cubic-bezier(.3, 1.5, .5, 1) calc(var(--j, 0) * 160ms + .25s);
+}
+/* escrow's middle step is the hold: an open ring instead of a filled dot */
+.pl-settle-card.is-escrow li:nth-child(2) .pl-settle-num { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.pl-anim .pl-settle-card:not(.is-in) .pl-settle-num { scale: .3; }
+.pl-anim .pl-settle-card:not(.is-in) .pl-settle-steps li::after { scale: 1 0; }
+
+/* comparison: cards and transfers next to Cosmos Pay, our column on the accent tint */
+.pl-compare-card { background: var(--bg); border-radius: var(--radius-lg); overflow: hidden; }
+.pl-compare { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 1rem; }
+.pl-compare th, .pl-compare td { padding: 20px 28px; text-align: left; vertical-align: top; line-height: 1.55; }
+.pl-compare thead th { font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+.pl-compare thead th:first-child { width: 24%; }
+.pl-compare tbody tr { border-top: 1px solid var(--line); }
+.pl-compare tbody th { font-weight: 600; color: var(--ink); }
+.pl-compare td { color: var(--ink-2); }
+.pl-compare .pl-compare-us { background: var(--accent-soft); color: var(--ink); }
+.pl-compare thead .pl-compare-us { color: var(--accent); }
+.pl-compare-val { display: flex; gap: 12px; align-items: flex-start; }
+
+/* integration paths: three columns on one panel, not three cards */
+.pl-paths {
+  list-style: none; margin: 0; padding: clamp(28px, 4vw, 48px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 56px;
+  background: var(--surface); border-radius: var(--radius-lg);
+}
+/* Each column spans the list's five rows (title, effort, body, checks, link) as a subgrid,
+   so the check lists and links of all three line up whatever the body's length. */
+.pl-path { display: grid; grid-row: span 5; grid-template-rows: subgrid; row-gap: 0; }
+.pl-path h3 { margin: 0; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); }
+.pl-path-level { margin: 6px 0 0; font-size: .875rem; font-weight: 600; color: var(--accent); }
+.pl-path-body { margin: 16px 0 24px; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+.pl-path .pl-checks { align-self: start; }
+.pl-path .pl-textlink { justify-self: start; align-self: end; margin-top: 28px; }
+
+/* how it works: a real sequence, so numbered, on one track */
+.pl-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+.pl-steps li { position: relative; }
+/* the track from one step's number to the next */
+.pl-steps li:not(:last-child)::after {
+  content: ""; content: "" / "";
+  position: absolute; top: 19px; left: 52px; right: -20px; height: 1.5px; background: var(--line-2);
+}
+.pl-step-num {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; font-size: 1rem; font-variant-numeric: tabular-nums;
+}
+.pl-steps h3 { margin: 22px 0 8px; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.pl-steps p { margin: 0; color: var(--ink-2); line-height: 1.6; font-size: 1rem; }
+
+/* checkout designs: the thumbnails are the content */
+.pl-designs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.pl-design-link { display: flex; flex-direction: column; height: 100%; }
+.pl-design-shot {
+  display: block; border-radius: var(--radius-lg); overflow: hidden; background: #fff;
+  outline: 1.5px solid transparent; outline-offset: 3px; transition: outline-color .2s;
+}
+.pl-design-link:is(:hover, :focus-visible) .pl-design-shot { outline-color: var(--ink); }
+.pl-design-link:focus-visible { outline: none; }
+.pl-design-shot img { display: block; width: 100%; height: auto; }
+.pl-design-name { margin: 18px 0 6px; font-weight: 600; font-size: 1.0625rem; color: var(--ink); }
+.pl-design-desc { margin: 0; font-size: .9375rem; line-height: 1.55; color: var(--ink-2); flex: 1; }
+
+/* use cases: the businesses on the left, the selected one on the right */
+.pl-uses { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 32px; align-items: start; }
+.pl-uses-tabs { display: grid; gap: 4px; }
+.pl-uses-tab {
+  width: 100%; padding: 16px 20px; text-align: left; cursor: pointer;
+  background: transparent; border: 0; border-radius: 14px;
+  font: 600 1.0625rem/1.3 var(--ff-sans); color: var(--ink-3);
+  transition: background-color .2s, color .2s;
+}
+.pl-uses-tab:hover { color: var(--ink); }
+.pl-uses-tab[aria-selected="true"] { color: var(--ink); background: var(--bg); }
+.pl-uses-panel { padding: clamp(28px, 4vw, 48px); background: var(--bg); border-radius: var(--radius-lg); }
+.pl-uses-panel[hidden] { display: none; }
+.pl-uses-panel h3 { margin: 0 0 14px; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); }
+.pl-uses-body { margin: 0 0 28px; max-width: 58ch; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); }
+.pl-uses-built { margin: 28px 0 0; font-size: .9375rem; color: var(--ink-2); }
+
+/* security: a two-column list beside its heading, no icons */
+.pl-facts-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 48px; }
+.pl-facts-list h3 { margin: 0 0 8px; font-size: 1.0625rem; font-weight: 600; color: var(--ink); }
+.pl-facts-list p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+
+/* developers: the code follows the theme too */
+.pl-dev { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; align-items: center; }
+.pl-dev .pl-head { margin-bottom: 28px; }
+.pl-code { margin: 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); color: var(--ink); }
+.pl-code figcaption { padding: 16px 22px 0; font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+.pl-code pre { margin: 0; padding: 16px 22px 8px; overflow-x: auto; font: 13px/1.75 var(--ff-mono); color: var(--ink); }
+.pl-code-note { margin: 0; padding: 0 22px 22px; font: 13px/1.7 var(--ff-mono); color: var(--accent); }
+
+/* pricing: one panel, a column per plan; the lowest rate sits on the accent tint */
+.pl-plans {
+  list-style: none; margin: 0; padding: 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
+  background: var(--surface); border-radius: var(--radius-lg);
+}
+.pl-plan { display: flex; flex-direction: column; gap: 6px; padding: 24px 22px; border-radius: calc(var(--radius-lg) - 6px); }
+.pl-plan-best { background: var(--accent-soft); }
+.pl-plan-name { font-weight: 600; color: var(--ink); }
+.pl-plan-rate { margin-top: 12px; font-size: clamp(1.5rem, 2.2vw, 2rem); font-weight: 600; letter-spacing: -.03em; color: var(--ink); }
+.pl-plan-sub { font-size: .875rem; color: var(--ink-2); }
+.pl-plan-price { margin-top: auto; padding-top: 16px; font-size: .875rem; color: var(--ink-2); }
+.pl-plans-more { margin-top: 32px; }
+
+/* faq: rules between questions, no box around them */
+.pl-faq details { border-top: 1px solid var(--line); }
+.pl-faq details:last-child { border-bottom: 1px solid var(--line); }
+.pl-faq summary {
+  display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  padding: 22px 0; cursor: pointer; list-style: none; font-size: 1.0625rem; font-weight: 600; color: var(--ink);
+}
+.pl-faq summary::-webkit-details-marker { display: none; }
+.pl-faq summary::after {
+  content: "+"; content: "+" / "";
+  flex: 0 0 auto; font-size: 1.5rem; font-weight: 400; line-height: 1; color: var(--ink-2);
+  transition: rotate .25s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-faq details[open] summary::after { rotate: 45deg; }
+.pl-faq p { margin: 0 0 24px; max-width: 64ch; color: var(--ink-2); line-height: 1.6; }
+
+/* final call: a light panel, not a dark band */
+.pl-final-wrap { padding-top: 0; }
+.pl-final { border-radius: 28px; padding: clamp(40px, 6vw, 80px); background: var(--accent-soft); }
+.pl-final h2 { max-width: 20ch; }
+.pl-final p { margin: 20px 0 0; max-width: 52ch; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); }
+
+/* ---- motion ----
+   The product owner wants the page alive: the hero comes in line by line, every block rises
+   in the first time it scrolls into view (data-reveal; --i staggers siblings by 80ms), the
+   steps' track draws itself, checks pop, tabs and answers slide open, and the logos run.
+   Reveals start hidden only under .pl-anim, which an inline script in the head adds (and
+   takes back after 2.5 s if the page script never arrives), so without JavaScript the page
+   is complete at rest. Only opacity, translate and scale move. */
+@keyframes pl-rise { from { opacity: 0; translate: 0 32px; } }
+@keyframes pl-fade { from { opacity: 0; } }
+@keyframes pl-panel { from { opacity: 0; translate: 18px 0; } }
+.pl-hero-line { display: block; }
+.pl-hero-line, .pl-hero .pl-lede, .pl-hero .pl-cta, .pl-hero .pl-textlink { animation: pl-rise .9s cubic-bezier(.2, .7, .2, 1) both; }
+.pl-hero-line + .pl-hero-line { animation-delay: .12s; }
+.pl-hero .pl-lede { animation-delay: .26s; }
+.pl-hero .pl-cta { animation-delay: .38s; }
+.pl-hero .pl-textlink { animation-delay: .5s; }
+.pl-hero-media { animation: pl-fade 1.4s ease .1s both; }
+.pl-motion { animation: pl-fade .6s ease 1s both; }
+
+.pl-anim [data-reveal] {
+  opacity: 0; translate: 0 28px;
+  transition: opacity .7s cubic-bezier(.2, .7, .2, 1), translate .7s cubic-bezier(.2, .7, .2, 1);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+.pl-anim [data-reveal].is-in { opacity: 1; translate: none; }
+/* the final call grows into place */
+.pl-anim .pl-final[data-reveal] { translate: none; scale: .96; transition-property: opacity, scale; }
+.pl-anim .pl-final[data-reveal].is-in { scale: 1; }
+/* the code slides in from the side it sits on */
+.pl-anim .pl-code[data-reveal] { translate: 40px 0; }
+.pl-anim .pl-code[data-reveal].is-in { translate: none; }
+
+/* checks pop once their row or column is in */
+.pl-check { transition: scale .45s cubic-bezier(.3, 1.5, .5, 1) .25s; }
+.pl-anim [data-reveal]:not(.is-in) .pl-check { scale: 0; }
+.pl-anim .pl-path [data-reveal]:not(.is-in) .pl-check, .pl-anim .pl-path:not(.is-in) .pl-check { scale: 0; }
+.pl-path .pl-checks li:nth-child(2) .pl-check { transition-delay: .35s; }
+.pl-path .pl-checks li:nth-child(3) .pl-check { transition-delay: .45s; }
+
+/* steps: the number pops, then the track to the next one draws */
+.pl-step-num { transition: scale .5s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .1s); }
+.pl-steps li:not(:last-child)::after { transform-origin: left; transition: scale .8s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms + .35s); }
+.pl-anim .pl-steps li:not(.is-in) .pl-step-num { scale: .3; }
+.pl-anim .pl-steps li:not(.is-in)::after { scale: 0 1; }
+
+/* the selected business slides in when its tab is chosen */
+.pl-uses-panel:not([hidden]) { animation: pl-panel .45s cubic-bezier(.2, .7, .2, 1); }
+
+/* hover */
+.pl-design-shot img { transition: scale .6s cubic-bezier(.2, .7, .2, 1); }
+.pl-design-link:is(:hover, :focus-visible) .pl-design-shot img { scale: 1.045; }
+.pl-plan { transition: background-color .25s, translate .3s cubic-bezier(.2, .7, .2, 1); }
+.pl-plan:hover { translate: 0 -4px; }
+.pl-plan:not(.pl-plan-best):hover { background: var(--bg); }
+.pl-steps li:hover .pl-step-num { scale: 1.08; }
+.pl-compare tbody tr { transition: background-color .2s; }
+.pl-compare tbody tr:hover { background: var(--surface); }
+
+/* FAQ answers open smoothly where the browser can size to auto */
+.pl-faq { interpolate-size: allow-keywords; }
+.pl-faq details::details-content {
+  block-size: 0; overflow: hidden;
+  transition: block-size .35s cubic-bezier(.2, .7, .2, 1), content-visibility .35s allow-discrete;
+}
+.pl-faq details[open]::details-content { block-size: auto; }
+
+/* ---- responsive ---- */
+/* Very wide screens (1440p and up): the hero copy grows with them instead of floating small. */
+@media (min-width: 2200px) {
+  .pl-hero-copy { max-width: 820px; }
+  .pl-hero-title { font-size: 5rem; }
+  .pl-hero .pl-lede { font-size: 1.375rem; max-width: 46ch; }
+}
+/* Short screens (a 720p laptop under its browser bars): the hero tightens so the whole of it fits. */
+@media (min-width: 901px) and (max-height: 640px) {
+  .pl-hero-copy { padding: 24px 0 40px; }
+  .pl-hero .pl-lede { margin-top: 18px; }
+  .pl-hero .pl-cta { margin-top: 24px; }
+  .pl-hero .pl-textlink { margin-top: 14px; }
+}
+@media (max-width: 1100px) {
+  .pl-designs, .pl-plans, .pl-benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pl-benefits { row-gap: 40px; }
+  .pl-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 48px; }
+  .pl-steps li:nth-child(2n)::after { display: none; }
+  .pl-hero-copy { max-width: 520px; }
+  .pl-hero-media { width: 54%; }
+}
+@media (max-width: 900px) {
+  /* One column: the copy first, the video under it, full width. */
+  .pl-hero { flex-direction: column; align-items: stretch; min-height: 0; }
+  .pl-hero-inner { order: 1; }
+  .pl-hero-media { order: 2; }
+  .pl-hero-copy { max-width: none; padding: 40px 0 8px; }
+  .pl-hero-media { position: relative; width: 100%; height: clamp(240px, 62vw, 460px); }
+  .pl-video {
+    object-position: 50% 70%;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18%); mask-image: linear-gradient(180deg, transparent 0, #000 18%);
+  }
+  .pl-split, .pl-dev, .pl-head-row { grid-template-columns: 1fr; gap: 32px; }
+  .pl-head-sticky { position: static; }
+  .pl-head-row .pl-section-lede { justify-self: start; }
+  .pl-settle-head { grid-template-columns: 1fr; gap: 16px; }
+  .pl-settle-head .pl-section-lede { justify-self: start; }
+  .pl-paths { grid-template-columns: 1fr; row-gap: 0; }
+  .pl-path + .pl-path { margin-top: 40px; }
+  .pl-uses { grid-template-columns: 1fr; gap: 16px; }
+  .pl-uses-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .pl-designs, .pl-steps, .pl-benefits, .pl-facts-list, .pl-settle-grid { grid-template-columns: 1fr; }
+  .pl-plans { grid-template-columns: 1fr; }
+  .pl-steps li::after { display: none; }
+  .pl-uses-tabs { grid-template-columns: 1fr; }
+  /* The comparison becomes one block per topic, each value under its column's name. */
+  .pl-compare, .pl-compare tbody, .pl-compare tr, .pl-compare th, .pl-compare td { display: block; width: auto; }
+  .pl-compare thead { display: none; }
+  .pl-compare tbody tr:first-child { border-top: 0; }
+  .pl-compare tbody th { padding: 22px 20px 10px; font-size: 1.0625rem; }
+  .pl-compare td, .pl-compare td.pl-compare-us { padding: 10px 20px 14px; }
+  .pl-compare td::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+  .pl-compare td.pl-compare-us::before { color: var(--accent); }
+  .pl-motion { right: 16px; bottom: 16px; }
+}
+/* Motion runs in full for everyone, reduced-motion settings included: the product owner's call
+   (2026-10-24), the same as for the hero video and the logo marquees. The video keeps its pause
+   button and the marquees stop under the pointer. */

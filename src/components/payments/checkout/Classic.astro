@@ -1,0 +1,30 @@
+---
+// Classic: one column — amount, status, QR and wallet buttons, then the details.
+import Brand from "@/components/payments/checkout/Brand.astro";
+import Amount from "@/components/payments/checkout/Amount.astro";
+import Status from "@/components/payments/checkout/Status.astro";
+import Qr from "@/components/payments/checkout/Qr.astro";
+import WalletActions from "@/components/payments/checkout/WalletActions.astro";
+import Field from "@/components/payments/checkout/Field.astro";
+import Facts from "@/components/payments/checkout/Facts.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<template data-design="classic">
+  <div class="ck-card ck-classic">
+    <Brand />
+    <Amount />
+    <Status />
+    <div class="pp-pay" data-open-only>
+      <Qr />
+      <WalletActions />
+    </div>
+    <div class="ck-fields" data-open-only>
+      <Field name="pay-to" label={t.payTo} />
+      <Field name="memo" label={t.memo} hint={t.memoHint} row="memo" />
+    </div>
+    <Facts rows={["network", "expires", "tx"]} />
+  </div>
+</template>

@@ -1,6 +1,7 @@
 /* ReviewStep.jsx — step 3: review summary + terms agreement. */
 import { I } from "@/components/cosmos/onboarding/icons";
 import { PLAN_DATA } from "@/components/cosmos/onboarding/data";
+import { TERMS } from "@/components/cosmos/lib/constants";
 
 export function ReviewStep({ ob, t, name, industry, goals, volume, plan, error, agreed, setAgreed, goto }) {
   return (
@@ -18,7 +19,9 @@ export function ReviewStep({ ob, t, name, industry, goals, volume, plan, error, 
       {error && <p className="ob-input-note" style={{ color: "#D64545", marginTop: 12 }}>{ob.error}</p>}
       <label className={`ob-terms${agreed ? " on" : ""}`} onClick={() => setAgreed((a) => !a)}>
         <span className="box">{I.chk}</span>
-        <span>{ob.termsPre}<a href="#" onClick={(e) => e.preventDefault()}>{ob.termsA}</a>{ob.termsMid}<a href="#" onClick={(e) => e.preventDefault()}>{ob.termsB}</a>{ob.termsPost}</span>
+        {/* The terms open in a new tab so the wizard keeps its answers; a click on the link
+            must not tick the box. The Acceptable Use Policy has no page yet: plain text. */}
+        <span>{ob.termsPre}<a href={TERMS} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>{ob.termsA}</a>{ob.termsMid}{ob.termsB}{/* <a href="#">{ob.termsB}</a> */}{ob.termsPost}</span>
       </label>
     </div>
   );

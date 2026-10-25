@@ -36,11 +36,13 @@ export function ctaProps(user: User | null | undefined, next: string = "/dashboa
    (`initial`, set when the page was served from the platform's own host) and otherwise reads
    /api/auth/get-session cross-origin after hydration. `ready` stays false until the answer
    arrives, so the nav can hold its skeleton instead of flashing "Log in" at a signed-in
-   visitor. A failed read counts as signed out — the page never waits on it. */
-export function useDevSession(initial: User | null = null): { user: User | null; ready: boolean } {
-  const [state, setState] = useState<{ user: User | null; ready: boolean }>({ user: initial, ready: !!initial });
+   visitor. A failed read counts as signed out — the page never waits on it.
+   `enabled: false` skips the read and reports signed out at once: the payments domain is
+   not an allowed origin for the session (src/lib/allowed-origins.ts), by design. */
+export function useDevSession(initial: User | null = null, enabled = true): { user: User | null; ready: boolean } {
+  const [state, setState] = useState<{ user: User | null; ready: boolean }>({ user: initial, ready: !!initial || !enabled });
   useEffect(() => {
-    if (initial) return;
+    if (initial || !enabled) return;
     let alive = true;
     Promise.resolve(getSession())
       .then((res) => {

@@ -4,9 +4,10 @@
  *
  *   cosmospay.lat           "site"      /, /pricing, /tos          (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
- *   payments.cosmospay.lat  "payments"  /pay, /{payment link id}   (pages under src/pages/payments/)
+ *   payments.cosmospay.lat  "payments"  /, /pay, /{payment link id}, /preview/{design}
+ *                                       (pages under src/pages/payments/)
  *
- * A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
+ * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
  * its owner (query kept); a path nobody owns is a 404 on the site and payments domains. The
  * site and payments pages live under internal mounts (/site, /payments) and are reached by a
  * rewrite, so their public URLs have no prefix — and the mounts themselves are never public:
@@ -34,13 +35,15 @@ export interface RouteRequest {
 export type RouteDecision =
   | { kind: "pass"; area: Area }
   | { kind: "rewrite"; area: Area; path: string }
-  | { kind: "redirect"; location: string; status: 301 | 302 | 308 }
+  | { kind: "redirect"; location: string; status: 301 | 308 }
   | { kind: "not-found"; area: Area };
 
 /** Where the site and payments pages live in src/pages. */
 export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", payments: "/payments" };
 
 const SITE_PATHS = new Set(["/pricing", "/tos"]);
+/* Checkout design previews (src/pages/payments/preview/[design].astro). */
+const PAYMENTS_PREFIXES = ["/preview"];
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
@@ -83,6 +86,7 @@ export function ownerOf(path: string): Area | "home" | null {
   if (path === "/") return "home";
   if (SITE_PATHS.has(path)) return "site";
   if (path === "/pay" || PAYMENT_LINK_PATH.test(path)) return "payments";
+  if (PAYMENTS_PREFIXES.some((p) => underPrefix(path, p))) return "payments";
   if (DEV_PREFIXES.some((p) => underPrefix(path, p))) return "dev";
   return null;
 }
@@ -106,10 +110,10 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
   const hostname = req.hostname.toLowerCase();
   // Redirects keep the method only with 308; a GET can take the cacheable 301.
   const moved = req.method === "GET" || req.method === "HEAD" ? 301 : 308;
-  const to = (area: Area, path: string, status: 301 | 302 | 308 = moved): RouteDecision => ({
+  const to = (area: Area, path: string): RouteDecision => ({
     kind: "redirect",
     location: `${origins[area].replace(/\/+$/, "")}${path}${req.search}`,
-    status,
+    status: moved,
   });
 
   if (hostname === `www.${hostOf(origins.site)}`) return to("site", req.pathname);
@@ -136,9 +140,8 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
   const owner = ownerOf(path);
   if (owner === "home") {
     if (areas.has("site")) return serve("site");
-    if (areas.has("dev")) return serve("dev");
-    // The payments domain has no home page; the company site is its home.
-    return to("site", "/", 302);
+    if (areas.has("payments")) return serve("payments");
+    return serve("dev");
   }
   if (owner) return areas.has(owner) ? serve(owner) : to(owner, encodeURI(canonical));
   // Nobody owns it: the platform renders its own 404 (and any route it adds before this

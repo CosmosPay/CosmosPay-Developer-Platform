@@ -1,18 +1,26 @@
 ---
-// The brand skin is the platform's (cosmos.css); payments.css adds the checkout's own layout.
+// The platform's base (cosmos.css) under the institutional skin (institutional.css, on <body
+// class="inst">); payments.css adds the checkout's own layout.
 import "@/styles/cosmos.css";
+import "@/styles/institutional.css";
 import "@/styles/payments.css";
+import SiteNav from "@/components/cosmos/layout/SiteNav";
 import { LOCALES, MESSAGES } from "@/lib/payments/i18n";
-import { PAYMENTS, SITE, TERMS } from "@/lib/payments/urls";
+import { PAYMENTS, TERMS } from "@/lib/payments/urls";
 
 interface Props {
   title: string;
   description?: string;
+  /** Only the landing is indexed: payment pages are personal and short-lived. */
+  indexable?: boolean;
+  /** For the nav: the landing's hero is a paper panel the bar sits over. */
+  overPanel?: "white";
 }
 
-const { title, description = "" } = Astro.props;
+const { title, description = "", indexable = false, overPanel } = Astro.props;
 const lang = Astro.locals.lang ?? "en";
 const t = MESSAGES[lang];
+const canonical = new URL(Astro.locals.publicPath ?? "/", PAYMENTS).href;
 
 // The language picker is a plain GET form, so it must carry the page's own query along
 // (/pay?uri=… would otherwise lose the payment it is showing).
@@ -26,8 +34,15 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
-    <!-- Payment pages are personal and short-lived: never indexed. -->
-    <meta name="robots" content="noindex, nofollow" />
+    {indexable ? (
+      <Fragment>
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href={canonical} />
+        <meta property="og:url" content={canonical} />
+      </Fragment>
+    ) : (
+      <meta name="robots" content="noindex, nofollow" />
+    )}
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="generator" content={Astro.generator} />
 
@@ -46,42 +61,55 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
     <meta property="og:image" content={`${PAYMENTS}/og-image.png`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={lang} />
 
     <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />
+    <slot name="head" />
 
     <script is:inline>
-      // Follow the system theme, set before paint so there is no flash.
+      // The visitor's saved theme, else the system's, set before paint so there is no flash.
+      // It follows the system until a theme is picked in the nav (useTheme saves it then).
       (function () {
+        var root = document.documentElement;
         var mq = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
-        var apply = function () { document.documentElement.setAttribute("data-theme", mq && mq.matches ? "dark" : "light"); };
+        var saved = function () { try { return localStorage.getItem("cosmospay-theme"); } catch (e) { return null; } };
+        var apply = function () { root.setAttribute("data-theme", saved() || (mq && mq.matches ? "dark" : "light")); };
         apply();
         if (mq && mq.addEventListener) mq.addEventListener("change", apply);
       })();
     </script>
   </head>
-  <body>
+  <body class="inst">
     <a class="skip-link" href="#main">{t.skip}</a>
-    <header class="pp-header">
-      <a class="brand" href={SITE}>
-        <span class="cosmos-lockup" role="img" aria-label="Cosmos Pay"></span>
-      </a>
-      <slot name="header" />
-    </header>
+    <!-- The general nav, as on every view. It never reads the platform session here: the
+         payments domain is not an allowed origin for it (src/lib/allowed-origins.ts). -->
+    <SiteNav client:load lang={lang} session={false} reloadOnLang overPanel={overPanel} area="payments" />
 
     <slot />
 
-    <footer class="pp-footer">
-      <span>{t.footer.by}</span>
-      <a href={TERMS}>{t.footer.terms}</a>
-      <form class="pp-lang" method="get">
-        {keep.map(([name, value]) => <input type="hidden" name={name} value={value} />)}
-        <label for="pp-lang-select">{t.footer.language}</label>
-        <select id="pp-lang-select" name="lang">
-          {LOCALES.map((l) => <option value={l.code} selected={l.code === lang} lang={l.code}>{l.name}</option>)}
-        </select>
-        <button class="btn btn-outline-w btn-sm" type="submit">{t.footer.change}</button>
-      </form>
-    </footer>
+    <slot name="footer">
+      <footer class="pp-footer">
+        <span>{t.footer.by}</span>
+        <a href={TERMS}>{t.footer.terms}</a>
+        <form class="pp-lang" method="get">
+          {keep.map(([name, value]) => <input type="hidden" name={name} value={value} />)}
+          <label for="pp-lang-select">{t.footer.language}</label>
+          <select id="pp-lang-select" name="lang">
+            {LOCALES.map((l) => <option value={l.code} selected={l.code === lang} lang={l.code}>{l.name}</option>)}
+          </select>
+          <button class="btn btn-outline-w btn-sm" type="submit">{t.footer.change}</button>
+        </form>
+      </footer>
+    </slot>
+
+    <script>
+      // The snap's ink fill on every button (src/scripts/ink.ts).
+      import { installInk } from "@/scripts/ink";
+
+      installInk();
+    </script>
   </body>
 </html>

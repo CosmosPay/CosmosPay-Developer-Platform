@@ -154,8 +154,9 @@
 
 /* ---------------- RIGHT: interactive plan specs ---------------- */
 .ob-right { position: relative; overflow: hidden auto; display: flex; align-items: center; justify-content: center; padding: clamp(28px, 3.6vw, 60px); background: var(--surface-2); border-left: 1px solid var(--line); }
-.ob-right::before { content: ''; position: absolute; inset: 0; background: radial-gradient(90% 70% at 78% 8%, color-mix(in srgb, var(--ob-accent) 22%, transparent), transparent 60%); pointer-events: none; }
-.ob-right::after { content: none; }
+/* Flat panel: the product owner allows no gradients anywhere, so the accent glow that sat in
+   its top corner is gone. */
+.ob-right::before, .ob-right::after { content: none; }
 
 .rp { position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; gap: 22px; margin: auto; }
 .rp-tagline { max-width: 30em; }

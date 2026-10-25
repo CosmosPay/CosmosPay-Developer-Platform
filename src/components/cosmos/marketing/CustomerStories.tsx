@@ -22,7 +22,8 @@ function CaseModal({ brand, onClose }) {
         <p style={{ marginTop: 0 }}>{item.label}</p>
         <p>{item.story}</p>
         <div className="mtags">{item.tags.map((tg) => <span key={tg}>{tg}</span>)}</div>
-        <a className="btn btn-violet" href="#">{c.readFull} <IcArrow /></a>
+        {/* Read the full story — no story pages yet. */}
+        {/* <a className="btn btn-violet" href="#">{c.readFull} <IcArrow /></a> */}
       </div>
     </Modal>
   );

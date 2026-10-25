@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Receipt checkout design"><defs><pattern id="q" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#000"/><rect x="4" y="4" width="4" height="4" fill="#000"/></pattern></defs>
+<rect width="320" height="220" fill="#D6D6DC"/><path d="M-20 230V150C60 150 140 175 210 230Z" fill="#F6F6F7"/>
+<rect x="14" y="20" width="292" height="186" rx="14" fill="#fff" stroke="rgba(0,0,0,.12)"/>
+<circle cx="30" cy="36" r="6" fill="#000"/>
+<rect x="40" y="33" width="48" height="6" rx="3" fill="rgba(0,0,0,.55)"/>
+<rect x="128" y="28" width="14" height="16" rx="3" fill="#13131A"/>
+<rect x="144" y="28" width="14" height="16" rx="3" fill="#13131A"/>
+<rect x="164" y="28" width="14" height="16" rx="3" fill="#13131A"/>
+<rect x="180" y="28" width="14" height="16" rx="3" fill="#13131A"/>
+<rect x="24" y="54" width="80" height="14" rx="4" fill="#000"/>
+<rect x="24" y="80" width="40" height="5" rx="2.5" fill="rgba(0,0,0,.5)"/>
+<rect x="24" y="89" width="170" height="16" rx="5" fill="#fff" stroke="rgba(0,0,0,.2)"/>
+<rect x="24" y="112" width="34" height="5" rx="2.5" fill="rgba(0,0,0,.5)"/>
+<rect x="24" y="121" width="170" height="16" rx="5" fill="#fff" stroke="rgba(0,0,0,.2)"/>
+<rect x="24" y="152" width="3" height="34" fill="#13131A"/>
+<rect x="32" y="154" width="54" height="6" rx="3" fill="#000"/>
+<rect x="32" y="166" width="120" height="5" rx="2.5" fill="rgba(0,0,0,.4)"/>
+<rect x="32" y="176" width="100" height="5" rx="2.5" fill="rgba(0,0,0,.4)"/>
+<rect x="206" y="28" width="92" height="170" rx="10" fill="#F2F2F5"/>
+<rect x="226" y="36" width="52" height="6" rx="3" fill="#000"/>
+<g transform="translate(228 50)"><rect width="48" height="48" rx="4" fill="#fff" stroke="rgba(0,0,0,.12)"/><rect x="5" y="5" width="38" height="38" fill="url(#q)" opacity=".85"/><rect x="5" y="5" width="12" height="12" fill="#fff" stroke="#000" stroke-width="3"/><rect x="31" y="5" width="12" height="12" fill="#fff" stroke="#000" stroke-width="3"/><rect x="5" y="31" width="12" height="12" fill="#fff" stroke="#000" stroke-width="3"/></g>
+<rect x="214" y="106" width="30" height="5" rx="2.5" fill="rgba(0,0,0,.4)"/>
+<rect x="262" y="106" width="28" height="5" rx="2.5" fill="#000"/>
+<rect x="214" y="118" width="26" height="5" rx="2.5" fill="rgba(0,0,0,.4)"/>
+<rect x="258" y="118" width="32" height="5" rx="2.5" fill="#000"/>
+<line x1="206" y1="136" x2="298" y2="136" stroke="rgba(0,0,0,.25)" stroke-width="1.5" stroke-dasharray="4 3"/><circle cx="206" cy="136" r="5" fill="#fff"/><circle cx="298" cy="136" r="5" fill="#fff"/>
+<rect x="214" y="146" width="40" height="5" rx="2.5" fill="rgba(0,0,0,.4)"/>
+<rect x="214" y="156" width="58" height="12" rx="4" fill="#000"/>
+<rect x="214" y="176" width="76" height="14" rx="7" fill="#13131A"/>
+</svg>

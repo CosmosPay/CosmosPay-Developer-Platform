@@ -18,6 +18,27 @@ export const DASH = `${DEV}/dashboard`;
 export const DOCS = `${DEV}/docs`;
 export const LOGIN = loginUrl(DEV);
 
+/** The domain a nav or footer is drawn on (src/lib/hosts.ts names the same three areas). */
+export type Area = "site" | "dev" | "payments";
+
+/** On the payments gateway its own links stay on it: a link into PAYMENTS becomes a
+ * same-origin path there, so the logo, Pricing and the product links never leave the
+ * gateway for the company site. Elsewhere the link is returned as given. */
+export function localHref(href: string, area?: Area): string {
+  if (area === "payments" && (href === PAYMENTS || href.startsWith(`${PAYMENTS}/`))) return href.slice(PAYMENTS.length) || "/";
+  return href;
+}
+
+/** The logo's target: the home of the domain the bar is on (the gateway's on payments). */
+export function homeFor(area?: Area): string {
+  return area === "payments" ? "/" : HOME;
+}
+
+/** Pricing: the gateway's own pricing section on payments, the pricing page elsewhere. */
+export function pricingFor(area?: Area): string {
+  return area === "payments" ? "/#pricing" : PRICING;
+}
+
 /** The platform's sign-in, landing on `next` (a path on the platform) afterwards. */
 export function loginTo(next: string): string {
   return loginUrl(DEV, next);

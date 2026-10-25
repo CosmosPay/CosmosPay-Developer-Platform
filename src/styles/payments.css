@@ -31,12 +31,7 @@
 
 body { min-height: 100vh; display: flex; flex-direction: column; }
 
-/* ---- header / footer ---- */
-.pp-header {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  max-width: 640px; width: 100%; margin: 0 auto; padding: 22px 16px 0;
-}
-.pp-header .cosmos-lockup { height: 30px; }
+/* ---- footer (the header is the general nav, from the layout) ---- */
 
 .pp-footer {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 18px;
@@ -77,21 +72,16 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 @media (prefers-reduced-motion: reduce) { .pp-spinner { animation: none; } }
 
 /* ---- amount + status ---- */
-.pp-testnet {
-  display: inline-block; margin: 0 0 14px; padding: 4px 12px; border-radius: 999px;
-  font-size: 12.5px; font-weight: 600; background: var(--accent-soft); border: 1px solid var(--accent-soft-2);
-}
+/* Plain labels, not chips: the network tier and the status are text with a colour. */
+.pp-testnet { display: inline-block; margin: 0 0 14px; font-size: 13px; font-weight: 700; color: var(--accent); }
 .pp-amount { font-size: clamp(34px, 9vw, 52px); font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; margin: 0; overflow-wrap: anywhere; }
 .pp-msg { margin: 12px 0 0; font-size: 16px; overflow-wrap: anywhere; }
 
 .pp-status { margin: 20px 0 0; }
-.pp-pill {
-  display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px;
-  font-size: 13px; font-weight: 600; background: var(--surface-2); border: 1px solid var(--line);
-}
+.pp-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--ink); }
 .pp-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-.pp-pill[data-phase="paid"] { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: transparent; }
-.pp-pill[data-phase="failed"], .pp-pill[data-phase="cancelled"] { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); border-color: transparent; }
+.pp-pill[data-phase="paid"] { color: var(--ok); }
+.pp-pill[data-phase="failed"], .pp-pill[data-phase="cancelled"] { color: var(--bad); }
 .pp-pill[data-phase="expired"] { color: var(--ink-2); }
 .pp-status .pp-body { margin: 10px 0 0; }
 

@@ -51,7 +51,8 @@ export function IntegrationPaths() {
                 <div className="ipn">{"/" + num}</div>
                 <h3>{p.t}</h3>
                 <p>{p.d}</p>
-                <a className="card-link" href={PATH_HREFS[i] || "#"}>{p.a} <IcChevSm /></a>
+                {/* A path without a page yet shows no link. */}
+                {PATH_HREFS[i] && <a className="card-link" href={PATH_HREFS[i]}>{p.a} <IcChevSm /></a>}
               </div>
             );
           })}

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { DEV, SITE } from "@/components/cosmos/lib/constants";
+import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 
-/* sitemap.xml per domain; the payments domain lists nothing (see robots.txt.ts). */
+/* sitemap.xml per domain; the payments domain lists its landing only (see robots.txt.ts). */
 const PAGES: Record<string, { loc: string; changefreq: string; priority: string }[]> = {
   site: [
     { loc: `${SITE}/`, changefreq: "weekly", priority: "1.0" },
@@ -9,7 +9,7 @@ const PAGES: Record<string, { loc: string; changefreq: string; priority: string 
     { loc: `${SITE}/tos`, changefreq: "yearly", priority: "0.3" },
   ],
   dev: [{ loc: `${DEV}/docs`, changefreq: "weekly", priority: "1.0" }],
-  payments: [],
+  payments: [{ loc: `${PAYMENTS}/`, changefreq: "weekly", priority: "1.0" }],
 };
 
 export const GET: APIRoute = ({ locals }) => {

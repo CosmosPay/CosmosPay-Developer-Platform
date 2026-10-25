@@ -19,7 +19,7 @@ domains. `src/middleware.ts` routes every request by host with the table in
 | :--- | :--- | :--- |
 | `cosmospay.lat` | The company site: landing, `/pricing`, `/tos` | `src/pages/site/` |
 | `dev.cosmospay.lat` | Sign-in (`/login`), dashboard, onboarding, invitations, `/docs`, `/swagger`, `/api/*` | the rest of `src/pages/` |
-| `payments.cosmospay.lat` | The hosted checkout of every payment link (`/{id}`) and the `web+stellar:` handler (`/pay`) | `src/pages/payments/` |
+| `payments.cosmospay.lat` | The payments landing (`/`), the hosted checkout of every payment link (`/{id}`) in the design its merchant picked, design previews (`/preview/{design}`) and the `web+stellar:` handler (`/pay`) | `src/pages/payments/` |
 
 - **A route renders only on the domain that owns it.** Asked on another domain it is a
   **301** to its owner, query kept (308 for non-GET): `cosmospay.lat/dashboard` →
@@ -53,7 +53,10 @@ domains. `src/middleware.ts` routes every request by host with the table in
   per-key scopes (read/write), role and environment (testnet/mainnet) forwarded downstream.
 - **Payments** — create and manage payment intents (`pay`/`tx`), validate transactions; every
   link has a hosted checkout page on payments.cosmospay.lat (amount, QR, open-in-wallet, live
-  status), linked from its detail modal.
+  status, countdown) in one of four designs — Classic, Split, Receipt, Card — chosen when the
+  link is created and changeable from its detail modal.
+- **Payments site** — payments.cosmospay.lat's own landing (products, flow, security, developers,
+  pricing, FAQ) with the coin-ramp video as its hero.
 - **Company site** — the landing, pricing and terms on cosmospay.lat, from the same app.
 - **Webhooks** — register endpoints, inspect deliveries, redeliver, rotate signing secrets.
 - **Products & customers** — catalog items / price links and merchant-managed customers.
@@ -110,11 +113,12 @@ src/
 │   │                     # notifications, cosmos proxy, auth catch-all, openapi.json)
 │   ├── dashboard.astro   # main app shell
 │   ├── onboarding.astro  # onboarding wizard
-│   ├── login.astro       # sign-in entry (starts the Authentik OAuth flow)
+│   ├── login.astro       # sign-in entry: 302 straight to Authentik, no view of its own
 │   ├── index.astro       # → /dashboard or /login
 │   ├── invite/[token].astro · kyc/ · swagger.astro
 │   ├── site/             # cosmospay.lat: index (landing), pricing, tos
-│   ├── payments/         # payments.cosmospay.lat: [id] (hosted checkout), pay (SEP-7 handler)
+│   ├── payments/         # payments.cosmospay.lat: index (landing), [id] (hosted checkout),
+│   │                     # pay (SEP-7 handler), preview/[design] (checkout design samples)
 │   └── robots.txt.ts · sitemap.xml.ts   # per domain
 ├── components/           # UI (cosmos/dashboard views, widgets, modals) + React islands
 ├── layouts/              # CosmosLayout etc.

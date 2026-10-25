@@ -1,4 +1,5 @@
 ---
+import "@/styles/dashboard.css";
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import Dashboard from "@/components/cosmos/Dashboard.tsx";
 import { getProfile, getRole } from "@/lib/profile";
@@ -62,6 +63,6 @@ const dashUser = {
 const features = planFeatures(role);
 ---
 
-<CosmosLayout title="Dashboard — Cosmos Pay" lang={lang} noindex>
+<CosmosLayout title="Dashboard — Cosmos Pay" lang={lang} noindex nav={false} bodyClass="inst">
   <Dashboard client:load user={dashUser} lang={lang} features={features} />
 </CosmosLayout>

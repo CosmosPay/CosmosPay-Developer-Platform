@@ -1,0 +1,103 @@
+---
+/* Checkout.astro — the hosted checkout's shell, shared by /{id} and /preview/{design}.
+ *
+ * Every design is a <template>; once the link is read, the script mounts the one the
+ * merchant picked (`checkoutTheme`) and fills its data-slot elements. The loading, missing
+ * and error states are common to all of them.
+ */
+import "@/styles/checkout.css";
+import Classic from "@/components/payments/checkout/Classic.astro";
+import Split from "@/components/payments/checkout/Split.astro";
+import Ticket from "@/components/payments/checkout/Ticket.astro";
+import Card from "@/components/payments/checkout/Card.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { API_BASE, WALLET_WEB } from "@/lib/payments/urls";
+import { CHECKOUT_THEMES, type CheckoutTheme } from "@/lib/payments/checkout-themes";
+
+interface Props {
+  /** The payment link to read. */
+  id?: string;
+  /** Draw this design with sample data instead of reading a link. */
+  preview?: CheckoutTheme;
+}
+
+const { id = "", preview } = Astro.props;
+const lang = Astro.locals.lang ?? "en";
+const m = MESSAGES[lang];
+const t = m.checkout;
+// Only the strings the script swaps in at runtime; the rest is rendered here.
+const runtime = {
+  phase: t.phase,
+  body: t.body,
+  anyAmount: t.anyAmount,
+  mainnet: t.mainnet,
+  testnetTier: t.testnetTier,
+  copy: t.copy,
+  copied: t.copied,
+  extOpening: t.extOpening,
+  extSent: t.extSent,
+  extFailed: t.extFailed,
+  errorBody: t.errorBody,
+  rateLimited: t.rateLimited,
+  timerLabel: t.timerLabel,
+  previewInert: t.previewInert,
+};
+// `<` escaped so no string can close the JSON <script> block early.
+const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
+---
+
+<main id="main" class="ck-page">
+  {preview && (
+    <div class="ck-preview-bar">
+      <p class="ck-preview-note" role="note">{t.previewBanner}</p>
+      <nav class="ck-preview-switch" aria-label={m.designs.title}>
+        {CHECKOUT_THEMES.map((d) => (
+          <a href={`/preview/${d}`} aria-current={d === preview ? "page" : undefined}>{m.designs[d].name}</a>
+        ))}
+      </nav>
+    </div>
+  )}
+  <section
+    class="ck"
+    id="checkout"
+    data-design={preview ?? "classic"}
+    data-id={id}
+    data-api={API_BASE}
+    data-wallet-web={WALLET_WEB}
+    data-lang={lang}
+    data-preview={preview}
+    aria-label={t.eyebrow}
+  >
+    <div class="ck-backdrop" aria-hidden="true"></div>
+
+    <div class="ck-card ck-solo" data-state="loading" role="status">
+      <div class="pp-loading"><span class="pp-spinner" aria-hidden="true"></span>{t.loading}</div>
+    </div>
+
+    <div class="ck-card ck-solo" data-state="not-found" hidden>
+      <h1 class="pp-title">{t.notFoundTitle}</h1>
+      <p class="pp-body">{t.notFoundBody}</p>
+    </div>
+
+    <div class="ck-card ck-solo" data-state="error" hidden>
+      <h1 class="pp-title">{t.errorTitle}</h1>
+      <p class="pp-body" data-slot="error-body" role="status" aria-live="polite">{t.errorBody}</p>
+      <button class="btn btn-dark btn-sm" type="button" data-action="retry">{t.retry}</button>
+    </div>
+
+    <div class="ck-mount" data-state="link" data-mount hidden></div>
+  </section>
+
+  <Classic />
+  <Split />
+  <Ticket />
+  <Card />
+</main>
+
+<script type="application/json" id="checkout-i18n" set:html={runtimeJson} />
+
+<script>
+  import { startCheckout } from "@/scripts/payments/checkout";
+
+  startCheckout();
+</script>

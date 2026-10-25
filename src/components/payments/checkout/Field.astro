@@ -1,0 +1,27 @@
+---
+// One value a payer may copy into a wallet by hand (address, memo, amount), as a labelled,
+// read-only field with its own copy button.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+interface Props {
+  name: "pay-to" | "memo" | "amount-value";
+  label: string;
+  hint?: string;
+  /** Hidden until the script decides the row applies (the memo exists on Stellar only). */
+  row?: string;
+}
+
+const { name, label, hint, row } = Astro.props;
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<div class="ck-field" data-row={row} hidden={row ? true : undefined}>
+  <div class="ck-field-text">
+    <span class="ck-field-label">{label}</span>
+    {hint && <span class="ck-field-hint">{hint}</span>}
+  </div>
+  <div class="ck-field-box">
+    <code class="pp-code" data-slot={name}></code>
+    <button class="pp-copy" type="button" data-copy={name} aria-label={`${t.copy}: ${label}`}>{t.copy}</button>
+  </div>
+</div>

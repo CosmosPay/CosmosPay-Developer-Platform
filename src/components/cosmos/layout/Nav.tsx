@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
-import { HOME, PRICING, DASH, DOCS } from "@/components/cosmos/lib/constants";
+import { DASH, DOCS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
 import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
 import { CosmosLockup, IcNChev, IcDocs } from "@/components/cosmos/icons";
 import { ThemeToggle } from "@/components/cosmos/layout/ThemeToggle";
@@ -10,45 +10,89 @@ import { NavUserMenu } from "@/components/cosmos/layout/NavUserMenu";
 import { MegaPanel } from "@/components/cosmos/layout/MegaPanel";
 import { Avatar } from "@/components/cosmos/ui/Avatar";
 
-/* Deep links into the docs site (served by the developer platform at /docs) for the mega-menu columns. The message
-   catalogs only carry translated labels, not hrefs, so the targets are defined here once
-   (they're identical in every language) and overlaid onto the catalog by position. Keyed by
-   nav item → column index → link index; a missing entry leaves that link's own href intact. */
-const NAV_DOC_HREFS: Record<string, Record<number, (string | undefined)[]>> = {
-  developers: { 0: [`${DOCS}/api`, `${DOCS}/sdk/server/overview`, `${DOCS}/sdk/server/webhooks`, `${DOCS}/getting-started`] },
-  resources: { 0: [DOCS, `${DOCS}/getting-started`] },
+/* The mega-menu links that lead somewhere: nav item → [column, link index in the catalog,
+   href]. The catalogs carry the labels (same shape in every language); the targets live
+   here once. Only these are drawn — a label whose page does not exist yet stays listed
+   below, commented out, and comes back by uncommenting its line. A column left with no
+   link is not drawn, nor is an item left with no column. */
+type NavLink = [col: number, link: number, href: string];
+const NAV_LINKS: Record<string, NavLink[]> = {
+  products: [
+    [0, 0, PAYMENTS], // Payments
+    [0, 1, `${PAYMENTS}/#designs`], // Checkout
+    [0, 2, `${PAYMENTS}/#integration`], // Payment Links
+    // [0, 3, "#"], // Invoicing — no page yet
+    // [1, 0, "#"], // Payouts — no page yet
+    // [1, 1, "#"], // Cross-border — no page yet
+    // [1, 2, "#"], // Anchors — no page yet
+    // [1, 3, "#"], // FX — no page yet
+    // [2, 0, "#"], // Stablecoins — no page yet
+    // [2, 1, "#"], // Wallets — no page yet
+    // [2, 2, "#"], // Ledger — no page yet
+    // [2, 3, "#"], // Radar — no page yet
+  ],
+  // Solutions: every link (SaaS & subscriptions, Marketplaces, Platforms, Embedded finance,
+  // E-commerce, Fintech, Gaming, Travel & mobility) has no page yet, so the item is off.
+  // solutions: [],
+  developers: [
+    [0, 0, `${DOCS}/api`], // API reference
+    [0, 1, `${DOCS}/sdk/server/overview`], // SDKs & libraries
+    [0, 2, `${DOCS}/sdk/server/webhooks`], // Webhooks
+    [0, 3, `${DOCS}/getting-started`], // Sandbox
+    // [1, 0, "#"], // CLI — no page yet
+    // [1, 1, "#"], // Status — no status page yet
+    // [1, 2, "#"], // Changelog — no public changelog page yet
+    // [1, 3, "#"], // Postman — no collection published yet
+  ],
+  resources: [
+    [0, 0, DOCS], // Documentation
+    [0, 1, `${DOCS}/getting-started`], // Tutorials
+    // [0, 2, "#"], // Blog — no page yet
+    // [0, 3, "#"], // Customer stories — no page yet
+    // [1, 0, "#"], // Help center — no page yet
+    // [1, 1, "#"], // Community — no page yet
+    // [1, 2, "#"], // Contact sales — no page yet
+    // [1, 3, "#"], // Partners — no page yet
+  ],
+};
+/* The featured card of an item, only where its call to action leads somewhere. */
+const FEATURED_HREFS: Record<string, string> = {
+  // products: "#", // Cosmos Sessions 2026 — no page yet
+  developers: `${DOCS}/getting-started`, // Quickstart
 };
 
-/* Overlay the doc hrefs above onto an item's columns without mutating the catalog. */
-function withDocHrefs(item: any): any {
-  const map = NAV_DOC_HREFS[item.key];
-  if (!map || !item.cols) return item;
-  return {
-    ...item,
-    cols: item.cols.map((col: any, ci: number) => {
-      const hrefs = map[ci];
-      if (!hrefs) return col;
-      return { ...col, links: col.links.map((l: any, li: number) => (l.href || !hrefs[li] ? l : { ...l, href: hrefs[li] })) };
-    }),
-  };
+/* An item's columns reduced to the links above, hrefs attached (kept on the gateway when the
+   bar is drawn there), empty columns dropped. */
+function withLinks(key: string, item: any, area?: Area): any {
+  const links = NAV_LINKS[key] || [];
+  const cols = item.cols
+    .map((col: any, ci: number) => ({
+      ...col,
+      links: links.filter(([c]) => c === ci).map(([, li, href]) => ({ ...col.links[li], href: localHref(href, area) })),
+    }))
+    .filter((col: any) => col.links.length > 0);
+  const featured = FEATURED_HREFS[key] && item.featured ? { ...item.featured, href: localHref(FEATURED_HREFS[key], area) } : undefined;
+  return { key, label: item.label, cols, featured };
 }
 
 /* Build the nav item list from the active catalog. */
-function useNavItems(): any[] {
+function useNavItems(area?: Area): any[] {
   const t = useT();
   const n = t.nav.items;
   return [
-    { key: "products", label: n.products.label, cols: n.products.cols, featured: n.products.featured },
-    { key: "solutions", label: n.solutions.label, cols: n.solutions.cols, featured: n.solutions.featured },
-    withDocHrefs({ key: "developers", label: n.developers.label, cols: n.developers.cols, featured: n.developers.featured }),
-    withDocHrefs({ key: "resources", label: n.resources.label, cols: n.resources.cols, featured: n.resources.featured }),
-    { key: "pricing", label: n.pricing.label, href: PRICING },
+    withLinks("products", n.products, area),
+    // withLinks("solutions", n.solutions, area), — see NAV_LINKS
+    withLinks("developers", n.developers, area),
+    withLinks("resources", n.resources, area),
+    { key: "pricing", label: n.pricing.label, href: pricingFor(area) },
   ];
 }
 
-export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white" }) {
+/* `area` is the domain the bar is drawn on: on the payments gateway the logo, Pricing and the
+   product links stay on it (constants.ts, localHref). */
+export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area }) {
   const t = useT();
-  const NAV_ITEMS = useNavItems();
+  const NAV_ITEMS = useNavItems(area);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [mob, setMob] = useState(false);
@@ -56,6 +100,10 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
      arranca en true cuando la pagina la pasa, asi el SSR ya pinta la barra
      transparente y no hay parpadeo al hidratar. */
   const [overInk, setOverInk] = useState(!!overPanel);
+  /* Over a "paper" panel (light in both themes, like the payments hero behind its video)
+     the bar is transparent and takes dark ink, so a dark page does not lay a black band
+     across the top of a white hero. */
+  const [overPaper, setOverPaper] = useState(false);
   /* Gate the session buttons until after hydration AND until the session is known
      (sessionReady: the company site reads it cross-origin), so they render once in the
      resolved language + auth state, instead of flashing through default → translated →
@@ -75,7 +123,9 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
       const first = document.querySelector<HTMLElement>("main section[data-panel]");
       const panel = first?.dataset.panel;
       const oscuro = panel === "black" || panel === "navy";
-      setOverInk(!!overPanel && !!first && oscuro && window.scrollY < first.offsetHeight - 72);
+      const above = !!overPanel && !!first && window.scrollY < first.offsetHeight - 72;
+      setOverInk(above && oscuro);
+      setOverPaper(above && panel === "paper");
     };
     h();
     window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h);
@@ -87,10 +137,13 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
   /* con el menu mobile abierto la barra deja de ser transparente: el panel
      que baja es solido y necesita el borde de la barra */
   const inkNow = overInk && !mob;
+  /* Transparent over paper only at the very top: once the page moves, the hero's copy would
+     scroll under the links, so the bar takes its own background back. */
+  const paperNow = overPaper && !mob && !scrolled;
   return (
-    <header className={`nav${scrolled ? " scrolled" : ""}${inkNow ? " over-ink" : ""}`}>
+    <header className={`nav${scrolled ? " scrolled" : ""}${mob ? " menu-open" : ""}${inkNow ? " over-ink" : ""}${paperNow ? " over-paper" : ""}`}>
       <div className="wrap nav-inner">
-        <a className="brand" href={HOME}><CosmosLockup height={32} label="Cosmos Pay" /></a>
+        <a className="brand" href={homeFor(area)}><CosmosLockup height={32} label="Cosmos Pay" /></a>
         <nav className="nav-center" onMouseLeave={scheduleClose}>
           {NAV_ITEMS.map((it) => it.cols ? (
             <div className="nav-item" key={it.key} onMouseEnter={() => open(it.key)}>
@@ -128,7 +181,17 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
       </div>
       {mob && (
         <div className="mobile-menu">
-          {NAV_ITEMS.map((it) => <a key={it.key} className="mm-link" href={it.href || "#"} onClick={() => setMob(false)}>{it.label}</a>)}
+          {/* A mega item has no page of its own: on mobile it is a heading over its links. */}
+          {NAV_ITEMS.map((it) => it.cols ? (
+            <div className="mm-group" key={it.key}>
+              <span className="mm-head">{it.label}</span>
+              {it.cols.flatMap((col: any) => col.links).map((l: any) => (
+                <a key={l.t} className="mm-sublink" href={l.href} onClick={() => setMob(false)}>{l.t}</a>
+              ))}
+            </div>
+          ) : (
+            <a key={it.key} className="mm-link" href={it.href} onClick={() => setMob(false)}>{it.label}</a>
+          ))}
           {/* Por debajo de 1100px el CSS esconde el selector de la barra y deja
               solo la hamburguesa, pero el menu no lo repetia: en celular no
               habia ninguna forma de cambiar el idioma. */}

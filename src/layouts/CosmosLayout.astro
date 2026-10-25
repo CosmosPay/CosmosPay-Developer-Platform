@@ -2,8 +2,10 @@
 import "@/styles/cosmos.css";
 import "@/styles/views.css";
 import "@/styles/onboarding.css";
+import "@/styles/institutional.css";
 import { PUBLIC_GA_ID, PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
+import SiteNav from "@/components/cosmos/layout/SiteNav";
 
 interface Props {
   title?: string;
@@ -17,6 +19,11 @@ interface Props {
   type?: string;
   /** Solo la landing: precarga la cinta del hero, la imagen mas grande sobre la linea de flotacion. */
   preloadCinta?: boolean;
+  /** The general nav bar, on every view. Off only where the page's own React tree renders
+   *  <Nav> (Landing, Pricing, Dashboard), so it is never drawn twice. */
+  nav?: boolean;
+  /** A skin class for <body> — "inst" puts the page on the institutional skin (the dashboard). */
+  bodyClass?: string;
 }
 
 const {
@@ -27,6 +34,8 @@ const {
   noindex = false,
   type = "website",
   preloadCinta = false,
+  nav = true,
+  bodyClass,
 } = Astro.props;
 
 // Locale comes from the cookie (set by the in-app language switcher) so SSR and the
@@ -153,8 +162,23 @@ const jsonLd = {
       }
     </style>
   </head>
-  <body>
+  <body class={bodyClass}>
     <a class="skip-link" href="#main">Skip to content</a>
+    {nav && (
+      <SiteNav
+        client:load
+        lang={locale}
+        user={Astro.locals.user ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image } : null}
+        session={Astro.locals.area !== "payments"}
+      />
+    )}
     <slot />
+
+    <script>
+      // The snap's ink fill on every button (src/scripts/ink.ts).
+      import { installInk } from "@/scripts/ink";
+
+      installInk();
+    </script>
   </body>
 </html>

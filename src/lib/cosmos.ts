@@ -13,6 +13,7 @@ import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
 import { upstreamBaseUrls } from "@/lib/apisix-upstream";
 import { consoleMarker } from "@/lib/console-marker";
+import type { CheckoutTheme } from "@/lib/payments/checkout-themes";
 
 export type CosmosEnv = "dev" | "prod";
 
@@ -114,7 +115,10 @@ async function cosmosFetch<T>(
       headers,
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
-  } catch {
+  } catch (err) {
+    // The cause (ECONNREFUSED, ECONNRESET, a timeout…) is what tells a down service from a
+    // network fault; it carries no request data.
+    console.error(`[cosmos] ${url.pathname} failed: ${(err as { cause?: { code?: string } })?.cause?.code ?? (err as Error)?.message}`);
     throw new CosmosApiError("Could not reach the Payments service", 502);
   }
 
@@ -210,7 +214,10 @@ export async function proxyCosmosRequest(opts: {
   let res: Response;
   try {
     res = await fetch(url, { method, headers, body });
-  } catch {
+  } catch (err) {
+    // The cause (ECONNREFUSED, ECONNRESET, a timeout…) is what tells a down service from a
+    // network fault; it carries no request data.
+    console.error(`[cosmos] ${url.pathname} failed: ${(err as { cause?: { code?: string } })?.cause?.code ?? (err as Error)?.message}`);
     throw new CosmosApiError("Could not reach the Payments service", 502);
   }
 
@@ -248,6 +255,8 @@ export interface PaymentIntent {
   qr: string;       // PNG data URL of the SEP-7 URI
   txHash: string | null;
   reference: string | null;
+  /** The hosted checkout's design; the server answers "classic" when none was chosen. */
+  checkoutTheme: CheckoutTheme;
   createdAt: string;
   updatedAt: string;
 }
@@ -267,6 +276,7 @@ export interface CreatePayInput {
   memo?: string;
   msg?: string;
   callback?: string;
+  checkoutTheme?: CheckoutTheme;
 }
 
 export interface CreateTxInput extends CreatePayInput {
@@ -276,6 +286,8 @@ export interface CreateTxInput extends CreatePayInput {
 
 export interface ListIntentsQuery {
   status?: string;
+  /** ISO instant: only intents created at or after it (the dashboard's period views). */
+  createdFrom?: string;
   take?: number;
   skip?: number;
 }
@@ -291,12 +303,12 @@ export const cosmos = {
     cosmosFetch<PaymentIntent>(userId, env, "/v1/payment-intents/tx", { method: "POST", body: input }),
 
   list: (userId: string, env: CosmosEnv, query: ListIntentsQuery = {}) =>
-    cosmosFetch<PaymentIntentList>(userId, env, "/v1/payment-intents", { query: { status: query.status, take: query.take, skip: query.skip } }),
+    cosmosFetch<PaymentIntentList>(userId, env, "/v1/payment-intents", { query: { status: query.status, createdFrom: query.createdFrom, take: query.take, skip: query.skip } }),
 
   get: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<PaymentIntent>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`),
 
-  update: (userId: string, env: CosmosEnv, id: string, patch: { status?: string; txHash?: string; reference?: string }) =>
+  update: (userId: string, env: CosmosEnv, id: string, patch: { status?: string; txHash?: string; reference?: string; checkoutTheme?: CheckoutTheme }) =>
     cosmosFetch<PaymentIntent>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`, { method: "PATCH", body: patch }),
 
   remove: (userId: string, env: CosmosEnv, id: string) =>

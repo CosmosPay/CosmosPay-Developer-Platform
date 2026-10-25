@@ -192,13 +192,6 @@ export default {
   },
 
   /* ---------------- /login ---------------- */
-  login: {
-    title: "Entre na Cosmos Pay",
-    sub: "Sua conta abre o painel de desenvolvedores: chaves de API, links de pagamento, webhooks e análises.",
-    cta: "Continuar para entrar",
-    redirecting: "Levando você para o login…",
-    note: "Login seguro com sua conta Cosmos Pay.",
-  },
 
   nav: {
     login: "Entrar",
@@ -998,6 +991,7 @@ export default {
       }
     },
     overview: {
+      hub: { crumb: "Visão geral", active: "Ativa", since: "Desde {date}", settled: "Volume liquidado", noVolume: "Ainda não há pagamentos liquidados", moreAssets: "+{n} mais", rate: "Tarifa", plan: "Plano", orgId: "ID da organização", createLink: "Criar link de pagamento", docs: "Documentação", designs: "Designs de checkout", kpiTotal: "Pagamentos totais", kpiSucceeded: "Concluídos", kpiFailed: "Falhos", kpiRate: "Taxa de sucesso", activity: "Atividade de pagamentos", period7: "7 dias", period30: "30 dias", periods: { today: "Hoje", week: "Semana", month: "Mês", year: "Ano" }, noPeriodTx: "Nenhum pagamento liquidado neste período.", sumVolume: "Volume liquidado", sumCount: "Pagamentos", sumPayers: "Pagadores", sumWebhooks: "Entregas de webhooks", sumWebhooksFailed: "{n} com falha", growthVs: "{pct} em relação aos {n} dias anteriores", legendVolume: "Volume", legendCount: "Pagamentos", chartLabel: "Pagamentos criados e volume liquidado por dia nos últimos {n} dias.", transactions: "Últimos pagamentos liquidados", viewAll: "Ver todos os pagamentos", thId: "Pagamento", thDate: "Data", thAmount: "Valor", thNetwork: "Rede", thTo: "Pago para", thStatus: "Status" },
       greeting: "Bom dia, {name}",
       sub: "Veja o que está acontecendo na {org} hoje.",
       metrics: {
@@ -1068,6 +1062,7 @@ export default {
       custDetail: { title: "Cliente", edit: "Editar", save: "Guardar alterações", alias: "Alias", note: "Nota", account: "Conta Stellar", payments: "Pagamentos", onChain: "On-chain", noPayments: "Ainda não há pagamentos." },
     },
     paylinks: {
+      design: { label: "Design do checkout", hint: "Como o checkout hospedado deste link aparece. Você pode mudar quando quiser.", preview: "Prévia", saved: "Design do checkout atualizado", saveError: "Não foi possível mudar o design do checkout", current: "Atual" },
       title: "Links de pagamento",
       sub: "{n} links · pagamentos SEP-7 na Stellar",
       create: "Criar link de pagamento",

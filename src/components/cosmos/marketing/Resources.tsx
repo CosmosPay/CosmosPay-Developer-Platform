@@ -15,12 +15,14 @@ export function Resources() {
         </div>
         <div className="news-list">
           {r.items.map((n, i) => (
-            <a className="news-item reveal" href="#" key={n.t} style={{ transitionDelay: `${(i % 2) * 0.06}s` }}>
+            /* No article pages yet: each item is a card, not a link (href="#" and its
+               "read more" stay commented out until the posts exist). */
+            <article className="news-item reveal" key={n.t} style={{ transitionDelay: `${(i % 2) * 0.06}s` }}>
               <div className="news-tag">{n.tag}</div>
               <h4>{n.t}</h4>
               <p>{n.d}</p>
-              <span className="card-link">{r.readMore} <IcChevSm /></span>
-            </a>
+              {/* <span className="card-link">{r.readMore} <IcChevSm /></span> */}
+            </article>
           ))}
         </div>
       </div>

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   amountLabel,
   canPayWithExtension,
+  countdown,
   explorerTxUrl,
   fetchPaymentLink,
   isPaymentLinkId,
@@ -36,9 +37,19 @@ function stellarBody(over: Record<string, unknown> = {}) {
     networkFee: null,
     expiresAt: '2026-10-24T13:34:56.000Z',
     createdAt: '2026-10-24T12:34:56.000Z',
+    checkoutTheme: 'ticket',
     ...over,
   };
 }
+
+test('countdown shows minutes and seconds, hours from an hour on, and stops at zero', () => {
+  const at = Date.parse('2026-10-24T12:00:00.000Z');
+  assert.deepEqual(countdown('2026-10-24T12:11:23.000Z', at), { digits: '11:23', seconds: 683 });
+  assert.deepEqual(countdown('2026-10-24T14:05:09.400Z', at), { digits: '02:05:09', seconds: 7509 });
+  assert.deepEqual(countdown('2026-10-24T11:59:00.000Z', at), { digits: '00:00', seconds: 0 });
+  assert.equal(countdown(null, at), null);
+  assert.equal(countdown('not a date', at), null);
+});
 
 test('isPaymentLinkId accepts cuids and nothing else', () => {
   assert.equal(isPaymentLinkId('cmh4x2k9a0001l70g8v5q3z2w'), true);
@@ -53,6 +64,14 @@ test('parsePaymentLink keeps a valid body field for field', () => {
   assert.equal(link.payTo, STELLAR_DEST);
   assert.equal(link.amount, '25.5');
   assert.equal(link.memo, '4127759120438726917');
+});
+
+test('parsePaymentLink reads the checkout design, and draws classic for one it does not know', () => {
+  assert.equal(parsePaymentLink(stellarBody())?.checkoutTheme, 'ticket');
+  // A cosmetic field never costs the payer the page: unknown, missing or odd values fall back.
+  assert.equal(parsePaymentLink(stellarBody({ checkoutTheme: 'neon' }))?.checkoutTheme, 'classic');
+  assert.equal(parsePaymentLink(stellarBody({ checkoutTheme: undefined }))?.checkoutTheme, 'classic');
+  assert.equal(parsePaymentLink(stellarBody({ checkoutTheme: null }))?.checkoutTheme, 'classic');
 });
 
 test('parsePaymentLink drops fields the contract does not have', () => {

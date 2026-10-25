@@ -1,0 +1,520 @@
+---
+/* / on payments.cosmospay.lat — the payments landing.
+ *
+ * Server-rendered, with no client JavaScript but the general nav island, a few lines for
+ * the hero video and the use-case tabs. The copy is src/lib/payments/landing-i18n.ts; the
+ * checkout design names are the payments catalog's; the rates come from src/lib/plans.ts.
+ * Its structure follows how crypto gateways present themselves (supported networks, assets
+ * and wallets; benefits; a comparison with cards; integration paths; how it works; use cases
+ * by business; security; developers; pricing; FAQ), with only claims a visitor can check.
+ * The look is the institutional skin (src/styles/institutional.css) the layout puts on
+ * <body>, quiet in type and structure (payments-landing.css): headings without labels above
+ * them, no accent words, no arrows, no icon cards. The motion carries it: the hero video, the
+ * logo marquees, and blocks that rise in as they scroll into view (data-reveal).
+ */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import type { ComponentProps } from "astro/types";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { LANDING } from "@/lib/payments/landing-i18n";
+import { CHECKOUT_THEMES, themeThumbnail } from "@/lib/payments/checkout-themes";
+import { PLAN_SPECS } from "@/lib/plans";
+import { DOCS, PRICING, loginTo } from "@/components/cosmos/lib/constants";
+
+const lang = Astro.locals.lang ?? "en";
+const t = LANDING[lang];
+const designs = MESSAGES[lang].designs;
+
+const CREATE_LINK = loginTo("/dashboard?view=payments");
+const CONTACT = "mailto:cosmosapplat@gmail.com";
+const lowestRate = PLAN_SPECS.growth.perTx;
+
+// The snap's highlighter marks one phrase in the hero and in the final call; a closing full
+// stop stays outside the mark.
+const marked = (text: string) => {
+  const [, words = text, stop = ""] = text.match(/^(.*?)([.!?]*)$/) ?? [];
+  return { words, stop };
+};
+const heroMark = marked(t.hero.titleMark);
+const ctaMark = marked(t.cta.titleBold);
+
+// What customers pay with, as two marquees. Official artwork only: the coins from
+// cryptocurrency-icons, the wallets' own icons (Stellar Wallets Kit, the Solana wallet
+// adapters), Monad and EURC from Trust Wallet's assets, Stellar's mark in currentColor so it
+// follows the theme (Mark.astro), Cosmos from public/brand. Files in public/media/brands.
+type MarkName = ComponentProps<typeof Mark>["name"];
+type Brand = { name: string; src?: string; mark?: MarkName };
+const brand = (name: string, file: string): Brand => ({ name, src: `/media/brands/${file}` });
+const marquees: { label: string; items: Brand[] }[] = [
+  {
+    label: t.marks.chains,
+    items: [
+      { name: "Stellar", mark: "stellar" },
+      brand("Solana", "sol.svg"),
+      brand("Monad", "monad.webp"),
+      brand("USDC", "usdc.svg"),
+      brand("EURC", "eurc.webp"),
+      brand("XLM", "xlm.svg"),
+      brand("SOL", "sol.svg"),
+      brand("MON", "monad.webp"),
+    ],
+  },
+  {
+    label: t.marks.wallets,
+    items: [
+      { name: "Cosmos Wallet", mark: "cosmos" },
+      brand("Freighter", "freighter.webp"),
+      brand("LOBSTR", "lobstr.webp"),
+      brand("xBull", "xbull.webp"),
+      brand("Albedo", "albedo.webp"),
+      brand("Rabet", "rabet.webp"),
+      brand("Phantom", "phantom.svg"),
+      brand("Solflare", "solflare.svg"),
+    ],
+  },
+];
+const benefits = (["final", "instant", "escrow", "yours"] as const).map((key) => t.benefits[key]);
+// The two ways a payment settles: straight to the merchant, or held in escrow until released.
+const settleModes = (["instant", "escrow"] as const).map((key) => ({ key, ...t.settle[key] }));
+const compareRows = (["chargebacks", "protection", "settlement", "hours", "borders", "custody", "fees"] as const).map((key) => {
+  const row = t.compare.rows[key];
+  return { ...row, us: row.us.replace("{rate}", lowestRate) };
+});
+const paths = [
+  { key: "nocode", href: CREATE_LINK },
+  { key: "hosted", href: "#designs" },
+  { key: "api", href: DOCS },
+] as const;
+const steps = (["create", "share", "pay", "confirm"] as const).map((key) => t.how[key]);
+const useCases = (["stores", "services", "digital", "donations"] as const).map((key) => ({ key, ...t.useCases[key] }));
+const security = (["onchain", "keys", "framing", "environments", "expiry", "docs"] as const).map((key) => t.security[key]);
+// Plan names are product names (untranslated); "Custom" and "$33/mo" are written out per language.
+const plans = (["starter", "essentials", "growth", "enterprise"] as const).map((id) => {
+  const spec = PLAN_SPECS[id];
+  const custom = spec.perTx === "Custom";
+  const monthly = spec.price === spec.perTx ? t.pricing.free : `${spec.price.replace("/mo", "")} ${t.pricing.perMonth}`;
+  return {
+    id,
+    name: id[0].toUpperCase() + id.slice(1),
+    rate: custom ? t.pricing.custom : spec.perTx,
+    unit: custom ? "" : t.pricing.perPayment,
+    monthly: custom ? "" : monthly,
+  };
+});
+const faq = (["wallet", "account", "wallets", "custody", "escrow", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
+
+// The REST call the developers section shows. Plain text: it is not translated.
+const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \\
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "chain": "stellar",
+    "destination": "G…YOUR_ACCOUNT",
+    "amount": "25",
+    "assetCode": "USDC",
+    "assetIssuer": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    "msg": "Order #1001",
+    "checkoutTheme": "ticket"
+  }'`;
+---
+
+<PaymentsLayout title={t.meta.title} description={t.meta.description} indexable>
+  <Fragment slot="head">
+    <link rel="preload" as="image" href="/media/coin-ramp-poster.webp" fetchpriority="high" />
+    <!-- Scroll reveals start hidden only when this runs; if the page script never arrives,
+         the class comes off after 2.5 s and everything shows. -->
+    <script is:inline>
+      document.documentElement.classList.add("pl-anim");
+      setTimeout(function () { if (!window.__plReveal) document.documentElement.classList.remove("pl-anim"); }, 2500);
+    </script>
+  </Fragment>
+
+  <main id="main" class="pl">
+    <!-- Hero. The coin-ramp video is the header's background, anchored to its right half
+         and starting there. It is drawn on white: in light mode it multiplies onto the page,
+         in dark mode it is inverted (hue kept) and lightens onto it. -->
+    <section class="pl-hero" aria-labelledby="pl-hero-title">
+      <div class="pl-hero-media" aria-hidden="true">
+        <video class="pl-video" autoplay muted loop playsinline preload="auto" poster="/media/coin-ramp-poster.webp" disablepictureinpicture data-hero-video>
+          <source src="/media/coin-ramp-1280.webm" type="video/webm" media="(max-width: 900px)" />
+          <source src="/media/coin-ramp-1280.mp4" type="video/mp4" media="(max-width: 900px)" />
+          <source src="/media/coin-ramp.webm" type="video/webm" />
+          <source src="/media/coin-ramp.mp4" type="video/mp4" />
+        </video>
+      </div>
+      <div class="wrap pl-hero-inner">
+        <div class="pl-hero-copy">
+          <h1 id="pl-hero-title" class="pl-hero-title"><span class="pl-hero-line">{t.hero.titleA} <mark class="pl-hl">{heroMark.words}</mark>{heroMark.stop}</span> <span class="pl-hero-line">{t.hero.titleB}</span></h1>
+          <p class="pl-lede">{t.hero.lede}</p>
+          <div class="pl-cta">
+            <a class="btn btn-dark" href={CREATE_LINK}>{t.hero.primary}</a>
+            <a class="btn btn-outline-w" href={DOCS}>{t.hero.secondary}</a>
+          </div>
+          <a class="pl-textlink" href="#designs">{t.hero.designs}</a>
+        </div>
+      </div>
+      <button class="pl-motion" type="button" data-motion data-pause={t.hero.pause} data-play={t.hero.play}>
+        <span class="pl-motion-icon" aria-hidden="true"></span><span data-motion-label>{t.hero.pause}</span>
+      </button>
+    </section>
+
+    <!-- What customers pay with: networks, assets and wallets, in place of the customer
+         logos a gateway would show (we show none until they are real). Each row is a
+         marquee: two identical sets slide by half the track, so the loop has no seam. The
+         row labels are for assistive tech only (the product owner's call), with a list of the
+         names, since the moving copy is never read. -->
+    <section class="pl-marks" aria-labelledby="pl-marks-title">
+      <h2 id="pl-marks-title" class="wrap pl-marks-title" data-reveal>{t.marks.title}</h2>
+      {marquees.map((row, r) => (
+        <div class="pl-marquee-row" data-reveal style={`--i: ${r}`}>
+          <h3 class="pl-sr">{row.label}</h3>
+          <ul class="pl-sr" role="list">{row.items.map((item) => <li>{item.name}</li>)}</ul>
+          <div class:list={["pl-marquee", { "pl-marquee-rev": r % 2 === 1 }]} aria-hidden="true">
+            <div class="pl-marquee-track">
+              {[0, 1].map(() => (
+                <div class="pl-marquee-set">
+                  {[...row.items, ...row.items].map((item) => (
+                    <span class="pl-brand">
+                      {item.mark ? <Mark name={item.mark} /> : <img src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
+                      <span>{item.name}</span>
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </section>
+
+    <section class="pl-section" aria-labelledby="pl-benefits">
+      <div class="wrap">
+        <div class="pl-head" data-reveal>
+          <h2 id="pl-benefits">{t.benefits.title} {t.benefits.titleBold}</h2>
+        </div>
+        <ul class="pl-benefits" role="list">
+          {benefits.map((b, i) => (
+            <li data-reveal style={`--i: ${i}`}>
+              <h3>{b.title}</h3>
+              <p>{b.body}</p>
+            </li>
+          ))}
+        </ul>
+
+        <div class="pl-settle">
+          <div class="pl-settle-head" data-reveal>
+            <h3 class="pl-settle-title">{t.settle.title} {t.settle.titleBold}</h3>
+            <p class="pl-section-lede">{t.settle.lede}</p>
+          </div>
+          <div class="pl-settle-grid">
+            {settleModes.map((mode, i) => (
+              <article class:list={["pl-settle-card", { "is-escrow": mode.key === "escrow" }]} data-reveal style={`--i: ${i}`}>
+                <h4>{mode.title}</h4>
+                <p>{mode.body}</p>
+                <ol class="pl-settle-steps" role="list">
+                  {mode.steps.map((step, j) => (
+                    <li style={`--j: ${j}`}><span class="pl-settle-num" aria-hidden="true">{j + 1}</span><span>{step}</span></li>
+                  ))}
+                </ol>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pl-section pl-section-alt" aria-labelledby="pl-compare">
+      <div class="wrap">
+        <div class="pl-head" data-reveal>
+          <h2 id="pl-compare">{t.compare.title} {t.compare.titleBold}</h2>
+        </div>
+        <div class="pl-compare-card">
+          <table class="pl-compare">
+            <caption class="pl-sr">{t.compare.caption}</caption>
+            <thead>
+              <tr>
+                <th scope="col"><span class="pl-sr">{t.compare.topic}</span></th>
+                <th scope="col">{t.compare.cards}</th>
+                <th scope="col" class="pl-compare-us">{t.compare.us}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {compareRows.map((row, i) => (
+                <tr data-reveal style={`--i: ${i}`}>
+                  <th scope="row">{row.k}</th>
+                  <td data-label={t.compare.cards}>{row.cards}</td>
+                  <td class="pl-compare-us" data-label={t.compare.us}>
+                    <div class="pl-compare-val"><span class="pl-check"><Icon name="check" /></span><span>{row.us}</span></div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="pl-footnote" data-reveal>{t.compare.note}</p>
+      </div>
+    </section>
+
+    <section class="pl-section" id="integration" aria-labelledby="pl-paths">
+      <div class="wrap">
+        <div class="pl-head pl-head-row" data-reveal>
+          <h2 id="pl-paths">{t.paths.title} {t.paths.titleBold}</h2>
+          <p class="pl-section-lede">{t.paths.lede}</p>
+        </div>
+        <ul class="pl-paths" role="list">
+          {paths.map((p, i) => {
+            const copy = t.paths[p.key];
+            return (
+              <li class="pl-path" data-reveal style={`--i: ${i}`}>
+                <h3>{copy.title}</h3>
+                <p class="pl-path-level">{copy.level}</p>
+                <p class="pl-path-body">{copy.body}</p>
+                <ul class="pl-checks" role="list">
+                  {copy.points.map((point) => (
+                    <li><span class="pl-check"><Icon name="check" /></span>{point}</li>
+                  ))}
+                </ul>
+                <a class="pl-textlink" href={p.href}>{copy.link}</a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+
+    <section class="pl-section pl-section-alt" aria-labelledby="pl-how">
+      <div class="wrap">
+        <div class="pl-head" data-reveal>
+          <h2 id="pl-how">{t.how.title} {t.how.titleBold}</h2>
+        </div>
+        <ol class="pl-steps" role="list">
+          {steps.map((s, i) => (
+            <li data-reveal style={`--i: ${i}`}>
+              <span class="pl-step-num" aria-hidden="true">{i + 1}</span>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <section class="pl-section" id="designs" aria-labelledby="pl-designs">
+      <div class="wrap">
+        <div class="pl-head pl-head-row" data-reveal>
+          <h2 id="pl-designs">{t.designs.title} {t.designs.titleBold}</h2>
+          <p class="pl-section-lede">{t.designs.lede}</p>
+        </div>
+        <ul class="pl-designs" role="list">
+          {CHECKOUT_THEMES.map((d, i) => (
+            <li class="pl-design" data-reveal style={`--i: ${i}`}>
+              <a href={`/preview/${d}`} class="pl-design-link">
+                <span class="pl-design-shot"><img src={themeThumbnail(d)} alt="" width="320" height="220" loading="lazy" decoding="async" /></span>
+                <span class="pl-design-name">{designs[d].name}</span>
+                <span class="pl-design-desc">{designs[d].desc}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <!-- Use cases by business, as tabs (the script below wires the keyboard). -->
+    <section class="pl-section pl-section-alt" aria-labelledby="pl-uses">
+      <div class="wrap">
+        <div class="pl-head" data-reveal>
+          <h2 id="pl-uses">{t.useCases.title} {t.useCases.titleBold}</h2>
+        </div>
+        <div class="pl-uses" data-tabs data-reveal>
+          <div class="pl-uses-tabs" role="tablist" aria-label={t.useCases.label} aria-orientation="vertical">
+            {useCases.map((u, i) => (
+              <button
+                type="button"
+                class="pl-uses-tab"
+                role="tab"
+                id={`pl-use-tab-${u.key}`}
+                aria-controls={`pl-use-${u.key}`}
+                aria-selected={i === 0 ? "true" : "false"}
+                tabindex={i === 0 ? 0 : -1}
+              >
+                {u.title}
+              </button>
+            ))}
+          </div>
+          {useCases.map((u, i) => (
+            <div class="pl-uses-panel" role="tabpanel" id={`pl-use-${u.key}`} aria-labelledby={`pl-use-tab-${u.key}`} tabindex="0" hidden={i !== 0}>
+              <h3>{u.title}</h3>
+              <p class="pl-uses-body">{u.body}</p>
+              <ul class="pl-checks" role="list">
+                {u.points.map((point) => (
+                  <li><span class="pl-check"><Icon name="check" /></span>{point}</li>
+                ))}
+              </ul>
+              <p class="pl-uses-built">{t.useCases.built} {u.uses}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="pl-section" aria-labelledby="pl-security">
+      <div class="wrap pl-split">
+        <div class="pl-head pl-head-sticky" data-reveal>
+          <h2 id="pl-security">{t.security.title} {t.security.titleBold}</h2>
+        </div>
+        <ul class="pl-facts-list" role="list">
+          {security.map((s, i) => (
+            <li data-reveal style={`--i: ${i}`}>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section class="pl-section pl-section-alt" aria-labelledby="pl-dev">
+      <div class="wrap pl-dev">
+        <div class="pl-dev-copy" data-reveal>
+          <div class="pl-head" data-reveal>
+            <h2 id="pl-dev">{t.developers.title} {t.developers.titleBold}</h2>
+            <p class="pl-section-lede">{t.developers.lede}</p>
+          </div>
+          <ul class="pl-checks" role="list">
+            {[t.developers.rest, t.developers.sdk, t.developers.webhooks, t.developers.keys].map((item) => (
+              <li><span class="pl-check"><Icon name="check" /></span>{item}</li>
+            ))}
+          </ul>
+          <div class="pl-cta">
+            <a class="btn btn-dark" href={DOCS}>{t.developers.docs}</a>
+            <a class="btn btn-outline-w" href={`${DOCS}/api`}>{t.developers.reference}</a>
+          </div>
+        </div>
+        <figure class="pl-code" data-reveal style="--i: 2">
+          <figcaption>{t.developers.codeTitle}</figcaption>
+          <pre tabindex="0" translate="no"><code>{CODE}</code></pre>
+          <p class="pl-code-note"># {t.developers.codeComment}</p>
+        </figure>
+      </div>
+    </section>
+
+    <section class="pl-section" id="pricing" aria-labelledby="pl-pricing">
+      <div class="wrap">
+        <div class="pl-head pl-head-row" data-reveal>
+          <h2 id="pl-pricing">{t.pricing.title} {t.pricing.titleBold}</h2>
+          <p class="pl-section-lede">{t.pricing.lede}</p>
+        </div>
+        <ul class="pl-plans" role="list">
+          {plans.map((p, i) => (
+            <li class:list={["pl-plan", { "pl-plan-best": p.id === "growth" }]} data-reveal style={`--i: ${i}`}>
+              <span class="pl-plan-name">{p.name}</span>
+              <span class="pl-plan-rate">{p.rate}</span>
+              {p.unit && <span class="pl-plan-sub">{p.unit}</span>}
+              {p.monthly && <span class="pl-plan-price">{p.monthly}</span>}
+            </li>
+          ))}
+        </ul>
+        <a class="btn btn-outline-w pl-plans-more" href={PRICING}>{t.pricing.compare}</a>
+      </div>
+    </section>
+
+    <section class="pl-section pl-section-alt" aria-labelledby="pl-faq">
+      <div class="wrap pl-split">
+        <div class="pl-head pl-head-sticky" data-reveal>
+          <h2 id="pl-faq">{t.faq.title} {t.faq.titleBold}</h2>
+        </div>
+        <div class="pl-faq">
+          {faq.map((f, i) => (
+            <details data-reveal style={`--i: ${i}`}>
+              <summary>{f.q}</summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="pl-section pl-final-wrap" aria-labelledby="pl-final">
+      <div class="wrap">
+        <div class="pl-final" data-reveal>
+          <h2 id="pl-final">{t.cta.title} <mark class="pl-hl">{ctaMark.words}</mark>{ctaMark.stop}</h2>
+          <p>{t.cta.body}</p>
+          <div class="pl-cta">
+            <a class="btn btn-dark" href={CREATE_LINK}>{t.cta.primary}</a>
+            <a class="btn btn-outline-w" href={CONTACT}>{t.cta.secondary}</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  /* The hero video plays on its own, always: the product owner wants it moving for every
+     visitor (reduced-motion included), so it is the one exception to that preference on this
+     site. It is paused only while off screen (no work nobody sees) and by its own button,
+     which is always there (WCAG 2.2.2: it loops for longer than 5 s). */
+  const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
+  const button = document.querySelector<HTMLButtonElement>("[data-motion]");
+  const label = button?.querySelector<HTMLElement>("[data-motion-label]");
+  if (video && button && label) {
+    let paused = false;
+    let visible = true;
+    const sync = () => {
+      if (!paused && visible) void video.play().catch(() => { /* autoplay refused: the poster stays */ });
+      else video.pause();
+      button.setAttribute("aria-pressed", String(paused));
+      label.textContent = paused ? button.dataset.play! : button.dataset.pause!;
+      button.dataset.state = paused ? "paused" : "playing";
+    };
+    button.addEventListener("click", () => { paused = !paused; sync(); });
+    new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); }).observe(video);
+    sync();
+  }
+
+  /* Scroll reveals: an element marked data-reveal rises in the first time it enters the
+     viewport (CSS: payments-landing.css, .pl-anim). Its --i staggers it among siblings. */
+  const reveal = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add("is-in");
+      reveal.unobserve(entry.target);
+    }
+  }, { rootMargin: "0px 0px -6% 0px", threshold: 0.1 });
+  for (const el of document.querySelectorAll("[data-reveal]")) reveal.observe(el);
+  (window as Window & { __plReveal?: boolean }).__plReveal = true;
+
+  /* Use-case tabs (WAI-ARIA tabs, automatic activation): a click or an arrow key selects a
+     tab and shows its panel; Home and End jump to the first and last. Only the selected tab
+     is in the tab order. */
+  for (const root of document.querySelectorAll<HTMLElement>("[data-tabs]")) {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const select = (tab: HTMLButtonElement, focus: boolean) => {
+      for (const other of tabs) {
+        const on = other === tab;
+        other.setAttribute("aria-selected", String(on));
+        other.tabIndex = on ? 0 : -1;
+        const panel = document.getElementById(other.getAttribute("aria-controls")!);
+        if (panel) panel.hidden = !on;
+      }
+      if (focus) tab.focus();
+    };
+    root.addEventListener("click", (event) => {
+      const tab = (event.target as Element).closest<HTMLButtonElement>('[role="tab"]');
+      if (tab) select(tab, false);
+    });
+    root.addEventListener("keydown", (event) => {
+      const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
+      if (at < 0) return;
+      const next = { ArrowDown: at + 1, ArrowRight: at + 1, ArrowUp: at - 1, ArrowLeft: at - 1, Home: 0, End: tabs.length - 1 }[event.key];
+      if (next === undefined) return;
+      event.preventDefault();
+      select(tabs[(next + tabs.length) % tabs.length], true);
+    });
+  }
+</script>

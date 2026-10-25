@@ -29,6 +29,7 @@ import {
   statusQuery,
   takeQuery,
 } from '@/schemas/shared/openapi-params';
+import { CHECKOUT_THEMES } from '@/lib/payments/checkout-themes';
 
 const TAG = 'Payment Intents';
 
@@ -64,6 +65,10 @@ export const paymentIntentSchema = z
     }),
     txHash: z.string().nullable().openapi({ example: null }),
     reference: z.string().nullable().openapi({ example: null }),
+    checkoutTheme: z.enum(CHECKOUT_THEMES).openapi({
+      example: 'classic',
+      description: 'The hosted checkout design at payments.cosmospay.lat/{id}; `classic` when none was chosen.',
+    }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     updatedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
   })
@@ -106,6 +111,14 @@ registerRoutes([
         org: orgQuery,
         env: envQuery,
         status: statusQuery,
+        createdFrom: z
+          .string()
+          .optional()
+          .openapi({
+            param: { name: 'createdFrom', in: 'query' },
+            description: 'Only intents created at or after this instant (ISO 8601). An unparseable value is ignored.',
+            example: '2026-10-01T00:00:00.000Z',
+          }),
         take: takeQuery,
         skip: skipQuery,
       }),
@@ -171,7 +184,7 @@ registerRoutes([
     path: '/api/payment-intents/{id}',
     tags: [TAG],
     summary: 'Update a payment intent',
-    description: 'Updates the status, transaction hash or merchant reference of an intent.',
+    description: 'Updates the status, transaction hash, merchant reference or checkout design of an intent.',
     security: sessionSecurity,
     request: {
       params: idParam,

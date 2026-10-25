@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { DEV, SITE } from "@/components/cosmos/lib/constants";
+import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 
 /* robots.txt per domain (one app answers all three, so a static file would say the same
    thing everywhere). src/lib/hosts.ts lets this path through on every domain. */
@@ -27,9 +27,13 @@ Disallow: /api/
 
 Sitemap: ${DEV}/sitemap.xml
 `,
-  payments: `# Cosmos Pay — payment links are personal and short-lived: nothing to index.
+  payments: `# Cosmos Pay — payments: only the landing is content. Payment links are personal and
+# short-lived, and the design previews are samples.
 User-agent: *
+Allow: /$
 Disallow: /
+
+Sitemap: ${PAYMENTS}/sitemap.xml
 `,
 };
 

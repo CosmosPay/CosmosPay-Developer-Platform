@@ -1,18 +1,52 @@
 ---
-import CosmosLayout from "@/layouts/CosmosLayout.astro";
-import Login from "@/components/cosmos/Login.tsx";
+/* /login — no view of its own. It starts the Authentik OAuth flow on the server and answers
+ * with a 302 straight to Authentik; the state cookie Better Auth sets for the flow rides on
+ * that redirect. Being a redirect, it never enters the browser history, so Back from
+ * Authentik returns to the page the visitor came from.
+ *
+ * Every "Log in" / "Get API keys" on the three domains, and every signed-out visit to the
+ * dashboard, lands here. `next` (a same-origin path, src/lib/safe-next.ts) is where the
+ * callback ends up. Only if the provider cannot be reached does this render anything.
+ */
+import ErrorPage from "@/components/ErrorPage.astro";
+import { auth } from "@/lib/auth";
 import { safeNextPath } from "@/lib/safe-next";
 
-// Sign-in entry: the company site's "Log in" / "Get API keys" and every signed-out visit
-// to the dashboard land here. `next` is where to go afterwards (same-origin paths only).
 const next = safeNextPath(Astro.url.searchParams.get("next"));
 if (Astro.locals.user) {
   return Astro.redirect(next);
 }
 
-const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+let location: string | null = null;
+let cookies: string[] = [];
+try {
+  const res = await auth.api.signInSocial({
+    body: { provider: "ak", callbackURL: next },
+    headers: Astro.request.headers,
+    asResponse: true,
+  });
+  const body = (await res.json().catch(() => null)) as { url?: string } | null;
+  if (res.ok && body?.url) {
+    location = body.url;
+    cookies = res.headers.getSetCookie();
+  } else {
+    console.error(`[login] Authentik sign-in did not start (${res.status})`);
+  }
+} catch (err) {
+  console.error("[login] Authentik sign-in did not start:", err instanceof Error ? err.message : err);
+}
+
+if (location) {
+  const headers = new Headers({ Location: location, "Cache-Control": "no-store" });
+  for (const cookie of cookies) headers.append("Set-Cookie", cookie);
+  return new Response(null, { status: 302, headers });
+}
+
+Astro.response.status = 503;
 ---
 
-<CosmosLayout title="Sign in — Cosmos Pay" lang={lang} noindex>
-  <Login client:load lang={lang} next={next} />
-</CosmosLayout>
+<ErrorPage
+  code="503"
+  title="Sign-in is unavailable"
+  message="We couldn't reach the sign-in provider. Please try again in a moment."
+/>

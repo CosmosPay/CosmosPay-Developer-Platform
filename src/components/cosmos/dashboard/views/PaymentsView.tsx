@@ -11,6 +11,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field, Sel } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
 const FILTER_KEYS = ["all", "PENDING", "SUCCEEDED", "FAILED"];
@@ -120,6 +121,7 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
   const [assetIssuer, setAssetIssuer] = useState("");
   const [memo, setMemo] = useState("");
   const [msg, setMsg] = useState("");
+  const [checkoutTheme, setCheckoutTheme] = useState("classic");
   const [busy, setBusy] = useState(false);
 
   const isTx = kind === "tx";
@@ -142,6 +144,7 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
       ...(needsIssuer && assetIssuer.trim() ? { assetIssuer: assetIssuer.trim() } : {}),
       ...(memo.trim() ? { memo: memo.trim() } : {}),
       ...(msg.trim() ? { msg: msg.trim() } : {}),
+      checkoutTheme,
     };
     payApi.create(body)
       .then((intent) => onCreated(intent))
@@ -168,6 +171,7 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
           customText={t.dash.common.assetCustom} anyText={t.dash.common.assetAny} allowAny codePlaceholder="XLM" />
         <Field label={m.memo} hint={m.memoHint} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" />
         <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Order #24" />
+        <CheckoutDesignPicker value={checkoutTheme} onChange={setCheckoutTheme} />
         <div className="modal-actions">
           <button className="btn btn-violet" disabled={!valid || busy} onClick={submit}>{m.submit}</button>
           <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>

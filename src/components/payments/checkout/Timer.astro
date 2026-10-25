@@ -1,0 +1,18 @@
+---
+// Countdown to the link's expiry. The digits are drawn by the script (aria-hidden); the
+// timer's label carries the same time in words for screen readers.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+interface Props {
+  /** Show the "Time left" caption above the digits. */
+  caption?: boolean;
+}
+
+const { caption = true } = Astro.props;
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<div class="ck-timer" data-slot="timer" data-open-only role="timer" hidden>
+  {caption && <span class="ck-timer-caption" aria-hidden="true">{t.timeLeft}</span>}
+  <span class="ck-digits" data-slot="digits" aria-hidden="true"></span>
+</div>

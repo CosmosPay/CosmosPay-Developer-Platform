@@ -1,0 +1,13 @@
+---
+// The payment's QR code. The image is the server's PNG data URL, set by the script.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+interface Props {
+  size?: number;
+}
+
+const { size = 240 } = Astro.props;
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<img class="pp-qr" data-slot="qr" alt={t.qrAlt} width={size} height={size} />

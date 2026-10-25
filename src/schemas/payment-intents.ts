@@ -9,6 +9,7 @@
    what guarantees the extension has run by the time they are constructed. It is the same
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
+import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
 
 // Stellar public keys are 56-char base32 strings starting with G.
 const stellarAddress = z
@@ -26,6 +27,8 @@ const memoString = z.string().trim().regex(/^\d+$/, "Memo must be a numeric MEMO
 const assetCode = z.string().trim().min(1).max(12);
 const msgString = z.string().trim().max(300);
 const callbackString = z.string().trim().max(2048);
+// The hosted checkout's design (src/lib/payments/checkout-themes.ts); the server defaults to classic.
+const checkoutTheme = z.enum(CHECKOUT_THEMES);
 
 // Which environment (network) the intent targets — maps to the consumer env header.
 export const cosmosEnvSchema = z.enum(["dev", "prod"]).default("dev");
@@ -46,6 +49,7 @@ export const createPaymentIntentBodySchema = z
     memo: memoString.optional(),
     msg: msgString.optional(),
     callback: callbackString.optional(),
+    checkoutTheme: checkoutTheme.optional(),
   })
   .refine((v) => v.kind !== "tx" || !!v.source, { message: "A source account is required for a transaction intent.", path: ["source"] })
   .refine((v) => v.kind !== "tx" || !!v.amount, { message: "An amount is required for a transaction intent.", path: ["amount"] })
@@ -55,6 +59,7 @@ export const updatePaymentIntentBodySchema = z.object({
   status: z.enum(["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"]).optional(),
   txHash: z.string().trim().min(1).max(128).optional(),
   reference: z.string().trim().max(120).optional(),
+  checkoutTheme: checkoutTheme.optional(),
 });
 
 export const validatePaymentIntentBodySchema = z.object({

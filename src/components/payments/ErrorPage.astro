@@ -4,7 +4,6 @@
 // and 500.astro pick it when the request is served as the payments area.
 import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
 import { MESSAGES } from "@/lib/payments/i18n";
-import { SITE } from "@/lib/payments/urls";
 
 interface Props {
   code: 404 | 500;
@@ -25,7 +24,8 @@ const figure = code === 500 ? "astronauta-acostado.svg" : "astronauta-pensando.s
       <h1 class="pp-title" id="err-title">{title}</h1>
       <p class="pp-body">{body}</p>
       <img class="pp-figure" src={`/brand/${figure}`} alt="" width="180" height="180" loading="lazy" decoding="async" />
-      <a class="btn btn-dark" href={SITE}>{t.home}</a>
+      <!-- The gateway's own home: a payments page never sends the payer off to the company site. -->
+      <a class="btn btn-dark" href="/">{t.home}</a>
     </section>
   </main>
 </PaymentsLayout>
