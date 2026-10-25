@@ -14,6 +14,7 @@ import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
+import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, CHAIN_NAMES, NATIVE_CODES, TEST_NETWORKS, TOKEN_PRESETS, ADDRESS_PLACEHOLDERS, isAddress } from "@/lib/chains";
 import { standardAssets } from "@/lib/stellar-assets";
@@ -24,7 +25,7 @@ const KINDS = ["PAY", "TX"];
 const DEFAULTS = { q: "", status: "all", chain: "all", kind: "all", date: "any" };
 const ALLOWED = { status: ["all", ...STATUSES], chain: ["all", ...CHAINS], kind: ["all", ...KINDS], date: DATE_RANGES };
 
-export function PaymentsView({ canManage = true, orgId, env = "dev" }) {
+export function PaymentsView({ canManage = true, canConnectWallets = false, orgId, env = "dev" }) {
   const t = useT();
   const pl = t.dash.paylinks;
   const fl = t.dash.filters;
@@ -137,7 +138,7 @@ export function PaymentsView({ canManage = true, orgId, env = "dev" }) {
         )}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}
       </div>
-      {modal && <CreatePayLinkModal pl={pl} orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
+      {modal && <CreatePayLinkModal pl={pl} orgId={orgId} env={env} canConnectWallets={canConnectWallets} onClose={() => setModal(false)} onCreated={onCreated} />}
       {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={onDeleted} />}
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </>
@@ -149,7 +150,7 @@ export function PaymentsView({ canManage = true, orgId, env = "dev" }) {
    Monad testnet in the sandbox). Composed as the payer will meet it: the network as a choice of
    three, the amount with its asset in one field (as a swap panel), the address that receives it,
    then the rest folded under "more options". Transaction intents (a known payer) are Stellar's. */
-function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
+function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, onClose, onCreated }) {
   const t = useT();
   const m = pl.modal;
   const tk = t.dash.tokens;
@@ -280,7 +281,8 @@ function CreatePayLinkModal({ pl, orgId, env, onClose, onCreated }) {
           </div>
         )}
 
-        <Field label={m.destination} value={destination} onChange={(e) => setDestination(e.target.value)} placeholder={ADDRESS_PLACEHOLDERS[chain]} aria-invalid={invalid(destOk, destination)} autoComplete="off" spellCheck={false} />
+        {/* The money goes to one of the organization's wallets (Settings), never a typed address. */}
+        <WalletSelect id="paylink-dest" orgId={orgId} chain={chain} value={destination} onChange={setDestination} canConnect={canConnectWallets} label={m.destination} />
         {isTx && <Field label={m.source} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" aria-invalid={invalid(sourceOk, source)} autoComplete="off" spellCheck={false} />}
 
         <button type="button" className="swap-more" aria-expanded={more} aria-controls="paylink-more" onClick={() => setMore((v) => !v)}>

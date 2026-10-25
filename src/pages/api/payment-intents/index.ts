@@ -4,6 +4,7 @@ import {
   ApiStatus,
   jsonCreated,
   jsonError,
+  jsonBadRequest,
   jsonForbidden,
   jsonSuccess,
   jsonUnauthorized,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
+import { orgHasWallet } from "@/lib/org-wallets-store";
 import { cosmos, CosmosApiError, type CosmosEnv } from "@/lib/cosmos";
 import { createPaymentIntentBodySchema } from "@/schemas/payment-intents";
 import { safeNotify } from "@/lib/notifications";
@@ -76,6 +78,11 @@ export const POST: APIRoute = async (ctx) => {
   if (!membership) return jsonForbidden("You are not a member of this organization.");
   if (!hasOrgPermission(membership.role, membership.permissions, "payments:create")) {
     return jsonForbidden("You don't have permission to create payment links in this organization.");
+  }
+  // The money goes to one of the organization's wallets (Settings), never to an address someone
+  // typed: the dashboard offers only those, and this is what holds when a request skips it.
+  if (!(await orgHasWallet(org, rest.chain, rest.destination).catch(() => false))) {
+    return jsonBadRequest("The receiving address must be one of the organization's wallets. Connect it in Settings first.");
   }
 
   try {

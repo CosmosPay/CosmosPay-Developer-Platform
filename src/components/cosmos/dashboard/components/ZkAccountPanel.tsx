@@ -4,7 +4,9 @@
    creates the account on Cosmos Pay's confidential token, shows its balances (rebuilt from chain
    events and checked against the on-chain commitments) and moves them: incoming to available, a
    deposit of public XLM, a withdrawal back to public XLM. The amount is asked for in a dialog; the
-   work then shows its progress here, in the panel. Proofs are generated in this tab, on one thread
+   work then shows its progress here, in the panel. Private payments go to the organization's
+   Stellar wallets (Settings), so an account that is not one of them says so, and whoever may
+   connect wallets adds it from here with one signature. Proofs are generated in this tab, on one thread
    (the dashboard is not cross-origin isolated, src/lib/zk/bb-loader.ts), and nothing about the key
    leaves the browser. */
 import { useEffect, useRef, useState } from "react";
@@ -15,6 +17,7 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { networkName } from "@/lib/chains";
 import { canProve } from "@/lib/zk/bb-loader";
+import { connectOrgWallet } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { fromUnits, toUnits } from "@/lib/zk/amounts";
 import type { ZkNetworkConfig } from "@/lib/zk/checkout-api";
 import type { ZkBalances, ZkPhase, ZkWallet } from "@/lib/zk/wallet";
@@ -24,7 +27,7 @@ export interface ZkAccountState {
   registered: boolean;
 }
 
-type Action = "connect" | "register" | "merge" | "deposit" | "withdraw" | "refresh";
+type Action = "connect" | "register" | "merge" | "deposit" | "withdraw" | "refresh" | "addToOrg";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const clock = (ms: number) => {
@@ -32,7 +35,14 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export function ZkAccountPanel({ config, onAccount }: { config: ZkNetworkConfig; onAccount?: (account: ZkAccountState | null) => void }) {
+export function ZkAccountPanel({ config, orgId, orgWallets = null, canConnectWallets = false, onAccount }: {
+  config: ZkNetworkConfig;
+  orgId: string;
+  /* The organization's Stellar wallets (null while they load). */
+  orgWallets?: string[] | null;
+  canConnectWallets?: boolean;
+  onAccount?: (account: ZkAccountState | null) => void;
+}) {
   const t = useT();
   const z = t.zk;
   const [address, setAddress] = useState<string | null>(null);
@@ -97,6 +107,20 @@ export function ZkAccountPanel({ config, onAccount }: { config: ZkNetworkConfig;
   };
 
   const provable = canProve();
+  const outsideOrg = !!address && orgWallets !== null && !orgWallets.includes(address);
+  const addToOrg = async () => {
+    if (busy) return;
+    setBusy("addToOrg");
+    setError(null);
+    try {
+      await connectOrgWallet({ orgId, chain: "stellar", provider: "freighter" });
+      showToast(t.dash.wallets.connected);
+    } catch (e) {
+      setError(problem(e));
+    } finally {
+      setBusy(null);
+    }
+  };
   const registered = !!balances?.registered;
   const bal = (amount: bigint, label: string) => (
     <li className="hub-bal arrive">
@@ -123,6 +147,14 @@ export function ZkAccountPanel({ config, onAccount }: { config: ZkNetworkConfig;
       </div>
 
       {!provable && <p className="field-err" role="alert">{z.cannotProve}</p>}
+      {outsideOrg && (
+        <div className="wl-none">
+          <span>{z.account.notOrgWallet}</span>
+          {canConnectWallets
+            ? <button type="button" className="btn btn-outline-w btn-sm" onClick={addToOrg} disabled={!!busy}>{z.account.addToOrg}</button>
+            : <span className="field-help">{t.dash.wallets.askAdmin}</span>}
+        </div>
+      )}
 
       <div className="zka-body">
         {registered && balances && (
@@ -151,10 +183,10 @@ export function ZkAccountPanel({ config, onAccount }: { config: ZkNetworkConfig;
       </div>
 
       {busy && (
-        <p className="zka-progress" role="status">
-          <span className="zka-spin" aria-hidden="true" />
-          <span>{phase ? z.phases[phase] : z.account.working}</span>
-          {phase === "proving" && now > startedAt && <span className="zka-time" aria-hidden="true">{clock(now - startedAt)}</span>}
+        <p className="work-progress" role="status">
+          <span className="work-spin" aria-hidden="true" />
+          <span>{phase ? z.phases[phase] : busy === "addToOrg" ? t.dash.wallets.signing : z.account.working}</span>
+          {phase === "proving" && now > startedAt && <span className="work-time" aria-hidden="true">{clock(now - startedAt)}</span>}
         </p>
       )}
       {error && <p className="field-err" role="alert">{error}</p>}

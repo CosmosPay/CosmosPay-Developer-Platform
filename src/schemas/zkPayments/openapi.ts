@@ -80,7 +80,7 @@ registerRoutes([
     tags,
     summary: "Create a private payment",
     description:
-      "A payment whose amount stays hidden on-chain, completed by the payer on the private checkout. The recipient must hold a confidential account on the token. The merchant receives the amount minus the 0.01% commission.",
+      "A payment whose amount stays hidden on-chain, completed by the payer on the private checkout. The recipient must be one of the organization's Stellar wallets (`/api/organizations/{id}/wallets`; 400 otherwise) and hold a confidential account on the token. The merchant receives the amount minus the 0.01% commission.",
     security: sessionSecurity,
     request: { body: { content: { "application/json": { schema: createZkPaymentBodySchema.openapi("CreateZkPaymentBody") } }, required: true } },
     responses: { 201: jsonCreated(paymentSchema, "CreateZkPaymentResponse", "Private payment created successfully"), 400: errors.badRequest, ...common },

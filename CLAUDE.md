@@ -303,6 +303,33 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   test network has none. Other tokens go by ticker and mint / contract (`TokenSelect`).
   `payment-link.ts` re-exports its chain list and explorer from there.
 
+### Organization wallets
+
+- **The organization's receiving wallets live in Settings** (product owner, 2026-10-25: asking people
+  to connect a wallet from the payments views is impractical, and members without the permission
+  must not be able to remove one or pick an address outside the list). Model `OrganizationWallet`
+  (chain, address, optional name, the wallet that proved it); routes
+  `/api/organizations/{id}/wallets` (list: any member; connect: `wallets:create`) and
+  `/api/organizations/{id}/wallets/{walletId}` (rename: `wallets:edit`; remove:
+  `wallets:delete`). `wallets` is a permission resource like the others (owners and admins hold
+  it implicitly). UI: `components/OrgWallets.tsx` (`OrgWalletsPanel` in Settings,
+  `ConnectWalletDialog`, `WalletSelect`, `useOrgWallets`).
+- **Connecting proves the wallet**: it signs `walletProofMessage` (`src/lib/org-wallets.ts`: the
+  organization, the network, the address and `issuedAt`), and the route checks the signature
+  against the address (`src/lib/org-wallets-verify.ts`): SEP-53 on Stellar (Freighter), Ed25519 on
+  Solana (Phantom, Solflare), EIP-191 `personal_sign` on Monad (any injected EVM wallet; the
+  signer is recovered with `@noble/curves` + `@noble/hashes`, pinned). A proof is accepted for 10
+  minutes; replaying one only connects the same wallet again. Tested against SEP-53's own vectors
+  and web3.js's documented `personal_sign` example (`tests/unit/orgWallets.test.ts`). The browser
+  side is `src/lib/wallets/prove.ts`.
+- **Payment forms choose, they never take a typed address**: the payment link's destination and the
+  private payment's recipient are a `WalletSelect` of the organization's wallets on that network
+  (whoever may connect wallets gets "connect another" inline, in the form, never a dialog on a
+  dialog; the others are told someone with permission can do it in Settings). **The routes enforce
+  it**: `POST /api/payment-intents` and `POST /api/zk-payments` answer 400 for an address that is
+  not one of the organization's wallets (`orgHasWallet`), failing closed if the table cannot be
+  read. Requests made with an API key straight to the Payments API are not affected.
+
 ### Swaps from the dashboard
 
 - **The swap form is the standard swap widget** (`components/SwapWidget.tsx`, inline at the top of

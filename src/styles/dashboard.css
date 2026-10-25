@@ -831,14 +831,27 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .zka-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .zka-actions:empty { display: none; }
 .zka-actions .btn { min-height: 44px; padding: 10px 20px; font-size: 14px; white-space: nowrap; }
-.zka-progress { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13.5px; color: var(--ink-2); animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
-.zka-time { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-3); }
-.zka-spin { width: 16px; height: 16px; flex: 0 0 auto; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: zkaSpin .8s linear infinite; }
-@keyframes zkaSpin { to { transform: rotate(360deg); } }
+/* A line saying work is under way (the confidential account, connecting a wallet): a turning ring,
+   the step, and a clock where the step is long. */
+.work-progress { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13.5px; color: var(--ink-2); animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
+.work-time { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.work-spin { width: 16px; height: 16px; flex: 0 0 auto; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: workSpin .8s linear infinite; }
+@keyframes workSpin { to { transform: rotate(360deg); } }
 /* An error under a form or inside a panel: plain text in the swap widget's error red, never a box. */
 .inst .field-err { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: #B42F2F; }
 [data-theme="dark"] .inst .field-err { color: #FF9B9B; }
 .zka .field-err { margin: 0; }
+/* The organization's wallets (components/OrgWallets.tsx): Settings' rows, the connect form, and
+   a payment form's receiving wallet when the organization has none on that network yet. */
+.wl-mark { flex: 0 0 auto; border-radius: 50%; object-fit: cover; }
+.wl-mono { display: inline-grid; place-items: center; background: var(--surface-2, var(--line)); color: var(--ink); font-weight: 700; font-size: 13px; }
+.wl-row .wl-net { margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+.wl-row .wl-net + .icon-mini { margin-left: 8px; }
+.wl-connect { display: flex; flex-direction: column; gap: 14px; }
+.wl-connect .modal-actions { margin-top: 2px; }
+.wl-inline { padding: 16px; border: 1px solid var(--line); border-radius: var(--r-pop); }
+.wl-none { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: var(--r-field); font-size: 13.5px; color: var(--ink-2); }
+.wl-none .field-help { margin: 0; }
 @media (max-width: 600px) {
   .inst .zka { padding: 18px; }
   .zka-actions { width: 100%; }

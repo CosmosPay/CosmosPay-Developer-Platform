@@ -2,8 +2,9 @@
    confidential transfer on Cosmos Pay's confidential token (OpenZeppelin's stellar-confidential):
    the amount stays hidden on-chain. The merchant receives the amount minus the 0.01% commission; the
    payer pays on the private checkout (payments.cosmospay.lat/zk/{id}); the merchant's receiving
-   account is a confidential account, set up and managed in this view (ZkAccountPanel), which also
-   fills it in as the recipient of a new payment. Testnet (the sandbox) only for now. */
+   account is one of the organization's Stellar wallets (Settings; the create dialog offers only
+   those) with a confidential account, set up and managed in this view (ZkAccountPanel), which also
+   preselects it as the recipient of a new payment. Testnet (the sandbox) only for now. */
 import { useEffect, useMemo, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
@@ -23,18 +24,18 @@ import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { fromUnits, toUnits, zkSplit } from "@/lib/zk/amounts";
 import { parseZkConfig } from "@/lib/zk/checkout-api";
 import { ZkAccountPanel } from "@/components/cosmos/dashboard/components/ZkAccountPanel";
+import { useOrgWallets, WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 
 const STATUSES = ["PENDING", "SUCCEEDED", "EXPIRED"];
 const PILL = { SUCCEEDED: "ok", EXPIRED: "fail", PENDING: "ref" };
 const DEFAULTS = { q: "", status: "all", date: "any" };
 const ALLOWED = { status: ["all", ...STATUSES] };
 const EXPIRIES = [60, 1440, 10080];
-const RECIPIENT_KEY = "cosmospay:zk:recipient";
 
 const checkoutUrl = (id) => `${PAYMENTS}/zk/${id}`;
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
 
-export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
+export function ZkPaymentsView({ canManage = false, canConnectWallets = false, orgId, env = "dev" }) {
   const t = useT();
   const z = t.zk;
   const fl = t.dash.filters;
@@ -43,6 +44,8 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
   const [account, setAccount] = useState(null);
+  const wallets = useOrgWallets(orgId);
+  const stellarWallets = useMemo(() => (wallets || []).filter((w) => w.chain === "stellar").map((w) => w.address), [wallets]);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   // Loads once the organization is known; an answer for an organization or environment the view
@@ -76,7 +79,7 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
         {canManage && config && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
       </ViewHead>
       {config === null && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{z.unavailable}</span></div>}
-      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} onAccount={setAccount} />}
+      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onAccount={setAccount} />}
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={z.view.searchPlaceholder}
@@ -121,7 +124,7 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
       </div>
       {modal && config && (
         <CreateZkPaymentModal
-          orgId={orgId} env={env} config={config} defaultRecipient={account && account.registered ? account.address : ""}
+          orgId={orgId} env={env} config={config} canConnectWallets={canConnectWallets} defaultRecipient={account && account.registered ? account.address : ""}
           onClose={() => setModal(false)}
           onCreated={(p) => { setRows((r) => [p, ...(r || [])]); }}
         />
@@ -130,13 +133,13 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
   );
 }
 
-function CreateZkPaymentModal({ orgId, env, config, defaultRecipient = "", onClose, onCreated }) {
+function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, defaultRecipient = "", onClose, onCreated }) {
   const t = useT();
   const z = t.zk;
   const keys = useMemo(() => idempotencyKeys(), []);
   const [amount, setAmount] = useState("");
-  // The merchant's own confidential account when the panel has it, else the last one used.
-  const [recipient, setRecipient] = useState(() => { if (defaultRecipient) return defaultRecipient; try { return localStorage.getItem(RECIPIENT_KEY) || ""; } catch { return ""; } });
+  // One of the organization's Stellar wallets: the panel's account when it is one, else the first.
+  const [recipient, setRecipient] = useState(defaultRecipient);
   const [description, setDescription] = useState("");
   const [expires, setExpires] = useState("1440");
   const [busy, setBusy] = useState(false);
@@ -155,7 +158,6 @@ function CreateZkPaymentModal({ orgId, env, config, defaultRecipient = "", onClo
     const body = { org: orgId, environment: env, amount: amount.trim(), recipient: recipient.trim(), description: description.trim() || undefined, expiresInMinutes: Number(expires) };
     try {
       const p = await zkApi.create({ ...body, idempotencyKey: keys.keyFor(body) });
-      try { localStorage.setItem(RECIPIENT_KEY, recipient.trim()); } catch { /* not kept */ }
       setCreated(p);
       onCreated(p);
       showToast(z.modal.created);
@@ -195,7 +197,7 @@ function CreateZkPaymentModal({ orgId, env, config, defaultRecipient = "", onClo
                 <div><dt>{z.commission} ({z.commissionRate})</dt><dd>{fromUnits(split.fee)} XLM</dd></div>
               </dl>
             )}
-            <Field label={z.modal.recipient} hint={z.modal.recipientHint} value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="G…" autoComplete="off" spellCheck={false} aria-invalid={recipient.trim() !== "" && !recipientOk ? true : undefined} />
+            <WalletSelect id="zk-recipient" orgId={orgId} chain="stellar" value={recipient} onChange={setRecipient} canConnect={canConnectWallets} label={z.modal.recipient} hint={z.modal.recipientHint} />
             <Field label={z.modal.description} hint={t.dash.common.optional} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t.dash.examples.order} maxLength={140} />
             <div className="fld">
               <span className="field-l" id="zk-expires-l">{z.modal.expires}</span>

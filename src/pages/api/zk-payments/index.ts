@@ -1,5 +1,6 @@
-import { ApiStatus, jsonCreated, jsonError, jsonForbidden, jsonSuccess, parseJson } from "@/lib/http";
+import { ApiStatus, jsonBadRequest, jsonCreated, jsonError, jsonForbidden, jsonSuccess, parseJson } from "@/lib/http";
 import { hasOrgPermission } from "@/lib/org-permissions";
+import { orgHasWallet } from "@/lib/org-wallets-store";
 import { cosmosZkPayments } from "@/lib/cosmos";
 import { createZkPaymentBodySchema } from "@/schemas/zk-payments";
 import { envFromQuery, requireOrgMember, zkErrorResponse } from "@/pages/api/zk-payments/_helpers";
@@ -32,6 +33,10 @@ export const POST: APIRoute = async (ctx) => {
   if (!gate.ok) return gate.response;
   if (!hasOrgPermission(gate.membership.role, gate.membership.permissions, "payments:create")) {
     return jsonForbidden("You don't have permission to create payments in this organization.");
+  }
+  // As for payment links: the recipient is one of the organization's Stellar wallets.
+  if (!(await orgHasWallet(org, "stellar", input.recipient).catch(() => false))) {
+    return jsonBadRequest("The receiving account must be one of the organization's wallets. Connect it in Settings first.");
   }
   try {
     const payment = await cosmosZkPayments.create(gate.userId, environment, org, input);

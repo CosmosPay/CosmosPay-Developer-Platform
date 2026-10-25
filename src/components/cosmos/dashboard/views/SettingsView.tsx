@@ -7,6 +7,7 @@ import { ORG_RESOURCES, ORG_ACTIONS, permKey } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDate } from "@/components/cosmos/dashboard/helpers";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { OrgWalletsPanel } from "@/components/cosmos/dashboard/components/OrgWallets";
 
 /* Per-action permission matrix (resource × create/edit/delete) as multi-select checkboxes,
    shared by the invite form and the member editor. */
@@ -178,7 +179,7 @@ function OrgMembersPanel({ org, orgLimits }) {
   );
 }
 
-export function SettingsView({ org, orgCount, limits, keyCount, onRenameOrg, onDeleteOrg }) {
+export function SettingsView({ org, orgCount, limits, keyCount, walletPerms = { create: false, edit: false, remove: false }, onRenameOrg, onDeleteOrg }) {
   const t = useT();
   const sv = t.dash.settings;
   const og = t.dash.orgs;
@@ -201,6 +202,7 @@ export function SettingsView({ org, orgCount, limits, keyCount, onRenameOrg, onD
           {isOrgOwner && org.id && orgCount > 1 && <button className="btn btn-soft danger-soft" style={{ marginTop: 8 }} onClick={() => onDeleteOrg(org)}>{DI.trash} {og.delete}</button>}
         </div></div>
         <OrgMembersPanel org={org} orgLimits={orgLimits} />
+        {org.id && <OrgWalletsPanel orgId={org.id} perms={walletPerms} />}
       </div>
     </>
   );

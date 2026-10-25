@@ -334,4 +334,9 @@ export const organizations = {
   invitations: (id) => request(`/api/organizations/${encodeURIComponent(id)}/invitations`),
   invite: (id, email, role, permissions) => request(`/api/organizations/${encodeURIComponent(id)}/invitations`, { method: "POST", body: JSON.stringify({ email, role, permissions }) }),
   revokeInvite: (id, invId) => request(`/api/organizations/${encodeURIComponent(id)}/invitations/${encodeURIComponent(invId)}`, { method: "DELETE" }),
+  // The wallets the organization receives payments in (Settings); connecting one carries its signed proof.
+  wallets: (id) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`),
+  connectWallet: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`, { method: "POST", body: JSON.stringify(body) }),
+  renameWallet: (id, walletId, label) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "PATCH", body: JSON.stringify({ label }) }),
+  removeWallet: (id, walletId) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
 };

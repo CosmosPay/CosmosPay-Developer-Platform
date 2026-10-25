@@ -151,7 +151,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Create a payment intent',
     description:
-      'Creates a SEP-7 `pay` link or a `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names.',
+      'Creates a SEP-7 `pay` link or a `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise).',
     security: sessionSecurity,
     request: {
       query: z.object({ env: envQuery }),

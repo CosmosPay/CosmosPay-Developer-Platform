@@ -304,12 +304,12 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const renderView = () => {
     const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} env={live ? "prod" : "dev"} />;
     switch (view) {
-      case "payments": return <PaymentsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "payments": return <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} />;
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       // Swaps between chains live in the swaps list; the old deep link opens it filtered to them.
       case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "liquidity": return <LiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
@@ -330,7 +330,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : overview;
-      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
+      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} walletPerms={{ create: can("wallets:create"), edit: can("wallets:edit"), remove: can("wallets:delete") }} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
       case "account": return <AccountView user={user} theme={theme} setTheme={setTheme} planId={plan} limits={limits} orgCount={orgs.length} onChangePlan={canChangePlan ? () => setModal("plan") : null} plansEnabled={feat.plansEnabled} onSaveProfile={saveProfile} />;
       default: return overview;
     }
