@@ -14,7 +14,7 @@ export default {
       EXPIRED: "Vencido",
     },
     unavailable: "Los pagos privados todavía no están disponibles en esta red.",
-    notIsolated: "Este navegador no puede generar las pruebas. Abre la página en Chrome, Edge o Firefox.",
+    cannotProve: "Este navegador no puede generar las pruebas. Abre la página en Chrome, Edge o Firefox.",
     freighter: {
       missing: "Instala Freighter para continuar.",
       declined: "Freighter rechazó la solicitud.",
@@ -28,7 +28,6 @@ export default {
     },
     view: {
       create: "Crear pago privado",
-      account: "Cuenta confidencial",
       empty: "Todavía no hay pagos privados.",
       loadError: "No se pudieron cargar los pagos privados.",
       tableHead: {
@@ -46,7 +45,7 @@ export default {
     modal: {
       title: "Nuevo pago privado",
       recipient: "Cuenta que recibe",
-      recipientHint: "Necesita una cuenta confidencial: créala desde Cuenta confidencial.",
+      recipientHint: "Debe tener una cuenta confidencial.",
       description: "Descripción",
       expires: "Vence en",
       expiries: {
@@ -64,7 +63,8 @@ export default {
       connect: "Conectar Freighter",
       connected: "Conectado como {account}",
       register: "Crear cuenta confidencial",
-      registered: "Cuenta confidencial activa",
+      registered: "Activa",
+      notRegistered: "Sin crear",
       spendable: "Disponible",
       receiving: "Entrante",
       merge: "Pasar lo entrante a disponible",
@@ -72,8 +72,12 @@ export default {
       deposit: "Depositar XLM",
       amountLabel: "Monto",
       refresh: "Actualizar",
+      working: "Procesando…",
+      createdOk: "Cuenta confidencial creada",
+      depositOk: "Depósito completado",
+      withdrawOk: "Retiro completado",
+      mergeOk: "Lo entrante pasó a disponible",
       done: "Listo",
-      back: "Volver al panel",
     },
     checkout: {
       title: "Pago privado",

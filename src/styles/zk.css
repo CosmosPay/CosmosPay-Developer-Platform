@@ -1,5 +1,5 @@
-/* The ZK payment pages (payments.cosmospay.lat/zk/*): the checkout and the merchant's
-   confidential account. One centred card on the institutional skin, the dashboard's shapes
+/* The private checkout (payments.cosmospay.lat/zk/{id}; the merchant's confidential account is a
+   panel in the dashboard's private payments view). One centred card on the institutional skin, the dashboard's shapes
    (20px card, 12px fields, pill buttons), solid colours only. */
 .zk-page { min-height: calc(100vh - 140px); display: grid; place-items: start center; padding: 48px 16px 64px; }
 .zk-card {
@@ -31,19 +31,14 @@
 .zk-step .zk-phase { grid-column: 2; }
 .zk-phase { margin: 0; font-size: 12.5px; font-weight: 400; color: var(--ink-3); }
 .zk-cta { width: 100%; min-height: 48px; justify-content: center; font-size: 15px; }
-.zk-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.zk-field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--ink-3); }
-.zk-field .field { border-radius: 12px; }
 .zk-msg { margin: 0; font-size: 14px; color: var(--ink-2); }
-.zk-ok { margin: 0; font-size: 14px; font-weight: 600; color: #1F9D55; }
 .zk-error { margin: 0; font-size: 14px; color: #D64545; }
 [data-theme="dark"] .zk-error { color: #FF8A8A; }
 .zk-done { display: flex; flex-direction: column; gap: 6px; }
 .zk-done b { font-size: 18px; color: #1F9D55; }
 .zk-done p { margin: 0; font-size: 14px; color: var(--ink-2); }
 .zk-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
-.zk-links a, .zk-back { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-.zk-back { font-size: 13px; font-weight: 600; align-self: flex-start; }
+.zk-links a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .zk-skel { height: 18px; border-radius: 6px; background: var(--line); animation: zkPulseBg 1.2s ease-in-out infinite; }
 .zk-skel.short { width: 60%; }
 @keyframes zkPulseBg { 50% { opacity: .55; } }

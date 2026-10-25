@@ -16,7 +16,7 @@ export default {
       EXPIRED: "Expired",
     },
     unavailable: "Private payments are not available on this network yet.",
-    notIsolated: "This browser cannot generate the proofs. Open the page in Chrome, Edge or Firefox.",
+    cannotProve: "This browser cannot generate the proofs. Open the page in Chrome, Edge or Firefox.",
     freighter: {
       missing: "Install Freighter to continue.",
       declined: "Freighter declined the request.",
@@ -30,7 +30,6 @@ export default {
     },
     view: {
       create: "Create private payment",
-      account: "Confidential account",
       empty: "No private payments yet.",
       loadError: "Couldn't load private payments.",
       tableHead: {
@@ -48,7 +47,7 @@ export default {
     modal: {
       title: "New private payment",
       recipient: "Receiving account",
-      recipientHint: "It needs a confidential account: create it from Confidential account.",
+      recipientHint: "It must have a confidential account.",
       description: "Description",
       expires: "Expires in",
       expiries: {
@@ -66,7 +65,8 @@ export default {
       connect: "Connect Freighter",
       connected: "Connected as {account}",
       register: "Create confidential account",
-      registered: "Confidential account active",
+      registered: "Active",
+      notRegistered: "Not created yet",
       spendable: "Available",
       receiving: "Incoming",
       merge: "Move incoming to available",
@@ -74,8 +74,12 @@ export default {
       deposit: "Deposit XLM",
       amountLabel: "Amount",
       refresh: "Refresh",
+      working: "Working…",
+      createdOk: "Confidential account created",
+      depositOk: "Deposit completed",
+      withdrawOk: "Withdrawal completed",
+      mergeOk: "Incoming moved to available",
       done: "Done",
-      back: "Back to the dashboard",
     },
     checkout: {
       title: "Private payment",

@@ -105,7 +105,7 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
 
   const expired = payment.status === "EXPIRED" || (payment.status === "PENDING" && Date.parse(payment.expiresAt) <= Date.now());
   const paid = payment.status === "SUCCEEDED";
-  const isolated = canProve();
+  const provable = canProve();
 
   return (
     <section className="zk-card" aria-labelledby="zk-title">
@@ -139,9 +139,9 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
               </li>
             ))}
           </ol>
-          {!isolated && <p className="zk-msg" role="alert">{z.notIsolated}</p>}
+          {!provable && <p className="zk-msg" role="alert">{z.cannotProve}</p>}
           {error && <p className="zk-error" role="alert">{error}</p>}
-          <button type="button" className="btn btn-dark zk-cta" onClick={pay} disabled={busy || !isolated}>{z.checkout.payPrivately}</button>
+          <button type="button" className="btn btn-dark zk-cta" onClick={pay} disabled={busy || !provable}>{z.checkout.payPrivately}</button>
         </>
       )}
     </section>

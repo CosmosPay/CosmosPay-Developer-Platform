@@ -816,3 +816,31 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .sp-unit { flex: 0 0 auto; font-size: 16px; font-weight: 700; color: var(--ink); padding: 0 6px; }
 .zk-split { margin: 10px 0 0; padding: 0 2px; }
 .zk-split > div:first-child { margin-top: 0; border-top: 0; padding-top: 7px; }
+
+/* Private payments: the merchant's confidential account, a panel at the top of the view
+   (ZkAccountPanel). Its balances reuse the overview's balance tiles; its actions are the page's
+   pills; while it works, a status line with a turning ring (and a clock beside the proof). */
+.inst .zka { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; margin-bottom: 16px; }
+.zka-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.zka-id { min-width: 0; }
+.zka-title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.zka-sub { margin: 4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 13px; color: var(--ink-3); }
+.zka-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; }
+.zka-body:empty { display: none; }
+.zka-bals { flex: 1 1 360px; max-width: 560px; }
+.zka-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.zka-actions:empty { display: none; }
+.zka-actions .btn { min-height: 44px; padding: 10px 20px; font-size: 14px; white-space: nowrap; }
+.zka-progress { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13.5px; color: var(--ink-2); animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
+.zka-time { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.zka-spin { width: 16px; height: 16px; flex: 0 0 auto; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: zkaSpin .8s linear infinite; }
+@keyframes zkaSpin { to { transform: rotate(360deg); } }
+/* An error under a form or inside a panel: plain text in the swap widget's error red, never a box. */
+.inst .field-err { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: #B42F2F; }
+[data-theme="dark"] .inst .field-err { color: #FF9B9B; }
+.zka .field-err { margin: 0; }
+@media (max-width: 600px) {
+  .inst .zka { padding: 18px; }
+  .zka-actions { width: 100%; }
+  .zka-actions .btn { flex: 1 1 auto; }
+}

@@ -14,7 +14,7 @@ export default {
       EXPIRED: "已过期",
     },
     unavailable: "此网络暂不支持隐私支付。",
-    notIsolated: "此浏览器无法生成证明。请在 Chrome、Edge 或 Firefox 中打开此页面。",
+    cannotProve: "此浏览器无法生成证明。请在 Chrome、Edge 或 Firefox 中打开此页面。",
     freighter: {
       missing: "请安装 Freighter 后继续。",
       declined: "Freighter 拒绝了该请求。",
@@ -28,7 +28,6 @@ export default {
     },
     view: {
       create: "创建隐私支付",
-      account: "保密账户",
       empty: "暂无隐私支付。",
       loadError: "无法加载隐私支付。",
       tableHead: {
@@ -46,7 +45,7 @@ export default {
     modal: {
       title: "新建隐私支付",
       recipient: "收款账户",
-      recipientHint: "该账户需要保密账户：请在“保密账户”中创建。",
+      recipientHint: "该账户必须已开通保密账户。",
       description: "描述",
       expires: "有效期",
       expiries: {
@@ -64,7 +63,8 @@ export default {
       connect: "连接 Freighter",
       connected: "已连接：{account}",
       register: "创建保密账户",
-      registered: "保密账户已启用",
+      registered: "已启用",
+      notRegistered: "尚未创建",
       spendable: "可用",
       receiving: "待入账",
       merge: "将待入账转为可用",
@@ -72,8 +72,12 @@ export default {
       deposit: "存入 XLM",
       amountLabel: "金额",
       refresh: "刷新",
+      working: "处理中…",
+      createdOk: "保密账户已创建",
+      depositOk: "存入完成",
+      withdrawOk: "提取完成",
+      mergeOk: "待入账已转为可用",
       done: "完成",
-      back: "返回控制台",
     },
     checkout: {
       title: "隐私支付",

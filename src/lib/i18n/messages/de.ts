@@ -14,7 +14,7 @@ export default {
       EXPIRED: "Abgelaufen",
     },
     unavailable: "Private Zahlungen sind in diesem Netzwerk noch nicht verfügbar.",
-    notIsolated: "Dieser Browser kann die Beweise nicht erzeugen. Öffnen Sie die Seite in Chrome, Edge oder Firefox.",
+    cannotProve: "Dieser Browser kann die Beweise nicht erzeugen. Öffnen Sie die Seite in Chrome, Edge oder Firefox.",
     freighter: {
       missing: "Installieren Sie Freighter, um fortzufahren.",
       declined: "Freighter hat die Anfrage abgelehnt.",
@@ -28,7 +28,6 @@ export default {
     },
     view: {
       create: "Private Zahlung erstellen",
-      account: "Vertrauliches Konto",
       empty: "Noch keine privaten Zahlungen.",
       loadError: "Private Zahlungen konnten nicht geladen werden.",
       tableHead: {
@@ -46,7 +45,7 @@ export default {
     modal: {
       title: "Neue private Zahlung",
       recipient: "Empfangskonto",
-      recipientHint: "Es braucht ein vertrauliches Konto: Erstellen Sie es unter Vertrauliches Konto.",
+      recipientHint: "Es muss ein vertrauliches Konto haben.",
       description: "Beschreibung",
       expires: "Läuft ab in",
       expiries: {
@@ -64,7 +63,8 @@ export default {
       connect: "Freighter verbinden",
       connected: "Verbunden als {account}",
       register: "Vertrauliches Konto erstellen",
-      registered: "Vertrauliches Konto aktiv",
+      registered: "Aktiv",
+      notRegistered: "Noch nicht erstellt",
       spendable: "Verfügbar",
       receiving: "Eingehend",
       merge: "Eingehendes verfügbar machen",
@@ -72,8 +72,12 @@ export default {
       deposit: "XLM einzahlen",
       amountLabel: "Betrag",
       refresh: "Aktualisieren",
+      working: "Wird ausgeführt…",
+      createdOk: "Vertrauliches Konto erstellt",
+      depositOk: "Einzahlung abgeschlossen",
+      withdrawOk: "Auszahlung abgeschlossen",
+      mergeOk: "Eingehendes ist jetzt verfügbar",
       done: "Fertig",
-      back: "Zurück zum Dashboard",
     },
     checkout: {
       title: "Private Zahlung",

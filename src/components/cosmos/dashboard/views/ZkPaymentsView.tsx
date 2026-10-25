@@ -1,8 +1,9 @@
-/* ZkPaymentsView: ZK payments as a service. A ZK payment is paid with a confidential transfer on
-   Cosmos Pay's confidential token (OpenZeppelin's stellar-confidential): the amount stays hidden
-   on-chain. The merchant receives the amount minus the 0.01% commission; the payer pays on the ZK
-   checkout (payments.cosmospay.lat/zk/{id}); the merchant's receiving account is a confidential
-   account, set up on payments.cosmospay.lat/zk/account. Testnet (the sandbox) only for now. */
+/* ZkPaymentsView: private payments ("ZK payments" in code) as a service. One is paid with a
+   confidential transfer on Cosmos Pay's confidential token (OpenZeppelin's stellar-confidential):
+   the amount stays hidden on-chain. The merchant receives the amount minus the 0.01% commission; the
+   payer pays on the private checkout (payments.cosmospay.lat/zk/{id}); the merchant's receiving
+   account is a confidential account, set up and managed in this view (ZkAccountPanel), which also
+   fills it in as the recipient of a new payment. Testnet (the sandbox) only for now. */
 import { useEffect, useMemo, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
@@ -20,6 +21,8 @@ import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton
 import { PAYMENTS } from "@/components/cosmos/lib/constants";
 import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { fromUnits, toUnits, zkSplit } from "@/lib/zk/amounts";
+import { parseZkConfig } from "@/lib/zk/checkout-api";
+import { ZkAccountPanel } from "@/components/cosmos/dashboard/components/ZkAccountPanel";
 
 const STATUSES = ["PENDING", "SUCCEEDED", "EXPIRED"];
 const PILL = { SUCCEEDED: "ok", EXPIRED: "fail", PENDING: "ref" };
@@ -39,17 +42,22 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
+  const [account, setAccount] = useState(null);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
-  const load = () => {
+  // Loads once the organization is known; an answer for an organization or environment the view
+  // has since left is dropped, so a slow failure can never cover a newer list.
+  useEffect(() => {
+    if (!orgId) return;
+    let current = true;
     setRows(null);
     setError(false);
-    zkApi.config(orgId, env).then((c) => setConfig(c && c.enabled ? c : null)).catch(() => setConfig(null));
+    zkApi.config(orgId, env).then((c) => { if (current) setConfig(c && c.enabled ? c : null); }).catch(() => { if (current) setConfig(null); });
     zkApi.list(orgId, env, { take: 100 })
-      .then((res) => setRows(Array.isArray(res?.data) ? res.data : []))
-      .catch(() => { setRows([]); setError(true); });
-  };
-  useEffect(load, [orgId, env]);
+      .then((res) => { if (current) setRows(Array.isArray(res?.data) ? res.data : []); })
+      .catch(() => { if (current) { setRows([]); setError(true); } });
+    return () => { current = false; };
+  }, [orgId, env]);
 
   const all = rows || [];
   const matches = (p, skip) =>
@@ -58,17 +66,17 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
     matchesQuery([p.id, p.recipient, p.payer, p.amount, p.description], filters.q);
   const shown = all.filter((p) => matches(p, null));
   const statusCounts = countBy(all.filter((p) => matches(p, "status")), (p) => p.status);
-  const accountUrl = `${PAYMENTS}/zk/account?network=${env === "prod" ? "public" : "testnet"}`;
+  const zkConfig = useMemo(() => (config ? parseZkConfig(config) : null), [config]);
 
   const copy = (id) => navigator.clipboard?.writeText(checkoutUrl(id)).then(() => showToast(t.toasts.copied)).catch(() => {});
 
   return (
     <>
       <ViewHead title={z.title}>
-        <a className="btn btn-outline-w btn-sm" href={accountUrl} target="_blank" rel="noopener">{z.view.account}</a>
         {canManage && config && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
       </ViewHead>
       {config === null && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{z.unavailable}</span></div>}
+      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} onAccount={setAccount} />}
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={z.view.searchPlaceholder}
@@ -113,7 +121,7 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
       </div>
       {modal && config && (
         <CreateZkPaymentModal
-          orgId={orgId} env={env} config={config}
+          orgId={orgId} env={env} config={config} defaultRecipient={account && account.registered ? account.address : ""}
           onClose={() => setModal(false)}
           onCreated={(p) => { setRows((r) => [p, ...(r || [])]); }}
         />
@@ -122,12 +130,13 @@ export function ZkPaymentsView({ canManage = false, orgId, env = "dev" }) {
   );
 }
 
-function CreateZkPaymentModal({ orgId, env, config, onClose, onCreated }) {
+function CreateZkPaymentModal({ orgId, env, config, defaultRecipient = "", onClose, onCreated }) {
   const t = useT();
   const z = t.zk;
   const keys = useMemo(() => idempotencyKeys(), []);
   const [amount, setAmount] = useState("");
-  const [recipient, setRecipient] = useState(() => { try { return localStorage.getItem(RECIPIENT_KEY) || ""; } catch { return ""; } });
+  // The merchant's own confidential account when the panel has it, else the last one used.
+  const [recipient, setRecipient] = useState(() => { if (defaultRecipient) return defaultRecipient; try { return localStorage.getItem(RECIPIENT_KEY) || ""; } catch { return ""; } });
   const [description, setDescription] = useState("");
   const [expires, setExpires] = useState("1440");
   const [busy, setBusy] = useState(false);

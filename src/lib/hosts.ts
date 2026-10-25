@@ -50,9 +50,14 @@ const SITE_PATHS = new Set(["/pricing", "/tos"]);
    because /pricing is the company site's. */
 const PAYMENTS_PATHS = new Set(PAYMENTS_PAGE_PATHS);
 /* Checkout design previews (src/pages/payments/preview/[design].astro) and the ZK payment pages
-   (src/pages/payments/zk/: the checkout, the merchant's confidential account and the prover's
-   files), the only cross-origin isolated pages. */
+   (src/pages/payments/zk/: the private checkout and the prover's files); the checkout is the only
+   cross-origin isolated page. */
 const PAYMENTS_PREFIXES = ["/preview", "/zk"];
+/* The prover's files (bb.js at the SDK's pinned version, src/pages/payments/zk/bb/) are served by
+   the platform too: the dashboard proves there for the merchant's confidential account, and bb.js
+   starts its Web Worker from its own URL, which must be the page's origin. Same route, same
+   headers, on both domains. */
+const PROVER_PREFIX = "/zk/bb";
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
@@ -145,6 +150,10 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
     area === "dev"
       ? { kind: "pass", area }
       : { kind: "rewrite", area, path: path === "/" ? MOUNTS[area] : `${MOUNTS[area]}${path}` };
+
+  if (underPrefix(path, PROVER_PREFIX) && areas.has("dev") && !areas.has("payments")) {
+    return { kind: "rewrite", area: "dev", path: `${MOUNTS.payments}${path}` };
+  }
 
   const owner = ownerOf(path);
   if (owner === "home") {

@@ -610,19 +610,26 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the merchant, the commission to Cosmos Pay's fee account) and `POST /v1/zk-checkout/{id}/confirm`
   with both hashes. The server decrypts both amounts with the auditor key and marks it paid.
   Retries never pay twice (the sent hashes are kept). The merchant's receiving account is a
-  confidential account managed on `payments.cosmospay.lat/zk/account` (register, balances, merge,
-  deposit, withdraw; `ZkAccount.tsx`).
-- **Both pages prove in the browser and are cross-origin isolated** (COOP same-origin, COEP
-  credentialless, set by the middleware on every `/zk` path of the payments domain, which owns the
-  `/zk` prefix). bb.js is **served by a route, not public/**: `/zk/bb/{version}/{file}`
+  confidential account **managed inside the private payments view** (`components/ZkAccountPanel.tsx`;
+  product owner: never send them to another page for it): connect Freighter, create the account,
+  balances, move incoming to available, deposit and withdraw (the amount in a dialog, the progress
+  in the panel, with a clock while the proof runs), and the create dialog fills it in as the
+  recipient. There is no separate account page.
+- **Proofs are generated in the browser.** The private checkout is cross-origin isolated (COOP
+  same-origin, COEP credentialless, set by the middleware on every `/zk` path of the payments domain,
+  which owns the `/zk` prefix), so bb.js proves on several threads; the dashboard is not isolated and
+  bb.js proves there on one thread with plain memory (a register proof took about 7 s headless), as
+  it does in a browser that cannot isolate (Safari). `canProve()` only asks for WebAssembly;
+  `provesInParallel()` says which mode applies. bb.js is **served by a route, not public/**:
+  `/zk/bb/{version}/{file}`, on the payments domain **and the platform's** (`PROVER_PREFIX` in
+  `hosts.ts`: bb.js starts its Web Worker from its own URL, which must be the page's origin)
   (`src/lib/zk/bb-assets.ts`) reads `node_modules/@aztec/bb.js/dest/browser` at the SDK's pinned
   version (`src/lib/zk/bb-version.ts`, `tests/unit/zkBbAssets.test.ts`) and adds the isolation
   headers its Web Worker needs (static files skip the middleware). Astro leaves `params` empty for
   that rewritten path, so the route reads the path. `@aztec/bb.js` is aliased to a stub in Vite and
   loaded as native ESM by `src/lib/zk/bb-loader.ts`; noir's wasm packages are excluded from
-  dependency pre-bundling. A browser that cannot isolate (Safari) is told to use Chrome, Edge or
-  Firefox. The development build exposes `window.__zkSelfTest(token, account)` on the account page:
-  a real register proof with throwaway keys, no wallet or network (it takes about 20 s headless).
+  dependency pre-bundling. The development build exposes `window.__zkSelfTest(token, account)` in
+  the private payments view: a real register proof with throwaway keys, no wallet or network.
 - **What the pages read comes through the gateway, never this server**: the keyless route
   `<route>-zk-checkout` (`/v1/zk-checkout/*`: the payment's public view, the confirm call and the
   network's config; any origin, no credentials; `src/lib/apisix-keyless.ts`, tested). It has its own

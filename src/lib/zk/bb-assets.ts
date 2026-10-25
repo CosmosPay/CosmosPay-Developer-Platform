@@ -20,8 +20,9 @@ export const BB_FILES = ["index.js", "main.worker.js", "thread.worker.js", "barr
 
 /* The headers of a cross-origin isolated page (COOP + COEP). `credentialless` rather than
    `require-corp`: cross-origin requests without credentials still load (the RPC, the gateway,
-   an avatar), while the page gets SharedArrayBuffer. Chrome, Edge and Firefox support it; a
-   browser that does not stays unisolated and the page says it cannot prove there. */
+   an avatar), while the page gets SharedArrayBuffer and bb.js proves on several threads. Chrome,
+   Edge and Firefox support it; a browser that does not stays unisolated and proves on one thread,
+   as the dashboard does (src/lib/zk/bb-loader.ts). */
 export const ZK_ISOLATION_HEADERS: Record<string, string> = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "credentialless",

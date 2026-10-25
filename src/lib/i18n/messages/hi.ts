@@ -14,7 +14,7 @@ export default {
       EXPIRED: "समाप्त",
     },
     unavailable: "निजी भुगतान अभी इस नेटवर्क पर उपलब्ध नहीं हैं।",
-    notIsolated: "यह ब्राउज़र प्रूफ़ नहीं बना सकता। पेज को Chrome, Edge या Firefox में खोलें।",
+    cannotProve: "यह ब्राउज़र प्रूफ़ नहीं बना सकता। पेज को Chrome, Edge या Firefox में खोलें।",
     freighter: {
       missing: "जारी रखने के लिए Freighter इंस्टॉल करें।",
       declined: "Freighter ने अनुरोध अस्वीकार कर दिया।",
@@ -28,7 +28,6 @@ export default {
     },
     view: {
       create: "निजी भुगतान बनाएँ",
-      account: "गोपनीय खाता",
       empty: "अभी कोई निजी भुगतान नहीं है।",
       loadError: "निजी भुगतान लोड नहीं हो सके।",
       tableHead: {
@@ -46,7 +45,7 @@ export default {
     modal: {
       title: "नया निजी भुगतान",
       recipient: "प्राप्त करने वाला खाता",
-      recipientHint: "इसके लिए गोपनीय खाता चाहिए: गोपनीय खाता से इसे बनाएँ।",
+      recipientHint: "इसका गोपनीय खाता होना चाहिए।",
       description: "विवरण",
       expires: "समाप्ति",
       expiries: {
@@ -64,7 +63,8 @@ export default {
       connect: "Freighter कनेक्ट करें",
       connected: "{account} के रूप में कनेक्टेड",
       register: "गोपनीय खाता बनाएँ",
-      registered: "गोपनीय खाता सक्रिय है",
+      registered: "सक्रिय",
+      notRegistered: "अभी नहीं बना",
       spendable: "उपलब्ध",
       receiving: "आने वाला",
       merge: "आने वाली राशि को उपलब्ध में ले जाएँ",
@@ -72,8 +72,12 @@ export default {
       deposit: "XLM जमा करें",
       amountLabel: "राशि",
       refresh: "रीफ़्रेश करें",
+      working: "प्रक्रिया जारी है…",
+      createdOk: "गोपनीय खाता बन गया",
+      depositOk: "जमा पूरा हुआ",
+      withdrawOk: "निकासी पूरी हुई",
+      mergeOk: "आने वाली राशि उपलब्ध में आ गई",
       done: "हो गया",
-      back: "डैशबोर्ड पर वापस जाएँ",
     },
     checkout: {
       title: "निजी भुगतान",
