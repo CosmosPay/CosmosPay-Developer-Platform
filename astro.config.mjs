@@ -167,6 +167,9 @@ export default defineConfig({
       SMTP_PASS: envField.string({ context: 'server', access: 'secret', optional: true }),
       SMTP_SECURE: envField.boolean({ context: 'server', access: 'secret', optional: true, default: false }),
       SMTP_FROM: envField.string({ context: 'server', access: 'secret', optional: true }),
+      // Where the payments gateway's contact form (POST /contact) sends what visitors write; the
+      // visitor's address is the reply-to. Unset, it goes to the gateway's public contact address.
+      CONTACT_EMAIL: envField.string({ context: 'server', access: 'secret', optional: true }),
       // --- Feature flags (plans & onboarding) ---
       // Whether the multi-step onboarding wizard runs. When false, a default
       // organization is auto-provisioned and the user lands straight on the dashboard.

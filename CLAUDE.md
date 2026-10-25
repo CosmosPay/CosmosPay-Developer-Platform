@@ -37,7 +37,7 @@ SDK, then regenerate.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/tos` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/faq`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/faq`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -342,6 +342,24 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   after trying blue cards, blue entrance pops and a blue payment travelling the flows: "quita
   los efectos azules, solo déjalo en el 3d"): its clay takes a faint tertiary blue (a filter) and it leans in; the card
   around it does not change. Entrances, completions and the flows keep their own colours.
+
+### The contact form
+
+- **The final call on every gateway page carries a contact form** (product owner), beside the
+  main button (`FinalCta.astro`, anchored at `#contact`). It posts to `/contact` on the payments
+  domain (`src/pages/payments/contact.ts`); the rules are pure and tested in
+  `src/lib/payments/contact.ts` (`tests/unit/paymentsContact.test.ts`).
+- **It works without JavaScript**: the page comes back at the form with
+  `?contact=sent|invalid|limited|failed`, shown in its live region; with the page script it posts
+  in place (`Accept: application/json` answers `{ status, errors }`) and marks the wrong fields.
+- **Only this origin may post** (Astro's `checkOrigin` is off app-wide, so the endpoint checks
+  `Origin` itself). A script is answered "sent" and nothing goes out: the honeypot field
+  (`website`) filled in, or a post under 3 s after the page rendered. One network sends at most
+  five messages per 15 minutes (in memory: one process). One-line fields refuse line breaks, so
+  nothing a visitor types can become a mail header.
+- It emails `CONTACT_EMAIL` (else the gateway's public address, `CONTACT_ADDRESS`) through
+  `src/lib/mailer.ts`, the visitor as the reply-to, their words as text (escaped in the HTML part).
+  With no mail transport configured the visitor is told to write to that address instead.
 
 ### Embedding a payment (pay button and embedded checkout)
 

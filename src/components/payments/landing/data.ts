@@ -7,6 +7,7 @@ import type { ComponentProps } from "astro/types";
 import { LANDING } from "@/lib/payments/landing-i18n";
 import { PLAN_SPECS } from "@/lib/plans";
 import { DOCS, PRICING, loginTo } from "@/components/cosmos/lib/constants";
+import { CONTACT_ADDRESS } from "@/lib/payments/contact";
 import type { Locale } from "@/lib/payments/i18n";
 
 /* "single" is the one long landing; "multi" spreads it over the home and the content pages
@@ -20,7 +21,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
     : { integrations: "#integrations", useCases: "#pl-uses", security: "#pl-security", fees: "#pricing", faq: "#pl-faq" };
 
   const CREATE_LINK = loginTo("/dashboard?view=payments");
-  const CONTACT = "mailto:cosmosapplat@gmail.com";
+  const CONTACT = `mailto:${CONTACT_ADDRESS}`;
   const lowestRate = PLAN_SPECS.growth.perTx;
 
   // The snap's highlighter marks one phrase in the hero and in the final call; a closing full

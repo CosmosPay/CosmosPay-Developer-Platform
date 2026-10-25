@@ -1,7 +1,7 @@
 /* landing.ts: the payments landing's behaviour, shared by every page built from its sections
    (src/components/payments/landing/sections): the hero video, scroll reveals, the digit
-   counters, the fee calculator, the pinned sections, the tabs, the live demos and the copy
-   buttons. Each part looks for its own elements and does nothing on a page without them. */
+   counters, the fee calculator, the pinned sections, the tabs, the live demos, the copy
+   buttons and the contact form. Each part looks for its own elements and does nothing on a page without them. */
 export function startLanding(): void {
   /* The hero video plays on its own, always: the product owner wants it moving for every
      visitor (reduced-motion included), so it is the one exception to that preference on this
@@ -266,6 +266,50 @@ export function startLanding(): void {
         clearTimeout(timer);
         timer = window.setTimeout(() => { label.textContent = idle; button.classList.remove("is-done"); }, 2000);
       } catch { /* clipboard refused (permissions, insecure context): the code stays selectable */ }
+    });
+  }
+
+  /* The contact form (FinalCta.astro) posts in place: the page stays put, the button says it
+     is sending, wrong fields are marked and named, and the answer is read out from the live
+     region under the form. Without this script the form posts normally and the page comes
+     back at the form with the outcome. */
+  for (const form of document.querySelectorAll<HTMLFormElement>("[data-contact]")) {
+    const status = form.querySelector<HTMLElement>("[data-contact-status]")!;
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const idle = submit.textContent ?? "";
+    const say = (state: string, text: string) => {
+      if (state) status.dataset.state = state;
+      else delete status.dataset.state;
+      status.textContent = text;
+    };
+    const mark = (wrong: string[]) => {
+      for (const note of form.querySelectorAll<HTMLElement>("[data-error-for]")) {
+        const name = note.dataset.errorFor!;
+        const bad = wrong.includes(name);
+        note.hidden = !bad;
+        note.textContent = bad ? note.dataset.message ?? "" : "";
+        form.querySelector(`[name="${name}"]`)?.setAttribute("aria-invalid", String(bad));
+      }
+    };
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      submit.disabled = true;
+      submit.textContent = form.dataset.sending ?? idle;
+      say("", "");
+      try {
+        const res = await fetch(form.action, { method: "POST", body: new FormData(form), headers: { Accept: "application/json" } });
+        const { status: outcome, errors = [] } = (await res.json()) as { status: string; errors?: string[] };
+        mark(errors);
+        say(outcome, form.dataset[outcome] ?? form.dataset.failed ?? "");
+        if (outcome === "sent") form.reset();
+        else if (outcome === "invalid") form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      } catch {
+        say("failed", form.dataset.failed ?? "");
+      } finally {
+        submit.disabled = false;
+        submit.textContent = idle;
+      }
     });
   }
 }

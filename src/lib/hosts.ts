@@ -5,7 +5,8 @@
  *   cosmospay.lat           "site"      /, /pricing, /tos          (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
  *   payments.cosmospay.lat  "payments"  /, its content pages (/integrations, /use-cases, /security,
- *                                       /fees, /faq), /pay, /{payment link id}, /preview/{design}
+ *                                       /fees, /faq), /pay, /contact (the contact form's POST),
+ *                                       /{payment link id}, /preview/{design}
  *                                       (pages under src/pages/payments/)
  *
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
@@ -91,7 +92,7 @@ function underPrefix(path: string, prefix: string): boolean {
 export function ownerOf(path: string): Area | "home" | null {
   if (path === "/") return "home";
   if (SITE_PATHS.has(path)) return "site";
-  if (path === "/pay" || PAYMENTS_PATHS.has(path) || PAYMENT_LINK_PATH.test(path)) return "payments";
+  if (path === "/pay" || path === "/contact" || PAYMENTS_PATHS.has(path) || PAYMENT_LINK_PATH.test(path)) return "payments";
   if (PAYMENTS_PREFIXES.some((p) => underPrefix(path, p))) return "payments";
   if (DEV_PREFIXES.some((p) => underPrefix(path, p))) return "dev";
   return null;
