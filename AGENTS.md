@@ -173,6 +173,20 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Alchemy Pay, Fireblocks): hero, the networks / assets / wallets strip, benefits, a comparison
   with cards and bank transfers, three integration paths (no code, hosted, API), how it works,
   checkout designs, use cases by business (WAI-ARIA tabs), security, developers, pricing, FAQ.
+- **The sections show the product, not only text** (the product owner found text-only sections
+  flat): as those gateways do, each one carries a piece of the interface —
+  `src/components/payments/landing/Mock.astro` draws them with the page's tokens (a confirmed
+  payment, the card-payout race, the escrow states, the instant/escrow flow with a payment
+  travelling the wire, a payment link, the checkout, an SDK call, one screen per step, a paid
+  order per business, an explorer card). They are decorative (`aria-hidden`): everything they
+  say is in the section's text too, and their figures are examples, never claims. Benefits are a
+  bento (wide and narrow cells swapping per row); the developers' code has REST / TypeScript SDK /
+  Webhook tabs (the same `[data-tabs]` script as the use cases); pricing has a fee calculator
+  (rates parsed from `plans.ts`, escrow's 0.5% as a checkbox, a logarithmic slider); the final
+  call carries the brand's astronaut (`public/brand/astronauta-telefono.svg`, inverted in dark
+  mode). Each mock-up is a size container, so its parts rearrange for the room it gets (the
+  escrow states stack when narrow). Their wrapper class is `pl-mk--<name>` — a modifier, so it
+  never clashes with a part's `pl-mk-*` class.
 - **Two settlement modes, as the product owner offers them: instant** (straight to the merchant's
   address) **and escrow** (the payment is held until it is released, e.g. when the order ships).
   As the product owner specified it: the payment waits in an on-chain contract (not with Cosmos
@@ -197,13 +211,15 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   draw an approximation of someone else's logo.
 - **Typography and structure stay quiet** (design-skill pass, 2026-10-24): no labels above
   headings, headings in one colour with no accent word, no all-caps labels, numbering only for
-  real sequences ("how it works"), no arrows on buttons or links, no rows of icon cards, no
-  resting shadows; surfaces differ by tone (`--bg` / `--surface`), lines only where they carry
-  structure.
+  real sequences ("how it works"), no arrows on buttons or links, no rows of icon cards (an icon
+  sits over a fact, not in a card), no resting shadows; surfaces differ by tone (`--bg` /
+  `--surface`), lines only where they carry structure.
 - **Motion is wanted** (the product owner's call: "animate everything you can"): the hero comes
   in line by line, every `data-reveal` block rises in the first time it scrolls into view
   (`--i` staggers siblings), the steps' track draws, checks pop, tabs and FAQ answers slide open,
-  the logos run. Reveals hide content only under `html.pl-anim`, set by an inline head script
+  the logos run, and each mock-up plays when its block arrives (rows one after the other, ticks
+  pop, bars fill; the flows and the approve button keep moving). A mock-up's resting state is its
+  finished one. Reveals hide content only under `html.pl-anim`, set by an inline head script
   that removes it again after 2.5 s if the page script never loads, so the page is complete
   without JavaScript. Only opacity, translate and scale animate, and **all of it runs for
   everyone, reduced-motion settings included** (the product owner's call, as for the video).

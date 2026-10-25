@@ -1,0 +1,151 @@
+---
+// Product mock-ups for the payments landing: small pieces of the real interface (a payment row,
+// the escrow states, a wallet prompt, a checkout, code) that show each section's point the way
+// the gateways we reviewed do, instead of text alone. Decorative: everything they say is also in
+// the section's text, so they are hidden from assistive tech. Figures are illustrative examples.
+// The motion lives in payments-landing.css (.pl-mk-*), keyed on the parent's `.is-in`.
+import Mark from "@/components/payments/landing/Mark.astro";
+import type { LandingMessages } from "@/lib/payments/landing-i18n";
+
+type Name =
+  | "final" | "race" | "escrow" | "balance"
+  | "flow-instant" | "flow-escrow"
+  | "link" | "checkout" | "code"
+  | "step-create" | "step-share" | "step-pay" | "step-confirm"
+  | "use-stores" | "use-services" | "use-digital" | "use-donations"
+  | "explorer";
+interface Props {
+  name: Name;
+  ui: LandingMessages["ui"];
+}
+
+const { name, ui } = Astro.props;
+---
+
+<div class:list={["pl-mk", `pl-mk--${name}`]} aria-hidden="true">
+  {name === "final" && (
+    <div class="pl-mk-card">
+      <div class="pl-mk-row pl-mk-head"><span class="pl-mk-ico pl-mk-ok"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg></span><b>{ui.payment}</b><span class="pl-mk-amt">120.00 USDC</span></div>
+      <div class="pl-mk-row"><span>{ui.status}</span><span class="pl-mk-good">{ui.confirmed}</span></div>
+      <div class="pl-mk-row"><span>{ui.chargebacks}</span><span class="pl-mk-strong">{ui.none}</span></div>
+    </div>
+  )}
+
+  {name === "race" && (
+    <div class="pl-mk-card">
+      <div class="pl-mk-race"><span>Cosmos Pay</span><span class="pl-mk-track"><i class="pl-mk-fast" /></span><b>≈ 5 s</b></div>
+      <div class="pl-mk-race"><span>{ui.cards}</span><span class="pl-mk-track"><i class="pl-mk-slow" /></span><b class="pl-mk-muted">{ui.cardsTime}</b></div>
+    </div>
+  )}
+
+  {name === "escrow" && (
+    <div class="pl-mk-card">
+      <ol class="pl-mk-states">
+        <li><span class="pl-mk-dot" />{ui.paid}</li>
+        <li><span class="pl-mk-dot pl-mk-lock"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg></span>{ui.held}</li>
+        <li><span class="pl-mk-dot" />{ui.shipped}</li>
+        <li><span class="pl-mk-dot" />{ui.released}</li>
+      </ol>
+    </div>
+  )}
+
+  {name === "balance" && (
+    <div class="pl-mk-card">
+      <div class="pl-mk-row pl-mk-head"><span class="pl-mk-ico"><Mark name="stellar" /></span><b>{ui.yourAddress}</b><code>GBXQ…K2PA</code></div>
+      <div class="pl-mk-incoming"><span>{ui.received}</span><b>+ 120.00 USDC</b></div>
+      <div class="pl-mk-incoming pl-mk-incoming-2"><span>{ui.received}</span><b>+ 42.50 USDC</b></div>
+    </div>
+  )}
+
+  {(name === "flow-instant" || name === "flow-escrow") && (
+    <div class="pl-mk-flow">
+      <span class="pl-mk-node"><span class="pl-mk-ico"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="13" rx="2.5" /><path d="M16 12.5h2M3.5 9.5h13" /></svg></span>{ui.wallet}</span>
+      <span class="pl-mk-wire"><i /></span>
+      {name === "flow-escrow" && (
+        <Fragment>
+          <span class="pl-mk-node pl-mk-node-hold"><span class="pl-mk-ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg></span>{ui.contract}</span>
+          <span class="pl-mk-wire pl-mk-wire-late"><i /></span>
+        </Fragment>
+      )}
+      <span class="pl-mk-node pl-mk-node-end"><span class="pl-mk-ico"><Mark name="cosmos" /></span>{ui.yourAddress}</span>
+    </div>
+  )}
+
+  {name === "link" && (
+    <div class="pl-mk-card">
+      <span class="pl-mk-label">{ui.link}</span>
+      <div class="pl-mk-field"><code>payments.cosmospay.lat/cmh9a1</code><span class="pl-mk-btn-xs">{ui.copy}</span></div>
+      <div class="pl-mk-qrrow"><img src="/media/sample-qr.png" alt="" width="64" height="64" loading="lazy" decoding="async" /><span>{ui.scan}</span></div>
+    </div>
+  )}
+
+  {name === "checkout" && (
+    <div class="pl-mk-card pl-mk-center">
+      <div class="pl-mk-row pl-mk-head"><span class="pl-mk-ico"><Mark name="cosmos" /></span><b>Cosmos Pay</b></div>
+      <div class="pl-mk-big">25.00 USDC</div>
+      <img class="pl-mk-qr" src="/media/sample-qr.png" alt="" width="84" height="84" loading="lazy" decoding="async" />
+      <span class="pl-mk-btn">{ui.openWallet}</span>
+    </div>
+  )}
+
+  {name === "code" && (
+    <pre class="pl-mk-code" translate="no"><code><span class="k">const</span> intent = <span class="k">await</span> client
+  .paymentIntents.<span class="f">createPay</span>({"{"}
+    destination: <span class="s">"G…YOUR_ACCOUNT"</span>,
+    amount: <span class="s">"25"</span>,
+  {"}"});
+intent.uri; <span class="c">// the checkout link</span></code></pre>
+  )}
+
+  {name === "step-create" && (
+    <div class="pl-mk-card">
+      <span class="pl-mk-label">{ui.newLink}</span>
+      <div class="pl-mk-form"><span>{ui.amount}</span><span class="pl-mk-input">25.00 USDC</span></div>
+      <div class="pl-mk-form"><span>{ui.network}</span><span class="pl-mk-input">Stellar</span></div>
+      <span class="pl-mk-btn">{ui.create}</span>
+    </div>
+  )}
+
+  {name === "step-share" && (
+    <div class="pl-mk-card pl-mk-chat">
+      <span class="pl-mk-bubble">{ui.chat}</span>
+      <span class="pl-mk-bubble pl-mk-bubble-link">payments.cosmospay.lat/cmh9a1</span>
+    </div>
+  )}
+
+  {name === "step-pay" && (
+    <div class="pl-mk-card pl-mk-center">
+      <span class="pl-mk-label">{ui.confirmPay}</span>
+      <div class="pl-mk-big">25.00 USDC</div>
+      <span class="pl-mk-btn pl-mk-pulse">{ui.approve}</span>
+    </div>
+  )}
+
+  {name === "step-confirm" && (
+    <div class="pl-mk-card">
+      <div class="pl-mk-row pl-mk-head"><span class="pl-mk-ico pl-mk-ok"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg></span><b>{ui.paid}</b></div>
+      <div class="pl-mk-row"><span>{ui.webhookSent}</span><code>PAYMENT_INTENT_SUCCEEDED</code></div>
+    </div>
+  )}
+
+  {name.startsWith("use-") && (
+    <div class="pl-mk-card">
+      <div class="pl-mk-row pl-mk-head">
+        <span class="pl-mk-ico pl-mk-ok"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg></span>
+        <b>{name === "use-stores" ? ui.orderPaid : name === "use-services" ? ui.invoice : name === "use-digital" ? ui.course : ui.support}</b>
+        <span class="pl-mk-amt">{name === "use-stores" ? "120.00 USDC" : name === "use-services" ? "1,500.00 USDC" : name === "use-digital" ? "49.00 USDC" : "25.00 USDC"}</span>
+      </div>
+      <div class="pl-mk-row"><span>{ui.status}</span>{name === "use-stores" ? <span class="pl-mk-wait">{ui.held}</span> : <span class="pl-mk-good">{ui.paid}</span>}</div>
+      <div class="pl-mk-row"><span>{name === "use-digital" ? ui.delivered : ui.webhookSent}</span><span class="pl-mk-strong">✓</span></div>
+    </div>
+  )}
+
+  {name === "explorer" && (
+    <div class="pl-mk-card">
+      <div class="pl-mk-row pl-mk-head"><span class="pl-mk-ico pl-mk-ok"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg></span><b>{ui.txConfirmed}</b></div>
+      <div class="pl-mk-row"><span>{ui.hash}</span><code>6864…2e54</code></div>
+      <div class="pl-mk-row"><span>{ui.ledger}</span><code>1,284,903</code></div>
+      <span class="pl-mk-linkline">{ui.explorer}</span>
+    </div>
+  )}
+</div>

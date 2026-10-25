@@ -17,6 +17,7 @@ import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
 import SiteFooter from "@/components/cosmos/layout/SiteFooter";
 import Icon from "@/components/payments/landing/Icon.astro";
 import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
 import type { ComponentProps } from "astro/types";
 import { MESSAGES } from "@/lib/payments/i18n";
 import { LANDING } from "@/lib/payments/landing-i18n";
@@ -76,7 +77,13 @@ const marquees: { label: string; items: Brand[] }[] = [
     ],
   },
 ];
-const benefits = (["final", "instant", "escrow", "yours"] as const).map((key) => t.benefits[key]);
+// Each benefit with the mock-up that shows it (Mock.astro).
+const benefits = ([
+  ["final", "final"],
+  ["instant", "race"],
+  ["escrow", "escrow"],
+  ["yours", "balance"],
+] as const).map(([key, mock]) => ({ key, mock, ...t.benefits[key] }));
 // The two ways a payment settles: straight to the merchant, or held in escrow until released.
 const settleModes = (["instant", "escrow"] as const).map((key) => ({ key, ...t.settle[key] }));
 const compareRows = (["chargebacks", "protection", "settlement", "hours", "borders", "custody", "fees"] as const).map((key) => {
@@ -84,13 +91,21 @@ const compareRows = (["chargebacks", "protection", "settlement", "hours", "borde
   return { ...row, us: row.us.replace("{rate}", lowestRate) };
 });
 const paths = [
-  { key: "nocode", href: CREATE_LINK },
-  { key: "hosted", href: "#designs" },
-  { key: "api", href: DOCS },
+  { key: "nocode", href: CREATE_LINK, mock: "link" },
+  { key: "hosted", href: "#designs", mock: "checkout" },
+  { key: "api", href: DOCS, mock: "code" },
 ] as const;
+const stepMocks = ["step-create", "step-share", "step-pay", "step-confirm"] as const;
 const steps = (["create", "share", "pay", "confirm"] as const).map((key) => t.how[key]);
 const useCases = (["stores", "services", "digital", "donations"] as const).map((key) => ({ key, ...t.useCases[key] }));
-const security = (["onchain", "keys", "framing", "environments", "expiry", "docs"] as const).map((key) => t.security[key]);
+const security = ([
+  ["onchain", "chain"],
+  ["keys", "key"],
+  ["framing", "frame"],
+  ["environments", "layers"],
+  ["expiry", "clock"],
+  ["docs", "book"],
+] as const).map(([key, icon]) => ({ icon, ...t.security[key] }));
 // Plan names are product names (untranslated); "Custom" and "$33/mo" are written out per language.
 const plans = (["starter", "essentials", "growth", "enterprise"] as const).map((id) => {
   const spec = PLAN_SPECS[id];
@@ -104,9 +119,39 @@ const plans = (["starter", "essentials", "growth", "enterprise"] as const).map((
     monthly: custom ? "" : monthly,
   };
 });
+// The fee calculator's plans: each rate parsed from plans.ts ("0.2% + 5¢"); Enterprise is custom.
+const calcPlans = (["starter", "essentials", "growth", "enterprise"] as const).map((id) => {
+  const spec = PLAN_SPECS[id];
+  const m = spec.perTx.match(/([\d.]+)%\s*\+\s*([\d.]+)¢/);
+  const monthly = spec.price.endsWith("/mo") ? t.calc.perMonth.replace("{price}", spec.price.replace("/mo", "")) : "";
+  return { id, name: id[0].toUpperCase() + id.slice(1), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, monthly };
+});
+const ESCROW_PCT = 0.5;
 const faq = (["wallet", "account", "wallets", "custody", "escrow", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
 
-// The REST call the developers section shows. Plain text: it is not translated.
+// The code the developers section shows, by tab. Plain text: it is not translated. The SDK and
+// webhook shapes are the real ones (@cosmosapp/pay_sdk's Client, the { id, type, createdAt, data }
+// envelope); values are examples.
+const SDK_CODE = `import { Client } from "@cosmosapp/pay_sdk";
+
+const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
+const intent = await client.paymentIntents.createPay({
+  destination: "G…YOUR_ACCOUNT",
+  amount: "25",
+});
+console.log(intent.uri); // the checkout link`;
+const WEBHOOK_CODE = `{
+  "id": "evt_01JB…",
+  "type": "PAYMENT_INTENT_SUCCEEDED",
+  "createdAt": "2026-10-24T22:36:56.000Z",
+  "data": {
+    "id": "cmh9a1…",
+    "status": "SUCCEEDED",
+    "amount": "25",
+    "txHash": "6864…2e54"
+  }
+}`;
+// The REST call.
 const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \\
   -H "Authorization: Bearer $COSMOS_PAY_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -119,6 +164,11 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
     "msg": "Order #1001",
     "checkoutTheme": "ticket"
   }'`;
+const codeTabs = [
+  { key: "curl", code: CODE },
+  { key: "sdk", code: SDK_CODE },
+  { key: "webhook", code: WEBHOOK_CODE },
+] as const;
 ---
 
 <PaymentsLayout title={t.meta.title} description={t.meta.description} indexable>
@@ -195,9 +245,10 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
         <div class="pl-head" data-reveal>
           <h2 id="pl-benefits">{t.benefits.title} {t.benefits.titleBold}</h2>
         </div>
-        <ul class="pl-benefits" role="list">
+        <ul class="pl-bento" role="list">
           {benefits.map((b, i) => (
-            <li data-reveal style={`--i: ${i}`}>
+            <li class="pl-bento-card" data-reveal style={`--i: ${i}`}>
+              <div class="pl-bento-visual"><Mock name={b.mock} ui={t.ui} /></div>
               <h3>{b.title}</h3>
               <p>{b.body}</p>
             </li>
@@ -212,6 +263,7 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
           <div class="pl-settle-grid">
             {settleModes.map((mode, i) => (
               <article class:list={["pl-settle-card", { "is-escrow": mode.key === "escrow" }]} data-reveal style={`--i: ${i}`}>
+                <Mock name={mode.key === "escrow" ? "flow-escrow" : "flow-instant"} ui={t.ui} />
                 <h4>{mode.title}</h4>
                 <p>{mode.body}</p>
                 <ol class="pl-settle-steps" role="list">
@@ -269,6 +321,7 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
             const copy = t.paths[p.key];
             return (
               <li class="pl-path" data-reveal style={`--i: ${i}`}>
+                <div class="pl-path-visual"><Mock name={p.mock} ui={t.ui} /></div>
                 <h3>{copy.title}</h3>
                 <p class="pl-path-level">{copy.level}</p>
                 <p class="pl-path-body">{copy.body}</p>
@@ -293,7 +346,8 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
         <ol class="pl-steps" role="list">
           {steps.map((s, i) => (
             <li data-reveal style={`--i: ${i}`}>
-              <span class="pl-step-num" aria-hidden="true">{i + 1}</span>
+              <div class="pl-step-visual"><Mock name={stepMocks[i]} ui={t.ui} /></div>
+              <div class="pl-step-top" aria-hidden="true"><span class="pl-step-num">{i + 1}</span><span class="pl-step-line" /></div>
               <h3>{s.title}</h3>
               <p>{s.body}</p>
             </li>
@@ -346,14 +400,17 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
           </div>
           {useCases.map((u, i) => (
             <div class="pl-uses-panel" role="tabpanel" id={`pl-use-${u.key}`} aria-labelledby={`pl-use-tab-${u.key}`} tabindex="0" hidden={i !== 0}>
-              <h3>{u.title}</h3>
-              <p class="pl-uses-body">{u.body}</p>
-              <ul class="pl-checks" role="list">
-                {u.points.map((point) => (
-                  <li><span class="pl-check"><Icon name="check" /></span>{point}</li>
-                ))}
-              </ul>
-              <p class="pl-uses-built">{t.useCases.built} {u.uses}</p>
+              <div class="pl-uses-text">
+                <h3>{u.title}</h3>
+                <p class="pl-uses-body">{u.body}</p>
+                <ul class="pl-checks" role="list">
+                  {u.points.map((point) => (
+                    <li><span class="pl-check"><Icon name="check" /></span>{point}</li>
+                  ))}
+                </ul>
+                <p class="pl-uses-built">{t.useCases.built} {u.uses}</p>
+              </div>
+              <div class="pl-uses-visual"><Mock name={`use-${u.key}`} ui={t.ui} /></div>
             </div>
           ))}
         </div>
@@ -364,10 +421,12 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
       <div class="wrap pl-split">
         <div class="pl-head pl-head-sticky" data-reveal>
           <h2 id="pl-security">{t.security.title} {t.security.titleBold}</h2>
+          <div class="pl-security-visual"><Mock name="explorer" ui={t.ui} /></div>
         </div>
         <ul class="pl-facts-list" role="list">
           {security.map((s, i) => (
             <li data-reveal style={`--i: ${i}`}>
+              <span class="pl-fact-icon"><Icon name={s.icon} /></span>
               <h3>{s.title}</h3>
               <p>{s.body}</p>
             </li>
@@ -393,11 +452,21 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
             <a class="btn btn-outline-w" href={`${DOCS}/api`}>{t.developers.reference}</a>
           </div>
         </div>
-        <figure class="pl-code" data-reveal style="--i: 2">
-          <figcaption>{t.developers.codeTitle}</figcaption>
-          <pre tabindex="0" translate="no"><code>{CODE}</code></pre>
+        <div class="pl-code" data-reveal style="--i: 2" data-tabs>
+          <div class="pl-code-tabs" role="tablist" aria-label={t.devTabs.label}>
+            {codeTabs.map((c, i) => (
+              <button type="button" class="pl-code-tab" role="tab" id={`pl-code-tab-${c.key}`} aria-controls={`pl-code-${c.key}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>
+                {t.devTabs[c.key]}
+              </button>
+            ))}
+          </div>
+          {codeTabs.map((c, i) => (
+            <div class="pl-code-panel" role="tabpanel" id={`pl-code-${c.key}`} aria-labelledby={`pl-code-tab-${c.key}`} hidden={i !== 0}>
+              <pre tabindex="0" translate="no"><code>{c.code}</code></pre>
+            </div>
+          ))}
           <p class="pl-code-note"># {t.developers.codeComment}</p>
-        </figure>
+        </div>
       </div>
     </section>
 
@@ -417,6 +486,30 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
             </li>
           ))}
         </ul>
+        <div class="pl-calc" data-calc data-reveal data-escrow-pct={ESCROW_PCT}>
+          <div class="pl-calc-controls">
+            <h3>{t.calc.title}</h3>
+            <label class="pl-calc-label" for="pl-calc-amount">{t.calc.amount}</label>
+            <div class="pl-calc-amount"><input id="pl-calc-amount" type="number" min="1" max="1000000" step="1" value="250" inputmode="decimal" data-calc-amount /><span>USDC</span></div>
+            <input class="pl-calc-range" type="range" min="0" max="100" step="0.5" value="60" aria-label={t.calc.amount} aria-valuetext="250 USDC" data-calc-range />
+            <label class="pl-calc-escrow"><input type="checkbox" data-calc-escrow /> <span>{t.calc.escrow}</span></label>
+            <p class="pl-footnote">{t.calc.note}</p>
+          </div>
+          <div class="pl-calc-result">
+            <table class="pl-calc-table">
+              <thead><tr><th scope="col">{t.calc.plan}</th><th scope="col">{t.calc.fee}</th><th scope="col">{t.calc.youGet}</th></tr></thead>
+              <tbody>
+                {calcPlans.map((p) => (
+                  <tr class:list={[{ "is-best": p.id === "growth" }]} data-calc-plan data-pct={p.pct ?? ""} data-cents={p.cents ?? ""}>
+                    <th scope="row">{p.name}{p.monthly && <small>{p.monthly}</small>}</th>
+                    <td data-calc-fee>{p.pct === null ? t.calc.custom : "—"}</td>
+                    <td data-calc-net>{p.pct === null ? t.calc.custom : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
         <a class="btn btn-outline-w pl-plans-more" href={PRICING}>{t.pricing.compare}</a>
       </div>
     </section>
@@ -440,12 +533,15 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
     <section class="pl-section pl-final-wrap" aria-labelledby="pl-final">
       <div class="wrap">
         <div class="pl-final" data-reveal>
-          <h2 id="pl-final">{t.cta.title} <mark class="pl-hl">{ctaMark.words}</mark>{ctaMark.stop}</h2>
-          <p>{t.cta.body}</p>
-          <div class="pl-cta">
-            <a class="btn btn-dark" href={CREATE_LINK}>{t.cta.primary}</a>
-            <a class="btn btn-outline-w" href={CONTACT}>{t.cta.secondary}</a>
+          <div class="pl-final-copy">
+            <h2 id="pl-final">{t.cta.title} <mark class="pl-hl">{ctaMark.words}</mark>{ctaMark.stop}</h2>
+            <p>{t.cta.body}</p>
+            <div class="pl-cta">
+              <a class="btn btn-dark" href={CREATE_LINK}>{t.cta.primary}</a>
+              <a class="btn btn-outline-w" href={CONTACT}>{t.cta.secondary}</a>
+            </div>
           </div>
+          <img class="pl-final-art" src="/brand/astronauta-telefono.svg" alt="" width="260" height="260" loading="lazy" decoding="async" />
         </div>
       </div>
     </section>
@@ -489,7 +585,39 @@ const CODE = `curl https://api.cosmospay.lat/cosmos-api/v1/payment-intents/pay \
   for (const el of document.querySelectorAll("[data-reveal]")) reveal.observe(el);
   (window as Window & { __plReveal?: boolean }).__plReveal = true;
 
-  /* Use-case tabs (WAI-ARIA tabs, automatic activation): a click or an arrow key selects a
+  /* Fee calculator: the amount (typed or slid) times each plan's rate, plus its fixed cents,
+     plus escrow's 0.5% when ticked; what the merchant keeps is the rest. Rates come from the
+     rows' data attributes (plans.ts); a custom plan keeps its label. The slider is logarithmic
+     (1 to 10,000 over 0–100), so small and large payments both get room on it. */
+  for (const calc of document.querySelectorAll<HTMLElement>("[data-calc]")) {
+    const amount = calc.querySelector<HTMLInputElement>("[data-calc-amount]")!;
+    const range = calc.querySelector<HTMLInputElement>("[data-calc-range]")!;
+    const escrow = calc.querySelector<HTMLInputElement>("[data-calc-escrow]")!;
+    const escrowPct = Number(calc.dataset.escrowPct) || 0;
+    const money = new Intl.NumberFormat(document.documentElement.lang || "en", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const render = () => {
+      const value = Math.max(0, Number(amount.value) || 0);
+      for (const row of calc.querySelectorAll<HTMLElement>("[data-calc-plan]")) {
+        if (row.dataset.pct === "") continue;
+        const pct = Number(row.dataset.pct) + (escrow.checked ? escrowPct : 0);
+        const fee = value * pct / 100 + Number(row.dataset.cents) / 100;
+        row.querySelector("[data-calc-fee]")!.textContent = money.format(fee) + " USDC";
+        row.querySelector("[data-calc-net]")!.textContent = money.format(Math.max(0, value - fee)) + " USDC";
+      }
+    };
+    const toRange = (value: number) => String(Math.min(100, Math.max(0, 25 * Math.log10(Math.max(1, value)))));
+    const fromRange = (position: number) => {
+      const value = 10 ** (position / 25);
+      return value < 100 ? Math.round(value) : value < 1000 ? Math.round(value / 5) * 5 : Math.round(value / 50) * 50;
+    };
+    const describe = () => range.setAttribute("aria-valuetext", `${amount.value || 0} USDC`);
+    amount.addEventListener("input", () => { range.value = toRange(Number(amount.value) || 0); describe(); render(); });
+    range.addEventListener("input", () => { amount.value = String(fromRange(Number(range.value))); describe(); render(); });
+    escrow.addEventListener("change", render);
+    render();
+  }
+
+  /* Tabs — use cases and code samples (WAI-ARIA tabs, automatic activation): a click or an arrow key selects a
      tab and shows its panel; Home and End jump to the first and last. Only the selected tab
      is in the tab order. */
   for (const root of document.querySelectorAll<HTMLElement>("[data-tabs]")) {
