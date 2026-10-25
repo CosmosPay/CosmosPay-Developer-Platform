@@ -937,9 +937,17 @@
 .pl-subnav-links::-webkit-scrollbar { display: none; }
 .pl-subnav-links a {
   position: relative; display: block; padding: 8px 12px; white-space: nowrap; border-radius: 10px;
-  font-size: .9375rem; font-weight: 600; color: var(--ink-3); transition: color .2s, background-color .2s;
+  font-size: .9375rem; font-weight: 600; color: var(--ink-3); transition: color .2s;
 }
-.pl-subnav-links a:hover { color: var(--ink); background: var(--accent-soft); }
+/* hover as in the general nav: the label darkens and an underline sweeps in from the left
+   (::before; ::after is the current page's bar, which already marks it) */
+.pl-subnav-links a:not([aria-current="page"])::before {
+  content: ""; content: "" / "";
+  position: absolute; left: 12px; right: 12px; bottom: 4px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-subnav-links a:is(:hover, :focus-visible) { color: var(--ink); }
+.pl-subnav-links a:is(:hover, :focus-visible)::before { scale: 1 1; }
 .pl-subnav-links a[aria-current="page"] { color: var(--ink); }
 .pl-subnav-links a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -9px; height: 2px; background: var(--btn-bg); }
 .pl-subnav-cta { flex: 0 0 auto; }
@@ -969,9 +977,13 @@
 .pl-crumbs a:is(:hover, :focus-visible)::after { scale: 1 1; }
 .pl-crumbs [aria-current="page"] { color: var(--ink); font-weight: 600; }
 
-/* the main call to action again, between sections */
-.pl-inline-cta { padding: 0 0 clamp(40px, 5vw, 64px); background: var(--bg); }
-.pl-inline-cta.pl-section-alt { background: var(--surface); padding-top: clamp(32px, 4vw, 48px); }
+/* the main call to action again, between sections, close to what it follows (product owner:
+   less space around it): the section above gives up most of its bottom padding, and the one
+   after starts nearer */
+.pl-inline-cta { padding: 0 0 clamp(24px, 3vw, 32px); background: var(--bg); }
+.pl-inline-cta.pl-section-alt { background: var(--surface); padding-top: clamp(16px, 2vw, 24px); }
+.pl-multi .pl-section:not(.is-pinned):has(+ .pl-inline-cta) { padding-bottom: clamp(36px, 4vw, 52px); }
+.pl-inline-cta + .pl-section:not(.is-pinned) { padding-top: clamp(48px, 6vw, 80px); }
 .pl-inline-cta-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 28px; }
 .pl-inline-cta .btn { min-height: 50px; padding: 13px 24px; }
 /* in one row with the button, so it drops the space it keeps above it elsewhere */
