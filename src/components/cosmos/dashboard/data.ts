@@ -117,6 +117,10 @@ export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[]
     entries: [{ group: "admin", views: ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"] }],
   },
 ];
+/* Views switched off for now (product owner, 2026-10-25: Fiat is disabled temporarily). They leave
+   the sidebar and the search, and a link to one (?view=blindpay from the KYC return) opens the
+   overview. Delete the entry to bring the view back. */
+export const DISABLED_VIEWS = ["blindpay"];
 export const STAFF_ROLES = ["owner", "admin", "support"];
 export const MANAGER_ROLES = ["owner", "admin"];
 export const STAFF_ONLY = ["inbox"];   // visible to owner/admin/support

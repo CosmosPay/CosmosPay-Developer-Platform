@@ -12,7 +12,7 @@ import { apiKeys as apiKeysApi, notifications as notificationsApi, account as ac
 import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
+import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS } from "@/components/cosmos/dashboard/data";
 import {
   OverviewView, PaymentsView, ZkPaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
@@ -54,7 +54,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   useEffect(() => {
     try {
       const v = new URLSearchParams(window.location.search).get("view");
-      if (v && t.dash.viewLabels[v]) setView(v);
+      if (v && t.dash.viewLabels[v] && !DISABLED_VIEWS.includes(v)) setView(v);
     } catch (e) {}
   }, []);
   // Keep the URL in sync with the active view so a reload restores it (no more snapping back to Overview).
@@ -337,7 +337,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   };
 
   // What this viewer's role may see in the sidebar.
-  const visibleView = (k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k));
+  const visibleView = (k) => !DISABLED_VIEWS.includes(k) && (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k));
 
   return (
     <div className={`dash${navOpen ? " nav-open" : ""}`}>

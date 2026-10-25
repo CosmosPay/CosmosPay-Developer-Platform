@@ -211,6 +211,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     Production and the outlined "create organization" (icon only on phones). A view's own h2 stays
     for assistive tech only and no view has a visible subtitle. The sidebar entries are `SIDE` in
     `dashboard/data.ts`; a group slides open and closed (its height animates; closed, it is inert).
+    `DISABLED_VIEWS` there switches a view off (out of the sidebar and the search, its link opens
+    the overview): Fiat, temporarily (product owner, 2026-10-25).
   - **The bar carries the dashboard's search** (`widgets/DashSearch.tsx`, passed to `Nav` as
     `search`; Ctrl K / Cmd K or "/" focus it): a combobox that finds the pages by name (and by
     their group's) and, with a query, searches payments, swaps and liquidity by writing their `q`
