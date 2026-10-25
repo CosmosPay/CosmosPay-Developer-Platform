@@ -25,6 +25,20 @@ export function startLanding(): void {
     sync();
   }
 
+  /* On a phone the section bar scrolls sideways and the current page can sit past its edge:
+     bring that link to the middle of the bar, so the visitor sees where they are. */
+  const here = document.querySelector<HTMLElement>(".pl-subnav-links [aria-current='page']");
+  const bar = here?.closest<HTMLElement>(".pl-subnav-links");
+  const centre = () => {
+    if (!here || !bar || bar.scrollWidth <= bar.clientWidth) return;
+    const link = here.getBoundingClientRect();
+    const box = bar.getBoundingClientRect();
+    bar.scrollLeft += link.left - box.left - (box.width - link.width) / 2;
+  };
+  centre();
+  // again once the web font is in: it changes every link's width
+  void document.fonts?.ready.then(centre);
+
   /* Scroll reveals: an element marked data-reveal rises in the first time it enters the
      viewport (CSS: payments-landing.css, .pl-anim). Its --i staggers it among siblings. */
   const reveal = new IntersectionObserver((entries) => {

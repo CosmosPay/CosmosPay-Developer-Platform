@@ -184,6 +184,13 @@ button { font-family: inherit; cursor: pointer; }
 .reveal.in { opacity: 1; transform: none; transition: opacity .4s cubic-bezier(.2,.7,.2,1), transform .4s cubic-bezier(.2,.7,.2,1); }
 @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1 !important; transform: none !important; } }
 
+/* Read by assistive technology, not drawn (a control's full name next to a short visible
+   label, e.g. "Language: ES"). */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
 /* ============================================================
    NAV + MEGA MENU
    ============================================================ */
@@ -228,18 +235,31 @@ button { font-family: inherit; cursor: pointer; }
 .cosmos-lockup { aspect-ratio: 235.27 / 66.17; -webkit-mask-image: url(/brand/lockup-cosmos-pay-mono.svg); mask-image: url(/brand/lockup-cosmos-pay-mono.svg); }
 
 .nav-center { display: flex; align-items: center; gap: 4px; margin-left: 8px; }
-.nav-item { position: relative; }
+/* static: an item's panel spans the bar (it hangs from the header), not the item */
+.nav-item { position: static; }
 .nav-trigger {
-  display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 0;
+  position: relative; display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 0;
   font-family: inherit; font-weight: 500; font-size: .9375rem; color: var(--ink);
   padding: 9px 12px; border-radius: var(--radius-btn); transition: color .18s;
 }
 .nav-trigger:hover, .nav-trigger.on { color: var(--accent); background: transparent; }
+/* The landing's text links sweep an underline in from the left; the bar's text items and its
+   sign-in link do the same, so the whole bar answers the pointer as its buttons do. */
+.nav-trigger::after, .nav .link-login::after {
+  content: ""; content: "" / "";
+  position: absolute; left: 12px; right: 12px; bottom: 4px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.nav .link-login { position: relative; }
+.nav .link-login::after { left: 0; right: 0; bottom: -5px; }
+.nav-trigger:is(:hover, :focus-visible, .on)::after, .nav .link-login:is(:hover, :focus-visible)::after { scale: 1 1; }
 .nav-trigger .nchev { width: 15px; height: 15px; opacity: .7; transition: transform .22s; }
 .nav-trigger.on .nchev { transform: rotate(180deg); }
 
 /* mega panel */
 .mega-wrap { position: absolute; left: 0; right: 0; top: 100%; display: flex; justify-content: center; padding-top: 8px; }
+/* every panel is in the page, hidden until its trigger opens it */
+.mega-wrap[hidden], .mobile-menu[hidden], .lang-menu[hidden] { display: none; }
 .mega {
   background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius-lg);
   padding: 28px; display: flex; gap: 30px;
@@ -249,12 +269,13 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes megaIn { from { transform: translateY(-8px); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .mega { animation: none; } }
 .mega-cols { display: grid; gap: 26px 22px; flex: 1; }
-.mega-col h6 { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 6px 10px; }
+.mega-head { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 6px 10px; }
+.mega-col ul, .mm-group ul, .lang-menu { list-style: none; margin: 0; padding: 0; }
 .mega-link { display: block; padding: 9px 10px; border-radius: var(--radius); transition: background .16s; }
 .mega-link:hover { background: var(--surface-2); }
-.mega-link .t { font-weight: 500; font-size: 15px; color: var(--ink); transition: color .16s; }
+.mega-link .t { display: block; font-weight: 500; font-size: 15px; color: var(--ink); transition: color .16s; }
 .mega-link:hover .t { color: var(--accent); }
-.mega-link .s { font-size: 13px; color: var(--ink-3); margin-top: 1px; line-height: 1.35; }
+.mega-link .s { display: block; font-size: 13px; color: var(--ink-3); margin-top: 1px; line-height: 1.35; }
 .mega-feat {
   flex: 0 0 252px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line);
   background: transparent; display: flex; flex-direction: column;
@@ -278,17 +299,46 @@ button { font-family: inherit; cursor: pointer; }
 /* Mobile: the burger and its menu. Here with the rest of the nav (not in views.css) so every
    page that draws the general nav (the payments pages too) lays it out the same. */
 .nav-burger { display: none; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); place-items: center; cursor: pointer; }
+/* The bar's round and pill controls (theme, docs, language, burger) are light outlined buttons,
+   so they take the snap's ink like one: a circle of the outline ink grows from where the pointer
+   enters (src/scripts/ink.ts places it), the icon turns to the ink's foreground and the outline
+   to the ink. Keyboard focus paints from the centre; touch has no hover, so taps leave nothing. */
+.nav :is(.theme-btn, .lang-btn, .nav-burger) {
+  --ink-fill: var(--out-ink, var(--cosmos-blue)); --ink-fg: var(--out-ink-fg, var(--cosmos-white));
+  position: relative; isolation: isolate; overflow: hidden;
+  transition: color .2s ease, border-color .2s ease, scale .15s ease;
+}
+.nav :is(.theme-btn, .lang-btn, .nav-burger)::before {
+  content: ""; content: "" / "";
+  position: absolute; left: var(--ink-x, 50%); top: var(--ink-y, 50%); z-index: -1;
+  width: var(--ink-size, 150%); aspect-ratio: 1; border-radius: 50%;
+  background: var(--ink-fill); translate: -50% -50%; scale: 0;
+  transition: scale .55s cubic-bezier(.2, .7, .2, 1); pointer-events: none;
+}
+.nav :is(.theme-btn, .lang-btn, .nav-burger):focus-visible { color: var(--ink-fg); border-color: var(--ink-fill); }
+.nav :is(.theme-btn, .lang-btn, .nav-burger):focus-visible::before { scale: 1; }
+@media (hover: hover) {
+  .nav :is(.theme-btn, .lang-btn, .nav-burger):hover { color: var(--ink-fg); border-color: var(--ink-fill); }
+  .nav :is(.theme-btn, .lang-btn, .nav-burger):hover::before { scale: 1; }
+}
+.nav :is(.theme-btn, .lang-btn, .nav-burger):active { scale: .96; }
+/* the open burger and the open language list stay painted while their panel is out */
+.nav :is(.lang-btn, .nav-burger)[aria-expanded="true"] { color: var(--ink-fg); border-color: var(--ink-fill); }
+.nav :is(.lang-btn, .nav-burger)[aria-expanded="true"]::before { scale: 1; }
+/* While the mobile menu is open the page behind does not scroll (Nav.tsx makes it inert too). */
+html.nav-locked { overflow: hidden; }
 .nav-burger svg { width: 21px; height: 21px; }
 .mobile-menu { display: none; }
 @media (max-width: 1100px) {
   .nav-burger { display: grid; }
   .nav-right .lang, .nav-right .link-login, .nav-right .getkeys { display: none; }
-  .mobile-menu { display: block; position: fixed; left: 0; right: 0; top: 72px; background: var(--bg); border-bottom: 1px solid var(--line); padding: 14px 16px 22px; z-index: 49; box-shadow: none; max-height: calc(100vh - 72px); overflow-y: auto; }
+  .mobile-menu { display: block; position: fixed; left: 0; right: 0; top: 72px; background: var(--bg); border-bottom: 1px solid var(--line); padding: 14px 16px 22px; z-index: 49; box-shadow: none; max-height: calc(100vh - 72px); max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain; }
   .mm-lang { padding: 14px 0; border-bottom: 1px solid var(--line); }
-  .mm-lang .lang-menu { left: 0; right: auto; }
+  /* inside the menu the language list opens in place, so the menu's own scroll never cuts it */
+  .mm-lang .lang-menu { position: static; width: auto; max-width: 320px; margin-top: 10px; animation: none; }
   .mm-link { display: block; font-size: 18px; font-weight: 500; color: var(--ink); padding: 13px 0; border-bottom: 1px solid var(--line); }
   .mm-group { padding: 12px 0 8px; border-bottom: 1px solid var(--line); }
-  .mm-head { display: block; font-size: 13px; font-weight: 600; color: var(--ink-3); padding: 2px 0 6px; }
+  .mm-head { display: block; margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-3); padding: 2px 0 6px; }
   .mm-sublink { display: block; font-size: 17px; font-weight: 500; color: var(--ink); padding: 9px 0; }
   .mm-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
   .mm-actions .btn { width: 100%; }
@@ -588,7 +638,8 @@ button { font-family: inherit; cursor: pointer; }
 /* el personaje del pie: figura, no icono (minimo 180px, BRAND.md seccion 5) */
 .foot-astro { display: block; height: 190px; width: auto; margin: 28px 0 0; }
 @media (max-width: 860px) { .foot-astro { display: none; } }
-.foot-col h5 { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 16px; }
+.foot-col .foot-h { font-size: .75rem; font-weight: 500; line-height: 1.4; letter-spacing: 0; color: var(--ink-3); margin: 0 0 16px; }
+.foot-col ul { list-style: none; margin: 0; padding: 0; }
 .foot-col a { display: block; color: var(--ink-2); font-size: .875rem; padding: 6px 0; transition: color .25s; }
 .foot-col a:hover { color: var(--accent); }
 .foot-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 56px; padding-top: 26px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .8125rem; flex-wrap: wrap; gap: 14px; }

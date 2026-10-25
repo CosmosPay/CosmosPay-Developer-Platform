@@ -97,6 +97,10 @@ export default {
     dashboard: "Dashboard",
     menu: "Menu",
     docs: "Documentation",
+    main: "Main",
+    closeMenu: "Close menu",
+    theme: "Dark mode",
+    language: "Language",
     items: {
       products: {
         label: "Products",

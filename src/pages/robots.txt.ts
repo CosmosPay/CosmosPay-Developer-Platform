@@ -28,11 +28,13 @@ Disallow: /api/
 
 Sitemap: ${DEV}/sitemap.xml
 `,
-  payments: `# Cosmos Pay payments: the landing and its content pages are content. Payment links
-# are personal and short-lived, and the design previews are samples.
+  payments: `# Cosmos Pay payments: the landing and its content pages are content, in every language
+# (?lang=, see src/lib/payments/seo.ts). Payment links are personal and short-lived, and the
+# design previews are samples.
 User-agent: *
 Allow: /$
-${PAYMENTS_PAGE_PATHS.map((p) => `Allow: ${p}$`).join("\n")}
+Allow: /?lang=
+${PAYMENTS_PAGE_PATHS.map((p) => `Allow: ${p}$\nAllow: ${p}?lang=`).join("\n")}
 Disallow: /
 
 Sitemap: ${PAYMENTS}/sitemap.xml

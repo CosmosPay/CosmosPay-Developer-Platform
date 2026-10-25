@@ -274,6 +274,7 @@ const en = {
   code: { copy: "Copy", copied: "Copied" },
   pages: {
     nav: "Cosmos Pay Payments sections",
+    crumbs: "Breadcrumb",
     home: "Overview",
     integrations: { nav: "Integration", title: "Integrate Cosmos Pay", lede: "From a payment link with no code to your own payment screen with the API. Pick how you charge and how the payment looks on your site.", meta: "Integration options | Cosmos Pay Payments" },
     useCases: { nav: "Use cases", title: "Use cases", lede: "How stores, services, digital products and creators take stablecoins, and what changes next to cards and bank transfers.", meta: "Use cases | Cosmos Pay Payments" },
@@ -556,6 +557,7 @@ const es: LandingMessages = {
   code: { copy: "Copiar", copied: "Copiado" },
   pages: {
     nav: "Secciones de Cosmos Pay Payments",
+    crumbs: "Ruta de navegación",
     home: "Inicio",
     integrations: { nav: "Integración", title: "Integra Cosmos Pay", lede: "Desde un enlace de pago sin código hasta tu propia pantalla de pago con la API. Elige cómo cobras y cómo se ve el pago en tu sitio.", meta: "Opciones de integración | Cosmos Pay Payments" },
     useCases: { nav: "Casos de uso", title: "Casos de uso", lede: "Cómo cobran con stablecoins las tiendas, los servicios, los productos digitales y los creadores, y qué cambia frente a tarjetas y transferencias.", meta: "Casos de uso | Cosmos Pay Payments" },
@@ -837,6 +839,7 @@ const pt: LandingMessages = {
   code: { copy: "Copiar", copied: "Copiado" },
   pages: {
     nav: "Seções do Cosmos Pay Payments",
+    crumbs: "Trilha de navegação",
     home: "Início",
     integrations: { nav: "Integração", title: "Integre o Cosmos Pay", lede: "De um link de pagamento sem código até sua própria tela de pagamento com a API. Escolha como cobra e como o pagamento aparece no seu site.", meta: "Opções de integração | Cosmos Pay Payments" },
     useCases: { nav: "Casos de uso", title: "Casos de uso", lede: "Como lojas, serviços, produtos digitais e criadores recebem em stablecoins, e o que muda em relação a cartões e transferências.", meta: "Casos de uso | Cosmos Pay Payments" },
@@ -1118,6 +1121,7 @@ const fr: LandingMessages = {
   code: { copy: "Copier", copied: "Copié" },
   pages: {
     nav: "Sections de Cosmos Pay Payments",
+    crumbs: "Fil d’Ariane",
     home: "Accueil",
     integrations: { nav: "Intégration", title: "Intégrez Cosmos Pay", lede: "D’un lien de paiement sans code à votre propre écran de paiement avec l’API. Choisissez comment vous encaissez et à quoi ressemble le paiement sur votre site.", meta: "Options d’intégration | Cosmos Pay Payments" },
     useCases: { nav: "Cas d’usage", title: "Cas d’usage", lede: "Comment les boutiques, les services, les produits numériques et les créateurs encaissent en stablecoins, et ce qui change par rapport aux cartes et aux virements.", meta: "Cas d’usage | Cosmos Pay Payments" },
@@ -1399,6 +1403,7 @@ const de: LandingMessages = {
   code: { copy: "Kopieren", copied: "Kopiert" },
   pages: {
     nav: "Bereiche von Cosmos Pay Payments",
+    crumbs: "Brotkrümelnavigation",
     home: "Übersicht",
     integrations: { nav: "Integration", title: "Cosmos Pay integrieren", lede: "Vom Zahlungslink ohne Code bis zu deinem eigenen Zahlungsbildschirm mit der API. Wähle, wie du kassierst und wie die Zahlung auf deiner Website aussieht.", meta: "Integrationsoptionen | Cosmos Pay Payments" },
     useCases: { nav: "Anwendungsfälle", title: "Anwendungsfälle", lede: "Wie Shops, Dienstleister, digitale Produkte und Creator Stablecoins annehmen, und was sich gegenüber Karten und Überweisungen ändert.", meta: "Anwendungsfälle | Cosmos Pay Payments" },

@@ -8,7 +8,8 @@
  * grows the circle from the centre.
  */
 
-const SELECTOR = ".btn";
+// The snap's buttons, and the general nav's round and pill controls drawn the same way (cosmos.css).
+const SELECTOR = ".btn, .nav .theme-btn, .nav .lang-btn, .nav .nav-burger";
 
 function place(button: HTMLElement, event: PointerEvent) {
   const rect = button.getBoundingClientRect();

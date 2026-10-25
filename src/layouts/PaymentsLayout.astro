@@ -8,6 +8,7 @@ import SiteNav from "@/components/cosmos/layout/SiteNav";
 import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 import { LOCALES, MESSAGES } from "@/lib/payments/i18n";
 import { PAYMENTS, TERMS } from "@/lib/payments/urls";
+import { OG_LOCALES, pageUrl } from "@/lib/payments/seo";
 
 interface Props {
   title: string;
@@ -21,7 +22,13 @@ interface Props {
 const { title, description = "", indexable = false, overPanel } = Astro.props;
 const lang = Astro.locals.lang ?? "en";
 const t = MESSAGES[lang];
-const canonical = new URL(Astro.locals.publicPath ?? "/", PAYMENTS).href;
+// An indexable page exists once per language at ?lang=<code>, and the bare path follows the
+// visitor (x-default): each version names itself canonical and lists the others (hreflang), so
+// search engines index every language instead of folding them into the English one.
+const path = Astro.locals.publicPath ?? "/";
+const asked = Astro.url.searchParams.get("lang");
+const explicit = LOCALES.find((l) => l.code === asked)?.code ?? null;
+const canonical = pageUrl(PAYMENTS, path, explicit);
 
 // The language picker is a plain GET form, so it must carry the page's own query along
 // (/pay?uri=… would otherwise lose the payment it is showing).
@@ -40,6 +47,8 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={canonical} />
         <meta property="og:url" content={canonical} />
+        {LOCALES.map((l) => <link rel="alternate" hreflang={l.code} href={pageUrl(PAYMENTS, path, l.code)} />)}
+        <link rel="alternate" hreflang="x-default" href={pageUrl(PAYMENTS, path)} />
       </Fragment>
     ) : (
       <meta name="robots" content="noindex, nofollow" />
@@ -64,7 +73,8 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
     <meta property="og:image" content={`${PAYMENTS}/og-image.png`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content={lang} />
+    <meta property="og:locale" content={OG_LOCALES[lang]} />
+    {LOCALES.filter((l) => l.code !== lang).map((l) => <meta property="og:locale:alternate" content={OG_LOCALES[l.code]} />)}
 
     <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />
@@ -83,7 +93,7 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
       })();
     </script>
   </head>
-  <body class="inst">
+  <body class="inst" data-area="payments">
     <a class="skip-link" href="#main">{t.skip}</a>
     <!-- The general nav, as on every view. It never reads the platform session here: the
          payments domain is not an allowed origin for it (src/lib/allowed-origins.ts). -->

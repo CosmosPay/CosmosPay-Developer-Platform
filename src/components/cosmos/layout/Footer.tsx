@@ -80,8 +80,11 @@ export function Footer({ area }: { area?: Area } = {}) {
             const grp = t.footer.groups[g.key];
             return (
               <div className="foot-col" key={g.key}>
-                <h5>{grp.title}</h5>
-                {g.links.map(({ i, href }) => <a href={href === PRICING ? pricingFor(area) : localHref(href, area)} key={i}>{grp.links[i]}</a>)}
+                {/* h2: the footer's groups come after the page's own content, whose sections are h2 */}
+                <h2 className="foot-h" id={`foot-${g.key}`}>{grp.title}</h2>
+                <ul role="list" aria-labelledby={`foot-${g.key}`}>
+                  {g.links.map(({ i, href }) => <li key={i}><a href={href === PRICING ? pricingFor(area) : localHref(href, area)}>{grp.links[i]}</a></li>)}
+                </ul>
               </div>
             );
           })}

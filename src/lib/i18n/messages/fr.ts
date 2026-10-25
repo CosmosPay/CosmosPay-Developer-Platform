@@ -191,6 +191,10 @@ export default {
     dashboard: "Tableau de bord",
     menu: "Menu",
     docs: "Documentation",
+    main: "Principale",
+    closeMenu: "Fermer le menu",
+    theme: "Mode sombre",
+    language: "Langue",
     items: {
       products: {
         label: "Produits",

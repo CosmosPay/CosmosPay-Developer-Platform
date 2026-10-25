@@ -1,7 +1,8 @@
 ---
-// The header of a gateway content page (multi-page layout): its title as the page's h1, one
-// line on what it covers, and a 3D clay render on the right (3dicons, CC0). The general nav and
-// the section navigation sit above it.
+// The header of a gateway content page (multi-page layout): a breadcrumb back to the gateway's
+// home (it mirrors the URL, /faq is Home > FAQ, and StructuredData.astro states the same trail
+// for search engines), its title as the page's h1, one line on what it covers, and a 3D clay
+// render on the right (3dicons, CC0). The general nav and the section navigation sit above it.
 import type { LandingData } from "@/components/payments/landing/data";
 
 type PageKey = "integrations" | "useCases" | "security" | "fees" | "faq";
@@ -13,12 +14,18 @@ interface Props {
 }
 
 const { d, page, art } = Astro.props;
-const copy = d.t.pages[page] as { title: string; lede: string };
+const copy = d.t.pages[page] as { nav: string; title: string; lede: string };
 ---
 
 <header class="pl-page-head">
   <div class="wrap pl-page-head-inner">
     <div class="pl-page-head-copy">
+      <nav class="pl-crumbs" aria-label={d.t.pages.crumbs}>
+        <ol role="list">
+          <li><a href="/">{d.t.pages.home}</a></li>
+          <li><span aria-current="page">{copy.nav}</span></li>
+        </ol>
+      </nav>
       <h1 class="pl-page-title">{copy.title}</h1>
       <p class="pl-lede">{copy.lede}</p>
     </div>

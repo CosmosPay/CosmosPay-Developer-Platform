@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type FocusEvent } from "react";
 import { useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
 import { DASH, DOCS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
@@ -131,9 +131,46 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
     window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h);
   }, [overPanel]);
   useEffect(() => { setHydrated(true); }, []);
+  const burger = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLElement>(null);
+  /* Escape closes an open mega panel and gives focus back to its trigger. */
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      document.querySelector<HTMLElement>(`[aria-controls="mega-${active}"]`)?.focus();
+      setActive(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [active]);
+  /* The mobile menu covers the page, so while it is open the page behind neither scrolls nor
+     takes focus (inert), focus moves into the menu, and Escape or a desktop-wide window closes
+     it, focus going back to the burger. */
+  useEffect(() => {
+    if (!mob) return;
+    const header = burger.current?.closest("header");
+    const behind = [...document.body.children].filter((el) => header && !el.contains(header) && el.tagName !== "SCRIPT");
+    behind.forEach((el) => el.setAttribute("inert", ""));
+    document.documentElement.classList.add("nav-locked");
+    menu.current?.querySelector<HTMLElement>("a[href], button")?.focus();
+    const close = () => { setMob(false); burger.current?.focus(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    const wide = window.matchMedia("(min-width: 1101px)");
+    const onWide = () => { if (wide.matches) setMob(false); };
+    document.addEventListener("keydown", onKey);
+    wide.addEventListener("change", onWide);
+    return () => {
+      behind.forEach((el) => el.removeAttribute("inert"));
+      document.documentElement.classList.remove("nav-locked");
+      document.removeEventListener("keydown", onKey);
+      wide.removeEventListener("change", onWide);
+    };
+  }, [mob]);
   const open = (k: string | null) => { if (timer.current) clearTimeout(timer.current); setActive(k); };
   const scheduleClose = () => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setActive(null), 150); };
-  const activeItem = NAV_ITEMS.find((i) => i.key === active && i.cols);
+  /* Tabbing out of an item closes its panel. */
+  const closeOnBlur = (e: FocusEvent<HTMLElement>) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setActive(null); };
   /* con el menu mobile abierto la barra deja de ser transparente: el panel
      que baja es solido y necesita el borde de la barra */
   const inkNow = overInk && !mob;
@@ -144,15 +181,18 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
     <header className={`nav${scrolled ? " scrolled" : ""}${mob ? " menu-open" : ""}${inkNow ? " over-ink" : ""}${paperNow ? " over-paper" : ""}`}>
       <div className="wrap nav-inner">
         <a className="brand" href={homeFor(area)}><CosmosLockup height={32} label="Cosmos Pay" /></a>
-        <nav className="nav-center" onMouseLeave={scheduleClose}>
+        {/* Every panel is in the page from the first render, hidden until its trigger opens it,
+            so its links are crawlable and the trigger has a panel to point at (aria-controls);
+            each sits right after its trigger, so Tab goes from the trigger into its links. */}
+        <nav className="nav-center" aria-label={t.nav.main} onMouseLeave={scheduleClose}>
           {NAV_ITEMS.map((it) => it.cols ? (
-            <div className="nav-item" key={it.key} onMouseEnter={() => open(it.key)}>
-              <button className={`nav-trigger${active === it.key ? " on" : ""}`} onClick={() => setActive((a) => a === it.key ? null : it.key)}>{it.label}<IcNChev /></button>
+            <div className="nav-item" key={it.key} onMouseEnter={() => open(it.key)} onBlur={closeOnBlur}>
+              <button type="button" className={`nav-trigger${active === it.key ? " on" : ""}`} aria-expanded={active === it.key} aria-controls={`mega-${it.key}`} onClick={() => setActive((a) => a === it.key ? null : it.key)}>{it.label}<IcNChev /></button>
+              <div className="mega-wrap" id={`mega-${it.key}`} hidden={active !== it.key} onMouseEnter={() => open(it.key)} onMouseLeave={scheduleClose}><MegaPanel item={it} /></div>
             </div>
           ) : (
             <a className="nav-trigger" href={it.href} key={it.key} onMouseEnter={() => open(null)}>{it.label}</a>
           ))}
-          {activeItem && (<div className="mega-wrap" onMouseEnter={() => open(activeItem.key)} onMouseLeave={scheduleClose}><MegaPanel item={activeItem} /></div>)}
         </nav>
         <div className="nav-right">
           <ThemeToggle theme={theme} setTheme={setTheme} />
@@ -174,44 +214,45 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
               <button type="button" className="btn btn-dark btn-sm getkeys" onClick={() => startLogin()}>{t.nav.getKeys}</button>
             </>
           )}
-          <button className="nav-burger" aria-label={t.nav.menu} onClick={() => setMob((m) => !m)}>
+          <button type="button" ref={burger} className="nav-burger" aria-label={mob ? t.nav.closeMenu : t.nav.menu} aria-expanded={mob} aria-controls="nav-mobile-menu" onClick={() => setMob((m) => !m)}>
             {mob ? <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg> : <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>}
           </button>
         </div>
       </div>
-      {mob && (
-        <div className="mobile-menu">
-          {/* A mega item has no page of its own: on mobile it is a heading over its links. */}
-          {NAV_ITEMS.map((it) => it.cols ? (
-            <div className="mm-group" key={it.key}>
-              <span className="mm-head">{it.label}</span>
+      {/* Always in the page (hidden while closed), so the burger always points at it. */}
+      <nav className="mobile-menu" id="nav-mobile-menu" ref={menu} aria-label={t.nav.menu} hidden={!mob}>
+        {/* A mega item has no page of its own: on mobile it is a heading over its list of links. */}
+        {NAV_ITEMS.map((it) => it.cols ? (
+          <div className="mm-group" key={it.key}>
+            <p className="mm-head" id={`mm-${it.key}`}>{it.label}</p>
+            <ul role="list" aria-labelledby={`mm-${it.key}`}>
               {it.cols.flatMap((col: any) => col.links).map((l: any) => (
-                <a key={l.t} className="mm-sublink" href={l.href} onClick={() => setMob(false)}>{l.t}</a>
+                <li key={l.t}><a className="mm-sublink" href={l.href} onClick={() => setMob(false)}>{l.t}</a></li>
               ))}
-            </div>
-          ) : (
-            <a key={it.key} className="mm-link" href={it.href} onClick={() => setMob(false)}>{it.label}</a>
-          ))}
-          {/* Por debajo de 1100px el CSS esconde el selector de la barra y deja
-              solo la hamburguesa, pero el menu no lo repetia: en celular no
-              habia ninguna forma de cambiar el idioma. */}
-          <div className="mm-lang"><LangSelect /></div>
-          <div className="mm-actions">
-            {user ? (
-              <>
-                <div className="mm-user"><Avatar user={user} size={34} /><div className="nav-user-id"><b>{user.name || "Account"}</b>{user.email && <span>{user.email}</span>}</div></div>
-                <a className="btn btn-dark" href={DASH}>{t.nav.dashboard}</a>
-                <button type="button" className="link-login as-link mm-login" onClick={() => startLogout()}>{t.profile.logout}</button>
-              </>
-            ) : (
-              <>
-                <button type="button" className="link-login as-link mm-login" onClick={() => startLogin()}>{t.nav.login}</button>
-                <button type="button" className="btn btn-dark" onClick={() => startLogin()}>{t.nav.getKeys}</button>
-              </>
-            )}
+            </ul>
           </div>
+        ) : (
+          <a key={it.key} className="mm-link" href={it.href} onClick={() => setMob(false)}>{it.label}</a>
+        ))}
+        {/* Por debajo de 1100px el CSS esconde el selector de la barra y deja
+            solo la hamburguesa, pero el menu no lo repetia: en celular no
+            habia ninguna forma de cambiar el idioma. */}
+        <div className="mm-lang"><LangSelect /></div>
+        <div className="mm-actions">
+          {user ? (
+            <>
+              <div className="mm-user"><Avatar user={user} size={34} /><div className="nav-user-id"><b>{user.name || "Account"}</b>{user.email && <span>{user.email}</span>}</div></div>
+              <a className="btn btn-dark" href={DASH}>{t.nav.dashboard}</a>
+              <button type="button" className="link-login as-link mm-login" onClick={() => startLogout()}>{t.profile.logout}</button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="link-login as-link mm-login" onClick={() => startLogin()}>{t.nav.login}</button>
+              <button type="button" className="btn btn-dark" onClick={() => startLogin()}>{t.nav.getKeys}</button>
+            </>
+          )}
         </div>
-      )}
+      </nav>
     </header>
   );
 }

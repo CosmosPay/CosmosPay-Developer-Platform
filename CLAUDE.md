@@ -121,6 +121,22 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   draws the bar the same way. **At the very top of a page the bar has no surface** (no fill,
   border or blur: `.nav:not(.scrolled):not(.menu-open)`); it takes one back once the page moves
   or the mobile menu opens.
+- **It works by keyboard, screen reader and touch.** Each mega trigger is a disclosure
+  (`aria-expanded` / `aria-controls`); every panel and the mobile menu are in the page from the
+  first render, hidden until opened, so their links are crawlable and Tab goes from a trigger
+  into its links. Escape closes and returns focus, tabbing out closes, the burger names its
+  state, and while the mobile menu is open the rest of the page is `inert` and does not scroll
+  (`html.nav-locked`), focus moves into it and a desktop-wide window closes it. The language
+  picker is a list of buttons (each in its own `lang`, the current one `aria-current`), the theme
+  toggle is `aria-pressed`, and its labels are in the catalogs (`nav.main`, `closeMenu`, `theme`,
+  `language`). Column names label link lists, they are not headings; the footer's group titles
+  are h2.
+- **The bar answers the pointer as the buttons do:** theme, docs, language and burger take the
+  snap's ink in the outline colour (`--out-ink`, placed by `ink.ts`), the text items and sign-in
+  sweep an underline, and an open burger or language list stays painted. Floating panels (mega,
+  mobile menu, menus, modals, toasts) reset to cosmos.css's tokens; on the payments site they take
+  the skin's instead (`.inst[data-area="payments"]` in institutional.css), so the mobile menu's
+  button is the page's black. The dashboard keeps the reset until its own review.
 - **Every page also has the footer's social profiles and a back-to-top button.** The profiles
   (X, Instagram, Discord, WhatsApp, LinkedIn) are `SOCIAL` in
   `src/components/cosmos/lib/constants.ts`, drawn by `Social.tsx` with Simple Icons' official
@@ -194,7 +210,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   facts), `<Faq limit={4}>`, `<Faq bare>` (heading for assistive tech only, under a page
   header). The page behaviour is `src/scripts/payments/landing.ts` (`startLanding()`), the head
   extras `LandingHead.astro`. Pinned stages stick under the nav and the section bar
-  (`--subnav-h`); the script reads where each stage sticks.
+  (`--subnav-h`); the script reads where each stage sticks. On a phone the section bar scrolls
+  sideways and the script centres the current page in it.
+- **Search engines get every language.** An indexable gateway page exists once per language at
+  `?lang=<code>` (the language resolution reads it first) and its bare path is the x-default.
+  `src/lib/payments/seo.ts` builds those URLs for everything that names them: the canonical (each
+  version names itself), the hreflang links and `og:locale` (+ alternates) in `PaymentsLayout`,
+  `robots.txt` (`Allow: <path>?lang=`) and the sitemap (every version with its alternates).
+  `StructuredData.astro` (rendered by `LandingHead`) emits one JSON-LD graph per page:
+  Organization, WebSite, the page (a FAQPage on `/faq`, with the questions the page shows) and a
+  BreadcrumbList matching the breadcrumb `PageHeader.astro` draws over a content page's title.
+  Only what the page says: no ratings, prices or claims beyond its copy.
 
 - `/` on payments is `src/pages/payments/index.astro`: server-rendered, copy in
   `src/lib/payments/landing-i18n.ts` (five languages, parity-tested), rates read from
@@ -308,6 +334,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   that removes it again after 2.5 s if the page script never loads, so the page is complete
   without JavaScript. Only opacity, translate and scale animate, and **all of it runs for
   everyone, reduced-motion settings included** (the product owner's call, as for the video).
+- **Completions pop through the tertiary blue** (product owner: so they read clearly and draw the
+  eye): the paid tick, the escrow states, the flow's nodes and a step's number grow in blue with a
+  blue ring and settle in their own colour (`pl-pop-blue`, `pl-flash-blue`), the list checks and
+  the race's winner pop in blue ink (`pl-pop-ink`, `pl-ink-blue`), and "Copied" pops filled blue
+  and stays blue. The benefit cards, which carry the 3D renders, take a faint tertiary wash and a
+  blue hairline under the pointer, and their render leans in. Solid colours, never a gradient.
 
 ### Embedding a payment (pay button and embedded checkout)
 

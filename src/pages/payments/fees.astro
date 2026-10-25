@@ -17,7 +17,7 @@ const d = landingData(lang, "multi");
 ---
 
 <PaymentsLayout title={d.t.pages.fees.meta} description={d.t.pages.fees.lede} indexable>
-  <LandingHead slot="head" />
+  <LandingHead slot="head" d={d} page="fees" title={d.t.pages.fees.meta} description={d.t.pages.fees.lede} />
 
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current="fees" />

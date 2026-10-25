@@ -191,6 +191,10 @@ export default {
     dashboard: "Painel",
     menu: "Menu",
     docs: "Documentação",
+    main: "Principal",
+    closeMenu: "Fechar menu",
+    theme: "Modo escuro",
+    language: "Idioma",
     items: {
       products: {
         label: "Produtos",
