@@ -427,7 +427,7 @@ export default {
   },
   footer: {
     tagline: "Die Zahlungsinfrastruktur für Entwickler. Eine API, jedes Rail.",
-    copyright: "© 2026 Cosmos Pay (Developer Platform)",
+    copyright: "© 2026 Cosmos Pay",
     groups: {
       products: {
         title: "Produkte",
