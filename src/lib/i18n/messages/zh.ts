@@ -1049,6 +1049,7 @@ export default {
       detail: {
         eyebrow: "兑换", title: "兑换已就绪",
         scan: "扫码签名", downloadQr: "下载二维码",
+        trustlineNote: "此交易还会为账户添加 {asset} 的信任线，以便接收该资产。这会占用 0.5 XLM 作为储备。",
         uri: "SEP-7 URI", xdr: "未签名 XDR",
         openWallet: "在钱包中打开", viewExplorer: "在区块浏览器中查看",
         fields: { id: "ID", status: "状态", network: "网络", source: "来源账户", destination: "目标地址", sent: "已发送", received: "收到（预计）", minimum: "最少", fee: "佣金", memo: "备注", commissionMemo: "佣金备注", txHash: "交易 ID", created: "创建时间" },

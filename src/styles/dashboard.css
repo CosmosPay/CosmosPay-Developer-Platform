@@ -837,6 +837,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .work-time { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-3); }
 .work-spin { width: 16px; height: 16px; flex: 0 0 auto; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: workSpin .8s linear infinite; }
 @keyframes workSpin { to { transform: rotate(360deg); } }
+/* The swap's note that its transaction also adds a trustline, read before signing. */
+.inst .swap-trustline { margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
 /* An error under a form or inside a panel: plain text in the swap widget's error red, never a box. */
 .inst .field-err { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: #B42F2F; }
 [data-theme="dark"] .inst .field-err { color: #FF9B9B; }

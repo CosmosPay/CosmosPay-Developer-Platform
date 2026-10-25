@@ -454,6 +454,9 @@ export interface Swap {
   memo: string | null;
   /** On-chain commission label ("Cosmos Swap Commission") when one was taken. */
   commissionMemo: string | null;
+  /** The trustline the transaction adds first, when the source swaps into an asset it does not
+      trust yet (the Payments API builds it in; one signature covers both). Null otherwise. */
+  trustline?: { code: string; issuer: string } | null;
   xdr: string;
   uri: string;
   txHash: string;

@@ -1049,6 +1049,7 @@ export default {
       detail: {
         eyebrow: "स्वैप", title: "स्वैप तैयार है",
         scan: "साइन करने के लिए स्कैन करें", downloadQr: "QR डाउनलोड करें",
+        trustlineNote: "यह लेन-देन खाते में {asset} की ट्रस्टलाइन भी जोड़ता है, ताकि वह इसे प्राप्त कर सके। इसके लिए 0.5 XLM रिज़र्व में रहते हैं।",
         uri: "SEP-7 URI", xdr: "बिना साइन किया XDR",
         openWallet: "वॉलेट में खोलें", viewExplorer: "एक्सप्लोरर पर देखें",
         fields: { id: "ID", status: "स्थिति", network: "नेटवर्क", source: "स्रोत", destination: "गंतव्य", sent: "भेजा गया", received: "प्राप्त (अनुमानित)", minimum: "न्यूनतम", fee: "कमीशन", memo: "मेमो", commissionMemo: "कमीशन मेमो", txHash: "लेन-देन ID", created: "बनाया गया" },

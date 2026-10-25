@@ -1706,6 +1706,7 @@ export default {
       detail: {
         eyebrow: "Swap", title: "Swap pronto",
         scan: "Escaneie para assinar", downloadQr: "Baixar QR",
+        trustlineNote: "Esta transação também adiciona a trustline de {asset} à conta para que ela possa recebê-lo. Isso deixa 0,5 XLM em reserva.",
         uri: "URI SEP-7", xdr: "XDR não assinado",
         openWallet: "Abrir na carteira", viewExplorer: "Ver no explorador",
         fields: { id: "ID", status: "Status", network: "Rede", source: "Origem", destination: "Destino", sent: "Enviado", received: "Recebido (est.)", minimum: "Mínimo", fee: "Comissão", memo: "Memo", commissionMemo: "Memo da comissão", txHash: "ID da transação", created: "Criado" },

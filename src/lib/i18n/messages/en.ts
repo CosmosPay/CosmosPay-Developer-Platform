@@ -1051,6 +1051,7 @@ export default {
       detail: {
         eyebrow: "Swap", title: "Swap ready",
         scan: "Scan to sign", downloadQr: "Download QR",
+        trustlineNote: "This transaction also adds a trustline for {asset} to the account, so it can receive it. That keeps 0.5 XLM in reserve.",
         uri: "SEP-7 URI", xdr: "Unsigned XDR",
         openWallet: "Open in wallet", viewExplorer: "View on explorer",
         fields: { id: "ID", status: "Status", network: "Network", source: "Source", destination: "Destination", sent: "Sent", received: "Received (est.)", minimum: "Minimum", fee: "Commission", memo: "Memo", commissionMemo: "Commission memo", txHash: "Transaction ID", created: "Created" },

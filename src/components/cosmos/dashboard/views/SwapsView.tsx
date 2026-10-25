@@ -237,6 +237,12 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
         <div className="modal-eyebrow">{d.eyebrow}</div>
         <h3>{d.title}</h3>
 
+        {/* Swapping into an asset the account does not trust yet: the same transaction adds the
+            trustline first. Said before the signature, since it also holds 0.5 XLM in reserve. */}
+        {data.status === "PENDING" && data.trustline && (
+          <p className="field-help swap-trustline" role="note">{fmt(d.trustlineNote, { asset: data.trustline.code })}</p>
+        )}
+
         {signable && (
           <div className="paylink-block">
             <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
