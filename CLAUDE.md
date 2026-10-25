@@ -203,7 +203,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   It is the first thing under the nav on every page, the home included (product owner: no
   waiting for it), so there the hero starts under it instead of running up under the nav. Its
   links hover as the general nav's do (an underline sweeps in), and the repeated call to action
-  sits close to the section it follows (the section above gives up most of its bottom padding);
+  sits close to the section it follows (the section above gives up most of its bottom padding;
+  below it keeps its own). Two sections on the same canvas in a row share one gap (half each)
+  instead of adding their paddings;
   each content page opens with `PageHeader.astro` (its h1, one line, a clay render).
 - **Every section is a component** in `src/components/payments/landing/sections/`, reading
   `landingData(lang, layout)` (`data.ts`); `layout` "multi" turns topic anchors into page links
@@ -284,7 +286,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (rates parsed from `plans.ts`, escrow's 0.5% as a checkbox, a logarithmic slider); the final
   call carries the brand's astronaut (`public/brand/astronauta-telefono.svg`, inverted in dark
   mode). **Images too, not only drawn UI** (the product owner asked for images after the
-  mock-ups): the brand's astronauts by the benefits heading, on the comparison table, by the
+  mock-ups): the brand's astronauts on the comparison table (none by the benefits heading: the product
+  owner removed that one), by the
   FAQ and in the final call (`.pl-art`, inverted in dark mode; none in pinned sections or by
   code, where they crowded the content); 3D clay renders from 3dicons (CC0,
   github.com/realvjy/3dicons) behind the benefit cards, in security and by the calculator
