@@ -64,8 +64,10 @@
    and lightens onto the page, so the hero follows the theme. Its left edge fades out, so the
    ramp never starts at a hard line. */
 /* No z-index here: a stacking context would cut the video off from the hero's background,
-   which is what it has to blend with. The copy sits above it instead. */
-.pl-hero-media { position: absolute; top: 0; right: 0; bottom: 0; width: 58%; }
+   which is what it has to blend with. The copy sits above it instead. Its fade-in still makes
+   it one (an opacity animation does, even once finished), so it carries the page colour
+   itself: the video blends with that, and no lighter band shows behind the white frame. */
+.pl-hero-media { position: absolute; top: 0; right: 0; bottom: 0; width: 58%; background: var(--bg); }
 .pl-video {
   display: block; width: 100%; height: 100%;
   object-fit: cover; object-position: 0% 62%;

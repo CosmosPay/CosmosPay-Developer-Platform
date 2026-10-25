@@ -190,7 +190,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   turned back and lightens onto the page, so the hero follows the theme. It **plays on its own for
   everyone** (the product owner's call, the one exception to reduced motion), pauses only off
   screen, and always has its pause button (WCAG 2.2.2). Its container must not get a z-index: a
-  stacking context would cut the video off from the background it blends with.
+  stacking context would cut the video off from the background it blends with. Its fade-in
+  makes it one anyway, so it carries the page colour (`--bg`) for the video to blend with;
+  without it a lighter band shows behind the white frame.
 - Its sections follow how crypto gateways present themselves (reviewed: Stripe, CoinGate, BitPay,
   NOWPayments, Triple-A, BVNK, Cryptomus, CoinPayments, Coinbase Business, MoonPay Commerce,
   Alchemy Pay, Fireblocks): hero, the networks / assets / wallets strip, benefits, a comparison
