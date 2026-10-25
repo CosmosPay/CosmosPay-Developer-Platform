@@ -6,12 +6,12 @@ import { ALL_PLAN_IDS, PLAN_IDS, PLAN_SPECS, PLAN_PRICE } from "@/lib/plans.ts";
 /* Render a spec value: booleans → check / dash, null numbers → ∞, everything else as-is. */
 function Cell({ v }) {
   if (v === true) return <IcCheck />;
-  if (v === false) return <span className="pcm-no">—</span>;
+  if (v === false) return <span className="pcm-no">-</span>;
   if (v === null) return <span>∞</span>;
   return <span>{v}</span>;
 }
 
-/* Plan switcher — always shows a full side-by-side comparison (in the style of the
+/* Plan switcher: always shows a full side-by-side comparison (in the style of the
    pricing page) between the current plan and a selected one, built entirely from the
    shared plan specs (@/lib/plans), so org counts, mainnet support, fees and limits stay
    in sync everywhere. Selecting routes through a confirmation (onSelect) before applying. */

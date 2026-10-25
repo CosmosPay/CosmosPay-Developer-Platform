@@ -1,4 +1,4 @@
-/* supportStatus.test.ts — the two guards a ticket update body passes through. */
+/* supportStatus.test.ts: the two guards a ticket update body passes through. */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 

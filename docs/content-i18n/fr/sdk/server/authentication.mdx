@@ -18,7 +18,7 @@ La clé API est envoyée sous la forme `Authorization: Bearer <apiKey>`.
 
 ## Sélection du réseau (important)
 
-Le **réseau est déterminé par le type de clé** — vous ne le configurez PAS :
+Le **réseau est déterminé par le type de clé** ; vous ne le configurez PAS :
 
 | Préfixe de clé | Réseau |
 | ---------- | ------- |
@@ -40,7 +40,7 @@ une `apiKey` pour des prototypes de confiance, mais n'envoyez jamais une clé de
 // Change the gateway for every client created afterward (once, at startup):
 Client.shared.baseURL = 'https://gateway.your-domain.com';
 
-// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+// Or per-client (rarely needed), e.g. local dev bypassing the gateway:
 const client = new Client({
   apiKey: '...',
   baseURL: 'http://localhost:3000',
@@ -49,9 +49,9 @@ const client = new Client({
 });
 ```
 
-`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sont tous facultatifs — une
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sont tous facultatifs : une
 intégration normale ne les définit jamais.
 
 ## Références
 
-- [Client](/sdk/definitions/client) — Le point d'entrée principal du SDK — un client unique et atomique qui expose chaque ressource via son propre gestionnaire — une conception atomique à client unique.
+- [Client](/sdk/definitions/client) : le point d'entrée principal du SDK, un client unique et atomique qui expose chaque ressource via son propre gestionnaire (une conception atomique à client unique).

@@ -1,9 +1,9 @@
-/* embedProtocol.test.ts — the message the hosted checkout posts to the window that opened it,
+/* embedProtocol.test.ts: the message the hosted checkout posts to the window that opened it,
    and the filter <cosmos-pay-button> runs on every `message` event (src/lib/payments/embed-protocol.ts).
 
    The filter is the button's whole defence: anything that passes it becomes a
    `cosmospay:status` / `cosmospay:paid` event on the merchant's page. So each check is
-   exercised on its own — origin, source window, shape, status, id — with everything else
+   exercised on its own (origin, source window, shape, status, id) with everything else
    right, to prove no single one is redundant. */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';

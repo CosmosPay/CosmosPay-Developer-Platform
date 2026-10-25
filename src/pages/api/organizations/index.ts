@@ -4,7 +4,7 @@ import { ApiStatus, jsonCreated, jsonError, jsonForbidden, jsonSuccess, jsonUnau
 import { createOrg, listForUser } from "@/lib/organizations";
 import type { APIRoute } from "astro";
 
-/* GET /api/organizations — the user's orgs (no auto-create; first org is made in onboarding). */
+/* GET /api/organizations: the user's orgs (no auto-create; first org is made in onboarding). */
 export const GET: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");
@@ -23,7 +23,7 @@ const createBodySchema = z.object({
   volume: z.string().trim().max(40).optional(),
 });
 
-/* POST /api/organizations — create one (subject to the plan's maxOrgs limit). */
+/* POST /api/organizations: create one (subject to the plan's maxOrgs limit). */
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

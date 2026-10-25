@@ -1,4 +1,4 @@
-/* support.ts — in-dashboard support as a ticket system. A customer can open several
+/* support.ts: in-dashboard support as a ticket system. A customer can open several
    tickets in parallel; each has a subject, a status (open | pending | resolved | closed)
    and its own message thread. Staff (owner/admin/support) reply and change the status. */
 import { prisma } from "@/lib/prisma";

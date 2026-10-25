@@ -1,8 +1,8 @@
 /* ============================================================
-   Cosmos Pay — institutional.css
+   Cosmos Pay: institutional.css
    The skin of the payments site (landing, checkout, previews) and the
    dashboard: a light canvas, white cards with soft depth, a bright
-   institutional blue and a navy for feature cards — after the fintech
+   institutional blue and a navy for feature cards, after the fintech
    references the product owner chose. BRAND.md stays the direction
    (logo, Open Sauce One, a blue family); this skin takes palette, depth
    and radii from those references.
@@ -13,7 +13,7 @@
    ============================================================ */
 
 /* Cosmos Lazos: the brand kit's display face (Aeronaut with the Cosmos loops). Product
-   owner's rule: it is for the logo and very specific highlights only — titles and text stay
+   owner's rule: it is for the logo and very specific highlights only; titles and text stay
    Open Sauce One. No page sets it today; --ff-display stays for that rare highlight. One
    weight. The kit's file stored every CFF glyph width without subtracting nominalWidthX
    (+435 units each, which Chrome on Windows reads as wide letter spacing); this WOFF has the widths re-encoded to match hmtx, outlines unchanged.
@@ -29,9 +29,9 @@
 
 .inst {
   --ff-display: "Cosmos Lazos", var(--ff-sans);
-  /* Palette, by rank (product owner): black is primary — buttons, links, figures, the account
-     card; neutral greys are secondary — canvas, surfaces, lines, tints; the corporate blue is
-     tertiary — only the light buttons' hover ink, the chart's volume and focus rings.
+  /* Palette, by rank (product owner): black is primary (buttons, links, figures, the account
+     card); neutral greys are secondary (canvas, surfaces, lines, tints); the corporate blue is
+     tertiary (only the light buttons' hover ink, the chart's volume and focus rings).
      Hover inks go by the button's own colour: a black button paints white (--btn-ink), a white
      or outlined light one paints blue (--out-ink); dark mode swaps them with the colours. */
   --bg:            #F6F6F7;

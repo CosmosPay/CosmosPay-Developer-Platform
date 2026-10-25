@@ -18,7 +18,7 @@ La clave de API se envía como `Authorization: Bearer <apiKey>`.
 
 ## Selección de red (importante)
 
-La **red se determina según el tipo de clave** — NO la configuras:
+La **red se determina según el tipo de clave**; NO la configuras tú:
 
 | Prefijo de clave | Red |
 | ---------- | ------- |
@@ -40,7 +40,7 @@ una `apiKey` para prototipos de confianza, pero nunca envíes una clave de produ
 // Change the gateway for every client created afterward (once, at startup):
 Client.shared.baseURL = 'https://gateway.your-domain.com';
 
-// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+// Or per-client (rarely needed), e.g. local dev bypassing the gateway:
 const client = new Client({
   apiKey: '...',
   baseURL: 'http://localhost:3000',
@@ -49,9 +49,9 @@ const client = new Client({
 });
 ```
 
-`baseURL`, `version`, `gatewaySecret`, `consumerUsername` son todos opcionales — una
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` son todos opcionales; una
 integración normal nunca los establece.
 
 ## Referencias
 
-- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.
+- [Client](/sdk/definitions/client): El punto de entrada principal del SDK, un único cliente atómico que expone cada recurso a través de su propio administrador (un diseño atómico de un solo cliente).

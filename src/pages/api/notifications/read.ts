@@ -3,7 +3,7 @@ import { ApiStatus, jsonError, jsonSuccess, jsonUnauthorized } from "@/lib/http"
 import { markAllNotificationsRead } from "@/lib/notifications";
 import type { APIRoute } from "astro";
 
-/* POST /api/notifications/read — mark all of the signed-in user's notifications read. */
+/* POST /api/notifications/read: mark all of the signed-in user's notifications read. */
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

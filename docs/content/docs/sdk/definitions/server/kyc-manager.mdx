@@ -25,7 +25,7 @@ createReceiver(options: CreateReceiverOptions): Promise<Receiver>
 
 **Parameters**
 
-- `options` — `CreateReceiverOptions`
+- `options`: `CreateReceiverOptions`
 
 **Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
 
@@ -39,7 +39,7 @@ receivers(options?: ListKycOptions): Promise<ReceiverPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListKycOptions`
+- `options` _(optional)_: `ListKycOptions`
 
 **Returns** `Promise<ReceiverPage>`
 
@@ -53,7 +53,7 @@ fetchReceiver(id: string): Promise<Receiver>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
 
@@ -67,7 +67,7 @@ fetchReceiverRaw(id: string): Promise<ReceiverData>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<ReceiverData>`
 
@@ -81,8 +81,8 @@ updateReceiver(id: string, options: UpdateReceiverOptions): Promise<Receiver>
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `UpdateReceiverOptions`
+- `id`: `string`
+- `options`: `UpdateReceiverOptions`
 
 **Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
 
@@ -96,7 +96,7 @@ deleteReceiver(id: string): Promise<void>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<void>`
 
@@ -110,8 +110,8 @@ approveReceiver(id: string, options?: ApproveReceiverOptions): Promise<ReceiverD
 
 **Parameters**
 
-- `id` — `string`
-- `options` _(optional)_ — `ApproveReceiverOptions`
+- `id`: `string`
+- `options` _(optional)_: `ApproveReceiverOptions`
 
 **Returns** `Promise<ReceiverData>`
 
@@ -125,8 +125,8 @@ requestTos(id: string, options: RequestTosOptions): Promise<TermsOfServiceData>
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `RequestTosOptions`
+- `id`: `string`
+- `options`: `RequestTosOptions`
 
 **Returns** `Promise<TermsOfServiceData>`
 
@@ -140,8 +140,8 @@ enableReceiver(id: string, options: EnableReceiverOptions): Promise<Receiver>
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `EnableReceiverOptions`
+- `id`: `string`
+- `options`: `EnableReceiverOptions`
 
 **Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
 
@@ -155,8 +155,8 @@ setReceiverAccess(id: string, options: SetReceiverAccessOptions): Promise<Receiv
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `SetReceiverAccessOptions`
+- `id`: `string`
+- `options`: `SetReceiverAccessOptions`
 
 **Returns** [`Promise<Receiver>`](/sdk/definitions/server/receiver)
 
@@ -170,7 +170,7 @@ walletSignMessage(receiverId: string): Promise<WalletSignMessageData>
 
 **Parameters**
 
-- `receiverId` — `string`
+- `receiverId`: `string`
 
 **Returns** `Promise<WalletSignMessageData>`
 
@@ -184,8 +184,8 @@ addWallet(receiverId: string, options: CreateReceiverWalletOptions): Promise<Rec
 
 **Parameters**
 
-- `receiverId` — `string`
-- `options` — `CreateReceiverWalletOptions`
+- `receiverId`: `string`
+- `options`: `CreateReceiverWalletOptions`
 
 **Returns** `Promise<ReceiverWalletData>`
 
@@ -199,8 +199,8 @@ wallets(receiverId: string, options?: ListKycOptions): Promise<ReceiverWalletPag
 
 **Parameters**
 
-- `receiverId` — `string`
-- `options` _(optional)_ — `ListKycOptions`
+- `receiverId`: `string`
+- `options` _(optional)_: `ListKycOptions`
 
 **Returns** `Promise<ReceiverWalletPage>`
 
@@ -214,8 +214,8 @@ deleteWallet(receiverId: string, id: string): Promise<void>
 
 **Parameters**
 
-- `receiverId` — `string`
-- `id` — `string`
+- `receiverId`: `string`
+- `id`: `string`
 
 **Returns** `Promise<void>`
 
@@ -229,8 +229,8 @@ addBankAccount(receiverId: string, options: CreateBankAccountOptions): Promise<B
 
 **Parameters**
 
-- `receiverId` — `string`
-- `options` — `CreateBankAccountOptions`
+- `receiverId`: `string`
+- `options`: `CreateBankAccountOptions`
 
 **Returns** `Promise<BankAccountData>`
 
@@ -244,8 +244,8 @@ bankAccounts(receiverId: string, options?: ListKycOptions): Promise<BankAccountP
 
 **Parameters**
 
-- `receiverId` — `string`
-- `options` _(optional)_ — `ListKycOptions`
+- `receiverId`: `string`
+- `options` _(optional)_: `ListKycOptions`
 
 **Returns** `Promise<BankAccountPage>`
 
@@ -259,8 +259,8 @@ deleteBankAccount(receiverId: string, id: string): Promise<void>
 
 **Parameters**
 
-- `receiverId` — `string`
-- `id` — `string`
+- `receiverId`: `string`
+- `id`: `string`
 
 **Returns** `Promise<void>`
 
@@ -274,7 +274,7 @@ upload(file: unknown): Promise<KycUploadData>
 
 **Parameters**
 
-- `file` — `unknown`
+- `file`: `unknown`
 
 **Returns** `Promise<KycUploadData>`
 
@@ -288,7 +288,7 @@ termsOfService(options?: InitiateTosOptions): Promise<TermsOfServiceData>
 
 **Parameters**
 
-- `options` _(optional)_ — `InitiateTosOptions`
+- `options` _(optional)_: `InitiateTosOptions`
 
 **Returns** `Promise<TermsOfServiceData>`
 
@@ -312,7 +312,7 @@ bankDetails(rail: string): Promise<BankDetailsData>
 
 **Parameters**
 
-- `rail` — `string`
+- `rail`: `string`
 
 **Returns** `Promise<BankDetailsData>`
 

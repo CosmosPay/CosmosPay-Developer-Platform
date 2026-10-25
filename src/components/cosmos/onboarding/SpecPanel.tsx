@@ -1,4 +1,4 @@
-/* SpecPanel.jsx — right-hand live plan spec panel with tab switcher. */
+/* SpecPanel.jsx: right-hand live plan spec panel with tab switcher. */
 import { I } from "./icons";
 import { PLAN_IDS, SUPPORT_FOR, PLAN_DATA } from "@/components/cosmos/onboarding/data";
 

@@ -1,19 +1,19 @@
 ---
 title: "Embed a payment: pay button and embedded checkout"
-description: Take a payment on your own website with one script tag — a button that opens the hosted checkout, or a compact checkout drawn inside your page.
+description: Take a payment on your own website with one script tag, using a button that opens the hosted checkout or a compact checkout drawn inside your page.
 ---
 
 Every payment link you create has a **hosted checkout** at `https://payments.cosmospay.lat/{id}`.
 To take the payment without sending the payer away from your site, add one script and then one of
 two elements:
 
-- **Pay button** — `<cosmos-pay-button>` draws a button. Clicking it opens the hosted checkout in a
+- **Pay button**: `<cosmos-pay-button>` draws a button. Clicking it opens the hosted checkout in a
   popup window, and the button tells your page when the status changes.
-- **Embedded checkout** — `<cosmos-pay-checkout>` draws a compact checkout inside your page: the
+- **Embedded checkout**: `<cosmos-pay-checkout>` draws a compact checkout inside your page: the
   amount, the network, the QR code, an **Open in wallet** button and the live status.
 
 Both take the **payment link id**: the `id` of the payment intent you created on your server (the
-last part of its checkout URL). Create the intent first — see [Payment intents](/sdk/server/payment-intents).
+last part of its checkout URL). Create the intent first (see [Payment intents](/sdk/server/payment-intents)).
 
 ## Add the script
 
@@ -22,7 +22,7 @@ last part of its checkout URL). Create the intent first — see [Payment intents
 ```
 
 Once per page, anywhere in it. The elements are standard custom elements, so they work in plain
-HTML and in any framework. The script needs **no API key** — never put your key in a web page.
+HTML and in any framework. The script needs **no API key**, so never put your key in a web page.
 
 ## Pay button
 
@@ -45,8 +45,8 @@ HTML and in any framework. The script needs **no API key** — never put your ke
 
 It shows the amount and asset (or "Any amount" when the payer chooses), the link's description,
 the network, the QR code, **Open in wallet**, the status, and the expiry when the link has one. It
-reads the link from the payer's browser and keeps it current — every 5 seconds while it awaits
-payment, every 3 while the network confirms it, every 30 once it has expired — and stops when the
+reads the link from the payer's browser and keeps it current (every 5 seconds while it awaits
+payment, every 3 while the network confirms it, every 30 once it has expired), and stops when the
 payment is paid, failed or cancelled.
 
 - It is up to 420px wide by default. Override that with CSS on the element:
@@ -105,7 +105,7 @@ what the payer sees, never to release goods. Confirm every payment **on your ser
 The pay button only hears from the checkout while its popup is open, and only if the browser keeps
 the two windows connected. If your page sends `Cross-Origin-Opener-Policy: same-origin`, use
 `same-origin-allow-popups` instead, or the button receives no updates. When the popup is blocked and
-the checkout opens in the same tab, there are no events at all — your server still gets the webhook.
+the checkout opens in the same tab, there are no events at all, but your server still gets the webhook.
 
 ## Content Security Policy
 

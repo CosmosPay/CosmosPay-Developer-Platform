@@ -2,9 +2,9 @@
    The Payments API does the real work (Horizon pool lookups, XDR build, submit);
    we only sanity-check input before forwarding, mirroring the upstream DTOs.
    The plan commission is derived server-side from the org's plan, never sent
-   by the client — so there is no fee field in these request bodies. */
+   by the client, so there is no fee field in these request bodies. */
 /* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
-   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive: a schema
    built before it runs has no `.openapi()` at all. These schemas are handed to the
    OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
    what guarantees the extension has run by the time they are constructed. It is the same

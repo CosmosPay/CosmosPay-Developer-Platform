@@ -13,7 +13,7 @@ const bodySchema = z.object({
   plan: z.enum(ALL_PLAN_IDS as [string, ...string[]]).optional(),
 }).refine((b) => b.role !== undefined || b.plan !== undefined, { message: "Nothing to update" });
 
-/* PATCH /api/admin/users/:id — set a user's role and/or plan. Owner/admin only;
+/* PATCH /api/admin/users/:id: set a user's role and/or plan. Owner/admin only;
    only an owner may grant or modify the "owner" role. */
 export const PATCH: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });

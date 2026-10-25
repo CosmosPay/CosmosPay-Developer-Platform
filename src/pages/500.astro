@@ -1,5 +1,5 @@
 ---
-// Custom Server Error page — Astro serves this when a page render throws (replacing its default).
+// Custom Server Error page: Astro serves this when a page render throws (replacing its default).
 // `Astro.props.error` is available here; we log it but never surface details to the visitor.
 import ErrorPage from "@/components/ErrorPage.astro";
 import PaymentsErrorPage from "@/components/payments/ErrorPage.astro";
@@ -18,6 +18,6 @@ Astro.response.status = 500;
   <ErrorPage
     code="500"
     title="Something went wrong"
-    message="An unexpected error occurred on our side. Please try again in a moment — if it keeps happening, contact support."
+    message="An unexpected error occurred on our side. Please try again in a moment. If it keeps happening, contact support."
   />
 )}

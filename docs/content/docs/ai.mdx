@@ -1,17 +1,17 @@
 ---
 title: LLMs & AI
-description: Feed the Cosmos Pay docs and SDK to your LLM or coding agent — ready-made llms.txt files, per-page Markdown, and "Open in ChatGPT/Claude".
+description: Feed the Cosmos Pay docs and SDK to your LLM or coding agent with ready-made llms.txt files, per-page Markdown, and "Open in ChatGPT/Claude".
 ---
 
 These docs are built to be consumed by LLMs and coding agents (Cursor, Claude, ChatGPT…), not
-just by humans. Copying the Markdown of a page is one option — but there's a lot more.
+just by humans. Copying the Markdown of a page is one option, but there's a lot more.
 
 ## Ready-made context files
 
 Two endpoints expose the whole documentation as plain text an LLM can ingest in one shot:
 
-- `/docs/llms.txt` — a compact index: every page with its title, URL and description.
-- `/docs/llms-full.txt` — the full text of every page, concatenated.
+- `/docs/llms.txt`: a compact index of every page with its title, URL and description.
+- `/docs/llms-full.txt`: the full text of every page, concatenated.
 
 ```bash
 # the index
@@ -25,8 +25,8 @@ curl https://dev.cosmospay.lat/docs/llms-full.txt
 
 Every page has an actions menu (top-right of the page) with:
 
-- **Copy Markdown** / **View as Markdown** — the raw Markdown source of that page.
-- **Open in ChatGPT** / **Open in Claude** — opens the assistant pre-loaded with that page.
+- **Copy Markdown** / **View as Markdown**: the raw Markdown source of that page.
+- **Open in ChatGPT** / **Open in Claude**: opens the assistant pre-loaded with that page.
 
 You can also fetch a page's Markdown directly by appending `/content.md` under `/docs/llms.mdx`:
 
@@ -37,14 +37,14 @@ curl https://dev.cosmospay.lat/docs/llms.mdx/sdk/server/quickstart/content.md
 
 <Callout title="Use it in a prompt">
 Paste `llms-full.txt` (or a single page's Markdown) into your assistant and let it write the
-integration — e.g. *"Using this, create a Cosmos Pay checkout that charges 10 USDC and verifies
+integration, for example *"Using this, create a Cosmos Pay checkout that charges 10 USDC and verifies
 the payment with a webhook."*
 </Callout>
 
 ## The SDK ships its own LLM docs
 
 The `@cosmosapp/pay_sdk` package bundles an AI-readable `llms/` folder, so once you install it
-the docs are right there in `node_modules` — no network needed:
+the docs are right there in `node_modules`, with no network needed:
 
 ```text
 node_modules/@cosmosapp/pay_sdk/llms/
@@ -61,7 +61,7 @@ cat node_modules/@cosmosapp/pay_sdk/llms/llms-full.txt
 ## Runnable examples
 
 The SDK repository keeps one runnable example per feature (payment intents, webhooks, the web
-client, customers, products, analytics, error handling) — ideal few-shot material for an agent.
+client, customers, products, analytics, error handling). They make ideal few-shot material for an agent.
 
 <Cards>
   <Card title="SDK examples" href="https://github.com/CosmosPay/CosmosJS_SDK/tree/main/examples" description="One runnable example per feature, in the SDK repo." />

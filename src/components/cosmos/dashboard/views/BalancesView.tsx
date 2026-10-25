@@ -81,7 +81,7 @@ export function BalancesView({ canManage = false, env = "dev" }) {
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 <td className="tid">{p.id}</td>
                 <td className="cust">{b.payment}</td>
-                <td className="amt">+{p.amount || "—"} {p.asset === "native" ? "XLM" : p.asset}</td>
+                <td className="amt">+{p.amount || "-"} {p.asset === "native" ? "XLM" : p.asset}</td>
                 <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
                 <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />

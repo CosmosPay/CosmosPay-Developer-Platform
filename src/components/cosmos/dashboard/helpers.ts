@@ -9,7 +9,7 @@ export function sl(t, label) { return (t.dash.statusLabels && t.dash.statusLabel
 
 /* Format an APISIX timestamp (unix seconds, numeric string, or ISO) for display. */
 export function fmtDate(v) {
-  if (v == null || v === "") return "—";
+  if (v == null || v === "") return "-";
   let d;
   if (typeof v === "number") d = new Date(v < 1e12 ? v * 1000 : v);
   else if (/^\d+$/.test(String(v))) d = new Date(Number(v) * 1000);

@@ -1,6 +1,6 @@
 /* OpenAPI registration for the client-activity feed (src/pages/api/activity/**).
 
-   Session-authenticated: every row is attributed to the signed-in account's consumer —
+   Session-authenticated: every row is attributed to the signed-in account's consumer;
    nothing in the body decides that. The wallet does not report here; it posts to the
    community server's `/v1/activity/events` through the gateway. */
 import { errors, jsonOk, registerRoutes, sessionSecurity } from '@/lib/openapi/route-helpers';
@@ -134,7 +134,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Activity rollup',
     description:
-      'Counts and a daily series for the activity view. `days` outside 1–90 is dropped, not clamped — the upstream owns the window bounds.',
+      'Counts and a daily series for the activity view. `days` outside 1–90 is dropped, not clamped; the upstream owns the window bounds.',
     security: sessionSecurity,
     request: {
       query: z.object({

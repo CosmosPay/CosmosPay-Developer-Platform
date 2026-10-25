@@ -1,4 +1,4 @@
-/* emails.ts — render transactional email bodies from the HTML templates in src/emails/.
+/* emails.ts: render transactional email bodies from the HTML templates in src/emails/.
    Templates are imported as raw strings (Vite `?raw`) and filled with {{placeholder}}
    values here, so the HTML files stay plain and easy to restyle independently. */
 import invitationHtml from "@/emails/invitation.html?raw";
@@ -50,7 +50,7 @@ export function renderTosEmail(v: { name: string; url: string }): RenderedEmail 
     "",
     `Your account stays inactive until you accept. If you weren't expecting this, ignore this email.`,
     "",
-    "— Cosmos Pay",
+    "The Cosmos Pay team",
   ].join("\n");
   return { subject, html, text };
 }

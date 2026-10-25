@@ -3,7 +3,7 @@ import { ApiStatus, jsonError, jsonForbidden, jsonSuccess, jsonUnauthorized } fr
 import { canManageUsers, getRole, listUsersWithProfile } from "@/lib/profile";
 import type { APIRoute } from "astro";
 
-/* GET /api/admin/users — list all accounts with role + plan. Owner/admin only. */
+/* GET /api/admin/users: list all accounts with role + plan. Owner/admin only. */
 export const GET: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

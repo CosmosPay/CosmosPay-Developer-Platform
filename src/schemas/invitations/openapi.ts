@@ -1,5 +1,5 @@
 /* OpenAPI registration for the invitations addressed to the signed-in account
-   (src/pages/api/invitations/**) — the inbox side of the flow whose sending side lives
+   (src/pages/api/invitations/**), the inbox side of the flow whose sending side lives
    under /api/organizations/{id}/invitations.
 
    The invitation entity is imported from that module rather than restated; importing a
@@ -42,7 +42,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Accept an invitation',
     description:
-      "Joins the organization the invitation belongs to. The invitation must be addressed to the signed-in account's email — a mismatch, an expired token, one already used, or a full seat count all answer 409; an unknown id answers 404.",
+      "Joins the organization the invitation belongs to. The invitation must be addressed to the signed-in account's email: a mismatch, an expired token, one already used, or a full seat count all answer 409; an unknown id answers 404.",
     security: sessionSecurity,
     request: jsonBody(
       z

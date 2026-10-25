@@ -1,6 +1,6 @@
 import type { User } from "@/components/cosmos/lib/types";
 
-/* User avatar — real Authentik photo when present, initials fallback otherwise. */
+/* User avatar: real Authentik photo when present, initials fallback otherwise. */
 export function Avatar({ user, size = 34 }: { user?: User | null; size?: number }) {
   const label = (user && (user.name || user.email)) || "?";
   const initials = label.trim().split(/\s+/).map((x) => x[0]).join("").slice(0, 2).toUpperCase();

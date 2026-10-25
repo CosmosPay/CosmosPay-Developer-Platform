@@ -1,4 +1,4 @@
-/* POST /api/kyc/receivers/:id/approve — OUR review gate for a fiat (KYC/KYB) receiver.
+/* POST /api/kyc/receivers/:id/approve: OUR review gate for a fiat (KYC/KYB) receiver.
 
    Only an organization OWNER or ADMIN may approve a `pending_review` receiver. Approving
    moves it to `pending_user` in the Payments API and returns BlindPay's hosted terms-of-
@@ -67,7 +67,7 @@ export const POST: APIRoute = async (ctx) => {
 
     return jsonSuccess({
       data: { approved: true, emailed, email: email ?? null, receiver: json?.receiver ?? null },
-      message: emailed ? "Approved — terms of service sent to the customer." : "Approved.",
+      message: emailed ? "Approved. Terms of service sent to the customer." : "Approved.",
     });
   } catch (err) {
     return cosmosErrorResponse(err);

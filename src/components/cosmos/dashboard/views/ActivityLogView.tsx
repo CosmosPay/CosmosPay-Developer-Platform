@@ -14,8 +14,8 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 
    Distinct from "API logs" (LogsView) on purpose, and the difference is the point
    of the view: API logs are requests that REACHED the Payments API, so anything
-   that failed before a request — a crash on the wallet's send screen, a signature
-   the user cancelled, a page that threw — appears in neither the API log nor the
+   that failed before a request (a crash on the wallet's send screen, a signature
+   the user cancelled, a page that threw) appears in neither the API log nor the
    webhook log. This is where those are. */
 
 /* Severity → the pill palette the rest of the dashboard already uses. */
@@ -36,7 +36,7 @@ export function ActivityLogView({ env = "dev" }) {
 
   /* Filtering is done UPSTREAM, not over the fetched page: the feed is paginated
      server-side, so narrowing a page in the browser would search the last 100
-     events and call the result "no errors". The free-text box is the exception —
+     events and call the result "no errors". The free-text box is the exception:
      it is a refinement of what is on screen and says so by living in the toolbar. */
   const query = useCallback(
     () => ({ source: source === "all" ? undefined : source, level: level === "all" ? undefined : level }),
@@ -56,7 +56,7 @@ export function ActivityLogView({ env = "dev" }) {
   }, [env, query, source]);
   useEffect(() => { load(); }, [load]);
 
-  // Live tail — refresh silently while the tab is visible, as the log views do.
+  // Live tail: refresh silently while the tab is visible, as the log views do.
   const refresh = useCallback(() => {
     activityApi.list(env, query()).then((r) => setRows((r && Array.isArray(r.data)) ? r.data : [])).catch(() => {});
   }, [env, query]);
@@ -124,7 +124,7 @@ export function ActivityLogView({ env = "dev" }) {
                     <td><Pill st={levelPill(l.level)} label={(av.levels && av.levels[l.level]) || l.level} /></td>
                     <td className="cust">{(av.sources && av.sources[l.source]) || l.source}</td>
                     <td className="tid">{l.type}</td>
-                    <td className="cust">{l.message || "—"}</td>
+                    <td className="cust">{l.message || "-"}</td>
                     <td className="cust">{fmtDateTime(l.at)}</td>
                   </tr>
                   {isOpen && (
@@ -135,8 +135,8 @@ export function ActivityLogView({ env = "dev" }) {
                         (l.network ? `\nnetwork: ${l.network}` : "")
                       }</pre></div>
                       <div className="ld-sec"><div className="ld-h">{av.context}</div><pre>{
-                        `app: ${l.appVersion || "—"}\nplatform: ${l.platform || "—"}\nsession: ${l.sessionId || "—"}` +
-                        `\nreceived: ${fmtDateTime(l.receivedAt)}\nip: ${l.ip || "—"}`
+                        `app: ${l.appVersion || "-"}\nplatform: ${l.platform || "-"}\nsession: ${l.sessionId || "-"}` +
+                        `\nreceived: ${fmtDateTime(l.receivedAt)}\nip: ${l.ip || "-"}`
                       }</pre></div>
                       {l.props && (
                         <div className="ld-sec"><div className="ld-h">{av.props}</div><pre>{JSON.stringify(l.props, null, 2)}</pre></div>

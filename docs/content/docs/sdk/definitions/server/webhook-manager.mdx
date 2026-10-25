@@ -17,7 +17,7 @@ create(options: CreateWebhookEndpointOptions): Promise<WebhookEndpoint>
 
 **Parameters**
 
-- `options` — `CreateWebhookEndpointOptions`
+- `options`: `CreateWebhookEndpointOptions`
 
 **Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
 
@@ -41,7 +41,7 @@ fetch(id: string): Promise<WebhookEndpoint>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
 
@@ -55,8 +55,8 @@ update(id: string, options: UpdateWebhookEndpointOptions): Promise<WebhookEndpoi
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `UpdateWebhookEndpointOptions`
+- `id`: `string`
+- `options`: `UpdateWebhookEndpointOptions`
 
 **Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
 
@@ -70,7 +70,7 @@ delete(id: string): Promise<WebhookDeletedData>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<WebhookDeletedData>`
 
@@ -84,7 +84,7 @@ rotateSecret(id: string): Promise<WebhookEndpoint>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** [`Promise<WebhookEndpoint>`](/sdk/definitions/server/webhook-endpoint)
 
@@ -98,7 +98,7 @@ ping(id: string): Promise<WebhookPingData>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<WebhookPingData>`
 
@@ -112,8 +112,8 @@ fetchDeliveries(id: string, options?: ListWebhookDeliveriesOptions): Promise<Web
 
 **Parameters**
 
-- `id` — `string`
-- `options` _(optional)_ — `ListWebhookDeliveriesOptions`
+- `id`: `string`
+- `options` _(optional)_: `ListWebhookDeliveriesOptions`
 
 **Returns** `Promise<WebhookDeliveryPage>`
 
@@ -127,8 +127,8 @@ redeliver(id: string, deliveryId: string): Promise<WebhookDelivery>
 
 **Parameters**
 
-- `id` — `string`
-- `deliveryId` — `string`
+- `id`: `string`
+- `deliveryId`: `string`
 
 **Returns** [`Promise<WebhookDelivery>`](/sdk/definitions/server/webhook-delivery)
 
@@ -142,9 +142,9 @@ process(rawBody: string | Uint8Array, signatureHeader: string | null | undefined
 
 **Parameters**
 
-- `rawBody` — `string | Uint8Array`
-- `signatureHeader` — `string | null | undefined`
-- `options` _(optional)_ — `WebhookProcessOptions`
+- `rawBody`: `string | Uint8Array`
+- `signatureHeader`: `string | null | undefined`
+- `options` _(optional)_: `WebhookProcessOptions`
 
 **Returns** `AnyWebhookEvent`
 
@@ -158,7 +158,7 @@ createHandler(options?: WebhookHandlerOptions): (req: IncomingMessage, res: Serv
 
 **Parameters**
 
-- `options` _(optional)_ — `WebhookHandlerOptions`
+- `options` _(optional)_: `WebhookHandlerOptions`
 
 **Returns** `(req: IncomingMessage, res: ServerResponse) => void`
 
@@ -172,7 +172,7 @@ middleware(options?: WebhookHandlerOptions): (req: RequestLike, res: ResponseLik
 
 **Parameters**
 
-- `options` _(optional)_ — `WebhookHandlerOptions`
+- `options` _(optional)_: `WebhookHandlerOptions`
 
 **Returns** `(req: RequestLike, res: ResponseLike, next: (err?: unknown) => void) => void`
 

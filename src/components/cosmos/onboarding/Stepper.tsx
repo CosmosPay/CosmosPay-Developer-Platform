@@ -1,4 +1,4 @@
-/* Stepper.jsx — top step indicator: (1) Label → (2) Label → …  Reached steps are clickable to edit. */
+/* Stepper.jsx, the top step indicator: (1) Label → (2) Label → …  Reached steps are clickable to edit. */
 import { Fragment } from "react";
 import { I } from "./icons";
 import { STEP_IDS } from "./data";

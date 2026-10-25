@@ -1,5 +1,5 @@
 ---
-/* /pay — the web+stellar: (SEP-7) protocol-handler page. Moved here from the developer
+/* /pay is the web+stellar: (SEP-7) protocol-handler page. Moved here from the developer
  * platform (dev.cosmospay.lat/pay, which now redirects to this page with its query intact,
  * so handlers browsers registered there keep working).
  *
@@ -45,13 +45,13 @@ const runtimeJson = JSON.stringify({
       <div class="pp-block" data-slot="incoming" hidden>
         <h2>{t.incoming}</h2>
         <dl class="pp-details">
-          <div class="pp-row"><dt>{t.dest}</dt><dd><code class="pp-code" data-slot="dest">—</code></dd></div>
-          <div class="pp-row"><dt>{t.amount}</dt><dd data-slot="amount">—</dd></div>
-          <div class="pp-row"><dt>{messages.checkout.network}</dt><dd data-slot="network">—</dd></div>
-          <div class="pp-row" data-slot="issuer-row" hidden><dt>{t.issuer}</dt><dd><code class="pp-code" data-slot="issuer">—</code></dd></div>
-          <div class="pp-row" data-slot="memo-row" hidden><dt>{t.memo}</dt><dd><code class="pp-code" data-slot="memo">—</code></dd></div>
-          <div class="pp-row" data-slot="origin-row" hidden><dt>{t.origin}</dt><dd data-slot="origin">—</dd></div>
-          <div class="pp-row" data-slot="callback-row" hidden><dt>{t.callback}</dt><dd data-slot="callback">—</dd></div>
+          <div class="pp-row"><dt>{t.dest}</dt><dd><code class="pp-code" data-slot="dest">-</code></dd></div>
+          <div class="pp-row"><dt>{t.amount}</dt><dd data-slot="amount">-</dd></div>
+          <div class="pp-row"><dt>{messages.checkout.network}</dt><dd data-slot="network">-</dd></div>
+          <div class="pp-row" data-slot="issuer-row" hidden><dt>{t.issuer}</dt><dd><code class="pp-code" data-slot="issuer">-</code></dd></div>
+          <div class="pp-row" data-slot="memo-row" hidden><dt>{t.memo}</dt><dd><code class="pp-code" data-slot="memo">-</code></dd></div>
+          <div class="pp-row" data-slot="origin-row" hidden><dt>{t.origin}</dt><dd data-slot="origin">-</dd></div>
+          <div class="pp-row" data-slot="callback-row" hidden><dt>{t.callback}</dt><dd data-slot="callback">-</dd></div>
         </dl>
         <p class="pp-hint">{t.network}</p>
         <div class="pp-actions">

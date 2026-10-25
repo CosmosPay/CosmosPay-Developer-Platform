@@ -1,4 +1,4 @@
-/* de.js — German message catalog. Mirrors en.js exactly in shape. */
+/* de.js: German message catalog. Mirrors en.js exactly in shape. */
 export default {
   invite: {
     eyebrow: "Einladung",
@@ -74,7 +74,7 @@ export default {
     },
     goalsEyebrow: "// was Sie bauen",
     goalsTitle: "Was möchten Sie zuerst tun?",
-    goalsSub: "Wählen Sie alles Zutreffende — wir passen Ihr Dashboard an und schlagen den passenden Tarif vor.",
+    goalsSub: "Wählen Sie alles Zutreffende. Wir passen Ihr Dashboard an und schlagen den passenden Tarif vor.",
     goals: {
       accept: {
         t: "Zahlungen annehmen",
@@ -122,7 +122,7 @@ export default {
     },
     planEyebrow: "// wählen Sie Ihren Tarif",
     planTitle: "Wählen Sie einen Tarif zum Start",
-    planSub: "Starter hat keine monatliche Gebühr — Sie zahlen nur pro erfolgreicher Transaktion. Jederzeit wechselbar — ohne Anruf.",
+    planSub: "Starter hat keine monatliche Gebühr: Sie zahlen nur pro erfolgreicher Transaktion. Jederzeit wechselbar, ohne Anruf.",
     popular: "Beliebt",
     recommended: "Empfohlen",
     enterpriseNote: "Benötigen Sie individuelle Tarife oder ein SLA?",
@@ -145,7 +145,7 @@ export default {
     termsB: "Richtlinie zur akzeptablen Nutzung",
     termsPost: " von Cosmos Pay zu.",
     specTagline: "Eine API. Stellar, Solana und Monad.",
-    specTaglineSub: "Akzeptieren und bewegen Sie Geld in USDC mit Abwicklung in ~5 Sekunden. Wählen Sie den passenden Tarif — jederzeit änderbar.",
+    specTaglineSub: "Akzeptieren und bewegen Sie Geld in USDC mit Abwicklung in ~5 Sekunden. Wählen Sie den passenden Tarif und ändern Sie ihn jederzeit.",
     selectedPlan: "Ausgewählter Tarif",
     recommendedForYou: "Für Sie empfohlen",
     spec: {
@@ -427,7 +427,7 @@ export default {
   },
   footer: {
     tagline: "Die Zahlungsinfrastruktur für Entwickler. Eine API, jedes Rail.",
-    copyright: "© 2026 Cosmos Pay, Inc. — Developer Platform",
+    copyright: "© 2026 Cosmos Pay, Inc. (Developer Platform)",
     groups: {
       products: {
         title: "Produkte",
@@ -455,7 +455,7 @@ export default {
     hero: {
       tagline: "Deine digitale Welt in Bewegung.",
       headline: "Weniger Code schreiben -> mehr Geld bewegen",
-      lede: "Die Zahlungsinfrastruktur für Entwickler. Eine API, um Geld über Stellar, Solana und Monad zu bewegen — Stablecoins und digitale Assets, die in Sekunden abgewickelt werden, in über 130 Ländern, mit Gebühren im Bruchteil eines Cents.",
+      lede: "Die Zahlungsinfrastruktur für Entwickler. Eine API, um Geld über Stellar, Solana und Monad zu bewegen: Stablecoins und digitale Assets, die in Sekunden abgewickelt werden, in über 130 Ländern, mit Gebühren im Bruchteil eines Cents.",
       getKeys: "API-Schlüssel erhalten",
       trustedBy: "Vertraut von Engineering-Teams bei"
     },
@@ -489,7 +489,7 @@ export default {
     api: {
       kicker: "// die Plattform",
       title: "Leistungsstarke APIs",
-      lede: "Unsere modularen APIs ermöglichen es Entwicklern, komplexe Finanzflüsse in Minuten zu integrieren — nicht in Monaten.",
+      lede: "Unsere modularen APIs ermöglichen es Entwicklern, komplexe Finanzflüsse in Minuten zu integrieren, nicht in Monaten.",
       docsLink: "API-Dokumentation ansehen",
       cards: {
         payments: {
@@ -498,7 +498,7 @@ export default {
         },
         stablecoin: {
           title: "Stablecoins",
-          desc: "Wickeln Sie in USDC und anderen Assets auf Stellar, Solana und Monad ab — on-chain und in Echtzeit."
+          desc: "Wickeln Sie in USDC und anderen Assets auf Stellar, Solana und Monad ab, on-chain und in Echtzeit."
         },
         anchor: {
           title: "Anchors",
@@ -518,17 +518,17 @@ export default {
     integration: {
       kicker: "// Entwickler",
       title: "Zuverlässige, erweiterbare Infrastruktur.",
-      lede: "Gebaut, um die größten Workloads der Welt zu bewältigen — und sich in jeden Stack einzufügen, den Sie bereits nutzen.",
+      lede: "Gebaut, um die größten Workloads der Welt zu bewältigen und sich in jeden Stack einzufügen, den Sie bereits nutzen.",
       scale: ["API-Anfragen / Tag", "Anfragen / Sek.", "On-Chain-Finalität", "Verfügbarkeit"],
       paths: [
         {
           t: "No-Code",
-          d: "Erstellen Sie Zahlungslinks und Rechnungen direkt in Ihrem Dashboard — ganz ohne Engineering.",
+          d: "Erstellen Sie Zahlungslinks und Rechnungen direkt in Ihrem Dashboard, ganz ohne Engineering.",
           a: "No-Code erkunden"
         },
         {
           t: "Vorgefertigte UI",
-          d: "Binden Sie Checkout oder Elements ein und nehmen Sie in Minuten Zahlungen auf Stellar, Solana und Monad an — mit Komponenten, die zu Ihrer Marke passen.",
+          d: "Binden Sie Checkout oder Elements ein und nehmen Sie in Minuten Zahlungen auf Stellar, Solana und Monad an, mit Komponenten, die zu Ihrer Marke passen.",
           a: "Komponenten ansehen"
         },
         {
@@ -543,25 +543,25 @@ export default {
     solutions: {
       kicker: "// Lösungen",
       title: "Für jedes Geschäftsmodell gebaut.",
-      lede: "Von der ersten Transaktion bis zu Milliarden an Volumen — Cosmos Pay passt sich daran an, wie Ihr Unternehmen Geld auf Stellar, Solana und Monad bewegt.",
+      lede: "Von der ersten Transaktion bis zu Milliarden an Volumen: Cosmos Pay passt sich daran an, wie Ihr Unternehmen Geld auf Stellar, Solana und Monad bewegt.",
       eyebrow: "Lösung",
       startBuilding: "Jetzt entwickeln",
       items: {
         pay: {
           t: "Multi-Chain-Zahlungen annehmen",
           d: "Senden und empfangen Sie Zahlungen auf Stellar, Solana und Monad mit Finalität in Sekunden und Gebühren im Bruchteil eines Cents.",
-          long: "Nehmen Sie Zahlungen von jedem mit einer Stellar-, Solana- oder Monad-Wallet an. Gelder erreichen in Sekunden Finalität und werden direkt auf Ihr Konto abgewickelt — keine Rückbuchungen, keine Zwischenhändler und keine tagelangen Sperren.",
+          long: "Nehmen Sie Zahlungen von jedem mit einer Stellar-, Solana- oder Monad-Wallet an. Gelder erreichen in Sekunden Finalität und werden direkt auf Ihr Konto abgewickelt, ohne Rückbuchungen, ohne Zwischenhändler und ohne tagelange Sperren.",
           points: ["Abwicklungsfinalität in Sekunden", "Gebühren im Bruchteil eines Cents", "Senden & empfangen auf Stellar, Solana und Monad", "Echtzeit-Webhooks bei jeder Zahlung"]
         },
         coin: {
           t: "Stablecoin-Abwicklung",
-          d: "Wickeln Sie in USDC und anderen Assets auf Stellar, Solana und Monad ab — on-chain und in Echtzeit.",
+          d: "Wickeln Sie in USDC und anderen Assets auf Stellar, Solana und Monad ab, on-chain und in Echtzeit.",
           long: "Halten und wickeln Sie Guthaben in USDC und anderen regulierten Stablecoins auf Stellar, Solana und Monad ab. Jede Transaktion wird on-chain erfasst und automatisch mit Ihrem Echtzeit-Ledger abgeglichen.",
           points: ["1:1 gedeckte, regulierte Stablecoins", "On-chain, prüfbare Abwicklung", "Echtzeit-Ledger für mehrere Assets", "Automatischer Abgleich"]
         },
         globe: {
           t: "Grenzüberschreitendes Geld",
-          d: "Erreichen Sie über 130 Länder über offene, globale Netzwerke — ohne Korrespondenzbanken.",
+          d: "Erreichen Sie über 130 Länder über offene, globale Netzwerke, ohne Korrespondenzbanken.",
           long: "Bewegen Sie Geld über Grenzen hinweg genauso wie lokal. Stellar, Solana und Monad erreichen über 130 Länder ohne Korrespondenzbanken, sodass Auszahlungen in Sekunden statt Tagen ankommen.",
           points: ["Über 130 Länder, eine API", "Keine Verzögerungen durch Korrespondenzbanken", "Transparenter FX im Voraus", "Abwicklung in Sekunden"]
         },
@@ -574,7 +574,7 @@ export default {
         wallet: {
           t: "Eingebettete Wallets",
           d: "Erstellen Sie verwahrte oder nicht verwahrte Wallets auf Stellar, Solana und Monad für Ihre Nutzer.",
-          long: "Geben Sie jedem Nutzer eine Multi-Chain-Wallet (Stellar, Solana und Monad) in Ihrem Produkt. Wählen Sie verwahrte Wallets, die Sie verwalten, oder nicht verwahrte Wallets, die Ihre Nutzer kontrollieren — beide mit einem einzigen API-Aufruf bereitgestellt.",
+          long: "Geben Sie jedem Nutzer eine Multi-Chain-Wallet (Stellar, Solana und Monad) in Ihrem Produkt. Wählen Sie verwahrte Wallets, die Sie verwalten, oder nicht verwahrte Wallets, die Ihre Nutzer kontrollieren. Beide werden mit einem einzigen API-Aufruf bereitgestellt.",
           points: ["Verwahrt oder nicht verwahrt", "Bereitstellung mit einem Aufruf", "Integrierte Schlüsselverwaltung", "Guthaben in mehreren Assets"]
         }
       },
@@ -591,7 +591,7 @@ export default {
     customers: {
       kicker: "// Kunden",
       title: "Antrieb für Unternehmen jeder Größe.",
-      lede: "Von Startups in der Seed-Phase bis zu börsennotierten Unternehmen — Teams bauen und skalieren ihre Zahlungen auf Cosmos Pay.",
+      lede: "Von Startups in der Seed-Phase bis zu börsennotierten Unternehmen: Teams bauen und skalieren ihre Zahlungen auf Cosmos Pay.",
       eyebrow: "Kundenbericht",
       readStory: "Bericht lesen",
       readFull: "Vollständigen Bericht lesen",
@@ -599,7 +599,7 @@ export default {
         Northwind: {
           label: "schnellere grenzüberschreitende Abwicklung nach dem Wechsel zu Cosmos Pay.",
           tags: ["Payments", "Stablecoins", "Wallets"],
-          story: "Northwind verlagerte seinen globalen Checkout auf Cosmos Pay mit Stellar, Solana und Monad, verkürzte die Abwicklung von Tagen auf Sekunden und senkte die FX-Kosten in über 30 Märkten — und das alles mit einem einzigen abgeglichenen Ledger."
+          story: "Northwind verlagerte seinen globalen Checkout auf Cosmos Pay mit Stellar, Solana und Monad, verkürzte die Abwicklung von Tagen auf Sekunden und senkte die FX-Kosten in über 30 Märkten, und das alles mit einem einzigen abgeglichenen Ledger."
         },
         Lumio: {
           label: "um USDC-Abonnements in 40 Ländern zu starten.",
@@ -609,7 +609,7 @@ export default {
         Helios: {
           label: "über Stellar, Solana und Monad weltweit an Verkäufer abgewickelt.",
           tags: ["Payouts", "Connect", "Ramps"],
-          story: "Helios zahlt vollständig on-chain an eine globale Verkäuferbasis aus. Im letzten Jahr wickelte das Unternehmen 2,4 Mrd. $ an Verkäufer in 58 Ländern ab — mit Geldern, die in Sekunden ankommen, und vollständiger On-Chain-Transparenz."
+          story: "Helios zahlt vollständig on-chain an eine globale Verkäuferbasis aus. Im letzten Jahr wickelte das Unternehmen 2,4 Mrd. $ an Verkäufer in 58 Ländern ab, mit Geldern, die in Sekunden ankommen, und vollständiger On-Chain-Transparenz."
         }
       }
     },
@@ -686,7 +686,7 @@ export default {
   pricing: {
     kicker: "// Preise",
     title: "Zahlen Sie für das, was Sie abwickeln.",
-    lede: "Transparente, nutzungsbasierte Preise. Ohne monatliche Gebühr starten — zahlen Sie nur eine kleine Gebühr pro erfolgreicher Transaktion.",
+    lede: "Transparente, nutzungsbasierte Preise. Ohne monatliche Gebühr starten und nur eine kleine Gebühr pro erfolgreicher Transaktion zahlen.",
     monthly: "Monatlich",
     annual: "Jährlich",
     save: "−17%",
@@ -735,7 +735,7 @@ export default {
     compare: [
       {
         l: "Monatliche Gebühr",
-        v: ["—", "$33 / mo", "$99 / mo", "Individuell"]
+        v: ["Keine", "$33 / mo", "$99 / mo", "Individuell"]
       },
       {
         l: "Gebühr pro Transaktion",
@@ -786,7 +786,7 @@ export default {
     faqs: [
       {
         q: "Muss ich eine monatliche Gebühr zahlen?",
-        a: "Nein. Starter hat keine monatliche Gebühr — Sie zahlen nur eine kleine Gebühr pro erfolgreicher Transaktion. Essentials und Growth kosten eine monatliche Gebühr und bieten dafür niedrigere Tarife."
+        a: "Nein. Starter hat keine monatliche Gebühr: Sie zahlen nur eine kleine Gebühr pro erfolgreicher Transaktion. Essentials und Growth kosten eine monatliche Gebühr und bieten dafür niedrigere Tarife."
       },
       {
         q: "Was kostet eine Transaktion?",
@@ -798,11 +798,11 @@ export default {
       },
       {
         q: "Wie schnell wird Geld abgewickelt?",
-        a: "Zahlungen erreichen in etwa fünf Sekunden Finalität, in jedem Plan — es gibt keine tagelangen Auszahlungsverzögerungen."
+        a: "Zahlungen erreichen in etwa fünf Sekunden Finalität, in jedem Plan. Es gibt keine tagelangen Auszahlungsverzögerungen."
       },
       {
         q: "Kann ich den Plan später ändern?",
-        a: "Selbstverständlich. Führen Sie jederzeit ein Upgrade oder Downgrade über Ihr Dashboard durch. Änderungen treten sofort in Kraft — kein Anruf erforderlich."
+        a: "Selbstverständlich. Führen Sie jederzeit ein Upgrade oder Downgrade über Ihr Dashboard durch. Änderungen treten sofort in Kraft, kein Anruf erforderlich."
       }
     ],
     ctaTitle: "Noch Fragen?",
@@ -832,11 +832,11 @@ export default {
       inbox: "Support-Postfach",
       users: "Benutzer",
       adminOverview: "Platform overview",
-      adminPayments: "Payments — all orgs",
-      adminSwaps: "Swaps — all orgs",
-      adminFiat: "Fiat — all orgs",
-      adminCustomers: "Customers — all orgs",
-      adminProducts: "Products — all orgs",
+      adminPayments: "Payments (all orgs)",
+      adminSwaps: "Swaps (all orgs)",
+      adminFiat: "Fiat (all orgs)",
+      adminCustomers: "Customers (all orgs)",
+      adminProducts: "Products (all orgs)",
       adminConsumers: "Organizations"
     },
     sidebar: {
@@ -881,7 +881,7 @@ export default {
       heading: "Organisationen",
       owned: "Deine Organisationen",
       invited: "Mit dir geteilt",
-      locked: "Gesperrt — Upgrade für Zugriff",
+      locked: "Gesperrt: Upgrade für Zugriff",
       create: "Organisation erstellen"
     },
     env: {
@@ -968,7 +968,7 @@ export default {
       reveal: {
         eyebrow: "API-Schlüssel erstellt",
         title: "Speichern Sie Ihren geheimen Schlüssel",
-        body: "Dies ist das einzige Mal, dass Sie dieses Geheimnis sehen. Kopieren Sie es jetzt und bewahren Sie es sicher auf — aus Sicherheitsgründen können Sie es nicht erneut anzeigen.",
+        body: "Dies ist das einzige Mal, dass Sie dieses Geheimnis sehen. Kopieren Sie es jetzt und bewahren Sie es sicher auf. Aus Sicherheitsgründen können Sie es nicht erneut anzeigen.",
         idLabel: "Schlüssel-ID",
         saved: "Ich habe meinen Schlüssel gespeichert"
       }
@@ -1022,7 +1022,7 @@ export default {
       modal: {
         eyebrow: "Zahlung",
         title: "Zahlung erstellen",
-        desc: "Zahlungen werden sofort auf Stellar, Solana oder Monad abgewickelt — ohne Haltefrist.",
+        desc: "Zahlungen werden sofort auf Stellar, Solana oder Monad abgewickelt, ohne Haltefrist.",
         amount: "Betrag",
         asset: "Asset",
         customer: "Kunde",
@@ -1035,7 +1035,7 @@ export default {
       loading: "Wird geladen…", loadError: "Daten konnten nicht geladen werden.", empty: "Hier ist noch nichts.",
       eventLabels: { PAYMENT_INTENT_CREATED: "Zahlung erstellt", PAYMENT_INTENT_UPDATED: "Zahlung aktualisiert", PAYMENT_INTENT_SUCCEEDED: "Zahlung erfolgreich", PAYMENT_INTENT_FAILED: "Zahlung fehlgeschlagen", PAYMENT_INTENT_CANCELLED: "Zahlung storniert", PAYMENT_INTENT_DELETED: "Zahlung gelöscht" },
       active: "Aktiv", inactive: "Deaktiviert",
-      reveal: "Geheimnis anzeigen", secret: "Signatur-Geheimnis", secretNote: "Nur einmal angezeigt — sicher aufbewahren.",
+      reveal: "Geheimnis anzeigen", secret: "Signatur-Geheimnis", secretNote: "Nur einmal angezeigt. Sicher aufbewahren.",
       rotate: "Geheimnis erneuern", ping: "Test senden", pingOk: "Testereignis zugestellt", pingFail: "Testereignis fehlgeschlagen",
       deliveries: "Letzte Zustellungen", noDeliveries: "Noch keine Zustellungen.", redeliver: "Erneut senden",
       enable: "Aktivieren", disable: "Deaktivieren",
@@ -1065,13 +1065,13 @@ export default {
         eyebrow: "Zahlungslink", title: "Zahlungslink erstellen",
         desc: "Erzeugen Sie einen SEP-7-Link und QR-Code, den Ihr Kunde aus jeder Stellar-Wallet bezahlen kann.",
         kind: "Typ", kindPay: "Zahlungslink (Kunde zahlt)", kindTx: "Transaktion (Quelle bekannt)",
-        kindPayHint: "Kein Quellkonto — liefert eine Pay-URI + QR.",
-        kindTxHint: "Quelle bekannt — liefert eine unsignierte Transaktion zum Signieren.",
+        kindPayHint: "Kein Quellkonto: liefert eine Pay-URI + QR.",
+        kindTxHint: "Quelle bekannt: liefert eine unsignierte Transaktion zum Signieren.",
         destination: "Ziel", destinationHint: "Stellar-Konto, das die Mittel empfängt (G…).",
         source: "Quelle", sourceHint: "Stellar-Konto des Zahlers (G…).",
         amount: "Betrag", amountHint: "Leer lassen, damit der Zahler wählt (Spenden).",
         asset: "Asset", assetIssuer: "Asset-Emittent", assetIssuerHint: "Erforderlich für nicht-native Assets (G…).",
-        memo: "Memo", memoHint: "Numerische MEMO_ID — automatisch generiert, wenn leer.",
+        memo: "Memo", memoHint: "Numerische MEMO_ID; wird automatisch generiert, wenn leer.",
         message: "Nachricht", messageHint: "Wird dem Zahler in seiner Wallet angezeigt (≤ 300 Zeichen).",
         submit: "Link erstellen",
       },
@@ -1090,7 +1090,7 @@ export default {
     balances: {
       title: "Guthaben",
       sub: "In Echtzeit direkt in Ihre eigene Wallet abgewickelt",
-      note: "Cosmos Pay hält Ihre Gelder niemals — jede Zahlung wird in dem Moment, in dem sie getätigt wird, direkt in Ihre eigene Wallet (auf Stellar, Solana oder Monad) abgewickelt.",
+      note: "Cosmos Pay hält Ihre Gelder niemals: Jede Zahlung wird in dem Moment, in dem sie getätigt wird, direkt in Ihre eigene Wallet (auf Stellar, Solana oder Monad) abgewickelt.",
       total: "GESAMTGUTHABEN",
       across: "über 3 Assets",
       explorer: "Im Explorer ansehen",
@@ -1153,7 +1153,7 @@ export default {
       }
     },
     apikeys: {
-      readOnly: "Du hast nur Lesezugriff — nur Owner und Admins können API-Schlüssel erstellen oder widerrufen.",
+      readOnly: "Du hast nur Lesezugriff. Nur Owner und Admins können API-Schlüssel erstellen oder widerrufen.",
       title: "API-Schlüssel",
       sub: "Geheime Schlüssel für die Cosmos Pay API. Erstellen Sie so viele, wie Sie brauchen.",
       create: "Geheimen Schlüssel erstellen",
@@ -1174,7 +1174,7 @@ export default {
       revoke: "Widerrufen",
       edit: "Bearbeiten",
       unnamed: "Unbenannter Schlüssel",
-      none: "—",
+      none: "Keine",
       revokeTitle: "API-Schlüssel widerrufen",
       revokeBody: "„{name}“ wird dauerhaft widerrufen und jede App, die ihn verwendet, funktioniert nicht mehr. Dies kann nicht rückgängig gemacht werden.",
       revokeConfirm: "Schlüssel widerrufen",
@@ -1206,7 +1206,7 @@ export default {
       }
     },
     activityLog: {
-      sub: "Was die Wallet und dieses Dashboard über sich selbst gemeldet haben — auch das, was nie zu einem API-Aufruf wurde",
+      sub: "Was die Wallet und dieses Dashboard über sich selbst gemeldet haben, auch das, was nie zu einem API-Aufruf wurde",
       searchPlaceholder: "Ereignisse suchen…",
       empty: "Noch keine Aktivität gemeldet.",
       context: "Kontext",
@@ -1219,7 +1219,7 @@ export default {
     },
     logs: {
       title: "API-Logs",
-      sub: "Jede Anfrage an die Cosmos Pay API — klicken Sie auf eine Zeile, um sie zu prüfen",
+      sub: "Jede Anfrage an die Cosmos Pay API (klicken Sie auf eine Zeile, um sie zu prüfen)",
       searchPlaceholder: "Nach Endpunkt suchen…",
       tableHead: {
         method: "Methode",
@@ -1251,7 +1251,7 @@ export default {
         unlimited: "Unbegrenzt",
         manage: "Organisationen verwalten",
         changeTitle: "Tarif ändern",
-        changeSub: "Ändern Sie Ihren Tarif. Dies ist eine Simulation — es wird nichts berechnet.",
+        changeSub: "Ändern Sie Ihren Tarif. Dies ist eine Simulation, daher wird nichts berechnet.",
         save: "Tarif aktualisieren",
         liveKeys: "Produktionsschlüssel",
         seats: "Team-Sitze",
@@ -1419,7 +1419,7 @@ export default {
       profile: { title: "Profil", name: "Name", email: "E-Mail", role: "Rolle", note: "Name, Foto und Bio bearbeitest du hier.",
         displayName: "Anzeigename", displayNamePlaceholder: "Dein Name", bio: "Bio", bioPlaceholder: "Eine Zeile über dich oder dein Unternehmen",
         edit: "Bearbeiten", save: "Änderungen speichern", saving: "Speichern…", uploadPhoto: "Foto hochladen", changePhoto: "Foto ändern", removePhoto: "Entfernen",
-        photoHint: "PNG, JPG oder WebP — quadratisch ist am besten.", saved: "Profil aktualisiert", saveError: "Profil konnte nicht aktualisiert werden.",
+        photoHint: "PNG, JPG oder WebP. Quadratisch ist am besten.", saved: "Profil aktualisiert", saveError: "Profil konnte nicht aktualisiert werden.",
         photoTooLarge: "Dieses Bild ist zu groß. Wähle eines unter 8 MB.", photoInvalid: "Diese Datei ist kein unterstütztes Bild.",
         editNote: "E-Mail und Rolle stammen aus deiner Cosmos-Pay-Anmeldung." },
       session: { title: "Sitzung", desc: "Melde dich auf diesem Gerät vom Cosmos-Pay-Dashboard ab.", signOut: "Abmelden" },
@@ -1515,7 +1515,7 @@ export default {
       chainLabel: "Chain",
       chains: { stellar: "Stellar", solana: "Solana", monad: "Monad" },
       venues: { stellar: "Stellar-DEX", solana: "Jupiter", monad: "Kuru Flow" },
-      mainnetOnly: "Swaps auf Solana und Monad laufen nur im Mainnet — wechsle in den Live-Modus, um sie zu nutzen.",
+      mainnetOnly: "Swaps auf Solana und Monad laufen nur im Mainnet. Wechsle in den Live-Modus, um sie zu nutzen.",
       chainModal: {
         desc: "Tausche zwei Assets auf {chain} über {venue}, das jede Liquiditätsquelle der Chain durchsucht. Hol ein Quote und signiere dann die Transaktion in der Wallet.",
         sourceHint: { solana: "Solana-Wallet, die signiert, zahlt und empfängt (base58).", monad: "Monad-Wallet, die signiert, zahlt und empfängt (0x…)." },
@@ -1543,7 +1543,7 @@ export default {
         quoteTitle: "Quote",
         estimated: "Estimated received", minimum: "Minimum received",
         fee: "Commission", bps: "bps",
-        feeNote: "The commission is your organization plan's rate — applied automatically.",
+        feeNote: "The commission is your organization plan's rate, applied automatically.",
         create: "Create swap", creating: "Creating…",
       },
       detail: {
@@ -1621,7 +1621,7 @@ export default {
       network: { dev: "Testnet", prod: "Public network" },
       pools: {
         assetA: "Asset A", assetAIssuer: "Issuer A", assetB: "Asset B", assetBIssuer: "Issuer B",
-        assetHint: "Asset code — leave empty or XLM for lumens.",
+        assetHint: "Asset code: leave empty or XLM for lumens.",
         search: "Search pools", searching: "Searching…", loading: "Loading pools…",
         empty: "No pools match this pair.",
         error: "Couldn't load liquidity pools.",
@@ -1646,14 +1646,14 @@ export default {
         assetA: "Asset A", assetB: "Asset B", assetHint: "Asset code (XLM for lumens).",
         assetAIssuer: "Issuer A", assetBIssuer: "Issuer B", issuerHint: "Required for non-native assets (G…).",
         maxAmountA: "Max amount A", maxAmountAHint: "Maximum of asset A to deposit.",
-        maxAmountB: "Max amount B", maxAmountBHint: "Optional — derived from the pool price when omitted; required for a brand-new pool.",
+        maxAmountB: "Max amount B", maxAmountBHint: "Optional. Derived from the pool price when omitted; required for a brand-new pool.",
         poolId: "Pool ID", poolIdHint: "64-character hex liquidity pool id.",
         shares: "Shares", sharesHint: "Amount of pool shares to burn.",
         slippage: "Slippage (bps)", slippageHint: "Max slippage in basis points (optional, e.g. 50).",
         trustNote: "If the account doesn't trust the pool shares yet, the transaction includes the trustline automatically.",
         create: "Build transaction", creating: "Building…",
         createError: "Couldn't build the transaction.",
-        commissionNote: "The plan commission applies only to your earnings — the gain over what you deposited — never to your principal. Positions opened outside Cosmos Pay are not charged.",
+        commissionNote: "The plan commission applies only to your earnings (the gain over what you deposited), never to your principal. Positions opened outside Cosmos Pay are not charged.",
       },
       detail: {
         eyebrow: "Liquidity",
@@ -1683,14 +1683,14 @@ export default {
       loadError: "Couldn't load data.",
       txStatuses: { pending: "Pending", processing: "Processing", on_hold: "On hold", funds_received: "Funds received", completed: "Completed", refunded: "Refunded", partial_refund: "Partially refunded", failed: "Failed", cancelled: "Cancelled", canceled: "Cancelled", expired: "Expired", reversed: "Reversed" },
       kycReturn: {
-        eyebrow: "Fiat — activation",
+        eyebrow: "Fiat: activation",
         activating: "Activating your account…",
         activatingBody: "Please wait while we confirm your acceptance.",
         successTitle: "Your account is now active",
         successBody: "You can now add wallets and bank accounts and use onramp & offramp.",
         errorTitle: "Activation failed",
         errorBody: "We couldn't activate your account. Please try again.",
-        noTosId: "No terms-of-service id was returned — please try activating again.",
+        noTosId: "No terms-of-service id was returned. Please try activating again.",
         backToDashboard: "Back to dashboard",
       },
       tabs: { receivers: "Receivers", onramp: "Onramp", offramp: "Offramp" },
@@ -1705,20 +1705,20 @@ export default {
         disabled: "Disabled",
         disableAccount: "Disable account",
         enableAccount: "Enable account",
-        disabledNote: "This fiat account is disabled — onramp/offramp are blocked until re-enabled.",
+        disabledNote: "This fiat account is disabled: onramp/offramp are blocked until re-enabled.",
         accountDisabled: "Fiat account disabled",
         accountEnabled: "Fiat account enabled",
         accessError: "Couldn't update the fiat account.",
-        inactiveNote: "Registration only — no KYC data submitted yet.",
+        inactiveNote: "Registration only: no KYC data submitted yet.",
         awaitingReview: "Awaiting owner/admin review.",
         reviewTitle: "Review KYC",
         reviewHint: "Review the submitted KYC data, then approve to email the customer the terms of service.",
         approve: "Approve & send terms",
         approving: "Approving…",
-        approvedSent: "Approved — terms sent to {email}",
+        approvedSent: "Approved: terms sent to {email}",
         approveError: "Couldn't approve the receiver.",
         termsSentTitle: "Terms sent",
-        termsSentBody: "Awaiting customer acceptance — terms sent to {email}.",
+        termsSentBody: "Awaiting customer acceptance. Terms sent to {email}.",
         termsSentBodyNoEmail: "Awaiting customer acceptance of the terms of service.",
         resendTerms: "Resend terms email",
         resendVerification: "Resend verification email",
@@ -1758,7 +1758,7 @@ export default {
             id_doc_country: "ID document country", id_doc_type: "ID document type", id_doc_front_file: "ID document (front)", id_doc_back_file: "ID document (back)",
             selfie_file: "Selfie", proof_of_address_doc_type: "Proof of address type", proof_of_address_doc_file: "Proof of address",
             occupation: "Occupation", account_purpose: "Account purpose", source_of_funds_doc_type: "Source of funds type", source_of_funds_doc_file: "Source of funds document",
-            source_of_wealth: "Source of wealth", purpose_of_transactions: "Purpose of transactions", purpose_of_transactions_explanation: "Purpose of transactions — explanation",
+            source_of_wealth: "Source of wealth", purpose_of_transactions: "Purpose of transactions", purpose_of_transactions_explanation: "Purpose of transactions (explanation)",
             legal_name: "Legal name", alternate_name: "Alternate name", business_type: "Business type", business_industry: "Business industry", business_description: "Business description",
             formation_date: "Formation date", estimated_annual_revenue: "Estimated annual revenue", website: "Website",
             incorporation_doc_file: "Incorporation document", proof_of_ownership_doc_file: "Proof of ownership document",

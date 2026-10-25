@@ -27,11 +27,11 @@ function chainAsset(asset, chain = "stellar") {
   return asset.length > 16 ? `${asset.slice(0, 4)}…${asset.slice(-4)}` : asset;
 }
 
-/* "0.5 XLM → ~12.3 USDC" — the swap's sent → received route for the table. */
+/* "0.5 XLM → ~12.3 USDC": the swap's sent → received route for the table. */
 function swapRoute(s) {
   const chain = s.chain || "stellar";
-  const sent = `${s.sendAmount ?? "—"} ${chain === "stellar" ? assetLabel(s.sendAsset) : chainAsset(s.sendAsset, chain)}`;
-  const got = `${s.destEstimated ?? s.swapAmount ?? "—"} ${chain === "stellar" ? s.destAsset || "" : chainAsset(s.destAsset, chain)}`.trim();
+  const sent = `${s.sendAmount ?? "-"} ${chain === "stellar" ? assetLabel(s.sendAsset) : chainAsset(s.sendAsset, chain)}`;
+  const got = `${s.destEstimated ?? s.swapAmount ?? "-"} ${chain === "stellar" ? s.destAsset || "" : chainAsset(s.destAsset, chain)}`.trim();
   return `${sent} → ${got}`;
 }
 

@@ -1,4 +1,4 @@
-/* Shared plumbing for the liquidity pool proxy routes (underscore file — not a
+/* Shared plumbing for the liquidity pool proxy routes (underscore file, not a
    route). Mirrors the swaps routes: session → org membership → forward to the
    Payments API, mapping CosmosApiError to a clean envelope. */
 import { auth } from "@/lib/auth";

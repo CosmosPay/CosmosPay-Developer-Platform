@@ -1,4 +1,4 @@
-/* features.ts — env-driven feature flags for plans & onboarding.
+/* features.ts: env-driven feature flags for plans & onboarding.
    Server-only (reads astro:env/server). The .astro pages compute a plain object
    from planFeatures() and pass it to the client islands as props, so toggling a
    flag in .env takes effect on the next request (no rebuild needed for the UI). */

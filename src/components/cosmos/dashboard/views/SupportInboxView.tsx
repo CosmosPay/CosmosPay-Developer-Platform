@@ -10,7 +10,7 @@ import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
 import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
 import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
 
-/* Staff support inbox — every customer ticket, filterable by status, with a reply pane
+/* Staff support inbox: every customer ticket, filterable by status, with a reply pane
    and a status selector to move tickets through open → pending → resolved → closed. */
 export function SupportInboxView() {
   const t = useT();
@@ -61,7 +61,7 @@ export function SupportInboxView() {
           <div className="inbox-list-h">{s.tickets}</div>
           {tickets.length === 0 && <div className="empty" style={{ padding: "24px 12px" }}>{s.noTickets}</div>}
           {tickets.map((tk) => {
-            const label = (tk.user && (tk.user.name || tk.user.email)) || "—";
+            const label = (tk.user && (tk.user.name || tk.user.email)) || "-";
             return (
               <button key={tk.id} className={`inbox-item${sel === tk.id ? " active" : ""}`} onClick={() => open(tk.id)}>
                 <span className="av-sm">{label.slice(0, 2).toUpperCase()}</span>

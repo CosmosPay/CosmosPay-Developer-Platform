@@ -9,7 +9,7 @@ import type { APIRoute } from "astro";
 // Offered plans only: a legacy plan (the old free one) can't be picked again.
 const planBodySchema = z.object({ plan: z.enum(PLAN_IDS as [string, ...string[]]) });
 
-/* PATCH /api/account/plan — change the signed-in account's own (mock) billing plan. */
+/* PATCH /api/account/plan: change the signed-in account's own (mock) billing plan. */
 export const PATCH: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

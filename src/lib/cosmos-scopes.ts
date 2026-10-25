@@ -1,11 +1,11 @@
-/* API-key scopes for the Cosmos Payments API — a permission system INDEPENDENT
+/* API-key scopes for the Cosmos Payments API: a permission system INDEPENDENT
    from the dashboard's own org-permissions. These map 1:1 to the actions the
    community server enforces (@RequirePermissions), e.g. `payments:write`.
    Presented as a resource × action matrix in the API-key modal. */
 
 /* Every resource the gateway enforces today. The list was six for a long time
    while the server had grown to ten, and a resource missing here is a scope the
-   dashboard cannot grant at all — the matrix IS the picker, so every key minted
+   dashboard cannot grant at all; the matrix IS the picker, so every key minted
    from this dashboard (and every wallet-provisioned key, see
    wallet-provisioning.ts) is refused with `insufficient_scope` on whatever it
    leaves out. Keep this in step with the server's @RequirePermissions

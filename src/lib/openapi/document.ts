@@ -24,7 +24,7 @@ export const openApiConfig: OpenAPIObjectConfig = {
   ],
   /* Tag order is the order Swagger UI renders the groups in: what a developer integrates
      first at the top, the internal consoles at the bottom. A route whose tag is missing
-     here still renders — ungrouped and undescribed, after everything else — so a new
+     here still renders (ungrouped and undescribed, after everything else), so a new
      module adds its line here. */
   tags: [
     {
@@ -95,7 +95,7 @@ export const openApiConfig: OpenAPIObjectConfig = {
     },
     {
       name: 'Admin',
-      description: 'Platform-owner console — every consumer, across organizations',
+      description: 'Platform-owner console: every consumer, across organizations',
     },
     {
       name: 'System',

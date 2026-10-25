@@ -1,4 +1,4 @@
-/* preview.ts — the sample payment link behind /preview/{design}, where merchants see each
+/* preview.ts: the sample payment link behind /preview/{design}, where merchants see each
    checkout design before choosing it. Nothing in it can be paid: the QR encodes a plain
    "sample" notice, the URI is empty (the page leaves every wallet button inert) and the
    address is Stellar's well-known test account format, on testnet. */

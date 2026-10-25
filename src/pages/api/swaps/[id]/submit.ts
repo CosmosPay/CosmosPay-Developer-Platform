@@ -25,7 +25,7 @@ function cosmosErrorResponse(err: unknown): Response {
   return jsonError({ message: "Swap request failed", code: 500, status: ApiStatus.INTERNAL_ERROR });
 }
 
-/* Relay a signed swap transaction to its network — `signedXdr` for Stellar,
+/* Relay a signed swap transaction to its network: `signedXdr` for Stellar,
    `signedTransaction` for Solana / Monad. The Payments API checks it is the transaction
    it built before broadcasting. */
 export const POST: APIRoute = async (ctx) => {

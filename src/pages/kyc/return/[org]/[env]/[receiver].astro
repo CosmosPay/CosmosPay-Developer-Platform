@@ -14,6 +14,6 @@ const { org, env, receiver } = Astro.params;
 const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 ---
 
-<CosmosLayout title="Activate account — Cosmos Pay" lang={lang} noindex>
+<CosmosLayout title="Activate account | Cosmos Pay" lang={lang} noindex>
   <KycReturn org={org} env={env} receiver={receiver} lang={lang} client:load />
 </CosmosLayout>

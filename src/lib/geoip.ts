@@ -1,4 +1,4 @@
-/* geoip.ts — MaxMind GeoLite2-City lookups, used to fill in / refine location when the
+/* geoip.ts: MaxMind GeoLite2-City lookups, used to fill in / refine location when the
    CDN header data is missing or coarse. The reader is opened once and cached.
    DB path: env MAXMIND_DB_PATH, else <cwd>/data/geoip/GeoLite2-City.mmdb. */
 import path from "node:path";

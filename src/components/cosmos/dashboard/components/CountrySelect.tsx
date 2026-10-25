@@ -56,7 +56,7 @@ export function CountrySelect({ label, hint, value, onChange, placeholder, searc
                 <CountryFlag code={c.code} /> {c.name} ({c.code})
               </button>
             ))}
-            {filtered.length === 0 && <div style={{ padding: "8px 10px", color: "var(--ink-3)", fontSize: 14 }}>—</div>}
+            {filtered.length === 0 && <div style={{ padding: "8px 10px", color: "var(--ink-3)", fontSize: 14 }}>-</div>}
           </div>
         )}
       </div>

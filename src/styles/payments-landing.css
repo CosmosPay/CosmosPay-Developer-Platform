@@ -1,5 +1,5 @@
 /* ============================================================
-   Cosmos Pay — payments-landing.css
+   Cosmos Pay: payments-landing.css
    payments.cosmospay.lat's landing (src/pages/payments/index.astro), on the
    institutional skin (institutional.css).
 
@@ -50,8 +50,8 @@
 .pl-check .pl-icon { width: 18px; height: 18px; }
 
 /* ---- hero ---- */
-/* The hero runs up under the nav (72px + its 1px border) — the bar is transparent at the top of
-   the page — so the video reaches the top edge, and it fills the first screen at any size. */
+/* The hero runs up under the nav (72px + its 1px border; the bar is transparent at the top of
+   the page), so the video reaches the top edge, and it fills the first screen at any size. */
 .pl-hero {
   position: relative; overflow: hidden; isolation: isolate; background: var(--bg);
   margin-top: -73px; padding-top: 73px;
@@ -467,7 +467,7 @@
 .pl-calc .pl-calc-range:focus-visible { outline: none; }
 .pl-calc-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
 .pl-calc-range:focus-visible::-moz-range-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
-/* escrow: a switch — outlined when off, filled in ink when on, the knob sliding across */
+/* escrow: a switch, outlined when off, filled in ink when on, the knob sliding across */
 .pl-calc-escrow { position: relative; display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 22px; font-weight: 500; color: var(--ink); cursor: pointer; }
 .pl-calc-switch-input { position: absolute; left: 0; top: 50%; width: 40px; height: 24px; margin: -12px 0 0; opacity: 0; cursor: pointer; }
 .pl-calc-switch {

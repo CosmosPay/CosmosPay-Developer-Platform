@@ -3,13 +3,13 @@
  * documents, with the same method.
  *
  * `docs/openapi.json` is the server's spec (auth rewritten, paths untouched), and
- * `npm run check:api-spec` keeps it equal to what the server serves — so holding the
+ * `npm run check:api-spec` keeps it equal to what the server serves, so holding the
  * console's calls against it is holding them against the server. Without this, the table
  * in `src/lib/cosmos.ts` was a hand-kept list of URLs that nothing compared with anything:
  * a renamed server route is a dashboard page that 404s in production.
  *
  * Two surfaces are out of reach, and said so rather than skipped silently:
- *   - `/v1/admin/*` — the operator surface. The server excludes it from its public spec.
+ *   - `/v1/admin/*`: the operator surface. The server excludes it from its public spec.
  *   - the prefix catch-alls in `src/lib/cosmos-proxy.ts` (kyc / onramp / offramp), which
  *     forward whatever path the dashboard asks for. The routes they end up at are the
  *     server's to validate.

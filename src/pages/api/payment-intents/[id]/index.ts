@@ -19,7 +19,7 @@ function envFromQuery(url: URL): CosmosEnv {
 
 function cosmosErrorResponse(err: unknown): Response {
   if (err instanceof CosmosApiError) {
-    // The upstream returns 404 for an intent that isn't the caller's — surface it cleanly.
+    // The upstream returns 404 for an intent that isn't the caller's; surface it cleanly.
     if (err.status === 404) return jsonNotFound("Payment intent not found");
     return jsonError({ message: err.message, code: err.status, status: ApiStatus.BAD_REQUEST });
   }

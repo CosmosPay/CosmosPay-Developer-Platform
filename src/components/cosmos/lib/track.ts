@@ -1,15 +1,15 @@
-/* track.ts — what the dashboard, in the browser, reports about itself.
+/* track.ts: what the dashboard, in the browser, reports about itself.
 
    The server records every `/api/*` request (see src/middleware.ts). This is the
    other half: what the person did before any request happened, and what broke
-   without one. A view opened, an action clicked, a script that threw — none of
+   without one. A view opened, an action clicked, a script that threw: none of
    those reach the server on their own, and they are exactly what is missing when
    someone says "the dashboard is broken" and every log looks fine.
 
    Batched, and never in the way:
      - events go into a buffer, flushed on a timer or when the batch fills;
      - the tab going away flushes with `sendBeacon`, which the browser delivers
-       after the page is gone — a normal fetch there is cancelled on unload,
+       after the page is gone, whereas a normal fetch there is cancelled on unload,
        which is precisely when a crash report is worth the most;
      - every failure is swallowed. Telemetry that can break the page it measures
        is worse than no telemetry.
@@ -30,7 +30,7 @@ const MAX_BUFFERED = 200;
 const SESSION_KEY = "cosmospay-activity-session";
 const DEVICE_KEY = "cosmospay-activity-device";
 
-/* Event names are LOWERCASE, dot-separated, `_` inside a word — the pattern the
+/* Event names are LOWERCASE, dot-separated, `_` inside a word: the pattern the
    ingest endpoint validates (`^[a-z0-9][a-z0-9._:-]*$`, enforced in @/schemas/activity
    and again upstream). A name that does not match does not merely get rejected: it
    fails the whole batch it was queued in, so a camelCase name would take every event
@@ -147,7 +147,7 @@ function schedule(): void {
  * `beacon` is used when the page is going away: a `fetch` started during
  * `pagehide` is cancelled with the document, and that is the moment a crash
  * report matters most. The events are taken off the queue before the call and
- * are not put back on failure — re-queueing would let an unreachable server grow
+ * are not put back on failure: re-queueing would let an unreachable server grow
  * the buffer until it eventually reported a flood of stale events.
  */
 export function flush(beacon = false): void {
@@ -177,7 +177,7 @@ export function flush(beacon = false): void {
 
 /**
  * Wire the automatic captures: uncaught errors, rejected promises, and the flush
- * on the way out. Idempotent — the dashboard shell may mount twice in dev.
+ * on the way out. Idempotent: the dashboard shell may mount twice in dev.
  */
 export function startTracking(initialEnv: "dev" | "prod" = "dev"): void {
   setTrackEnv(initialEnv);

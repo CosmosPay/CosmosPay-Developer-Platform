@@ -1,4 +1,4 @@
-/* profile.ts — Cosmos Pay per-account data (role, region/country/language defaults)
+/* profile.ts: Cosmos Pay per-account data (role, region/country/language defaults)
    and sign-in location capture. Profiles are created lazily on first authenticated
    request so headers (geo) are available. */
 import { prisma } from "@/lib/prisma";

@@ -2,7 +2,7 @@
  * Fails when a route under `src/pages/api/` is missing from the OpenAPI document.
  *
  * WHY THIS EXISTS. The Swagger reference is only worth opening if it is complete, and
- * "document the endpoint too" is the step that gets dropped under time pressure — which
+ * "document the endpoint too" is the step that gets dropped under time pressure, which
  * is how the spec once described 11 of 95 operations while the dashboard shipped all 95.
  * A rule in CLAUDE.md states the intent; this is what notices when the intent slipped.
  *
@@ -10,7 +10,7 @@
  * route file, with the file path turned into its URL (`[id]` -> `{id}`, `[...path]` ->
  * `{path}`, `index.ts` -> the directory). Right side: the operations
  * `generateOpenApiDocument()` produces. An `ALL` catch-all counts as covered when the
- * path carries at least one documented method — it answers whatever the upstream
+ * path carries at least one documented method: it answers whatever the upstream
  * accepts, so enumerating verbs there would be fiction.
  *
  * It does NOT check that the documented schema matches what the handler returns. That
@@ -28,7 +28,7 @@ const API_DIR = path.join(ROOT, 'src', 'pages', 'api');
 const SCHEMAS_DIR = path.join(ROOT, 'src', 'schemas');
 
 /**
- * Routes that are deliberately absent from the spec. Each one needs a reason — an
+ * Routes that are deliberately absent from the spec. Each one needs a reason: an
  * endpoint is either documented or explicitly, visibly excluded, never just missing.
  */
 const EXCLUDED = new Map([
@@ -87,7 +87,7 @@ await loadRegistrations();
 
 /* Not `generateOpenApiDocument()`: that calls loadOpenApiRoutes(), whose `import.meta.glob`
    only exists under Vite. The registrations are already imported above, so the document is
-   generated straight from the registry — with the app's own config, not a copy of it. */
+   generated straight from the registry, with the app's own config, not a copy of it. */
 const { OpenApiGeneratorV3 } = await import('@asteasolutions/zod-to-openapi');
 const { openApiRegistry } = await import('@/lib/openapi/registry');
 const { openApiConfig } = await import('@/lib/openapi/document');
@@ -128,7 +128,7 @@ if (missing.length) {
     console.error(`  ${op.method.padEnd(6)} ${op.url}   (${path.relative(ROOT, op.file)})`);
   }
   console.error(
-    '\nAdd a registration under src/schemas/<module>/openapi.ts — see CLAUDE.md, "every API endpoint MUST be documented".',
+    '\nAdd a registration under src/schemas/<module>/openapi.ts (see CLAUDE.md, "every API endpoint MUST be documented").',
   );
   process.exit(1);
 }

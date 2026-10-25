@@ -15,7 +15,7 @@ constructor(options: RESTOptions)
 
 **Parameters**
 
-- `options` — `RESTOptions`
+- `options`: `RESTOptions`
 
 ## Properties
 
@@ -43,7 +43,7 @@ setApiKey(apiKey: string): this
 
 **Parameters**
 
-- `apiKey` — `string`
+- `apiKey`: `string`
 
 **Returns** `this`
 
@@ -55,8 +55,8 @@ get<T>(path: string, options?: RequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `RequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `RequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -68,8 +68,8 @@ post<T>(path: string, options?: RequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `RequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `RequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -81,8 +81,8 @@ put<T>(path: string, options?: RequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `RequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `RequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -94,8 +94,8 @@ patch<T>(path: string, options?: RequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `RequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `RequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -107,8 +107,8 @@ delete<T>(path: string, options?: RequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `RequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `RequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -122,8 +122,8 @@ buildURL(path: string, query?: RequestOptions['query']): string
 
 **Parameters**
 
-- `path` — `string`
-- `query` _(optional)_ — `RequestOptions['query']`
+- `path`: `string`
+- `query` _(optional)_: `RequestOptions['query']`
 
 **Returns** `string`
 
@@ -137,8 +137,8 @@ request<T>(method: string, path: string, options?: RequestOptions): Promise<T>
 
 **Parameters**
 
-- `method` — `string`
-- `path` — `string`
-- `options` _(optional)_ — `RequestOptions`
+- `method`: `string`
+- `path`: `string`
+- `options` _(optional)_: `RequestOptions`
 
 **Returns** `Promise<T>`

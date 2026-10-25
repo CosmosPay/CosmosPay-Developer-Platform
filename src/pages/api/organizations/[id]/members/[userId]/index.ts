@@ -12,7 +12,7 @@ const patchBodySchema = z.object({
   permissions: z.array(z.string()).optional(),
 });
 
-/* PATCH /api/organizations/:id/members/:userId — update a member's role + per-action
+/* PATCH /api/organizations/:id/members/:userId: update a member's role + per-action
    permissions (owner/admin only; the owner can't be changed). */
 export const PATCH: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
@@ -44,7 +44,7 @@ export const PATCH: APIRoute = async (ctx) => {
   return jsonSuccess({ data: { userId, role: updated.role, permissions: updated.permissions }, message: "Member updated" });
 };
 
-/* DELETE /api/organizations/:id/members/:userId — remove a member (owner/admin; never the owner). */
+/* DELETE /api/organizations/:id/members/:userId: remove a member (owner/admin; never the owner). */
 export const DELETE: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

@@ -1,4 +1,4 @@
-/* api-client.ts — thin browser client for the same-origin developer API.
+/* api-client.ts: thin browser client for the same-origin developer API.
    Every endpoint returns the ApiEnvelope { data, code, status, message }; these
    helpers unwrap `data` and throw an Error (with the server message) on failure. */
 async function request(url, options = {}) {
@@ -19,7 +19,7 @@ async function request(url, options = {}) {
   return json ? json.data : null;
 }
 
-/* API keys CRUD — see src/pages/api/api-keys.
+/* API keys CRUD (see src/pages/api/api-keys).
    create body: { org, environment: 'dev'|'prod', permissions: string[] (>=1), role: 'user'|'admin' }
      (environment is injected from the dashboard's test/production switch, not chosen in the modal)
    create → { username, apiKey (secret, shown once), id, createdAt, updatedAt, permissions, role, environment }
@@ -31,7 +31,7 @@ export const apiKeys = {
   update: (id, body) => request(`/api/api-keys/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(body) }),
 };
 
-/* Payment intents (Stellar SEP-7 links) — proxied to the Cosmos Payments API,
+/* Payment intents (Stellar SEP-7 links), proxied to the Cosmos Payments API,
    scoped to the signed-in user's consumer. `env` is 'dev' (testnet) or 'prod' (public).
    create body: { org, environment, kind: 'pay'|'tx', destination, amount?, assetCode?,
    assetIssuer?, source? (tx only), memo?, msg?, callback? }
@@ -54,7 +54,7 @@ export const paymentIntents = {
   validate: (id, env, txHash) => request(`/api/payment-intents/${encodeURIComponent(id)}/validate?env=${env || "dev"}`, { method: "POST", body: JSON.stringify({ txHash }) }),
 };
 
-/* Webhook endpoints — proxied to the Cosmos Payments API (per-user consumer).
+/* Webhook endpoints, proxied to the Cosmos Payments API (per-user consumer).
    `env` is 'dev'|'prod'; mutations pass the active `org` so the platform can
    enforce the workspace's webhooks:* permission. create/rotate return the secret once. */
 const qp = (env, org) => `?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`;
@@ -99,7 +99,7 @@ export const metrics = {
   webhookLogs: (env) => request(`/api/cosmos/webhook-logs?env=${env || "dev"}`),
 };
 
-/* Client activity — what the wallet and this dashboard reported about themselves.
+/* Client activity: what the wallet and this dashboard reported about themselves.
    Distinct from `metrics.apiLogs`, which only ever sees requests that REACHED the
    Payments API: everything a client did before (or instead of) a request is here. */
 export const activity = {
@@ -118,14 +118,14 @@ export const activity = {
   },
 };
 
-/* Activity notifications — list is open to the user; create is owner/admin only (403 otherwise). */
+/* Activity notifications: list is open to the user; create is owner/admin only (403 otherwise). */
 export const notifications = {
   list: () => request("/api/notifications"),
   create: (body) => request("/api/notifications", { method: "POST", body: JSON.stringify(body) }),
   markRead: () => request("/api/notifications/read", { method: "POST", body: "{}" }),
 };
 
-/* Support tickets — customer side (own tickets). Each ticket has a subject + status. */
+/* Support tickets, customer side (own tickets). Each ticket has a subject + status. */
 export const support = {
   tickets: () => request("/api/support/tickets"),
   unread: () => request("/api/support/unread"),
@@ -134,7 +134,7 @@ export const support = {
   send: (id, body) => request(`/api/support/tickets/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify({ body }) }),
 };
 
-/* Support tickets — staff side (owner/admin/support). 403 for regular users. */
+/* Support tickets, staff side (owner/admin/support). 403 for regular users. */
 export const supportAdmin = {
   tickets: (status) => request(`/api/support/admin/tickets${status ? `?status=${encodeURIComponent(status)}` : ""}`),
   ticket: (id) => request(`/api/support/tickets/${encodeURIComponent(id)}`),
@@ -165,7 +165,7 @@ function adminQs(query = {}) {
   return s ? `?${s}` : "";
 }
 
-/* Admin (platform owner/admin). 403 otherwise — the /api/admin proxy enforces it.
+/* Admin (platform owner/admin). 403 otherwise; the /api/admin proxy enforces it.
    - users/setUser: account role management.
    - the rest are read-only, cross-organization (global) views proxied to the Payments
      API's /v1/admin/* endpoints; each returns the upstream JSON directly. */
@@ -184,11 +184,11 @@ export const admin = {
   receivers: (query = {}) => request(`/api/admin/receivers${adminQs(query)}`),
   payins: (query = {}) => request(`/api/admin/payins${adminQs(query)}`),
   payouts: (query = {}) => request(`/api/admin/payouts${adminQs(query)}`),
-  // Global enable/disable of any consumer's fiat receiver (no org/env — admin is global).
+  // Global enable/disable of any consumer's fiat receiver (no org/env; admin is global).
   setReceiverAccess: (id, disabled) => request(`/api/admin/receivers/${encodeURIComponent(id)}/access`, { method: "PATCH", body: JSON.stringify({ disabled }) }),
   // Global approve (pending_review → pending_user, emails the customer the terms link)
   // and activation (submits the tos_id) for any consumer's fiat receiver.
-  // `expected_version` pins the approval to the dossier the reviewer had on screen —
+  // `expected_version` pins the approval to the dossier the reviewer had on screen:
   // the Payments API 409s when it changed since. Undefined is dropped by JSON.stringify,
   // which is the right fallback for a row read before that field existed.
   approveReceiver: (id, redirect_url, expected_version) => request(`/api/admin/receivers/${encodeURIComponent(id)}/approve`, { method: "POST", body: JSON.stringify({ redirect_url, expected_version }) }),
@@ -203,7 +203,7 @@ export const invites = {
   accept: (id) => request("/api/invitations/accept", { method: "POST", body: JSON.stringify({ id }) }),
 };
 
-/* Same-chain swaps — proxied to the Cosmos Payments API and scoped to the active
+/* Same-chain swaps, proxied to the Cosmos Payments API and scoped to the active
    organization. `env` is 'dev' (testnet) or 'prod' (public). `chain` picks the venue:
    omitted / 'stellar' is the Stellar DEX, 'solana' Jupiter, 'monad' Kuru Flow (the last
    two mainnet only). There is NO fee parameter: the commission is the org plan's rate,
@@ -230,7 +230,7 @@ export const swaps = {
   submit: (id, org, env, signed) => request(`/api/swaps/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify(typeof signed === "string" ? { signedXdr: signed } : signed) }),
 };
 
-/* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents) — proxied to the Payments
+/* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents), proxied to the Payments
    API. Mainnet only upstream: in test mode assets and quotes work, creating is refused. */
 export const crossChainSwaps = {
   assets: (org, env) => request(`/api/cross-chain-swaps/assets?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
@@ -248,7 +248,7 @@ export const crossChainSwaps = {
   reportDeposit: (id, org, env, txHash) => request(`/api/cross-chain-swaps/${encodeURIComponent(id)}/deposit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ txHash }) }),
 };
 
-/* Liquidity pools (Stellar AMM) — proxied to the Cosmos Payments API and scoped
+/* Liquidity pools (Stellar AMM), proxied to the Cosmos Payments API and scoped
    to the active organization. Non-custodial like swaps: deposit/withdraw return an
    unsigned XDR + SEP-7 URI + QR to sign, then the signed XDR is submitted back.
    deposit body: { org, environment, source, assetACode?, assetAIssuer?, assetBCode?,
@@ -282,7 +282,7 @@ export const liquidity = {
   submit: (id, org, env, signedXdr) => request(`/api/liquidity/operations/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ signedXdr }) }),
 };
 
-/* BlindPay onramp/offramp/KYC — generic same-origin proxies. Any sub-path is
+/* BlindPay onramp/offramp/KYC: generic same-origin proxies. Any sub-path is
    forwarded to the Payments API `/v1/<prefix>/<path>` with ?org=&env= and the
    response is the inner upstream JSON. Mutations require the payments:create
    permission (enforced server-side). Use the path-style helpers, e.g.

@@ -15,8 +15,8 @@ constructor(client: Client, data: ReceiverData)
 
 **Parameters**
 
-- `client` — [`Client`](/sdk/definitions/server/client)
-- `data` — `ReceiverData`
+- `client`: [`Client`](/sdk/definitions/server/client)
+- `data`: `ReceiverData`
 
 ## Properties
 
@@ -146,7 +146,7 @@ update(options: UpdateReceiverOptions): Promise<this>
 
 **Parameters**
 
-- `options` — `UpdateReceiverOptions`
+- `options`: `UpdateReceiverOptions`
 
 **Returns** `Promise<this>`
 
@@ -170,7 +170,7 @@ approve(options?: ApproveReceiverOptions): Promise<ReceiverData>
 
 **Parameters**
 
-- `options` _(optional)_ — `ApproveReceiverOptions`
+- `options` _(optional)_: `ApproveReceiverOptions`
 
 **Returns** `Promise<ReceiverData>`
 
@@ -184,7 +184,7 @@ requestTos(options: RequestTosOptions): Promise<TermsOfServiceData>
 
 **Parameters**
 
-- `options` — `RequestTosOptions`
+- `options`: `RequestTosOptions`
 
 **Returns** `Promise<TermsOfServiceData>`
 
@@ -198,7 +198,7 @@ enable(options: EnableReceiverOptions): Promise<this>
 
 **Parameters**
 
-- `options` — `EnableReceiverOptions`
+- `options`: `EnableReceiverOptions`
 
 **Returns** `Promise<this>`
 
@@ -212,7 +212,7 @@ setAccess(disabled: boolean): Promise<this>
 
 **Parameters**
 
-- `disabled` — `boolean`
+- `disabled`: `boolean`
 
 **Returns** `Promise<this>`
 
@@ -226,7 +226,7 @@ addWallet(options: CreateReceiverWalletOptions): Promise<ReceiverWalletData>
 
 **Parameters**
 
-- `options` — `CreateReceiverWalletOptions`
+- `options`: `CreateReceiverWalletOptions`
 
 **Returns** `Promise<ReceiverWalletData>`
 
@@ -240,7 +240,7 @@ wallets(options?: ListKycOptions): Promise<ReceiverWalletPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListKycOptions`
+- `options` _(optional)_: `ListKycOptions`
 
 **Returns** `Promise<ReceiverWalletPage>`
 
@@ -254,7 +254,7 @@ addBankAccount(options: CreateBankAccountOptions): Promise<BankAccountData>
 
 **Parameters**
 
-- `options` — `CreateBankAccountOptions`
+- `options`: `CreateBankAccountOptions`
 
 **Returns** `Promise<BankAccountData>`
 
@@ -268,7 +268,7 @@ bankAccounts(options?: ListKycOptions): Promise<BankAccountPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListKycOptions`
+- `options` _(optional)_: `ListKycOptions`
 
 **Returns** `Promise<BankAccountPage>`
 

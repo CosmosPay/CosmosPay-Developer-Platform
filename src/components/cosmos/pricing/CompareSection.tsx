@@ -26,7 +26,7 @@ export function CompareSection() {
             <tr key={row.l}>
               <th>{row.l}</th>
               {row.v.map((c, j) => (
-                <td key={j} className={c === 1 ? "yes" : ""}>{c === 1 ? <IcCheck /> : c === 0 ? "—" : c}</td>
+                <td key={j} className={c === 1 ? "yes" : ""}>{c === 1 ? <IcCheck /> : c === 0 ? "-" : c}</td>
               ))}
             </tr>
           ))}

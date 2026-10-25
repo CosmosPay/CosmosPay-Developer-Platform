@@ -1,4 +1,4 @@
-# Cosmos Pay — Developer Platform
+# Cosmos Pay Developer Platform
 
 The developer dashboard for **Cosmos Pay**: a self-service console where developers sign in,
 manage their organization, mint API keys, and operate against the Cosmos Pay Payments API
@@ -11,7 +11,7 @@ proxies the Cosmos Pay Payments API on the developer's behalf.
 
 ### Three domains, one app
 
-This one Astro app — one build, one PM2 process, one `.env`, one Better Auth — answers three
+This one Astro app (one build, one PM2 process, one `.env`, one Better Auth) answers three
 domains. `src/middleware.ts` routes every request by host with the table in
 `src/lib/hosts.ts`:
 
@@ -31,7 +31,7 @@ domains. `src/middleware.ts` routes every request by host with the table in
   `/payments/*`, so their public URLs have no prefix; asked directly, those mounts redirect to
   the public address.
 - **One sign-in for everything, one cookie on one host.** Better Auth runs on
-  `dev.cosmospay.lat` and its session cookie stays host-only there — never scoped to
+  `dev.cosmospay.lat` and its session cookie stays host-only there, never scoped to
   `.cosmospay.lat`, where it would reach the gateway, Authentik and the wallet landing too.
   The company site reads the session with a credentialed call to `/api/auth/get-session`
   (same site, allowed by the CORS layer) and signs out the same way. Signing in always happens
@@ -46,30 +46,30 @@ domains. `src/middleware.ts` routes every request by host with the table in
 
 ## ✨ Features
 
-- **Auth** — OAuth2 login through Authentik (Better Auth `genericOAuth`), sessions in Postgres.
-- **Organizations & teams** — orgs, members, role/permission scoping, email invitations
+- **Auth**: OAuth2 login through Authentik (Better Auth `genericOAuth`), sessions in Postgres.
+- **Organizations & teams**: orgs, members, role/permission scoping, email invitations
   (magic links) with per-plan seat limits.
-- **API keys** — create/rotate/revoke keys backed by APISIX consumers & credentials, with
+- **API keys**: create/rotate/revoke keys backed by APISIX consumers & credentials, with
   per-key scopes (read/write), role and environment (testnet/mainnet) forwarded downstream.
-- **Payments** — create and manage payment intents (`pay`/`tx`), validate transactions; every
+- **Payments**: create and manage payment intents (`pay`/`tx`), validate transactions; every
   link has a hosted checkout page on payments.cosmospay.lat (amount, QR, open-in-wallet, live
-  status, countdown) in one of four designs — Classic, Split, Receipt, Card — chosen when the
+  status, countdown) in one of four designs (Classic, Split, Receipt, Card), chosen when the
   link is created and changeable from its detail modal.
-- **Embed** — one script for merchants' own sites (`/embed/cosmos-pay.js`, built from
+- **Embed**: one script for merchants' own sites (`/embed/cosmos-pay.js`, built from
   `src/embed/`): `<cosmos-pay-button>` opens the hosted checkout in a popup and relays its status,
   `<cosmos-pay-checkout>` draws a compact checkout inline.
-- **Payments site** — payments.cosmospay.lat's own landing (products, flow, security, developers,
+- **Payments site**: payments.cosmospay.lat's own landing (products, flow, security, developers,
   pricing, FAQ) with the coin-ramp video as its hero.
-- **Company site** — the landing, pricing and terms on cosmospay.lat, from the same app.
-- **Webhooks** — register endpoints, inspect deliveries, redeliver, rotate signing secrets.
-- **Products & customers** — catalog items / price links and merchant-managed customers.
-- **Analytics** — summary, balances, API & webhook logs.
-- **Client activity** — what the dashboard and the Cosmos Pay Wallet report about
+- **Company site**: the landing, pricing and terms on cosmospay.lat, from the same app.
+- **Webhooks**: register endpoints, inspect deliveries, redeliver, rotate signing secrets.
+- **Products & customers**: catalog items / price links and merchant-managed customers.
+- **Analytics**: summary, balances, API & webhook logs.
+- **Client activity**: what the dashboard and the Cosmos Pay Wallet report about
   themselves (errors, timings, transactions), including everything that never became an
   API call; browsable under **Build → Activity log**.
-- **Plans & onboarding** — feature-flagged onboarding wizard and plan selection.
-- **Support** — in-dashboard tickets.
-- **i18n** — multi-language UI (en, es, pt, fr, de).
+- **Plans & onboarding**: feature-flagged onboarding wizard and plan selection.
+- **Support**: in-dashboard tickets.
+- **i18n**: multi-language UI (en, es, pt, fr, de).
 
 ---
 
@@ -91,7 +91,7 @@ Browser ──▶ Cloudflare ──▶ nginx ──▶ Astro SSR app (this repo,
 ```
 
 - The dashboard talks to the **Payments API server-to-server** (`src/lib/cosmos.ts`),
-  presenting the gateway secret + the signed-in user's consumer identity — exactly as a
+  presenting the gateway secret + the signed-in user's consumer identity, exactly as a
   real API key would after passing through APISIX.
 - It (re)syncs the APISIX routes to the current `COSMOS_API_URL` on startup
   (`src/lib/apisix-route.ts`): the key-auth route external API-key traffic is proxied through,
@@ -162,7 +162,7 @@ COMMON_ISSUES.md          # production troubleshooting runbook
 # 1. Install
 npm install
 
-# 2. Configure — copy the example and fill it in
+# 2. Configure: copy the example and fill it in
 cp .env.example .env
 
 # 3. Create the schema in your database
@@ -195,7 +195,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `SMTP_HOST/PORT/USER/PASS/SECURE` / `SMTP_FROM` | SMTP transport + verified sender |
 | `ONBOARDING_ENABLED` / `PLANS_ENABLED` / `ALLOW_USER_PLAN_CHANGES` / `ENABLED_PLANS` | Feature flags |
 
-> ⚠️ `PUBLIC_BETTER_AUTH_URL` is **inlined at build time** — change it before `npm run build`,
+> ⚠️ `PUBLIC_BETTER_AUTH_URL` is **inlined at build time**: change it before `npm run build`,
 > not just before restarting. See [COMMON_ISSUES.md](./COMMON_ISSUES.md) for the why.
 
 ### External setup checklist
@@ -203,7 +203,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 - **Authentik:** register a Redirect URI of `https://<your-domain>/api/auth/callback/ak`.
   (better-auth 1.7 rebuilt generic OAuth as a social provider and moved the callback off
   `/api/auth/oauth2/callback/:id`; an instance upgraded from 1.6 must register the new URI
-  before the deploy — Authentik accepts both, so keep the old one until the cutover lands.)
+  before the deploy. Authentik accepts both, so keep the old one until the cutover lands.)
 - **Email:** verify your `SMTP_FROM` domain in Resend (SPF/DKIM).
 - **APISIX:** point `APISIX_URL` at the **local/internal** admin API (never expose it publicly).
 
@@ -228,10 +228,10 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 ## 🌐 nginx: three domains, one upstream
 
 All three domains proxy to the same process (`127.0.0.1:4321`) and **must pass the original
-`Host`** — it is what the app routes on. Two things stay outside the app:
+`Host`**, because that is what the app routes on. Two things stay outside the app:
 
 ```nginx
-# cosmospay.lat — the web wallet and the passkey files stay on disk (the passkey RP ID is
+# cosmospay.lat: the web wallet and the passkey files stay on disk (the passkey RP ID is
 # cosmospay.lat); everything else is the app.
 location /wallet/      { alias /var/www/cosmos-wallet-releases/current/; }   # as today
 location /.well-known/ { root  /var/www/...; }                               # as today
@@ -250,7 +250,7 @@ location / {
 ```
 
 The `/docs` rules are there because the docs are a static export the Node server hands out
-before the middleware runs — on every host. Everything else is routed by the app. Point
+before the middleware runs, on every host. Everything else is routed by the app. Point
 `www.cosmospay.lat` at the same upstream too (the app redirects it to the apex).
 
 ## 🏗️ Production deployment (PM2)
@@ -269,12 +269,12 @@ npm run build
 pm2 start ecosystem.config.cjs --only devplat       # production
 pm2 save
 
-# (dev variant — astro dev, do NOT run alongside devplat: same port 4321)
+# (dev variant with astro dev; do NOT run it alongside devplat, they share port 4321)
 pm2 start ecosystem.config.cjs --only devplat-dev
 ```
 
 nginx terminates TLS and proxies the domain to `127.0.0.1:4321`. For the full production
-runbook — Cloudflare and OAuth gotchas, the APISIX/Docker upstream, email/SMTP, database init —
+runbook (Cloudflare and OAuth gotchas, the APISIX/Docker upstream, email/SMTP, database init),
 read **[COMMON_ISSUES.md](./COMMON_ISSUES.md)**.
 
 ---
@@ -284,19 +284,19 @@ read **[COMMON_ISSUES.md](./COMMON_ISSUES.md)**.
 Every route under `src/pages/api/**` is a typed SSR endpoint. A generated OpenAPI document is
 served at **`/api/openapi.json`** (schemas live in `src/schemas/`). Highlights:
 
-- `POST /api/auth/[...all]` — Better Auth (OAuth2 sign-in/callback, session, sign-out)
-- `GET|POST /api/api-keys` · `…/[id]` — manage APISIX-backed API keys
-- `…/api/payment-intents` (+ `/[id]`, `/[id]/validate`) — SEP-7 intents
-- `…/api/webhooks` (+ deliveries, ping, rotate-secret) — webhook endpoints
-- `…/api/products` · `…/api/customers` — catalog & customers
-- `…/api/organizations/[id]/…` — orgs, members, invitations
-- `GET /api/cosmos/[metric]` — analytics proxy
-- `GET|POST /api/activity` · `GET /api/activity/summary` — the client-activity feed
+- `POST /api/auth/[...all]`: Better Auth (OAuth2 sign-in/callback, session, sign-out)
+- `GET|POST /api/api-keys` · `…/[id]`: manage APISIX-backed API keys
+- `…/api/payment-intents` (+ `/[id]`, `/[id]/validate`): SEP-7 intents
+- `…/api/webhooks` (+ deliveries, ping, rotate-secret): webhook endpoints
+- `…/api/products` · `…/api/customers`: catalog & customers
+- `…/api/organizations/[id]/…`: orgs, members, invitations
+- `GET /api/cosmos/[metric]`: analytics proxy
+- `GET|POST /api/activity` · `GET /api/activity/summary`: the client-activity feed
   (POST is the dashboard reporting its own page views, actions and errors)
-- `POST /api/telemetry` — **public**: activity from a wallet that has no Cosmos Pay
+- `POST /api/telemetry` (**public**): activity from a wallet that has no Cosmos Pay
   account yet, forwarded upstream under one shared consumer so it stays anonymous
   rather than being attributed to a guess. Rate-limited per address *and* globally
-- `…/api/support/…` · `…/api/notifications/…` — tickets & notifications
+- `…/api/support/…` · `…/api/notifications/…`: tickets & notifications
 
 ---
 
@@ -304,20 +304,20 @@ served at **`/api/openapi.json`** (schemas live in `src/schemas/`). Highlights:
 
 Part of the Cosmos Pay ecosystem:
 
-- **[CosmosPay Community Server](https://github.com/CosmosPay/CosmosPay-Community-Server)** —
+- **[CosmosPay Community Server](https://github.com/CosmosPay/CosmosPay-Community-Server)**:
   the NestJS Payments API (payment intents and swaps on Stellar, Solana and Monad, webhooks,
   products, customers, analytics).
   This is the **upstream** that the dashboard proxies through APISIX.
-- **[CosmosJS SDK](https://github.com/CosmosPay/CosmosJS_SDK)** — the object-oriented JS/TS
+- **[CosmosJS SDK](https://github.com/CosmosPay/CosmosJS_SDK)**: the object-oriented JS/TS
   client developers use to call the public API with their API keys.
-- **[cosmos-wallet-landing](https://github.com/CosmosPay/cosmos-wallet-landing)** —
-  wallet.cosmospay.lat: the wallet's own marketing site.
+- **[cosmos-wallet-landing](https://github.com/CosmosPay/cosmos-wallet-landing)**:
+  the wallet's own marketing site at wallet.cosmospay.lat.
 
 Built on top of:
 
-- **[Authentik](https://goauthentik.io)** ([source](https://github.com/goauthentik/authentik)) —
+- **[Authentik](https://goauthentik.io)** ([source](https://github.com/goauthentik/authentik)):
   the OAuth2 / OpenID Connect identity provider that handles user login.
-- **[Apache APISIX](https://apisix.apache.org)** ([source](https://github.com/apache/apisix)) —
+- **[Apache APISIX](https://apisix.apache.org)** ([source](https://github.com/apache/apisix)):
   the API gateway where per-user consumers/credentials (API keys) live and through which
   external API traffic is authenticated and proxied to the Payments API.
 
@@ -325,4 +325,4 @@ Built on top of:
 
 ## 📄 License
 
-Proprietary — © Cosmos Pay. All rights reserved.
+Proprietary. © Cosmos Pay. All rights reserved.

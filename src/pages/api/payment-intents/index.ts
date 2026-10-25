@@ -66,7 +66,7 @@ export const POST: APIRoute = async (ctx) => {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: ApiStatus.BAD_REQUEST });
   }
 
-  // Payment links belong to an organization — the caller must be a member and hold
+  // Payment links belong to an organization: the caller must be a member and hold
   // the `payments:create` permission (owners/admins implicitly have it).
   const { org, environment, kind, ...rest } = body.data;
   const membership = await getMembership(org, session.user.id).catch(() => null);
@@ -100,7 +100,7 @@ export const POST: APIRoute = async (ctx) => {
             checkoutTheme: rest.checkoutTheme,
           });
 
-    // Activity notification (best-effort) — records origin + date of the action.
+    // Activity notification (best-effort): records origin + date of the action.
     const loc = await geoLocate(ctx.request.headers, ctx.clientAddress).catch(() => null);
     safeNotify({
       userId: session.user.id,

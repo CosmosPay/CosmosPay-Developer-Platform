@@ -5,7 +5,7 @@ description: "Lesen Sie Ihre Kontoübersicht, Guthaben und Logs und prüfen Sie 
 
 Diese schreibgeschützten Endpunkte geben Ihnen operative Einsicht: wie viel Sie eingenommen haben, jüngste Aktivitäten und ob der Dienst läuft.
 
-## Analysen (schreibgeschützt) — `client.analytics`
+## Analysen (schreibgeschützt): `client.analytics`
 
 ```ts
 const summary  = await client.analytics.summary();   // totals, volume, webhook health, 30-day series
@@ -20,7 +20,7 @@ expired, successRate }, volume: [...], webhooks: { endpoints, deliveries, ... } 
 `balances()` → `{ data: [{ asset, amount, pending, count }], total }`
 wobei `amount`/`pending` Dezimalzeichenketten sind und `count` die Anzahl der Zahlungen ist.
 
-## Health (öffentliche Probes) — `client.health`
+## Health (öffentliche Probes): `client.health`
 
 ```ts
 await client.health.liveness();        // → true when the service is up

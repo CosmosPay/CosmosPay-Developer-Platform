@@ -1,4 +1,4 @@
-/* i18n/index.tsx — lightweight, SSR-safe multilanguage store for the Cosmos Pay frontend.
+/* i18n/index.tsx: lightweight, SSR-safe multilanguage store for the Cosmos Pay frontend.
    - Locale is read from the `cosmospay-lang` cookie on the server (so SSR + first client
      render agree → no hydration mismatch) and persisted to both cookie + localStorage.
    - Components subscribe via useT()/useLang(); LangSelect flips the locale live with setLang(). */

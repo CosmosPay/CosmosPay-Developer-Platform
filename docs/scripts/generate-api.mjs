@@ -23,12 +23,12 @@ const GATEWAY = process.env.COSMOS_API_BASE || GATEWAY_DEFAULT;
 // only on dev/build machines; on a production box it's absent and we don't want the docs to depend
 // on it. The generated content/docs/api + openapi.json are committed, so just skip here.
 if (!fs.existsSync(SRC)) {
-  console.warn(`[generate-api] OpenAPI source not found at ${SRC} — keeping the committed content/docs/api + openapi.json as-is.`);
+  console.warn(`[generate-api] OpenAPI source not found at ${SRC}; keeping the committed content/docs/api + openapi.json as-is.`);
   process.exit(0);
 }
 
 // Every change to the server's spec lives in transform-spec.mjs, which the check script
-// (scripts/check-api-spec.mjs) runs too — so what is written here is exactly what CI
+// (scripts/check-api-spec.mjs) runs too, so what is written here is exactly what CI
 // expects to find committed.
 const spec = transformSpec(JSON.parse(fs.readFileSync(SRC, 'utf8')), { gateway: GATEWAY });
 fs.writeFileSync(SPEC_OUT, `${JSON.stringify(spec, null, 2)}\n`);
@@ -45,8 +45,8 @@ await generateFiles({
 });
 
 // Build our own meta.json (ordered) + an index landing page with cards.
-// fumadocs writes each page under its tag lowercased, so match the table the same way —
-// a tag the server spells in capitals (`DeFindex`) would otherwise lose its title and place.
+// fumadocs writes each page under its tag lowercased, so match the table the same way.
+// A tag the server spells in capitals (`DeFindex`) would otherwise lose its title and place.
 const order = TAGS.map((t) => t.name.toLowerCase());
 const titleOf = Object.fromEntries(TAGS.map((t) => [t.name.toLowerCase(), t.title]));
 const generated = fs

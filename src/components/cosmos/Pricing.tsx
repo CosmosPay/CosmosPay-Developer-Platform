@@ -1,4 +1,4 @@
-/* Pricing.jsx — Cosmos Pay pricing page. Copy resolved through the i18n catalog (useT). */
+/* Pricing.jsx: Cosmos Pay pricing page. Copy resolved through the i18n catalog (useT). */
 import { useState } from "react";
 import { Nav, Footer, useTheme, useReveal, useDevSession } from "@/components/cosmos/shared";
 import type { User } from "@/components/cosmos/lib/types";

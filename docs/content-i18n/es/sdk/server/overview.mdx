@@ -3,17 +3,17 @@ title: "Resumen"
 description: "Qué es el SDK, sus puntos de entrada de servidor y navegador, el flujo de pago de tres pasos, y los datos clave que debes conocer."
 ---
 
-Este es el modelo mental de todo el SDK — léelo primero. Explica por qué hay dos puntos de entrada (servidor y navegador) y cómo un solo pago atraviesa tres pasos.
+Este es el modelo mental de todo el SDK; léelo primero. Explica por qué hay dos puntos de entrada (servidor y navegador) y cómo un solo pago atraviesa tres pasos.
 
 `@cosmosapp/pay_sdk` es el SDK orientado a objetos de JavaScript/TypeScript para la
-API de pagos de **Cosmos Pay** — **intenciones de pago SEP-7** de Stellar, **webhooks**,
+API de pagos de **Cosmos Pay**: **intenciones de pago SEP-7** de Stellar, **webhooks**,
 **productos**, **clientes** y **analíticas**.
 
 ## Dos puntos de entrada
 
 | Importación | Se ejecuta en | Propósito |
 | ------ | ------- | ------- |
-| `@cosmosapp/pay_sdk` | servidor (Node ≥ 18) | Crear y administrar intenciones, webhooks, productos, clientes, analíticas — todo lo que necesite tu clave de API secreta. |
+| `@cosmosapp/pay_sdk` | servidor (Node ≥ 18) | Crear y administrar intenciones, webhooks, productos, clientes, analíticas: todo lo que necesite tu clave de API secreta. |
 | `@cosmosapp/pay_sdk/web` | navegador | *Completar* una intención: autodetectar la billetera de Stellar del usuario (Freighter, xBull, Rabet, LOBSTR, Albedo), construir la transacción, firmar y enviar. Independiente del proveedor. |
 
 ## Modelo mental
@@ -29,14 +29,14 @@ Un pago tiene dos mitades:
 
 ## Diseño
 
-- **Atómico** — un `Client`; un administrador por recurso (`client.paymentIntents`,
+- **Atómico**: un `Client`; un administrador por recurso (`client.paymentIntents`,
   `client.webhooks`, `client.products`, `client.customers`, `client.analytics`,
   `client.health`).
-- **Estructuras que actúan sobre sí mismas** — los objetos devueltos actúan sobre sí mismos:
+- **Estructuras que actúan sobre sí mismas**: los objetos devueltos actúan sobre sí mismos:
   `intent.validate()`, `endpoint.rotateSecret()`, `product.deactivate()`.
-- **Cero dependencias en tiempo de ejecución** — `fetch` nativo + `node:crypto`. El SDK de Stellar
+- **Cero dependencias en tiempo de ejecución**: `fetch` nativo + `node:crypto`. El SDK de Stellar
   es una dependencia de par *opcional*, solo necesaria por el cliente web del navegador.
-- **Totalmente tipado** — funciona tanto en CJS como en ESM.
+- **Totalmente tipado**: funciona tanto en CJS como en ESM.
 
 ## Datos clave para una integración correcta
 
@@ -49,5 +49,5 @@ Un pago tiene dos mitades:
 
 ## Referencias
 
-- [Client](/sdk/definitions/client) — El punto de entrada principal del SDK — un único cliente atómico que expone cada recurso a través de su propio administrador — un diseño atómico de un solo cliente.
+- [Client](/sdk/definitions/client): El punto de entrada principal del SDK, un único cliente atómico que expone cada recurso a través de su propio administrador (un diseño atómico de un solo cliente).
 - [WebClient](/sdk/definitions/web-client)

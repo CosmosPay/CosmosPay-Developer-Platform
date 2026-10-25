@@ -1,4 +1,4 @@
-/* POST /api/kyc/receivers/:id/tos — request a terms-of-service link for a receiver.
+/* POST /api/kyc/receivers/:id/tos: request a terms-of-service link for a receiver.
 
    More specific than the generic /api/kyc/[...path] proxy, so it wins for this path.
    It forwards to the Payments API (which rate-limits the email channel to once/day and

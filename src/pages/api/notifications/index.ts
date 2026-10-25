@@ -14,7 +14,7 @@ import { canCreateNotifications, getRole } from "@/lib/profile";
 import { geoLocate } from "@/lib/geo";
 import type { APIRoute } from "astro";
 
-/* GET /api/notifications — list the signed-in user's activity notifications. */
+/* GET /api/notifications: list the signed-in user's activity notifications. */
 export const GET: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");
@@ -38,7 +38,7 @@ const createNotificationBodySchema = z.object({
   message: z.string().trim().max(500).optional(),
 });
 
-/* POST /api/notifications — create a notification. Restricted to owner/admin accounts;
+/* POST /api/notifications: create a notification. Restricted to owner/admin accounts;
    regular ("user") accounts can only read, since the system generates their notifications. */
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });

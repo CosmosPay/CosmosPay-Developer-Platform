@@ -1,4 +1,4 @@
-// Cosmos Pay — Developer Platform
+// Cosmos Pay Developer Platform
 // Own accounts/profile system backing the Authentik (OAuth2) login.
 // better-auth persists its core models here; Profile is our own per-user data.
 
@@ -95,7 +95,7 @@ model Profile {
   // Developer-panel account role: "user" (default) | "support" | "admin" | "owner".
   role        String   @default("user")
 
-  // Billing plan (mock — not yet wired to a billing provider): starter | essentials | growth |
+  // Billing plan (mock, not yet wired to a billing provider): starter | essentials | growth |
   // enterprise, plus the legacy "community" (the free plan, no longer offered; the accounts
   // already on it keep it). New accounts start on starter (DEFAULT_PLAN_ID in src/lib/plans.ts).
   plan        String   @default("starter")
@@ -112,7 +112,7 @@ model Profile {
   lastLoginRegion  String?
   lastLoginAt     DateTime?
 
-  // Last activity (any authenticated request), throttled — used for "last online".
+  // Last activity (any authenticated request), throttled; used for "last online".
   lastSeenAt      DateTime?
 
   createdAt   DateTime @default(now())
@@ -172,7 +172,7 @@ model SupportTicket {
 model SupportMessage {
   id          String   @id @default(cuid())
   ticketId    String // the ticket this message belongs to
-  userId      String // ticket owner (the customer) — denormalized for convenience
+  userId      String // ticket owner (the customer), denormalized for convenience
   senderId    String // user id of whoever sent this message
   senderName  String?
   fromStaff   Boolean  @default(false)
@@ -197,7 +197,7 @@ model Organization {
   id        String   @id @default(cuid())
   name      String
   ownerId   String
-  // Onboarding context (industry, goals, expected volume) — optional, captured on creation.
+  // Onboarding context (industry, goals, expected volume), optional and captured on creation.
   metadata  Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -250,13 +250,13 @@ model OrganizationMember {
   @@map("organization_member")
 }
 
-// ---------------- Wallet account provisioning — RETIRED ----------------
-// RETIRED — wallet accounts are provisioned by the community server now (it emails the
+// ---------------- Wallet account provisioning (RETIRED) ----------------
+// RETIRED: wallet accounts are provisioned by the community server now (it emails the
 // sign-in code and mints the keys in APISIX itself), and the flows that wrote this table
 // were deleted. Unlike the tables below it is still READ: isWalletProvisionedUser
 // (src/lib/wallet-provisioning.ts) uses a confirmed/claimed row to keep a legacy wallet
 // account on the rotate-only API-key path. It is NOT part of `npm run export:wallet-data`,
-// so dropping it loses no wallet data, but it does change that behaviour — decide it on
+// so dropping it loses no wallet data, but it does change that behaviour. Decide it on
 // its own, not as part of dropping the tables below.
 //
 // What it held: a pending CosmosPay account request initiated by the (public, open-source) CosmosPay
@@ -304,7 +304,7 @@ model WalletRegistration {
   @@map("wallet_registration")
 }
 
-// ---------------- Wallet sign-in (own social login) — RETIRED ----------------
+// ---------------- Wallet sign-in, own social login (RETIRED) ----------------
 // The sign-in moved to the community server (its src/wallet-auth/), and so did the code that
 // used these tables. They are KEPT, not dropped: `wallet_backup` holds the encrypted seeds
 // people restore their wallets from, and a migration that dropped it before the export had
@@ -313,7 +313,7 @@ model WalletRegistration {
 // provider handshake the wallet polls, an emailed code waiting to be typed, and the
 // encrypted seed a person restores on their next device.
 
-// RETIRED — served by the community server now (src/wallet-auth/ over there). Nothing
+// RETIRED: served by the community server now (src/wallet-auth/ over there). Nothing
 // in this repo reads or writes this table any more; the model is kept ONLY so the rows
 // survive until they are exported. Drop it in a later migration, and only after
 // `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
@@ -327,7 +327,7 @@ model WalletAuthHandshake {
   state         String   @unique
   // "google" | "github"
   provider      String
-  // base64url(SHA-256(verifier)) — RFC 7636 S256, the only method accepted.
+  // base64url(SHA-256(verifier)): RFC 7636 S256, the only method accepted.
   codeChallenge String
   // pending → authorized (identity read at the callback) → redeemed; or failed / expired.
   status        String   @default("pending")
@@ -347,14 +347,14 @@ model WalletAuthHandshake {
   @@map("wallet_auth_handshake")
 }
 
-// RETIRED — served by the community server now (src/wallet-auth/ over there). Nothing
+// RETIRED: served by the community server now (src/wallet-auth/ over there). Nothing
 // in this repo reads or writes this table any more; the model is kept ONLY so the rows
 // survive until they are exported. Drop it in a later migration, and only after
 // `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
 // output imported over there.
 // A six-digit code emailed to prove an inbox. Two ways in: an email sign-in (`via` =
 // "email"), and a provider sign-in for an email that already has an account (`via` =
-// "google" | "github") — the provider proves who consented, the inbox proves who opened
+// "google" | "github"): the provider proves who consented, the inbox proves who opened
 // the login.
 model WalletLoginCode {
   id        String   @id @default(cuid())
@@ -377,7 +377,7 @@ model WalletLoginCode {
   @@map("wallet_login_code")
 }
 
-// RETIRED — served by the community server now (src/wallet-auth/ over there). Nothing
+// RETIRED: served by the community server now (src/wallet-auth/ over there). Nothing
 // in this repo reads or writes this table any more; the model is kept ONLY so the rows
 // survive until they are exported. Drop it in a later migration, and only after
 // `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
@@ -389,7 +389,7 @@ model WalletLoginCode {
 model WalletBackup {
   id             String   @id @default(cuid())
   userId         String   @unique
-  // The address the box restores to — and the key that must sign any later change to it.
+  // The address the box restores to, and the key that must sign any later change to it.
   stellarAddress String
   // Opaque to this server: the wallet's own sealed-box JSON (salt, KDF cost, IV, ciphertext).
   box            String
@@ -402,21 +402,21 @@ model WalletBackup {
   @@map("wallet_backup")
 }
 
-// ---------------- Account recovery (SEP-30) — RETIRED ----------------
+// ---------------- Account recovery, SEP-30 (RETIRED) ----------------
 // SEP-10/SEP-30 moved to the community server (its src/recovery/), each role a separate
 // deployment with its own database. A deployment was ONE of the two recovery servers,
 // and `role` is on every row so that two of them sharing a database by accident still
 // never shared an account. The signer this server held for an account was DERIVED from RECOVERY_SIGNER_MASTER,
-// so there is no key material here — only who may ask it to sign.
+// so there is no key material here, only who may ask it to sign.
 
-// RETIRED — served by the community server now (src/recovery/ over there). Nothing
+// RETIRED: served by the community server now (src/recovery/ over there). Nothing
 // in this repo reads or writes this table any more; the model is kept ONLY so the rows
 // survive until they are exported. Drop it in a later migration, and only after
 // `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its
 // output imported over there.
 model RecoveryAccount {
   id        String   @id @default(cuid())
-  // "a" | "b" — which server registered this account.
+  // "a" | "b": which server registered this account.
   role      String
   // The Stellar account being protected.
   address   String
@@ -431,7 +431,7 @@ model RecoveryAccount {
   @@map("recovery_account")
 }
 
-// RETIRED — served by the community server now (src/recovery/ over there). Nothing
+// RETIRED: served by the community server now (src/recovery/ over there). Nothing
 // in this repo reads or writes this table any more; the model is kept ONLY so the rows
 // survive until they are exported. Drop it in a later migration, and only after
 // `npm run export:wallet-data` (scripts/export-wallet-data.mjs) has been run and its

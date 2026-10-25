@@ -1,4 +1,4 @@
-/* wallet-provisioning.ts — what is left of the wallet's account provisioning here.
+/* wallet-provisioning.ts: what is left of the wallet's account provisioning here.
 
    Wallet accounts are provisioned by the community server now: it emails the sign-in code
    and mints the keys in APISIX itself, under `cosmos_wallet_<accountId>`, so no wallet
@@ -16,7 +16,7 @@ import { prisma } from "@/lib/prisma";
 // this list is a feature that dies on its first call with `insufficient_scope`, which
 // reads to the user like a broken install. Exported because the rotate path (api-keys)
 // re-applies this set to a wallet key: accounts provisioned before a scope was added
-// would otherwise keep a key that can never reach the new surface — and one removed
+// would otherwise keep a key that can never reach the new surface, and one removed
 // here (`pollar:*`, with the server's Pollar bridge) is dropped on the next rotate.
 export const WALLET_KEY_SCOPES = [
   "swaps:read",
@@ -42,8 +42,8 @@ export const WALLET_KEY_SCOPES = [
 /**
  * Whether a user was provisioned via Cosmos Wallet (vs Authentik OAuth). Their
  * dev + prod API keys are auto-minted at registration, so such accounts cannot
- * create *additional* keys — the API-key endpoint rotates their existing keys
- * instead. Authoritative signal: a confirmed/claimed WalletRegistration row — written only
+ * create *additional* keys; the API-key endpoint rotates their existing keys
+ * instead. Authoritative signal: a confirmed/claimed WalletRegistration row, written only
  * by the retired flows, so this is true for legacy wallet accounts alone.
  */
 export async function isWalletProvisionedUser(userId: string): Promise<boolean> {

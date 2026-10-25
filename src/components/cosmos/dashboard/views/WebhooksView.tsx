@@ -121,7 +121,7 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
           <tbody>{rows.map((d) => (
             <tr key={d.id}>
               <td className="tid">{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</td>
-              <td className="cust">{d.responseStatus ?? "—"}</td>
+              <td className="cust">{d.responseStatus ?? "-"}</td>
               <td><Pill st={DELIVERY_PILL[d.status] || "ref"} label={d.status} /></td>
               <td className="cust">{fmtDateTime(d.lastAttemptAt || d.createdAt)}</td>
               <td style={{ textAlign: "right" }}>{canManage && <button className="link-btn" onClick={() => redeliver(d)}>{cx.redeliver}</button>}</td>

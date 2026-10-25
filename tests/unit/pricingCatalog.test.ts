@@ -1,4 +1,4 @@
-/* pricingCatalog.test.ts — the pricing page and the onboarding wizard pair translated copy
+/* pricingCatalog.test.ts: the pricing page and the onboarding wizard pair translated copy
    with plan data by POSITION (the plan cards with PLAN_META and PLAN_IDS, the compare table's
    columns with PLAN_IDS) or by id (the wizard's cards). A column added or dropped in one
    catalog and not the others shifts every value under the wrong plan, silently. */

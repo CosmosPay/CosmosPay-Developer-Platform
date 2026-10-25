@@ -1,4 +1,4 @@
-/* checkout.ts — the browser half of /{id} and /preview/{design}.
+/* checkout.ts: the browser half of /{id} and /preview/{design}.
  *
  * Reads the payment link from the gateway, mounts the design the merchant picked (one of
  * the <template>s Checkout.astro served), fills it, and keeps reading the link until it

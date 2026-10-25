@@ -1,4 +1,4 @@
-/* SiteNav.tsx — the general navigation bar as an island of its own. Every view on the three
+/* SiteNav.tsx: the general navigation bar as an island of its own. Every view on the three
    domains carries the same bar: CosmosLayout and PaymentsLayout render this one, and the
    React pages that own the whole document (Landing, Pricing, Dashboard, PaymentsLanding)
    render <Nav> themselves with the same props. */

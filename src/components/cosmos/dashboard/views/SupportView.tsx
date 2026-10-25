@@ -9,7 +9,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
 import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
 
-/* Customer support — a ticket system. The customer can open several tickets in parallel;
+/* Customer support: a ticket system. The customer can open several tickets in parallel;
    each has a subject, a status and its own message thread. */
 export function SupportView() {
   const t = useT();

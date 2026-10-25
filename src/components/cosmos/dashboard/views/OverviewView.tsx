@@ -1,4 +1,4 @@
-/* OverviewView — the organization's payments at a glance, laid out after the product
+/* OverviewView: the organization's payments at a glance, laid out after the product
    owner's gateway-dashboard reference: a navy account card beside the totals, a period
    switch over a daily bar chart, then the latest settled payments and the activity feed.
    Every figure is the Payments API's /v1/summary; nothing here is sample data. */
@@ -34,7 +34,7 @@ const periodStart = (period) => {
   return new Date(now.getTime() - days * 86400000);
 };
 
-/* The organization id, copyable — the merchant code of the reference. */
+/* The organization id, copyable: the merchant code of the reference. */
 function OrgIdPill({ id, label }) {
   const t = useT();
   const [done, copy] = useCopy();
@@ -136,8 +136,8 @@ export function OverviewView({ org, notifications, onViewActivity, onGo = (v) =>
               </div>
             </div>
             <p className="hub-terms">
-              {/* A plan without a per-payment rate (Community: "—") shows no rate line. */}
-              {plan.perTx && plan.perTx !== "—" && <span>{h.rate} <b>{plan.perTx}</b></span>}
+              {/* A plan without a per-payment rate (Community: "-") shows no rate line. */}
+              {plan.perTx && plan.perTx !== "-" && <span>{h.rate} <b>{plan.perTx}</b></span>}
               <span><b>{tier}</b></span>
             </p>
           </div>
@@ -213,7 +213,7 @@ export function OverviewView({ org, notifications, onViewActivity, onGo = (v) =>
                   <tr key={p.id}>
                     <td className="tid"><span className="hub-idcell"><span className="hub-ok" aria-hidden="true"><IcCheck /></span>{short(p.id)}</span></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>
-                    <td className="amt">{p.amount ? amount(p.amount) : "—"} {p.asset}</td>
+                    <td className="amt">{p.amount ? amount(p.amount) : "-"} {p.asset}</td>
                     <td className="cust">{CHAIN_NAME[p.chain] || p.chain || "Stellar"}</td>
                     <td className="cust"><code>{short(p.destination)}</code></td>
                     <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>

@@ -1,4 +1,4 @@
-/* ink.ts — the buttons' hover fill, after the Stellar Snap's landing: a circle of ink grows
+/* ink.ts draws the buttons' hover fill, after the Stellar Snap's landing: a circle of ink grows
  * from the point where the pointer entered until it paints the whole button, then shrinks
  * back towards where it left (the CSS is `.btn::before` in cosmos.css).
  *

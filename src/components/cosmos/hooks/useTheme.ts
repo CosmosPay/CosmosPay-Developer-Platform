@@ -6,7 +6,7 @@ const STORAGE_KEY = "cosmospay-theme";
 /* Persisted light/dark theme, reflected onto <html data-theme>. Without a saved choice it
    starts from what the layout's pre-paint script already set (light on the site and the
    platform, the system theme on payment pages), so hydrating never flips it, and it is
-   saved only once the visitor picks one — until then a payment page keeps following the
+   saved only once the visitor picks one; until then a payment page keeps following the
    system. */
 export function useTheme() {
   const saved = useRef(false);

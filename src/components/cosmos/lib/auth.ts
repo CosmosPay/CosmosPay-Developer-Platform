@@ -1,4 +1,4 @@
-/* Auth helpers. There is one auth system — Better Auth on the platform's domain — for all
+/* Auth helpers. There is one auth system (Better Auth on the platform's domain) for all
    three domains this app answers. Its session cookie stays host-only there (src/lib/auth.ts),
    so pages on another domain read the session with a credentialed call (useDevSession).
    Signing in is the Authentik OAuth2 flow; there is no username/password screen. */
@@ -36,7 +36,7 @@ export function ctaProps(user: User | null | undefined, next: string = "/dashboa
    (`initial`, set when the page was served from the platform's own host) and otherwise reads
    /api/auth/get-session cross-origin after hydration. `ready` stays false until the answer
    arrives, so the nav can hold its skeleton instead of flashing "Log in" at a signed-in
-   visitor. A failed read counts as signed out — the page never waits on it.
+   visitor. A failed read counts as signed out; the page never waits on it.
    `enabled: false` skips the read and reports signed out at once: the payments domain is
    not an allowed origin for the session (src/lib/allowed-origins.ts), by design. */
 export function useDevSession(initial: User | null = null, enabled = true): { user: User | null; ready: boolean } {

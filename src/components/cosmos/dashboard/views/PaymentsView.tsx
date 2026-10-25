@@ -61,7 +61,7 @@ export function PaymentsView({ canManage = true, orgId, env = "dev" }) {
 
   const onCreated = (intent) => { setModal(false); setRows((r) => [intent, ...r]); setDetail(intent); };
   const onDeleted = (id) => { setRows((r) => r.filter((x) => x.id !== id)); setDetail(null); };
-  // Delete from the table row — confirmed via the shared ConfirmModal.
+  // Delete from the table row, confirmed via the shared ConfirmModal.
   const confirmDelete = () => {
     if (!toDelete || deleting) return;
     setDeleting(true);

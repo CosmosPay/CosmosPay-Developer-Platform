@@ -135,7 +135,7 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
     [pl.modal.assetIssuer, data.assetIssuer],
     [F.memo, data.memo],
     [F.message, data.msg],
-    // Stellar transaction id — only present once paid/submitted.
+    // Stellar transaction id, only present once paid/submitted.
     [F.txHash, data.txHash],
     [F.created, fmtDateTime(data.createdAt)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
@@ -183,7 +183,7 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
           {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
         </div>
 
-        {/* A paid (settled) link is an immutable record — it can't be deleted. */}
+        {/* A paid (settled) link is an immutable record: it can't be deleted. */}
         {canManage && data.status !== "SUCCEEDED" && (
           <div className="modal-actions">
             {confirming ? (

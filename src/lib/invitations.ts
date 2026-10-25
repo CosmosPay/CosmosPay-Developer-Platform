@@ -1,4 +1,4 @@
-/* invitations.ts — email-based organization invitations with magic-link tokens.
+/* invitations.ts: email-based organization invitations with magic-link tokens.
    An owner/admin invites by email; we create a single-use token that expires after
    3 days and email the invitee a magic link (/invite/:token). They accept by visiting
    the link while signed in with the invited email. Seats are per-organization and
@@ -93,7 +93,7 @@ export async function createInvitation(
   // Pending invite already out for this email?
   const pendingExisting = await prisma.organizationInvitation.findFirst({ where: { orgId, email: e, acceptedAt: null, expiresAt: { gt: new Date() } } });
   if (pendingExisting) return { ok: false, reason: "pending" };
-  // Seat limit (members + pending) — null = unlimited.
+  // Seat limit (members + pending); null = unlimited.
   const usage = await seatUsage(orgId);
   if (usage.limit != null && usage.used >= usage.limit) return { ok: false, reason: "seat_limit" };
 
@@ -122,7 +122,7 @@ export async function getInvitationByToken(token: string) {
   return prisma.organizationInvitation.findUnique({ where: { token }, include: { org: { select: { id: true, name: true } } } });
 }
 
-/* Pending invitations addressed to a signed-in user's email — surfaced inside their
+/* Pending invitations addressed to a signed-in user's email, surfaced inside their
    dashboard so they can join without digging up the email. */
 export async function listInvitationsForUserEmail(email: string): Promise<Array<InvitationSummary & { orgId: string; orgName: string }>> {
   const e = (email || "").trim().toLowerCase();
@@ -144,7 +144,7 @@ type LoadedInvitation = { id: string; orgId: string; email: string; role: string
 async function finalizeAcceptance(inv: LoadedInvitation, user: { id: string; email?: string | null }): Promise<AcceptResult> {
   if (inv.acceptedAt) return { ok: false, reason: "accepted", email: inv.email };
   if (inv.expiresAt.getTime() < Date.now()) return { ok: false, reason: "expired", email: inv.email };
-  // The invitation is tied to the invited email — the signed-in account must match.
+  // The invitation is tied to the invited email: the signed-in account must match.
   if ((user.email || "").trim().toLowerCase() !== inv.email.toLowerCase()) return { ok: false, reason: "mismatch", email: inv.email };
 
   const existing = await prisma.organizationMember.findUnique({ where: { orgId_userId: { orgId: inv.orgId, userId: user.id } } });

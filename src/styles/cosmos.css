@@ -276,7 +276,7 @@ button { font-family: inherit; cursor: pointer; }
 .nav .nav-trigger, .nav .link-login, .nav .btn { white-space: nowrap; }
 
 /* Mobile: the burger and its menu. Here with the rest of the nav (not in views.css) so every
-   page that draws the general nav — the payments pages too — lays it out the same. */
+   page that draws the general nav (the payments pages too) lays it out the same. */
 .nav-burger { display: none; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); place-items: center; cursor: pointer; }
 .nav-burger svg { width: 21px; height: 21px; }
 .mobile-menu { display: none; }
@@ -404,7 +404,7 @@ button { font-family: inherit; cursor: pointer; }
 .toast-error svg { color: #FF6B6B; }
 @media (prefers-reduced-motion: reduce) { .toast { transition: opacity .15s; transform: none; } .toast.out { transform: none; } }
 
-/* buttons — the Stellar Snap's pills: a 1.5px outline, a bold label, and an ink fill that
+/* buttons, the Stellar Snap's pills: a 1.5px outline, a bold label, and an ink fill that
    grows from the point where the pointer enters until it paints the button, then shrinks back
    towards where it leaves (src/scripts/ink.ts places it). Keyboard focus paints from the centre.
    Each variant names its ink (--ink-fill) and the label colour on it (--ink-fg). */

@@ -50,7 +50,7 @@ export function UsersView({ currentUserId, currentRole }) {
               const planOpts = planIds.map((pp) => ({ value: pp, label: t.dash.planNames[pp] || pp }));
               return (
                 <tr key={r.id}>
-                  <td><div className="cust-cell"><span className="av-sm">{(r.name || r.email || "?").slice(0, 2).toUpperCase()}</span>{r.name || "—"}{isSelf && <span className="kg pub" style={{ marginLeft: 8 }}>{t.dash.orgs.you}</span>}</div></td>
+                  <td><div className="cust-cell"><span className="av-sm">{(r.name || r.email || "?").slice(0, 2).toUpperCase()}</span>{r.name || "-"}{isSelf && <span className="kg pub" style={{ marginLeft: 8 }}>{t.dash.orgs.you}</span>}</div></td>
                   <td className="cust">{r.email}</td>
                   <td><MiniSelect value={r.role} options={roleOpts} onChange={(v) => update(r.id, { role: v })} disabled={roleLocked} /></td>
                   <td><MiniSelect value={r.plan} options={planOpts} onChange={(v) => update(r.id, { plan: v })} /></td>

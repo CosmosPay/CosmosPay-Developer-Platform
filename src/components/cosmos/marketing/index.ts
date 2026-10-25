@@ -1,4 +1,4 @@
-/* index.js — barrel re-exporting the marketing section components used by the root. */
+/* index.js: barrel re-exporting the marketing section components used by the root. */
 export { Hero } from "@/components/cosmos/marketing/Hero";
 export { WalletSection } from "@/components/cosmos/marketing/WalletSection";
 export { DevKit } from "@/components/cosmos/marketing/DevKit";

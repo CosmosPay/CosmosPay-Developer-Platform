@@ -1,6 +1,6 @@
 /* OpenAPI registration for the platform-admin surface (src/pages/api/admin/**).
 
-   WHO MAY CALL THESE: a platform owner/admin, decided here against the account role —
+   WHO MAY CALL THESE: a platform owner/admin, decided here against the account role;
    being an owner of some organization is not enough. The Payments service holds no admin
    credential of its own any more; it admits these calls because they arrive from this
    backend (gateway secret + `X-Cosmos-Internal`) and audits them under the account, so
@@ -45,7 +45,7 @@ const receiverApprovalSchema = z
     emailed: z.boolean().openapi({
       example: true,
       description:
-        'Whether the terms-of-service email actually went out. False when mail is not configured or delivery failed — the approval still stands.',
+        'Whether the terms-of-service email actually went out. False when mail is not configured or delivery failed; the approval still stands.',
     }),
     email: z.string().nullable().openapi({ example: 'customer@example.com' }),
     receiver: passthroughObject('FiatReceiver', 'The receiver as the Payments API returns it.').nullable(),
@@ -68,7 +68,7 @@ const receiverParam = pathParam('id', 'rcv_clx9z8a1b0000', 'Fiat receiver id.');
 const adminProxyPathParam = pathParam(
   'path',
   'consumers',
-  'Everything after /api/admin/ — forwarded to the Payments API as /v1/admin/<path>.',
+  'Everything after /api/admin/, forwarded to the Payments API as /v1/admin/<path>.',
 );
 
 const adminProxyResponses = {
@@ -170,7 +170,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Approve any fiat receiver',
     description:
-      "The platform-wide twin of `/api/kyc/receivers/{id}/approve`: it reaches receivers in ANY organization. Moves the receiver from `pending_review` to `pending_user` and emails the customer the hosted terms-of-service link (the Payments service has no mailer). `expected_version` is the dossier version the reviewer read — the upstream answers 409 when the tenant edited the dossier in between.",
+      "The platform-wide twin of `/api/kyc/receivers/{id}/approve`: it reaches receivers in ANY organization. Moves the receiver from `pending_review` to `pending_user` and emails the customer the hosted terms-of-service link (the Payments service has no mailer). `expected_version` is the dossier version the reviewer read; the upstream answers 409 when the tenant edited the dossier in between.",
     security: sessionSecurity,
     request: {
       params: receiverParam,
@@ -228,7 +228,7 @@ registerRoutes([
     tags: [TAG],
     summary: `Admin proxy (${method.toUpperCase()})`,
     description:
-      'Catch-all forward to the Payments API admin surface — summary, consumers, payment-intents, swaps, customers, products, receivers, payins, payouts. The response is the upstream payload, with consumer references resolved to the owning organization and account so the console never shows a bare `cosmos_<id>`. More specific admin routes win over this one.',
+      'Catch-all forward to the Payments API admin surface (summary, consumers, payment-intents, swaps, customers, products, receivers, payins, payouts). The response is the upstream payload, with consumer references resolved to the owning organization and account so the console never shows a bare `cosmos_<id>`. More specific admin routes win over this one.',
     security: sessionSecurity,
     request: {
       params: adminProxyPathParam,

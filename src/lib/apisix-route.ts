@@ -67,7 +67,7 @@ function describeUris(uris: () => string[]): string {
    is for -- and that is worth a line in the log that says so. */
 function logKeyless(id: string, uris: string, result: SyncResult, consequence: string) {
   if ("error" in result) {
-    console.warn(`[apisix] Failed to sync public route "${id}" (${uris}) — ${consequence}: ${result.error}`);
+    console.warn(`[apisix] Failed to sync public route "${id}" (${uris}); ${consequence}: ${result.error}`);
   } else {
     console.info(`[apisix] Route "${id}" ${result.created ? "created" : "updated"} -> ${uris} (no key-auth)`);
   }

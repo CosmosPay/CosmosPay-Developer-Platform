@@ -39,7 +39,7 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                   {canEdit && <button className="icon-mini" title={ak.edit} aria-label={ak.edit} onClick={() => onEdit(k)} disabled={locked}>{DI.edit}</button>}
                   {canDelete && <button className="icon-mini danger" title={ak.revoke} aria-label={ak.revoke} onClick={() => onRevoke(k)}>{DI.trash}</button>}
-                  {!canEdit && !canDelete && <span className="cust">—</span>}
+                  {!canEdit && !canDelete && <span className="cust">{ak.none}</span>}
                 </td>
               </tr>
             ); })}</tbody>

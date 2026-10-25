@@ -1,8 +1,8 @@
-/* plans.ts — THE single source of truth for plan specs (mock billing).
+/* plans.ts: THE single source of truth for plan specs (mock billing).
    Pure data (no server-only imports) so it can be used on both server and client.
    Edit PLAN_SPECS here and every surface (dashboard plan comparison, account & settings,
    onboarding spec panel, API limits) updates from it. `null` limit = unlimited / custom.
-   The translated marketing copy on /pricing mirrors these numbers — keep it in sync. */
+   The translated marketing copy on /pricing mirrors these numbers; keep it in sync. */
 export type PlanId = "community" | "starter" | "essentials" | "growth" | "enterprise";
 
 /* Every plan an account can hold, cheapest first. "community" is a LEGACY plan: the free
@@ -34,20 +34,20 @@ export interface PlanSpec {
   perTx: string; // per-transaction fee
   settle: string; // settlement speed
   // Swap commission in basis points (50 = 0.5%) taken from the source asset on every
-  // Stellar swap. This is the rate the Payments API enforces per organization — it is
+  // Stellar swap. This is the rate the Payments API enforces per organization: it is
   // injected into the gateway/consumer context (never a request param) so it can't be
   // bypassed. It is set on its own, NOT from `perTx` (the payments rate): swap rates
   // follow what other wallets charge for a swap (MetaMask 0.875%, Phantom 0.85%,
-  // LOBSTR 0.5% on XLM), payments rates follow card processors. Whole bps only — the
-  // Payments API and the swap aggregators refuse fractions — so the floor is 3 (0.03%).
+  // LOBSTR 0.5% on XLM), payments rates follow card processors. Whole bps only (the
+  // Payments API and the swap aggregators refuse fractions), so the floor is 3 (0.03%).
   // A new rate reaches existing keys on the next start (syncAllConsumerForwarders).
   swapFeeBps: number;
 }
 
 export const PLAN_SPECS: Record<PlanId, PlanSpec> = {
   // Legacy: the free plan, no longer offered. Kept so existing accounts on it keep working
-  // (and the shared public wallet key, which pays this plan's swap rate — see public-key.ts).
-  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "—",             settle: "~5 sec", swapFeeBps: 50 },
+  // (and the shared public wallet key, which pays this plan's swap rate; see public-key.ts).
+  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "-",             settle: "~5 sec", swapFeeBps: 50 },
   starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1% + 25¢", perTx: "1% + 25¢",  settle: "~5 sec", swapFeeBps: 25 },
   essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "0.5% + 10¢",    settle: "~5 sec", swapFeeBps: 10  },
   growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.2% + 5¢",    settle: "~5 sec", swapFeeBps: 5  },
@@ -68,7 +68,7 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = ALL_PLAN_IDS.reduce((acc,
   return acc;
 }, {} as Record<PlanId, PlanLimits>);
 
-/* Headline price tag per plan (mock billing) — derived from the specs. */
+/* Headline price tag per plan (mock billing), derived from the specs. */
 export const PLAN_PRICE: Record<PlanId, string> = ALL_PLAN_IDS.reduce((acc, id) => {
   acc[id] = PLAN_SPECS[id].price;
   return acc;
@@ -94,7 +94,7 @@ export function planLimits(plan: unknown): PlanLimits {
 }
 
 /* The swap commission (basis points) charged on every Stellar swap for a plan.
-   The Payments API enforces this per organization (see orgSwapContext) — it's never
+   The Payments API enforces this per organization (see orgSwapContext); it's never
    accepted as a request parameter, so the rate can't be undercut. */
 export function planSwapFeeBps(plan: unknown): number {
   return PLAN_SPECS[normalizePlan(plan)].swapFeeBps;

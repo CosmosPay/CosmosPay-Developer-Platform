@@ -1,4 +1,4 @@
-/* data.js — static id lists, recommendation maps, and non-translatable plan spec values. */
+/* data.js: static id lists, recommendation maps, and non-translatable plan spec values. */
 export const INDUSTRY_IDS = ["saas", "market", "ecom", "fintech", "platform", "ai"];
 export const GOAL_IDS = ["accept", "payout", "subs", "cross", "embed", "test"];
 export const VOLUME_IDS = ["explore", "lt10", "mid", "gt100"];

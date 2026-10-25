@@ -1,6 +1,6 @@
 // PM2 production entry (see ecosystem.config.cjs → app `devplat`).
 //
-// PM2 runs the compiled Astro server directly, which bypasses the `prestart` npm hook — so the
+// PM2 runs the compiled Astro server directly, which bypasses the `prestart` npm hook, so the
 // /docs site would never be built/refreshed when you bring the ecosystem up. This wrapper runs
 // ensure-docs first (builds /docs only when missing or stale, then mirrors it into
 // dist/client/docs that `start` serves), then boots the server in THIS same process so PM2 keeps

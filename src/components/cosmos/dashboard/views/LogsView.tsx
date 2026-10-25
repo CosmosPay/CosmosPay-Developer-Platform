@@ -34,7 +34,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
       .finally(() => setLoading(false));
   }, [env, kind]);
   useEffect(() => { load(); }, [load]);
-  // Live tail — refresh silently while visible.
+  // Live tail: refresh silently while visible.
   const refresh = useCallback(() => {
     fetcher(env).then((r) => setRows((r && Array.isArray(r.data)) ? r.data : [])).catch(() => {});
   }, [env, kind]);
@@ -73,7 +73,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
                     </>) : (<>
                       <td><span className="method m-post">HOOK</span></td>
                       <td className="tid">{(cx.eventLabels && cx.eventLabels[l.eventType]) || l.eventType}</td>
-                      <td><Pill st={codePill(l.responseStatus)} label={l.responseStatus != null ? String(l.responseStatus) : (l.status || "—")} /></td>
+                      <td><Pill st={codePill(l.responseStatus)} label={l.responseStatus != null ? String(l.responseStatus) : (l.status || "-")} /></td>
                       <td className="cust">{fmtDateTime(l.at)}</td>
                     </>)}
                   </tr>
@@ -81,10 +81,10 @@ export function LogsView({ kind = "api", env = "dev" }) {
                     <tr className="log-detail"><td colSpan={isApi ? 6 : 5}><div className="log-detail-grid">
                       {isApi ? (<>
                         <div className="ld-sec"><div className="ld-h">{lv.tableHead.endpoint}</div><pre>{`${l.method} ${l.path}\nstatus: ${l.statusCode}\nlatency: ${l.durationMs} ms`}</pre></div>
-                        <div className="ld-sec"><div className="ld-h">{lv.meta}</div><pre>{`ip: ${l.ip || "—"}\nuser-agent: ${l.userAgent || "—"}`}</pre></div>
+                        <div className="ld-sec"><div className="ld-h">{lv.meta}</div><pre>{`ip: ${l.ip || "-"}\nuser-agent: ${l.userAgent || "-"}`}</pre></div>
                       </>) : (<>
                         <div className="ld-sec"><div className="ld-h">{lv.tableHead.event}</div><pre>{`${l.eventType}\neventId: ${l.eventId}\nattempts: ${l.attempts}`}</pre></div>
-                        <div className="ld-sec"><div className="ld-h">{lv.response}</div><pre>{`url: ${l.url || "—"}\nresponse: ${l.responseStatus ?? "—"}\nerror: ${l.error || "—"}`}</pre></div>
+                        <div className="ld-sec"><div className="ld-h">{lv.response}</div><pre>{`url: ${l.url || "-"}\nresponse: ${l.responseStatus ?? "-"}\nerror: ${l.error || "-"}`}</pre></div>
                       </>)}
                     </div></td></tr>
                   )}

@@ -1,4 +1,4 @@
-/* pay-handler.ts — the browser half of /pay: register this page as the web+stellar:
+/* pay-handler.ts is the browser half of /pay: register this page as the web+stellar:
    handler, show an incoming SEP-7 `pay` URI in full, and hand it to the Cosmos Wallet
    extension (or the web wallet when there is no extension) only on the payer's click. The
    URI arrives in the query string, which any site can choose, so it is never handed over on
@@ -53,7 +53,7 @@ export function startPayHandler(): void {
   }
 
   slot("dest").textContent = shortAddress(pay.destination, 10, 10);
-  slot("amount").textContent = `${pay.amount || "—"} ${pay.asset}`;
+  slot("amount").textContent = `${pay.amount || "-"} ${pay.asset}`;
   slot("network").textContent = `Stellar · ${pay.network === "testnet" ? t.testnet : t.mainnet}`;
   if (pay.memo) {
     slot("memo-row").hidden = false;

@@ -1,4 +1,4 @@
-/* PlanStep.jsx — step 2: plan picker. */
+/* PlanStep.jsx, step 2: plan picker. */
 import { PLAN_IDS, POPULAR, PLAN_DATA } from "@/components/cosmos/onboarding/data";
 import { PRICING } from "@/components/cosmos/lib/constants";
 

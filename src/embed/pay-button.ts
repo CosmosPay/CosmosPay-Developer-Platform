@@ -1,4 +1,4 @@
-/* pay-button.ts — <cosmos-pay-button link="LINK_ID">: a button that opens the hosted checkout
+/* pay-button.ts defines <cosmos-pay-button link="LINK_ID">: a button that opens the hosted checkout
    for a payment link in a popup (no iframe: the payments pages refuse every frame).
 
    While its popup is open it listens for the checkout's status messages and re-fires them on

@@ -21,7 +21,7 @@ export const auth = betterAuth({
   trustedOrigins: ALLOWED_ORIGINS,
   /* The session cookie stays HOST-ONLY on the platform's domain, although this app also
      answers cosmospay.lat and payments.cosmospay.lat. Scoped to the parent domain it would
-     travel to every *.cosmospay.lat host — the gateway, Authentik, the wallet landing —
+     travel to every *.cosmospay.lat host (the gateway, Authentik, the wallet landing),
      none of which needs it. The company site reads the session with a credentialed call to
      /api/auth/get-session instead (useDevSession), and the payments pages need none. Do not
      turn on crossSubDomainCookies to save that call. */
@@ -50,14 +50,14 @@ export const auth = betterAuth({
              email"), and an OIDC provider only returns the email claim when the `email`
              scope was granted. better-auth requests exactly the scopes listed here:
              1.6 sent none at all, so Authentik fell back to the scopes configured on
-             the provider — which happened to include email — while 1.7 narrows the
+             the provider (which happened to include email), while 1.7 narrows the
              request to `openid`, and Authentik then honours that strictly and returns
              `sub` and nothing else. Leaning on a provider's default grant was always
              the fragile half; this states what the app actually needs.
              `profile` is what carries `name` and `picture`, which the dashboard renders
              as the display name and avatar. If email still comes back missing, check
              that the Authentik provider has the openid/email/profile scope mappings
-             assigned — a scope the provider cannot issue is silently not granted. */
+             assigned: a scope the provider cannot issue is silently not granted. */
           scopes: ["openid", "profile", "email"],
         },
       ],

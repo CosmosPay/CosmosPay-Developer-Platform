@@ -1,4 +1,4 @@
-/* i18n.ts — the embed's end-user copy, in the five languages Cosmos Pay ships.
+/* i18n.ts: the embed's end-user copy, in the five languages Cosmos Pay ships.
 
    It lives in the bundle (public/embed/cosmos-pay.js runs on a merchant's page and cannot
    read the payments site's catalog at runtime), and it is a copy of that catalog's wording on
@@ -25,7 +25,7 @@ const en = {
     loading: "Loading payment…",
     anyAmount: "Any amount",
     anyAmountHint: "You choose the amount in your wallet.",
-    testnet: "Test network — no real funds move",
+    testnet: "Test network: no real funds move",
     phase: {
       open: "Awaiting payment",
       processing: "Confirming payment",
@@ -71,7 +71,7 @@ const es: EmbedMessages = {
     loading: "Cargando el pago…",
     anyAmount: "Importe libre",
     anyAmountHint: "Eliges el importe en tu wallet.",
-    testnet: "Red de pruebas — no se mueven fondos reales",
+    testnet: "Red de pruebas: no se mueven fondos reales",
     phase: {
       open: "Esperando el pago",
       processing: "Confirmando el pago",
@@ -116,7 +116,7 @@ const pt: EmbedMessages = {
     loading: "Carregando o pagamento…",
     anyAmount: "Valor livre",
     anyAmountHint: "Você escolhe o valor na sua carteira.",
-    testnet: "Rede de testes — nenhum fundo real é movimentado",
+    testnet: "Rede de testes: nenhum fundo real é movimentado",
     phase: {
       open: "Aguardando pagamento",
       processing: "Confirmando pagamento",
@@ -161,7 +161,7 @@ const fr: EmbedMessages = {
     loading: "Chargement du paiement…",
     anyAmount: "Montant libre",
     anyAmountHint: "Vous choisissez le montant dans votre wallet.",
-    testnet: "Réseau de test — aucun fonds réel n’est transféré",
+    testnet: "Réseau de test : aucun fonds réel n’est transféré",
     phase: {
       open: "En attente de paiement",
       processing: "Confirmation du paiement",
@@ -206,7 +206,7 @@ const de: EmbedMessages = {
     loading: "Zahlung wird geladen…",
     anyAmount: "Freier Betrag",
     anyAmountHint: "Du wählst den Betrag in deiner Wallet.",
-    testnet: "Testnetz — es werden keine echten Mittel bewegt",
+    testnet: "Testnetz: Es werden keine echten Mittel bewegt",
     phase: {
       open: "Zahlung ausstehend",
       processing: "Zahlung wird bestätigt",

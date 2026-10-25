@@ -1,4 +1,4 @@
-/* icons.jsx — feature-local inline icons for the marketing landing. */
+/* icons.jsx: feature-local inline icons for the marketing landing. */
 
 export const IcExpand = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4H4v5M20 9V4h-5M4 15v5h5M15 20h5v-5" /></svg>);
 

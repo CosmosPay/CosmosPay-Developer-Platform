@@ -1,4 +1,4 @@
-/* consoleMarker.test.ts — the X-Cosmos-Internal marker is one contract across two
+/* consoleMarker.test.ts: the X-Cosmos-Internal marker is one contract across two
    repositories: this console mints it, the Payments service verifies it, and no
    toolchain sees both. The vector below is pinned on BOTH sides (the service's
    `src/admin/console-marker.spec.ts` holds the same literal), so a change to the

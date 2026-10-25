@@ -18,7 +18,7 @@ Der API-Schlüssel wird als `Authorization: Bearer <apiKey>` gesendet.
 
 ## Netzwerkauswahl (wichtig)
 
-Das **Netzwerk wird durch den Schlüsseltyp bestimmt** — Sie konfigurieren es NICHT:
+Das **Netzwerk wird durch den Schlüsseltyp bestimmt**; Sie konfigurieren es NICHT:
 
 | Schlüsselpräfix | Netzwerk |
 | ---------- | ------- |
@@ -40,7 +40,7 @@ vertrauenswürdige Prototypen einen `apiKey` annehmen, aber liefern Sie niemals 
 // Change the gateway for every client created afterward (once, at startup):
 Client.shared.baseURL = 'https://gateway.your-domain.com';
 
-// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+// Or per-client (rarely needed), e.g. local dev bypassing the gateway:
 const client = new Client({
   apiKey: '...',
   baseURL: 'http://localhost:3000',
@@ -49,9 +49,9 @@ const client = new Client({
 });
 ```
 
-`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sind alle optional — eine
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sind alle optional; eine
 normale Integration setzt sie nie.
 
 ## Referenzen
 
-- [Client](/sdk/definitions/client) — Der Haupteinstiegspunkt des SDK — ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt — ein atomares Single-Client-Design.
+- [Client](/sdk/definitions/client): Der Haupteinstiegspunkt des SDK. Ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt (ein atomares Single-Client-Design).

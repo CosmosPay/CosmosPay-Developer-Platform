@@ -2,7 +2,7 @@
 // this docs tree, so `@/...` imports resolve locally and Next/Turbopack never has to reach
 // across the project boundary (which would drag in the portal's Astro middleware).
 //
-// The portal stays the single source of truth — these copies are generated, like the
+// The portal stays the single source of truth: these copies are generated, like the
 // SDK/API content, and are git-ignored. The only edit applied is rewriting the
 // `astro:env/client` imports (Astro virtual module) to a Next-compatible shim.
 import fs from 'node:fs';
@@ -81,7 +81,7 @@ function shimAstroEnv(p) {
 const shimmed = COPIES.reduce((n, [, to]) => n + shimAstroEnv(path.join(DOCS_SRC, to)), 0);
 
 // The docs (Next) and portal (Astro) are separate bundles, so the i18n store may not be a
-// shared singleton — a nav language switch wouldn't reach the Fumadocs Provider. Patch the
+// shared singleton, and a nav language switch wouldn't reach the Fumadocs Provider. Patch the
 // copied setLang to also broadcast a window event the docs Provider can listen for (it then
 // re-reads the cookie). This makes the docs chrome follow the language switch reliably.
 const i18nIndex = path.join(DOCS_SRC, 'lib/i18n/index.tsx');

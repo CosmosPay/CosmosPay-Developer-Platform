@@ -1,5 +1,5 @@
 /**
- * PM2 process config — defines TWO apps that share the same `.env`:
+ * PM2 process config, defining TWO apps that share the same `.env`:
  *
  *   devplat       → PRODUCTION. Runs scripts/start-prod.mjs, which ensures the /docs site is
  *                   built/mirrored (ensure-docs) and then boots the compiled Astro server
@@ -27,7 +27,7 @@
  * `npm ci` and not `npm install`: install resolves package.json's ranges afresh, so a
  * caret can pull a new minor into node_modules while dist/ still holds the build made
  * against the old one. Dependencies are EXTERNAL in that bundle, so the mismatch only
- * appears when the server boots — `does not provide an export named 'parse'` and PM2
+ * appears when the server boots: `does not provide an export named 'parse'` and PM2
  * restart-looping. ci installs the lockfile, the same tree CI built and audited.
  * ALWAYS re-run `npm run build` after installing: a stale dist/ is the same failure.
  *   pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat; pm2 save
@@ -53,7 +53,7 @@ module.exports = {
   apps: [
     {
       name: 'devplat',
-      // Ensures /docs is built (ensure-docs) before booting the compiled server — so bringing
+      // Ensures /docs is built (ensure-docs) before booting the compiled server, so bringing
       // the ecosystem up always serves an up-to-date /docs, even without a fresh `npm run build`.
       script: './scripts/start-prod.mjs',
       cwd: __dirname,

@@ -1,18 +1,18 @@
 ---
 title: "Intégrer un paiement : bouton de paiement et checkout intégré"
-description: Encaissez sur votre propre site avec une seule balise script — un bouton qui ouvre le checkout hébergé, ou un checkout compact dessiné dans votre page.
+description: Encaissez sur votre propre site avec une seule balise script, au moyen d'un bouton qui ouvre le checkout hébergé ou d'un checkout compact dessiné dans votre page.
 ---
 
 Chaque lien de paiement que vous créez a un **checkout hébergé** à `https://payments.cosmospay.lat/{id}`.
 Pour encaisser sans faire quitter votre site au payeur, ajoutez un script, puis l'un de ces deux éléments :
 
-- **Bouton de paiement** — `<cosmos-pay-button>` dessine un bouton. Un clic ouvre le checkout hébergé
+- **Bouton de paiement** : `<cosmos-pay-button>` dessine un bouton. Un clic ouvre le checkout hébergé
   dans une fenêtre pop-up, et le bouton prévient votre page quand le statut change.
-- **Checkout intégré** — `<cosmos-pay-checkout>` dessine un checkout compact dans votre page : le
+- **Checkout intégré** : `<cosmos-pay-checkout>` dessine un checkout compact dans votre page, avec le
   montant, le réseau, le code QR, un bouton **Ouvrir dans le wallet** et le statut en direct.
 
 Les deux prennent l'**id du lien de paiement** : l'`id` de l'intention de paiement que vous avez créée
-sur votre serveur (la dernière partie de son URL de checkout). Créez d'abord l'intention — voir
+sur votre serveur (la dernière partie de son URL de checkout). Créez d'abord l'intention, comme expliqué dans
 [Intentions de paiement](/sdk/server/payment-intents).
 
 ## Ajouter le script
@@ -22,7 +22,7 @@ sur votre serveur (la dernière partie de son URL de checkout). Créez d'abord l
 ```
 
 Une fois par page, n'importe où. Les éléments sont des custom elements standard : ils fonctionnent en
-HTML simple comme dans n'importe quel framework. Le script **ne demande aucune clé d'API** — ne mettez
+HTML simple comme dans n'importe quel framework. Le script **ne demande aucune clé d'API** : ne mettez
 jamais votre clé dans une page web.
 
 ## Bouton de paiement
@@ -47,8 +47,8 @@ jamais votre clé dans une page web.
 
 Il affiche le montant et l'actif (« Montant libre » quand le payeur le choisit), la description du
 lien, le réseau, le code QR, **Ouvrir dans le wallet**, le statut et l'expiration quand le lien en a
-une. Il lit le lien depuis le navigateur du payeur et le tient à jour — toutes les 5 secondes en
-attente du paiement, toutes les 3 pendant que le réseau le confirme, toutes les 30 une fois expiré —
+une. Il lit le lien depuis le navigateur du payeur et le tient à jour (toutes les 5 secondes en
+attente du paiement, toutes les 3 pendant que le réseau le confirme, toutes les 30 une fois expiré)
 et s'arrête quand le paiement est payé, échoué ou annulé.
 
 - Par défaut, il fait au plus 420px de large. Changez-le en CSS sur l'élément :
@@ -110,7 +110,7 @@ Le bouton de paiement n'a des nouvelles du checkout que tant que son pop-up est 
 le navigateur garde les deux fenêtres reliées. Si votre page envoie
 `Cross-Origin-Opener-Policy: same-origin`, utilisez plutôt `same-origin-allow-popups`, sinon le bouton
 ne reçoit aucune mise à jour. Quand le pop-up est bloqué et que le checkout s'ouvre dans le même onglet,
-il n'y a aucun événement — votre serveur reçoit quand même le webhook.
+il n'y a aucun événement, mais votre serveur reçoit quand même le webhook.
 
 ## Content Security Policy
 

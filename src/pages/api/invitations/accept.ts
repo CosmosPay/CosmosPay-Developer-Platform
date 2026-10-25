@@ -6,7 +6,7 @@ import type { APIRoute } from "astro";
 
 const bodySchema = z.object({ id: z.string().min(1) });
 
-/* POST /api/invitations/accept — accept a pending invitation from inside the dashboard.
+/* POST /api/invitations/accept: accept a pending invitation from inside the dashboard.
    The invitation must be addressed to the signed-in user's email. */
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });

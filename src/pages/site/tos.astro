@@ -1,11 +1,11 @@
 ---
-/* /tos — General Terms & Conditions covering BOTH Cosmos Pay products:
+/* /tos holds the General Terms & Conditions covering BOTH Cosmos Pay products:
  *   1. the crypto payment gateway (payments API, swaps, fiat on/off-ramp), and
  *   2. the Cosmos Pay non-custodial wallet for Stellar, Solana and Monad (app + browser extension).
  *
  * Public page; language follows the site cookie (EN default, full ES version).
  * The wallet links here from its onboarding consent checkbox (TERMS_URL).
- * NOTE: template terms — have counsel review before relying on them legally.
+ * NOTE: template terms; have counsel review before relying on them legally.
  */
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 
@@ -28,10 +28,10 @@ const en: { title: string; intro: string; sections: Section[] } = {
       ],
     },
     {
-      h: "2. Non-custodial wallet — your keys, your responsibility",
+      h: "2. Non-custodial wallet: your keys, your responsibility",
       ps: [
         "The wallet generates and encrypts your keys locally on your device. We never receive, store or can recover your recovery phrase, secret key or password.",
-        "You are solely and exclusively responsible for safekeeping your recovery phrase and password, and for all funds in your wallet. If you lose the phrase and forget the password, the funds are irrecoverable — by anyone, including us.",
+        "You are solely and exclusively responsible for safekeeping your recovery phrase and password, and for all funds in your wallet. If you lose the phrase and forget the password, the funds are irrecoverable by anyone, including us.",
         "All transactions you sign are executed on the public blockchain network they belong to (Stellar, Solana or Monad) and are irreversible. Verify addresses and amounts before confirming; we cannot cancel, reverse or refund on-chain transactions.",
       ],
     },
@@ -105,10 +105,10 @@ const esC: typeof en = {
       ],
     },
     {
-      h: "2. Wallet no custodial — tus claves, tu responsabilidad",
+      h: "2. Wallet no custodial: tus claves, tu responsabilidad",
       ps: [
         "La wallet genera y cifra tus claves localmente en tu dispositivo. Nunca recibimos, guardamos ni podemos recuperar tu frase de recuperación, tu clave secreta ni tu contraseña.",
-        "Eres única y exclusivamente responsable de custodiar tu frase de recuperación y tu contraseña, y de todos los fondos de tu wallet. Si pierdes la frase y olvidas la contraseña, los fondos son irrecuperables — para cualquiera, incluidos nosotros.",
+        "Eres única y exclusivamente responsable de custodiar tu frase de recuperación y tu contraseña, y de todos los fondos de tu wallet. Si pierdes la frase y olvidas la contraseña, los fondos son irrecuperables para cualquiera, incluidos nosotros.",
         "Toda transacción que firmes se ejecuta en la red blockchain pública a la que pertenece (Stellar, Solana o Monad) y es irreversible. Verifica direcciones e importes antes de confirmar; no podemos cancelar, revertir ni reembolsar transacciones on-chain.",
       ],
     },
@@ -174,9 +174,9 @@ const t = es ? esC : en;
 ---
 
 <CosmosLayout
-  title={`${t.title} · Cosmos Pay`}
+  title={`${t.title} | Cosmos Pay`}
   lang={lang}
-  description="Cosmos Pay Terms and Conditions — crypto payment gateway and non-custodial wallet for Stellar, Solana and Monad."
+  description="Cosmos Pay Terms and Conditions: crypto payment gateway and non-custodial wallet for Stellar, Solana and Monad."
 >
   <main class="tos-wrap">
     <article class="tos">

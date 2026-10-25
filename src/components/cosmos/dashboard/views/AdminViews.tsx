@@ -1,4 +1,4 @@
-/* Platform-admin (owner/admin) views — global, cross-organization, read-only.
+/* Platform-admin (owner/admin) views: global, cross-organization, read-only.
    Every list is searchable + paginated (mirrors PaymentsView) and shows the owning
    organization (the API consumer's apisixUsername, with the cosmos_ prefix stripped).
    IDs are click-to-copy; counts/org cells cross-navigate (filtered by consumer).
@@ -24,7 +24,7 @@ const ADMIN_PILL = {
   REFUNDED: "fail", AWAITING_DEPOSIT: "pend", DEPOSIT_DETECTED: "pend", INCOMPLETE_DEPOSIT: "pend", PROCESSING: "pend",
 };
 /* The swap tables the admin view reads: Stellar path payments, the two aggregator
-   chains, and swaps between chains. Only Stellar follows the live/test network — the
+   chains, and swaps between chains. Only Stellar follows the live/test network; the
    others run on mainnet only, so the environment switch does not filter them. */
 const SWAP_VENUES = ["stellar", "solana", "monad", "crossChain"];
 const CROSS_FILTERS = ["all", "AWAITING_DEPOSIT", "PROCESSING", "SUCCEEDED", "REFUNDED", "FAILED"];
@@ -34,16 +34,16 @@ const shortAsset = (asset, chain) =>
 const netFromEnv = (env) => (env === "prod" ? "public" : "testnet");
 const unwrapList = (res) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
 // Owning-org label for a LIST row (consumer nested under row.consumer): prefer the
-// resolved displayName, fall back to the stripped apisixUsername, then "—".
+// resolved displayName, fall back to the stripped apisixUsername, then "-".
 const stripUser = (u) => (u || "").replace(/^cosmos_/, "");
 const orgOf = (row) => {
   const c = (row && row.consumer) || {};
-  return c.displayName || stripUser(c.apisixUsername) || "—";
+  return c.displayName || stripUser(c.apisixUsername) || "-";
 };
 // Label for a CONSUMER row (AdminConsumersView), where the fields are top-level.
-const consumerLabel = (c) => (c && (c.displayName || stripUser(c.apisixUsername) || c.id)) || "—";
+const consumerLabel = (c) => (c && (c.displayName || stripUser(c.apisixUsername) || c.id)) || "-";
 const assetOf = (asset) => (!asset || asset === "native" ? "XLM" : asset);
-const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : (a || "—"));
+const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : (a || "-"));
 function fiatPill(status) {
   const s = (status || "").toLowerCase();
   if (["approved", "verified", "completed", "complete", "paid", "settled", "success"].includes(s)) return "ok";
@@ -64,7 +64,7 @@ function CopyText({ value, display, width = 190, muted = false }) {
   const t = useT();
   const [done, copy] = useCopy();
   const text = value == null ? "" : String(value);
-  if (!text || text === "—") return <span className="cust">—</span>;
+  if (!text || text === "-") return <span className="cust">-</span>;
   return (
     <button
       type="button" title={text}
@@ -98,13 +98,13 @@ function NameTd({ name, ids = [] }) {
   const list = ids.filter(Boolean);
   return (
     <td>
-      <div>{name || "—"}</div>
+      <div>{name || "-"}</div>
       {list.length > 0 && <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>{list.map((v, i) => <CopyText key={i} value={v} muted />)}</div>}
     </td>
   );
 }
 
-/* The owning-organization cell — clickable to filter the CURRENT view by that org. */
+/* The owning-organization cell, clickable to filter the CURRENT view by that org. */
 function OrgTd({ row, onFilter }) {
   const label = orgOf(row);
   if (onFilter && row.consumerId) {
@@ -142,7 +142,7 @@ function useAdminRows(fetcher, deps) {
 }
 
 /* Owner/admin row actions for a fiat receiver in the GLOBAL admin view (no org/env on
-   access/enable — admin is global). Approve is shown ONLY for pending_review (mirrors the
+   access/enable; admin is global). Approve is shown ONLY for pending_review (mirrors the
    org-scoped Fiat rule); otherwise the disable/enable toggle when at the provider. */
 function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved }) {
   const af = a.fiat;
@@ -239,7 +239,7 @@ function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads,
 /* ======================= Overview (global summary) ======================= */
 function Breakdown({ obj, pillOf }) {
   const entries = Object.entries(obj || {});
-  if (!entries.length) return <span className="field-note">—</span>;
+  if (!entries.length) return <span className="field-note">-</span>;
   return (
     <div className="paylink-actions" style={{ flexWrap: "wrap", gap: 10 }}>
       {entries.map(([k, v]) => (
@@ -359,8 +359,8 @@ export function AdminPaymentsView({ env = "dev", adminFilter, goToAdmin }) {
             <IdTd id={p.id} secondary={p.txHash} />
             <OrgTd row={p} onFilter={onOrgFilter} />
             <td className="cust">{shortAcct(p.destination)}</td>
-            <td className="amt">{p.amount || "—"} {assetOf(p.asset)}</td>
-            <td><Pill st={ADMIN_PILL[p.status] || "ref"} label={p.status || "—"} /></td>
+            <td className="amt">{p.amount || "-"} {assetOf(p.asset)}</td>
+            <td><Pill st={ADMIN_PILL[p.status] || "ref"} label={p.status || "-"} /></td>
             <td className="cust">{fmtDateTime(p.createdAt)}</td>
           </tr>
         )}
@@ -390,8 +390,8 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
     venue === "crossChain"
       ? `${s.amountIn} ${s.originAsset} (${s.originChain}) → ${s.amountOut || s.amountOutEstimated} ${s.destinationAsset} (${s.destinationChain})`
       : venue === "stellar"
-        ? `${s.sendAmount ?? "—"} ${assetOf(s.sendAsset)} → ${s.destEstimated ?? s.swapAmount ?? "—"} ${s.destAsset || ""}`.trim()
-        : `${s.sendAmount ?? "—"} ${shortAsset(s.sendAsset, venue)} → ${s.destEstimated ?? "—"} ${shortAsset(s.destAsset, venue)}`;
+        ? `${s.sendAmount ?? "-"} ${assetOf(s.sendAsset)} → ${s.destEstimated ?? s.swapAmount ?? "-"} ${s.destAsset || ""}`.trim()
+        : `${s.sendAmount ?? "-"} ${shortAsset(s.sendAsset, venue)} → ${s.destEstimated ?? "-"} ${shortAsset(s.destAsset, venue)}`;
   const onOrgFilter = (row) => goToAdmin && goToAdmin("adminSwaps", { consumer: row.consumerId, label: orgOf(row) });
 
   return (
@@ -411,7 +411,7 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
             <IdTd id={s.id} secondary={s.txHash || s.depositTxHash || s.correlationId} />
             <OrgTd row={s} onFilter={onOrgFilter} />
             <td className="amt">{route(s)}</td>
-            <td><Pill st={ADMIN_PILL[s.status] || "ref"} label={s.status || "—"} /></td>
+            <td><Pill st={ADMIN_PILL[s.status] || "ref"} label={s.status || "-"} /></td>
             <td className="cust">{fmtDateTime(s.createdAt)}</td>
           </tr>
         )}
@@ -444,7 +444,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
           <tr key={x.id}>
             <NameTd name={x.name || x.email || x.blindpayId || x.id} ids={[x.id, x.blindpayId]} />
             <OrgTd row={x} onFilter={onOrgFilter} />
-            <td className="cust">{x.type || "—"}</td>
+            <td className="cust">{x.type || "-"}</td>
             <td>{x.disabled ? <Pill st="fail" label={af.disabled} /> : <Pill st={fiatPill(x.kycStatus)} label={humanizeStatus(x.kycStatus) || af.statusUnknown} />}</td>
             <td className="cust">{fmtDateTime(x.createdAt)}</td>
             <AdminReceiverActions a={a} row={x} env={env} onAccessChanged={onAccessChanged} onApproved={onApproved} />
@@ -464,9 +464,9 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
           <tr key={x.id}>
             <IdTd id={x.id} />
             <OrgTd row={x} onFilter={onOrgFilter} />
-            <td className="cust">{x.token || "—"}{x.network ? ` · ${x.network}` : ""}</td>
-            <td className="cust">{x.paymentMethod || "—"}</td>
-            <td className="amt">{x.senderAmount ?? "—"} → {x.receiverAmount ?? "—"}</td>
+            <td className="cust">{x.token || "-"}{x.network ? ` · ${x.network}` : ""}</td>
+            <td className="cust">{x.paymentMethod || "-"}</td>
+            <td className="amt">{x.senderAmount ?? "-"} → {x.receiverAmount ?? "-"}</td>
             <td><Pill st={fiatPill(x.status)} label={humanizeStatus(x.status) || af.statusUnknown} /></td>
             <td className="cust">{fmtDateTime(x.createdAt)}</td>
           </tr>
@@ -484,9 +484,9 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
         <tr key={x.id}>
           <IdTd id={x.id} />
           <OrgTd row={x} onFilter={onOrgFilter} />
-          <td className="cust">{x.token || "—"}{x.network ? ` · ${x.network}` : ""}</td>
-          <td className="cust">{x.rail || "—"}</td>
-          <td className="amt">{x.senderAmount ?? "—"} → {x.receiverAmount ?? "—"}</td>
+          <td className="cust">{x.token || "-"}{x.network ? ` · ${x.network}` : ""}</td>
+          <td className="cust">{x.rail || "-"}</td>
+          <td className="amt">{x.senderAmount ?? "-"} → {x.receiverAmount ?? "-"}</td>
           <td><Pill st={fiatPill(x.status)} label={humanizeStatus(x.status) || af.statusUnknown} /></td>
           <td className="cust">{fmtDateTime(x.createdAt)}</td>
         </tr>
@@ -537,7 +537,7 @@ export function AdminCustomersView({ adminFilter, goToAdmin }) {
           <tr key={c.id}>
             <NameTd name={c.name || c.alias || c.email || c.id} ids={[c.id]} />
             <OrgTd row={c} onFilter={onOrgFilter} />
-            <td className="cust">{c.email || "—"}</td>
+            <td className="cust">{c.email || "-"}</td>
             <td className="cust">{shortAcct(c.account)}</td>
             <td className="cust">{fmtDateTime(c.createdAt)}</td>
           </tr>
@@ -569,8 +569,8 @@ export function AdminProductsView({ adminFilter, goToAdmin }) {
           <tr key={p.id}>
             <NameTd name={p.name || p.id} ids={[p.id]} />
             <OrgTd row={p} onFilter={onOrgFilter} />
-            <td className="amt">{p.amount ? `${p.amount} ${assetOf(p.asset)}` : "—"}</td>
-            <td className="cust">{p.kind || "—"}</td>
+            <td className="amt">{p.amount ? `${p.amount} ${assetOf(p.asset)}` : "-"}</td>
+            <td className="cust">{p.kind || "-"}</td>
             <td className="cust">{fmtDateTime(p.createdAt)}</td>
           </tr>
         )}

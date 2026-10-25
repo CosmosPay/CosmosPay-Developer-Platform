@@ -1,4 +1,4 @@
-/* sep7.ts — the SEP-7 `pay` reader behind /pay. The wallet re-parses the URI and the payer
+/* sep7.ts: the SEP-7 `pay` reader behind /pay. The wallet re-parses the URI and the payer
    confirms everything in its approval window before anything is signed, but this page shows
    the request first, so what it SHOWS must be what the wallet will read:
 

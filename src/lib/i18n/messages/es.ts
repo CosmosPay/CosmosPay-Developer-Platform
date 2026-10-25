@@ -1,4 +1,4 @@
-/* es.js — Spanish message catalog. Mirrors en.js exactly in shape. */
+/* es.js: Spanish message catalog. Mirrors en.js exactly in shape. */
 export default {
   invite: {
     eyebrow: "Invitación",
@@ -74,7 +74,7 @@ export default {
     },
     goalsEyebrow: "// qué construirás",
     goalsTitle: "¿Qué quieres hacer primero?",
-    goalsSub: "Elige todo lo que aplique — adaptaremos tu panel y te sugeriremos el plan adecuado.",
+    goalsSub: "Elige todo lo que aplique. Adaptaremos tu panel y te sugeriremos el plan adecuado.",
     goals: {
       accept: {
         t: "Aceptar pagos",
@@ -122,7 +122,7 @@ export default {
     },
     planEyebrow: "// elige tu plan",
     planTitle: "Elige un plan para empezar",
-    planSub: "Starter no tiene cuota mensual: solo pagas por transacción exitosa. Cambia de plan cuando quieras — sin llamadas.",
+    planSub: "Starter no tiene cuota mensual: solo pagas por transacción exitosa. Cambia de plan cuando quieras, sin llamadas.",
     popular: "Popular",
     recommended: "Recomendado",
     enterpriseNote: "¿Necesitas tarifas a medida o un SLA?",
@@ -145,7 +145,7 @@ export default {
     termsB: "Política de Uso Aceptable",
     termsPost: " de Cosmos Pay.",
     specTagline: "Una API. Stellar, Solana y Monad.",
-    specTaglineSub: "Acepta y mueve dinero en USDC con liquidación en ~5 segundos. Elige el plan que encaje — cámbialo cuando quieras.",
+    specTaglineSub: "Acepta y mueve dinero en USDC con liquidación en ~5 segundos. Elige el plan que encaje y cámbialo cuando quieras.",
     selectedPlan: "Plan seleccionado",
     recommendedForYou: "Recomendado para ti",
     spec: {
@@ -427,7 +427,7 @@ export default {
   },
   footer: {
     tagline: "La infraestructura de pagos para desarrolladores. Una API, todos los rieles.",
-    copyright: "© 2026 Cosmos Pay, Inc. — Plataforma para desarrolladores",
+    copyright: "© 2026 Cosmos Pay, Inc. (Plataforma para desarrolladores)",
     groups: {
       products: {
         title: "Productos",
@@ -735,7 +735,7 @@ export default {
     compare: [
       {
         l: "Cuota mensual",
-        v: ["—", "$33 / mo", "$99 / mo", "Personalizado"]
+        v: ["Sin cuota", "$33 / mo", "$99 / mo", "Personalizado"]
       },
       {
         l: "Comisión por transacción",
@@ -832,11 +832,11 @@ export default {
       inbox: "Bandeja de soporte",
       users: "Usuarios",
       adminOverview: "Resumen de la plataforma",
-      adminPayments: "Pagos — todas las orgs",
-      adminSwaps: "Swaps — todas las orgs",
-      adminFiat: "Fiat — todas las orgs",
-      adminCustomers: "Clientes — todas las orgs",
-      adminProducts: "Productos — todas las orgs",
+      adminPayments: "Pagos (todas las orgs)",
+      adminSwaps: "Swaps (todas las orgs)",
+      adminFiat: "Fiat (todas las orgs)",
+      adminCustomers: "Clientes (todas las orgs)",
+      adminProducts: "Productos (todas las orgs)",
       adminConsumers: "Organizaciones"
     },
     sidebar: {
@@ -881,7 +881,7 @@ export default {
       heading: "Organizaciones",
       owned: "Tus organizaciones",
       invited: "Compartidas contigo",
-      locked: "Bloqueada — mejora tu plan para usarla",
+      locked: "Bloqueada: mejora tu plan para usarla",
       create: "Crear organización"
     },
     env: {
@@ -968,7 +968,7 @@ export default {
       reveal: {
         eyebrow: "Clave API creada",
         title: "Guarda tu clave secreta",
-        body: "Esta es la única vez que verás este secreto. Cópialo ahora y guárdalo en un lugar seguro — por seguridad, no podrás volver a verlo.",
+        body: "Esta es la única vez que verás este secreto. Cópialo ahora y guárdalo en un lugar seguro. Por seguridad, no podrás volver a verlo.",
         idLabel: "ID de la clave",
         saved: "He guardado mi clave"
       }
@@ -1035,7 +1035,7 @@ export default {
       loading: "Cargando…", loadError: "No se pudieron cargar los datos.", empty: "Aún no hay nada aquí.",
       eventLabels: { PAYMENT_INTENT_CREATED: "Pago creado", PAYMENT_INTENT_UPDATED: "Pago actualizado", PAYMENT_INTENT_SUCCEEDED: "Pago completado", PAYMENT_INTENT_FAILED: "Pago fallido", PAYMENT_INTENT_CANCELLED: "Pago cancelado", PAYMENT_INTENT_DELETED: "Pago eliminado" },
       active: "Activo", inactive: "Desactivado",
-      reveal: "Mostrar secreto", secret: "Secreto de firma", secretNote: "Se muestra una sola vez — guárdalo de forma segura.",
+      reveal: "Mostrar secreto", secret: "Secreto de firma", secretNote: "Se muestra una sola vez. Guárdalo de forma segura.",
       rotate: "Rotar secreto", ping: "Enviar prueba", pingOk: "Evento de prueba entregado", pingFail: "Falló el evento de prueba",
       deliveries: "Entregas recientes", noDeliveries: "Aún no hay entregas.", redeliver: "Reenviar",
       enable: "Activar", disable: "Desactivar",
@@ -1065,13 +1065,13 @@ export default {
         eyebrow: "Enlace de pago", title: "Crear enlace de pago",
         desc: "Genera un enlace SEP-7 y un QR que tu cliente puede pagar desde cualquier billetera Stellar.",
         kind: "Tipo", kindPay: "Enlace de pago (paga el cliente)", kindTx: "Transacción (origen conocido)",
-        kindPayHint: "Sin cuenta de origen — devuelve una URI de pago + QR.",
-        kindTxHint: "Origen conocido — devuelve una transacción sin firmar para firmar.",
+        kindPayHint: "Sin cuenta de origen: devuelve una URI de pago + QR.",
+        kindTxHint: "Origen conocido: devuelve una transacción sin firmar para firmar.",
         destination: "Destino", destinationHint: "Cuenta Stellar que recibe los fondos (G…).",
         source: "Origen", sourceHint: "Cuenta Stellar del pagador (G…).",
         amount: "Importe", amountHint: "Déjalo vacío para que el pagador elija (donaciones).",
         asset: "Activo", assetIssuer: "Emisor del activo", assetIssuerHint: "Obligatorio para activos no nativos (G…).",
-        memo: "Memo", memoHint: "MEMO_ID numérico — se genera automáticamente si se deja vacío.",
+        memo: "Memo", memoHint: "MEMO_ID numérico. Se genera automáticamente si se deja vacío.",
         message: "Mensaje", messageHint: "Se muestra al pagador en su billetera (≤ 300 caracteres).",
         submit: "Crear enlace",
       },
@@ -1153,7 +1153,7 @@ export default {
       }
     },
     apikeys: {
-      readOnly: "Tienes acceso de solo lectura — solo los owners y admins pueden crear o revocar claves de API.",
+      readOnly: "Tienes acceso de solo lectura. Solo los owners y admins pueden crear o revocar claves de API.",
       title: "Claves API",
       sub: "Claves secretas para la API de Cosmos Pay. Crea todas las que necesites.",
       create: "Crear clave secreta",
@@ -1174,7 +1174,7 @@ export default {
       revoke: "Revocar",
       edit: "Editar",
       unnamed: "Clave sin nombre",
-      none: "—",
+      none: "Ninguno",
       revokeTitle: "Revocar clave API",
       revokeBody: "«{name}» se revocará permanentemente y cualquier aplicación que la use dejará de funcionar. Esta acción no se puede deshacer.",
       revokeConfirm: "Revocar clave",
@@ -1251,7 +1251,7 @@ export default {
         unlimited: "Ilimitadas",
         manage: "Gestionar organizaciones",
         changeTitle: "Cambiar de plan",
-        changeSub: "Cambia tu plan. Es una simulación — no se cobra nada.",
+        changeSub: "Cambia tu plan. Es una simulación: no se cobra nada.",
         save: "Actualizar plan",
         liveKeys: "Claves de producción",
         seats: "Asientos del equipo",
@@ -1419,7 +1419,7 @@ export default {
       profile: { title: "Perfil", name: "Nombre", email: "Correo", role: "Rol", note: "Tu nombre, foto y biografía se editan aquí.",
         displayName: "Nombre visible", displayNamePlaceholder: "Tu nombre", bio: "Biografía", bioPlaceholder: "Una línea sobre ti o tu empresa",
         edit: "Editar", save: "Guardar cambios", saving: "Guardando…", uploadPhoto: "Subir foto", changePhoto: "Cambiar foto", removePhoto: "Quitar",
-        photoHint: "PNG, JPG o WebP — cuadrada queda mejor.", saved: "Perfil actualizado", saveError: "No se pudo actualizar tu perfil.",
+        photoHint: "PNG, JPG o WebP. Cuadrada queda mejor.", saved: "Perfil actualizado", saveError: "No se pudo actualizar tu perfil.",
         photoTooLarge: "Esa imagen es muy grande. Elige una de menos de 8 MB.", photoInvalid: "Ese archivo no es una imagen compatible.",
         editNote: "El correo y el rol provienen de tu inicio de sesión de Cosmos Pay." },
       session: { title: "Sesión", desc: "Cierra sesión del panel de Cosmos Pay en este dispositivo.", signOut: "Cerrar sesión" },
@@ -1515,7 +1515,7 @@ export default {
       chainLabel: "Red",
       chains: { stellar: "Stellar", solana: "Solana", monad: "Monad" },
       venues: { stellar: "DEX de Stellar", solana: "Jupiter", monad: "Kuru Flow" },
-      mainnetOnly: "Los swaps en Solana y Monad solo funcionan en mainnet — cambia al modo en vivo para usarlos.",
+      mainnetOnly: "Los swaps en Solana y Monad solo funcionan en mainnet. Cambia al modo en vivo para usarlos.",
       chainModal: {
         desc: "Cambia dos activos en {chain} a través de {venue}, que recorre todas las fuentes de liquidez de la red. Cotiza y luego firma la transacción en la billetera.",
         sourceHint: { solana: "Billetera de Solana que firma, paga y recibe (base58).", monad: "Billetera de Monad que firma, paga y recibe (0x…)." },
@@ -1543,7 +1543,7 @@ export default {
         quoteTitle: "Cotización",
         estimated: "Recibido estimado", minimum: "Recibido mínimo",
         fee: "Comisión", bps: "bps",
-        feeNote: "La comisión es la tarifa del plan de tu organización — se aplica automáticamente.",
+        feeNote: "La comisión es la tarifa del plan de tu organización y se aplica automáticamente.",
         create: "Crear swap", creating: "Creando…",
       },
       detail: {
@@ -1621,7 +1621,7 @@ export default {
       network: { dev: "Testnet", prod: "Red pública" },
       pools: {
         assetA: "Activo A", assetAIssuer: "Emisor A", assetB: "Activo B", assetBIssuer: "Emisor B",
-        assetHint: "Código del activo — vacío o XLM para lumens.",
+        assetHint: "Código del activo: vacío o XLM para lumens.",
         search: "Buscar pools", searching: "Buscando…", loading: "Cargando pools…",
         empty: "No hay pools para este par.",
         error: "No se pudieron cargar los pools de liquidez.",
@@ -1646,14 +1646,14 @@ export default {
         assetA: "Activo A", assetB: "Activo B", assetHint: "Código del activo (XLM para lumens).",
         assetAIssuer: "Emisor A", assetBIssuer: "Emisor B", issuerHint: "Requerido para activos no nativos (G…).",
         maxAmountA: "Monto máx. A", maxAmountAHint: "Máximo del activo A a depositar.",
-        maxAmountB: "Monto máx. B", maxAmountBHint: "Opcional — se deriva del precio del pool si se omite; requerido para un pool nuevo.",
+        maxAmountB: "Monto máx. B", maxAmountBHint: "Opcional. Se deriva del precio del pool si se omite; requerido para un pool nuevo.",
         poolId: "ID del pool", poolIdHint: "ID hexadecimal de 64 caracteres del pool.",
         shares: "Participaciones", sharesHint: "Cantidad de participaciones del pool a quemar.",
         slippage: "Slippage (bps)", slippageHint: "Slippage máximo en puntos básicos (opcional, p. ej. 50).",
         trustNote: "Si la cuenta aún no confía en las participaciones del pool, la transacción incluye la trustline automáticamente.",
         create: "Generar transacción", creating: "Generando…",
         createError: "No se pudo generar la transacción.",
-        commissionNote: "La comisión del plan se aplica solo a tus ganancias — lo que rindió por encima de lo que depositaste — nunca a tu capital. Las posiciones abiertas fuera de Cosmos Pay no pagan comisión.",
+        commissionNote: "La comisión del plan se aplica solo a tus ganancias (lo que rindió por encima de lo que depositaste), nunca a tu capital. Las posiciones abiertas fuera de Cosmos Pay no pagan comisión.",
       },
       detail: {
         eyebrow: "Liquidez",
@@ -1683,14 +1683,14 @@ export default {
       loadError: "No se pudieron cargar los datos.",
       txStatuses: { pending: "Pendiente", processing: "Procesando", on_hold: "En espera", funds_received: "Fondos recibidos", completed: "Completado", refunded: "Reembolsado", partial_refund: "Reembolsado parcialmente", failed: "Fallido", cancelled: "Cancelado", canceled: "Cancelado", expired: "Expirado", reversed: "Revertido" },
       kycReturn: {
-        eyebrow: "Fiat — activación",
+        eyebrow: "Fiat: activación",
         activating: "Activando tu cuenta…",
         activatingBody: "Espera mientras confirmamos tu aceptación.",
         successTitle: "Tu cuenta ya está activa",
         successBody: "Ya puedes añadir wallets y cuentas bancarias y usar onramp y offramp.",
         errorTitle: "No se pudo activar",
         errorBody: "No pudimos activar tu cuenta. Inténtalo de nuevo.",
-        noTosId: "No se devolvió ningún id de términos de servicio — inténtalo de nuevo.",
+        noTosId: "No se devolvió ningún id de términos de servicio. Inténtalo de nuevo.",
         backToDashboard: "Volver al panel",
       },
       tabs: { receivers: "Receptores", onramp: "Onramp", offramp: "Offramp" },
@@ -1705,20 +1705,20 @@ export default {
         disabled: "Deshabilitada",
         disableAccount: "Deshabilitar cuenta",
         enableAccount: "Habilitar cuenta",
-        disabledNote: "Esta cuenta fiat está deshabilitada — onramp/offramp están bloqueados hasta reactivarla.",
+        disabledNote: "Esta cuenta fiat está deshabilitada: onramp/offramp están bloqueados hasta reactivarla.",
         accountDisabled: "Cuenta fiat deshabilitada",
         accountEnabled: "Cuenta fiat habilitada",
         accessError: "No se pudo actualizar la cuenta fiat.",
-        inactiveNote: "Solo registro — aún no se han enviado datos de KYC.",
+        inactiveNote: "Solo registro: aún no se han enviado datos de KYC.",
         awaitingReview: "A la espera de revisión del propietario/administrador.",
         reviewTitle: "Revisar KYC",
         reviewHint: "Revisa los datos de KYC enviados y luego aprueba para enviar al cliente los términos de servicio por email.",
         approve: "Aprobar y enviar términos",
         approving: "Aprobando…",
-        approvedSent: "Aprobado — términos enviados a {email}",
+        approvedSent: "Aprobado: términos enviados a {email}",
         approveError: "No se pudo aprobar el receptor.",
         termsSentTitle: "Términos enviados",
-        termsSentBody: "A la espera de la aceptación del cliente — términos enviados a {email}.",
+        termsSentBody: "A la espera de la aceptación del cliente. Términos enviados a {email}.",
         termsSentBodyNoEmail: "A la espera de que el cliente acepte los términos de servicio.",
         resendTerms: "Reenviar email de términos",
         resendVerification: "Reenviar email de verificación",
@@ -1758,7 +1758,7 @@ export default {
             id_doc_country: "País del documento", id_doc_type: "Tipo de documento", id_doc_front_file: "Documento (anverso)", id_doc_back_file: "Documento (reverso)",
             selfie_file: "Selfie", proof_of_address_doc_type: "Tipo de comprobante de domicilio", proof_of_address_doc_file: "Comprobante de domicilio",
             occupation: "Ocupación", account_purpose: "Propósito de la cuenta", source_of_funds_doc_type: "Tipo de origen de fondos", source_of_funds_doc_file: "Documento de origen de fondos",
-            source_of_wealth: "Origen del patrimonio", purpose_of_transactions: "Propósito de las transacciones", purpose_of_transactions_explanation: "Propósito de las transacciones — explicación",
+            source_of_wealth: "Origen del patrimonio", purpose_of_transactions: "Propósito de las transacciones", purpose_of_transactions_explanation: "Propósito de las transacciones (explicación)",
             legal_name: "Razón social", alternate_name: "Nombre alternativo", business_type: "Tipo de empresa", business_industry: "Industria", business_description: "Descripción del negocio",
             formation_date: "Fecha de constitución", estimated_annual_revenue: "Ingresos anuales estimados", website: "Sitio web",
             incorporation_doc_file: "Documento de constitución", proof_of_ownership_doc_file: "Comprobante de titularidad",

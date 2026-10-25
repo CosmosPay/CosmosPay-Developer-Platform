@@ -1,5 +1,5 @@
 /* ============================================================
-   Cosmos Pay — Onboarding (create organization)
+   Cosmos Pay: Onboarding (create organization)
    Ported from the Claude Design handoff; restyled to the project's
    tokens (acento de marca via --ob-accent, misma familia, sin monospace).
    Split layout · left steps + form · right interactive plan specs.
@@ -19,7 +19,7 @@
 
 /* ---------------- LEFT: steps + form ---------------- */
 .ob-left { position: relative; display: flex; flex-direction: column; min-height: 100vh; padding: 30px clamp(32px, 4.4vw, 76px) 30px; background: var(--bg); }
-/* content fills the column width (no max-width) — the .ob-left padding gives the breathing room */
+/* content fills the column width (no max-width); the .ob-left padding gives the breathing room */
 .ob-top, .obsteps, .ob-main { width: 100%; }
 /* content + footer grouped and vertically centred so the buttons sit next to the form */
 .ob-main { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }

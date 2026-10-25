@@ -59,7 +59,7 @@ export function AssetSelect({
   const [sel, setSel] = useState<string>(initial);
   const isCustom = sel === CUSTOM_KEY;
 
-  // Keep the parent's code/issuer aligned to the picked standard asset — also on
+  // Keep the parent's code/issuer aligned to the picked standard asset, also on
   // mount, so a listed default like "USDC" fills in its issuer automatically.
   useEffect(() => {
     if (sel === CUSTOM_KEY || sel === ANY_KEY) return;

@@ -2,7 +2,7 @@
    (src/pages/api/payment-intents/**). Auto-loaded by src/lib/openapi/auto-load.ts.
 
    The request bodies are the SAME schemas the handlers validate with
-   (src/schemas/payment-intents.ts) — imported rather than restated, so a rule that
+   (src/schemas/payment-intents.ts), imported rather than restated, so a rule that
    changes there cannot keep being documented here as it used to be. The response
    shapes mirror `PaymentIntent` in src/lib/cosmos.ts, which is what the Payments API
    returns and this platform forwards inside the envelope. */

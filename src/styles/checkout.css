@@ -1,13 +1,13 @@
 /* ============================================================
-   Cosmos Pay — checkout.css
+   Cosmos Pay: checkout.css
    The four hosted-checkout designs (src/components/payments/checkout/),
    on the institutional skin. One DOM vocabulary (.ck-*), four layouts
    keyed by .ck[data-design], each after one of the reference shots the
    product owner picked:
-     classic — one white card on the canvas
-     split   — a payment-method rail beside the form, a soft blue glow
-     ticket  — form + receipt with a tear line, on a violet-blue sweep
-     card    — big countdown, labelled rows, a payment card, on blue waves
+     classic: one white card on the canvas
+     split:   a payment-method rail beside the form, a soft blue glow
+     ticket:  form + receipt with a tear line, on a violet-blue sweep
+     card:    big countdown, labelled rows, a payment card, on blue waves
    ============================================================ */
 
 .ck-page {

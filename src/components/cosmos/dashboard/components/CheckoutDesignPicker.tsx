@@ -1,4 +1,4 @@
-/* CheckoutDesignPicker — choose one of the hosted checkout's prebuilt designs
+/* CheckoutDesignPicker: choose one of the hosted checkout's prebuilt designs
    (src/lib/payments/checkout-themes.ts) for a payment link. A radio group of thumbnails,
    each with a link to its live preview on the payments site. Names and descriptions are
    the payments catalog's, so the dashboard and payments.cosmospay.lat call them the same. */

@@ -1,4 +1,4 @@
-/* fr.js — French message catalog. Mirrors en.js exactly in shape. */
+/* fr.js: French message catalog. Mirrors en.js exactly in shape. */
 export default {
   invite: {
     eyebrow: "Invitation",
@@ -74,7 +74,7 @@ export default {
     },
     goalsEyebrow: "// ce que vous allez construire",
     goalsTitle: "Que voulez-vous faire en premier ?",
-    goalsSub: "Choisissez tout ce qui s’applique — nous adapterons votre tableau de bord et vous suggérerons le bon forfait.",
+    goalsSub: "Choisissez tout ce qui s’applique. Nous adapterons votre tableau de bord et vous suggérerons le bon forfait.",
     goals: {
       accept: {
         t: "Accepter des paiements",
@@ -122,7 +122,7 @@ export default {
     },
     planEyebrow: "// choisissez votre forfait",
     planTitle: "Choisissez un forfait pour démarrer",
-    planSub: "Starter est sans frais mensuels : vous ne payez que par transaction réussie. Changez à tout moment — sans appel.",
+    planSub: "Starter est sans frais mensuels : vous ne payez que par transaction réussie. Changez à tout moment, sans appel.",
     popular: "Populaire",
     recommended: "Recommandé",
     enterpriseNote: "Besoin de tarifs sur mesure ou d’un SLA ?",
@@ -145,7 +145,7 @@ export default {
     termsB: "Politique d’Utilisation Acceptable",
     termsPost: " de Cosmos Pay.",
     specTagline: "Une API. Stellar, Solana et Monad.",
-    specTaglineSub: "Acceptez et déplacez de l’argent en USDC avec un règlement en ~5 secondes. Choisissez le forfait qui convient — changez quand vous voulez.",
+    specTaglineSub: "Acceptez et déplacez de l’argent en USDC avec un règlement en ~5 secondes. Choisissez le forfait qui convient et changez-en quand vous voulez.",
     selectedPlan: "Forfait sélectionné",
     recommendedForYou: "Recommandé pour vous",
     spec: {
@@ -427,7 +427,7 @@ export default {
   },
   footer: {
     tagline: "L’infrastructure de paiement pour les développeurs. Une seule API, tous les rails.",
-    copyright: "© 2026 Cosmos Pay, Inc. — Plateforme pour développeurs",
+    copyright: "© 2026 Cosmos Pay, Inc. (Plateforme pour développeurs)",
     groups: {
       products: {
         title: "Produits",
@@ -455,7 +455,7 @@ export default {
     hero: {
       tagline: "Votre monde numérique en mouvement.",
       headline: "Écrivez moins de code -> transférez plus d’argent",
-      lede: "L’infrastructure de paiement pour les développeurs. Une seule API pour transférer de l’argent sur Stellar, Solana et Monad — des stablecoins et des actifs numériques réglés en quelques secondes, dans plus de 130 pays, avec des frais de l’ordre d’une fraction de centime.",
+      lede: "L’infrastructure de paiement pour les développeurs. Une seule API pour transférer de l’argent sur Stellar, Solana et Monad : des stablecoins et des actifs numériques réglés en quelques secondes, dans plus de 130 pays, avec des frais de l’ordre d’une fraction de centime.",
       getKeys: "Obtenir des clés API",
       trustedBy: "La confiance des équipes d’ingénierie de"
     },
@@ -489,7 +489,7 @@ export default {
     api: {
       kicker: "// la plateforme",
       title: "Des API puissantes",
-      lede: "Nos API modulaires permettent aux développeurs d’intégrer des flux financiers complexes en quelques minutes — pas en plusieurs mois.",
+      lede: "Nos API modulaires permettent aux développeurs d’intégrer des flux financiers complexes en quelques minutes, pas en plusieurs mois.",
       docsLink: "Voir la documentation de l’API",
       cards: {
         payments: {
@@ -518,12 +518,12 @@ export default {
     integration: {
       kicker: "// développeurs",
       title: "Une infrastructure fiable et extensible.",
-      lede: "Conçue pour gérer les charges de travail les plus importantes au monde — et pour s’intégrer à n’importe quelle stack que vous utilisez déjà.",
+      lede: "Conçue pour gérer les charges de travail les plus importantes au monde, et pour s’intégrer à n’importe quelle stack que vous utilisez déjà.",
       scale: ["requêtes API / jour", "requêtes / sec", "finalité on-chain", "disponibilité"],
       paths: [
         {
           t: "Sans code",
-          d: "Lancez des liens de paiement et de la facturation directement depuis votre tableau de bord — aucun développement requis.",
+          d: "Lancez des liens de paiement et de la facturation directement depuis votre tableau de bord, sans aucun développement.",
           a: "Explorer le sans-code"
         },
         {
@@ -543,14 +543,14 @@ export default {
     solutions: {
       kicker: "// solutions",
       title: "Conçu pour chaque modèle économique.",
-      lede: "De votre première transaction à des milliards de volume — Cosmos Pay s’adapte à la façon dont votre entreprise transfère de l’argent sur Stellar, Solana et Monad.",
+      lede: "De votre première transaction à des milliards de volume, Cosmos Pay s’adapte à la façon dont votre entreprise transfère de l’argent sur Stellar, Solana et Monad.",
       eyebrow: "Solution",
       startBuilding: "Commencer à développer",
       items: {
         pay: {
           t: "Acceptez les paiements multichaînes",
           d: "Envoyez et recevez des paiements sur Stellar, Solana et Monad avec une finalité en quelques secondes et des frais de l’ordre d’une fraction de centime.",
-          long: "Acceptez des paiements de toute personne disposant d’un wallet Stellar, Solana ou Monad. Les fonds atteignent la finalité en quelques secondes et sont réglés directement sur votre compte — sans rétrofacturation, sans intermédiaire et sans blocage de plusieurs jours.",
+          long: "Acceptez des paiements de toute personne disposant d’un wallet Stellar, Solana ou Monad. Les fonds atteignent la finalité en quelques secondes et sont réglés directement sur votre compte, sans rétrofacturation, sans intermédiaire et sans blocage de plusieurs jours.",
           points: ["Finalité de règlement en quelques secondes", "Des frais de l’ordre d’une fraction de centime", "Envoyez et recevez sur Stellar, Solana et Monad", "Webhooks en temps réel sur chaque paiement"]
         },
         coin: {
@@ -561,7 +561,7 @@ export default {
         },
         globe: {
           t: "Argent transfrontalier",
-          d: "Atteignez plus de 130 pays via des réseaux ouverts et mondiaux — sans banques correspondantes.",
+          d: "Atteignez plus de 130 pays via des réseaux ouverts et mondiaux, sans banques correspondantes.",
           long: "Transférez de l’argent au-delà des frontières comme vous le feriez localement. Stellar, Solana et Monad atteignent plus de 130 pays sans banques correspondantes, de sorte que les reversements arrivent en quelques secondes plutôt qu’en plusieurs jours.",
           points: ["Plus de 130 pays, une seule API", "Aucun délai lié aux banques correspondantes", "Change transparent et annoncé à l’avance", "Règlement en quelques secondes"]
         },
@@ -574,7 +574,7 @@ export default {
         wallet: {
           t: "Wallets intégrés",
           d: "Créez des wallets avec ou sans dépôt fiduciaire sur Stellar, Solana et Monad pour vos utilisateurs.",
-          long: "Offrez à chaque utilisateur un wallet multichaîne (Stellar, Solana et Monad) au sein de votre produit. Choisissez des wallets avec dépôt fiduciaire que vous gérez, ou sans dépôt fiduciaire que vos utilisateurs contrôlent — les deux provisionnés en un seul appel API.",
+          long: "Offrez à chaque utilisateur un wallet multichaîne (Stellar, Solana et Monad) au sein de votre produit. Choisissez des wallets avec dépôt fiduciaire que vous gérez, ou sans dépôt fiduciaire que vos utilisateurs contrôlent. Les deux sont provisionnés en un seul appel API.",
           points: ["Avec ou sans dépôt fiduciaire", "Provisionnement en un seul appel", "Gestion des clés intégrée", "Soldes multi-actifs"]
         }
       },
@@ -599,7 +599,7 @@ export default {
         Northwind: {
           label: "de règlement transfrontalier plus rapide après le passage à Cosmos Pay.",
           tags: ["Payments", "Stablecoins", "Wallets"],
-          story: "Northwind a migré son paiement mondial vers Cosmos Pay sur Stellar, Solana et Monad, réduisant le règlement de plusieurs jours à quelques secondes et diminuant fortement les coûts de change sur plus de 30 marchés — tout en conservant un registre unique et rapproché."
+          story: "Northwind a migré son paiement mondial vers Cosmos Pay sur Stellar, Solana et Monad, réduisant le règlement de plusieurs jours à quelques secondes et diminuant fortement les coûts de change sur plus de 30 marchés, tout en conservant un registre unique et rapproché."
         },
         Lumio: {
           label: "pour lancer des abonnements en USDC dans 40 pays.",
@@ -686,7 +686,7 @@ export default {
   pricing: {
     kicker: "// tarifs",
     title: "Payez ce que vous réglez.",
-    lede: "Une tarification transparente, basée sur l’usage. Démarrez sans frais mensuels — ne payez qu’un petit frais par transaction réussie.",
+    lede: "Une tarification transparente, basée sur l’usage. Démarrez sans frais mensuels : ne payez qu’un petit frais par transaction réussie.",
     monthly: "Mensuel",
     annual: "Annuel",
     save: "−17%",
@@ -735,7 +735,7 @@ export default {
     compare: [
       {
         l: "Frais mensuels",
-        v: ["—", "$33 / mo", "$99 / mo", "Sur mesure"]
+        v: ["Sans frais", "$33 / mo", "$99 / mo", "Sur mesure"]
       },
       {
         l: "Frais par transaction",
@@ -798,11 +798,11 @@ export default {
       },
       {
         q: "À quelle vitesse l’argent est-il réglé ?",
-        a: "Les paiements atteignent la finalité en environ cinq secondes, sur tous les plans — il n’y a aucun délai de reversement de plusieurs jours."
+        a: "Les paiements atteignent la finalité en environ cinq secondes, sur tous les plans. Il n’y a aucun délai de reversement de plusieurs jours."
       },
       {
         q: "Puis-je changer de plan plus tard ?",
-        a: "Tout à fait. Montez ou descendez de gamme à tout moment depuis votre tableau de bord. Les changements prennent effet immédiatement — aucun appel requis."
+        a: "Tout à fait. Montez ou descendez de gamme à tout moment depuis votre tableau de bord. Les changements prennent effet immédiatement, sans aucun appel."
       }
     ],
     ctaTitle: "Vous avez encore des questions ?",
@@ -832,11 +832,11 @@ export default {
       inbox: "Boîte d’assistance",
       users: "Utilisateurs",
       adminOverview: "Platform overview",
-      adminPayments: "Payments — all orgs",
-      adminSwaps: "Swaps — all orgs",
-      adminFiat: "Fiat — all orgs",
-      adminCustomers: "Customers — all orgs",
-      adminProducts: "Products — all orgs",
+      adminPayments: "Payments (all orgs)",
+      adminSwaps: "Swaps (all orgs)",
+      adminFiat: "Fiat (all orgs)",
+      adminCustomers: "Customers (all orgs)",
+      adminProducts: "Products (all orgs)",
       adminConsumers: "Organizations"
     },
     sidebar: {
@@ -881,7 +881,7 @@ export default {
       heading: "Organisations",
       owned: "Vos organisations",
       invited: "Partagées avec vous",
-      locked: "Verrouillée — améliorez votre offre",
+      locked: "Verrouillée : améliorez votre offre",
       create: "Créer une organisation"
     },
     env: {
@@ -968,7 +968,7 @@ export default {
       reveal: {
         eyebrow: "Clé d’API créée",
         title: "Enregistrez votre clé secrète",
-        body: "C’est la seule fois où vous verrez ce secret. Copiez-le maintenant et conservez-le en lieu sûr — pour des raisons de sécurité, vous ne pourrez plus le consulter.",
+        body: "C’est la seule fois où vous verrez ce secret. Copiez-le maintenant et conservez-le en lieu sûr. Pour des raisons de sécurité, vous ne pourrez plus le consulter.",
         idLabel: "ID de la clé",
         saved: "J’ai enregistré ma clé"
       }
@@ -1022,7 +1022,7 @@ export default {
       modal: {
         eyebrow: "Paiement",
         title: "Créer un paiement",
-        desc: "Les paiements sont réglés instantanément sur Stellar, Solana ou Monad — sans période de blocage.",
+        desc: "Les paiements sont réglés instantanément sur Stellar, Solana ou Monad, sans période de blocage.",
         amount: "Montant",
         asset: "Actif",
         customer: "Client",
@@ -1035,7 +1035,7 @@ export default {
       loading: "Chargement…", loadError: "Impossible de charger les données.", empty: "Rien ici pour l'instant.",
       eventLabels: { PAYMENT_INTENT_CREATED: "Paiement créé", PAYMENT_INTENT_UPDATED: "Paiement mis à jour", PAYMENT_INTENT_SUCCEEDED: "Paiement réussi", PAYMENT_INTENT_FAILED: "Paiement échoué", PAYMENT_INTENT_CANCELLED: "Paiement annulé", PAYMENT_INTENT_DELETED: "Paiement supprimé" },
       active: "Actif", inactive: "Désactivé",
-      reveal: "Afficher le secret", secret: "Secret de signature", secretNote: "Affiché une seule fois — conservez-le en lieu sûr.",
+      reveal: "Afficher le secret", secret: "Secret de signature", secretNote: "Affiché une seule fois. Conservez-le en lieu sûr.",
       rotate: "Renouveler le secret", ping: "Envoyer un test", pingOk: "Événement de test livré", pingFail: "Échec de l'événement de test",
       deliveries: "Livraisons récentes", noDeliveries: "Aucune livraison pour l'instant.", redeliver: "Renvoyer",
       enable: "Activer", disable: "Désactiver",
@@ -1065,13 +1065,13 @@ export default {
         eyebrow: "Lien de paiement", title: "Créer un lien de paiement",
         desc: "Générez un lien SEP-7 et un QR que votre client peut payer depuis n'importe quel portefeuille Stellar.",
         kind: "Type", kindPay: "Lien de paiement (le client paie)", kindTx: "Transaction (source connue)",
-        kindPayHint: "Pas de compte source — renvoie une URI de paiement + QR.",
-        kindTxHint: "Source connue — renvoie une transaction non signée à signer.",
+        kindPayHint: "Pas de compte source : renvoie une URI de paiement + QR.",
+        kindTxHint: "Source connue : renvoie une transaction non signée à signer.",
         destination: "Destination", destinationHint: "Compte Stellar qui reçoit les fonds (G…).",
         source: "Source", sourceHint: "Compte Stellar du payeur (G…).",
         amount: "Montant", amountHint: "Laissez vide pour que le payeur choisisse (dons).",
         asset: "Actif", assetIssuer: "Émetteur de l'actif", assetIssuerHint: "Requis pour les actifs non natifs (G…).",
-        memo: "Mémo", memoHint: "MEMO_ID numérique — généré automatiquement si vide.",
+        memo: "Mémo", memoHint: "MEMO_ID numérique, généré automatiquement si vide.",
         message: "Message", messageHint: "Affiché au payeur dans son portefeuille (≤ 300 caractères).",
         submit: "Créer le lien",
       },
@@ -1090,7 +1090,7 @@ export default {
     balances: {
       title: "Soldes",
       sub: "Réglés directement sur votre propre wallet, en temps réel",
-      note: "Cosmos Pay ne détient jamais vos fonds — chaque paiement est réglé directement sur votre propre wallet (sur Stellar, Solana ou Monad) dès qu’il est effectué.",
+      note: "Cosmos Pay ne détient jamais vos fonds : chaque paiement est réglé directement sur votre propre wallet (sur Stellar, Solana ou Monad) dès qu’il est effectué.",
       total: "SOLDE TOTAL",
       across: "réparti sur 3 actifs",
       explorer: "Voir sur l’explorateur",
@@ -1153,7 +1153,7 @@ export default {
       }
     },
     apikeys: {
-      readOnly: "Vous avez un accès en lecture seule — seuls les owners et admins peuvent créer ou révoquer des clés API.",
+      readOnly: "Vous avez un accès en lecture seule. Seuls les owners et admins peuvent créer ou révoquer des clés API.",
       title: "Clés d’API",
       sub: "Clés secrètes pour l’API Cosmos Pay. Créez-en autant que nécessaire.",
       create: "Créer une clé secrète",
@@ -1174,7 +1174,7 @@ export default {
       revoke: "Révoquer",
       edit: "Modifier",
       unnamed: "Clé sans nom",
-      none: "—",
+      none: "Aucune",
       revokeTitle: "Révoquer la clé d’API",
       revokeBody: "« {name} » sera révoquée définitivement et toute application qui l’utilise cessera de fonctionner. Cette action est irréversible.",
       revokeConfirm: "Révoquer la clé",
@@ -1219,7 +1219,7 @@ export default {
     },
     logs: {
       title: "Journaux d’API",
-      sub: "Chaque requête vers l’API Cosmos Pay — cliquez sur une ligne pour l’inspecter",
+      sub: "Chaque requête vers l’API Cosmos Pay (cliquez sur une ligne pour l’inspecter)",
       searchPlaceholder: "Rechercher par endpoint…",
       tableHead: {
         method: "Méthode",
@@ -1251,7 +1251,7 @@ export default {
         unlimited: "Illimité",
         manage: "Gérer les organisations",
         changeTitle: "Changer de forfait",
-        changeSub: "Changez de forfait. Ceci est une simulation — rien n’est facturé.",
+        changeSub: "Changez de forfait. Ceci est une simulation : rien n’est facturé.",
         save: "Mettre à jour le forfait",
         liveKeys: "Clés de production",
         seats: "Sièges d’équipe",
@@ -1419,7 +1419,7 @@ export default {
       profile: { title: "Profil", name: "Nom", email: "E-mail", role: "Rôle", note: "Votre nom, photo et bio se modifient ici.",
         displayName: "Nom affiché", displayNamePlaceholder: "Votre nom", bio: "Bio", bioPlaceholder: "Une ligne sur vous ou votre entreprise",
         edit: "Modifier", save: "Enregistrer", saving: "Enregistrement…", uploadPhoto: "Importer une photo", changePhoto: "Changer la photo", removePhoto: "Retirer",
-        photoHint: "PNG, JPG ou WebP — carrée de préférence.", saved: "Profil mis à jour", saveError: "Impossible de mettre à jour votre profil.",
+        photoHint: "PNG, JPG ou WebP. Carrée de préférence.", saved: "Profil mis à jour", saveError: "Impossible de mettre à jour votre profil.",
         photoTooLarge: "Cette image est trop volumineuse. Choisissez-en une de moins de 8 Mo.", photoInvalid: "Ce fichier n’est pas une image prise en charge.",
         editNote: "L’e-mail et le rôle proviennent de votre connexion Cosmos Pay." },
       session: { title: "Session", desc: "Déconnectez-vous du tableau de bord Cosmos Pay sur cet appareil.", signOut: "Se déconnecter" },
@@ -1515,7 +1515,7 @@ export default {
       chainLabel: "Chaîne",
       chains: { stellar: "Stellar", solana: "Solana", monad: "Monad" },
       venues: { stellar: "DEX Stellar", solana: "Jupiter", monad: "Kuru Flow" },
-      mainnetOnly: "Les swaps sur Solana et Monad fonctionnent uniquement sur le mainnet — passe en mode live pour les utiliser.",
+      mainnetOnly: "Les swaps sur Solana et Monad fonctionnent uniquement sur le mainnet. Passe en mode live pour les utiliser.",
       chainModal: {
         desc: "Échange deux actifs sur {chain} via {venue}, qui parcourt toutes les sources de liquidité de la chaîne. Obtiens une cotation, puis signe la transaction dans le portefeuille.",
         sourceHint: { solana: "Portefeuille Solana qui signe, paie et reçoit (base58).", monad: "Portefeuille Monad qui signe, paie et reçoit (0x…)." },
@@ -1543,7 +1543,7 @@ export default {
         quoteTitle: "Quote",
         estimated: "Estimated received", minimum: "Minimum received",
         fee: "Commission", bps: "bps",
-        feeNote: "The commission is your organization plan's rate — applied automatically.",
+        feeNote: "The commission is your organization plan's rate, applied automatically.",
         create: "Create swap", creating: "Creating…",
       },
       detail: {
@@ -1621,7 +1621,7 @@ export default {
       network: { dev: "Testnet", prod: "Public network" },
       pools: {
         assetA: "Asset A", assetAIssuer: "Issuer A", assetB: "Asset B", assetBIssuer: "Issuer B",
-        assetHint: "Asset code — leave empty or XLM for lumens.",
+        assetHint: "Asset code: leave empty or XLM for lumens.",
         search: "Search pools", searching: "Searching…", loading: "Loading pools…",
         empty: "No pools match this pair.",
         error: "Couldn't load liquidity pools.",
@@ -1646,14 +1646,14 @@ export default {
         assetA: "Asset A", assetB: "Asset B", assetHint: "Asset code (XLM for lumens).",
         assetAIssuer: "Issuer A", assetBIssuer: "Issuer B", issuerHint: "Required for non-native assets (G…).",
         maxAmountA: "Max amount A", maxAmountAHint: "Maximum of asset A to deposit.",
-        maxAmountB: "Max amount B", maxAmountBHint: "Optional — derived from the pool price when omitted; required for a brand-new pool.",
+        maxAmountB: "Max amount B", maxAmountBHint: "Optional. Derived from the pool price when omitted; required for a brand-new pool.",
         poolId: "Pool ID", poolIdHint: "64-character hex liquidity pool id.",
         shares: "Shares", sharesHint: "Amount of pool shares to burn.",
         slippage: "Slippage (bps)", slippageHint: "Max slippage in basis points (optional, e.g. 50).",
         trustNote: "If the account doesn't trust the pool shares yet, the transaction includes the trustline automatically.",
         create: "Build transaction", creating: "Building…",
         createError: "Couldn't build the transaction.",
-        commissionNote: "The plan commission applies only to your earnings — the gain over what you deposited — never to your principal. Positions opened outside Cosmos Pay are not charged.",
+        commissionNote: "The plan commission applies only to your earnings (the gain over what you deposited), never to your principal. Positions opened outside Cosmos Pay are not charged.",
       },
       detail: {
         eyebrow: "Liquidity",
@@ -1683,14 +1683,14 @@ export default {
       loadError: "Couldn't load data.",
       txStatuses: { pending: "Pending", processing: "Processing", on_hold: "On hold", funds_received: "Funds received", completed: "Completed", refunded: "Refunded", partial_refund: "Partially refunded", failed: "Failed", cancelled: "Cancelled", canceled: "Cancelled", expired: "Expired", reversed: "Reversed" },
       kycReturn: {
-        eyebrow: "Fiat — activation",
+        eyebrow: "Fiat: activation",
         activating: "Activating your account…",
         activatingBody: "Please wait while we confirm your acceptance.",
         successTitle: "Your account is now active",
         successBody: "You can now add wallets and bank accounts and use onramp & offramp.",
         errorTitle: "Activation failed",
         errorBody: "We couldn't activate your account. Please try again.",
-        noTosId: "No terms-of-service id was returned — please try activating again.",
+        noTosId: "No terms-of-service id was returned. Please try activating again.",
         backToDashboard: "Back to dashboard",
       },
       tabs: { receivers: "Receivers", onramp: "Onramp", offramp: "Offramp" },
@@ -1705,20 +1705,20 @@ export default {
         disabled: "Disabled",
         disableAccount: "Disable account",
         enableAccount: "Enable account",
-        disabledNote: "This fiat account is disabled — onramp/offramp are blocked until re-enabled.",
+        disabledNote: "This fiat account is disabled: onramp/offramp are blocked until re-enabled.",
         accountDisabled: "Fiat account disabled",
         accountEnabled: "Fiat account enabled",
         accessError: "Couldn't update the fiat account.",
-        inactiveNote: "Registration only — no KYC data submitted yet.",
+        inactiveNote: "Registration only: no KYC data submitted yet.",
         awaitingReview: "Awaiting owner/admin review.",
         reviewTitle: "Review KYC",
         reviewHint: "Review the submitted KYC data, then approve to email the customer the terms of service.",
         approve: "Approve & send terms",
         approving: "Approving…",
-        approvedSent: "Approved — terms sent to {email}",
+        approvedSent: "Approved: terms sent to {email}",
         approveError: "Couldn't approve the receiver.",
         termsSentTitle: "Terms sent",
-        termsSentBody: "Awaiting customer acceptance — terms sent to {email}.",
+        termsSentBody: "Awaiting customer acceptance. Terms sent to {email}.",
         termsSentBodyNoEmail: "Awaiting customer acceptance of the terms of service.",
         resendTerms: "Resend terms email",
         resendVerification: "Resend verification email",
@@ -1758,7 +1758,7 @@ export default {
             id_doc_country: "ID document country", id_doc_type: "ID document type", id_doc_front_file: "ID document (front)", id_doc_back_file: "ID document (back)",
             selfie_file: "Selfie", proof_of_address_doc_type: "Proof of address type", proof_of_address_doc_file: "Proof of address",
             occupation: "Occupation", account_purpose: "Account purpose", source_of_funds_doc_type: "Source of funds type", source_of_funds_doc_file: "Source of funds document",
-            source_of_wealth: "Source of wealth", purpose_of_transactions: "Purpose of transactions", purpose_of_transactions_explanation: "Purpose of transactions — explanation",
+            source_of_wealth: "Source of wealth", purpose_of_transactions: "Purpose of transactions", purpose_of_transactions_explanation: "Purpose of transactions (explanation)",
             legal_name: "Legal name", alternate_name: "Alternate name", business_type: "Business type", business_industry: "Business industry", business_description: "Business description",
             formation_date: "Formation date", estimated_annual_revenue: "Estimated annual revenue", website: "Website",
             incorporation_doc_file: "Incorporation document", proof_of_ownership_doc_file: "Proof of ownership document",

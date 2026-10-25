@@ -31,7 +31,7 @@ export function MiniSelect({ value, options, onChange, disabled = false }) {
     };
     const close = () => setOpen(false);
     document.addEventListener("mousedown", onDown);
-    // A fixed menu would detach on scroll/resize — just close it.
+    // A fixed menu would detach on scroll/resize, so just close it.
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     return () => {

@@ -95,7 +95,7 @@ function CreateProductModal({ pr, env, orgId, onClose, onCreated }) {
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
         <p>{m.desc}</p>
-        <Field label={m.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Pro plan — monthly" autoFocus />
+        <Field label={m.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Pro plan (monthly)" autoFocus />
         <Field label={m.price} hint={m.priceHint} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="49.00" inputMode="decimal" />
         <Field label={t.dash.paylinks.modal.asset} value={asset} onChange={(e) => setAsset(e.target.value)} placeholder="XLM" />
         <Sel label={m.type} value={type} onChange={setType} options={["Recurring", "One-time", "Payment link"]} labels={pr.types} />

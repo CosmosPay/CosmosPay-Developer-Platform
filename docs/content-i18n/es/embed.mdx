@@ -1,18 +1,18 @@
 ---
 title: "Integra un pago: botón de pago y checkout embebido"
-description: Cobra en tu propio sitio web con una sola etiqueta script — un botón que abre el checkout alojado, o un checkout compacto dibujado dentro de tu página.
+description: Cobra en tu propio sitio web con una sola etiqueta script, ya sea un botón que abre el checkout alojado, o un checkout compacto dibujado dentro de tu página.
 ---
 
 Cada enlace de pago que creas tiene un **checkout alojado** en `https://payments.cosmospay.lat/{id}`.
 Para cobrar sin sacar al pagador de tu sitio, agrega un script y luego uno de estos dos elementos:
 
-- **Botón de pago** — `<cosmos-pay-button>` dibuja un botón. Al hacer clic abre el checkout alojado en
+- **Botón de pago**: `<cosmos-pay-button>` dibuja un botón. Al hacer clic abre el checkout alojado en
   una ventana emergente, y el botón avisa a tu página cuando cambia el estado.
-- **Checkout embebido** — `<cosmos-pay-checkout>` dibuja un checkout compacto dentro de tu página: el
+- **Checkout embebido**: `<cosmos-pay-checkout>` dibuja un checkout compacto dentro de tu página: el
   importe, la red, el código QR, un botón **Abrir en la wallet** y el estado en vivo.
 
 Ambos reciben el **id del enlace de pago**: el `id` de la intención de pago que creaste en tu servidor
-(la última parte de su URL de checkout). Crea primero la intención — consulta [Intenciones de pago](/sdk/server/payment-intents).
+(la última parte de su URL de checkout). Crea primero la intención (consulta [Intenciones de pago](/sdk/server/payment-intents)).
 
 ## Agrega el script
 
@@ -21,7 +21,7 @@ Ambos reciben el **id del enlace de pago**: el `id` de la intención de pago que
 ```
 
 Una vez por página, en cualquier lugar. Los elementos son custom elements estándar, así que funcionan
-en HTML plano y en cualquier framework. El script **no necesita clave de API** — nunca pongas tu clave
+en HTML plano y en cualquier framework. El script **no necesita clave de API**: nunca pongas tu clave
 en una página web.
 
 ## Botón de pago
@@ -46,8 +46,8 @@ en una página web.
 
 Muestra el importe y el activo ("Importe libre" cuando el pagador lo elige), la descripción del
 enlace, la red, el código QR, **Abrir en la wallet**, el estado y el vencimiento cuando el enlace lo
-tiene. Lee el enlace desde el navegador del pagador y lo mantiene al día — cada 5 segundos mientras
-espera el pago, cada 3 mientras la red lo confirma, cada 30 una vez vencido — y se detiene cuando el
+tiene. Lee el enlace desde el navegador del pagador y lo mantiene al día (cada 5 segundos mientras
+espera el pago, cada 3 mientras la red lo confirma, cada 30 una vez vencido) y se detiene cuando el
 pago se completa, falla o se cancela.
 
 - Por defecto mide hasta 420px de ancho. Cámbialo con CSS sobre el elemento:
@@ -108,7 +108,7 @@ El botón de pago solo recibe noticias del checkout mientras su ventana está ab
 navegador mantiene conectadas las dos ventanas. Si tu página envía
 `Cross-Origin-Opener-Policy: same-origin`, usa `same-origin-allow-popups` en su lugar, o el botón no
 recibirá actualizaciones. Cuando la ventana se bloquea y el checkout se abre en la misma pestaña, no
-hay eventos — tu servidor igualmente recibe el webhook.
+hay eventos, pero tu servidor igualmente recibe el webhook.
 
 ## Content Security Policy
 

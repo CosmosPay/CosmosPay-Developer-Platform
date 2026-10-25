@@ -2,8 +2,8 @@
    organizations, their members and their pending invitations.
 
    Two things the reference has to get right because they are what callers trip on:
-   a caller who is not a member is answered 404, not 403 — an org they cannot see does
-   not exist for them — and the permission list is imported from lib/org-permissions.ts
+   a caller who is not a member is answered 404, not 403 (an org they cannot see does
+   not exist for them), and the permission list is imported from lib/org-permissions.ts
    rather than retyped, so a new resource shows up here the day it is added there. */
 import {
   errors,
@@ -38,7 +38,7 @@ const orgSummarySchema = z
     permissions: z.array(orgPermission).openapi({ example: [] }),
     plan: z.string().openapi({
       example: 'starter',
-      description: "The OWNER's plan — it governs the org's seat and resource limits. `community` is the legacy free plan, kept by the accounts already on it.",
+      description: "The OWNER's plan: it governs the org's seat and resource limits. `community` is the legacy free plan, kept by the accounts already on it.",
     }),
   })
   .openapi('OrganizationSummary', { description: 'An organization as the caller sees it.' });
@@ -112,7 +112,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'List my organizations',
     description:
-      'Every organization the signed-in account is a member of, oldest first. No organization is created implicitly — the first one is made during onboarding.',
+      'Every organization the signed-in account is a member of, oldest first. No organization is created implicitly; the first one is made during onboarding.',
     security: sessionSecurity,
     responses: {
       200: jsonOk(z.array(orgSummarySchema), 'ListOrganizationsResponse', 'Organizations loaded'),
@@ -187,7 +187,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Delete an organization',
     description:
-      'Owner only, and refused with 403 when it is the last organization the account has — everyone keeps at least one.',
+      'Owner only, and refused with 403 when it is the last organization the account has: everyone keeps at least one.',
     security: sessionSecurity,
     request: { params: orgIdParam },
     responses: {
@@ -204,7 +204,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'List members',
     description:
-      'Any member may read the roster. Members are not added directly — invite by email instead.',
+      'Any member may read the roster. Members are not added directly; invite by email instead.',
     security: sessionSecurity,
     request: { params: orgIdParam },
     responses: {

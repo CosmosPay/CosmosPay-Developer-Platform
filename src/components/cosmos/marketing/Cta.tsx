@@ -16,7 +16,7 @@ export function Cta({ user }) {
             <p>{c.desc}</p>
             <div className="row">
               <a className="btn btn-white" {...ctaProps(user)}>{c.getKeys} <IcArrow /></a>
-              {/* Talk to sales — no contact page yet. */}
+              {/* Talk to sales: no contact page yet. */}
               {/* <a className="btn btn-outline-w" href="#">{c.talk}</a> */}
             </div>
           </div>

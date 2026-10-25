@@ -1,4 +1,4 @@
-/* Shared plumbing for the cross-chain swap proxy routes (underscore file — not a
+/* Shared plumbing for the cross-chain swap proxy routes (underscore file, not a
    route). Same shape as the swaps and liquidity routes: session → org membership →
    forward to the Payments API, mapping CosmosApiError to a clean envelope. */
 import { auth } from "@/lib/auth";
@@ -11,7 +11,7 @@ export function envFromQuery(url: URL): CosmosEnv {
 }
 
 /* A 404 stays a 404 (a swap that is not this org's); anything else upstream refused is
-   the caller's to fix and comes back as a 400 carrying the Payments API's message —
+   the caller's to fix and comes back as a 400 carrying the Payments API's message,
    including "network_unsupported" for a dev key, since NEAR Intents is mainnet only. */
 export function cosmosErrorResponse(err: unknown): Response {
   if (err instanceof CosmosApiError) {

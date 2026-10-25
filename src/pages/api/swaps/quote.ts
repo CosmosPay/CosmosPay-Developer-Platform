@@ -35,7 +35,7 @@ export const POST: APIRoute = async (ctx) => {
   const membership = await getMembership(org, session.user.id).catch(() => null);
   if (!membership) return jsonForbidden("You are not a member of this organization.");
 
-  // The fee is the org plan's rate — resolved server-side, never from the body.
+  // The fee is the org plan's rate, resolved server-side, never from the body.
   const { swapFeeBps } = await orgSwapContext(org);
 
   try {

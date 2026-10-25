@@ -1,4 +1,4 @@
-/* events.ts — the DOM events both elements fire on themselves.
+/* events.ts: the DOM events both elements fire on themselves.
 
    `cosmospay:status` on every status change, then `cosmospay:paid` when that status is the
    settled one; both with `detail: { id, status }`, bubbling and composed, so a listener on

@@ -13,7 +13,7 @@ import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 
-/* ---- display constants (technical identifiers — intentionally not translated) ---- */
+/* ---- display constants (technical identifiers, intentionally not translated) ---- */
 const RECEIVER_TYPES = ["individual", "business"];
 const KYC_TYPES = ["light", "standard", "enhanced"];
 const TOKENS = ["USDC", "USDT", "USDB"];
@@ -60,16 +60,16 @@ function kycLabel(status, r) {
   if (map[s]) return map[s];
   if (["approved", "verified", "completed", "complete"].includes(s)) return map.approved || status;
   if (["rejected", "denied", "failed"].includes(s)) return map.rejected || status;
-  return map.verifying || status || (r && r.statusUnknown) || "—";
+  return map.verifying || status || (r && r.statusUnknown) || "-";
 }
 const onlyFilled = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== "" && v !== undefined && v !== null));
 const unwrap = (res) => (Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : []);
 
 /* ID document types (technical identifiers; "" = none chosen). */
 const ID_DOC_TYPES = ["", "PASSPORT", "ID_CARD", "DRIVERS_LICENSE", "RESIDENCE_PERMIT"];
-const ID_DOC_TYPE_LABELS = { "": "—" };
+const ID_DOC_TYPE_LABELS = { "": "-" };
 
-/* Receiver field groups by verification type/level — snake_case CreateReceiverDto
+/* Receiver field groups by verification type/level: snake_case CreateReceiverDto
    field names. These groupings are UX only; the provider validates the real
    requirements, and empty fields are stripped before sending. */
 const IND_ALL = ["first_name", "last_name", "date_of_birth", "tax_id", "phone_number", "address_line_1", "city", "state_province_region", "postal_code"];
@@ -85,7 +85,7 @@ const toIsoDate = (d) => (d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T00:00:00.00
 /* Document field. Two modes for the same value (the file_url BlindPay receives):
    - "Upload": POST the file (multipart FormData) to the kyc/upload proxy and store the
      returned { data: { file_url } }.
-   - "Link": paste a URL directly — the pasted URL IS the file_url.
+   - "Link": paste a URL directly; the pasted URL IS the file_url.
    A required *_file is satisfied by a non-empty value from either mode. */
 function UploadField({ label, value, onChange, orgId, env, bp }) {
   const inputRef = useRef(null);
@@ -229,7 +229,7 @@ function ReceiversTab({ bp, orgId, env, canManage, isManager }) {
           <tbody>{pg.slice.map((rec) => (
             <tr key={rec.id} className="row-click" onClick={() => setDetail(rec)}>
               <td>{rec.name || rec.email || rec.id}</td>
-              <td className="cust">{(r.types && r.types[rec.type]) || rec.type || "—"}</td>
+              <td className="cust">{(r.types && r.types[rec.type]) || rec.type || "-"}</td>
               <td>{rec.disabled ? <Pill st="fail" label={r.disabled} /> : <Pill st={statusPill(rec.kycStatus)} label={kycLabel(rec.kycStatus, r)} />}</td>
               <td className="cust">{fmtDateTime(rec.createdAt)}</td>
             </tr>
@@ -266,7 +266,7 @@ function CreateReceiverModal({ bp, orgId, env, onClose, onCreated }) {
   const get = (k) => form[k] || "";
   const filled = (k) => String(form[k] || "").trim() !== "";
 
-  // Required fields per type + verification level — these must be present so BlindPay's
+  // Required fields per type + verification level; these must be present so BlindPay's
   // `enable` step never rejects the receiver. A required upload is satisfied once its
   // file_url is set; a required date is satisfied by the picker (sent as ISO datetime).
   const requiredKeys = new Set(
@@ -392,7 +392,7 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
   // Pull the live KYC status from BlindPay. GET receivers/:id refreshes from the provider and
   // falls back to the last-known ("return") status server-side, so on failure we simply keep
   // what we have. For pre-provider states (inactive/pending_review/pending_user) the server
-  // returns the local row unchanged — no provider round-trip.
+  // returns the local row unchanged, with no provider round-trip.
   const refresh = (opts = {}) => {
     setRefreshing(true);
     return kycApi.get(`receivers/${receiver.id}`, env, orgId)
@@ -454,7 +454,7 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
             {wallets !== null && wallets.length === 0 && <div className="empty">{dt.noWallets}</div>}
             {wallets !== null && wallets.length > 0 && (
               <div className="t-scroll"><table className="tx"><tbody>{wallets.map((w) => (
-                <tr key={w.id}><td className="cust">{w.name || w.id}</td><td className="cust">{w.network}</td><td className="tid">{w.address || "—"}</td></tr>
+                <tr key={w.id}><td className="cust">{w.name || w.id}</td><td className="cust">{w.network}</td><td className="tid">{w.address || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
             {canManage && !disabled && (addWallet
@@ -467,7 +467,7 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
             {banks !== null && banks.length === 0 && <div className="empty">{dt.noBanks}</div>}
             {banks !== null && banks.length > 0 && (
               <div className="t-scroll"><table className="tx"><tbody>{banks.map((b) => (
-                <tr key={b.id}><td className="cust">{b.name || b.id}</td><td className="cust">{b.rail}</td><td className="cust">{b.country || "—"}</td></tr>
+                <tr key={b.id}><td className="cust">{b.name || b.id}</td><td className="cust">{b.rail}</td><td className="cust">{b.country || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
             {canManage && !disabled && (addBank
@@ -510,7 +510,7 @@ function ApproveReceiver({ r, receiver, orgId, env, onApproved }) {
 }
 
 /* Resend the KYC verification (terms-of-service acceptance) email to a pending_user customer
-   from our panel — owner/admin only. Accepting the emailed terms is the step that kicks off
+   from our panel (owner/admin only). Accepting the emailed terms is the step that kicks off
    BlindPay's verification, so this is the "resend KYC verification email" action. The provider
    enforces a once-per-day limit; that error surfaces via showToast. */
 function ResendTerms({ r, receiver, orgId, env }) {
@@ -612,7 +612,7 @@ function AddBankForm({ bp, receiver, orgId, env, onClose, onAdded }) {
   return (
     <div className="paylink-block">
       <Sel label={b.rail} value={type} onChange={setType} options={RAILS} />
-      <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme payouts — USD" />
+      <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme payouts (USD)" />
       <Field label={b.beneficiary} hint={t.dash.common.optional} value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} placeholder="Jane Doe" />
       <CountrySelect label={b.country} hint={t.dash.common.optional} value={country} onChange={setCountry} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
       <Field label={b.accountNumber} hint={t.dash.common.optional} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789" />
@@ -661,9 +661,9 @@ function OnrampTab({ bp, orgId, env, canManage }) {
           <tbody>{pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>
-              <td className="cust">{p.token || "—"}{p.network ? ` · ${p.network}` : ""}</td>
-              <td className="cust">{p.paymentMethod || "—"}</td>
-              <td className="amt">{p.senderAmount ?? "—"} → {p.receiverAmount ?? "—"}</td>
+              <td className="cust">{p.token || "-"}{p.network ? ` · ${p.network}` : ""}</td>
+              <td className="cust">{p.paymentMethod || "-"}</td>
+              <td className="amt">{p.senderAmount ?? "-"} → {p.receiverAmount ?? "-"}</td>
               <td><Pill st={statusPill(p.status)} label={fiatStatusLabel(p.status, bp.txStatuses) || o.statusUnknown} /></td>
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>
@@ -795,9 +795,9 @@ function OfframpTab({ bp, orgId, env, canManage }) {
           <tbody>{pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>
-              <td className="cust">{p.token || "—"}{p.network ? ` · ${p.network}` : ""}</td>
-              <td className="cust">{p.rail || "—"}</td>
-              <td className="amt">{p.senderAmount ?? "—"} → {p.receiverAmount ?? "—"}</td>
+              <td className="cust">{p.token || "-"}{p.network ? ` · ${p.network}` : ""}</td>
+              <td className="cust">{p.rail || "-"}</td>
+              <td className="amt">{p.senderAmount ?? "-"} → {p.receiverAmount ?? "-"}</td>
               <td><Pill st={statusPill(p.status)} label={fiatStatusLabel(p.status, bp.txStatuses) || o.statusUnknown} /></td>
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>

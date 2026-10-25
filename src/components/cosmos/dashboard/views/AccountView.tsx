@@ -32,7 +32,7 @@ function fileToAvatar(file) {
   });
 }
 
-/* Editable profile card — display name, bio and avatar. Email + role stay read-only
+/* Editable profile card: display name, bio and avatar. Email + role stay read-only
    (they come from the real OAuth/SSO session). */
 function ProfileCard({ user, onSaveProfile }) {
   const t = useT();
@@ -108,8 +108,8 @@ function ProfileCard({ user, onSaveProfile }) {
               <label className="field-l">{pf.bio} <span className="field-hint">{t.dash.common.optional}</span></label>
               <textarea className="field acct-bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder={pf.bioPlaceholder} maxLength={400} rows={3} />
             </div>
-            <div className="set-row"><div className="set-l">{pf.email}</div><div className="set-v">{u.email || "—"}</div></div>
-            <div className="set-row"><div className="set-l">{pf.role}</div><div className="set-v"><span className="kg pub">{t.dash.roleNames[u.role] || u.role || "—"}</span></div></div>
+            <div className="set-row"><div className="set-l">{pf.email}</div><div className="set-v">{u.email || "-"}</div></div>
+            <div className="set-row"><div className="set-l">{pf.role}</div><div className="set-v"><span className="kg pub">{t.dash.roleNames[u.role] || u.role || "-"}</span></div></div>
             <div className="set-note">{pf.editNote}</div>
             <div className="modal-actions" style={{ marginTop: 14 }}>
               <button className="btn btn-violet" disabled={!dirty || saving} onClick={save}>{saving ? pf.saving : pf.save}</button>
@@ -118,11 +118,11 @@ function ProfileCard({ user, onSaveProfile }) {
           </>
         ) : (
           <>
-            <div className="acct-id"><Avatar user={u} size={56} /><div className="acct-id-meta"><b>{u.name || "—"}</b><span>{u.email || "—"}</span></div></div>
+            <div className="acct-id"><Avatar user={u} size={56} /><div className="acct-id-meta"><b>{u.name || "-"}</b><span>{u.email || "-"}</span></div></div>
             {u.bio && <div className="set-row"><div className="set-l">{pf.bio}</div><div className="set-v">{u.bio}</div></div>}
-            <div className="set-row"><div className="set-l">{pf.name}</div><div className="set-v">{u.name || "—"}</div></div>
-            <div className="set-row"><div className="set-l">{pf.email}</div><div className="set-v">{u.email || "—"}</div></div>
-            <div className="set-row"><div className="set-l">{pf.role}</div><div className="set-v"><span className="kg pub">{t.dash.roleNames[u.role] || u.role || "—"}</span></div></div>
+            <div className="set-row"><div className="set-l">{pf.name}</div><div className="set-v">{u.name || "-"}</div></div>
+            <div className="set-row"><div className="set-l">{pf.email}</div><div className="set-v">{u.email || "-"}</div></div>
+            <div className="set-row"><div className="set-l">{pf.role}</div><div className="set-v"><span className="kg pub">{t.dash.roleNames[u.role] || u.role || "-"}</span></div></div>
             <div className="set-note">{pf.note}</div>
           </>
         )}
@@ -131,7 +131,7 @@ function ProfileCard({ user, onSaveProfile }) {
   );
 }
 
-/* Personal account — the signed-in user's own profile, appearance & session.
+/* Personal account: the signed-in user's own profile, appearance & session.
    Kept separate from the organization settings. Profile name/photo/bio are editable;
    email + role come from the real OAuth/SSO session. */
 export function AccountView({ user, theme, setTheme, planId, limits, orgCount, onChangePlan, onSaveProfile, plansEnabled = true }) {

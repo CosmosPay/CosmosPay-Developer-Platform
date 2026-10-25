@@ -21,9 +21,9 @@ export function NotificationsView({ notifications, loading, error }) {
             <tbody>{pg.slice.map((n) => (
               <tr key={n.id}>
                 <td><div className="cust-cell"><span className="am-sq">{notifIcon(n.type)}</span><div><b>{(nt.types && nt.types[n.type]) || n.title}</b>{n.message ? <div className="as" style={{ marginTop: 2 }}>{humanizeLocal(n.message)}</div> : null}</div></div></td>
-                <td className="cust">{notifLocation(n) || "—"}</td>
-                <td className="tid">{notifIp(n) || "—"}</td>
-                <td className="cust">{deviceLabel(n) || "—"}</td>
+                <td className="cust">{notifLocation(n) || "-"}</td>
+                <td className="tid">{notifIp(n) || "-"}</td>
+                <td className="cust">{deviceLabel(n) || "-"}</td>
                 <td className="cust">{fmtWhen(n.createdAt)}</td>
               </tr>
             ))}</tbody>

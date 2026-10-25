@@ -1,5 +1,5 @@
 ---
-/* / on payments.cosmospay.lat — the payments landing.
+/* / on payments.cosmospay.lat: the payments landing.
  *
  * Server-rendered, with no client JavaScript but the general nav island and the page script
  * below (hero video, reveals, pinned sections, counters, tabs, calculator, copy buttons). The
@@ -629,8 +629,8 @@ const PLUGINS = [
                 {calcPlans.map((p) => (
                   <tr class:list={[{ "is-best": p.id === "growth" }]} data-calc-plan data-pct={p.pct ?? ""} data-cents={p.cents ?? ""}>
                     <th scope="row">{p.name}{p.monthly && <small>{p.monthly}</small>}</th>
-                    <td data-calc-fee data-odo>{p.pct === null ? t.calc.custom : "—"}</td>
-                    <td data-calc-net data-odo>{p.pct === null ? t.calc.custom : "—"}</td>
+                    <td data-calc-fee data-odo>{p.pct === null ? t.calc.custom : "-"}</td>
+                    <td data-calc-net data-odo>{p.pct === null ? t.calc.custom : "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -856,7 +856,7 @@ const PLUGINS = [
   window.addEventListener("resize", paintPins);
   pinQuery.addEventListener("change", setPinMode);
 
-  /* Tabs — integration options, use cases, code samples (WAI-ARIA tabs, automatic activation):
+  /* Tabs (integration options, use cases, code samples; WAI-ARIA tabs, automatic activation):
      a click or an arrow key selects a tab and shows its panel; Home and End jump to the first
      and last. Only the selected tab is in the tab order. Inside a pinned section the scroll
      position drives them too, and choosing one scrolls to its step. */

@@ -3,7 +3,7 @@
    in the Payments API; here we only sanity-check the developer's input before
    forwarding it, mirroring the upstream DTOs. */
 /* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
-   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive: a schema
    built before it runs has no `.openapi()` at all. These schemas are handed to the
    OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
    what guarantees the extension has run by the time they are constructed. It is the same
@@ -30,7 +30,7 @@ const callbackString = z.string().trim().max(2048);
 // The hosted checkout's design (src/lib/payments/checkout-themes.ts); the server defaults to classic.
 const checkoutTheme = z.enum(CHECKOUT_THEMES);
 
-// Which environment (network) the intent targets — maps to the consumer env header.
+// Which environment (network) the intent targets; maps to the consumer env header.
 export const cosmosEnvSchema = z.enum(["dev", "prod"]).default("dev");
 
 /* Unified create body. `kind` selects the SEP-7 flavour:

@@ -1,5 +1,5 @@
 /* ============================================================
-   Cosmos Pay — views.css
+   Cosmos Pay: views.css
    Arrow animation · copy buttons · Pricing · Dashboard
    (loaded after styles.css on every page)
    ============================================================ */
@@ -788,7 +788,7 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 /* ---------------- custom scrollbars (modals + scroll areas) ---------------- */
 /* Firefox */
 .modal-overlay, .modal, .t-scroll, .chat-scroll, .inbox-list, .notif-menu, .nav-user-menu, .side-nav { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
-/* WebKit / Chromium — slim, rounded, padded thumb that tracks the surface colour. */
+/* WebKit / Chromium: slim, rounded, padded thumb that tracks the surface colour. */
 .modal::-webkit-scrollbar, .t-scroll::-webkit-scrollbar, .chat-scroll::-webkit-scrollbar,
 .inbox-list::-webkit-scrollbar, .notif-menu::-webkit-scrollbar, .nav-user-menu::-webkit-scrollbar, .side-nav::-webkit-scrollbar { width: 11px; height: 11px; }
 .modal::-webkit-scrollbar-track, .t-scroll::-webkit-scrollbar-track, .chat-scroll::-webkit-scrollbar-track,
@@ -947,7 +947,7 @@ select.field { background-position: right 13px center; padding-right: 34px; }
 .paylink-code:hover { border-color: var(--ink-3); }
 .paylink-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
 
-/* copyable key/value rows — each is a full-width button */
+/* copyable key/value rows; each is a full-width button */
 .paylink-fields { display: flex; flex-direction: column; gap: 1px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: 6px; }
 .paylink-field { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 16px; background: var(--surface); width: 100%; border: 0; text-align: left; font-family: inherit; cursor: pointer; transition: background .14s; }
 .paylink-field:nth-child(even) { background: var(--surface-2); }

@@ -1,4 +1,4 @@
-/* plans.test.ts — the plan table is what decides how many API keys an account may
+/* plans.test.ts: the plan table is what decides how many API keys an account may
    mint, whether it may go to mainnet, and the commission taken from every swap.
    Those are money and access decisions, so they are asserted here rather than
    trusted to a screen that reads them. */
@@ -74,7 +74,7 @@ test('swap commission never increases as the plan gets more expensive', () => {
     assert.ok(bps[i] <= bps[i - 1], `${ALL_PLAN_IDS[i]} (${bps[i]}) charges more than ${ALL_PLAN_IDS[i - 1]} (${bps[i - 1]})`);
   }
   // 0.5% down to 0.03%: whole bps only (the Payments API and the aggregators refuse
-  // fractions), and never 0 — every plan pays something on a swap.
+  // fractions), and never 0: every plan pays something on a swap.
   assert.equal(planSwapFeeBps('community'), 50);
   assert.equal(planSwapFeeBps('enterprise'), 3);
   for (const [i, b] of bps.entries()) {

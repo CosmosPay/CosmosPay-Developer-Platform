@@ -1,4 +1,4 @@
-/* index.js — barrel for the Onboarding feature folder. */
+/* index.js: barrel for the Onboarding feature folder. */
 export * from "./icons";
 export * from "./data";
 export { Stepper } from "./Stepper";

@@ -1,4 +1,4 @@
-/* highlight.ts — a small syntax highlighter for the payments landing's code samples.
+/* highlight.ts: a small syntax highlighter for the payments landing's code samples.
    The samples are fixed strings written in this repo (curl, TypeScript, JSON, HTML), so a
    tokenizer of a few rules is enough and keeps the colours in the page's palette instead of an
    editor theme's. It never produces HTML: the result is tokens, rendered by Code.astro as text

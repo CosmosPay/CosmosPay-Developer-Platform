@@ -1,10 +1,10 @@
-/* inline-checkout.ts — <cosmos-pay-checkout link="LINK_ID">: a compact checkout drawn inline
+/* inline-checkout.ts defines <cosmos-pay-checkout link="LINK_ID">: a compact checkout drawn inline
    in the merchant's page, in its own shadow root (no iframe: the payments pages refuse every
    frame, on purpose).
 
    It reads the link exactly as the hosted checkout does (src/scripts/payments/checkout.ts):
    from the payer's browser, keyless, `GET {PAYMENTS_API_URL}/v1/payment-links/{id}` through
-   fetchPaymentLink, so every body passes parsePaymentLink — the trust boundary — before
+   fetchPaymentLink, so every body passes parsePaymentLink (the trust boundary) before
    anything is drawn. Then it keeps reading it on the same schedule (nextPollDelay), stops on
    the final states, and fires `cosmospay:status` / `cosmospay:paid` on every status change.
 
@@ -14,7 +14,7 @@
    Attributes: `link` (required), `lang` (en/es/pt/fr/de; default from the browser, then
    English), `theme` (light/dark/auto; default light), `demo` (no link and no request: it
    draws the payments site's sample, which nothing can pay, says so on top, and plays its
-   states — open, confirming, paid — firing the usual events, for showcases). */
+   states (open, confirming, paid), firing the usual events, for showcases). */
 import {
   amountLabel,
   assetSymbol,

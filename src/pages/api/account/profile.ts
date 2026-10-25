@@ -18,7 +18,7 @@ const bodySchema = z
   })
   .strict();
 
-/* PATCH /api/account/profile — update the signed-in account's own profile
+/* PATCH /api/account/profile: update the signed-in account's own profile
    (display name, bio, avatar). Email and role stay managed by the OAuth/SSO sign-in. */
 export const PATCH: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });

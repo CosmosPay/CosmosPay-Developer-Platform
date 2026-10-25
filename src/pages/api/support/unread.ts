@@ -3,7 +3,7 @@ import { jsonSuccess, jsonUnauthorized } from "@/lib/http";
 import { countUnreadForUser } from "@/lib/support";
 import type { APIRoute } from "astro";
 
-/* GET /api/support/unread — number of unread support replies for the signed-in user
+/* GET /api/support/unread: number of unread support replies for the signed-in user
    (drives the sidebar dot). */
 export const GET: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });

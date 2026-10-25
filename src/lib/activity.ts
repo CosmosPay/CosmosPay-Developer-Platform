@@ -1,4 +1,4 @@
-/* activity.ts — the platform's side of the client-activity feed.
+/* activity.ts: the platform's side of the client-activity feed.
 
    Two writers here land in the same place (`POST /v1/activity/events` on the
    Payments service, see its `activity/` module):
@@ -49,7 +49,7 @@ export interface ActivityEventInput {
   eventId?: string;
 }
 
-/* Batch bounds. `MAX_BATCH` matches the upstream cap (100) — a larger batch would
+/* Batch bounds. `MAX_BATCH` matches the upstream cap (100): a larger batch would
    be rejected whole, which is the one failure mode worth avoiding by construction. */
 const MAX_BATCH = 100;
 /* How long an event may sit in the buffer. Short enough that the dashboard's
@@ -100,7 +100,7 @@ export function trackActivity(
     }
     buckets.set(key, bucket);
 
-    // A full batch goes now rather than waiting out the timer — the timer is the
+    // A full batch goes now rather than waiting out the timer; the timer is the
     // floor on latency, not a quota.
     if (bucket.events.length >= MAX_BATCH) {
       void flushBucket(key);
@@ -154,7 +154,7 @@ async function flushBucket(key: string): Promise<void> {
   try {
     await cosmosActivity.ingest(bucket.userId, bucket.env, batch);
   } catch {
-    /* Upstream unreachable or refusing the scope. Not re-queued — see above. */
+    /* Upstream unreachable or refusing the scope. Not re-queued (see above). */
   }
 }
 

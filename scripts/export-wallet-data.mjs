@@ -1,11 +1,11 @@
-/* export-wallet-data.mjs — dump the RETIRED wallet sign-in and recovery tables to JSON, so the
+/* export-wallet-data.mjs: dump the RETIRED wallet sign-in and recovery tables to JSON, so the
    community server can import them before those tables are dropped here.
 
    WHY IT EXISTS. The wallet's own sign-in and SEP-30 account recovery moved to the community
    server (its src/wallet-auth/ and src/recovery/), and the code that served them from this
    platform was deleted. The data was not: `wallet_backup` holds the encrypted seeds people
-   restore their wallets from — this platform can never open them, and for some wallets a
-   row there is the ONLY copy — and `recovery_account` / `recovery_auth_method` record which
+   restore their wallets from (this platform can never open them, and for some wallets a
+   row there is the ONLY copy), and `recovery_account` / `recovery_auth_method` record which
    inbox may ask each recovery server to co-sign a new key onto an account. Dropping either
    before the import lands loses wallets and recoverability with no way back. So the Prisma
    models stay (marked RETIRED in prisma/schema.prisma) until this has been run and its output
@@ -21,7 +21,7 @@
    `walletBackups` joins each backup to its User for the email the sign-in looks it up by
    (lowercased, since that is how the other side compares it). `box` is copied byte for byte:
    it is the wallet's own sealed JSON and nothing here can check it opens.
-   `wallet_auth_handshake` and `wallet_login_code` are NOT exported — both are short-lived
+   `wallet_auth_handshake` and `wallet_login_code` are NOT exported: both are short-lived
    (minutes), so every row in them has already expired and there is nothing to carry over.
    Only `email` recovery methods are exported, because email is the only method the community
    server registers; any other method is counted and reported, not silently dropped, so an
@@ -51,7 +51,7 @@ if (!process.env.DATABASE_URL) {
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 /* The values the stored rows use, plus the one bucket the export format allows for anything
-   else — reported, because an account on an unrecognised network is one the importer may not
+   else. Those are reported, because an account on an unrecognised network is one the importer may not
    be able to serve. */
 const NETWORKS = new Set(["public", "testnet"]);
 

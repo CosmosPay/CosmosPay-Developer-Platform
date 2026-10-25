@@ -15,7 +15,7 @@ constructor(client: Client)
 
 **Parameters**
 
-- `client` — [`Client`](/sdk/definitions/server/client)
+- `client`: [`Client`](/sdk/definitions/server/client)
 
 ## Properties
 
@@ -39,7 +39,7 @@ quote(options: CreatePayinQuoteOptions): Promise<PayinQuoteData>
 
 **Parameters**
 
-- `options` — `CreatePayinQuoteOptions`
+- `options`: `CreatePayinQuoteOptions`
 
 **Returns** `Promise<PayinQuoteData>`
 
@@ -53,7 +53,7 @@ createPayin(options: CreatePayinOptions): Promise<PayinData>
 
 **Parameters**
 
-- `options` — `CreatePayinOptions`
+- `options`: `CreatePayinOptions`
 
 **Returns** `Promise<PayinData>`
 
@@ -67,7 +67,7 @@ payins(options?: ListPayinsOptions): Promise<PayinPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListPayinsOptions`
+- `options` _(optional)_: `ListPayinsOptions`
 
 **Returns** `Promise<PayinPage>`
 
@@ -81,7 +81,7 @@ payin(id: string): Promise<PayinData>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<PayinData>`
 
@@ -95,7 +95,7 @@ createTrustline(options: CreateTrustlineOptions): Promise<TrustlineData>
 
 **Parameters**
 
-- `options` — `CreateTrustlineOptions`
+- `options`: `CreateTrustlineOptions`
 
 **Returns** `Promise<TrustlineData>`
 
@@ -109,8 +109,8 @@ createVirtualAccount(receiverId: string, options: CreateVirtualAccountOptions): 
 
 **Parameters**
 
-- `receiverId` — `string`
-- `options` — `CreateVirtualAccountOptions`
+- `receiverId`: `string`
+- `options`: `CreateVirtualAccountOptions`
 
 **Returns** `Promise<VirtualAccountData>`
 
@@ -124,8 +124,8 @@ virtualAccounts(receiverId: string, options?: ListPayinsOptions): Promise<Virtua
 
 **Parameters**
 
-- `receiverId` — `string`
-- `options` _(optional)_ — `ListPayinsOptions`
+- `receiverId`: `string`
+- `options` _(optional)_: `ListPayinsOptions`
 
 **Returns** `Promise<VirtualAccountData>`
 

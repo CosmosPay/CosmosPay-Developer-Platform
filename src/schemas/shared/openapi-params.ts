@@ -4,7 +4,7 @@
 
    Deliberately NOT named `openapi.ts`: the auto-loader globs
    `/src/schemas/**\/openapi.ts` and executes whatever it finds, and this file registers
-   no route — it only exports the parts the files that DO register them are built from. */
+   no route; it only exports the parts the files that DO register them are built from. */
 import { z } from '@/lib/openapi/zod';
 
 /** `?env=prod` selects the production consumer; anything else resolves to dev/testnet. */
@@ -31,7 +31,7 @@ export const orgQuery = z
 /** Same field, for the routes that refuse to act without a workspace. */
 export const requiredOrgQuery = z.string().openapi({
   param: { name: 'org', in: 'query' },
-  description: 'Organization id. Required — the caller must be a member.',
+  description: 'Organization id. Required: the caller must be a member.',
   example: 'org_123',
 });
 

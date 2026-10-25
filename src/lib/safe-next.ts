@@ -1,4 +1,4 @@
-/* safe-next.ts — where /login sends the browser after signing in. The `next` parameter is
+/* safe-next.ts: where /login sends the browser after signing in. The `next` parameter is
    user-controlled (it rides in links from the company site), so only a path on THIS origin
    is honoured; anything else falls back to the dashboard rather than becoming an open
    redirect. */

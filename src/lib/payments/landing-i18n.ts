@@ -1,4 +1,4 @@
-/* landing-i18n.ts — the copy of payments.cosmospay.lat's landing, in the five languages
+/* landing-i18n.ts: the copy of payments.cosmospay.lat's landing, in the five languages
    of the payments catalog (src/lib/payments/i18n.ts, which holds the checkout's copy and
    the design names this page reuses). Every locale mirrors `en` exactly in shape
    (tests/unit/paymentsI18n.test.ts).
@@ -7,13 +7,13 @@
    and wallets; benefits; a comparison with cards; integration paths; use cases by business;
    security; developers; pricing; FAQ). Keep it factual: no customer logos, volumes,
    certifications, licences or uptime figures until they exist. The page earns trust with what
-   a visitor can check — the networks, the rates, the open docs, the explorer link on every
+   a visitor can check: the networks, the rates, the open docs, the explorer link on every
    paid checkout. Rates are not written here; the page reads them from src/lib/plans.ts. */
 import type { Locale } from "@/lib/payments/i18n";
 
 const en = {
   meta: {
-    title: "Cosmos Pay Payments — Accept stablecoins on Stellar, Solana and Monad",
+    title: "Cosmos Pay Payments: accept stablecoins on Stellar, Solana and Monad",
     description:
       "Payment links, a hosted checkout and a payments API for businesses. Customers pay from their own wallet on Stellar, Solana or Monad, and you get paid at your address, instantly or through escrow.",
   },
@@ -284,7 +284,7 @@ export type LandingMessages = typeof en;
 
 const es: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments — Acepta stablecoins en Stellar, Solana y Monad",
+    title: "Cosmos Pay Payments: acepta stablecoins en Stellar, Solana y Monad",
     description:
       "Enlaces de pago, un checkout alojado y una API de pagos para empresas. Tus clientes pagan desde su propia wallet en Stellar, Solana o Monad y cobras en tu dirección, al instante o con escrow.",
   },
@@ -554,7 +554,7 @@ const es: LandingMessages = {
 
 const pt: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments — Aceite stablecoins na Stellar, Solana e Monad",
+    title: "Cosmos Pay Payments: aceite stablecoins na Stellar, Solana e Monad",
     description:
       "Links de pagamento, um checkout hospedado e uma API de pagamentos para empresas. Seus clientes pagam com a própria carteira na Stellar, Solana ou Monad e você recebe no seu endereço, na hora ou com escrow.",
   },
@@ -824,7 +824,7 @@ const pt: LandingMessages = {
 
 const fr: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments — Acceptez les stablecoins sur Stellar, Solana et Monad",
+    title: "Cosmos Pay Payments : acceptez les stablecoins sur Stellar, Solana et Monad",
     description:
       "Des liens de paiement, un checkout hébergé et une API de paiement pour les entreprises. Vos clients paient depuis leur propre wallet sur Stellar, Solana ou Monad, et vous êtes payé à votre adresse, instantanément ou via un escrow.",
   },
@@ -1094,7 +1094,7 @@ const fr: LandingMessages = {
 
 const de: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments — Stablecoins auf Stellar, Solana und Monad akzeptieren",
+    title: "Cosmos Pay Payments: Stablecoins auf Stellar, Solana und Monad akzeptieren",
     description:
       "Zahlungslinks, ein gehosteter Checkout und eine Zahlungs-API für Unternehmen. Deine Kunden zahlen aus ihrer eigenen Wallet auf Stellar, Solana oder Monad, und du wirst an deine Adresse bezahlt, sofort oder per Escrow.",
   },

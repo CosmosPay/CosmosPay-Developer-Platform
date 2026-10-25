@@ -61,7 +61,7 @@ export const GET: APIRoute = async (ctx) => {
 };
 
 /* Build a swap (unsigned XDR + tx URI + QR) for the customer's wallet to sign. The
-   commission is the org plan's rate — resolved here and never taken from the body. */
+   commission is the org plan's rate, resolved here and never taken from the body. */
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

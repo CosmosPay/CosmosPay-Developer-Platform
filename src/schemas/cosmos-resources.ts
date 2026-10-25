@@ -2,7 +2,7 @@
    community server's DTOs; the upstream re-validates, so these just give fast,
    friendly client-side errors. */
 /* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
-   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive: a schema
    built before it runs has no `.openapi()` at all. These schemas are handed to the
    OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
    what guarantees the extension has run by the time they are constructed. It is the same
@@ -62,7 +62,7 @@ export const updateCustomerBodySchema = createCustomerBodySchema.partial();
 
    `expected_version` is the receiver's `dossierVersion` as the reviewer read it. A review
    is a person reading the KYC dossier and then approving it, and the tenant can edit that
-   dossier in between — the status stays `pending_review` through an edit, so without this
+   dossier in between (the status stays `pending_review` through an edit), so without this
    the approval lands on whatever is stored when the request arrives. The Payments API
    answers 409 `kyc_state_invalid` when the version moved on. It is optional upstream for
    compatibility, and optional here for the same reason: a receiver read from a Payments

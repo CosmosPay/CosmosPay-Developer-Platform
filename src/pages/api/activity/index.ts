@@ -1,10 +1,10 @@
-/* /api/activity — the dashboard's own activity feed.
+/* /api/activity: the dashboard's own activity feed.
 
    POST  what the browser did: page views, actions, and anything it threw.
    GET   read it back (this account's events, newest first).
 
    Both are session-authenticated, so every row is attributed to the signed-in
-   account's consumer upstream — nothing in the body decides that.
+   account's consumer upstream; nothing in the body decides that.
 
    The POST is buffered rather than forwarded inline (see @/lib/activity): a page
    view must not wait on a round trip to the Payments service, and the browser

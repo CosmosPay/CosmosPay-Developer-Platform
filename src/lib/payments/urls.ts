@@ -1,4 +1,4 @@
-/* urls.ts — what the payments pages link to or read from, normalized once. */
+/* urls.ts: what the payments pages link to or read from, normalized once. */
 import { PUBLIC_PAYMENTS_API_URL, PUBLIC_WALLET_WEB_URL } from "astro:env/client";
 import { normalizeOrigin } from "@/lib/urls";
 

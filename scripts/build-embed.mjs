@@ -88,6 +88,6 @@ await build({
 const size = fs.statSync(outfile).size;
 const ms = Math.round(performance.now() - started);
 console.log(
-  `[build-embed] ${path.relative(root, outfile)} (${(size / 1024).toFixed(1)} KiB, ${ms} ms) — ` +
+  `[build-embed] ${path.relative(root, outfile)} (${(size / 1024).toFixed(1)} KiB, ${ms} ms), ` +
     `payments ${paymentsOrigin}, API ${apiUrl} [${mode}]`,
 );

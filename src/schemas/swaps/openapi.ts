@@ -3,7 +3,7 @@
    /api/swaps surface in the portal API reference (/swagger + /api/openapi.json).
 
    Note: the swap commission is the calling organization's plan rate, enforced
-   server-side — there is deliberately NO fee field in any request body. */
+   server-side; there is deliberately NO fee field in any request body. */
 import {
   errors,
   jsonCreated,

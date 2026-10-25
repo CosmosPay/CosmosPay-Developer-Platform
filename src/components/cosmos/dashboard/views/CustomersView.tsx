@@ -55,7 +55,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
             <tbody>{pg.slice.map((c) => (
               <tr key={c.id} className="row-click" onClick={() => setDetail(c)}>
                 <td><div className="cust-cell"><span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>{c.alias || c.name}</div></td>
-                <td className="cust">{c.email || (c.account ? shortAcct(c.account) : "—")}</td>
+                <td className="cust">{c.email || (c.account ? shortAcct(c.account) : "-")}</td>
                 <td className="amt">{c.total || "0"}</td>
                 <td className="cust">{c.succeeded ?? 0}/{c.payments ?? 0}</td>
                 <td className="cust">{fmtDate(c.createdAt)}</td>
@@ -102,7 +102,7 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
         <h3>{m.title}</h3>
         <p>{m.desc}</p>
         <Field label={m.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Inc." autoFocus />
-        <Field label={cx.custDetail.alias} hint={t.dash.common.optional} value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="Acme — billing" />
+        <Field label={cx.custDetail.alias} hint={t.dash.common.optional} value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="Acme billing" />
         <Field label={m.email} hint={t.dash.common.optional} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@acme.com" />
         <Field label={cx.custDetail.account} hint={t.dash.common.optional} value={account} onChange={(e) => setAccount(e.target.value)} placeholder="G…" />
         <div className="modal-actions">
@@ -153,7 +153,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
         {edit ? (
           <>
             <Field label={m.name} value={form.name} onChange={set("name")} autoFocus />
-            <Field label={cd.alias} hint={t.dash.common.optional} value={form.alias} onChange={set("alias")} placeholder="Acme — billing" />
+            <Field label={cd.alias} hint={t.dash.common.optional} value={form.alias} onChange={set("alias")} placeholder="Acme billing" />
             <Field label={m.email} hint={t.dash.common.optional} type="email" value={form.email} onChange={set("email")} />
             <Field label={cd.account} hint={t.dash.common.optional} value={form.account} onChange={set("account")} placeholder="G…" />
             <Field label={cd.note} hint={t.dash.common.optional} value={form.note} onChange={set("note")} />
@@ -183,7 +183,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
                 {pays.map((p) => (
                   <tr key={p.id}>
                     <td className="tid">{p.id}</td>
-                    <td className="amt">{p.amount || "—"} {p.asset === "native" ? "XLM" : p.asset}</td>
+                    <td className="amt">{p.amount || "-"} {p.asset === "native" ? "XLM" : p.asset}</td>
                     <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>
                   </tr>

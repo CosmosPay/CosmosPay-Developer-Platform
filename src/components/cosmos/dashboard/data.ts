@@ -4,7 +4,7 @@ import { PLAN_IDS } from "@/lib/plans";
 
 export const PAGE_SIZE = 8;
 
-/* ---------------- datasets (mock — values not translated) ---------------- */
+/* ---------------- datasets (mock; values not translated) ---------------- */
 export const VOL = [38,41,40,45,43,49,52,48,55,58,54,62,60,67,71,68,74,79,83,80,88,92,96,94,101,108,112,118,124,128];
 export const METRICS = [
   { k: "gross", v: "$128,430", c: "+12.4%", up: true, d: [40,44,42,50,55,60,72,90,128] },
@@ -54,8 +54,8 @@ export const BALANCES = [
 ];
 /* product rows: [name, price, typeKey, statusKey, statusLabel] */
 export const PRODUCTS0 = [
-  ["Pro plan — monthly", "49.00 USDC", "Recurring", "ok", "Active"],
-  ["Pro plan — yearly", "490.00 USDC", "Recurring", "ok", "Active"],
+  ["Pro plan (monthly)", "49.00 USDC", "Recurring", "ok", "Active"],
+  ["Pro plan (yearly)", "490.00 USDC", "Recurring", "ok", "Active"],
   ["One-time setup", "250.00 USDC", "One-time", "ok", "Active"],
   ["Donation link", "Customer-set", "Payment link", "ok", "Active"],
 ];
@@ -70,7 +70,7 @@ export const DELIVERIES = [
   ["payment.failed", "fail", "500", "1 hour ago"],
   ["customer.created", "ok", "200", "2 hours ago"],
 ];
-/* activity rows: [iconKey, detail, when] — title comes from the catalog by iconKey */
+/* activity rows: [iconKey, detail, when]; title comes from the catalog by iconKey */
 export const ACTS = [
   ["key", "sk_live_ ••• 4f2a", "1h"],
   ["webhook", "payment.succeeded", "2h"],
@@ -98,5 +98,5 @@ export const STAFF_ROLES = ["owner", "admin", "support"];
 export const MANAGER_ROLES = ["owner", "admin"];
 export const STAFF_ONLY = ["inbox"];   // visible to owner/admin/support
 export const MANAGER_ONLY = [];        // (user management moved to the Admin section / OWNER_ONLY)
-// Platform-admin (cross-organization) views + user management — owner/admin account role only.
+// Platform-admin (cross-organization) views + user management: owner/admin account role only.
 export const OWNER_ONLY = ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"];

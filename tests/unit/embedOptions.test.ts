@@ -1,4 +1,4 @@
-/* embedOptions.test.ts — the embed's attributes and the URLs it builds (src/embed/options.ts). */
+/* embedOptions.test.ts: the embed's attributes and the URLs it builds (src/embed/options.ts). */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 

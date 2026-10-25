@@ -16,21 +16,21 @@ interface Props {
   image?: string;
   /** Set true on private/auth pages so search engines don't index them. */
   noindex?: boolean;
-  /** Open Graph type — "website" for marketing pages, "article" for posts. */
+  /** Open Graph type: "website" for marketing pages, "article" for posts. */
   type?: string;
   /** Solo la landing: precarga la cinta del hero, la imagen mas grande sobre la linea de flotacion. */
   preloadCinta?: boolean;
   /** The general nav bar, on every view. Off only where the page's own React tree renders
    *  <Nav> (Landing, Pricing, Dashboard), so it is never drawn twice. */
   nav?: boolean;
-  /** A skin class for <body> — "inst" puts the page on the institutional skin (the dashboard). */
+  /** A skin class for <body>; "inst" puts the page on the institutional skin (the dashboard). */
   bodyClass?: string;
 }
 
 const {
-  title = "Cosmos Pay — Developer Platform",
+  title = "Cosmos Pay Developer Platform",
   lang,
-  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API — multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers and analytics.",
+  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API (multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers and analytics).",
   image = "/og-image.png",
   noindex = false,
   type = "website",
@@ -53,7 +53,7 @@ const robots = noindex ? "noindex, nofollow" : "index, follow";
 const gaId = PUBLIC_GA_ID;
 const googleSiteVerification = PUBLIC_GOOGLE_SITE_VERIFICATION;
 
-// Structured data (skipped on noindex pages — search engines ignore them anyway).
+// Structured data (skipped on noindex pages; search engines ignore them anyway).
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -65,7 +65,7 @@ const jsonLd = {
     },
     {
       "@type": "WebSite",
-      name: Astro.locals.area === "site" ? "Cosmos Pay" : "Cosmos Pay — Developer Platform",
+      name: Astro.locals.area === "site" ? "Cosmos Pay" : "Cosmos Pay Developer Platform",
       url: siteBase.origin,
     },
   ],
@@ -146,7 +146,7 @@ const jsonLd = {
       </Fragment>
     )}
     <style>
-      /* Keyboard skip-to-content link — visually hidden until focused. */
+      /* Keyboard skip-to-content link, visually hidden until focused. */
       .skip-link {
         position: absolute;
         left: -9999px;

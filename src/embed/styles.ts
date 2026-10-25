@@ -1,9 +1,9 @@
-/* styles.ts — the embed's CSS, scoped by each element's shadow root.
+/* styles.ts: the embed's CSS, scoped by each element's shadow root.
 
    The institutional skin of the payments site (src/styles/institutional.css), reduced to
    what an element on someone else's page needs: black is primary (the pill button, #13131A
    with white text; inverted in dark mode), neutral greys for surfaces and lines, solid colours
-   only — no gradients, no decorative chips, no shadow beyond a hairline border. Status is
+   only: no gradients, no decorative chips, no shadow beyond a hairline border. Status is
    coloured text with a dot, as on the hosted checkout. Open Sauce One is not served to
    third-party pages, so the type is the system stack.
 

@@ -1,8 +1,8 @@
-/* GET /api/admin/public-key — mint (or re-read) the shared public key. Owner/admin only.
+/* GET /api/admin/public-key: mint (or re-read) the shared public key. Owner/admin only.
 
    Creating API keys is this platform's job, and the shared public key is one: it is minted
    here, once, with `role: 'public'` (see src/lib/public-key.ts). Serving it to wallets is
-   NOT this platform's job any more — the community server does that, keyless, at
+   NOT this platform's job any more; the community server does that, keyless, at
    `GET /v1/public-key`, from its `PUBLIC_API_KEY_DEV` / `PUBLIC_API_KEY_PROD`. This route is
    where an operator gets the values to put there, so that no wallet request depends on this
    platform being up.

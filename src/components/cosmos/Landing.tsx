@@ -1,4 +1,4 @@
-/* Landing.jsx — Cosmos Pay Developer Platform marketing landing.
+/* Landing.jsx: Cosmos Pay Developer Platform marketing landing.
    Ported from the Design bundle; all copy resolved through the i18n catalog (useT).
    Thin root: section components live under ./marketing. */
 import { Nav, Footer, useTheme, useReveal, useDevSession } from "@/components/cosmos/shared";

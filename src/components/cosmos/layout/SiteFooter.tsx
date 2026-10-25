@@ -1,4 +1,4 @@
-/* SiteFooter.tsx — the site footer for Astro pages, rendered on the server only (no client
+/* SiteFooter.tsx: the site footer for Astro pages, rendered on the server only (no client
    directive): it has nothing interactive, so it ships no JavaScript. */
 import { initLang } from "@/lib/i18n/index";
 import { Footer } from "@/components/cosmos/layout/Footer";

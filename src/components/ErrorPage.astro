@@ -18,7 +18,7 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const astro = String(code) === "500" ? "astronauta-acostado.svg" : "astronauta-pensando.svg";
 ---
 
-<CosmosLayout title={`${code} — ${title} · Cosmos Pay`} noindex={true} lang={locale}>
+<CosmosLayout title={`${code}: ${title} | Cosmos Pay`} noindex={true} lang={locale}>
   <main id="main" class="errp">
     <div class="errp-inner">
       <div class="errp-code">{code}</div>

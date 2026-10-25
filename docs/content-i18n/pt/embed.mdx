@@ -1,18 +1,18 @@
 ---
 title: "Incorpore um pagamento: botão de pagamento e checkout incorporado"
-description: Receba no seu próprio site com uma única tag script — um botão que abre o checkout hospedado, ou um checkout compacto desenhado dentro da sua página.
+description: Receba no seu próprio site com uma única tag script, usando um botão que abre o checkout hospedado ou um checkout compacto desenhado dentro da sua página.
 ---
 
 Todo link de pagamento que você cria tem um **checkout hospedado** em `https://payments.cosmospay.lat/{id}`.
 Para receber sem tirar o pagador do seu site, adicione um script e depois um destes dois elementos:
 
-- **Botão de pagamento** — `<cosmos-pay-button>` desenha um botão. O clique abre o checkout hospedado
+- **Botão de pagamento**: `<cosmos-pay-button>` desenha um botão. O clique abre o checkout hospedado
   em uma janela pop-up, e o botão avisa a sua página quando o status muda.
-- **Checkout incorporado** — `<cosmos-pay-checkout>` desenha um checkout compacto dentro da sua
-  página: o valor, a rede, o código QR, um botão **Abrir na carteira** e o status ao vivo.
+- **Checkout incorporado**: `<cosmos-pay-checkout>` desenha um checkout compacto dentro da sua
+  página, com o valor, a rede, o código QR, um botão **Abrir na carteira** e o status ao vivo.
 
 Os dois recebem o **id do link de pagamento**: o `id` da intenção de pagamento que você criou no seu
-servidor (a última parte da URL do checkout). Crie a intenção primeiro — veja [Intenções de pagamento](/sdk/server/payment-intents).
+servidor (a última parte da URL do checkout). Crie a intenção primeiro. Veja [Intenções de pagamento](/sdk/server/payment-intents).
 
 ## Adicione o script
 
@@ -21,7 +21,7 @@ servidor (a última parte da URL do checkout). Crie a intenção primeiro — ve
 ```
 
 Uma vez por página, em qualquer lugar dela. Os elementos são custom elements padrão, então funcionam
-em HTML puro e em qualquer framework. O script **não precisa de chave de API** — nunca coloque sua
+em HTML puro e em qualquer framework. O script **não precisa de chave de API**: nunca coloque sua
 chave em uma página web.
 
 ## Botão de pagamento
@@ -45,8 +45,8 @@ chave em uma página web.
 
 Mostra o valor e o ativo ("Valor livre" quando o pagador escolhe), a descrição do link, a rede, o
 código QR, **Abrir na carteira**, o status e a expiração quando o link tem uma. Lê o link a partir do
-navegador do pagador e o mantém atualizado — a cada 5 segundos enquanto aguarda o pagamento, a cada 3
-enquanto a rede confirma, a cada 30 depois de expirado — e para quando o pagamento é concluído, falha
+navegador do pagador e o mantém atualizado (a cada 5 segundos enquanto aguarda o pagamento, a cada 3
+enquanto a rede confirma, a cada 30 depois de expirado) e para quando o pagamento é concluído, falha
 ou é cancelado.
 
 - Por padrão tem até 420px de largura. Altere com CSS no elemento:
@@ -106,7 +106,7 @@ sua chave (`client.paymentIntents.fetch(id)`, ou `GET /v1/payment-intents/{id}` 
 O botão de pagamento só recebe notícias do checkout enquanto o pop-up está aberto, e só se o navegador
 mantiver as duas janelas conectadas. Se a sua página envia `Cross-Origin-Opener-Policy: same-origin`,
 use `same-origin-allow-popups`, ou o botão não recebe atualizações. Quando o pop-up é bloqueado e o
-checkout abre na mesma aba, não há eventos — o seu servidor continua recebendo o webhook.
+checkout abre na mesma aba, não há eventos, mas o seu servidor continua recebendo o webhook.
 
 ## Content Security Policy
 

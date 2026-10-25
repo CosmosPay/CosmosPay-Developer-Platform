@@ -1,6 +1,6 @@
 ---
 title: Erste Schritte
-description: Alles, was Sie vor Ihrer ersten Cosmos-Pay-Zahlung brauchen — was es ist, wie eine Zahlung abläuft und die beiden Integrationswege.
+description: Alles, was Sie vor Ihrer ersten Cosmos-Pay-Zahlung brauchen (was es ist, wie eine Zahlung abläuft und die beiden Integrationswege).
 ---
 
 Mit **Cosmos Pay** akzeptieren Sie Zahlungen auf [Stellar](https://stellar.org),
@@ -11,7 +11,7 @@ Wallet ab, und Sie bestätigen sie On-Chain. Rund um diesen Kern erhalten Sie au
 Es gibt zwei Integrationswege, und die meisten Anwendungen nutzen beide gemeinsam:
 
 <Cards>
-  <Card title="Das SDK verwenden (empfohlen)" href="/sdk/server/overview" description="@cosmosapp/pay_sdk — ein typisierter JavaScript/TypeScript-Client, der Authentifizierung, Anfragen und Wallet-Signierung für Sie übernimmt." />
+  <Card title="Das SDK verwenden (empfohlen)" href="/sdk/server/overview" description="@cosmosapp/pay_sdk: ein typisierter JavaScript/TypeScript-Client, der Authentifizierung, Anfragen und Wallet-Signierung für Sie übernimmt." />
   <Card title="Die REST-API direkt aufrufen" href="/api" description="Die Payments-REST-API (OpenAPI), falls Sie nicht mit JavaScript arbeiten oder volle Kontrolle über die Anfragen wünschen." />
 </Cards>
 
@@ -19,24 +19,24 @@ Es gibt zwei Integrationswege, und die meisten Anwendungen nutzen beide gemeinsa
 
 Jede Zahlung durchläuft dieselben drei Schritte (hier mit dem SDK, auf Stellar):
 
-1. **Ihr Server erstellt eine Absicht** mit Ihrem geheimen API-Schlüssel — z. B. `client.paymentIntents.createPay({ ... })`. Sie erhalten eine SEP-7-`uri` und einen `qr`, die Sie dem Zahler anzeigen.
+1. **Ihr Server erstellt eine Absicht** mit Ihrem geheimen API-Schlüssel, z. B. `client.paymentIntents.createPay({ ... })`. Sie erhalten eine SEP-7-`uri` und einen `qr`, die Sie dem Zahler anzeigen.
 2. **Der Zahler schließt sie ab** in seinem Stellar-Wallet (Freighter, xBull, Rabet, LOBSTR oder Albedo). Im Browser ist das ein einziger Aufruf: `new WebClient().pay(intent)`, der einen On-Chain-`txHash` zurückgibt.
-3. **Ihr Server validiert** diesen Hash — `intent.validate(txHash)` —, wodurch der Status der Zahlung aktualisiert und ein Webhook an Ihre Endpunkte ausgelöst wird.
+3. **Ihr Server validiert** diesen Hash mit `intent.validate(txHash)`, wodurch der Status der Zahlung aktualisiert und ein Webhook an Ihre Endpunkte ausgelöst wird.
 
 Auf Solana und Monad erstellen Sie die Absicht über die [REST-API](/api/payment-intents) mit `chain`:
 Sie erhalten einen Solana-Pay- oder EIP-681-Link statt eines SEP-7-Links, der Zahler bezahlt ihn aus einem
 beliebigen Wallet dieser Chain, und die Payments-API erkennt die Zahlung on-chain und löst dieselben Webhooks aus.
 
 <Callout title="Testnet vs. Mainnet">
-Sie wählen das Netzwerk niemals im Code — es wird durch Ihr **API-Schlüssel-Präfix** bestimmt: `dv_`-Schlüssel laufen
+Sie wählen das Netzwerk niemals im Code; es wird durch Ihr **API-Schlüssel-Präfix** bestimmt: `dv_`-Schlüssel laufen
 im **Testnet**, `prod_`-Schlüssel im **Mainnet**. Entwickeln Sie mit einem `dv_`-Schlüssel und tauschen Sie ihn dann gegen einen
 `prod_`-Schlüssel aus, um live zu gehen.
 </Callout>
 
 ## Bevor Sie beginnen
 
-1. **Holen Sie sich einen API-Schlüssel** — melden Sie sich an der Entwicklerplattform an und erzeugen Sie einen. Siehe [API-Schlüssel holen](/api-keys).
-2. **Installieren Sie das SDK** — `npm install @cosmosapp/pay_sdk` (Node.js ≥ 18). Siehe [Installation](/sdk/server/installation).
+1. **Holen Sie sich einen API-Schlüssel**: Melden Sie sich an der Entwicklerplattform an und erzeugen Sie einen. Siehe [API-Schlüssel holen](/api-keys).
+2. **Installieren Sie das SDK**: `npm install @cosmosapp/pay_sdk` (Node.js ≥ 18). Siehe [Installation](/sdk/server/installation).
 3. **Bewahren Sie den Schlüssel auf Ihrem Server auf.** Er ist geheim; der Browser-Web-Client benötigt ihn nie.
 
 ## Ihre erste Zahlung

@@ -48,7 +48,7 @@ export type ApiKeyRole = 'admin' | 'user' | 'public';
 /**
  * Normalizes a credential's `role` label.
  *
- * `public` names the SHARED key embedded in the open-source wallet — one
+ * `public` names the SHARED key embedded in the open-source wallet: one
  * credential held by everyone, so the Payments service must be able to tell it
  * from an ordinary tenant's key and confine it to the routes that return no
  * per-consumer rows. It has to survive this parser AND the forwarder below: this
@@ -609,7 +609,7 @@ type ForwardEntry = {
   e: Environment;
   // Organization the key belongs to, the org's plan, and the plan's swap commission
   // (basis points). Baked from each credential's `org` label + the owner's plan so the
-  // Payments API enforces the swap fee per organization — the client can never set or
+  // Payments API enforces the swap fee per organization; the client can never set or
   // undercut it (the forwarder overwrites these headers on every request).
   o?: string;
   pl?: string;
@@ -620,8 +620,8 @@ type ForwardEntry = {
   em?: string;
 };
 
-/* The account's verified email as the forwarder bakes it, or "" when there is none — the
-   synthetic public and bootstrap consumers have no user row — or when it is not a plain
+/* The account's verified email as the forwarder bakes it, or "" when there is none (the
+   synthetic public and bootstrap consumers have no user row) or when it is not a plain
    lowercase address. The map is embedded in a Lua long string, so only a value that cannot
    break out of it is admitted; anything else forwards as "no email" rather than as text
    nobody checked. */
@@ -643,7 +643,7 @@ async function accountEmail(userId: string): Promise<string> {
    consumer, where it IS executed for credential-authenticated requests, and switches on
    `ctx.consumer.credential_id` (the key that authenticated) to emit that key's values.
    The map is rebuilt by syncConsumerForwarder() whenever the user's keys change.
-   Runs in the `access` phase — after key-auth, before the upstream request. */
+   Runs in the `access` phase, after key-auth, before the upstream request. */
 function consumerForwardingPlugin(map: Record<string, ForwardEntry>) {
   // Embedded as a Lua long string with a `==` level so JSON quotes/brackets don't need
   // escaping; map values are sanitized in syncConsumerForwarder so they can't contain `]==]`.
@@ -662,7 +662,7 @@ return function(conf, ctx)
     ngx.req.set_header("X-Consumer-Role", entry.r or "user")
     ngx.req.set_header("X-Consumer-Env", entry.e or "dev")
     -- Always set (never append) the org/plan/fee headers so a client-supplied copy is
-    -- overwritten — the swap commission is the org plan's rate, enforced server-side.
+    -- overwritten; the swap commission is the org plan's rate, enforced server-side.
     ngx.req.set_header("X-Consumer-Org", entry.o or "")
     ngx.req.set_header("X-Consumer-Plan", entry.pl or "")
     ngx.req.set_header("X-Plan-Swap-Fee-Bps", (entry.f ~= nil) and tostring(entry.f) or "")
@@ -682,7 +682,7 @@ export async function createConsumer(
 
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 
-  // Idempotent: never overwrite an existing consumer — it carries the forwarder plugin
+  // Idempotent: never overwrite an existing consumer; it carries the forwarder plugin
   // (syncConsumerForwarder). A blind PUT here would wipe that plugin on every list call.
   const existing = await apisix.get(`/consumers/${username}`).then((r) => r.data).catch(() => null);
   if (existing) {
@@ -713,14 +713,14 @@ export async function createConsumer(
    credential_id → context map into a single consumer plugin. APISIX versions the
    per-credential consumer cache by `credential.modifiedIndex .. consumer.modifiedIndex`,
    so updating the consumer here invalidates that cache and the new values take effect on
-   the next request — including for credentials created earlier. Best-effort: failures are
+   the next request, including for credentials created earlier. Best-effort: failures are
    logged but never block the create/update/delete that triggered the sync. */
 export async function syncConsumerForwarder(userId: string) {
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 
   const credentials = await listUserApiKeys(userId).catch(() => []);
 
-  // Sorted by id so the baked map (and thus the function body) is deterministic — the
+  // Sorted by id so the baked map (and thus the function body) is deterministic; the
   // idempotency check below relies on a stable string for unchanged key sets.
   const sorted = (Array.isArray(credentials) ? credentials : [])
     .slice()

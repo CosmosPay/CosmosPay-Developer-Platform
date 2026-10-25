@@ -7,7 +7,7 @@ import type { APIRoute } from "astro";
 
 const paramsSchema = z.object({ id: z.string().min(1), invId: z.string().min(1) });
 
-/* DELETE /api/organizations/:id/invitations/:invId — revoke a pending invitation (owner/admin). */
+/* DELETE /api/organizations/:id/invitations/:invId: revoke a pending invitation (owner/admin). */
 export const DELETE: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

@@ -1,8 +1,8 @@
-/* KycReturn.tsx — the BlindPay terms-of-service callback island.
+/* KycReturn.tsx: the BlindPay terms-of-service callback island.
    BlindPay redirects here after the user accepts the hosted terms, appending
    ?tos_id=… to the redirect_url we gave it. We read that single-use id from the
    query string and call the kyc proxy to enable the (inactive) receiver. The id is
-   never entered by hand — capturing it from this redirect is the only legitimate path. */
+   never entered by hand; capturing it from this redirect is the only legitimate path. */
 import { useState, useEffect } from "react";
 import { useT, initLang } from "@/lib/i18n/index";
 import { kyc as kycApi, admin as adminApi } from "@/lib/api-client";

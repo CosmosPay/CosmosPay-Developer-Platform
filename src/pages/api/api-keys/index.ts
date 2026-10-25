@@ -147,7 +147,7 @@ export const POST: APIRoute = async (ctx) => {
     });
   }
 
-  // API keys belong to an organization — the caller must be a member of it, and must hold
+  // API keys belong to an organization: the caller must be a member of it, and must hold
   // the matching per-action permission (owners/admins implicitly have all). Production and
   // test keys are gated separately so a collaborator can be limited to test keys only.
   const orgId = body.data.org;
@@ -172,7 +172,7 @@ export const POST: APIRoute = async (ctx) => {
     ? existingKeys.filter((k: { value?: { labels?: { org?: string } } }) => k.value?.labels?.org === orgId).length
     : 0;
   if (atLimit(limits.maxApiKeys, orgKeyCount)) {
-    // Cosmos-Wallet accounts can't mint *additional* keys — their dev + prod keys
+    // Cosmos-Wallet accounts can't mint *additional* keys; their dev + prod keys
     // are auto-provisioned at registration. Rather than fail at the limit, rotate
     // the org's existing key for this environment and return the fresh secret.
     const walletProvisioned = await isWalletProvisionedUser(session.user.id).catch(() => false);
@@ -189,7 +189,7 @@ export const POST: APIRoute = async (ctx) => {
     }
     // Rotate onto the CURRENT wallet scope set, not the labels the key was minted with.
     // These accounts cannot create additional keys, so a key minted before a scope
-    // existed could never be granted it — the rotate they are offered instead was
+    // existed could never be granted it, and the rotate they are offered instead was
     // handing back the same limitation with a new secret.
     const rotated = await rotateApiKey(
       rotatable[0].value.id,
@@ -276,7 +276,7 @@ export const POST: APIRoute = async (ctx) => {
     });
   }
 
-  // Activity notification (best-effort) — records origin + date of the action.
+  // Activity notification (best-effort): records origin + date of the action.
   const loc = await geoLocate(ctx.request.headers, ctx.clientAddress).catch(() => null);
   safeNotify({
     userId: session.user.id,

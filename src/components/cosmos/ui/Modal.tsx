@@ -28,7 +28,7 @@ export function Modal({ onClose, children, label = "Dialog" }: { onClose: () => 
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     // Move focus into the dialog: a form field if there is one, otherwise the dialog itself
-    // (never auto-focus an action button — avoids accidental confirm of destructive dialogs).
+    // (never auto-focus an action button; that avoids accidental confirm of destructive dialogs).
     const root = ref.current;
     const field = root?.querySelector<HTMLElement>("input,textarea,select");
     (field ?? root)?.focus();

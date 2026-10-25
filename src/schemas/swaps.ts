@@ -5,9 +5,9 @@
 
    NOTE: there is deliberately NO fee/commission field here. The swap commission is the
    calling organization's plan rate, resolved server-side (orgSwapContext) and injected
-   into the gateway headers — it can never be passed as a parameter. */
+   into the gateway headers; it can never be passed as a parameter. */
 /* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
-   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive: a schema
    built before it runs has no `.openapi()` at all. These schemas are handed to the
    OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
    what guarantees the extension has run by the time they are constructed. It is the same
@@ -125,14 +125,14 @@ export const createSwapBodySchema = z
   .superRefine(checkChain);
 
 /* A Stellar swap is submitted as `signedXdr`, a Solana or Monad one as
-   `signedTransaction` — exactly one of the two. */
+   `signedTransaction`: exactly one of the two. */
 export const submitSwapBodySchema = z
   .object({
     signedXdr: z.string().trim().min(1).max(100000).optional(),
     signedTransaction: z.string().trim().min(1).max(100000).optional(),
   })
   .refine((v) => (v.signedXdr === undefined) !== (v.signedTransaction === undefined), {
-    message: "Send signedXdr (Stellar) or signedTransaction (Solana, Monad) — exactly one.",
+    message: "Send exactly one of signedXdr (Stellar) or signedTransaction (Solana, Monad).",
     path: ["signedXdr"],
   });
 

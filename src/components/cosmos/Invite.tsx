@@ -1,4 +1,4 @@
-/* Invite.tsx — the /invite/:token magic-link landing. The page resolves the invitation
+/* Invite.tsx: the /invite/:token magic-link landing. The page resolves the invitation
    server-side (and accepts it when the signed-in email matches); this island just renders
    the resulting state and, when needed, kicks off sign-in returning to this same link. */
 import { useT, fmt, initLang } from "@/lib/i18n/index";

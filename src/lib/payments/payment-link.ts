@@ -1,4 +1,4 @@
-/* payment-link.ts — the hosted checkout's model of a payment link: what
+/* payment-link.ts holds the hosted checkout's model of a payment link: what
    `GET /v1/payment-links/{id}` answers (the community server's PublicPaymentLinkEntity)
    and every decision the page makes from it. Pure, so it is unit-tested under plain
    node; the browser script only wires it to the DOM. */
@@ -20,7 +20,7 @@ export interface PaymentLink {
   chain: Chain;
   network: Tier;
   status: LinkStatus;
-  /** Where the payer sends — always the address inside `uri`. */
+  /** Where the payer sends: always the address inside `uri`. */
   payTo: string;
   /** Decimal in the asset's units; null when the payer chooses. */
   amount: string | null;
@@ -61,7 +61,7 @@ const strOrNull = (v: unknown): v is string | null => v === null || typeof v ===
 
 /**
  * Validate a response body into a PaymentLink. Anything that does not match the contract
- * — an unknown chain, a URI with a foreign scheme, a QR that is not a PNG data URL — makes
+ * (an unknown chain, a URI with a foreign scheme, a QR that is not a PNG data URL) makes
  * the whole body invalid: a checkout page must not render a half-trusted payment.
  */
 export function parsePaymentLink(body: unknown): PaymentLink | null {
@@ -120,7 +120,7 @@ export function amountLabel(link: Pick<PaymentLink, "chain" | "asset" | "amount"
   return link.amount ? `${link.amount} ${assetSymbol(link)}` : null;
 }
 
-/** "GCALNQ…X7AOO" — enough of both ends to compare against the wallet's screen. */
+/** "GCALNQ…X7AOO": enough of both ends to compare against the wallet's screen. */
 export function shortAddress(address: string, head = 6, tail = 6): string {
   return address.length <= head + tail + 1 ? address : `${address.slice(0, head)}…${address.slice(-tail)}`;
 }
@@ -174,7 +174,7 @@ export function phaseOf(link: Pick<PaymentLink, "status" | "expiresAt">, now: nu
 }
 
 /* How long to wait before reading the link again, by phase. EXPIRED is not final on the
-   server — a payment verified later still moves it to SUCCEEDED — so an expired link keeps
+   server (a payment verified later still moves it to SUCCEEDED), so an expired link keeps
    being read, just slowly. Paid, failed and cancelled are final: polling stops.
    The server allows 60 reads a minute per address; 5 s is 12. */
 const POLL_MS: Partial<Record<Phase, number>> = { open: 5_000, processing: 3_000, expired: 30_000 };

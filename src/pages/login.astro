@@ -1,5 +1,5 @@
 ---
-/* /login — no view of its own. It starts the Authentik OAuth flow on the server and answers
+/* /login has no view of its own. It starts the Authentik OAuth flow on the server and answers
  * with a 302 straight to Authentik; the state cookie Better Auth sets for the flow rides on
  * that redirect. Being a redirect, it never enters the browser history, so Back from
  * Authentik returns to the page the visitor came from.

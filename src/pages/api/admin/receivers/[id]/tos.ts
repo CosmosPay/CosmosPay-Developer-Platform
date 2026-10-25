@@ -1,4 +1,4 @@
-/* POST /api/admin/receivers/:id/tos — PLATFORM-ADMIN (owner) resend of the KYC verification
+/* POST /api/admin/receivers/:id/tos: PLATFORM-ADMIN (owner) resend of the KYC verification
    (terms-of-service acceptance) email for ANY fiat receiver, across every organization.
 
    The org-scoped /api/kyc/receivers/:id/tos only works for a receiver in the caller's own org;
@@ -26,7 +26,7 @@ export const POST: APIRoute = async (ctx) => {
   const id = ctx.params.id;
   if (!id) return jsonNotFound("Receiver not found");
 
-  // Platform owner/admin only — the same gate as the rest of the admin surface. The role also
+  // Platform owner/admin only: the same gate as the rest of the admin surface. The role also
   // tunes the resend cooldown (owner: immediate, admin: 1/min).
   const role = await getRole(session.user.id).catch(() => "user" as const);
   if (!canManageUsers(role)) return jsonForbidden("Platform admin access required.");

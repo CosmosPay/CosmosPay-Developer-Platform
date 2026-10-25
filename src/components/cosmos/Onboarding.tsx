@@ -1,4 +1,4 @@
-/* Onboarding.jsx — create-organization wizard (Organization → Goals → Plan → Review).
+/* Onboarding.jsx: create-organization wizard (Organization → Goals → Plan → Review).
    Ported from the Cosmos Pay Design "onboarding" handoff; restyled to the project's
    own tokens (acento de marca, sin monospace) and fully i18n'd. */
 import { useState, useEffect } from "react";

@@ -4,7 +4,7 @@ import { useOutside } from "@/components/cosmos/hooks/useOutside";
 import { Flag } from "@/components/cosmos/ui/Flag";
 import { IcChev, IcCheck } from "@/components/cosmos/icons";
 
-/* Language selector — flips the active locale live across all islands. */
+/* Language selector: flips the active locale live across all islands. */
 export function LangSelect() {
   const [open, setOpen] = useState(false);
   const lang = useLang();

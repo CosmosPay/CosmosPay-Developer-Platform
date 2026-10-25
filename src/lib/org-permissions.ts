@@ -1,4 +1,4 @@
-/* org-permissions.ts — per-action permissions for organization collaborators.
+/* org-permissions.ts: per-action permissions for organization collaborators.
    Pure data (no server-only imports) so it's shared by the API and the React islands.
 
    Roles: owner / admin / member. Owners and admins implicitly have EVERY permission.

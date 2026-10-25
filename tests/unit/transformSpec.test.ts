@@ -1,5 +1,5 @@
 /**
- * docs/scripts/transform-spec.mjs — the docs site's view of the community server's spec.
+ * docs/scripts/transform-spec.mjs: the docs site's view of the community server's spec.
  *
  * It rewrites auth for a public audience, and that rewrite is where the reference once
  * started telling readers to send an API key to routes that take none: an empty

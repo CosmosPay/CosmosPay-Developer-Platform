@@ -2,12 +2,12 @@
 
    Two callers with the same body shape and very different trust: the dashboard
    (a session cookie, attributed to the signed-in account) and the wallet (no
-   credential at all, forwarded anonymously). They share this schema on purpose —
+   credential at all, forwarded anonymously). They share this schema on purpose:
    the bounds below are what keeps an UNAUTHENTICATED caller from turning the
    telemetry endpoint into free storage, so applying them to only one of the two
    would leave the hole exactly where it matters. */
 /* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
-   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive: a schema
    built before it runs has no `.openapi()` at all. These schemas are handed to the
    OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
    what guarantees the extension has run by the time they are constructed. It is the same
@@ -38,7 +38,7 @@ export const activityEventSchema = z.object({
   type: eventName,
   level: z.enum(["debug", "info", "warn", "error"]).optional(),
   category: categoryName.optional(),
-  // Truncated, never rejected — and with NO `.max()` in front of it, which is the
+  // Truncated, never rejected, and with NO `.max()` in front of it, which is the
   // point: a length cap here would refuse the batch, and the batch is a telemetry
   // report whose most useful member is exactly the one carrying an unusually long
   // error string. The upstream truncates for the same reason.

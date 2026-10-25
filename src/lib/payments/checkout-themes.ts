@@ -1,4 +1,4 @@
-/* checkout-themes.ts — the prebuilt designs a merchant picks for a payment link's hosted
+/* checkout-themes.ts: the prebuilt designs a merchant picks for a payment link's hosted
    checkout. The community server stores the choice on the payment intent (`checkoutTheme`)
    with exactly these values; the dashboard offers them and the checkout page draws them. */
 

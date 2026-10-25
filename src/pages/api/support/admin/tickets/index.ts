@@ -4,7 +4,7 @@ import { getRole, isStaff } from "@/lib/profile";
 import { listAllTickets } from "@/lib/support";
 import type { APIRoute } from "astro";
 
-/* GET /api/support/admin/tickets?status= — every ticket (optionally filtered by status).
+/* GET /api/support/admin/tickets?status= returns every ticket (optionally filtered by status).
    Staff only (owner/admin/support). */
 export const GET: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });

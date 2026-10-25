@@ -1,4 +1,4 @@
-/* cosmos.ts — server-to-server client for the Cosmos Pay Payments API
+/* cosmos.ts: server-to-server client for the Cosmos Pay Payments API
    (the community NestJS service, see comos-pay-community-server).
 
    In production every request to that service must arrive through the APISIX
@@ -6,7 +6,7 @@
    consumer identity (`X-Consumer-Username`, `X-Consumer-Env`). Our dashboard is a
    trusted backend (it already holds the APISIX admin key), so instead of round-
    tripping through the data plane we call the Payments API directly and present
-   those same headers ourselves — scoping every payment intent to the signed-in
+   those same headers ourselves, scoping every payment intent to the signed-in
    user's consumer (`cosmos_<userId>`), exactly as a real API key would. */
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
 import { keyPrefix } from "@/utils/apisix";
@@ -23,7 +23,7 @@ function consumerUsername(userId: string): string {
 }
 
 /* Round-robin across the replicas `COSMOS_API_URL` lists, the same set APISIX balances
-   across. A single entry — every deployment until replicas — always returns itself. */
+   across. A single entry (every deployment until replicas) always returns itself. */
 const BASE_URLS = upstreamBaseUrls(COSMOS_API_URL);
 let nextBase = 0;
 function baseUrl(): string {
@@ -58,7 +58,7 @@ async function cosmosFetch<T>(
     method?: string;
     body?: unknown;
     query?: Record<string, string | number | undefined>;
-    // Organization context for swaps. `swapFeeBps` is the org plan's commission — the
+    // Organization context for swaps. `swapFeeBps` is the org plan's commission; the
     // Payments API takes it from this trusted header, NEVER from the request body, so a
     // caller can't change the fee. Resolved server-side via orgSwapContext().
     org?: string;
@@ -93,7 +93,7 @@ async function cosmosFetch<T>(
     // separate API-key scopes (read/write) only restrict external key holders.
     "X-Consumer-Role": "admin",
   };
-  // Only sent when configured — but the community server always enforces it now, so
+  // Only sent when configured, but the community server always enforces it now, so
   // COSMOS_GATEWAY_SECRET must be set (and match) for these calls to succeed. The
   // console marker is keyed by the same secret: it flags this as management-console
   // traffic (excluded from the tenant's API request log, exempt from per-consumer rate
@@ -102,7 +102,7 @@ async function cosmosFetch<T>(
     headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
     headers["X-Cosmos-Internal"] = consoleMarker(COSMOS_GATEWAY_SECRET);
   }
-  // Swap context. The fee is the org plan's rate, enforced server-side — presented here
+  // Swap context. The fee is the org plan's rate, enforced server-side and presented here
   // exactly as the APISIX consumer forwarder would for an API-key caller.
   if (init.org) headers["X-Consumer-Org"] = init.org;
   if (init.swapFeeBps !== undefined) headers["X-Plan-Swap-Fee-Bps"] = String(init.swapFeeBps);
@@ -138,7 +138,7 @@ async function cosmosFetch<T>(
 /* Generic reverse-proxy to the Payments API for whole feature prefixes (BlindPay:
    kyc / onramp / offramp), so the dashboard can expose them without a hand-written route
    per endpoint. Presents the same gateway identity headers as cosmosFetch and forwards
-   the method, query (minus our control params), and body — including multipart bodies
+   the method, query (minus our control params), and body, including multipart bodies
    like KYC document uploads (passed through untouched). Returns the parsed JSON + status;
    throws CosmosApiError on a non-2xx so callers map it to a clean error. */
 export async function proxyCosmosRequest(opts: {
@@ -204,7 +204,7 @@ export async function proxyCosmosRequest(opts: {
         headers["Content-Type"] = "application/json";
         body = text && text.trim() ? text : undefined;
       } else if (contentType) {
-        // multipart/form-data, etc. (e.g. KYC document upload) — forward as-is.
+        // multipart/form-data, etc. (e.g. KYC document upload): forward as-is.
         headers["Content-Type"] = contentType;
         body = await opts.request.arrayBuffer();
       }
@@ -294,11 +294,11 @@ export interface ListIntentsQuery {
 
 /* ---- High-level operations, each scoped to a user's consumer. ---- */
 export const cosmos = {
-  /** SEP-7 `pay` intent — no source, just a payment link + QR (no XDR). */
+  /** SEP-7 `pay` intent: no source, just a payment link + QR (no XDR). */
   createPay: (userId: string, env: CosmosEnv, input: CreatePayInput) =>
     cosmosFetch<PaymentIntent>(userId, env, "/v1/payment-intents/pay", { method: "POST", body: input }),
 
-  /** SEP-7 `tx` intent — source known, returns an unsigned XDR + tx URI + QR. */
+  /** SEP-7 `tx` intent: source known, returns an unsigned XDR + tx URI + QR. */
   createTx: (userId: string, env: CosmosEnv, input: CreateTxInput) =>
     cosmosFetch<PaymentIntent>(userId, env, "/v1/payment-intents/tx", { method: "POST", body: input }),
 
@@ -407,7 +407,7 @@ export const cosmosCustomers = {
 /* ---- Same-chain swaps: Stellar path payments by default, Solana through Jupiter and
    Monad through Kuru Flow with `chain`. The Payments API quotes, builds the unsigned
    transaction, and relays the signed one. The swap commission is the calling org's
-   plan rate — passed via the trusted X-Plan-Swap-Fee-Bps header (orgSwapContext),
+   plan rate, passed via the trusted X-Plan-Swap-Fee-Bps header (orgSwapContext),
    never in the body, so it can't be bypassed. ---- */
 export type SwapChain = "stellar" | "solana" | "monad";
 export interface SwapAssetAmount {
@@ -512,7 +512,7 @@ export interface CreateSwapInput extends QuoteSwapInput {
 }
 
 /* Each method takes the org + the org plan's swapFeeBps (resolved by the route via
-   orgSwapContext) — the fee is never sourced from the caller's body. */
+   orgSwapContext); the fee is never sourced from the caller's body. */
 export const cosmosSwaps = {
   quote: (userId: string, env: CosmosEnv, org: string, swapFeeBps: number, body: QuoteSwapInput) =>
     cosmosFetch<SwapQuote>(userId, env, "/v1/swaps/quote", { method: "POST", body, org, swapFeeBps }),
@@ -665,7 +665,7 @@ export interface LiquidityOperation {
   minPrice: string | null;
   maxPrice: string | null;
   slippageBps: number;
-  /** Plan commission (bps) taken from both assets — 0 when none applies. */
+  /** Plan commission (bps) taken from both assets; 0 when none applies. */
   feeBps: number;
   feeAmountA: string;
   feeAmountB: string;

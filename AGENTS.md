@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for Codex when working in this repository (Cosmos Pay developer platform —
+Guidance for Codex when working in this repository (Cosmos Pay developer platform:
 Astro SSR portal + its own REST API under `src/pages/api/`).
 
 ## Commands
@@ -9,8 +9,8 @@ Astro SSR portal + its own REST API under `src/pages/api/`).
 npm run dev               # astro dev --host; predev runs `prisma migrate deploy` + scripts/ensure-docs.mjs
 npm run build             # prisma generate -> docs:build (Fumadocs export into public/docs) -> astro build
 npm start                 # node dist/server/entry.mjs; prestart runs ensure-docs. Production runs under PM2
-npm test                  # = test:unit — node:test over tests/unit/**/*.test.ts (no DB, no astro:env)
-npm run test:smoke        # boots dist/ and makes one real request — catches broken external imports
+npm test                  # = test:unit (node:test over tests/unit/**/*.test.ts; no DB, no astro:env)
+npm run test:smoke        # boots dist/ and makes one real request; catches broken external imports
 npm run check:openapi     # fails if any src/pages/api route is missing from this app's OpenAPI document
 npm run check:api-spec    # fails if docs/openapi.json differs from the community server's spec
                           #   (OPENAPI_SRC, else the sibling checkout; exits 0 when neither exists)
@@ -21,13 +21,23 @@ npm run sync:route        # re-points every APISIX route's upstream at COSMOS_AP
 npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
 ```
 
+## Writing rule: no em dashes
+
+The product owner forbids the em dash (U+2014) in every context: UI copy in every language,
+code comments, docs, commit messages and pull requests. Use a full stop, comma, colon,
+parentheses or a conjunction; never an en dash or a spaced hyphen in its place (en dashes stay
+only in numeric ranges). An empty table cell shows "-" or a word. Page titles separate with
+" | ". The only em dashes left in the repo come from generated files (`docs/openapi.json`,
+`docs/content/docs/api/`, `docs/content/docs/sdk/`): fix them in the community server and the
+SDK, then regenerate.
+
 ## Three domains, one app
 
 | Domain | Area | Pages |
 | :--- | :--- | :--- |
-| `cosmospay.lat` | `site` | `src/pages/site/` — landing, `/pricing`, `/tos` |
-| `dev.cosmospay.lat` | `dev` | everything else in `src/pages/` — `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/` — `/` landing, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/preview/{design}` |
+| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/tos` |
+| `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` landing, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -54,7 +64,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 - Better Auth runs here and its session cookie stays **host-only on the platform domain**.
   Do not scope it to the parent domain (`crossSubDomainCookies`): it would travel to every
-  `*.cosmospay.lat` host — the gateway, Authentik, the wallet landing. Pages on the company
+  `*.cosmospay.lat` host (the gateway, Authentik, the wallet landing). Pages on the company
   site get `Astro.locals.user` only when served from the platform's own host (local single-host
   setups); otherwise `useDevSession` reads `/api/auth/get-session` cross-origin and the nav
   holds its skeleton (`sessionReady`) until it answers.
@@ -64,7 +74,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   It renders something only when the provider cannot be reached (503). `next` must be a
   same-origin path (`src/lib/safe-next.ts`).
 - **Authentik must list the callback of the host that serves `/login`:**
-  `<PUBLIC_BETTER_AUTH_URL>/api/auth/callback/ak` — `https://dev.cosmospay.lat/api/auth/callback/ak`
+  `<PUBLIC_BETTER_AUTH_URL>/api/auth/callback/ak`: `https://dev.cosmospay.lat/api/auth/callback/ak`
   in production, `http://localhost:4321/api/auth/callback/ak` for the default local setup. A local
   multi-domain run on other hosts needs its own callback registered there, or Authentik answers
   "Redirect URI Error".
@@ -75,7 +85,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 - **The checkout reads its link from the payer's browser**:
   `GET ${PUBLIC_PAYMENTS_API_URL}/v1/payment-links/{id}` through the gateway's keyless route
-  `<route>-payment-links` (GET/OPTIONS, CORS `*` without credentials, priority 15 — any
+  `<route>-payment-links` (GET/OPTIONS, CORS `*` without credentials, priority 15: any
   merchant's site reads it for the embedded checkout; `src/lib/apisix-keyless.ts`). The
   community server writes no CORS there; if it ever does, drop the plugin on that route, as on
   the SEP route, or browsers get two `Access-Control-Allow-Origin` headers and refuse it.
@@ -89,14 +99,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **`/pay` never hands a URI to the wallet on arrival.** The URI comes from the query string,
   which any site can choose; the page shows the whole request (issuer, network, `origin_domain`,
   callback host) and calls `requestPayment` only on the payer's click. `parseSep7Pay` refuses what
-  it cannot describe AND what a wallet could read differently — a key given twice, a case variant,
-  a key SEP-7 does not define — because the wallet gets the URI as received (its `signature`
+  it cannot describe AND what a wallet could read differently (a key given twice, a case variant,
+  a key SEP-7 does not define), because the wallet gets the URI as received (its `signature`
   covers that exact string).
 - **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
   stops on paid, failed and cancelled (`nextPollDelay`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
-  to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` — the
-  landing is the one indexed page — and the domain has its own five-language
+  to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` (the
+  landing is the one indexed page), and the domain has its own five-language
   catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`)
   and resolves the language as ?lang → cookie → Accept-Language → en.
 
@@ -119,7 +129,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **No ghost links.** A menu or footer link renders only when it leads somewhere. The targets are
   listed by catalog position in `NAV_LINKS` / `FEATURED_HREFS` (Nav.tsx) and `FOOT_GROUPS`
   (Footer.tsx); a label whose page does not exist yet stays there commented out. Never ship
-  `href="#"` — comment the link out instead.
+  `href="#"`; comment the link out instead.
 - **On the payments gateway its own links stay on it.** `Nav` and `Footer` take `area`
   (`PaymentsLayout` and the landing pass `"payments"`): the logo goes to `/`, Pricing to the
   landing's `/#pricing`, and any link into `PAYMENTS` becomes a same-origin path
@@ -132,9 +142,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - `src/styles/institutional.css`, switched on by `class="inst"` on `<body>` (`PaymentsLayout`
   always; `CosmosLayout bodyClass="inst"` for the dashboard), re-declares cosmos.css's tokens:
   a light neutral canvas and white cards. **The palette has ranks, set by the product owner:
-  black is primary** (buttons, links, figures, the account card — `--btn-bg`, `--accent`,
+  black is primary** (buttons, links, figures, the account card: `--btn-bg`, `--accent`,
   `--navy`, all `#13131A`, inverted to white in dark mode), **neutral greys are secondary**
-  (canvas, surfaces, lines, tints — no blue cast), and **the corporate blue is tertiary**
+  (canvas, surfaces, lines, tints; no blue cast), and **the corporate blue is tertiary**
   (`--tertiary`: the light buttons' hover ink, the dashboard chart, focus rings). Don't bring blue back
   as a primary colour. It follows the product owner's reference shots; BRAND.md is the
   direction (logo, Open Sauce One), not a hard limit. The checkout designs follow it too:
@@ -142,7 +152,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - Filled surfaces use `--btn-bg` / `--btn-fg`: in dark mode `--accent` is white, meant
   for text and icons.
 - **Solid colours only:** no gradients (backgrounds, glows, thumbnails), no dark bands in light
-  mode — every section follows the theme — and no decorative chips (status and network are
+  mode (every section follows the theme), and no decorative chips (status and network are
   coloured text). The product owner rejected all three as generic.
 - **Cosmos Lazos (`--ff-display`) is for the logo and very specific highlights only**; no page
   sets it today. Titles, numbers and brand names are Open Sauce One (weight 600, tight
@@ -178,7 +188,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - The hero's background is the coin-ramp video (`public/media/coin-ramp*.{webm,mp4}` + poster),
   anchored right. It multiplies onto the light page; in dark mode it is inverted with its hue
   turned back and lightens onto the page, so the hero follows the theme. It **plays on its own for
-  everyone** — the product owner's call, the one exception to reduced motion — pauses only off
+  everyone** (the product owner's call, the one exception to reduced motion), pauses only off
   screen, and always has its pause button (WCAG 2.2.2). Its container must not get a z-index: a
   stacking context would cut the video off from the background it blends with.
 - Its sections follow how crypto gateways present themselves (reviewed: Stripe, CoinGate, BitPay,
@@ -192,7 +202,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   where the pay button and the embedded checkout run for real in wide cells (the embed's `demo`
   mode: a sample nothing can pay, no API request; the embedded one logs its events under it),
   then hosted checkout, payment links and QR, API and SDK, and e-commerce plugins (WooCommerce,
-  Shopify — "coming soon", not built). Code is folded behind "view code" with a copy button. The pay button and the
+  Shopify: "coming soon", not built). Code is folded behind "view code" with a copy button. The pay button and the
   embedded checkout are the embed script's elements (see "Embedding a payment"). The four
   checkout designs still exist (dashboard, `/preview/{design}`); only the gallery left.
 - **"How it works" and the use cases are pinned** on screens of at least 1000×700 (`data-pin`,
@@ -212,7 +222,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   and the tertiary blue marks progress, checks, the current step, the best plan and links. The
   nav, the footer and every other page keep the neutral dark of institutional.css.
 - **The sections show the product, not only text** (the product owner found text-only sections
-  flat): as those gateways do, each one carries a piece of the interface —
+  flat): as those gateways do, each one carries a piece of the interface:
   `src/components/payments/landing/Mock.astro` draws them with the page's tokens (a confirmed
   payment, the card-payout race, the escrow states, the instant/escrow flow with a payment
   travelling the wire, a payment link, the checkout, an SDK call, one screen per step, a paid
@@ -234,7 +244,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Use only CC0 / public-domain material or the brand's own (no attribution-bound licences, no
   third-party logos in a photo); Unsplash and Pexels sit behind bot checks, so search Openverse
   (`api.openverse.org`, `license=cc0`). Each mock-up is a size container, so its parts rearrange for the room it gets (the
-  escrow states stack when narrow). Their wrapper class is `pl-mk--<name>` — a modifier, so it
+  escrow states stack when narrow). Their wrapper class is `pl-mk--<name>`, a modifier, so it
   never clashes with a part's `pl-mk-*` class.
 - **Two settlement modes, as the product owner offers them: instant** (straight to the merchant's
   address) **and escrow** (the payment is held until it is released, e.g. when the order ships).
@@ -288,7 +298,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   another build. The smoke test requires the file to be served.
 - **The contract is `src/lib/payments/embed-protocol.ts`:** the hosted checkout posts
   `{ source: "cosmos-pay", type: "status", id, status }` to `window.opener` (targetOrigin `*`,
-  allowed only because id and status are public) and nothing else — never the URI, address or
+  allowed only because id and status are public) and nothing else: never the URI, address or
   amount. The button accepts a message only from the payments origin, from the popup it
   opened, for its own link. It re-dispatches `cosmospay:status` / `cosmospay:paid`; those are
   UI hints, and the merchant confirms payment server-side (webhook or API).
@@ -350,7 +360,7 @@ worth anything if it is complete: **an endpoint that is not registered does not 
 as the SDK, the docs and the consumers are concerned.**
 
 So: **adding or changing a route under `src/pages/api/` is not done until the OpenAPI
-registration for it lands in the same change.** No "I'll document it later" — that is exactly
+registration for it lands in the same change.** No "I'll document it later": that is exactly
 how the spec got to the state it is in (see *Current coverage* below). This applies to every
 exported HTTP method of the file (`GET`, `POST`, `PATCH`, `DELETE`, `ALL`), each one its own
 entry.
@@ -358,7 +368,7 @@ entry.
 ### Where the registration goes
 
 Next to the Zod schemas of the module, in `src/schemas/<module>/openapi.ts`.
-`src/lib/openapi/auto-load.ts` picks it up with a `/src/schemas/**/openapi.ts` glob — there is
+`src/lib/openapi/auto-load.ts` picks it up with a `/src/schemas/**/openapi.ts` glob, so there is
 **no central list to edit**, creating the file is enough. Follow the existing shape in
 `src/schemas/api-keys/openapi.ts` (session auth + params + body) and
 `src/schemas/swaps/openapi.ts` (query params, several response schemas).
@@ -387,18 +397,18 @@ registerRoutes([
 
 ### Non-negotiables
 
-- **Import `z` from `@/lib/openapi/zod`**, never from `zod` — in the registration AND in any
+- **Import `z` from `@/lib/openapi/zod`**, never from `zod`, in the registration AND in any
   module whose schemas it documents (`src/schemas/*.ts`). `@/lib/openapi/zod` is what runs
   `extendZodWithOpenApi`, and **with zod v4 that extension is not retroactive**: a schema
   constructed before it runs has no `.openapi()` method at all, so the call throws
   `.openapi is not a function`. Under `astro dev` the import order usually hides this; the
-  production bundle reorders modules and it fires there — on the one route that serves the
+  production bundle reorders modules and it fires there, on the one route that serves the
   spec. `registry.register()` is not a way around it (it calls `.openapi()` internally).
-- **Wrap every JSON response in the envelope helper** — `jsonOk` / `jsonCreated`, never a bare
+- **Wrap every JSON response in the envelope helper** (`jsonOk` / `jsonCreated`), never a bare
   data schema. The API always answers `{ data, code, status, message }`; a spec that documents
   the payload alone is a spec that lies, and "Try it out" in Swagger then shows a mismatch.
 - **Errors come from `errors.*`** (`badRequest`, `unauthorized`, `forbidden`, `notFound`,
-  `internalError`) — register the statuses the handler can actually return.
+  `internalError`); register the statuses the handler can actually return.
 - **Path params**: `[id]` -> `{id}`, `[...path]` -> `{path}`, `/index.ts` -> the directory path.
   The string must match the real URL exactly or Swagger's "Try it out" hits a 404.
 - **Query and path params need `.openapi({ param: { name, in } })`** or they are dropped from
@@ -412,23 +422,23 @@ registerRoutes([
 
 ### Verify before you call it done
 
-`npm run check:openapi` first — it fails, by name, on any route operation that is not in the
+`npm run check:openapi` first: it fails, by name, on any route operation that is not in the
 document. Then `npm run dev` and open http://localhost:4321/swagger to confirm the operation
 renders, expands, and that its schemas resolve. Both `/swagger` and `/api/openapi.json` are gated by
 `apiDocsEnabled` (`src/lib/api-docs.ts`): on in dev, off in production unless `API_DOCS_ENABLED`
 is set. That flag is an `astro:env` field with `access: 'public'`, so it is **inlined at build
-time** — a production build serves 404 there and no runtime env var changes it; to expose the
+time**: a production build serves 404 there and no runtime env var changes it; to expose the
 reference on staging, build with the flag set.
 
 ### Current coverage
 
 **Every route operation is documented**, plus the external `/cosmos-api/{path}` gateway route.
-Don't quote a count from here — quote the line `npm run check:openapi` prints
+Don't quote a count from here; quote the line `npm run check:openapi` prints
 (`OpenAPI coverage: N/N route operations documented (1 explicitly excluded), M paths in the
 document.`); a number frozen in this file was wrong within weeks. The one exclusion is
 `/api/auth/{all}`, Better Auth's own handler, named with its reason in the `EXCLUDED` map of
 `scripts/check-openapi-coverage.mjs`. Keep it that way: an endpoint is either documented or
-listed in that map with a reason — never just missing.
+listed in that map with a reason, never just missing.
 
 ### Known-good shape of the generated document
 
@@ -437,7 +447,7 @@ and renders in Swagger UI. Two habits keep it that way:
 
 - **Catch-all proxies** (`/api/admin/{path}`, `/api/kyc/{path}`, `/api/onramp/{path}`,
   `/api/offramp/{path}`) are registered once per verb, with the upstream payload documented
-  as an open object — restating the Payments API's entities here would be a second copy to
+  as an open object: restating the Payments API's entities here would be a second copy to
   be wrong about.
 - **Upstream shapes come from `src/lib/cosmos.ts`** (the TypeScript interfaces the client
   already declares) or from the Payments API's own spec in `docs/openapi.json`. Don't invent
@@ -447,7 +457,7 @@ and renders in Swagger UI. Two habits keep it that way:
 ## Wallet sign-in and account recovery live on the community server
 
 The wallet's own sign-in (`/v1/wallet/auth/*`, the backup box), SEP-10 web auth, SEP-30 account
-recovery and `/.well-known/stellar.toml` are served by the community server, not by this app —
+recovery and `/.well-known/stellar.toml` are served by the community server, not by this app:
 it is the piece that runs as load-balanced replicas behind APISIX, and each recovery server is a
 separate deployment of it with its own database and keys. Do not add routes for them here.
 
@@ -455,7 +465,7 @@ What this app still does for them:
 
 - **Nothing on the request path.** The community server emails the sign-in code and mints the
   wallet's keys in APISIX itself, so no wallet request passes through this platform. The console
-  legs it used to call here (`/api/wallet/console/*`) are deleted, and so are their secrets —
+  legs it used to call here (`/api/wallet/console/*`) are deleted, and so are their secrets:
   `WALLET_AUTH_CONSOLE_SECRET` and `WALLET_RECOVERY_CONSOLE_SECRETS` no longer exist in
   `astro.config.mjs`. Do not bring them back.
 - **The keys it provisioned before that** (`src/lib/wallet-provisioning.ts`): accounts this
@@ -463,24 +473,24 @@ What this app still does for them:
   rotates them with `WALLET_KEY_SCOPES` instead of minting more.
 - **The keyless APISIX routes** (`src/utils/apisix.ts`, synced at boot by
   `src/lib/apisix-route.ts`, upstreams re-pointed by `npm run sync:route`):
-  - `<route>-oauth-callbacks` — the wallet sign-in's OAuth callback
+  - `<route>-oauth-callbacks`: the wallet sign-in's OAuth callback
     (`/v1/wallet/auth/oauth/callback/*`) plus the shared public key (`/v1/public-key`), with
     CORS from `COSMOS_API_CORS_ORIGINS`.
-  - `<route>-payment-links` — the public payment-link read (`/v1/payment-links/*`, GET/OPTIONS),
+  - `<route>-payment-links`: the public payment-link read (`/v1/payment-links/*`, GET/OPTIONS),
     made from payers' browsers by the hosted and the embedded checkout, so its CORS is `*`
     without credentials. No other keyless route lists that URI. The old `<route>-pollar-callback` route is only ever
     DELETED at boot, never created.
-  - `<route>-sep` — `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
+  - `<route>-sep`: `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
     `cors` plugin, because the community server answers CORS itself for those prefixes and two
     `Access-Control-Allow-Origin` headers make a browser refuse the response, and it forwards
     `Authorization`, because there it is the SEP-10 / identity JWT.
-  - `<route>-sep-recovery-{a,b}` — optional host-bound copies of the SEP route, one per recovery
+  - `<route>-sep-recovery-{a,b}`: optional host-bound copies of the SEP route, one per recovery
     server, from `COSMOS_RECOVERY_{A,B}_HOST` + `_UPSTREAM` (both halves or neither).
 - **Its old tables.** `wallet_backup` (encrypted seeds people restore from),
   `wallet_auth_handshake`, `wallet_login_code`, `recovery_account` and `recovery_auth_method` are
   RETIRED but kept: nothing here reads or writes them. Never drop them before
   `npm run export:wallet-data` (`scripts/export-wallet-data.mjs`) has been run and its output
-  imported on the community server. `wallet_registration` is retired too — nothing writes it —
+  imported on the community server. `wallet_registration` is retired too (nothing writes it),
   but it is NOT in the export and it is still READ: `isWalletProvisionedUser` uses it to keep
   legacy wallet accounts on the rotate-only key path. Dropping it changes that behaviour, so it
   needs its own decision, not a ride along with the others.
@@ -494,7 +504,7 @@ consumer headers.
 - **`COSMOS_API_URL` may list several replicas** (comma-separated) and `src/lib/cosmos.ts`
   round-robins across them, as APISIX does. Locally, run every replica it lists (the server's
   `npm run dev:local` starts `api` + `replica`) or point it at one: with one of two down, every
-  other call answers 502 "Could not reach the Payments service" — the server log names the
+  other call answers 502 "Could not reach the Payments service", and the server log names the
   cause (`[cosmos] … failed: ECONNREFUSED`).
 - **`COSMOS_GATEWAY_SECRET` must equal the server's `APISIX_GATEWAY_SECRET`.** The server always
   enforces it; empty or mismatched, every Payments API call answers 403. APISIX sets the same
@@ -502,7 +512,7 @@ consumer headers.
 - **`X-Cosmos-Internal` is a MAC, not a flag.** `src/lib/console-marker.ts` mints
   `v1.<unix seconds>.<hex HMAC-SHA256(COSMOS_GATEWAY_SECRET, label + ts)>` per request; the
   server accepts it for five minutes either side of its clock. It used to be the literal `1`,
-  trusted only because APISIX strips the header from clients — one forgotten strip from handing
+  trusted only because APISIX strips the header from clients, which left it one forgotten strip from handing
   any API key the cross-tenant admin surface. APISIX still strips it, as defence in depth.
 - **The format is one contract across two repositories.** `tests/unit/consoleMarker.test.ts`
   pins a test vector that the server's `src/admin/console-marker.spec.ts` pins too. Change the
@@ -517,7 +527,7 @@ consumer headers.
 
 - **Prisma 7.** The CLI's `DATABASE_URL` lives in `prisma.config.ts`, not in `schema.prisma`'s
   datasource. At runtime the client is built on `@prisma/adapter-pg` in `src/lib/prisma.ts`, fed
-  from `astro:env`. The client is generated into `generated/prisma/` (git-ignored) — import
+  from `astro:env`. The client is generated into `generated/prisma/` (git-ignored); import
   from there, never from `@prisma/client`.
 - **`access: 'public'` env vars are inlined at build.** That covers every `PUBLIC_*` client var
   and the public server flags (`API_DOCS_ENABLED`, `ONBOARDING_ENABLED`, `PLANS_ENABLED`, …):

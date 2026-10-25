@@ -4,7 +4,7 @@ import { jsonCreated, jsonError, jsonSuccess, jsonUnauthorized, parseJson } from
 import { createTicket, listMyTickets } from "@/lib/support";
 import type { APIRoute } from "astro";
 
-/* GET /api/support/tickets — the signed-in customer's own tickets. */
+/* GET /api/support/tickets: the signed-in customer's own tickets. */
 export const GET: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");
@@ -19,7 +19,7 @@ const createBodySchema = z.object({
   body: z.string().trim().min(1).max(4000),
 });
 
-/* POST /api/support/tickets — open a new ticket with its first message. */
+/* POST /api/support/tickets: open a new ticket with its first message. */
 export const POST: APIRoute = async (ctx) => {
   const session = await auth.api.getSession({ headers: ctx.request.headers });
   if (!session) return jsonUnauthorized("Session required");

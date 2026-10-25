@@ -1,4 +1,4 @@
-/* Dashboard.jsx — Cosmos Pay developer dashboard shell. Ported from the Design bundle.
+/* Dashboard.jsx: Cosmos Pay developer dashboard shell. Ported from the Design bundle.
    Auth/profile are real (Authentik session passed in via props); data is mock.
    All UI copy comes from the i18n catalog (useT). */
 import { useState, useEffect } from "react";
@@ -90,11 +90,11 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   }).catch(() => showToast(t.dash.orgs.loadError, "error"));
   useEffect(() => { loadOrgs(); }, []);
   useEffect(() => { try { if (curOrg) localStorage.setItem("cosmospay-org", curOrg); } catch (e) {} }, [curOrg]);
-  // Real API keys (APISIX-backed) — fetched from the developer API, not mocked.
+  // Real API keys (APISIX-backed), fetched from the developer API, not mocked.
   const [keys, setKeys] = useState([]);
   const [keysLoading, setKeysLoading] = useState(true);
   const [keysError, setKeysError] = useState(false);
-  // Keys are scoped per organization — refetch whenever the active org changes.
+  // Keys are scoped per organization: refetch whenever the active org changes.
   useEffect(() => {
     if (!curOrg) { setKeys([]); setKeysLoading(false); return; }
     let alive = true;
@@ -111,7 +111,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const [confirm, setConfirm] = useState(null); // { title, body, confirmLabel, onConfirm }
   const [renamingOrg, setRenamingOrg] = useState(null);
 
-  // Activity notifications — fetched once and shared across the bell, Overview and Activity views.
+  // Activity notifications, fetched once and shared across the bell, Overview and Activity views.
   const [notifs, setNotifs] = useState([]);
   const [notifsLoading, setNotifsLoading] = useState(true);
   const [notifsError, setNotifsError] = useState(false);
@@ -127,7 +127,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     const id = setInterval(() => { if (!document.hidden) loadNotifs(); }, 20000);
     return () => clearInterval(id);
   }, []);
-  // The server emits notifications asynchronously after key actions — refetch shortly after.
+  // The server emits notifications asynchronously after key actions, so refetch shortly after.
   const refreshNotifsSoon = () => { setTimeout(loadNotifs, 900); };
   // Payment notifications are tagged with their Stellar network; surface only those
   // matching the active environment (test → testnet, live → public). Notifications
@@ -202,7 +202,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     setOrgs((o) => o.map((x) => (x.id === id ? { ...x, name } : x)));
     orgsApi.rename(id, name).catch(() => { showToast(t.dash.orgs.renameError, "error"); loadOrgs(); });
   };
-  // Renaming is a PATCH — confirm before applying.
+  // Renaming is a PATCH: confirm before applying.
   const requestRenameOrg = (o, name) => {
     const og = t.dash.orgs;
     setConfirm({ title: og.renameTitle, body: `“${o.name}” → “${name}”`, confirmLabel: og.rename, onConfirm: () => renameOrg(o.id, name) });
@@ -218,7 +218,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   };
   // POST to the developer API; on success prepend the (secret-less) record + reveal the secret once.
   // Keys belong to the active organization (org) and to the environment currently selected by
-  // the test/production switch (environment) — the modal never asks for either.
+  // the test/production switch (environment); the modal never asks for either.
   const addKey = (body) => {
     const environment = live ? "prod" : "dev";
     apiKeysApi.create({ ...body, org: curOrg, environment })
@@ -234,7 +234,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       .then(() => { setKeys((k) => k.filter((x) => x.id !== id)); refreshNotifsSoon(); })
       .catch(() => showToast(t.dash.apikeys.deleteError, "error"));
   };
-  // Destructive — ask for confirmation before revoking.
+  // Destructive: ask for confirmation before revoking.
   const requestRevoke = (k) => {
     const ak = t.dash.apikeys;
     setConfirm({
@@ -256,7 +256,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const go = (v) => { setView(v); setAdminFilter(null); setNavOpen(false); };
   const goToAdmin = (v, filter = null) => { setView(v); setAdminFilter(filter); setNavOpen(false); };
 
-  // Pending invitations addressed to my email — surfaced as a banner so I can join from
+  // Pending invitations addressed to my email, surfaced as a banner so I can join from
   // inside the dashboard (in addition to the emailed magic link).
   const [myInvites, setMyInvites] = useState([]);
   const loadMyInvites = () => { invitesApi.mine().then((d) => setMyInvites(Array.isArray(d) ? d : [])).catch(() => {}); };

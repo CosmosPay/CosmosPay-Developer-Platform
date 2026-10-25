@@ -1,4 +1,4 @@
-/* embedI18n.test.ts — the embed's copy (src/embed/i18n.ts): every locale complete, and the
+/* embedI18n.test.ts checks the embed's copy (src/embed/i18n.ts): every locale complete, and the
    checkout's sentences word for word those of the hosted checkout (src/lib/payments/i18n.ts),
    so the payer reads the same thing inline and on the payments site. */
 import { strict as assert } from 'node:assert';

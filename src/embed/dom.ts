@@ -1,4 +1,4 @@
-/* dom.ts — small browser helpers shared by the two elements. */
+/* dom.ts: small browser helpers shared by the two elements. */
 
 /** The browser's languages, most preferred first. */
 export function browserLanguages(): readonly string[] {

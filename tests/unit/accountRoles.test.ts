@@ -1,4 +1,4 @@
-/* accountRoles.test.ts — the ladder that decides "you may only assign a role strictly
+/* accountRoles.test.ts: the ladder that decides "you may only assign a role strictly
    below your own". An off-by-one here is a privilege escalation, so the ordering is
    asserted as an ordering rather than as four remembered numbers. */
 import { strict as assert } from 'node:assert';
@@ -25,7 +25,7 @@ test('an unknown, empty or missing role sits at the bottom rung', () => {
   }
 });
 
-test('case matters — "Admin" is not admin', () => {
+test('case matters: "Admin" is not admin', () => {
   // The column is written by the app in lowercase; accepting a capitalised variant
   // would make a role check pass for a string no writer of this code produces.
   assert.ok(roleLevel('Admin') < roleLevel('admin'));

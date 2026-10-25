@@ -1,4 +1,4 @@
-/* config.ts — the two addresses the embed needs, inlined by scripts/build-embed.mjs (esbuild
+/* config.ts: the two addresses the embed needs, inlined by scripts/build-embed.mjs (esbuild
    `define`) from the same variables the app inlines: PUBLIC_PAYMENTS_URL and
    PUBLIC_PAYMENTS_API_URL. The bundle runs on a merchant's page, so it cannot read them at
    runtime; a different environment is a different build of public/embed/cosmos-pay.js.

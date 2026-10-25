@@ -8,7 +8,7 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDate } from "@/components/cosmos/dashboard/helpers";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 
-/* Per-action permission matrix (resource × create/edit/delete) — multi-select checkboxes,
+/* Per-action permission matrix (resource × create/edit/delete) as multi-select checkboxes,
    shared by the invite form and the member editor. */
 function PermissionPicker({ value, onChange }) {
   const t = useT();
@@ -74,7 +74,7 @@ function MemberEditModal({ org, member, onClose, onSaved }) {
 
 /* Organization members: invite by email (role + granular permissions), edit a member's
    role/permissions, and remove (with confirmation). Members join via the emailed magic
-   link — never added directly. Seats are per organization (the owner's plan). */
+   link, never added directly. Seats are per organization (the owner's plan). */
 function OrgMembersPanel({ org, orgLimits }) {
   const t = useT();
   const og = t.dash.orgs;
@@ -193,8 +193,8 @@ export function SettingsView({ org, orgCount, limits, keyCount, onRenameOrg, onD
       <div className="set-grid">
         <div className="panel set-panel"><div className="panel-head"><h3>{sv.org.title}</h3>{canManageOrg && org.id && <button className="link-btn" onClick={() => onRenameOrg(org)}>{og.rename}</button>}</div><div className="set-body">
           <div className="set-row"><div className="set-l">{sv.org.name}</div><div className="set-v">{org.name}</div></div>
-          <div className="set-row"><div className="set-l">{sv.org.id}</div><div className="set-v tid">{org.id || "—"}</div></div>
-          <div className="set-row"><div className="set-l">{sv.org.created}</div><div className="set-v">{org.createdAt ? fmtDate(org.createdAt) : "—"}</div></div>
+          <div className="set-row"><div className="set-l">{sv.org.id}</div><div className="set-v tid">{org.id || "-"}</div></div>
+          <div className="set-row"><div className="set-l">{sv.org.created}</div><div className="set-v">{org.createdAt ? fmtDate(org.createdAt) : "-"}</div></div>
           <div className="set-row"><div className="set-l">{sv.plan.current}</div><div className="set-v"><span className="kg pub">{t.dash.planNames[org.plan] || org.plan}</span></div></div>
           <div className="set-row"><div className="set-l">{sv.plan.seats}</div><div className="set-v">{fmtLimit(orgLimits.maxSeats)}</div></div>
           <div className="set-row"><div className="set-l">{sv.plan.apiKeys}</div><div className="set-v">{keyCount} / {fmtLimit(orgLimits.maxApiKeys)}</div></div>

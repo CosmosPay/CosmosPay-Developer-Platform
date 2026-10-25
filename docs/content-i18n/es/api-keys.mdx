@@ -11,18 +11,18 @@ pertenece (que elige testnet o mainnet, en todas las redes) y los **alcances** q
 
 1. **Inicia sesión** en la plataforma de desarrolladores en [dev.cosmospay.lat](https://dev.cosmospay.lat) y abre el **Panel**.
 2. **Elige el entorno** con el interruptor **Test / Production** del panel:
-   - **Test** emite claves `dv_…` que corren en **testnet** — úsalas mientras desarrollas.
-   - **Production** emite claves `prod_…` que corren en **mainnet** — úsalas para salir a producción.
+   - **Test** emite claves `dv_…` que corren en **testnet**; úsalas mientras desarrollas.
+   - **Production** emite claves `prod_…` que corren en **mainnet**; úsalas para salir a producción.
 3. Ve a **API Keys → Create**.
 4. Dale a la clave un **nombre** (y una descripción opcional) para que puedas reconocerla más tarde.
 5. Elige un **rol**:
-   - **User** — con alcances. Elige exactamente los permisos que necesita en la matriz (por recurso: **read** o **write**, o ambos, para pagos, webhooks, productos, clientes y analíticas).
-   - **Admin** — acceso completo; omite la matriz de alcances. Úsalo con moderación.
+   - **User**: con alcances. Elige exactamente los permisos que necesita en la matriz (por recurso: **read** o **write**, o ambos, para pagos, webhooks, productos, clientes y analíticas).
+   - **Admin**: acceso completo; omite la matriz de alcances. Úsalo con moderación.
 6. **Crea** la clave y luego **cópiala de inmediato**.
 
 <Callout type="warn" title="Se muestra solo una vez">
 La clave completa se muestra **una vez**, al crearla (y de nuevo solo si la rotas). Guárdala en
-un gestor de secretos o en las variables de entorno de tu servidor de inmediato — no podrás volver a verla.
+un gestor de secretos o en las variables de entorno de tu servidor de inmediato, porque no podrás volver a verla.
 </Callout>
 
 ## Usar la clave
@@ -33,7 +33,7 @@ API REST):
 ```ts
 import { Client } from '@cosmosapp/pay_sdk';
 
-// Reads e.g. COSMOS_PAY_API_KEY from your server environment — never hard-code it.
+// Reads e.g. COSMOS_PAY_API_KEY from your server environment; never hard-code it.
 const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
 ```
 
@@ -43,14 +43,14 @@ Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
 
 <Callout title="Privilegio mínimo">
 Dale a cada clave solo los alcances que necesita. Un servidor que solo crea pagos puede usar una clave con
-`payments:write` y `payments:read` y nada más — así una clave filtrada no puede hacer más que su trabajo.
+`payments:write` y `payments:read` y nada más. Así, una clave filtrada no puede hacer más que su trabajo.
 </Callout>
 
 ## Buenas prácticas
 
 - **Una clave por entorno / servicio.** No reutilices una clave `prod_` en test, y rota las claves por servicio para que puedas revocar una sin afectar al resto.
 - **Nunca envíes una clave al navegador.** El [cliente web](/sdk/web/web-client) firma transacciones con la billetera del usuario y no necesita tu clave.
-- **Rota ante una exposición.** Si una clave se filtra, rótala en el panel — el valor antiguo deja de funcionar de inmediato.
+- **Rota ante una exposición.** Si una clave se filtra, rótala en el panel: el valor antiguo deja de funcionar de inmediato.
 
 ## Próximos pasos
 

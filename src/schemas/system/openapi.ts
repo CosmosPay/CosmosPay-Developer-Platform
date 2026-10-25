@@ -31,7 +31,7 @@ registerRoutes([
   },
   {
     // The Swagger UI lives at /swagger (src/pages/swagger.astro). /docs is the statically
-    // exported Fumadocs site (public/docs) — a different surface, not this reference.
+    // exported Fumadocs site (public/docs), a different surface, not this reference.
     method: 'get',
     path: '/swagger',
     tags: ['System'],

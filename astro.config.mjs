@@ -10,7 +10,7 @@ import node from '@astrojs/node';
 import react from '@astrojs/react';
 
 // Dev-only: `astro dev` (Vite) serves exact files from public/ but doesn't resolve directory
-// requests (/docs/, /docs/sdk/overview/) to their index.html — so the statically-exported
+// requests (/docs/, /docs/sdk/overview/) to their index.html, so the statically-exported
 // Fumadocs site 404s in dev even though the production node adapter serves it fine. This
 // middleware serves public/docs at /docs during dev so the route behaves the same as in prod.
 function cosmosDocsDevStatic() {
@@ -67,7 +67,7 @@ function cosmosDocsDevStatic() {
         fs.stat(resolved, (err, st) => {
           if (err || !st.isFile()) {
             // Next 16 client-prefetch segment files (`__next.*`) don't exist in a static
-            // export — answer 204 instead of a noisy 404 (navigation still works on click).
+            // export, so answer 204 instead of a noisy 404 (navigation still works on click).
             if (url.includes('__next')) {
               res.statusCode = 204;
               return res.end();
@@ -148,15 +148,15 @@ export default defineConfig({
       // Payments service used to demand one (COSMOS_ADMIN_API_SECRET, matched against its
       // ADMIN_API_CREDENTIALS) and failed closed without it, so every admin screen answered
       // 401 while the signed-in account's platform rights were perfectly fine. Who may use
-      // that surface is decided HERE, against the account role — the same check that gates
-      // assigning plans and roles — and the call is admitted there because it carries
+      // that surface is decided HERE, against the account role (the same check that gates
+      // assigning plans and roles), and the call is admitted there because it carries
       // COSMOS_GATEWAY_SECRET plus X-Cosmos-Internal, which APISIX strips from client
       // requests. Delete both variables from your environment if you still carry them.
       // --- Email (organization invitations / magic links) ---
       // Two transports, in priority order:
-      //   1. Resend HTTP API (preferred) — set RESEND_API_KEY. Sends over HTTPS (443),
+      //   1. Resend HTTP API (preferred): set RESEND_API_KEY. Sends over HTTPS (443),
       //      so it works even on hosts that block outbound SMTP ports (OVH, etc.).
-      //   2. SMTP fallback — set SMTP_HOST/PORT/USER/PASS/SECURE (e.g. Resend SMTP).
+      //   2. SMTP fallback: set SMTP_HOST/PORT/USER/PASS/SECURE (e.g. Resend SMTP).
       // In both cases the "from" address is SMTP_FROM and must be a verified sender.
       // When neither is configured, invites can't be sent and the API returns a clear
       // "email not configured" error.
@@ -175,7 +175,7 @@ export default defineConfig({
       // UI is hidden and everyone stays on the default plan.
       PLANS_ENABLED: envField.boolean({ context: 'server', access: 'public', optional: true, default: true }),
       // Whether regular users may change their own plan. When false, only owner/admin
-      // accounts can (e.g. via admin tools) — "we manage plans for now".
+      // accounts can (e.g. via admin tools): "we manage plans for now".
       ALLOW_USER_PLAN_CHANGES: envField.boolean({ context: 'server', access: 'public', optional: true, default: true }),
       // Comma-separated plan ids offered for self-selection (onboarding + plan modal),
       // e.g. "starter,growth". Empty = every offered plan. The first entry is the plan
@@ -183,7 +183,7 @@ export default defineConfig({
       ENABLED_PLANS: envField.string({ context: 'server', access: 'public', optional: true, default: '' }),
       // --- API reference (Swagger) ---
       // Exposes the portal's own API reference UI at /swagger (+ the /api/openapi.json spec). It's
-      // a developer/internal tool, so it's ON in development and OFF in production by default — set
+      // a developer/internal tool, so it's ON in development and OFF in production by default; set
       // this true to also expose it in a given (e.g. staging) environment.
       API_DOCS_ENABLED: envField.boolean({ context: 'server', access: 'public', optional: true, default: false }),
       // --- Analytics ---
@@ -194,7 +194,7 @@ export default defineConfig({
       // Site-ownership verification token for Google Search Console. Paste only the
       // `content` value from the "HTML tag" verification method (the part inside
       // content="..."), e.g. "abc123…". When set, a
-      // <meta name="google-site-verification"> tag is injected on every public page —
+      // <meta name="google-site-verification"> tag is injected on every public page, which is
       // all Search Console needs to verify ownership. Empty = no tag (local dev).
       // (Search Console can also verify via the existing Google Analytics property.)
       PUBLIC_GOOGLE_SITE_VERIFICATION: envField.string({ context: 'client', access: 'public', optional: true, default: '' }),
@@ -217,7 +217,7 @@ export default defineConfig({
     },
     // nodemailer is a server-only, runtime dependency (used by src/lib/mailer.ts for
     // invitation emails). Keep it external so the SSR build doesn't try to bundle it and
-    // it's `require`d at runtime instead — install it with `npm install` for email to work.
+    // it's `require`d at runtime instead; install it with `npm install` for email to work.
     ssr: {
       external: ['nodemailer'],
     },

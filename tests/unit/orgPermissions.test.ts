@@ -1,4 +1,4 @@
-/* orgPermissions.test.ts — who inside an organization may mint a LIVE API key.
+/* orgPermissions.test.ts: who inside an organization may mint a LIVE API key.
    `sanitizePermissions` is the boundary between a request body and that answer, so
    it is asserted against hostile input, not just the happy shape. */
 import { strict as assert } from 'node:assert';

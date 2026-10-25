@@ -1,4 +1,4 @@
-/* options.ts — the embed's attributes and the URLs it builds from them. Pure: no DOM and no
+/* options.ts: the embed's attributes and the URLs it builds from them. Pure: no DOM and no
    build-time constants, so tests/unit/embedOptions.test.ts loads it under plain node. */
 import { isPaymentLinkId, type LinkStatus } from "@/lib/payments/payment-link";
 import { EMBED_LOCALES, type EmbedLocale } from "@/embed/i18n";

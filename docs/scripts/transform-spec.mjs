@@ -1,5 +1,5 @@
 // The docs site's view of the Payments API spec: the community server's openapi.json,
-// with public-facing auth and tag headings — and NOTHING else changed.
+// with public-facing auth and tag headings, and NOTHING else changed.
 //
 // Pure, and shared by the two scripts that must agree on it: `generate-api.mjs` writes
 // docs/openapi.json through it, and `scripts/check-api-spec.mjs` recomputes it from the
@@ -15,7 +15,7 @@
 //     API key. That is replaced with one bearer scheme. SEP-30's own token (`sep-token`)
 //     is NOT the gateway's and is kept.
 //   - public routes keep `security: []`. An empty requirement list is a statement ("no
-//     credentials"), not an absence — deleting it made every public route inherit the
+//     credentials"), not an absence; deleting it made every public route inherit the
 //     API-key requirement, and the reference told readers to send a key the SEP-10 and
 //     SEP-30 endpoints never read.
 
@@ -141,7 +141,7 @@ export const TAGS = [
     name: 'activity',
     title: 'Client Activity',
     description:
-      'Report what your own client did — errors, timings, transactions — and read it back. ' +
+      'Report what your own client did (errors, timings, transactions) and read it back. ' +
       'Unlike the API logs, which only ever see requests that reached this service, these are ' +
       'the events that happen entirely on a device: a crash, a cancelled signature, a screen ' +
       'that failed before any request left it.',

@@ -1,9 +1,9 @@
-/* apisix-keyless.ts — the pure half of the keyless APISIX routes (src/utils/apisix.ts): which
+/* apisix-keyless.ts is the pure half of the keyless APISIX routes (src/utils/apisix.ts): which
    gateway URIs each one serves, and the CORS the public payment-link read answers with.
 
    Kept apart from the admin calls for the same reason as apisix-upstream.ts: these are the
    decisions that fail silently in production (a URI two routes both match, a CORS header a
-   browser refuses), and none of them needs `astro:env` or a network to be checked —
+   browser refuses), and none of them needs `astro:env` or a network to be checked:
    tests/unit/apisixKeyless.test.ts reaches them directly. */
 
 /* Where the community server serves the callback, relative to the gateway entry:
@@ -14,8 +14,8 @@ export const WALLET_AUTH_CALLBACK_PATH = '/v1/wallet/auth/oauth/callback/';
 
 /* Where the community server serves the shared public key to a wallet with no account
    (`GET /v1/public-key`, `@Public()` over there). Keyless by definition: the caller holds no
-   key yet. It rides the callback route because it wants exactly that route's shape — GET,
-   CORS for the wallet's origins, consumer headers scrubbed — and it is an exact path, so
+   key yet. It rides the callback route because it wants exactly that route's shape (GET,
+   CORS for the wallet's origins, consumer headers scrubbed), and it is an exact path, so
    nothing under it loses its authentication. It used to be served from this platform
    (the old `/api/public-key`), which put the platform in front of every anonymous wallet. */
 export const PUBLIC_KEY_PATH = '/v1/public-key';
@@ -63,11 +63,11 @@ export const PAYMENT_LINKS_METHODS = ['GET', 'OPTIONS'];
      - `allow_credential` is false, so a browser never attaches cookies to the request and
        APISIX can answer the literal `*` (it refuses `*` together with credentials);
      - what it answers is the payer's view of one link, which anyone holding the id may read
-       — that is what a payment link is for.
+       (that is what a payment link is for).
 
    Exactly one party writes these headers: the community server sets no CORS on
    `/v1/payment-links/*` (its sepCors covers only the SEP prefixes). If it ever does, this
-   plugin must go, as on the SEP route — two `Access-Control-Allow-Origin` headers make a
+   plugin must go, as on the SEP route: two `Access-Control-Allow-Origin` headers make a
    browser refuse the response.
 
    `Retry-After` and the RateLimit-* headers are exposed so a 429 tells the page when to come

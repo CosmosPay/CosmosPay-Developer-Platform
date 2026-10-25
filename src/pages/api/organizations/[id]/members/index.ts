@@ -6,7 +6,7 @@ import type { APIRoute } from "astro";
 
 const paramsSchema = z.object({ id: z.string().min(1) });
 
-/* GET /api/organizations/:id/members — list members (any member).
+/* GET /api/organizations/:id/members: list members (any member).
    Members are no longer added directly: invite by email instead
    (see /api/organizations/:id/invitations). */
 export const GET: APIRoute = async (ctx) => {

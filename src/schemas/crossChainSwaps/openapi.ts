@@ -2,7 +2,7 @@
    src/lib/openapi/auto-load.ts via the /src/schemas/**\/openapi.ts glob). Documents the
    /api/cross-chain-swaps surface in the portal API reference.
 
-   The commission is the calling organization's plan rate, enforced server-side — there
+   The commission is the calling organization's plan rate, enforced server-side; there
    is deliberately NO fee field in any request body. */
 import {
   errors,
@@ -85,7 +85,7 @@ const swapSchema = z
     destinationTxHashes: z.array(txRef).nullable(),
     timeEstimateSeconds: z.number(),
     correlationId: z.string(),
-    quoteSignature: z.string().openapi({ description: "NEAR Intents' signature over the quote — keep it." }),
+    quoteSignature: z.string().openapi({ description: "NEAR Intents' signature over the quote; keep it." }),
     expiresAt: z.string(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -168,7 +168,7 @@ registerRoutes([
     tags: ["Cross-chain Swaps"],
     summary: "Create a cross-chain swap",
     description:
-      "Opens the swap: NEAR Intents issues a deposit address (and a memo on Stellar) that the payer funds. Mainnet only — a dev environment is refused.",
+      "Opens the swap: NEAR Intents issues a deposit address (and a memo on Stellar) that the payer funds. Mainnet only: a dev environment is refused.",
     security: sessionSecurity,
     request: jsonBody(body),
     responses: {

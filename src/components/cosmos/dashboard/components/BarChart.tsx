@@ -1,4 +1,4 @@
-/* BarChart — daily payments and settled volume as paired bars (volume on the left axis,
+/* BarChart: daily payments and settled volume as paired bars (volume on the left axis,
    count on the right), with a tooltip on hover. The figures are also in a visually hidden
    table, so the chart is never the only way to read them. */
 import { useState } from "react";

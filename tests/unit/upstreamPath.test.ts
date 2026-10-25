@@ -1,6 +1,6 @@
-/* upstreamPath.test.ts — the feature-prefix proxies (/api/kyc, /api/onramp, /api/offramp)
+/* upstreamPath.test.ts: the feature-prefix proxies (/api/kyc, /api/onramp, /api/offramp)
    build an upstream path by pasting a catch-all param behind a fixed prefix. `new URL`
-   then normalizes it, so one `..` segment would land the caller on /v1/admin — every
+   then normalizes it, so one `..` segment would land the caller on /v1/admin: every
    tenant's data. That used to bounce off the Payments service's admin credential; the
    credential is gone, so this check is the thing standing there now. */
 import { strict as assert } from 'node:assert';

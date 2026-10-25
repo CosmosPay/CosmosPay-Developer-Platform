@@ -1,17 +1,17 @@
 ---
 title: LLMs e IA
-description: Alimenta tu LLM o agente de programación con la documentación y el SDK de Cosmos Pay — archivos llms.txt listos para usar, Markdown por página y "Abrir en ChatGPT/Claude".
+description: Alimenta tu LLM o agente de programación con la documentación y el SDK de Cosmos Pay, con archivos llms.txt listos para usar, Markdown por página y "Abrir en ChatGPT/Claude".
 ---
 
 Esta documentación está hecha para ser consumida por LLMs y agentes de programación (Cursor, Claude, ChatGPT…), no
-solo por humanos. Copiar el Markdown de una página es una opción — pero hay mucho más.
+solo por humanos. Copiar el Markdown de una página es una opción, pero hay mucho más.
 
 ## Archivos de contexto listos para usar
 
 Dos endpoints exponen toda la documentación como texto plano que un LLM puede ingerir de una sola vez:
 
-- `/docs/llms.txt` — un índice compacto: cada página con su título, URL y descripción.
-- `/docs/llms-full.txt` — el texto completo de cada página, concatenado.
+- `/docs/llms.txt`: un índice compacto: cada página con su título, URL y descripción.
+- `/docs/llms-full.txt`: el texto completo de cada página, concatenado.
 
 ```bash
 # the index
@@ -25,8 +25,8 @@ curl https://dev.cosmospay.lat/docs/llms-full.txt
 
 Cada página tiene un menú de acciones (arriba a la derecha de la página) con:
 
-- **Copy Markdown** / **View as Markdown** — el código fuente Markdown en crudo de esa página.
-- **Open in ChatGPT** / **Open in Claude** — abre el asistente precargado con esa página.
+- **Copy Markdown** / **View as Markdown**: el código fuente Markdown en crudo de esa página.
+- **Open in ChatGPT** / **Open in Claude**: abre el asistente precargado con esa página.
 
 También puedes obtener el Markdown de una página directamente añadiendo `/content.md` bajo `/docs/llms.mdx`:
 
@@ -37,14 +37,14 @@ curl https://dev.cosmospay.lat/docs/llms.mdx/sdk/server/quickstart/content.md
 
 <Callout title="Úsalo en un prompt">
 Pega `llms-full.txt` (o el Markdown de una sola página) en tu asistente y déjalo escribir la
-integración — p. ej. *"Usando esto, crea un checkout de Cosmos Pay que cobre 10 USDC y verifique
+integración. Por ejemplo: *"Usando esto, crea un checkout de Cosmos Pay que cobre 10 USDC y verifique
 el pago con un webhook."*
 </Callout>
 
 ## El SDK incluye su propia documentación para LLMs
 
 El paquete `@cosmosapp/pay_sdk` incluye una carpeta `llms/` legible por IA, así que una vez que lo instales
-la documentación está justo ahí en `node_modules` — sin necesidad de red:
+la documentación está justo ahí en `node_modules`, sin necesidad de red:
 
 ```text
 node_modules/@cosmosapp/pay_sdk/llms/
@@ -61,7 +61,7 @@ cat node_modules/@cosmosapp/pay_sdk/llms/llms-full.txt
 ## Ejemplos ejecutables
 
 El repositorio del SDK mantiene un ejemplo ejecutable por característica (intenciones de pago, webhooks, el cliente
-web, clientes, productos, analíticas, manejo de errores) — material ideal de pocos ejemplos para un agente.
+web, clientes, productos, analíticas, manejo de errores), material ideal de pocos ejemplos para un agente.
 
 <Cards>
   <Card title="Ejemplos del SDK" href="https://github.com/CosmosPay/CosmosJS_SDK/tree/main/examples" description="Un ejemplo ejecutable por característica, en el repositorio del SDK." />

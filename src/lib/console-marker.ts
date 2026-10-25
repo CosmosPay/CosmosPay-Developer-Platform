@@ -1,4 +1,4 @@
-/* console-marker.ts — the X-Cosmos-Internal value this console presents to the
+/* console-marker.ts: the X-Cosmos-Internal value this console presents to the
    Payments service.
 
    The service admits a call to its cross-tenant /v1/admin surface (and exempts it

@@ -2,8 +2,8 @@
 //
 // Translations live under docs/content-i18n/<lang>/ mirroring content/docs/ (e.g.
 // content-i18n/es/sdk/server/overview.mdx, content-i18n/es/sdk/server/meta.json). This script
-// copies each into content/docs/ as a Fumadocs dot-locale sibling — overview.mdx ->
-// overview.es.mdx, meta.json -> meta.es.json — which the loader's i18n parser ('dot') picks
+// copies each into content/docs/ as a Fumadocs dot-locale sibling (overview.mdx ->
+// overview.es.mdx, meta.json -> meta.es.json), which the loader's i18n parser ('dot') picks
 // up. Pages without a translation just fall back to English (fallbackLanguage in
 // lib/i18n-config.ts). Runs in `npm run generate` AFTER generate-sdk (which wipes content/
 // docs/sdk), so the siblings survive.
@@ -40,7 +40,7 @@ function fixDefLinks(content) {
 
 // Translations froze their generated "References" list at translation time, so newly-added
 // references (e.g. catalog imports like Assets) are missing. Merge in any reference the freshly
-// generated English page has that the translation lacks — keeping the translated entries and
+// generated English page has that the translation lacks, keeping the translated entries and
 // appending the missing ones (correct links) so every example's imports are referenced too.
 const REF_HEADING_RE = /^##\s+(?:References|Referencias|Références|Referenzen|Referências)\s*$/m;
 const refLines = (md) => {

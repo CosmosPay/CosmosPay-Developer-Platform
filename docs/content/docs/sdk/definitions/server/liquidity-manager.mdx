@@ -17,7 +17,7 @@ deposit(options: DepositLiquidityOptions): Promise<LiquidityOperation>
 
 **Parameters**
 
-- `options` — `DepositLiquidityOptions`
+- `options`: `DepositLiquidityOptions`
 
 **Returns** [`Promise<LiquidityOperation>`](/sdk/definitions/server/liquidity-operation)
 
@@ -31,7 +31,7 @@ withdraw(options: WithdrawLiquidityOptions): Promise<LiquidityOperation>
 
 **Parameters**
 
-- `options` — `WithdrawLiquidityOptions`
+- `options`: `WithdrawLiquidityOptions`
 
 **Returns** [`Promise<LiquidityOperation>`](/sdk/definitions/server/liquidity-operation)
 
@@ -45,7 +45,7 @@ positions(account: string): Promise<LiquidityPositionsData>
 
 **Parameters**
 
-- `account` — `string`
+- `account`: `string`
 
 **Returns** `Promise<LiquidityPositionsData>`
 
@@ -59,7 +59,7 @@ browse(options?: BrowseLiquidityPoolsOptions): Promise<LiquidityPoolPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `BrowseLiquidityPoolsOptions`
+- `options` _(optional)_: `BrowseLiquidityPoolsOptions`
 
 **Returns** `Promise<LiquidityPoolPage>`
 
@@ -73,7 +73,7 @@ pool(poolId: string): Promise<LiquidityPoolData>
 
 **Parameters**
 
-- `poolId` — `string`
+- `poolId`: `string`
 
 **Returns** `Promise<LiquidityPoolData>`
 
@@ -87,7 +87,7 @@ operations(options?: ListLiquidityOperationsOptions): Promise<LiquidityOperation
 
 **Parameters**
 
-- `options` _(optional)_ — `ListLiquidityOperationsOptions`
+- `options` _(optional)_: `ListLiquidityOperationsOptions`
 
 **Returns** `Promise<LiquidityOperationPage>`
 
@@ -101,7 +101,7 @@ fetch(id: string): Promise<LiquidityOperation>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** [`Promise<LiquidityOperation>`](/sdk/definitions/server/liquidity-operation)
 
@@ -115,7 +115,7 @@ fetchRaw(id: string): Promise<LiquidityOperationData>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<LiquidityOperationData>`
 
@@ -129,8 +129,8 @@ submit(id: string, options: SubmitLiquidityOptions): Promise<LiquiditySubmitOutc
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `SubmitLiquidityOptions`
+- `id`: `string`
+- `options`: `SubmitLiquidityOptions`
 
 **Returns** `Promise<LiquiditySubmitOutcome>`
 

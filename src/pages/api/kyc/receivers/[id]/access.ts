@@ -1,4 +1,4 @@
-/* PATCH /api/kyc/receivers/:id/access — owner/admin kill-switch for a fiat account.
+/* PATCH /api/kyc/receivers/:id/access: owner/admin kill-switch for a fiat account.
 
    Enables or disables a receiver for onramp/offramp. Only an organization OWNER or ADMIN
    may toggle it (the per-receiver fiat on/off control). More specific than the generic

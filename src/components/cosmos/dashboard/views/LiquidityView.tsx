@@ -16,7 +16,7 @@ import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosm
 const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
 const TERMINAL = ["SUCCEEDED", "FAILED"];
 
-/* "XLM / USDC" — the pool's asset pair. */
+/* "XLM / USDC": the pool's asset pair. */
 const pairLabel = (a, b) => `${assetLabel(a)} / ${assetLabel(b)}`;
 const poolShort = (id) => `${(id || "").slice(0, 8)}…`;
 const explorerTx = (o) => `https://stellar.expert/explorer/${o.network === "public" ? "public" : "testnet"}/tx/${o.txHash}`;

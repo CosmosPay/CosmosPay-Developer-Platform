@@ -1,4 +1,4 @@
-/* embed-protocol.ts — the contract between the hosted checkout and the merchant embed
+/* embed-protocol.ts: the contract between the hosted checkout and the merchant embed
    (src/embed, served as public/embed/cosmos-pay.js).
 
    One message crosses windows: when `<cosmos-pay-button>` opens the hosted checkout in a
@@ -6,7 +6,7 @@
    `window.opener` every time it changes. Both sides import this module, so the shape is
    written once. Pure: unit-tested under plain node (tests/unit/embedProtocol.test.ts).
 
-   The payload is the public id and the status, nothing else — no URI, address or amount.
+   The payload is the public id and the status, nothing else: no URI, address or amount.
    That is what lets the checkout post it with targetOrigin "*": anyone who can open the
    checkout for an id can already read both from the public `GET /v1/payment-links/{id}`.
 

@@ -1,4 +1,4 @@
-/* index.ts — entry of public/embed/cosmos-pay.js (scripts/build-embed.mjs).
+/* index.ts: entry of public/embed/cosmos-pay.js (scripts/build-embed.mjs).
 
    A merchant adds one script tag and gets two elements:
      <cosmos-pay-button link="LINK_ID">   opens the hosted checkout in a popup

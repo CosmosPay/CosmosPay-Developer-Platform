@@ -1,4 +1,4 @@
-/* hosts.ts — which domain owns which route, and what a request on any domain becomes.
+/* hosts.ts: which domain owns which route, and what a request on any domain becomes.
  *
  * One deployment answers three domains (nginx sends all three to the same process):
  *
@@ -10,7 +10,7 @@
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
  * its owner (query kept); a path nobody owns is a 404 on the site and payments domains. The
  * site and payments pages live under internal mounts (/site, /payments) and are reached by a
- * rewrite, so their public URLs have no prefix — and the mounts themselves are never public:
+ * rewrite, so their public URLs have no prefix, and the mounts themselves are never public:
  * asked directly, they redirect to the public address.
  *
  * Pure (no astro:env), so tests/unit/hosts.test.ts covers the whole table; src/middleware.ts
@@ -94,7 +94,7 @@ export function ownerOf(path: string): Area | "home" | null {
 /**
  * The areas a hostname serves. An unknown host (a direct IP, a health check, the smoke test)
  * is the platform. Several areas share a host only when the origins are configured that way
- * (a single local host) — then that host serves all of them, and no redirect can loop.
+ * (a single local host); then that host serves all of them, and no redirect can loop.
  */
 export function areasOf(hostname: string, origins: Origins): Set<Area> {
   const host = hostname.toLowerCase();

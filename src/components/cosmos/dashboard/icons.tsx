@@ -1,5 +1,5 @@
 /* Feature-local dashboard icon map + the inline lock glyph. Kept inside dashboard/
-   (not the global icons/ folder) — these are specific to the dashboard shell/views. */
+   (not the global icons/ folder) because these are specific to the dashboard shell/views. */
 
 /* ---------------- icons ---------------- */
 export const DI = {

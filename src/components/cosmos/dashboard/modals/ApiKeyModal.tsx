@@ -30,7 +30,7 @@ function ScopePicker({ value, m }: any) {
   );
 }
 
-/* Create + edit API keys. The environment (test vs production) is NOT chosen here — it
+/* Create + edit API keys. The environment (test vs production) is NOT chosen here: it
    follows the dashboard's test/production switch and is injected by the caller, so the
    key is always created for the environment the user is currently viewing. */
 export function ApiKeyModal({ mode, initial, onClose, onSubmit }) {

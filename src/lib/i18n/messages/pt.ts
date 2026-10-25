@@ -1,4 +1,4 @@
-/* pt.js — Portuguese message catalog. Mirrors en.js exactly in shape. */
+/* pt.js: Portuguese message catalog. Mirrors en.js exactly in shape. */
 export default {
   invite: {
     eyebrow: "Convite",
@@ -74,7 +74,7 @@ export default {
     },
     goalsEyebrow: "// o que você vai construir",
     goalsTitle: "O que você quer fazer primeiro?",
-    goalsSub: "Escolha tudo o que se aplica — vamos personalizar seu painel e sugerir o plano certo.",
+    goalsSub: "Escolha tudo o que se aplica. Vamos personalizar seu painel e sugerir o plano certo.",
     goals: {
       accept: {
         t: "Aceitar pagamentos",
@@ -122,7 +122,7 @@ export default {
     },
     planEyebrow: "// escolha seu plano",
     planTitle: "Escolha um plano para começar",
-    planSub: "O Starter não tem mensalidade — você paga apenas por transação bem-sucedida. Faça upgrade ou downgrade quando quiser — sem ligações.",
+    planSub: "O Starter não tem mensalidade: você paga apenas por transação bem-sucedida. Faça upgrade ou downgrade quando quiser, sem ligações.",
     popular: "Popular",
     recommended: "Recomendado",
     enterpriseNote: "Precisa de tarifas personalizadas ou um SLA?",
@@ -145,7 +145,7 @@ export default {
     termsB: "Política de Uso Aceitável",
     termsPost: " da Cosmos Pay.",
     specTagline: "Uma API. Stellar, Solana e Monad.",
-    specTaglineSub: "Aceite e movimente dinheiro em USDC com liquidação em ~5 segundos. Escolha o plano que se encaixa — mude quando quiser.",
+    specTaglineSub: "Aceite e movimente dinheiro em USDC com liquidação em ~5 segundos. Escolha o plano que se encaixa e mude quando quiser.",
     selectedPlan: "Plano selecionado",
     recommendedForYou: "Recomendado para você",
     spec: {
@@ -427,7 +427,7 @@ export default {
   },
   footer: {
     tagline: "A infraestrutura de pagamentos para desenvolvedores. Uma API, todos os trilhos.",
-    copyright: "© 2026 Cosmos Pay, Inc. — Plataforma para Desenvolvedores",
+    copyright: "© 2026 Cosmos Pay, Inc. (Plataforma para Desenvolvedores)",
     groups: {
       products: {
         title: "Produtos",
@@ -455,7 +455,7 @@ export default {
     hero: {
       tagline: "O teu mundo digital em movimento.",
       headline: "Escreva menos código -> movimente mais dinheiro",
-      lede: "A infraestrutura de pagamentos para desenvolvedores. Uma API para movimentar dinheiro na Stellar, Solana e Monad — stablecoins e ativos digitais que liquidam em segundos, em mais de 130 países, com taxas de frações de centavo.",
+      lede: "A infraestrutura de pagamentos para desenvolvedores. Uma API para movimentar dinheiro na Stellar, Solana e Monad: stablecoins e ativos digitais que liquidam em segundos, em mais de 130 países, com taxas de frações de centavo.",
       getKeys: "Obter chaves de API",
       trustedBy: "Com a confiança de equipes de engenharia de"
     },
@@ -489,7 +489,7 @@ export default {
     api: {
       kicker: "// a plataforma",
       title: "APIs poderosas",
-      lede: "Nossas APIs modulares permitem que desenvolvedores integrem fluxos financeiros complexos em minutos — não em meses.",
+      lede: "Nossas APIs modulares permitem que desenvolvedores integrem fluxos financeiros complexos em minutos, não em meses.",
       docsLink: "Ver documentação da API",
       cards: {
         payments: {
@@ -518,12 +518,12 @@ export default {
     integration: {
       kicker: "// desenvolvedores",
       title: "Infraestrutura confiável e extensível.",
-      lede: "Construída para lidar com as maiores cargas de trabalho do mundo — e para encaixar em qualquer stack que você já use.",
+      lede: "Construída para lidar com as maiores cargas de trabalho do mundo e para encaixar em qualquer stack que você já use.",
       scale: ["requisições de API / dia", "requisições / s", "finalidade on-chain", "disponibilidade"],
       paths: [
         {
           t: "Sem código",
-          d: "Crie links de pagamento e faturamento direto do seu painel — sem necessidade de engenharia.",
+          d: "Crie links de pagamento e faturamento direto do seu painel, sem necessidade de engenharia.",
           a: "Explorar sem código"
         },
         {
@@ -543,14 +543,14 @@ export default {
     solutions: {
       kicker: "// soluções",
       title: "Feito para todo modelo de negócio.",
-      lede: "Da sua primeira transação a bilhões em volume — a Cosmos Pay se adapta à forma como sua empresa movimenta dinheiro na Stellar, Solana e Monad.",
+      lede: "Da sua primeira transação a bilhões em volume, a Cosmos Pay se adapta à forma como sua empresa movimenta dinheiro na Stellar, Solana e Monad.",
       eyebrow: "Solução",
       startBuilding: "Começar a construir",
       items: {
         pay: {
           t: "Aceite pagamentos multichain",
           d: "Envie e receba pagamentos na Stellar, Solana e Monad com finalidade em segundos e taxas medidas em frações de centavo.",
-          long: "Aceite pagamentos de qualquer pessoa com uma carteira Stellar, Solana ou Monad. Os fundos atingem a finalidade em segundos e liquidam direto na sua conta — sem chargebacks, sem intermediários e sem retenções de vários dias.",
+          long: "Aceite pagamentos de qualquer pessoa com uma carteira Stellar, Solana ou Monad. Os fundos atingem a finalidade em segundos e liquidam direto na sua conta, sem chargebacks, sem intermediários e sem retenções de vários dias.",
           points: ["Finalidade de liquidação em segundos", "Taxas em frações de centavo", "Envie e receba na Stellar, Solana e Monad", "Webhooks em tempo real em cada pagamento"]
         },
         coin: {
@@ -561,7 +561,7 @@ export default {
         },
         globe: {
           t: "Dinheiro internacional",
-          d: "Alcance mais de 130 países por redes abertas e globais — sem bancos correspondentes.",
+          d: "Alcance mais de 130 países por redes abertas e globais, sem bancos correspondentes.",
           long: "Movimente dinheiro entre fronteiras da mesma forma que faz localmente. Stellar, Solana e Monad alcançam mais de 130 países sem bancos correspondentes, então os repasses chegam em segundos em vez de dias.",
           points: ["Mais de 130 países, uma única API", "Sem atrasos de bancos correspondentes", "Câmbio transparente e antecipado", "Liquida em segundos"]
         },
@@ -574,7 +574,7 @@ export default {
         wallet: {
           t: "Carteiras embarcadas",
           d: "Crie carteiras custodial ou não custodial na Stellar, Solana e Monad para seus usuários.",
-          long: "Dê a cada usuário uma carteira multichain (Stellar, Solana e Monad) dentro do seu produto. Escolha carteiras custodial que você gerencia ou carteiras não custodial controladas pelos seus usuários — ambas provisionadas com uma única chamada de API.",
+          long: "Dê a cada usuário uma carteira multichain (Stellar, Solana e Monad) dentro do seu produto. Escolha carteiras custodial que você gerencia ou carteiras não custodial controladas pelos seus usuários. Ambas são provisionadas com uma única chamada de API.",
           points: ["Custodial ou não custodial", "Provisionamento em uma chamada", "Gerenciamento de chaves integrado", "Saldos multiativos"]
         }
       },
@@ -599,7 +599,7 @@ export default {
         Northwind: {
           label: "liquidação internacional mais rápida após migrar para a Cosmos Pay.",
           tags: ["Pagamentos", "Stablecoins", "Carteiras"],
-          story: "A Northwind migrou seu checkout global para a Cosmos Pay na Stellar, Solana e Monad, reduzindo a liquidação de dias para segundos e cortando custos de câmbio em mais de 30 mercados — tudo isso mantendo um único ledger reconciliado."
+          story: "A Northwind migrou seu checkout global para a Cosmos Pay na Stellar, Solana e Monad, reduzindo a liquidação de dias para segundos e cortando custos de câmbio em mais de 30 mercados, tudo isso mantendo um único ledger reconciliado."
         },
         Lumio: {
           label: "para lançar assinaturas em USDC em 40 países.",
@@ -686,7 +686,7 @@ export default {
   pricing: {
     kicker: "// preços",
     title: "Pague pelo que você processa.",
-    lede: "Preços transparentes baseados em uso. Comece sem mensalidade — pague apenas uma pequena taxa por transação bem-sucedida.",
+    lede: "Preços transparentes baseados em uso. Comece sem mensalidade: pague apenas uma pequena taxa por transação bem-sucedida.",
     monthly: "Mensal",
     annual: "Anual",
     save: "−17%",
@@ -735,7 +735,7 @@ export default {
     compare: [
       {
         l: "Mensalidade",
-        v: ["—", "$33 / mo", "$99 / mo", "Personalizado"]
+        v: ["Sem mensalidade", "$33 / mo", "$99 / mo", "Personalizado"]
       },
       {
         l: "Taxa por transação",
@@ -786,7 +786,7 @@ export default {
     faqs: [
       {
         q: "Preciso pagar uma mensalidade?",
-        a: "Não. O Starter não tem mensalidade — você paga apenas uma pequena taxa por transação bem-sucedida. Essentials e Growth acrescentam uma mensalidade em troca de taxas menores."
+        a: "Não. O Starter não tem mensalidade: você paga apenas uma pequena taxa por transação bem-sucedida. Essentials e Growth acrescentam uma mensalidade em troca de taxas menores."
       },
       {
         q: "Quanto custa uma transação?",
@@ -798,11 +798,11 @@ export default {
       },
       {
         q: "Com que rapidez o dinheiro liquida?",
-        a: "Os pagamentos atingem a finalidade em cerca de cinco segundos, em todos os planos — não há atrasos de repasse de vários dias."
+        a: "Os pagamentos atingem a finalidade em cerca de cinco segundos, em todos os planos. Não há atrasos de repasse de vários dias."
       },
       {
         q: "Posso mudar de plano depois?",
-        a: "Com certeza. Faça upgrade ou downgrade a qualquer momento pelo seu painel. As mudanças entram em vigor imediatamente — sem necessidade de ligações."
+        a: "Com certeza. Faça upgrade ou downgrade a qualquer momento pelo seu painel. As mudanças entram em vigor imediatamente, sem necessidade de ligações."
       }
     ],
     ctaTitle: "Ainda tem dúvidas?",
@@ -832,11 +832,11 @@ export default {
       inbox: "Caixa de suporte",
       users: "Usuários",
       adminOverview: "Platform overview",
-      adminPayments: "Payments — all orgs",
-      adminSwaps: "Swaps — all orgs",
-      adminFiat: "Fiat — all orgs",
-      adminCustomers: "Customers — all orgs",
-      adminProducts: "Products — all orgs",
+      adminPayments: "Payments (all orgs)",
+      adminSwaps: "Swaps (all orgs)",
+      adminFiat: "Fiat (all orgs)",
+      adminCustomers: "Customers (all orgs)",
+      adminProducts: "Products (all orgs)",
       adminConsumers: "Organizations"
     },
     sidebar: {
@@ -881,7 +881,7 @@ export default {
       heading: "Organizações",
       owned: "Suas organizações",
       invited: "Compartilhadas com você",
-      locked: "Bloqueada — faça upgrade do plano",
+      locked: "Bloqueada: faça upgrade do plano",
       create: "Criar organização"
     },
     env: {
@@ -968,7 +968,7 @@ export default {
       reveal: {
         eyebrow: "Chave de API criada",
         title: "Salve sua chave secreta",
-        body: "Esta é a única vez que você verá este segredo. Copie-o agora e guarde-o em um lugar seguro — por segurança, você não poderá vê-lo novamente.",
+        body: "Esta é a única vez que você verá este segredo. Copie-o agora e guarde-o em um lugar seguro. Por segurança, você não poderá vê-lo novamente.",
         idLabel: "ID da chave",
         saved: "Salvei minha chave"
       }
@@ -1022,7 +1022,7 @@ export default {
       modal: {
         eyebrow: "Pagamento",
         title: "Criar pagamento",
-        desc: "Os pagamentos liquidam instantaneamente na Stellar, Solana ou Monad — sem período de retenção.",
+        desc: "Os pagamentos liquidam instantaneamente na Stellar, Solana ou Monad, sem período de retenção.",
         amount: "Valor",
         asset: "Ativo",
         customer: "Cliente",
@@ -1035,7 +1035,7 @@ export default {
       loading: "A carregar…", loadError: "Não foi possível carregar os dados.", empty: "Ainda não há nada aqui.",
       eventLabels: { PAYMENT_INTENT_CREATED: "Pagamento criado", PAYMENT_INTENT_UPDATED: "Pagamento atualizado", PAYMENT_INTENT_SUCCEEDED: "Pagamento concluído", PAYMENT_INTENT_FAILED: "Pagamento falhou", PAYMENT_INTENT_CANCELLED: "Pagamento cancelado", PAYMENT_INTENT_DELETED: "Pagamento eliminado" },
       active: "Ativo", inactive: "Desativado",
-      reveal: "Mostrar segredo", secret: "Segredo de assinatura", secretNote: "Mostrado uma vez — guarde-o em segurança.",
+      reveal: "Mostrar segredo", secret: "Segredo de assinatura", secretNote: "Mostrado uma vez. Guarde-o em segurança.",
       rotate: "Rodar segredo", ping: "Enviar teste", pingOk: "Evento de teste entregue", pingFail: "Falhou o evento de teste",
       deliveries: "Entregas recentes", noDeliveries: "Ainda não há entregas.", redeliver: "Reenviar",
       enable: "Ativar", disable: "Desativar",
@@ -1065,13 +1065,13 @@ export default {
         eyebrow: "Link de pagamento", title: "Criar link de pagamento",
         desc: "Gere um link SEP-7 e um QR que o seu cliente pode pagar em qualquer carteira Stellar.",
         kind: "Tipo", kindPay: "Link de pagamento (o cliente paga)", kindTx: "Transação (origem conhecida)",
-        kindPayHint: "Sem conta de origem — devolve um URI de pagamento + QR.",
-        kindTxHint: "Origem conhecida — devolve uma transação não assinada para assinar.",
+        kindPayHint: "Sem conta de origem: devolve um URI de pagamento + QR.",
+        kindTxHint: "Origem conhecida: devolve uma transação não assinada para assinar.",
         destination: "Destino", destinationHint: "Conta Stellar que recebe os fundos (G…).",
         source: "Origem", sourceHint: "Conta Stellar do pagador (G…).",
         amount: "Valor", amountHint: "Deixe vazio para o pagador escolher (doações).",
         asset: "Ativo", assetIssuer: "Emissor do ativo", assetIssuerHint: "Obrigatório para ativos não nativos (G…).",
-        memo: "Memo", memoHint: "MEMO_ID numérico — gerado automaticamente se vazio.",
+        memo: "Memo", memoHint: "MEMO_ID numérico, gerado automaticamente se vazio.",
         message: "Mensagem", messageHint: "Mostrado ao pagador na carteira (≤ 300 caracteres).",
         submit: "Criar link",
       },
@@ -1090,7 +1090,7 @@ export default {
     balances: {
       title: "Saldos",
       sub: "Liquidados diretamente na sua própria carteira, em tempo real",
-      note: "A Cosmos Pay nunca retém seus fundos — cada pagamento liquida direto na sua própria carteira (na Stellar, Solana ou Monad) no momento em que é feito.",
+      note: "A Cosmos Pay nunca retém seus fundos: cada pagamento liquida direto na sua própria carteira (na Stellar, Solana ou Monad) no momento em que é feito.",
       total: "SALDO TOTAL",
       across: "em 3 ativos",
       explorer: "Ver no explorer",
@@ -1153,7 +1153,7 @@ export default {
       }
     },
     apikeys: {
-      readOnly: "Você tem acesso somente leitura — apenas owners e admins podem criar ou revogar chaves de API.",
+      readOnly: "Você tem acesso somente leitura. Apenas owners e admins podem criar ou revogar chaves de API.",
       title: "Chaves de API",
       sub: "Chaves secretas para a API da Cosmos Pay. Crie quantas precisar.",
       create: "Criar chave secreta",
@@ -1174,7 +1174,7 @@ export default {
       revoke: "Revogar",
       edit: "Editar",
       unnamed: "Chave sem nome",
-      none: "—",
+      none: "Nenhuma",
       revokeTitle: "Revogar chave de API",
       revokeBody: "«{name}» será revogada permanentemente e qualquer app que a use deixará de funcionar. Esta ação não pode ser desfeita.",
       revokeConfirm: "Revogar chave",
@@ -1219,7 +1219,7 @@ export default {
     },
     logs: {
       title: "Logs da API",
-      sub: "Cada requisição à API da Cosmos Pay — clique em uma linha para inspecionar",
+      sub: "Cada requisição à API da Cosmos Pay (clique em uma linha para inspecionar)",
       searchPlaceholder: "Buscar por endpoint…",
       tableHead: {
         method: "Método",
@@ -1251,7 +1251,7 @@ export default {
         unlimited: "Ilimitado",
         manage: "Gerenciar organizações",
         changeTitle: "Mudar de plano",
-        changeSub: "Mude seu plano. É uma simulação — nada é cobrado.",
+        changeSub: "Mude seu plano. É uma simulação: nada é cobrado.",
         save: "Atualizar plano",
         liveKeys: "Chaves de produção",
         seats: "Assentos da equipe",
@@ -1419,7 +1419,7 @@ export default {
       profile: { title: "Perfil", name: "Nome", email: "E-mail", role: "Função", note: "Seu nome, foto e biografia são editados aqui.",
         displayName: "Nome de exibição", displayNamePlaceholder: "Seu nome", bio: "Biografia", bioPlaceholder: "Uma linha sobre você ou sua empresa",
         edit: "Editar", save: "Salvar alterações", saving: "Salvando…", uploadPhoto: "Enviar foto", changePhoto: "Trocar foto", removePhoto: "Remover",
-        photoHint: "PNG, JPG ou WebP — quadrada fica melhor.", saved: "Perfil atualizado", saveError: "Não foi possível atualizar seu perfil.",
+        photoHint: "PNG, JPG ou WebP. Quadrada fica melhor.", saved: "Perfil atualizado", saveError: "Não foi possível atualizar seu perfil.",
         photoTooLarge: "Essa imagem é muito grande. Escolha uma com menos de 8 MB.", photoInvalid: "Esse arquivo não é uma imagem compatível.",
         editNote: "E-mail e função vêm do seu login da Cosmos Pay." },
       session: { title: "Sessão", desc: "Saia do painel da Cosmos Pay neste dispositivo.", signOut: "Sair" },
@@ -1515,7 +1515,7 @@ export default {
       chainLabel: "Rede",
       chains: { stellar: "Stellar", solana: "Solana", monad: "Monad" },
       venues: { stellar: "DEX da Stellar", solana: "Jupiter", monad: "Kuru Flow" },
-      mainnetOnly: "Os swaps na Solana e na Monad só funcionam na mainnet — mude para o modo ao vivo para usá-los.",
+      mainnetOnly: "Os swaps na Solana e na Monad só funcionam na mainnet. Mude para o modo ao vivo para usá-los.",
       chainModal: {
         desc: "Troque dois ativos na {chain} pelo {venue}, que percorre todas as fontes de liquidez da rede. Cote e depois assine a transação na carteira.",
         sourceHint: { solana: "Carteira Solana que assina, paga e recebe (base58).", monad: "Carteira Monad que assina, paga e recebe (0x…)." },
@@ -1543,7 +1543,7 @@ export default {
         quoteTitle: "Quote",
         estimated: "Estimated received", minimum: "Minimum received",
         fee: "Commission", bps: "bps",
-        feeNote: "The commission is your organization plan's rate — applied automatically.",
+        feeNote: "The commission is your organization plan's rate, applied automatically.",
         create: "Create swap", creating: "Creating…",
       },
       detail: {
@@ -1621,7 +1621,7 @@ export default {
       network: { dev: "Testnet", prod: "Public network" },
       pools: {
         assetA: "Asset A", assetAIssuer: "Issuer A", assetB: "Asset B", assetBIssuer: "Issuer B",
-        assetHint: "Asset code — leave empty or XLM for lumens.",
+        assetHint: "Asset code: leave empty or XLM for lumens.",
         search: "Search pools", searching: "Searching…", loading: "Loading pools…",
         empty: "No pools match this pair.",
         error: "Couldn't load liquidity pools.",
@@ -1646,14 +1646,14 @@ export default {
         assetA: "Asset A", assetB: "Asset B", assetHint: "Asset code (XLM for lumens).",
         assetAIssuer: "Issuer A", assetBIssuer: "Issuer B", issuerHint: "Required for non-native assets (G…).",
         maxAmountA: "Max amount A", maxAmountAHint: "Maximum of asset A to deposit.",
-        maxAmountB: "Max amount B", maxAmountBHint: "Optional — derived from the pool price when omitted; required for a brand-new pool.",
+        maxAmountB: "Max amount B", maxAmountBHint: "Optional. Derived from the pool price when omitted; required for a brand-new pool.",
         poolId: "Pool ID", poolIdHint: "64-character hex liquidity pool id.",
         shares: "Shares", sharesHint: "Amount of pool shares to burn.",
         slippage: "Slippage (bps)", slippageHint: "Max slippage in basis points (optional, e.g. 50).",
         trustNote: "If the account doesn't trust the pool shares yet, the transaction includes the trustline automatically.",
         create: "Build transaction", creating: "Building…",
         createError: "Couldn't build the transaction.",
-        commissionNote: "The plan commission applies only to your earnings — the gain over what you deposited — never to your principal. Positions opened outside Cosmos Pay are not charged.",
+        commissionNote: "The plan commission applies only to your earnings (the gain over what you deposited), never to your principal. Positions opened outside Cosmos Pay are not charged.",
       },
       detail: {
         eyebrow: "Liquidity",
@@ -1683,14 +1683,14 @@ export default {
       loadError: "Couldn't load data.",
       txStatuses: { pending: "Pending", processing: "Processing", on_hold: "On hold", funds_received: "Funds received", completed: "Completed", refunded: "Refunded", partial_refund: "Partially refunded", failed: "Failed", cancelled: "Cancelled", canceled: "Cancelled", expired: "Expired", reversed: "Reversed" },
       kycReturn: {
-        eyebrow: "Fiat — activation",
+        eyebrow: "Fiat: activation",
         activating: "Activating your account…",
         activatingBody: "Please wait while we confirm your acceptance.",
         successTitle: "Your account is now active",
         successBody: "You can now add wallets and bank accounts and use onramp & offramp.",
         errorTitle: "Activation failed",
         errorBody: "We couldn't activate your account. Please try again.",
-        noTosId: "No terms-of-service id was returned — please try activating again.",
+        noTosId: "No terms-of-service id was returned. Please try activating again.",
         backToDashboard: "Back to dashboard",
       },
       tabs: { receivers: "Receivers", onramp: "Onramp", offramp: "Offramp" },
@@ -1705,20 +1705,20 @@ export default {
         disabled: "Disabled",
         disableAccount: "Disable account",
         enableAccount: "Enable account",
-        disabledNote: "This fiat account is disabled — onramp/offramp are blocked until re-enabled.",
+        disabledNote: "This fiat account is disabled: onramp/offramp are blocked until re-enabled.",
         accountDisabled: "Fiat account disabled",
         accountEnabled: "Fiat account enabled",
         accessError: "Couldn't update the fiat account.",
-        inactiveNote: "Registration only — no KYC data submitted yet.",
+        inactiveNote: "Registration only: no KYC data submitted yet.",
         awaitingReview: "Awaiting owner/admin review.",
         reviewTitle: "Review KYC",
         reviewHint: "Review the submitted KYC data, then approve to email the customer the terms of service.",
         approve: "Approve & send terms",
         approving: "Approving…",
-        approvedSent: "Approved — terms sent to {email}",
+        approvedSent: "Approved: terms sent to {email}",
         approveError: "Couldn't approve the receiver.",
         termsSentTitle: "Terms sent",
-        termsSentBody: "Awaiting customer acceptance — terms sent to {email}.",
+        termsSentBody: "Awaiting customer acceptance. Terms sent to {email}.",
         termsSentBodyNoEmail: "Awaiting customer acceptance of the terms of service.",
         resendTerms: "Resend terms email",
         resendVerification: "Resend verification email",
@@ -1758,7 +1758,7 @@ export default {
             id_doc_country: "ID document country", id_doc_type: "ID document type", id_doc_front_file: "ID document (front)", id_doc_back_file: "ID document (back)",
             selfie_file: "Selfie", proof_of_address_doc_type: "Proof of address type", proof_of_address_doc_file: "Proof of address",
             occupation: "Occupation", account_purpose: "Account purpose", source_of_funds_doc_type: "Source of funds type", source_of_funds_doc_file: "Source of funds document",
-            source_of_wealth: "Source of wealth", purpose_of_transactions: "Purpose of transactions", purpose_of_transactions_explanation: "Purpose of transactions — explanation",
+            source_of_wealth: "Source of wealth", purpose_of_transactions: "Purpose of transactions", purpose_of_transactions_explanation: "Purpose of transactions (explanation)",
             legal_name: "Legal name", alternate_name: "Alternate name", business_type: "Business type", business_industry: "Business industry", business_description: "Business description",
             formation_date: "Formation date", estimated_annual_revenue: "Estimated annual revenue", website: "Website",
             incorporation_doc_file: "Incorporation document", proof_of_ownership_doc_file: "Proof of ownership document",

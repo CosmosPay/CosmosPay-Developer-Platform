@@ -1,15 +1,15 @@
-/* mailer.ts — transactional email (organization invitations) with two transports:
+/* mailer.ts sends transactional email (organization invitations) with two transports:
 
-     1. Resend HTTP API (preferred)  — set RESEND_API_KEY. Sends over HTTPS (443), so it
+     1. Resend HTTP API (preferred): set RESEND_API_KEY. Sends over HTTPS (443), so it
         works even where outbound SMTP ports are blocked (e.g. OVH blocks 25/465/587).
-     2. SMTP fallback                — set SMTP_HOST/PORT/USER/PASS/SECURE (nodemailer).
+     2. SMTP fallback: set SMTP_HOST/PORT/USER/PASS/SECURE (nodemailer).
 
    The "from" address is SMTP_FROM in both cases and must be a verified sender. When
    neither transport is configured, isMailConfigured() is false and sendMail() throws,
    so callers surface a clear "email isn't set up" error instead of silently failing.
 
    nodemailer is imported dynamically so the project still builds (and runs for everything
-   else) even before `npm install` has pulled the dependency in — and it's only loaded
+   else) even before `npm install` has pulled the dependency in, and it's only loaded
    when the SMTP path is actually used. */
 import {
   SMTP_HOST,
@@ -60,7 +60,7 @@ async function sendViaResend(msg: MailMessage): Promise<void> {
       signal: controller.signal,
     });
   } catch (err) {
-    // Network error / timeout — surface a concise, catchable message.
+    // Network error / timeout: surface a concise, catchable message.
     throw new Error(
       `Resend request failed: ${err instanceof Error ? err.message : String(err)}`,
     );

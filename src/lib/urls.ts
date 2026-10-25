@@ -1,4 +1,4 @@
-/* urls.ts — pure helpers for absolute links between the three domains. No astro:env import
+/* urls.ts: pure helpers for absolute links between the three domains. No astro:env import
    here, so the unit tests can load it under plain `node --test`;
    @/components/cosmos/lib/constants feeds it the configured origins. */
 import { isSafeNextPath } from "@/lib/safe-next";

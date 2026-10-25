@@ -4,7 +4,7 @@
    on-chain reserves and returns an UNSIGNED transaction (XDR + SEP-7 URI + QR). Nothing
    moves until the signed envelope comes back to `/submit`.
 
-   As with swaps there is deliberately NO fee field in any request body — the commission
+   As with swaps there is deliberately NO fee field in any request body: the commission
    is the calling organization's plan rate, resolved server-side and reported back in the
    `fee*` fields of the operation. Every route here REQUIRES `?org=`: without one the
    request is 400, not a guess at which workspace to charge. */
@@ -61,7 +61,7 @@ const poolListSchema = z
     data: z.array(poolSchema),
     cursor: z.string().nullable().openapi({
       example: null,
-      description: 'Horizon paging cursor — pass it back as `cursor` for the next page.',
+      description: 'Horizon paging cursor; pass it back as `cursor` for the next page.',
     }),
   })
   .openapi('LiquidityPoolList', { description: 'Cursor-paged pools.' });
@@ -122,7 +122,7 @@ const operationSchema = z
     commissionMemo: z.string().nullable().openapi({ example: 'Cosmos Liquidity Commission' }),
     xdr: z.string().openapi({
       example: 'AAAAAgAAAAB...',
-      description: 'Unsigned transaction — sign it and send it to `/submit`.',
+      description: 'Unsigned transaction: sign it and send it to `/submit`.',
     }),
     uri: z.string().openapi({ example: 'web+stellar:tx?xdr=AAAAAgAAAAB...' }),
     txHash: z.string().openapi({ example: '3389e9f0…64hex' }),

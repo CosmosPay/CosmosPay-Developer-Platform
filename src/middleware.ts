@@ -47,7 +47,7 @@ function applyCors(headers: Headers, origin: string, request: Request): void {
    domain owns which route, and what a request for someone else's route becomes, is the table
    in src/lib/hosts.ts; the origins come from PUBLIC_SITE_URL / PUBLIC_BETTER_AUTH_URL /
    PUBLIC_PAYMENTS_URL. Static files (dist/client) are served before this runs, on every
-   domain — fine for assets; the docs export under /docs is kept to the platform domain by
+   domain, which is fine for assets; the docs export under /docs is kept to the platform domain by
    nginx (see README). */
 const ORIGINS = { site: SITE, dev: DEV, payments: PAYMENTS };
 
@@ -69,8 +69,8 @@ function underPaymentsMount(routePattern: string | undefined): boolean {
 
 /* --- Activity: this app's own API surface ---
    The Payments service logs what reaches IT. Nothing logged what reaches US, so
-   the half of a session that never leaves this app — signing in, minting a key,
-   loading the dashboard — was invisible in the activity feed while an API-key
+   the half of a session that never leaves this app (signing in, minting a key,
+   loading the dashboard) was invisible in the activity feed while an API-key
    call from a script was not. Recorded here, once, rather than in forty route
    handlers that would each have to remember.
 
@@ -95,7 +95,7 @@ function trackApiRequest(context: {
   const method = context.request.method.toUpperCase();
   // A successful read is not activity worth a row. The dashboard polls notifications
   // every 20s and unread support replies every 15s per open tab, so recording every
-  // 200 GET would bury the events somebody actually goes looking for — and would grow
+  // 200 GET would bury the events somebody actually goes looking for, and would grow
   // the table by two rows a minute per idle tab. A FAILED read is kept: a 500 on a
   // poll is exactly the invisible breakage this feed exists for.
   const read = method === "GET" || method === "HEAD";
@@ -120,7 +120,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const origin = context.request.headers.get("origin");
   const corsOk = isAllowedOrigin(origin);
 
-  // Answer CORS preflight directly — before auth/route work (preflight carries no creds).
+  // Answer CORS preflight directly, before auth/route work (preflight carries no creds).
   if (context.request.method === "OPTIONS") {
     const headers = new Headers();
     if (corsOk) applyCors(headers, origin, context.request);
@@ -176,7 +176,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Best-effort: ensure the profile exists and capture sign-in location once per
     // session (emits a sign-in notification). Never blocks or fails the request.
     recordLogin(isAuthed, context).catch(() => {});
-    // Track "last online" (throttled write — see touchLastSeen).
+    // Track "last online" (throttled write; see touchLastSeen).
     touchLastSeen(isAuthed.user.id).catch(() => {});
   } else {
     context.locals.user = null;

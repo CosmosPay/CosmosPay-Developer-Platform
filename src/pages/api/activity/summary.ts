@@ -1,4 +1,4 @@
-/* GET /api/activity/summary — the rollup behind the activity view's header:
+/* GET /api/activity/summary returns the rollup behind the activity view's header:
    counts per level / source / category, the most frequent event types, the most
    frequent error messages, and a daily series. Session-scoped like the feed. */
 import { jsonSuccess } from "@/lib/http";

@@ -10,7 +10,7 @@ const apiKeyPermissionsSchema = z
 
 const apiKeyNameSchema = z.string().trim().max(80).optional().openapi({ example: 'Production server' });
 const apiKeyDescriptionSchema = z.string().trim().max(240).optional().openapi({ example: 'Used by the billing service' });
-// API keys belong to an organization — the caller must specify which one.
+// API keys belong to an organization: the caller must specify which one.
 const apiKeyOrgSchema = z.string().trim().min(1).max(64).openapi({ example: 'org_abc123' });
 
 export const createApiKeyBodySchema = z

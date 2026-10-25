@@ -1,4 +1,4 @@
-/* POST /api/admin/receivers/:id/approve — PLATFORM-ADMIN (owner) review gate for ANY
+/* POST /api/admin/receivers/:id/approve: PLATFORM-ADMIN (owner) review gate for ANY
    fiat receiver, across every organization.
 
    The org-scoped /api/kyc/receivers/:id/approve only works for a receiver in the caller's
@@ -24,7 +24,7 @@ export const POST: APIRoute = async (ctx) => {
   const id = ctx.params.id;
   if (!id) return jsonNotFound("Receiver not found");
 
-  // Platform owner/admin only — the same gate as the rest of the admin surface.
+  // Platform owner/admin only: the same gate as the rest of the admin surface.
   const role = await getRole(session.user.id).catch(() => "user" as const);
   if (!canManageUsers(role)) return jsonForbidden("Platform admin access required.");
 
@@ -63,7 +63,7 @@ export const POST: APIRoute = async (ctx) => {
 
     return jsonSuccess({
       data: { approved: true, emailed, email: email ?? null, receiver: json?.receiver ?? null },
-      message: emailed ? "Approved — terms of service sent to the customer." : "Approved.",
+      message: emailed ? "Approved. Terms of service sent to the customer." : "Approved.",
     });
   } catch (err) {
     return cosmosErrorResponse(err);

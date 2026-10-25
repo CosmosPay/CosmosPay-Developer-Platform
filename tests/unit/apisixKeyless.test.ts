@@ -1,4 +1,4 @@
-/* apisixKeyless.test.ts — the keyless APISIX routes' URIs and the public payment-link read's
+/* apisixKeyless.test.ts: the keyless APISIX routes' URIs and the public payment-link read's
    CORS (src/lib/apisix-keyless.ts).
 
    Two failures this guards, both silent in production:

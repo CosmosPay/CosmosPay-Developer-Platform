@@ -3,7 +3,7 @@ title: "Overview"
 description: "What the SDK is, its server and browser entry points, the three-step payment flow, and the key facts you must know."
 ---
 
-This is the mental model for the whole SDK — read it first. It explains why there are two entry points (server and browser) and how a single payment moves through three steps.
+This is the mental model for the whole SDK, so read it first. It explains why there are two entry points (server and browser) and how a single payment moves through three steps.
 
 `@cosmosapp/pay_sdk` is the object-oriented JavaScript/TypeScript SDK for the
 **Cosmos Pay** Payments API — Stellar **SEP-7 payment intents**, **webhooks**,
@@ -49,6 +49,6 @@ A payment has two halves:
 
 ## References
 
-- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
-- [WebClient](/sdk/definitions/web/web-client) — The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction
+- [Client](/sdk/definitions/server/client): The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+- [WebClient](/sdk/definitions/web/web-client): The browser wallet client that detects the user's Stellar wallet, then builds, signs and submits the transaction
 

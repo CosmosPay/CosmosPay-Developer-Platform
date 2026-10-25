@@ -55,7 +55,7 @@ export function PlansSection({ user, billing }) {
           <div className="ent-cta">
             <div className="ent-price">{p.enterprise.price}</div>
             <div className="ent-subt">{p.enterprise.subt}</div>
-            {/* Contact sales — no contact page yet. */}
+            {/* Contact sales: no contact page yet. */}
             {/* <a className="btn btn-dark" href="#">{p.enterprise.cta} <IcArrow /></a> */}
           </div>
         </div>

@@ -12,7 +12,7 @@ import { Avatar } from "@/components/cosmos/ui/Avatar";
 
 /* The mega-menu links that lead somewhere: nav item → [column, link index in the catalog,
    href]. The catalogs carry the labels (same shape in every language); the targets live
-   here once. Only these are drawn — a label whose page does not exist yet stays listed
+   here once. Only these are drawn; a label whose page does not exist yet stays listed
    below, commented out, and comes back by uncommenting its line. A column left with no
    link is not drawn, nor is an item left with no column. */
 type NavLink = [col: number, link: number, href: string];
@@ -21,15 +21,15 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     [0, 0, PAYMENTS], // Payments
     [0, 1, `${PAYMENTS}/#integrations`], // Checkout
     [0, 2, `${PAYMENTS}/#integration`], // Payment Links
-    // [0, 3, "#"], // Invoicing — no page yet
-    // [1, 0, "#"], // Payouts — no page yet
-    // [1, 1, "#"], // Cross-border — no page yet
-    // [1, 2, "#"], // Anchors — no page yet
-    // [1, 3, "#"], // FX — no page yet
-    // [2, 0, "#"], // Stablecoins — no page yet
-    // [2, 1, "#"], // Wallets — no page yet
-    // [2, 2, "#"], // Ledger — no page yet
-    // [2, 3, "#"], // Radar — no page yet
+    // [0, 3, "#"], // Invoicing (no page yet)
+    // [1, 0, "#"], // Payouts (no page yet)
+    // [1, 1, "#"], // Cross-border (no page yet)
+    // [1, 2, "#"], // Anchors (no page yet)
+    // [1, 3, "#"], // FX (no page yet)
+    // [2, 0, "#"], // Stablecoins (no page yet)
+    // [2, 1, "#"], // Wallets (no page yet)
+    // [2, 2, "#"], // Ledger (no page yet)
+    // [2, 3, "#"], // Radar (no page yet)
   ],
   // Solutions: every link (SaaS & subscriptions, Marketplaces, Platforms, Embedded finance,
   // E-commerce, Fintech, Gaming, Travel & mobility) has no page yet, so the item is off.
@@ -39,25 +39,25 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     [0, 1, `${DOCS}/sdk/server/overview`], // SDKs & libraries
     [0, 2, `${DOCS}/sdk/server/webhooks`], // Webhooks
     [0, 3, `${DOCS}/getting-started`], // Sandbox
-    // [1, 0, "#"], // CLI — no page yet
-    // [1, 1, "#"], // Status — no status page yet
-    // [1, 2, "#"], // Changelog — no public changelog page yet
-    // [1, 3, "#"], // Postman — no collection published yet
+    // [1, 0, "#"], // CLI (no page yet)
+    // [1, 1, "#"], // Status (no status page yet)
+    // [1, 2, "#"], // Changelog (no public changelog page yet)
+    // [1, 3, "#"], // Postman (no collection published yet)
   ],
   resources: [
     [0, 0, DOCS], // Documentation
     [0, 1, `${DOCS}/getting-started`], // Tutorials
-    // [0, 2, "#"], // Blog — no page yet
-    // [0, 3, "#"], // Customer stories — no page yet
-    // [1, 0, "#"], // Help center — no page yet
-    // [1, 1, "#"], // Community — no page yet
-    // [1, 2, "#"], // Contact sales — no page yet
-    // [1, 3, "#"], // Partners — no page yet
+    // [0, 2, "#"], // Blog (no page yet)
+    // [0, 3, "#"], // Customer stories (no page yet)
+    // [1, 0, "#"], // Help center (no page yet)
+    // [1, 1, "#"], // Community (no page yet)
+    // [1, 2, "#"], // Contact sales (no page yet)
+    // [1, 3, "#"], // Partners (no page yet)
   ],
 };
 /* The featured card of an item, only where its call to action leads somewhere. */
 const FEATURED_HREFS: Record<string, string> = {
-  // products: "#", // Cosmos Sessions 2026 — no page yet
+  // products: "#", // Cosmos Sessions 2026 (no page yet)
   developers: `${DOCS}/getting-started`, // Quickstart
 };
 
@@ -81,7 +81,7 @@ function useNavItems(area?: Area): any[] {
   const n = t.nav.items;
   return [
     withLinks("products", n.products, area),
-    // withLinks("solutions", n.solutions, area), — see NAV_LINKS
+    // withLinks("solutions", n.solutions, area), // see NAV_LINKS
     withLinks("developers", n.developers, area),
     withLinks("resources", n.resources, area),
     { key: "pricing", label: n.pricing.label, href: pricingFor(area) },
