@@ -1,7 +1,7 @@
 /* Dashboard.jsx: Cosmos Pay developer dashboard shell. Ported from the Design bundle.
    Auth/profile are real (Authentik session passed in via props); data is mock.
    All UI copy comes from the i18n catalog (useT). */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ConfirmModal, useTheme, showToast,
   startTracking, setTrackEnv, track, trackView,
@@ -14,7 +14,7 @@ import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
 import {
-  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, CrossChainSwapsView, LiquidityView, BlindPayView,
+  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
@@ -56,9 +56,15 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     } catch (e) {}
   }, []);
   // Keep the URL in sync with the active view so a reload restores it (no more snapping back to Overview).
+  // Moving to another view drops the last one's list filters (useListFilters keeps them in the URL).
+  const shownView = useRef(null);
   useEffect(() => {
     try {
       const url = new URL(window.location.href);
+      if (shownView.current !== null && shownView.current !== view) {
+        for (const key of [...url.searchParams.keys()]) if (key !== "view") url.searchParams.delete(key);
+      }
+      shownView.current = view;
       if (view === "overview") url.searchParams.delete("view");
       else url.searchParams.set("view", view);
       window.history.replaceState({}, "", url);
@@ -258,8 +264,17 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   // Cross-organization drill-down filter for the platform-admin views. Sidebar
   // navigation (go) always clears it; only goToAdmin sets it.
   const [adminFilter, setAdminFilter] = useState(null); // { consumer, label, tab? } | null
-  const go = (v) => { setView(v); setAdminFilter(null); setNavOpen(false); };
-  const goToAdmin = (v, filter = null) => { setView(v); setAdminFilter(filter); setNavOpen(false); };
+  // Switching views drops the last view's list filters before the next one reads the URL.
+  const clearListFilters = (v) => {
+    if (v === view) return;
+    try {
+      const url = new URL(window.location.href);
+      for (const key of [...url.searchParams.keys()]) if (key !== "view") url.searchParams.delete(key);
+      window.history.replaceState(window.history.state, "", url);
+    } catch (e) {}
+  };
+  const go = (v) => { clearListFilters(v); setView(v); setAdminFilter(null); setNavOpen(false); };
+  const goToAdmin = (v, filter = null) => { clearListFilters(v); setView(v); setAdminFilter(filter); setNavOpen(false); };
 
   // Pending invitations addressed to my email, surfaced as a banner so I can join from
   // inside the dashboard (in addition to the emailed magic link).
@@ -291,8 +306,9 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} />;
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "swaps": return <SwapsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "crossChainSwaps": return <CrossChainSwapsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      // Swaps between chains live in the swaps list; the old deep link opens it filtered to them.
+      case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "liquidity": return <LiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
@@ -327,7 +343,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       <div className="dash-frame">
         <div className="nav-scrim" onClick={() => setNavOpen(false)} />
         <aside className="side" id="dash-side">
-          <Sidebar view={view} go={go} visible={visibleView} unread={unreadNotifs} supportUnread={supportUnread} />
+          <Sidebar view={view === "crossChainSwaps" ? "swaps" : view} go={go} visible={visibleView} unread={unreadNotifs} supportUnread={supportUnread} />
         </aside>
 
         <div className="dash-main">

@@ -99,7 +99,7 @@ export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[]
       { view: "overview" },
       { group: "payments", views: ["payments", "customers", "products"] },
       { view: "balances" },
-      { group: "swaps", views: ["swaps", "crossChainSwaps", "liquidity"] },
+      { group: "swaps", views: ["swaps", "liquidity"] },
       { view: "blindpay" },
       { group: "developers", views: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
     ],

@@ -13,20 +13,21 @@
    what guarantees the extension has run by the time they are constructed. It is the same
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
+import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, CHAINS, type Chain } from "@/lib/chains";
 
-export const SWAP_CHAINS = ["stellar", "solana", "monad"] as const;
-export type SwapChain = (typeof SWAP_CHAINS)[number];
+export const SWAP_CHAINS = CHAINS;
+export type SwapChain = Chain;
 
-const STELLAR_ADDRESS = /^G[A-Z2-7]{55}$/;
-const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const STELLAR_ADDRESS = ADDRESS_PATTERNS.stellar;
+const SOLANA_ADDRESS = ADDRESS_PATTERNS.solana;
+const EVM_ADDRESS = ADDRESS_PATTERNS.monad;
 
 /* What an account address looks like on each chain (shape only; the Payments API checks
    the checksum). A missing chain is Stellar, as upstream. */
 const ADDRESS_RULES: Record<SwapChain, { re: RegExp; message: string }> = {
-  stellar: { re: STELLAR_ADDRESS, message: "Must be a valid Stellar public key (G...56 chars)." },
-  solana: { re: SOLANA_ADDRESS, message: "Must be a valid Solana address (base58)." },
-  monad: { re: EVM_ADDRESS, message: "Must be a valid Monad (EVM) address (0x + 40 hex)." },
+  stellar: { re: ADDRESS_PATTERNS.stellar, message: ADDRESS_MESSAGES.stellar },
+  solana: { re: ADDRESS_PATTERNS.solana, message: ADDRESS_MESSAGES.solana },
+  monad: { re: ADDRESS_PATTERNS.monad, message: ADDRESS_MESSAGES.monad },
 };
 
 /* How each chain spells a swap asset: a Stellar code, or the native ticker / `native` /

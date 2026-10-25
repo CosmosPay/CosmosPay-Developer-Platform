@@ -3,10 +3,10 @@
    and every decision the page makes from it. Pure, so it is unit-tested under plain
    node; the browser script only wires it to the DOM. */
 import { DEFAULT_CHECKOUT_THEME, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
+import { CHAINS, CHAIN_NAMES, NATIVE_CODES, explorerTxUrl as chainExplorerTx, type Chain, type Tier } from "@/lib/chains";
 
-export const CHAINS = ["stellar", "solana", "monad"] as const;
-export type Chain = (typeof CHAINS)[number];
-export type Tier = "public" | "testnet";
+// The chain vocabulary is src/lib/chains.ts's; re-exported for the checkout and the embed.
+export { CHAINS, type Chain, type Tier };
 export type LinkStatus = "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
 export const LINK_STATUSES: readonly LinkStatus[] = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 
@@ -104,15 +104,12 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
   };
 }
 
-const NATIVE_SYMBOL: Record<Chain, string> = { stellar: "XLM", solana: "SOL", monad: "MON" };
-const CHAIN_NAME: Record<Chain, string> = { stellar: "Stellar", solana: "Solana", monad: "Monad" };
-
 export function assetSymbol(link: Pick<PaymentLink, "chain" | "asset">): string {
-  return !link.asset || link.asset === "native" ? NATIVE_SYMBOL[link.chain] : link.asset;
+  return !link.asset || link.asset === "native" ? NATIVE_CODES[link.chain] : link.asset;
 }
 
 export function chainName(chain: Chain): string {
-  return CHAIN_NAME[chain];
+  return CHAIN_NAMES[chain];
 }
 
 /** "25.5 XLM", or null when the payer chooses the amount. */
@@ -125,31 +122,9 @@ export function shortAddress(address: string, head = 6, tail = 6): string {
   return address.length <= head + tail + 1 ? address : `${address.slice(0, head)}…${address.slice(-tail)}`;
 }
 
-/* Explorers, the same ones the wallet links (its src/constants/chains.ts). The hash is
-   checked against the chain's alphabet so a crafted value can't become a different URL. */
-const TX_HASH: Record<Chain, RegExp> = {
-  stellar: /^[0-9a-f]{64}$/i,
-  solana: /^[1-9A-HJ-NP-Za-km-z]{43,90}$/,
-  monad: /^0x[0-9a-f]{64}$/i,
-};
-const EXPLORER_TX: Record<Chain, Record<Tier, (hash: string) => string>> = {
-  stellar: {
-    public: (h) => `https://stellar.expert/explorer/public/tx/${h}`,
-    testnet: (h) => `https://stellar.expert/explorer/testnet/tx/${h}`,
-  },
-  solana: {
-    public: (h) => `https://solscan.io/tx/${h}`,
-    testnet: (h) => `https://explorer.solana.com/tx/${h}?cluster=devnet`,
-  },
-  monad: {
-    public: (h) => `https://monadscan.com/tx/${h}`,
-    testnet: (h) => `https://testnet.monadexplorer.com/tx/${h}`,
-  },
-};
-
+/* The explorer for the transaction (src/lib/chains.ts checks the hash first). */
 export function explorerTxUrl(link: Pick<PaymentLink, "chain" | "network" | "txHash">): string | null {
-  if (!link.txHash || !TX_HASH[link.chain].test(link.txHash)) return null;
-  return EXPLORER_TX[link.chain][link.network](link.txHash);
+  return chainExplorerTx(link.chain, link.network, link.txHash);
 }
 
 /**

@@ -8,6 +8,8 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { matchesQuery } from "@/lib/dashboard-filters";
 
 const codePill = (c) => (c == null ? "ref" : c < 400 ? "ok" : c < 500 ? "ref" : "fail");
 
@@ -40,7 +42,8 @@ export function LogsView({ kind = "api", env = "dev" }) {
   }, [env, kind]);
   usePolling(refresh, 8000);
 
-  const view = rows.filter((l) => JSON.stringify(l).toLowerCase().includes(q.toLowerCase()));
+  // Every word of the search must appear somewhere in the entry.
+  const view = rows.filter((l) => matchesQuery([JSON.stringify(l)], q));
   const pg = usePaged(view, q + "|" + kind);
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
@@ -54,8 +57,8 @@ export function LogsView({ kind = "api", env = "dev" }) {
         {!loading && !error && view.length > 0 && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx logs"><thead>
             {isApi
-              ? <tr><th></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.time}</th><th>{lv.tableHead.timestamp}</th></tr>
-              : <tr><th></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.timestamp}</th></tr>}
+              ? <tr><th><span className="sr-only">{t.dash.common.details}</span></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.time}</th><th>{lv.tableHead.timestamp}</th></tr>
+              : <tr><th><span className="sr-only">{t.dash.common.details}</span></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.timestamp}</th></tr>}
           </thead>
             <tbody>{pg.slice.map((l, j) => {
               const i = pg.start + j;
@@ -93,7 +96,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
             })}</tbody>
           </table></div>
         )}
-        {loading && <div className="empty">{cx.loading}</div>}
+        {loading && <TableSkeleton label={cx.loading} />}
         {!loading && error && <div className="empty">{cx.loadError}</div>}
         {!loading && !error && !view.length && <div className="empty">{cx.empty}</div>}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}

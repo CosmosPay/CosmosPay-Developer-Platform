@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { isChain } from "@/lib/chains";
 import {
   ApiStatus,
   jsonCreated,
@@ -43,6 +44,8 @@ export const GET: APIRoute = async (ctx) => {
 
   const env = envFromQuery(ctx.url);
   const status = ctx.url.searchParams.get("status") || undefined;
+  const chainParam = ctx.url.searchParams.get("chain");
+  const chain = isChain(chainParam) ? chainParam : undefined;
   const take = Number(ctx.url.searchParams.get("take")) || undefined;
   const skip = Number(ctx.url.searchParams.get("skip")) || undefined;
   // Only a parseable instant is forwarded, normalised to ISO; anything else is ignored.
@@ -50,7 +53,7 @@ export const GET: APIRoute = async (ctx) => {
   const createdFrom = createdFromRaw && !Number.isNaN(Date.parse(createdFromRaw)) ? new Date(createdFromRaw).toISOString() : undefined;
 
   try {
-    const list = await cosmos.list(session.user.id, env, { status, createdFrom, take, skip });
+    const list = await cosmos.list(session.user.id, env, { status, chain, createdFrom, take, skip });
     return jsonSuccess({ data: list, message: "Payment intents fetched successfully" });
   } catch (err) {
     return cosmosErrorResponse(err);
@@ -90,6 +93,7 @@ export const POST: APIRoute = async (ctx) => {
             checkoutTheme: rest.checkoutTheme,
           })
         : await cosmos.createPay(session.user.id, environment, {
+            chain: rest.chain,
             destination: rest.destination,
             amount: rest.amount,
             assetCode: rest.assetCode,

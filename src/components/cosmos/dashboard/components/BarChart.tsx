@@ -73,7 +73,7 @@ export function BarChart({ data, label, volumeLabel, countLabel, dateLabel, lang
           {data.map((d, i) => {
             const x = i * GROUP;
             return (
-              <g key={d.date} onMouseEnter={() => setHover(i)} className={hover === i ? "on" : undefined}>
+              <g key={d.date} onMouseEnter={() => setHover(i)} className={hover === i ? "on" : undefined} style={{ ["--i" as string]: i }}>
                 <rect x={x} y={0} width={GROUP} height={H} className="bars-hit" />
                 <rect className="bar-vol" x={x + 7} width="6" y={y(d.volume, vMax)} height={Math.max(0, PAD_TOP + plotH - y(d.volume, vMax))} rx="3" />
                 <rect className="bar-cnt" x={x + 15} width="6" y={y(d.count, cMax)} height={Math.max(0, PAD_TOP + plotH - y(d.count, cMax))} rx="3" />

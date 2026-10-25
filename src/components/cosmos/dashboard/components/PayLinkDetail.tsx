@@ -6,25 +6,30 @@ import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
+import { CHAIN_NAMES, TEST_NETWORKS, assetLabel as chainAssetLabel, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
 
 /* Map an upstream status to a status-pill class (reuses the existing ok/fail/ref pills). */
 export const STATUS_PILL = { SUCCEEDED: "ok", FAILED: "fail", EXPIRED: "fail", CANCELLED: "fail", PENDING: "ref", SUBMITTED: "ref" };
 
-/* "native" → XLM; otherwise the asset code as stored. */
-export function assetLabel(asset) { return !asset || asset === "native" ? "XLM" : asset; }
-export function amountLabel(intent, pl) { return intent.amount ? `${intent.amount} ${assetLabel(intent.asset)}` : pl.anyAmount; }
-
-/* A settled/submitted intent carries an on-chain transaction hash. Only then does
-   an explorer link / transaction id make sense. */
-export function hasTransaction(intent) { return !!(intent && intent.txHash); }
-
-/* stellar.expert link to the on-chain transaction (only valid when txHash exists). */
-export function explorerUrl(intent) {
-  const net = intent.network === "public" ? "public" : "testnet";
-  return `https://stellar.expert/explorer/${net}/tx/${intent.txHash}`;
+/* The chain a record settles on (Stellar for a record from before chains). */
+export const chainOf = (record) => (record && isChain(record.chain) ? record.chain : "stellar");
+/* "native" as the chain's coin (XLM, SOL, MON), a code as stored, a long token shortened. */
+export function assetLabel(asset, chain = "stellar") { return chainAssetLabel(chain, asset); }
+export function amountLabel(intent, pl) { return intent.amount ? `${intent.amount} ${assetLabel(intent.asset, chainOf(intent))}` : pl.anyAmount; }
+/* "Solana · Devnet" in the sandbox, "Solana" on mainnet. */
+export function networkLabel(record) {
+  const chain = chainOf(record);
+  return tierOf(record && record.network) === "public" ? CHAIN_NAMES[chain] : `${CHAIN_NAMES[chain]} · ${TEST_NETWORKS[chain]}`;
 }
 
-/* Shared table row-actions cell: view the payment, open the Stellar tx (only when one
+/* The explorer page of the record's on-chain transaction, on its chain and network; null until
+   there is a transaction (or when the hash is not one of that chain's). */
+export function explorerUrl(intent) {
+  return intent ? explorerTxUrl(chainOf(intent), tierOf(intent.network), intent.txHash) : null;
+}
+export function hasTransaction(intent) { return !!explorerUrl(intent); }
+
+/* Shared table row-actions cell: view the payment, open its transaction (only when one
    exists), and delete (only when the caller can manage AND the link isn't paid).
    Reused by the Payments and Balances tables so both behave identically. */
 export function PayLinkRowActions({ intent, t, pl, onView, canManage = false, onDelete }) {
@@ -127,15 +132,15 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
     [F.id, data.id],
     [F.status, (pl.status && pl.status[data.status]) || data.status],
     [F.kind, pl.kinds[data.kind] || data.kind],
-    [F.network, data.network],
+    [F.network, networkLabel(data)],
     [F.destination, data.destination],
     [F.source, data.source],
     [F.amount, amountLabel(data, pl)],
-    [F.asset, assetLabel(data.asset)],
-    [pl.modal.assetIssuer, data.assetIssuer],
+    [F.asset, assetLabel(data.asset, chainOf(data))],
+    [chainOf(data) === "stellar" ? pl.modal.assetIssuer : t.dash.tokens.address[chainOf(data)], data.assetIssuer],
     [F.memo, data.memo],
     [F.message, data.msg],
-    // Stellar transaction id, only present once paid/submitted.
+    // The on-chain transaction id, only present once paid/submitted.
     [F.txHash, data.txHash],
     [F.created, fmtDateTime(data.createdAt)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
@@ -169,7 +174,7 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
           </div>
         )}
 
-        <CopyBlock label={d.uri} value={data.uri}>
+        <CopyBlock label={d.uriLabels[chainOf(data)]} value={data.uri}>
           <div className="paylink-actions">
             <a className="btn btn-soft btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
             {/* No transaction exists until the payment is submitted/paid. */}

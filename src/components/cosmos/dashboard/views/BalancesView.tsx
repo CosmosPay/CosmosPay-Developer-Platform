@@ -6,7 +6,9 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { CHAIN_NAMES, isChain } from "@/lib/chains";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 const num = (s) => { const n = Number(s); return Number.isFinite(n) ? n : 0; };
 
@@ -56,12 +58,13 @@ export function BalancesView({ canManage = false, env = "dev" }) {
   return (
     <>
       <ViewHead title={b.title} sub={b.sub} />
-      {loading && <div className="empty">{cx.loading}</div>}
+      {loading && <TableSkeleton label={cx.loading} />}
       {!loading && (
         <div className="bal-grid">
           {bals.map((bal) => (
-            <div className="bal-card" key={bal.asset}>
-              <div className="bal-asset"><span className="bal-chip">{bal.asset}</span></div>
+            <div className="bal-card" key={`${bal.chain || "stellar"}:${bal.asset}`}>
+              {/* The asset and the chain it settles on, as text (no chip). */}
+              <div className="bal-asset"><span className="bal-asset-name"><b>{bal.asset}</b> {CHAIN_NAMES[isChain(bal.chain) ? bal.chain : "stellar"]}</span></div>
               <div className="bal-amt">{bal.amount}</div>
               <div className="bal-fiat">{num(bal.pending) > 0 ? `${cx.pending}: ${bal.pending}` : `${bal.count}× ${cx.received}`}</div>
               <div className="bal-bar"><span style={{ width: Math.round((num(bal.amount) / max) * 100) + "%" }} /></div>
@@ -76,12 +79,12 @@ export function BalancesView({ canManage = false, env = "dev" }) {
       )}
       <div className="panel"><div className="panel-head"><h3>{b.recent}</h3></div>
         {!loading && recent.length > 0 && (
-          <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{recent.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 <td className="tid">{p.id}</td>
                 <td className="cust">{b.payment}</td>
-                <td className="amt">+{p.amount || "-"} {p.asset === "native" ? "XLM" : p.asset}</td>
+                <td className="amt">+{amountLabel(p, pl)}</td>
                 <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
                 <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />

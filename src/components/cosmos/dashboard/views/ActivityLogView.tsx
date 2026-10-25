@@ -9,6 +9,8 @@ import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { matchesQuery } from "@/lib/dashboard-filters";
 
 /* Client activity: what the wallet and this dashboard reported about themselves.
 
@@ -62,7 +64,8 @@ export function ActivityLogView({ env = "dev" }) {
   }, [env, query]);
   usePolling(refresh, 10000);
 
-  const view = rows.filter((l) => JSON.stringify(l).toLowerCase().includes(q.toLowerCase()));
+  // Every word of the search must appear somewhere in the entry.
+  const view = rows.filter((l) => matchesQuery([JSON.stringify(l)], q));
   const pg = usePaged(view, q + "|" + source + "|" + level);
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
@@ -106,7 +109,7 @@ export function ActivityLogView({ env = "dev" }) {
         {!loading && !error && view.length > 0 && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx logs"><thead>
             <tr>
-              <th></th>
+              <th><span className="sr-only">{t.dash.common.details}</span></th>
               <th>{av.tableHead.level}</th>
               <th>{av.tableHead.source}</th>
               <th>{av.tableHead.event}</th>
@@ -148,7 +151,7 @@ export function ActivityLogView({ env = "dev" }) {
             })}</tbody>
           </table></div>
         )}
-        {loading && <div className="empty">{cx.loading}</div>}
+        {loading && <TableSkeleton label={cx.loading} />}
         {!loading && error && <div className="empty">{cx.loadError}</div>}
         {!loading && !error && !view.length && <div className="empty">{av.empty}</div>}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}

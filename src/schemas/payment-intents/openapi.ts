@@ -30,6 +30,7 @@ import {
   takeQuery,
 } from '@/schemas/shared/openapi-params';
 import { CHECKOUT_THEMES } from '@/lib/payments/checkout-themes';
+import { CHAINS } from '@/lib/chains';
 
 const TAG = 'Payment Intents';
 
@@ -40,10 +41,11 @@ export const paymentIntentSchema = z
       example: 'PAY',
       description: 'SEP-7 flavour: `PAY` is a payment link, `TX` carries an unsigned XDR.',
     }),
+    chain: z.enum(CHAINS).openapi({ example: 'stellar', description: 'Where the payment settles.' }),
     status: z
       .enum(['PENDING', 'SUBMITTED', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'EXPIRED'])
       .openapi({ example: 'PENDING' }),
-    network: z.string().openapi({ example: 'testnet' }),
+    network: z.string().openapi({ example: 'testnet', description: 'The tier on every chain: public (mainnet) or testnet (Solana devnet, Monad testnet).' }),
     source: z.string().nullable().openapi({ example: null }),
     destination: z
       .string()
@@ -111,6 +113,14 @@ registerRoutes([
         org: orgQuery,
         env: envQuery,
         status: statusQuery,
+        chain: z
+          .enum(CHAINS)
+          .optional()
+          .openapi({
+            param: { name: 'chain', in: 'query' },
+            description: 'Only intents on this chain; every chain when omitted.',
+            example: 'solana',
+          }),
         createdFrom: z
           .string()
           .optional()

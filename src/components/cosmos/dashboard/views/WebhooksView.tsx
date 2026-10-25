@@ -9,6 +9,7 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 const EVENT_TYPES = [
   "PAYMENT_INTENT_CREATED",
@@ -69,7 +70,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
       <div className="panel" style={{ marginBottom: 16 }}>
         <div className="panel-head"><h3>{wv.endpoints}</h3><span className="env-tag">{DI.network} {env === "prod" ? "Public" : "Testnet"}</span></div>
         {!loading && !error && eps.length > 0 && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{pg.slice.map((w) => (
               <tr key={w.id} className={`row-click${selected && selected.id === w.id ? " row-on" : ""}`} onClick={() => setSelected(w)}>
                 <td className="tid">{w.url}</td>
@@ -85,7 +86,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
             ))}</tbody>
           </table></div>
         )}
-        {loading && <div className="empty">{cx.loading}</div>}
+        {loading && <TableSkeleton label={cx.loading} />}
         {!loading && error && <div className="empty">{cx.loadError}</div>}
         {!loading && !error && !eps.length && <div className="empty">{wv.modal.desc}</div>}
         {!loading && !error && eps.length > 0 && <Pagination {...pg} />}
@@ -100,6 +101,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
 }
 
 function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
+  const t = useT();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const load = useCallback(() => {
@@ -114,10 +116,10 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
   return (
     <div className="panel">
       <div className="panel-head"><h3>{cx.deliveries}</h3><span className="cust" style={{ fontSize: 12.5 }}>{endpoint.url}</span></div>
-      {loading && <div className="empty">{cx.loading}</div>}
+      {loading && <TableSkeleton label={cx.loading} />}
       {!loading && !rows.length && <div className="empty">{cx.noDeliveries}</div>}
       {!loading && rows.length > 0 && (
-        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{wv.tableHead.event}</th><th>{wv.tableHead.response}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.when}</th><th></th></tr></thead>
+        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{wv.tableHead.event}</th><th>{wv.tableHead.response}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.when}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{rows.map((d) => (
             <tr key={d.id}>
               <td className="tid">{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</td>

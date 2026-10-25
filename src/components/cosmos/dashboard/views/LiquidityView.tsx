@@ -4,17 +4,22 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { liquidity as liquidityApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, usePolling, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
-import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 
-const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
+const STATUSES = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "EXPIRED"];
+const KINDS = ["DEPOSIT", "WITHDRAW"];
+const DEFAULTS = { q: "", status: "all", kind: "all", date: "any" };
+const ALLOWED = { status: ["all", ...STATUSES], kind: ["all", ...KINDS], date: DATE_RANGES };
 const TERMINAL = ["SUCCEEDED", "FAILED"];
 
 /* "XLM / USDC": the pool's asset pair. */
@@ -35,8 +40,8 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("all");
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
+  const fl = t.dash.filters;
   const [modal, setModal] = useState(null); // { kind: 'deposit'|'withdraw', prefill? }
   const [detail, setDetail] = useState(null);
 
@@ -56,13 +61,15 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
   }, [env, orgId]);
   usePolling(refresh, 8000);
 
-  const view = rows.filter((o) => {
-    if (filter !== "all" && o.status !== filter) return false;
-    if (!q) return true;
-    const hay = `${o.id} ${o.source || ""} ${o.poolId || ""} ${o.assetA || ""} ${o.assetB || ""}`.toLowerCase();
-    return hay.includes(q.toLowerCase());
-  });
-  const pg = usePaged(view, q + "|" + filter);
+  const matches = (o, skip) =>
+    (skip === "status" || filters.status === "all" || o.status === filters.status) &&
+    (skip === "kind" || filters.kind === "all" || o.kind === filters.kind) &&
+    inRange(o.createdAt, filters.date) &&
+    matchesQuery([o.id, o.source, o.poolId, o.assetA, o.assetB, o.txHash], filters.q);
+  const view = rows.filter((o) => matches(o, null));
+  const statusCounts = countBy(rows.filter((o) => matches(o, "status")), (o) => o.status);
+  const kindCounts = countBy(rows.filter((o) => matches(o, "kind")), (o) => o.kind);
+  const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
   const onCreated = (op) => { setModal(null); setRows((r) => [op, ...r]); setDetail(op); };
@@ -79,19 +86,30 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
       </ViewHead>
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{lq.readOnly}</span></div>}
 
-      <div className="filter-tabs">
+      <div className="filter-tabs" role="group" aria-label={lq.title}>
         {["operations", "pools", "positions"].map((k) => (
-          <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{lq.tabs[k]}</button>
+          <button key={k} type="button" className={tab === k ? "on" : ""} aria-pressed={tab === k} onClick={() => setTab(k)}>{lq.tabs[k]}</button>
         ))}
       </div>
 
       {tab === "operations" && (
         <>
-          <div className="filter-tabs">{FILTER_KEYS.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{lq.filters[k]}</button>)}</div>
+          <FilterBar
+            label={fl.label}
+            query={filters.q} onQuery={(v) => set("q", v)} placeholder={lq.searchPlaceholder}
+            status={{
+              label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+              options: [
+                { key: "all", label: lq.filters.all, count: rows.filter((o) => matches(o, "status")).length },
+                ...STATUSES.filter((st) => statusCounts[st] || filters.status === st).map((st) => ({ key: st, label: lq.status[st] || st, count: statusCounts[st] || 0 })),
+              ],
+            }}
+            selects={[{ key: "kind", label: fl.kind, value: filters.kind, onChange: (v) => set("kind", v), options: [{ key: "all", label: fl.allKinds }, ...KINDS.map((k) => ({ key: k, label: lq.kind[k] || k, count: kindCounts[k] || 0 }))] }]}
+            date={filters.date} onDate={(v) => set("date", v)}
+            active={active} onReset={reset}
+            shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+          />
           <div className="panel">
-            <Toolbar q={q} setQ={setQ} placeholder={lq.searchPlaceholder}>
-              <span className="env-tag">{DI.network} {env === "prod" ? lq.network.prod : lq.network.dev}</span>
-            </Toolbar>
             {!loading && !error && view.length > 0 && (
               <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th></tr></thead>
                 <tbody>{pg.slice.map((o) => (
@@ -106,9 +124,9 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
                 ))}</tbody>
               </table></div>
             )}
-            {loading && <div className="empty">{lq.loading}</div>}
+            {loading && <TableSkeleton label={lq.loading} />}
             {!loading && error && <div className="empty">{lq.loadError}</div>}
-            {!loading && !error && !view.length && <div className="empty">{lq.empty}</div>}
+            {!loading && !error && !view.length && <div className="empty">{rows.length ? fl.noMatch : lq.empty}</div>}
             {!loading && !error && view.length > 0 && <Pagination {...pg} />}
           </div>
         </>
@@ -197,7 +215,7 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
           ))}</tbody>
         </table></div>
       )}
-      {loading && !loaded && <div className="empty">{p.loading}</div>}
+      {loading && !loaded && <TableSkeleton label={p.loading} />}
       {loaded && !pools.length && <div className="empty">{p.empty}</div>}
     </div>
   );

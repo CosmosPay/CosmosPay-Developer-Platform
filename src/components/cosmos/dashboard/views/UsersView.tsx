@@ -9,6 +9,7 @@ import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 /* Admin: assign roles + plans to accounts (owner/admin only). You can't change your own
    role, only assign roles strictly below your own, and can't modify peers/superiors. */
@@ -35,7 +36,7 @@ export function UsersView({ currentUserId, currentRole }) {
       <ViewHead title={u.title} sub={u.subtitle} />
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={u.search} />
-        {loading && <div className="empty">…</div>}
+        {loading && <TableSkeleton label={t.dash.cosmos.loading} />}
         {!loading && error && <div className="empty">{u.loadError}</div>}
         {!loading && !error && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{u.name}</th><th>{u.email}</th><th>{u.role}</th><th>{u.plan}</th></tr></thead>

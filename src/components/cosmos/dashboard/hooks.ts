@@ -1,8 +1,9 @@
 /* Dashboard hooks: visibility-aware polling, table row animation, client-side
-   pagination, and the dropdown outside-click helper. */
+   pagination, list filters kept in the URL, and the dropdown outside-click helper. */
 import { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { PAGE_SIZE } from "./data";
+import { PAGE_SIZE } from "@/components/cosmos/dashboard/data";
+import { activeCount, readFilters, writeFilters, type Allowed, type Filters } from "@/lib/dashboard-filters";
 
 /* Polling that pauses while the browser tab is hidden (saves resources). Fires once on
    mount, then every `ms` only while visible; refires immediately when the tab returns. */
@@ -52,6 +53,32 @@ export function usePaged(rows, resetKey, pageSize = PAGE_SIZE) {
   const start = (cur - 1) * pageSize;
   const slice = rows.slice(start, start + pageSize);
   return { page: cur, setPage, pages, total, slice, start, count: slice.length };
+}
+
+/* A list's filters, kept in the URL so a reload or a shared link shows the same list. Values the
+   view does not accept fall back to their defaults (src/lib/dashboard-filters.ts); the shell
+   drops them when another view opens. */
+export function useListFilters(defaults: Filters, allowed: Allowed = {}) {
+  // The first render matches the server's (no URL there): the URL's filters arrive right after.
+  const [filters, setFilters] = useState<Filters>(defaults);
+  const skipFirstWrite = useRef(true);
+  useEffect(() => {
+    try { setFilters(readFilters(window.location.search, defaults, allowed)); } catch (e) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    // Writing the defaults on mount would erase the URL's filters before they are read.
+    if (skipFirstWrite.current) { skipFirstWrite.current = false; return; }
+    try {
+      const url = new URL(window.location.href);
+      writeFilters(url.searchParams, filters, defaults);
+      window.history.replaceState(window.history.state, "", url);
+    } catch (e) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+  const set = (key: string, value: string) => setFilters((f) => ({ ...f, [key]: value }));
+  const reset = () => setFilters(defaults);
+  return { filters, set, reset, active: activeCount(filters, defaults) };
 }
 
 /* ---------------- dropdown shell ---------------- */

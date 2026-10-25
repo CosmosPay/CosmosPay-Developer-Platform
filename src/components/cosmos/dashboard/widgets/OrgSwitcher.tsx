@@ -4,6 +4,7 @@ import { useT } from "@/lib/i18n/index";
 import { DI, IcLock } from "@/components/cosmos/dashboard/icons";
 import { initials } from "@/components/cosmos/dashboard/helpers";
 import { useOutside } from "@/components/cosmos/dashboard/hooks";
+import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 
 /* `variant="crumb"`: the organization as the grey half of the page title's breadcrumb (the
    reference's "Gateways → Gateways Profile"), opening the same menu. */
@@ -28,7 +29,8 @@ export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, vari
     <div className={`org-wrap${variant === "crumb" ? " crumb" : ""}`} ref={ref}>
       {variant === "crumb" ? (
         <button type="button" className={`org-crumb${open ? " open" : ""}`} aria-haspopup="menu" aria-expanded={open} aria-label={`${og.heading}: ${current.name}`} onClick={() => setOpen((o) => !o)}>
-          <span className="org-crumb-nm">{current.name}</span>
+          {/* Until the organizations arrive the crumb holds a skeleton, not an ellipsis. */}
+          {current.id ? <span className="org-crumb-nm">{current.name}</span> : <Sk className="lg" w="8em" />}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
         </button>
       ) : (

@@ -4,6 +4,7 @@ import { notifIcon, fmtWhen, humanizeLocal, notifLocation, notifIp, deviceLabel 
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 export function NotificationsView({ notifications, loading, error }) {
   const t = useT();
@@ -29,7 +30,7 @@ export function NotificationsView({ notifications, loading, error }) {
             ))}</tbody>
           </table></div>
         )}
-        {loading && <div className="empty">…</div>}
+        {loading && <TableSkeleton label={t.dash.cosmos.loading} />}
         {!loading && error && <div className="empty">{nt.loadError}</div>}
         {!loading && !error && !rows.length && <div className="empty">{nt.empty}</div>}
         {show && <Pagination {...pg} />}

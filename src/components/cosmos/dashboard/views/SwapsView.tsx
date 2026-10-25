@@ -1,335 +1,418 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+/* SwapsView: every swap of the organization in one list and one form, whatever the chains. On
+   one chain the Payments API routes it through that chain's market (the Stellar DEX, Jupiter on
+   Solana, Kuru Flow on Monad); between two chains NEAR Intents settles it. Non-custodial: the API
+   builds the transaction or the deposit address, the person's wallet signs and pays. */
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
-import { swaps as swapsApi } from "@/lib/api-client";
+import { swaps as swapsApi, crossChainSwaps as crossApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, usePolling, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
-import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
+import { TokenSelect } from "@/components/cosmos/dashboard/components/TokenSelect";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
-import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { CrossChainSwapDetailModal } from "@/components/cosmos/dashboard/components/CrossChainSwapDetail";
+import { assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { needsIssuer as assetNeedsIssuer } from "@/lib/stellar-assets";
+import { CHAINS, CHAIN_NAMES, NATIVE_CODES, ADDRESS_PLACEHOLDERS, assetLabel as chainAssetLabel, explorerTxUrl, isAddress, tierOf } from "@/lib/chains";
+import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 
-const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "EXPIRED"];
 const TERMINAL = ["SUCCEEDED", "FAILED"];
 /* A swap stops changing once it settled, failed, or expired without a transaction (an expired
    Solana or Monad swap with a hash is still looked for on-chain). */
 const settled = (s) => TERMINAL.includes(s.status) || (s.status === "EXPIRED" && !s.txHash);
-const CHAINS = ["stellar", "solana", "monad"];
-const NATIVE = { stellar: "XLM", solana: "SOL", monad: "MON" };
-/* Where each chain's swaps land when the chain (not the swap) is named. */
-const PLACEHOLDER = { stellar: "G…", solana: "Base58…", monad: "0x…" };
+/* One vocabulary for both kinds: a swap on one chain (PENDING → SUBMITTED → SUCCEEDED) and one
+   between chains (AWAITING_DEPOSIT → … → SUCCEEDED or REFUNDED). */
+const GROUPS = ["open", "succeeded", "refunded", "failed", "expired"];
+const groupOf = (status) =>
+  status === "SUCCEEDED" ? "succeeded" : status === "FAILED" ? "failed" : status === "EXPIRED" ? "expired" : status === "REFUNDED" ? "refunded" : "open";
+const GROUP_PILL = { open: "pend", succeeded: "ok", refunded: "ref", failed: "fail", expired: "fail" };
+const TYPES = ["same", "cross"];
 
-/* An asset as the table shows it: the chain's ticker for "native", a long mint or
-   contract shortened, a Stellar code as is. */
-function chainAsset(asset, chain = "stellar") {
-  if (!asset || asset === "native") return NATIVE[chain] || "XLM";
-  return asset.length > 16 ? `${asset.slice(0, 4)}…${asset.slice(-4)}` : asset;
+const chainOfSwap = (s) => s.chain || "stellar";
+const swapExplorer = (s) => explorerTxUrl(chainOfSwap(s), tierOf(s.network), s.txHash);
+const asList = (res) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+
+/* Both kinds of swap as one kind of row. */
+function sameRow(s) {
+  const chain = chainOfSwap(s);
+  return {
+    key: `s:${s.id}`, kind: "same", id: s.id, from: chain, to: chain, status: s.status, createdAt: s.createdAt, raw: s,
+    sent: `${s.sendAmount ?? "-"} ${chainAssetLabel(chain, s.sendAsset)}`,
+    got: `${s.destEstimated ?? s.swapAmount ?? "-"} ${chainAssetLabel(chain, s.destAsset)}`,
+    search: [s.id, s.source, s.destination, s.sendAsset, s.destAsset, s.txHash, s.memo],
+  };
+}
+function crossRow(x) {
+  return {
+    key: `x:${x.id}`, kind: "cross", id: x.id, from: x.originChain, to: x.destinationChain, status: x.status, createdAt: x.createdAt, raw: x,
+    sent: `${x.amountIn} ${x.originAsset}`,
+    got: `${x.amountOut || `~${x.amountOutEstimated}`} ${x.destinationAsset}`,
+    search: [x.id, x.recipient, x.refundTo, x.depositAddress, x.originAsset, x.destinationAsset],
+  };
 }
 
-/* "0.5 XLM → ~12.3 USDC": the swap's sent → received route for the table. */
-function swapRoute(s) {
-  const chain = s.chain || "stellar";
-  const sent = `${s.sendAmount ?? "-"} ${chain === "stellar" ? assetLabel(s.sendAsset) : chainAsset(s.sendAsset, chain)}`;
-  const got = `${s.destEstimated ?? s.swapAmount ?? "-"} ${chain === "stellar" ? s.destAsset || "" : chainAsset(s.destAsset, chain)}`.trim();
-  return `${sent} → ${got}`;
-}
-
-/* The explorer each chain's transactions are read on. */
-const EXPLORERS = {
-  stellar: (s) => `https://stellar.expert/explorer/${s.network === "public" ? "public" : "testnet"}/tx/${s.txHash}`,
-  solana: (s) => `https://solscan.io/tx/${s.txHash}`,
-  monad: (s) => `https://monadscan.com/tx/${s.txHash}`,
-};
-const explorerTx = (s) => EXPLORERS[s.chain || "stellar"](s);
-
-export function SwapsView({ canManage = true, orgId, env = "dev" }) {
+export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = "all" }) {
   const t = useT();
   const sw = t.dash.swaps;
-  const [chain, setChain] = useState("stellar");
+  const cc = t.dash.crossChain;
+  const fl = t.dash.filters;
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("all");
+  const defaults = useMemo(() => ({ q: "", status: "all", type: defaultType, chain: "all", date: "any" }), [defaultType]);
+  const { filters, set, reset, active } = useListFilters(defaults, { status: ["all", ...GROUPS], type: ["all", ...TYPES], chain: ["all", ...CHAINS], date: DATE_RANGES });
   const [modal, setModal] = useState(false);
   const [detail, setDetail] = useState(null);
 
-  // Solana (Jupiter) and Monad (Kuru Flow) exist on mainnet only.
-  const unavailable = chain !== "stellar" && env !== "prod";
-
+  // Swaps on each chain and swaps between chains are four lists upstream; read together, newest first.
+  const fetchAll = useCallback(() => Promise.all([
+    ...CHAINS.map((c) => swapsApi.list(orgId, env, { take: 100, chain: c }).then(asList).catch(() => null)),
+    crossApi.list(orgId, env, { take: 100 }).then(asList).catch(() => null),
+  ]).then((parts) => {
+    if (parts.every((p) => p === null)) throw new Error("unavailable");
+    return [
+      ...parts.slice(0, CHAINS.length).flatMap((p) => (p || []).map(sameRow)),
+      ...(parts[CHAINS.length] || []).map(crossRow),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }), [orgId, env]);
   const load = useCallback(() => {
     setLoading(true);
-    swapsApi.list(orgId, env, { take: 100, chain })
-      .then((res) => { setRows(Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []); setError(false); })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [env, orgId, chain]);
+    fetchAll().then((list) => { setRows(list); setError(false); }).catch(() => setError(true)).finally(() => setLoading(false));
+  }, [fetchAll]);
   useEffect(() => { load(); }, [load]);
-  // Live refresh while the tab is visible so an on-chain submission flips status.
-  const refresh = useCallback(() => {
-    swapsApi.list(orgId, env, { take: 100, chain })
-      .then((res) => setRows(Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []))
-      .catch(() => {});
-  }, [env, orgId, chain]);
-  usePolling(refresh, 8000);
+  // Live refresh while the tab is visible, so a swap settling on-chain flips its status.
+  const refresh = useCallback(() => { fetchAll().then(setRows).catch(() => {}); }, [fetchAll]);
+  usePolling(refresh, 10000);
 
-  const view = rows.filter((s) => {
-    if (filter !== "all" && s.status !== filter) return false;
-    if (!q) return true;
-    const hay = `${s.id} ${s.source || ""} ${s.destination || ""} ${s.sendAsset || ""} ${s.destAsset || ""}`.toLowerCase();
-    return hay.includes(q.toLowerCase());
-  });
-  const pg = usePaged(view, q + "|" + filter + "|" + chain);
+  const matches = (r, skip) =>
+    (skip === "status" || filters.status === "all" || groupOf(r.status) === filters.status) &&
+    (skip === "type" || filters.type === "all" || r.kind === filters.type) &&
+    (skip === "chain" || filters.chain === "all" || r.from === filters.chain || r.to === filters.chain) &&
+    inRange(r.createdAt, filters.date) &&
+    matchesQuery([...r.search, r.sent, r.got, CHAIN_NAMES[r.from], CHAIN_NAMES[r.to]], filters.q);
+  const view = rows.filter((r) => matches(r, null));
+  const groupCounts = countBy(rows.filter((r) => matches(r, "status")), (r) => groupOf(r.status));
+  const typeCounts = countBy(rows.filter((r) => matches(r, "type")), (r) => r.kind);
+  const chainRows = rows.filter((r) => matches(r, "chain"));
+  const chainCounts = Object.fromEntries(CHAINS.map((c) => [c, chainRows.filter((r) => r.from === c || r.to === c).length]));
+
+  const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
-  const onCreated = (swap) => { setModal(false); setRows((r) => [swap, ...r]); setDetail(swap); };
+  const onCreated = (row) => { setModal(false); setRows((r) => [row, ...r]); setDetail(row); };
+  const statusLabel = (r) => (r.kind === "cross" ? cc.status[r.status] : sw.status[r.status]) || r.status;
+  const chainsLabel = (r) => (r.kind === "cross" ? `${CHAIN_NAMES[r.from]} → ${CHAIN_NAMES[r.to]}` : CHAIN_NAMES[r.from]);
 
   return (
     <>
       <ViewHead title={sw.title} sub={fmt(sw.sub, { n: rows.length })}>
-        {canManage && <button className="btn btn-dark btn-sm" disabled={unavailable} onClick={() => setModal(true)}>{DI.plus} {sw.create}</button>}
+        {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {sw.create}</button>}
       </ViewHead>
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
-      <div className="filter-tabs" style={{ marginBottom: 8 }} aria-label={sw.chainLabel}>
-        {CHAINS.map((c) => <button key={c} className={chain === c ? "on" : ""} onClick={() => { setChain(c); setDetail(null); }}>{sw.chains[c]} · {sw.venues[c]}</button>)}
-      </div>
-      {unavailable && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.network}<span>{sw.mainnetOnly}</span></div>}
-      <div className="filter-tabs">{FILTER_KEYS.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{sw.filters[k]}</button>)}</div>
+      <FilterBar
+        label={fl.label}
+        query={filters.q} onQuery={(v) => set("q", v)} placeholder={sw.searchPlaceholder}
+        status={{
+          label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+          options: [
+            { key: "all", label: fl.allStatuses, count: rows.filter((r) => matches(r, "status")).length },
+            ...GROUPS.filter((g) => groupCounts[g] || filters.status === g).map((g) => ({ key: g, label: sw.groups[g], count: groupCounts[g] || 0 })),
+          ],
+        }}
+        selects={[
+          { key: "type", label: sw.typeLabel, value: filters.type, onChange: (v) => set("type", v), options: [{ key: "all", label: sw.types.all }, ...TYPES.map((k) => ({ key: k, label: sw.types[k], count: typeCounts[k] || 0 }))] },
+          { key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], count: chainCounts[c] }))] },
+        ]}
+        date={filters.date} onDate={(v) => set("date", v)}
+        active={active} onReset={reset}
+        shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+      />
       <div className="panel">
-        <Toolbar q={q} setQ={setQ} placeholder={sw.searchPlaceholder}>
-          <span className="env-tag">{DI.network} {env === "prod" ? sw.network.prod : sw.network.dev}</span>
-        </Toolbar>
+        {loading && <TableSkeleton label={sw.loading} cols={5} />}
         {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
-            <tbody>{pg.slice.map((s) => (
-              <tr key={s.id} className="row-click" onClick={() => setDetail(s)}>
-                <td className="tid">{s.id}</td>
-                <td className="amt">{swapRoute(s)}</td>
-                <td><Pill st={STATUS_PILL[s.status] || "ref"} label={(sw.status && sw.status[s.status]) || s.status} /></td>
-                <td className="cust">{fmtDateTime(s.createdAt)}</td>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.chains}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
+            <tbody>{pg.slice.map((r) => (
+              <tr key={r.key} className="row-click" onClick={() => setDetail(r)}>
+                <td className="tid">{r.id}</td>
+                <td><span className="net-badge">{chainsLabel(r)}</span></td>
+                <td className="amt">{r.sent} → {r.got}</td>
+                <td><Pill st={GROUP_PILL[groupOf(r.status)]} label={statusLabel(r)} /></td>
+                <td className="cust">{fmtDateTime(r.createdAt)}</td>
               </tr>
             ))}</tbody>
           </table></div>
         )}
-        {loading && <div className="empty">{sw.loading}</div>}
         {!loading && error && <div className="empty">{sw.loadError}</div>}
-        {!loading && !error && !view.length && <div className="empty">{sw.empty}</div>}
+        {!loading && !error && !view.length && (
+          <div className="empty">
+            {rows.length ? fl.noMatch : sw.empty}
+            {rows.length > 0 && active > 0 && <div><button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button></div>}
+          </div>
+        )}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}
       </div>
-      {modal && chain === "stellar" && <CreateSwapModal sw={sw} orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
-      {modal && chain !== "stellar" && <CreateChainSwapModal sw={sw} chain={chain} orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
-      {detail && !detail.chain && <SwapDetailModal sw={sw} swap={detail} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
-      {detail && detail.chain && <ChainSwapDetailModal sw={sw} swap={detail} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
+      {modal && <NewSwapModal orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
+      {detail && detail.kind === "cross" && <CrossChainSwapDetailModal swap={detail.raw} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
+      {detail && detail.kind === "same" && detail.from === "stellar" && <SwapDetailModal sw={sw} swap={detail.raw} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
+      {detail && detail.kind === "same" && detail.from !== "stellar" && <ChainSwapDetailModal sw={sw} swap={detail.raw} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
     </>
   );
 }
 
-/* ---------------- create modal (quote → create) ---------------- */
-function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
+/* NEAR Intents' value for an asset: a Stellar token as CODE:ISSUER, elsewhere its contract or
+   its symbol for the chain's coin. */
+const crossValue = (a) => (a.contract && a.chain === "stellar" ? `${a.symbol}:${a.contract}` : a.contract || a.symbol);
+
+/* ---------------- the swap form: from a chain and asset, to a chain and asset ---------------- */
+/* Same chain: the chain's market quotes and builds a transaction to sign (Stellar also takes a
+   destination and a memo). Different chains: NEAR Intents quotes and, once opened, gives a
+   deposit address to pay; it needs a refund address on the first chain and a recipient on the
+   second. Solana and Monad markets, and opening a swap between chains, are mainnet only. */
+function NewSwapModal({ orgId, env, onClose, onCreated }) {
   const t = useT();
+  const sw = t.dash.swaps;
+  const cc = t.dash.crossChain;
   const m = sw.modal;
-  const network = env === "prod" ? "public" : "testnet";
-  const [source, setSource] = useState("");
+  const nm = sw.form;
+  const tier = env === "prod" ? "public" : "testnet";
+  const [fromChain, setFromChain] = useState("stellar");
+  const [toChain, setToChain] = useState("stellar");
+  const cross = fromChain !== toChain;
+  // Same-chain assets: Stellar as code + issuer; Solana and Monad as their coin or a token address.
+  const [src, setSrc] = useState({ code: "XLM", issuer: "" });
+  const [dst, setDst] = useState({ code: "USDC", issuer: "" });
+  // Between chains: the assets NEAR Intents lists, loaded once.
+  const [nearAssets, setNearAssets] = useState(null);
+  const [xFrom, setXFrom] = useState("");
+  const [xTo, setXTo] = useState("");
   const [amount, setAmount] = useState("");
-  const [sourceAssetCode, setSourceAssetCode] = useState("XLM");
-  const [sourceAssetIssuer, setSourceAssetIssuer] = useState("");
-  const [destAssetCode, setDestAssetCode] = useState("USDC");
-  const [destAssetIssuer, setDestAssetIssuer] = useState("");
-  const [destination, setDestination] = useState("");
+  const [account, setAccount] = useState("");
+  const [recipient, setRecipient] = useState("");
   const [memo, setMemo] = useState("");
   const [slippageBps, setSlippageBps] = useState("");
   const [quote, setQuote] = useState(null);
   const [quoting, setQuoting] = useState(false);
   const [busy, setBusy] = useState(false);
   const keys = useRef(idempotencyKeys()).current;
+  // Bumped by flip(), so the asset pickers (which keep their own choice) start from the new legs.
+  const [flips, setFlips] = useState(0);
 
-  const sourceNeedsIssuer = !!sourceAssetCode.trim() && assetNeedsIssuer(sourceAssetCode.trim());
-  const needsIssuer = !!destAssetCode.trim() && assetNeedsIssuer(destAssetCode.trim());
-  const memoValid = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
-  const baseValid = amount.trim() && sourceAssetCode.trim() && (!sourceNeedsIssuer || sourceAssetIssuer.trim()) && destAssetCode.trim() && (!needsIssuer || destAssetIssuer.trim());
-  const canCreate = baseValid && source.trim() && memoValid;
+  useEffect(() => {
+    if (!cross || nearAssets) return;
+    let alive = true;
+    crossApi.assets(orgId, env).then((list) => { if (alive) setNearAssets(Array.isArray(list) ? list : asList(list)); }).catch(() => { if (alive) setNearAssets([]); });
+    return () => { alive = false; };
+  }, [cross, nearAssets, orgId, env]);
+  const nearFor = (chain) => (nearAssets || []).filter((a) => a.chain === chain);
+  // A leg's first listed asset once the list is in, or when its chain changes.
+  useEffect(() => { if (cross) setXFrom((v) => (nearFor(fromChain).some((a) => crossValue(a) === v) ? v : nearFor(fromChain)[0] ? crossValue(nearFor(fromChain)[0]) : "")); }, [cross, fromChain, nearAssets]);
+  useEffect(() => { if (cross) setXTo((v) => (nearFor(toChain).some((a) => crossValue(a) === v) ? v : nearFor(toChain)[0] ? crossValue(nearFor(toChain)[0]) : "")); }, [cross, toChain, nearAssets]);
 
-  const quoteBody = () => ({
-    org: orgId,
-    environment: env,
-    amount: amount.trim(),
-    // XLM is the default source; another asset travels with its issuer.
-    ...(sourceNeedsIssuer ? { sourceAssetCode: sourceAssetCode.trim(), sourceAssetIssuer: sourceAssetIssuer.trim() } : {}),
-    destAssetCode: destAssetCode.trim(),
-    ...(needsIssuer && destAssetIssuer.trim() ? { destAssetIssuer: destAssetIssuer.trim() } : {}),
-    ...(slippageBps.trim() ? { slippageBps: Number(slippageBps.trim()) } : {}),
-  });
+  const stale = () => setQuote(null);
+  const pickChain = (leg, c) => {
+    stale();
+    if (leg === "from") { setFromChain(c); setSrc({ code: c === "stellar" ? "XLM" : "", issuer: "" }); setAccount(""); }
+    else { setToChain(c); setDst({ code: c === "stellar" ? "USDC" : "", issuer: "" }); setRecipient(""); }
+    setMemo("");
+  };
+  // Swap the two legs: chains, assets and, between chains, nothing else carries across.
+  const flip = () => {
+    stale();
+    setFromChain(toChain); setToChain(fromChain);
+    setSrc(dst); setDst(src);
+    setXFrom(xTo); setXTo(xFrom);
+    setAccount(""); setRecipient(""); setMemo("");
+    setFlips((n) => n + 1);
+  };
 
-  // Re-quoting after an input change clears the stale quote so the user re-prices.
-  const onChange = (setter) => (e) => { setter(e.target.value); setQuote(null); };
+  const sameUnavailable = !cross && fromChain !== "stellar" && env !== "prod";
+  const openBlocked = cross && env !== "prod";
+  const venue = cross ? nm.venueCross : sw.venues[fromChain];
+
+  // The swap API names an asset per chain: a Stellar code (+ issuer), else the coin or a token address.
+  const sameAsset = (chain, a) => (chain === "stellar" ? a.code.trim() : a.issuer.trim() || NATIVE_CODES[chain]);
+  const srcNeedsIssuer = fromChain === "stellar" && !!src.code.trim() && assetNeedsIssuer(src.code.trim());
+  const dstNeedsIssuer = toChain === "stellar" && !!dst.code.trim() && assetNeedsIssuer(dst.code.trim());
+  const assetsOk = cross
+    ? !!xFrom && !!xTo
+    : !!sameAsset(fromChain, src) && !!sameAsset(toChain, dst) && (!srcNeedsIssuer || !!src.issuer.trim()) && (!dstNeedsIssuer || !!dst.issuer.trim()) &&
+      (fromChain === "stellar" || ((!src.issuer || isAddress(fromChain, src.issuer)) && (!dst.issuer || isAddress(toChain, dst.issuer))));
+  const accountOk = isAddress(fromChain, account);
+  const recipientOk = cross ? isAddress(toChain, recipient) : !recipient.trim() || isAddress("stellar", recipient);
+  const memoOk = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
+  const amountOk = /^\d+(\.\d+)?$/.test(amount.trim()) && Number(amount) > 0;
+  // A cross-chain quote needs both addresses; a same-chain one only the amount and assets.
+  const canQuote = !sameUnavailable && amountOk && assetsOk && (!cross || (accountOk && recipientOk));
+  const canCreate = canQuote && accountOk && recipientOk && memoOk && !openBlocked;
+
+  const body = () => {
+    const slip = slippageBps.trim() ? { slippageBps: Number(slippageBps.trim()) } : {};
+    if (cross) {
+      return { org: orgId, environment: env, originChain: fromChain, originAsset: xFrom, destinationChain: toChain, destinationAsset: xTo, amount: amount.trim(), recipient: recipient.trim(), refundTo: account.trim(), ...slip };
+    }
+    return {
+      org: orgId, environment: env, chain: fromChain, amount: amount.trim(),
+      ...(fromChain !== "stellar" ? { sourceAssetCode: sameAsset(fromChain, src) } : srcNeedsIssuer ? { sourceAssetCode: src.code.trim(), sourceAssetIssuer: src.issuer.trim() } : {}),
+      destAssetCode: sameAsset(toChain, dst),
+      ...(dstNeedsIssuer ? { destAssetIssuer: dst.issuer.trim() } : {}),
+      ...slip,
+    };
+  };
 
   const getQuote = () => {
-    if (!baseValid || quoting) return;
+    if (!canQuote || quoting) return;
     setQuoting(true);
-    swapsApi.quote(quoteBody())
-      .then((qt) => setQuote(qt))
+    (cross ? crossApi.quote(body()) : swapsApi.quote(body()))
+      .then(setQuote)
       .catch((err) => showToast((err && err.message) || sw.quoteError, "error"))
       .finally(() => setQuoting(false));
   };
 
-  const submit = () => {
+  const create = () => {
     if (!canCreate || busy) return;
     setBusy(true);
-    const body = {
-      ...quoteBody(),
-      source: source.trim(),
-      ...(destination.trim() ? { destination: destination.trim() } : {}),
-      ...(memo.trim() ? { memo: memo.trim() } : {}),
-    };
-    swapsApi.create({ ...body, idempotencyKey: keys.keyFor(body) })
-      .then((swap) => onCreated(swap))
+    const b = cross
+      ? body()
+      : {
+          ...body(), source: account.trim(),
+          ...(fromChain === "stellar" && recipient.trim() ? { destination: recipient.trim() } : {}),
+          ...(fromChain === "stellar" && memo.trim() ? { memo: memo.trim() } : {}),
+        };
+    (cross ? crossApi.create({ ...b, idempotencyKey: keys.keyFor(b) }) : swapsApi.create({ ...b, idempotencyKey: keys.keyFor(b) }))
+      .then((rec) => onCreated(cross ? crossRow(rec) : sameRow(rec)))
       .catch((err) => showToast((err && err.message) || sw.createError, "error"))
       .finally(() => setBusy(false));
   };
 
-  const fee = quote && quote.fee;
-  const dest = quote && quote.destination;
+  // The quote, the same rows whichever market answered.
+  const quoteRows = (() => {
+    if (!quote) return [];
+    if (cross) {
+      return [
+        [m.estimated, `${quote.destination.amount} ${quote.destination.asset}`],
+        [m.minimum, `${quote.destination.minimum} ${quote.destination.asset}`],
+        [m.fee, `${quote.fee.amount} ${quote.fee.asset} (${quote.fee.bps} ${m.bps})`],
+        [cc.modal.eta, `${quote.timeEstimateSeconds} ${cc.modal.seconds}`],
+        [nm.route, venue],
+      ];
+    }
+    const d = quote.destination || {};
+    const destName = chainAssetLabel(toChain, toChain === "stellar" ? dst.code : d.asset);
+    return [
+      quote.swap ? [m.swapped, `${quote.swap.amount} ${chainAssetLabel(fromChain, quote.swap.asset)}`] : null,
+      [m.estimated, `${d.estimated} ${destName}`],
+      d.minimum != null ? [m.minimum, `${d.minimum} ${destName}`] : null,
+      quote.fee ? [m.fee, `${quote.fee.amount} ${chainAssetLabel(fromChain, quote.fee.asset)} (${quote.fee.bps} ${m.bps})`] : null,
+      [nm.route, venue],
+    ].filter(Boolean);
+  })();
+
+  const leg = (which) => {
+    const isFrom = which === "from";
+    const chain = isFrom ? fromChain : toChain;
+    const value = isFrom ? src : dst;
+    const setValue = (v) => { stale(); (isFrom ? setSrc : setDst)(v); };
+    const label = isFrom ? nm.from : nm.to;
+    return (
+      <fieldset className="swap-leg">
+        <legend className="field-l">{label}</legend>
+        <div className="field-row">
+          <div className="fld">
+            <label className="field-l" htmlFor={`swap-${which}-chain`}>{nm.chain}</label>
+            <select id={`swap-${which}-chain`} className="field" value={chain} onChange={(e) => pickChain(which, e.target.value)}>
+              {CHAINS.map((c) => <option key={c} value={c}>{CHAIN_NAMES[c]}</option>)}
+            </select>
+          </div>
+          {cross ? (
+            <div className="fld">
+              <label className="field-l" htmlFor={`swap-${which}-asset`}>{nm.asset}</label>
+              <select id={`swap-${which}-asset`} className="field" value={isFrom ? xFrom : xTo} onChange={(e) => { stale(); (isFrom ? setXFrom : setXTo)(e.target.value); }} disabled={!nearFor(chain).length}>
+                {!nearFor(chain).length && <option value="">{cc.modal.assetsLoading}</option>}
+                {nearFor(chain).map((a) => (
+                  <option key={a.assetId} value={crossValue(a)}>{a.symbol}{a.contract ? ` · ${a.contract.slice(0, 6)}…${a.contract.slice(-4)}` : ""}</option>
+                ))}
+              </select>
+            </div>
+          ) : chain === "stellar" ? (
+            <AssetSelect
+              key={`${which}-stellar-${flips}`}
+              network={tier}
+              label={nm.asset} codeLabel={nm.asset} issuerLabel={isFrom ? m.sourceIssuer : m.destIssuer}
+              issuerHint={m.destIssuerHint}
+              code={value.code} issuer={value.issuer}
+              onCode={(v) => setValue({ ...value, code: v })}
+              onIssuer={(v) => setValue({ ...value, issuer: v })}
+              customText={t.dash.common.assetCustom} codePlaceholder={isFrom ? "XLM" : "USDC"}
+            />
+          ) : (
+            <TokenSelect key={`${which}-${chain}-${flips}`} chain={chain} tier={tier} label={nm.asset} code={value.code} issuer={value.issuer} onChange={setValue} withTicker={false} />
+          )}
+        </div>
+      </fieldset>
+    );
+  };
 
   return (
     <Modal onClose={onClose}>
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
-        <Field label={m.source} hint={m.sourceHint} value={source} onChange={onChange(setSource)} placeholder="G…" autoFocus />
-        <AssetSelect
-          network={network}
-          label={m.sourceAsset} codeLabel={m.sourceAsset} issuerLabel={m.sourceIssuer}
-          hint={m.sourceAssetHint} issuerHint={m.destIssuerHint}
-          code={sourceAssetCode} issuer={sourceAssetIssuer}
-          onCode={(v) => { setSourceAssetCode(v); setQuote(null); }}
-          onIssuer={(v) => { setSourceAssetIssuer(v); setQuote(null); }}
-          customText={t.dash.common.assetCustom} codePlaceholder="XLM"
-        />
-        <Field label={m.amount} hint={m.amountHint} value={amount} onChange={onChange(setAmount)} placeholder="100.00" inputMode="decimal" />
-        <AssetSelect
-          network={env === "prod" ? "public" : "testnet"}
-          label={m.destAsset} codeLabel={m.destAsset} issuerLabel={m.destIssuer}
-          hint={m.destAssetHint} issuerHint={m.destIssuerHint}
-          code={destAssetCode} issuer={destAssetIssuer}
-          onCode={(v) => { setDestAssetCode(v); setQuote(null); }}
-          onIssuer={(v) => { setDestAssetIssuer(v); setQuote(null); }}
-          customText={t.dash.common.assetCustom} codePlaceholder="USDC"
-        />
-        <Field label={m.destination} hint={m.destinationHint} value={destination} onChange={onChange(setDestination)} placeholder="G…" />
-        <Field label={m.memo} hint={m.memoHint} value={memo} onChange={onChange(setMemo)} placeholder="123456789" inputMode="numeric" aria-invalid={!memoValid || undefined} />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={onChange(setSlippageBps)} placeholder="50" inputMode="numeric" />
+        <p>{nm.desc}</p>
 
-        <div className="paylink-actions" style={{ marginBottom: 14 }}>
-          <button className="btn btn-soft btn-sm" disabled={!baseValid || quoting} onClick={getQuote}>{quoting ? m.quoting : m.getQuote}</button>
+        {leg("from")}
+        <Field label={m.amount} hint={nm.amountHint} value={amount} onChange={(e) => { stale(); setAmount(e.target.value); }} placeholder="100.00" inputMode="decimal" />
+        <div className="swap-flip">
+          <button type="button" className="icon-mini" onClick={flip} aria-label={nm.flip} title={nm.flip}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" /></svg>
+          </button>
+          <span className="field-help">{fmt(nm.routeLine, { route: venue })}</span>
+        </div>
+        {leg("to")}
+
+        {sameUnavailable && <div className="note-bar">{DI.network}<span>{sw.mainnetOnly}</span></div>}
+        {openBlocked && <div className="note-bar">{DI.network}<span>{cc.mainnetOnly}</span></div>}
+
+        <Field
+          label={cross ? cc.modal.refundTo : m.source}
+          hint={cross ? cc.modal.refundToHint : fromChain === "stellar" ? m.sourceHint : sw.chainModal.sourceHint[fromChain]}
+          value={account} onChange={(e) => { stale(); setAccount(e.target.value); }}
+          placeholder={ADDRESS_PLACEHOLDERS[fromChain]} aria-invalid={account.trim() && !accountOk ? true : undefined}
+        />
+        {(cross || fromChain === "stellar") && (
+          <Field
+            label={cross ? cc.modal.recipient : m.destination}
+            hint={cross ? cc.modal.recipientHint : m.destinationHint}
+            value={recipient} onChange={(e) => { stale(); setRecipient(e.target.value); }}
+            placeholder={ADDRESS_PLACEHOLDERS[toChain]} aria-invalid={recipient.trim() && !recipientOk ? true : undefined}
+          />
+        )}
+        <div className="field-row">
+          {!cross && fromChain === "stellar" && <Field label={m.memo} hint={m.memoHint} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />}
+          <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => { stale(); setSlippageBps(e.target.value); }} placeholder={cross ? "100" : "50"} inputMode="numeric" />
+        </div>
+
+        <div className="paylink-actions" style={{ margin: "16px 0 14px" }}>
+          <button className="btn btn-soft btn-sm" disabled={!canQuote || quoting} onClick={getQuote}>{quoting ? m.quoting : m.getQuote}</button>
         </div>
 
         {quote && (
-          <div className="paylink-fields" style={{ marginBottom: 16 }}>
-            <div className="modal-eyebrow" style={{ marginBottom: 8 }}>{m.quoteTitle}</div>
-            {quote.swap && <CopyField label={m.swapped} value={`${quote.swap.amount} ${assetLabel(quote.swap.asset)}`} />}
-            {dest && <CopyField label={m.estimated} value={`${dest.estimated} ${destAssetCode.trim().toUpperCase()}`} />}
-            {dest && dest.minimum != null && <CopyField label={m.minimum} value={`${dest.minimum} ${destAssetCode.trim().toUpperCase()}`} />}
-            {fee && <CopyField label={m.fee} value={`${fee.amount} ${assetLabel(fee.asset)} (${fee.bps} ${m.bps})`} />}
-            <p className="field-note">{m.feeNote}</p>
+          <div className="paylink-fields arrive" style={{ marginBottom: 16 }}>
+            <div className="modal-eyebrow">{m.quoteTitle}</div>
+            {quoteRows.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
+            <p className="field-note">{cross ? cc.modal.feeNote : fromChain === "stellar" ? m.feeNote : sw.chainModal.feeNote}</p>
           </div>
         )}
 
         <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-/* ---------------- create modal for Solana (Jupiter) / Monad (Kuru Flow) ---------------- */
-function CreateChainSwapModal({ sw, chain, orgId, env, onClose, onCreated }) {
-  const t = useT();
-  const m = sw.modal;
-  const c = sw.chainModal;
-  const [source, setSource] = useState("");
-  const [amount, setAmount] = useState("");
-  const [sourceAssetCode, setSourceAssetCode] = useState(NATIVE[chain]);
-  const [destAssetCode, setDestAssetCode] = useState("");
-  const [slippageBps, setSlippageBps] = useState("");
-  const [quote, setQuote] = useState(null);
-  const [quoting, setQuoting] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const keys = useRef(idempotencyKeys()).current;
-
-  const baseValid = amount.trim() && sourceAssetCode.trim() && destAssetCode.trim();
-  const canCreate = baseValid && source.trim();
-
-  const quoteBody = () => ({
-    org: orgId,
-    environment: env,
-    chain,
-    amount: amount.trim(),
-    sourceAssetCode: sourceAssetCode.trim(),
-    destAssetCode: destAssetCode.trim(),
-    ...(slippageBps.trim() ? { slippageBps: Number(slippageBps.trim()) } : {}),
-  });
-  const onChange = (setter) => (e) => { setter(e.target.value); setQuote(null); };
-
-  const getQuote = () => {
-    if (!baseValid || quoting) return;
-    setQuoting(true);
-    swapsApi.quote(quoteBody())
-      .then((qt) => setQuote(qt))
-      .catch((err) => showToast((err && err.message) || sw.quoteError, "error"))
-      .finally(() => setQuoting(false));
-  };
-
-  const submit = () => {
-    if (!canCreate || busy) return;
-    setBusy(true);
-    const body = { ...quoteBody(), source: source.trim() };
-    swapsApi.create({ ...body, idempotencyKey: keys.keyFor(body) })
-      .then((swap) => onCreated(swap))
-      .catch((err) => showToast((err && err.message) || sw.createError, "error"))
-      .finally(() => setBusy(false));
-  };
-
-  const fee = quote && quote.fee;
-  const dest = quote && quote.destination;
-  const assetHint = (hint) => fmt(hint, { native: NATIVE[chain] });
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="modal-body">
-        <div className="modal-eyebrow">{sw.chains[chain]}</div>
-        <h3>{m.title}</h3>
-        <p>{fmt(c.desc, { chain: sw.chains[chain], venue: sw.venues[chain] })}</p>
-        <Field label={m.source} hint={c.sourceHint[chain]} value={source} onChange={onChange(setSource)} placeholder={PLACEHOLDER[chain]} autoFocus />
-        <Field label={c.sourceAsset} hint={assetHint(c.sourceAssetHint)} value={sourceAssetCode} onChange={onChange(setSourceAssetCode)} placeholder={NATIVE[chain]} />
-        <Field label={m.amount} value={amount} onChange={onChange(setAmount)} placeholder="1.00" inputMode="decimal" />
-        <Field label={m.destAsset} hint={assetHint(c.destAssetHint)} value={destAssetCode} onChange={onChange(setDestAssetCode)} placeholder={PLACEHOLDER[chain]} />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={onChange(setSlippageBps)} placeholder="50" inputMode="numeric" />
-
-        <div className="paylink-actions" style={{ marginBottom: 14 }}>
-          <button className="btn btn-soft btn-sm" disabled={!baseValid || quoting} onClick={getQuote}>{quoting ? m.quoting : m.getQuote}</button>
-        </div>
-
-        {quote && (
-          <div className="paylink-fields" style={{ marginBottom: 16 }}>
-            <div className="modal-eyebrow" style={{ marginBottom: 8 }}>{m.quoteTitle}</div>
-            {dest && <CopyField label={m.estimated} value={`${dest.estimated} ${chainAsset(dest.asset, chain)}`} />}
-            {dest && dest.minimum != null && <CopyField label={m.minimum} value={`${dest.minimum} ${chainAsset(dest.asset, chain)}`} />}
-            {fee && <CopyField label={m.fee} value={`${fee.amount} ${chainAsset(fee.asset, chain)} (${fee.bps} ${m.bps})`} />}
-            <p className="field-note">{c.feeNote}</p>
-          </div>
-        )}
-
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
+          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={create}>{busy ? m.creating : cross ? cc.modal.create : m.create}</button>
           <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
         </div>
       </div>
@@ -440,7 +523,7 @@ function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
         {/* The hash exists before signing; the explorer only knows it once it was sent. */}
         {data.txHash && data.status !== "PENDING" && (
           <div className="paylink-actions" style={{ marginBottom: 12 }}>
-            <a className="btn btn-soft btn-sm" href={explorerTx(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
+            <a className="btn btn-soft btn-sm" href={swapExplorer(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
           </div>
         )}
 
@@ -499,10 +582,10 @@ function ChainSwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
     [F.status, (sw.status && sw.status[data.status]) || data.status],
     [c.provider, `${sw.venues[chain]} · ${sw.chains[chain]}`],
     [F.source, data.source],
-    [F.sent, data.sendAmount ? `${data.sendAmount} ${chainAsset(data.sendAsset, chain)}` : null],
-    [F.received, data.destEstimated ? `${data.destEstimated} ${chainAsset(data.destAsset, chain)}` : null],
-    [F.minimum, data.destMin ? `${data.destMin} ${chainAsset(data.destAsset, chain)}` : null],
-    [F.fee, data.feeAmount ? `${data.feeAmount} ${chainAsset(data.destAsset, chain)} (${data.feeBps} ${sw.modal.bps})` : null],
+    [F.sent, data.sendAmount ? `${data.sendAmount} ${chainAssetLabel(chain, data.sendAsset)}` : null],
+    [F.received, data.destEstimated ? `${data.destEstimated} ${chainAssetLabel(chain, data.destAsset)}` : null],
+    [F.minimum, data.destMin ? `${data.destMin} ${chainAssetLabel(chain, data.destAsset)}` : null],
+    [F.fee, data.feeAmount ? `${data.feeAmount} ${chainAssetLabel(chain, data.destAsset)} (${data.feeBps} ${sw.modal.bps})` : null],
     [c.expires, data.status === "PENDING" ? fmtDateTime(data.expiresAt) : null],
     [F.txHash, data.txHash],
     [F.created, fmtDateTime(data.createdAt)],
@@ -524,7 +607,7 @@ function ChainSwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
         {data.transaction && data.status === "PENDING" && <CopyBlock label={c.transaction} value={txText} />}
         {data.txHash && (
           <div className="paylink-actions" style={{ marginBottom: 12 }}>
-            <a className="btn btn-soft btn-sm" href={explorerTx(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
+            <a className="btn btn-soft btn-sm" href={swapExplorer(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
           </div>
         )}
 

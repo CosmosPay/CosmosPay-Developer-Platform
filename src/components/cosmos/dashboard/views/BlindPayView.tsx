@@ -12,6 +12,7 @@ import { CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/P
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 /* ---- display constants (technical identifiers, intentionally not translated) ---- */
 const RECEIVER_TYPES = ["individual", "business"];
@@ -236,7 +237,7 @@ function ReceiversTab({ bp, orgId, env, canManage, isManager }) {
           ))}</tbody>
         </table></div>
       )}
-      {loading && <div className="empty">{bp.loading}</div>}
+      {loading && <TableSkeleton label={bp.loading} />}
       {!loading && error && <div className="empty">{bp.loadError}</div>}
       {!loading && !error && !view.length && <div className="empty">{r.empty}</div>}
       {!loading && !error && view.length > 0 && <Pagination {...pg} />}
@@ -450,7 +451,7 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
           <>
             {/* Wallets */}
             <label className="field-l">{dt.wallets}</label>
-            {wallets === null && <div className="empty">{bp.loading}</div>}
+            {wallets === null && <TableSkeleton label={bp.loading} />}
             {wallets !== null && wallets.length === 0 && <div className="empty">{dt.noWallets}</div>}
             {wallets !== null && wallets.length > 0 && (
               <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{wallets.map((w) => (
@@ -463,7 +464,7 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
 
             {/* Bank accounts */}
             <label className="field-l">{dt.banks}</label>
-            {banks === null && <div className="empty">{bp.loading}</div>}
+            {banks === null && <TableSkeleton label={bp.loading} />}
             {banks !== null && banks.length === 0 && <div className="empty">{dt.noBanks}</div>}
             {banks !== null && banks.length > 0 && (
               <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{banks.map((b) => (
@@ -670,7 +671,7 @@ function OnrampTab({ bp, orgId, env, canManage }) {
           ))}</tbody>
         </table></div>
       )}
-      {loading && <div className="empty">{bp.loading}</div>}
+      {loading && <TableSkeleton label={bp.loading} />}
       {!loading && error && <div className="empty">{bp.loadError}</div>}
       {!loading && !error && !view.length && <div className="empty">{o.empty}</div>}
       {!loading && !error && view.length > 0 && <Pagination {...pg} />}
@@ -804,7 +805,7 @@ function OfframpTab({ bp, orgId, env, canManage }) {
           ))}</tbody>
         </table></div>
       )}
-      {loading && <div className="empty">{bp.loading}</div>}
+      {loading && <TableSkeleton label={bp.loading} />}
       {!loading && error && <div className="empty">{bp.loadError}</div>}
       {!loading && !error && !view.length && <div className="empty">{o.empty}</div>}
       {!loading && !error && view.length > 0 && <Pagination {...pg} />}

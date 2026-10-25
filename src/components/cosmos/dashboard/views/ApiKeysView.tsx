@@ -6,6 +6,7 @@ import { fmtDate } from "@/components/cosmos/dashboard/helpers";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedIds, canCreate = true, canEdit = true, canDelete = true, onCreate, onRevoke, onEdit }) {
   const t = useT();
@@ -28,7 +29,7 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
       {canCreate && reached && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.key}<span>{ak.limitReached}</span></div>}
       <div className="panel">
         {showTable && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{ak.tableHead.name}</th><th>{ak.tableHead.id}</th><th>{ak.tableHead.role}</th><th>{ak.tableHead.permissions}</th><th>{ak.tableHead.created}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{ak.tableHead.name}</th><th>{ak.tableHead.id}</th><th>{ak.tableHead.role}</th><th>{ak.tableHead.permissions}</th><th>{ak.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{pg.slice.map((k) => { const locked = !!(lockedIds && lockedIds.has(k.id)); return (
               <tr key={k.id} className={locked ? "row-locked" : ""}>
                 <td><b>{k.name || ak.unnamed}</b>{locked && <span className="lock-badge">{ak.locked}</span>}{k.description ? <div className="as" style={{ marginTop: 2 }}>{k.description}</div> : null}</td>
@@ -45,7 +46,7 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
             ); })}</tbody>
           </table></div>
         )}
-        {loading && <div className="empty">{ak.loading}</div>}
+        {loading && <TableSkeleton label={ak.loading} />}
         {!loading && error && <div className="empty">{ak.loadError}</div>}
         {!loading && !error && !shown.length && <div className="empty">{ak.empty}</div>}
         {showTable && <Pagination {...pg} />}

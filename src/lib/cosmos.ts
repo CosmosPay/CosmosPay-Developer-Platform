@@ -9,6 +9,7 @@
    those same headers ourselves, scoping every payment intent to the signed-in
    user's consumer (`cosmos_<userId>`), exactly as a real API key would. */
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
+import type { Chain } from "@/lib/chains";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
 import { upstreamBaseUrls } from "@/lib/apisix-upstream";
@@ -240,6 +241,8 @@ export async function proxyCosmosRequest(opts: {
 export interface PaymentIntent {
   id: string;
   kind: "TX" | "PAY";
+  /** Where it settles; `network` is the tier (public or testnet) on every chain. */
+  chain: Chain;
   status: "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
   network: string;
   source: string | null;
@@ -269,6 +272,8 @@ export interface PaymentIntentList {
 }
 
 export interface CreatePayInput {
+  /** Stellar when omitted; Solana and Monad take a payment link only. */
+  chain?: Chain;
   destination: string;
   amount?: string;
   assetCode?: string;
@@ -286,6 +291,8 @@ export interface CreateTxInput extends CreatePayInput {
 
 export interface ListIntentsQuery {
   status?: string;
+  /** Only intents on this chain; every chain when omitted. */
+  chain?: Chain;
   /** ISO instant: only intents created at or after it (the dashboard's period views). */
   createdFrom?: string;
   take?: number;
@@ -303,7 +310,7 @@ export const cosmos = {
     cosmosFetch<PaymentIntent>(userId, env, "/v1/payment-intents/tx", { method: "POST", body: input }),
 
   list: (userId: string, env: CosmosEnv, query: ListIntentsQuery = {}) =>
-    cosmosFetch<PaymentIntentList>(userId, env, "/v1/payment-intents", { query: { status: query.status, createdFrom: query.createdFrom, take: query.take, skip: query.skip } }),
+    cosmosFetch<PaymentIntentList>(userId, env, "/v1/payment-intents", { query: { status: query.status, chain: query.chain, createdFrom: query.createdFrom, take: query.take, skip: query.skip } }),
 
   get: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<PaymentIntent>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`),

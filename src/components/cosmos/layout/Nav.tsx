@@ -90,8 +90,9 @@ function useNavItems(area?: Area): any[] {
 
 /* `area` is the domain the bar is drawn on: on the payments gateway the logo, Pricing and the
    product links stay on it (constants.ts, localHref). */
-/* `inDash`: the bar inside the dashboard's frame (Dashboard.tsx), restyled to its reference: it
-   spans the content column only, and the logo lives in the sidebar instead (dashboard.css). */
+/* `inDash`: the bar inside the dashboard (Dashboard.tsx), restyled to its reference: it spans the
+   content column only, the logo lives in the sidebar instead (dashboard.css), and it drops the
+   "Dashboard" button, which would lead to the page it is on. */
 export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area, inDash = false }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area; inDash?: boolean }) {
   const t = useT();
   const NAV_ITEMS = useNavItems(area);
@@ -207,7 +208,8 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
             </div>
           ) : user ? (
             <>
-              <a className="btn btn-dark btn-sm getkeys" href={DASH}>{t.nav.dashboard}</a>
+              {/* Inside the dashboard the button would lead to the page it is on. */}
+              {!inDash && <a className="btn btn-dark btn-sm getkeys" href={DASH}>{t.nav.dashboard}</a>}
               <NavUserMenu user={user} />
             </>
           ) : (
@@ -244,7 +246,7 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
           {user ? (
             <>
               <div className="mm-user"><Avatar user={user} size={34} /><div className="nav-user-id"><b>{user.name || "Account"}</b>{user.email && <span>{user.email}</span>}</div></div>
-              <a className="btn btn-dark" href={DASH}>{t.nav.dashboard}</a>
+              {!inDash && <a className="btn btn-dark" href={DASH}>{t.nav.dashboard}</a>}
               <button type="button" className="link-login as-link mm-login" onClick={() => startLogout()}>{t.profile.logout}</button>
             </>
           ) : (

@@ -15,6 +15,7 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 /* ---- shared helpers ---- */
 const PAY_FILTERS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
@@ -228,7 +229,7 @@ function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads,
           <tbody>{pg.slice.map(renderRow)}</tbody>
         </table></div>
       )}
-      {loading && <div className="empty">{a.loading}</div>}
+      {loading && <TableSkeleton label={a.loading} />}
       {!loading && error && <div className="empty">{a.loadError}</div>}
       {!loading && !error && !view.length && <div className="empty">{empty}</div>}
       {!loading && !error && view.length > 0 && <Pagination {...pg} />}
@@ -279,7 +280,7 @@ export function AdminOverviewView({ env = "dev" }) {
   return (
     <>
       <ViewHead title={ao.title} sub={ao.sub} />
-      {loading && <div className="panel"><div className="empty">{a.loading}</div></div>}
+      {loading && <div className="panel"><TableSkeleton label={a.loading} /></div>}
       {!loading && error && <div className="panel"><div className="empty">{a.loadError}</div></div>}
       {!loading && !error && sum && (
         <>

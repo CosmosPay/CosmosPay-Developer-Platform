@@ -4,7 +4,6 @@ export { BalancesView } from "./BalancesView";
 export { CustomersView } from "./CustomersView";
 export { ProductsView } from "./ProductsView";
 export { SwapsView } from "./SwapsView";
-export { CrossChainSwapsView } from "./CrossChainSwapsView";
 export { LiquidityView } from "./LiquidityView";
 export { BlindPayView } from "./BlindPayView";
 export { ApiKeysView } from "./ApiKeysView";

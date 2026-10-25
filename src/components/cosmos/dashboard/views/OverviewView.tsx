@@ -2,9 +2,10 @@
    gateway-dashboard reference: a dark account card (its arrows step through the organizations)
    beside a grey panel with the totals, the organization ID and the main action; the payments
    activity by day, week, month or year (a five-column strip over paired bars); and the
-   transaction list with its filter row and a menu per payment. Every figure comes from the
-   Payments API (/v1/summary, /v1/summary/series and the payment list); nothing is sample data. */
-import { useState, useEffect, useMemo, type FormEvent } from "react";
+   transaction list with the dashboard's filter bar and a menu per payment. Every figure comes
+   from the Payments API (/v1/summary, /v1/summary/series and the payment list); nothing is
+   sample data. While a figure loads, a skeleton holds its place. */
+import { useState, useEffect } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { planSpec } from "@/lib/plans";
@@ -14,20 +15,15 @@ import { showToast } from "@/components/cosmos/shared";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { useOutside } from "@/components/cosmos/dashboard/hooks";
+import { useOutside, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { BarChart } from "@/components/cosmos/dashboard/components/BarChart";
-import { explorerUrl } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { Sk, TableSkeleton, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { CHAINS, CHAIN_NAMES } from "@/lib/chains";
+import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
-const CHAIN_NAME = { stellar: "Stellar", solana: "Solana", monad: "Monad" };
-const NATIVE = { stellar: "XLM", solana: "SOL", monad: "MON" };
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
-/* The list endpoint's asset, as the summary labels it: the chain's coin for "native", the code
-   before an issuer, a long mint or contract address shortened. */
-const assetText = (asset, chain) => {
-  if (!asset || asset === "native") return NATIVE[chain] || "XLM";
-  const code = String(asset).split(":")[0];
-  return code.length > 12 ? short(code) : code;
-};
 const CHART_PERIODS = ["day", "week", "month", "year"];
 /* The transaction list's periods, as the start of the window. "today" starts at local midnight. */
 const LIST_PERIODS = ["today", "week", "month", "year"];
@@ -39,7 +35,11 @@ const periodStart = (period) => {
 };
 const SETTLED = "SUCCEEDED";
 const FAILED = ["FAILED", "CANCELLED", "EXPIRED"];
-const NO_FILTERS = { onlySettled: false, id: "", amount: "", date: "", chain: "", wallet: "" };
+/* The list's status groups: what a merchant asks of recent payments. */
+const groupOf = (status) => (status === SETTLED ? "settled" : FAILED.includes(status) ? "failed" : "open");
+const GROUPS = ["settled", "open", "failed"];
+const DEFAULTS = { q: "", status: "all", chain: "all" };
+const ALLOWED = { status: ["all", ...GROUPS], chain: ["all", ...CHAINS] };
 
 /* The organization id, copyable: the merchant code of the reference. */
 function OrgIdField({ id, label }) {
@@ -62,6 +62,7 @@ function RowMenu({ p, onGo }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(() => setOpen(false));
   const id = `hub-menu-${p.id}`;
+  const href = explorerUrl(p);
   const copy = () => {
     navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {});
     setOpen(false);
@@ -73,7 +74,7 @@ function RowMenu({ p, onGo }) {
       </button>
       <ul className="hub-menu" id={id} role="list" hidden={!open}>
         <li><button type="button" onClick={copy}>{DI.link}{h.copyId}</button></li>
-        {p.txHash && (p.chain || "stellar") === "stellar" && <li><a href={explorerUrl(p)} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>{DI.network}{h.explorer}</a></li>}
+        {href && <li><a href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>{DI.network}{h.explorer}</a></li>}
         <li><button type="button" onClick={() => { setOpen(false); onGo("payments"); }}>{DI.payments}{h.openPayments}</button></li>
       </ul>
     </div>
@@ -90,22 +91,29 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const t = useT();
   const lang = useLang();
   const h = t.dash.overview.hub;
-  const [sum, setSum] = useState(null);
+  const fl = t.dash.filters;
+  // undefined while loading, null when the request failed.
+  const [sum, setSum] = useState(undefined);
   const [chartPeriod, setChartPeriod] = useState("month");
-  const [series, setSeries] = useState(null);
+  const [series, setSeries] = useState(undefined);
+  const [seriesLoading, setSeriesLoading] = useState(true);
   const [listPeriod, setListPeriod] = useState("month");
   const [rows, setRows] = useState(null);
-  const [draft, setDraft] = useState(NO_FILTERS);
-  const [filters, setFilters] = useState(NO_FILTERS);
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   useEffect(() => {
     let alive = true;
+    setSum(undefined);
     metricsApi.summary(env).then((d) => { if (alive) setSum(d); }).catch(() => { if (alive) setSum(null); });
     return () => { alive = false; };
   }, [env]);
   useEffect(() => {
     let alive = true;
-    metricsApi.series(env, chartPeriod).then((d) => { if (alive) setSeries(d); }).catch(() => { if (alive) setSeries(null); });
+    setSeriesLoading(true);
+    metricsApi.series(env, chartPeriod)
+      .then((d) => { if (alive) setSeries(d); })
+      .catch(() => { if (alive) setSeries(null); })
+      .finally(() => { if (alive) setSeriesLoading(false); });
     return () => { alive = false; };
   }, [env, chartPeriod]);
   useEffect(() => {
@@ -120,6 +128,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const num = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 });
   // Amounts arrive as exact decimal strings; grouped for reading, never re-rounded below 7 places.
   const amount = (v) => { const n = Number(v); return Number.isFinite(n) ? new Intl.NumberFormat(lang, { minimumFractionDigits: 2, maximumFractionDigits: 7 }).format(n) : v; };
+  const sumLoading = sum === undefined;
   const totals = (sum && sum.totals) || {};
   const volume = (sum && sum.volume) || [];
   const primary = volume[0];
@@ -139,6 +148,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   ];
 
   // The chart's window and the one before it, for growth.
+  const firstSeries = series === undefined;
   const win = (series && series.totals) || { count: 0, succeeded: 0, failed: 0, volume: "0", payers: 0 };
   const before = (series && series.previous) || { count: 0, volume: "0" };
   const growth = (cur, prev) => (prev > 0 ? ((cur - prev) / prev) * 100 : null);
@@ -146,22 +156,18 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const gCount = growth(win.count || 0, before.count || 0);
   const pct = (g) => `${g >= 0 ? "↑" : "↓"} ${num.format(Math.round(Math.abs(g) * 10) / 10)}%`;
   const bars = ((series && series.buckets) || []).map((b) => ({ date: b.start, volume: Number(b.volume) || 0, count: b.count || 0 }));
+  // A figure of the strip, or its skeleton while its period loads.
+  const fig = (v) => (seriesLoading ? <Sk className="lg" w="64%" /> : <b className="arrive">{v}</b>);
 
-  // The list, as the filters narrow it (applied by the filter button, as in the reference).
-  const shown = useMemo(() => (rows || []).filter((p) => {
-    if (filters.onlySettled && p.status !== SETTLED) return false;
-    if (filters.id && !p.id.toLowerCase().includes(filters.id.trim().toLowerCase())) return false;
-    if (filters.amount && !String(p.amount ?? "").startsWith(filters.amount.trim())) return false;
-    if (filters.date && !String(p.createdAt).startsWith(filters.date)) return false;
-    if (filters.chain && (p.chain || "stellar") !== filters.chain) return false;
-    if (filters.wallet) {
-      const w = filters.wallet.trim().toLowerCase();
-      if (!`${p.source ?? ""} ${p.destination ?? ""}`.toLowerCase().includes(w)) return false;
-    }
-    return true;
-  }), [rows, filters]);
-  const apply = (e: FormEvent) => { e.preventDefault(); setFilters(draft); };
-  const set = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
+  // The list, as the filter bar narrows it; each control counts what the others leave.
+  const all = rows || [];
+  const matches = (p, skip) =>
+    (skip === "status" || filters.status === "all" || groupOf(p.status) === filters.status) &&
+    (skip === "chain" || filters.chain === "all" || chainOf(p) === filters.chain) &&
+    matchesQuery([p.id, p.source, p.destination, p.amount, p.asset, p.memo, CHAIN_NAMES[chainOf(p)]], filters.q);
+  const shown = all.filter((p) => matches(p, null));
+  const groupCounts = countBy(all.filter((p) => matches(p, "status")), (p) => groupOf(p.status));
+  const chainCounts = countBy(all.filter((p) => matches(p, "chain")), (p) => chainOf(p));
 
   return (
     <div className="hub">
@@ -175,8 +181,9 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
           <div className="hub-card-main">
             <div className="hub-card-top">
               <div className="hub-org">
-                <b>{org.name}</b>
-                <span className="hub-org-sub">{h.plan} {t.dash.planNames[org.plan] || org.plan || ""}</span>
+                {/* The shell has no organization until its list arrives: a skeleton holds the name. */}
+                {org.id ? <b>{org.name}</b> : <Sk className="lg sk-on-dark" w="10em" />}
+                {org.id && <span className="hub-org-sub">{h.plan} {t.dash.planNames[org.plan] || org.plan || ""}</span>}
               </div>
               <button type="button" className="hub-gear" onClick={() => onGo("settings")} aria-label={t.dash.viewLabels.settings} title={t.dash.viewLabels.settings}>{DI.settings}</button>
             </div>
@@ -185,10 +192,10 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
               {created && <span className="hub-created">{fmt(h.created, { date: created })}</span>}
             </div>
             <div className="hub-card-bottom">
-              <div>
+              <div aria-busy={sumLoading || undefined}>
                 <span className="hub-label">{h.settled}</span>
                 <div className="hub-balance">
-                  {primary ? `${amount(primary.amount)} ${primary.asset}` : <span className="hub-muted">{h.noVolume}</span>}
+                  {sumLoading ? <Sk className="lg sk-on-dark" w="9em" /> : primary ? <span className="arrive">{`${amount(primary.amount)} ${primary.asset}`}</span> : <span className="hub-muted">{h.noVolume}</span>}
                   {volume.length > 1 && <span className="hub-more">{fmt(h.moreAssets, { n: volume.length - 1 })}</span>}
                 </div>
               </div>
@@ -200,9 +207,9 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
           </div>
         </div>
         <div className="hub-side">
-          <div className="hub-kpis">
+          <div className="hub-kpis" aria-busy={sumLoading || undefined}>
             {kpis.map((m) => (
-              <div className="hub-kpi" key={m.k}><span>{m.k}</span><b>{m.v}</b></div>
+              <div className="hub-kpi" key={m.k}><span>{m.k}</span>{sumLoading ? <Sk className="lg sk-on-slate" w="55%" /> : <b className="arrive">{m.v}</b>}</div>
             ))}
           </div>
           <div className="hub-actions">
@@ -228,42 +235,50 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             ))}
           </div>
         </div>
-        <div className="panel hub-panel">
+        <div className="panel hub-panel" aria-busy={seriesLoading || undefined}>
           <div className="hub-summary">
-            <div><span>{h.sumVolume}</span><b>{num.format(Number(win.volume) || 0)}</b></div>
-            <div><span>{h.sumCount}</span><b>{num.format(win.count || 0)}</b></div>
-            <div><span>{h.sumFailed}</span><b>{num.format(win.failed || 0)}</b></div>
-            <div><span>{h.sumPayers}</span><b>{num.format(win.payers || 0)}</b></div>
+            <div><span>{h.sumVolume}</span>{fig(num.format(Number(win.volume) || 0))}</div>
+            <div><span>{h.sumCount}</span>{fig(num.format(win.count || 0))}</div>
+            <div><span>{h.sumFailed}</span>{fig(num.format(win.failed || 0))}</div>
+            <div><span>{h.sumPayers}</span>{fig(num.format(win.payers || 0))}</div>
             <div title={h.growthTitle}>
               <span>{h.sumGrowth}</span>
-              {/* Nothing before this window to compare with: one dash, not one per figure. */}
-              <span className="hub-growth">
-                {gVolume === null && gCount === null ? <em>-</em> : (
-                  <>
-                    <em className={gVolume === null ? "" : gVolume >= 0 ? "up" : "down"}><span className="sr-only">{h.growthVolume} </span>{gVolume === null ? "-" : pct(gVolume)}</em>
-                    <em className={gCount === null ? "" : gCount >= 0 ? "up" : "down"}><span className="sr-only">{h.growthCount} </span>{gCount === null ? "-" : pct(gCount)}</em>
-                  </>
-                )}
-              </span>
+              {seriesLoading ? <Sk className="lg" w="70%" /> : (
+                /* Nothing before this window to compare with: one dash, not one per figure. */
+                <span className="hub-growth arrive">
+                  {gVolume === null && gCount === null ? <em>-</em> : (
+                    <>
+                      <em className={gVolume === null ? "" : gVolume >= 0 ? "up" : "down"}><span className="sr-only">{h.growthVolume} </span>{gVolume === null ? "-" : pct(gVolume)}</em>
+                      <em className={gCount === null ? "" : gCount >= 0 ? "up" : "down"}><span className="sr-only">{h.growthCount} </span>{gCount === null ? "-" : pct(gCount)}</em>
+                    </>
+                  )}
+                </span>
+              )}
             </div>
           </div>
           <div className="hub-legend" aria-hidden="true">
             <span><i className="dot-vol" />{h.legendVolume}</span>
             <span><i className="dot-cnt" />{h.legendCount}</span>
           </div>
-          <BarChart
-            data={bars.length ? bars : [{ date: new Date().toISOString().slice(0, 10), volume: 0, count: 0 }]}
-            label={h.chartLabels[chartPeriod]}
-            volumeLabel={h.legendVolume}
-            countLabel={h.legendCount}
-            dateLabel={h.thDate}
-            lang={lang}
-            period={chartPeriod}
-          />
+          {firstSeries ? <ChartSkeleton label={h.chartLabels[chartPeriod]} bars={12} /> : (
+            <div className={seriesLoading ? "hub-chart is-loading" : "hub-chart"}>
+              {/* Remounted per period, so the bars grow again from the axis. */}
+              <BarChart
+                key={`${chartPeriod}-${bars.length}`}
+                data={bars.length ? bars : [{ date: new Date().toISOString().slice(0, 10), volume: 0, count: 0 }]}
+                label={h.chartLabels[chartPeriod]}
+                volumeLabel={h.legendVolume}
+                countLabel={h.legendCount}
+                dateLabel={h.thDate}
+                lang={lang}
+                period={chartPeriod}
+              />
+            </div>
+          )}
         </div>
       </section>
 
-      {/* The transaction list: a filter row, then one line per payment. */}
+      {/* The transaction list: the filter bar, then one line per payment. */}
       <section className="hub-section" aria-labelledby="hub-tx">
         <div className="hub-section-head">
           <h2 id="hub-tx">{h.txTitle}</h2>
@@ -273,50 +288,46 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             ))}
           </div>
         </div>
-        <form className="hub-filters" role="search" aria-label={h.filtersLabel} onSubmit={apply}>
-          <div className="hub-filter-row">
-            <label className="hub-switch" title={h.onlySettled}>
-              <input type="checkbox" role="switch" checked={draft.onlySettled} onChange={set("onlySettled")} />
-              <span className="hub-switch-ui" aria-hidden="true" />
-              <span className="sr-only">{h.onlySettled}</span>
-            </label>
-            <input className="hub-filter" type="search" placeholder={h.thId} aria-label={h.thId} value={draft.id} onChange={set("id")} />
-            <input className="hub-filter" inputMode="decimal" placeholder={h.thAmount} aria-label={h.thAmount} value={draft.amount} onChange={set("amount")} />
-            <input className="hub-filter" type="date" aria-label={h.thDate} value={draft.date} onChange={set("date")} />
-            <select className="hub-filter" aria-label={h.network} value={draft.chain} onChange={set("chain")}>
-              <option value="">{h.allNetworks}</option>
-              {Object.entries(CHAIN_NAME).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
-            <input className="hub-filter hub-filter-wide" type="search" placeholder={h.wallet} aria-label={h.wallet} value={draft.wallet} onChange={set("wallet")} />
-          </div>
-          <button type="submit" className="hub-filter-go" aria-label={h.applyFilters} title={h.applyFilters}>{DI.search}</button>
-        </form>
+        <FilterBar
+          label={h.filtersLabel}
+          query={filters.q} onQuery={(v) => set("q", v)} placeholder={h.searchPlaceholder}
+          status={{
+            label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+            options: [
+              { key: "all", label: fl.allStatuses, count: all.filter((p) => matches(p, "status")).length },
+              ...GROUPS.map((g) => ({ key: g, label: h.groups[g], count: groupCounts[g] || 0 })),
+            ],
+          }}
+          selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], count: chainCounts[c] || 0 }))] }]}
+          active={active} onReset={reset}
+          shown={Math.min(shown.length, 20)} total={rows === null ? undefined : all.length} loading={rows === null}
+        />
         <div className="panel hub-txlist">
           {rows === null ? (
-            <div className="empty">{t.dash.cosmos.loading || "…"}</div>
+            <TableSkeleton label={t.dash.cosmos.loading} cols={6} rows={5} />
           ) : shown.length ? (
-            <>
-              <p className="sr-only" role="status">{fmt(h.shown, { n: shown.length, total: rows.length })}</p>
-              <ul className="hub-rows" role="list">
-                {shown.slice(0, 20).map((p) => (
-                  <li className="hub-row" key={p.id}>
-                    {statusIcon(p.status)}
-                    <dl className="hub-cells">
-                      <div><dt>{h.thId}</dt><dd><code>{short(p.id)}</code></dd></div>
-                      <div><dt>{h.thStatus}</dt><dd className={`hub-st-t ${p.status === SETTLED ? "ok" : FAILED.includes(p.status) ? "fail" : "wait"}`}>{(h.status && h.status[p.status]) || p.status}</dd></div>
-                      <div><dt>{h.thDate}</dt><dd>{fmtDateTime(p.createdAt)}</dd></div>
-                      <div><dt>{h.thAmount}</dt><dd><b>{p.amount ? amount(p.amount) : "-"}</b> {assetText(p.asset, p.chain)}</dd></div>
-                      <div><dt>{h.thNetwork}</dt><dd>{CHAIN_NAME[p.chain] || "Stellar"}</dd></div>
-                      <div><dt>{h.thFrom}</dt><dd><code>{short(p.source)}</code></dd></div>
-                      <div><dt>{h.thTo}</dt><dd><code>{short(p.destination)}</code></dd></div>
-                    </dl>
-                    <RowMenu p={p} onGo={onGo} />
-                  </li>
-                ))}
-              </ul>
-            </>
+            <ul className="hub-rows arrive" role="list">
+              {shown.slice(0, 20).map((p) => (
+                <li className="hub-row" key={p.id}>
+                  {statusIcon(p.status)}
+                  <dl className="hub-cells">
+                    <div><dt>{h.thId}</dt><dd><code>{short(p.id)}</code></dd></div>
+                    <div><dt>{h.thStatus}</dt><dd className={`hub-st-t ${p.status === SETTLED ? "ok" : FAILED.includes(p.status) ? "fail" : "wait"}`}>{(h.status && h.status[p.status]) || p.status}</dd></div>
+                    <div><dt>{h.thDate}</dt><dd>{fmtDateTime(p.createdAt)}</dd></div>
+                    <div><dt>{h.thAmount}</dt><dd><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</dd></div>
+                    <div><dt>{h.thNetwork}</dt><dd>{CHAIN_NAMES[chainOf(p)]}</dd></div>
+                    <div><dt>{h.thFrom}</dt><dd><code>{short(p.source)}</code></dd></div>
+                    <div><dt>{h.thTo}</dt><dd><code>{short(p.destination)}</code></dd></div>
+                  </dl>
+                  <RowMenu p={p} onGo={onGo} />
+                </li>
+              ))}
+            </ul>
           ) : (
-            <div className="empty">{rows.length ? h.noMatch : h.noTx}</div>
+            <div className="empty">
+              {all.length ? h.noMatch : h.noTx}
+              {all.length > 0 && active > 0 && <div><button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button></div>}
+            </div>
           )}
           <button type="button" className="link-btn hub-viewall" onClick={() => onGo("payments")}>{h.viewAll}</button>
         </div>

@@ -42,6 +42,7 @@ export const paymentIntents = {
     const qs = new URLSearchParams({ env: env || "dev" });
     if (query.org) qs.set("org", query.org);
     if (query.status) qs.set("status", query.status);
+    if (query.chain) qs.set("chain", query.chain);
     if (query.createdFrom) qs.set("createdFrom", query.createdFrom);
     if (query.take) qs.set("take", String(query.take));
     if (query.skip) qs.set("skip", String(query.skip));

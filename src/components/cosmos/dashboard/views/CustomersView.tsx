@@ -11,6 +11,8 @@ import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { matchesQuery } from "@/lib/dashboard-filters";
 
 const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
 const acctExplorer = (account, env) => `https://stellar.expert/explorer/${env === "prod" ? "public" : "testnet"}/account/${account}`;
@@ -35,7 +37,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
   }, [env]);
   useEffect(() => { load(); }, [load]);
 
-  const view = rows.filter((c) => `${c.name} ${c.alias || ""} ${c.email || ""} ${c.account || ""}`.toLowerCase().includes(q.toLowerCase()));
+  const view = rows.filter((c) => matchesQuery([c.name, c.alias, c.email, c.account], q));
   const pg = usePaged(view, q);
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
@@ -51,7 +53,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={cv.searchPlaceholder} />
         {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{cv.tableHead.name}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{cv.tableHead.name}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{pg.slice.map((c) => (
               <tr key={c.id} className="row-click" onClick={() => setDetail(c)}>
                 <td><div className="cust-cell"><span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>{c.alias || c.name}</div></td>
@@ -67,7 +69,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
             ))}</tbody>
           </table></div>
         )}
-        {loading && <div className="empty">{cx.loading}</div>}
+        {loading && <TableSkeleton label={cx.loading} />}
         {!loading && error && <div className="empty">{cx.loadError}</div>}
         {!loading && !error && !view.length && <div className="empty">{cv.empty}</div>}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}
@@ -176,7 +178,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
             </div>
 
             <label className="field-l">{cd.payments}</label>
-            {pays === null && <div className="empty">{cx.loading}</div>}
+            {pays === null && <TableSkeleton label={cx.loading} />}
             {pays !== null && pays.length === 0 && <div className="empty">{cd.noPayments}</div>}
             {pays !== null && pays.length > 0 && (
               <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>

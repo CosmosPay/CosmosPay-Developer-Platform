@@ -182,8 +182,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   outline turning blue with it). Dark mode swaps them, since there the filled button is white.
 - **The dashboard follows the product owner's gateway-dashboard reference strictly** (Dribbble
   "Gateway dashboard", 2026-10-25), on `src/styles/dashboard.css`:
-  - **The shell is one white frame on the canvas** (`.dash-frame`, 28px radius): the sidebar on
-    its left (`widgets/Sidebar.tsx`: logo, "Main menu" and "Preferences" split by a hairline, plain
+  - **The shell fills the window, with no frame or border around it** (product owner: the
+    reference shot's rounded frame was its presentation, not the product): the sidebar on the left (`widgets/Sidebar.tsx`: logo, "Main menu" and "Preferences" split by a hairline, plain
     links whose current one is bold, groups that open into a dashed tree with a dot on the current
     view; a group with one visible view renders as a plain link), the general nav inside the
     content column (`Nav inDash` gives `.nav-dash`: no logo, no surface at the top; the logo comes
@@ -198,21 +198,58 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     main button with the checkout designs link); "Payments activity" with Daily / Weekly / Monthly /
     Yearly tabs over a five-column strip (volume, payments, failed, payers, growth: tertiary blue up,
     red down, against the window before) and the paired bars; then "Transactions" with Today /
-    Week / Month / Year, a filter row (only-settled switch, ID, amount, date, network, wallet, applied
-    by the search button) and one line per payment (status icon, label over value, a menu to copy
-    the ID, open the explorer or the Payments view).
+    Week / Month / Year, the shared filter bar (settled / in progress / failed, network, search) and
+    one line per payment (status icon, label over value, a menu to copy the ID, open the explorer on
+    its chain or the Payments view).
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
     from Monday), with the window's totals (distinct payers too) and the window before it. Its volume
     adds every asset's amount, as the daily summary does. The list reads
     `GET /api/payment-intents?createdFrom=…`.
+  - **One filter bar for every list** (`components/FilterBar.tsx`, the logic pure and tested in
+    `src/lib/dashboard-filters.ts`): the status segments with how many rows each holds (each
+    control counts what the others leave), the number shown, then a search where every word must
+    match, the view's selects (network, type…), a date range and "clear filters". The filters live in
+    the URL (`useListFilters`, read after mount so the server render matches), so a filtered list
+    survives a reload and can be shared; switching views drops them. Payments, swaps, liquidity and
+    the overview's list use it; the other lists keep the plain toolbar search with the same matching.
+    Status and type tabs are segments (plain text, the current one filled), never chips.
+  - **Fields are plain** (`.inst .field`): white, a 1px grey line, 10px corners, the label above and
+    the help under the input (`Field` / `Sel` link it with aria-describedby), focus darkening the
+    line with the tertiary ring.
+  - **What loads has a skeleton** (`components/Skeleton.tsx`: `TableSkeleton`, `ChartSkeleton`,
+    `Sk`): grey bars in the list's or the figure's shape, pulsing in a solid colour (never a
+    gradient sweep), still under reduced motion, each a polite status naming what loads. Content then
+    arrives with a short rise (`.arrive`), table rows with their GSAP stagger, and the chart's bars
+    grow from the axis per period.
   - Status is coloured text with a dot or an icon, never a capsule; section labels are plain
     sentence case; every overview block keeps `min-width: 0`, so nothing pushes the page wider on
     phones. To see it locally, sign in through local Authentik with the `.env` test account
     (`DEV_TEST_*`).
 
+### Payment links on every chain
+
+- **A payment link settles on Stellar, Solana or Monad**, on the environment's network (Solana
+  devnet and Monad testnet in the sandbox). The form picks the network first; transaction intents
+  (a known payer) are Stellar's only, Monad needs an amount and takes no wallet message. The schema
+  (`src/schemas/payment-intents.ts`, tested) checks each chain's address shape and decimals; the
+  Payments API checks the rest.
+- **`src/lib/chains.ts` is the chain vocabulary** for every screen and route: names, native coins,
+  test-network names, address shapes, explorers (transactions and accounts, per network) and the
+  token presets. Presets are only addresses we verified: Solana USDC (mainnet `EPjF…Dt1v`, devnet
+  Circle's `4zMM…ncDU`) and Monad mainnet USDC (`0x7547…b603`, from NEAR Intents' list); Monad's
+  test network has none. Other tokens go by ticker and mint / contract (`TokenSelect`).
+  `payment-link.ts` re-exports its chain list and explorer from there.
+
 ### Swaps from the dashboard
 
+- **One list and one form for every swap** (`views/SwapsView.tsx`): the list reads the swaps on each
+  chain and the cross-chain ones together, newest first, filtered by status group (in progress,
+  succeeded, refunded, failed, expired), type (on one chain / between chains), network and date. The
+  form picks what you send and what you receive (chain and asset each, with a switch between them):
+  the same chain goes through that chain's market (the Stellar DEX, Jupiter, Kuru Flow), two chains
+  through NEAR Intents (refund address on the first, recipient on the second). The old
+  `?view=crossChainSwaps` opens the list filtered to cross-chain; the sidebar has no separate entry.
 - **Stellar swaps, Solana / Monad swaps, cross-chain swaps and liquidity are non-custodial**: the
   Payments API builds the transaction, the person signs it in a wallet, the dashboard submits the
   signed envelope. Nobody's key ever reaches this app.
