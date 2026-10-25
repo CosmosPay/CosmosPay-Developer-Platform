@@ -122,7 +122,7 @@ export default {
     },
     planEyebrow: "// escolha seu plano",
     planTitle: "Escolha um plano para começar",
-    planSub: "Comece grátis e pague apenas por transação bem-sucedida. Faça upgrade ou downgrade quando quiser — sem ligações.",
+    planSub: "O Starter não tem mensalidade — você paga apenas por transação bem-sucedida. Faça upgrade ou downgrade quando quiser — sem ligações.",
     popular: "Popular",
     recommended: "Recomendado",
     enterpriseNote: "Precisa de tarifas personalizadas ou um SLA?",
@@ -162,24 +162,16 @@ export default {
     whatsIncluded: "O que está incluído",
     specFoot: "As chaves de teste ficam prontas na hora. Sem cartão para começar.",
     supportLevels: {
-      community: "Comunidade",
       standard: "Padrão",
       priority: "Prioritário"
     },
     plans: {
-      community: {
-        desc: "Grátis no lançamento · todas as redes",
-        sub: "Stellar, Solana e Monad",
-        pnote: "grátis durante o lançamento · Stellar, Solana e Monad",
-        team: "1",
-        feats: ["Webhooks de pagamento", "Chaves de API de teste", "1 projeto"]
-      },
       starter: {
         desc: "Aceite pagamentos reais na Stellar, Solana e Monad",
-        sub: "+ 10¢ / txn",
-        pnote: "0.5% + 10¢ por transação",
-        team: "Até 5",
-        feats: ["API de pagamentos completa", "Chaves ao vivo e de teste", "Liquidação em USDC", "Até 5 membros"]
+        sub: "+ 25¢ / txn",
+        pnote: "1% + 25¢ por transação",
+        team: "Até 2",
+        feats: ["Acesso parcial à API", "Chaves ao vivo e de teste", "Liquidação em USDC", "Até 2 membros"]
       },
       growth: {
         desc: "Tarifas menores para equipes em crescimento",
@@ -694,7 +686,7 @@ export default {
   pricing: {
     kicker: "// preços",
     title: "Pague pelo que você processa.",
-    lede: "Preços transparentes baseados em uso. Comece grátis — pague apenas uma pequena taxa por transação bem-sucedida.",
+    lede: "Preços transparentes baseados em uso. Comece sem mensalidade — pague apenas uma pequena taxa por transação bem-sucedida.",
     monthly: "Mensal",
     annual: "Anual",
     save: "−17%",
@@ -704,21 +696,12 @@ export default {
     billedYearly: "cobrado anualmente",
     plans: [
       {
-        name: "Community",
-        tag: "Grátis",
-        desc: "Comece a aceitar pagamentos sem custo mensal.",
-        amt: "Grátis",
-        txt: "sem mensalidade",
-        cta: "Começar grátis",
-        feats: ["Aceite pagamentos", "Chaves de API de teste", "1 projeto", "Suporte da comunidade", "Proteção de pagamentos", "Resolução de disputas", "Cartões e transferências bancárias"]
-      },
-      {
         name: "Starter",
-        desc: "Receba pagamentos reais com proteção de pagamentos integrada.",
+        desc: "Receba pagamentos reais sem mensalidade e com proteção de pagamentos integrada.",
         amt: "1%",
         txt: "+ 25¢ por transação *",
-        cta: "Começar grátis",
-        feats: ["Tudo do Community", "Pagamentos reais", "Proteção de pagamentos", "Acesso parcial à API", "Suporte padrão", "Resolução de disputas", "Cartões e transferências bancárias"]
+        cta: "Começar",
+        feats: ["Pagamentos reais", "Chaves de API de teste", "Proteção de pagamentos", "Acesso parcial à API", "Suporte padrão", "Resolução de disputas", "Cartões e transferências bancárias"]
       },
       {
         name: "Essentials",
@@ -743,67 +726,67 @@ export default {
       subt: "Taxas baseadas em volume",
       cta: "Falar com vendas"
     },
-    footnote: "* Cada transação também inclui uma pequena taxa de rede. Community e Starter cobrem nossos recursos essenciais de pagamento; Essentials e Growth liberam acesso total à API, resolução de disputas e todos os métodos de pagamento, incluindo cartões e transferências bancárias.",
+    footnote: "* Cada transação também inclui uma pequena taxa de rede. O Starter cobre nossos recursos essenciais de pagamento; Essentials e Growth liberam acesso total à API, resolução de disputas e todos os métodos de pagamento, incluindo cartões e transferências bancárias.",
     compareTitle: "Comparar planos",
     orgsRow: "Organizações",
     seatsRow: "Membros por organização",
     keysRow: "Chaves de API",
-    compareHead: ["Recurso", "Community", "Starter", "Essentials", "Growth", "Enterprise"],
+    compareHead: ["Recurso", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       {
         l: "Mensalidade",
-        v: ["—", "—", "$33 / mo", "$99 / mo", "Personalizado"]
+        v: ["—", "$33 / mo", "$99 / mo", "Personalizado"]
       },
       {
         l: "Taxa por transação",
-        v: ["—", "1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Personalizado"]
+        v: ["1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Personalizado"]
       },
       {
         l: "Velocidade de liquidação",
-        v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec", "~5 sec"]
+        v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec"]
       },
       {
         l: "Acesso à API",
-        v: ["Notificações", "Parcial", "Completo", "Completo", "Completo"]
+        v: ["Parcial", "Completo", "Completo", "Completo"]
       },
       {
         l: "Pagamentos reais",
-        v: [1, 1, 1, 1, 1]
+        v: [1, 1, 1, 1]
       },
       {
         l: "Proteção de pagamentos",
-        v: [0, 1, 1, 1, 1]
+        v: [1, 1, 1, 1]
       },
       {
         l: "Resolução de disputas",
-        v: [0, 0, 1, 1, 1]
+        v: [0, 1, 1, 1]
       },
       {
         l: "Cartões e transferências bancárias",
-        v: [0, 0, 1, 1, 1]
+        v: [0, 1, 1, 1]
       },
       {
         l: "Ferramentas antifraude avançadas",
-        v: [0, 0, 0, 1, 1]
+        v: [0, 0, 1, 1]
       },
       {
         l: "Descontos por volume",
-        v: [0, 0, 0, 1, 1]
+        v: [0, 0, 1, 1]
       },
       {
         l: "SSO / SAML",
-        v: [0, 0, 0, 0, 1]
+        v: [0, 0, 0, 1]
       },
       {
         l: "Suporte",
-        v: ["Community", "Padrão", "Prioritário por e-mail", "Prioritário", "24/7 dedicado"]
+        v: ["Padrão", "Prioritário por e-mail", "Prioritário", "24/7 dedicado"]
       }
     ],
     faqTitle: "Perguntas frequentes",
     faqs: [
       {
-        q: "Existe mesmo um plano gratuito?",
-        a: "Sim. O plano Community é gratuito e inclui tudo o que você precisa para começar a aceitar pagamentos imediatamente. O Starter também é gratuito mensalmente; você paga apenas uma pequena taxa por transação bem-sucedida."
+        q: "Preciso pagar uma mensalidade?",
+        a: "Não. O Starter não tem mensalidade — você paga apenas uma pequena taxa por transação bem-sucedida. Essentials e Growth acrescentam uma mensalidade em troca de taxas menores."
       },
       {
         q: "Quanto custa uma transação?",
@@ -811,7 +794,7 @@ export default {
       },
       {
         q: "Quais métodos de pagamento vocês suportam?",
-        a: "Community e Starter cobrem nossos métodos de pagamento essenciais. A partir do Essentials você também pode aceitar cartões, transferências bancárias e outros métodos de pagamento locais por meio de uma única integração."
+        a: "O Starter cobre nossos métodos de pagamento essenciais. A partir do Essentials você também pode aceitar cartões, transferências bancárias e outros métodos de pagamento locais por meio de uma única integração."
       },
       {
         q: "Com que rapidez o dinheiro liquida?",

@@ -1,6 +1,6 @@
 /* SpecPanel.jsx — right-hand live plan spec panel with tab switcher. */
 import { I } from "./icons";
-import { PLAN_IDS, SUPPORT_FOR, PLAN_DATA } from "./data";
+import { PLAN_IDS, SUPPORT_FOR, PLAN_DATA } from "@/components/cosmos/onboarding/data";
 
 function SpecRow({ icon, k, v, flag, no }) {
   return (<div className="spec-cell"><span className="k">{icon}{k}</span><span className={`v${flag ? (no ? " no" : " yes") : ""}`}>{v}</span></div>);

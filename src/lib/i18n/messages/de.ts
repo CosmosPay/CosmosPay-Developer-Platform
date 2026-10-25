@@ -122,7 +122,7 @@ export default {
     },
     planEyebrow: "// wählen Sie Ihren Tarif",
     planTitle: "Wählen Sie einen Tarif zum Start",
-    planSub: "Starten Sie kostenlos und zahlen Sie nur pro erfolgreicher Transaktion. Jederzeit wechselbar — ohne Anruf.",
+    planSub: "Starter hat keine monatliche Gebühr — Sie zahlen nur pro erfolgreicher Transaktion. Jederzeit wechselbar — ohne Anruf.",
     popular: "Beliebt",
     recommended: "Empfohlen",
     enterpriseNote: "Benötigen Sie individuelle Tarife oder ein SLA?",
@@ -162,24 +162,16 @@ export default {
     whatsIncluded: "Was enthalten ist",
     specFoot: "Testschlüssel sind sofort bereit. Keine Karte zum Starten nötig.",
     supportLevels: {
-      community: "Community",
       standard: "Standard",
       priority: "Priorität"
     },
     plans: {
-      community: {
-        desc: "Kostenlos zum Launch · alle Netzwerke",
-        sub: "Stellar, Solana & Monad",
-        pnote: "kostenlos während des Launches · Stellar, Solana & Monad",
-        team: "1",
-        feats: ["Zahlungs-Webhooks", "Test-API-Schlüssel", "1 Projekt"]
-      },
       starter: {
         desc: "Echte Zahlungen auf Stellar, Solana & Monad annehmen",
-        sub: "+ 10¢ / Txn",
-        pnote: "0,5% + 10¢ pro Transaktion",
-        team: "Bis zu 5",
-        feats: ["Vollständige Zahlungs-API", "Live- und Testschlüssel", "USDC-Abwicklung", "Bis zu 5 Mitglieder"]
+        sub: "+ 25¢ / Txn",
+        pnote: "1% + 25¢ pro Transaktion",
+        team: "Bis zu 2",
+        feats: ["Teilweiser API-Zugriff", "Live- und Testschlüssel", "USDC-Abwicklung", "Bis zu 2 Mitglieder"]
       },
       growth: {
         desc: "Niedrigere Tarife für wachsende Teams",
@@ -694,7 +686,7 @@ export default {
   pricing: {
     kicker: "// Preise",
     title: "Zahlen Sie für das, was Sie abwickeln.",
-    lede: "Transparente, nutzungsbasierte Preise. Kostenlos starten — zahlen Sie nur eine kleine Gebühr pro erfolgreicher Transaktion.",
+    lede: "Transparente, nutzungsbasierte Preise. Ohne monatliche Gebühr starten — zahlen Sie nur eine kleine Gebühr pro erfolgreicher Transaktion.",
     monthly: "Monatlich",
     annual: "Jährlich",
     save: "−17%",
@@ -704,21 +696,12 @@ export default {
     billedYearly: "jährliche Abrechnung",
     plans: [
       {
-        name: "Community",
-        tag: "Kostenlos",
-        desc: "Beginnen Sie ohne monatliche Kosten, Zahlungen anzunehmen.",
-        amt: "Kostenlos",
-        txt: "keine monatliche Gebühr",
-        cta: "Kostenlos starten",
-        feats: ["Zahlungen akzeptieren", "Test-API-Schlüssel", "1 Projekt", "Community-Support", "Zahlungsabsicherung", "Streitfalllösung", "Karten & Banküberweisungen"]
-      },
-      {
         name: "Starter",
-        desc: "Nehmen Sie echte Zahlungen mit integrierter Zahlungsabsicherung an.",
+        desc: "Nehmen Sie echte Zahlungen ohne monatliche Gebühr und mit integrierter Zahlungsabsicherung an.",
         amt: "1%",
         txt: "+ 25¢ pro Transaktion *",
-        cta: "Kostenlos starten",
-        feats: ["Alles aus Community", "Live-Zahlungen", "Zahlungsabsicherung", "Teilweiser API-Zugriff", "Standard-Support", "Streitfalllösung", "Karten & Banküberweisungen"]
+        cta: "Jetzt starten",
+        feats: ["Live-Zahlungen", "Test-API-Schlüssel", "Zahlungsabsicherung", "Teilweiser API-Zugriff", "Standard-Support", "Streitfalllösung", "Karten & Banküberweisungen"]
       },
       {
         name: "Essentials",
@@ -743,67 +726,67 @@ export default {
       subt: "Volumenbasierte Tarife",
       cta: "Vertrieb kontaktieren"
     },
-    footnote: "* Jede Transaktion enthält zusätzlich eine kleine Netzwerkgebühr. Community und Starter decken unsere zentralen Zahlungsfunktionen ab; Essentials und Growth schalten vollen API-Zugriff, Streitfalllösung und jede Zahlungsmethode frei, einschließlich Karten und Banküberweisungen.",
+    footnote: "* Jede Transaktion enthält zusätzlich eine kleine Netzwerkgebühr. Starter deckt unsere zentralen Zahlungsfunktionen ab; Essentials und Growth schalten vollen API-Zugriff, Streitfalllösung und jede Zahlungsmethode frei, einschließlich Karten und Banküberweisungen.",
     compareTitle: "Pläne vergleichen",
     orgsRow: "Organisationen",
     seatsRow: "Mitglieder pro Organisation",
     keysRow: "API-Schlüssel",
-    compareHead: ["Funktion", "Community", "Starter", "Essentials", "Growth", "Enterprise"],
+    compareHead: ["Funktion", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       {
         l: "Monatliche Gebühr",
-        v: ["—", "—", "$33 / mo", "$99 / mo", "Individuell"]
+        v: ["—", "$33 / mo", "$99 / mo", "Individuell"]
       },
       {
         l: "Gebühr pro Transaktion",
-        v: ["—", "1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Individuell"]
+        v: ["1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Individuell"]
       },
       {
         l: "Abwicklungsgeschwindigkeit",
-        v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec", "~5 sec"]
+        v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec"]
       },
       {
         l: "API-Zugriff",
-        v: ["Benachrichtigungen", "Teilweise", "Voll", "Voll", "Voll"]
+        v: ["Teilweise", "Voll", "Voll", "Voll"]
       },
       {
         l: "Live-Zahlungen",
-        v: [1, 1, 1, 1, 1]
+        v: [1, 1, 1, 1]
       },
       {
         l: "Zahlungsabsicherung",
-        v: [0, 1, 1, 1, 1]
+        v: [1, 1, 1, 1]
       },
       {
         l: "Streitfalllösung",
-        v: [0, 0, 1, 1, 1]
+        v: [0, 1, 1, 1]
       },
       {
         l: "Karten & Banküberweisungen",
-        v: [0, 0, 1, 1, 1]
+        v: [0, 1, 1, 1]
       },
       {
         l: "Erweiterte Betrugserkennung",
-        v: [0, 0, 0, 1, 1]
+        v: [0, 0, 1, 1]
       },
       {
         l: "Mengenrabatte",
-        v: [0, 0, 0, 1, 1]
+        v: [0, 0, 1, 1]
       },
       {
         l: "SSO / SAML",
-        v: [0, 0, 0, 0, 1]
+        v: [0, 0, 0, 1]
       },
       {
         l: "Support",
-        v: ["Community", "Standard", "Bevorzugter E-Mail-Support", "Bevorzugt", "24/7 dediziert"]
+        v: ["Standard", "Bevorzugter E-Mail-Support", "Bevorzugt", "24/7 dediziert"]
       }
     ],
     faqTitle: "Häufig gestellte Fragen",
     faqs: [
       {
-        q: "Gibt es wirklich einen kostenlosen Plan?",
-        a: "Ja. Der Community-Plan ist kostenlos und enthält alles, was Sie brauchen, um sofort mit der Annahme von Zahlungen zu beginnen. Starter ist ebenfalls monatlich kostenlos; Sie zahlen nur eine kleine Gebühr pro erfolgreicher Transaktion."
+        q: "Muss ich eine monatliche Gebühr zahlen?",
+        a: "Nein. Starter hat keine monatliche Gebühr — Sie zahlen nur eine kleine Gebühr pro erfolgreicher Transaktion. Essentials und Growth kosten eine monatliche Gebühr und bieten dafür niedrigere Tarife."
       },
       {
         q: "Was kostet eine Transaktion?",
@@ -811,7 +794,7 @@ export default {
       },
       {
         q: "Welche Zahlungsmethoden unterstützen Sie?",
-        a: "Community und Starter decken unsere zentralen Zahlungsmethoden ab. Ab Essentials können Sie auch Karten, Banküberweisungen und andere lokale Zahlungsmethoden über eine einzige Integration akzeptieren."
+        a: "Starter deckt unsere zentralen Zahlungsmethoden ab. Ab Essentials können Sie auch Karten, Banküberweisungen und andere lokale Zahlungsmethoden über eine einzige Integration akzeptieren."
       },
       {
         q: "Wie schnell wird Geld abgewickelt?",

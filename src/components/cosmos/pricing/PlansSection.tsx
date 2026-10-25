@@ -30,8 +30,7 @@ export function PlansSection({ user, billing }) {
           const meta = PLAN_META[i];
           const spec = PLAN_SPECS[PLAN_IDS[i]];
           return (
-            <div className={`plan reveal${meta.featured ? " featured" : ""}${i === p.plans.length - 1 ? " wide-plan" : ""}`} key={plan.name} style={{ transitionDelay: `${i * 0.06}s` }}>
-              {meta.tag && plan.tag && <span className="plan-tag">{plan.tag}</span>}
+            <div className={`plan reveal${meta.featured ? " featured" : ""}`} key={plan.name} style={{ transitionDelay: `${i * 0.06}s` }}>
               {meta.featured && <span className="plan-tag">{p.popular}</span>}
               <div className="pname">{plan.name}</div>
               <div className="pdesc">{plan.desc}</div>

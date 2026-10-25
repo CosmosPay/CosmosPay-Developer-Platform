@@ -4,8 +4,12 @@
    wants to swap. Registering an account first — email, verification link, a claim
    round trip — is a wall in front of the one thing they came to do. So the wallet
    ships a key that already works, and the price of using it is the commission:
-   the `community` plan's 150 bps, the highest rate on the board. Registering is
+   the `community` plan's 50 bps, the highest rate on the board. Registering is
    what buys a lower one, which makes the upgrade an offer rather than a toll gate.
+   `community` is no longer offered to anyone (it was the free plan); this synthetic
+   account keeps it ON PURPOSE, as the rate card for anonymous use. Moving it to the
+   default plan (starter, 25 bps) would hand anonymous wallets the same rate a
+   registered account pays, and registering would buy nothing.
 
    THIS KEY IS NOT A SECRET. It is compiled into an open-source binary published on
    app stores; treating it as a credential would be self-deception. Everything that
@@ -101,6 +105,7 @@ async function ensurePublicAccount(): Promise<string> {
   }
   // The plan is what sets the commission: the forwarder bakes the org owner's
   // plan rate into every request this key makes, so `community` here IS its swap rate (0.5%).
+  // A legacy plan, deliberately: see the header — not to be replaced by the default plan.
   await prisma.profile
     .upsert({
       where: { userId: PUBLIC_USER_ID },

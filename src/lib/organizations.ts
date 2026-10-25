@@ -1,7 +1,7 @@
 /* organizations.ts — workspaces owned by users, with members + org-level roles.
    Plan limits (maxOrgs) are enforced on creation. */
 import { prisma } from "@/lib/prisma";
-import { planLimits, planSwapFeeBps, atLimit } from "@/lib/plans";
+import { DEFAULT_PLAN_ID, planLimits, planSwapFeeBps, atLimit } from "@/lib/plans";
 import { getProfile } from "@/lib/profile";
 
 export type OrgRole = "owner" | "admin" | "member";
@@ -37,7 +37,7 @@ export async function listForUser(userId: string): Promise<OrgSummary[]> {
       ownerId: m.org.ownerId,
       createdAt: m.org.createdAt,
       permissions: Array.isArray(m.permissions) ? m.permissions : [],
-      plan: m.org.owner?.profile?.plan ?? "community",
+      plan: m.org.owner?.profile?.plan ?? DEFAULT_PLAN_ID,
     }));
 }
 
@@ -89,7 +89,7 @@ export async function createOrg(userId: string, name: string, bypassLimit = fals
   const org = await prisma.organization.create({ data: { name: name.trim(), ownerId: userId, metadata: (metadata ?? undefined) as never } });
   await prisma.organizationMember.create({ data: { orgId: org.id, userId, role: "owner" } });
   const ownerProfile = await getProfile(userId).catch(() => null);
-  return { ok: true, org: { id: org.id, name: org.name, role: "owner", ownerId: org.ownerId, createdAt: org.createdAt, permissions: [], plan: ownerProfile?.plan ?? "community" } };
+  return { ok: true, org: { id: org.id, name: org.name, role: "owner", ownerId: org.ownerId, createdAt: org.createdAt, permissions: [], plan: ownerProfile?.plan ?? DEFAULT_PLAN_ID } };
 }
 
 export async function getMembership(orgId: string, userId: string) {
@@ -113,7 +113,7 @@ export async function orgOwnerPlanLimits(orgId: string) {
 export async function orgSwapContext(orgId: string): Promise<{ plan: string; swapFeeBps: number }> {
   const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { ownerId: true } });
   const ownerProfile = org ? await getProfile(org.ownerId).catch(() => null) : null;
-  const plan = ownerProfile?.plan ?? "community";
+  const plan = ownerProfile?.plan ?? DEFAULT_PLAN_ID;
   return { plan, swapFeeBps: planSwapFeeBps(plan) };
 }
 

@@ -8,7 +8,7 @@ import {
   ALLOW_USER_PLAN_CHANGES,
   ENABLED_PLANS,
 } from "astro:env/server";
-import { PLAN_IDS } from "@/lib/plans";
+import { DEFAULT_PLAN_ID, PLAN_IDS, isOfferedPlan } from "@/lib/plans";
 
 const MANAGER_ROLES = ["owner", "admin"];
 
@@ -16,19 +16,21 @@ export function isManagerRole(role: string | null | undefined): boolean {
   return MANAGER_ROLES.includes(role ?? "user");
 }
 
-/** Plan ids offered for self-selection. Empty/invalid env → all plans. */
+/** Plan ids offered for self-selection. Empty/invalid env → all offered plans. A plan that
+ *  is no longer offered (the legacy "community") is ignored even when the env lists it. */
 export function enabledPlanIds(): string[] {
   const raw = (ENABLED_PLANS || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const valid = raw.filter((p) => (PLAN_IDS as readonly string[]).includes(p));
+  const valid = raw.filter(isOfferedPlan);
   return valid.length ? valid : [...PLAN_IDS];
 }
 
-/** The default plan a new account / disabled-plan account lands on. */
+/** The plan onboarding preselects (the first enabled one). New accounts are created on the
+ *  database default (`profile.plan`, = DEFAULT_PLAN_ID) whatever this returns. */
 export function defaultPlanId(): string {
-  return enabledPlanIds()[0] ?? "community";
+  return enabledPlanIds()[0] ?? DEFAULT_PLAN_ID;
 }
 
 /** May an account with this role change its own (self-service) plan? */

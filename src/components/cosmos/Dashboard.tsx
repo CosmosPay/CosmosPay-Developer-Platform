@@ -9,7 +9,7 @@ import {
 import { Nav } from "@/components/cosmos/layout/Nav";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi } from "@/lib/api-client";
-import { planLimits, PLAN_IDS } from "@/lib/plans.ts";
+import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { SIDE, STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
@@ -30,7 +30,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const t = useT();
   // Plan/onboarding feature flags resolved server-side (per account role). Defaults
   // keep the dashboard fully functional if a page forgets to pass them.
-  const feat = features || { plansEnabled: true, allowUserPlanChanges: true, enabledPlans: PLAN_IDS, defaultPlan: "community", canChangePlan: true };
+  const feat = features || { plansEnabled: true, allowUserPlanChanges: true, enabledPlans: PLAN_IDS, defaultPlan: DEFAULT_PLAN_ID, canChangePlan: true };
   const canChangePlan = !!feat.canChangePlan;
   // The signed-in user is held in state so editing the profile (name / photo) updates
   // the sidebar, topbar and account view live, without a reload.
@@ -143,7 +143,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const isStaff = STAFF_ROLES.includes(user && user.role);
   const isManager = MANAGER_ROLES.includes(user && user.role);
   // Mock billing plan (changeable in Settings). Limits drive the real restrictions.
-  const [plan, setPlan] = useState((user && user.plan) || "community");
+  const [plan, setPlan] = useState((user && user.plan) || DEFAULT_PLAN_ID);
   const limits = planLimits(plan);
   const changePlan = (next) => {
     const prev = plan;
@@ -156,7 +156,8 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     const sp = t.dash.settings.plan;
     const curName = t.dash.planNames[plan] || plan;
     const nextName = t.dash.planNames[next] || next;
-    const down = PLAN_IDS.indexOf(next) < PLAN_IDS.indexOf(plan);
+    // Ladder order includes legacy plans, so leaving the old free plan is never a downgrade.
+    const down = ALL_PLAN_IDS.indexOf(next) < ALL_PLAN_IDS.indexOf(plan);
     const body = `${curName} → ${nextName}.` + (down ? ` ${sp.downgradeNote}` : "");
     setConfirm({ title: sp.changeTitle, body, confirmLabel: sp.confirmSwitch, onConfirm: () => changePlan(next) });
   };
@@ -170,7 +171,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const lockedOrgIds = new Set(limits.maxOrgs == null ? [] : ownedOrgsSorted.slice(limits.maxOrgs).map((o) => o.id));
 
   const usableOrgs = orgs.filter((o) => !lockedOrgIds.has(o.id));
-  const org = usableOrgs.find((o) => o.id === curOrg) || usableOrgs[0] || orgs[0] || { id: "", name: "…", role: "member", plan: "community", permissions: [] };
+  const org = usableOrgs.find((o) => o.id === curOrg) || usableOrgs[0] || orgs[0] || { id: "", name: "…", role: "member", plan: DEFAULT_PLAN_ID, permissions: [] };
   const ownedOrgCount = orgs.filter((o) => o.role === "owner").length;
 
   // The active org's keys/seats are governed by the OWNER's plan (the org's subscription),

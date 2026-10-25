@@ -10,7 +10,7 @@ const TAG = 'Account';
 
 const planId = z
   .enum(PLAN_IDS as unknown as [string, ...string[]])
-  .openapi('PlanId', { description: 'Billing plan identifier.', example: 'starter' });
+  .openapi('PlanId', { description: 'Billing plan identifier: one of the plans offered today.', example: 'starter' });
 
 const planBody = z.object({ plan: planId }).openapi('UpdateAccountPlanBody');
 

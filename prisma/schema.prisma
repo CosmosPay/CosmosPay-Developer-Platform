@@ -95,8 +95,10 @@ model Profile {
   // Developer-panel account role: "user" (default) | "support" | "admin" | "owner".
   role        String   @default("user")
 
-  // Billing plan (mock — not yet wired to a billing provider): community | starter | growth | enterprise.
-  plan        String   @default("community")
+  // Billing plan (mock — not yet wired to a billing provider): starter | essentials | growth |
+  // enterprise, plus the legacy "community" (the free plan, no longer offered; the accounts
+  // already on it keep it). New accounts start on starter (DEFAULT_PLAN_ID in src/lib/plans.ts).
+  plan        String   @default("starter")
 
   // Defaults captured at account creation.
   region      String?

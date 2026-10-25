@@ -7,7 +7,7 @@
    this check is the only one in play. */
 import { errors, jsonOk, registerRoutes, sessionSecurity } from '@/lib/openapi/route-helpers';
 import { z } from '@/lib/openapi/zod';
-import { PLAN_IDS } from '@/lib/plans';
+import { ALL_PLAN_IDS } from '@/lib/plans';
 import { approveReceiverBodySchema } from '@/schemas/cosmos-resources';
 import {
   envQuery,
@@ -31,7 +31,10 @@ const adminUserSchema = z
     image: z.string().nullable().openapi({ example: null }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     role: accountRole,
-    plan: z.enum(PLAN_IDS as unknown as [string, ...string[]]).openapi({ example: 'community' }),
+    plan: z.enum(ALL_PLAN_IDS as unknown as [string, ...string[]]).openapi({
+      example: 'starter',
+      description: "The account's plan. `community` is the legacy free plan: no longer offered, kept by the accounts already on it.",
+    }),
     lastSeenAt: z.string().nullable().openapi({ example: '2026-09-17T12:30:00.000Z' }),
   })
   .openapi('AdminUser', { description: 'An account as the admin console lists it.' });
@@ -131,7 +134,7 @@ registerRoutes([
     tags: [TAG],
     summary: "Set an account's role or plan",
     description:
-      'Plan changes are unrestricted for an admin. Role changes are not: you cannot change your own role, you can only assign a role strictly below your own, and you cannot touch an account at or above your level. Each of those is a 403.',
+      'Plan changes are unrestricted for an admin, and accept the legacy `community` plan for accounts still on it. Role changes are not: you cannot change your own role, you can only assign a role strictly below your own, and you cannot touch an account at or above your level. Each of those is a 403.',
     security: sessionSecurity,
     request: {
       params: pathParam('id', 'usr_abc', 'Account id.'),
@@ -139,7 +142,7 @@ registerRoutes([
         z
           .object({
             role: accountRole.optional(),
-            plan: z.enum(PLAN_IDS as unknown as [string, ...string[]]).optional(),
+            plan: z.enum(ALL_PLAN_IDS as unknown as [string, ...string[]]).optional().openapi({ example: 'starter' }),
           })
           .openapi('UpdateAdminUserBody', { description: 'At least one of `role` or `plan`.' }),
       ),
@@ -149,7 +152,7 @@ registerRoutes([
         z.object({
           userId: z.string().openapi({ example: 'usr_abc' }),
           role: accountRole,
-          plan: z.enum(PLAN_IDS as unknown as [string, ...string[]]),
+          plan: z.enum(ALL_PLAN_IDS as unknown as [string, ...string[]]).openapi({ example: 'starter' }),
         }),
         'UpdateAdminUserResponse',
         'User updated',

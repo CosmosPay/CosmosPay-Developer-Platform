@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, IcCheck, IcArrow, PRICING } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
-import { PLAN_IDS, PLAN_SPECS, PLAN_PRICE } from "@/lib/plans.ts";
+import { ALL_PLAN_IDS, PLAN_IDS, PLAN_SPECS, PLAN_PRICE } from "@/lib/plans.ts";
 
 /* Render a spec value: booleans → check / dash, null numbers → ∞, everything else as-is. */
 function Cell({ v }) {
@@ -19,13 +19,16 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
   const t = useT();
   const p = t.dash.settings.plan;
   const names = t.dash.planNames;
-  const curIdx = PLAN_IDS.indexOf(current);
-  // Only offer the env-enabled plans (always keep the current one visible).
-  const ids = PLAN_IDS.filter((id) => !enabledPlans || !enabledPlans.length || enabledPlans.includes(id) || id === current);
+  // Upgrade/downgrade follows the full ladder, so leaving a legacy plan reads as an upgrade.
+  const curIdx = ALL_PLAN_IDS.indexOf(current);
+  // Only offer the env-enabled plans that are still offered; always keep the current one
+  // visible, even a legacy plan (the old free one), which can't be picked again.
+  const offered = PLAN_IDS.filter((id) => !enabledPlans || !enabledPlans.length || enabledPlans.includes(id));
+  const ids = ALL_PLAN_IDS.filter((id) => offered.includes(id) || id === current);
   // Default the comparison to the first other enabled plan (or the current one).
   const [target, setTarget] = useState(ids.find((id) => id !== current) || current);
   const isSame = target === current;
-  const isUpgrade = PLAN_IDS.indexOf(target) > curIdx;
+  const isUpgrade = ALL_PLAN_IDS.indexOf(target) > curIdx;
   const a = PLAN_SPECS[current];
   const b = PLAN_SPECS[target];
 

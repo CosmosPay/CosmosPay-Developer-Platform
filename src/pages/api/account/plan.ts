@@ -6,6 +6,7 @@ import { PLAN_IDS } from "@/lib/plans";
 import { canChangeOwnPlan, enabledPlanIds, isManagerRole } from "@/lib/features";
 import type { APIRoute } from "astro";
 
+// Offered plans only: a legacy plan (the old free one) can't be picked again.
 const planBodySchema = z.object({ plan: z.enum(PLAN_IDS as [string, ...string[]]) });
 
 /* PATCH /api/account/plan — change the signed-in account's own (mock) billing plan. */

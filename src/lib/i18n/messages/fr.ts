@@ -122,7 +122,7 @@ export default {
     },
     planEyebrow: "// choisissez votre forfait",
     planTitle: "Choisissez un forfait pour démarrer",
-    planSub: "Commencez gratuitement et ne payez que par transaction réussie. Changez à tout moment — sans appel.",
+    planSub: "Starter est sans frais mensuels : vous ne payez que par transaction réussie. Changez à tout moment — sans appel.",
     popular: "Populaire",
     recommended: "Recommandé",
     enterpriseNote: "Besoin de tarifs sur mesure ou d’un SLA ?",
@@ -162,24 +162,16 @@ export default {
     whatsIncluded: "Ce qui est inclus",
     specFoot: "Les clés de test sont prêtes instantanément. Aucune carte requise pour commencer.",
     supportLevels: {
-      community: "Communauté",
       standard: "Standard",
       priority: "Prioritaire"
     },
     plans: {
-      community: {
-        desc: "Gratuit au lancement · tous les réseaux",
-        sub: "Stellar, Solana et Monad",
-        pnote: "gratuit pendant le lancement · Stellar, Solana et Monad",
-        team: "1",
-        feats: ["Webhooks de paiement", "Clés d’API de test", "1 projet"]
-      },
       starter: {
         desc: "Acceptez de vrais paiements sur Stellar, Solana et Monad",
-        sub: "+ 10¢ / txn",
-        pnote: "0,5% + 10¢ par transaction",
-        team: "Jusqu’à 5",
-        feats: ["API de paiements complète", "Clés en direct et de test", "Règlement en USDC", "Jusqu’à 5 membres"]
+        sub: "+ 25¢ / txn",
+        pnote: "1% + 25¢ par transaction",
+        team: "Jusqu’à 2",
+        feats: ["Accès partiel à l’API", "Clés en direct et de test", "Règlement en USDC", "Jusqu’à 2 membres"]
       },
       growth: {
         desc: "Tarifs réduits pour les équipes en croissance",
@@ -694,7 +686,7 @@ export default {
   pricing: {
     kicker: "// tarifs",
     title: "Payez ce que vous réglez.",
-    lede: "Une tarification transparente, basée sur l’usage. Démarrez gratuitement — ne payez qu’un petit frais par transaction réussie.",
+    lede: "Une tarification transparente, basée sur l’usage. Démarrez sans frais mensuels — ne payez qu’un petit frais par transaction réussie.",
     monthly: "Mensuel",
     annual: "Annuel",
     save: "−17%",
@@ -704,21 +696,12 @@ export default {
     billedYearly: "facturé annuellement",
     plans: [
       {
-        name: "Community",
-        tag: "Gratuit",
-        desc: "Commencez à accepter les paiements sans coût mensuel.",
-        amt: "Gratuit",
-        txt: "sans frais mensuels",
-        cta: "Commencer gratuitement",
-        feats: ["Acceptez les paiements", "Clés API de test", "1 projet", "Support communautaire", "Protection des paiements", "Gestion des litiges", "Cartes et virements bancaires"]
-      },
-      {
         name: "Starter",
-        desc: "Encaissez de vrais paiements avec une protection des paiements intégrée.",
+        desc: "Encaissez de vrais paiements sans frais mensuels, avec une protection des paiements intégrée.",
         amt: "1%",
         txt: "+ 25¢ par transaction *",
-        cta: "Commencer gratuitement",
-        feats: ["Tout ce qui est inclus dans Community", "Paiements réels", "Protection des paiements", "Accès partiel à l'API", "Support standard", "Gestion des litiges", "Cartes et virements bancaires"]
+        cta: "Commencer",
+        feats: ["Paiements réels", "Clés API de test", "Protection des paiements", "Accès partiel à l'API", "Support standard", "Gestion des litiges", "Cartes et virements bancaires"]
       },
       {
         name: "Essentials",
@@ -743,67 +726,67 @@ export default {
       subt: "Tarifs basés sur le volume",
       cta: "Contacter le service commercial"
     },
-    footnote: "* Chaque transaction inclut également un petit frais de réseau. Les plans Community et Starter couvrent nos fonctionnalités de paiement essentielles ; Essentials et Growth débloquent l’accès complet à l’API, la gestion des litiges et tous les moyens de paiement, y compris les cartes et les virements bancaires.",
+    footnote: "* Chaque transaction inclut également un petit frais de réseau. Le plan Starter couvre nos fonctionnalités de paiement essentielles ; Essentials et Growth débloquent l’accès complet à l’API, la gestion des litiges et tous les moyens de paiement, y compris les cartes et les virements bancaires.",
     compareTitle: "Comparer les plans",
     orgsRow: "Organisations",
     seatsRow: "Membres par organisation",
-    keysRow: "ClÃ©s API",
-    compareHead: ["Fonctionnalité", "Community", "Starter", "Essentials", "Growth", "Enterprise"],
+    keysRow: "Clés API",
+    compareHead: ["Fonctionnalité", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       {
         l: "Frais mensuels",
-        v: ["—", "—", "$33 / mo", "$99 / mo", "Sur mesure"]
+        v: ["—", "$33 / mo", "$99 / mo", "Sur mesure"]
       },
       {
         l: "Frais par transaction",
-        v: ["—", "1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Sur mesure"]
+        v: ["1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Sur mesure"]
       },
       {
         l: "Vitesse de règlement",
-        v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec", "~5 sec"]
+        v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec"]
       },
       {
         l: "Accès à l'API",
-        v: ["Notifications", "Partiel", "Complet", "Complet", "Complet"]
+        v: ["Partiel", "Complet", "Complet", "Complet"]
       },
       {
         l: "Paiements réels",
-        v: [1, 1, 1, 1, 1]
+        v: [1, 1, 1, 1]
       },
       {
         l: "Protection des paiements",
-        v: [0, 1, 1, 1, 1]
+        v: [1, 1, 1, 1]
       },
       {
         l: "Gestion des litiges",
-        v: [0, 0, 1, 1, 1]
+        v: [0, 1, 1, 1]
       },
       {
         l: "Cartes et virements bancaires",
-        v: [0, 0, 1, 1, 1]
+        v: [0, 1, 1, 1]
       },
       {
         l: "Outils antifraude avancés",
-        v: [0, 0, 0, 1, 1]
+        v: [0, 0, 1, 1]
       },
       {
         l: "Remises sur volume",
-        v: [0, 0, 0, 1, 1]
+        v: [0, 0, 1, 1]
       },
       {
         l: "SSO / SAML",
-        v: [0, 0, 0, 0, 1]
+        v: [0, 0, 0, 1]
       },
       {
         l: "Support",
-        v: ["Communautaire", "Standard", "E-mail prioritaire", "Prioritaire", "24/7 dédié"]
+        v: ["Standard", "E-mail prioritaire", "Prioritaire", "24/7 dédié"]
       }
     ],
     faqTitle: "Questions fréquentes",
     faqs: [
       {
-        q: "Y a-t-il vraiment un plan gratuit ?",
-        a: "Oui. Le plan Community est gratuit et inclut tout ce dont vous avez besoin pour commencer à accepter des paiements immédiatement. Starter est également gratuit chaque mois ; vous ne payez qu’un petit frais par transaction réussie."
+        q: "Dois-je payer des frais mensuels ?",
+        a: "Non. Starter est sans frais mensuels : vous ne payez qu’un petit frais par transaction réussie. Essentials et Growth ajoutent des frais mensuels en échange de tarifs plus bas."
       },
       {
         q: "Combien coûte une transaction ?",
@@ -811,7 +794,7 @@ export default {
       },
       {
         q: "Quels moyens de paiement prenez-vous en charge ?",
-        a: "Community et Starter couvrent nos moyens de paiement essentiels. À partir d’Essentials, vous pouvez également accepter les cartes, les virements bancaires et d’autres moyens de paiement locaux via une seule intégration."
+        a: "Starter couvre nos moyens de paiement essentiels. À partir d’Essentials, vous pouvez également accepter les cartes, les virements bancaires et d’autres moyens de paiement locaux via une seule intégration."
       },
       {
         q: "À quelle vitesse l’argent est-il réglé ?",

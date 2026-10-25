@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { CosmosLockup, IcArrow, IcSun, IcMoon, useTheme, useMounted, LangSelect, HOME } from "@/components/cosmos/shared";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { organizations, account } from "@/lib/api-client";
-import { VOL_REC } from "./onboarding/data";
+import { VOL_REC, PLAN_IDS as ONBOARDING_PLAN_IDS } from "@/components/cosmos/onboarding/data";
+import { DEFAULT_PLAN_ID } from "@/lib/plans";
 import { I } from "./onboarding/icons";
 import { Stepper } from "./onboarding/Stepper";
 import { SpecPanel } from "./onboarding/SpecPanel";
@@ -25,8 +26,10 @@ export default function Onboarding({ lang, features }) {
   // Plan selection follows the env flags: locked to the default plan unless plan
   // changes are allowed and more than one plan is enabled.
   const feat = features || {};
-  const enabledPlans = feat.enabledPlans;
-  const defaultPlan = feat.defaultPlan || "community";
+  // Only the plans the wizard has cards for (its PLAN_IDS); the others are picked later
+  // from the dashboard.
+  const enabledPlans = Array.isArray(feat.enabledPlans) ? feat.enabledPlans.filter((id: string) => ONBOARDING_PLAN_IDS.includes(id)) : undefined;
+  const defaultPlan = ONBOARDING_PLAN_IDS.includes(feat.defaultPlan) ? feat.defaultPlan : DEFAULT_PLAN_ID;
   const planSelectable = (feat.plansEnabled ?? true) && (feat.allowUserPlanChanges ?? true) && (!enabledPlans || enabledPlans.length > 1);
   const planOptions = planSelectable ? (enabledPlans && enabledPlans.length ? enabledPlans : undefined) : [defaultPlan];
 

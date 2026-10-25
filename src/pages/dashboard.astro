@@ -5,6 +5,7 @@ import Dashboard from "@/components/cosmos/Dashboard.tsx";
 import { getProfile, getRole } from "@/lib/profile";
 import { listForUser, ensureDefaultOrg } from "@/lib/organizations";
 import { planFeatures, ONBOARDING_ENABLED } from "@/lib/features";
+import { DEFAULT_PLAN_ID } from "@/lib/plans";
 
 // Auth guard — the dashboard is only for logged-in developers.
 // Astro.locals.user is populated by src/middleware.ts from the Authentik session.
@@ -43,7 +44,7 @@ const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 // user management). The first account bootstraps to "owner" (see getRole). Best-effort.
 const profile = await getProfile(user.id).catch(() => null);
 const role = await getRole(user.id).catch(() => "user");
-const plan = profile?.plan ?? "community";
+const plan = profile?.plan ?? DEFAULT_PLAN_ID;
 // The custom profile (displayName / avatarUrl) overrides the OAuth name + photo when set.
 // We pass both the effective values (name/image) and the raw OAuth fallbacks (authName/
 // authImage) so the account editor can revert cleanly when a custom value is cleared.

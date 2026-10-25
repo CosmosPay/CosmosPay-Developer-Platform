@@ -1,5 +1,6 @@
 /* Mock datasets + display constants for the dashboard. All data is mock/sample
    (client-side); values are intentionally not translated. */
+import { PLAN_IDS } from "@/lib/plans";
 
 export const PAGE_SIZE = 8;
 
@@ -80,9 +81,10 @@ export const ACTS = [
 /* ---------------- display constants ---------------- */
 export const PERM_OPTIONS = ["read", "write"];
 /* Plan price tags now live in the shared plan specs: import { PLAN_PRICE } from "@/lib/plans". */
-/* Admin: assign roles + plans to accounts (owner/admin only). */
+/* Admin: assign roles + plans to accounts (owner/admin only). Only offered plans are
+   assignable; an account still on a legacy plan shows it in its own row (UsersView). */
 export const ROLE_OPTIONS = ["user", "support", "admin", "owner"];
-export const PLAN_OPTIONS = ["community", "starter", "essentials", "growth", "enterprise"];
+export const PLAN_OPTIONS = PLAN_IDS;
 
 /* ---------------- shell config ---------------- */
 export const SIDE = [

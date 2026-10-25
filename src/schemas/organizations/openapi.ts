@@ -37,8 +37,8 @@ const orgSummarySchema = z
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     permissions: z.array(orgPermission).openapi({ example: [] }),
     plan: z.string().openapi({
-      example: 'community',
-      description: "The OWNER's plan — it governs the org's seat and resource limits.",
+      example: 'starter',
+      description: "The OWNER's plan — it governs the org's seat and resource limits. `community` is the legacy free plan, kept by the accounts already on it.",
     }),
   })
   .openapi('OrganizationSummary', { description: 'An organization as the caller sees it.' });

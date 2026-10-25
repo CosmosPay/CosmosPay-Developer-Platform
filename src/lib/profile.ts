@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { clientLanguage, geoLocate } from "@/lib/geo";
 import { safeNotify } from "@/lib/notifications";
+import { DEFAULT_PLAN_ID } from "@/lib/plans";
 import type { APIContext } from "astro";
 
 export type AccountRole = "user" | "admin" | "owner" | "support";
@@ -85,7 +86,7 @@ export async function listUsersWithProfile(limit = 200) {
     image: u.image,
     createdAt: u.createdAt,
     role: u.profile?.role ?? "user",
-    plan: u.profile?.plan ?? "community",
+    plan: u.profile?.plan ?? DEFAULT_PLAN_ID,
     lastSeenAt: u.profile?.lastSeenAt ?? null,
   }));
 }

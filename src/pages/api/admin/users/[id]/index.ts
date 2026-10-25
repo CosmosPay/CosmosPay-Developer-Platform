@@ -3,13 +3,14 @@ import { auth } from "@/lib/auth";
 import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageUsers, getRole, setUserRolePlan } from "@/lib/profile";
 import { roleLevel } from "@/lib/account-roles";
-import { PLAN_IDS } from "@/lib/plans";
+import { ALL_PLAN_IDS } from "@/lib/plans";
 import type { APIRoute } from "astro";
 
 const paramsSchema = z.object({ id: z.string().min(1) });
 const bodySchema = z.object({
   role: z.enum(["user", "support", "admin", "owner"]).optional(),
-  plan: z.enum(PLAN_IDS as [string, ...string[]]).optional(),
+  // Every known plan, legacy ones included: accounts still on the old free plan keep it.
+  plan: z.enum(ALL_PLAN_IDS as [string, ...string[]]).optional(),
 }).refine((b) => b.role !== undefined || b.plan !== undefined, { message: "Nothing to update" });
 
 /* PATCH /api/admin/users/:id — set a user's role and/or plan. Owner/admin only;
