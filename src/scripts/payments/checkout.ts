@@ -11,6 +11,10 @@
  *
  * A preview page (data-preview) draws src/lib/payments/preview.ts's sample instead, reads
  * nothing and leaves every wallet button inert.
+ *
+ * Opened as a popup by a merchant's `<cosmos-pay-button>` (src/embed), the page also tells
+ * its opener each status change (src/lib/payments/embed-protocol.ts): the id and the status,
+ * nothing else.
  */
 import {
   amountLabel,
@@ -24,10 +28,12 @@ import {
   phaseOf,
   shortAddress,
   webWalletUrl,
+  type LinkStatus,
   type PaymentLink,
   type Phase,
 } from "@/lib/payments/payment-link";
 import { DEFAULT_CHECKOUT_THEME, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
+import { statusMessage } from "@/lib/payments/embed-protocol";
 import { previewLink } from "@/lib/payments/preview";
 
 interface Runtime {
@@ -87,6 +93,7 @@ export function startCheckout(): void {
   let errorDelay = 5_000;
   let lastPhase: Phase | null = null;
   let lastMinute = -1;
+  let toldOpener: LinkStatus | null = null;
 
   function show(state: "loading" | "not-found" | "error" | "link") {
     root!.querySelectorAll<HTMLElement>(":scope > [data-state]").forEach((el) => {
@@ -220,6 +227,7 @@ export function startCheckout(): void {
     if (explorer) slots<HTMLAnchorElement>("tx").forEach((a) => { a.href = explorer; });
 
     if (!preview) {
+      tellOpener(l);
       const delay = nextPollDelay(phase);
       if (delay !== null) {
         // An open link flips to expired locally at its deadline, without waiting for a read.
@@ -228,6 +236,25 @@ export function startCheckout(): void {
       }
     }
     offerExtension(l, phase);
+  }
+
+  /* ---- the merchant page that opened this one (<cosmos-pay-button>) ----
+     Only with an opener, and only when the server's status changes (not the locally
+     derived phase: the merchant's page gets what the API would answer). targetOrigin "*"
+     because the opener is any merchant's site and this page cannot know which; that is
+     acceptable only because the payload is the public id and status, which anyone holding
+     the id already reads from the public GET /v1/payment-links/{id}. Never add the URI,
+     the address, the amount or anything else to it. */
+  function tellOpener(l: PaymentLink) {
+    if (l.status === toldOpener) return;
+    const opener = window.opener as Window | null;
+    if (!opener || opener === window) return;
+    toldOpener = l.status;
+    try {
+      opener.postMessage(statusMessage(l.id, l.status), "*");
+    } catch {
+      /* the opener navigated away or closed: nobody to tell */
+    }
   }
 
   /* ---- countdown ---- */

@@ -140,8 +140,9 @@ export default defineConfig({
       // src/middleware.ts. Leave empty to use only the defaults.
       CORS_ALLOWED_ORIGINS: envField.string({ context: 'server', access: 'public', optional: true, default: '' }),
       // Origins the APISIX routes allow cross-origin (comma-separated), so the wallet's
-      // in-browser calls and the hosted checkout's payment-link read (payments.cosmospay.lat)
-      // aren't blocked. Used by createRoute and createCallbackRoute.
+      // in-browser calls aren't blocked. Used by createRoute and createCallbackRoute. The public
+      // payment-link read (hosted and embedded checkouts) has its own route answering any
+      // origin without credentials (src/lib/apisix-keyless.ts), so it does not depend on this.
       COSMOS_API_CORS_ORIGINS: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://cosmospay.lat,https://dev.cosmospay.lat,https://payments.cosmospay.lat' }),
       // NOTE: the dashboard's /api/admin/* proxy needs NO admin secret of its own. The
       // Payments service used to demand one (COSMOS_ADMIN_API_SECRET, matched against its
@@ -177,7 +178,8 @@ export default defineConfig({
       // accounts can (e.g. via admin tools) — "we manage plans for now".
       ALLOW_USER_PLAN_CHANGES: envField.boolean({ context: 'server', access: 'public', optional: true, default: true }),
       // Comma-separated plan ids offered for self-selection (onboarding + plan modal),
-      // e.g. "community". Empty = all plans. The first entry is the default plan.
+      // e.g. "starter,growth". Empty = every offered plan. The first entry is the plan
+      // onboarding preselects. A plan no longer offered (the legacy "community") is ignored.
       ENABLED_PLANS: envField.string({ context: 'server', access: 'public', optional: true, default: '' }),
       // --- API reference (Swagger) ---
       // Exposes the portal's own API reference UI at /swagger (+ the /api/openapi.json spec). It's

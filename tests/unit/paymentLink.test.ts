@@ -102,6 +102,12 @@ test('parsePaymentLink refuses unknown chains, statuses and missing fields', () 
   assert.equal(parsePaymentLink('nope'), null);
 });
 
+test('parsePaymentLink refuses a deadline that is not a date, and keeps no deadline', () => {
+  assert.equal(parsePaymentLink(stellarBody({ expiresAt: 'tomorrow-ish' })), null);
+  assert.equal(parsePaymentLink(stellarBody({ expiresAt: '' })), null);
+  assert.equal(parsePaymentLink(stellarBody({ expiresAt: null }))?.expiresAt, null);
+});
+
 test('parsePaymentLink accepts Solana Pay and EIP-681 links', () => {
   const sol = parsePaymentLink(stellarBody({
     chain: 'solana', payTo: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', asset: 'USDC',

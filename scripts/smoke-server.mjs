@@ -147,6 +147,18 @@ if (res.status === 200) {
   detail = `served ${paths} documented paths`;
 }
 
+// The merchant embed is a static file `npm run build` bundles into public/ BEFORE astro build
+// copies public/ into dist/client. Served here, the order of that chain held; a 404 means
+// merchants' pages would load nothing from /embed/cosmos-pay.js.
+const embed = await fetch(`http://${HOST}:${PORT}/embed/cosmos-pay.js`, { signal: AbortSignal.timeout(15_000) }).catch(
+  (e) => fail(`GET /embed/cosmos-pay.js never completed: ${e.message}`),
+);
+const embedBody = embed.status === 200 ? await embed.text() : '';
+if (!/javascript/i.test(embed.headers.get('content-type') || '') || !embedBody.includes('cosmos-pay-checkout')) {
+  fail(`GET /embed/cosmos-pay.js returned ${embed.status} (${embed.headers.get('content-type')}); expected the embed bundle — did the build run embed:build before astro build?`);
+}
+detail += `; embed bundle served (${(embedBody.length / 1024).toFixed(1)} KiB)`;
+
 settled = true;
 server.removeAllListeners('exit');
 server.kill();

@@ -7,6 +7,10 @@ RELEASE_NOTES.md
 # docs static export, copied in by scripts/build-docs.mjs (source lives in docs/)
 public/docs/
 
+# merchant embed bundle, built from src/embed by scripts/build-embed.mjs with the
+# environment's origins inlined (npm run embed:build; build and predev run it)
+/public/embed/cosmos-pay.js
+
 # design handoff bundle (reference only)
 .design-ref/
 

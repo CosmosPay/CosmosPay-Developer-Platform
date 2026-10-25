@@ -55,6 +55,9 @@ domains. `src/middleware.ts` routes every request by host with the table in
   link has a hosted checkout page on payments.cosmospay.lat (amount, QR, open-in-wallet, live
   status, countdown) in one of four designs — Classic, Split, Receipt, Card — chosen when the
   link is created and changeable from its detail modal.
+- **Embed** — one script for merchants' own sites (`/embed/cosmos-pay.js`, built from
+  `src/embed/`): `<cosmos-pay-button>` opens the hosted checkout in a popup and relays its status,
+  `<cosmos-pay-checkout>` draws a compact checkout inline.
 - **Payments site** — payments.cosmospay.lat's own landing (products, flow, security, developers,
   pricing, FAQ) with the coin-ramp video as its hero.
 - **Company site** — the landing, pricing and terms on cosmospay.lat, from the same app.
@@ -92,9 +95,10 @@ Browser ──▶ Cloudflare ──▶ nginx ──▶ Astro SSR app (this repo,
   real API key would after passing through APISIX.
 - It (re)syncs the APISIX routes to the current `COSMOS_API_URL` on startup
   (`src/lib/apisix-route.ts`): the key-auth route external API-key traffic is proxied through,
-  plus keyless routes for the OAuth callbacks, the two public reads (the shared public key and
-  one payment link, `/v1/payment-links/*`, which the hosted checkout calls from the payer's
-  browser) and SEP-1/10/30 (stellar.toml, web auth and account recovery, all served by the
+  plus keyless routes for the OAuth callbacks and the shared public key, for the public read of
+  one payment link (`/v1/payment-links/*`, its own route with CORS for any origin: the hosted
+  checkout and the embedded checkout on merchants' sites call it from the payer's browser)
+  and for SEP-1/10/30 (stellar.toml, web auth and account recovery, all served by the
   community server). `COSMOS_API_URL` may list several
   `host:port` replicas, balanced round-robin.
 
@@ -128,6 +132,8 @@ src/
 ├── utils/                # apisix.ts (admin API: routes/consumers/credentials)
 ├── schemas/              # Zod schemas (OpenAPI source of truth)
 ├── emails/               # transactional email templates
+├── embed/                # merchant embed (<cosmos-pay-button>, <cosmos-pay-checkout>),
+│                         # bundled by scripts/build-embed.mjs into public/embed/cosmos-pay.js
 ├── middleware.ts         # session resolution, CORS, one-time APISIX route sync, and
 │                         # the activity record of this app's own /api/* traffic
 └── styles/
@@ -177,13 +183,13 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `BETTER_AUTH_SECRET` | Session signing secret |
 | `BETTER_AUTH_URL` / `PUBLIC_BETTER_AUTH_URL` | Public app URL (server + browser). **Must match the deployed domain** |
 | `PUBLIC_SITE_URL` / `PUBLIC_PAYMENTS_URL` | The two other domains this app answers (host routing, absolute links, each link's checkout URL). Default to the production domains |
-| `PUBLIC_PAYMENTS_API_URL` / `PUBLIC_WALLET_WEB_URL` | The gateway the checkout reads links from (with its entry prefix) and the web wallet it hands Stellar links to |
+| `PUBLIC_PAYMENTS_API_URL` / `PUBLIC_WALLET_WEB_URL` | The gateway the checkout and the embed read links from (with its entry prefix) and the web wallet the checkout hands Stellar links to. With `PUBLIC_PAYMENTS_URL`, inlined into the embed bundle too |
 | `AUTHENTIK_CLIENT_ID` / `_SECRET` / `_DISCOVERY_URL` | Authentik OAuth2 provider |
 | `APISIX_URL` / `APISIX_ADMIN_KEY` / `APISSIX_ROUTE_ID` | APISIX admin API + the synced route id |
 | `COSMOS_API_URL` | Upstream Payments API the routes proxy to (comma-separated replicas allowed) |
 | `COSMOS_RECOVERY_{A,B}_HOST` / `_UPSTREAM` | Optional: a host-bound SEP route per recovery server deployment |
 | `COSMOS_API_ENTRY` / `COSMOS_API_REWRITE` | Public route path + rewrite (`/cosmos-api/* → /$1`) |
-| `COSMOS_API_CORS_ORIGINS` | Browser origins the gateway routes allow. **Must include `https://payments.cosmospay.lat`**, or the hosted checkout cannot read its link; applied by `npm run sync:route` |
+| `COSMOS_API_CORS_ORIGINS` | Browser origins the gateway's key-auth and callback routes allow (the wallet's origins). Not used by the public payment-link read, whose route answers any origin; applied when the app syncs the routes at boot |
 | `COSMOS_GATEWAY_SECRET` | `X-Gateway-Secret` for direct server-to-server calls, and the key of the `X-Cosmos-Internal` marker. **Must equal the community server's `APISIX_GATEWAY_SECRET`** |
 | `RESEND_API_KEY` | Resend HTTP email (preferred). Falls back to `SMTP_*` if unset |
 | `SMTP_HOST/PORT/USER/PASS/SECURE` / `SMTP_FROM` | SMTP transport + verified sender |
@@ -208,7 +214,8 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | Command | Action |
 | :--- | :--- |
 | `npm run dev` | Dev server with HMR at `localhost:4321` (`--host`) |
-| `npm run build` | `prisma generate` + production build → `dist/` |
+| `npm run build` | `prisma generate` + docs + embed bundle + production build → `dist/` |
+| `npm run embed:build` | Bundle `src/embed/` into `public/embed/cosmos-pay.js` with the env's origins inlined (`build` and `predev` run it; `-- --mode development` reads `.env.development`) |
 | `npm run start` | Run the built server (`node ./dist/server/entry.mjs`) |
 | `npm run preview` | Preview the build locally |
 | `npm run db:generate` | Regenerate the Prisma client |

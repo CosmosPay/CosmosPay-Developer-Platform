@@ -8,7 +8,11 @@ export const CHAINS = ["stellar", "solana", "monad"] as const;
 export type Chain = (typeof CHAINS)[number];
 export type Tier = "public" | "testnet";
 export type LinkStatus = "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
-const STATUSES: readonly LinkStatus[] = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
+export const LINK_STATUSES: readonly LinkStatus[] = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
+
+export function isLinkStatus(value: unknown): value is LinkStatus {
+  return typeof value === "string" && (LINK_STATUSES as readonly string[]).includes(value);
+}
 
 export interface PaymentLink {
   id: string;
@@ -67,10 +71,12 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
   if (b.kind !== "PAY" && b.kind !== "TX") return null;
   if (!CHAINS.includes(b.chain as Chain)) return null;
   if (b.network !== "public" && b.network !== "testnet") return null;
-  if (!STATUSES.includes(b.status as LinkStatus)) return null;
+  if (!isLinkStatus(b.status)) return null;
   if (!str(b.payTo) || !b.payTo || !str(b.asset) || !str(b.memo) || !str(b.uri) || !str(b.qr) || !str(b.createdAt)) return null;
   if (!strOrNull(b.amount) || !strOrNull(b.assetIssuer) || !strOrNull(b.msg) || !strOrNull(b.txHash)) return null;
   if (!strOrNull(b.networkFee) || !strOrNull(b.expiresAt)) return null;
+  // a deadline the page cannot read would break the countdown and the poll timing
+  if (b.expiresAt !== null && !Number.isFinite(Date.parse(b.expiresAt))) return null;
   const chain = b.chain as Chain;
   if (!URI_SCHEMES[chain].test(b.uri)) return null;
   if (!QR_DATA_URL.test(b.qr)) return null;

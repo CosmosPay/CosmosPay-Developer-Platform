@@ -1,0 +1,128 @@
+---
+title: "Embed a payment: pay button and embedded checkout"
+description: Take a payment on your own website with one script tag — a button that opens the hosted checkout, or a compact checkout drawn inside your page.
+---
+
+Every payment link you create has a **hosted checkout** at `https://payments.cosmospay.lat/{id}`.
+To take the payment without sending the payer away from your site, add one script and then one of
+two elements:
+
+- **Pay button** — `<cosmos-pay-button>` draws a button. Clicking it opens the hosted checkout in a
+  popup window, and the button tells your page when the status changes.
+- **Embedded checkout** — `<cosmos-pay-checkout>` draws a compact checkout inside your page: the
+  amount, the network, the QR code, an **Open in wallet** button and the live status.
+
+Both take the **payment link id**: the `id` of the payment intent you created on your server (the
+last part of its checkout URL). Create the intent first — see [Payment intents](/sdk/server/payment-intents).
+
+## Add the script
+
+```html
+<script src="https://payments.cosmospay.lat/embed/cosmos-pay.js" defer></script>
+```
+
+Once per page, anywhere in it. The elements are standard custom elements, so they work in plain
+HTML and in any framework. The script needs **no API key** — never put your key in a web page.
+
+## Pay button
+
+```html
+<cosmos-pay-button link="cmh4x2k9a0001l70g8v5q3z2w"></cosmos-pay-button>
+```
+
+- The label is "Pay with Cosmos Pay", in the payer's language. Text inside the element replaces it:
+  `<cosmos-pay-button link="…">Pay order #1001</cosmos-pay-button>`.
+- Clicking opens the hosted checkout in a 480×780 popup. If the browser blocks the popup, the same
+  tab goes to the checkout instead.
+- While the popup is open, the button fires the [events](#events) below each time the status changes.
+- To restyle it, target its part: `cosmos-pay-button::part(button) { … }`.
+
+## Embedded checkout
+
+```html
+<cosmos-pay-checkout link="cmh4x2k9a0001l70g8v5q3z2w" lang="es" theme="auto"></cosmos-pay-checkout>
+```
+
+It shows the amount and asset (or "Any amount" when the payer chooses), the link's description,
+the network, the QR code, **Open in wallet**, the status, and the expiry when the link has one. It
+reads the link from the payer's browser and keeps it current — every 5 seconds while it awaits
+payment, every 3 while the network confirms it, every 30 once it has expired — and stops when the
+payment is paid, failed or cancelled.
+
+- It is up to 420px wide by default. Override that with CSS on the element:
+  `cosmos-pay-checkout { max-width: none; }`.
+- It is not an iframe: the payment pages refuse to be framed, on purpose. The element draws its own
+  interface in a shadow root, so your page's styles do not leak into it.
+- Show **one per payment**. Each one reads its link about 12 times a minute, and that read is limited
+  per payer address.
+
+## Attributes
+
+| Attribute | Element | Values | Default |
+| :--- | :--- | :--- | :--- |
+| `link` | both | The payment link id | Required |
+| `lang` | both | `en`, `es`, `pt`, `fr`, `de` (a regional tag such as `es-AR` works too) | The payer's browser language, else `en` |
+| `theme` | both | `light`, `dark`, `auto` (follows the payer's system setting) | `light` |
+
+On the button, `lang` sets the label and, when you give it, the hosted checkout's language too.
+Without it, the checkout uses the payer's own language.
+
+## Events
+
+Both elements fire these events on themselves. They bubble, so you can also listen on `document`.
+
+| Event | When | `detail` |
+| :--- | :--- | :--- |
+| `cosmospay:status` | The payment's status changes (also once on the first read) | `{ id, status }` |
+| `cosmospay:paid` | The status becomes `SUCCEEDED` | `{ id, status }` |
+
+`status` is one of the API's values: `PENDING`, `SUBMITTED`, `SUCCEEDED`, `FAILED`, `CANCELLED`,
+`EXPIRED`. `SUBMITTED` means the payment was sent and the network is confirming it. `EXPIRED` is not
+final: a payment verified late can still move an expired link to `SUCCEEDED`.
+
+```js
+const checkout = document.querySelector('cosmos-pay-checkout');
+
+checkout.addEventListener('cosmospay:status', (event) => {
+  console.log(event.detail.id, event.detail.status);
+});
+
+checkout.addEventListener('cosmospay:paid', async () => {
+  // Update the page, then ask YOUR server whether the order is paid.
+  const res = await fetch('/orders/1001/status');
+  // …
+});
+```
+
+<Callout type="warn" title="Events are UI hints, not proof of payment">
+Any script on the page can fire the same events, and a payer can change the page. Use them to update
+what the payer sees, never to release goods. Confirm every payment **on your server**: through the
+[webhook](/sdk/server/webhooks) (`PAYMENT_INTENT_SUCCEEDED`) or by reading the intent with your key
+(`client.paymentIntents.fetch(id)`, or `GET /v1/payment-intents/{id}` in the [REST API](/api/payment-intents)).
+</Callout>
+
+The pay button only hears from the checkout while its popup is open, and only if the browser keeps
+the two windows connected. If your page sends `Cross-Origin-Opener-Policy: same-origin`, use
+`same-origin-allow-popups` instead, or the button receives no updates. When the popup is blocked and
+the checkout opens in the same tab, there are no events at all — your server still gets the webhook.
+
+## Content Security Policy
+
+If your site sends a `Content-Security-Policy`, allow:
+
+| Directive | Value | Why |
+| :--- | :--- | :--- |
+| `script-src` | `https://payments.cosmospay.lat` | The script itself |
+| `connect-src` | `https://api.cosmospay.lat` | The embedded checkout reads its link from the API |
+| `img-src` | `data:` | The QR code is a data URL |
+
+The elements need no inline styles or scripts. The script is updated in place with each release, so it
+is published without a fixed `integrity` hash.
+
+## Next steps
+
+<Cards>
+  <Card title="Payment intents" href="/sdk/server/payment-intents" description="Create the payment whose link you embed." />
+  <Card title="Webhooks" href="/sdk/server/webhooks" description="Confirm the payment on your server the moment it succeeds." />
+  <Card title="Payment links API" href="/api/payment-links" description="The keyless read both elements use." />
+</Cards>
