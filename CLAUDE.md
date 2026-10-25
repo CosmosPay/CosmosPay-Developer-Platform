@@ -112,9 +112,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   border or blur: `.nav:not(.scrolled):not(.menu-open)`); it takes one back once the page moves
   or the mobile menu opens.
 - **Every page also has the footer's social profiles and a back-to-top button.** The profiles
-  (X, Instagram, Discord, WhatsApp) are `SOCIAL` in `src/components/cosmos/lib/constants.ts`,
-  drawn by `Social.tsx` with Simple Icons' official glyphs (CC0); LinkedIn stays commented out
-  until it has a URL. `BackToTop.astro` (both layouts) appears once the page has moved down a
+  (X, Instagram, Discord, WhatsApp, LinkedIn) are `SOCIAL` in
+  `src/components/cosmos/lib/constants.ts`, drawn by `Social.tsx` with Simple Icons' official
+  glyphs (CC0). `BackToTop.astro` (both layouts) appears once the page has moved down a
   screen; it keeps its own five-language label because the layouts read two catalogs.
 - **No ghost links.** A menu or footer link renders only when it leads somewhere. The targets are
   listed by catalog position in `NAV_LINKS` / `FEATURED_HREFS` (Nav.tsx) and `FOOT_GROUPS`
@@ -324,6 +324,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   upgrade order. New accounts start on `DEFAULT_PLAN_ID` (starter; also `profile.plan`'s
   database default). Existing community rows were not migrated, and the shared public wallet key
   stays on community on purpose (its swap rate must stay the highest; see `public-key.ts`).
+- Production leaves `ENABLED_PLANS` empty: every offered plan can be picked (product owner,
+  2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
 - Starter is 1% + 25¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
 

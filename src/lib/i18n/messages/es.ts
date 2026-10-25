@@ -707,14 +707,14 @@ export default {
         name: "Essentials",
         desc: "Acceso completo a la plataforma con disputas y todos los métodos de pago.",
         txt: "+ 0.5% + 10¢ por transacción *",
-        cta: "Empezar prueba gratuita",
+        cta: "Elegir Essentials",
         feats: ["Todo lo de Starter", "Acceso total a la API", "Protección de pagos", "Resolución de disputas", "Tarjetas y transferencias bancarias", "Soporte prioritario por email", "Descuentos por volumen"]
       },
       {
         name: "Growth",
         desc: "Tarifas más bajas y más potencia para equipos en crecimiento.",
         txt: "+ 0.2% + 5¢ por transacción *",
-        cta: "Empezar prueba gratuita",
+        cta: "Elegir Growth",
         feats: ["Todo lo de Essentials", "Tarifa de 0.2% + 5¢ por transacción", "Miembros del equipo ilimitados", "Herramientas antifraude avanzadas", "Descuentos por volumen", "Soporte prioritario", "Enrutamiento inteligente de pagos"]
       }
     ],

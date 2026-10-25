@@ -379,9 +379,9 @@ export default {
     plans: [
       { name: "Starter", desc: "Take real payments with no monthly fee and built-in payment protection.", amt: "1%", txt: "+ 25¢ per transaction *", cta: "Get started",
         feats: ["Live payments", "Test API keys", "Payment protection", "Partial API access", "Standard support", "Dispute resolution", "Cards & bank transfers"] },
-      { name: "Essentials", desc: "Full platform access with disputes and every payment method.", txt: "+ 0.5% + 10¢ per transaction *", cta: "Start free trial",
+      { name: "Essentials", desc: "Full platform access with disputes and every payment method.", txt: "+ 0.5% + 10¢ per transaction *", cta: "Choose Essentials",
         feats: ["Everything in Starter", "Full API access", "Payment protection", "Dispute resolution", "Cards & bank transfers", "Priority email support", "Volume discounts"] },
-      { name: "Growth", desc: "Lower rates and more power for scaling teams.", txt: "+ 0.2% + 5¢ per transaction *", cta: "Start free trial",
+      { name: "Growth", desc: "Lower rates and more power for scaling teams.", txt: "+ 0.2% + 5¢ per transaction *", cta: "Choose Growth",
         feats: ["Everything in Essentials", "0.2% + 5¢ transaction rate", "Unlimited team members", "Advanced fraud tools", "Volume discounts", "Priority support", "Smart payment routing"] },
     ],
     enterprise: {
