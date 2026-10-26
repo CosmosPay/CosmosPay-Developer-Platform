@@ -1,8 +1,9 @@
 /* The ZK checkout (payments.cosmospay.lat/zk/{id}): the payer pays a ZK payment privately.
    The payment is read from the gateway in the payer's browser (src/lib/zk/checkout-api.ts); paying
    runs entirely here: Freighter signs, bb.js proves (the page is cross-origin isolated), and the
-   two confidential transfers go out (the merchant's net amount, then the 0.01% commission). The
-   Payments API then checks both on-chain, with the token's auditor key, before it says "paid".
+   confidential transfers go out (the merchant's net amount, the 0.01% commission, and the
+   merchant fee when the payment has one). The Payments API then checks each on-chain, with the
+   token's auditor key, before it says "paid".
    The wallet and the prover load only when the payer starts paying. */
 import { useEffect, useRef, useState } from "react";
 import { fmt, initLang, useT } from "@/lib/i18n/index";
@@ -11,8 +12,10 @@ import { confirmZkCheckout, fetchZkCheckout, type ZkCheckout as Payment } from "
 import { toUnits } from "@/lib/zk/amounts";
 import type { ZkPhase, ZkWallet } from "@/lib/zk/wallet";
 
-type Step = "register" | "fund" | "pay" | "fee" | "confirm";
-const STEPS: Step[] = ["register", "fund", "pay", "fee", "confirm"];
+type Step = "register" | "fund" | "pay" | "fee" | "merchantFee" | "confirm";
+const ALL_STEPS: Step[] = ["register", "fund", "pay", "fee", "merchantFee", "confirm"];
+/* A payment with no merchant fee makes no third transfer. */
+const stepsOf = (p: Payment | null): Step[] => ALL_STEPS.filter((s) => s !== "merchantFee" || !!p?.merchantFee);
 type StepState = "todo" | "active" | "done" | "skipped";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -24,13 +27,13 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
   const z = t.zk;
   const [load, setLoad] = useState<"loading" | "ok" | "not-found" | "error">("loading");
   const [payment, setPayment] = useState<Payment | null>(null);
-  const [steps, setSteps] = useState<Record<Step, StepState>>({ register: "todo", fund: "todo", pay: "todo", fee: "todo", confirm: "todo" });
+  const [steps, setSteps] = useState<Record<Step, StepState>>({ register: "todo", fund: "todo", pay: "todo", fee: "todo", merchantFee: "todo", confirm: "todo" });
   const [phase, setPhase] = useState<ZkPhase | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wallet = useRef<ZkWallet | null>(null);
   // The transfers already sent, so a retry after a failure never pays twice.
-  const sent = useRef<{ payment?: string; fee?: string }>({});
+  const sent = useRef<{ payment?: string; fee?: string; merchantFee?: string }>({});
 
   const reload = () => {
     setLoad("loading");
@@ -76,17 +79,26 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
         sent.current.fee = await w.transfer(payment.feeAccount, toUnits(payment.feeAmount), setPhase);
         mark("fee", "done");
       }
+      if (payment.merchantFee && !sent.current.merchantFee) {
+        mark("merchantFee", "active");
+        sent.current.merchantFee = await w.transfer(payment.merchantFee.wallet, toUnits(payment.merchantFee.amount), setPhase);
+        mark("merchantFee", "done");
+      }
       const paymentTx = sent.current.payment;
       const feeTx = sent.current.fee;
       mark("confirm", "active");
       setPhase("waiting");
-      const res = await confirmZkCheckout(apiBase, id, { paymentTxHash: paymentTx, feeTxHash: feeTx });
+      const res = await confirmZkCheckout(apiBase, id, {
+        paymentTxHash: paymentTx,
+        feeTxHash: feeTx,
+        ...(sent.current.merchantFee ? { merchantFeeTxHash: sent.current.merchantFee } : {}),
+      });
       if (res.kind !== "ok") throw new Error(res.kind === "error" && res.message ? res.message : z.checkout.loadError);
       mark("confirm", "done");
       setPayment(res.value);
     } catch (e) {
       setError(freighterMessage(e));
-      setSteps((x) => Object.fromEntries(STEPS.map((s) => [s, x[s] === "active" ? "todo" : x[s]])) as Record<Step, StepState>);
+      setSteps((x) => Object.fromEntries(ALL_STEPS.map((s) => [s, x[s] === "active" ? "todo" : x[s]])) as Record<Step, StepState>);
     } finally {
       setBusy(false);
       setPhase(null);
@@ -116,6 +128,7 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
         <div><dt>{z.checkout.to}</dt><dd className="zk-mono" title={payment.recipient}>{short(payment.recipient)}</dd></div>
         <div><dt>{z.merchantGets}</dt><dd>{payment.netAmount} {payment.token.symbol}</dd></div>
         <div><dt>{z.commission}</dt><dd>{payment.feeAmount} {payment.token.symbol} <span className="zk-muted">({z.commissionRate})</span></dd></div>
+        {payment.merchantFee && <div><dt>{z.merchantFee}</dt><dd>{payment.merchantFee.amount} {payment.token.symbol}</dd></div>}
       </dl>
 
       {paid ? (
@@ -131,7 +144,7 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
       ) : (
         <>
           <ol className="zk-steps">
-            {STEPS.map((s) => (
+            {stepsOf(payment).map((s) => (
               <li key={s} className={`zk-step is-${steps[s]}`}>
                 <span className="zk-step-dot" aria-hidden="true" />
                 <span>{z.checkout.steps[s]}</span>

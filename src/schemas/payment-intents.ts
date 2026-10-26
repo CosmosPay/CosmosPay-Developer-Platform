@@ -25,6 +25,11 @@ const amountString = z
    Payments API checks the token's real decimals). */
 const AMOUNT_PLACES: Record<Chain, number> = { stellar: 7, solana: 18, monad: 18 };
 
+/** Decimal places of an amount string; 0 for none. */
+const places = (amount: string | undefined) => amount?.split(".")[1]?.length ?? 0;
+/** Two addresses of one chain are the same account: EVM ones whatever their case. */
+const sameAddress = (chain: Chain, a: string, b: string) => (chain === "monad" ? a.toLowerCase() === b.toLowerCase() : a === b);
+
 const memoString = z.string().trim().regex(/^\d+$/, "Memo must be a numeric MEMO_ID.").max(20);
 const assetCode = z.string().trim().regex(/^[a-zA-Z0-9]{1,12}$/, "Asset code must be 1-12 letters or digits.");
 const msgString = z.string().trim().max(300);
@@ -66,13 +71,15 @@ export const createPaymentIntentBodySchema = z
     const places = v.amount?.split(".")[1]?.length ?? 0;
     if (places > AMOUNT_PLACES[chain]) issue("amount", "Amount must have at most " + AMOUNT_PLACES[chain] + " decimals on " + chain + ".");
     const native = !v.assetCode || v.assetCode.toUpperCase() === NATIVE_CODES[chain];
-    // A merchant fee is a second payment in the same transaction: Stellar only for now, and it
-    // needs an amount to take it from. Its wallet is the organization's (checked by the route).
+    // A merchant fee is a second payment in the same transaction (Stellar, Solana) or a split at
+    // the deposit address (Monad), and it needs an amount to take it from. Its wallet is the
+    // organization's, on the link's chain (checked by the route).
     if (v.merchantFee) {
-      if (chain !== "stellar") issue("merchantFee", "A merchant fee is available on Stellar payments only for now.");
-      else if (!v.amount) issue("merchantFee", "A merchant fee needs an amount.");
-      else if (!ADDRESS_PATTERNS.stellar.test(v.merchantFee.wallet)) issue("merchantFee", ADDRESS_MESSAGES.stellar);
-      else if (v.merchantFee.wallet === v.destination) issue("merchantFee", "The fee goes to another wallet than the payment.");
+      const wallet = v.merchantFee.wallet;
+      if (!v.amount) issue("merchantFee", "A merchant fee needs an amount.");
+      else if (!ADDRESS_PATTERNS[chain].test(wallet)) issue("merchantFee", ADDRESS_MESSAGES[chain]);
+      else if (sameAddress(chain, wallet, v.destination)) issue("merchantFee", "The fee goes to another wallet than the payment.");
+      else if (places(v.merchantFee.fixed) > AMOUNT_PLACES[chain]) issue("merchantFee", "The fixed fee has too many decimals for " + chain + ".");
     }
     if (chain === "stellar") {
       if (v.kind === "tx" && !v.source) issue("source", "A source account is required for a transaction intent.");

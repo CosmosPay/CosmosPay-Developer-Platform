@@ -1335,6 +1335,284 @@
         "security": []
       }
     },
+    "/v1/payment-links/{id}/solana-pay": {
+      "get": {
+        "description": "A Solana payment link with a merchant fee is a Solana Pay transaction request (`solana:<this URL>`), because a transfer request names one recipient. A wallet reads this first, then POSTs the payer’s account.",
+        "operationId": "PaymentLinksController_solanaPayInfo_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolanaPayInfoEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: the link is not a Solana Pay transaction request (only a Solana link with a merchant fee is), or `account` is not a Solana address. `invalid_state_transition`: the link is no longer open.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: Not a transaction request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "This payment link is not a Solana Pay transaction request: open its uri",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/solana-pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The link is no longer open",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w is EXPIRED: it can no longer be paid",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/solana-pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment intent has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/solana-pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Solana Pay transaction request, GET: the label and icon a wallet shows (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:read",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      },
+      "post": {
+        "description": "Given the payer’s `account`, the unsigned transaction (base64) with the link’s memo, the transfer to the merchant carrying the link’s reference, and the merchant fee’s transfer to its wallet (creating their token accounts first when missing, paid by the payer). The link settles from the ledger, found by its reference; nothing is stored. Only for an open link.",
+        "operationId": "PaymentLinksController_solanaPayTransaction_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolanaPayAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolanaPayTransactionEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: the link is not a Solana Pay transaction request (only a Solana link with a merchant fee is), or `account` is not a Solana address. `invalid_state_transition`: the link is no longer open.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: Not a transaction request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "This payment link is not a Solana Pay transaction request: open its uri",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/solana-pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The link is no longer open",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w is EXPIRED: it can no longer be paid",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/solana-pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment intent has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/solana-pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Solana Pay transaction request, POST: the transaction the payer signs (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:transaction",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Solana"
+        ],
+        "security": []
+      }
+    },
     "/v1/customers": {
       "post": {
         "operationId": "CustomersController_create_v1",
@@ -1624,7 +1902,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: `chain: solana | monad` with a dev (testnet) key: Jupiter and Kuru Flow run on mainnet only. `asset_unsupported`: not an SPL mint / ERC-20 on that chain. `provider_error`: the aggregator found no route or refused the amount.",
+            "description": "`network_unsupported`: `chain: solana | monad` with a dev (testnet) key: Jupiter and Kuru Flow run on mainnet only. `asset_unsupported`: not an SPL mint / ERC-20 on that chain. `provider_error`: the aggregator found no route or refused the amount. `merchant_fee_unsupported`: a `merchantFee` on a Monad swap where no merchant fee router is configured (KURU_MERCHANT_FEE_ROUTER).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1710,6 +1988,17 @@
                       "path": "/v1/onramp/quotes",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
+                  },
+                  "merchant_fee_unsupported": {
+                    "summary": "merchant_fee_unsupported: This operation cannot pay a merchant fee yet",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "merchant_fee_unsupported",
+                      "error": "Bad Request",
+                      "message": "A merchant fee is not available on monad swaps on this deployment: Kuru Flow takes one referrer fee per swap and the plan commission uses it, and no merchant fee router is configured (KURU_MERCHANT_FEE_ROUTER).",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
                   }
                 }
               }
@@ -1731,7 +2020,7 @@
             "$ref": "#/components/responses/UpstreamError"
           },
           "503": {
-            "description": "`misconfigured`: the plan charges a commission and the chain has no fee wallet configured (STELLAR_SWAP_FEE_WALLET, SOLANA_SWAP_FEE_WALLET, MONAD_SWAP_FEE_WALLET).",
+            "description": "`misconfigured`: the plan charges a commission and the chain has no fee wallet configured (STELLAR_SWAP_FEE_WALLET, SOLANA_SWAP_FEE_WALLET, MONAD_SWAP_FEE_WALLET), or KURU_MERCHANT_FEE_ROUTER is not a MerchantFeeSwapRouter.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1856,7 +2145,7 @@
             }
           },
           "400": {
-            "description": "Stellar: `trustline_missing` (the destination is another account that does not trust the bought asset, and only it can add the trustline; a source that receives the swap gets the trustline in the same transaction instead), `insufficient_balance` (the source cannot keep the 0.5 XLM reserve that trustline locks, after what the transaction sends and its fee), `no_path_found`. Solana / Monad: `network_unsupported` (a dev key), `asset_unsupported`, `provider_error` (no route, or the aggregator simulated a failure, usually a wallet that cannot cover the amount plus fees).",
+            "description": "Stellar: `trustline_missing` (the destination is another account that does not trust the bought asset, and only it can add the trustline; a source that receives the swap gets the trustline in the same transaction instead), `insufficient_balance` (the source cannot keep the 0.5 XLM reserve that trustline locks, after what the transaction sends and its fee), `no_path_found`. Solana / Monad: `network_unsupported` (a dev key), `asset_unsupported`, `provider_error` (no route, or the aggregator simulated a failure, usually a wallet that cannot cover the amount plus fees). Monad: `merchant_fee_unsupported` (a `merchantFee` and no merchant fee router configured, KURU_MERCHANT_FEE_ROUTER).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1964,6 +2253,17 @@
                       "path": "/v1/onramp/quotes",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
+                  },
+                  "merchant_fee_unsupported": {
+                    "summary": "merchant_fee_unsupported: This operation cannot pay a merchant fee yet",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "merchant_fee_unsupported",
+                      "error": "Bad Request",
+                      "message": "A merchant fee is not available on monad swaps on this deployment: Kuru Flow takes one referrer fee per swap and the plan commission uses it, and no merchant fee router is configured (KURU_MERCHANT_FEE_ROUTER).",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
                   }
                 }
               }
@@ -2019,7 +2319,7 @@
             "$ref": "#/components/responses/UpstreamError"
           },
           "503": {
-            "description": "`misconfigured`: the plan charges a commission and the chain has no fee wallet (or, on Solana, the fee wallet has no token account for the output mint yet).",
+            "description": "`misconfigured`: the plan charges a commission and the chain has no fee wallet (or, on Solana, the fee wallet has no token account for the output mint yet), or, for a Monad swap with a merchant fee, KURU_MERCHANT_FEE_ROUTER is not a MerchantFeeSwapRouter or Kuru Flow routes through another aggregator than the one it was deployed for.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3443,7 +3743,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_amount`: Not a Stellar amount, or not greater than zero\n\n`insufficient_balance`: The source account cannot cover the amount, or the XLM reserve the transaction needs",
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_amount`: Not a Stellar amount, or not greater than zero\n\n`insufficient_balance`: The source account cannot cover the amount, or the XLM reserve the transaction needs\n\n`trustline_missing`: An account does not trust the asset, and this request cannot add the trustline for it",
             "content": {
               "application/json": {
                 "schema": {
@@ -3483,6 +3783,17 @@
                       "error": "Bad Request",
                       "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ holds only 12.5000000 shares of this pool",
                       "path": "/v1/liquidity-pools/withdraw",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "trustline_missing": {
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "trustline_missing",
+                      "error": "Bad Request",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5, so it cannot receive the swap. Only that account can add the trustline, by signing a transaction of its own: ask its owner to add it, then try again.",
+                      "path": "/v1/swaps",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   }
@@ -12072,7 +12383,7 @@
     },
     "/v1/zk-payments": {
       "post": {
-        "description": "A private payment hides its amount on-chain: it is paid with confidential transfers on Cosmos Pay's confidential token, proven with zero-knowledge proofs (hence `zk` in the paths). Prices the payment (`amount` = `netAmount` + `feeAmount`, the fee rounded up and at least one stroop) and checks on-chain that the recipient holds a confidential account on the token under auditor 0. The payer then makes two confidential transfers (net to the merchant, fee to the fee account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`.",
+        "description": "A private payment hides its amount on-chain: it is paid with confidential transfers on Cosmos Pay's confidential token, proven with zero-knowledge proofs (hence `zk` in the paths). Prices the payment (`amount` = `netAmount` + `feeAmount`, the fee rounded up and at least one stroop) and checks on-chain that the recipient holds a confidential account on the token under auditor 0. The payer then makes two confidential transfers (net to the merchant, fee to the fee account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`. With a `merchantFee`, a third transfer pays it to its wallet, which must hold a confidential account on the token too.",
         "operationId": "ZkPaymentsController_create_v1",
         "parameters": [
           {
@@ -12131,7 +12442,7 @@
             }
           },
           "400": {
-            "description": "`invalid_amount`: after the commission the merchant would receive nothing. `recipient_not_registered`: the recipient has no confidential account on the token under auditor 0. `network_unsupported`: private payments do not run on this network yet (mainnet today; use a dev key).",
+            "description": "`invalid_amount`: after the commission (and the merchant fee) the merchant would receive nothing, or the merchant fee rounds to nothing. `recipient_not_registered`: the recipient, or the merchant fee's wallet, has no confidential account on the token under auditor 0. `network_unsupported`: private payments do not run on this network yet (mainnet today; use a dev key).",
             "content": {
               "application/json": {
                 "schema": {
@@ -12575,7 +12886,7 @@
     },
     "/v1/zk-checkout/{id}/confirm": {
       "post": {
-        "description": "Reads both transactions back through the Soroban RPC and settles the payment only when: both succeeded and each is a single `confidential_transfer` on the token; both closed while the payment was open (not before it was created, not after `expiresAt`); both come from the same payer; the payment transfer goes to the recipient and the fee transfer to the fee account; and each decrypts with the auditor key, on both auditor channels and against the transfer's commitment, to exactly `netAmount` / `feeAmount`. Neither transaction may have settled another private payment.\n\nIdempotent: the same hashes on a settled payment answer it again. A refusal leaves the payment PENDING, and never says what an amount decrypted to.",
+        "description": "Reads both transactions back through the Soroban RPC and settles the payment only when: both succeeded and each is a single `confidential_transfer` on the token; both closed while the payment was open (not before it was created, not after `expiresAt`); both come from the same payer; the payment transfer goes to the recipient and the fee transfer to the fee account; and each decrypts with the auditor key, on both auditor channels and against the transfer's commitment, to exactly `netAmount` / `feeAmount`. Neither transaction may have settled another private payment.\n\nIdempotent: the same hashes on a settled payment answer it again. A refusal leaves the payment PENDING, and never says what an amount decrypted to.\n\nA payment with a `merchantFee` has a third transfer, of `merchantFee.amount` to `merchantFee.wallet`: send its hash as `merchantFeeTxHash` (required for such a payment, refused for any other). It is checked like the other two, in the same order.",
         "operationId": "ZkCheckoutController_confirm_v1",
         "parameters": [
           {
@@ -12641,7 +12952,7 @@
             }
           },
           "400": {
-            "description": "`transaction_not_found`: the RPC has no such transaction yet (retry in a few seconds) or no longer. `transaction_rejected`: it failed on-chain. `payment_transfer_mismatch` / `fee_transfer_mismatch`: that transaction is not the confidential transfer this payment needs (wrong token, shape, recipient, amount, or it closed before the payment existed). `payer_mismatch`: the two transfers come from different accounts. `expired`: a transfer closed after `expiresAt`. `invalid_state_transition`: already settled by other transactions.",
+            "description": "`transaction_not_found`: the RPC has no such transaction yet (retry in a few seconds) or no longer. `transaction_rejected`: it failed on-chain. `payment_transfer_mismatch` / `fee_transfer_mismatch` / `merchant_fee_transfer_mismatch`: that transaction is not the confidential transfer this payment needs (wrong token, shape, recipient, amount, or it closed before the payment existed). `payer_mismatch`: the transfers come from different accounts. `expired`: a transfer closed after `expiresAt`. `invalid_state_transition`: already settled by other transactions. `validation_failed` also answers a `merchantFeeTxHash` missing on a payment with a merchant fee, or sent for one without.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12702,6 +13013,17 @@
                       "code": "fee_transfer_mismatch",
                       "error": "Bad Request",
                       "message": "The fee transaction does not settle this private payment: it is not a confidential transfer of the commission to the fee account.",
+                      "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "merchant_fee_transfer_mismatch": {
+                    "summary": "merchant_fee_transfer_mismatch: The merchant fee transaction does not pay this payment's merchant fee to its wallet",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "merchant_fee_transfer_mismatch",
+                      "error": "Bad Request",
+                      "message": "The merchant fee transaction does not settle this private payment: it is not a confidential transfer of the merchant fee to the fee's wallet.",
                       "path": "/v1/zk-checkout/cmh4x2k9a0001l70g8v5q3z2w/confirm",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -12810,7 +13132,7 @@
             "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
-        "summary": "Confirm a private payment with its two confidential transfers, verified on-chain (no API key)",
+        "summary": "Confirm a private payment with its confidential transfers, verified on-chain (no API key)",
         "tags": [
           "zk-checkout"
         ],
@@ -13103,7 +13425,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: a dev (testnet) key; USDT0 is on Stellar mainnet only. `validation_failed`: the source account does not exist, or the recipient has a bad EIP-55 checksum. `trustline_missing`: the source does not trust USDT0. `insufficient_balance`: it holds less USDT0 than the transfer takes, or too little XLM for LayerZero’s fee limit, the network fee and its reserve (the message says how much XLM to add). `invalid_amount`: all dust, or outside the OFT’s limits. `provider_error`: the OFT refused the transfer; `message` carries its contract error.",
+            "description": "`merchant_fee_unsupported`: a `merchantFee` and no merchant fee wrapper configured (USDT0_MERCHANT_FEE_WRAPPER). `network_unsupported`: a dev (testnet) key; USDT0 is on Stellar mainnet only. `validation_failed`: the source account does not exist, or the recipient has a bad EIP-55 checksum. `trustline_missing`: the source does not trust USDT0. `insufficient_balance`: it holds less USDT0 than the transfer takes, or too little XLM for LayerZero’s fee limit, the network fee and its reserve (the message says how much XLM to add). `invalid_amount`: all dust, or outside the OFT’s limits. `provider_error`: the OFT refused the transfer; `message` carries its contract error. With a merchant fee, `trustline_missing` also answers a fee wallet that does not trust USDT0, and `insufficient_balance` counts the fee the holder pays on top.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13175,6 +13497,17 @@
                       "path": "/v1/usdt0/transfers",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
+                  },
+                  "merchant_fee_unsupported": {
+                    "summary": "merchant_fee_unsupported: This operation cannot pay a merchant fee yet",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "merchant_fee_unsupported",
+                      "error": "Bad Request",
+                      "message": "A merchant fee is not available on USDT0 transfers on this deployment: a Soroban transaction carries one operation, so the fee needs the merchant fee wrapper (USDT0_MERCHANT_FEE_WRAPPER), which is not configured.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
                   }
                 }
               }
@@ -13239,7 +13572,7 @@
             }
           },
           "503": {
-            "description": "`provider_unavailable`: Horizon or the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network.",
+            "description": "`provider_unavailable`: Horizon or the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network, or USDT0_MERCHANT_FEE_WRAPPER is not the reviewed wrapper bound to USDT0's OFT and token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14116,7 +14449,7 @@
             "example": "ticket"
           },
           "merchantFee": {
-            "description": "Stellar only for now, and only with an `amount`: your own fee on this payment, paid in its asset to `wallet` (a Stellar account that can receive the asset, not `destination`). A SEP-7 `pay` link pays one account, so such a link asks for its payer first: `uri` is the hosted checkout, and `POST /v1/payment-links/{id}/transaction` builds the payer's envelope with both payments. `paidBy: recipient` takes the fee from `amount`; `payer` adds it on top. Solana and Monad answer `merchant_fee_unsupported`.",
+            "description": "Only with an `amount`: your own fee on this payment, paid in its asset to `wallet` (an account on the link's chain, not `destination`). `paidBy: recipient` takes the fee from `amount`; `payer` adds it on top. Stellar: a SEP-7 `pay` link pays one account, so `uri` is the hosted checkout, which asks for the payer and has `POST /v1/payment-links/{id}/transaction` build the envelope with both payments. Solana: `uri` is a Solana Pay transaction request (`/v1/payment-links/{id}/solana-pay`); a SOL fee goes to an existing account. Monad: needs deposit addresses (`merchant_fee_unsupported` without them); the deposit address pays the fee (PaymentSplitForwarder) and the link asks for the amount, plus the fee when the payer pays it.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"
@@ -14895,6 +15228,56 @@
           "xdr",
           "uri",
           "qr"
+        ]
+      },
+      "SolanaPayInfoEntity": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "Cosmos Pay",
+            "description": "Who requests the payment."
+          },
+          "icon": {
+            "type": "string",
+            "example": "https://payments.cosmospay.lat/android-chrome-512x512.png",
+            "description": "An absolute https URL of an image the wallet shows."
+          }
+        },
+        "required": [
+          "label",
+          "icon"
+        ]
+      },
+      "SolanaPayAccountDto": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string",
+            "description": "The payer’s account (base58), which pays the fee and signs.",
+            "example": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+          }
+        },
+        "required": [
+          "account"
+        ]
+      },
+      "SolanaPayTransactionEntity": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "type": "string",
+            "description": "The unsigned transaction (base64 wire bytes): the payment to the merchant, carrying the link’s reference, the merchant fee to its wallet, and the link’s memo. Fee payer: the account that asked.",
+            "example": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA..."
+          },
+          "message": {
+            "type": "string",
+            "description": "The link’s message, for the wallet to show.",
+            "example": "Order #24"
+          }
+        },
+        "required": [
+          "transaction"
         ]
       },
       "CreateCustomerDto": {
@@ -16214,7 +16597,7 @@
             "example": 50
           },
           "merchantFee": {
-            "description": "Stellar only for now: your own fee on this swap, paid in the source asset to `wallet` (a Stellar account that can receive it) by its own payment in the same transaction, beside the plan commission. `paidBy: recipient` takes it from `amount` (the swap routes less); `payer` adds it on top (the source sends `amount` plus the fee). Solana and Monad answer `merchant_fee_unsupported`.",
+            "description": "Your own fee on this swap, paid in the source asset to `wallet` out of the source wallet, in the same transaction, beside the plan commission. Stellar: its own payment (the wallet must trust the asset). Solana: a transfer appended to Jupiter's transaction (a SOL fee goes to an existing account). `paidBy: recipient` takes it from `amount` (the swap routes less); `payer` adds it on top (the source sends `amount` plus the fee). Monad: through the merchant fee router (`KURU_MERCHANT_FEE_ROUTER`), which the wallet sends or approves the input plus the fee; without one configured, `merchant_fee_unsupported`.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"
@@ -16446,7 +16829,7 @@
             "example": 50
           },
           "merchantFee": {
-            "description": "Stellar only for now: your own fee on this swap, paid in the source asset to `wallet` (a Stellar account that can receive it) by its own payment in the same transaction, beside the plan commission. `paidBy: recipient` takes it from `amount` (the swap routes less); `payer` adds it on top (the source sends `amount` plus the fee). Solana and Monad answer `merchant_fee_unsupported`.",
+            "description": "Your own fee on this swap, paid in the source asset to `wallet` out of the source wallet, in the same transaction, beside the plan commission. Stellar: its own payment (the wallet must trust the asset). Solana: a transfer appended to Jupiter's transaction (a SOL fee goes to an existing account). `paidBy: recipient` takes it from `amount` (the swap routes less); `payer` adds it on top (the source sends `amount` plus the fee). Monad: through the merchant fee router (`KURU_MERCHANT_FEE_ROUTER`), which the wallet sends or approves the input plus the fee; without one configured, `merchant_fee_unsupported`.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"
@@ -18106,11 +18489,78 @@
             "type": "string",
             "description": "Optional idempotency key. Prefer the `Idempotency-Key` request header; when both are set, the header wins. A retry with the same key and the same request returns the existing operation instead of building another transaction; the same key with a different request is 409 `idempotency_conflict`.",
             "example": "lp-deposit-2026-08-23-001"
+          },
+          "merchantFee": {
+            "description": "Your own fee on this deposit: `bps` of EACH asset it moves, paid to `wallet` (a Stellar account that can receive both assets) by one payment per asset in the same transaction, beside the plan commission. `fixed` is refused here: the operation moves two assets. `paidBy: recipient` takes it from the amounts (less enters the pool); `payer` adds it on top (the full amounts enter the pool).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeDto"
+              }
+            ]
           }
         },
         "required": [
           "source",
           "maxAmountA"
+        ]
+      },
+      "LiquidityMerchantFeeEntity": {
+        "type": "object",
+        "properties": {
+          "bps": {
+            "type": "number",
+            "description": "The percentage part, in basis points.",
+            "example": 150
+          },
+          "fixed": {
+            "type": "string",
+            "description": "The fixed part, in `asset`.",
+            "example": "0.25"
+          },
+          "amount": {
+            "type": "string",
+            "description": "The fee charged: the percentage of `amount` plus the fixed part.",
+            "example": "1.75"
+          },
+          "asset": {
+            "type": "string",
+            "description": "The asset the fee is paid in.",
+            "example": "XLM"
+          },
+          "wallet": {
+            "type": "string",
+            "description": "Where the fee is paid.",
+            "example": "GBDHAQXQQ75WVBUZ2IX3O7ME7JOKJUOUPUXRNDCORUJODWQCTVUEQ62R"
+          },
+          "paidBy": {
+            "type": "string",
+            "enum": [
+              "recipient",
+              "payer"
+            ],
+            "description": "`recipient`: deducted from the amount. `payer`: added on top of it.",
+            "example": "recipient"
+          },
+          "amountB": {
+            "type": "string",
+            "description": "The fee charged on asset B, in asset B.",
+            "example": "0.05"
+          },
+          "assetB": {
+            "type": "string",
+            "description": "Asset B (`native` for XLM).",
+            "example": "USDC"
+          }
+        },
+        "required": [
+          "bps",
+          "fixed",
+          "amount",
+          "asset",
+          "wallet",
+          "paidBy",
+          "amountB",
+          "assetB"
         ]
       },
       "LiquidityOperationEntity": {
@@ -18234,6 +18684,16 @@
             "example": "GBFEE...WALLET",
             "description": "Commission collector account (null when the fee is disabled)."
           },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The merchant fee the request named: `bps` of each asset, `amount` in asset A and `amountB` in asset B, paid to `wallet` in this transaction; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LiquidityMerchantFeeEntity"
+              }
+            ]
+          },
           "commissionMemo": {
             "type": "object",
             "nullable": true,
@@ -18295,6 +18755,7 @@
           "feeAmountA",
           "feeAmountB",
           "feeWallet",
+          "merchantFee",
           "commissionMemo",
           "xdr",
           "uri",
@@ -18337,6 +18798,14 @@
             "type": "string",
             "description": "Optional idempotency key. Prefer the `Idempotency-Key` request header; when both are set, the header wins. A retry with the same key and the same request returns the existing operation instead of building another transaction; the same key with a different request is 409 `idempotency_conflict`.",
             "example": "lp-withdraw-2026-08-23-001"
+          },
+          "merchantFee": {
+            "description": "Your own fee on this withdrawal: `bps` of EACH asset it moves, paid to `wallet` (a Stellar account that can receive both assets) by one payment per asset in the same transaction, beside the plan commission. `fixed` is refused here: the operation moves two assets. The fee comes out of what the withdrawal pays, on its guaranteed minimums, whichever `paidBy` names: the account is payer and receiver.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeDto"
+              }
+            ]
           }
         },
         "required": [
@@ -18558,6 +19027,16 @@
             "example": "GBFEE...WALLET",
             "description": "Commission collector account (null when the fee is disabled)."
           },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The merchant fee the request named: `bps` of each asset, `amount` in asset A and `amountB` in asset B, paid to `wallet` in this transaction; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LiquidityMerchantFeeEntity"
+              }
+            ]
+          },
           "xdr": {
             "type": "string",
             "description": "Unsigned transaction envelope (base64 XDR) to sign.",
@@ -18609,6 +19088,7 @@
           "feeAmountA",
           "feeAmountB",
           "feeWallet",
+          "merchantFee",
           "xdr",
           "uri",
           "txHash",
@@ -24695,6 +25175,14 @@
             "description": "Idempotency key. A retry with the same key and the same request returns the existing payment; the same key with a different request is 409 idempotency_conflict. The Idempotency-Key header takes precedence over this field. One is generated when neither is sent.",
             "example": "order-24",
             "maxLength": 255
+          },
+          "merchantFee": {
+            "description": "Your own fee on this payment, in XLM, paid privately like the rest: a third confidential transfer from the payer to `wallet`, which must already hold a confidential account on Cosmos Pay's token (under auditor id 0) and be neither the recipient nor the fee account. `paidBy: recipient` takes it from `amount` (the merchant receives less); `payer` adds it on top (the payer pays `amount` plus the fee). The 0.01% commission is a share of `amount` either way. Confirm then takes `merchantFeeTxHash` too.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeDto"
+              }
+            ]
           }
         },
         "required": [
@@ -24735,12 +25223,12 @@
           "amount": {
             "type": "string",
             "example": "25.5",
-            "description": "What the payer pays in total, in XLM."
+            "description": "What the payer pays in total, in XLM: `netAmount + feeAmount`, plus `merchantFee.amount` when there is one."
           },
           "netAmount": {
             "type": "string",
             "example": "25.49745",
-            "description": "What the merchant receives: `amount - feeAmount`."
+            "description": "What the merchant receives: `amount - feeAmount`, less `merchantFee.amount` when there is one."
           },
           "feeAmount": {
             "type": "string",
@@ -24775,6 +25263,22 @@
             "type": "string",
             "nullable": true,
             "example": null
+          },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The merchant fee the request named, paid by a third confidential transfer to its wallet; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeEntity"
+              }
+            ]
+          },
+          "merchantFeeTxHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The merchant fee's transaction, once settled."
           },
           "description": {
             "type": "string",
@@ -24822,6 +25326,8 @@
           "payer",
           "paymentTxHash",
           "feeTxHash",
+          "merchantFee",
+          "merchantFeeTxHash",
           "description",
           "idempotencyKey",
           "expiresAt",
@@ -24901,6 +25407,16 @@
             "example": "GDUYXOQZFVPDVIVBTJNUCGYQEC3XSI2LQOQ3SJWJJ6ZY4JLCJZZFGTNQ",
             "description": "Transfer `feeAmount` here, from the same account."
           },
+          "merchantFee": {
+            "nullable": true,
+            "description": "When not null, a third transfer: `merchantFee.amount` to `merchantFee.wallet`, from the same account.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeEntity"
+              }
+            ]
+          },
           "description": {
             "type": "string",
             "nullable": true,
@@ -24945,6 +25461,7 @@
           "feeBps",
           "recipient",
           "feeAccount",
+          "merchantFee",
           "description",
           "expiresAt",
           "network",
@@ -24966,6 +25483,11 @@
             "type": "string",
             "description": "The transaction of the confidential transfer that paid the fee account the payment's `feeAmount` (64 hex), from the same account.",
             "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          },
+          "merchantFeeTxHash": {
+            "type": "string",
+            "description": "Only for a payment with a merchant fee, and then required: the transaction of the confidential transfer that paid `merchantFee.wallet` the payment's `merchantFee.amount` (64 hex), from the same account.",
+            "example": "9c2e4a6b8d0f1e3c5a7b9d2f4e6a8c0b1d3f5e7a9c2b4d6f8e0a1c3e5b7d9f2a"
           }
         },
         "required": [
@@ -25289,6 +25811,14 @@
             "type": "string",
             "example": "usdt0-retry-2026-10-25-001",
             "description": "Optional idempotency key. Prefer the `Idempotency-Key` request header; when both are set, the header wins. A retry with the same key and the same request returns the stored transfer; the same key with a different request is 409 `idempotency_conflict`."
+          },
+          "merchantFee": {
+            "description": "Your own fee on this transfer, in USDT0, paid to `wallet` (a Stellar account that trusts USDT0) in the same transaction: the operation is then the merchant fee wrapper (`USDT0_MERCHANT_FEE_WRAPPER`), which pays the fee and calls the OFT's `send` under the holder's one authorization. `paidBy: recipient` takes it from `amount` (less is sent); `payer` adds it on top. Without a configured wrapper, `merchant_fee_unsupported`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeDto"
+              }
+            ]
           }
         },
         "required": [
@@ -25457,6 +25987,16 @@
             "example": null,
             "description": "Why a FAILED transfer failed."
           },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the merchant fee wrapper; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeEntity"
+              }
+            ]
+          },
           "idempotencyKey": {
             "type": "string",
             "nullable": true,
@@ -25517,6 +26057,7 @@
           "scanStatus",
           "scanUrl",
           "failureReason",
+          "merchantFee",
           "idempotencyKey",
           "expiresAt",
           "submittedAt",
@@ -25677,6 +26218,16 @@
             "example": null,
             "description": "Why a FAILED transfer failed."
           },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the merchant fee wrapper; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeEntity"
+              }
+            ]
+          },
           "idempotencyKey": {
             "type": "string",
             "nullable": true,
@@ -25731,6 +26282,7 @@
           "scanStatus",
           "scanUrl",
           "failureReason",
+          "merchantFee",
           "idempotencyKey",
           "expiresAt",
           "submittedAt",
@@ -25926,6 +26478,16 @@
             "example": null,
             "description": "Why a FAILED transfer failed."
           },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the merchant fee wrapper; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeEntity"
+              }
+            ]
+          },
           "idempotencyKey": {
             "type": "string",
             "nullable": true,
@@ -25981,6 +26543,7 @@
           "scanStatus",
           "scanUrl",
           "failureReason",
+          "merchantFee",
           "idempotencyKey",
           "expiresAt",
           "submittedAt",
@@ -26074,6 +26637,7 @@
               "recipient_not_registered",
               "payment_transfer_mismatch",
               "fee_transfer_mismatch",
+              "merchant_fee_transfer_mismatch",
               "payer_mismatch",
               "transaction_not_found",
               "expired",

@@ -22,12 +22,21 @@ export interface ZkNetworkConfig {
   feeAccount: string;
 }
 
+/** A merchant fee on a ZK payment: a third transfer, of `amount` XLM to `wallet`. */
+export interface ZkMerchantFee {
+  amount: string;
+  wallet: string;
+  paidBy: "recipient" | "payer";
+}
+
 export interface ZkCheckout extends ZkNetworkConfig {
   id: string;
   status: ZkCheckoutStatus;
   amount: string;
   netAmount: string;
   feeAmount: string;
+  /** Null without one; with one, the payer makes three transfers, not two. */
+  merchantFee: ZkMerchantFee | null;
   recipient: string;
   description: string | null;
   expiresAt: string;
@@ -90,6 +99,19 @@ export function parseZkConfig(json: unknown): ZkNetworkConfig | null {
   return cfg as ZkNetworkConfig;
 }
 
+/* The merchant fee, null when there is none, undefined when it is malformed: it is a transfer
+   the payer makes, so a half-read one voids the whole payment. */
+function parseZkMerchantFee(v: unknown): ZkMerchantFee | null | undefined {
+  if (v === undefined || v === null) return null;
+  const f = obj(v);
+  if (!f) return undefined;
+  const amount = str(f.amount, DECIMAL);
+  const wallet = str(f.wallet, ACCOUNT);
+  const paidBy = f.paidBy === "payer" || f.paidBy === "recipient" ? f.paidBy : null;
+  if (!amount || !wallet || !paidBy || !/[1-9]/.test(amount)) return undefined;
+  return { amount, wallet, paidBy };
+}
+
 /** The payer's view of one ZK payment, or null when anything is malformed or it is another id. */
 export function parseZkCheckout(json: unknown, expectedId: string): ZkCheckout | null {
   const o = unwrap(json);
@@ -101,6 +123,8 @@ export function parseZkCheckout(json: unknown, expectedId: string): ZkCheckout |
   const netAmount = str(o.netAmount, DECIMAL);
   const feeAmount = str(o.feeAmount, DECIMAL);
   const recipient = str(o.recipient, ACCOUNT);
+  const merchantFee = parseZkMerchantFee(o.merchantFee);
+  if (merchantFee === undefined) return null;
   const expiresAt = str(o.expiresAt);
   if (!config || !id || id !== expectedId || !status || !amount || !netAmount || !feeAmount || !recipient || !expiresAt || !Number.isFinite(Date.parse(expiresAt))) return null;
   const description = o.description === null || o.description === undefined ? null : str(o.description);
@@ -113,6 +137,7 @@ export function parseZkCheckout(json: unknown, expectedId: string): ZkCheckout |
     amount,
     netAmount,
     feeAmount,
+    merchantFee,
     recipient,
     description,
     expiresAt,
@@ -158,14 +183,14 @@ export async function fetchZkConfig(apiBase: string, network: "testnet" | "publi
   }
 }
 
-/** Report the two transfers that pay `id`; the server checks both on-chain before it answers. */
+/** Report the transfers that pay `id` (three with a merchant fee); the server checks each on-chain before it answers. */
 export async function confirmZkCheckout(
   apiBase: string,
   id: string,
-  hashes: { paymentTxHash: string; feeTxHash: string },
+  hashes: { paymentTxHash: string; feeTxHash: string; merchantFeeTxHash?: string },
   fetchImpl: typeof fetch = fetch,
 ): Promise<ZkFetch<ZkCheckout>> {
-  if (!TX.test(hashes.paymentTxHash) || !TX.test(hashes.feeTxHash)) return { kind: "error" };
+  if (!Object.values(hashes).every((h) => h === undefined || TX.test(h))) return { kind: "error" };
   try {
     const res = await fetchImpl(`${base(apiBase)}/v1/zk-checkout/${encodeURIComponent(id)}/confirm`, {
       method: "POST",

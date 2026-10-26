@@ -47,7 +47,9 @@ _openapi:
           one stroop) and checks on-chain that the recipient holds a
           confidential account on the token under auditor 0. The payer then
           makes two confidential transfers (net to the merchant, fee to the fee
-          account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`."
+          account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`.
+          With a `merchantFee`, a third transfer pays it to its wallet, which
+          must hold a confidential account on the token too."
         heading: create-a-private-payment-a-confidential-payment-to-a-merchant-registered-on-the-token-minus-the-001-commission
 ---
 

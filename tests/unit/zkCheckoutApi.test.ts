@@ -91,3 +91,26 @@ test("confirm sends only well-formed hashes", async () => {
   assert.deepEqual(await confirmZkCheckout("https://x", ID, { paymentTxHash: "nope", feeTxHash: "a".repeat(64) }, fake), { kind: "error" });
   assert.equal(sent, false);
 });
+
+test("a merchant fee parses as a third transfer, and a malformed one voids the payment", () => {
+  assert.equal(parseZkCheckout(payment, ID)?.merchantFee, null);
+  const fee = { bps: 100, fixed: "0", amount: "1", asset: "XLM", wallet: G("W"), paidBy: "payer" };
+  assert.deepEqual(parseZkCheckout({ ...payment, merchantFee: fee }, ID)?.merchantFee, { amount: "1", wallet: G("W"), paidBy: "payer" });
+  for (const bad of [{ ...fee, wallet: "nope" }, { ...fee, amount: "-1" }, { ...fee, amount: "0" }, { ...fee, paidBy: "someone" }, "fee"]) {
+    assert.equal(parseZkCheckout({ ...payment, merchantFee: bad }, ID), null, JSON.stringify(bad));
+  }
+});
+
+test("confirm sends the merchant fee's hash beside the other two, and checks it too", async () => {
+  let body: unknown = null;
+  const fake = (async (_url: string, init: RequestInit) => {
+    body = JSON.parse(String(init.body));
+    return new Response(JSON.stringify({ data: { ...payment, status: "SUCCEEDED" } }), { status: 200 });
+  }) as unknown as typeof fetch;
+  const hashes = { paymentTxHash: "a".repeat(64), feeTxHash: "b".repeat(64), merchantFeeTxHash: "c".repeat(64) };
+  assert.equal((await confirmZkCheckout("https://x", ID, hashes, fake)).kind, "ok");
+  assert.deepEqual(body, hashes);
+  body = null;
+  assert.deepEqual(await confirmZkCheckout("https://x", ID, { ...hashes, merchantFeeTxHash: "nope" }, fake), { kind: "error" });
+  assert.equal(body, null);
+});

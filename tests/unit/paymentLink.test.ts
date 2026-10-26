@@ -126,6 +126,21 @@ test('parsePaymentLink accepts Solana Pay and EIP-681 links', () => {
   assert.ok(monad);
 });
 
+test('parsePaymentLink accepts a Solana Pay transaction request, and refuses another scheme dressed as one', () => {
+  const fee = { bps: 100, fixed: '0', amount: '0.25', asset: 'USDC', wallet: '94qWNcvLxv6CBfjrq9H4uXq2THGt6kLjzNi3WT3nbXzu', paidBy: 'recipient' };
+  const request = parsePaymentLink(stellarBody({
+    chain: 'solana', payTo: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', asset: 'USDC',
+    assetIssuer: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', merchantFee: fee,
+    uri: 'solana:' + encodeURIComponent('https://api.cosmospay.lat/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/solana-pay'),
+  }));
+  assert.ok(request);
+  assert.equal(request.merchantFee?.amount, '0.25');
+  // Not https, or not encoded: refused before it can become an href.
+  for (const uri of ['solana:http%3A%2F%2Fevil.example', 'solana:javascript:alert(1)']) {
+    assert.equal(parsePaymentLink(stellarBody({ chain: 'solana', payTo: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', uri })), null);
+  }
+});
+
 test('amountLabel names the chain coin for native, the code otherwise, null for any amount', () => {
   assert.equal(amountLabel({ chain: 'stellar', asset: 'native', amount: '10' }), '10 XLM');
   assert.equal(amountLabel({ chain: 'solana', asset: 'native', amount: '1.5' }), '1.5 SOL');

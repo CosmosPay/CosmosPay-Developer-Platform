@@ -785,14 +785,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   10%) and/or a fixed part, paid on-chain to a wallet it names, apart from the plan commission;
   each request chooses whether the recipient pays it (taken from the amount) or the payer (on
   top). The Payments API owns the rules (`merchantFee` on its routes, `src/common/merchant-fee/`
-  over there); rolled out in stages, and where a chain cannot split a payment natively the plan
-  is a contract of our own (testnet only for any deployment).
-- **Live today:** Stellar swaps and cross-chain swaps (API), and **Stellar payment links**
-  (API and dashboard). Solana and Monad links and swaps answer `merchant_fee_unsupported`;
-  private payments, USDT0 and liquidity do not take the field yet.
-- **Dashboard:** the payment link form's "more options" has the merchant fee (Stellar only):
-  percentage, fixed amount, the wallet (a `WalletSelect` of the organization's wallets, never a
-  typed address) and who pays it. `POST /api/payment-intents` takes `merchantFee`
+  over there); where a chain cannot split a payment natively it is a contract of our own.
+- **Live in the API on every service:** payment links on all three chains, swaps on all three
+  (Stellar, Jupiter, and Kuru through `contracts/MerchantFeeSwapRouter.sol`), cross-chain swaps,
+  private payments (a third confidential transfer), liquidity (bps of each asset) and USDT0
+  (through the Soroban wrapper `contracts/soroban/merchant-fee-oft`). The two contracts are the
+  operator's to deploy on mainnet (`KURU_MERCHANT_FEE_ROUTER`, `USDT0_MERCHANT_FEE_WRAPPER`);
+  until then those routes answer `merchant_fee_unsupported`. B2B goes straight to the API: the
+  dashboard's own forms are for the organization's operations.
+- **Dashboard:** the payment link form's "more options" has the merchant fee, on every chain:
+  percentage, fixed amount, the wallet (a `WalletSelect` of the organization's wallets on the
+  link's chain, never a typed address; EVM ones compared whatever their case) and who pays it. `POST /api/payment-intents` takes `merchantFee`
   (`src/schemas/merchant-fee.ts`) and refuses a fee wallet that is not one of the
   organization's (`orgHasWallet`), as it does the destination. The payment's view lists the fee.
 - **A Stellar link with a merchant fee cannot be one SEP-7 `pay` link** (that pays one
@@ -811,6 +814,16 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - `parsePaymentLink` refuses a malformed fee and a `payerAccountRequired` link that is not a
   Stellar link with a fee and an amount, and only then accepts an `https` `uri` (never used as
   a wallet link).
+- **A Solana link with a merchant fee is a Solana Pay transaction request**
+  (`solana:https%3A%2F%2F…/solana-pay`): the wallet asks the API for the transaction with both
+  transfers. `URI_SCHEMES.solana` takes that shape and a transfer request, nothing else. The
+  checkout hides the manual transfer for it, as for Stellar; a **Monad** link's deposit address
+  splits the fee itself, so its manual row stays and shows the total (`payerTotal`).
+- **Private payments:** a ZK payment with a merchant fee carries `merchantFee` (its amount and
+  wallet) in the public read. `ZkCheckout.tsx` then makes a third confidential transfer after
+  the commission (the "merchantFee" step, only when there is one) and confirms with
+  `merchantFeeTxHash`; `parseZkCheckout` voids a payment whose fee is malformed, and
+  `confirmZkCheckout` sends no hash that is not one.
 
 ### Checkout designs
 

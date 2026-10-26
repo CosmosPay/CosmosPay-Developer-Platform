@@ -241,8 +241,10 @@ export function startCheckout(): void {
     });
     toggle('[data-slot="tx-note"]', l.kind !== "TX");
     // A TX link carries a transaction prepared for one payer: there is nothing to send by hand.
-    // Nor on a link with a merchant fee: a transfer by hand would skip the fee.
-    const noManual = l.kind === "TX" || payerLink;
+    // Nor on a Stellar or Solana link with a merchant fee: a transfer by hand would skip the
+    // fee's payment, and the link settles only on both. A Monad link's deposit address splits
+    // the fee itself, so sending it the total by hand pays both.
+    const noManual = l.kind === "TX" || payerLink || (l.merchantFee !== null && l.chain !== "monad");
     rows("manual", noManual);
     if (noManual && method === "manual") selectMethod("qr", false);
 
@@ -254,7 +256,8 @@ export function startCheckout(): void {
     text("memo", l.memo);
     text("memo-text", l.memo);
     rows("amount", !l.amount);
-    text("amount-value", l.amount ?? "");
+    // By hand the payer sends the total: the amount, plus a fee paid on top.
+    text("amount-value", total ?? "");
     const tier = l.network === "public" ? t.mainnet : t.testnetTier;
     text("network", `${chainName(l.chain)} · ${tier}`);
     text("chain", chainName(l.chain));

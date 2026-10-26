@@ -250,12 +250,14 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const amountOk = !amount.trim() || /^\d+(\.\d+)?$/.test(amount.trim());
   const memoOk = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
   const mf = m.merchantFee;
-  const feeOn = stellar && (feePct.trim() !== "" || feeFixed.trim() !== "");
+  const feeOn = feePct.trim() !== "" || feeFixed.trim() !== "";
   const pctNum = Number(feePct.trim() || 0);
   const fixedNum = Number(feeFixed.trim() || 0);
   const feePctOk = !feePct.trim() || (/^\d+(\.\d{1,2})?$/.test(feePct.trim()) && pctNum <= 10);
-  const feeFixedOk = !feeFixed.trim() || /^\d+(\.\d{1,7})?$/.test(feeFixed.trim());
-  const feeOk = !feeOn || (feePctOk && feeFixedOk && (pctNum > 0 || fixedNum > 0) && !!amount.trim() && !!feeWallet && feeWallet !== destination);
+  const feeFixedOk = !feeFixed.trim() || (stellar ? /^\d+(\.\d{1,7})?$/ : /^\d+(\.\d{1,18})?$/).test(feeFixed.trim());
+  // EVM addresses are one account whatever their case.
+  const feeSameWallet = !!feeWallet && (chain === "monad" ? feeWallet.toLowerCase() === destination.trim().toLowerCase() : feeWallet === destination.trim());
+  const feeOk = !feeOn || (feePctOk && feeFixedOk && (pctNum > 0 || fixedNum > 0) && !!amount.trim() && !!feeWallet && !feeSameWallet);
   const valid = destOk && sourceOk && (!amountNeeded || amount.trim()) && amountOk && tokenOk && memoOk && feeOk;
 
   const submit = () => {
@@ -359,31 +361,29 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
           <div className="swap-another-in">
             <Field label={m.memo} hint={stellar ? m.memoHint : m.memoHintOther} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />
             {chain !== "monad" && <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
-            {stellar && (
-              <div className="paylink-fee" role="group" aria-labelledby="paylink-fee-l">
-                <span className="field-l" id="paylink-fee-l">{mf.title}</span>
-                <p className="field-help">{mf.hint}</p>
-                <div className="field-row">
-                  <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
-                  <Field label={mf.fixed} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.25" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
-                </div>
-                {feeOn && (
-                  <div className="arrive">
-                    <WalletSelect id="paylink-fee-wallet" orgId={orgId} chain={chain} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
-                    {feeWallet && feeWallet === destination && <p className="field-err" role="alert">{mf.sameWallet}</p>}
-                    {!amount.trim() && <p className="field-err" role="alert">{mf.needsAmount}</p>}
-                    <div className="fld">
-                      <span className="field-l" id="paylink-fee-by">{mf.paidBy}</span>
-                      <div className="seg-tabs seg-fill" role="group" aria-labelledby="paylink-fee-by">
-                        {["recipient", "payer"].map((k) => (
-                          <button key={k} type="button" className={feePaidBy === k ? "on" : ""} aria-pressed={feePaidBy === k} onClick={() => setFeePaidBy(k)}>{mf[k]}</button>
-                        ))}
-                      </div>
+            <div className="paylink-fee" role="group" aria-labelledby="paylink-fee-l">
+              <span className="field-l" id="paylink-fee-l">{mf.title}</span>
+              <p className="field-help">{mf.hint}</p>
+              <div className="field-row">
+                <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
+                <Field label={mf.fixed} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.25" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
+              </div>
+              {feeOn && (
+                <div className="arrive">
+                  <WalletSelect id="paylink-fee-wallet" orgId={orgId} chain={chain} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
+                  {feeSameWallet && <p className="field-err" role="alert">{mf.sameWallet}</p>}
+                  {!amount.trim() && <p className="field-err" role="alert">{mf.needsAmount}</p>}
+                  <div className="fld">
+                    <span className="field-l" id="paylink-fee-by">{mf.paidBy}</span>
+                    <div className="seg-tabs seg-fill" role="group" aria-labelledby="paylink-fee-by">
+                      {["recipient", "payer"].map((k) => (
+                        <button key={k} type="button" className={feePaidBy === k ? "on" : ""} aria-pressed={feePaidBy === k} onClick={() => setFeePaidBy(k)}>{mf[k]}</button>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

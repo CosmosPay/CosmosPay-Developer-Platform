@@ -73,7 +73,9 @@ export function isPaymentLinkId(id: string | undefined | null): id is string {
    refused before it can become an href. */
 const URI_SCHEMES: Record<Chain, RegExp> = {
   stellar: /^web\+stellar:(pay|tx)\?/i,
-  solana: /^solana:[1-9A-HJ-NP-Za-km-z]+/,
+  // A transfer request names the recipient; a transaction request (a link with a merchant fee)
+  // names the https endpoint the wallet asks for the transaction, URL-encoded.
+  solana: /^solana:(?:[1-9A-HJ-NP-Za-km-z]{32,44}(?:\?|$)|https%3A%2F%2F)/,
   monad: /^ethereum:0x[0-9a-fA-F]{40}/,
 };
 const QR_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
