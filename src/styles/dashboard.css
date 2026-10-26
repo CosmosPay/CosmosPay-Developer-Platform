@@ -325,8 +325,8 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .hub-cells dd { margin: 0; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hub-cells code { font-family: var(--ff-mono); font-size: 12px; }
 /* a cell with a link and its copy button keeps the row's height and shows the button's focus */
-.hub-cells dd:has(.addr, .rec-link) { overflow: visible; }
-.hub-cells .addr-copy { width: 22px; height: 22px; margin: -3px 0; }
+.hub-cells dd:has(.ref) { overflow: visible; }
+.hub-cells .ref-copy { width: 22px; height: 22px; margin: -3px 0; }
 .hub-st-t { font-weight: 600; }
 .hub-st-t.fail { color: #C93636; }
 [data-theme="dark"] .hub-st-t.fail { color: #FF8A8A; }
@@ -529,25 +529,33 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 :is(.rec-link, .addr-link):is(:hover, :focus-visible) { text-decoration-color: currentColor; }
 .rec-link code, .addr code { font-family: var(--ff-mono); font-size: 12px; }
 .rec-preview {
-  position: fixed; z-index: 200; width: 300px; padding: 14px 16px; color: var(--ink);
+  position: fixed; z-index: 300; width: 300px; padding: 14px 16px; color: var(--ink);
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pop); box-shadow: var(--shadow-lg);
   animation: rp-in .14s ease-out both;
 }
 .rec-preview.up { translate: 0 -100%; }
 @keyframes rp-in { from { opacity: 0; transform: translateY(4px); } }
-.rp-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 12px; color: var(--ink-3); }
-.rp-head code { min-width: 0; font-family: var(--ff-mono); font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rp-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 8px 0 12px; font-size: 16px; }
-.rp-line b { font-weight: 700; letter-spacing: -.01em; }
-.rp-line .hub-st-t { font-size: 13px; }
-.rp-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
-.rp-fields > div { min-width: 0; }
-.rp-fields dt { font-size: 11px; color: var(--ink-3); }
-.rp-fields dd { margin: 2px 0 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rp-fields code { font-family: var(--ff-mono); font-size: 11.5px; }
-.addr { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; vertical-align: middle; }
-.inst .addr-copy { width: 24px; height: 24px; padding: 0; }
-.addr-copy svg { width: 13px; height: 13px; }
+.rpv-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 12px; color: var(--ink-3); }
+.rpv-head code { min-width: 0; font-family: var(--ff-mono); font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rpv-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 8px 0 12px; font-size: 16px; }
+.rpv-line b { font-weight: 700; letter-spacing: -.01em; }
+.rpv-line .hub-st-t { font-size: 13px; }
+.rpv-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.rpv-fields > div { min-width: 0; }
+.rpv-fields dt { font-size: 11px; color: var(--ink-3); }
+.rpv-fields dd { margin: 2px 0 0; font-size: 12.5px; overflow-wrap: anywhere; }
+.rpv-fields code { font-family: var(--ff-mono); font-size: 11.5px; }
+/* a reference and its copy button side by side; a reference that opens in place is a button
+   dressed as the link, one with nothing to open is plain text that still previews */
+.ref { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; vertical-align: middle; }
+.ref > .rec-link { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-link.as-btn { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; text-align: left; }
+.rec-link.as-text { text-decoration: none; cursor: default; }
+.rec-link.as-text:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 2px; border-radius: 4px; }
+.inst .ref-copy { width: 24px; height: 24px; padding: 0; flex: 0 0 auto; }
+.ref-copy svg { width: 13px; height: 13px; }
+.rpv-head.whole { flex-direction: column; align-items: flex-start; gap: 4px; }
+.rpv-head.whole code { white-space: normal; overflow-wrap: anywhere; color: var(--ink); }
 .inst .pager-range { font-variant-numeric: tabular-nums; }
 
 /* ---- figures that count up (Odometer): each digit a strip of 0-9 spinning into place, the

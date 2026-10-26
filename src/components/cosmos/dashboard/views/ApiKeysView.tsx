@@ -12,6 +12,8 @@ import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
 const DEFAULTS = { q: "", role: "all" };
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 
 /* At the plan's key limit, or in Production on a plan without live keys, the page says so and, for
    the organization's owner who can change plan, offers the plan dialog (`onUpgrade`); anyone else is
@@ -64,7 +66,12 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
             <tbody>{!error && pg.slice.map((k) => { const locked = !!(lockedIds && lockedIds.has(k.id)); return (
               <tr key={k.id} className={locked ? "row-locked" : ""}>
                 <td><b>{k.name || ak.unnamed}</b>{locked && <span className="lock-badge">{ak.locked}</span>}{k.description ? <div className="as" style={{ marginTop: 2 }}>{k.description}</div> : null}</td>
-                <td className="tid">{k.id}</td>
+                <td className="tid">
+                  <RecordLink
+                    onOpen={canEdit && !locked ? () => onEdit(k) : undefined} copy={k.id}
+                    preview={() => <PreviewCard label={ak.tableHead.id} title={k.id} headline={<b>{k.name || ak.unnamed}</b>} fields={[[ak.tableHead.role, roleLabels[k.role] || k.role], [t.dash.env.heading, k.environment === "prod" ? t.dash.env.production : t.dash.env.sandbox], [ak.tableHead.permissions, Array.isArray(k.permissions) && k.permissions.length ? k.permissions.join(", ") : ak.none], [ak.tableHead.created, fmtDate(k.createdAt)]]} />}
+                   title={k.id}><code>{shortAddress(k.id)}</code></RecordLink>
+                </td>
                 <td className="cust">{roleLabels[k.role] || k.role}</td>
                 <td className="cust">{Array.isArray(k.permissions) && k.permissions.length ? k.permissions.join(", ") : ak.none}</td>
                 <td className="cust">{fmtDate(k.createdAt)}</td>

@@ -6,6 +6,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 
 /* Where a notification leads: the record it is about (its id in the metadata, opened by the view's
    `open` request) or, without one, the view that lists that kind of thing. Sign-ins and deleted
@@ -46,7 +47,7 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
                 <tr key={n.id} className={to ? "row-click" : undefined} onClick={to ? () => follow(n) : undefined}>
                   <td><div className="cust-cell"><span className="am-sq">{notifIcon(n.type)}</span><div><b>{(nt.types && nt.types[n.type]) || n.title}</b>{n.message ? <div className="as" style={{ marginTop: 2 }}>{humanizeLocal(n.message)}</div> : null}</div></div></td>
                   <td className="cust">{notifLocation(n) || "-"}</td>
-                  <td className="tid">{notifIp(n) || "-"}</td>
+                  <td className="tid">{notifIp(n) ? <RecordLink copy={notifIp(n)}>{notifIp(n)}</RecordLink> : "-"}</td>
                   <td className="cust">{deviceLabel(n) || "-"}</td>
                   <td className="cust">{fmtWhen(n.createdAt)}</td>
                   {/* The row opens it too; the button is the keyboard's way in. */}

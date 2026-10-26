@@ -127,7 +127,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
                   <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                     <td className="tid">
                       <RecordLink
-                        href={`/dashboard?view=zkPayments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)}
+                        href={`/dashboard?view=zkPayments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} copy={p.id}
                         preview={() => <PreviewCard label={z.view.tableHead.id} title={p.id} headline={<><b>{p.amount} XLM</b><span className={`hub-st-t ${(PILL[p.status] === "ok" ? "ok" : PILL[p.status] === "fail" ? "fail" : "wait")}`}>{z.status[p.status] || p.status}</span></>} fields={[[z.view.tableHead.net, `${p.netAmount} XLM`], [z.view.tableHead.fee, `${p.feeAmount} XLM`], [z.view.tableHead.created, fmtDateTime(p.createdAt)], ...(p.description ? [[z.modal.description, p.description]] : [])]} />}
                       >{p.description || short(p.id)}</RecordLink>
                     </td>

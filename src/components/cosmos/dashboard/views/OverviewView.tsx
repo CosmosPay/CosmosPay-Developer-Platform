@@ -11,7 +11,7 @@
    counts up (Odometer). */
 import { useState, useEffect, useRef } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
-import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
+import { metrics as metricsApi, paymentIntents as payApi, organizations as orgsApi } from "@/lib/api-client";
 import { planSpec } from "@/lib/plans";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { showToast } from "@/components/cosmos/shared";
@@ -24,7 +24,7 @@ import { Odometer } from "@/components/cosmos/dashboard/components/Odometer";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PaymentPreview } from "@/components/cosmos/dashboard/components/RecordPreview";
-import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
+import { AddressLink, shortAddress } from "@/components/cosmos/dashboard/components/AddressLink";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { Sk, ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
@@ -113,6 +113,8 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const [seriesLoading, setSeriesLoading] = useState(true);
   const [listPeriod, setListPeriod] = useState("month");
   const [rows, setRows] = useState(null);
+  // The organization's wallets, so an account's card can say it is one of them.
+  const [wallets, setWallets] = useState([]);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   // The first look arrives in one go (product owner: never request after request): the summary,
@@ -129,12 +131,13 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
     setSeriesLoading(true);
     setRows(null);
     fetched.current = { series: seriesKey, list: listKey };
-    Promise.allSettled([metricsApi.summary(env), metricsApi.series(env, chartPeriod), payApi.list(env, listQuery())]).then(([s, w, l]) => {
+    Promise.allSettled([metricsApi.summary(env), metricsApi.series(env, chartPeriod), payApi.list(env, listQuery()), org.id ? orgsApi.wallets(org.id) : Promise.resolve([])]).then(([s, w, l, ow]) => {
       if (!alive) return;
       setSum(s.status === "fulfilled" ? s.value : null);
       setSeries(w.status === "fulfilled" ? w.value : null);
       setSeriesLoading(false);
       setRows(l.status === "fulfilled" && Array.isArray(l.value?.data) ? l.value.data : []);
+      setWallets(ow.status === "fulfilled" && Array.isArray(ow.value) ? ow.value : []);
     });
     return () => { alive = false; };
   }, [env, org.id]);
@@ -187,6 +190,19 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const groupCounts = countBy(all.filter((p) => matches(p, "status")), (p) => groupOf(p.status));
   const chainCounts = countBy(all.filter((p) => matches(p, "chain")), (p) => chainOf(p));
   const pg = usePaged(shown, `${listPeriod}|${filters.q}|${filters.status}|${filters.chain}`);
+  // What an account's card says beyond the address: the organization wallet it is, and the
+  // payments of this list it paid or received, with the last one.
+  const cm = t.dash.common;
+  const accountContext = (addr) => () => {
+    const w = wallets.find((x) => x.address === addr);
+    const mine = all.filter((x) => x.source === addr || x.destination === addr);
+    const last = mine.reduce((a, x) => (!a || x.createdAt > a ? x.createdAt : a), null);
+    return [
+      ...(w ? [[cm.orgWallet, w.name || shortAddress(w.address)]] : []),
+      [cm.paymentsHere, num.format(mine.length)],
+      ...(last ? [[cm.lastPayment, fmtDateTime(last)]] : []),
+    ];
+  };
   // A short or empty page keeps its height: the missing rows are drawn empty, and an empty list
   // says so in the middle one (product owner).
   const fill = Math.max(0, pg.size - pg.count);
@@ -307,13 +323,13 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
                   <dl className="hub-cells">
                     {/* The id opens the payment and previews it on hover; both accounts open on their
                         explorer and copy (product owner). */}
-                    <div><dt>{h.thId}</dt><dd><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => goFiltered(onGo, "payments", { open: p.id })} preview={() => <PaymentPreview p={p} status={(h.status && h.status[p.status]) || p.status} />}><code>{short(p.id)}</code></RecordLink></dd></div>
+                    <div><dt>{h.thId}</dt><dd><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => goFiltered(onGo, "payments", { open: p.id })} copy={p.id} preview={() => <PaymentPreview p={p} status={(h.status && h.status[p.status]) || p.status} />}><code>{short(p.id)}</code></RecordLink></dd></div>
                     <div><dt>{h.thStatus}</dt><dd className={`hub-st-t ${p.status === SETTLED ? "ok" : FAILED.includes(p.status) ? "fail" : "wait"}`}>{(h.status && h.status[p.status]) || p.status}</dd></div>
                     <div><dt>{h.thDate}</dt><dd>{fmtDateTime(p.createdAt)}</dd></div>
                     <div><dt>{h.thAmount}</dt><dd><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</dd></div>
                     <div><dt>{h.thNetwork}</dt><dd>{CHAIN_NAMES[chainOf(p)]}</dd></div>
-                    <div><dt>{h.thFrom}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.source} /></dd></div>
-                    <div><dt>{h.thTo}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.destination} /></dd></div>
+                    <div><dt>{h.thFrom}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.source} label={h.thFrom} context={accountContext(p.source)} /></dd></div>
+                    <div><dt>{h.thTo}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.destination} label={h.thTo} context={accountContext(p.destination)} /></dd></div>
                   </dl>
                   <RowMenu p={p} onGo={onGo} />
                 </li>

@@ -5,7 +5,7 @@ import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-clien
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
-import { PaymentPreview } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { PaymentPreview, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { goFiltered, usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
@@ -117,7 +117,7 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
-                <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} preview={() => <PaymentPreview p={p} />}>{p.id}</RecordLink></td>
+                <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{b.payment}</td>
                 <td className="amt">+{amountLabel(p, pl)}</td>
                 <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>

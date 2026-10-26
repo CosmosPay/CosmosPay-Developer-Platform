@@ -13,7 +13,7 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
-import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { showToast } from "@/components/cosmos/shared";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
@@ -174,9 +174,9 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
               <tr key={r.key} className="row-click" onClick={() => setDetail(r)}>
                 <td className="tid">
                   <RecordLink
-                    href={`/dashboard?view=swaps&open=${encodeURIComponent(r.id)}`} onOpen={() => setDetail(r)}
+                    href={`/dashboard?view=swaps&open=${encodeURIComponent(r.id)}`} onOpen={() => setDetail(r)} copy={r.id}
                     preview={() => <PreviewCard label={sw.tableHead.id} title={r.id} headline={<><b>{r.sent} → {r.got}</b><span className={`hub-st-t ${(GROUP_PILL[groupOf(r.status)] === "ok" ? "ok" : GROUP_PILL[groupOf(r.status)] === "fail" ? "fail" : "wait")}`}>{statusLabel(r)}</span></>} fields={[[sw.tableHead.chains, chainsLabel(r)], [sw.tableHead.created, fmtDateTime(r.createdAt)]]} />}
-                  >{r.id}</RecordLink>
+                   title={r.id}><code>{shortAddress(r.id)}</code></RecordLink>
                 </td>
                 <td><span className="net-badge">{chainsLabel(r)}</span></td>
                 <td className="amt">{r.sent} → {r.got}</td>

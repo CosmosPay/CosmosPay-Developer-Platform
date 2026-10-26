@@ -13,6 +13,9 @@ import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PaymentPreview, PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { matchesQuery } from "@/lib/dashboard-filters";
 import { CHAINS, assetLabel, explorerAccountUrl, isAddress, isChain } from "@/lib/chains";
 
@@ -76,8 +79,16 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{cv.tableHead.name}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((c) => (
               <tr key={c.id} className="row-click" onClick={() => setDetail(c)}>
-                <td><div className="cust-cell"><span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>{c.alias || c.name}</div></td>
-                <td className="cust">{c.email || (c.account ? shortAcct(c.account) : "-")}</td>
+                <td>
+                  <div className="cust-cell">
+                    <span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>
+                    <RecordLink
+                      onOpen={() => setDetail(c)} copy={c.id}
+                      preview={() => <PreviewCard label={cv.tableHead.name} title={c.id} headline={<b>{c.alias || c.name}</b>} fields={[[cv.tableHead.email, c.email || "-"], [t.dash.common.account, c.account ? shortAcct(c.account) : "-"], [cv.tableHead.spend, c.total || "0"], [cv.tableHead.payments, `${c.succeeded ?? 0}/${c.payments ?? 0}`], [cv.tableHead.since, fmtDate(c.createdAt)]]} />}
+                    >{c.alias || c.name}</RecordLink>
+                  </div>
+                </td>
+                <td className="cust">{c.email || (c.account ? <AddressLink chain={CHAINS.find((k) => isAddress(k, c.account)) || "stellar"} network={env === "prod" ? "public" : "testnet"} address={c.account} label={t.dash.common.account} /> : "-")}</td>
                 <td className="amt">{c.total || "0"}</td>
                 <td className="cust">{c.account && c.payments ? <button type="button" className="link-btn" onClick={(e) => { e.stopPropagation(); paymentsOf(c); }}>{c.succeeded ?? 0}/{c.payments}</button> : `${c.succeeded ?? 0}/${c.payments ?? 0}`}</td>
                 <td className="cust">{fmtDate(c.createdAt)}</td>
@@ -222,7 +233,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
               <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>
                 {pays.map((p) => (
                   <tr key={p.id} className="row-click" tabIndex={0} onClick={() => onOpenPayment(p.id)} onKeyDown={(e) => { if (e.key === "Enter") onOpenPayment(p.id); }}>
-                    <td className="tid">{p.id}</td>
+                    <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => onOpenPayment(p.id)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                     <td className="amt">{p.amount || "-"} {assetLabel(isChain(p.chain) ? p.chain : "stellar", p.asset)}</td>
                     <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>

@@ -10,6 +10,8 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { matchesQuery } from "@/lib/dashboard-filters";
 
 const codePill = (c) => (c == null ? "ref" : c < 400 ? "ok" : c < 500 ? "ref" : "fail");
@@ -70,7 +72,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
                     <td className="exp-cell"><span className={`exp-ic${isOpen ? " open" : ""}`}>{DI.chevR}</span></td>
                     {isApi ? (<>
                       <td><span className={`method m-${(l.method || "get").toLowerCase()}`}>{l.method}</span></td>
-                      <td className="tid">{l.path}</td>
+                      <td className="tid"><RecordLink copy={l.path} preview={() => <PreviewCard label={lv.tableHead.endpoint} title={l.path} wrap headline={<><b>{l.method}</b><span className={`hub-st-t ${l.statusCode >= 400 ? "fail" : "ok"}`}>{l.statusCode}</span></>} fields={[[lv.tableHead.time, `${l.durationMs} ms`], [lv.tableHead.timestamp, fmtDateTime(l.at)]]} />}>{l.path}</RecordLink></td>
                       <td><Pill st={codePill(l.statusCode)} label={String(l.statusCode)} /></td>
                       <td className="cust">{l.durationMs} ms</td>
                       <td className="cust">{fmtDateTime(l.at)}</td>

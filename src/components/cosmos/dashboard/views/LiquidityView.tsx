@@ -6,7 +6,7 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
-import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
@@ -137,9 +137,9 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
                   <tr key={o.id} className="row-click" onClick={() => setDetail(o)}>
                     <td className="tid">
                       <RecordLink
-                        href={`/dashboard?view=liquidity&open=${encodeURIComponent(o.id)}`} onOpen={() => setDetail(o)}
+                        href={`/dashboard?view=liquidity&open=${encodeURIComponent(o.id)}`} onOpen={() => setDetail(o)} copy={o.id}
                         preview={() => <PreviewCard label={lq.opsHead.id} title={o.id} headline={<><b>{lq.kind[o.kind] || o.kind}</b><span className={`hub-st-t ${(STATUS_PILL[o.status] === "ok" ? "ok" : STATUS_PILL[o.status] === "fail" ? "fail" : "wait")}`}>{lq.status[o.status] || o.status}</span></>} fields={[[lq.opsHead.pool, pairLabel(o.assetA, o.assetB)], [lq.opsHead.amounts, o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)], [lq.opsHead.created, fmtDateTime(o.createdAt)]]} />}
-                      >{o.id}</RecordLink>
+                       title={o.id}><code>{shortAddress(o.id)}</code></RecordLink>
                     </td>
                     <td>{lq.kind[o.kind] || o.kind}</td>
                     <td>{pairLabel(o.assetA, o.assetB)}</td>
@@ -241,7 +241,12 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th>{canManage && <th />}</tr></thead>
           <tbody>{pg.slice.map((pool) => (
             <tr key={pool.id}>
-              <td className="tid" title={pool.id}>{pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id)}</td>
+              <td className="tid">
+                <RecordLink
+                  title={pool.id} copy={pool.id}
+                  preview={() => <PreviewCard label={p.head.pool} title={pool.id} wrap fields={[[p.head.reserves, (pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ") || "-"], [p.head.shares, pool.totalShares], [p.head.trustlines, pool.totalTrustlines], [p.head.fee, `${(pool.feeBp / 100).toFixed(2)}%`]]} />}
+                >{pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id)}</RecordLink>
+              </td>
               <td className="amt">{(pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>
               <td>{pool.totalShares}</td>
               <td>{pool.totalTrustlines}</td>
@@ -296,7 +301,12 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
       <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th>{canManage && <th />}</tr></thead>
           <tbody>{loaded && pg.slice.map((pos) => (
             <tr key={pos.poolId}>
-              <td className="tid" title={pos.poolId}>{pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId)}</td>
+              <td className="tid">
+                <RecordLink
+                  title={pos.poolId} copy={pos.poolId}
+                  preview={() => <PreviewCard label={p.head.pool} title={pos.poolId} wrap fields={[[p.head.shares, pos.shares], [p.head.share, `${(pos.shareOfPoolBps / 100).toFixed(2)}%`], [p.head.redeemable, (pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ") || "-"]]} />}
+                >{pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId)}</RecordLink>
+              </td>
               <td className="amt">{pos.shares}</td>
               <td>{(pos.shareOfPoolBps / 100).toFixed(2)}%</td>
               <td className="amt">{(pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>

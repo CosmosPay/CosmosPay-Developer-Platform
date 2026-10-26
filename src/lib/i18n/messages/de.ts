@@ -1077,7 +1077,7 @@ export default {
       Active: "Aktiv",
       Delivered: "Zugestellt"
     },
-    common: { copyValue: "{value} kopieren", notFound: "Nicht in dieser Organisation oder Umgebung vorhanden.", open: "Öffnen",
+    common: { account: "Konto", orgWallet: "Wallet der Organisation", paymentsHere: "Zahlungen in der Liste", lastPayment: "Letzte Zahlung", copyValue: "{value} kopieren", notFound: "Nicht in dieser Organisation oder Umgebung vorhanden.", open: "Öffnen",
       actions: "Aktionen",
       details: "Details",
       cancel: "Abbrechen",

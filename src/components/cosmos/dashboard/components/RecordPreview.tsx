@@ -5,18 +5,20 @@ import type { ReactNode } from "react";
 import { useT } from "@/lib/i18n/index";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { amountLabel, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { shortAddress } from "@/components/cosmos/dashboard/components/AddressLink";
 
 const FAILED = ["FAILED", "CANCELLED", "EXPIRED"];
+/* An account or a long id shortened for a cell; the full value goes in a title or a card. */
+export const shortAddress = (a: string) => (a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
 export const statusTone = (status: string) => (status === "SUCCEEDED" ? "ok" : FAILED.includes(status) ? "fail" : "wait");
 
-/* A generic card: a title (the id), a headline (amount and status) and fields. */
-export function PreviewCard({ title, label, headline, fields }: { title: string; label: string; headline?: ReactNode; fields: [string, ReactNode][] }) {
+/* A generic card: a title (the id; `wrap` shows a long one whole, as an address), a headline
+   (amount and status) and fields. */
+export function PreviewCard({ title, label, headline, fields, wrap = false }: { title: string; label: string; headline?: ReactNode; fields: [string, ReactNode][]; wrap?: boolean }) {
   return (
-    <div className="rp">
-      <div className="rp-head"><span className="rp-k">{label}</span><code>{title}</code></div>
-      {headline && <div className="rp-line">{headline}</div>}
-      <dl className="rp-fields">
+    <div className="rpv">
+      <div className={`rpv-head${wrap ? " whole" : ""}`}><span className="rpv-k">{label}</span><code>{title}</code></div>
+      {headline && <div className="rpv-line">{headline}</div>}
+      <dl className="rpv-fields">
         {fields.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
       </dl>
     </div>

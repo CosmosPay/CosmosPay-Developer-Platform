@@ -1,30 +1,39 @@
-/* AddressLink: an account as a link to its page on the chain's explorer (a new tab), with a copy
-   button beside it (product owner: "paid by" and "paid to" open and copy in one gesture each).
-   Shortened on screen; the full address is the link's title and what the button copies. With no
-   explorer for it (an unknown chain, a shape the chain does not use) it is the text alone. */
-import type { MouseEvent } from "react";
-import { useT, fmt } from "@/lib/i18n/index";
-import { useCopy } from "@/components/cosmos/hooks/useCopy";
-import { IcCheck, IcCopy } from "@/components/cosmos/icons";
+/* AddressLink: an account as a reference (RecordLink): a link to its page on the chain's
+   explorer (a new tab), its copy button, and a preview (product owner: "paid by" and "paid to"
+   open, copy and preview like everything else). Shortened on screen; the full address is in the
+   card, its title and what the button copies. The card names the role it plays (`label`), its
+   network, and what the caller knows of it (`context`: the organization wallet it is, the
+   payments listed with it). With no explorer for it, it still copies and previews. */
+import type { ReactNode } from "react";
+import { useT } from "@/lib/i18n/index";
 import { explorerAccountUrl, isChain, tierOf } from "@/lib/chains";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 
-export const shortAddress = (a: string) => (a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
+export { shortAddress };
 
-export function AddressLink({ chain, network, address }: { chain: string; network?: string | null; address?: string | null }) {
+export function AddressLink({ chain, network, address, label, context }: {
+  chain: string;
+  network?: string | null;
+  address?: string | null;
+  label?: string;
+  context?: () => [string, ReactNode][];
+}) {
   const t = useT();
-  const [done, copy] = useCopy();
   if (!address) return <span>-</span>;
   const url = isChain(chain) ? explorerAccountUrl(chain, tierOf(network ?? ""), address) : null;
-  const text = <code>{shortAddress(address)}</code>;
-  const onCopy = (e: MouseEvent) => { e.stopPropagation(); copy(address, t.toasts.copied); };
   return (
-    <span className="addr">
-      {url
-        ? <a className="addr-link" href={url} target="_blank" rel="noopener noreferrer" title={address} onClick={(e) => e.stopPropagation()}>{text}</a>
-        : <span title={address}>{text}</span>}
-      <button type="button" className={`copy-mini addr-copy${done ? " done" : ""}`} onClick={onCopy} title={t.dash.common.copy} aria-label={fmt(t.dash.common.copyValue, { value: address })}>
-        {done ? <IcCheck /> : <IcCopy />}
-      </button>
-    </span>
+    <RecordLink
+      href={url} external className="addr-link" title={address} copy={address}
+      preview={() => (
+        <PreviewCard
+          label={label || t.dash.common.account} title={address} wrap
+          fields={[[t.dash.paylinks.detail.fields.network, networkLabel({ chain, network })], ...(context ? context() : [])]}
+        />
+      )}
+    >
+      <code>{shortAddress(address)}</code>
+    </RecordLink>
   );
 }

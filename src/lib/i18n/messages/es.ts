@@ -1077,7 +1077,7 @@ export default {
       Active: "Activo",
       Delivered: "Entregado"
     },
-    common: { copyValue: "Copiar {value}", notFound: "No está en esta organización o entorno.", open: "Abrir",
+    common: { account: "Cuenta", orgWallet: "Billetera de la organización", paymentsHere: "Pagos en la lista", lastPayment: "Último pago", copyValue: "Copiar {value}", notFound: "No está en esta organización o entorno.", open: "Abrir",
       actions: "Acciones",
       details: "Detalles",
       cancel: "Cancelar",

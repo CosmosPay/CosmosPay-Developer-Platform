@@ -13,6 +13,8 @@ import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 
 const TYPE_TO_KIND = { Recurring: "recurring", "One-time": "one_time", "Payment link": "link" };
 const KIND_TO_TYPE = { recurring: "Recurring", one_time: "One-time", link: "Payment link" };
@@ -89,7 +91,15 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
-                <td><div className="cust-cell"><span className="am-sq">{DI.products}</span>{p.name}</div></td>
+                <td>
+                  <div className="cust-cell">
+                    <span className="am-sq">{DI.products}</span>
+                    <RecordLink
+                      onOpen={() => setDetail(p)} copy={p.id}
+                      preview={() => <PreviewCard label={pr.tableHead.name} title={p.id} headline={<><b>{p.name}</b><span className={`hub-st-t ${p.active ? "ok" : "wait"}`}>{p.active ? cx.active : cx.inactive}</span></>} fields={[[pr.tableHead.price, p.amount ? `${p.amount} ${assetLabel(p.asset)}` : cx.customerSet], [pr.tableHead.type, pr.types[KIND_TO_TYPE[p.kind]] || p.kind]]} />}
+                    >{p.name}</RecordLink>
+                  </div>
+                </td>
                 <td className="amt">{p.amount ? `${p.amount} ${assetLabel(p.asset)}` : cx.customerSet}</td>
                 <td className="cust">{pr.types[KIND_TO_TYPE[p.kind]] || p.kind}</td>
                 <td><Pill st={p.active ? "ok" : "ref"} label={p.active ? cx.active : cx.inactive} /></td>

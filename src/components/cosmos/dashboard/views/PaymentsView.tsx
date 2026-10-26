@@ -6,7 +6,7 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
-import { PaymentPreview } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { PaymentPreview, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
@@ -148,7 +148,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
             <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 {/* The id opens the payment (a new tab with a modified click) and previews it on hover. */}
-                <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} preview={() => <PaymentPreview p={p} />}>{p.id}</RecordLink></td>
+                <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{pl.kinds[p.kind] || p.kind}</td>
                 <td><span className="net-badge">{networkLabel(p)}</span></td>
                 <td className="amt">{amountLabel(p, pl)}</td>

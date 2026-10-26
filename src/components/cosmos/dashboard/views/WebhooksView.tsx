@@ -14,6 +14,8 @@ import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 
 const EVENT_TYPES = [
   "PAYMENT_INTENT_CREATED",
@@ -114,7 +116,12 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((w) => (
               <tr key={w.id} className={`row-click${selected && selected.id === w.id ? " row-on" : ""}`} onClick={() => setSelected(w)}>
-                <td className="tid">{w.url}</td>
+                <td className="tid">
+                  <RecordLink
+                    onOpen={() => setSelected(w)} copy={w.url}
+                    preview={() => <PreviewCard label={wv.tableHead.url} title={w.url} wrap headline={<span className={`hub-st-t ${w.enabled ? "ok" : "wait"}`}>{w.enabled ? cx.active : cx.inactive}</span>} fields={[[wv.tableHead.events, w.eventTypes && w.eventTypes.length ? w.eventTypes.map((e) => (cx.eventLabels && cx.eventLabels[e]) || humanize(e)).join(", ") : cx.allEvents]]} />}
+                  >{w.url}</RecordLink>
+                </td>
                 <td className="cust">
                   {/* The events it receives, named on hover; whoever manages webhooks changes them from here. */}
                   {(() => {
@@ -194,7 +201,12 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{wv.tableHead.event}</th><th>{wv.tableHead.response}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.when}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{pg.slice.map((d) => (
             <tr key={d.id} className="row-click" onClick={() => setOpen(d)}>
-              <td className="tid">{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</td>
+              <td className="tid">
+                <RecordLink
+                  onOpen={() => setOpen(d)} copy={d.eventId || d.id}
+                  preview={() => <PreviewCard label={wv.eventId} title={d.eventId || d.id} headline={<><b>{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</b><span className={`hub-st-t ${DELIVERY_PILL[d.status] === "ok" ? "ok" : DELIVERY_PILL[d.status] === "fail" ? "fail" : "wait"}`}>{d.status}</span></>} fields={[[wv.tableHead.response, d.responseStatus ?? "-"], [wv.attempts, d.attempts ?? "-"], [wv.tableHead.when, fmtDateTime(d.lastAttemptAt || d.createdAt)]]} />}
+                >{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</RecordLink>
+              </td>
               <td className="cust">{d.responseStatus ?? "-"}</td>
               <td><Pill st={DELIVERY_PILL[d.status] || "ref"} label={d.status} /></td>
               <td className="cust">{fmtDateTime(d.lastAttemptAt || d.createdAt)}</td>

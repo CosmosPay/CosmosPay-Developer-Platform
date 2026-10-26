@@ -675,7 +675,7 @@ export default {
     env: { heading: "एनवायरनमेंट", sandbox: "सैंडबॉक्स", production: "प्रोडक्शन", testnet: "टेस्टनेट एनवायरनमेंट", mainnet: "मेननेट एनवायरनमेंट" },
     topbar: { search: "भुगतान, ग्राहक, लॉग खोजें…", theme: "थीम बदलें", notifications: "सूचनाएँ" },
     statusLabels: { Succeeded: "सफल", Failed: "विफल", Refunded: "रिफ़ंड किया गया", Active: "सक्रिय", Delivered: "डिलीवर हुआ" },
-    common: { copyValue: "{value} कॉपी करें", notFound: "यह इस संगठन या परिवेश में नहीं है।", open: "खोलें", cancel: "रद्द करें", copy: "कॉपी करें", copyLink: "लिंक कॉपी करें", export: "एक्सपोर्ट करें", vsLastWeek: "पिछले हफ़्ते की तुलना में", optional: "(वैकल्पिक)", viewPlans: "प्लान देखें", yes: "हाँ", no: "नहीं", assetCustom: "कस्टम…", assetAny: "कोई भी एसेट", actions: "कार्रवाइयाँ", details: "विवरण" },
+    common: { account: "खाता", orgWallet: "संगठन का वॉलेट", paymentsHere: "सूची में भुगतान", lastPayment: "अंतिम भुगतान", copyValue: "{value} कॉपी करें", notFound: "यह इस संगठन या परिवेश में नहीं है।", open: "खोलें", cancel: "रद्द करें", copy: "कॉपी करें", copyLink: "लिंक कॉपी करें", export: "एक्सपोर्ट करें", vsLastWeek: "पिछले हफ़्ते की तुलना में", optional: "(वैकल्पिक)", viewPlans: "प्लान देखें", yes: "हाँ", no: "नहीं", assetCustom: "कस्टम…", assetAny: "कोई भी एसेट", actions: "कार्रवाइयाँ", details: "विवरण" },
     pagination: { rows: "प्रति पृष्ठ पंक्तियाँ", prev: "पिछला", next: "अगला", range: "{total} में से {from}–{to}" },
     profileMenu: { account: "खाता सेटिंग्स", billing: "बिलिंग", docs: "डॉक्यूमेंटेशन", backToSite: "वेबसाइट पर वापस जाएँ", logout: "लॉग आउट करें" },
     modals: {

@@ -286,13 +286,21 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       the wallet that paid, `p.source`), products and webhook endpoints open their edit forms, a
       delivery its detail (the error, the attempts) with a failed-only filter, a private payment
       its detail, the admin overview's figures their lists (`goToAdmin`, a venue or fiat tab).
-    - **A record's id is a link to it, previewed on hover or focus** (product owner, 2026-10-26):
-      `components/RecordLink.tsx` (a plain click opens the record in place, a modified one a new tab
-      at `?view=…&open=<id>`; the card is portaled and fixed, so a table's scroller never clips it,
-      hoverable, Escape closes it) with `components/RecordPreview.tsx` (`PaymentPreview`, the generic
-      `PreviewCard`), in the overview's transactions and the Payments, Balances, Swaps, Liquidity and
-      private payments lists. **An account is a link to its explorer page with a copy button beside
-      it** (`components/AddressLink.tsx`: the overview's "paid by" and "paid to").
+    - **Every reference copies, and previews whatever it can** (product owner, 2026-10-26): ids,
+      accounts, endpoints, keys, pools, paths are a `components/RecordLink.tsx`: it opens (a link to
+      `?view=…&open=<id>`, a plain click in place, a modified one a new tab; a button for a record
+      with no address, as an endpoint; an external link for an explorer), its copy button copies
+      the full value (`CopyRef`), and a card previews it on hover or focus
+      (`components/RecordPreview.tsx`: `PaymentPreview`, the generic `PreviewCard`; portaled and
+      fixed, so no table scroller clips it, hoverable, Escape closes it, no native title stacked on
+      it). Accounts are `components/AddressLink.tsx` (explorer, copy, a card with the full address,
+      the network and what the screen knows: the organization wallet it is, the payments listed
+      with it). Cells show ids shortened (`shortAddress`); the card, the copy and the link carry
+      the full value. Where: the overview's transactions (payment, paid by, paid to), Payments,
+      Balances, Swaps, Liquidity (operations, pools, positions), private payments, Customers (the
+      customer, its account, its payments), Products, API keys, webhook endpoints and deliveries,
+      API logs (the path) and notifications (the address, copy only). The admin lists keep their
+      click-to-copy ids. Card classes are `rpv-*` (`.rp` and `.wrap` are taken elsewhere).
     - A pending Stellar payment's detail checks a transaction hash (`/validate`) for a payer whose
       wallet never reported back.
     - Empty lists offer their first action to whoever may take it; a plan limit (API keys,
