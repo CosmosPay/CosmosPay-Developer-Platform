@@ -4,6 +4,9 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PaymentPreview } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
@@ -122,6 +125,8 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   return (
     <>
       <ViewHead title={pl.title} />
+      {/* Its own figures and chart (product owner): settled volume in USD and payments. */}
+      <ViewActivity env={env} metrics={["volume", "payments"]} id="pay-activity" />
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{pl.readOnly}</span></div>}
       <FilterBar
         label={fl.label}
@@ -142,7 +147,8 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pl.tableHead.id}</th><th>{pl.tableHead.type}</th><th>{pl.detail.fields.network}</th><th>{pl.tableHead.amount}</th><th>{pl.tableHead.status}</th><th>{pl.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
-                <td className="tid">{p.id}</td>
+                {/* The id opens the payment (a new tab with a modified click) and previews it on hover. */}
+                <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} preview={() => <PaymentPreview p={p} />}>{p.id}</RecordLink></td>
                 <td className="cust">{pl.kinds[p.kind] || p.kind}</td>
                 <td><span className="net-badge">{networkLabel(p)}</span></td>
                 <td className="amt">{amountLabel(p, pl)}</td>

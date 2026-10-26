@@ -253,11 +253,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     or that payment in the Payments view), paged like every table (rows per page, empty rows keeping
     the height); "View all payments", at the pager's end, keeps the period, network, search and
     "settled". Counts never build a plural from a suffix: `countText` picks the singular string.
+  - **Every list of money or events carries its own activity** (product owner, 2026-10-26):
+    `components/ActivityPanel.tsx` is the overview's activity, shared (`ViewActivity` reads its own
+    series): Payments shows settled volume (USD) and payments, private payments their settled volume
+    (USD) and the payments created (the series' `zkPayments` part), Swaps, Liquidity and Webhooks
+    their one figure (a single figure stands alone, not a tab). Each sits above its list; only the
+    overview's charts link into a view.
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
     from Monday), with the window's totals (distinct payers too) and the window before it, plus
-    `swaps` (Stellar DEX, Solana / Monad, cross-chain and USDT0), `liquidity` and `webhooks` for the
-    same window, each with its own buckets (consumer and network; cross-chain and USDT0 count zero
+    `swaps` (Stellar DEX, Solana / Monad, cross-chain and USDT0), `liquidity`, `webhooks` and
+    `zkPayments` (private payments: created, settled, expired, volume and fees) for the same window, each with its own buckets (consumer and network; cross-chain and USDT0 count zero
     in the sandbox). **A chart with nothing to draw shows its window at zero** (product owner: fill
     with 0): no buckets, or a part a server does not send, draws the window's buckets (`zeroBuckets`,
     as the server cuts them) empty. **The settled volume is in USD** (product owner): the server
@@ -280,6 +286,13 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       the wallet that paid, `p.source`), products and webhook endpoints open their edit forms, a
       delivery its detail (the error, the attempts) with a failed-only filter, a private payment
       its detail, the admin overview's figures their lists (`goToAdmin`, a venue or fiat tab).
+    - **A record's id is a link to it, previewed on hover or focus** (product owner, 2026-10-26):
+      `components/RecordLink.tsx` (a plain click opens the record in place, a modified one a new tab
+      at `?view=…&open=<id>`; the card is portaled and fixed, so a table's scroller never clips it,
+      hoverable, Escape closes it) with `components/RecordPreview.tsx` (`PaymentPreview`, the generic
+      `PreviewCard`), in the overview's transactions and the Payments, Balances, Swaps, Liquidity and
+      private payments lists. **An account is a link to its explorer page with a copy button beside
+      it** (`components/AddressLink.tsx`: the overview's "paid by" and "paid to").
     - A pending Stellar payment's detail checks a transaction hash (`/validate`) for a payer whose
       wallet never reported back.
     - Empty lists offer their first action to whoever may take it; a plan limit (API keys,
@@ -324,7 +337,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   - **Every table is paged and keeps its height** (product owner, 2026-10-26): `usePaged` (`hooks.ts`)
     pages at the viewer's rows per page (`PAGE_SIZES` 10 / 20 / 50, never more than 50; one choice
     for every table, kept in the browser as `cosmospay-rows`), `Pagination` under the table always
-    shows the picker, the range and, past one page, the steps. A short or empty page is padded with
+    shows the picker, the range and, past one page, the steps (as tall as the picker, its line and
+    type: product owner). A short or empty page is padded with
     empty rows (`components/FillRows.tsx`, each as tall as a real row of that table, measured), and
     an empty list says so, with its first action, in the middle row: a table never shrinks to an
     "empty" box. The table scroller is positioned, so a wide table's hidden labels never make the

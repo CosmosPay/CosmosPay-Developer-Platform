@@ -4,6 +4,9 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { liquidity as liquidityApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
@@ -92,6 +95,8 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
     <>
       <ViewHead title={lq.title} />
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{lq.readOnly}</span></div>}
+      {/* Its own figures and chart: operations and the completed ones. */}
+      <ViewActivity env={env} metrics={["liquidity"]} id="liq-activity" />
 
       {/* The sections, with the view's two actions at the row's right end (they serve every tab). */}
       <div className="tabs-row">
@@ -130,7 +135,12 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
               <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th></tr></thead>
                 <tbody>{!error && pg.slice.map((o) => (
                   <tr key={o.id} className="row-click" onClick={() => setDetail(o)}>
-                    <td className="tid">{o.id}</td>
+                    <td className="tid">
+                      <RecordLink
+                        href={`/dashboard?view=liquidity&open=${encodeURIComponent(o.id)}`} onOpen={() => setDetail(o)}
+                        preview={() => <PreviewCard label={lq.opsHead.id} title={o.id} headline={<><b>{lq.kind[o.kind] || o.kind}</b><span className={`hub-st-t ${(STATUS_PILL[o.status] === "ok" ? "ok" : STATUS_PILL[o.status] === "fail" ? "fail" : "wait")}`}>{lq.status[o.status] || o.status}</span></>} fields={[[lq.opsHead.pool, pairLabel(o.assetA, o.assetB)], [lq.opsHead.amounts, o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)], [lq.opsHead.created, fmtDateTime(o.createdAt)]]} />}
+                      >{o.id}</RecordLink>
+                    </td>
                     <td>{lq.kind[o.kind] || o.kind}</td>
                     <td>{pairLabel(o.assetA, o.assetB)}</td>
                     <td className="amt">{o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)}</td>

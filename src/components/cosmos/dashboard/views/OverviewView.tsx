@@ -3,9 +3,12 @@
    there is another one) with the settled volume in USD, beside a white panel with the quick links
    as tiles (they follow what the viewer opens: src/lib/dashboard-usage.ts, kept by the shell; the
    balances have their own view), the organization ID and the main actions; the activity by
-   day, week, month or year (a strip over paired bars); and the transaction list with the
-   dashboard's filter bar, a menu per payment and rows per page. Every figure comes from the
-   Payments API (/v1/summary, /v1/summary/series and the payment list); nothing is sample data. While a figure loads, a skeleton holds its place; then it counts up (Odometer). */
+   day, week, month or year (components/ActivityPanel.tsx, shared with the views); and the
+   transaction list with the dashboard's filter bar, a menu per payment and rows per page, each
+   payment's id previewing it and both accounts linking to their explorer with a copy button.
+   Every figure comes from the Payments API (/v1/summary, /v1/summary/series and the payment
+   list); nothing is sample data. While a figure loads, a skeleton holds its place; then it
+   counts up (Odometer). */
 import { useState, useEffect, useRef } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
@@ -16,38 +19,22 @@ import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { useOutside, useListFilters, usePresence, usePaged, goFiltered } from "@/components/cosmos/dashboard/hooks";
-import { BarChart } from "@/components/cosmos/dashboard/components/BarChart";
+import { ActivityPanel, countText, type MetricKey } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { Odometer } from "@/components/cosmos/dashboard/components/Odometer";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PaymentPreview } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
-import { Sk, ListSkeleton, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { Sk, ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, CHAIN_NAMES } from "@/lib/chains";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
-const CHART_PERIODS = ["day", "week", "month", "year"];
-/* The activity's figures, each a tab over its own chart: settled volume (with the payments
-   created), payments (with the failed), swaps of every kind, liquidity operations (with the
-   completed) and webhook deliveries (with the failed), and the view each one lives in. */
-const METRICS = ["volume", "payments", "swaps", "liquidity", "webhooks"];
-const METRIC_VIEW = { volume: "payments", payments: "payments", swaps: "swaps", liquidity: "liquidity", webhooks: "webhook" };
-/* The list filter that matches a chart window (30 days, 12 weeks; longer windows show everything). */
-const WINDOW_DATE = { day: "30d", week: "90d" };
-/* A chart with nothing to draw (no buckets, or a part the server does not send) shows the window's
-   buckets at zero (product owner: fill with 0), as the server draws them: UTC, weeks from Monday,
-   30 days, 12 weeks, 12 months or 5 years. */
-const WINDOW_SIZE = { day: 30, week: 12, month: 12, year: 5 };
-function zeroBuckets(period) {
-  const now = new Date();
-  const y = now.getUTCFullYear(), mo = now.getUTCMonth(), d = now.getUTCDate();
-  const monday = d - ((now.getUTCDay() + 6) % 7);
-  return Array.from({ length: WINDOW_SIZE[period] }, (_, k) => {
-    const i = WINDOW_SIZE[period] - 1 - k;
-    const at = period === "day" ? Date.UTC(y, mo, d - i) : period === "week" ? Date.UTC(y, mo, monday - 7 * i) : period === "month" ? Date.UTC(y, mo - i, 1) : Date.UTC(y - i, 0, 1);
-    return { date: new Date(at).toISOString().slice(0, 10), a: 0, b: 0 };
-  });
-}
+/* The activity's figures (components/ActivityPanel.tsx), each a tab over its own chart: settled
+   volume, payments, swaps of every kind, liquidity operations and webhook deliveries. */
+const METRICS: MetricKey[] = ["volume", "payments", "swaps", "liquidity", "webhooks"];
 /* The transaction list's periods, as the start of the window. "today" starts at local midnight. */
 const LIST_PERIODS = ["today", "week", "month", "year"];
 const periodStart = (period) => {
@@ -113,8 +100,6 @@ const statusIcon = (status) => {
 
 /* The overview list's period as the Payments view's date filter ("year" has none: everything). */
 const LIST_DATE = { today: "today", week: "7d", month: "30d" };
-/* Plural-safe counts: the singular has its own string. */
-const countText = (n, one, many, num) => (n === 1 ? one : fmt(many, { n: num.format(n || 0) }));
 
 export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = (v) => {}, canCreatePayments = false, env = "dev", quick = [], onQuickUse = (key) => {} }) {
   const t = useT();
@@ -124,7 +109,6 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   // undefined while loading, null when the request failed.
   const [sum, setSum] = useState(undefined);
   const [chartPeriod, setChartPeriod] = useState("month");
-  const [metric, setMetric] = useState("volume");
   const [series, setSeries] = useState(undefined);
   const [seriesLoading, setSeriesLoading] = useState(true);
   const [listPeriod, setListPeriod] = useState("month");
@@ -192,84 +176,6 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   // The organizations the arrows step through (the shell passes the usable ones).
   const at = orgs.findIndex((o) => o.id === org.id);
   const step = (d) => { if (orgs.length > 1) onSwitchOrg(orgs[(at + d + orgs.length) % orgs.length].id); };
-
-  // The chart's window and the one before it, for growth.
-  const firstSeries = series === undefined;
-  const win = (series && series.totals) || { count: 0, succeeded: 0, failed: 0, volume: "0", volumeUsd: "0", payers: 0, unpriced: 0 };
-  const before = (series && series.previous) || { count: 0, failed: 0, volume: "0", volumeUsd: "0" };
-  // Beyond payments (the same window): every swap (on one chain, between chains, USDT0), liquidity
-  // operations and webhook deliveries.
-  const part = (k) => (series && series[k]) || {};
-  const growth = (cur, prev) => (prev > 0 ? ((cur - prev) / prev) * 100 : null);
-  const pct = (g) => `${g >= 0 ? "↑" : "↓"} ${num.format(Math.round(Math.abs(g) * 10) / 10)}%`;
-  const n = (v) => num.format(v || 0);
-  // Each figure: its tab (label, value, the line under it, growth) and its chart (two series, a
-  // shared axis for two counts of the same thing). A part whose buckets the server does not send
-  // draws the window at zero.
-  const m = {
-    volume: {
-      label: h.sumVolume, value: usd(win.volumeUsd), sub: countText(win.payers, h.payersOne, h.payersN, num),
-      growth: growth(Number(win.volumeUsd) || 0, Number(before.volumeUsd) || 0),
-      a: h.legendVolume, b: h.legendCount, shared: false, currency: "USD",
-      bars: series && series.buckets && series.buckets.map((x) => ({ date: x.start, a: Number(x.volumeUsd) || 0, b: x.count || 0 })),
-    },
-    payments: {
-      label: h.sumCount, value: n(win.count), sub: countText(win.failed, h.paymentsFailedOne, h.paymentsFailedN, num),
-      growth: growth(win.count || 0, before.count || 0),
-      a: h.legendCount, b: h.sumFailed, shared: true,
-      bars: series && series.buckets && series.buckets.map((x) => ({ date: x.start, a: x.count || 0, b: x.failed || 0 })),
-    },
-    swaps: {
-      label: h.sumSwaps, value: n(part("swaps").totals?.count), sub: countText(part("swaps").totals?.succeeded, h.doneOne, h.doneN, num),
-      growth: growth(part("swaps").totals?.count || 0, part("swaps").previous?.count || 0),
-      a: h.sumSwaps, b: h.legendDone, shared: true,
-      bars: part("swaps").buckets && part("swaps").buckets.map((x) => ({ date: x.start, a: x.count || 0, b: x.succeeded || 0 })),
-    },
-    liquidity: {
-      label: h.sumLiquidity, value: n(part("liquidity").totals?.count), sub: countText(part("liquidity").totals?.succeeded, h.doneOne, h.doneN, num),
-      growth: growth(part("liquidity").totals?.count || 0, part("liquidity").previous?.count || 0),
-      a: h.sumLiquidity, b: h.legendDone, shared: true,
-      bars: part("liquidity").buckets && part("liquidity").buckets.map((x) => ({ date: x.start, a: x.count || 0, b: x.succeeded || 0 })),
-    },
-    webhooks: {
-      label: h.sumWebhooks, value: n(part("webhooks").totals?.deliveries), sub: countText(part("webhooks").totals?.failed, h.webhooksFailedOne, h.sumWebhooksFailed, num),
-      growth: growth(part("webhooks").totals?.deliveries || 0, part("webhooks").previous?.deliveries || 0),
-      a: h.sumWebhooks, b: h.sumFailed, shared: true,
-      bars: part("webhooks").buckets && part("webhooks").buckets.map((x) => ({ date: x.start, a: x.deliveries || 0, b: x.failed || 0 })),
-    },
-  };
-  const cur = m[metric];
-  const bars = cur.bars && cur.bars.length ? cur.bars : zeroBuckets(chartPeriod);
-  const curView = METRIC_VIEW[metric];
-  // Its view, filtered to the chart's window where the view has a date filter.
-  const openMetric = () => {
-    const date = curView === "webhook" ? null : WINDOW_DATE[chartPeriod];
-    goFiltered(onGo, curView, date ? { date } : {});
-  };
-  // Tabs by arrow keys (automatic activation), Home and End.
-  const onTabKey = (e) => {
-    const at = METRICS.indexOf(metric);
-    const next = e.key === "ArrowRight" || e.key === "ArrowDown" ? at + 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? at - 1 : e.key === "Home" ? 0 : e.key === "End" ? METRICS.length - 1 : null;
-    if (next === null) return;
-    e.preventDefault();
-    const k = METRICS[(next + METRICS.length) % METRICS.length];
-    setMetric(k);
-    document.getElementById(`hub-m-${k}`)?.focus();
-  };
-  // A figure of a tab, or its skeleton while its period loads.
-  // A window that could not be read shows a dash, never zeros that look like data.
-  const fig = (x) => (seriesLoading
-    ? <Sk className="lg" w="64%" />
-    : series === null ? <b className="arrive">-</b>
-    : (
-      <>
-        <b className="arrive"><Odometer text={x.value} /></b>
-        <small className="hub-sub arrive">
-          {x.sub}
-          {x.growth !== null && <em className={x.growth >= 0 ? "up" : "down"} title={h.growthTitle}><span className="sr-only">{h.growthTitle}: </span>{pct(x.growth)}</em>}
-        </small>
-      </>
-    ));
 
   // The list, as the filter bar narrows it; each control counts what the others leave.
   const all = rows || [];
@@ -363,59 +269,8 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
         </div>
       </section>
 
-      {/* Activity by period: the strip and the paired bars. */}
-      <section className="hub-section" aria-labelledby="hub-activity">
-        <div className="hub-section-head">
-          <h2 id="hub-activity">{h.activity}</h2>
-          <div className="seg-tabs" role="group" aria-label={h.periodLabel}>
-            {CHART_PERIODS.map((p) => (
-              <button key={p} type="button" className={chartPeriod === p ? "on" : ""} aria-pressed={chartPeriod === p} onClick={() => setChartPeriod(p)}>{h.chartPeriods[p]}</button>
-            ))}
-          </div>
-        </div>
-        <div className="panel hub-panel" aria-busy={seriesLoading || undefined}>
-          <div className="hub-metrics" role="tablist" aria-label={h.activity} onKeyDown={onTabKey}>
-            {METRICS.map((k) => (
-              <button
-                key={k} type="button" role="tab" id={`hub-m-${k}`}
-                className={metric === k ? "hub-metric on" : "hub-metric"}
-                aria-selected={metric === k} aria-controls="hub-metric-panel" tabIndex={metric === k ? 0 : -1}
-                onClick={() => setMetric(k)}
-              >
-                <span className="hub-metric-k">{m[k].label}</span>
-                {fig(m[k])}
-              </button>
-            ))}
-          </div>
-          <div id="hub-metric-panel" role="tabpanel" aria-labelledby={`hub-m-${metric}`}>
-            <div className="hub-chart-head">
-              <div className="hub-legend" aria-hidden="true">
-                <span><i className="dot-a" />{cur.a}</span>
-                <span><i className="dot-b" />{cur.b}</span>
-              </div>
-              {metric === "volume" && win.unpriced > 0 && <span className="hub-chart-note">{countText(win.unpriced, h.usdUnpricedOne, h.usdUnpricedN, num)}</span>}
-              <button type="button" className="hub-link" onClick={openMetric}>{fmt(h.goTo, { view: t.dash.viewLabels[curView] })}</button>
-            </div>
-            {firstSeries ? <ChartSkeleton label={h.chartLabels[chartPeriod]} bars={12} /> : (
-              <div className={seriesLoading ? "hub-chart is-loading" : "hub-chart"}>
-                {/* Remounted per figure and period, so the bars grow again from the axis. */}
-                <BarChart
-                  key={`${metric}-${chartPeriod}-${bars.length}`}
-                  data={bars}
-                  label={metric === "volume" ? h.chartLabels[chartPeriod] : `${cur.label} (${h.chartPeriods[chartPeriod]})`}
-                  aLabel={cur.a}
-                  bLabel={cur.b}
-                  dateLabel={h.thDate}
-                  lang={lang}
-                  period={chartPeriod}
-                  shared={cur.shared}
-                  currency={cur.currency}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      {/* Activity by period: the figures over their paired bars, each linking into its view. */}
+      <ActivityPanel id="hub-activity" series={series} loading={seriesLoading} period={chartPeriod} onPeriod={setChartPeriod} metrics={METRICS} onGo={onGo} />
 
       {/* The transaction list: the filter bar, then one line per payment. */}
       <section className="hub-section" aria-labelledby="hub-tx">
@@ -450,13 +305,15 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
                 <li className="hub-row" key={p.id}>
                   {statusIcon(p.status)}
                   <dl className="hub-cells">
-                    <div><dt>{h.thId}</dt><dd><code>{short(p.id)}</code></dd></div>
+                    {/* The id opens the payment and previews it on hover; both accounts open on their
+                        explorer and copy (product owner). */}
+                    <div><dt>{h.thId}</dt><dd><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => goFiltered(onGo, "payments", { open: p.id })} preview={() => <PaymentPreview p={p} status={(h.status && h.status[p.status]) || p.status} />}><code>{short(p.id)}</code></RecordLink></dd></div>
                     <div><dt>{h.thStatus}</dt><dd className={`hub-st-t ${p.status === SETTLED ? "ok" : FAILED.includes(p.status) ? "fail" : "wait"}`}>{(h.status && h.status[p.status]) || p.status}</dd></div>
                     <div><dt>{h.thDate}</dt><dd>{fmtDateTime(p.createdAt)}</dd></div>
                     <div><dt>{h.thAmount}</dt><dd><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</dd></div>
                     <div><dt>{h.thNetwork}</dt><dd>{CHAIN_NAMES[chainOf(p)]}</dd></div>
-                    <div><dt>{h.thFrom}</dt><dd><code>{short(p.source)}</code></dd></div>
-                    <div><dt>{h.thTo}</dt><dd><code>{short(p.destination)}</code></dd></div>
+                    <div><dt>{h.thFrom}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.source} /></dd></div>
+                    <div><dt>{h.thTo}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.destination} /></dd></div>
                   </dl>
                   <RowMenu p={p} onGo={onGo} />
                 </li>

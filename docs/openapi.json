@@ -19601,6 +19601,133 @@
           "previous"
         ]
       },
+      "SeriesPrivatePaymentBucketEntity": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "The first day of the bucket (UTC; weeks start on Monday), the same as the payments bucket at that index.",
+            "example": "2026-10-01"
+          },
+          "count": {
+            "type": "number",
+            "description": "Private payments created in the bucket, any status.",
+            "example": 12
+          },
+          "succeeded": {
+            "type": "number",
+            "description": "Settled: both transfers confirmed.",
+            "example": 9
+          },
+          "expired": {
+            "type": "number",
+            "description": "Past their deadline without settling (a pending payment reads as expired once its deadline passes).",
+            "example": 2
+          },
+          "volume": {
+            "type": "string",
+            "description": "Settled amount in XLM, what the payers paid (the commission included).",
+            "example": "450.5"
+          },
+          "volumeUsd": {
+            "type": "string",
+            "nullable": true,
+            "description": "The bucket's settled amount in USD with two decimals, valued at XLM's current reference price on NEAR Intents (an indicative figure at today's price). Null only when there is something settled and NEAR Intents' prices could not be read.",
+            "example": "112.63"
+          }
+        },
+        "required": [
+          "start",
+          "count",
+          "succeeded",
+          "expired",
+          "volume",
+          "volumeUsd"
+        ]
+      },
+      "SeriesPrivatePaymentWindowEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Private payments created in the window, any status.",
+            "example": 48
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 41
+          },
+          "expired": {
+            "type": "number",
+            "description": "Past their deadline without settling (a pending payment reads as expired once its deadline passes).",
+            "example": 5
+          },
+          "volume": {
+            "type": "string",
+            "description": "Settled amount in XLM, what the payers paid (the commission included).",
+            "example": "2140.25"
+          },
+          "volumeUsd": {
+            "type": "string",
+            "nullable": true,
+            "description": "The window's settled amount in USD with two decimals, valued at XLM's current reference price on NEAR Intents (an indicative figure at today's price). Null only when there is something settled and NEAR Intents' prices could not be read.",
+            "example": "535.06"
+          },
+          "fees": {
+            "type": "string",
+            "description": "Commission the settled payments paid to Cosmos Pay, in XLM (0.01% of each).",
+            "example": "0.214025"
+          },
+          "feesUsd": {
+            "type": "string",
+            "nullable": true,
+            "description": "The window's commission in USD with two decimals, valued at XLM's current reference price on NEAR Intents (an indicative figure at today's price). Null only when there is something settled and NEAR Intents' prices could not be read.",
+            "example": "0.05"
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "expired",
+          "volume",
+          "volumeUsd",
+          "fees",
+          "feesUsd"
+        ]
+      },
+      "SeriesPrivatePaymentsEntity": {
+        "type": "object",
+        "properties": {
+          "buckets": {
+            "description": "Private payments per bucket, on the same buckets as the payments, pre-seeded so a quiet bucket is a zero.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesPrivatePaymentBucketEntity"
+            }
+          },
+          "totals": {
+            "description": "The window the buckets cover.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesPrivatePaymentWindowEntity"
+              }
+            ]
+          },
+          "previous": {
+            "description": "The window of the same length just before it, for growth.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesPrivatePaymentWindowEntity"
+              }
+            ]
+          }
+        },
+        "required": [
+          "buckets",
+          "totals",
+          "previous"
+        ]
+      },
       "AnalyticsSeriesEntity": {
         "type": "object",
         "properties": {
@@ -19660,6 +19787,14 @@
                 "$ref": "#/components/schemas/SeriesWebhooksEntity"
               }
             ]
+          },
+          "zkPayments": {
+            "description": "Private payments (amounts hidden on-chain, /v1/zk-payments) on the network the key targets. They run on testnet only for now, so a production key counts none.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SeriesPrivatePaymentsEntity"
+              }
+            ]
           }
         },
         "required": [
@@ -19669,7 +19804,8 @@
           "previous",
           "swaps",
           "liquidity",
-          "webhooks"
+          "webhooks",
+          "zkPayments"
         ]
       },
       "AssetBalanceEntity": {

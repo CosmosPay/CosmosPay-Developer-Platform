@@ -11,6 +11,9 @@ import { swaps as swapsApi, crossChainSwaps as crossApi, usdt0 as usdt0Api } fro
 import { orgSwapApi } from "@/lib/swap-api";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { showToast } from "@/components/cosmos/shared";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
@@ -142,6 +145,8 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
     <>
       <ViewHead title={sw.title} />
       {canManage ? <SwapWidget api={api} tier={env === "prod" ? "public" : "testnet"} onCreated={onCreated} /> : <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
+      {/* Its own figures and chart: swaps of every kind and the completed ones. */}
+      <ViewActivity env={env} metrics={["swaps"]} id="swaps-activity" />
       <div className="hub-section-head swaps-list-head"><h2 id="swaps-list-h">{sw.listTitle}</h2></div>
       <FilterBar
         label={fl.label}
@@ -167,7 +172,12 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.chains}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
             <tbody>{!error && pg.slice.map((r) => (
               <tr key={r.key} className="row-click" onClick={() => setDetail(r)}>
-                <td className="tid">{r.id}</td>
+                <td className="tid">
+                  <RecordLink
+                    href={`/dashboard?view=swaps&open=${encodeURIComponent(r.id)}`} onOpen={() => setDetail(r)}
+                    preview={() => <PreviewCard label={sw.tableHead.id} title={r.id} headline={<><b>{r.sent} → {r.got}</b><span className={`hub-st-t ${(GROUP_PILL[groupOf(r.status)] === "ok" ? "ok" : GROUP_PILL[groupOf(r.status)] === "fail" ? "fail" : "wait")}`}>{statusLabel(r)}</span></>} fields={[[sw.tableHead.chains, chainsLabel(r)], [sw.tableHead.created, fmtDateTime(r.createdAt)]]} />}
+                  >{r.id}</RecordLink>
+                </td>
                 <td><span className="net-badge">{chainsLabel(r)}</span></td>
                 <td className="amt">{r.sent} → {r.got}</td>
                 <td><Pill st={GROUP_PILL[groupOf(r.status)]} label={statusLabel(r)} /></td>

@@ -14,6 +14,9 @@ import { IcCopy } from "@/components/cosmos/icons";
 import { zkPayments as zkApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
+import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { useListFilters, useUrlRequest, usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { explorerTxUrl, explorerAccountUrl } from "@/lib/chains";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
@@ -97,6 +100,8 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
       <ViewHead title={z.title} />
       {config === null && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{z.unavailable}</span></div>}
       {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onRegistered={setRegistered} />}
+      {/* Its own figures and chart: settled volume in USD and the payments created. */}
+      <ViewActivity env={env} metrics={["zkVolume", "zkPayments"]} id="zk-activity" />
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={z.view.searchPlaceholder}
@@ -120,7 +125,12 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
               <tbody>
                 {!error && pg.slice.map((p) => (
                   <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
-                    <td className="tid" title={p.id}>{p.description || short(p.id)}</td>
+                    <td className="tid">
+                      <RecordLink
+                        href={`/dashboard?view=zkPayments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)}
+                        preview={() => <PreviewCard label={z.view.tableHead.id} title={p.id} headline={<><b>{p.amount} XLM</b><span className={`hub-st-t ${(PILL[p.status] === "ok" ? "ok" : PILL[p.status] === "fail" ? "fail" : "wait")}`}>{z.status[p.status] || p.status}</span></>} fields={[[z.view.tableHead.net, `${p.netAmount} XLM`], [z.view.tableHead.fee, `${p.feeAmount} XLM`], [z.view.tableHead.created, fmtDateTime(p.createdAt)], ...(p.description ? [[z.modal.description, p.description]] : [])]} />}
+                      >{p.description || short(p.id)}</RecordLink>
+                    </td>
                     <td className="amt">{p.amount} XLM</td>
                     <td className="amt">{p.netAmount} XLM</td>
                     <td className="cust">{p.feeAmount} XLM</td>

@@ -265,6 +265,14 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 /* the window's figures, split by short rules; each is a tab over its own chart: the chosen one
    in ink with a line drawn under it, the others answering the pointer with the surface tint */
 .hub-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 22px; border-bottom: 1px solid var(--line); }
+/* a view's own activity: two figures share the row, a single one stands alone (not a tab) */
+.hub-metrics.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hub-metrics.n1 { grid-template-columns: minmax(0, 1fr); }
+.hub-metric.solo { cursor: default; }
+.hub-metric.solo::after { display: none; }
+.hub-metric.solo:hover { background: transparent; }
+.hub-metric.solo .hub-metric-k { color: var(--ink-3); }
+.view-activity { margin-bottom: 32px; }
 .hub-metric {
   position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0;
   margin: 12px 0 0; padding: 6px 20px 18px; border: 0; border-radius: var(--r-item, 10px) var(--r-item, 10px) 0 0;
@@ -316,6 +324,9 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .hub-cells dt { font-size: 11px; color: var(--ink-3); }
 .hub-cells dd { margin: 0; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hub-cells code { font-family: var(--ff-mono); font-size: 12px; }
+/* a cell with a link and its copy button keeps the row's height and shows the button's focus */
+.hub-cells dd:has(.addr, .rec-link) { overflow: visible; }
+.hub-cells .addr-copy { width: 22px; height: 22px; margin: -3px 0; }
 .hub-st-t { font-weight: 600; }
 .hub-st-t.fail { color: #C93636; }
 [data-theme="dark"] .hub-st-t.fail { color: #FF8A8A; }
@@ -506,7 +517,37 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .pager { padding: 12px 20px; }
 .pager-size { display: flex; align-items: center; gap: 10px; margin-right: auto; }
 .pager-size-k { font-size: 13px; color: var(--ink-3); white-space: nowrap; }
-.pager-dd .dd-btn { height: 34px; min-width: 76px; }
+.inst .pager-dd .dd-btn { height: 36px; min-width: 76px; }
+/* the steps take the rows-per-page picker's shape: as tall, the same line, the same type */
+.inst .pager .pager-btn { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-color: var(--line-2); font: 500 14px/1 var(--ff-sans); color: var(--ink-2); }
+.inst .pager-pages { font-size: 13.5px; }
+
+/* ---- a record's id links to it and previews it on hover or focus (RecordLink: a card portaled
+   to the body, so no table scroller clips it); an account links to its explorer page with a
+   copy button beside it (AddressLink) ---- */
+.rec-link, .addr-link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; transition: text-decoration-color .15s ease; }
+:is(.rec-link, .addr-link):is(:hover, :focus-visible) { text-decoration-color: currentColor; }
+.rec-link code, .addr code { font-family: var(--ff-mono); font-size: 12px; }
+.rec-preview {
+  position: fixed; z-index: 200; width: 300px; padding: 14px 16px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pop); box-shadow: var(--shadow-lg);
+  animation: rp-in .14s ease-out both;
+}
+.rec-preview.up { translate: 0 -100%; }
+@keyframes rp-in { from { opacity: 0; transform: translateY(4px); } }
+.rp-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 12px; color: var(--ink-3); }
+.rp-head code { min-width: 0; font-family: var(--ff-mono); font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 8px 0 12px; font-size: 16px; }
+.rp-line b { font-weight: 700; letter-spacing: -.01em; }
+.rp-line .hub-st-t { font-size: 13px; }
+.rp-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.rp-fields > div { min-width: 0; }
+.rp-fields dt { font-size: 11px; color: var(--ink-3); }
+.rp-fields dd { margin: 2px 0 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-fields code { font-family: var(--ff-mono); font-size: 11.5px; }
+.addr { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; vertical-align: middle; }
+.inst .addr-copy { width: 24px; height: 24px; padding: 0; }
+.addr-copy svg { width: 13px; height: 13px; }
 .inst .pager-range { font-variant-numeric: tabular-nums; }
 
 /* ---- figures that count up (Odometer): each digit a strip of 0-9 spinning into place, the

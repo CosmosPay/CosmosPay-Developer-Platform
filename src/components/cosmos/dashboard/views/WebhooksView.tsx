@@ -7,6 +7,7 @@ import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { usePaged, useGsapRows, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
@@ -91,6 +92,8 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
   return (
     <>
       <ViewHead title={wv.title} />
+      {/* Its own figures and chart: deliveries and the failed ones. */}
+      <ViewActivity env={env} metrics={["webhooks"]} id="wh-activity" />
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={wv.searchPlaceholder}
