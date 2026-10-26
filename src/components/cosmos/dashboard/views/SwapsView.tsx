@@ -18,6 +18,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { SwapWidget } from "@/components/cosmos/dashboard/components/SwapWidget";
 import { SwapRecordDetail } from "@/components/cosmos/dashboard/components/SwapDetails";
 import { CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, networkName } from "@/lib/chains";
@@ -162,9 +163,9 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
       />
       <div className="panel">
         {loading && <TableSkeleton label={sw.loading} cols={5} />}
-        {!loading && !error && view.length > 0 && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.chains}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
-            <tbody>{pg.slice.map((r) => (
+            <tbody>{!error && pg.slice.map((r) => (
               <tr key={r.key} className="row-click" onClick={() => setDetail(r)}>
                 <td className="tid">{r.id}</td>
                 <td><span className="net-badge">{chainsLabel(r)}</span></td>
@@ -172,17 +173,20 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
                 <td><Pill st={GROUP_PILL[groupOf(r.status)]} label={statusLabel(r)} /></td>
                 <td className="cust">{fmtDateTime(r.createdAt)}</td>
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows
+                n={pg.size - (error ? 0 : pg.count)} cols={5}
+                empty={error ? sw.loadError : !view.length ? (
+                  <>
+                    {rows.length ? fl.noMatch : sw.empty}
+                    {rows.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                  </>
+                ) : null}
+              />
+            </tbody>
           </table></div>
         )}
-        {!loading && error && <div className="empty">{sw.loadError}</div>}
-        {!loading && !error && !view.length && (
-          <div className="empty">
-            {rows.length ? fl.noMatch : sw.empty}
-            {rows.length > 0 && active > 0 && <div><button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button></div>}
-          </div>
-        )}
-        {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
       {detail && <SwapRecordDetail api={api} kind={detail.kind} record={detail.raw} canManage={canManage} onClose={() => setDetail(null)} />}
     </>

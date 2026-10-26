@@ -7,14 +7,14 @@
    the wallets; without one it says the organization needs a Stellar wallet and nothing can be
    created). The first wallet with a confidential account is the new payment's recipient by default.
    Testnet (the sandbox) only for now. */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { IcCopy } from "@/components/cosmos/icons";
 import { zkPayments as zkApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
-import { useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
+import { useListFilters, useUrlRequest, usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { explorerTxUrl, explorerAccountUrl } from "@/lib/chains";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
@@ -22,6 +22,8 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { PAYMENTS } from "@/components/cosmos/lib/constants";
 import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { fromUnits, toUnits, zkSplit } from "@/lib/zk/amounts";
@@ -72,6 +74,9 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
     matchesQuery([p.id, p.recipient, p.payer, p.amount, p.description], filters.q);
   const shown = all.filter((p) => matches(p, null));
   const statusCounts = countBy(all.filter((p) => matches(p, "status")), (p) => p.status);
+  const pg = usePaged(shown, JSON.stringify(filters));
+  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + shown.length);
+  const canCreate = canManage && config && stellarWallets.length > 0;
   const zkConfig = useMemo(() => (config ? parseZkConfig(config) : null), [config]);
 
   const copy = (id) => navigator.clipboard?.writeText(checkoutUrl(id)).then(() => showToast(t.toasts.copied)).catch(() => {});
@@ -89,9 +94,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
 
   return (
     <>
-      <ViewHead title={z.title}>
-        {canManage && config && stellarWallets.length > 0 && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
-      </ViewHead>
+      <ViewHead title={z.title} />
       {config === null && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{z.unavailable}</span></div>}
       {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onRegistered={setRegistered} />}
       <FilterBar
@@ -106,18 +109,16 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
         }}
         date={filters.date} onDate={(v) => set("date", v)}
         shown={shown.length} total={all.length} active={active} onReset={reset} loading={rows === null}
+        actions={canCreate && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
       />
       <div className="panel">
         {rows === null && <TableSkeleton label={t.dash.cosmos.loading} />}
-        {rows !== null && error && <div className="empty">{z.view.loadError}</div>}
-        {rows !== null && !error && !all.length && <div className="empty">{z.view.empty}</div>}
-        {rows !== null && !error && all.length > 0 && !shown.length && <div className="empty">{fl.noMatch}</div>}
-        {shown.length > 0 && (
-          <div className="t-scroll" tabIndex={0}>
+        {rows !== null && (
+          <div className="t-scroll" tabIndex={0} ref={tref}>
             <table className="tx">
               <thead><tr><th>{z.view.tableHead.id}</th><th>{z.view.tableHead.amount}</th><th>{z.view.tableHead.net}</th><th>{z.view.tableHead.fee}</th><th>{z.view.tableHead.status}</th><th>{z.view.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
               <tbody>
-                {shown.map((p) => (
+                {!error && pg.slice.map((p) => (
                   <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                     <td className="tid" title={p.id}>{p.description || short(p.id)}</td>
                     <td className="amt">{p.amount} XLM</td>
@@ -132,10 +133,21 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
                     </td>
                   </tr>
                 ))}
+                <FillRows
+                  n={pg.size - (error ? 0 : pg.count)} cols={7}
+                  empty={error ? z.view.loadError : !shown.length ? (
+                    <>
+                      {all.length ? fl.noMatch : z.view.empty}
+                      {all.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                      {!all.length && canCreate && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
+                    </>
+                  ) : null}
+                />
               </tbody>
             </table>
           </div>
         )}
+        {rows !== null && <Pagination {...pg} />}
       </div>
       {detail && <ZkPaymentDetailModal payment={detail} orgId={orgId} env={env} onCopy={copy} onClose={() => setDetail(null)} />}
       {modal && config && (

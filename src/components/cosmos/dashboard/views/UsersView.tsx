@@ -8,6 +8,7 @@ import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
@@ -37,10 +38,9 @@ export function UsersView({ currentUserId, currentRole }) {
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={u.search} />
         {loading && <TableSkeleton label={t.dash.cosmos.loading} />}
-        {!loading && error && <div className="empty">{u.loadError}</div>}
-        {!loading && !error && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{u.name}</th><th>{u.email}</th><th>{u.role}</th><th>{u.plan}</th></tr></thead>
-            <tbody>{pg.slice.map((r) => {
+            <tbody>{!error && pg.slice.map((r) => {
               const isSelf = r.id === currentUserId;
               // Can't change your own role, or that of a peer/superior.
               const roleLocked = isSelf || roleLevel(r.role) >= actorLevel;
@@ -57,11 +57,12 @@ export function UsersView({ currentUserId, currentRole }) {
                   <td><MiniSelect value={r.plan} options={planOpts} onChange={(v) => update(r.id, { plan: v })} /></td>
                 </tr>
               );
-            })}</tbody>
+            })}
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? u.loadError : !view.length ? u.empty : null} />
+            </tbody>
           </table></div>
         )}
-        {!loading && !error && !view.length && <div className="empty">{u.empty}</div>}
-        {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
     </>
   );

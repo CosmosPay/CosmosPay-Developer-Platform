@@ -15,6 +15,7 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 
@@ -230,15 +231,16 @@ function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads,
         ))}
         {tag ? <span className="env-tag">{DI.network} {tag}</span> : null}
       </Toolbar>
-      {!loading && !error && view.length > 0 && (
+      {!loading && (
         <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{heads.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
-          <tbody>{pg.slice.map(renderRow)}</tbody>
+          <tbody>
+            {!error && pg.slice.map(renderRow)}
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={heads.length} empty={error ? a.loadError : !view.length ? empty : null} />
+          </tbody>
         </table></div>
       )}
       {loading && <TableSkeleton label={a.loading} />}
-      {!loading && error && <div className="empty">{a.loadError}</div>}
-      {!loading && !error && !view.length && <div className="empty">{empty}</div>}
-      {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+      {!loading && <Pagination {...pg} />}
     </div>
   );
 }

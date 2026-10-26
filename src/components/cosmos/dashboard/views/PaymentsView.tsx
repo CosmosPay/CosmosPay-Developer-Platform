@@ -13,6 +13,7 @@ import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
@@ -120,9 +121,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
 
   return (
     <>
-      <ViewHead title={pl.title}>
-        {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pl.create}</button>}
-      </ViewHead>
+      <ViewHead title={pl.title} />
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{pl.readOnly}</span></div>}
       <FilterBar
         label={fl.label}
@@ -135,12 +134,13 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
         date={filters.date} onDate={(v) => set("date", v)}
         active={active} onReset={reset}
         shown={view.length} total={loading ? undefined : inEnv.length} loading={loading}
+        actions={canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pl.create}</button>}
       />
       <div className="panel">
         {loading && <TableSkeleton label={pl.loading} cols={6} />}
-        {!loading && !error && view.length > 0 && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pl.tableHead.id}</th><th>{pl.tableHead.type}</th><th>{pl.detail.fields.network}</th><th>{pl.tableHead.amount}</th><th>{pl.tableHead.status}</th><th>{pl.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
-            <tbody>{pg.slice.map((p) => (
+            <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 <td className="tid">{p.id}</td>
                 <td className="cust">{pl.kinds[p.kind] || p.kind}</td>
@@ -150,17 +150,21 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
                 <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows
+                n={pg.size - (error ? 0 : pg.count)} cols={7}
+                empty={error ? pl.loadError : !view.length ? (
+                  <>
+                    {inEnv.length ? fl.noMatch : pl.empty}
+                    {inEnv.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                    {!inEnv.length && canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pl.create}</button>}
+                  </>
+                ) : null}
+              />
+            </tbody>
           </table></div>
         )}
-        {!loading && error && <div className="empty">{pl.loadError}</div>}
-        {!loading && !error && !view.length && (
-          <div className="empty">
-            {inEnv.length ? fl.noMatch : pl.empty}
-            {inEnv.length > 0 && active > 0 && <div><button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button></div>}
-          </div>
-        )}
-        {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CreatePayLinkModal pl={pl} orgId={orgId} env={env} canConnectWallets={canConnectWallets} initial={modal === true ? null : modal} onClose={() => setModal(false)} onCreated={onCreated} />}
       {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={onDeleted} />}

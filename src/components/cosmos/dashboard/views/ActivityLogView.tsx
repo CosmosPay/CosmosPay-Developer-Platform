@@ -9,6 +9,7 @@ import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { matchesQuery } from "@/lib/dashboard-filters";
 
@@ -106,7 +107,7 @@ export function ActivityLogView({ env = "dev" }) {
           <MiniSelect value={level} options={levelOptions} onChange={setLevel} />
         </Toolbar>
 
-        {!loading && !error && view.length > 0 && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx logs"><thead>
             <tr>
               <th><span className="sr-only">{t.dash.common.details}</span></th>
@@ -117,7 +118,7 @@ export function ActivityLogView({ env = "dev" }) {
               <th>{av.tableHead.timestamp}</th>
             </tr>
           </thead>
-            <tbody>{pg.slice.map((l, j) => {
+            <tbody>{!error && pg.slice.map((l, j) => {
               const i = pg.start + j;
               const isOpen = open === i;
               return (
@@ -148,13 +149,13 @@ export function ActivityLogView({ env = "dev" }) {
                   )}
                 </React.Fragment>
               );
-            })}</tbody>
+            })}
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? cx.loadError : !view.length ? (rows.length ? t.dash.filters.noMatch : av.empty) : null} />
+            </tbody>
           </table></div>
         )}
         {loading && <TableSkeleton label={cx.loading} />}
-        {!loading && error && <div className="empty">{cx.loadError}</div>}
-        {!loading && !error && !view.length && <div className="empty">{av.empty}</div>}
-        {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
 
       {summary && Array.isArray(summary.topErrors) && summary.topErrors.length > 0 && (

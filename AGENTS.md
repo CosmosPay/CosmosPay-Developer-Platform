@@ -227,31 +227,46 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     filter to the URL; `FILTERS_EVENT` (`dashboard/hooks.ts`) makes a list already on screen read
     it again. On phones it shrinks to its glyph and opens over the bar.
   - **The overview** (`views/OverviewView.tsx`): a black account card (its up and down arrows step
-    through the organizations; name, plan, Active in the reference's orange, created date, settled
-    volume, the plan's rate and the environment as text split by a hairline) beside a white panel
-    like every other one (product owner: no grey panel): the balances, each token with its logo
-    (`/v1/balances`), the organization ID to copy with the docs link, "Create payment link" and
-    "Swap"; "Activity" with Daily / Weekly / Monthly / Yearly over a row of five figures that are
-    tabs (WAI-ARIA, arrow keys), each over its own paired bars (product owner: the summary must show
+    through the organizations and are not drawn when there is no other one, product owner; name,
+    plan, Active in the reference's orange, created date, the settled volume in USD, the plan's rate
+    and the environment as text split by a hairline) beside a white panel like every other one
+    (product owner: no grey panel): "Quick links" as four rectangular tiles (an icon in a small
+    square and the view's name; product owner: in place of the balances, which keep their own view),
+    the organization ID to copy, "Create payment link" and "Swap". **The quick links follow each
+    person's use** (`src/lib/dashboard-usage.ts`, tested): Documentation, API keys, Webhooks and API
+    logs until a view earns a place with recent use (every view opened counts, halving every two
+    weeks; only views the viewer may open), kept per account in the browser
+    (`cosmospay-usage:<user>`, the shell records each view it shows). Money and counts **count up
+    digit by digit** (`components/Odometer.tsx`, the payments landing's effect: the card's volume,
+    the activity's figures) whenever they arrive or change. "Activity" with Daily / Weekly /
+    Monthly / Yearly over a row of five figures that are tabs (WAI-ARIA, arrow keys), each over its
+    own paired bars (product owner: the summary must show
     swaps, liquidity, webhooks and their own charts, not payments only): settled volume with its
     payers (volume and payments, an axis each), payments with the failed, swaps of every kind
     (USDT0 included) and liquidity operations with the completed, webhook deliveries with the
-    failed (two counts on one axis, `BarChart shared`). Each figure carries its growth against the
-    window before (tertiary blue up, red down) and its chart a link into its view, filtered to the
+    failed (two counts on one axis, `BarChart shared`). Bars are square (product owner); the
+    volume's axis is USD (`BarChart currency`, compact on the axis, in full in the tooltip). Each
+    figure carries its growth against the window before (tertiary blue up, red down) and its chart a link into its view, filtered to the
     window where the view has a date filter. Then "Transactions" with Today / Week / Month / Year,
     the shared filter bar (settled / in progress / failed, network, search) and one line per
     payment (status icon, label over value, a menu to copy the ID, open the explorer on its chain
-    or that payment in the Payments view); "View all payments" keeps the period, network, search
-    and "settled". Counts never build a plural from a suffix: `countText` picks the singular string.
+    or that payment in the Payments view), paged like every table (rows per page, empty rows keeping
+    the height); "View all payments", at the pager's end, keeps the period, network, search and
+    "settled". Counts never build a plural from a suffix: `countText` picks the singular string.
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
     from Monday), with the window's totals (distinct payers too) and the window before it, plus
     `swaps` (Stellar DEX, Solana / Monad, cross-chain and USDT0), `liquidity` and `webhooks` for the
     same window, each with its own buckets (consumer and network; cross-chain and USDT0 count zero
-    in the sandbox). A part whose buckets a server does not send shows a note, never a flat chart. Its volume adds every
-    asset's amount, as the daily summary does. A window or a balance list that fails to load shows
-    a dash or says so, never zeros that look like data. The list reads
-    `GET /api/payment-intents?createdFrom=…`.
+    in the sandbox). **A chart with nothing to draw shows its window at zero** (product owner: fill
+    with 0): no buckets, or a part a server does not send, draws the window's buckets (`zeroBuckets`,
+    as the server cuts them) empty. **The settled volume is in USD** (product owner): the server
+    prices each settled asset from NEAR Intents' token list (`volumeUsd` on `/v1/summary` and on the
+    series' buckets, totals and previous window; testnet assets at their mainnet counterpart's
+    price), and says how many settled payments it could not price (`unpriced`, shown under the
+    figure). Raw `volume` (every asset's amount added) is no longer shown anywhere. A window that
+    fails to load, or a volume the server could not price at all (`volumeUsd` null), shows a dash.
+    The list reads `GET /api/payment-intents?createdFrom=…`.
   - **No ghost controls; everything named on screen opens** (product owner, 2026-10-25). A button
     or link that does nothing, an always-disabled one or a figure that names something with no way
     to it is a bug. What exists:
@@ -260,8 +275,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       `useUrlRequest(key)` and dropped from the URL: `open=<id>` shows that record (Payments,
       Swaps, Liquidity, private payments, Support's tickets; read by id when the list does not
       hold it), `create=1` opens Payments' form (with `amount`, `asset` and `note` from a product).
-    - Balances open their settled payments, notifications open the record their metadata names
-      (`targetOf` in `NotificationsView.tsx`), a customer's payments open in Payments (searched by
+    - The Balances view's tiles open their settled payments, notifications open the record their
+      metadata names (`targetOf` in `NotificationsView.tsx`), a customer's payments open in Payments (searched by
       the wallet that paid, `p.source`), products and webhook endpoints open their edit forms, a
       delivery its detail (the error, the attempts) with a failed-only filter, a private payment
       its detail, the admin overview's figures their lists (`goToAdmin`, a venue or fiat tab).
@@ -277,11 +292,24 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     `src/lib/dashboard-filters.ts`): the search, then a dropdown per filter (status, network, type,
     date), each showing its name until it is set and filled ink while it filters, with how many rows
     each option would show (each control counts what the others leave); "clear filters" once any is on
-    and the count shown at the end. **Status is never a separate row of tabs** (product owner): the
+    (the count of rows shown is for assistive tech only: the pager shows the range), and **the view's
+    own buttons at the row's right end** (`FilterBar actions`;
+    product owner: create payment, add product, new ticket... sit at the filters' height, never on a
+    row of their own above the list). A view whose sections are tabs (Liquidity) puts them at the
+    right of its tabs (`.tabs-row`). Products, Customers, Webhooks, API keys and Support have a
+    filter row too. **Status is never a separate row of tabs** (product owner): the
     admin lists and the support inbox put theirs in the same row as their search. The filters live in
     the URL (`useListFilters`, read after mount so the server render matches), so a filtered list
     survives a reload and can be shared; switching views drops them. Tabs remain only for sections
     (Liquidity, Fiat) and periods (the overview), as segments, never chips.
+  - **Every table is paged and keeps its height** (product owner, 2026-10-26): `usePaged` (`hooks.ts`)
+    pages at the viewer's rows per page (`PAGE_SIZES` 10 / 20 / 50, never more than 50; one choice
+    for every table, kept in the browser as `cosmospay-rows`), `Pagination` under the table always
+    shows the picker, the range and, past one page, the steps. A short or empty page is padded with
+    empty rows (`components/FillRows.tsx`, each as tall as a real row of that table, measured), and
+    an empty list says so, with its first action, in the middle row: a table never shrinks to an
+    "empty" box. The table scroller is positioned, so a wide table's hidden labels never make the
+    page scroll sideways on a phone. Small summary tables inside a view or a dialog are not paged.
   - **Every dropdown is `components/Select.tsx`** (no native `<select>` in the dashboard): the
     WAI-ARIA select-only combobox (arrow keys, Home / End, typeahead, Escape, a click outside), with
     marks and hints on its options, opening upwards when there is no room. It and every menu (the

@@ -4,13 +4,20 @@ import { useT } from "@/lib/i18n/index";
 import { support as supportApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtWhen } from "@/components/cosmos/dashboard/helpers";
-import { usePolling, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
+import { usePolling, useUrlRequest, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { TICKET_STATUSES } from "@/lib/support-status";
+import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
 import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
 
 /* Customer support: a ticket system. The customer can open several tickets in parallel;
-   each has a subject, a status and its own message thread. */
+   each has a subject, a status and its own message thread. The list has the dashboard's filter
+   row (search, status) with "new ticket" at its right end. */
+const DEFAULTS = { q: "", status: "all" };
+const ALLOWED = { status: ["all", ...TICKET_STATUSES] };
+
 export function SupportView() {
   const t = useT();
   const s = t.dash.support;
@@ -23,6 +30,8 @@ export function SupportView() {
   const [subject, setSubject] = useState("");
   const [firstMsg, setFirstMsg] = useState("");
   const [error, setError] = useState(false);
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
+  const fl = t.dash.filters;
 
   const loadTickets = () => supportApi.tickets().then((d) => { setTickets(Array.isArray(d) ? d : []); setError(false); }).catch(() => setError(true));
   const loadTicket = (id) => supportApi.ticket(id).then((d) => setTicket(d || null)).catch(() => {});
@@ -51,15 +60,41 @@ export function SupportView() {
       .then((m) => { if (m) setTicket((tk) => (tk ? { ...tk, messages: [...(tk.messages || []), m] } : tk)); loadTickets(); })
       .catch(() => showToast(s.sendError, "error"));
 
+  const matches = (tk, skip) =>
+    (skip === "status" || filters.status === "all" || tk.status === filters.status) &&
+    matchesQuery([tk.subject, tk.lastMessage], filters.q);
+  const shown = tickets.filter((tk) => matches(tk, null));
+  const statusCounts = countBy(tickets.filter((tk) => matches(tk, "status")), (tk) => tk.status);
+
   return (
     <>
-      <ViewHead title={s.title}><button className="btn btn-dark btn-sm" onClick={startNew}>{DI.plus} {s.newTicket}</button></ViewHead>
+      <ViewHead title={s.title} />
+      <FilterBar
+        label={fl.label}
+        query={filters.q} onQuery={(v) => set("q", v)} placeholder={s.searchPlaceholder}
+        status={{
+          label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+          options: [
+            { key: "all", label: fl.allStatuses, count: tickets.filter((tk) => matches(tk, "status")).length },
+            ...TICKET_STATUSES.map((st) => ({ key: st, label: (s.statuses && s.statuses[st]) || st, count: statusCounts[st] || 0 })),
+          ],
+        }}
+        active={active} onReset={reset}
+        shown={shown.length} total={tickets.length}
+        actions={<button className="btn btn-dark btn-sm" onClick={startNew}>{DI.plus} {s.newTicket}</button>}
+      />
       <div className="inbox">
         <div className="panel inbox-list">
           <div className="inbox-list-h">{s.myTickets}</div>
           {error && <div className="empty" style={{ padding: "24px 12px" }}>{s.loadError}</div>}
           {!error && tickets.length === 0 && <div className="empty" style={{ padding: "24px 12px" }}>{s.noTickets}</div>}
-          {tickets.map((tk) => (
+          {!error && tickets.length > 0 && !shown.length && (
+            <div className="empty" style={{ padding: "24px 12px" }}>
+              {fl.noMatch}
+              {active > 0 && <div><button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button></div>}
+            </div>
+          )}
+          {shown.map((tk) => (
             <button key={tk.id} className={`inbox-item${sel === tk.id ? " active" : ""}`} onClick={() => open(tk.id)}>
               <div className="inbox-item-body">
                 <b>{tk.subject}</b>

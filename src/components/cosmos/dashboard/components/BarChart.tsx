@@ -2,8 +2,9 @@
    settled volume and payments, payments and failures, swaps and completed ones...), with a tooltip
    on hover; the hovered bucket's label turns bold, as in the gateway-dashboard reference. Two
    different quantities get an axis each (`a` left, `b` right); two counts of the same thing share
-   the left one (`shared`), in whole steps. The figures are also in a visually hidden table, so the
-   chart is never the only way to read them. */
+   the left one (`shared`), in whole steps; `currency` makes `a` money (the settled volume in USD:
+   compact on the axis, in full in the tooltip). Bars are square (product owner). The figures are
+   also in a visually hidden table, so the chart is never the only way to read them. */
 import { useState } from "react";
 
 export interface BarPoint {
@@ -23,6 +24,8 @@ interface Props {
   period?: "day" | "week" | "month" | "year";
   /** Both series are counts on the left axis; otherwise `b` is a count on its own right axis. */
   shared?: boolean;
+  /** `a` is an amount of this currency (ISO code). */
+  currency?: string;
 }
 
 const H = 220;
@@ -40,7 +43,7 @@ function niceMax(v: number): number {
 /* A count axis: a round ceiling whose quarters are whole numbers. */
 const countMax = (v: number) => Math.max(4, Math.ceil(niceMax(v) / 4) * 4);
 
-export function BarChart({ data, label, aLabel, bLabel, dateLabel, lang, period = "day", shared = false }: Props) {
+export function BarChart({ data, label, aLabel, bLabel, dateLabel, lang, period = "day", shared = false, currency = undefined }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const w = Math.max(data.length, 1) * GROUP;
   const plotH = H - PAD_TOP - PAD_BOTTOM;
@@ -68,12 +71,15 @@ export function BarChart({ data, label, aLabel, bLabel, dateLabel, lang, period 
   // Labels count back from the newest bucket, so it always has one and no label crowds it.
   const every = data.length > 14 ? 5 : 1;
   const tip = hover !== null ? data[hover] : null;
-  const aFmt = shared ? whole : num;
+  const money = currency ? new Intl.NumberFormat(lang, { style: "currency", currency }) : null;
+  const moneyAxis = currency ? new Intl.NumberFormat(lang, { style: "currency", currency, notation: "compact", maximumSignificantDigits: 3 }) : null;
+  const aFmt = shared ? whole : money ?? num;
+  const aAxis = shared ? whole : moneyAxis ?? num;
 
   return (
-    <div className={shared ? "bars shared" : "bars"} onMouseLeave={() => setHover(null)}>
+    <div className={`bars${shared ? " shared" : ""}${currency ? " money" : ""}`} onMouseLeave={() => setHover(null)}>
       <div className="bars-axis bars-axis-l" aria-hidden="true">
-        {[1, 0.75, 0.5, 0.25, 0].map((f) => <span key={f}>{aFmt.format(aMax * f)}</span>)}
+        {[1, 0.75, 0.5, 0.25, 0].map((f) => <span key={f}>{aAxis.format(aMax * f)}</span>)}
       </div>
       <div className="bars-plot">
         <svg className="bars-svg" viewBox={`0 0 ${w} ${H}`} preserveAspectRatio="none" role="img" aria-label={label}>
@@ -85,8 +91,8 @@ export function BarChart({ data, label, aLabel, bLabel, dateLabel, lang, period 
             return (
               <g key={d.date} onMouseEnter={() => setHover(i)} className={hover === i ? "on" : undefined} style={{ ["--i" as string]: i }}>
                 <rect x={x} y={0} width={GROUP} height={H} className="bars-hit" />
-                <rect className="bar-a" x={x + 7} width="6" y={y(d.a, aMax)} height={Math.max(0, PAD_TOP + plotH - y(d.a, aMax))} rx="3" />
-                <rect className="bar-b" x={x + 15} width="6" y={y(d.b, bMax)} height={Math.max(0, PAD_TOP + plotH - y(d.b, bMax))} rx="3" />
+                <rect className="bar-a" x={x + 7} width="6" y={y(d.a, aMax)} height={Math.max(0, PAD_TOP + plotH - y(d.a, aMax))} />
+                <rect className="bar-b" x={x + 15} width="6" y={y(d.b, bMax)} height={Math.max(0, PAD_TOP + plotH - y(d.b, bMax))} />
               </g>
             );
           })}

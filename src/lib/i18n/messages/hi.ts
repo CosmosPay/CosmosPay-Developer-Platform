@@ -676,7 +676,7 @@ export default {
     topbar: { search: "भुगतान, ग्राहक, लॉग खोजें…", theme: "थीम बदलें", notifications: "सूचनाएँ" },
     statusLabels: { Succeeded: "सफल", Failed: "विफल", Refunded: "रिफ़ंड किया गया", Active: "सक्रिय", Delivered: "डिलीवर हुआ" },
     common: { notFound: "यह इस संगठन या परिवेश में नहीं है।", open: "खोलें", cancel: "रद्द करें", copy: "कॉपी करें", copyLink: "लिंक कॉपी करें", export: "एक्सपोर्ट करें", vsLastWeek: "पिछले हफ़्ते की तुलना में", optional: "(वैकल्पिक)", viewPlans: "प्लान देखें", yes: "हाँ", no: "नहीं", assetCustom: "कस्टम…", assetAny: "कोई भी एसेट", actions: "कार्रवाइयाँ", details: "विवरण" },
-    pagination: { prev: "पिछला", next: "अगला", range: "{total} में से {from}–{to}" },
+    pagination: { rows: "प्रति पृष्ठ पंक्तियाँ", prev: "पिछला", next: "अगला", range: "{total} में से {from}–{to}" },
     profileMenu: { account: "खाता सेटिंग्स", billing: "बिलिंग", docs: "डॉक्यूमेंटेशन", backToSite: "वेबसाइट पर वापस जाएँ", logout: "लॉग आउट करें" },
     modals: {
       org: {
@@ -711,7 +711,7 @@ export default {
       },
     },
     overview: {
-      hub: { webhooksFailedOne: "1 विफल", paymentsFailedOne: "1 विफल", paymentsFailedN: "{n} विफल", doneOne: "1 पूरा हुआ", payersOne: "1 भुगतानकर्ता", sumSwaps: "स्वैप", sumLiquidity: "लिक्विडिटी", payersN: "{n} भुगतानकर्ता", doneN: "{n} पूरे हुए", balances: "बैलेंस", allBalances: "सभी बैलेंस", noBalances: "अभी तक कुछ भी सेटल नहीं हुआ।", newSwap: "स्वैप", crumb: "अवलोकन", active: "सक्रिय", since: "{date} से", settled: "सेटल हुआ वॉल्यूम", noVolume: "अभी तक कोई सेटल भुगतान नहीं", moreAssets: "+{n} और", rate: "दर", plan: "प्लान", orgId: "संगठन ID", createLink: "पेमेंट लिंक बनाएँ", docs: "डॉक्यूमेंटेशन", designs: "चेकआउट डिज़ाइन", kpiTotal: "कुल भुगतान", kpiSucceeded: "सफल", kpiFailed: "विफल", kpiRate: "सफलता दर", activity: "गतिविधि", period7: "7 दिन", period30: "30 दिन", periods: { today: "आज", week: "सप्ताह", month: "महीना", year: "साल" }, noPeriodTx: "इस अवधि में कोई सेटल भुगतान नहीं।", sumVolume: "सेटल हुआ वॉल्यूम", sumCount: "भुगतान", sumPayers: "भुगतानकर्ता", sumWebhooks: "वेबहुक डिलीवरी", sumWebhooksFailed: "{n} विफल", growthVs: "पिछले {n} दिनों की तुलना में {pct}", legendVolume: "वॉल्यूम", legendCount: "भुगतान", legendDone: "पूरे हुए", goTo: "{view} पर जाएँ", noBreakdown: "अवधि के अनुसार विवरण अभी उपलब्ध नहीं है।", periodLabel: "अवधि", chartLabel: "पिछले {n} दिनों में प्रतिदिन बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", transactions: "हाल के सेटल भुगतान", viewAll: "सभी भुगतान देखें", thId: "भुगतान", thDate: "तारीख", thAmount: "राशि", thNetwork: "नेटवर्क", thTo: "प्राप्तकर्ता", thStatus: "स्थिति", chartPeriods: { day: "दैनिक", week: "साप्ताहिक", month: "मासिक", year: "वार्षिक" }, chartLabels: { day: "पिछले 30 दिनों में प्रतिदिन बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", week: "पिछले 12 सप्ताहों में प्रति सप्ताह बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", month: "पिछले 12 महीनों में प्रति माह बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", year: "पिछले 5 सालों में प्रति वर्ष बनाए गए भुगतान और सेटल हुआ वॉल्यूम।" }, sumFailed: "विफल", sumGrowth: "ग्रोथ", growthTitle: "ठीक पिछली अवधि की तुलना में", growthVolume: "वॉल्यूम", growthCount: "भुगतान", prevOrg: "पिछला संगठन", nextOrg: "अगला संगठन", created: "{date} को बनाया गया", fee: "शुल्क", txTitle: "लेन-देन", thFrom: "भुगतानकर्ता", thMemo: "मेमो", onlySettled: "सिर्फ़ सेटल", network: "नेटवर्क", allNetworks: "सभी नेटवर्क", wallet: "वॉलेट", applyFilters: "सूची फ़िल्टर करें", filtersLabel: "लेन-देन फ़िल्टर करें", noTx: "इस अवधि में कोई भुगतान नहीं।", noMatch: "इन फ़िल्टर से कोई भुगतान मेल नहीं खाता।", shown: "{total} में से {n} भुगतान", rowMenu: "भुगतान {id} के लिए कार्रवाइयाँ", copyId: "ID कॉपी करें", explorer: "एक्सप्लोरर पर देखें", openPayments: "भुगतान में खोलें", status: { SUCCEEDED: "सेटल हुआ", FAILED: "विफल", CANCELLED: "रद्द", EXPIRED: "समाप्त", PENDING: "लंबित", SUBMITTED: "पुष्टि हो रही है" }, searchPlaceholder: "ID, पता, राशि या एसेट से खोजें…", groups: { settled: "सेटल हुए", open: "प्रगति में", failed: "विफल" } },
+      hub: { quick: "त्वरित लिंक", usdUnpricedOne: "बिना USD मूल्य वाले एसेट में 1 भुगतान नहीं गिना गया", usdUnpricedN: "बिना USD मूल्य वाले एसेट में {n} भुगतान नहीं गिने गए", webhooksFailedOne: "1 विफल", paymentsFailedOne: "1 विफल", paymentsFailedN: "{n} विफल", doneOne: "1 पूरा हुआ", payersOne: "1 भुगतानकर्ता", sumSwaps: "स्वैप", sumLiquidity: "लिक्विडिटी", payersN: "{n} भुगतानकर्ता", doneN: "{n} पूरे हुए", newSwap: "स्वैप", crumb: "अवलोकन", active: "सक्रिय", since: "{date} से", settled: "सेटल हुआ वॉल्यूम", noVolume: "अभी तक कोई सेटल भुगतान नहीं", rate: "दर", plan: "प्लान", orgId: "संगठन ID", createLink: "पेमेंट लिंक बनाएँ", docs: "डॉक्यूमेंटेशन", designs: "चेकआउट डिज़ाइन", kpiTotal: "कुल भुगतान", kpiSucceeded: "सफल", kpiFailed: "विफल", kpiRate: "सफलता दर", activity: "गतिविधि", period7: "7 दिन", period30: "30 दिन", periods: { today: "आज", week: "सप्ताह", month: "महीना", year: "साल" }, noPeriodTx: "इस अवधि में कोई सेटल भुगतान नहीं।", sumVolume: "सेटल हुआ वॉल्यूम", sumCount: "भुगतान", sumPayers: "भुगतानकर्ता", sumWebhooks: "वेबहुक डिलीवरी", sumWebhooksFailed: "{n} विफल", growthVs: "पिछले {n} दिनों की तुलना में {pct}", legendVolume: "वॉल्यूम (USD)", legendCount: "भुगतान", legendDone: "पूरे हुए", goTo: "{view} पर जाएँ", periodLabel: "अवधि", chartLabel: "पिछले {n} दिनों में प्रतिदिन बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", transactions: "हाल के सेटल भुगतान", viewAll: "सभी भुगतान देखें", thId: "भुगतान", thDate: "तारीख", thAmount: "राशि", thNetwork: "नेटवर्क", thTo: "प्राप्तकर्ता", thStatus: "स्थिति", chartPeriods: { day: "दैनिक", week: "साप्ताहिक", month: "मासिक", year: "वार्षिक" }, chartLabels: { day: "पिछले 30 दिनों में प्रतिदिन बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", week: "पिछले 12 सप्ताहों में प्रति सप्ताह बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", month: "पिछले 12 महीनों में प्रति माह बनाए गए भुगतान और सेटल हुआ वॉल्यूम।", year: "पिछले 5 सालों में प्रति वर्ष बनाए गए भुगतान और सेटल हुआ वॉल्यूम।" }, sumFailed: "विफल", sumGrowth: "ग्रोथ", growthTitle: "ठीक पिछली अवधि की तुलना में", growthVolume: "वॉल्यूम", growthCount: "भुगतान", prevOrg: "पिछला संगठन", nextOrg: "अगला संगठन", created: "{date} को बनाया गया", fee: "शुल्क", txTitle: "लेन-देन", thFrom: "भुगतानकर्ता", thMemo: "मेमो", onlySettled: "सिर्फ़ सेटल", network: "नेटवर्क", allNetworks: "सभी नेटवर्क", wallet: "वॉलेट", applyFilters: "सूची फ़िल्टर करें", filtersLabel: "लेन-देन फ़िल्टर करें", noTx: "इस अवधि में कोई भुगतान नहीं।", noMatch: "इन फ़िल्टर से कोई भुगतान मेल नहीं खाता।", shown: "{total} में से {n} भुगतान", rowMenu: "भुगतान {id} के लिए कार्रवाइयाँ", copyId: "ID कॉपी करें", explorer: "एक्सप्लोरर पर देखें", openPayments: "भुगतान में खोलें", status: { SUCCEEDED: "सेटल हुआ", FAILED: "विफल", CANCELLED: "रद्द", EXPIRED: "समाप्त", PENDING: "लंबित", SUBMITTED: "पुष्टि हो रही है" }, searchPlaceholder: "ID, पता, राशि या एसेट से खोजें…", groups: { settled: "सेटल हुए", open: "प्रगति में", failed: "विफल" } },
       greeting: "सुप्रभात, {name}",
       sub: "आज {org} में यह सब हो रहा है।",
       metrics: { gross: "सकल वॉल्यूम", net: "शुद्ध वॉल्यूम", success: "सफल भुगतान", newCust: "नए ग्राहक" },
@@ -817,7 +817,7 @@ export default {
         name: "नाम", email: "ईमेल", add: "ग्राहक जोड़ें",
       },
     },
-    products: { detail: { title: "उत्पाद", save: "बदलाव सहेजें", active: "बिक्री के लिए", activeHint: "निष्क्रिय उत्पाद रखा जाता है, पर बेचा नहीं जा सकता।", saveError: "उत्पाद सहेजा नहीं जा सका।" },
+    products: { searchPlaceholder: "नाम या कीमत से खोजें…", detail: { title: "उत्पाद", save: "बदलाव सहेजें", active: "बिक्री के लिए", activeHint: "निष्क्रिय उत्पाद रखा जाता है, पर बेचा नहीं जा सकता।", saveError: "उत्पाद सहेजा नहीं जा सका।" },
       title: "प्रोडक्ट और लिंक",
       sub: "आवर्ती प्लान और पेमेंट लिंक",
       add: "नया प्रोडक्ट",
@@ -830,7 +830,7 @@ export default {
         type: "प्रकार", create: "प्रोडक्ट बनाएँ",
       },
     },
-    apikeys: { ownerPlan: "यह संगठन के स्वामी के प्लान से तय होता है।", liveLocked: "आपके प्लान में प्रोडक्शन कुंजियाँ शामिल नहीं हैं।",
+    apikeys: { searchPlaceholder: "नाम या की ID से खोजें…", ownerPlan: "यह संगठन के स्वामी के प्लान से तय होता है।", liveLocked: "आपके प्लान में प्रोडक्शन कुंजियाँ शामिल नहीं हैं।",
       readOnly: "आपके पास सिर्फ़ देखने का एक्सेस है। केवल मालिक और एडमिन ही API कुंजियाँ बना या निरस्त कर सकते हैं।",
       title: "API कुंजियाँ",
       sub: "Cosmos Pay API के लिए सीक्रेट कुंजियाँ। जितनी ज़रूरत हो, उतनी बनाएँ।",
@@ -875,6 +875,7 @@ export default {
       },
     },
     support: {
+      searchPlaceholder: "टिकट खोजें…",
       title: "सहायता",
       subtitle: "Cosmos Pay टीम से चैट करें",
       placeholder: "संदेश लिखें…",
@@ -967,7 +968,7 @@ export default {
       memberRemoveError: "सदस्य को नहीं हटाया जा सका।",
       empty: "अभी तक कोई सदस्य नहीं।",
     },
-    webhooks: { resent: "डिलीवरी दोबारा भेजी गई", noFailed: "कोई विफल डिलीवरी नहीं।", only: { all: "सभी", failed: "विफल" }, eventId: "इवेंट ID", error: "त्रुटि", attempts: "प्रयास", delivery: "डिलीवरी", save: "बदलाव सहेजें", editTitle: "एंडपॉइंट संपादित करें", edit: "एंडपॉइंट संपादित करें", eventsOne: "1 इवेंट",
+    webhooks: { searchPlaceholder: "URL या इवेंट से खोजें…", resent: "डिलीवरी दोबारा भेजी गई", noFailed: "कोई विफल डिलीवरी नहीं।", only: { all: "सभी", failed: "विफल" }, eventId: "इवेंट ID", error: "त्रुटि", attempts: "प्रयास", delivery: "डिलीवरी", save: "बदलाव सहेजें", editTitle: "एंडपॉइंट संपादित करें", edit: "एंडपॉइंट संपादित करें", eventsOne: "1 इवेंट",
       title: "वेबहुक",
       sub: "Stellar, Solana या Monad पर भुगतान सेटल होते ही रियल-टाइम इवेंट",
       add: "एंडपॉइंट जोड़ें",

@@ -4,11 +4,14 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { webhooks as whApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 const EVENT_TYPES = [
@@ -23,6 +26,10 @@ const EVENT_TYPES = [
 /* PAYMENT_INTENT_SUCCEEDED → payment_intent.succeeded, ZK_PAYMENT_SUCCEEDED → zk_payment.succeeded */
 const humanize = (e) => e.toLowerCase().replace(/^(payment_intent|zk_payment)_/, "$1.");
 const DELIVERY_PILL = { SUCCEEDED: "ok", FAILED: "fail", PENDING: "ref" };
+const STATES = ["active", "inactive"];
+const DEFAULTS = { q: "", status: "all" };
+const ALLOWED = { status: ["all", ...STATES] };
+const stateOf = (w) => (w.enabled ? "active" : "inactive");
 
 export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
   const t = useT();
@@ -35,6 +42,8 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
   const [editing, setEditing] = useState(null); // endpoint whose URL and events are being edited
   const [reveal, setReveal] = useState(null);   // { url, secret }
   const [selected, setSelected] = useState(null); // endpoint whose deliveries are shown
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
+  const fl = t.dash.filters;
 
   const load = useCallback(() => {
     setLoading(true);
@@ -45,8 +54,16 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
   }, [env]);
   useEffect(() => { load(); }, [load]);
 
-  const pg = usePaged(eps, eps.length);
-  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + eps.length);
+  // The search reads an endpoint's URL and the events it receives, by name and by code.
+  const eventNames = (w) => (w.eventTypes || []).flatMap((e) => [e, (cx.eventLabels && cx.eventLabels[e]) || humanize(e)]);
+  const matches = (w, skip) =>
+    (skip === "status" || filters.status === "all" || stateOf(w) === filters.status) &&
+    matchesQuery([w.url, w.description, ...eventNames(w)], filters.q);
+  const view = eps.filter((w) => matches(w, null));
+  const stateCounts = countBy(eps.filter((w) => matches(w, "status")), stateOf);
+  const pg = usePaged(view, JSON.stringify(filters));
+  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
+  const addButton = canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button>;
 
   const onCreated = (ep) => { setModal(false); setEps((p) => [ep, ...p]); if (ep.secret) setReveal({ url: ep.url, secret: ep.secret }); };
   const onEdited = (ep) => {
@@ -73,12 +90,26 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
 
   return (
     <>
-      <ViewHead title={wv.title}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button>}</ViewHead>
+      <ViewHead title={wv.title} />
+      <FilterBar
+        label={fl.label}
+        query={filters.q} onQuery={(v) => set("q", v)} placeholder={wv.searchPlaceholder}
+        status={{
+          label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+          options: [
+            { key: "all", label: fl.allStatuses, count: eps.filter((w) => matches(w, "status")).length },
+            ...STATES.map((st) => ({ key: st, label: st === "active" ? cx.active : cx.inactive, count: stateCounts[st] || 0 })),
+          ],
+        }}
+        active={active} onReset={reset}
+        shown={view.length} total={loading ? undefined : eps.length} loading={loading}
+        actions={addButton}
+      />
       <div className="panel" style={{ marginBottom: 16 }}>
         <div className="panel-head"><h3>{wv.endpoints}</h3><span className="env-tag">{DI.network} {t.dash.paylinks.network[env === "prod" ? "prod" : "dev"]}</span></div>
-        {!loading && !error && eps.length > 0 && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
-            <tbody>{pg.slice.map((w) => (
+            <tbody>{!error && pg.slice.map((w) => (
               <tr key={w.id} className={`row-click${selected && selected.id === w.id ? " row-on" : ""}`} onClick={() => setSelected(w)}>
                 <td className="tid">{w.url}</td>
                 <td className="cust">
@@ -101,18 +132,22 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
                   {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(w)}>{DI.trash}</button>}
                 </td>
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows
+                n={pg.size - (error ? 0 : pg.count)} cols={4}
+                empty={error ? cx.loadError : !view.length ? (
+                  <>
+                    {eps.length ? fl.noMatch : wv.modal.desc}
+                    {eps.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                    {!eps.length && addButton}
+                  </>
+                ) : null}
+              />
+            </tbody>
           </table></div>
         )}
         {loading && <TableSkeleton label={cx.loading} />}
-        {!loading && error && <div className="empty">{cx.loadError}</div>}
-        {!loading && !error && !eps.length && (
-          <div className="empty">
-            {wv.modal.desc}
-            {canManage && <div><button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button></div>}
-          </div>
-        )}
-        {!loading && !error && eps.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
 
       {selected && <DeliveriesPanel wv={wv} cx={cx} endpoint={selected} env={env} orgId={orgId} canManage={canManage} />}
@@ -132,9 +167,10 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
   const [loading, setLoading] = useState(true);
   const [only, setOnly] = useState("all");
   const [open, setOpen] = useState(null);
+  const pg = usePaged(rows, only + "|" + endpoint.id);
   const load = useCallback(() => {
     setLoading(true);
-    whApi.deliveries(endpoint.id, env, { take: 20, ...(only === "failed" ? { status: "FAILED" } : {}) })
+    whApi.deliveries(endpoint.id, env, { take: 50, ...(only === "failed" ? { status: "FAILED" } : {}) })
       .then((d) => setRows((d && Array.isArray(d.data)) ? d.data : []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
@@ -151,10 +187,9 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
         </div>
       </div>
       {loading && <TableSkeleton label={cx.loading} />}
-      {!loading && !rows.length && <div className="empty">{only === "failed" ? wv.noFailed : cx.noDeliveries}</div>}
-      {!loading && rows.length > 0 && (
+      {!loading && (
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{wv.tableHead.event}</th><th>{wv.tableHead.response}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.when}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
-          <tbody>{rows.map((d) => (
+          <tbody>{pg.slice.map((d) => (
             <tr key={d.id} className="row-click" onClick={() => setOpen(d)}>
               <td className="tid">{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</td>
               <td className="cust">{d.responseStatus ?? "-"}</td>
@@ -165,9 +200,12 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
                 {canManage && <button type="button" className="btn btn-outline-w btn-sm" style={{ marginLeft: 8 }} onClick={() => redeliver(d)}>{cx.redeliver}</button>}
               </td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - pg.count} cols={5} empty={!rows.length ? (only === "failed" ? wv.noFailed : cx.noDeliveries) : null} />
+          </tbody>
         </table></div>
       )}
+      {!loading && <Pagination {...pg} />}
       {open && (
         <Modal onClose={() => setOpen(null)}>
           <div className="modal-body">

@@ -3,17 +3,25 @@ import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { products as prodApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { usePaged, useGsapRows, goFiltered } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, goFiltered, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { IcCheck } from "@/components/cosmos/icons";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field, Sel } from "@/components/cosmos/dashboard/components/Field";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 const TYPE_TO_KIND = { Recurring: "recurring", "One-time": "one_time", "Payment link": "link" };
 const KIND_TO_TYPE = { recurring: "Recurring", one_time: "One-time", link: "Payment link" };
 const assetLabel = (a) => (!a || a === "native" ? "XLM" : a);
+const KINDS = ["recurring", "one_time", "link"];
+const STATES = ["active", "inactive"];
+const DEFAULTS = { q: "", status: "all", kind: "all" };
+const ALLOWED = { status: ["all", ...STATES], kind: ["all", ...KINDS] };
+const stateOf = (p) => (p.active ? "active" : "inactive");
 
 /* A product opens its detail: editable (name, price, type, whether it is on sale) for whoever may
    manage products, and, when it has a price, the payment link that sells it (the Payments form,
@@ -27,6 +35,8 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
   const [detail, setDetail] = useState(null);
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
+  const fl = t.dash.filters;
 
   const load = useCallback(() => {
     setLoading(true);
@@ -37,8 +47,17 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
   }, [env]);
   useEffect(() => { load(); }, [load]);
 
-  const pg = usePaged(items, items.length);
-  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + items.length);
+  // The search reads the product as listed: its name, price, asset and type.
+  const matches = (p, skip) =>
+    (skip === "status" || filters.status === "all" || stateOf(p) === filters.status) &&
+    (skip === "kind" || filters.kind === "all" || p.kind === filters.kind) &&
+    matchesQuery([p.name, p.amount, assetLabel(p.asset), pr.types[KIND_TO_TYPE[p.kind]]], filters.q);
+  const view = items.filter((p) => matches(p, null));
+  const stateCounts = countBy(items.filter((p) => matches(p, "status")), stateOf);
+  const kindCounts = countBy(items.filter((p) => matches(p, "kind")), (p) => p.kind);
+  const pg = usePaged(view, JSON.stringify(filters));
+  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
+  const addButton = canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button>;
 
   const onCreated = (p) => { setModal(false); setItems((x) => [p, ...x]); };
   const onUpdated = (p) => { setItems((x) => x.map((i) => (i.id === p.id ? { ...i, ...p } : i))); setDetail(null); };
@@ -49,11 +68,26 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
 
   return (
     <>
-      <ViewHead title={pr.title}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button>}</ViewHead>
+      <ViewHead title={pr.title} />
+      <FilterBar
+        label={fl.label}
+        query={filters.q} onQuery={(v) => set("q", v)} placeholder={pr.searchPlaceholder}
+        status={{
+          label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+          options: [
+            { key: "all", label: fl.allStatuses, count: items.filter((p) => matches(p, "status")).length },
+            ...STATES.map((st) => ({ key: st, label: st === "active" ? cx.active : cx.inactive, count: stateCounts[st] || 0 })),
+          ],
+        }}
+        selects={[{ key: "kind", label: fl.kind, value: filters.kind, onChange: (v) => set("kind", v), options: [{ key: "all", label: fl.allKinds }, ...KINDS.map((k) => ({ key: k, label: pr.types[KIND_TO_TYPE[k]], count: kindCounts[k] || 0 }))] }]}
+        active={active} onReset={reset}
+        shown={view.length} total={loading ? undefined : items.length} loading={loading}
+        actions={addButton}
+      />
       <div className="panel">
-        {!loading && !error && items.length > 0 && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
-            <tbody>{pg.slice.map((p) => (
+            <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 <td><div className="cust-cell"><span className="am-sq">{DI.products}</span>{p.name}</div></td>
                 <td className="amt">{p.amount ? `${p.amount} ${assetLabel(p.asset)}` : cx.customerSet}</td>
@@ -64,18 +98,22 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
                   {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(p)}>{DI.trash}</button>}
                 </td>
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows
+                n={pg.size - (error ? 0 : pg.count)} cols={5}
+                empty={error ? cx.loadError : !view.length ? (
+                  <>
+                    {items.length ? fl.noMatch : pr.modal.desc}
+                    {items.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                    {!items.length && addButton}
+                  </>
+                ) : null}
+              />
+            </tbody>
           </table></div>
         )}
         {loading && <TableSkeleton label={cx.loading} />}
-        {!loading && error && <div className="empty">{cx.loadError}</div>}
-        {!loading && !error && !items.length && (
-          <div className="empty">
-            {pr.modal.desc}
-            {canManage && <div><button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button></div>}
-          </div>
-        )}
-        {!loading && !error && items.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CreateProductModal pr={pr} env={env} orgId={orgId} onClose={() => setModal(false)} onCreated={onCreated} />}
       {detail && <ProductDetailModal pr={pr} cx={cx} product={detail} env={env} orgId={orgId} canManage={canManage} canSell={canSell} onClose={() => setDetail(null)} onUpdated={onUpdated} onSell={() => sell(detail)} onDelete={() => remove(detail)} />}

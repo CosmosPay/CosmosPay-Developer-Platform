@@ -1150,7 +1150,7 @@ export default {
       }
     },
     overview: {
-      hub: { webhooksFailedOne: "1 com falha", paymentsFailedOne: "1 com falha", paymentsFailedN: "{n} com falha", doneOne: "1 concluído", payersOne: "1 pagador", sumSwaps: "Swaps", sumLiquidity: "Liquidez", payersN: "{n} pagadores", doneN: "{n} concluídos", balances: "Saldos", allBalances: "Ver saldos", noBalances: "Nada liquidado ainda.", newSwap: "Swap", crumb: "Visão geral", active: "Ativa", since: "Desde {date}", settled: "Volume liquidado", noVolume: "Ainda não há pagamentos liquidados", moreAssets: "+{n} mais", rate: "Tarifa", plan: "Plano", orgId: "ID da organização", createLink: "Criar link de pagamento", docs: "Documentação", designs: "Designs de checkout", kpiTotal: "Pagamentos totais", kpiSucceeded: "Concluídos", kpiFailed: "Falhos", kpiRate: "Taxa de sucesso", activity: "Atividade", period7: "7 dias", period30: "30 dias", periods: { today: "Hoje", week: "Semana", month: "Mês", year: "Ano" }, noPeriodTx: "Nenhum pagamento liquidado neste período.", sumVolume: "Volume liquidado", sumCount: "Pagamentos", sumPayers: "Pagadores", sumWebhooks: "Entregas de webhooks", sumWebhooksFailed: "{n} com falha", growthVs: "{pct} em relação aos {n} dias anteriores", legendVolume: "Volume", legendCount: "Pagamentos", legendDone: "Concluídos", goTo: "Ir para {view}", noBreakdown: "Ainda não há detalhamento por período.", periodLabel: "Período", chartLabel: "Pagamentos criados e volume liquidado por dia nos últimos {n} dias.", transactions: "Últimos pagamentos liquidados", viewAll: "Ver todos os pagamentos", thId: "Pagamento", thDate: "Data", thAmount: "Valor", thNetwork: "Rede", thTo: "Pago para", thStatus: "Status", chartPeriods: { day: "Diário", week: "Semanal", month: "Mensal", year: "Anual" }, chartLabels: { day: "Pagamentos criados e volume liquidado por dia nos últimos 30 dias.", week: "Pagamentos criados e volume liquidado por semana nas últimas 12 semanas.", month: "Pagamentos criados e volume liquidado por mês nos últimos 12 meses.", year: "Pagamentos criados e volume liquidado por ano nos últimos 5 anos." }, sumFailed: "Falhos", sumGrowth: "Crescimento", growthTitle: "Em relação ao período anterior", growthVolume: "Volume", growthCount: "Pagamentos", prevOrg: "Organização anterior", nextOrg: "Próxima organização", created: "Criada em {date}", fee: "Taxa", txTitle: "Transações", thFrom: "Pago por", thMemo: "Memo", onlySettled: "Só liquidados", network: "Rede", allNetworks: "Todas as redes", wallet: "Carteira", applyFilters: "Filtrar a lista", filtersLabel: "Filtrar transações", noTx: "Nenhum pagamento neste período.", noMatch: "Nenhum pagamento corresponde a estes filtros.", shown: "{n} de {total} pagamentos", rowMenu: "Ações do pagamento {id}", copyId: "Copiar ID", explorer: "Ver no explorador", openPayments: "Abrir em Pagamentos", status: { SUCCEEDED: "Liquidado", FAILED: "Falhou", CANCELLED: "Cancelado", EXPIRED: "Expirado", PENDING: "Pendente", SUBMITTED: "Confirmando" }, searchPlaceholder: "Buscar por ID, endereço, valor ou ativo…", groups: { settled: "Liquidados", open: "Em andamento", failed: "Falhos" } },
+      hub: { quick: "Atalhos", usdUnpricedOne: "1 pagamento num ativo sem preço em USD não é contado", usdUnpricedN: "{n} pagamentos em ativos sem preço em USD não são contados", webhooksFailedOne: "1 com falha", paymentsFailedOne: "1 com falha", paymentsFailedN: "{n} com falha", doneOne: "1 concluído", payersOne: "1 pagador", sumSwaps: "Swaps", sumLiquidity: "Liquidez", payersN: "{n} pagadores", doneN: "{n} concluídos", newSwap: "Swap", crumb: "Visão geral", active: "Ativa", since: "Desde {date}", settled: "Volume liquidado", noVolume: "Ainda não há pagamentos liquidados", rate: "Tarifa", plan: "Plano", orgId: "ID da organização", createLink: "Criar link de pagamento", docs: "Documentação", designs: "Designs de checkout", kpiTotal: "Pagamentos totais", kpiSucceeded: "Concluídos", kpiFailed: "Falhos", kpiRate: "Taxa de sucesso", activity: "Atividade", period7: "7 dias", period30: "30 dias", periods: { today: "Hoje", week: "Semana", month: "Mês", year: "Ano" }, noPeriodTx: "Nenhum pagamento liquidado neste período.", sumVolume: "Volume liquidado", sumCount: "Pagamentos", sumPayers: "Pagadores", sumWebhooks: "Entregas de webhooks", sumWebhooksFailed: "{n} com falha", growthVs: "{pct} em relação aos {n} dias anteriores", legendVolume: "Volume (USD)", legendCount: "Pagamentos", legendDone: "Concluídos", goTo: "Ir para {view}", periodLabel: "Período", chartLabel: "Pagamentos criados e volume liquidado por dia nos últimos {n} dias.", transactions: "Últimos pagamentos liquidados", viewAll: "Ver todos os pagamentos", thId: "Pagamento", thDate: "Data", thAmount: "Valor", thNetwork: "Rede", thTo: "Pago para", thStatus: "Status", chartPeriods: { day: "Diário", week: "Semanal", month: "Mensal", year: "Anual" }, chartLabels: { day: "Pagamentos criados e volume liquidado por dia nos últimos 30 dias.", week: "Pagamentos criados e volume liquidado por semana nas últimas 12 semanas.", month: "Pagamentos criados e volume liquidado por mês nos últimos 12 meses.", year: "Pagamentos criados e volume liquidado por ano nos últimos 5 anos." }, sumFailed: "Falhos", sumGrowth: "Crescimento", growthTitle: "Em relação ao período anterior", growthVolume: "Volume", growthCount: "Pagamentos", prevOrg: "Organização anterior", nextOrg: "Próxima organização", created: "Criada em {date}", fee: "Taxa", txTitle: "Transações", thFrom: "Pago por", thMemo: "Memo", onlySettled: "Só liquidados", network: "Rede", allNetworks: "Todas as redes", wallet: "Carteira", applyFilters: "Filtrar a lista", filtersLabel: "Filtrar transações", noTx: "Nenhum pagamento neste período.", noMatch: "Nenhum pagamento corresponde a estes filtros.", shown: "{n} de {total} pagamentos", rowMenu: "Ações do pagamento {id}", copyId: "Copiar ID", explorer: "Ver no explorador", openPayments: "Abrir em Pagamentos", status: { SUCCEEDED: "Liquidado", FAILED: "Falhou", CANCELLED: "Cancelado", EXPIRED: "Expirado", PENDING: "Pendente", SUBMITTED: "Confirmando" }, searchPlaceholder: "Buscar por ID, endereço, valor ou ativo…", groups: { settled: "Liquidados", open: "Em andamento", failed: "Falhos" } },
       greeting: "Bom dia, {name}",
       sub: "Veja o que está acontecendo na {org} hoje.",
       metrics: {
@@ -1303,7 +1303,7 @@ export default {
         add: "Adicionar cliente"
       }
     },
-    products: { detail: { title: "Produto", save: "Salvar alterações", active: "À venda", activeHint: "Um produto inativo é mantido, mas não pode ser vendido.", saveError: "Não foi possível salvar o produto." },
+    products: { searchPlaceholder: "Pesquisar por nome ou preço…", detail: { title: "Produto", save: "Salvar alterações", active: "À venda", activeHint: "Um produto inativo é mantido, mas não pode ser vendido.", saveError: "Não foi possível salvar o produto." },
       title: "Produtos e links",
       sub: "Planos recorrentes e links de pagamento",
       add: "Novo produto",
@@ -1329,7 +1329,7 @@ export default {
         create: "Criar produto"
       }
     },
-    apikeys: { ownerPlan: "Isso é definido pelo plano do proprietário da organização.", liveLocked: "Seu plano não inclui chaves de produção.",
+    apikeys: { searchPlaceholder: "Pesquisar por nome ou ID da chave…", ownerPlan: "Isso é definido pelo plano do proprietário da organização.", liveLocked: "Seu plano não inclui chaves de produção.",
       readOnly: "Você tem acesso somente leitura. Apenas owners e admins podem criar ou revogar chaves de API.",
       title: "Chaves de API",
       sub: "Chaves secretas para a API da Cosmos Pay. Crie quantas precisar.",
@@ -1358,7 +1358,7 @@ export default {
       usage: "{used} / {limit}",
       limitReached: "Você atingiu o limite de chaves do seu plano. Faça upgrade para adicionar mais."
     },
-    webhooks: { resent: "Entrega reenviada", noFailed: "Nenhuma entrega com falha.", only: { all: "Todas", failed: "Com falha" }, eventId: "ID do evento", error: "Erro", attempts: "Tentativas", delivery: "Entrega", save: "Salvar alterações", editTitle: "Editar endpoint", edit: "Editar endpoint", eventsOne: "1 evento",
+    webhooks: { searchPlaceholder: "Pesquisar por URL ou evento…", resent: "Entrega reenviada", noFailed: "Nenhuma entrega com falha.", only: { all: "Todas", failed: "Com falha" }, eventId: "ID do evento", error: "Erro", attempts: "Tentativas", delivery: "Entrega", save: "Salvar alterações", editTitle: "Editar endpoint", edit: "Editar endpoint", eventsOne: "1 evento",
       title: "Webhooks",
       sub: "Eventos em tempo real quando os pagamentos liquidam na Stellar, Solana ou Monad",
       add: "Adicionar endpoint",
@@ -1474,6 +1474,7 @@ export default {
       }
     },
     pagination: {
+      rows: "Linhas por página",
       prev: "Anterior",
       next: "Próximo",
       range: "{from}–{to} de {total}"
@@ -1500,6 +1501,7 @@ export default {
       localhost: "localhost"
     },
     support: {
+      searchPlaceholder: "Pesquisar tickets…",
       title: "Suporte",
       subtitle: "Converse com a equipe da Cosmos Pay",
       placeholder: "Escreva uma mensagem…",

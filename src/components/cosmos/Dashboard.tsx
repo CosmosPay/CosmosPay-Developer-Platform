@@ -22,6 +22,8 @@ import { OrgSwitcher } from "@/components/cosmos/dashboard/widgets/OrgSwitcher";
 import { Sidebar } from "@/components/cosmos/dashboard/widgets/Sidebar";
 import { DashSearch } from "@/components/cosmos/dashboard/widgets/DashSearch";
 import { tierOf } from "@/lib/chains";
+import { DOCS } from "@/components/cosmos/lib/constants";
+import { parseUsage, quickLinks, recordUse } from "@/lib/dashboard-usage";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
@@ -85,6 +87,24 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   useEffect(() => { startTracking(live ? "prod" : "dev"); track("dashboard.open", { category: "lifecycle" }); }, []);
   useEffect(() => { setTrackEnv(live ? "prod" : "dev"); }, [live]);
   useEffect(() => { trackView(view); }, [view]);
+  // What this person opens, for the overview's quick links (src/lib/dashboard-usage.ts): kept in
+  // this browser per account, read after mount so the first render matches the server's. The ref
+  // makes a use stored at once (a click on the docs leaves the page before a re-render).
+  const usageKey = `cosmospay-usage:${initialUser.id}`;
+  const [usage, setUsage] = useState({});
+  const usageRef = useRef({});
+  const noteUse = (key) => {
+    const next = recordUse(usageRef.current, key);
+    if (next === usageRef.current) return;
+    usageRef.current = next;
+    try { localStorage.setItem(usageKey, JSON.stringify(next)); } catch (e) {}
+    setUsage(next);
+  };
+  useEffect(() => {
+    try { usageRef.current = parseUsage(localStorage.getItem(usageKey)); } catch (e) {}
+    setUsage(usageRef.current);
+  }, []);
+  useEffect(() => { noteUse(view); }, [view]);
   const [navOpen, setNavOpen] = useState(false);
   // Real organizations (API-backed). The active org is persisted to localStorage.
   const [orgs, setOrgs] = useState([]);
@@ -312,7 +332,11 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   };
 
   const renderView = () => {
-    const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} canCreatePayments={can("payments:create")} env={live ? "prod" : "dev"} />;
+    // The quick links: the views this person opens most (that they may open), else the defaults.
+    const quick = quickLinks(usage, (k) => k === "docs" || (!!t.dash.viewLabels[k] && visibleView(k))).map((k) => (k === "docs"
+      ? { key: k, label: t.dash.overview.hub.docs, icon: DI.docs, href: DOCS }
+      : { key: k, label: t.dash.viewLabels[k], icon: DI[k] || DI.overview, href: `/dashboard?view=${k}` }));
+    const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} canCreatePayments={can("payments:create")} env={live ? "prod" : "dev"} quick={quick} onQuickUse={noteUse} />;
     switch (view) {
       case "payments": return <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} onGo={go} />;

@@ -11,6 +11,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
@@ -89,20 +90,22 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
 
   return (
     <>
-      <ViewHead title={lq.title}>
-        {canManage && (
-          <>
-            <button className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>
-            <button className="btn btn-soft btn-sm" onClick={() => setModal({ kind: "withdraw" })}>{lq.withdraw}</button>
-          </>
-        )}
-      </ViewHead>
+      <ViewHead title={lq.title} />
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{lq.readOnly}</span></div>}
 
-      <div className="filter-tabs" role="group" aria-label={lq.title}>
-        {["operations", "pools", "positions"].map((k) => (
-          <button key={k} type="button" className={tab === k ? "on" : ""} aria-pressed={tab === k} onClick={() => setTab(k)}>{lq.tabs[k]}</button>
-        ))}
+      {/* The sections, with the view's two actions at the row's right end (they serve every tab). */}
+      <div className="tabs-row">
+        <div className="filter-tabs" role="group" aria-label={lq.title}>
+          {["operations", "pools", "positions"].map((k) => (
+            <button key={k} type="button" className={tab === k ? "on" : ""} aria-pressed={tab === k} onClick={() => setTab(k)}>{lq.tabs[k]}</button>
+          ))}
+        </div>
+        {canManage && (
+          <div className="tabs-row-actions">
+            <button className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>
+            <button className="btn btn-soft btn-sm" onClick={() => setModal({ kind: "withdraw" })}>{lq.withdraw}</button>
+          </div>
+        )}
       </div>
 
       {tab === "operations" && (
@@ -123,9 +126,9 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
             shown={view.length} total={loading ? undefined : rows.length} loading={loading}
           />
           <div className="panel">
-            {!loading && !error && view.length > 0 && (
+            {!loading && (
               <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th></tr></thead>
-                <tbody>{pg.slice.map((o) => (
+                <tbody>{!error && pg.slice.map((o) => (
                   <tr key={o.id} className="row-click" onClick={() => setDetail(o)}>
                     <td className="tid">{o.id}</td>
                     <td>{lq.kind[o.kind] || o.kind}</td>
@@ -134,13 +137,22 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
                     <td><Pill st={STATUS_PILL[o.status] || "ref"} label={lq.status[o.status] || o.status} /></td>
                     <td className="cust">{fmtDateTime(o.createdAt)}</td>
                   </tr>
-                ))}</tbody>
+                ))}
+                  <FillRows
+                    n={pg.size - (error ? 0 : pg.count)} cols={6}
+                    empty={error ? lq.loadError : !view.length ? (
+                      <>
+                        {rows.length ? fl.noMatch : lq.empty}
+                        {rows.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                        {!rows.length && canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>}
+                      </>
+                    ) : null}
+                  />
+                </tbody>
               </table></div>
             )}
             {loading && <TableSkeleton label={lq.loading} />}
-            {!loading && error && <div className="empty">{lq.loadError}</div>}
-            {!loading && !error && !view.length && <div className="empty">{rows.length ? fl.noMatch : lq.empty}</div>}
-            {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+            {!loading && <Pagination {...pg} />}
           </div>
         </>
       )}
@@ -187,6 +199,7 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
   const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const pg = usePaged(pools, pools);
 
   const search = () => {
     if (loading) return;
@@ -214,9 +227,9 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
           <button className="btn btn-soft btn-sm" disabled={loading} onClick={search}>{loading ? p.searching : p.search}</button>
         </div>
       </div>
-      {loaded && pools.length > 0 && (
+      {loaded && (
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th>{canManage && <th />}</tr></thead>
-          <tbody>{pools.map((pool) => (
+          <tbody>{pg.slice.map((pool) => (
             <tr key={pool.id}>
               <td className="tid" title={pool.id}>{pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id)}</td>
               <td className="amt">{(pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>
@@ -225,11 +238,13 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
               <td>{(pool.feeBp / 100).toFixed(2)}%</td>
               {canManage && <td><button className="btn btn-soft btn-sm" onClick={() => onDeposit(pool)}>{lq.deposit}</button></td>}
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - pg.count} cols={canManage ? 6 : 5} empty={!pools.length ? p.empty : null} />
+          </tbody>
         </table></div>
       )}
       {loading && !loaded && <TableSkeleton label={p.loading} />}
-      {loaded && !pools.length && <div className="empty">{p.empty}</div>}
+      {loaded && <Pagination {...pg} />}
     </div>
   );
 }
@@ -243,6 +258,7 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const pg = usePaged(positions, positions);
 
   const valid = /^G[A-Z2-7]{55}$/.test(account.trim());
 
@@ -266,9 +282,9 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
           <button className="btn btn-soft btn-sm" disabled={!valid || loading} onClick={() => search()}>{loading ? p.loadingBtn : p.load}</button>
         </div>
       </div>
-      {loaded && positions.length > 0 && (
-        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th>{canManage && <th />}</tr></thead>
-          <tbody>{positions.map((pos) => (
+      {/* Until an account is picked the table waits, empty, saying what it needs. */}
+      <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th>{canManage && <th />}</tr></thead>
+          <tbody>{loaded && pg.slice.map((pos) => (
             <tr key={pos.poolId}>
               <td className="tid" title={pos.poolId}>{pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId)}</td>
               <td className="amt">{pos.shares}</td>
@@ -276,11 +292,11 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
               <td className="amt">{(pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>
               {canManage && <td><button className="btn btn-soft btn-sm" onClick={() => onWithdraw(pos)}>{lq.withdraw}</button></td>}
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (loaded ? pg.count : 0)} cols={canManage ? 5 : 4} empty={!loaded ? p.prompt : !positions.length ? p.empty : null} />
+          </tbody>
         </table></div>
-      )}
-      {loaded && !positions.length && <div className="empty">{p.empty}</div>}
-      {!loaded && <div className="empty">{p.prompt}</div>}
+      <Pagination {...pg} />
     </div>
   );
 }

@@ -4,17 +4,19 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { customers as custApi, paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDate, fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, goFiltered } from "@/components/cosmos/dashboard/hooks";
-import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { usePaged, useGsapRows, goFiltered, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { matchesQuery } from "@/lib/dashboard-filters";
 import { CHAINS, assetLabel, explorerAccountUrl, isAddress, isChain } from "@/lib/chains";
 
+const DEFAULTS = { q: "" };
 const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
 /* A customer's account may be on Stellar, Solana or Monad: its explorer is the one of the chain its
    address belongs to, on the environment's network. */
@@ -29,7 +31,9 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
   const t = useT();
   const cv = t.dash.customers;
   const cx = t.dash.cosmos;
-  const [q, setQ] = useState("");
+  const { filters, set, reset, active } = useListFilters(DEFAULTS);
+  const q = filters.q;
+  const fl = t.dash.filters;
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -48,6 +52,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
   const view = rows.filter((c) => matchesQuery([c.name, c.alias, c.email, c.account], q));
   const pg = usePaged(view, q);
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
+  const addButton = canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button>;
 
   const onCreated = (c) => { setModal(false); setRows((x) => [c, ...x]); };
   const onUpdated = (c) => { setRows((x) => x.map((i) => (i.id === c.id ? { ...i, ...c } : i))); setDetail((d) => (d && d.id === c.id ? { ...d, ...c } : d)); };
@@ -58,12 +63,18 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
 
   return (
     <>
-      <ViewHead title={cv.title}>{canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button>}</ViewHead>
+      <ViewHead title={cv.title} />
+      <FilterBar
+        label={fl.label}
+        query={q} onQuery={(v) => set("q", v)} placeholder={cv.searchPlaceholder}
+        active={active} onReset={reset}
+        shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+        actions={addButton}
+      />
       <div className="panel">
-        <Toolbar q={q} setQ={setQ} placeholder={cv.searchPlaceholder} />
-        {!loading && !error && view.length > 0 && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{cv.tableHead.name}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
-            <tbody>{pg.slice.map((c) => (
+            <tbody>{!error && pg.slice.map((c) => (
               <tr key={c.id} className="row-click" onClick={() => setDetail(c)}>
                 <td><div className="cust-cell"><span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>{c.alias || c.name}</div></td>
                 <td className="cust">{c.email || (c.account ? shortAcct(c.account) : "-")}</td>
@@ -75,18 +86,22 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
                   {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(c)}>{DI.trash}</button>}
                 </td>
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows
+                n={pg.size - (error ? 0 : pg.count)} cols={6}
+                empty={error ? cx.loadError : !view.length ? (
+                  <>
+                    {rows.length ? fl.noMatch : cv.empty}
+                    {rows.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                    {!rows.length && addButton}
+                  </>
+                ) : null}
+              />
+            </tbody>
           </table></div>
         )}
         {loading && <TableSkeleton label={cx.loading} />}
-        {!loading && error && <div className="empty">{cx.loadError}</div>}
-        {!loading && !error && !view.length && (
-          <div className="empty">
-            {rows.length ? t.dash.filters.noMatch : cv.empty}
-            {!rows.length && canManage && <div><button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button></div>}
-          </div>
-        )}
-        {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CustomerFormModal cv={cv} cx={cx} env={env} orgId={orgId} onClose={() => setModal(false)} onSaved={onCreated} />}
       {detail && <CustomerDetailModal cv={cv} cx={cx} customer={detail} env={env} orgId={orgId} canManage={canManage} onClose={() => setDetail(null)} onUpdated={onUpdated} onDelete={() => remove(detail)} onOpenPayment={(id) => goFiltered(onGo, "payments", { open: id })} onAllPayments={() => paymentsOf(detail)} />}

@@ -8,6 +8,7 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { matchesQuery } from "@/lib/dashboard-filters";
 
@@ -54,13 +55,13 @@ export function LogsView({ kind = "api", env = "dev" }) {
       <ViewHead title={title} />
       <div className="panel">
         <Toolbar q={q} setQ={setQ} placeholder={lv.searchPlaceholder} />
-        {!loading && !error && view.length > 0 && (
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx logs"><thead>
             {isApi
               ? <tr><th><span className="sr-only">{t.dash.common.details}</span></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.time}</th><th>{lv.tableHead.timestamp}</th></tr>
               : <tr><th><span className="sr-only">{t.dash.common.details}</span></th><th>{lv.tableHead.method}</th><th>{lv.tableHead.endpoint}</th><th>{lv.tableHead.status}</th><th>{lv.tableHead.timestamp}</th></tr>}
           </thead>
-            <tbody>{pg.slice.map((l, j) => {
+            <tbody>{!error && pg.slice.map((l, j) => {
               const i = pg.start + j;
               const isOpen = open === i;
               return (
@@ -93,13 +94,13 @@ export function LogsView({ kind = "api", env = "dev" }) {
                   )}
                 </React.Fragment>
               );
-            })}</tbody>
+            })}
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={isApi ? 6 : 5} empty={error ? cx.loadError : !view.length ? (rows.length ? t.dash.filters.noMatch : cx.empty) : null} />
+            </tbody>
           </table></div>
         )}
         {loading && <TableSkeleton label={cx.loading} />}
-        {!loading && error && <div className="empty">{cx.loadError}</div>}
-        {!loading && !error && !view.length && <div className="empty">{cx.empty}</div>}
-        {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
     </>
   );

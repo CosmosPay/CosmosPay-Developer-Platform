@@ -11,6 +11,7 @@ import { CountrySelect } from "@/components/cosmos/dashboard/components/CountryS
 import { CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
@@ -227,22 +228,22 @@ function ReceiversTab({ bp, orgId, env, canManage, isManager }) {
       <Toolbar q={q} setQ={setQ} placeholder={r.searchPlaceholder}>
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {r.create}</button>}
       </Toolbar>
-      {!loading && !error && view.length > 0 && (
+      {!loading && (
         <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{r.tableHead.name}</th><th>{r.tableHead.type}</th><th>{r.tableHead.status}</th><th>{r.tableHead.created}</th></tr></thead>
-          <tbody>{pg.slice.map((rec) => (
+          <tbody>{!error && pg.slice.map((rec) => (
             <tr key={rec.id} className="row-click" onClick={() => setDetail(rec)}>
               <td>{rec.name || rec.email || rec.id}</td>
               <td className="cust">{(r.types && r.types[rec.type]) || rec.type || "-"}</td>
               <td>{rec.disabled ? <Pill st="fail" label={r.disabled} /> : <Pill st={statusPill(rec.kycStatus)} label={kycLabel(rec.kycStatus, r)} />}</td>
               <td className="cust">{fmtDateTime(rec.createdAt)}</td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? bp.loadError : !view.length ? r.empty : null} />
+          </tbody>
         </table></div>
       )}
       {loading && <TableSkeleton label={bp.loading} />}
-      {!loading && error && <div className="empty">{bp.loadError}</div>}
-      {!loading && !error && !view.length && <div className="empty">{r.empty}</div>}
-      {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+      {!loading && <Pagination {...pg} />}
       {modal && <CreateReceiverModal bp={bp} orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
       {detail && <ReceiverDetailModal bp={bp} receiver={detail} orgId={orgId} env={env} canManage={canManage} isManager={isManager} onClose={() => setDetail(null)} onUpdated={onUpdated} />}
     </div>
@@ -658,9 +659,9 @@ function OnrampTab({ bp, orgId, env, canManage }) {
       <Toolbar q={q} setQ={setQ} placeholder={o.searchPlaceholder}>
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {o.create}</button>}
       </Toolbar>
-      {!loading && !error && view.length > 0 && (
+      {!loading && (
         <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.method}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
-          <tbody>{pg.slice.map((p) => (
+          <tbody>{!error && pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>
               <td className="cust">{p.token || "-"}{p.network ? ` · ${p.network}` : ""}</td>
@@ -669,13 +670,13 @@ function OnrampTab({ bp, orgId, env, canManage }) {
               <td><Pill st={statusPill(p.status)} label={fiatStatusLabel(p.status, bp.txStatuses) || o.statusUnknown} /></td>
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : !view.length ? o.empty : null} />
+          </tbody>
         </table></div>
       )}
       {loading && <TableSkeleton label={bp.loading} />}
-      {!loading && error && <div className="empty">{bp.loadError}</div>}
-      {!loading && !error && !view.length && <div className="empty">{o.empty}</div>}
-      {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+      {!loading && <Pagination {...pg} />}
       {modal && <NewPayinModal bp={bp} orgId={orgId} env={env} onClose={() => setModal(false)} onDone={() => { setModal(false); load(); }} />}
     </div>
   );
@@ -791,9 +792,9 @@ function OfframpTab({ bp, orgId, env, canManage }) {
       <Toolbar q={q} setQ={setQ} placeholder={o.searchPlaceholder}>
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {o.create}</button>}
       </Toolbar>
-      {!loading && !error && view.length > 0 && (
+      {!loading && (
         <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.rail}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
-          <tbody>{pg.slice.map((p) => (
+          <tbody>{!error && pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>
               <td className="cust">{p.token || "-"}{p.network ? ` · ${p.network}` : ""}</td>
@@ -802,13 +803,13 @@ function OfframpTab({ bp, orgId, env, canManage }) {
               <td><Pill st={statusPill(p.status)} label={fiatStatusLabel(p.status, bp.txStatuses) || o.statusUnknown} /></td>
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : !view.length ? o.empty : null} />
+          </tbody>
         </table></div>
       )}
       {loading && <TableSkeleton label={bp.loading} />}
-      {!loading && error && <div className="empty">{bp.loadError}</div>}
-      {!loading && !error && !view.length && <div className="empty">{o.empty}</div>}
-      {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+      {!loading && <Pagination {...pg} />}
       {modal && <NewPayoutModal bp={bp} orgId={orgId} env={env} onClose={() => setModal(false)} onDone={() => { setModal(false); load(); }} />}
     </div>
   );

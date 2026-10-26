@@ -4,6 +4,7 @@ import { notifIcon, notifMd, fmtWhen, humanizeLocal, notifLocation, notifIp, dev
 import { usePaged, useGsapRows, goFiltered } from "@/components/cosmos/dashboard/hooks";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 /* Where a notification leads: the record it is about (its id in the metadata, opened by the view's
@@ -31,7 +32,7 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
   const rows = notifications || [];
   const pg = usePaged(rows, rows.length);
   const tref = useRef(null); useGsapRows(tref, pg.page);
-  const show = !loading && !error && rows.length > 0;
+  const show = !loading;
   const follow = (n) => { const to = targetOf(n); if (to) goFiltered(onGo, to[0], to[1]); };
   return (
     <>
@@ -39,7 +40,7 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
       <div className="panel">
         {show && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{t.dash.webhooks.tableHead.event}</th><th>{nt.location}</th><th>{nt.ip}</th><th>{nt.device}</th><th>{t.dash.overview.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
-            <tbody>{pg.slice.map((n) => {
+            <tbody>{!error && pg.slice.map((n) => {
               const to = targetOf(n);
               return (
                 <tr key={n.id} className={to ? "row-click" : undefined} onClick={to ? () => follow(n) : undefined}>
@@ -52,12 +53,12 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
                   <td style={{ textAlign: "right" }}>{to && <button type="button" className="link-btn" onClick={(e) => { e.stopPropagation(); follow(n); }}>{t.dash.common.open}</button>}</td>
                 </tr>
               );
-            })}</tbody>
+            })}
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? nt.loadError : !rows.length ? nt.empty : null} />
+            </tbody>
           </table></div>
         )}
         {loading && <TableSkeleton label={t.dash.cosmos.loading} />}
-        {!loading && error && <div className="empty">{nt.loadError}</div>}
-        {!loading && !error && !rows.length && <div className="empty">{nt.empty}</div>}
         {show && <Pagination {...pg} />}
       </div>
     </>

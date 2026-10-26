@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ConfirmModal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { goFiltered } from "@/components/cosmos/dashboard/hooks";
+import { goFiltered, usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 
 const num = (s) => { const n = Number(s); return Number.isFinite(n) ? n : 0; };
 
@@ -47,16 +49,18 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
     const wantNet = env === "prod" ? "public" : "testnet";
     Promise.all([
       metricsApi.balances(env).catch(() => ({ data: [] })),
-      payApi.list(env, { status: "SUCCEEDED", take: 50 }).catch(() => ({ data: [] })),
+      payApi.list(env, { status: "SUCCEEDED", take: 100 }).catch(() => ({ data: [] })),
     ]).then(([bal, pay]) => {
       if (!alive) return;
       setBals((bal && Array.isArray(bal.data)) ? bal.data : []);
       const rows = (pay && Array.isArray(pay.data)) ? pay.data : [];
-      setRecent(rows.filter((p) => !p.network || p.network === wantNet).slice(0, 8));
+      setRecent(rows.filter((p) => !p.network || p.network === wantNet));
     }).finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [env]);
 
+  const pg = usePaged(recent, env);
+  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + recent.length);
   const max = Math.max(1, ...bals.map((x) => num(x.amount)));
   const totalSettlements = bals.reduce((a, x) => a + (x.count || 0), 0);
   const networks = new Set(bals.map((x) => x.chain)).size;
@@ -70,7 +74,7 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
     ...(bal && bal.asset ? { q: bal.asset === "native" ? code(bal) : String(bal.asset) } : {}),
   });
   const createLink = () => goFiltered(onGo, "payments", { create: "1" });
-  const startHere = canManage && <div><button type="button" className="btn btn-dark btn-sm" onClick={createLink}>{t.dash.overview.hub.createLink}</button></div>;
+  const startHere = canManage && <button type="button" className="btn btn-dark btn-sm" onClick={createLink}>{t.dash.overview.hub.createLink}</button>;
 
   return (
     <>
@@ -107,9 +111,9 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
         </div>
       )}
       <div className="panel"><div className="panel-head"><h3>{b.recent}</h3>{recent.length > 0 && <button type="button" className="hub-link" onClick={() => settled()}>{t.dash.overview.hub.viewAll}</button>}</div>
-        {!loading && recent.length > 0 && (
-          <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
-            <tbody>{recent.map((p) => (
+        {!loading && (
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+            <tbody>{pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 <td className="tid">{p.id}</td>
                 <td className="cust">{b.payment}</td>
@@ -118,10 +122,12 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
                 <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows n={pg.size - pg.count} cols={6} empty={!recent.length ? <>{cx.empty}{startHere}</> : null} />
+            </tbody>
           </table></div>
         )}
-        {!loading && !recent.length && <div className="empty">{cx.empty}{startHere}</div>}
+        {!loading && <Pagination {...pg} />}
       </div>
       {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={(id) => { setRecent((r) => r.filter((x) => x.id !== id)); setDetail(null); }} />}
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}

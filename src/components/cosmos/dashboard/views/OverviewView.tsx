@@ -1,27 +1,28 @@
 /* OverviewView: the organization at a glance, after the product owner's gateway-dashboard
-   reference: a dark account card (its arrows step through the organizations) beside a white
-   panel with its balances (each token with its logo), the organization ID and the main actions;
-   the activity by day, week, month or year (a strip over paired bars); and the transaction list
-   with the dashboard's filter bar and a menu per payment. Every figure comes from the Payments
-   API (/v1/summary, /v1/summary/series, /v1/balances and the payment list); nothing is sample
-   data. While a figure loads, a skeleton holds its place. */
+   reference: a dark account card (its arrows step through the organizations, shown only when
+   there is another one) with the settled volume in USD, beside a white panel with the quick links
+   as tiles (they follow what the viewer opens: src/lib/dashboard-usage.ts, kept by the shell; the
+   balances have their own view), the organization ID and the main actions; the activity by
+   day, week, month or year (a strip over paired bars); and the transaction list with the
+   dashboard's filter bar, a menu per payment and rows per page. Every figure comes from the
+   Payments API (/v1/summary, /v1/summary/series and the payment list); nothing is sample data. While a figure loads, a skeleton holds its place; then it counts up (Odometer). */
 import { useState, useEffect } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { planSpec } from "@/lib/plans";
-import { DOCS } from "@/components/cosmos/lib/constants";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { showToast } from "@/components/cosmos/shared";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { useOutside, useListFilters, usePresence, goFiltered } from "@/components/cosmos/dashboard/hooks";
+import { useOutside, useListFilters, usePresence, usePaged, goFiltered } from "@/components/cosmos/dashboard/hooks";
 import { BarChart } from "@/components/cosmos/dashboard/components/BarChart";
+import { Odometer } from "@/components/cosmos/dashboard/components/Odometer";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { Sk, ListSkeleton, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { CHAINS, CHAIN_NAMES, networkName, isChain, assetLabel as chainAsset } from "@/lib/chains";
-import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { CHAINS, CHAIN_NAMES } from "@/lib/chains";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
@@ -33,6 +34,20 @@ const METRICS = ["volume", "payments", "swaps", "liquidity", "webhooks"];
 const METRIC_VIEW = { volume: "payments", payments: "payments", swaps: "swaps", liquidity: "liquidity", webhooks: "webhook" };
 /* The list filter that matches a chart window (30 days, 12 weeks; longer windows show everything). */
 const WINDOW_DATE = { day: "30d", week: "90d" };
+/* A chart with nothing to draw (no buckets, or a part the server does not send) shows the window's
+   buckets at zero (product owner: fill with 0), as the server draws them: UTC, weeks from Monday,
+   30 days, 12 weeks, 12 months or 5 years. */
+const WINDOW_SIZE = { day: 30, week: 12, month: 12, year: 5 };
+function zeroBuckets(period) {
+  const now = new Date();
+  const y = now.getUTCFullYear(), mo = now.getUTCMonth(), d = now.getUTCDate();
+  const monday = d - ((now.getUTCDay() + 6) % 7);
+  return Array.from({ length: WINDOW_SIZE[period] }, (_, k) => {
+    const i = WINDOW_SIZE[period] - 1 - k;
+    const at = period === "day" ? Date.UTC(y, mo, d - i) : period === "week" ? Date.UTC(y, mo, monday - 7 * i) : period === "month" ? Date.UTC(y, mo - i, 1) : Date.UTC(y - i, 0, 1);
+    return { date: new Date(at).toISOString().slice(0, 10), a: 0, b: 0 };
+  });
+}
 /* The transaction list's periods, as the start of the window. "today" starts at local midnight. */
 const LIST_PERIODS = ["today", "week", "month", "year"];
 const periodStart = (period) => {
@@ -61,9 +76,6 @@ function OrgIdField({ id, label }) {
     </button>
   );
 }
-
-/* A balance's symbol: the chain's coin for "native", the code of a CODE:ISSUER asset. */
-const balSymbol = (x) => (isChain(x.chain) ? chainAsset(x.chain, x.asset) : String(x.asset).split(":")[0]);
 
 /* A payment's menu: copy its id, open it on its chain's explorer (once it has a transaction),
    or its detail in the Payments view. A disclosure: Escape and a click elsewhere close it. */
@@ -104,14 +116,13 @@ const LIST_DATE = { today: "today", week: "7d", month: "30d" };
 /* Plural-safe counts: the singular has its own string. */
 const countText = (n, one, many, num) => (n === 1 ? one : fmt(many, { n: num.format(n || 0) }));
 
-export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = (v) => {}, canCreatePayments = false, env = "dev" }) {
+export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = (v) => {}, canCreatePayments = false, env = "dev", quick = [], onQuickUse = (key) => {} }) {
   const t = useT();
   const lang = useLang();
   const h = t.dash.overview.hub;
   const fl = t.dash.filters;
   // undefined while loading, null when the request failed.
   const [sum, setSum] = useState(undefined);
-  const [bals, setBals] = useState(undefined);
   const [chartPeriod, setChartPeriod] = useState("month");
   const [metric, setMetric] = useState("volume");
   const [series, setSeries] = useState(undefined);
@@ -124,8 +135,6 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
     let alive = true;
     setSum(undefined);
     metricsApi.summary(env).then((d) => { if (alive) setSum(d); }).catch(() => { if (alive) setSum(null); });
-    setBals(undefined);
-    metricsApi.balances(env).then((d) => { if (alive) setBals(Array.isArray(d?.data) ? d.data : []); }).catch(() => { if (alive) setBals(null); });
     return () => { alive = false; };
   }, [env]);
   useEffect(() => {
@@ -149,9 +158,12 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const num = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 });
   // Amounts arrive as exact decimal strings; grouped for reading, never re-rounded below 7 places.
   const amount = (v) => { const n = Number(v); return Number.isFinite(n) ? new Intl.NumberFormat(lang, { minimumFractionDigits: 2, maximumFractionDigits: 7 }).format(n) : v; };
+  // The settled volume is in USD (product owner): the server prices each asset; null means it
+  // could not price at all, shown as a dash rather than a sum of unlike assets.
+  const usdFmt = new Intl.NumberFormat(lang, { style: "currency", currency: "USD" });
+  const usd = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? "-" : usdFmt.format(Number(v)));
   const sumLoading = sum === undefined;
   const volume = (sum && sum.volume) || [];
-  const primary = volume[0];
   const plan = planSpec(org.plan);
   const created = org.createdAt ? new Date(org.createdAt).toLocaleDateString(lang, { day: "numeric", month: "short", year: "numeric" }) : null;
   const tier = env === "prod" ? t.dash.env.production : t.dash.env.sandbox;
@@ -160,11 +172,10 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const at = orgs.findIndex((o) => o.id === org.id);
   const step = (d) => { if (orgs.length > 1) onSwitchOrg(orgs[(at + d + orgs.length) % orgs.length].id); };
 
-
   // The chart's window and the one before it, for growth.
   const firstSeries = series === undefined;
-  const win = (series && series.totals) || { count: 0, succeeded: 0, failed: 0, volume: "0", payers: 0 };
-  const before = (series && series.previous) || { count: 0, failed: 0, volume: "0" };
+  const win = (series && series.totals) || { count: 0, succeeded: 0, failed: 0, volume: "0", volumeUsd: "0", payers: 0, unpriced: 0 };
+  const before = (series && series.previous) || { count: 0, failed: 0, volume: "0", volumeUsd: "0" };
   // Beyond payments (the same window): every swap (on one chain, between chains, USDT0), liquidity
   // operations and webhook deliveries.
   const part = (k) => (series && series[k]) || {};
@@ -173,13 +184,13 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const n = (v) => num.format(v || 0);
   // Each figure: its tab (label, value, the line under it, growth) and its chart (two series, a
   // shared axis for two counts of the same thing). A part whose buckets the server does not send
-  // has no chart, never a flat one that looks like data.
+  // draws the window at zero.
   const m = {
     volume: {
-      label: h.sumVolume, value: n(Number(win.volume)), sub: countText(win.payers, h.payersOne, h.payersN, num),
-      growth: growth(Number(win.volume) || 0, Number(before.volume) || 0),
-      a: h.legendVolume, b: h.legendCount, shared: false,
-      bars: series && series.buckets && series.buckets.map((x) => ({ date: x.start, a: Number(x.volume) || 0, b: x.count || 0 })),
+      label: h.sumVolume, value: usd(win.volumeUsd), sub: countText(win.payers, h.payersOne, h.payersN, num),
+      growth: growth(Number(win.volumeUsd) || 0, Number(before.volumeUsd) || 0),
+      a: h.legendVolume, b: h.legendCount, shared: false, currency: "USD",
+      bars: series && series.buckets && series.buckets.map((x) => ({ date: x.start, a: Number(x.volumeUsd) || 0, b: x.count || 0 })),
     },
     payments: {
       label: h.sumCount, value: n(win.count), sub: countText(win.failed, h.paymentsFailedOne, h.paymentsFailedN, num),
@@ -207,6 +218,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
     },
   };
   const cur = m[metric];
+  const bars = cur.bars && cur.bars.length ? cur.bars : zeroBuckets(chartPeriod);
   const curView = METRIC_VIEW[metric];
   // Its view, filtered to the chart's window where the view has a date filter.
   const openMetric = () => {
@@ -230,7 +242,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
     : series === null ? <b className="arrive">-</b>
     : (
       <>
-        <b className="arrive">{x.value}</b>
+        <b className="arrive"><Odometer text={x.value} /></b>
         <small className="hub-sub arrive">
           {x.sub}
           {x.growth !== null && <em className={x.growth >= 0 ? "up" : "down"} title={h.growthTitle}><span className="sr-only">{h.growthTitle}: </span>{pct(x.growth)}</em>}
@@ -247,16 +259,30 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const shown = all.filter((p) => matches(p, null));
   const groupCounts = countBy(all.filter((p) => matches(p, "status")), (p) => groupOf(p.status));
   const chainCounts = countBy(all.filter((p) => matches(p, "chain")), (p) => chainOf(p));
+  const pg = usePaged(shown, `${listPeriod}|${filters.q}|${filters.status}|${filters.chain}`);
+  // A short or empty page keeps its height: the missing rows are drawn empty, and an empty list
+  // says so in the middle one (product owner).
+  const fill = Math.max(0, pg.size - pg.count);
+  const emptyAt = pg.count ? -1 : Math.floor((fill - 1) / 2);
+  // A quick link to a view switches in place on a plain click (the shell counts the view it opens);
+  // the docs are a page of their own, counted here before the page leaves.
+  const followQuick = (q) => (e) => {
+    if (q.key === "docs") { onQuickUse(q.key); return; }
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    onGo(q.key);
+  };
 
   return (
     <div className="hub">
       {/* The account card and its panel: who is collecting, at what rate, how much, and the main action. */}
       <section className="hub-hero" aria-label={org.name}>
-        <div className="hub-card">
-          <div className="hub-steps">
-            <button type="button" className="hub-step" onClick={() => step(-1)} disabled={orgs.length < 2} aria-label={h.prevOrg}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg></button>
-            <button type="button" className="hub-step" onClick={() => step(1)} disabled={orgs.length < 2} aria-label={h.nextOrg}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
-          </div>
+        <div className={orgs.length > 1 ? "hub-card" : "hub-card solo"}>
+          {/* The arrows switch organization quickly; with nothing to switch to they are not drawn. */}
+          {orgs.length > 1 && <div className="hub-steps">
+            <button type="button" className="hub-step" onClick={() => step(-1)} aria-label={h.prevOrg}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg></button>
+            <button type="button" className="hub-step" onClick={() => step(1)} aria-label={h.nextOrg}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
+          </div>}
           <div className="hub-card-main">
             <div className="hub-card-top">
               <div className="hub-org">
@@ -274,9 +300,12 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
               <div aria-busy={sumLoading || undefined}>
                 <span className="hub-label">{h.settled}</span>
                 <div className="hub-balance">
-                  {sumLoading ? <Sk className="lg sk-on-dark" w="9em" /> : primary ? <span className="arrive">{`${amount(primary.amount)} ${primary.asset}`}</span> : <span className="hub-muted">{h.noVolume}</span>}
-                  {volume.length > 1 && <button type="button" className="hub-more" onClick={() => onGo("balances")}>{fmt(h.moreAssets, { n: volume.length - 1 })}</button>}
+                  {sumLoading ? <Sk className="lg sk-on-dark" w="9em" />
+                    : sum === null ? <span className="hub-muted">-</span>
+                    : !volume.length ? <span className="hub-muted">{h.noVolume}</span>
+                    : <Odometer className="arrive" text={usd(sum.volumeUsd)} />}
                 </div>
+                {sum && sum.unpriced > 0 && <small className="hub-card-note">{countText(sum.unpriced, h.usdUnpricedOne, h.usdUnpricedN, num)}</small>}
               </div>
               <p className="hub-terms">
                 {plan.perTx && plan.perTx !== "-" && <span>{h.fee} <b>{plan.perTx}</b></span>}
@@ -285,30 +314,25 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             </div>
           </div>
         </div>
-        {/* Beside the card: what the organization holds, its ID and the two main actions. */}
+        {/* Beside the card: the quick links (Documentation, API keys, Webhooks and API logs until the
+            viewer's own use says otherwise), the organization's ID and the two main actions. */}
         <div className="hub-side">
           <div className="hub-side-head">
-            <h2 className="hub-side-t">{h.balances}</h2>
-            <button type="button" className="hub-link" onClick={() => onGo("balances")}>{h.allBalances}</button>
+            <h2 className="hub-side-t" id="hub-quick">{h.quick}</h2>
           </div>
-          <ul className="hub-bals" role="list" aria-busy={bals === undefined || undefined}>
-            {bals === undefined
-              ? [0, 1, 2].map((i) => <li key={i} className="hub-bal"><Sk className="round" w="32px" /><span className="hub-bal-t"><Sk w="7em" /><Sk w="4em" /></span></li>)
-              : (bals || []).slice(0, 4).map((x) => (
-                <li key={`${x.chain}:${x.asset}`} className="arrive">
-                  <button type="button" className="hub-bal" onClick={() => onGo("balances")}>
-                    <TokenMark symbol={balSymbol(x)} chain={x.chain} chainName={networkName(x.chain)} size={32} />
-                    <span className="hub-bal-t"><b>{amount(x.amount)} {balSymbol(x)}</b><span>{networkName(x.chain)}</span></span>
-                  </button>
-                </li>
-              ))}
-            {Array.isArray(bals) && !bals.length && <li className="hub-bal-empty">{h.noBalances}</li>}
-            {bals === null && <li className="hub-bal-empty" role="alert">{t.dash.admin.loadError}</li>}
+          <ul className="hub-bals hub-quick" role="list" aria-labelledby="hub-quick">
+            {quick.map((q) => (
+              <li key={q.key}>
+                <a className="hub-bal hub-quick-a" href={q.href} onClick={followQuick(q)}>
+                  <span className="hub-quick-ic" aria-hidden="true">{q.icon}</span>
+                  <b>{q.label}</b>
+                </a>
+              </li>
+            ))}
           </ul>
           <div className="hub-actions">
             <div className="hub-field">
               <OrgIdField id={org.id} label={h.orgId} />
-              <a className="hub-link" href={DOCS}>{h.docs}</a>
             </div>
             <div className="hub-cta">
               {canCreatePayments && <button type="button" className="btn btn-dark" onClick={() => goFiltered(onGo, "payments", { create: "1" })}>{h.createLink}</button>}
@@ -348,16 +372,15 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
                 <span><i className="dot-a" />{cur.a}</span>
                 <span><i className="dot-b" />{cur.b}</span>
               </div>
+              {metric === "volume" && win.unpriced > 0 && <span className="hub-chart-note">{countText(win.unpriced, h.usdUnpricedOne, h.usdUnpricedN, num)}</span>}
               <button type="button" className="hub-link" onClick={openMetric}>{fmt(h.goTo, { view: t.dash.viewLabels[curView] })}</button>
             </div>
-            {firstSeries ? <ChartSkeleton label={h.chartLabels[chartPeriod]} bars={12} /> : series !== null && !cur.bars ? (
-              <p className="hub-nochart">{h.noBreakdown}</p>
-            ) : (
+            {firstSeries ? <ChartSkeleton label={h.chartLabels[chartPeriod]} bars={12} /> : (
               <div className={seriesLoading ? "hub-chart is-loading" : "hub-chart"}>
                 {/* Remounted per figure and period, so the bars grow again from the axis. */}
                 <BarChart
-                  key={`${metric}-${chartPeriod}-${(cur.bars || []).length}`}
-                  data={cur.bars && cur.bars.length ? cur.bars : [{ date: new Date().toISOString().slice(0, 10), a: 0, b: 0 }]}
+                  key={`${metric}-${chartPeriod}-${bars.length}`}
+                  data={bars}
                   label={metric === "volume" ? h.chartLabels[chartPeriod] : `${cur.label} (${h.chartPeriods[chartPeriod]})`}
                   aLabel={cur.a}
                   bLabel={cur.b}
@@ -365,6 +388,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
                   lang={lang}
                   period={chartPeriod}
                   shared={cur.shared}
+                  currency={cur.currency}
                 />
               </div>
             )}
@@ -394,14 +418,14 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
           }}
           selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], count: chainCounts[c] || 0 }))] }]}
           active={active} onReset={reset}
-          shown={Math.min(shown.length, 20)} total={rows === null ? undefined : all.length} loading={rows === null}
+          shown={shown.length} total={rows === null ? undefined : all.length} loading={rows === null}
         />
         <div className="panel hub-txlist">
           {rows === null ? (
             <ListSkeleton label={t.dash.cosmos.loading} rows={5} pairs={7} />
-          ) : shown.length ? (
+          ) : (
             <ul className="hub-rows arrive" role="list">
-              {shown.slice(0, 20).map((p) => (
+              {pg.slice.map((p) => (
                 <li className="hub-row" key={p.id}>
                   {statusIcon(p.status)}
                   <dl className="hub-cells">
@@ -416,24 +440,31 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
                   <RowMenu p={p} onGo={onGo} />
                 </li>
               ))}
+              {Array.from({ length: fill }, (_, i) => (i === emptyAt ? (
+                <li className="hub-row row-fill row-empty" key={`fill-${i}`}>
+                  <div className="row-empty-msg">
+                    {all.length ? h.noMatch : h.noTx}
+                    {all.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
+                  </div>
+                </li>
+              ) : <li className="hub-row row-fill" key={`fill-${i}`} aria-hidden="true" />))}
             </ul>
-          ) : (
-            <div className="empty">
-              {all.length ? h.noMatch : h.noTx}
-              {all.length > 0 && active > 0 && <div><button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button></div>}
-            </div>
           )}
-          {/* The whole list, keeping what this one is narrowed to (the period, the network, the
-              search, and "settled", the one status group the Payments view has as a status). */}
-          <button
-            type="button" className="link-btn hub-viewall"
-            onClick={() => goFiltered(onGo, "payments", {
-              ...(LIST_DATE[listPeriod] ? { date: LIST_DATE[listPeriod] } : {}),
-              ...(filters.chain !== "all" ? { chain: filters.chain } : {}),
-              ...(filters.q ? { q: filters.q } : {}),
-              ...(filters.status === "settled" ? { status: SETTLED } : {}),
-            })}
-          >{h.viewAll}</button>
+          {rows !== null && (
+            <Pagination {...pg}>
+              {/* The whole list, keeping what this one is narrowed to (the period, the network, the
+                  search, and "settled", the one status group the Payments view has as a status). */}
+              <button
+                type="button" className="link-btn hub-viewall"
+                onClick={() => goFiltered(onGo, "payments", {
+                  ...(LIST_DATE[listPeriod] ? { date: LIST_DATE[listPeriod] } : {}),
+                  ...(filters.chain !== "all" ? { chain: filters.chain } : {}),
+                  ...(filters.q ? { q: filters.q } : {}),
+                  ...(filters.status === "settled" ? { status: SETTLED } : {}),
+                })}
+              >{h.viewAll}</button>
+            </Pagination>
+          )}
         </div>
       </section>
     </div>

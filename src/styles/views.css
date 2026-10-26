@@ -1139,3 +1139,14 @@ a.icon-mini { text-decoration: none; }
   .dk-ic { margin-bottom: 24px; }
   .xp-astro { height: 210px; }
 }
+
+/* ---- a view whose sections are tabs (Liquidity) keeps its actions on the tabs' row, at the right
+   end, instead of a row of their own above it (product owner); the section under the row arrives
+   as it did under the tabs ---- */
+.tabs-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
+.tabs-row-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+.inst .tabs-row ~ * { animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
+
+/* ---- a view head left with its title only (for assistive tech: the buttons now close the filter
+   row) takes no room, so the list starts right under the page head instead of after an empty band ---- */
+.inst .view-head:not(:has(.vh-actions > *, p)) { margin-bottom: 0; }

@@ -678,7 +678,7 @@ export default {
     topbar: { search: "Search payments, customers, logs…", theme: "Toggle theme", notifications: "Notifications" },
     statusLabels: { Succeeded: "Succeeded", Failed: "Failed", Refunded: "Refunded", Active: "Active", Delivered: "Delivered" },
     common: { notFound: "It isn't in this organization or environment.", open: "Open", cancel: "Cancel", copy: "Copy", copyLink: "Copy link", export: "Export", vsLastWeek: "vs last week", optional: "(optional)", viewPlans: "View plans", yes: "Yes", no: "No", assetCustom: "Custom…", assetAny: "Any asset", actions: "Actions", details: "Details" },
-    pagination: { prev: "Previous", next: "Next", range: "{from}–{to} of {total}" },
+    pagination: { rows: "Rows per page", prev: "Previous", next: "Next", range: "{from}–{to} of {total}" },
     profileMenu: { account: "Account settings", billing: "Billing", docs: "Documentation", backToSite: "Back to website", logout: "Log out" },
     modals: {
       org: {
@@ -713,7 +713,7 @@ export default {
       },
     },
     overview: {
-      hub: { webhooksFailedOne: "1 failed", paymentsFailedOne: "1 failed", paymentsFailedN: "{n} failed", doneOne: "1 completed", payersOne: "1 payer", sumSwaps: "Swaps", sumLiquidity: "Liquidity", payersN: "{n} payers", doneN: "{n} completed", balances: "Balances", allBalances: "All balances", noBalances: "Nothing settled yet.", newSwap: "Swap", crumb: "Overview", active: "Active", since: "Since {date}", settled: "Settled volume", noVolume: "No settled payments yet", moreAssets: "+{n} more", rate: "Rate", plan: "Plan", orgId: "Organization ID", createLink: "Create payment link", docs: "Documentation", designs: "Checkout designs", kpiTotal: "Total payments", kpiSucceeded: "Succeeded", kpiFailed: "Failed", kpiRate: "Success rate", activity: "Activity", period7: "7 days", period30: "30 days", periods: { today: "Today", week: "Week", month: "Month", year: "Year" }, noPeriodTx: "No settled payments in this period.", sumVolume: "Settled volume", sumCount: "Payments", sumPayers: "Payers", sumWebhooks: "Webhook deliveries", sumWebhooksFailed: "{n} failed", growthVs: "{pct} vs the previous {n} days", legendVolume: "Volume", legendCount: "Payments", legendDone: "Completed", goTo: "Go to {view}", noBreakdown: "No breakdown by period yet.", periodLabel: "Period", chartLabel: "Payments created and volume settled per day over the last {n} days.", transactions: "Latest settled payments", viewAll: "View all payments", thId: "Payment", thDate: "Date", thAmount: "Amount", thNetwork: "Network", thTo: "Paid to", thStatus: "Status", chartPeriods: { day: "Daily", week: "Weekly", month: "Monthly", year: "Yearly" }, chartLabels: { day: "Payments created and volume settled per day over the last 30 days.", week: "Payments created and volume settled per week over the last 12 weeks.", month: "Payments created and volume settled per month over the last 12 months.", year: "Payments created and volume settled per year over the last 5 years." }, sumFailed: "Failed", sumGrowth: "Growth", growthTitle: "Against the window just before", growthVolume: "Volume", growthCount: "Payments", prevOrg: "Previous organization", nextOrg: "Next organization", created: "Created {date}", fee: "Fee", txTitle: "Transactions", thFrom: "Paid by", thMemo: "Memo", onlySettled: "Only settled", network: "Network", allNetworks: "All networks", wallet: "Wallet", applyFilters: "Filter the list", filtersLabel: "Filter transactions", noTx: "No payments in this period.", noMatch: "No payment matches these filters.", shown: "{n} of {total} payments", rowMenu: "Actions for payment {id}", copyId: "Copy ID", explorer: "View on explorer", openPayments: "Open in Payments", status: { SUCCEEDED: "Settled", FAILED: "Failed", CANCELLED: "Cancelled", EXPIRED: "Expired", PENDING: "Pending", SUBMITTED: "Confirming" }, searchPlaceholder: "Search by ID, address, amount or asset…", groups: { settled: "Settled", open: "In progress", failed: "Failed" } },
+      hub: { quick: "Quick links", usdUnpricedOne: "1 payment in an asset with no USD price is not counted", usdUnpricedN: "{n} payments in assets with no USD price are not counted", webhooksFailedOne: "1 failed", paymentsFailedOne: "1 failed", paymentsFailedN: "{n} failed", doneOne: "1 completed", payersOne: "1 payer", sumSwaps: "Swaps", sumLiquidity: "Liquidity", payersN: "{n} payers", doneN: "{n} completed", newSwap: "Swap", crumb: "Overview", active: "Active", since: "Since {date}", settled: "Settled volume", noVolume: "No settled payments yet", rate: "Rate", plan: "Plan", orgId: "Organization ID", createLink: "Create payment link", docs: "Documentation", designs: "Checkout designs", kpiTotal: "Total payments", kpiSucceeded: "Succeeded", kpiFailed: "Failed", kpiRate: "Success rate", activity: "Activity", period7: "7 days", period30: "30 days", periods: { today: "Today", week: "Week", month: "Month", year: "Year" }, noPeriodTx: "No settled payments in this period.", sumVolume: "Settled volume", sumCount: "Payments", sumPayers: "Payers", sumWebhooks: "Webhook deliveries", sumWebhooksFailed: "{n} failed", growthVs: "{pct} vs the previous {n} days", legendVolume: "Volume (USD)", legendCount: "Payments", legendDone: "Completed", goTo: "Go to {view}", periodLabel: "Period", chartLabel: "Payments created and volume settled per day over the last {n} days.", transactions: "Latest settled payments", viewAll: "View all payments", thId: "Payment", thDate: "Date", thAmount: "Amount", thNetwork: "Network", thTo: "Paid to", thStatus: "Status", chartPeriods: { day: "Daily", week: "Weekly", month: "Monthly", year: "Yearly" }, chartLabels: { day: "Payments created and volume settled per day over the last 30 days.", week: "Payments created and volume settled per week over the last 12 weeks.", month: "Payments created and volume settled per month over the last 12 months.", year: "Payments created and volume settled per year over the last 5 years." }, sumFailed: "Failed", sumGrowth: "Growth", growthTitle: "Against the window just before", growthVolume: "Volume", growthCount: "Payments", prevOrg: "Previous organization", nextOrg: "Next organization", created: "Created {date}", fee: "Fee", txTitle: "Transactions", thFrom: "Paid by", thMemo: "Memo", onlySettled: "Only settled", network: "Network", allNetworks: "All networks", wallet: "Wallet", applyFilters: "Filter the list", filtersLabel: "Filter transactions", noTx: "No payments in this period.", noMatch: "No payment matches these filters.", shown: "{n} of {total} payments", rowMenu: "Actions for payment {id}", copyId: "Copy ID", explorer: "View on explorer", openPayments: "Open in Payments", status: { SUCCEEDED: "Settled", FAILED: "Failed", CANCELLED: "Cancelled", EXPIRED: "Expired", PENDING: "Pending", SUBMITTED: "Confirming" }, searchPlaceholder: "Search by ID, address, amount or asset…", groups: { settled: "Settled", open: "In progress", failed: "Failed" } },
       greeting: "Good morning, {name}",
       sub: "Here’s what’s happening at {org} today.",
       metrics: { gross: "Gross volume", net: "Net volume", success: "Successful payments", newCust: "New customers" },
@@ -819,7 +819,7 @@ export default {
         name: "Name", email: "Email", add: "Add customer",
       },
     },
-    products: { detail: { title: "Product", save: "Save changes", active: "On sale", activeHint: "An inactive product is kept but can't be sold.", saveError: "Couldn't save the product." },
+    products: { searchPlaceholder: "Search by name or price…", detail: { title: "Product", save: "Save changes", active: "On sale", activeHint: "An inactive product is kept but can't be sold.", saveError: "Couldn't save the product." },
       title: "Products & links",
       sub: "Recurring plans and payment links",
       add: "New product",
@@ -832,7 +832,7 @@ export default {
         type: "Type", create: "Create product",
       },
     },
-    apikeys: { ownerPlan: "The organization owner's plan sets this.", liveLocked: "Your plan doesn't include production keys.",
+    apikeys: { searchPlaceholder: "Search by name or key ID…", ownerPlan: "The organization owner's plan sets this.", liveLocked: "Your plan doesn't include production keys.",
       readOnly: "You have read-only access. Only owners and admins can create or revoke API keys.",
       title: "API keys",
       sub: "Secret keys for the Cosmos Pay API. Create as many as you need.",
@@ -877,6 +877,7 @@ export default {
       },
     },
     support: {
+      searchPlaceholder: "Search tickets…",
       title: "Support",
       subtitle: "Chat with the Cosmos Pay team",
       placeholder: "Write a message…",
@@ -969,7 +970,7 @@ export default {
       memberRemoveError: "Couldn’t remove the member.",
       empty: "No members yet.",
     },
-    webhooks: { resent: "Delivery resent", noFailed: "No failed deliveries.", only: { all: "All", failed: "Failed" }, eventId: "Event ID", error: "Error", attempts: "Attempts", delivery: "Delivery", save: "Save changes", editTitle: "Edit endpoint", edit: "Edit endpoint", eventsOne: "1 event",
+    webhooks: { searchPlaceholder: "Search by URL or event…", resent: "Delivery resent", noFailed: "No failed deliveries.", only: { all: "All", failed: "Failed" }, eventId: "Event ID", error: "Error", attempts: "Attempts", delivery: "Delivery", save: "Save changes", editTitle: "Edit endpoint", edit: "Edit endpoint", eventsOne: "1 event",
       title: "Webhooks",
       sub: "Real-time events when payments settle on Stellar, Solana or Monad",
       add: "Add endpoint",

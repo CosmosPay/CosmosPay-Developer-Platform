@@ -2,7 +2,7 @@
    pagination, list filters kept in the URL, and the dropdown outside-click helper. */
 import { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { PAGE_SIZE } from "@/components/cosmos/dashboard/data";
+import { PAGE_SIZE, PAGE_SIZES } from "@/components/cosmos/dashboard/data";
 import { activeCount, readFilters, writeFilters, type Allowed, type Filters } from "@/lib/dashboard-filters";
 
 /* Polling that pauses while the browser tab is hidden (saves resources). Fires once on
@@ -30,7 +30,8 @@ export function useGsapRows(ref, dep) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const rows = el.querySelectorAll("tbody > tr");
+    // The empty rows that keep a short page's height stay still.
+    const rows = el.querySelectorAll("tbody > tr:not(.row-fill)");
     if (!rows.length) return;
     el.classList.add("is-animating");
     const done = () => el.classList.remove("is-animating");
@@ -43,16 +44,39 @@ export function useGsapRows(ref, dep) {
   }, [dep]);
 }
 
-/* Client-side pager over an array. `resetKey` (e.g. the search query) snaps back to page 1. */
-export function usePaged(rows, resetKey, pageSize = PAGE_SIZE) {
+/* Rows per page, one choice for every table (PAGE_SIZES, at most 50), kept in this browser. Read
+   after mount, so the first render matches the server's; a change reaches every table on screen. */
+const ROWS_KEY = "cosmospay-rows";
+const ROWS_EVENT = "dash:rows";
+export function useRowsPerPage(): [number, (n: number) => void] {
+  const [size, setSize] = useState(PAGE_SIZE);
+  useEffect(() => {
+    try { const n = Number(localStorage.getItem(ROWS_KEY)); if (PAGE_SIZES.includes(n)) setSize(n); } catch (e) {}
+    const on = (e: Event) => { const n = Number((e as CustomEvent).detail); if (PAGE_SIZES.includes(n)) setSize(n); };
+    window.addEventListener(ROWS_EVENT, on);
+    return () => window.removeEventListener(ROWS_EVENT, on);
+  }, []);
+  const choose = (n: number) => {
+    if (!PAGE_SIZES.includes(n)) return;
+    try { localStorage.setItem(ROWS_KEY, String(n)); } catch (e) {}
+    window.dispatchEvent(new CustomEvent(ROWS_EVENT, { detail: n }));
+  };
+  return [size, choose];
+}
+
+/* Client-side pager over an array, at the viewer's rows per page. `resetKey` (e.g. the search
+   query) snaps back to page 1, and so does another page size. `size` and `setSize` feed
+   Pagination's picker; `size - count` is how many empty rows keep a short page's height. */
+export function usePaged(rows, resetKey) {
+  const [pageSize, setSize] = useRowsPerPage();
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [resetKey]);
+  useEffect(() => { setPage(1); }, [resetKey, pageSize]);
   const total = rows.length;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const cur = Math.min(page, pages);
   const start = (cur - 1) * pageSize;
   const slice = rows.slice(start, start + pageSize);
-  return { page: cur, setPage, pages, total, slice, start, count: slice.length };
+  return { page: cur, setPage, pages, total, slice, start, count: slice.length, size: pageSize, setSize };
 }
 
 /* A list's filters, kept in the URL so a reload or a shared link shows the same list. Values the

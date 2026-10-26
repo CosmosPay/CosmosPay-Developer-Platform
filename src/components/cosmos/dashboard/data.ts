@@ -2,7 +2,9 @@
    (client-side); values are intentionally not translated. */
 import { PLAN_IDS } from "@/lib/plans";
 
-export const PAGE_SIZE = 8;
+/* Rows per page: every table offers these, at most 50 (product owner); 10 until the viewer picks. */
+export const PAGE_SIZES = [10, 20, 50];
+export const PAGE_SIZE = 10;
 
 /* ---------------- datasets (mock; values not translated) ---------------- */
 export const VOL = [38,41,40,45,43,49,52,48,55,58,54,62,60,67,71,68,74,79,83,80,88,92,96,94,101,108,112,118,124,128];
