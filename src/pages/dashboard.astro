@@ -40,6 +40,8 @@ if (orgCount === 0) {
 }
 
 const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// The environment last picked (Dashboard writes the cookie), so a reload opens on it.
+const env = Astro.cookies.get("cosmospay-env")?.value === "prod" ? "prod" : "dev";
 // Account role (user | support | admin | owner); gates staff features (support inbox,
 // user management). The first account bootstraps to "owner" (see getRole). Best-effort.
 const profile = await getProfile(user.id).catch(() => null);
@@ -65,5 +67,5 @@ const features = planFeatures(role);
 ---
 
 <CosmosLayout title="Dashboard | Cosmos Pay" lang={lang} noindex nav={false} bodyClass="inst">
-  <Dashboard client:load user={dashUser} lang={lang} features={features} />
+  <Dashboard client:load user={dashUser} lang={lang} features={features} env={env} />
 </CosmosLayout>

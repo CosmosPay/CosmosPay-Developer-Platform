@@ -25,7 +25,7 @@ import { tierOf } from "@/lib/chains";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
-export default function Dashboard({ user: initialUser, lang, features }) {
+export default function Dashboard({ user: initialUser, lang, features, env = "dev" }) {
   initLang(lang);
   const t = useT();
   // Plan/onboarding feature flags resolved server-side (per account role). Defaults
@@ -72,7 +72,13 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       window.history.replaceState({}, "", url);
     } catch (e) {}
   }, [view]);
-  const [live, setLive] = useState(false);
+  // Sandbox or production survives a reload: a cookie the page reads on the server, so the first
+  // render already shows the chosen environment (no sandbox flash, no second fetch).
+  const [live, setLive] = useState(env === "prod");
+  const chooseEnv = (next) => {
+    setLive(next);
+    try { document.cookie = `cosmospay-env=${next ? "prod" : "dev"};path=/;max-age=31536000;samesite=lax`; } catch (e) {}
+  };
   // Activity tracking. `startTracking` also wires the uncaught-error and rejected-
   // promise handlers, which is why it runs from the shell rather than from the
   // first view that happens to want an event.
@@ -363,13 +369,13 @@ export default function Dashboard({ user: initialUser, lang, features }) {
             <button type="button" className="icon-btn burger" aria-label={t.nav.menu} aria-expanded={navOpen} aria-controls="dash-side" onClick={() => setNavOpen(true)}>{DI.menu}</button>
             <div className="page-title">
               <h1>{t.dash.viewLabels[view]}</h1>
-              <span className="page-crumb" aria-hidden="true">→</span>
+              <span className="page-crumb" aria-hidden="true">/</span>
               <OrgSwitcher variant="crumb" orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} onUpgrade={canChangePlan ? () => setModal("plan") : null} />
             </div>
             <div className="top-actions">
               <div className="env-seg" role="group" aria-label={t.dash.env.heading}>
-                <button type="button" aria-pressed={!live} onClick={() => setLive(false)}>{t.dash.env.sandbox}</button>
-                <button type="button" aria-pressed={live} onClick={() => setLive(true)}>{t.dash.env.production}</button>
+                <button type="button" aria-pressed={!live} onClick={() => chooseEnv(false)}>{t.dash.env.sandbox}</button>
+                <button type="button" aria-pressed={live} onClick={() => chooseEnv(true)}>{t.dash.env.production}</button>
               </div>
               <button type="button" className="btn btn-outline-w btn-sm top-add" onClick={() => setModal("org")}>{DI.plus}<span className="top-add-t">{t.dash.org.create}</span></button>
             </div>

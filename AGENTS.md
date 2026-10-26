@@ -209,8 +209,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     content column (`Nav inDash` gives `.nav-dash`: no logo, no surface at the top but its bottom
     line always drawn, product owner; the logo comes back on screens where the sidebar is
     off-canvas), then the page head: the view's name as the h1,
-    an arrow and the organization as a breadcrumb menu (`OrgSwitcher variant="crumb"`), Sandbox /
-    Production and the outlined "create organization" (icon only on phones). A view's own h2 stays
+    a slash and the organization as a breadcrumb menu (`OrgSwitcher variant="crumb"`), the three at
+    one size (`--title-fs`, 24px: its letters as tall as the environment switch's selected pill;
+    product owner: never an arrow, never two sizes, in proportion to the switch), Sandbox / Production
+    and the outlined "create organization" (icon only on phones). The environment survives a reload:
+    the switch writes the `cosmospay-env` cookie and `dashboard.astro` reads it, so the first render
+    is already on it. A view's own h2 stays
     for assistive tech only and no view has a visible subtitle. The sidebar entries are `SIDE` in
     `dashboard/data.ts`; a group slides open and closed (its height animates; closed, it is inert).
     The sidebar's logo never moves (product owner): on a window too short for the menu only

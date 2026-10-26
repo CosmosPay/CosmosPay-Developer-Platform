@@ -6,8 +6,8 @@ import { initials } from "@/components/cosmos/dashboard/helpers";
 import { useOutside, usePresence } from "@/components/cosmos/dashboard/hooks";
 import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 
-/* `variant="crumb"`: the organization as the grey half of the page title's breadcrumb (the
-   reference's "Gateways → Gateways Profile"), opening the same menu. */
+/* `variant="crumb"`: the organization as the grey half of the page title's breadcrumb ("Overview /
+   Organization", at the title's size), opening the same menu. */
 /* A locked organization (past the account plan's limit) opens the plan dialog when the viewer can
    change plan (`onUpgrade`); otherwise it stays a disabled row that says why. */
 export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, variant, onUpgrade }: { orgs: any[]; current: any; onSwitch: (id: string) => void; onCreate: () => void; lockedIds?: Set<string>; variant?: "crumb"; onUpgrade?: (() => void) | null }) {

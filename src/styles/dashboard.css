@@ -81,20 +81,25 @@ body.inst:has(.dash) { background: var(--surface); }
 .nav-dash .nav-trigger { padding-left: 0; padding-right: 20px; }
 .nav-dash .nav-trigger::after { left: 0; right: 20px; }
 
-/* the page head: a big title, its breadcrumb (the organization, a menu), Test/Live and the
-   outlined action, as the reference's "Gateways → Gateways Profile" and "Add Gateway" */
+/* the page head: a big title, its breadcrumb (a slash, then the organization, a menu), Test/Live
+   and the outlined action, as the reference's breadcrumb title and "Add Gateway" */
 .inst .topbar {
   position: static; height: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 16px 20px;
   padding: 14px 36px 26px 40px; background: transparent; backdrop-filter: none; border: 0;
 }
-.page-title { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 auto; }
-.page-title h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.025em; line-height: 1.15; color: var(--ink); white-space: nowrap; }
-.page-crumb { color: var(--line-2); font-size: 22px; line-height: 1; }
+/* the view's name, the slash and the organization share one size (product owner: titles of
+   different sizes look broken), set once in --title-fs, and sized against the environment switch
+   beside it (product owner): at 24px the letters stand as tall as its selected pill (31.5px) inside
+   its 40px, so the title leads without outweighing the controls. The h1 rule outranks views.css's
+   older `.topbar h1` (19px), which loads later and used to shrink the name under the organization. */
+.page-title { --title-fs: 24px; display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto; }
+.inst .page-title h1 { margin: 0; font-size: var(--title-fs); font-weight: 600; letter-spacing: -.025em; line-height: 1.15; color: var(--ink); white-space: nowrap; }
+.page-crumb { color: var(--line-2); font-size: var(--title-fs); font-weight: 400; line-height: 1.15; }
 .org-wrap.crumb { margin: 0; min-width: 0; }
 .org-crumb {
   display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 6px;
   border: 0; border-radius: 10px; background: transparent; cursor: pointer;
-  font: 600 24px/1.2 var(--ff-sans); letter-spacing: -.02em; color: var(--ink-3); transition: color .2s ease;
+  font: 600 var(--title-fs)/1.15 var(--ff-sans); letter-spacing: -.025em; color: var(--ink-3); transition: color .2s ease;
 }
 .org-crumb-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .org-crumb svg { width: 18px; height: 18px; flex: 0 0 auto; transition: rotate .25s ease; }
@@ -121,8 +126,7 @@ body.inst:has(.dash) { background: var(--surface); }
   .inst .topbar { padding: 6px 16px 18px; }
   .inst .dash-body { padding: 0 16px 36px; }
   .page-title { flex: 1 1 0; }
-  .page-title h1 { font-size: 22px; }
-  .org-crumb { font-size: 19px; }
+  .page-title { --title-fs: 22px; }
   .inst .top-actions { margin-left: 0; width: 100%; justify-content: space-between; }
   /* the sidebar is off-canvas here, so the nav carries the logo again */
   .nav-dash .brand { display: flex; }
