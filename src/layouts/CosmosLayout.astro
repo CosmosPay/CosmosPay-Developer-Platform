@@ -173,6 +173,7 @@ const jsonLd = {
         lang={locale}
         user={Astro.locals.user ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image } : null}
         session={Astro.locals.area !== "payments"}
+        area={Astro.locals.area === "site" ? "site" : undefined}
       />
     )}
     <slot />

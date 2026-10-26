@@ -258,7 +258,10 @@ function Breakdown({ obj, pillOf }) {
   );
 }
 
-export function AdminOverviewView({ env = "dev" }) {
+/* Every figure opens the list it counts (`goToAdmin`): the organizations, customers and products,
+   payments, swaps by venue and each fiat list. Webhook endpoints have no admin list, so that card
+   is a figure only. */
+export function AdminOverviewView({ env = "dev", goToAdmin = null }) {
   const t = useT();
   const a = t.dash.admin;
   const ao = a.overview;
@@ -291,22 +294,24 @@ export function AdminOverviewView({ env = "dev" }) {
       {!loading && !error && sum && (
         <>
           <div className="metrics">
-            {[["consumers", sum.consumers], ["customers", sum.customers], ["products", sum.products], ["webhooks", sum.webhookEndpoints]].map(([k, v]) => (
-              <div className="metric" key={k}><div className="ml">{ao.cards[k]}</div><div className="mv">{v ?? 0}</div></div>
+            {[["consumers", sum.consumers, "adminConsumers"], ["customers", sum.customers, "adminCustomers"], ["products", sum.products, "adminProducts"], ["webhooks", sum.webhookEndpoints, null]].map(([k, v, to]) => (
+              to && goToAdmin
+                ? <button type="button" className="metric metric-link" key={k} onClick={() => goToAdmin(to, null)}><div className="ml">{ao.cards[k]}</div><div className="mv">{v ?? 0}</div></button>
+                : <div className="metric" key={k}><div className="ml">{ao.cards[k]}</div><div className="mv">{v ?? 0}</div></div>
             ))}
           </div>
 
           <div className="panels">
-            <div className="panel"><div className="panel-head"><h3>{ao.payments}</h3></div>
+            <div className="panel"><div className="panel-head"><h3>{ao.payments}</h3>{goToAdmin && <button type="button" className="hub-link" onClick={() => goToAdmin("adminPayments", null)}>{a.viewList}</button>}</div>
               <div style={{ padding: "0 16px 16px" }}><div className="mv" style={{ marginBottom: 10 }}>{pi.total ?? 0}</div><Breakdown obj={pi.byStatus} pillOf={(k) => ADMIN_PILL[k] || "ref"} /></div>
             </div>
-            <div className="panel"><div className="panel-head"><h3>{ao.swaps}</h3></div>
+            <div className="panel"><div className="panel-head"><h3>{ao.swaps}</h3>{goToAdmin && <button type="button" className="hub-link" onClick={() => goToAdmin("adminSwaps", { tab: "stellar" })}>{a.viewList}</button>}</div>
               <div style={{ padding: "0 16px 16px" }}><div className="mv" style={{ marginBottom: 10 }}>{sw.total ?? 0}</div><Breakdown obj={sw.byStatus} pillOf={(k) => ADMIN_PILL[k] || "ref"} /></div>
             </div>
-            <div className="panel"><div className="panel-head"><h3>{ao.chainSwaps}</h3></div>
+            <div className="panel"><div className="panel-head"><h3>{ao.chainSwaps}</h3>{goToAdmin && <button type="button" className="hub-link" onClick={() => goToAdmin("adminSwaps", { tab: "solana" })}>{a.viewList}</button>}</div>
               <div style={{ padding: "0 16px 16px" }}><div className="mv" style={{ marginBottom: 10 }}>{csw.total ?? 0}</div><Breakdown obj={csw.byStatus} pillOf={(k) => ADMIN_PILL[k] || "ref"} /></div>
             </div>
-            <div className="panel"><div className="panel-head"><h3>{ao.crossChainSwaps}</h3></div>
+            <div className="panel"><div className="panel-head"><h3>{ao.crossChainSwaps}</h3>{goToAdmin && <button type="button" className="hub-link" onClick={() => goToAdmin("adminSwaps", { tab: "crossChain" })}>{a.viewList}</button>}</div>
               <div style={{ padding: "0 16px 16px" }}><div className="mv" style={{ marginBottom: 10 }}>{xsw.total ?? 0}</div><Breakdown obj={xsw.byStatus} pillOf={(k) => ADMIN_PILL[k] || "ref"} /></div>
             </div>
           </div>
@@ -315,7 +320,10 @@ export function AdminOverviewView({ env = "dev" }) {
             <div style={{ padding: "4px 16px 16px" }}>
               {[["receivers", fiat.receivers], ["payins", fiat.payins], ["payouts", fiat.payouts]].map(([k, obj]) => (
                 <div key={k} style={{ marginBottom: 14 }}>
-                  <label className="field-l">{ao[k]} · {(obj && obj.total) ?? 0}</label>
+                  <div className="admin-fiat-head">
+                    <label className="field-l">{ao[k]}: {(obj && obj.total) ?? 0}</label>
+                    {goToAdmin && <button type="button" className="hub-link" onClick={() => goToAdmin("adminFiat", { tab: k })}>{a.viewList}</button>}
+                  </div>
                   <Breakdown obj={obj && obj.byStatus} pillOf={fiatPill} />
                 </div>
               ))}
@@ -383,7 +391,9 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
   const as = a.swaps;
   const network = netFromEnv(env);
   const consumer = adminFilter && adminFilter.consumer;
-  const [venue, setVenue] = useState("stellar");
+  // The overview opens it on a venue (`adminFilter.tab`): Stellar, a chain or cross-chain.
+  const [venue, setVenue] = useState((adminFilter && adminFilter.tab) || "stellar");
+  useEffect(() => { if (adminFilter && adminFilter.tab) setVenue(adminFilter.tab); }, [adminFilter]);
   const fetcher =
     venue === "stellar" ? () => adminApi.swaps({ network, consumer, take: 200 })
       : venue === "crossChain" ? () => adminApi.crossChainSwaps({ consumer, take: 200 })

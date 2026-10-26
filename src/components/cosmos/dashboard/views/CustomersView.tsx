@@ -4,7 +4,7 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { customers as custApi, paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDate, fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, goFiltered } from "@/components/cosmos/dashboard/hooks";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
@@ -23,7 +23,9 @@ const acctExplorer = (account, env) => {
   return chain ? explorerAccountUrl(chain, env === "prod" ? "public" : "testnet", account) : null;
 };
 
-export function CustomersView({ canManage = true, orgId, env = "dev" }) {
+/* A customer's payments are the payments their wallet paid: the count and each payment open in the
+   Payments view (searched by that wallet, or the payment's own detail). */
+export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v) => {} }) {
   const t = useT();
   const cv = t.dash.customers;
   const cx = t.dash.cosmos;
@@ -49,6 +51,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
 
   const onCreated = (c) => { setModal(false); setRows((x) => [c, ...x]); };
   const onUpdated = (c) => { setRows((x) => x.map((i) => (i.id === c.id ? { ...i, ...c } : i))); setDetail((d) => (d && d.id === c.id ? { ...d, ...c } : d)); };
+  const paymentsOf = (c) => goFiltered(onGo, "payments", { q: c.account });
   const remove = (c) => custApi.remove(c.id, env, orgId)
     .then(() => { setRows((x) => x.filter((i) => i.id !== c.id)); setDetail(null); })
     .catch((e) => showToast((e && e.message) || cx.delete, "error"));
@@ -65,7 +68,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
                 <td><div className="cust-cell"><span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>{c.alias || c.name}</div></td>
                 <td className="cust">{c.email || (c.account ? shortAcct(c.account) : "-")}</td>
                 <td className="amt">{c.total || "0"}</td>
-                <td className="cust">{c.succeeded ?? 0}/{c.payments ?? 0}</td>
+                <td className="cust">{c.account && c.payments ? <button type="button" className="link-btn" onClick={(e) => { e.stopPropagation(); paymentsOf(c); }}>{c.succeeded ?? 0}/{c.payments}</button> : `${c.succeeded ?? 0}/${c.payments ?? 0}`}</td>
                 <td className="cust">{fmtDate(c.createdAt)}</td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                   <button className="icon-mini" title={cx.custDetail.title} aria-label={cx.custDetail.title} onClick={() => setDetail(c)}>{DI.docs}</button>
@@ -77,11 +80,16 @@ export function CustomersView({ canManage = true, orgId, env = "dev" }) {
         )}
         {loading && <TableSkeleton label={cx.loading} />}
         {!loading && error && <div className="empty">{cx.loadError}</div>}
-        {!loading && !error && !view.length && <div className="empty">{cv.empty}</div>}
+        {!loading && !error && !view.length && (
+          <div className="empty">
+            {rows.length ? t.dash.filters.noMatch : cv.empty}
+            {!rows.length && canManage && <div><button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button></div>}
+          </div>
+        )}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}
       </div>
       {modal && <CustomerFormModal cv={cv} cx={cx} env={env} orgId={orgId} onClose={() => setModal(false)} onSaved={onCreated} />}
-      {detail && <CustomerDetailModal cv={cv} cx={cx} customer={detail} env={env} orgId={orgId} canManage={canManage} onClose={() => setDetail(null)} onUpdated={onUpdated} onDelete={() => remove(detail)} />}
+      {detail && <CustomerDetailModal cv={cv} cx={cx} customer={detail} env={env} orgId={orgId} canManage={canManage} onClose={() => setDetail(null)} onUpdated={onUpdated} onDelete={() => remove(detail)} onOpenPayment={(id) => goFiltered(onGo, "payments", { open: id })} onAllPayments={() => paymentsOf(detail)} />}
     </>
   );
 }
@@ -122,7 +130,7 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
 }
 
 /* Drill-down: editable info + the customer's on-chain payments. */
-function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose, onUpdated, onDelete }) {
+function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose, onUpdated, onDelete, onOpenPayment, onAllPayments }) {
   const t = useT();
   const cd = cx.custDetail;
   const m = cv.modal;
@@ -182,13 +190,23 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
               {canManage && <button className="btn btn-soft danger-soft" onClick={onDelete}>{DI.trash} {cx.delete}</button>}
             </div>
 
-            <label className="field-l">{cd.payments}</label>
+            <div className="cust-pays-head">
+              <label className="field-l">{cd.payments}</label>
+              {pays !== null && pays.length > 0 && <button type="button" className="link-btn" onClick={onAllPayments}>{t.dash.overview.hub.viewAll}</button>}
+            </div>
             {pays === null && <TableSkeleton label={cx.loading} />}
-            {pays !== null && pays.length === 0 && <div className="empty">{cd.noPayments}</div>}
+            {/* Payments are matched by the wallet that paid: without one there is nothing to match. */}
+            {pays !== null && pays.length === 0 && !customer.account && (
+              <div className="empty">
+                {cd.noAccount}
+                {canManage && <div><button type="button" className="btn btn-dark btn-sm" onClick={() => setEdit(true)}>{DI.edit} {cd.edit}</button></div>}
+              </div>
+            )}
+            {pays !== null && pays.length === 0 && customer.account && <div className="empty">{cd.noPayments}</div>}
             {pays !== null && pays.length > 0 && (
               <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>
                 {pays.map((p) => (
-                  <tr key={p.id}>
+                  <tr key={p.id} className="row-click" tabIndex={0} onClick={() => onOpenPayment(p.id)} onKeyDown={(e) => { if (e.key === "Enter") onOpenPayment(p.id); }}>
                     <td className="tid">{p.id}</td>
                     <td className="amt">{p.amount || "-"} {assetLabel(isChain(p.chain) ? p.chain : "stellar", p.asset)}</td>
                     <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>

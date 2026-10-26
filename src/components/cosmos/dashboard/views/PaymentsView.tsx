@@ -4,7 +4,7 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, usePolling, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
@@ -33,7 +33,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
-  const [modal, setModal] = useState(false);   // create modal
+  const [modal, setModal] = useState(false);   // create modal: true, or what to fill it with
   const [detail, setDetail] = useState(null);  // a payment intent shown in the detail modal
   const [toDelete, setToDelete] = useState(null); // a payment intent pending delete confirmation
   const [deleting, setDeleting] = useState(false);
@@ -59,6 +59,29 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   }, [query]);
   usePolling(refresh, 8000);
 
+  // A payment named from elsewhere (the overview's row menu, a notification, a customer): its
+  // detail opens once the list is here, read by id when the list does not hold it. A create
+  // request opens the form for whoever may create.
+  const [openId, clearOpen] = useUrlRequest("open");
+  useEffect(() => {
+    if (!openId || loading) return;
+    const hit = rows.find((p) => p.id === openId);
+    clearOpen();
+    if (hit) { setDetail(hit); return; }
+    payApi.get(openId, env).then((p) => { if (p && p.id) setDetail(p); else showToast(t.dash.common.notFound, "error"); }).catch(() => showToast(t.dash.common.notFound, "error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, loading]);
+  const [createReq, clearCreate] = useUrlRequest("create");
+  const [preAmount] = useUrlRequest("amount");
+  const [preAsset] = useUrlRequest("asset");
+  const [preNote] = useUrlRequest("note");
+  useEffect(() => {
+    if (!createReq) return;
+    clearCreate();
+    if (canManage) setModal(preAmount || preAsset || preNote ? { amount: preAmount, asset: preAsset, note: preNote } : true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createReq]);
+
   // The upstream list isn't network-scoped, so separate testnet vs public here to
   // match the active environment switcher (dev → testnet, prod → public).
   const wantNet = env === "prod" ? "public" : "testnet";
@@ -68,7 +91,8 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
     (skip === "kind" || filters.kind === "all" || p.kind === filters.kind) &&
     (skip === "status" || filters.status === "all" || p.status === filters.status) &&
     inRange(p.createdAt, filters.date) &&
-    matchesQuery([p.id, p.destination, p.memo, p.reference, p.asset, p.amount, CHAIN_NAMES[chainOf(p)]], filters.q);
+    // the asset as stored and as shown ("native" reads XLM, SOL or MON), so a ticker finds it
+    matchesQuery([p.id, p.source, p.destination, p.memo, p.reference, p.asset, p.amount, amountLabel(p, pl), CHAIN_NAMES[chainOf(p)]], filters.q);
   const view = inEnv.filter((p) => matches(p, null));
   // Each control counts what the others leave, so a number says what picking it would show.
   const statusCounts = countBy(inEnv.filter((p) => matches(p, "status")), (p) => p.status);
@@ -138,7 +162,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
         )}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}
       </div>
-      {modal && <CreatePayLinkModal pl={pl} orgId={orgId} env={env} canConnectWallets={canConnectWallets} onClose={() => setModal(false)} onCreated={onCreated} />}
+      {modal && <CreatePayLinkModal pl={pl} orgId={orgId} env={env} canConnectWallets={canConnectWallets} initial={modal === true ? null : modal} onClose={() => setModal(false)} onCreated={onCreated} />}
       {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={onDeleted} />}
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </>
@@ -150,7 +174,9 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
    Monad testnet in the sandbox). Composed as the payer will meet it: the network as a choice of
    three, the amount with its asset in one field (as a swap panel), the address that receives it,
    then the rest folded under "more options". Transaction intents (a known payer) are Stellar's. */
-function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, onClose, onCreated }) {
+/* `initial` fills a Stellar link from elsewhere (a product): its amount, its asset (the chain's coin,
+   a listed asset by code, or CODE:ISSUER as a custom one) and its name as the payer's message. */
+function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null, onClose, onCreated }) {
   const t = useT();
   const m = pl.modal;
   const tk = t.dash.tokens;
@@ -159,14 +185,14 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, onClose, onCrea
   const [kind, setKind] = useState("pay");
   const [destination, setDestination] = useState("");
   const [source, setSource] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(initial?.amount || "");
   // The asset: a listed one, or "custom" with its code / ticker and issuer / mint / contract.
   const [assetKey, setAssetKey] = useState("native");
   const [customCode, setCustomCode] = useState("");
   const [customIssuer, setCustomIssuer] = useState("");
   const [memo, setMemo] = useState("");
-  const [msg, setMsg] = useState("");
-  const [more, setMore] = useState(false);
+  const [msg, setMsg] = useState(initial?.note || "");
+  const [more, setMore] = useState(!!initial?.note);
   const [checkoutTheme, setCheckoutTheme] = useState("classic");
   const [busy, setBusy] = useState(false);
 
@@ -180,6 +206,18 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, onClose, onCrea
       ...TOKEN_PRESETS[chain][tier].map((p) => ({ key: `preset:${p.issuer}`, code: p.code, issuer: p.issuer, label: p.code, hint: `${p.issuer.slice(0, 4)}…${p.issuer.slice(-4)}`, symbol: p.code })),
     ];
   }, [chain, tier, stellar]);
+  // The asset named by `initial`, once: the chain's coin, a listed asset by its code, else custom.
+  const placed = useRef(false);
+  useEffect(() => {
+    if (placed.current || !initial?.asset) return;
+    placed.current = true;
+    const [code, issuer = ""] = String(initial.asset).split(":");
+    if (!code || code === "native" || code.toUpperCase() === "XLM") return;
+    const hit = assets.find((a) => a.code && a.code.toUpperCase() === code.toUpperCase() && (!issuer || a.issuer === issuer));
+    if (hit) { setAssetKey(hit.key); return; }
+    setAssetKey("custom"); setCustomCode(code); setCustomIssuer(issuer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assets]);
   const listed = assets.find((a) => a.key === assetKey);
   const assetCode = listed ? listed.code : customCode.trim();
   const assetIssuer = listed ? listed.issuer : customIssuer.trim();

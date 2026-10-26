@@ -19,8 +19,8 @@ export type LandingLayout = "single" | "multi";
 export function landingData(lang: Locale, layout: LandingLayout = "single") {
   const t = LANDING[lang];
   const links = layout === "multi"
-    ? { integrations: "/integrations", useCases: "/use-cases", security: "/security", fees: "/fees", faq: "/faq" }
-    : { integrations: "#integrations", useCases: "#pl-uses", security: "#pl-security", fees: "#pricing", faq: "#pl-faq" };
+    ? { integrations: "/integrations", swaps: "/swaps", useCases: "/use-cases", security: "/security", fees: "/fees", faq: "/faq" }
+    : { integrations: "#integrations", swaps: "/swaps", useCases: "#pl-uses", security: "#pl-security", fees: "#pricing", faq: "#pl-faq" };
 
   const CREATE_LINK = loginTo("/dashboard?view=payments");
   const CONTACT = `mailto:${CONTACT_ADDRESS}`;

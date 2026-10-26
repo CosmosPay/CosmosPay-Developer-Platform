@@ -20,7 +20,7 @@ export default function Landing({ user: serverUser = null, lang }: { user?: User
       {/* la barra hereda el color del primer panel: al pasar la wallet arriba
           el panel de entrada es blanco, y con overPanel="black" los links
           quedaban blancos sobre blanco. */}
-      <Nav theme={theme} setTheme={setTheme} user={user} sessionReady={ready} overPanel="white" />
+      <Nav theme={theme} setTheme={setTheme} user={user} sessionReady={ready} overPanel="white" area="site" />
       <main id="main">
         {/* La wallet es lo primero que se ve, sin scrollear: quien entra a
             cosmospay.lat viene a conseguirla, no a leer sobre la API. El hero

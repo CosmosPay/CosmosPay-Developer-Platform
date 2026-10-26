@@ -4,16 +4,20 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { goFiltered } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
+import { CHAINS, assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
 const num = (s) => { const n = Number(s); return Number.isFinite(n) ? n : 0; };
 
-export function BalancesView({ canManage = false, env = "dev" }) {
+/* Each balance opens the settled payments behind it (Payments, filtered to settled, its network and
+   its asset); the total opens every settled payment. With nothing settled yet, whoever may create
+   payments is offered the payment link that starts it. */
+export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} }) {
   const t = useT();
   const b = t.dash.balances;
   const cx = t.dash.cosmos;
@@ -59,6 +63,14 @@ export function BalancesView({ canManage = false, env = "dev" }) {
   // A balance names its asset by the chain's coin for "native" and by the code of a CODE:ISSUER
   // asset; its mark and name go by that.
   const code = (bal) => (isChain(bal.chain) ? chainAsset(bal.chain, bal.asset) : String(bal.asset).split(":")[0]);
+  const settled = (bal = null) => goFiltered(onGo, "payments", {
+    status: "SUCCEEDED",
+    ...(bal && CHAINS.includes(bal.chain || "stellar") ? { chain: bal.chain || "stellar" } : {}),
+    // the asset by its ticker (the search reads the payment's asset as shown) or CODE:ISSUER
+    ...(bal && bal.asset ? { q: bal.asset === "native" ? code(bal) : String(bal.asset) } : {}),
+  });
+  const createLink = () => goFiltered(onGo, "payments", { create: "1" });
+  const startHere = canManage && <div><button type="button" className="btn btn-dark btn-sm" onClick={createLink}>{t.dash.overview.hub.createLink}</button></div>;
 
   return (
     <>
@@ -67,7 +79,7 @@ export function BalancesView({ canManage = false, env = "dev" }) {
       {!loading && (
         <div className="bal-grid">
           {bals.map((bal) => (
-            <div className="bal-card" key={`${bal.chain || "stellar"}:${bal.asset}`}>
+            <button type="button" className="bal-card" key={`${bal.chain || "stellar"}:${bal.asset}`} onClick={() => settled(bal)}>
               {/* The asset with its logo and the network it settles on, as text (no chip). */}
               <div className="bal-asset">
                 <TokenMark symbol={code(bal)} chain={bal.chain || "stellar"} chainName={networkName(bal.chain || "stellar")} size={28} />
@@ -76,17 +88,25 @@ export function BalancesView({ canManage = false, env = "dev" }) {
               <div className="bal-amt">{bal.amount}</div>
               <div className="bal-fiat">{num(bal.pending) > 0 ? `${cx.pending}: ${bal.pending}` : `${bal.count}× ${cx.received}`}</div>
               <div className="bal-bar"><span style={{ width: Math.round((num(bal.amount) / max) * 100) + "%" }} /></div>
-            </div>
+            </button>
           ))}
           {/* Amounts in different assets do not add up: the black card counts settlements instead. */}
-          <div className="bal-card total">
-            <div className="bal-asset"><span className="bal-total-k">{b.total}</span></div>
-            <div className="bal-amt">{totalSettlements}</div>
-            <div className="bal-fiat">{bals.length ? fmt(b.across, { assets: bals.length, networks }) : cx.empty}</div>
-          </div>
+          {bals.length > 0 ? (
+            <button type="button" className="bal-card total" onClick={() => settled()}>
+              <div className="bal-asset"><span className="bal-total-k">{b.total}</span></div>
+              <div className="bal-amt">{totalSettlements}</div>
+              <div className="bal-fiat">{fmt(b.across, { assets: bals.length, networks })}</div>
+            </button>
+          ) : (
+            <div className="bal-card total">
+              <div className="bal-asset"><span className="bal-total-k">{b.total}</span></div>
+              <div className="bal-amt">{totalSettlements}</div>
+              <div className="bal-fiat">{cx.empty}</div>
+            </div>
+          )}
         </div>
       )}
-      <div className="panel"><div className="panel-head"><h3>{b.recent}</h3></div>
+      <div className="panel"><div className="panel-head"><h3>{b.recent}</h3>{recent.length > 0 && <button type="button" className="hub-link" onClick={() => settled()}>{t.dash.overview.hub.viewAll}</button>}</div>
         {!loading && recent.length > 0 && (
           <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{recent.map((p) => (
@@ -101,7 +121,7 @@ export function BalancesView({ canManage = false, env = "dev" }) {
             ))}</tbody>
           </table></div>
         )}
-        {!loading && !recent.length && <div className="empty">{cx.empty}</div>}
+        {!loading && !recent.length && <div className="empty">{cx.empty}{startHere}</div>}
       </div>
       {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={(id) => { setRecent((r) => r.filter((x) => x.id !== id)); setDetail(null); }} />}
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}

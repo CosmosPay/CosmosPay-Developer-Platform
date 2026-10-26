@@ -8,11 +8,15 @@
    network, NEAR Intents (POST /api/cross-chain-swaps: a deposit address). A NEAR Intents quote
    needs both addresses, so until they are in, the receive side shows an estimate from the
    listed prices. Opening a NEAR Intents swap, and Solana's and Monad's markets, are mainnet
-   only; the button says so in the sandbox. */
+   only; the button says so in the sandbox. USDT0 on Stellar to USDT / USDT0 on a network
+   LayerZero's OFT reaches goes through the OFT (/usdt0/transfers: a Soroban transaction the holder
+   signs, 1:1, LayerZero's fee in XLM), mainnet only like USDT0 itself.
+
+   The calls go through `api` (src/lib/swap-api.ts): the organization's proxies in the dashboard,
+   the gateway with the shared public key on the public swap pages. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { showToast } from "@/components/cosmos/shared";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
-import { swaps as swapsApi, crossChainSwaps as crossApi } from "@/lib/api-client";
 import { idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
 import { useOutside, usePresence } from "@/components/cosmos/dashboard/hooks";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
@@ -20,22 +24,27 @@ import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TokenPicker } from "@/components/cosmos/dashboard/components/TokenPicker";
 import { amountFits, buildCatalog, estimateOut, routeFor, type NearAsset, type SwapToken } from "@/lib/swap-catalog";
-import { NATIVE_CODES, isAddress, isChain, placeholderFor } from "@/lib/chains";
+import { NATIVE_CODES, isAddress, isChain, placeholderFor, type Tier } from "@/lib/chains";
+import { isEvmAddress, type Usdt0Route } from "@/lib/usdt0";
+import type { SwapApi, SwapRecordKind } from "@/lib/swap-api";
 
-const asList = (res) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
 /* An account on a network the dashboard has no rule for: one word of address characters.
    The Payments API checks the network's real format. */
 const LOOSE_ADDRESS = /^[A-Za-z0-9:._-]{2,128}$/;
 const accountOk = (chain: string, v: string) => (isChain(chain) ? isAddress(chain, v) : LOOSE_ADDRESS.test(v.trim()));
 const SLIPPAGES = ["", "50", "100", "200"];
 
-export function SwapWidget({ orgId, env, onCreated }) {
+/* `preset` preselects a pair (the public page's "send USDT0" does): the first token each predicate
+   accepts, whenever `n` changes. */
+export type SwapPick = { from: (t: SwapToken) => boolean; to: (t: SwapToken) => boolean; n: number };
+
+export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapApi; tier: Tier; onCreated: (kind: SwapRecordKind, rec: any) => void; preset?: SwapPick | null }) {
   const t = useT();
   const lang = useLang();
   const w = t.dash.swaps.widget;
   const m = t.dash.swaps.modal;
-  const tier = env === "prod" ? "public" : "testnet";
   const [near, setNear] = useState<NearAsset[] | null>(null);
+  const [oftRoutes, setOftRoutes] = useState<Usdt0Route[]>([]);
   const [fromKey, setFromKey] = useState<string | null>(null);
   const [toKey, setToKey] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -52,20 +61,29 @@ export function SwapWidget({ orgId, env, onCreated }) {
   const [busy, setBusy] = useState(false);
   const keys = useRef(idempotencyKeys()).current;
 
-  // NEAR Intents' list, once per environment; without it the chains' own markets still work.
+  // NEAR Intents' list and USDT0's routes, once per API; without them the chains' own markets still work.
   useEffect(() => {
     let alive = true;
     setNear(null);
-    crossApi.assets(orgId, env).then((res) => { if (alive) setNear(asList(res)); }).catch(() => { if (alive) setNear([]); });
+    api.assets().then((list) => { if (alive) setNear(list as NearAsset[]); }).catch(() => { if (alive) setNear([]); });
+    api.usdt0Routes().then((r) => { if (alive) setOftRoutes(r); }).catch(() => { if (alive) setOftRoutes([]); });
     return () => { alive = false; };
-  }, [orgId, env]);
-  const catalog = useMemo(() => buildCatalog(near || [], tier), [near, tier]);
+  }, [api]);
+  const catalog = useMemo(() => buildCatalog(near || [], tier, oftRoutes), [near, tier, oftRoutes]);
   // Defaults: XLM to USDC on Stellar, the pair that works in both environments.
   useEffect(() => {
     if (!catalog.length) return;
     setFromKey((k) => (k && catalog.some((x) => x.key === k) ? k : catalog.find((x) => x.chain === "stellar" && !x.contract)?.key ?? null));
     setToKey((k) => (k && catalog.some((x) => x.key === k) ? k : catalog.find((x) => x.chain === "stellar" && x.symbol === "USDC")?.key ?? null));
   }, [catalog]);
+  useEffect(() => {
+    if (!preset || !catalog.length) return;
+    const f = catalog.find(preset.from);
+    const g = catalog.find(preset.to);
+    if (f) setFromKey(f.key);
+    if (g) setToKey(g.key);
+    setAccount(""); setRecipient("");
+  }, [preset?.n, catalog.length]);
   const from = catalog.find((x) => x.key === fromKey) || null;
   const to = catalog.find((x) => x.key === toKey) || null;
   const route = from && to ? routeFor(from, to, tier) : null;
@@ -74,21 +92,25 @@ export function SwapWidget({ orgId, env, onCreated }) {
   const amountValid = amountFits(amount, from);
   const isNear = route?.kind === "near";
   const isDex = route?.kind === "dex";
+  const isUsdt0 = route?.kind === "usdt0";
   const accountValid = !!from && accountOk(from.chain, account);
-  const recipientValid = isNear ? !!to && accountOk(to.chain, recipient) : !recipient.trim() || isAddress("stellar", recipient);
+  const recipientValid = isNear ? !!to && accountOk(to.chain, recipient) : isUsdt0 ? isEvmAddress(recipient) : !recipient.trim() || isAddress("stellar", recipient);
   const memoValid = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
   // A firm quote: the chain's market needs the amount and tokens; NEAR Intents also both addresses.
-  const quotable = !!route && (isDex || isNear) && amountValid && (!isNear || (accountValid && recipientValid));
+  // USDT0's quote needs only the amount (the source, once typed, checks its balances too).
+  const quotable = !!route && (isDex || isNear || isUsdt0) && amountValid && (!isNear || (accountValid && recipientValid));
+  const kind = isNear ? "near" : isUsdt0 ? "usdt0" : "dex";
 
-  const body = () => {
+  const body = (): Record<string, unknown> => {
     const slip = slippage ? { slippageBps: Number(slippage) } : {};
+    if (isUsdt0) return { to: route.chain, amount: amount.trim(), ...(accountValid ? { source: account.trim() } : {}) };
     if (isNear) {
-      return { org: orgId, environment: env, originChain: from.chain, originAsset: from.near, destinationChain: to.chain, destinationAsset: to.near, amount: amount.trim(), recipient: recipient.trim(), refundTo: account.trim(), ...slip };
+      return { originChain: from.chain, originAsset: from.near, destinationChain: to.chain, destinationAsset: to.near, amount: amount.trim(), recipient: recipient.trim(), refundTo: account.trim(), ...slip };
     }
     const chain = from.chain;
     const asset = (tk: SwapToken) => (chain === "stellar" ? tk.symbol : tk.contract || NATIVE_CODES[chain]);
     return {
-      org: orgId, environment: env, chain, amount: amount.trim(),
+      chain, amount: amount.trim(),
       ...(chain !== "stellar" ? { sourceAssetCode: asset(from) } : from.contract ? { sourceAssetCode: from.symbol, sourceAssetIssuer: from.contract } : {}),
       destAssetCode: asset(to),
       ...(chain === "stellar" && to.contract ? { destAssetIssuer: to.contract } : {}),
@@ -103,7 +125,7 @@ export function SwapWidget({ orgId, env, onCreated }) {
   const ask = (k: string) => {
     latest.current = k;
     setQuote({ status: "loading", data: null, key: k });
-    (isNear ? crossApi.quote(JSON.parse(k)) : swapsApi.quote(JSON.parse(k)))
+    api.quote(kind, JSON.parse(k))
       .then((data) => { if (latest.current === k) setQuote({ status: "ready", data, key: k }); })
       .catch((err) => { if (latest.current === k) setQuote({ status: "error", data: err?.message || null, key: k }); });
   };
@@ -118,13 +140,14 @@ export function SwapWidget({ orgId, env, onCreated }) {
   const num = (v, max = 7) => { const n = Number(v); return Number.isFinite(n) ? new Intl.NumberFormat(lang, { maximumFractionDigits: max }).format(n) : String(v ?? ""); };
   const usd = (v) => (v === null || v === undefined || v === "" ? null : new Intl.NumberFormat(lang, { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(Number(v)));
   // What the receive side shows: the quote, else an estimate from the listed prices.
-  const out = fresh ? (isNear ? fresh.destination?.amount : fresh.destination?.estimated) : null;
-  const estimate = !out && isNear && amountValid ? estimateOut(amount, from, to) : null;
+  const out = fresh ? (isNear ? fresh.destination?.amount : isUsdt0 ? fresh.amountReceived : fresh.destination?.estimated) : null;
+  // Before the quote: NEAR Intents' listed prices, or 1:1 for USDT0.
+  const estimate = !out && amountValid ? (isNear ? estimateOut(amount, from, to) : isUsdt0 ? Number(amount) : null) : null;
   const shownOut = out ?? (estimate !== null ? String(estimate) : "");
   const payUsd = fresh && isNear ? fresh.origin?.amountUsd : amountValid && from?.priceUsd ? Number(amount) * from.priceUsd : null;
   const getUsd = fresh && isNear ? fresh.destination?.amountUsd : estimate !== null && to?.priceUsd ? estimate * to.priceUsd : null;
   const rate = out && amountValid ? Number(out) / Number(amount) : estimate !== null ? estimate / Number(amount) : null;
-  const venue = isNear ? w.venueNear : isDex ? t.dash.swaps.venues[route.chain] : "";
+  const venue = isNear ? w.venueNear : isUsdt0 ? w.venueUsdt0 : isDex ? t.dash.swaps.venues[route.chain] : "";
 
   // The button: what is missing, or the action.
   const cta = (() => {
@@ -137,21 +160,21 @@ export function SwapWidget({ orgId, env, onCreated }) {
     if (!memoValid) return { label: w.ctaMemo, ok: false };
     if (quote.status === "loading" || (quotable && !fresh && quote.status !== "error")) return { label: w.ctaQuoting, ok: false };
     if (quote.status === "error") return { label: w.ctaRetry, ok: true, retry: true };
-    if (isNear && env !== "prod") return { label: w.ctaProductionOpen, ok: false };
-    return { label: isNear ? w.ctaOpen : fmt(w.ctaSwap, { venue }), ok: true };
+    if (isNear && tier !== "public") return { label: w.ctaProductionOpen, ok: false };
+    return { label: isNear ? w.ctaOpen : isUsdt0 ? fmt(w.ctaBridge, { chain: to.chainName }) : fmt(w.ctaSwap, { venue }), ok: true };
   })();
 
   const create = () => {
     if (cta.retry) { ask(quoteKey); return; }
     if (!cta.ok || busy) return;
     setBusy(true);
-    const b = isNear ? body() : {
+    const b = isNear ? body() : isUsdt0 ? { source: account.trim(), to: route.chain, recipient: recipient.trim(), amount: amount.trim() } : {
       ...body(), source: account.trim(),
       ...(from.chain === "stellar" && another && recipient.trim() ? { destination: recipient.trim() } : {}),
       ...(from.chain === "stellar" && another && memo.trim() ? { memo: memo.trim() } : {}),
     };
-    (isNear ? crossApi.create({ ...b, idempotencyKey: keys.keyFor(b) }) : swapsApi.create({ ...b, idempotencyKey: keys.keyFor(b) }))
-      .then((rec) => { onCreated(isNear ? "cross" : "same", rec); setAmount(""); })
+    api.create(kind, { ...b, idempotencyKey: keys.keyFor(b) })
+      .then((rec) => { onCreated(isNear ? "cross" : isUsdt0 ? "usdt0" : "same", rec); setAmount(""); })
       .catch((err) => showToast((err && err.message) || t.dash.swaps.createError, "error"))
       .finally(() => setBusy(false));
   };
@@ -233,7 +256,9 @@ export function SwapWidget({ orgId, env, onCreated }) {
               {fresh?.fee && <div><dt>{m.fee}</dt><dd>{num(fresh.fee.amount)} {isNear ? fresh.fee.asset : from.chain === "stellar" ? from.symbol : to.symbol} ({fresh.fee.bps} {m.bps})</dd></div>}
               {fresh?.swap && <div><dt>{m.swapped}</dt><dd>{num(fresh.swap.amount)} {from.symbol}</dd></div>}
               {isNear && fresh?.timeEstimateSeconds != null && <div><dt>{w.eta}</dt><dd>{fmt(w.seconds, { n: fresh.timeEstimateSeconds })}</dd></div>}
-              <div><dt>{w.slippage}</dt><dd>{slippage ? `${Number(slippage) / 100}%` : w.slippageAuto}</dd></div>
+              {isUsdt0 && fresh?.nativeFee != null && <div><dt>{w.lzFee}</dt><dd>{num(fresh.nativeFee)} XLM</dd></div>}
+              {isUsdt0 && Number(fresh?.dust) > 0 && <div><dt>{w.dustNote}</dt><dd>{num(fresh.dust)} {from.symbol}</dd></div>}
+              {!isUsdt0 && <div><dt>{w.slippage}</dt><dd>{slippage ? `${Number(slippage) / 100}%` : w.slippageAuto}</dd></div>}
               <div><dt>{w.route}</dt><dd>{venue}</dd></div>
             </dl>
           </div>
@@ -249,7 +274,7 @@ export function SwapWidget({ orgId, env, onCreated }) {
             aria-invalid={account.trim() && !accountValid ? true : undefined}
             autoComplete="off" spellCheck={false}
           />
-          {isNear && (
+          {(isNear || isUsdt0) && (
             <Field
               label={fmt(w.recipientLabel, { chain: to.chainName })}
               value={recipient} onChange={(e) => setRecipient(e.target.value)}

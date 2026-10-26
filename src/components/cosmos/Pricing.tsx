@@ -15,7 +15,7 @@ export default function Pricing({ user: serverUser = null, lang }: { user?: User
   useReveal();
   return (
     <>
-      <Nav theme={theme} setTheme={setTheme} user={user} sessionReady={ready} overPanel="black" />
+      <Nav theme={theme} setTheme={setTheme} user={user} sessionReady={ready} overPanel="black" area="site" />
       <main id="main">
         <PricingHero billing={billing} setBilling={setBilling} />
         <PlansSection user={user} billing={billing} />

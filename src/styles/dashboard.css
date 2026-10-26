@@ -21,14 +21,16 @@
 body.inst:has(.dash) { background: var(--surface); }
 .inst .dash { display: block; min-height: 100vh; padding: 0; background: var(--surface); }
 .dash-frame { display: flex; min-height: 100vh; background: var(--surface); }
+/* The logo stays put: on a window too short for the menu only the menu scrolls under it (its
+   side padding, taken back by the margin, leaves room for the focus outlines). */
 .inst .side {
   position: sticky; top: 0; align-self: flex-start; height: 100vh;
   width: 264px; min-width: 264px; padding: 20px 20px 24px 34px;
-  display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: thin;
+  display: flex; flex-direction: column; overflow: hidden;
   background: transparent; border-right: 0;
 }
-.side-logo { display: inline-flex; align-self: flex-start; margin: 0 0 40px; color: var(--ink); }
-.inst .side-nav { flex: 1; padding: 0; overflow: visible; }
+.side-logo { display: inline-flex; flex: 0 0 auto; align-self: flex-start; margin: 0 0 40px; color: var(--ink); }
+.inst .side-nav { flex: 1 1 auto; min-height: 0; margin: 0 -10px; padding: 0 10px 4px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 /* the reference's two sections, split by a hairline */
 .side-sec-wrap + .side-sec-wrap { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
 .inst .side-sec { margin: 0 0 12px; padding: 0; font-size: 12px; font-weight: 500; letter-spacing: .04em; color: var(--ink-3); }
@@ -67,8 +69,10 @@ body.inst:has(.dash) { background: var(--surface); }
 }
 
 /* the general nav inside the frame: the content column's width, no logo (the sidebar has it),
-   no surface at the top, the frame's white once the page moves */
-.inst .nav.nav-dash { top: 0; background: transparent; border-bottom-color: transparent; backdrop-filter: none; }
+   its bottom line always drawn (product owner), no surface at the top, the frame's white once
+   the page moves */
+.inst .nav.nav-dash { top: 0; background: transparent; backdrop-filter: none; }
+.inst .nav.nav-dash, .inst .nav.nav-dash:not(.scrolled) { border-bottom-color: var(--line); }
 .inst .nav.nav-dash.scrolled { background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(10px); border-bottom-color: var(--line); }
 .nav-dash .brand { display: none; }
 /* the content column keeps a gutter from the sidebar: nav, page head and view all start at 40px */
@@ -188,7 +192,8 @@ body.inst:has(.dash) { background: var(--surface); }
 .hub-label { font-size: 12.5px; color: rgba(255, 255, 255, .72); }
 .hub-balance { margin-top: 4px; font-size: clamp(21px, 2vw, 26px); font-weight: 700; letter-spacing: -.02em; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .hub-muted { font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, .72); }
-.hub-more { font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, .72); }
+.hub-more { padding: 0; border: 0; background: none; cursor: pointer; font: 600 12.5px/1.3 var(--ff-sans); color: rgba(255, 255, 255, .72); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: color .2s ease, text-decoration-color .2s ease; }
+.hub-more:hover { color: #fff; text-decoration-color: currentColor; }
 /* the plan's rate and the network, as text split by a hairline (no capsule) */
 .hub-terms { margin: 0; display: flex; align-items: center; font-size: 12.5px; color: rgba(255, 255, 255, .72); }
 .hub-terms b { color: #fff; font-weight: 700; }
@@ -202,6 +207,9 @@ body.inst:has(.dash) { background: var(--surface); }
 .hub-side-t { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .hub-bals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .hub-bal { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-field); }
+/* a balance opens the Balances view: the whole tile is the button, its line darkening on hover */
+button.hub-bal { width: 100%; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; transition: border-color .2s ease, background-color .2s ease; }
+button.hub-bal:hover { border-color: var(--line-2); background: var(--surface-2); }
 .hub-bal-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .hub-bal-t b { font-size: 15px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .hub-bal-t span { font-size: 12.5px; color: var(--ink-3); }
@@ -235,26 +243,38 @@ body.inst:has(.dash) { background: var(--surface); }
 .seg-tabs button:hover { color: var(--ink); }
 .seg-tabs button.on { background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; }
 .hub-panel { overflow: visible; }
-/* the window's five figures, split by short rules */
-.hub-summary { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0 22px; padding: 18px 0; border-bottom: 1px solid var(--line); }
-.hub-summary > div { display: flex; flex-direction: column; gap: 6px; padding: 2px 20px; min-width: 0; }
-.hub-summary > div:first-child { padding-left: 0; }
-.hub-summary > div + div { border-left: 1px solid var(--line); }
-.hub-summary > div > span:first-child { font-size: 12.5px; color: var(--ink-3); }
-.hub-summary b { font-size: 17px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
-.hub-sub { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.hub-growth { display: flex; gap: 14px; flex-wrap: wrap; }
-.hub-growth em { font-style: normal; font-size: 14px; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
+/* the window's figures, split by short rules; each is a tab over its own chart: the chosen one
+   in ink with a line drawn under it, the others answering the pointer with the surface tint */
+.hub-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 22px; border-bottom: 1px solid var(--line); }
+.hub-metric {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0;
+  margin: 12px 0 0; padding: 6px 20px 18px; border: 0; border-radius: var(--r-item, 10px) var(--r-item, 10px) 0 0;
+  background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color .2s ease;
+}
+.hub-metric:first-child { padding-left: 4px; }
+.hub-metric + .hub-metric::before { content: ""; content: "" / ""; position: absolute; left: 0; top: 6px; bottom: 18px; border-left: 1px solid var(--line); }
+.hub-metric::after { content: ""; content: "" / ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); transform: scaleX(0); transition: transform .28s cubic-bezier(.2, .7, .2, 1); }
+.hub-metric:first-child::after { left: 0; }
+.hub-metric.on::after { transform: scaleX(1); }
+.hub-metric:hover:not(.on) { background: var(--surface-2); }
+.hub-metric-k { font-size: 12.5px; color: var(--ink-3); transition: color .2s ease; }
+.hub-metric.on .hub-metric-k, .hub-metric:hover .hub-metric-k { color: var(--ink); }
+.hub-metric b { font-size: 17px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.hub-sub { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 /* growth against the window before: the tertiary blue up, red down */
-.hub-growth em.up { color: var(--tertiary); }
-.hub-growth em.down { color: #C93636; }
-[data-theme="dark"] .hub-growth em.down { color: #FF8A8A; }
-.hub-legend { display: flex; justify-content: flex-end; gap: 22px; padding: 16px 24px 0; font-size: 12px; color: var(--ink-3); }
+.hub-sub em { font-style: normal; font-weight: 700; white-space: nowrap; }
+.hub-sub em.up { color: var(--tertiary); }
+.hub-sub em.down { color: #C93636; }
+[data-theme="dark"] .hub-sub em.down { color: #FF8A8A; }
+.hub-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px 0; flex-wrap: wrap; }
+.hub-chart-head .hub-link { align-self: center; }
+.hub-legend { display: flex; gap: 22px; font-size: 12px; color: var(--ink-3); }
 .hub-legend span { display: inline-flex; align-items: center; gap: 7px; }
-.dot-vol, .dot-cnt { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
-/* the chart is where the tertiary blue lives: volume in blue, payments in its soft tint */
-.dot-vol { background: var(--tertiary); }
-.dot-cnt { background: var(--tertiary-soft); }
+.dot-a, .dot-b { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+/* the chart is where the tertiary blue lives: the first figure in blue, the second in its soft tint */
+.dot-a { background: var(--tertiary); }
+.dot-b { background: var(--tertiary-soft); }
+.hub-nochart { margin: 0; padding: 72px 24px 88px; text-align: center; font-size: 13.5px; color: var(--ink-3); }
 .dash-body, .hub > * { min-width: 0; }
 
 /* ---- overview: the transaction list (its filters are the shared FilterBar) ---- */
@@ -307,8 +327,10 @@ body.inst:has(.dash) { background: var(--surface); }
 .bars-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 4 4; }
 .bars-hit { fill: transparent; }
 .bars-svg g.on .bars-hit { fill: var(--accent-soft); }
-.bar-vol { fill: var(--tertiary); }
-.bar-cnt { fill: var(--tertiary-soft); }
+.bar-a { fill: var(--tertiary); }
+.bar-b { fill: var(--tertiary-soft); }
+/* two counts on one axis: no right axis */
+.bars.shared { grid-template-columns: 52px minmax(0, 1fr); }
 .bars-x { display: flex; margin-top: 4px; }
 .bars-x span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: visible; }
 /* the hovered bucket's label in ink, as the reference marks "Jul" */
@@ -353,8 +375,12 @@ body.inst:has(.dash) { background: var(--surface); }
 }
 @media (max-width: 900px) {
   .hub-bals { grid-template-columns: minmax(0, 1fr); }
-  .hub-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
-  .hub-summary > div { padding-left: 0; border-left: 0 !important; }
+  /* phones and tablets: the figures scroll sideways as a row of tabs */
+  .hub-metrics { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 12px; }
+  .hub-metrics::-webkit-scrollbar { display: none; }
+  .hub-metric { flex: 0 0 auto; min-width: 9.5em; padding-left: 12px; }
+  .hub-metric:first-child { padding-left: 12px; }
+  .hub-metric:first-child::after { left: 12px; }
 }
 @media (max-width: 600px) {
   .hub-card { padding: 18px; gap: 14px; }
@@ -513,7 +539,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
    everyone (product owner's call), kept short and small. ---- */
 .arrive { animation: arrive .32s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes arrive { from { opacity: 0; transform: translateY(6px); } }
-.bars-svg .bar-vol, .bars-svg .bar-cnt { transform-box: fill-box; transform-origin: 50% 100%; animation: barGrow .55s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
+.bars-svg .bar-a, .bars-svg .bar-b { transform-box: fill-box; transform-origin: 50% 100%; animation: barGrow .55s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
 @keyframes barGrow { from { transform: scaleY(0); } }
 
 /* ---- the swap widget: the pattern every swap app uses. A card with two wells ("You pay", "You

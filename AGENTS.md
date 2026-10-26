@@ -206,12 +206,15 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     reference shot's rounded frame was its presentation, not the product): the sidebar on the left (`widgets/Sidebar.tsx`: logo, "Main menu" and "Preferences" split by a hairline, plain
     links whose current one is bold, groups that open into a dashed tree with a dot on the current
     view; a group with one visible view renders as a plain link), the general nav inside the
-    content column (`Nav inDash` gives `.nav-dash`: no logo, no surface at the top; the logo comes
-    back on screens where the sidebar is off-canvas), then the page head: the view's name as the h1,
+    content column (`Nav inDash` gives `.nav-dash`: no logo, no surface at the top but its bottom
+    line always drawn, product owner; the logo comes back on screens where the sidebar is
+    off-canvas), then the page head: the view's name as the h1,
     an arrow and the organization as a breadcrumb menu (`OrgSwitcher variant="crumb"`), Sandbox /
     Production and the outlined "create organization" (icon only on phones). A view's own h2 stays
     for assistive tech only and no view has a visible subtitle. The sidebar entries are `SIDE` in
     `dashboard/data.ts`; a group slides open and closed (its height animates; closed, it is inert).
+    The sidebar's logo never moves (product owner): on a window too short for the menu only
+    `.side-nav` scrolls, under it.
     `DISABLED_VIEWS` there switches a view off (out of the sidebar and the search, its link opens
     the overview): Fiat, temporarily (product owner, 2026-10-25).
   - **The bar carries the dashboard's search** (`widgets/DashSearch.tsx`, passed to `Nav` as
@@ -224,22 +227,48 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     volume, the plan's rate and the environment as text split by a hairline) beside a white panel
     like every other one (product owner: no grey panel): the balances, each token with its logo
     (`/v1/balances`), the organization ID to copy with the docs link, "Create payment link" and
-    "Swap"; "Activity" with Daily / Weekly / Monthly / Yearly tabs over a six-figure strip (settled
-    volume with its payers, payments with the failed, swaps of every kind and liquidity operations
-    with the completed, webhook deliveries with the failed, growth: tertiary blue up, red down,
-    against the window before; product owner: the metrics are not payments only) and the paired
-    bars of payments and volume; then "Transactions" with Today /
-    Week / Month / Year, the shared filter bar (settled / in progress / failed, network, search) and
-    one line per payment (status icon, label over value, a menu to copy the ID, open the explorer on
-    its chain or the Payments view).
+    "Swap"; "Activity" with Daily / Weekly / Monthly / Yearly over a row of five figures that are
+    tabs (WAI-ARIA, arrow keys), each over its own paired bars (product owner: the summary must show
+    swaps, liquidity, webhooks and their own charts, not payments only): settled volume with its
+    payers (volume and payments, an axis each), payments with the failed, swaps of every kind
+    (USDT0 included) and liquidity operations with the completed, webhook deliveries with the
+    failed (two counts on one axis, `BarChart shared`). Each figure carries its growth against the
+    window before (tertiary blue up, red down) and its chart a link into its view, filtered to the
+    window where the view has a date filter. Then "Transactions" with Today / Week / Month / Year,
+    the shared filter bar (settled / in progress / failed, network, search) and one line per
+    payment (status icon, label over value, a menu to copy the ID, open the explorer on its chain
+    or that payment in the Payments view); "View all payments" keeps the period, network, search
+    and "settled". Counts never build a plural from a suffix: `countText` picks the singular string.
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
     from Monday), with the window's totals (distinct payers too) and the window before it, plus
-    `swaps` (Stellar DEX, Solana / Monad and cross-chain), `liquidity` and `webhooks` for the same
-    window (consumer and network; cross-chain counts zero in the sandbox). Its volume adds every
+    `swaps` (Stellar DEX, Solana / Monad, cross-chain and USDT0), `liquidity` and `webhooks` for the
+    same window, each with its own buckets (consumer and network; cross-chain and USDT0 count zero
+    in the sandbox). A part whose buckets a server does not send shows a note, never a flat chart. Its volume adds every
     asset's amount, as the daily summary does. A window or a balance list that fails to load shows
     a dash or says so, never zeros that look like data. The list reads
     `GET /api/payment-intents?createdFrom=…`.
+  - **No ghost controls; everything named on screen opens** (product owner, 2026-10-25). A button
+    or link that does nothing, an always-disabled one or a figure that names something with no way
+    to it is a bug. What exists:
+    - `goFiltered(go, view, params)` (`dashboard/hooks.ts`) opens a view already filtered: its
+      `useListFilters` keys (`q`, `status`, `chain`, `date`...) or a one-off request read by
+      `useUrlRequest(key)` and dropped from the URL: `open=<id>` shows that record (Payments,
+      Swaps, Liquidity, private payments, Support's tickets; read by id when the list does not
+      hold it), `create=1` opens Payments' form (with `amount`, `asset` and `note` from a product).
+    - Balances open their settled payments, notifications open the record their metadata names
+      (`targetOf` in `NotificationsView.tsx`), a customer's payments open in Payments (searched by
+      the wallet that paid, `p.source`), products and webhook endpoints open their edit forms, a
+      delivery its detail (the error, the attempts) with a failed-only filter, a private payment
+      its detail, the admin overview's figures their lists (`goToAdmin`, a venue or fiat tab).
+    - A pending Stellar payment's detail checks a transaction hash (`/validate`) for a payer whose
+      wallet never reported back.
+    - Empty lists offer their first action to whoever may take it; a plan limit (API keys,
+      production keys, organizations, a locked organization) opens the plan dialog for whoever can
+      change plan (keys: only the organization's owner, whose plan sets them) and says who decides
+      otherwise. A control the viewer may not use is hidden, not disabled.
+    - The account menu's item opens the personal account view in place (`Nav onAccount`); the
+      notifications view is titled as the sidebar names it.
   - **One filter row for every list** (`components/FilterBar.tsx`, the logic pure and tested in
     `src/lib/dashboard-filters.ts`): the search, then a dropdown per filter (status, network, type,
     date), each showing its name until it is set and filled ink while it filters, with how many rows
@@ -331,6 +360,25 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   not one of the organization's wallets (`orgHasWallet`), failing closed if the table cannot be
   read. Requests made with an API key straight to the Payments API are not affected.
 
+### Public swaps (no account)
+
+- **Product owner: Cosmos Pay offers public swaps and a public swap API without an account.**
+  `/swaps` exists on the gateway and on the company site (`DUAL_PATHS` in `hosts.ts`: each domain
+  serves its own, the platform redirects to the gateway): `src/pages/payments/swaps.astro` (a gateway
+  content page: section bar, page header) and `src/pages/site/swaps.astro` (its own header, the
+  institutional skin), both rendering `components/cosmos/swaps/PublicSwaps.tsx`: the dashboard's
+  swap widget and screens on `publicSwapApi`, USDT0 out of Stellar with its networks (from the API)
+  and a "send USDT0" that preselects the pair, the public API in three `curl` calls, the questions.
+  The pages load `dashboard.css` (scoped to the widget's classes) and `public-swaps.css`. The nav's
+  Products menu links it (`localHref` keeps it on the company site there).
+- **The browser calls the gateway with the shared public key** (`GET /v1/public-key?env=prod`,
+  keyless): commission is the public consumer's plan's (`PLAN_SPECS.community.swapFeeBps`, shown on
+  the page), and the server confines the key to quoting, creating, submitting and reading a swap by
+  its id. **The gateway's CORS must list both origins** (`COSMOS_API_CORS_ORIGINS`:
+  `https://payments.cosmospay.lat` and `https://cosmospay.lat`, as its default and `.env.example` do;
+  an environment that sets its own list adds them and restarts, since the routes sync at boot), or the
+  widget cannot reach it from either page. A local test needs the local origins in that list too.
+
 ### Swaps from the dashboard
 
 - **The swap form is the standard swap widget** (`components/SwapWidget.tsx`, inline at the top of
@@ -350,9 +398,23 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Bitcoin-family, XRP, Tron, TON, NEAR, Sui, Aptos, Starknet, Cardano, Aleo...; `NETWORK_NAMES` in
   `src/lib/chains.ts` names them). A deposit on a network with a wallet-link standard gets a link;
   elsewhere `depositUri` is null and the detail shows the address, memo and QR.
-- **One list for every swap**: the swaps on each chain and the cross-chain ones together, newest
-  first, filtered by status group, type (on one chain / between chains), network and date. The old
-  `?view=crossChainSwaps` opens it filtered to cross-chain; the sidebar has no separate entry.
+- **One list for every swap**: the swaps on each chain, the cross-chain ones and USDT0's transfers
+  together, newest first, filtered by status group, type (on one chain / between chains / USDT0
+  bridge), network and date. The old `?view=crossChainSwaps` opens it filtered to cross-chain; the
+  sidebar has no separate entry.
+- **The widget and the screens a swap opens take a `SwapApi`** (`src/lib/swap-api.ts`): `orgSwapApi`
+  (the organization's proxies under `/api`) in the dashboard, `publicSwapApi` (the gateway with the
+  shared public key) on the public swap pages. Same bodies (the Payments API's), so one widget
+  (`components/SwapWidget.tsx`) and one set of screens (`components/SwapDetails.tsx`,
+  `SwapRecordDetail`) serve both.
+- **USDT0 out of Stellar** (`src/lib/usdt0.ts`, proxies `/api/usdt0/*`, OpenAPI tag USDT0): USDT0 on
+  Stellar to USDT or USDT0 on a network LayerZero's OFT reaches (`GET /v1/usdt0/routes`: 21 today,
+  native USDT on Ethereum, USDT0 elsewhere) is its own route in the catalogue (`routeFor` kind
+  `usdt0`, ahead of NEAR Intents): 1:1, no slippage, LayerZero's fee in XLM, the seventh decimal
+  stays on Stellar (the OFT shares six). The holder signs one Soroban transaction (Freighter or
+  SEP-7), the screen follows the LayerZero message to its destination. Stellar mainnet only (USDT0
+  does not exist on testnet), no Cosmos Pay commission. Networks only USDT0 reaches are named in
+  `OFT_NETWORK_NAMES` (`src/lib/chains.ts`), never in `NETWORK_IDS` (that is NEAR Intents' set).
 - **Stellar swaps, Solana / Monad swaps, cross-chain swaps and liquidity are non-custodial**: the
   Payments API builds the transaction, the person signs it in a wallet, the dashboard submits the
   signed envelope. Nobody's key ever reaches this app.
@@ -658,7 +720,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (`src/lib/zk/bb-assets.ts`) reads `node_modules/@aztec/bb.js/dest/browser` at the SDK's pinned
   version (`src/lib/zk/bb-version.ts`, `tests/unit/zkBbAssets.test.ts`) and adds the isolation
   headers its Web Worker needs (static files skip the middleware). Astro leaves `params` empty for
-  that rewritten path, so the route reads the path. `@aztec/bb.js` is aliased to a stub in Vite and
+  that rewritten path, so the route reads the path. The SDK encodes contract arguments with Node's
+  global `Buffer`, which browsers lack ("Buffer is not defined" on every register, transfer and
+  withdraw): `src/lib/zk/buffer-global.ts`, imported first by `wallet.ts`, installs the `buffer`
+  package's. `@aztec/bb.js` is aliased to a stub in Vite and
   loaded as native ESM by `src/lib/zk/bb-loader.ts`; noir's wasm packages are excluded from
   dependency pre-bundling. The development build exposes `window.__zkSelfTest(token, account)` in
   the private payments view: a real register proof with throwaway keys, no wallet or network.

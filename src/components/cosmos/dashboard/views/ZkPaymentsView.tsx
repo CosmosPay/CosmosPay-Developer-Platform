@@ -14,7 +14,8 @@ import { IcCopy } from "@/components/cosmos/icons";
 import { zkPayments as zkApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
-import { useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
+import { explorerTxUrl, explorerAccountUrl } from "@/lib/chains";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
@@ -74,6 +75,17 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
   const zkConfig = useMemo(() => (config ? parseZkConfig(config) : null), [config]);
 
   const copy = (id) => navigator.clipboard?.writeText(checkoutUrl(id)).then(() => showToast(t.toasts.copied)).catch(() => {});
+  const [detail, setDetail] = useState(null);
+  // A private payment named from elsewhere opens once the list is here.
+  const [openId, clearOpen] = useUrlRequest("open");
+  useEffect(() => {
+    if (!openId || rows === null) return;
+    clearOpen();
+    const hit = (rows || []).find((p) => p.id === openId);
+    if (hit) setDetail(hit);
+    else zkApi.get(openId, orgId, env).then((p) => { if (p && p.id) setDetail(p); else showToast(t.dash.common.notFound, "error"); }).catch(() => showToast(t.dash.common.notFound, "error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, rows === null]);
 
   return (
     <>
@@ -106,14 +118,15 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
               <thead><tr><th>{z.view.tableHead.id}</th><th>{z.view.tableHead.amount}</th><th>{z.view.tableHead.net}</th><th>{z.view.tableHead.fee}</th><th>{z.view.tableHead.status}</th><th>{z.view.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
               <tbody>
                 {shown.map((p) => (
-                  <tr key={p.id}>
+                  <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                     <td className="tid" title={p.id}>{p.description || short(p.id)}</td>
                     <td className="amt">{p.amount} XLM</td>
                     <td className="amt">{p.netAmount} XLM</td>
                     <td className="cust">{p.feeAmount} XLM</td>
                     <td><Pill st={PILL[p.status] || "ref"} label={z.status[p.status] || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>
-                    <td className="row-actions">
+                    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" className="icon-mini" title={z.view.detail.title} aria-label={z.view.detail.title} onClick={() => setDetail(p)}>{DI.docs}</button>
                       <button type="button" className="icon-mini" title={z.view.copyLink} aria-label={z.view.copyLink} onClick={() => copy(p.id)}><IcCopy /></button>
                       <a className="icon-mini" href={checkoutUrl(p.id)} target="_blank" rel="noopener" title={z.view.openCheckout} aria-label={z.view.openCheckout}>{DI.link}</a>
                     </td>
@@ -124,6 +137,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
           </div>
         )}
       </div>
+      {detail && <ZkPaymentDetailModal payment={detail} orgId={orgId} env={env} onCopy={copy} onClose={() => setDetail(null)} />}
       {modal && config && (
         <CreateZkPaymentModal
           orgId={orgId} env={env} config={config} canConnectWallets={canConnectWallets} defaultRecipient={registered[0] || ""}
@@ -212,6 +226,54 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, defaultRe
             </div>
           </>
         )}
+      </div>
+    </Modal>
+  );
+}
+
+/* A private payment's detail, read again by id so a payment settled since the list loaded shows
+   it: the amount and its split, the receiving account and the payer, both transactions (the net
+   amount to the merchant, the commission to Cosmos Pay) on the explorer, and its deadline. Amounts
+   on-chain stay hidden; these are the ones the payment was created with. */
+function ZkPaymentDetailModal({ payment, orgId, env, onCopy, onClose }) {
+  const t = useT();
+  const z = t.zk;
+  const d = z.view.detail;
+  const [data, setData] = useState(payment);
+  useEffect(() => {
+    let alive = true;
+    zkApi.get(payment.id, orgId, env).then((p) => { if (alive && p && p.id) setData(p); }).catch(() => {});
+    return () => { alive = false; };
+  }, [payment.id, orgId, env]);
+  const tier = data.network === "public" ? "public" : "testnet";
+  const tx = (hash) => (hash ? explorerTxUrl("stellar", tier, hash) : null);
+  const acct = (a) => (a ? explorerAccountUrl("stellar", tier, a) : null);
+  const rows = [
+    [z.view.tableHead.status, z.status[data.status] || data.status],
+    [z.view.tableHead.amount, `${data.amount} XLM`],
+    [z.view.tableHead.net, `${data.netAmount} XLM`],
+    [z.view.tableHead.fee, `${data.feeAmount} XLM`],
+    [z.modal.recipient, data.recipient],
+    [d.payer, data.payer],
+    [d.expires, data.status === "PENDING" && data.expiresAt ? fmtDateTime(data.expiresAt) : null],
+    [d.settled, data.settledAt ? fmtDateTime(data.settledAt) : null],
+    [z.view.tableHead.created, fmtDateTime(data.createdAt)],
+  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
+  return (
+    <Modal onClose={onClose}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{d.title}</div>
+        <h3>{data.description || short(data.id)}</h3>
+        <div className="paylink-fields" style={{ marginBottom: 18 }}>
+          {rows.map(([k, v]) => (<div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{String(v)}</span></div>))}
+        </div>
+        <div className="paylink-actions">
+          {data.status === "PENDING" && <a className="btn btn-dark btn-sm" href={checkoutUrl(data.id)} target="_blank" rel="noopener">{DI.link} {z.view.openCheckout}</a>}
+          {data.status === "PENDING" && <button type="button" className="btn btn-soft btn-sm" onClick={() => onCopy(data.id)}><IcCopy /> {z.view.copyLink}</button>}
+          {tx(data.paymentTxHash) && <a className="btn btn-soft btn-sm" href={tx(data.paymentTxHash)} target="_blank" rel="noopener noreferrer">{DI.network} {d.paymentTx}</a>}
+          {tx(data.feeTxHash) && <a className="btn btn-soft btn-sm" href={tx(data.feeTxHash)} target="_blank" rel="noopener noreferrer">{DI.network} {d.feeTx}</a>}
+          {!data.paymentTxHash && acct(data.recipient) && <a className="btn btn-soft btn-sm" href={acct(data.recipient)} target="_blank" rel="noopener noreferrer">{DI.network} {z.modal.recipient}</a>}
+        </div>
       </div>
     </Modal>
   );

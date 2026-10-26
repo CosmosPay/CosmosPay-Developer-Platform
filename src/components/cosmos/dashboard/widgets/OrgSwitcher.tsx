@@ -8,7 +8,9 @@ import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 
 /* `variant="crumb"`: the organization as the grey half of the page title's breadcrumb (the
    reference's "Gateways → Gateways Profile"), opening the same menu. */
-export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, variant }: { orgs: any[]; current: any; onSwitch: (id: string) => void; onCreate: () => void; lockedIds?: Set<string>; variant?: "crumb" }) {
+/* A locked organization (past the account plan's limit) opens the plan dialog when the viewer can
+   change plan (`onUpgrade`); otherwise it stays a disabled row that says why. */
+export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, variant, onUpgrade }: { orgs: any[]; current: any; onSwitch: (id: string) => void; onCreate: () => void; lockedIds?: Set<string>; variant?: "crumb"; onUpgrade?: (() => void) | null }) {
   const t = useT();
   const og = t.dash.org;
   const [open, setOpen] = useState(false);
@@ -20,7 +22,7 @@ export function OrgSwitcher({ orgs, current, onSwitch, onCreate, lockedIds, vari
   const renderOpt = (o) => {
     const locked = isLocked(o);
     return (
-      <button key={o.id} className={`org-opt${o.id === current.id ? " active" : ""}${locked ? " locked" : ""}`} disabled={locked} title={locked ? og.locked : undefined} onClick={() => { if (!locked) { onSwitch(o.id); setOpen(false); } }}>
+      <button key={o.id} className={`org-opt${o.id === current.id ? " active" : ""}${locked ? " locked" : ""}`} disabled={locked && !onUpgrade} title={locked ? og.locked : undefined} onClick={() => { setOpen(false); if (!locked) onSwitch(o.id); else if (onUpgrade) onUpgrade(); }}>
         <span className="org-av sm">{initials(o.name)}</span><span className="org-opt-nm">{o.name}</span>
         {locked ? <span className="org-lock"><IcLock /></span> : (o.id === current.id && <span className="org-check"><IcCheck /></span>)}
       </button>

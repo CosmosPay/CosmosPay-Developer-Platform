@@ -1,40 +1,38 @@
 /* SwapsView: every swap of the organization in one list and one form, whatever the chains. On
    one chain the Payments API routes it through that chain's market (the Stellar DEX, Jupiter on
-   Solana, Kuru Flow on Monad); between two chains NEAR Intents settles it. Non-custodial: the API
-   builds the transaction or the deposit address, the person's wallet signs and pays. */
+   Solana, Kuru Flow on Monad); between two chains NEAR Intents settles it; USDT0 out of Stellar
+   goes through LayerZero's OFT. Non-custodial: the API builds the transaction or the deposit
+   address, the person's wallet signs and pays. The form and the screens a swap opens are shared
+   with the public swap pages (components/SwapWidget.tsx, components/SwapDetails.tsx); here they
+   call the organization's proxies (orgSwapApi). */
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Modal, showToast } from "@/components/cosmos/shared";
-import { useT, fmt } from "@/lib/i18n/index";
-import { swaps as swapsApi, crossChainSwaps as crossApi } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/index";
+import { swaps as swapsApi, crossChainSwaps as crossApi, usdt0 as usdt0Api } from "@/lib/api-client";
+import { orgSwapApi } from "@/lib/swap-api";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, usePolling, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
+import { showToast } from "@/components/cosmos/shared";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
-import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { SwapWidget } from "@/components/cosmos/dashboard/components/SwapWidget";
-import { CrossChainSwapDetailModal } from "@/components/cosmos/dashboard/components/CrossChainSwapDetail";
-import { assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, explorerTxUrl, networkName, tierOf } from "@/lib/chains";
+import { SwapRecordDetail } from "@/components/cosmos/dashboard/components/SwapDetails";
+import { CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, networkName } from "@/lib/chains";
 import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 
-const TERMINAL = ["SUCCEEDED", "FAILED"];
-/* A swap stops changing once it settled, failed, or expired without a transaction (an expired
-   Solana or Monad swap with a hash is still looked for on-chain). */
-const settled = (s) => TERMINAL.includes(s.status) || (s.status === "EXPIRED" && !s.txHash);
-/* One vocabulary for both kinds: a swap on one chain (PENDING → SUBMITTED → SUCCEEDED) and one
-   between chains (AWAITING_DEPOSIT → … → SUCCEEDED or REFUNDED). */
+/* One vocabulary for every kind: a swap on one chain (PENDING → SUBMITTED → SUCCEEDED), one
+   between chains (AWAITING_DEPOSIT → … → SUCCEEDED or REFUNDED) and USDT0 out of Stellar
+   (PENDING → SUBMITTED → DELIVERED). */
 const GROUPS = ["open", "succeeded", "refunded", "failed", "expired"];
 const groupOf = (status) =>
-  status === "SUCCEEDED" ? "succeeded" : status === "FAILED" ? "failed" : status === "EXPIRED" ? "expired" : status === "REFUNDED" ? "refunded" : "open";
+  status === "SUCCEEDED" || status === "DELIVERED" ? "succeeded" : status === "FAILED" ? "failed" : status === "EXPIRED" ? "expired" : status === "REFUNDED" ? "refunded" : "open";
 const GROUP_PILL = { open: "pend", succeeded: "ok", refunded: "ref", failed: "fail", expired: "fail" };
-const TYPES = ["same", "cross"];
+const TYPES = ["same", "cross", "usdt0"];
 
 const chainOfSwap = (s) => s.chain || "stellar";
-const swapExplorer = (s) => explorerTxUrl(chainOfSwap(s), tierOf(s.network), s.txHash);
 const asList = (res) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
 
 /* Both kinds of swap as one kind of row. */
@@ -45,6 +43,14 @@ function sameRow(s) {
     sent: `${s.sendAmount ?? "-"} ${chainAssetLabel(chain, s.sendAsset)}`,
     got: `${s.destEstimated ?? s.swapAmount ?? "-"} ${chainAssetLabel(chain, s.destAsset)}`,
     search: [s.id, s.source, s.destination, s.sendAsset, s.destAsset, s.txHash, s.memo],
+  };
+}
+function usdt0Row(u) {
+  return {
+    key: `u:${u.id}`, kind: "usdt0", id: u.id, from: "stellar", to: u.to, status: u.status, createdAt: u.createdAt, raw: u,
+    sent: `${u.amountSent ?? u.amount} USDT0`,
+    got: `${u.amountReceived ?? "-"} ${u.receives ?? "USDT0"}`,
+    search: [u.id, u.source, u.recipient, u.txHash, u.guid],
   };
 }
 function crossRow(x) {
@@ -67,16 +73,20 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   const defaults = useMemo(() => ({ q: "", status: "all", type: defaultType, chain: "all", date: "any" }), [defaultType]);
   const { filters, set, reset, active } = useListFilters(defaults, { status: ["all", ...GROUPS], type: ["all", ...TYPES], chain: ["all", ...NETWORK_IDS], date: DATE_RANGES });
   const [detail, setDetail] = useState(null);
+  const api = useMemo(() => orgSwapApi(orgId, env), [orgId, env]);
 
-  // Swaps on each chain and swaps between chains are four lists upstream; read together, newest first.
+  // Swaps on each chain, between chains and USDT0's transfers are five lists upstream; read
+  // together, newest first.
   const fetchAll = useCallback(() => Promise.all([
     ...CHAINS.map((c) => swapsApi.list(orgId, env, { take: 100, chain: c }).then(asList).catch(() => null)),
     crossApi.list(orgId, env, { take: 100 }).then(asList).catch(() => null),
+    usdt0Api.list(orgId, env, { take: 100 }).then(asList).catch(() => null),
   ]).then((parts) => {
     if (parts.every((p) => p === null)) throw new Error("unavailable");
     return [
       ...parts.slice(0, CHAINS.length).flatMap((p) => (p || []).map(sameRow)),
       ...(parts[CHAINS.length] || []).map(crossRow),
+      ...(parts[CHAINS.length + 1] || []).map(usdt0Row),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }), [orgId, env]);
   const load = useCallback(() => {
@@ -87,6 +97,23 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   // Live refresh while the tab is visible, so a swap settling on-chain flips its status.
   const refresh = useCallback(() => { fetchAll().then(setRows).catch(() => {}); }, [fetchAll]);
   usePolling(refresh, 10000);
+
+  // A swap named from elsewhere (a notification) opens once the list is here, read by id from
+  // each kind's route when the list does not hold it.
+  const [openId, clearOpen] = useUrlRequest("open");
+  useEffect(() => {
+    if (!openId || loading) return;
+    clearOpen();
+    const hit = rows.find((r) => r.id === openId);
+    if (hit) { setDetail(hit); return; }
+    (async () => {
+      for (const [kind, toRow] of [["same", sameRow], ["cross", crossRow], ["usdt0", usdt0Row]] as const) {
+        try { const rec = await api.get(kind, openId); if (rec && rec.id) { setDetail(toRow(rec)); return; } } catch (e) {}
+      }
+      showToast(t.dash.common.notFound, "error");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, loading]);
 
   const matches = (r, skip) =>
     (skip === "status" || filters.status === "all" || groupOf(r.status) === filters.status) &&
@@ -106,14 +133,14 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
   // A swap the widget opened joins the list and opens its detail (to sign, or to fund).
-  const onCreated = (kind, rec) => { const row = kind === "cross" ? crossRow(rec) : sameRow(rec); setRows((r) => [row, ...r]); setDetail(row); };
+  const onCreated = (kind, rec) => { const row = kind === "cross" ? crossRow(rec) : kind === "usdt0" ? usdt0Row(rec) : sameRow(rec); setRows((r) => [row, ...r]); setDetail(row); };
   const statusLabel = (r) => (r.kind === "cross" ? cc.status[r.status] : sw.status[r.status]) || r.status;
   const chainsLabel = (r) => (r.from !== r.to ? `${networkName(r.from)} → ${networkName(r.to)}` : networkName(r.from));
 
   return (
     <>
       <ViewHead title={sw.title} />
-      {canManage ? <SwapWidget orgId={orgId} env={env} onCreated={onCreated} /> : <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
+      {canManage ? <SwapWidget api={api} tier={env === "prod" ? "public" : "testnet"} onCreated={onCreated} /> : <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
       <div className="hub-section-head swaps-list-head"><h2 id="swaps-list-h">{sw.listTitle}</h2></div>
       <FilterBar
         label={fl.label}
@@ -157,238 +184,7 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
         )}
         {!loading && !error && view.length > 0 && <Pagination {...pg} />}
       </div>
-      {detail && detail.kind === "cross" && <CrossChainSwapDetailModal swap={detail.raw} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
-      {detail && detail.kind === "same" && detail.from === "stellar" && <SwapDetailModal sw={sw} swap={detail.raw} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
-      {detail && detail.kind === "same" && detail.from !== "stellar" && <ChainSwapDetailModal sw={sw} swap={detail.raw} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
+      {detail && <SwapRecordDetail api={api} kind={detail.kind} record={detail.raw} canManage={canManage} onClose={() => setDetail(null)} />}
     </>
-  );
-}
-
-/* Polls a swap until it is terminal so status and txHash update live. */
-function useSwapRecord(swap, orgId, env, complete) {
-  const [data, setData] = useState(swap);
-  useEffect(() => {
-    if (complete(data)) return;
-    let alive = true;
-    swapsApi.get(swap.id, orgId, env).then((full) => { if (alive && full) setData(full); }).catch(() => {});
-    return () => { alive = false; };
-  }, [swap.id, orgId, env]);
-  useEffect(() => {
-    if (settled(data)) return;
-    let alive = true;
-    const h = setInterval(() => {
-      if (document.hidden) return;
-      swapsApi.get(swap.id, orgId, env).then((full) => { if (alive && full) setData(full); }).catch(() => {});
-    }, 5000);
-    return () => { alive = false; clearInterval(h); };
-  }, [swap.id, orgId, env, data.status, data.txHash]);
-  return [data, setData];
-}
-
-/* ---------------- detail modal (QR + uri + xdr + submit signed tx) ---------------- */
-function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
-  const d = sw.detail;
-  // Seed with the row, then fetch the full record for the QR/uri/xdr.
-  const [data, setData] = useSwapRecord(swap, orgId, env, (s) => !!(s.qr && s.uri));
-  const [signed, setSigned] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [outcome, setOutcome] = useState(null);
-
-  // The signed envelope comes from Freighter or from the paste box.
-  const submit = (signedXdr = signed.trim()) => {
-    if (!signedXdr || busy) return;
-    setBusy(true);
-    setOutcome(null);
-    swapsApi.submit(swap.id, orgId, env, { signedXdr })
-      .then((res) => {
-        setOutcome(res || {});
-        if (res && res.swap) setData((cur) => ({ ...cur, ...res.swap }));
-        if (res && res.submitted) showToast(d.submitted);
-      })
-      .catch((err) => { setOutcome({ submitted: false, reason: (err && err.message) || d.submitFailed }); })
-      .finally(() => setBusy(false));
-  };
-
-  const F = d.fields;
-  const fields = [
-    [F.id, data.id],
-    [F.status, (sw.status && sw.status[data.status]) || data.status],
-    [F.network, data.network],
-    [F.source, data.source],
-    [F.destination, data.destination],
-    [F.sent, data.sendAmount ? `${data.sendAmount} ${assetLabel(data.sendAsset)}` : null],
-    [F.received, data.destEstimated ? `${data.destEstimated} ${data.destAsset}` : null],
-    [F.minimum, data.destMin ? `${data.destMin} ${data.destAsset}` : null],
-    [F.fee, data.feeAmount ? `${data.feeAmount} ${assetLabel(data.sendAsset)} (${data.feeBps} ${sw.modal.bps})` : null],
-    [F.memo, data.memo],
-    [F.commissionMemo, data.commissionMemo],
-    [F.txHash, data.txHash],
-    [F.created, fmtDateTime(data.createdAt)],
-  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
-
-  // Only a built, unsigned swap can be signed: a submitted one is on its way, an expired one's
-  // time bounds have passed.
-  const signable = canManage && !!data.xdr && data.status === "PENDING";
-  const w = useT().dash.wallet;
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="modal-body paylink-detail">
-        <div className="modal-eyebrow">{d.eyebrow}</div>
-        <h3>{d.title}</h3>
-
-        {/* Swapping into an asset the account does not trust yet: the same transaction adds the
-            trustline first. Said before the signature, since it also holds 0.5 XLM in reserve. */}
-        {data.status === "PENDING" && data.trustline && (
-          <p className="field-help swap-trustline" role="note">{fmt(d.trustlineNote, { asset: data.trustline.code })}</p>
-        )}
-
-        {signable && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
-            <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
-          </div>
-        )}
-
-        {/* What other wallets sign from, while the swap waits for its signature. */}
-        {data.status === "PENDING" && data.qr && (
-          <div className="paylink-qr-wrap">
-            <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
-            <div className="paylink-qr-cap">{d.scan}</div>
-            <a className="btn btn-soft btn-sm" href={data.qr} download={`swap-${data.id}.png`}>{DI.download} {d.downloadQr}</a>
-          </div>
-        )}
-
-        {data.status === "PENDING" && data.uri && (
-          <CopyBlock label={d.uri} value={data.uri}>
-            <div className="paylink-actions">
-              <a className="btn btn-dark btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
-            </div>
-          </CopyBlock>
-        )}
-
-        {data.status === "PENDING" && data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
-
-        {/* The hash exists before signing; the explorer only knows it once it was sent. */}
-        {data.txHash && data.status !== "PENDING" && (
-          <div className="paylink-actions" style={{ marginBottom: 12 }}>
-            <a className="btn btn-soft btn-sm" href={swapExplorer(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
-          </div>
-        )}
-
-        <div className="paylink-fields">
-          {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
-        </div>
-
-        {/* Or a transaction signed in another wallet, pasted back. */}
-        {signable && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><label className="field-l" htmlFor={`swap-signed-${data.id}`}>{d.submitTitle}</label></div>
-            <p className="field-note">{d.submitDesc}</p>
-            <textarea id={`swap-signed-${data.id}`} className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
-            <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={() => submit()}>{busy ? d.submitting : d.submit}</button>
-            </div>
-          </div>
-        )}
-
-        <SubmitOutcome d={d} outcome={outcome} />
-      </div>
-    </Modal>
-  );
-}
-
-/* ---------------- detail modal for Solana / Monad (transaction + approval + submit) ---------------- */
-function ChainSwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
-  const d = sw.detail;
-  const c = sw.chainDetail;
-  const chain = swap.chain;
-  const [data, setData] = useSwapRecord(swap, orgId, env, (s) => !!s.transaction);
-  const [signed, setSigned] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [outcome, setOutcome] = useState(null);
-
-  const submit = () => {
-    if (!signed.trim() || busy) return;
-    setBusy(true);
-    setOutcome(null);
-    swapsApi.submit(swap.id, orgId, env, { signedTransaction: signed.trim() })
-      .then((res) => {
-        setOutcome(res || {});
-        if (res && res.swap) setData((cur) => ({ ...cur, ...res.swap }));
-        if (res && res.submitted) showToast(d.submitted);
-      })
-      .catch((err) => { setOutcome({ submitted: false, reason: (err && err.message) || d.submitFailed }); })
-      .finally(() => setBusy(false));
-  };
-
-  const tx = data.transaction || {};
-  // Solana hands out base64 bytes; Monad a call object the wallet signs as EIP-1559.
-  const txText = tx.encoding === "base64" ? tx.data : JSON.stringify(tx, null, 2);
-  const F = d.fields;
-  const fields = [
-    [F.id, data.id],
-    [F.status, (sw.status && sw.status[data.status]) || data.status],
-    [c.provider, `${sw.venues[chain]} · ${sw.chains[chain]}`],
-    [F.source, data.source],
-    [F.sent, data.sendAmount ? `${data.sendAmount} ${chainAssetLabel(chain, data.sendAsset)}` : null],
-    [F.received, data.destEstimated ? `${data.destEstimated} ${chainAssetLabel(chain, data.destAsset)}` : null],
-    [F.minimum, data.destMin ? `${data.destMin} ${chainAssetLabel(chain, data.destAsset)}` : null],
-    [F.fee, data.feeAmount ? `${data.feeAmount} ${chainAssetLabel(chain, data.destAsset)} (${data.feeBps} ${sw.modal.bps})` : null],
-    [c.expires, data.status === "PENDING" ? fmtDateTime(data.expiresAt) : null],
-    [F.txHash, data.txHash],
-    [F.created, fmtDateTime(data.createdAt)],
-  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
-
-  const isTerminal = TERMINAL.includes(data.status);
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="modal-body paylink-detail">
-        <div className="modal-eyebrow">{d.eyebrow} · {sw.chains[chain]}</div>
-        <h3>{c.title}</h3>
-
-        {data.approval && data.status === "PENDING" && (
-          <CopyBlock label={c.approval} value={JSON.stringify(data.approval, null, 2)}>
-            <p className="field-note">{c.approvalNote}</p>
-          </CopyBlock>
-        )}
-        {data.transaction && data.status === "PENDING" && <CopyBlock label={c.transaction} value={txText} />}
-        {data.txHash && (
-          <div className="paylink-actions" style={{ marginBottom: 12 }}>
-            <a className="btn btn-soft btn-sm" href={swapExplorer(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
-          </div>
-        )}
-
-        <div className="paylink-fields">
-          {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
-        </div>
-
-        {canManage && !isTerminal && data.status !== "EXPIRED" && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><label className="field-l">{d.submitTitle}</label></div>
-            <p className="field-note">{c.submitDesc}</p>
-            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={c.submitPlaceholder} />
-            <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={submit}>{busy ? d.submitting : d.submit}</button>
-            </div>
-          </div>
-        )}
-
-        <SubmitOutcome d={d} outcome={outcome} />
-      </div>
-    </Modal>
-  );
-}
-
-function SubmitOutcome({ d, outcome }) {
-  if (!outcome) return null;
-  return (
-    <div className="paylink-fields" style={{ marginTop: 8 }}>
-      <CopyField label={d.fields.status} value={outcome.submitted ? d.submitted : (outcome.reason || d.submitFailed)} />
-      {outcome.txHash && <CopyField label={d.fields.txHash} value={outcome.txHash} />}
-      {Array.isArray(outcome.resultCodes?.operations) && outcome.resultCodes.operations.length > 0 && <CopyField label={d.resultCodes} value={outcome.resultCodes.operations.join(", ")} />}
-      {typeof outcome.resultCodes === "string" && <CopyField label={d.resultCodes} value={outcome.resultCodes} />}
-    </div>
   );
 }

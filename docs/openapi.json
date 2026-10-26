@@ -2012,6 +2012,7 @@
     },
     "/v1/swaps/{id}": {
       "get": {
+        "description": "The shared public key may call it, so a swap made without an account can follow its own status: the read is still scoped to the consumer, so that key reaches only swaps made with it, and the swap id (a cuid) is the capability. Listing swaps stays closed to the public key.",
         "operationId": "SwapsController_findOne_v1",
         "parameters": [
           {
@@ -2060,7 +2061,8 @@
         "summary": "Get a swap by id, on any chain",
         "tags": [
           "swaps"
-        ]
+        ],
+        "x-cosmos-public-key": true
       }
     },
     "/v1/swaps/{id}/submit": {
@@ -2818,6 +2820,7 @@
     },
     "/v1/cross-chain-swaps/{id}": {
       "get": {
+        "description": "The shared public key may call it, so a swap made without an account can follow its own status: the read is still scoped to the consumer, so that key reaches only swaps made with it, and the swap id (a cuid) is the capability. Listing swaps stays closed to the public key.",
         "operationId": "CrossChainSwapsController_findOne_v1",
         "parameters": [
           {
@@ -2859,7 +2862,8 @@
         "summary": "Get a cross-chain swap by id",
         "tags": [
           "cross-chain-swaps"
-        ]
+        ],
+        "x-cosmos-public-key": true
       }
     },
     "/v1/cross-chain-swaps/{id}/deposit": {
@@ -12625,6 +12629,755 @@
         ],
         "security": []
       }
+    },
+    "/v1/usdt0/routes": {
+      "get": {
+        "description": "USDT0 is Tether’s omnichain USDT. From Stellar it travels through LayerZero’s OFT: Ethereum receives native USDT (Tether’s OFT adapter unlocks it), every other network receives USDT0. All routes take an EVM recipient. USDT0 exists on Stellar mainnet only: a dev (testnet) key gets `available: false` and no routes.",
+        "operationId": "Usdt0Controller_routes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usdt0RoutesEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "The networks USDT0 can be sent to from Stellar, with what arrives there (mainnet only)",
+        "tags": [
+          "usdt0"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/usdt0/quote": {
+      "post": {
+        "description": "Simulates the OFT’s `quote_oft` and `quote_send` on Stellar mainnet. The OFT carries 6 decimals and the asset has 7, so the 7th is `dust` that stays in the account. `nativeFee` is LayerZero’s fee, paid in XLM on top of the USDT0; `nativeFeeLimit` is what a transfer built now would offer (20% more, the excess refunded in the same transaction). Mainnet only.",
+        "operationId": "Usdt0Controller_quote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteUsdt0Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usdt0QuoteEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`network_unsupported`: a dev (testnet) key; USDT0 is on Stellar mainnet only. `invalid_amount`: less than 0.000001 USDT0 (all dust), or outside the OFT’s limits. `provider_error`: the OFT refused the quote; `message` carries its contract error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_amount": {
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "amount must be at least 0.000001 USDT0: the OFT carries 6 decimals, and the 7th stays in the account as dust",
+                      "path": "/v1/usdt0/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported: USDT0 is on Stellar mainnet only; a dev key cannot use this route",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "USDT0 is on Stellar mainnet only: it does not exist on Stellar testnet. Use a prod API key.",
+                      "path": "/v1/usdt0/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The USDT0 contract refused the quote (quote_send): HostError: Error(Contract, #2001)",
+                      "path": "/v1/usdt0/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "`provider_error`: the Soroban RPC answered the simulation with no result, or in a shape the OFT never returns.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 502,
+                      "code": "provider_error",
+                      "error": "Bad Gateway",
+                      "message": "The USDT0 contract answered quote_oft in an unexpected shape.",
+                      "path": "/v1/usdt0/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`provider_unavailable`: the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "The Stellar mainnet Soroban RPC is unavailable. Retry shortly.",
+                      "path": "/v1/usdt0/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "The Soroban RPC configured for Stellar mainnet (STELLAR_RPC_URL_MAINNET) serves another network.",
+                      "path": "/v1/usdt0/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Quote a USDT0 transfer from Stellar: what arrives, the dust, and LayerZero’s fee in XLM; persists nothing",
+        "tags": [
+          "usdt0"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "usdt0:quote",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Soroban RPC"
+        ]
+      }
+    },
+    "/v1/usdt0/transfers": {
+      "post": {
+        "description": "Builds `send` on USDT0’s LayerZero OFT: it burns the USDT0 on Stellar and LayerZero delivers it to `recipient`, as native USDT on Ethereum and as USDT0 elsewhere. The source signs one transaction (Freighter, or the SEP-7 `uri`) and pays two fees in XLM: LayerZero’s (`nativeFeeLimit` is offered, the unused part refunded in the same transaction) and the network’s (`networkFee`). A 7th decimal of `amount` is `dust` and stays in the account. No Cosmos Pay commission is charged. Mainnet only. Submit the signed XDR to `POST /v1/usdt0/transfers/{id}/submit`, then follow `GET /v1/usdt0/transfers/{id}`.",
+        "operationId": "Usdt0Controller_create_v1",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional idempotency key. A retry with the same key and the same request returns the stored transfer unchanged; the same key with a different request is 409 idempotency_conflict. Takes precedence over body.idempotencyKey.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "usdt0-retry-2026-10-25-001"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUsdt0TransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usdt0TransferEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`network_unsupported`: a dev (testnet) key; USDT0 is on Stellar mainnet only. `validation_failed`: the source account does not exist, or the recipient has a bad EIP-55 checksum. `trustline_missing`: the source does not trust USDT0. `insufficient_balance`: it holds less USDT0 than the transfer takes, or too little XLM for LayerZero’s fee limit, the network fee and its reserve (the message says how much XLM to add). `invalid_amount`: all dust, or outside the OFT’s limits. `provider_error`: the OFT refused the transfer; `message` carries its contract error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "recipient has an invalid EIP-55 checksum: check the address, or send it in lowercase",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_amount": {
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "amount must be at least 0.000001 USDT0: the OFT carries 6 decimals, and the 7th stays in the account as dust",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "trustline_missing": {
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "trustline_missing",
+                      "error": "Bad Request",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDT0:GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q, so it holds no USDT0 to send. Add the trustline and receive USDT0 first, then try again.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "insufficient_balance": {
+                    "summary": "insufficient_balance: The source account cannot cover the amount, or the XLM reserve the transaction needs",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "insufficient_balance",
+                      "error": "Bad Request",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ cannot pay this transfer's fees in XLM: it needs 7.1996499 XLM (its minimum balance of 1.5 XLM, the 4.2474009 XLM LayerZero fee limit, the 1.452249 XLM network fee) but holds 5 XLM. Add at least 2.1996499 XLM to it, then try again. What LayerZero does not charge of its fee limit comes back in the same transaction.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported: USDT0 is on Stellar mainnet only; a dev key cannot use this route",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "USDT0 is on Stellar mainnet only: it does not exist on Stellar testnet. Use a prod API key.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The USDT0 contract refused the transfer: HostError: Error(Contract, #2001)",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "This Idempotency-Key was already used for a different USDT0 transfer request, or an identical transfer was built from the same account in the same second.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "idempotency_conflict": {
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "idempotency_conflict",
+                      "error": "Conflict",
+                      "message": "This Idempotency-Key was already used for a different USDT0 transfer request. Use a new key for a new request.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "`provider_error`: the OFT cannot be called right now (part of its state is archived on the ledger, or it asks for a signature the transaction cannot carry), or the RPC answered in an unexpected shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 502,
+                      "code": "provider_error",
+                      "error": "Bad Gateway",
+                      "message": "Part of the USDT0 contract state is archived on the ledger and must be restored before a transfer can be built. Retry later.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`provider_unavailable`: Horizon or the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "The Stellar mainnet Soroban RPC is unavailable. Retry shortly.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "The Soroban RPC configured for Stellar mainnet (STELLAR_RPC_URL_MAINNET) serves another network.",
+                      "path": "/v1/usdt0/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a USDT0 transfer from Stellar → the unsigned Soroban transaction to sign (XDR + SEP-7 link)",
+        "tags": [
+          "usdt0"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "usdt0:create",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon",
+          "Soroban RPC"
+        ]
+      },
+      "get": {
+        "description": "Answers from this service’s own table, as last refreshed; read one transfer to refresh it. Refused to the shared public key, which is every anonymous caller at once.",
+        "operationId": "Usdt0Controller_findAll_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "SUBMITTED",
+                "DELIVERED",
+                "FAILED",
+                "EXPIRED"
+              ]
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usdt0TransferListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the consumer's USDT0 transfers (not on the shared public key)",
+        "tags": [
+          "usdt0"
+        ]
+      }
+    },
+    "/v1/usdt0/transfers/{id}": {
+      "get": {
+        "description": "While PENDING or SUBMITTED, a read asks the Stellar ledger (a wallet may have broadcast the transaction itself) and LayerZero Scan, at most once every 15 seconds per transfer, and moves it to SUBMITTED, DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery takes about 27 minutes on every route: LayerZero’s verifiers wait for Stellar confirmations. The shared public key may call it: the transfer is still scoped to the consumer, and its id is the capability.",
+        "operationId": "Usdt0Controller_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usdt0TransferEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Get a USDT0 transfer by id, refreshed from the Stellar ledger and LayerZero Scan",
+        "tags": [
+          "usdt0"
+        ],
+        "x-cosmos-public-key": true
+      }
+    },
+    "/v1/usdt0/transfers/{id}/submit": {
+      "post": {
+        "description": "The signed XDR must hash to the transfer’s transaction and carry a signature. Accepted and applied: SUBMITTED, with LayerZero’s `guid`. Applied and failed: FAILED. Refused by the network: the transfer stays PENDING (`submitted: false`, `reason`) and can be submitted again until it expires. Waits up to 30 seconds for the ledger.",
+        "operationId": "Usdt0Controller_submit_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitUsdt0TransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usdt0SubmitResultEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: `signedXdr` is not a transaction, is not the one built for this transfer, or carries no signature. `invalid_state_transition`: the transfer is FAILED or EXPIRED, or its transaction expired; build a new one. `network_unsupported`: a dev (testnet) key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "The signed transaction does not match this transfer",
+                      "path": "/v1/usdt0/transfers/cm2u0t0transfer0000000001/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot submit a FAILED USDT0 transfer. Build a new one.",
+                      "path": "/v1/usdt0/transfers/cm2u0t0transfer0000000001/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported: USDT0 is on Stellar mainnet only; a dev key cannot use this route",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "USDT0 is on Stellar mainnet only: it does not exist on Stellar testnet. Use a prod API key.",
+                      "path": "/v1/usdt0/transfers/cm2u0t0transfer0000000001/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`provider_unavailable`: the Soroban RPC did not answer, or the network asked to try again later; the transfer stays PENDING, submit again. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "The Stellar mainnet Soroban RPC is unavailable. Retry shortly.",
+                      "path": "/v1/usdt0/transfers/cm2u0t0transfer0000000001/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "The Soroban RPC configured for Stellar mainnet (STELLAR_RPC_URL_MAINNET) serves another network.",
+                      "path": "/v1/usdt0/transfers/cm2u0t0transfer0000000001/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Relay the signed USDT0 transaction to Stellar mainnet (checked against the one built) and wait for the ledger",
+        "tags": [
+          "usdt0"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "usdt0:submit",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Soroban RPC"
+        ]
+      }
     }
   },
   "info": {
@@ -12645,6 +13398,10 @@
     {
       "name": "cross-chain-swaps",
       "description": "Swaps between every network NEAR Intents reaches, settled by NEAR Intents: quote, get a deposit address, pay it, and follow the swap to its outcome."
+    },
+    {
+      "name": "usdt0",
+      "description": "USDT0 out of Stellar through LayerZero: quote, build the Soroban transaction the holder signs, submit it and follow the message to its destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only."
     },
     {
       "name": "zk-payments",
@@ -17848,12 +18605,18 @@
             "type": "number",
             "description": "Swaps between networks through NEAR Intents. Mainnet only.",
             "example": 4
+          },
+          "usdt0": {
+            "type": "number",
+            "description": "USDT0 sent from Stellar to an EVM network through LayerZero (`/v1/usdt0`). Mainnet only.",
+            "example": 2
           }
         },
         "required": [
           "dex",
           "chain",
-          "crossChain"
+          "crossChain",
+          "usdt0"
         ]
       },
       "SeriesSwapTotalsEntity": {
@@ -17875,7 +18638,7 @@
           },
           "inProgress": {
             "type": "number",
-            "description": "Not final yet: unsigned, submitted, or a cross-chain swap awaiting or processing its deposit.",
+            "description": "Not final yet: unsigned, submitted (a USDT0 transfer LayerZero is still delivering included), or a cross-chain swap awaiting or processing its deposit.",
             "example": 2
           },
           "byKind": {
@@ -17952,9 +18715,46 @@
           "previous"
         ]
       },
+      "SeriesLiquidityBucketEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Created in the bucket or window, any status.",
+            "example": 42
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 37
+          },
+          "failed": {
+            "type": "number",
+            "description": "Given up on: failed or expired (and, for a cross-chain swap, refunded).",
+            "example": 3
+          },
+          "start": {
+            "type": "string",
+            "description": "The first day of the bucket (UTC; weeks start on Monday), the same as the payments bucket at that index.",
+            "example": "2026-10-01"
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "failed",
+          "start"
+        ]
+      },
       "SeriesLiquidityEntity": {
         "type": "object",
         "properties": {
+          "buckets": {
+            "description": "Liquidity pool deposits and withdrawals per bucket, on the same buckets as the payments, pre-seeded so a quiet bucket is a zero.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesLiquidityBucketEntity"
+            }
+          },
           "totals": {
             "description": "Liquidity pool deposits and withdrawals in the window.",
             "allOf": [
@@ -17973,8 +18773,34 @@
           }
         },
         "required": [
+          "buckets",
           "totals",
           "previous"
+        ]
+      },
+      "SeriesWebhookBucketEntity": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "The first day of the bucket (UTC; weeks start on Monday), the same as the payments bucket at that index.",
+            "example": "2026-10-01"
+          },
+          "deliveries": {
+            "type": "number",
+            "description": "Deliveries created in the bucket, any status.",
+            "example": 26
+          },
+          "failed": {
+            "type": "number",
+            "description": "Of those, the ones whose last attempt failed, as GET /v1/summary counts them.",
+            "example": 1
+          }
+        },
+        "required": [
+          "start",
+          "deliveries",
+          "failed"
         ]
       },
       "SeriesWebhookCountsEntity": {
@@ -17999,6 +18825,13 @@
       "SeriesWebhooksEntity": {
         "type": "object",
         "properties": {
+          "buckets": {
+            "description": "Deliveries per bucket, on the same buckets as the payments, pre-seeded so a quiet bucket is a zero.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesWebhookBucketEntity"
+            }
+          },
           "totals": {
             "description": "Deliveries to every endpoint of the consumer in the window. Not scoped by network: an endpoint belongs to none.",
             "allOf": [
@@ -18017,6 +18850,7 @@
           }
         },
         "required": [
+          "buckets",
           "totals",
           "previous"
         ]
@@ -18058,7 +18892,7 @@
             ]
           },
           "swaps": {
-            "description": "Swaps of every kind (Stellar DEX, Solana and Monad, cross-chain) on the network the key targets: a sandbox key counts no Solana, Monad or cross-chain swap, which run on mainnet only.",
+            "description": "Swaps of every kind (Stellar DEX, Solana and Monad, cross-chain, USDT0 sent through LayerZero) on the network the key targets: a sandbox key counts no Solana, Monad, cross-chain swap or USDT0 transfer, which run on mainnet only.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/SeriesSwapsEntity"
@@ -22794,6 +23628,848 @@
         "required": [
           "paymentTxHash",
           "feeTxHash"
+        ]
+      },
+      "Usdt0TokenEntity": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "USDT0"
+          },
+          "issuer": {
+            "type": "string",
+            "example": "GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q"
+          },
+          "contract": {
+            "type": "string",
+            "example": "CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF",
+            "description": "The asset's Stellar Asset Contract (SAC)."
+          }
+        },
+        "required": [
+          "code",
+          "issuer",
+          "contract"
+        ]
+      },
+      "Usdt0RouteEntity": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "eth",
+              "arb",
+              "bera",
+              "conflux",
+              "flare",
+              "hedera",
+              "hyperevm",
+              "ink",
+              "mantle",
+              "megaeth",
+              "monad",
+              "morph",
+              "op",
+              "plasma",
+              "pol",
+              "rootstock",
+              "sei",
+              "stable",
+              "tempo",
+              "unichain",
+              "xlayer"
+            ],
+            "example": "eth",
+            "description": "The id requests name this network with (`to`)."
+          },
+          "name": {
+            "type": "string",
+            "example": "Ethereum"
+          },
+          "eid": {
+            "type": "number",
+            "example": 30101,
+            "description": "LayerZero endpoint id."
+          },
+          "receives": {
+            "type": "string",
+            "enum": [
+              "USDT",
+              "USDT0"
+            ],
+            "example": "USDT",
+            "description": "What arrives: native `USDT` on Ethereum (Tether’s OFT adapter unlocks it), `USDT0` everywhere else."
+          }
+        },
+        "required": [
+          "chain",
+          "name",
+          "eid",
+          "receives"
+        ]
+      },
+      "Usdt0RoutesEntity": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "Always `public`: USDT0 exists on Stellar mainnet only."
+          },
+          "available": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether this API key can send USDT0: true for a prod (mainnet) key. A dev (testnet) key gets `false` and no routes."
+          },
+          "token": {
+            "$ref": "#/components/schemas/Usdt0TokenEntity"
+          },
+          "oft": {
+            "type": "string",
+            "example": "CBOWOLFSDM5PZXNFIVDMP5NZ7U2GSIHED6H6R446QOHF266XINKUMMF6",
+            "description": "The LayerZero OFT contract the transaction calls (`send`)."
+          },
+          "eid": {
+            "type": "number",
+            "example": 30600,
+            "description": "Stellar mainnet's LayerZero endpoint id."
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Usdt0RouteEntity"
+            }
+          }
+        },
+        "required": [
+          "network",
+          "available",
+          "token",
+          "oft",
+          "eid",
+          "routes"
+        ]
+      },
+      "QuoteUsdt0Dto": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "enum": [
+              "eth",
+              "arb",
+              "bera",
+              "conflux",
+              "flare",
+              "hedera",
+              "hyperevm",
+              "ink",
+              "mantle",
+              "megaeth",
+              "monad",
+              "morph",
+              "op",
+              "plasma",
+              "pol",
+              "rootstock",
+              "sei",
+              "stable",
+              "tempo",
+              "unichain",
+              "xlayer"
+            ],
+            "example": "eth",
+            "description": "The destination network (`GET /v1/usdt0/routes`). `eth` receives native USDT; every other network receives USDT0."
+          },
+          "amount": {
+            "type": "string",
+            "example": "12.5",
+            "description": "USDT0 to send, decimal with up to 7 places. The OFT carries 6: a 7th decimal is dust that stays in the account (see `dust`)."
+          },
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
+            "description": "The account that would send it: the quote is simulated as that account. Omitted, a fixed mainnet account is used; the price is the same."
+          }
+        },
+        "required": [
+          "to",
+          "amount"
+        ]
+      },
+      "Usdt0QuoteEntity": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "enum": [
+              "eth",
+              "arb",
+              "bera",
+              "conflux",
+              "flare",
+              "hedera",
+              "hyperevm",
+              "ink",
+              "mantle",
+              "megaeth",
+              "monad",
+              "morph",
+              "op",
+              "plasma",
+              "pol",
+              "rootstock",
+              "sei",
+              "stable",
+              "tempo",
+              "unichain",
+              "xlayer"
+            ],
+            "example": "eth"
+          },
+          "eid": {
+            "type": "number",
+            "example": 30101
+          },
+          "receives": {
+            "type": "string",
+            "enum": [
+              "USDT",
+              "USDT0"
+            ],
+            "example": "USDT"
+          },
+          "amount": {
+            "type": "string",
+            "example": "12.5000001",
+            "description": "The amount asked for."
+          },
+          "amountSent": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What the OFT takes from the account: `amount` without its dust."
+          },
+          "amountReceived": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What arrives on the destination network (in its token’s 6 decimals). Equal to `amountSent` unless the OFT charges a fee of its own."
+          },
+          "dust": {
+            "type": "string",
+            "example": "0.0000001",
+            "description": "The 7th decimal the OFT cannot carry (it shares 6 across chains). It stays in the account; nothing is lost."
+          },
+          "nativeFee": {
+            "type": "string",
+            "example": "3.6664143",
+            "description": "LayerZero’s messaging fee, in XLM, paid by the account on top of the USDT0. It follows LayerZero’s price feeds and changes over time."
+          },
+          "nativeFeeLimit": {
+            "type": "string",
+            "example": "4.3996972",
+            "description": "What a transfer built now would offer LayerZero, in XLM: `nativeFee` plus a 20% buffer for the minutes before it is signed. What LayerZero does not charge returns to the account in the same transaction, but the account must hold all of it."
+          },
+          "minAmount": {
+            "type": "string",
+            "example": "0",
+            "description": "The smallest amount the OFT accepts, in USDT0."
+          },
+          "maxAmount": {
+            "type": "string",
+            "example": "1844674407370.9551615",
+            "description": "The largest amount the OFT accepts, in USDT0."
+          }
+        },
+        "required": [
+          "to",
+          "eid",
+          "receives",
+          "amount",
+          "amountSent",
+          "amountReceived",
+          "dust",
+          "nativeFee",
+          "nativeFeeLimit",
+          "minAmount",
+          "maxAmount"
+        ]
+      },
+      "CreateUsdt0TransferDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
+            "description": "The Stellar account that holds the USDT0, signs the transaction and pays its fees in XLM (LayerZero fee plus network fee)."
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "eth",
+              "arb",
+              "bera",
+              "conflux",
+              "flare",
+              "hedera",
+              "hyperevm",
+              "ink",
+              "mantle",
+              "megaeth",
+              "monad",
+              "morph",
+              "op",
+              "plasma",
+              "pol",
+              "rootstock",
+              "sei",
+              "stable",
+              "tempo",
+              "unichain",
+              "xlayer"
+            ],
+            "example": "eth",
+            "description": "The destination network (`GET /v1/usdt0/routes`). `eth` receives native USDT; every other network receives USDT0."
+          },
+          "recipient": {
+            "type": "string",
+            "example": "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+            "description": "The EVM address credited on the destination network (0x + 40 hex). A mixed-case address must carry a valid EIP-55 checksum."
+          },
+          "amount": {
+            "type": "string",
+            "example": "12.5",
+            "description": "USDT0 to send, decimal with up to 7 places. The OFT carries 6: a 7th decimal is dust that stays in the account (see `dust`)."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "usdt0-retry-2026-10-25-001",
+            "description": "Optional idempotency key. Prefer the `Idempotency-Key` request header; when both are set, the header wins. A retry with the same key and the same request returns the stored transfer; the same key with a different request is 409 `idempotency_conflict`."
+          }
+        },
+        "required": [
+          "source",
+          "to",
+          "recipient",
+          "amount"
+        ]
+      },
+      "Usdt0TransferEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm2u0t0transfer0000000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "DELIVERED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "PENDING",
+            "description": "PENDING: built, waiting for the signature. SUBMITTED: on the Stellar ledger, LayerZero is delivering it. DELIVERED: credited on the destination network. FAILED: the Stellar transaction failed, or LayerZero gave up on the message (`failureReason`). EXPIRED: never reached the ledger before `expiresAt`. A read refreshes a PENDING or SUBMITTED transfer from the ledger and LayerZero Scan."
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "Always mainnet."
+          },
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "eth",
+              "arb",
+              "bera",
+              "conflux",
+              "flare",
+              "hedera",
+              "hyperevm",
+              "ink",
+              "mantle",
+              "megaeth",
+              "monad",
+              "morph",
+              "op",
+              "plasma",
+              "pol",
+              "rootstock",
+              "sei",
+              "stable",
+              "tempo",
+              "unichain",
+              "xlayer"
+            ],
+            "example": "eth"
+          },
+          "eid": {
+            "type": "number",
+            "example": 30101
+          },
+          "receives": {
+            "type": "string",
+            "enum": [
+              "USDT",
+              "USDT0"
+            ],
+            "example": "USDT"
+          },
+          "recipient": {
+            "type": "string",
+            "example": "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+            "description": "The EVM address credited, EIP-55."
+          },
+          "amount": {
+            "type": "string",
+            "example": "12.5000001",
+            "description": "The amount asked for."
+          },
+          "amountSent": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What the OFT takes from the account: `amount` without its dust."
+          },
+          "amountReceived": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What arrives, and the on-chain floor: the transaction fails rather than deliver less."
+          },
+          "dust": {
+            "type": "string",
+            "example": "0.0000001",
+            "description": "The dust left in the account (`amount` - `amountSent`)."
+          },
+          "nativeFee": {
+            "type": "string",
+            "example": "3.6664143",
+            "description": "LayerZero’s quoted messaging fee, in XLM."
+          },
+          "nativeFeeLimit": {
+            "type": "string",
+            "example": "4.3996972",
+            "description": "What the transaction offers LayerZero, in XLM: `nativeFee` plus a 20% buffer. The endpoint charges the real fee and returns the rest to the account in the same transaction."
+          },
+          "networkFee": {
+            "type": "string",
+            "example": "1.4468825",
+            "description": "The Stellar network fee, in XLM: inclusion plus Soroban resources (part of it is refunded by the network)."
+          },
+          "xdr": {
+            "type": "string",
+            "description": "The unsigned transaction (base64 XDR) to sign.",
+            "example": "AAAAAgAAAABx…(base64 XDR)…AAAAAAAAAAA="
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:tx?xdr=AAAAAgAAAABx…",
+            "description": "A SEP-7 `tx` link carrying `xdr`."
+          },
+          "qr": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "A QR of `uri` as a PNG data URL, or null when the transaction is too large for one, which a Soroban transaction usually is (its ledger footprint makes the XDR several kilobytes). Sign with a connected wallet (Freighter) or the link instead."
+          },
+          "txHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The Stellar transaction hash once it reached the network (SUBMITTED, DELIVERED, FAILED); null while PENDING or EXPIRED."
+          },
+          "guid": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "LayerZero’s message id (0x + 64 hex), once the transaction landed."
+          },
+          "destinationTxHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The destination network’s transaction, once DELIVERED."
+          },
+          "scanStatus": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "LayerZero Scan’s own status word, verbatim (`INFLIGHT`, `CONFIRMING`, `DELIVERED`, `PAYLOAD_STORED`, ...)."
+          },
+          "scanUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The transaction on LayerZero Scan (layerzeroscan.com), once it reached the network."
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why a FAILED transfer failed."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The Idempotency-Key it was created with, if any."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:05:00.000Z",
+            "description": "When the transaction's time bounds close: submit refuses it afterwards."
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "When it was first seen accepted by the network."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "network",
+          "source",
+          "to",
+          "eid",
+          "receives",
+          "recipient",
+          "amount",
+          "amountSent",
+          "amountReceived",
+          "dust",
+          "nativeFee",
+          "nativeFeeLimit",
+          "networkFee",
+          "xdr",
+          "uri",
+          "qr",
+          "txHash",
+          "guid",
+          "destinationTxHash",
+          "scanStatus",
+          "scanUrl",
+          "failureReason",
+          "idempotencyKey",
+          "expiresAt",
+          "submittedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "Usdt0TransferListItemEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm2u0t0transfer0000000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "DELIVERED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "PENDING",
+            "description": "PENDING: built, waiting for the signature. SUBMITTED: on the Stellar ledger, LayerZero is delivering it. DELIVERED: credited on the destination network. FAILED: the Stellar transaction failed, or LayerZero gave up on the message (`failureReason`). EXPIRED: never reached the ledger before `expiresAt`. A read refreshes a PENDING or SUBMITTED transfer from the ledger and LayerZero Scan."
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "Always mainnet."
+          },
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "eth",
+              "arb",
+              "bera",
+              "conflux",
+              "flare",
+              "hedera",
+              "hyperevm",
+              "ink",
+              "mantle",
+              "megaeth",
+              "monad",
+              "morph",
+              "op",
+              "plasma",
+              "pol",
+              "rootstock",
+              "sei",
+              "stable",
+              "tempo",
+              "unichain",
+              "xlayer"
+            ],
+            "example": "eth"
+          },
+          "eid": {
+            "type": "number",
+            "example": 30101
+          },
+          "receives": {
+            "type": "string",
+            "enum": [
+              "USDT",
+              "USDT0"
+            ],
+            "example": "USDT"
+          },
+          "recipient": {
+            "type": "string",
+            "example": "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+            "description": "The EVM address credited, EIP-55."
+          },
+          "amount": {
+            "type": "string",
+            "example": "12.5000001",
+            "description": "The amount asked for."
+          },
+          "amountSent": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What the OFT takes from the account: `amount` without its dust."
+          },
+          "amountReceived": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What arrives, and the on-chain floor: the transaction fails rather than deliver less."
+          },
+          "dust": {
+            "type": "string",
+            "example": "0.0000001",
+            "description": "The dust left in the account (`amount` - `amountSent`)."
+          },
+          "nativeFee": {
+            "type": "string",
+            "example": "3.6664143",
+            "description": "LayerZero’s quoted messaging fee, in XLM."
+          },
+          "nativeFeeLimit": {
+            "type": "string",
+            "example": "4.3996972",
+            "description": "What the transaction offers LayerZero, in XLM: `nativeFee` plus a 20% buffer. The endpoint charges the real fee and returns the rest to the account in the same transaction."
+          },
+          "networkFee": {
+            "type": "string",
+            "example": "1.4468825",
+            "description": "The Stellar network fee, in XLM: inclusion plus Soroban resources (part of it is refunded by the network)."
+          },
+          "xdr": {
+            "type": "string",
+            "description": "The unsigned transaction (base64 XDR) to sign.",
+            "example": "AAAAAgAAAABx…(base64 XDR)…AAAAAAAAAAA="
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:tx?xdr=AAAAAgAAAABx…",
+            "description": "A SEP-7 `tx` link carrying `xdr`."
+          },
+          "txHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The Stellar transaction hash once it reached the network (SUBMITTED, DELIVERED, FAILED); null while PENDING or EXPIRED."
+          },
+          "guid": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "LayerZero’s message id (0x + 64 hex), once the transaction landed."
+          },
+          "destinationTxHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The destination network’s transaction, once DELIVERED."
+          },
+          "scanStatus": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "LayerZero Scan’s own status word, verbatim (`INFLIGHT`, `CONFIRMING`, `DELIVERED`, `PAYLOAD_STORED`, ...)."
+          },
+          "scanUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The transaction on LayerZero Scan (layerzeroscan.com), once it reached the network."
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why a FAILED transfer failed."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The Idempotency-Key it was created with, if any."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:05:00.000Z",
+            "description": "When the transaction's time bounds close: submit refuses it afterwards."
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "When it was first seen accepted by the network."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "network",
+          "source",
+          "to",
+          "eid",
+          "receives",
+          "recipient",
+          "amount",
+          "amountSent",
+          "amountReceived",
+          "dust",
+          "nativeFee",
+          "nativeFeeLimit",
+          "networkFee",
+          "xdr",
+          "uri",
+          "txHash",
+          "guid",
+          "destinationTxHash",
+          "scanStatus",
+          "scanUrl",
+          "failureReason",
+          "idempotencyKey",
+          "expiresAt",
+          "submittedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "Usdt0TransferListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Usdt0TransferListItemEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "SubmitUsdt0TransferDto": {
+        "type": "object",
+        "properties": {
+          "signedXdr": {
+            "type": "string",
+            "description": "The signed transaction envelope (base64 XDR).",
+            "example": "AAAAAgAAAABx…(signed base64 XDR)…AAAAAAAAAAA="
+          }
+        },
+        "required": [
+          "signedXdr"
+        ]
+      },
+      "Usdt0SubmitResultEntity": {
+        "type": "object",
+        "properties": {
+          "submitted": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the network accepted the transaction (status SUBMITTED, or already DELIVERED)."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "DELIVERED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "SUBMITTED"
+          },
+          "txHash": {
+            "type": "string",
+            "example": "6bc5348acd5dfa908c8d8ff8401d5cce5e659566b0f6707a84950b16ca7410e8",
+            "description": "The Stellar transaction hash, once it reached the network."
+          },
+          "reason": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "Why it was not submitted, when `submitted` is false: the network refused it (the transfer stays PENDING and can be submitted again until it expires), or it failed on the ledger (FAILED)."
+          },
+          "transfer": {
+            "$ref": "#/components/schemas/Usdt0TransferEntity"
+          }
+        },
+        "required": [
+          "submitted",
+          "status",
+          "transfer"
         ]
       },
       "ApiErrorBodyEntity": {

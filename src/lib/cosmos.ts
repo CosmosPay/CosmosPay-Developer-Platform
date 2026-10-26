@@ -631,6 +631,78 @@ export const cosmosCrossChainSwaps = {
     cosmosFetch<CrossChainSwap>(userId, env, `/v1/cross-chain-swaps/${encodeURIComponent(id)}/deposit`, { method: "POST", body: { txHash }, org }),
 };
 
+/* ---- USDT0 out of Stellar (src/lib/usdt0.ts): LayerZero's OFT moves it 1:1 to the networks
+   /v1/usdt0/routes lists, native USDT on Ethereum, USDT0 elsewhere. Stellar mainnet only; the
+   holder signs one Soroban transaction and pays LayerZero's fee in XLM. ---- */
+export interface Usdt0RoutesView {
+  available: boolean;
+  network: string;
+  token: { code: string; issuer: string; contract: string };
+  oft: string;
+  eid: number;
+  routes: { chain: string; name: string; eid: number; receives: "USDT" | "USDT0" }[];
+}
+export interface Usdt0Quote {
+  to: string;
+  eid: number;
+  receives: "USDT" | "USDT0";
+  amount: string;
+  amountSent: string;
+  amountReceived: string;
+  dust: string;
+  /** LayerZero's fee, in XLM. */
+  nativeFee: string;
+  minAmount: string;
+  maxAmount: string;
+}
+export interface Usdt0Transfer {
+  id: string;
+  status: "PENDING" | "SUBMITTED" | "DELIVERED" | "FAILED" | "EXPIRED";
+  network: string;
+  source: string;
+  to: string;
+  eid: number;
+  receives: "USDT" | "USDT0";
+  recipient: string;
+  amount: string;
+  amountSent: string;
+  amountReceived: string;
+  nativeFee: string;
+  xdr: string | null;
+  uri: string | null;
+  qr: string | null;
+  txHash: string | null;
+  guid: string | null;
+  destinationTxHash: string | null;
+  scanUrl: string | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface Usdt0TransferList {
+  data: Usdt0Transfer[];
+  total: number;
+  take: number;
+  skip: number;
+}
+export interface Usdt0QuoteInput { to: string; amount: string; source?: string }
+export interface Usdt0TransferInput { source: string; to: string; recipient: string; amount: string; idempotencyKey?: string }
+
+export const cosmosUsdt0 = {
+  routes: (userId: string, env: CosmosEnv, org: string) =>
+    cosmosFetch<Usdt0RoutesView>(userId, env, "/v1/usdt0/routes", { org }),
+  quote: (userId: string, env: CosmosEnv, org: string, body: Usdt0QuoteInput) =>
+    cosmosFetch<Usdt0Quote>(userId, env, "/v1/usdt0/quote", { method: "POST", body, org }),
+  create: (userId: string, env: CosmosEnv, org: string, body: Usdt0TransferInput) =>
+    cosmosFetch<Usdt0Transfer>(userId, env, "/v1/usdt0/transfers", { method: "POST", body, org }),
+  list: (userId: string, env: CosmosEnv, org: string, query: { status?: string; take?: number; skip?: number } = {}) =>
+    cosmosFetch<Usdt0TransferList>(userId, env, "/v1/usdt0/transfers", { query: { status: query.status, take: query.take, skip: query.skip }, org }),
+  get: (userId: string, env: CosmosEnv, org: string, id: string) =>
+    cosmosFetch<Usdt0Transfer>(userId, env, `/v1/usdt0/transfers/${encodeURIComponent(id)}`, { org }),
+  submit: (userId: string, env: CosmosEnv, org: string, id: string, signedXdr: string) =>
+    cosmosFetch<{ submitted: boolean; reason?: string; transfer: Usdt0Transfer }>(userId, env, `/v1/usdt0/transfers/${encodeURIComponent(id)}/submit`, { method: "POST", body: { signedXdr }, org }),
+};
+
 /* ---- ZK payments as a service: confidential payments on Cosmos Pay's confidential token
    (OpenZeppelin's stellar-confidential), where the amount stays hidden on-chain. The payer
    proves and pays in the browser; the Payments API holds the token's auditor key, checks both

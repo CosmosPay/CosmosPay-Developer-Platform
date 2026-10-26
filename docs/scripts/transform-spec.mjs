@@ -44,6 +44,13 @@ export const TAGS = [
       'deposit address, pay it, and follow the swap to its outcome.',
   },
   {
+    name: 'usdt0',
+    title: 'USDT0 Transfers',
+    description:
+      'USDT0 out of Stellar through LayerZero: quote, build the Soroban transaction the holder signs, ' +
+      'submit it and follow the message to its destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only.',
+  },
+  {
     name: 'zk-payments',
     title: 'Private Payments',
     description:

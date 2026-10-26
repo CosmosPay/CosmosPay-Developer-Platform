@@ -4,7 +4,7 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { liquidity as liquidityApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, usePolling, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
@@ -14,6 +14,7 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 
 const STATUSES = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "EXPIRED"];
@@ -33,7 +34,7 @@ function opAmounts(o) {
   return `${pre}${o.amountA} ${assetLabel(o.assetA)} + ${pre}${o.amountB} ${assetLabel(o.assetB)}`;
 }
 
-export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
+export function LiquidityView({ canManage = true, canConnectWallets = false, orgId, env = "dev" }) {
   const t = useT();
   const lq = t.dash.liquidity;
   const [tab, setTab] = useState("operations");
@@ -60,6 +61,18 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
       .catch(() => {});
   }, [env, orgId]);
   usePolling(refresh, 8000);
+
+  // An operation named from elsewhere (a notification) opens once the list is here.
+  const [openId, clearOpen] = useUrlRequest("open");
+  useEffect(() => {
+    if (!openId || loading) return;
+    clearOpen();
+    setTab("operations");
+    const hit = rows.find((o) => o.id === openId);
+    if (hit) { setDetail(hit); return; }
+    liquidityApi.operation(openId, orgId, env).then((op) => { if (op && op.id) setDetail(op); else showToast(t.dash.common.notFound, "error"); }).catch(() => showToast(t.dash.common.notFound, "error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, loading]);
 
   const matches = (o, skip) =>
     (skip === "status" || filters.status === "all" || o.status === filters.status) &&
@@ -150,7 +163,7 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
 
       {tab === "positions" && (
         <PositionsPanel
-          lq={lq} orgId={orgId} env={env} canManage={canManage}
+          lq={lq} orgId={orgId} env={env} canManage={canManage} canConnectWallets={canConnectWallets}
           onWithdraw={(pos) => setModal({ kind: "withdraw", prefill: { poolId: pos.poolId, shares: pos.shares } })}
         />
       )}
@@ -221,8 +234,10 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
   );
 }
 
-/* ---------------- positions (an account's pool shares) ---------------- */
-function PositionsPanel({ lq, orgId, env, canManage, onWithdraw }) {
+/* ---------------- positions (an account's pool shares) ----------------
+   The account is one of the organization's Stellar wallets (Settings), picked from the list as the
+   payment forms do; its positions load as soon as it is picked. */
+function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdraw }) {
   const p = lq.positions;
   const [account, setAccount] = useState("");
   const [positions, setPositions] = useState([]);
@@ -231,10 +246,10 @@ function PositionsPanel({ lq, orgId, env, canManage, onWithdraw }) {
 
   const valid = /^G[A-Z2-7]{55}$/.test(account.trim());
 
-  const search = () => {
-    if (!valid || loading) return;
+  const search = (acct = account) => {
+    if (!/^G[A-Z2-7]{55}$/.test(acct.trim()) || loading) return;
     setLoading(true);
-    liquidityApi.positions(account.trim(), orgId, env)
+    liquidityApi.positions(acct.trim(), orgId, env)
       .then((res) => { setPositions(Array.isArray(res?.data) ? res.data : []); setLoaded(true); })
       .catch((err) => showToast((err && err.message) || p.error, "error"))
       .finally(() => setLoading(false));
@@ -243,9 +258,12 @@ function PositionsPanel({ lq, orgId, env, canManage, onWithdraw }) {
   return (
     <div className="panel">
       <div className="paylink-fields" style={{ marginBottom: 12 }}>
-        <Field label={p.account} hint={p.accountHint} value={account} onChange={(e) => setAccount(e.target.value)} placeholder="G…" />
+        <WalletSelect
+          orgId={orgId} chain="stellar" id="lq-positions-account" label={p.account} canConnect={canConnectWallets}
+          value={account} onChange={(a) => { setAccount(a); setLoaded(false); search(a); }}
+        />
         <div className="paylink-actions">
-          <button className="btn btn-soft btn-sm" disabled={!valid || loading} onClick={search}>{loading ? p.loadingBtn : p.load}</button>
+          <button className="btn btn-soft btn-sm" disabled={!valid || loading} onClick={() => search()}>{loading ? p.loadingBtn : p.load}</button>
         </div>
       </div>
       {loaded && positions.length > 0 && (

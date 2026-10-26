@@ -8,8 +8,10 @@ import { usePresence } from "@/components/cosmos/hooks/usePresence";
 import { Avatar } from "@/components/cosmos/ui/Avatar";
 import { IcGauge, IcUser, IcDocs, IcLogout } from "@/components/cosmos/icons";
 
-/* Signed-in account dropdown for the marketing nav. */
-export function NavUserMenu({ user }: { user: User }) {
+/* Signed-in account dropdown for the general nav. Its account item opens the personal account
+   page; inside the dashboard (`onAccount`) it switches to that view in place, and the dashboard
+   item, which would lead to the page already open, is left out. */
+export function NavUserMenu({ user, onAccount }: { user: User; onAccount?: () => void }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const { mounted, state } = usePresence(open, 120);
@@ -27,8 +29,16 @@ export function NavUserMenu({ user }: { user: User }) {
             <Avatar user={user} size={38} />
             <div className="nav-user-id"><b>{name}</b>{email && <span>{email}</span>}</div>
           </div>
-          <a className="nav-user-opt" href={DASH} role="menuitem"><IcGauge /> {t.nav.dashboard}</a>
-          <a className="nav-user-opt" href={`${DASH}?view=settings`} role="menuitem"><IcUser /> {t.profile.account}</a>
+          {!onAccount && <a className="nav-user-opt" href={DASH} role="menuitem"><IcGauge /> {t.nav.dashboard}</a>}
+          <a
+            className="nav-user-opt" href={`${DASH}?view=account`} role="menuitem"
+            onClick={(e) => {
+              if (!onAccount || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              setOpen(false);
+              onAccount();
+            }}
+          ><IcUser /> {t.profile.account}</a>
           <a className="nav-user-opt" href={DOCS} role="menuitem"><IcDocs /> {t.profile.docs}</a>
           <button className="nav-user-opt danger" onClick={() => startLogout()} role="menuitem"><IcLogout /> {t.profile.logout}</button>
         </div>

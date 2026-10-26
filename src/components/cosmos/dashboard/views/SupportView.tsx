@@ -1,10 +1,10 @@
-import { useState, useId } from "react";
+import { useState, useId, useEffect } from "react";
 import { showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { support as supportApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtWhen } from "@/components/cosmos/dashboard/helpers";
-import { usePolling } from "@/components/cosmos/dashboard/hooks";
+import { usePolling, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
 import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
@@ -31,6 +31,14 @@ export function SupportView() {
 
   // Opening a ticket marks it read server-side; clear its unread badge immediately too.
   const open = (id) => { setCreating(false); setSel(id); setTickets((ts) => ts.map((tk) => (tk.id === id ? { ...tk, unread: 0 } : tk))); loadTicket(id).then(loadTickets); };
+  // A ticket named from elsewhere (a reply's notification) opens on arrival.
+  const [ticketReq, clearTicketReq] = useUrlRequest("open");
+  useEffect(() => {
+    if (!ticketReq) return;
+    clearTicketReq();
+    open(ticketReq);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketReq]);
   const startNew = () => { setCreating(true); setSel(null); setTicket(null); setSubject(""); setFirstMsg(""); };
   const create = () => {
     if (!subject.trim() || !firstMsg.trim()) return;

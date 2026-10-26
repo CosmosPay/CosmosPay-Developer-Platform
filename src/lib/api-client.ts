@@ -265,6 +265,23 @@ export const crossChainSwaps = {
   reportDeposit: (id, org, env, txHash) => request(`/api/cross-chain-swaps/${encodeURIComponent(id)}/deposit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ txHash }) }),
 };
 
+/* USDT0 out of Stellar through LayerZero's OFT (src/lib/usdt0.ts). Mainnet only. */
+export const usdt0 = {
+  routes: (org, env) => request(`/api/usdt0/routes?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  quote: (body) => request("/api/usdt0/quote", { method: "POST", body: JSON.stringify(body) }),
+  create: (body) => request("/api/usdt0/transfers", { method: "POST", body: JSON.stringify(body) }),
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    if (query.skip) qs.set("skip", String(query.skip));
+    return request(`/api/usdt0/transfers?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/usdt0/transfers/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  submit: (id, org, env, body) => request(`/api/usdt0/transfers/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify(body) }),
+};
+
 /* Liquidity pools (Stellar AMM), proxied to the Cosmos Payments API and scoped
    to the active organization. Non-custodial like swaps: deposit/withdraw return an
    unsigned XDR + SEP-7 URI + QR to sign, then the signed XDR is submitted back.

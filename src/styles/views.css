@@ -277,12 +277,18 @@
 .filter-tabs button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
 .empty { padding: 40px; text-align: center; color: var(--ink-3); font-size: 14.5px; }
+/* the one action an empty list offers (create the first one, clear the filters) sits under its words */
+.empty > div:has(.btn) { margin-top: 16px; }
 .cust-cell { display: flex; align-items: center; gap: 10px; font-weight: 600; }
 .av-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: 0 0 auto; }
 .am-sq { width: 30px; height: 30px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--accent); display: grid; place-items: center; flex: 0 0 auto; }
 .am-sq svg { width: 16px; height: 16px; }
 .link-btn { background: none; border: 0; color: var(--accent); font-family: inherit; font-weight: 600; font-size: 13.5px; cursor: pointer; }
 .icon-mini { width: 30px; height: 30px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; margin-left: 6px; vertical-align: middle; }
+.paylink-check { display: flex; gap: 10px; align-items: center; }
+.paylink-check .field { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+.cust-pays-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.icon-mini-gap { display: inline-block; width: 30px; height: 30px; margin-left: 6px; vertical-align: middle; }
 .icon-mini svg { width: 15px; height: 15px; }
 .icon-mini:hover { color: var(--ink); border-color: var(--ink-3); }
 .icon-mini.danger:hover { color: #D64545; border-color: #D64545; }
@@ -297,6 +303,9 @@
    no existe en el deck (BRAND.md, secciones 7 y 10). */
 .bal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
 .bal-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+/* a balance is a way into its payments: the whole card is the button */
+button.bal-card { display: block; width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.bal-card:not(.total):hover { border-color: var(--line-2); }
 .bal-card.total {
   background: var(--navy);
   --ink: var(--cosmos-white); --ink-2: rgba(255,255,255,.66); --ink-3: rgba(255,255,255,.66);
@@ -345,6 +354,8 @@
 /* note bar */
 .note-bar { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px; color: var(--ink-2); font-size: 14px; }
 .note-bar svg { width: 20px; height: 20px; color: var(--accent); flex: 0 0 auto; }
+/* a note's way out (the plan dialog, the form that fixes it) closes the line */
+.note-bar-act { margin-left: auto; flex: 0 0 auto; }
 .t-scroll { overflow-x: auto; }
 /* during the GSAP row animation, suppress the (transient) scrollbar for a clean reveal */
 .t-scroll.is-animating { overflow: hidden; }
@@ -456,6 +467,10 @@ select.field { cursor: pointer; }
 
 .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
 .metric { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+/* a figure that opens the list it counts */
+button.metric-link { display: block; width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.metric-link:hover { border-color: var(--line-2); }
+.admin-fiat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .metric .ml { font-size: 13.5px; color: var(--ink-3); font-weight: 600; }
 .metric .mv { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin: 8px 0 6px; }
 .metric .mc { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }

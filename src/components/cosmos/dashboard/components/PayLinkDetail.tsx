@@ -30,7 +30,8 @@ export function explorerUrl(intent) {
 export function hasTransaction(intent) { return !!explorerUrl(intent); }
 
 /* Shared table row-actions cell: view the payment, open its transaction (only when one
-   exists), and delete (only when the caller can manage AND the link isn't paid).
+   exists; otherwise an empty slot keeps the icons in line, never a button that does nothing),
+   and delete (only when the caller can manage AND the link isn't paid).
    Reused by the Payments and Balances tables so both behave identically. */
 export function PayLinkRowActions({ intent, t, pl, onView, canManage = false, onDelete }) {
   return (
@@ -38,7 +39,7 @@ export function PayLinkRowActions({ intent, t, pl, onView, canManage = false, on
       <button className="icon-mini" title={pl.detail.eyebrow} aria-label={pl.detail.eyebrow} onClick={() => onView(intent)}>{DI.docs}</button>
       {hasTransaction(intent)
         ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={explorerUrl(intent)} target="_blank" rel="noopener noreferrer">{DI.network}</a>
-        : <button className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} disabled>{DI.network}</button>}
+        : <span className="icon-mini-gap" aria-hidden="true" />}
       {canManage && intent.status !== "SUCCEEDED" && <button className="icon-mini danger" title={pl.detail.delete} aria-label={pl.detail.delete} onClick={() => onDelete(intent)}>{DI.trash}</button>}
     </td>
   );
@@ -87,6 +88,25 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
+  // A Stellar payment still open can be checked against a transaction the payer sent from a
+  // wallet that never reported back: the Payments API verifies it and settles the link.
+  const [txHash, setTxHash] = useState("");
+  const [checking, setChecking] = useState(false);
+  const canCheck = canManage && chainOf(intent) === "stellar" && ["PENDING", "SUBMITTED"].includes(data.status);
+  const hashOk = /^[0-9a-fA-F]{64}$/.test(txHash.trim());
+  const check = () => {
+    if (!hashOk || checking) return;
+    setChecking(true);
+    payApi.validate(data.id, env, txHash.trim())
+      .then((r) => {
+        if (r && r.paymentIntent) setData((x) => ({ ...x, ...r.paymentIntent }));
+        else payApi.get(data.id, env).then((full) => { if (full) setData(full); }).catch(() => {});
+        if (r && r.valid) { showToast(d.check.ok); setTxHash(""); }
+        else showToast((r && r.reason) || d.check.bad, "error");
+      })
+      .catch((err) => showToast((err && err.message) || d.check.bad, "error"))
+      .finally(() => setChecking(false));
+  };
 
   useEffect(() => {
     if (data.qr) return;
@@ -187,6 +207,16 @@ export function PayLinkDetailModal({ pl, intent, env, canManage = false, onClose
         <div className="paylink-fields">
           {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
         </div>
+
+        {canCheck && (
+          <div className="paylink-block">
+            <div className="paylink-block-head"><label className="field-l" htmlFor="paylink-check">{d.check.label}</label></div>
+            <div className="paylink-check">
+              <input id="paylink-check" className="field" value={txHash} onChange={(e) => setTxHash(e.target.value)} placeholder={d.check.placeholder} spellCheck={false} autoComplete="off" />
+              <button type="button" className="btn btn-dark btn-sm" disabled={!hashOk || checking} onClick={check}>{d.check.submit}</button>
+            </div>
+          </div>
+        )}
 
         {/* A paid (settled) link is an immutable record: it can't be deleted. */}
         {canManage && data.status !== "SUCCEEDED" && (

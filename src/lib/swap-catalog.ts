@@ -8,9 +8,13 @@
 
    A pair's route: on one of those three chains, both tokens on its market; between chains, or
    within any other chain, NEAR Intents, both tokens listed there. The Payments API refuses NEAR
-   Intents within Stellar, Solana or Monad (their market settles it), so neither does this. */
-import { CHAIN_NAMES, NATIVE_CODES, NATIVE_DECIMALS, TOKEN_PRESETS, isChain, type Chain, type Tier } from "@/lib/chains";
+   Intents within Stellar, Solana or Monad (their market settles it), so neither does this.
+   USDT0 on Stellar to USDT or USDT0 on a network LayerZero's OFT reaches (src/lib/usdt0.ts) goes
+   through the OFT instead: 1:1, no slippage, LayerZero's fee in XLM. Its destinations join the
+   catalogue, and a network NEAR Intents does not list gets its USDT0 as a token of its own. */
+import { CHAIN_NAMES, NATIVE_CODES, NATIVE_DECIMALS, TOKEN_PRESETS, isChain, networkName, type Chain, type Tier } from "@/lib/chains";
 import { standardAssets } from "@/lib/stellar-assets";
+import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
 
 /* What GET /api/cross-chain-swaps/assets lists: one NEAR Intents token. */
 export interface NearAsset {
@@ -40,6 +44,8 @@ export interface SwapToken {
   near: string | null;
   /** Tradable on its chain's own market in this environment. */
   dex: boolean;
+  /** Reached from Stellar's USDT0 through LayerZero's OFT (USDT on Ethereum, USDT0 elsewhere). */
+  usdt0?: boolean;
 }
 
 /* The chains with their own market for swaps within the chain. */
@@ -73,7 +79,7 @@ function fromNear(a: NearAsset, dex: boolean): SwapToken {
 }
 
 /* The tokens the form offers in this environment. */
-export function buildCatalog(near: readonly NearAsset[], tier: Tier): SwapToken[] {
+export function buildCatalog(near: readonly NearAsset[], tier: Tier, usdt0Routes: readonly Usdt0Route[] = []): SwapToken[] {
   const out: SwapToken[] = [];
   const onChain = (chain: string) => near.filter((a) => a.chain === chain);
   const uniqueSymbol = (list: readonly NearAsset[], symbol: string) => {
@@ -129,17 +135,36 @@ export function buildCatalog(near: readonly NearAsset[], tier: Tier): SwapToken[
 
   // Every other network: NEAR Intents only.
   for (const a of near) if (!hasDex(a.chain)) out.push(fromNear(a, false));
+
+  // USDT0's destinations, on mainnet: the network's listed USDT / USDT0 when NEAR Intents has it
+  // (the same token, now reachable both ways), else USDT0 as a token of its own.
+  if (tier === "public") {
+    for (const r of usdt0Routes) {
+      const listed = out.filter((t) => t.chain === r.chain && ["USDT", "USDT0"].includes(t.symbol.toUpperCase()));
+      if (listed.length) {
+        for (const t of listed) t.usdt0 = true;
+      } else {
+        out.push({
+          key: keyOf(r.chain, r.receives, "oft"), chain: r.chain, chainName: r.name || networkName(r.chain), symbol: r.receives, contract: null,
+          issuerName: "Tether", decimals: 6, priceUsd: 1, near: null, dex: false, usdt0: true,
+        });
+      }
+    }
+  }
   return out;
 }
 
 export type Route =
   | { kind: "dex"; chain: Chain }
   | { kind: "near" }
+  | { kind: "usdt0"; chain: string }
   | { kind: "none"; reason: "same-token" | "production-only" | "unsupported" };
 
 /* How a pair is swapped in this environment, or why it cannot be. */
 export function routeFor(from: SwapToken, to: SwapToken, tier: Tier): Route {
   if (from.key === to.key) return { kind: "none", reason: "same-token" };
+  // Stellar's USDT0 out through the OFT, ahead of NEAR Intents: 1:1, and to networks it lists too.
+  if (isUsdt0OnStellar(from) && to.usdt0 && to.chain !== "stellar") return { kind: "usdt0", chain: to.chain };
   if (from.chain === to.chain && hasDex(from.chain)) {
     if (from.dex && to.dex) return { kind: "dex", chain: from.chain };
     // Solana's and Monad's markets exist on mainnet only.
@@ -179,7 +204,7 @@ export function networkRank(chain: string): number {
   return i < 0 ? NETWORK_ORDER.length : i;
 }
 export function tokenRank(t: SwapToken): number {
-  if (!t.contract) return 0;
+  if (!t.contract && !t.usdt0) return 0;
   const i = POPULAR.indexOf(t.symbol.toUpperCase());
   return i >= 0 ? 1 + i : 10;
 }

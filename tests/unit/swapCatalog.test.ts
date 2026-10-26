@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { amountFits, buildCatalog, estimateOut, routeFor, sortTokens, tokenMatches, type NearAsset } from '@/lib/swap-catalog';
+import { bridgedAmount, isEvmAddress } from '@/lib/usdt0';
 
 const CIRCLE_MAINNET = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
 const CIRCLE_TESTNET = 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5';
@@ -82,4 +83,35 @@ test('search and order: every word matches, coins and big stablecoins first', ()
   const sorted = sortTokens(cat);
   assert.equal(sorted[0].contract, null);
   assert.ok(sorted.findIndex((t) => t.symbol === 'USDC') < sorted.findIndex((t) => t.symbol === 'BOME'));
+});
+
+test('USDT0 on Stellar reaches the OFT networks: the listed USDT where NEAR Intents has it, its own USDT0 elsewhere', () => {
+  const routes = [
+    { chain: 'eth', name: 'Ethereum', eid: 30101, receives: 'USDT' as const },
+    { chain: 'mantle', name: 'Mantle', eid: 30181, receives: 'USDT0' as const },
+  ];
+  const near: NearAsset[] = [...NEAR, { chain: 'eth', chainName: 'Ethereum', symbol: 'USDT', assetId: 'et', decimals: 6, contract: '0xdAC17F958D2ee523a2206206994597C13D831ec7', priceUsd: 1 }];
+  const cat = buildCatalog(near, 'public', routes);
+  const usdt0 = find(cat, 'stellar', 'USDT0');
+  const ethUsdt = find(cat, 'eth', 'USDT');
+  const mantle = find(cat, 'mantle', 'USDT0');
+  assert.equal(ethUsdt.usdt0, true);
+  assert.equal(cat.filter((t) => t.chain === 'eth' && t.symbol === 'USDT').length, 1, 'the listing and the OFT destination are one token');
+  assert.equal(mantle.chainName, 'Mantle');
+  assert.equal(mantle.near, null);
+  assert.deepEqual(routeFor(usdt0, ethUsdt, 'public'), { kind: 'usdt0', chain: 'eth' });
+  assert.deepEqual(routeFor(usdt0, mantle, 'public'), { kind: 'usdt0', chain: 'mantle' });
+  // Only Stellar's USDT0 takes the OFT: XLM to Mantle has no route at all.
+  assert.equal(routeFor(find(cat, 'stellar', 'XLM'), mantle, 'public').kind, 'none');
+  // The sandbox has no USDT0 (it does not exist on testnet).
+  assert.equal(buildCatalog(near, 'testnet', routes).some((t) => t.usdt0), false);
+});
+
+test('USDT0 crosses with six decimals: the seventh stays on Stellar', () => {
+  assert.equal(bridgedAmount('12.5'), '12.5');
+  assert.equal(bridgedAmount('1.0000001'), '1');
+  assert.equal(bridgedAmount('0.0000009'), null);
+  assert.equal(bridgedAmount('abc'), null);
+  assert.equal(isEvmAddress('0x2c7536E3605D9C16a7a3D7b1898e529396a65c23'), true);
+  assert.equal(isEvmAddress('GABC'), false);
 });

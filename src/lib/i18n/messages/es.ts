@@ -26,7 +26,7 @@ export default {
       signing: "Aprueba en Freighter…",
       waiting: "Esperando a la red…",
     },
-    view: {
+    view: { detail: { title: "Pago privado", payer: "Pagador", paymentTx: "Transacción del pago", feeTx: "Transacción de la comisión", expires: "Vence", settled: "Liquidado" },
       create: "Crear pago privado",
       empty: "Todavía no hay pagos privados.",
       loadError: "No se pudieron cargar los pagos privados.",
@@ -336,8 +336,8 @@ export default {
                 s: "Rampas de entrada y salida de fiat"
               },
               {
-                t: "FX",
-                s: "Conversión multiactivo"
+                t: "Swaps",
+                s: "Cualquier token y red, sin cuenta"
               }
             ]
           },
@@ -915,6 +915,35 @@ export default {
     contactSales: "Contactar con ventas",
     openDashboard: "Abrir panel"
   },
+  swapsPage: {
+    metaTitle: "Swaps | Cosmos Pay",
+    metaDescription: "Cambia tokens entre más de 35 redes y envía USDT0 desde Stellar a 21 redes, sin crear una cuenta: tu wallet firma y nadie custodia tus fondos. Con API pública de swaps.",
+    title: "Cambia entre redes, sin crear cuenta",
+    lede: "Elige con qué pagas y qué recibes. Tu wallet firma y los fondos nunca pasan por Cosmos Pay.",
+    facts: [
+      { t: "Sin cuenta", s: "Abres la página y haces el swap. La API pública funciona igual." },
+      { t: "Más de 35 redes", s: "Los mercados de Stellar, Solana y Monad, y todas las redes que alcanza NEAR Intents." },
+      { t: "Sin custodia", s: "Cada swap es una transacción que firma tu wallet o una dirección de depósito que pagas." },
+    ],
+    fee: "Comisión: {pct} por swap, más las tarifas de las redes.",
+    usdt0Title: "USDT0: USDT nativo desde Stellar",
+    usdt0Lede: "USDT0 en Stellar es el USDT omnichain de Tether. Envíalo 1:1 por LayerZero: llega como USDT nativo en Ethereum y como USDT0 en {n} redes más. La única tarifa es la de LayerZero, en XLM.",
+    usdt0Cta: "Enviar USDT0",
+    usdt0Networks: "Adónde llega",
+    apiTitle: "Los mismos swaps desde tu código",
+    apiLede: "La API pública de swaps tampoco necesita cuenta: toma la clave pública compartida y llama a los mismos endpoints que usa esta página.",
+    apiStep1: "Obtén la clave pública",
+    apiStep2: "Cotiza un swap entre redes",
+    apiStep3: "Cotiza USDT0 saliendo de Stellar",
+    apiDocs: "Referencia de la API",
+    faqTitle: "Preguntas",
+    faq: [
+      { q: "¿Necesito una cuenta?", a: "No. La página y la API pública usan una clave pública compartida. Con una cuenta tienes el historial en el dashboard y, con un plan, una comisión menor." },
+      { q: "¿Quién custodia mis fondos?", a: "Nadie. Un swap en una red es una transacción que firma tu wallet, un swap entre redes es una dirección de depósito que liquida NEAR Intents, y USDT0 viaja por LayerZero." },
+      { q: "¿Cuánto cuesta?", a: "{pct} por swap, más las tarifas de las redes. Enviar USDT0 desde Stellar no tiene comisión de Cosmos Pay: solo la tarifa de LayerZero, en XLM." },
+      { q: "¿Por qué USDT0 deja un resto mínimo?", a: "USDT0 cruza con seis decimales y Stellar tiene siete: el séptimo queda en tu cuenta." },
+    ],
+  },
   dash: {
     wallets: {
       title: "Wallets",
@@ -968,7 +997,7 @@ export default {
       activityLog: "Actividad de clientes",
       settings: "Organización",
       account: "Cuenta",
-      activity: "Actividad",
+      activity: "Notificaciones",
       support: "Soporte",
       inbox: "Bandeja de soporte",
       users: "Usuarios",
@@ -1048,7 +1077,7 @@ export default {
       Active: "Activo",
       Delivered: "Entregado"
     },
-    common: {
+    common: { notFound: "No está en esta organización o entorno.", open: "Abrir",
       actions: "Acciones",
       details: "Detalles",
       cancel: "Cancelar",
@@ -1121,7 +1150,7 @@ export default {
       }
     },
     overview: {
-      hub: { sumSwaps: "Swaps", sumLiquidity: "Liquidez", payersN: "{n} pagadores", doneN: "{n} completados", balances: "Saldos", allBalances: "Ver saldos", noBalances: "Todavía no hay nada liquidado.", newSwap: "Swap", crumb: "Resumen", active: "Activa", since: "Desde {date}", settled: "Volumen liquidado", noVolume: "Aún no hay pagos liquidados", moreAssets: "+{n} más", rate: "Tarifa", plan: "Plan", orgId: "ID de la organización", createLink: "Crear enlace de pago", docs: "Documentación", designs: "Diseños de checkout", kpiTotal: "Pagos totales", kpiSucceeded: "Completados", kpiFailed: "Fallidos", kpiRate: "Tasa de éxito", activity: "Actividad", period7: "7 días", period30: "30 días", periods: { today: "Hoy", week: "Semana", month: "Mes", year: "Año" }, noPeriodTx: "No hay pagos liquidados en este período.", sumVolume: "Volumen liquidado", sumCount: "Pagos", sumPayers: "Pagadores", sumWebhooks: "Entregas de webhooks", sumWebhooksFailed: "{n} fallidas", growthVs: "{pct} frente a los {n} días anteriores", legendVolume: "Volumen", legendCount: "Pagos", chartLabel: "Pagos creados y volumen liquidado por día en los últimos {n} días.", transactions: "Últimos pagos liquidados", viewAll: "Ver todos los pagos", thId: "Pago", thDate: "Fecha", thAmount: "Importe", thNetwork: "Red", thTo: "Pagado a", thStatus: "Estado", chartPeriods: { day: "Diario", week: "Semanal", month: "Mensual", year: "Anual" }, chartLabels: { day: "Pagos creados y volumen liquidado por día en los últimos 30 días.", week: "Pagos creados y volumen liquidado por semana en las últimas 12 semanas.", month: "Pagos creados y volumen liquidado por mes en los últimos 12 meses.", year: "Pagos creados y volumen liquidado por año en los últimos 5 años." }, sumFailed: "Fallidos", sumGrowth: "Crecimiento", growthTitle: "Frente al período anterior", growthVolume: "Volumen", growthCount: "Pagos", prevOrg: "Organización anterior", nextOrg: "Organización siguiente", created: "Creada el {date}", fee: "Comisión", txTitle: "Transacciones", thFrom: "Pagado por", thMemo: "Memo", onlySettled: "Solo liquidados", network: "Red", allNetworks: "Todas las redes", wallet: "Wallet", applyFilters: "Filtrar la lista", filtersLabel: "Filtrar transacciones", noTx: "No hay pagos en este período.", noMatch: "Ningún pago coincide con estos filtros.", shown: "{n} de {total} pagos", rowMenu: "Acciones del pago {id}", copyId: "Copiar ID", explorer: "Ver en el explorador", openPayments: "Abrir en Pagos", status: { SUCCEEDED: "Liquidado", FAILED: "Fallido", CANCELLED: "Cancelado", EXPIRED: "Vencido", PENDING: "Pendiente", SUBMITTED: "Confirmando" }, searchPlaceholder: "Buscar por ID, dirección, monto o activo…", groups: { settled: "Liquidados", open: "En curso", failed: "Fallidos" } },
+      hub: { webhooksFailedOne: "1 fallida", paymentsFailedOne: "1 fallido", paymentsFailedN: "{n} fallidos", doneOne: "1 completado", payersOne: "1 pagador", sumSwaps: "Swaps", sumLiquidity: "Liquidez", payersN: "{n} pagadores", doneN: "{n} completados", balances: "Saldos", allBalances: "Ver saldos", noBalances: "Todavía no hay nada liquidado.", newSwap: "Swap", crumb: "Resumen", active: "Activa", since: "Desde {date}", settled: "Volumen liquidado", noVolume: "Aún no hay pagos liquidados", moreAssets: "+{n} más", rate: "Tarifa", plan: "Plan", orgId: "ID de la organización", createLink: "Crear enlace de pago", docs: "Documentación", designs: "Diseños de checkout", kpiTotal: "Pagos totales", kpiSucceeded: "Completados", kpiFailed: "Fallidos", kpiRate: "Tasa de éxito", activity: "Actividad", period7: "7 días", period30: "30 días", periods: { today: "Hoy", week: "Semana", month: "Mes", year: "Año" }, noPeriodTx: "No hay pagos liquidados en este período.", sumVolume: "Volumen liquidado", sumCount: "Pagos", sumPayers: "Pagadores", sumWebhooks: "Entregas de webhooks", sumWebhooksFailed: "{n} fallidas", growthVs: "{pct} frente a los {n} días anteriores", legendVolume: "Volumen", legendCount: "Pagos", legendDone: "Completados", goTo: "Ir a {view}", noBreakdown: "Todavía no hay desglose por período.", periodLabel: "Período", chartLabel: "Pagos creados y volumen liquidado por día en los últimos {n} días.", transactions: "Últimos pagos liquidados", viewAll: "Ver todos los pagos", thId: "Pago", thDate: "Fecha", thAmount: "Importe", thNetwork: "Red", thTo: "Pagado a", thStatus: "Estado", chartPeriods: { day: "Diario", week: "Semanal", month: "Mensual", year: "Anual" }, chartLabels: { day: "Pagos creados y volumen liquidado por día en los últimos 30 días.", week: "Pagos creados y volumen liquidado por semana en las últimas 12 semanas.", month: "Pagos creados y volumen liquidado por mes en los últimos 12 meses.", year: "Pagos creados y volumen liquidado por año en los últimos 5 años." }, sumFailed: "Fallidos", sumGrowth: "Crecimiento", growthTitle: "Frente al período anterior", growthVolume: "Volumen", growthCount: "Pagos", prevOrg: "Organización anterior", nextOrg: "Organización siguiente", created: "Creada el {date}", fee: "Comisión", txTitle: "Transacciones", thFrom: "Pagado por", thMemo: "Memo", onlySettled: "Solo liquidados", network: "Red", allNetworks: "Todas las redes", wallet: "Wallet", applyFilters: "Filtrar la lista", filtersLabel: "Filtrar transacciones", noTx: "No hay pagos en este período.", noMatch: "Ningún pago coincide con estos filtros.", shown: "{n} de {total} pagos", rowMenu: "Acciones del pago {id}", copyId: "Copiar ID", explorer: "Ver en el explorador", openPayments: "Abrir en Pagos", status: { SUCCEEDED: "Liquidado", FAILED: "Fallido", CANCELLED: "Cancelado", EXPIRED: "Vencido", PENDING: "Pendiente", SUBMITTED: "Confirmando" }, searchPlaceholder: "Buscar por ID, dirección, monto o activo…", groups: { settled: "Liquidados", open: "En curso", failed: "Fallidos" } },
       greeting: "Buenos días, {name}",
       sub: "Esto es lo que está pasando hoy en {org}.",
       metrics: {
@@ -1189,7 +1218,7 @@ export default {
       delete: "Eliminar", deleteConfirm: "Eliminar", confirmDelete: "Esto no se puede deshacer.",
       customerSet: "Importe libre", allEvents: "Todos los eventos", events: "Eventos",
       received: "Recibido", pending: "Pendiente",
-      custDetail: { title: "Cliente", edit: "Editar", save: "Guardar cambios", alias: "Alias", note: "Nota", account: "Dirección de wallet", accountPlaceholder: "Dirección en Stellar, Solana o Monad", payments: "Pagos", onChain: "On-chain", noPayments: "Aún no hay pagos." },
+      custDetail: { noAccount: "Añade la dirección de la wallet del cliente para ver los pagos que hizo.", title: "Cliente", edit: "Editar", save: "Guardar cambios", alias: "Alias", note: "Nota", account: "Dirección de wallet", accountPlaceholder: "Dirección en Stellar, Solana o Monad", payments: "Pagos", onChain: "On-chain", noPayments: "Aún no hay pagos." },
     },
     filters: { label: "Filtrar la lista", status: "Estado", network: "Red", kind: "Tipo", allStatuses: "Todos", allNetworks: "Todas las redes", allKinds: "Todos los tipos", date: "Fecha", dates: { any: "Cualquier fecha", today: "Hoy", "7d": "Últimos 7 días", "30d": "Últimos 30 días", "90d": "Últimos 90 días" }, shown: "{n} de {total}", clear: "Quitar filtros", noMatch: "Nada coincide con estos filtros." },
     tokens: { custom: "Otro token…", ticker: "Símbolo del token", address: { solana: "Mint del token", monad: "Contrato del token" } },
@@ -1224,7 +1253,7 @@ export default {
         mainnet: "Mainnet", more: "Más opciones",
         submit: "Crear enlace",
       },
-      detail: {
+      detail: { check: { label: "¿Se pagó desde otra wallet? Verifica su transacción", placeholder: "Hash de la transacción", submit: "Verificar transacción", ok: "La transacción paga este enlace.", bad: "Esa transacción no paga este enlace." },
         checkout: "Página de pago", openCheckout: "Abrir página de pago",
         eyebrow: "Enlace de pago", title: "Enlace de pago listo",
         scan: "Escanea para pagar", downloadQr: "Descargar QR",
@@ -1274,7 +1303,7 @@ export default {
         add: "Añadir cliente"
       }
     },
-    products: {
+    products: { detail: { title: "Producto", save: "Guardar cambios", active: "A la venta", activeHint: "Un producto inactivo se conserva, pero no se puede vender.", saveError: "No se pudo guardar el producto." },
       title: "Productos y enlaces",
       sub: "Planes recurrentes y enlaces de pago",
       add: "Nuevo producto",
@@ -1300,7 +1329,7 @@ export default {
         create: "Crear producto"
       }
     },
-    apikeys: {
+    apikeys: { ownerPlan: "Lo define el plan del owner de la organización.", liveLocked: "Tu plan no incluye claves de producción.",
       readOnly: "Tienes acceso de solo lectura. Solo los owners y admins pueden crear o revocar claves de API.",
       title: "Claves API",
       sub: "Claves secretas para la API de Cosmos Pay. Crea todas las que necesites.",
@@ -1329,7 +1358,7 @@ export default {
       usage: "{used} / {limit}",
       limitReached: "Alcanzaste el límite de claves de tu plan. Mejora tu plan para añadir más."
     },
-    webhooks: {
+    webhooks: { resent: "Entrega reenviada", noFailed: "No hay entregas fallidas.", only: { all: "Todas", failed: "Fallidas" }, eventId: "ID del evento", error: "Error", attempts: "Intentos", delivery: "Entrega", save: "Guardar cambios", editTitle: "Editar endpoint", edit: "Editar endpoint", eventsOne: "1 evento",
       title: "Webhooks",
       sub: "Eventos en tiempo real cuando los pagos se liquidan en Stellar, Solana o Monad",
       add: "Añadir endpoint",
@@ -1507,7 +1536,7 @@ export default {
       statusError: "No se pudo actualizar el estado.",
       statuses: { open: "Abierto", pending: "Pendiente", resolved: "Resuelto", closed: "Cerrado" }
     },
-    admin: {
+    admin: { viewList: "Ver lista",
       loading: "Cargando…",
       loadError: "No se pudieron cargar los datos.",
       empty: "Nada por aquí todavía.",
@@ -1650,15 +1679,15 @@ export default {
       create: "Nuevo swap",
       readOnly: "Tienes acceso de solo lectura a los swaps en esta organización.",
       listTitle: "Tus swaps",
-      widget: { title: "Swap", pay: "Pagas", receive: "Recibes", selectToken: "Elegir token", changeToken: "{token} en {chain}, cambiar el token", flip: "Intercambiar lo que pagas y lo que recibes", pickPay: "Pagar con", pickReceive: "Recibir", details: "Detalle de la cotización", invertRate: "Invertir la tasa", eta: "Tiempo estimado", seconds: "{n} s", slippage: "Tolerancia de slippage", slippageAuto: "Auto", slippageHint: "Por debajo del mínimo que fija, el swap no se hace (uno entre redes se reembolsa).", settings: "Ajustes del swap", route: "Ruta", venueNear: "NEAR Intents", accountLabel: "Tu cuenta de {chain}", accountHint: "Paga y firma el swap.", refundLabel: "Dirección de reembolso en {chain}", recipientLabel: "Recibir en {chain}", another: "Enviar a otra cuenta", ctaSelect: "Elige un token", ctaSame: "Elige dos tokens distintos", ctaProduction: "Disponible en Production", ctaUnsupported: "Estos tokens no pueden cambiarse entre sí", ctaAmount: "Ingresa un monto", ctaAmountBad: "Revisa el monto", ctaAccount: "Ingresa tu cuenta de {chain}", ctaRefund: "Ingresa la dirección de reembolso en {chain}", ctaRecipient: "Ingresa la dirección en {chain}", ctaMemo: "Revisa el memo", ctaQuoting: "Cotizando…", ctaRetry: "Volver a cotizar", ctaProductionOpen: "Abrir un swap requiere Production", ctaOpen: "Abrir swap", ctaSwap: "Swap en {venue}", ctaBusy: "Preparando…" },
+      widget: { title: "Swap", pay: "Pagas", receive: "Recibes", selectToken: "Elegir token", changeToken: "{token} en {chain}, cambiar el token", flip: "Intercambiar lo que pagas y lo que recibes", pickPay: "Pagar con", pickReceive: "Recibir", details: "Detalle de la cotización", invertRate: "Invertir la tasa", eta: "Tiempo estimado", seconds: "{n} s", slippage: "Tolerancia de slippage", slippageAuto: "Auto", slippageHint: "Por debajo del mínimo que fija, el swap no se hace (uno entre redes se reembolsa).", settings: "Ajustes del swap", route: "Ruta", venueNear: "NEAR Intents", venueUsdt0: "LayerZero (USDT0)", ctaBridge: "Enviar a {chain}", lzFee: "Tarifa de LayerZero", dustNote: "Queda en Stellar", accountLabel: "Tu cuenta de {chain}", accountHint: "Paga y firma el swap.", refundLabel: "Dirección de reembolso en {chain}", recipientLabel: "Recibir en {chain}", another: "Enviar a otra cuenta", ctaSelect: "Elige un token", ctaSame: "Elige dos tokens distintos", ctaProduction: "Disponible en Production", ctaUnsupported: "Estos tokens no pueden cambiarse entre sí", ctaAmount: "Ingresa un monto", ctaAmountBad: "Revisa el monto", ctaAccount: "Ingresa tu cuenta de {chain}", ctaRefund: "Ingresa la dirección de reembolso en {chain}", ctaRecipient: "Ingresa la dirección en {chain}", ctaMemo: "Revisa el memo", ctaQuoting: "Cotizando…", ctaRetry: "Volver a cotizar", ctaProductionOpen: "Abrir un swap requiere Production", ctaOpen: "Abrir swap", ctaSwap: "Swap en {venue}", ctaBusy: "Preparando…" },
       picker: { search: "Busca un token, red o dirección", network: "Red", allNetworks: "Todas las redes", count: "{n} tokens", useToken: "Usar {token}", none: "Ningún token coincide. Pega la dirección de un token de Stellar, Solana o Monad para usarlo.", more: "{n} más: busca para acotar la lista." },
       groups: { open: "En curso", succeeded: "Completados", refunded: "Reembolsados", failed: "Fallidos", expired: "Vencidos" },
       typeLabel: "Tipo",
-      types: { all: "Todos los tipos", same: "En una red", cross: "Entre redes" },
+      types: { all: "Todos los tipos", same: "En una red", cross: "Entre redes", usdt0: "Puente USDT0" },
       form: { desc: "Elige qué envías y qué recibes. En una red lo opera su mercado; entre redes lo liquida NEAR Intents. Nada pasa por Cosmos Pay.", from: "Envías", to: "Recibes", chain: "Red", asset: "Activo", amountHint: "Cuánto del activo envías.", flip: "Intercambiar lo que envías y lo que recibes", routeLine: "Ruta: {route}", route: "Ruta", venueCross: "NEAR Intents" },
       searchPlaceholder: "Buscar por ID, dirección o activo…",
       filters: { all: "Todos", PENDING: "Pendiente", SUBMITTED: "Enviado", SUCCEEDED: "Completado", FAILED: "Fallido", EXPIRED: "Vencido" },
-      status: { PENDING: "Pendiente", SUBMITTED: "Enviado", SUCCEEDED: "Completado", FAILED: "Fallido", EXPIRED: "Vencido" },
+      status: { PENDING: "Pendiente", SUBMITTED: "Enviado", SUCCEEDED: "Completado", FAILED: "Fallido", EXPIRED: "Vencido", DELIVERED: "Entregado" },
       tableHead: { id: "Swap", route: "Enviado → recibido", status: "Estado", created: "Creado", chains: "Redes" },
       empty: "Aún no hay swaps. Crea uno para obtener una transacción sin firmar.",
       loading: "Cargando swaps…",
@@ -1701,6 +1730,17 @@ export default {
         fee: "Comisión", bps: "bps",
         feeNote: "La comisión es la tarifa del plan de tu organización y se aplica automáticamente.",
         create: "Crear swap", creating: "Creando…",
+      },
+      usdt0: {
+        title: "USDT0 a {chain}",
+        destination: "Red",
+        recipient: "Destinatario",
+        arrives: "Llega",
+        fee: "Tarifa de LayerZero",
+        destTx: "Transacción de destino",
+        scan: "Ver en LayerZero Scan",
+        travelling: "Enviado desde Stellar. LayerZero lo está entregando en {chain}.",
+        delivered: "Entregado en {chain}.",
       },
       detail: {
         eyebrow: "Swap", title: "Swap listo",

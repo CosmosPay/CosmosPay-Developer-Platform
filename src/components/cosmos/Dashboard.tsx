@@ -50,7 +50,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
     });
   const [theme, setTheme] = useTheme();
   const [view, setView] = useState("overview");
-  // Allow deep-linking a view via ?view= (e.g. the nav "Account settings" → ?view=settings).
+  // Allow deep-linking a view via ?view= (e.g. the nav's account item → ?view=account).
   useEffect(() => {
     try {
       const v = new URLSearchParams(window.location.search).get("view");
@@ -198,6 +198,10 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const canCreateKeys = live
     ? (can("apiKeysLive:create") && orgLimits.allowLive)
     : can("apiKeysTest:create");
+  // Production on a plan without live keys: the button would vanish without a word, so the page says why.
+  const liveKeysLocked = live && can("apiKeysLive:create") && !orgLimits.allowLive;
+  // The keys go by the organization owner's plan: only that owner can lift the limit.
+  const keyUpgrade = canChangePlan && org.role === "owner" ? () => setModal("plan") : null;
   const canEditKeys = can("apiKeysTest:edit") || can("apiKeysLive:edit");
   const canDeleteKeys = can("apiKeysTest:delete") || can("apiKeysLive:delete");
   const keysSorted = keys.slice().sort(byAge);
@@ -302,28 +306,28 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   };
 
   const renderView = () => {
-    const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} env={live ? "prod" : "dev"} />;
+    const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} canCreatePayments={can("payments:create")} env={live ? "prod" : "dev"} />;
     switch (view) {
       case "payments": return <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} />;
-      case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} onGo={go} />;
+      case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
+      case "products": return <ProductsView canManage={can("products:create")} canSell={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
       case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       // Swaps between chains live in the swaps list; the old deep link opens it filtered to them.
       case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "liquidity": return <LiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "liquidity": return <LiquidityView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
-      case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
+      case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;
       case "weblogs": return <LogsView kind="webhooks" env={live ? "prod" : "dev"} />;
       case "activityLog": return <ActivityLogView env={live ? "prod" : "dev"} />;
-      case "activity": return <NotificationsView notifications={visibleNotifs} loading={notifsLoading} error={notifsError} />;
+      case "activity": return <NotificationsView notifications={visibleNotifs} loading={notifsLoading} error={notifsError} onGo={go} />;
       case "support": return <SupportView />;
       case "inbox": return isStaff ? <SupportInboxView /> : overview;
       case "users": return isManager ? <UsersView currentUserId={user.id} currentRole={user.role} /> : overview;
-      case "adminOverview": return isManager ? <AdminOverviewView env={live ? "prod" : "dev"} /> : overview;
+      case "adminOverview": return isManager ? <AdminOverviewView env={live ? "prod" : "dev"} goToAdmin={goToAdmin} /> : overview;
       case "adminPayments": return isManager ? <AdminPaymentsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminSwaps": return isManager ? <AdminSwapsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminFiat": return isManager ? <AdminFiatView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
@@ -351,7 +355,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
 
         <div className="dash-main">
           {/* The general nav, as on every view, adapted to the frame (Nav inDash). */}
-          <Nav theme={theme} setTheme={setTheme} user={user} sessionReady inDash search={<DashSearch go={go} view={view} visible={visibleView} />} />
+          <Nav theme={theme} setTheme={setTheme} user={user} sessionReady inDash onAccount={() => go("account")} search={<DashSearch go={go} view={view} visible={visibleView} />} />
           {/* The page head opens the main landmark (the nav above is the page banner), so the
               view's h1 and the environment switch belong to the content they title. */}
           <main id="main" className="dash-content">
@@ -360,7 +364,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
             <div className="page-title">
               <h1>{t.dash.viewLabels[view]}</h1>
               <span className="page-crumb" aria-hidden="true">→</span>
-              <OrgSwitcher variant="crumb" orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} />
+              <OrgSwitcher variant="crumb" orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} onUpgrade={canChangePlan ? () => setModal("plan") : null} />
             </div>
             <div className="top-actions">
               <div className="env-seg" role="group" aria-label={t.dash.env.heading}>
@@ -389,7 +393,7 @@ export default function Dashboard({ user: initialUser, lang, features }) {
         </div>
       </div>
 
-      {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} />}
+      {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} onUpgrade={canChangePlan ? () => setModal("plan") : null} />}
       {modal === "plan" && canChangePlan && <PlanModal current={plan} enabledPlans={feat.enabledPlans} onClose={() => setModal(null)} onSelect={requestChangePlan} />}
       {renamingOrg && <RenameOrgModal current={renamingOrg} onClose={() => setRenamingOrg(null)} onRename={(name) => requestRenameOrg(renamingOrg, name)} />}
       {modal === "key" && <ApiKeyModal mode="create" onClose={() => setModal(null)} onSubmit={addKey} />}

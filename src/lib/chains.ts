@@ -127,7 +127,16 @@ export const NETWORK_NAMES: Record<string, string> = {
   movement: "Movement", starknet: "Starknet", cardano: "Cardano", aleo: "Aleo", fogo: "Fogo",
 };
 export const NETWORK_IDS = Object.keys(NETWORK_NAMES);
-export const networkName = (id: string | null | undefined) => (id ? NETWORK_NAMES[id] || id.toUpperCase() : "");
+
+/* Networks only USDT0 reaches from here (LayerZero's OFT from Stellar, src/lib/usdt0.ts), not NEAR
+   Intents: named for people, never accepted as a cross-chain swap's network. The OFT's other
+   destinations (Ethereum, Arbitrum, Optimism, Polygon, Berachain, Plasma, X Layer, Monad) are
+   already above. */
+export const OFT_NETWORK_NAMES: Record<string, string> = {
+  conflux: "Conflux eSpace", flare: "Flare", hyperevm: "HyperEVM", hedera: "Hedera", ink: "Ink", mantle: "Mantle",
+  megaeth: "MegaETH", morph: "Morph", rootstock: "Rootstock", sei: "Sei", stable: "Stable", tempo: "Tempo", unichain: "Unichain",
+};
+export const networkName = (id: string | null | undefined) => (id ? NETWORK_NAMES[id] || OFT_NETWORK_NAMES[id] || id.toUpperCase() : "");
 
 /* What an address looks like on each network, as a field's placeholder. */
 const EVM_HINT = "0x…";
@@ -139,4 +148,4 @@ export const NETWORK_PLACEHOLDERS: Record<string, string> = {
   btc: "bc1… / 1… / 3…", ltc: "ltc1… / L…", doge: "D…", bch: "bitcoincash:q…", dash: "X…", zec: "t1… / u1…",
   xrp: "r…", tron: "T…", ton: "UQ… / EQ…", near: "name.near", cardano: "addr1…", aleo: "aleo1…", fogo: "Base58…",
 };
-export const placeholderFor = (id: string) => NETWORK_PLACEHOLDERS[id] || "";
+export const placeholderFor = (id: string) => NETWORK_PLACEHOLDERS[id] || (OFT_NETWORK_NAMES[id] ? EVM_HINT : "");

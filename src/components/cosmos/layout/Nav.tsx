@@ -25,7 +25,7 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     // [1, 0, "#"], // Payouts (no page yet)
     // [1, 1, "#"], // Cross-border (no page yet)
     // [1, 2, "#"], // Anchors (no page yet)
-    // [1, 3, "#"], // FX (no page yet)
+    [1, 3, `${PAYMENTS}/swaps`], // Swaps (the gateway's, or the company site's own)
     // [2, 0, "#"], // Stablecoins (no page yet)
     // [2, 1, "#"], // Wallets (no page yet)
     // [2, 2, "#"], // Ledger (no page yet)
@@ -93,7 +93,7 @@ function useNavItems(area?: Area): any[] {
 /* `inDash`: the bar inside the dashboard (Dashboard.tsx), restyled to its reference: it spans the
    content column only, the logo lives in the sidebar instead (dashboard.css), and it drops the
    "Dashboard" button, which would lead to the page it is on. */
-export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area, inDash = false, search }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area; inDash?: boolean; search?: ReactNode }) {
+export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area, inDash = false, search, onAccount }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area; inDash?: boolean; search?: ReactNode; onAccount?: () => void }) {
   const t = useT();
   const NAV_ITEMS = useNavItems(area);
   const [scrolled, setScrolled] = useState(false);
@@ -239,7 +239,7 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
             <>
               {/* Inside the dashboard the button would lead to the page it is on. */}
               {!inDash && <a className="btn btn-dark btn-sm getkeys" href={DASH}>{t.nav.dashboard}</a>}
-              <NavUserMenu user={user} />
+              <NavUserMenu user={user} onAccount={inDash ? onAccount : undefined} />
             </>
           ) : (
             <>

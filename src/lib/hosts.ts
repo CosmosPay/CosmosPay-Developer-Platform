@@ -63,6 +63,9 @@ const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
 /* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts). */
 const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);
+/* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
+   src/pages/site/swaps.astro): the public swaps. The platform sends them to the gateway. */
+const DUAL_PATHS = new Set(["/swaps"]);
 /* A payment link id (Prisma cuid). Mirrors isPaymentLinkId in src/lib/payments/payment-link.ts. */
 const PAYMENT_LINK_PATH = /^\/c[a-z0-9]{20,31}$/;
 
@@ -165,6 +168,11 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
   const serve = (area: Area): RouteDecision => (area === "dev" ? { kind: "pass", area } : rewrite(area, MOUNTS[area], path));
 
   if (PROVER_FILE.test(path) && areas.has("dev") && !areas.has("payments")) return rewrite("dev", MOUNTS.payments, path);
+  if (DUAL_PATHS.has(path)) {
+    if (areas.has("payments")) return serve("payments");
+    if (areas.has("site")) return serve("site");
+    return to("payments", encodeURI(canonical));
+  }
 
   const owner = ownerOf(path);
   if (owner === "home") {

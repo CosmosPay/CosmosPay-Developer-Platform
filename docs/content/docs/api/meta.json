@@ -6,6 +6,7 @@
     "payment-intents",
     "swaps",
     "cross-chain-swaps",
+    "usdt0",
     "zk-payments",
     "zk-checkout",
     "liquidity-pools",

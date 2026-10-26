@@ -62,6 +62,43 @@ export function usePaged(rows, resetKey, pageSize = PAGE_SIZE) {
    bar's search does): a list already on screen reads them again. */
 export const FILTERS_EVENT = "dash:filters";
 
+/* Opens a view already filtered (a figure, a count or a notice that names a list): `go` drops the
+   last view's filters, then these are written to the URL, where the list reads them when it mounts
+   or, already on screen, on FILTERS_EVENT. Keys are the view's own (useListFilters); a value it
+   does not accept falls back to its default. */
+export function goFiltered(go: (view: string) => void, view: string, params: Record<string, string> = {}) {
+  go(view);
+  try {
+    const url = new URL(window.location.href);
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+    window.history.replaceState(window.history.state, "", url);
+    window.dispatchEvent(new Event(FILTERS_EVENT));
+  } catch (e) {}
+}
+
+/* A one-off request in the URL, written by goFiltered from elsewhere: `open=<id>` (show that record)
+   or `create=1` (open the create dialog). Read after mount (and on FILTERS_EVENT, when the view is
+   already on screen), then dropped from the URL, so a reload or closing the dialog leaves the list. */
+export function useUrlRequest(key: string): [string | null, () => void] {
+  const [value, setValue] = useState<string | null>(null);
+  useEffect(() => {
+    const read = () => {
+      try {
+        const url = new URL(window.location.href);
+        const v = url.searchParams.get(key);
+        if (!v) return;
+        setValue(v);
+        url.searchParams.delete(key);
+        window.history.replaceState(window.history.state, "", url);
+      } catch (e) {}
+    };
+    read();
+    window.addEventListener(FILTERS_EVENT, read);
+    return () => window.removeEventListener(FILTERS_EVENT, read);
+  }, [key]);
+  return [value, () => setValue(null)];
+}
+
 export function useListFilters(defaults: Filters, allowed: Allowed = {}) {
   // The first render matches the server's (no URL there): the URL's filters arrive right after.
   const [filters, setFilters] = useState<Filters>(defaults);

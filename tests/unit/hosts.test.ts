@@ -164,3 +164,9 @@ test('one host configured for every area serves all of them without redirect loo
   assert.deepEqual(r(LINK), { kind: 'rewrite', area: 'payments', path: `/payments${LINK}` });
   assert.deepEqual(r('/site/tos'), { kind: 'redirect', location: 'http://localhost:4321/tos', status: 301 });
 });
+
+test('/swaps is served by the gateway and by the company site, each its own; the platform sends it to the gateway', () => {
+  assert.deepEqual(route('payments.cosmospay.lat', '/swaps'), { kind: 'rewrite', area: 'payments', path: '/payments/swaps' });
+  assert.deepEqual(route('cosmospay.lat', '/swaps'), { kind: 'rewrite', area: 'site', path: '/site/swaps' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/swaps', '?x=1'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/swaps?x=1', status: 301 });
+});

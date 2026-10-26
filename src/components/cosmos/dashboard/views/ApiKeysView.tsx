@@ -8,7 +8,10 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
-export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedIds, canCreate = true, canEdit = true, canDelete = true, onCreate, onRevoke, onEdit }) {
+/* At the plan's key limit, or in Production on a plan without live keys, the page says so and, for
+   the organization's owner who can change plan, offers the plan dialog (`onUpgrade`); anyone else is
+   told the owner's plan decides. */
+export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedIds, canCreate = true, canEdit = true, canDelete = true, liveLocked = false, onCreate, onRevoke, onEdit, onUpgrade = null }) {
   const t = useT();
   const ak = t.dash.apikeys;
   const roleLabels = t.dash.modals.key.roles;
@@ -26,7 +29,13 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
     <>
       <ViewHead title={ak.title} sub={usage}>{canCreate && <button className="btn btn-dark btn-sm" onClick={onCreate} disabled={reached}>{DI.plus} {ak.create}</button>}</ViewHead>
       {readOnly && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.key}<span>{ak.readOnly}</span></div>}
-      {canCreate && reached && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.key}<span>{ak.limitReached}</span></div>}
+      {((canCreate && reached) || liveLocked) && (
+        <div className="note-bar" style={{ marginBottom: 16 }}>
+          {DI.key}
+          <span>{liveLocked ? ak.liveLocked : ak.limitReached} {!onUpgrade && ak.ownerPlan}</span>
+          {onUpgrade && <button type="button" className="btn btn-dark btn-sm note-bar-act" onClick={onUpgrade}>{t.dash.common.viewPlans}</button>}
+        </div>
+      )}
       <div className="panel">
         {showTable && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{ak.tableHead.name}</th><th>{ak.tableHead.id}</th><th>{ak.tableHead.role}</th><th>{ak.tableHead.permissions}</th><th>{ak.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>

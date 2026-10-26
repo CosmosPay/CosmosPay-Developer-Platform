@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
-import { crossChainSwaps as api } from "@/lib/api-client";
+import type { SwapApi } from "@/lib/swap-api";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
@@ -16,7 +16,7 @@ export const CROSS_FINAL = ["SUCCEEDED", "REFUNDED", "FAILED"];
 export const crossRoute = (s) =>
   `${s.amountIn} ${s.originAsset} (${networkName(s.originChain)}) → ${s.amountOut || `~${s.amountOutEstimated}`} ${s.destinationAsset} (${networkName(s.destinationChain)})`;
 
-export function CrossChainSwapDetailModal({ swap, orgId, env, canManage, onClose }) {
+export function CrossChainSwapDetailModal({ swap, api, canManage, onClose }: { swap; api: SwapApi; canManage: boolean; onClose: () => void }) {
   const t = useT();
   const cc = t.dash.crossChain;
   const d = cc.detail;
@@ -27,23 +27,23 @@ export function CrossChainSwapDetailModal({ swap, orgId, env, canManage, onClose
   // The list rows carry no QR: fetch the full record once, then poll until final.
   useEffect(() => {
     let alive = true;
-    api.get(swap.id, orgId, env).then((full) => { if (alive && full) setData(full); }).catch(() => {});
+    api.get("cross", swap.id).then((full) => { if (alive && full) setData(full); }).catch(() => {});
     return () => { alive = false; };
-  }, [swap.id, orgId, env]);
+  }, [swap.id, api]);
   useEffect(() => {
     if (CROSS_FINAL.includes(data.status)) return;
     let alive = true;
     const h = setInterval(() => {
       if (document.hidden) return;
-      api.get(swap.id, orgId, env).then((full) => { if (alive && full) setData(full); }).catch(() => {});
+      api.get("cross", swap.id).then((full) => { if (alive && full) setData(full); }).catch(() => {});
     }, 6000);
     return () => { alive = false; clearInterval(h); };
-  }, [swap.id, orgId, env, data.status]);
+  }, [swap.id, api, data.status]);
 
   const report = () => {
     if (!txHash.trim() || busy) return;
     setBusy(true);
-    api.reportDeposit(swap.id, orgId, env, txHash.trim())
+    api.reportDeposit(swap.id, txHash.trim())
       .then((fresh) => { if (fresh) setData(fresh); showToast(d.reported); setTxHash(""); })
       .catch((err) => showToast((err && err.message) || d.reportError, "error"))
       .finally(() => setBusy(false));

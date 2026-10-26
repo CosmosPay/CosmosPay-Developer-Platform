@@ -7,8 +7,9 @@
 
    WHAT IT COVERS. Every symbol NEAR Intents' 1Click lists (GET /v0/tokens, minus the
    blockchains the Payments API does not offer: qtc, adi), the standard assets the dashboard
-   offers on Stellar, Solana and Monad, every network id in NETWORK_NAMES (src/lib/chains.ts),
-   and Pollar's mark for the landing's wallets marquee. Logos are keyed by normalized symbol
+   offers on Stellar, Solana and Monad, every network id in NETWORK_NAMES and OFT_NETWORK_NAMES
+   (src/lib/chains.ts: the networks only USDT0 reaches), and Pollar's mark for the landing's
+   wallets marquee. Logos are keyed by normalized symbol
    (uppercase, a trailing "(...)" tag and a leading "$" removed), so one symbol on several chains
    shares one file.
 
@@ -171,7 +172,7 @@ const MISSING_NOTES = {
    src/lib/chains.ts). */
 const EXTRA_SYMBOLS = ['XLM', 'USDC', 'EURC', 'USDT0', 'USDB', 'SOL', 'MON'];
 
-/* Every network id in NETWORK_NAMES. */
+/* Every network id in NETWORK_NAMES, then OFT_NETWORK_NAMES. */
 const NETWORK_SOURCES = {
   stellar: brand('/media/brands/xlm.svg'),
   solana: brand('/media/brands/sol.svg'),
@@ -208,6 +209,20 @@ const NETWORK_SOURCES = {
   cardano: tw('cardano/info/logo.png'),
   aleo: plate(ALEO_MARK, '#121212'),
   fogo: FOGO_ICON,
+  // Networks only USDT0 reaches (OFT_NETWORK_NAMES). Trust Wallet files Conflux eSpace under cfxevm.
+  conflux: tw('cfxevm/info/logo.png'),
+  flare: url('https://drive.usercontent.google.com/download?id=1RQubyppyPT8hH8blnxHlk4bebQghwkDC&export=download', NO_LICENCE, 'Flare brand assets (the "Brand Assets" folder linked from flare.network), Token icons/Flare/SVG/FLR.svg'),
+  hyperevm: tw('hyperevm/info/logo.png'),
+  hedera: tw('hedera/info/logo.png'),
+  ink: zip('https://docs.inkonchain.com/downloads/ink-brand-kit.zip', 'ink-brand-kit/mark/svg/ink-mark-purple.svg', NO_LICENCE, 'Ink brand kit (docs.inkonchain.com/work-with-ink/brand-kit), purple mark'),
+  mantle: tw('mantle/info/logo.png'),
+  megaeth: tw('megaeth/info/logo.png'),
+  morph: url('https://morphbrand.notion.site/image/attachment%3Ac7d00f91-495c-41dc-9e3b-f1a587e70ed8%3AMainnet-Circle-green.svg?table=block&id=2f42d06e-6aeb-80a7-a812-ff01ca8518d1&spaceId=fcab2c10-8da9-4414-aa63-4998ddf62e78&cache=v2', NO_LICENCE, 'Morph brand guideline (morphbrand.notion.site, linked from morph.network), Mainnet-Circle-green.svg'),
+  rootstock: tw('rootstock/info/logo.png'),
+  sei: tw('sei/info/logo.png'),
+  stable: plate(url('https://www.stable.xyz/brand/logo/stable-logotype-light.svg', NO_LICENCE, 'Stable brand kit (stable.xyz/brand-kit), light logotype on the kit\'s Dark #001E1E disc'), '#001e1e'),
+  tempo: url('https://drive.usercontent.google.com/download?id=1xDMoRdUg2htMpEhrQS6SPvV8XJ3ob0-u&export=download', NO_LICENCE, 'Tempo brand kit (the Google Drive folder tempo.xyz/brand opens), social/circle-black.png: white mark on its black disc'),
+  unichain: zip('https://unichain.org/assets/zip/unichain-brand-kit.zip', 'Unichain Brand Kit /Network icons/Mainnet.svg', NO_LICENCE, 'Unichain brand kit (unichain.org/brand-kit), mainnet network icon'),
 };
 
 /* Pollar, for the landing's wallets marquee (pollar.xyz/brandkit, PNG only, no SVG offered). */
@@ -508,9 +523,10 @@ async function main() {
     brandLines.push(`- \`${file}\`: ${describe(result.source)}`);
   }
 
-  // Network coverage against the app's own list.
-  const { NETWORK_IDS } = await import(pathToFileURL(join(ROOT, 'src', 'lib', 'chains.ts')).href);
-  for (const id of NETWORK_IDS) if (!networkLogos[id]) missing.push(`network:${id} (no source)`);
+  // Network coverage against the app's own lists: NEAR Intents' networks and the ones only USDT0 reaches.
+  const { NETWORK_IDS, OFT_NETWORK_NAMES } = await import(pathToFileURL(join(ROOT, 'src', 'lib', 'chains.ts')).href);
+  const networkIds = [...NETWORK_IDS, ...Object.keys(OFT_NETWORK_NAMES)];
+  for (const id of networkIds) if (!networkLogos[id]) missing.push(`network:${id} (no source)`);
 
   const missingTokens = missing.filter((m) => !m.includes(':'));
   writeFileSync(join(TOKENS_DIR, 'SOURCES.md'), [
@@ -549,7 +565,7 @@ async function main() {
   }
 
   writeFileSync(MANIFEST, manifestSource(tokenLogos, networkLogos));
-  console.log(`\ntokens: ${Object.keys(tokenLogos).length} of ${bySymbol.size} symbols; networks: ${Object.keys(networkLogos).length} of ${NETWORK_IDS.length}`);
+  console.log(`\ntokens: ${Object.keys(tokenLogos).length} of ${bySymbol.size} symbols; networks: ${Object.keys(networkLogos).length} of ${networkIds.length}`);
   if (missing.length) console.log(`without a logo: ${missing.join(', ')}`);
 }
 
@@ -565,7 +581,7 @@ export const TOKEN_LOGOS: Record<string, string> = {
 ${entries(tokens)}
 };
 
-/* Keyed by the network ids of NETWORK_NAMES (src/lib/chains.ts). */
+/* Keyed by the network ids of NETWORK_NAMES and OFT_NETWORK_NAMES (src/lib/chains.ts). */
 export const NETWORK_LOGOS: Record<string, string> = {
 ${entries(networks)}
 };
