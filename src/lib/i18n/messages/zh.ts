@@ -753,7 +753,7 @@ export default {
     filters: { label: "筛选列表", status: "状态", network: "网络", kind: "类型", allStatuses: "全部", allNetworks: "所有网络", allKinds: "所有类型", date: "日期", dates: { any: "任意日期", today: "今天", "7d": "最近 7 天", "30d": "最近 30 天", "90d": "最近 90 天" }, shown: "{n} / {total}", clear: "清除筛选", noMatch: "没有符合这些筛选条件的结果。" },
     tokens: { custom: "其他代币…", ticker: "代币符号", address: { solana: "代币 Mint 地址", monad: "代币合约地址" } },
     paylinks: {
-      design: { label: "收银台样式", hint: "此链接的托管收银台外观，可随时更改。", preview: "预览", saved: "收银台样式已更新", saveError: "无法更改收银台样式", current: "当前" },
+      design: { label: "收银台样式", hint: "此链接的托管收银台外观，可随时更改。", preview: "预览", saved: "收银台样式已更新", saveError: "无法更改收银台样式", selected: "已选择" },
       title: "支付链接",
       sub: "{n} 个链接 · Stellar、Solana 和 Monad",
       create: "创建支付链接",

@@ -396,10 +396,17 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .design-opt.on { border-color: var(--btn-bg); box-shadow: 0 0 0 3px var(--accent-soft); }
 .design-opt input { position: absolute; opacity: 0; pointer-events: none; }
 .design-opt:has(input:focus-visible) { outline: 2px solid var(--tertiary); outline-offset: 2px; }
-.design-opt img { display: block; width: 100%; height: auto; border-radius: 9px; border: 1px solid var(--line); background: #fff; margin-bottom: 6px; }
+.design-opt img { display: block; width: 100%; height: auto; border-radius: 9px; border: 1px solid var(--line); background: #fff; }
+/* the chosen design: a check on its thumbnail and the word under its name (product owner) */
+.design-opt-thumb { position: relative; display: block; margin-bottom: 6px; }
+.design-opt-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--btn-bg); color: var(--btn-fg); box-shadow: 0 0 0 2px var(--surface); animation: design-check-in .22s cubic-bezier(.2, .7, .2, 1.3); }
+.design-opt-check svg { width: 13px; height: 13px; }
+.design-opt-sel { display: inline-flex; align-items: center; gap: 4px; padding: 0 2px; font-size: 12px; font-weight: 600; color: var(--ink); }
+.design-opt-sel svg { width: 12px; height: 12px; flex: 0 0 auto; }
+@keyframes design-check-in { from { opacity: 0; scale: .5; } to { opacity: 1; scale: 1; } }
 .design-opt-name { font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 2px; }
 .design-opt-desc { font-size: 12px; line-height: 1.4; color: var(--ink-3); padding: 0 2px; }
-.design-opt-preview { margin-top: 4px; padding: 0 2px; font-size: 12px; font-weight: 600; color: var(--accent); }
+.design-opt-preview { margin-top: auto; padding-top: 4px; padding: 0 2px; font-size: 12px; font-weight: 600; color: var(--accent); }
 .design-picker:disabled .design-opt { opacity: .6; cursor: progress; }
 
 /* ---- responsive ---- */
@@ -703,8 +710,11 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .tmark { position: relative; display: inline-block; flex: 0 0 auto; width: var(--tm); height: var(--tm); }
 .tmark-img, .tmark-mono { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .tmark-mono { background: var(--line); color: var(--ink-2); font-size: calc(var(--tm) * .36); font-weight: 700; letter-spacing: -.02em; }
-.tmark-badge { position: absolute; right: -3px; bottom: -3px; display: grid; place-items: center; width: 15px; height: 15px; border: 2px solid var(--surface); border-radius: 50%; background: var(--surface); object-fit: cover; box-sizing: content-box; }
-.tmark-badge-mono { background: var(--ink-2); color: var(--surface); font-size: 7px; font-weight: 800; }
+/* the network's badge keeps to the token's scale (product owner: on the overview's 18px marks a
+   fixed 15px badge covered the asset): about 40% of the mark, never under 8px */
+.tmark { --tm-badge: max(8px, calc(var(--tm) * .4)); }
+.tmark-badge { position: absolute; right: calc(var(--tm-badge) * -.2); bottom: calc(var(--tm-badge) * -.2); display: grid; place-items: center; width: var(--tm-badge); height: var(--tm-badge); border: 1.5px solid var(--surface); border-radius: 50%; background: var(--surface); object-fit: cover; box-sizing: content-box; }
+.tmark-badge-mono { background: var(--ink-2); color: var(--surface); font-size: calc(var(--tm-badge) * .5); font-weight: 800; }
 /* the rate, and the quote's details folding open under it */
 .sq { margin-top: 12px; border-radius: 14px; }
 .sq-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 6px; }
@@ -845,10 +855,12 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .design-picker.compact { margin-top: 4px; }
 .design-picker.compact .design-grid { grid-template-columns: repeat(4, minmax(0, 148px)); gap: 8px; }
 .design-picker.compact .design-opt { padding: 6px; gap: 2px; }
-.design-picker.compact .design-opt img { aspect-ratio: 16 / 11; height: auto; object-fit: cover; margin-bottom: 4px; }
+.design-picker.compact .design-opt img { aspect-ratio: 16 / 11; height: auto; object-fit: cover; }
+.design-picker.compact .design-opt-thumb { margin-bottom: 4px; }
+.design-picker.compact .design-opt-sel { font-size: 11.5px; }
 .design-picker.compact .design-opt-name { font-size: 12.5px; }
 .design-picker.compact .design-opt-desc { display: none; }
-.design-picker.compact .design-opt-preview { font-size: 11.5px; margin-top: 0; }
+.design-picker.compact .design-opt-preview { font-size: 11.5px; }
 @media (max-width: 700px) { .design-picker.compact .design-grid { grid-template-columns: repeat(2, minmax(0, 148px)); } }
 .pay-record-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px; position: sticky; top: 92px; }
 .pay-record-main { padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; }

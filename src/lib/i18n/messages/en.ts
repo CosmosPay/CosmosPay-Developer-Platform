@@ -755,7 +755,7 @@ export default {
     filters: { label: "Filter the list", status: "Status", network: "Network", kind: "Type", allStatuses: "All", allNetworks: "All networks", allKinds: "All types", date: "Date", dates: { any: "Any date", today: "Today", "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days" }, shown: "{n} of {total}", clear: "Clear filters", noMatch: "Nothing matches these filters." },
     tokens: { custom: "Other token…", ticker: "Token ticker", address: { solana: "Token mint", monad: "Token contract" } },
     paylinks: {
-      design: { label: "Checkout design", hint: "How the hosted checkout looks for this link. You can change it at any time.", preview: "Preview", saved: "Checkout design updated", saveError: "Couldn’t change the checkout design", current: "Current" },
+      design: { label: "Checkout design", hint: "How the hosted checkout looks for this link. You can change it at any time.", preview: "Preview", saved: "Checkout design updated", saveError: "Couldn’t change the checkout design", selected: "Selected" },
       title: "Payment links",
       sub: "{n} links · Stellar, Solana and Monad",
       create: "Create payment link",

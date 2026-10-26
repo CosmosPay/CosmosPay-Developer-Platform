@@ -1223,7 +1223,7 @@ export default {
     filters: { label: "Filtrer la liste", status: "Statut", network: "Réseau", kind: "Type", allStatuses: "Tous", allNetworks: "Tous les réseaux", allKinds: "Tous les types", date: "Date", dates: { any: "Toutes les dates", today: "Aujourd’hui", "7d": "7 derniers jours", "30d": "30 derniers jours", "90d": "90 derniers jours" }, shown: "{n} sur {total}", clear: "Effacer les filtres", noMatch: "Rien ne correspond à ces filtres." },
     tokens: { custom: "Autre jeton…", ticker: "Symbole du jeton", address: { solana: "Mint du jeton", monad: "Contrat du jeton" } },
     paylinks: {
-      design: { label: "Design du checkout", hint: "L’apparence du checkout hébergé de ce lien. Vous pouvez la changer à tout moment.", preview: "Aperçu", saved: "Design du checkout mis à jour", saveError: "Impossible de changer le design du checkout", current: "Actuel" },
+      design: { label: "Design du checkout", hint: "L’apparence du checkout hébergé de ce lien. Vous pouvez la changer à tout moment.", preview: "Aperçu", saved: "Design du checkout mis à jour", saveError: "Impossible de changer le design du checkout", selected: "Sélectionné" },
       title: "Liens de paiement",
       sub: "{n} liens · Stellar, Solana et Monad",
       create: "Créer un lien de paiement",

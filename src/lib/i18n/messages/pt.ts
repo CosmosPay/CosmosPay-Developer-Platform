@@ -1223,7 +1223,7 @@ export default {
     filters: { label: "Filtrar a lista", status: "Status", network: "Rede", kind: "Tipo", allStatuses: "Todos", allNetworks: "Todas as redes", allKinds: "Todos os tipos", date: "Data", dates: { any: "Qualquer data", today: "Hoje", "7d": "Últimos 7 dias", "30d": "Últimos 30 dias", "90d": "Últimos 90 dias" }, shown: "{n} de {total}", clear: "Limpar filtros", noMatch: "Nada corresponde a estes filtros." },
     tokens: { custom: "Outro token…", ticker: "Símbolo do token", address: { solana: "Mint do token", monad: "Contrato do token" } },
     paylinks: {
-      design: { label: "Design do checkout", hint: "Como o checkout hospedado deste link aparece. Você pode mudar quando quiser.", preview: "Prévia", saved: "Design do checkout atualizado", saveError: "Não foi possível mudar o design do checkout", current: "Atual" },
+      design: { label: "Design do checkout", hint: "Como o checkout hospedado deste link aparece. Você pode mudar quando quiser.", preview: "Prévia", saved: "Design do checkout atualizado", saveError: "Não foi possível mudar o design do checkout", selected: "Selecionado" },
       title: "Links de pagamento",
       sub: "{n} links · Stellar, Solana e Monad",
       create: "Criar link de pagamento",
