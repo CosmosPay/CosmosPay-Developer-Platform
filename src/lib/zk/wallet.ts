@@ -5,9 +5,11 @@
    re-derived in a new tab). Balances are rebuilt from chain events and checked against the
    on-chain commitments by the SDK's StateEngine.
 
-   Used by the merchant's account page (register, balance, merge, withdraw) and the ZK checkout
+   Used by the private payments panel (register, balances, merge, withdraw) and the private checkout
    (`pay`: register if needed, fund the spendable balance, then the two confidential transfers of
    a ZK payment). */
+// First: the SDK needs a global Buffer in the browser (src/lib/zk/buffer-global.ts).
+import "@/lib/zk/buffer-global";
 import {
   ChainClient,
   LocalStorageStore,
