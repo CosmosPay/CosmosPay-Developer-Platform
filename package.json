@@ -21,7 +21,8 @@
     "sync:route": "node scripts/sync-apisix-route.mjs",
     "test:unit": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs --test \"tests/unit/**/*.test.ts\"",
     "test:smoke": "node scripts/smoke-server.mjs",
-    "test": "npm run test:unit"
+    "test": "npm run test:unit",
+    "test:links": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/smoke-links.mjs"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^9.1.0",
