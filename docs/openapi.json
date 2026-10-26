@@ -2749,6 +2749,7 @@
     },
     "/v1/cross-chain-swaps/assets": {
       "get": {
+        "description": "Only what NEAR Intents still trades. A token it tags deprecated is left out, and so is one it lists with no price, because it answers no quote for such a token.",
         "operationId": "CrossChainSwapsController_assets_v1",
         "parameters": [],
         "responses": {

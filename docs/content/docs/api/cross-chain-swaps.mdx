@@ -51,6 +51,10 @@ _openapi:
           without waiting for its indexer
         id: report-the-deposit-transaction-to-near-intents-so-the-swap-starts-without-waiting-for-its-indexer
     contents:
+      - content: Only what NEAR Intents still trades. A token it tags deprecated is left
+          out, and so is one it lists with no price, because it answers no quote
+          for such a token.
+        heading: list-the-assets-near-intents-can-swap-on-every-network-this-service-reaches-with-an-indicative-usd-price
       - content: 'The shared public key may call it, so a swap made without an account
           can follow its own status, but only with the swap’s `publicToken` in
           `X-Record-Token`: without it, or with another swap’s, the answer is

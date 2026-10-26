@@ -9,6 +9,7 @@ import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { sortTokens, tokenMatches, DEX_CHAINS, type SwapToken } from "@/lib/swap-catalog";
 import { ADDRESS_PATTERNS, CHAIN_NAMES } from "@/lib/chains";
 
@@ -85,14 +86,14 @@ export function TokenPicker({ tokens, selectedKey, onPick, onClose, title, dexLi
           <Select
             variant="filter" className="tpick-net" label={tp.network} placeholder={tp.allNetworks} active={network !== "all"}
             value={network} onChange={setNetwork}
-            options={[{ value: "all", label: tp.allNetworks, count: tokens.length }, ...networks.map(([id, x]) => ({ value: id, label: x.name, count: x.n }))]}
+            options={[{ value: "all", label: tp.allNetworks, count: tokens.length }, ...networks.map(([id, x]) => ({ value: id, label: x.name, count: x.n, icon: <NetworkMark chain={id} size={18} /> }))]}
           />
         </div>
         <p className="tpick-count" role="status" aria-live="polite">{fmt(tp.count, { n: shown.length })}</p>
         <ul className="tpick-list" ref={list} role="list" onKeyDown={onKey}>
           {shown.slice(0, MAX_ROWS).map((tk, i, rows) => [
             // Across every network, each one's tokens sit under its name.
-            network === "all" && (i === 0 || rows[i - 1].chain !== tk.chain) ? <li key={`h-${tk.chain}`} className="tpick-group" role="presentation">{tk.chainName}</li> : null,
+            network === "all" && (i === 0 || rows[i - 1].chain !== tk.chain) ? <li key={`h-${tk.chain}`} className="tpick-group" role="presentation"><NetworkMark chain={tk.chain} size={16} />{tk.chainName}</li> : null,
             <li key={tk.key}>
               <button type="button" className={`tpick-row${tk.key === selectedKey ? " on" : ""}`} aria-pressed={tk.key === selectedKey} onClick={() => onPick(tk)}>
                 <TokenMark symbol={tk.symbol} chain={tk.chain} chainName={tk.chainName} size={34} />

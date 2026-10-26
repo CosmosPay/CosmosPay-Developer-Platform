@@ -23,7 +23,7 @@ import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TokenPicker } from "@/components/cosmos/dashboard/components/TokenPicker";
-import { amountFits, buildCatalog, estimateOut, routeFor, type NearAsset, type SwapToken } from "@/lib/swap-catalog";
+import { amountFits, buildCatalog, canPayWith, estimateOut, receivableFrom, routeFor, type NearAsset, type SwapToken } from "@/lib/swap-catalog";
 import { NATIVE_CODES, isAddress, isChain, placeholderFor, type Tier } from "@/lib/chains";
 import { isEvmAddress, type Usdt0Route } from "@/lib/usdt0";
 import type { SwapApi, SwapRecordKind } from "@/lib/swap-api";
@@ -87,6 +87,13 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
   const from = catalog.find((x) => x.key === fromKey) || null;
   const to = catalog.find((x) => x.key === toKey) || null;
   const route = from && to ? routeFor(from, to, tier) : null;
+  // Each side offers only what a swap can use: "pay" what can start one, "receive" what the
+  // chosen token reaches in this environment. A pair with no route is never offered.
+  const payable = useMemo(() => catalog.filter(canPayWith), [catalog]);
+  const receivable = useMemo(() => (from ? receivableFrom(from, catalog, tier) : catalog), [from, catalog, tier]);
+  const routes = (a: SwapToken | null, b: SwapToken | null) => !!a && !!b && routeFor(a, b, tier).kind !== "none";
+  // Flipping needs the received token to be a source, and a route back.
+  const flippable = !!to && canPayWith(to) && routes(to, from);
   const dexLive = (chain: string) => chain === "stellar" || tier === "public";
 
   const amountValid = amountFits(amount, from);
@@ -182,11 +189,20 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
   const pick = (tk: SwapToken) => {
     const side = picker;
     setPicker(null);
-    // Picking the other side's token swaps the two, as swap apps do.
-    if (side === "from") { if (tk.key === toKey) setToKey(fromKey); if (tk.chain !== from?.chain) setAccount(""); setFromKey(tk.key); }
-    else { if (tk.key === fromKey) setFromKey(toKey); if (tk.chain !== to?.chain) setRecipient(""); setToKey(tk.key); }
+    // Picking the received token to pay with swaps the two, as swap apps do. The other side
+    // stays only while the pair has a route; otherwise it is chosen again, from what reaches.
+    if (side === "from") {
+      const other = tk.key === toKey ? from : to;
+      setFromKey(tk.key);
+      setToKey(other && routes(tk, other) ? other.key : null);
+      if (tk.chain !== from?.chain) setAccount("");
+    } else {
+      if (tk.chain !== to?.chain) setRecipient("");
+      setToKey(tk.key);
+    }
   };
   const flip = () => {
+    if (!flippable) return;
     setFlipped((f) => !f);
     setFromKey(toKey); setToKey(fromKey);
     if (shownOut && amountFits(Number(shownOut).toFixed(Math.min(7, to?.decimals ?? 7)).replace(/\.?0+$/, ""), to)) setAmount(Number(shownOut).toFixed(Math.min(7, to?.decimals ?? 7)).replace(/\.?0+$/, ""));
@@ -224,7 +240,7 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
         </div>
       </div>
 
-      <button type="button" className={`swap-flip-btn${flipped ? " turned" : ""}`} onClick={flip} aria-label={w.flip} title={w.flip} disabled={!from || !to}>
+      <button type="button" className={`swap-flip-btn${flipped ? " turned" : ""}`} onClick={flip} aria-label={w.flip} title={w.flip} disabled={!from || !flippable}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" /></svg>
       </button>
 
@@ -306,7 +322,7 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
       {picker && (
         <TokenPicker
           title={picker === "from" ? w.pickPay : w.pickReceive}
-          tokens={catalog}
+          tokens={picker === "from" ? payable : receivable}
           selectedKey={picker === "from" ? fromKey : toKey}
           onPick={pick}
           onClose={() => setPicker(null)}

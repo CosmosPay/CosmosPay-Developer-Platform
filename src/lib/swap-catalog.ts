@@ -63,6 +63,13 @@ const sameContract = (chain: string, a: string | null, b: string | null) =>
 const keyOf = (chain: string, symbol: string, contract: string | null) => `${chain}:${symbol}:${contract ?? ""}`;
 const chainNameOf = (chain: string, listed?: string) => listed || (isChain(chain) ? CHAIN_NAMES[chain] : chain.toUpperCase());
 
+/* A NEAR Intents listing it still trades: priced, and not tagged as retiring ("USDT0(DEPRECATED)").
+   It quotes none of the others ("No liquidity available"), so the Payments API no longer lists
+   them; an older answer is filtered here the same way. */
+export function tradesOnNear(a: Pick<NearAsset, "symbol" | "priceUsd">): boolean {
+  return typeof a.priceUsd === "number" && a.priceUsd > 0 && !/_?\(DEPRECATED\)$/i.test(a.symbol.trim());
+}
+
 function fromNear(a: NearAsset, dex: boolean): SwapToken {
   return {
     key: keyOf(a.chain, a.symbol, a.contract),
@@ -73,7 +80,8 @@ function fromNear(a: NearAsset, dex: boolean): SwapToken {
     issuerName: null,
     decimals: a.decimals,
     priceUsd: a.priceUsd ?? null,
-    near: nearValue(a),
+    // A listing NEAR Intents does not trade can still be its chain's market token.
+    near: tradesOnNear(a) ? nearValue(a) : null,
     dex,
   };
 }
@@ -82,6 +90,8 @@ function fromNear(a: NearAsset, dex: boolean): SwapToken {
 export function buildCatalog(near: readonly NearAsset[], tier: Tier, usdt0Routes: readonly Usdt0Route[] = []): SwapToken[] {
   const out: SwapToken[] = [];
   const onChain = (chain: string) => near.filter((a) => a.chain === chain);
+  // What a NEAR Intents route may name: only what it still trades.
+  const routable = (chain: string) => onChain(chain).filter(tradesOnNear);
   const uniqueSymbol = (list: readonly NearAsset[], symbol: string) => {
     const found = list.filter((a) => a.symbol.toUpperCase() === symbol.toUpperCase());
     return found.length === 1 ? found[0] : null;
@@ -91,9 +101,10 @@ export function buildCatalog(near: readonly NearAsset[], tier: Tier, usdt0Routes
   // assets, so in the sandbox an asset reaches it by symbol (a dry quote prices it), and the
   // mainnet-only listings are left out: their issuers do not exist on testnet.
   const nearStellar = onChain("stellar");
+  const tradedStellar = routable("stellar");
   for (const s of standardAssets(tier)) {
-    const exact = nearStellar.find((a) => sameContract("stellar", a.contract, s.issuer));
-    const match = exact || (tier === "testnet" ? uniqueSymbol(nearStellar, s.code) : null);
+    const exact = tradedStellar.find((a) => sameContract("stellar", a.contract, s.issuer));
+    const match = exact || (tier === "testnet" ? uniqueSymbol(tradedStellar, s.code) : null);
     out.push({
       key: keyOf("stellar", s.code, s.issuer),
       chain: "stellar",
@@ -115,26 +126,28 @@ export function buildCatalog(near: readonly NearAsset[], tier: Tier, usdt0Routes
   // Intents' list; in the sandbox only NEAR Intents' list (quotes, not markets) applies.
   for (const chain of ["solana", "monad"] as const) {
     const listed = onChain(chain);
+    const traded = routable(chain);
     const dex = tier === "public";
     if (dex) {
-      const coin = listed.find((a) => !a.contract);
+      const coin = traded.find((a) => !a.contract);
       out.push({
         key: keyOf(chain, NATIVE_CODES[chain], null), chain, chainName: CHAIN_NAMES[chain], symbol: NATIVE_CODES[chain], contract: null,
         issuerName: null, decimals: NATIVE_DECIMALS[chain], priceUsd: coin?.priceUsd ?? null, near: coin ? nearValue(coin) : null, dex,
       });
       for (const p of TOKEN_PRESETS[chain].public) {
-        const match = listed.find((a) => sameContract(chain, a.contract, p.issuer));
+        const match = traded.find((a) => sameContract(chain, a.contract, p.issuer));
         out.push({
           key: keyOf(chain, p.code, p.issuer), chain, chainName: CHAIN_NAMES[chain], symbol: p.code, contract: p.issuer,
           issuerName: null, decimals: p.decimals, priceUsd: match?.priceUsd ?? null, near: match ? nearValue(match) : null, dex,
         });
       }
     }
-    for (const a of listed) if (!out.some((t) => t.chain === chain && sameContract(chain, t.contract, a.contract))) out.push(fromNear(a, dex));
+    // Without the chain's market (the sandbox), a listing NEAR Intents does not trade reaches nothing.
+    for (const a of dex ? listed : traded) if (!out.some((t) => t.chain === chain && sameContract(chain, t.contract, a.contract))) out.push(fromNear(a, dex));
   }
 
-  // Every other network: NEAR Intents only.
-  for (const a of near) if (!hasDex(a.chain)) out.push(fromNear(a, false));
+  // Every other network: NEAR Intents only, so only what it still trades.
+  for (const a of near) if (!hasDex(a.chain) && tradesOnNear(a)) out.push(fromNear(a, false));
 
   // USDT0's destinations, on mainnet: the network's listed USDT / USDT0 when NEAR Intents has it
   // (the same token, now reachable both ways), else USDT0 as a token of its own.
@@ -172,6 +185,17 @@ export function routeFor(from: SwapToken, to: SwapToken, tier: Tier): Route {
   }
   if (from.near && to.near) return { kind: "near" };
   return { kind: "none", reason: "unsupported" };
+}
+
+/* Whether a swap can start from the token: on its chain's market or through NEAR Intents. A
+   network reached only through USDT0's OFT is a destination, never a source. */
+export function canPayWith(t: SwapToken): boolean {
+  return t.dex || t.near !== null;
+}
+
+/* The tokens a swap from `from` can end in, in this environment: the pairs routeFor can settle. */
+export function receivableFrom(from: SwapToken, tokens: readonly SwapToken[], tier: Tier): SwapToken[] {
+  return tokens.filter((t) => routeFor(from, t, tier).kind !== "none");
 }
 
 /* An indicative amount out from the listed USD prices, before a quote; null without both. */

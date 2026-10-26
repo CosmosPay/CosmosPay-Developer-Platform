@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { amountFits, buildCatalog, estimateOut, routeFor, sortTokens, tokenMatches, type NearAsset } from '@/lib/swap-catalog';
+import { amountFits, buildCatalog, canPayWith, estimateOut, receivableFrom, routeFor, sortTokens, tokenMatches, tradesOnNear, type NearAsset } from '@/lib/swap-catalog';
 import { bridgedAmount, isEvmAddress } from '@/lib/usdt0';
 
 const CIRCLE_MAINNET = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
@@ -59,6 +59,45 @@ test('a token NEAR Intents does not list has no route to another chain', () => {
   const eurc = find(cat, 'stellar', 'EURC');
   assert.equal(eurc.near, null);
   assert.deepEqual(routeFor(eurc, find(cat, 'eth', 'ETH'), 'public'), { kind: 'none', reason: 'unsupported' });
+});
+
+test('what NEAR Intents no longer trades is not offered: no price, or tagged deprecated', () => {
+  const extra: NearAsset[] = [
+    { chain: 'near', chainName: 'NEAR', symbol: 'TESTNEBULA', assetId: 'tn', decimals: 24, contract: 'nebula.near', priceUsd: null },
+    { chain: 'plasma', chainName: 'Plasma', symbol: 'USDT0(DEPRECATED)', assetId: 'pu', decimals: 6, contract: '0xdead', priceUsd: 1 },
+    { chain: 'plasma', chainName: 'Plasma', symbol: 'XPL_(DEPRECATED)', assetId: 'px', decimals: 18, contract: null, priceUsd: 0.3 },
+    // A Solana listing with no price: still Jupiter's token on mainnet, but no NEAR Intents route.
+    { chain: 'solana', chainName: 'Solana', symbol: 'FMS', assetId: 'sf', decimals: 6, contract: 'Fms1111111111111111111111111111111111111111', priceUsd: 0 },
+  ];
+  assert.equal(tradesOnNear({ symbol: 'USDC', priceUsd: 1 }), true);
+  assert.equal(tradesOnNear({ symbol: 'USDT0(DEPRECATED)', priceUsd: 1 }), false);
+  assert.equal(tradesOnNear({ symbol: 'ABG', priceUsd: null }), false);
+  const live = buildCatalog([...NEAR, ...extra], 'public');
+  for (const gone of ['TESTNEBULA', 'USDT0(DEPRECATED)', 'XPL_(DEPRECATED)']) assert.equal(live.some((t) => t.symbol === gone), false, gone);
+  const fms = find(live, 'solana', 'FMS');
+  assert.equal(fms.dex, true);
+  assert.equal(fms.near, null);
+  // In the sandbox Solana has no market, so a listing NEAR Intents does not trade reaches nothing.
+  assert.equal(buildCatalog([...NEAR, ...extra], 'testnet').some((t) => t.symbol === 'FMS'), false);
+});
+
+test('each side offers only what can be swapped: sources pay, a destination is what the source reaches', () => {
+  const live = buildCatalog(NEAR, 'public', [{ chain: 'unichain', name: 'Unichain', receives: 'USDT0', eid: 30320 }]);
+  const oftOnly = find(live, 'unichain', 'USDT0');
+  assert.equal(canPayWith(oftOnly), false, 'reached only through the OFT: a destination, never a source');
+  assert.equal(canPayWith(find(live, 'stellar', 'EURC')), true, 'the Stellar DEX takes it');
+  // From EURC (no NEAR Intents listing): the Stellar DEX only.
+  const fromEurc = receivableFrom(find(live, 'stellar', 'EURC'), live, 'public');
+  assert.ok(fromEurc.length > 0);
+  assert.ok(fromEurc.every((t) => t.chain === 'stellar' && t.symbol !== 'EURC'));
+  // From BTC: every NEAR Intents token but itself, nothing that only a chain market or the OFT reaches.
+  const fromBtc = receivableFrom(find(live, 'btc', 'BTC'), live, 'public');
+  assert.ok(fromBtc.every((t) => t.near !== null && t.symbol !== 'BTC'));
+  assert.ok(!fromBtc.some((t) => t.key === oftOnly.key));
+  // From Stellar's USDT0, the OFT destination is reachable.
+  assert.ok(receivableFrom(find(live, 'stellar', 'USDT0'), live, 'public').some((t) => t.key === oftOnly.key));
+  // Every offered pair has a route.
+  for (const from of live.filter(canPayWith)) for (const to of receivableFrom(from, live, 'public')) assert.notEqual(routeFor(from, to, 'public').kind, 'none');
 });
 
 test('estimateOut uses the listed prices, and needs both', () => {
