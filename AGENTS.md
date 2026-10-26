@@ -506,8 +506,15 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   with a big amount and a token button naming its network, a flip between them, the quote updating on
   its own (debounced) with its details folded under the rate, the accounts the route needs, one
   button whose words say what is missing, and a slippage popover. The token picker
-  (`components/TokenPicker.tsx`) lists every token on every network, searchable, by network, with
-  official logos where they exist (`TokenMark`, else a neutral monogram).
+  (`components/TokenPicker.tsx`) lists the tokens on every network, searchable, by network, with
+  official logos where they exist (`TokenMark`, else a neutral monogram) and each network's mark
+  (`NetworkMark`) on its heading and in the network filter.
+- **Each side offers only what can be swapped** (product owner, 2026-10-26: some assets are not
+  compatible). "Pay" lists `canPayWith` tokens (an OFT-only USDT0 destination never is one);
+  "receive" lists `receivableFrom(from)`, the pairs `routeFor` settles in this environment. A new
+  source keeps the other side only while the pair has a route; flipping needs a route back. The
+  catalogue also drops what NEAR Intents no longer trades (`tradesOnNear`: no price, or tagged
+  deprecated; it quotes none of those), as the Payments API's asset list does.
 - **Tokens and routes are `src/lib/swap-catalog.ts`** (tested): NEAR Intents' list joined with the
   environment's Stellar assets and the verified Solana / Monad presets. Within Stellar, Solana or
   Monad a pair goes through that chain's market (the Stellar DEX in both environments, Jupiter and
