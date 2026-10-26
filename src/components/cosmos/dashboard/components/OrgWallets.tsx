@@ -18,7 +18,7 @@ import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { ListSkeleton, Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { CHAINS, CHAIN_NAMES, networkName, type Chain } from "@/lib/chains";
-import { networkLogo } from "@/lib/token-logos";
+import { networkLogoUrl } from "@/lib/logo-urls";
 import { shortAddress, WALLET_LABEL_MAX, WALLET_PROVIDERS, walletProofMessage, type OrgWallet, type WalletProvider } from "@/lib/org-wallets";
 import { detectWallets, evmWalletName, proveWallet } from "@/lib/wallets/prove";
 
@@ -63,7 +63,7 @@ export function useOrgWallets(orgId: string): OrgWallet[] | null | undefined {
 
 /** A network's official mark, or its initial on a neutral disc where it has none. */
 export function NetworkMark({ chain, size = 32 }: { chain: string; size?: number }) {
-  const src = networkLogo(chain);
+  const src = networkLogoUrl(chain);
   return src
     ? <img className="wl-mark" src={src} alt="" width={size} height={size} loading="lazy" />
     : <span className="wl-mark wl-mono" style={{ width: size, height: size }} aria-hidden="true">{networkName(chain).slice(0, 1)}</span>;

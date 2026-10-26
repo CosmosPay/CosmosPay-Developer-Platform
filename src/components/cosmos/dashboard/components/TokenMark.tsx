@@ -1,4 +1,4 @@
-import { networkLogo, tokenLogo } from "@/lib/token-logos";
+import { networkLogoUrl, tokenLogoUrl } from "@/lib/logo-urls";
 
 /* TokenMark: a token's mark with its network's beside it. Official artwork only, from the
    generated manifest (src/lib/token-logos.ts: every NEAR Intents token we could source and every
@@ -11,8 +11,8 @@ function Mono({ text, className }: { text: string; className: string }) {
 }
 
 export function TokenMark({ symbol, chain, chainName, size = 32 }: { symbol: string; chain: string; chainName: string; size?: number }) {
-  const logo = tokenLogo(symbol);
-  const badge = networkLogo(chain);
+  const logo = tokenLogoUrl(symbol);
+  const badge = networkLogoUrl(chain);
   return (
     <span className="tmark" style={{ ["--tm" as string]: `${size}px` }} aria-hidden="true">
       {logo ? <img className="tmark-img" src={logo} alt="" width={size} height={size} loading="lazy" decoding="async" /> : <Mono className="tmark-mono" text={symbol} />}

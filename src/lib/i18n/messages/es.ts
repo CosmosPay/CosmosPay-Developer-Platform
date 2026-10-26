@@ -252,6 +252,7 @@ export default {
     recommendedForYou: "Recomendado para ti",
     spec: {
       perTx: "Por transacción",
+      swap: "Por swap",
       settle: "Liquidación",
       network: "Red",
       team: "Miembros del equipo",
@@ -793,7 +794,7 @@ export default {
   pricing: {
     kicker: "// precios",
     title: "Paga por lo que procesas.",
-    lede: "Precios transparentes basados en el uso. Empieza sin cuota mensual: solo pagas una pequeña comisión por transacción exitosa.",
+    lede: "Pagos, swaps y pagos privados como servicio, con precio por operación. Empieza sin cuota mensual: solo pagas una pequeña comisión por cada operación exitosa.",
     monthly: "Mensual",
     annual: "Anual",
     save: "−17%",
@@ -838,6 +839,7 @@ export default {
     orgsRow: "Organizaciones",
     seatsRow: "Miembros por organización",
     keysRow: "Claves de API",
+    ratesRows: { swaps: "Comisión por swap", escrow: "Escrow, por pago", privatePayments: "Pagos privados", ownFee: "Tu propia comisión en cada operación" },
     compareHead: ["Característica", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       {
@@ -910,6 +912,14 @@ export default {
       {
         q: "¿Puedo cambiar de plan más adelante?",
         a: "Por supuesto. Mejora o reduce tu plan en cualquier momento desde tu panel. Los cambios surten efecto de inmediato, sin necesidad de llamadas."
+      },
+      {
+        q: "¿Cuánto cuesta un swap?",
+        a: "Cada plan tiene su propia comisión por swap: {starter} en Starter, {essentials} en Essentials, {growth} en Growth y {enterprise} en Enterprise. Sin cuenta, la página pública de swaps y su API cobran {public}. Las tarifas de las redes van aparte, y cada cotización muestra las comisiones antes de que firmes."
+      },
+      {
+        q: "¿Puedo ofrecer estos servicios a mis clientes?",
+        a: "Sí. Cosmos Pay es pagos, swaps, pasarela de pagos y pagos privados como servicio: nosotros operamos todo el servicio, y tú solo indicas las direcciones de wallet que reciben el dinero y firmas con tu wallet. Cada operación paga la tarifa de tu plan, y puedes sumarle tu propia comisión, que se paga a la wallet que elijas."
       }
     ],
     ctaTitle: "¿Todavía tienes preguntas?",
@@ -927,23 +937,24 @@ export default {
       { t: "Más de 35 redes", s: "Los mercados de Stellar, Solana y Monad, y todas las redes que alcanza NEAR Intents." },
       { t: "Sin custodia", s: "Cada swap es una transacción que firma tu wallet o una dirección de depósito que pagas." },
     ],
-    fee: "Comisión: {pct} por swap, más las tarifas de las redes.",
+    fee: "Comisión: {pct} por swap sin cuenta, de {max} a {min} con un plan, más las tarifas de las redes.",
     usdt0Title: "USDT0: USDT nativo desde Stellar",
-    usdt0Lede: "USDT0 en Stellar es el USDT omnichain de Tether. Envíalo 1:1 por LayerZero: llega como USDT nativo en Ethereum y como USDT0 en {n} redes más. La única tarifa es la de LayerZero, en XLM.",
+    usdt0Lede: "USDT0 en Stellar es el USDT omnichain de Tether. Envíalo 1:1 por LayerZero: llega como USDT nativo en Ethereum y como USDT0 en {n} redes más. La tarifa de LayerZero se paga en XLM, y la cotización muestra todas las comisiones antes de que firmes.",
     usdt0Cta: "Enviar USDT0",
     usdt0Networks: "Adónde llega",
     apiTitle: "Los mismos swaps desde tu código",
-    apiLede: "La API pública de swaps tampoco necesita cuenta: toma la clave pública compartida y llama a los mismos endpoints que usa esta página.",
+    apiLede: "La API pública de swaps tampoco necesita cuenta: toma la clave pública compartida y llama a los mismos endpoints que usa esta página. Cobra la misma comisión de {pct} por swap.",
     apiStep1: "Obtén la clave pública",
     apiStep2: "Cotiza un swap entre redes",
     apiStep3: "Cotiza USDT0 saliendo de Stellar",
     apiDocs: "Referencia de la API",
     faqTitle: "Preguntas",
     faq: [
-      { q: "¿Necesito una cuenta?", a: "No. La página y la API pública usan una clave pública compartida. Con una cuenta tienes el historial en el dashboard y, con un plan, una comisión menor." },
+      { q: "¿Necesito una cuenta?", a: "No. La página y la API pública usan una clave pública compartida. Con una cuenta tienes el historial en el dashboard y, con un plan, una comisión menor: de {max} a {min}." },
       { q: "¿Quién custodia mis fondos?", a: "Nadie. Un swap en una red es una transacción que firma tu wallet, un swap entre redes es una dirección de depósito que liquida NEAR Intents, y USDT0 viaja por LayerZero." },
-      { q: "¿Cuánto cuesta?", a: "{pct} por swap, más las tarifas de las redes. Enviar USDT0 desde Stellar no tiene comisión de Cosmos Pay: solo la tarifa de LayerZero, en XLM." },
+      { q: "¿Cuánto cuesta?", a: "{pct} por swap sin cuenta, de {max} a {min} con un plan, más las tarifas de las redes. Enviar USDT0 desde Stellar también paga la tarifa de LayerZero, en XLM. Cada cotización muestra las comisiones antes de que firmes." },
       { q: "¿Por qué USDT0 deja un resto mínimo?", a: "USDT0 cruza con seis decimales y Stellar tiene siete: el séptimo queda en tu cuenta." },
+      { q: "¿Puedo ofrecer swaps a mis clientes?", a: "Sí, como servicio: nosotros operamos los swaps, y tú solo indicas las direcciones de wallet que reciben el dinero y firmas con tu wallet. Cada swap paga la comisión de tu plan, y puedes sumarle tu propia comisión, que se paga a la wallet que elijas." },
     ],
   },
   dash: {
@@ -1444,6 +1455,7 @@ export default {
         switchTo: "Cambiar a {plan}",
         price: "Precio",
         perTx: "Por transacción",
+        swapFee: "Comisión por swap",
         mainnet: "Pagos en vivo",
         settle: "Liquidación",
         apiAccess: "Acceso API",

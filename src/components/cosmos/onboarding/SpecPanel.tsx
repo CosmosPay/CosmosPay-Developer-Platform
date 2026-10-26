@@ -32,6 +32,7 @@ export function SpecPanel({ t, viewId, setViewId, selectedId, recId, showRec }) 
             <div className="spec-pnote">{p.pnote}</div>
             <div className="spec-grid">
               <SpecRow icon={I.coin} k={ob.spec.perTx} v={d.perTx} />
+              <SpecRow icon={I.coin} k={ob.spec.swap} v={d.swap} />
               <SpecRow icon={I.bolt} k={ob.spec.settle} v={d.settle} />
               <SpecRow icon={I.net} k={ob.spec.network} v="Stellar · Solana · Monad" />
               <SpecRow icon={I.team} k={ob.spec.team} v={p.team} />

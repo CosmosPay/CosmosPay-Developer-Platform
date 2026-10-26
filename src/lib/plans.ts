@@ -100,6 +100,23 @@ export function planSwapFeeBps(plan: unknown): number {
   return PLAN_SPECS[normalizePlan(plan)].swapFeeBps;
 }
 
+/* A plan's swap commission as copy shows it ("0.25%"). Pricing, the plan pickers and the
+   public swaps page read it from here, so no page writes a rate of its own. */
+export function swapFeePct(plan: unknown): string {
+  return `${planSwapFeeBps(plan) / 100}%`;
+}
+
+/* The highest and lowest swap commission across the offered plans ("from 0.25% to 0.03%"). */
+export function swapFeeRange(): { max: string; min: string } {
+  const bps = PLAN_IDS.map((id) => PLAN_SPECS[id].swapFeeBps);
+  return { max: `${Math.max(...bps) / 100}%`, min: `${Math.min(...bps) / 100}%` };
+}
+
+/* Rates that are the same on every plan, in percent: escrow's surcharge per payment and the
+   private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 1). */
+export const ESCROW_FEE_PCT = 0.5;
+export const PRIVATE_PAYMENT_FEE_PCT = 0.01;
+
 /* true when adding one more would exceed the plan's limit (null = unlimited). */
 export function atLimit(limit: number | null, count: number): boolean {
   return limit !== null && count >= limit;

@@ -14,9 +14,9 @@ export const POPULAR = "growth";
 /* Org count, mainnet support and settlement come from the shared plan specs
    (@/lib/plans) so they stay in sync with the dashboard; the price formatting stays
    presentational here (the headline amount pairs with the translated `sub` label). */
-import { PLAN_SPECS } from "@/lib/plans";
+import { PLAN_SPECS, swapFeePct } from "@/lib/plans";
 const orgsLabel = (n: number | null) => (n == null ? "∞" : String(n));
 export const PLAN_DATA = {
-  starter: { amt: "1%", price: "$0", per: "/mo", perTx: PLAN_SPECS.starter.perTx, settle: PLAN_SPECS.starter.settle, orgs: orgsLabel(PLAN_SPECS.starter.maxOrgs), live: PLAN_SPECS.starter.mainnet },
-  growth: { amt: "$99", price: "$99", per: "/mo", perTx: PLAN_SPECS.growth.perTx, settle: PLAN_SPECS.growth.settle, orgs: orgsLabel(PLAN_SPECS.growth.maxOrgs), live: PLAN_SPECS.growth.mainnet },
+  starter: { amt: "1%", price: "$0", per: "/mo", perTx: PLAN_SPECS.starter.perTx, swap: swapFeePct("starter"), settle: PLAN_SPECS.starter.settle, orgs: orgsLabel(PLAN_SPECS.starter.maxOrgs), live: PLAN_SPECS.starter.mainnet },
+  growth: { amt: "$99", price: "$99", per: "/mo", perTx: PLAN_SPECS.growth.perTx, swap: swapFeePct("growth"), settle: PLAN_SPECS.growth.settle, orgs: orgsLabel(PLAN_SPECS.growth.maxOrgs), live: PLAN_SPECS.growth.mainnet },
 };

@@ -29,6 +29,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
           <span class="pl-plan-name">{p.name}</span>
           <span class="pl-plan-rate" data-odo>{p.rate}</span>
           {p.unit && <span class="pl-plan-sub">{p.unit}</span>}
+          <span class="pl-plan-sub">{p.swap}</span>
           {p.monthly && <span class="pl-plan-price" data-odo>{p.monthly}</span>}
         </li>
       ))}

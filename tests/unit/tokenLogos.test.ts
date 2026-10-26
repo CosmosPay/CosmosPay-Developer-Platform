@@ -6,15 +6,23 @@ import { NETWORK_IDS, OFT_NETWORK_NAMES } from '@/lib/chains';
 import { NETWORK_LOGOS, TOKEN_LOGOS, networkLogo, normalizeSymbol, tokenLogo } from '@/lib/token-logos';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../../public', import.meta.url));
+const LOGOS_DIR = fileURLToPath(new URL('../../src/assets/logos/', import.meta.url));
 
 /* Networks in NETWORK_NAMES or OFT_NETWORK_NAMES with no official artwork, by id, each with a
    comment giving the reason. Empty today: every network has one. */
 const NETWORKS_WITHOUT_LOGO: readonly string[] = [];
 
-test('every logo in the manifest is a file under public/media', () => {
+// Token and network files are Vite assets (fingerprinted and cached for a year, see
+// src/lib/logo-urls.ts); only the landing's brand files are served from public/.
+test('every logo in the manifest is a file under src/assets/logos or public/media/brands', () => {
   for (const [key, path] of [...Object.entries(TOKEN_LOGOS), ...Object.entries(NETWORK_LOGOS)]) {
-    assert.match(path, /^\/media\/(tokens|networks|brands)\/[a-z0-9_.-]+\.(webp|png|svg)$/, key);
-    assert.ok(existsSync(PUBLIC_DIR + path), `${key}: ${path} is missing`);
+    if (path.startsWith('/')) {
+      assert.match(path, /^\/media\/brands\/[a-z0-9_.-]+\.(webp|png|svg)$/, key);
+      assert.ok(existsSync(PUBLIC_DIR + path), `${key}: ${path} is missing`);
+    } else {
+      assert.match(path, /^(tokens|networks)\/[a-z0-9_.-]+\.webp$/, key);
+      assert.ok(existsSync(LOGOS_DIR + path), `${key}: ${path} is missing`);
+    }
   }
 });
 

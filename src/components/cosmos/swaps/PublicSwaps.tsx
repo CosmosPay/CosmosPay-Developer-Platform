@@ -14,7 +14,7 @@ import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets
 import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { publicSwapApi, type SwapRecordKind } from "@/lib/swap-api";
 import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
-import { PLAN_SPECS } from "@/lib/plans";
+import { swapFeePct, swapFeeRange } from "@/lib/plans";
 
 export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false }: { lang: string; apiBase: string; docsUrl: string; showHeader?: boolean }) {
   initLang(lang);
@@ -24,7 +24,8 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
   const [routes, setRoutes] = useState<Usdt0Route[] | null>(null);
   const [opened, setOpened] = useState<{ kind: SwapRecordKind; rec: unknown } | null>(null);
   const [pick, setPick] = useState<SwapPick | null>(null);
-  const pct = `${PLAN_SPECS.community.swapFeeBps / 100}%`;
+  // The public consumer's commission, and the range a plan brings it down to.
+  const rates = { pct: swapFeePct("community"), ...swapFeeRange() };
   const base = apiBase.replace(/\/+$/, "");
 
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
           <ul className="pswap-facts" role="list">
             {p.facts.map((f) => <li key={f.t}><b>{f.t}</b><span>{f.s}</span></li>)}
           </ul>
-          <p className="pswap-fee">{fmt(p.fee, { pct })}</p>
+          <p className="pswap-fee">{fmt(p.fee, rates)}</p>
         </div>
       </section>
 
@@ -97,7 +98,7 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
 
       <section className="pswap-api wrap" aria-labelledby="pswap-api">
         <h2 id="pswap-api">{p.apiTitle}</h2>
-        <p className="pswap-section-lede">{p.apiLede}</p>
+        <p className="pswap-section-lede">{fmt(p.apiLede, rates)}</p>
         <ol className="pswap-steps">
           {steps.map((s) => (
             <li key={s.label}>
@@ -120,7 +121,7 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
           {p.faq.map((x) => (
             <details key={x.q}>
               <summary>{x.q}</summary>
-              <p>{fmt(x.a, { pct })}</p>
+              <p>{fmt(x.a, rates)}</p>
             </details>
           ))}
         </div>

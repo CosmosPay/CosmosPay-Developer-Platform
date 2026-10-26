@@ -5,11 +5,11 @@
 import type Mark from "@/components/payments/landing/Mark.astro";
 import type { ComponentProps } from "astro/types";
 import { LANDING } from "@/lib/payments/landing-i18n";
-import { PLAN_SPECS } from "@/lib/plans";
+import { PLAN_SPECS, swapFeePct, ESCROW_FEE_PCT } from "@/lib/plans";
 import { DOCS, PRICING, loginTo } from "@/components/cosmos/lib/constants";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
 import { NETWORK_IDS, networkName } from "@/lib/chains";
-import { networkLogo, tokenLogo } from "@/lib/token-logos";
+import { networkLogoUrl, tokenLogoUrl } from "@/lib/logo-urls";
 import type { Locale } from "@/lib/payments/i18n";
 
 /* "single" is the one long landing; "multi" spreads it over the home and the content pages
@@ -47,8 +47,8 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
   const SETTLE = ["stellar", "solana", "monad"];
   const SWAP_TOKENS = ["USDT", "USDT0", "DAI", "WBTC", "cbBTC"];
   const swapRow: Brand[] = [
-    ...NETWORK_IDS.filter((id) => !SETTLE.includes(id) && networkLogo(id)).map((id) => ({ name: networkName(id), src: networkLogo(id) })),
-    ...SWAP_TOKENS.filter((sym) => tokenLogo(sym)).map((sym) => ({ name: sym, src: tokenLogo(sym) })),
+    ...NETWORK_IDS.filter((id) => !SETTLE.includes(id) && networkLogoUrl(id)).map((id) => ({ name: networkName(id), src: networkLogoUrl(id) })),
+    ...SWAP_TOKENS.filter((sym) => tokenLogoUrl(sym)).map((sym) => ({ name: sym, src: tokenLogoUrl(sym) })),
   ];
   const marquees: { label: string; items: Brand[] }[] = [
     {
@@ -132,6 +132,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
       rate: custom ? t.pricing.custom : spec.perTx,
       unit: custom ? "" : t.pricing.perPayment,
       monthly: custom ? "" : monthly,
+      swap: t.pricing.perSwap.replace("{rate}", swapFeePct(id)),
     };
   });
   // The fee calculator's plans: each rate parsed from plans.ts ("0.2% + 5¢"); Enterprise is custom.
@@ -141,8 +142,8 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
     const monthly = spec.price.endsWith("/mo") ? t.calc.perMonth.replace("{price}", spec.price.replace("/mo", "")) : "";
     return { id, name: id[0].toUpperCase() + id.slice(1), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, monthly };
   });
-  const ESCROW_PCT = 0.5;
-  const faq = (["wallet", "account", "wallets", "custody", "escrow", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
+  const ESCROW_PCT = ESCROW_FEE_PCT;
+  const faq = (["wallet", "account", "wallets", "custody", "service", "escrow", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
 
   // The code the developers section shows, by tab. Plain text: it is not translated. The SDK and
   // webhook shapes are the real ones (@cosmosapp/pay_sdk's Client, the { id, type, createdAt, data }

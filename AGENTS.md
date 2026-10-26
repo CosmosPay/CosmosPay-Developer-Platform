@@ -488,8 +488,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   The pages load `dashboard.css` (scoped to the widget's classes) and `public-swaps.css`. The nav's
   Products menu links it (`localHref` keeps it on the company site there).
 - **The browser calls the gateway with the shared public key** (`GET /v1/public-key?env=prod`,
-  keyless): commission is the public consumer's plan's (`PLAN_SPECS.community.swapFeeBps`, shown on
-  the page), and the server confines the key to quoting, creating, submitting and reading a swap by
+  keyless): commission is the public consumer's plan's (`swapFeePct("community")`, shown on the page
+  with the offered plans' range, `swapFeeRange()`), and the server confines the key to quoting, creating, submitting and reading a swap by
   its id. **Every visitor shares that key**, so a record it creates comes back with a `publicToken`
   that only its creator holds: `publicSwapApi` keeps it in memory (never in the URL) and sends it as
   `X-Record-Token` to read, submit or report that record; without it the server answers 404. The
@@ -509,6 +509,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (`components/TokenPicker.tsx`) lists the tokens on every network, searchable, by network, with
   official logos where they exist (`TokenMark`, else a neutral monogram) and each network's mark
   (`NetworkMark`) on its heading and in the network filter.
+- **Token and network logos are Vite assets** (`src/assets/logos/{tokens,networks}`, product owner,
+  2026-10-27: icons must not reload all the time). `@/lib/logo-urls` (`tokenLogoUrl`,
+  `networkLogoUrl`) turns the manifest's file names into fingerprinted `/_astro/` URLs, which the node
+  adapter serves with `max-age=31536000, immutable`; a file under `public/` goes out with
+  `max-age=0` and is revalidated on every load. Render a logo through those two, never the
+  manifest's value. The landing's brand files stay in `public/media/brands`.
 - **Each side offers only what can be swapped** (product owner, 2026-10-26: some assets are not
   compatible). "Pay" lists `canPayWith` tokens (an OFT-only USDT0 destination never is one);
   "receive" lists `receivableFrom(from)`, the pairs `routeFor` settles in this environment. A new
@@ -933,6 +939,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
 - Starter is 1% + 25¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
+- **Every service's rate is on the pricing surfaces** (product owner, 2026-10-27: the swap
+  commission was on no pricing page). `/pricing` compares, per plan, the payment fee, the swap
+  commission (`swapFeePct`), escrow (`ESCROW_FEE_PCT`), private payments
+  (`PRIVATE_PAYMENT_FEE_PCT`) and the merchant's own fee; each plan card, the payments site's
+  `/fees` cards, the dashboard's plan comparison and the onboarding spec panel show the swap
+  commission too, and the pricing FAQ quotes every plan's and the public key's. Copy carries
+  `{placeholders}` filled from `plans.ts`, never a written rate.
+- **Cosmos Pay is sold as a service** (product owner, 2026-10-27): payments, swaps, a payment
+  gateway and private payments. Cosmos Pay runs everything; an organization only names the wallet
+  addresses that receive the money (and its own fee) and signs with its wallet. Copy never says
+  an organization runs anything or uses keys of its own to offer them.
 - **A plan has a standing** (`src/lib/plan-status.ts`, tested): `active`, `paused`, `past_due` or
   `suspended`, stored on the owner's profile (`profile.planStatus`, migration
   `20261026120000_profile_plan_status`, default active). Billing has no provider yet, so staff set
