@@ -8,6 +8,7 @@ import { usePolling, useUrlRequest, useListFilters } from "@/components/cosmos/d
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TICKET_STATUSES } from "@/lib/support-status";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { ChatPanel } from "@/components/cosmos/dashboard/components/ChatPanel";
 import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboard/components/TicketStatusPill";
@@ -76,7 +77,7 @@ export function SupportView() {
           label: fl.status, value: filters.status, onChange: (v) => set("status", v),
           options: [
             { key: "all", label: fl.allStatuses, count: tickets.filter((tk) => matches(tk, "status")).length },
-            ...TICKET_STATUSES.map((st) => ({ key: st, label: (s.statuses && s.statuses[st]) || st, count: statusCounts[st] || 0 })),
+            ...TICKET_STATUSES.map((st) => ({ key: st, label: (s.statuses && s.statuses[st]) || st, count: statusCounts[st] || 0, icon: <StatusIcon tone={st === "resolved" ? "ok" : st === "closed" ? "off" : "wait"} size={16} /> })),
           ],
         }}
         active={active} onReset={reset}

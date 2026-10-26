@@ -13,6 +13,8 @@ import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PaymentPreview, PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
@@ -95,18 +97,22 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                   <button className="icon-mini" title={cx.custDetail.title} aria-label={cx.custDetail.title} onClick={() => setDetail(c)}>{DI.docs}</button>
                   {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(c)}>{DI.trash}</button>}
+                  <RowMenu
+                    label={fmt(t.dash.common.rowActions, { name: c.alias || c.name || shortAcct(c.account) || c.id })}
+                    items={[
+                      { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => setDetail(c) },
+                      { key: "copy", label: t.dash.common.copyId, icon: DI.link, onClick: () => navigator.clipboard?.writeText(c.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      { key: "account", label: t.dash.common.copyAccount, icon: DI.link, disabled: !c.account, hint: cx.custDetail.noAccount, onClick: () => navigator.clipboard?.writeText(c.account).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      { key: "payments", label: t.dash.overview.hub.viewAll, icon: DI.payments, disabled: !(c.account && c.payments), hint: cx.custDetail.noAccount, onClick: () => paymentsOf(c) },
+                      ...(canManage ? [{ key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => remove(c) }] : []),
+                    ]}
+                  />
                 </td>
               </tr>
             ))}
               <FillRows
                 n={pg.size - (error ? 0 : pg.count)} cols={6}
-                empty={error ? cx.loadError : !view.length ? (
-                  <>
-                    {rows.length ? fl.noMatch : cv.empty}
-                    {rows.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                    {!rows.length && addButton}
-                  </>
-                ) : null}
+                empty={error ? cx.loadError : null}
               />
             </tbody>
           </table></div>
@@ -235,7 +241,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
                   <tr key={p.id} className="row-click" tabIndex={0} onClick={() => onOpenPayment(p.id)} onKeyDown={(e) => { if (e.key === "Enter") onOpenPayment(p.id); }}>
                     <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => onOpenPayment(p.id)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                     <td className="amt">{p.amount || "-"} {assetLabel(isChain(p.chain) ? p.chain : "stellar", p.asset)}</td>
-                    <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
+                    <td><Pill st={STATUS_PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>
                   </tr>
                 ))}

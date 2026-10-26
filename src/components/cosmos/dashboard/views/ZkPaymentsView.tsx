@@ -9,14 +9,14 @@
    Testnet (the sandbox) only for now. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
-import { useT } from "@/lib/i18n/index";
+import { useT, fmt } from "@/lib/i18n/index";
 import { IcCopy } from "@/components/cosmos/icons";
 import { zkPayments as zkApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
 import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
-import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { useListFilters, useUrlRequest, usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { explorerTxUrl, explorerAccountUrl } from "@/lib/chains";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
@@ -25,6 +25,9 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { PAYMENTS } from "@/components/cosmos/lib/constants";
@@ -109,7 +112,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
           label: fl.status, value: filters.status, onChange: (v) => set("status", v),
           options: [
             { key: "all", label: fl.allStatuses, count: all.filter((p) => matches(p, "status")).length },
-            ...STATUSES.map((st) => ({ key: st, label: z.status[st], count: statusCounts[st] || 0 })),
+            ...STATUSES.map((st) => ({ key: st, label: z.status[st], count: statusCounts[st] || 0, icon: <StatusIcon tone={paymentTone(st)} size={16} /> })),
           ],
         }}
         date={filters.date} onDate={(v) => set("date", v)}
@@ -131,27 +134,31 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
                         preview={() => <PreviewCard label={z.view.tableHead.id} title={p.id} headline={<><b>{p.amount} XLM</b><span className={`hub-st-t ${(PILL[p.status] === "ok" ? "ok" : PILL[p.status] === "fail" ? "fail" : "wait")}`}>{z.status[p.status] || p.status}</span></>} fields={[[z.view.tableHead.net, `${p.netAmount} XLM`], [z.view.tableHead.fee, `${p.feeAmount} XLM`], [z.view.tableHead.created, fmtDateTime(p.createdAt)], ...(p.description ? [[z.modal.description, p.description]] : [])]} />}
                       >{p.description || short(p.id)}</RecordLink>
                     </td>
-                    <td className="amt">{p.amount} XLM</td>
+                    <td className="amt"><span className="cell-mark"><TokenMark symbol="XLM" chain="stellar" chainName="Stellar" size={24} /><span>{p.amount} XLM</span></span></td>
                     <td className="amt">{p.netAmount} XLM</td>
                     <td className="cust">{p.feeAmount} XLM</td>
-                    <td><Pill st={PILL[p.status] || "ref"} label={z.status[p.status] || p.status} /></td>
+                    <td><Pill st={PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={z.status[p.status] || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>
                     <td className="row-actions" onClick={(e) => e.stopPropagation()}>
                       <button type="button" className="icon-mini" title={z.view.detail.title} aria-label={z.view.detail.title} onClick={() => setDetail(p)}>{DI.docs}</button>
                       <button type="button" className="icon-mini" title={z.view.copyLink} aria-label={z.view.copyLink} onClick={() => copy(p.id)}><IcCopy /></button>
                       <a className="icon-mini" href={checkoutUrl(p.id)} target="_blank" rel="noopener" title={z.view.openCheckout} aria-label={z.view.openCheckout}>{DI.link}</a>
+                      <RowMenu
+                        label={fmt(t.dash.common.rowActions, { name: shortAddress(p.id) })}
+                        items={[
+                          { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => setDetail(p) },
+                          { key: "tab", label: t.dash.common.openNewTab, icon: DI.link, href: `/dashboard?view=zkPayments&open=${encodeURIComponent(p.id)}`, external: true },
+                          { key: "copyId", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                          { key: "copy", label: z.view.copyLink, icon: <IcCopy />, onClick: () => copy(p.id) },
+                          { key: "checkout", label: z.view.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
                 <FillRows
                   n={pg.size - (error ? 0 : pg.count)} cols={7}
-                  empty={error ? z.view.loadError : !shown.length ? (
-                    <>
-                      {all.length ? fl.noMatch : z.view.empty}
-                      {all.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                      {!all.length && canCreate && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
-                    </>
-                  ) : null}
+                  empty={error ? z.view.loadError : null}
                 />
               </tbody>
             </table>

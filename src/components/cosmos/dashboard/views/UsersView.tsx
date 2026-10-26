@@ -58,7 +58,7 @@ export function UsersView({ currentUserId, currentRole }) {
                 </tr>
               );
             })}
-              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? u.loadError : !view.length ? u.empty : null} />
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? u.loadError : null} />
             </tbody>
           </table></div>
         )}

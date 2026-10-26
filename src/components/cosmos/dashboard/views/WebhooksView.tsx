@@ -14,6 +14,8 @@ import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 
@@ -103,7 +105,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
           label: fl.status, value: filters.status, onChange: (v) => set("status", v),
           options: [
             { key: "all", label: fl.allStatuses, count: eps.filter((w) => matches(w, "status")).length },
-            ...STATES.map((st) => ({ key: st, label: st === "active" ? cx.active : cx.inactive, count: stateCounts[st] || 0 })),
+            ...STATES.map((st) => ({ key: st, label: st === "active" ? cx.active : cx.inactive, count: stateCounts[st] || 0, icon: <StatusIcon tone={st === "active" ? "ok" : "off"} size={16} /> })),
           ],
         }}
         active={active} onReset={reset}
@@ -117,10 +119,12 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
             <tbody>{!error && pg.slice.map((w) => (
               <tr key={w.id} className={`row-click${selected && selected.id === w.id ? " row-on" : ""}`} onClick={() => setSelected(w)}>
                 <td className="tid">
+                  <span className="cell-mark"><span className="am-sq">{DI.webhook}</span>
                   <RecordLink
                     onOpen={() => setSelected(w)} copy={w.url}
                     preview={() => <PreviewCard label={wv.tableHead.url} title={w.url} wrap headline={<span className={`hub-st-t ${w.enabled ? "ok" : "wait"}`}>{w.enabled ? cx.active : cx.inactive}</span>} fields={[[wv.tableHead.events, w.eventTypes && w.eventTypes.length ? w.eventTypes.map((e) => (cx.eventLabels && cx.eventLabels[e]) || humanize(e)).join(", ") : cx.allEvents]]} />}
                   >{w.url}</RecordLink>
+                  </span>
                 </td>
                 <td className="cust">
                   {/* The events it receives, named on hover; whoever manages webhooks changes them from here. */}
@@ -140,18 +144,27 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
                   {canManage && <button className="icon-mini" title={cx.rotate} aria-label={cx.rotate} onClick={() => rotate(w)}>{DI.key}</button>}
                   {canManage && <button className="icon-mini" title={w.enabled ? cx.disable : cx.enable} aria-label={w.enabled ? cx.disable : cx.enable} onClick={() => toggle(w)}>{DI.network}</button>}
                   {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(w)}>{DI.trash}</button>}
+                  <RowMenu
+                    label={fmt(t.dash.common.rowActions, { name: w.url })}
+                    items={[
+                      { key: "open", label: wv.tableHead.events, icon: DI.activity, onClick: () => setSelected(w) },
+                      { key: "url", label: t.dash.common.copyUrl, icon: DI.link, onClick: () => copyText(w.url).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      { key: "id", label: t.dash.common.copyId, icon: DI.link, onClick: () => copyText(w.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      ...(canManage ? [
+                        { key: "edit", label: wv.edit, icon: DI.edit, onClick: () => setEditing(w) },
+                        { key: "ping", label: cx.ping, icon: DI.activity, onClick: () => ping(w) },
+                        { key: "rotate", label: cx.rotate, icon: DI.key, onClick: () => rotate(w) },
+                        { key: "toggle", label: w.enabled ? cx.disable : cx.enable, icon: DI.network, onClick: () => toggle(w) },
+                        { key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => remove(w) },
+                      ] : []),
+                    ]}
+                  />
                 </td>
               </tr>
             ))}
               <FillRows
                 n={pg.size - (error ? 0 : pg.count)} cols={4}
-                empty={error ? cx.loadError : !view.length ? (
-                  <>
-                    {eps.length ? fl.noMatch : wv.modal.desc}
-                    {eps.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                    {!eps.length && addButton}
-                  </>
-                ) : null}
+                empty={error ? cx.loadError : null}
               />
             </tbody>
           </table></div>
@@ -202,21 +215,31 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
           <tbody>{pg.slice.map((d) => (
             <tr key={d.id} className="row-click" onClick={() => setOpen(d)}>
               <td className="tid">
+                <span className="cell-mark"><StatusIcon tone={pillTone(DELIVERY_PILL[d.status] || "ref")} />
                 <RecordLink
                   onOpen={() => setOpen(d)} copy={d.eventId || d.id}
                   preview={() => <PreviewCard label={wv.eventId} title={d.eventId || d.id} headline={<><b>{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</b><span className={`hub-st-t ${DELIVERY_PILL[d.status] === "ok" ? "ok" : DELIVERY_PILL[d.status] === "fail" ? "fail" : "wait"}`}>{d.status}</span></>} fields={[[wv.tableHead.response, d.responseStatus ?? "-"], [wv.attempts, d.attempts ?? "-"], [wv.tableHead.when, fmtDateTime(d.lastAttemptAt || d.createdAt)]]} />}
                 >{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</RecordLink>
+                </span>
               </td>
               <td className="cust">{d.responseStatus ?? "-"}</td>
-              <td><Pill st={DELIVERY_PILL[d.status] || "ref"} label={d.status} /></td>
+              <td><Pill st={DELIVERY_PILL[d.status] || "ref"} tone={d.status === "PENDING" ? "wait" : undefined} label={d.status} /></td>
               <td className="cust">{fmtDateTime(d.lastAttemptAt || d.createdAt)}</td>
               <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                 <button className="icon-mini" title={wv.delivery} aria-label={wv.delivery} onClick={() => setOpen(d)}>{DI.docs}</button>
                 {canManage && <button type="button" className="btn btn-outline-w btn-sm" style={{ marginLeft: 8 }} onClick={() => redeliver(d)}>{cx.redeliver}</button>}
+                <RowMenu
+                  label={fmt(t.dash.common.rowActions, { name: d.eventId || d.id })}
+                  items={[
+                    { key: "open", label: wv.delivery, icon: DI.docs, onClick: () => setOpen(d) },
+                    { key: "copy", label: t.dash.common.copyId, icon: DI.link, onClick: () => copyText(d.eventId || d.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                    ...(canManage ? [{ key: "redeliver", label: cx.redeliver, icon: DI.refresh, onClick: () => redeliver(d) }] : []),
+                  ]}
+                />
               </td>
             </tr>
           ))}
-            <FillRows n={pg.size - pg.count} cols={5} empty={!rows.length ? (only === "failed" ? wv.noFailed : cx.noDeliveries) : null} />
+            <FillRows n={pg.size - pg.count} cols={5} />
           </tbody>
         </table></div>
       )}

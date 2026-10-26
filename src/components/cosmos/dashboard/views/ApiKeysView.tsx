@@ -12,12 +12,32 @@ import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
 const DEFAULTS = { q: "", role: "all" };
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 
 /* At the plan's key limit, or in Production on a plan without live keys, the page says so and, for
    the organization's owner who can change plan, offers the plan dialog (`onUpgrade`); anyone else is
    told the owner's plan decides. */
+/* A key's menu: its id, and editing or revoking it for whoever may (editing disabled while the
+   key is locked by the plan, saying so). */
+function KeyMenu({ k, locked, canEdit, canDelete, onEdit, onRevoke }) {
+  const t = useT();
+  const ak = t.dash.apikeys;
+  const [, copy] = useCopy();
+  return (
+    <RowMenu
+      label={fmt(t.dash.common.rowActions, { name: k.name || k.id })}
+      items={[
+        { key: "copy", label: t.dash.common.copyId, icon: DI.link, onClick: () => copy(k.id, t.toasts.copied) },
+        ...(canEdit ? [{ key: "edit", label: ak.edit, icon: DI.edit, disabled: locked, hint: ak.locked, onClick: () => onEdit(k) }] : []),
+        ...(canDelete ? [{ key: "revoke", label: ak.revoke, icon: DI.trash, danger: true, onClick: () => onRevoke(k) }] : []),
+      ]}
+    />
+  );
+}
+
 export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedIds, canCreate = true, canEdit = true, canDelete = true, liveLocked = false, onCreate, onRevoke, onEdit, onUpgrade = null }) {
   const t = useT();
   const ak = t.dash.apikeys;
@@ -65,7 +85,7 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{ak.tableHead.name}</th><th>{ak.tableHead.id}</th><th>{ak.tableHead.role}</th><th>{ak.tableHead.permissions}</th><th>{ak.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((k) => { const locked = !!(lockedIds && lockedIds.has(k.id)); return (
               <tr key={k.id} className={locked ? "row-locked" : ""}>
-                <td><b>{k.name || ak.unnamed}</b>{locked && <span className="lock-badge">{ak.locked}</span>}{k.description ? <div className="as" style={{ marginTop: 2 }}>{k.description}</div> : null}</td>
+                <td><span className="cell-mark"><span className="am-sq">{DI.key}</span><span><b>{k.name || ak.unnamed}</b>{locked && <span className="lock-badge">{ak.locked}</span>}{k.description ? <div className="as" style={{ marginTop: 2 }}>{k.description}</div> : null}</span></span></td>
                 <td className="tid">
                   <RecordLink
                     onOpen={canEdit && !locked ? () => onEdit(k) : undefined} copy={k.id}
@@ -78,19 +98,13 @@ export function ApiKeysView({ keys, env = "dev", loading, error, limit, lockedId
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                   {canEdit && <button className="icon-mini" title={ak.edit} aria-label={ak.edit} onClick={() => onEdit(k)} disabled={locked}>{DI.edit}</button>}
                   {canDelete && <button className="icon-mini danger" title={ak.revoke} aria-label={ak.revoke} onClick={() => onRevoke(k)}>{DI.trash}</button>}
-                  {!canEdit && !canDelete && <span className="cust">{ak.none}</span>}
+                  <KeyMenu k={k} locked={locked} canEdit={canEdit} canDelete={canDelete} onEdit={onEdit} onRevoke={onRevoke} />
                 </td>
               </tr>
             ); })}
               <FillRows
                 n={pg.size - (error ? 0 : pg.count)} cols={6}
-                empty={error ? ak.loadError : !shown.length ? (
-                  <>
-                    {inEnv.length ? fl.noMatch : ak.empty}
-                    {inEnv.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                    {!inEnv.length && canCreate && !reached && <button className="btn btn-dark btn-sm" onClick={onCreate}>{DI.plus} {ak.create}</button>}
-                  </>
-                ) : null}
+                empty={error ? ak.loadError : null}
               />
             </tbody>
           </table></div>

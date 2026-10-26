@@ -4,12 +4,13 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PaymentPreview, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { goFiltered, usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { PayLinkDetailModal, PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
@@ -119,13 +120,13 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
                 <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{b.payment}</td>
-                <td className="amt">+{amountLabel(p, pl)}</td>
-                <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
+                <td className="amt"><PaymentAmount intent={p} pl={pl} /></td>
+                <td><Pill st={STATUS_PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
                 <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />
               </tr>
             ))}
-              <FillRows n={pg.size - pg.count} cols={6} empty={!recent.length ? <>{cx.empty}{startHere}</> : null} />
+              <FillRows n={pg.size - pg.count} cols={6} />
             </tbody>
           </table></div>
         )}

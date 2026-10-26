@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
-import { useT } from "@/lib/i18n/index";
+import { useT, fmt } from "@/lib/i18n/index";
 import { products as prodApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { usePaged, useGsapRows, goFiltered, useListFilters } from "@/components/cosmos/dashboard/hooks";
@@ -13,6 +13,8 @@ import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 
@@ -78,7 +80,7 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
           label: fl.status, value: filters.status, onChange: (v) => set("status", v),
           options: [
             { key: "all", label: fl.allStatuses, count: items.filter((p) => matches(p, "status")).length },
-            ...STATES.map((st) => ({ key: st, label: st === "active" ? cx.active : cx.inactive, count: stateCounts[st] || 0 })),
+            ...STATES.map((st) => ({ key: st, label: st === "active" ? cx.active : cx.inactive, count: stateCounts[st] || 0, icon: <StatusIcon tone={st === "active" ? "ok" : "off"} size={16} /> })),
           ],
         }}
         selects={[{ key: "kind", label: fl.kind, value: filters.kind, onChange: (v) => set("kind", v), options: [{ key: "all", label: fl.allKinds }, ...KINDS.map((k) => ({ key: k, label: pr.types[KIND_TO_TYPE[k]], count: kindCounts[k] || 0 }))] }]}
@@ -106,18 +108,21 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                   <button className="icon-mini" title={pr.detail.title} aria-label={pr.detail.title} onClick={() => setDetail(p)}>{DI.docs}</button>
                   {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(p)}>{DI.trash}</button>}
+                  <RowMenu
+                    label={fmt(t.dash.common.rowActions, { name: p.name })}
+                    items={[
+                      { key: "open", label: pr.detail.title, icon: DI.docs, onClick: () => setDetail(p) },
+                      { key: "copy", label: t.dash.common.copyId, icon: DI.link, onClick: () => navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      ...(canSell ? [{ key: "sell", label: t.dash.overview.hub.createLink, icon: DI.payments, disabled: !(p.amount && p.active), hint: t.dash.common.sellNeeds, onClick: () => sell(p) }] : []),
+                      ...(canManage ? [{ key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => remove(p) }] : []),
+                    ]}
+                  />
                 </td>
               </tr>
             ))}
               <FillRows
                 n={pg.size - (error ? 0 : pg.count)} cols={5}
-                empty={error ? cx.loadError : !view.length ? (
-                  <>
-                    {items.length ? fl.noMatch : pr.modal.desc}
-                    {items.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                    {!items.length && addButton}
-                  </>
-                ) : null}
+                empty={error ? cx.loadError : null}
               />
             </tbody>
           </table></div>

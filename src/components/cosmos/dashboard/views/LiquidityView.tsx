@@ -18,8 +18,13 @@ import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
+import { explorerTxUrl, tierOf } from "@/lib/chains";
 
 const STATUSES = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "EXPIRED"];
 const KINDS = ["DEPOSIT", "WITHDRAW"];
@@ -122,7 +127,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
               label: fl.status, value: filters.status, onChange: (v) => set("status", v),
               options: [
                 { key: "all", label: lq.filters.all, count: rows.filter((o) => matches(o, "status")).length },
-                ...STATUSES.filter((st) => statusCounts[st] || filters.status === st).map((st) => ({ key: st, label: lq.status[st] || st, count: statusCounts[st] || 0 })),
+                ...STATUSES.filter((st) => statusCounts[st] || filters.status === st).map((st) => ({ key: st, label: lq.status[st] || st, count: statusCounts[st] || 0, icon: <StatusIcon tone={paymentTone(st)} size={16} /> })),
               ],
             }}
             selects={[{ key: "kind", label: fl.kind, value: filters.kind, onChange: (v) => set("kind", v), options: [{ key: "all", label: fl.allKinds }, ...KINDS.map((k) => ({ key: k, label: lq.kind[k] || k, count: kindCounts[k] || 0 }))] }]}
@@ -142,21 +147,16 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
                        title={o.id}><code>{shortAddress(o.id)}</code></RecordLink>
                     </td>
                     <td>{lq.kind[o.kind] || o.kind}</td>
-                    <td>{pairLabel(o.assetA, o.assetB)}</td>
+                    <td><span className="cell-mark"><TokenMark symbol={assetLabel(o.assetA)} chain="stellar" chainName="Stellar" size={24} /><span>{pairLabel(o.assetA, o.assetB)}</span></span></td>
                     <td className="amt">{o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)}</td>
-                    <td><Pill st={STATUS_PILL[o.status] || "ref"} label={lq.status[o.status] || o.status} /></td>
+                    <td><Pill st={STATUS_PILL[o.status] || "ref"} tone={paymentTone(o.status)} label={lq.status[o.status] || o.status} /></td>
                     <td className="cust">{fmtDateTime(o.createdAt)}</td>
+                    <LiqRowActions o={o} onView={() => setDetail(o)} />
                   </tr>
                 ))}
                   <FillRows
-                    n={pg.size - (error ? 0 : pg.count)} cols={6}
-                    empty={error ? lq.loadError : !view.length ? (
-                      <>
-                        {rows.length ? fl.noMatch : lq.empty}
-                        {rows.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                        {!rows.length && canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>}
-                      </>
-                    ) : null}
+                    n={pg.size - (error ? 0 : pg.count)} cols={7}
+                    empty={error ? lq.loadError : null}
                   />
                 </tbody>
               </table></div>
@@ -198,6 +198,36 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
 }
 
 /* ---------------- pools browser (Horizon proxy) ---------------- */
+/* An operation's actions: its detail, then its menu (a new tab, its id, its transaction). */
+function LiqRowActions({ o, onView }) {
+  const t = useT();
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  const tx = o.txHash ? explorerTxUrl("stellar", tierOf(o.network), o.txHash) : null;
+  return (
+    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+      <button type="button" className="icon-mini" title={cm.details} aria-label={cm.details} onClick={onView}>{DI.docs}</button>
+      <RowMenu
+        label={fmt(cm.rowActions, { name: shortAddress(o.id) })}
+        items={[
+          { key: "open", label: cm.details, icon: DI.docs, onClick: onView },
+          { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=liquidity&open=${encodeURIComponent(o.id)}`, external: true },
+          { key: "copy", label: cm.copyId, icon: DI.link, onClick: () => copy(o.id, t.toasts.copied) },
+          { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: tx, external: true, disabled: !tx, hint: cm.noTxYet },
+        ]}
+      />
+    </td>
+  );
+}
+
+/* A pool's or a position's menu: its id, and the action its row offers. */
+function PoolMenu({ id, action }) {
+  const t = useT();
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  return <RowMenu label={fmt(cm.rowActions, { name: shortAddress(id) })} items={[{ key: "copy", label: cm.copyId, icon: DI.link, onClick: () => copy(id, t.toasts.copied) }, ...(action ? [action] : [])]} />;
+}
+
 function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
   const t = useT();
   const p = lq.pools;
@@ -238,7 +268,7 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
         </div>
       </div>
       {loaded && (
-        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th>{canManage && <th />}</tr></thead>
+        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{pg.slice.map((pool) => (
             <tr key={pool.id}>
               <td className="tid">
@@ -251,10 +281,13 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
               <td>{pool.totalShares}</td>
               <td>{pool.totalTrustlines}</td>
               <td>{(pool.feeBp / 100).toFixed(2)}%</td>
-              {canManage && <td><button className="btn btn-soft btn-sm" onClick={() => onDeposit(pool)}>{lq.deposit}</button></td>}
+              <td className="row-actions">
+                {canManage && <button className="btn btn-soft btn-sm" onClick={() => onDeposit(pool)}>{lq.deposit}</button>}
+                <PoolMenu id={pool.id} action={canManage ? { key: "deposit", label: lq.deposit, icon: DI.plus, onClick: () => onDeposit(pool) } : null} />
+              </td>
             </tr>
           ))}
-            <FillRows n={pg.size - pg.count} cols={canManage ? 6 : 5} empty={!pools.length ? p.empty : null} />
+            <FillRows n={pg.size - pg.count} cols={6} />
           </tbody>
         </table></div>
       )}
@@ -268,6 +301,7 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
    The account is one of the organization's Stellar wallets (Settings), picked from the list as the
    payment forms do; its positions load as soon as it is picked. */
 function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdraw }) {
+  const t = useT();
   const p = lq.positions;
   const [account, setAccount] = useState("");
   const [positions, setPositions] = useState([]);
@@ -298,7 +332,7 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
         </div>
       </div>
       {/* Until an account is picked the table waits, empty, saying what it needs. */}
-      <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th>{canManage && <th />}</tr></thead>
+      <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{loaded && pg.slice.map((pos) => (
             <tr key={pos.poolId}>
               <td className="tid">
@@ -310,10 +344,13 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
               <td className="amt">{pos.shares}</td>
               <td>{(pos.shareOfPoolBps / 100).toFixed(2)}%</td>
               <td className="amt">{(pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>
-              {canManage && <td><button className="btn btn-soft btn-sm" onClick={() => onWithdraw(pos)}>{lq.withdraw}</button></td>}
+              <td className="row-actions">
+                {canManage && <button className="btn btn-soft btn-sm" onClick={() => onWithdraw(pos)}>{lq.withdraw}</button>}
+                <PoolMenu id={pos.poolId} action={canManage ? { key: "withdraw", label: lq.withdraw, icon: DI.download, onClick: () => onWithdraw(pos) } : null} />
+              </td>
             </tr>
           ))}
-            <FillRows n={pg.size - (loaded ? pg.count : 0)} cols={canManage ? 5 : 4} empty={!loaded ? p.prompt : !positions.length ? p.empty : null} />
+            <FillRows n={pg.size - (loaded ? pg.count : 0)} cols={5} />
           </tbody>
         </table></div>
       <Pagination {...pg} />

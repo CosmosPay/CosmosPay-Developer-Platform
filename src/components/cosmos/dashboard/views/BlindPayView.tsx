@@ -238,7 +238,7 @@ function ReceiversTab({ bp, orgId, env, canManage, isManager }) {
               <td className="cust">{fmtDateTime(rec.createdAt)}</td>
             </tr>
           ))}
-            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? bp.loadError : !view.length ? r.empty : null} />
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? bp.loadError : null} />
           </tbody>
         </table></div>
       )}
@@ -671,7 +671,7 @@ function OnrampTab({ bp, orgId, env, canManage }) {
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>
           ))}
-            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : !view.length ? o.empty : null} />
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : null} />
           </tbody>
         </table></div>
       )}
@@ -804,7 +804,7 @@ function OfframpTab({ bp, orgId, env, canManage }) {
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>
           ))}
-            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : !view.length ? o.empty : null} />
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : null} />
           </tbody>
         </table></div>
       )}

@@ -13,7 +13,7 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { DATE_RANGES } from "@/lib/dashboard-filters";
 
-type Option = { key: string; label: string; count?: number };
+type Option = { key: string; label: string; count?: number; icon?: ReactNode };
 type Filter = { key: string; label: string; value: string; onChange: (v: string) => void; options: Option[] };
 
 export function FilterBar({
@@ -74,7 +74,7 @@ export function FilterBar({
             active={f.value !== f.options[0]?.key}
             value={f.value}
             onChange={f.onChange}
-            options={f.options.map((o) => ({ value: o.key, label: o.label, count: loading ? undefined : o.count }))}
+            options={f.options.map((o) => ({ value: o.key, label: o.label, icon: o.icon, count: loading ? undefined : o.count }))}
           />
         ))}
         {active > 0 && <button type="button" className="fbar-reset" onClick={onReset}>{fl.clear}</button>}

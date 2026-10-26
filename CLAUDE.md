@@ -303,10 +303,26 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       click-to-copy ids. Card classes are `rpv-*` (`.rp` and `.wrap` are taken elsewhere).
     - A pending Stellar payment's detail checks a transaction hash (`/validate`) for a payer whose
       wallet never reported back.
-    - Empty lists offer their first action to whoever may take it; a plan limit (API keys,
+    - An empty list stays empty (product owner, 2026-10-26: no "nothing here" text or create
+      button inside a table; the view's first action is in its filter row); a list that failed to
+      load still says so in its middle row. A plan limit (API keys,
       production keys, organizations, a locked organization) opens the plan dialog for whoever can
       change plan (keys: only the organization's owner, whose plan sets them) and says who decides
-      otherwise. A control the viewer may not use is hidden, not disabled.
+      otherwise. A control the viewer may not use (a permission) is hidden, not disabled; an
+      action that does not apply to one row (no transaction yet, a completed payment) is drawn
+      disabled, saying why, so every row's buttons line up (product owner, 2026-10-26).
+    - **Every row leads with an icon and ends with its "⋮"** (product owner, 2026-10-26): the
+      token it handles with its network's badge (`TokenMark`: payments, balances, swaps,
+      liquidity, private payments), a status mark (`components/StatusIcon.tsx`: deliveries, the
+      overview's transactions) or the kind of record (`am-sq`: products, keys, endpoints;
+      avatars for customers). `components/RowMenu.tsx` is the row's menu (details, a new tab, copy
+      the id or the link, the explorer, the row's own actions; portaled and fixed, focus moves
+      into it, Escape returns it; an action that does not apply stays disabled with its hint).
+    - **Filters show their options' icons**: a status's mark (`StatusIcon`, `paymentTone`,
+      `pillTone`) and a network's logo (`NetworkMark`), in the list and on the chosen value. So do
+      the cells: a status (`Pill`) is its mark and its coloured word, never a dot (done is green in
+      both themes, never the ink), and a network cell carries the network's logo (both for a swap
+      between networks).
     - The account menu's item opens the personal account view in place (`Nav onAccount`); the
       notifications view is titled as the sidebar names it.
   - **One filter row for every list** (`components/FilterBar.tsx`, the logic pure and tested in
@@ -346,10 +362,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     pages at the viewer's rows per page (`PAGE_SIZES` 10 / 20 / 50, never more than 50; one choice
     for every table, kept in the browser as `cosmospay-rows`), `Pagination` under the table always
     shows the picker, the range and, past one page, the steps (as tall as the picker, its line and
-    type: product owner). A short or empty page is padded with
-    empty rows (`components/FillRows.tsx`, each as tall as a real row of that table, measured), and
-    an empty list says so, with its first action, in the middle row: a table never shrinks to an
-    "empty" box. The table scroller is positioned, so a wide table's hidden labels never make the
+    type: product owner). A chart whose legend names the currency ("Volume (USD)") shows plain
+    figures on its axis and in its tooltip, never the currency again (product owner). A short or empty page is padded with
+    empty rows (`components/FillRows.tsx`, each as tall as a real row of that table, measured); an
+    empty list is just those rows, never an "empty" box. The actions column takes only the room
+    its buttons need, against the table's right edge, so the width goes to the data (product owner:
+    no empty band on the right). The table scroller is positioned, so a wide table's hidden labels never make the
     page scroll sideways on a phone. Small summary tables inside a view or a dialog are not paged.
   - **Every dropdown is `components/Select.tsx`** (no native `<select>` in the dashboard): the
     WAI-ARIA select-only combobox (arrow keys, Home / End, typeahead, Escape, a click outside), with

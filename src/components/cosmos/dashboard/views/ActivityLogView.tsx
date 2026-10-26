@@ -150,7 +150,7 @@ export function ActivityLogView({ env = "dev" }) {
                 </React.Fragment>
               );
             })}
-              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? cx.loadError : !view.length ? (rows.length ? t.dash.filters.noMatch : av.empty) : null} />
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? cx.loadError : null} />
             </tbody>
           </table></div>
         )}

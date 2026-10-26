@@ -288,7 +288,6 @@
 .paylink-check { display: flex; gap: 10px; align-items: center; }
 .paylink-check .field { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 .cust-pays-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.icon-mini-gap { display: inline-block; width: 30px; height: 30px; margin-left: 6px; vertical-align: middle; }
 .icon-mini svg { width: 15px; height: 15px; }
 .icon-mini:hover { color: var(--ink); border-color: var(--ink-3); }
 .icon-mini.danger:hover { color: #D64545; border-color: #D64545; }

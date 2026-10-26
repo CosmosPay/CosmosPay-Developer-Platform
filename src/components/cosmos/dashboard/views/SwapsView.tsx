@@ -6,7 +6,7 @@
    with the public swap pages (components/SwapWidget.tsx, components/SwapDetails.tsx); here they
    call the organization's proxies (orgSwapApi). */
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useT } from "@/lib/i18n/index";
+import { useT, fmt } from "@/lib/i18n/index";
 import { swaps as swapsApi, crossChainSwaps as crossApi, usdt0 as usdt0Api } from "@/lib/api-client";
 import { orgSwapApi } from "@/lib/swap-api";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -20,11 +20,16 @@ import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { SwapWidget } from "@/components/cosmos/dashboard/components/SwapWidget";
 import { SwapRecordDetail } from "@/components/cosmos/dashboard/components/SwapDetails";
-import { CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, networkName } from "@/lib/chains";
+import { CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, networkName, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
 import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 
 /* One vocabulary for every kind: a swap on one chain (PENDING → SUBMITTED → SUCCEEDED), one
@@ -64,6 +69,30 @@ function crossRow(x) {
     got: `${x.amountOut || `~${x.amountOutEstimated}`} ${x.destinationAsset}`,
     search: [x.id, x.recipient, x.refundTo, x.depositAddress, x.originAsset, x.destinationAsset],
   };
+}
+
+/* A swap row's actions: its detail, then its menu (a new tab, its id, its transaction on the
+   explorer, disabled until there is one). */
+function SwapRowActions({ r, onView }) {
+  const t = useT();
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  const chain = isChain(r.from) ? r.from : "stellar";
+  const tx = r.raw && r.raw.txHash ? explorerTxUrl(chain, tierOf(r.raw.network), r.raw.txHash) : null;
+  return (
+    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+      <button type="button" className="icon-mini" title={cm.details} aria-label={cm.details} onClick={onView}>{DI.docs}</button>
+      <RowMenu
+        label={fmt(cm.rowActions, { name: shortAddress(r.id) })}
+        items={[
+          { key: "open", label: cm.details, icon: DI.docs, onClick: onView },
+          { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=swaps&open=${encodeURIComponent(r.id)}`, external: true },
+          { key: "copy", label: cm.copyId, icon: DI.link, onClick: () => copy(r.id, t.toasts.copied) },
+          { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: tx, external: true, disabled: !tx, hint: cm.noTxYet },
+        ]}
+      />
+    </td>
+  );
 }
 
 export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = "all" }) {
@@ -155,12 +184,12 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
           label: fl.status, value: filters.status, onChange: (v) => set("status", v),
           options: [
             { key: "all", label: fl.allStatuses, count: rows.filter((r) => matches(r, "status")).length },
-            ...GROUPS.filter((g) => groupCounts[g] || filters.status === g).map((g) => ({ key: g, label: sw.groups[g], count: groupCounts[g] || 0 })),
+            ...GROUPS.filter((g) => groupCounts[g] || filters.status === g).map((g) => ({ key: g, label: sw.groups[g], count: groupCounts[g] || 0, icon: <StatusIcon tone={pillTone(GROUP_PILL[g])} size={16} /> })),
           ],
         }}
         selects={[
           { key: "type", label: sw.typeLabel, value: filters.type, onChange: (v) => set("type", v), options: [{ key: "all", label: sw.types.all }, ...TYPES.map((k) => ({ key: k, label: sw.types[k], count: typeCounts[k] || 0 }))] },
-          { key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...networks.map((c) => ({ key: c, label: networkName(c), count: chainCounts[c] }))] },
+          { key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...networks.map((c) => ({ key: c, label: networkName(c), icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] }))] },
         ]}
         date={filters.date} onDate={(v) => set("date", v)}
         active={active} onReset={reset}
@@ -169,7 +198,7 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
       <div className="panel">
         {loading && <TableSkeleton label={sw.loading} cols={5} />}
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.chains}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.chains}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((r) => (
               <tr key={r.key} className="row-click" onClick={() => setDetail(r)}>
                 <td className="tid">
@@ -178,20 +207,16 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
                     preview={() => <PreviewCard label={sw.tableHead.id} title={r.id} headline={<><b>{r.sent} → {r.got}</b><span className={`hub-st-t ${(GROUP_PILL[groupOf(r.status)] === "ok" ? "ok" : GROUP_PILL[groupOf(r.status)] === "fail" ? "fail" : "wait")}`}>{statusLabel(r)}</span></>} fields={[[sw.tableHead.chains, chainsLabel(r)], [sw.tableHead.created, fmtDateTime(r.createdAt)]]} />}
                    title={r.id}><code>{shortAddress(r.id)}</code></RecordLink>
                 </td>
-                <td><span className="net-badge">{chainsLabel(r)}</span></td>
-                <td className="amt">{r.sent} → {r.got}</td>
-                <td><Pill st={GROUP_PILL[groupOf(r.status)]} label={statusLabel(r)} /></td>
+                <td><span className="cell-mark"><span className="net-marks"><NetworkMark chain={r.from} size={18} />{r.to && r.to !== r.from && <NetworkMark chain={r.to} size={18} />}</span><span className="net-badge">{chainsLabel(r)}</span></span></td>
+                <td className="amt"><span className="cell-mark"><TokenMark symbol={String(r.sent).split(" ").pop()} chain={r.from} chainName={networkName(r.from)} size={24} /><span>{r.sent} → {r.got}</span></span></td>
+                <td><Pill st={GROUP_PILL[groupOf(r.status)]} tone={pillTone(GROUP_PILL[groupOf(r.status)])} label={statusLabel(r)} /></td>
                 <td className="cust">{fmtDateTime(r.createdAt)}</td>
+                <SwapRowActions r={r} onView={() => setDetail(r)} />
               </tr>
             ))}
               <FillRows
-                n={pg.size - (error ? 0 : pg.count)} cols={5}
-                empty={error ? sw.loadError : !view.length ? (
-                  <>
-                    {rows.length ? fl.noMatch : sw.empty}
-                    {rows.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                  </>
-                ) : null}
+                n={pg.size - (error ? 0 : pg.count)} cols={6}
+                empty={error ? sw.loadError : null}
               />
             </tbody>
           </table></div>

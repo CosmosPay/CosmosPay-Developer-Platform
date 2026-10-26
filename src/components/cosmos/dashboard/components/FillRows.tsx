@@ -1,10 +1,11 @@
 /* FillRows: a table keeps its height whatever it holds (product owner: a short or empty list must
    not shrink the table). Placed at the end of a <tbody>, it draws the page's missing rows empty,
    each as tall as a real row of the same table (measured, since rows differ from table to table;
-   a one-line row's height when the page has none); with `empty`, the list has nothing to show and
-   the middle row says so, on one line with its first action, if any. The empty rows are hidden
-   from assistive tech; the message is not.
-   Usage: <FillRows n={pg.size - pg.count} cols={5} empty={!pg.total ? <>{text}{action}</> : null} /> */
+   a one-line row's height when the page has none). An empty list stays empty (product owner: no
+   "nothing here" text or action inside the table; the view's buttons are in its filter row);
+   `empty` is only for a list that could not load, said in the middle row. The empty rows are
+   hidden from assistive tech; the message is not.
+   Usage: <FillRows n={pg.size - pg.count} cols={5} empty={error ? text : null} /> */
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 
 export function FillRows({ n, cols, empty = null }: { n: number; cols: number; empty?: ReactNode }) {

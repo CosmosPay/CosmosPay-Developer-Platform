@@ -313,11 +313,14 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .hub-row.row-fill { height: 69.6px; }
 .hub-row.row-empty { justify-content: center; }
 .hub-st { display: grid; place-items: center; width: 20px; height: 20px; flex: 0 0 auto; border-radius: 50%; }
-.hub-st svg { width: 11px; height: 11px; }
-.hub-st.ok { background: var(--btn-bg); color: var(--btn-fg); }
+.hub-st svg { width: 55%; height: 55%; }
+/* done is green in both themes (product owner: never the ink, which turns white in dark mode) */
+.hub-st.ok { background: #15803D; color: #fff; }
+[data-theme="dark"] .hub-st.ok { background: #22A35A; color: #fff; }
 .hub-st.fail { background: #C93636; color: #fff; }
 .hub-st.wait { color: var(--ink-3); }
-.hub-st.wait svg { width: 20px; height: 20px; }
+.hub-st.wait svg { width: 100%; height: 100%; }
+.hub-st.off { background: var(--surface-2); color: var(--ink-3); box-shadow: inset 0 0 0 1px var(--line); }
 /* each payment's fields: a small label over its value */
 .hub-cells { flex: 1; min-width: 0; display: grid; grid-template-columns: 1.1fr .9fr 1.25fr 1.15fr .8fr 1fr 1fr; gap: 12px; margin: 0; }
 .hub-cells > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -331,24 +334,12 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .hub-st-t.fail { color: #C93636; }
 [data-theme="dark"] .hub-st-t.fail { color: #FF8A8A; }
 .hub-st-t.wait { color: var(--ink-3); }
-.hub-menu-wrap { position: relative; flex: 0 0 auto; }
 .hub-kebab {
   display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px;
   background: transparent; color: var(--ink); cursor: pointer;
 }
 .hub-kebab:hover, .hub-kebab[aria-expanded="true"] { background: var(--surface-2); }
 .hub-kebab svg { width: 18px; height: 18px; }
-.hub-menu {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 200px; margin: 0; padding: 6px; list-style: none;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg);
-}
-.hub-menu[hidden] { display: none; }
-.hub-menu :is(a, button) {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px;
-  background: transparent; color: var(--ink); font: 500 13px/1.2 var(--ff-sans); text-align: left; text-decoration: none; cursor: pointer;
-}
-.hub-menu :is(a, button):hover { background: var(--surface-2); }
-.hub-menu svg { width: 16px; height: 16px; color: var(--ink-3); flex: 0 0 auto; }
 /* the whole list, at the pager's end */
 .hub-viewall { margin: 0; white-space: nowrap; }
 
@@ -432,7 +423,8 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 }
 
 /* ---- no chips: statuses and networks are coloured text ---- */
-.inst .pill-st { background: transparent; padding: 0; font-size: 13px; font-weight: 700; }
+.inst .pill-st { background: transparent; padding: 0; font-size: 13px; font-weight: 700; gap: 8px; }
+.inst .pill-st::before { display: none; }
 /* Status is coloured text with its dot, never a capsule: the base tints set per state lose here. */
 .inst .pill-st.ok, .inst .pill-st.pend, .inst .pill-st.fail, .inst .pill-st.ref { background: transparent; }
 /* as text on white and on a hovered row, each state keeps 4.5:1 (dark mode has its own) */
@@ -791,9 +783,44 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 @media (max-width: 700px) {
   .inst .tx td.tid { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
-/* the organization menu and a payment's menu open and close like the dropdowns */
-.hub-menu { transform-origin: top right; animation: popIn .16s cubic-bezier(.2, .7, .2, 1) both; }
-.org-menu[data-state="closing"], .hub-menu[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
+/* a row's menu (RowMenu): fixed and portaled, as the previews, so no table scroller clips it; it
+   grows out of its button and opens upwards near the window's bottom */
+.row-menu-wrap { display: inline-flex; vertical-align: middle; }
+.row-menu {
+  position: fixed; z-index: 310; min-width: 220px; max-width: 300px; margin: 0; padding: 6px; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pop); box-shadow: var(--shadow-lg);
+  transform-origin: top right; animation: popIn .16s cubic-bezier(.2, .7, .2, 1) both;
+}
+.row-menu.up { transform-origin: bottom right; }
+.row-menu[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
+.row-menu :is(a, button) {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: var(--r-item);
+  background: transparent; color: var(--ink); font: 500 13px/1.25 var(--ff-sans); text-align: left; text-decoration: none; cursor: pointer;
+}
+.row-menu :is(a, button):is(:hover, :focus-visible):not(:disabled) { background: var(--surface-2); outline: none; }
+.row-menu button:disabled { color: var(--ink-3); cursor: not-allowed; }
+.row-menu svg { width: 16px; height: 16px; color: var(--ink-3); flex: 0 0 auto; }
+.row-menu .danger, .row-menu .danger svg { color: #C93636; }
+.row-menu button.danger:disabled, .row-menu button.danger:disabled svg { color: var(--ink-3); }
+.row-menu-hint { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
+/* a row's actions sit against the table's right edge and take only the room they need, so the
+   width goes to the columns with data instead of an empty band after the menu (product owner).
+   `.tx td` sets text-align: left more specifically than an actions class, hence the table in
+   front. */
+.inst .tx :is(td.paylink-row-actions, td.row-actions),
+.inst table.tx:has(.hub-kebab) tr > :last-child { width: 1%; white-space: nowrap; text-align: right; }
+.inst table.tx:has(.hub-kebab) tr > :last-child > * { vertical-align: middle; }
+.inst .tx td.row-actions > * + * { margin-left: 6px; }
+/* a row's actions that do not apply to it are drawn disabled, so every row's buttons line up */
+.inst .icon-mini:disabled { opacity: .38; cursor: not-allowed; }
+/* a row's leading mark: a status, a token with its network, a kind of record */
+.cell-mark { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.cell-mark > :last-child { min-width: 0; }
+/* a swap between two networks shows both marks, the second tucked under the first */
+.net-marks { display: inline-flex; flex: 0 0 auto; }
+.net-marks > * + * { margin-left: -6px; box-shadow: 0 0 0 2px var(--surface); border-radius: 50%; }
+/* the organization menu opens and closes like the dropdowns */
+.org-menu[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
 @media (max-width: 600px) { .sk-pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tpick-group { position: sticky; top: 0; z-index: 1; padding: 12px 10px 6px; background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink-3); }
 
@@ -890,9 +917,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst :is(.field, .dd-btn, .chat-input, .key-field, .reveal-key, .hub-code, .hub-bal, .design-opt img, .bars-tip) { border-radius: var(--r-field); }
 .inst .dd-filter .dd-btn, .inst .fbar-search .field { border-radius: var(--radius-btn); }
 /* options inside lists and menus */
-.inst :is(.dd-opt, .dsearch-opt, .tpick-row, .org-opt, .prof-opt, .msel-opt, .hub-menu :is(a, button), .side-link:focus-visible) { border-radius: var(--r-item); }
+.inst :is(.dd-opt, .dsearch-opt, .tpick-row, .org-opt, .prof-opt, .msel-opt, .side-link:focus-visible) { border-radius: var(--r-item); }
 /* popovers, menus and the wells inside a card */
-.inst :is(.dd-list, .dsearch-pop, .hub-menu, .org-menu, .prof-menu, .msel-menu, .slip-pop, .sp, .sq, .design-opt, .net-opt) { border-radius: var(--r-pop); }
+.inst :is(.dd-list, .dsearch-pop, .org-menu, .prof-menu, .msel-menu, .slip-pop, .sp, .sq, .design-opt, .net-opt) { border-radius: var(--r-pop); }
 /* cards and panels */
 .inst :is(.panel, .metric, .bal-card, .swapper, .hub-side, .hub-card) { border-radius: var(--r-card); }
 .inst .modal { border-radius: var(--r-modal); }

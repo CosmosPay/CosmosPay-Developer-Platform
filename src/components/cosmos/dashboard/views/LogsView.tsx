@@ -97,7 +97,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
                 </React.Fragment>
               );
             })}
-              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={isApi ? 6 : 5} empty={error ? cx.loadError : !view.length ? (rows.length ? t.dash.filters.noMatch : cx.empty) : null} />
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={isApi ? 6 : 5} empty={error ? cx.loadError : null} />
             </tbody>
           </table></div>
         )}

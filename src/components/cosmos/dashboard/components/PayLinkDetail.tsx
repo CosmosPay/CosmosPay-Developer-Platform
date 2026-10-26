@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Modal, showToast, IcCopy, IcCheck, checkoutUrl } from "@/components/cosmos/shared";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
-import { useT } from "@/lib/i18n/index";
+import { useT, fmt } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { CHAIN_NAMES, TEST_NETWORKS, assetLabel as chainAssetLabel, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
 
 /* Map an upstream status to a status-pill class (reuses the existing ok/fail/ref pills). */
@@ -33,14 +35,45 @@ export function hasTransaction(intent) { return !!explorerUrl(intent); }
    exists; otherwise an empty slot keeps the icons in line, never a button that does nothing),
    and delete (only when the caller can manage AND the link isn't paid).
    Reused by the Payments and Balances tables so both behave identically. */
+/* A payment's amount with its token's mark (and its network's badge): what the row handles. */
+export function PaymentAmount({ intent, pl, size = 24 }) {
+  const chain = chainOf(intent);
+  return (
+    <span className="cell-mark">
+      <TokenMark symbol={assetLabel(intent.asset, chain)} chain={chain} chainName={CHAIN_NAMES[chain]} size={size} />
+      <span>{amountLabel(intent, pl)}</span>
+    </span>
+  );
+}
+
+/* A payment row's actions. Every row draws the same buttons (product owner: no gaps): the explorer
+   is disabled until there is a transaction, deletion once the payment completed, each saying why;
+   then the row's "⋮" menu with everything a payment offers. */
 export function PayLinkRowActions({ intent, t, pl, onView, canManage = false, onDelete }) {
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  const url = explorerUrl(intent);
+  const paid = intent.status === "SUCCEEDED";
+  const short = intent.id.length > 14 ? `${intent.id.slice(0, 6)}…${intent.id.slice(-4)}` : intent.id;
   return (
     <td className="paylink-row-actions" onClick={(e) => e.stopPropagation()}>
       <button className="icon-mini" title={pl.detail.eyebrow} aria-label={pl.detail.eyebrow} onClick={() => onView(intent)}>{DI.docs}</button>
-      {hasTransaction(intent)
-        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={explorerUrl(intent)} target="_blank" rel="noopener noreferrer">{DI.network}</a>
-        : <span className="icon-mini-gap" aria-hidden="true" />}
-      {canManage && intent.status !== "SUCCEEDED" && <button className="icon-mini danger" title={pl.detail.delete} aria-label={pl.detail.delete} onClick={() => onDelete(intent)}>{DI.trash}</button>}
+      {url
+        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={url} target="_blank" rel="noopener noreferrer">{DI.network}</a>
+        : <button type="button" className="icon-mini" disabled title={cm.noTxYet} aria-label={`${t.dash.balances.explorer}: ${cm.noTxYet}`}>{DI.network}</button>}
+      {canManage && <button className="icon-mini danger" disabled={paid} title={paid ? cm.paidNoDelete : pl.detail.delete} aria-label={paid ? `${pl.detail.delete}: ${cm.paidNoDelete}` : pl.detail.delete} onClick={() => onDelete(intent)}>{DI.trash}</button>}
+      <RowMenu
+        label={fmt(cm.rowActions, { name: short })}
+        items={[
+          { key: "open", label: cm.details, icon: DI.docs, onClick: () => onView(intent) },
+          { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=payments&open=${encodeURIComponent(intent.id)}`, external: true },
+          { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(intent.id, t.toasts.copied) },
+          { key: "link", label: cm.copyLink, icon: <IcCopy />, onClick: () => copy(checkoutUrl(intent.id), t.toasts.copied) },
+          { key: "checkout", label: pl.detail.openCheckout, icon: DI.payments, href: checkoutUrl(intent.id), external: true },
+          { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: url, external: true, disabled: !url, hint: cm.noTxYet },
+          ...(canManage ? [{ key: "delete", label: pl.detail.delete, icon: DI.trash, danger: true, disabled: paid, hint: cm.paidNoDelete, onClick: () => onDelete(intent) }] : []),
+        ]}
+      />
     </td>
   );
 }

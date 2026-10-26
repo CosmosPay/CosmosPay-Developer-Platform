@@ -3,7 +3,8 @@
    on hover; the hovered bucket's label turns bold, as in the gateway-dashboard reference. Two
    different quantities get an axis each (`a` left, `b` right); two counts of the same thing share
    the left one (`shared`), in whole steps; `currency` makes `a` money (the settled volume in USD:
-   compact on the axis, in full in the tooltip). Bars are square (product owner). The figures are
+   two decimals, compact on the axis), its currency named once by the legend, never again on the
+   axis or in the tooltip (product owner). Bars are square (product owner). The figures are
    also in a visually hidden table, so the chart is never the only way to read them. */
 import { useState } from "react";
 
@@ -71,8 +72,8 @@ export function BarChart({ data, label, aLabel, bLabel, dateLabel, lang, period 
   // Labels count back from the newest bucket, so it always has one and no label crowds it.
   const every = data.length > 14 ? 5 : 1;
   const tip = hover !== null ? data[hover] : null;
-  const money = currency ? new Intl.NumberFormat(lang, { style: "currency", currency }) : null;
-  const moneyAxis = currency ? new Intl.NumberFormat(lang, { style: "currency", currency, notation: "compact", maximumSignificantDigits: 3 }) : null;
+  const money = currency ? new Intl.NumberFormat(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : null;
+  const moneyAxis = currency ? new Intl.NumberFormat(lang, { notation: "compact", maximumSignificantDigits: 3 }) : null;
   const aFmt = shared ? whole : money ?? num;
   const aAxis = shared ? whole : moneyAxis ?? num;
 

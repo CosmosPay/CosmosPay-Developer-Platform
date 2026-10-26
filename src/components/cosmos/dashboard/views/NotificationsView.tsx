@@ -55,7 +55,7 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
                 </tr>
               );
             })}
-              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? nt.loadError : !rows.length ? nt.empty : null} />
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? nt.loadError : null} />
             </tbody>
           </table></div>
         )}

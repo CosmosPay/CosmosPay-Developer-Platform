@@ -15,11 +15,13 @@ import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
-import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { PayLinkDetailModal, PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, CHAIN_NAMES, NATIVE_CODES, TEST_NETWORKS, TOKEN_PRESETS, ADDRESS_PLACEHOLDERS, isAddress } from "@/lib/chains";
 import { standardAssets } from "@/lib/stellar-assets";
 import { DATE_RANGES, countBy, inRange, matchesQuery, rangeStart } from "@/lib/dashboard-filters";
@@ -104,7 +106,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   const kindCounts = countBy(inEnv.filter((p) => matches(p, "kind")), (p) => p.kind);
   const statusOptions = [
     { key: "all", label: pl.filters.all, count: inEnv.filter((p) => matches(p, "status")).length },
-    ...STATUSES.filter((s) => statusCounts[s] || filters.status === s).map((s) => ({ key: s, label: pl.filters[s], count: statusCounts[s] || 0 })),
+    ...STATUSES.filter((s) => statusCounts[s] || filters.status === s).map((s) => ({ key: s, label: pl.filters[s], count: statusCounts[s] || 0, icon: <StatusIcon tone={paymentTone(s)} size={16} /> })),
   ];
 
   const pg = usePaged(view, JSON.stringify(filters));
@@ -133,7 +135,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={pl.searchPlaceholder}
         status={{ label: fl.status, value: filters.status, onChange: (v) => set("status", v), options: statusOptions }}
         selects={[
-          { key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], count: chainCounts[c] || 0 }))] },
+          { key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] || 0 }))] },
           { key: "kind", label: fl.kind, value: filters.kind, onChange: (v) => set("kind", v), options: [{ key: "all", label: fl.allKinds }, ...KINDS.map((k) => ({ key: k, label: pl.kinds[k], count: kindCounts[k] || 0 }))] },
         ]}
         date={filters.date} onDate={(v) => set("date", v)}
@@ -150,22 +152,16 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
                 {/* The id opens the payment (a new tab with a modified click) and previews it on hover. */}
                 <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{pl.kinds[p.kind] || p.kind}</td>
-                <td><span className="net-badge">{networkLabel(p)}</span></td>
-                <td className="amt">{amountLabel(p, pl)}</td>
-                <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(pl.status && pl.status[p.status]) || p.status} /></td>
+                <td><span className="cell-mark"><NetworkMark chain={chainOf(p)} size={18} /><span className="net-badge">{networkLabel(p)}</span></span></td>
+                <td className="amt"><PaymentAmount intent={p} pl={pl} /></td>
+                <td><Pill st={STATUS_PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={(pl.status && pl.status[p.status]) || p.status} /></td>
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
                 <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />
               </tr>
             ))}
               <FillRows
                 n={pg.size - (error ? 0 : pg.count)} cols={7}
-                empty={error ? pl.loadError : !view.length ? (
-                  <>
-                    {inEnv.length ? fl.noMatch : pl.empty}
-                    {inEnv.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                    {!inEnv.length && canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pl.create}</button>}
-                  </>
-                ) : null}
+                empty={error ? pl.loadError : null}
               />
             </tbody>
           </table></div>

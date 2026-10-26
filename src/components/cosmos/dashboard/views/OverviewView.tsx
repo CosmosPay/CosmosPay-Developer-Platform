@@ -14,15 +14,19 @@ import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi, organizations as orgsApi } from "@/lib/api-client";
 import { planSpec } from "@/lib/plans";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
-import { showToast } from "@/components/cosmos/shared";
+import { checkoutUrl } from "@/components/cosmos/shared";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { useOutside, useListFilters, usePresence, usePaged, goFiltered } from "@/components/cosmos/dashboard/hooks";
+import { useListFilters, usePaged, goFiltered } from "@/components/cosmos/dashboard/hooks";
 import { ActivityPanel, countText, type MetricKey } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { Odometer } from "@/components/cosmos/dashboard/components/Odometer";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { StatusIcon, paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { PaymentPreview } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { AddressLink, shortAddress } from "@/components/cosmos/dashboard/components/AddressLink";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
@@ -64,39 +68,28 @@ function OrgIdField({ id, label }) {
   );
 }
 
-/* A payment's menu: copy its id, open it on its chain's explorer (once it has a transaction),
-   or its detail in the Payments view. A disclosure: Escape and a click elsewhere close it. */
-function RowMenu({ p, onGo }) {
+/* A payment's menu (RowMenu, as every list's): its detail in Payments, a new tab, its id, its
+   checkout link and page, and its transaction on the explorer, disabled until there is one. */
+function PaymentMenu({ p, onGo }) {
   const t = useT();
   const h = t.dash.overview.hub;
-  const [open, setOpen] = useState(false);
-  const menu = usePresence(open, 120);
-  const ref = useOutside(() => setOpen(false));
-  const id = `hub-menu-${p.id}`;
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
   const href = explorerUrl(p);
-  const copy = () => {
-    navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {});
-    setOpen(false);
-  };
   return (
-    <div className="hub-menu-wrap" ref={ref} onKeyDown={(e) => { if (e.key === "Escape" && open) { e.stopPropagation(); setOpen(false); } }}>
-      <button type="button" className="hub-kebab" aria-label={fmt(h.rowMenu, { id: short(p.id) })} aria-haspopup="true" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="19" r="1.7" /></svg>
-      </button>
-      <ul className="hub-menu" id={id} role="list" hidden={!menu.mounted} data-state={menu.state}>
-        <li><button type="button" onClick={copy}>{DI.link}{h.copyId}</button></li>
-        {href && <li><a href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>{DI.network}{h.explorer}</a></li>}
-        <li><button type="button" onClick={() => { setOpen(false); goFiltered(onGo, "payments", { open: p.id }); }}>{DI.payments}{h.openPayments}</button></li>
-      </ul>
-    </div>
+    <RowMenu
+      label={fmt(h.rowMenu, { id: short(p.id) })}
+      items={[
+        { key: "open", label: h.openPayments, icon: DI.payments, onClick: () => goFiltered(onGo, "payments", { open: p.id }) },
+        { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=payments&open=${encodeURIComponent(p.id)}`, external: true },
+        { key: "copy", label: h.copyId, icon: <IcCopy />, onClick: () => copy(p.id, t.toasts.copied) },
+        { key: "link", label: cm.copyLink, icon: <IcCopy />, onClick: () => copy(checkoutUrl(p.id), t.toasts.copied) },
+        { key: "checkout", label: t.dash.paylinks.detail.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true },
+        { key: "explorer", label: h.explorer, icon: DI.network, href, external: true, disabled: !href, hint: cm.noTxYet },
+      ]}
+    />
   );
 }
-
-const statusIcon = (status) => {
-  if (status === SETTLED) return <span className="hub-st ok" aria-hidden="true"><IcCheck /></span>;
-  if (FAILED.includes(status)) return <span className="hub-st fail" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M7 7l10 10M17 7L7 17" /></svg></span>;
-  return <span className="hub-st wait" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></svg></span>;
-};
 
 /* The overview list's period as the Payments view's date filter ("year" has none: everything). */
 const LIST_DATE = { today: "today", week: "7d", month: "30d" };
@@ -203,10 +196,9 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
       ...(last ? [[cm.lastPayment, fmtDateTime(last)]] : []),
     ];
   };
-  // A short or empty page keeps its height: the missing rows are drawn empty, and an empty list
-  // says so in the middle one (product owner).
+  // A short or empty page keeps its height: the missing rows are drawn empty, and an empty one
+  // stays empty (product owner: no message in the table).
   const fill = Math.max(0, pg.size - pg.count);
-  const emptyAt = pg.count ? -1 : Math.floor((fill - 1) / 2);
   // A quick link to a view switches in place on a plain click (the shell counts the view it opens);
   // the docs are a page of their own, counted here before the page leaves.
   const followQuick = (q) => (e) => {
@@ -305,10 +297,10 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             label: fl.status, value: filters.status, onChange: (v) => set("status", v),
             options: [
               { key: "all", label: fl.allStatuses, count: all.filter((p) => matches(p, "status")).length },
-              ...GROUPS.map((g) => ({ key: g, label: h.groups[g], count: groupCounts[g] || 0 })),
+              ...GROUPS.map((g) => ({ key: g, label: h.groups[g], count: groupCounts[g] || 0, icon: <StatusIcon tone={g === "settled" ? "ok" : g === "failed" ? "fail" : "wait"} size={16} /> })),
             ],
           }}
-          selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], count: chainCounts[c] || 0 }))] }]}
+          selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], count: chainCounts[c] || 0, icon: <NetworkMark chain={c} size={18} /> }))] }]}
           active={active} onReset={reset}
           shown={shown.length} total={rows === null ? undefined : all.length} loading={rows === null}
         />
@@ -319,29 +311,22 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             <ul className="hub-rows arrive" role="list">
               {pg.slice.map((p) => (
                 <li className="hub-row" key={p.id}>
-                  {statusIcon(p.status)}
+                  <StatusIcon tone={paymentTone(p.status)} />
                   <dl className="hub-cells">
                     {/* The id opens the payment and previews it on hover; both accounts open on their
                         explorer and copy (product owner). */}
                     <div><dt>{h.thId}</dt><dd><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => goFiltered(onGo, "payments", { open: p.id })} copy={p.id} preview={() => <PaymentPreview p={p} status={(h.status && h.status[p.status]) || p.status} />}><code>{short(p.id)}</code></RecordLink></dd></div>
                     <div><dt>{h.thStatus}</dt><dd className={`hub-st-t ${p.status === SETTLED ? "ok" : FAILED.includes(p.status) ? "fail" : "wait"}`}>{(h.status && h.status[p.status]) || p.status}</dd></div>
                     <div><dt>{h.thDate}</dt><dd>{fmtDateTime(p.createdAt)}</dd></div>
-                    <div><dt>{h.thAmount}</dt><dd><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</dd></div>
-                    <div><dt>{h.thNetwork}</dt><dd>{CHAIN_NAMES[chainOf(p)]}</dd></div>
+                    <div><dt>{h.thAmount}</dt><dd><span className="cell-mark"><TokenMark symbol={assetLabel(p.asset, chainOf(p))} chain={chainOf(p)} chainName={CHAIN_NAMES[chainOf(p)]} size={18} /><span><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</span></span></dd></div>
+                    <div><dt>{h.thNetwork}</dt><dd><span className="cell-mark"><NetworkMark chain={chainOf(p)} size={18} /><span>{CHAIN_NAMES[chainOf(p)]}</span></span></dd></div>
                     <div><dt>{h.thFrom}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.source} label={h.thFrom} context={accountContext(p.source)} /></dd></div>
                     <div><dt>{h.thTo}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.destination} label={h.thTo} context={accountContext(p.destination)} /></dd></div>
                   </dl>
-                  <RowMenu p={p} onGo={onGo} />
+                  <PaymentMenu p={p} onGo={onGo} />
                 </li>
               ))}
-              {Array.from({ length: fill }, (_, i) => (i === emptyAt ? (
-                <li className="hub-row row-fill row-empty" key={`fill-${i}`}>
-                  <div className="row-empty-msg">
-                    {all.length ? h.noMatch : h.noTx}
-                    {all.length > 0 && active > 0 && <button type="button" className="fbar-reset" onClick={reset}>{fl.clear}</button>}
-                  </div>
-                </li>
-              ) : <li className="hub-row row-fill" key={`fill-${i}`} aria-hidden="true" />))}
+              {Array.from({ length: fill }, (_, i) => <li className="hub-row row-fill" key={`fill-${i}`} aria-hidden="true" />)}
             </ul>
           )}
           {rows !== null && (

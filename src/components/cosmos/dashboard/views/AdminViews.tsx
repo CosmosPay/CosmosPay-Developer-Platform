@@ -235,7 +235,7 @@ function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads,
         <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{heads.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
           <tbody>
             {!error && pg.slice.map(renderRow)}
-            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={heads.length} empty={error ? a.loadError : !view.length ? empty : null} />
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={heads.length} empty={error ? a.loadError : null} />
           </tbody>
         </table></div>
       )}
