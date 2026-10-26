@@ -5,7 +5,9 @@
    - publicSwapApi: the public swap pages', straight to the gateway from the visitor's browser with
      the shared public key (GET /v1/public-key, keyless), so no account is needed. Its commission is
      the public consumer's plan, and the server confines the key to building, submitting and reading
-     a swap by its id, never listing anyone's. Mainnet.
+     a swap by its id, never listing anyone's. Every visitor shares that key, so a record it creates
+     comes back with a `publicToken`; only the visitor holding it can read, submit or report that
+     record (`X-Record-Token`), and the token lives in this page's memory, never in the URL. Mainnet.
    Routes: "dex" a chain's own market (/v1/swaps), "near" NEAR Intents (/v1/cross-chain-swaps),
    "usdt0" LayerZero's OFT out of Stellar (/v1/usdt0). Records: "same", "cross", "usdt0". */
 import { crossChainSwaps as crossApi, swaps as swapsApi, usdt0 as usdt0Api } from "@/lib/api-client";
@@ -47,8 +49,10 @@ export function orgSwapApi(orgId: string, env: string): SwapApi {
 }
 
 export class PublicSwapError extends Error {
-  constructor(message: string, readonly status: number) {
+  readonly status: number;
+  constructor(message: string, status: number) {
     super(message);
+    this.status = status;
   }
 }
 
@@ -65,27 +69,44 @@ export function publicSwapApi(apiBase: string, env: "prod" | "dev" = "prod"): Sw
         return k;
       })
       .catch((e) => { key = null; throw e; }));
-  const call = async (path: string, init: { method?: string; body?: string } = {}) => {
+  // Each record's read token, from its create response.
+  const tokens = new Map<string, string>();
+  const call = async (path: string, init: { method?: string; body?: string; record?: string } = {}) => {
     const k = await publicKey();
+    const token = init.record ? tokens.get(init.record) : undefined;
     const r = await fetch(`${base}${path}`, {
       method: init.method ?? "GET",
       body: init.body,
-      headers: { accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}), authorization: `Bearer ${k}` },
+      headers: {
+        accept: "application/json",
+        ...(init.body ? { "content-type": "application/json" } : {}),
+        authorization: `Bearer ${k}`,
+        ...(token ? { "x-record-token": token } : {}),
+      },
       cache: "no-store",
     });
     const j = await r.json().catch(() => null);
     if (!r.ok) throw new PublicSwapError(j?.message || `Request failed (${r.status})`, r.status);
     return j && typeof j === "object" && "data" in j ? j.data : j;
   };
-  const post = (path: string, body: Body) => call(path, { method: "POST", body: JSON.stringify(body) });
+  const post = (path: string, body: Body, record?: string) => call(path, { method: "POST", body: JSON.stringify(body), record });
+  // A created record's token is kept for its later calls and not handed to the screens.
+  const keep = (rec: any) => {
+    if (rec && typeof rec.id === "string" && typeof rec.publicToken === "string") {
+      tokens.set(rec.id, rec.publicToken);
+      const { publicToken: _token, ...rest } = rec;
+      return rest;
+    }
+    return rec;
+  };
   const record = (kind: SwapRecordKind) => (kind === "cross" ? "cross-chain-swaps" : kind === "usdt0" ? "usdt0/transfers" : "swaps");
   return {
     assets: () => call("/v1/cross-chain-swaps/assets").then(asList),
     usdt0Routes: () => call("/v1/usdt0/routes").then(routesOf),
     quote: (kind, body) => post(kind === "near" ? "/v1/cross-chain-swaps/quote" : kind === "usdt0" ? "/v1/usdt0/quote" : "/v1/swaps/quote", body),
-    create: (kind, body) => post(kind === "near" ? "/v1/cross-chain-swaps" : kind === "usdt0" ? "/v1/usdt0/transfers" : "/v1/swaps", body),
-    get: (kind, id) => call(`/v1/${record(kind)}/${encodeURIComponent(id)}`),
-    submit: (kind, id, body) => post(`/v1/${record(kind)}/${encodeURIComponent(id)}/submit`, body),
-    reportDeposit: (id, txHash) => post(`/v1/cross-chain-swaps/${encodeURIComponent(id)}/deposit`, { txHash }),
+    create: (kind, body) => post(kind === "near" ? "/v1/cross-chain-swaps" : kind === "usdt0" ? "/v1/usdt0/transfers" : "/v1/swaps", body).then(keep),
+    get: (kind, id) => call(`/v1/${record(kind)}/${encodeURIComponent(id)}`, { record: id }),
+    submit: (kind, id, body) => post(`/v1/${record(kind)}/${encodeURIComponent(id)}/submit`, body, id),
+    reportDeposit: (id, txHash) => post(`/v1/cross-chain-swaps/${encodeURIComponent(id)}/deposit`, { txHash }, id),
   };
 }

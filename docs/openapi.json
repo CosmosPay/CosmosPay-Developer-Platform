@@ -1660,16 +1660,16 @@
         },
         "responses": {
           "201": {
-            "description": "A Stellar swap (no `chain`, or `stellar`), or a Solana / Monad swap.",
+            "description": "A Stellar swap (no `chain`, or `stellar`), or a Solana / Monad swap. With the shared public key it carries `publicToken`: send it as `X-Record-Token` to read the swap or submit it.",
             "content": {
               "application/json": {
                 "schema": {
                   "oneOf": [
                     {
-                      "$ref": "#/components/schemas/SwapEntity"
+                      "$ref": "#/components/schemas/SwapCreatedEntity"
                     },
                     {
-                      "$ref": "#/components/schemas/ChainSwapEntity"
+                      "$ref": "#/components/schemas/ChainSwapCreatedEntity"
                     }
                   ]
                 }
@@ -2012,7 +2012,7 @@
     },
     "/v1/swaps/{id}": {
       "get": {
-        "description": "The shared public key may call it, so a swap made without an account can follow its own status: the read is still scoped to the consumer, so that key reaches only swaps made with it, and the swap id (a cuid) is the capability. Listing swaps stays closed to the public key.",
+        "description": "The shared public key may call it, so a swap made without an account can follow its own status, but only with the swap’s `publicToken` in `X-Record-Token`: without it, or with another swap’s, the answer is 404. Every other key reads its own swaps as before. Listing swaps stays closed to the public key.",
         "operationId": "SwapsController_findOne_v1",
         "parameters": [
           {
@@ -2021,6 +2021,16 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "Required with the shared public key: the `publicToken` the create response returned for this record. Without it, or with the token of another record, the answer is 404, as for a record that does not exist. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
             }
           }
         ],
@@ -2075,6 +2085,16 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "With the shared public key, send the `publicToken` the create response returned for this record. A wrong token is 404, as for a record that does not exist. A missing one is still accepted for now (and logged as deprecated) so wallets that do not send it yet keep working; it becomes required here when the deployment sets `PUBLIC_RECORD_TOKEN_REQUIRED_ON_LEGACY=true`. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
             }
           }
         ],
@@ -2530,11 +2550,11 @@
         },
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "The swap. With the shared public key it carries `publicToken`: send it as `X-Record-Token` to read the swap or report its deposit.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CrossChainSwapEntity"
+                  "$ref": "#/components/schemas/CrossChainSwapCreatedEntity"
                 }
               }
             },
@@ -2820,7 +2840,7 @@
     },
     "/v1/cross-chain-swaps/{id}": {
       "get": {
-        "description": "The shared public key may call it, so a swap made without an account can follow its own status: the read is still scoped to the consumer, so that key reaches only swaps made with it, and the swap id (a cuid) is the capability. Listing swaps stays closed to the public key.",
+        "description": "The shared public key may call it, so a swap made without an account can follow its own status, but only with the swap’s `publicToken` in `X-Record-Token`: without it, or with another swap’s, the answer is 404. Every other key reads its own swaps as before. Listing swaps stays closed to the public key.",
         "operationId": "CrossChainSwapsController_findOne_v1",
         "parameters": [
           {
@@ -2829,6 +2849,16 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "Required with the shared public key: the `publicToken` the create response returned for this record. Without it, or with the token of another record, the answer is 404, as for a record that does not exist. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
             }
           }
         ],
@@ -2876,6 +2906,16 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "With the shared public key, send the `publicToken` the create response returned for this record. A wrong token is 404, as for a record that does not exist. A missing one is still accepted for now (and logged as deprecated) so wallets that do not send it yet keep working; it becomes required here when the deployment sets `PUBLIC_RECORD_TOKEN_REQUIRED_ON_LEGACY=true`. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
             }
           }
         ],
@@ -12872,11 +12912,11 @@
         },
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "The transfer. With the shared public key it carries `publicToken`: send it as `X-Record-Token` to read the transfer or submit it.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Usdt0TransferEntity"
+                  "$ref": "#/components/schemas/Usdt0TransferCreatedEntity"
                 }
               }
             },
@@ -13163,7 +13203,7 @@
     },
     "/v1/usdt0/transfers/{id}": {
       "get": {
-        "description": "While PENDING or SUBMITTED, a read asks the Stellar ledger (a wallet may have broadcast the transaction itself) and LayerZero Scan, at most once every 15 seconds per transfer, and moves it to SUBMITTED, DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery takes about 27 minutes on every route: LayerZero’s verifiers wait for Stellar confirmations. The shared public key may call it: the transfer is still scoped to the consumer, and its id is the capability.",
+        "description": "While PENDING or SUBMITTED, a read asks the Stellar ledger (a wallet may have broadcast the transaction itself) and LayerZero Scan, at most once every 15 seconds per transfer, and moves it to SUBMITTED, DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery takes about 27 minutes on every route: LayerZero’s verifiers wait for Stellar confirmations. The shared public key may call it, but only with the transfer’s `publicToken` in `X-Record-Token`: without it, or with another transfer’s, the answer is 404. Every other key reads its own transfers as before.",
         "operationId": "Usdt0Controller_findOne_v1",
         "parameters": [
           {
@@ -13172,6 +13212,16 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "Required with the shared public key: the `publicToken` the create response returned for this record. Without it, or with the token of another record, the answer is 404, as for a record that does not exist. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
             }
           }
         ],
@@ -13220,6 +13270,16 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "Required with the shared public key: the `publicToken` the create response returned for this record. Without it, or with the token of another record, the answer is 404, as for a record that does not exist. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
             }
           }
         ],
@@ -14751,6 +14811,164 @@
           "issuer"
         ]
       },
+      "ChainSwapCreatedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm1x2y3z4a5b6c7d8e9f0g1h2"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "solana",
+              "monad"
+            ],
+            "example": "solana"
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "Always mainnet."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "jupiter",
+              "kuru"
+            ],
+            "example": "jupiter"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "source": {
+            "type": "string",
+            "example": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK",
+            "description": "The wallet that signs, pays and receives."
+          },
+          "sendAsset": {
+            "type": "string",
+            "example": "native",
+            "description": "`native` (SOL / MON), or the SPL mint / ERC-20 address."
+          },
+          "sendAmount": {
+            "type": "string",
+            "example": "0.1"
+          },
+          "destAsset": {
+            "type": "string",
+            "example": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+          },
+          "destEstimated": {
+            "type": "string",
+            "example": "11.87",
+            "description": "Quoted output, net of the commission."
+          },
+          "destMin": {
+            "type": "string",
+            "example": "11.81",
+            "description": "On-chain minimum after slippage."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.059",
+            "description": "The commission, in the destination asset (taken from the output)."
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 50
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SwapPathHop"
+            }
+          },
+          "transaction": {
+            "type": "object",
+            "additionalProperties": true,
+            "example": {
+              "encoding": "base64",
+              "data": "AQAAAAAAAAAAAAAAA…"
+            },
+            "description": "What the wallet signs. Solana: `{ encoding: \"base64\", data, lastValidBlockHeight }`, an unsigned VersionedTransaction. Monad: `{ to, data, value, chainId }`, a call the wallet signs as an EIP-1559 transaction (it fills nonce and gas)."
+          },
+          "approval": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": null,
+            "description": "Monad only, selling an ERC-20 whose allowance is short: the exact `approve` call `{ to, data, value, chainId }` to send and confirm first. The wallet broadcasts it itself."
+          },
+          "txHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "The Solana signature / EVM hash, once submitted."
+          },
+          "idempotencyKey": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-03T12:01:00.000Z",
+            "description": "Submit refuses the transaction after this; build a new swap."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "publicToken": {
+            "type": "string",
+            "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w",
+            "description": "Only when the caller is the shared public key: this record’s read token. Send it as `X-Record-Token` on the routes of this one record. Reading it by id (and submitting a USDT0 transfer) answers 404 without it; swap submit and cross-chain deposit still accept a request without it for now, and will require it once the deployment turns `PUBLIC_RECORD_TOKEN_REQUIRED_ON_LEGACY` on. The same create replayed with its Idempotency-Key answers the same token. Keep it like the record id: whoever holds both can read the record."
+          }
+        },
+        "required": [
+          "id",
+          "chain",
+          "network",
+          "provider",
+          "status",
+          "source",
+          "sendAsset",
+          "sendAmount",
+          "destAsset",
+          "destEstimated",
+          "destMin",
+          "feeBps",
+          "feeAmount",
+          "slippageBps",
+          "path",
+          "transaction",
+          "approval",
+          "txHash",
+          "idempotencyKey",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "ChainSwapEntity": {
         "type": "object",
         "properties": {
@@ -14981,6 +15199,188 @@
         "required": [
           "code",
           "issuer"
+        ]
+      },
+      "SwapCreatedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx9z8a1b0000abcd1234efgh"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "network": {
+            "type": "string",
+            "example": "testnet"
+          },
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "destination": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "sendAsset": {
+            "type": "string",
+            "example": "native"
+          },
+          "sendAssetIssuer": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "sendAmount": {
+            "type": "string",
+            "example": "100",
+            "description": "Gross source amount."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.5"
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50
+          },
+          "swapAmount": {
+            "type": "string",
+            "example": "99.5",
+            "description": "Amount routed through the DEX/AMM."
+          },
+          "destAsset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "destAssetIssuer": {
+            "type": "object",
+            "nullable": true,
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTR6F3DSZL5A3W4G4M4N4A5U4QY3T6"
+          },
+          "destEstimated": {
+            "type": "string",
+            "example": "24.81"
+          },
+          "destMin": {
+            "type": "string",
+            "example": "24.68595"
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 50
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SwapPathHop"
+            }
+          },
+          "memo": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "idempotencyKey": {
+            "type": "object",
+            "nullable": true,
+            "example": "swap-retry-2026-08-23-001",
+            "description": "Client idempotency key when supplied via Idempotency-Key / body (null otherwise)."
+          },
+          "commissionMemo": {
+            "type": "object",
+            "nullable": true,
+            "example": "Cosmos Swap Commission",
+            "description": "On-chain MEMO_TEXT label stamped when a commission is collected and no caller memo was supplied (null otherwise)."
+          },
+          "trustline": {
+            "nullable": true,
+            "example": null,
+            "description": "The bought asset, when the source receives it and does not trust it yet: the transaction then starts with a `changeTrust` for it, so the one signature adds the trustline and makes the swap. Adding it locks another 0.5 XLM base reserve in the account, which a wallet should tell its user before they sign. Null when no trustline is added (XLM bought, the account already trusts the asset, or the destination is another account). Read from the transaction itself.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapTrustline"
+              }
+            ]
+          },
+          "xdr": {
+            "type": "string",
+            "description": "Unsigned transaction envelope (base64 XDR) to sign.",
+            "example": "AAAAAgAAAABx…(base64 XDR)…AAAAAAAAAAA="
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:tx?xdr=AAAAAgAAAABx…"
+          },
+          "txHash": {
+            "type": "string",
+            "description": "Deterministic transaction hash (verified on submit).",
+            "example": "3389e9f0...64hex"
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…"
+          },
+          "expiresAt": {
+            "type": "object",
+            "nullable": true,
+            "description": "When the envelope's time bounds close; submit refuses it afterwards.",
+            "example": "2026-06-29T12:39:56.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-29T12:34:56.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-29T12:34:56.000Z"
+          },
+          "publicToken": {
+            "type": "string",
+            "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w",
+            "description": "Only when the caller is the shared public key: this record’s read token. Send it as `X-Record-Token` on the routes of this one record. Reading it by id (and submitting a USDT0 transfer) answers 404 without it; swap submit and cross-chain deposit still accept a request without it for now, and will require it once the deployment turns `PUBLIC_RECORD_TOKEN_REQUIRED_ON_LEGACY` on. The same create replayed with its Idempotency-Key answers the same token. Keep it like the record id: whoever holds both can read the record."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "network",
+          "source",
+          "destination",
+          "sendAsset",
+          "sendAssetIssuer",
+          "sendAmount",
+          "feeAmount",
+          "feeBps",
+          "swapAmount",
+          "destAsset",
+          "destAssetIssuer",
+          "destEstimated",
+          "destMin",
+          "slippageBps",
+          "path",
+          "memo",
+          "commissionMemo",
+          "trustline",
+          "xdr",
+          "uri",
+          "txHash",
+          "qr",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "SwapEntity": {
@@ -16292,7 +16692,7 @@
           "explorerUrl"
         ]
       },
-      "CrossChainSwapEntity": {
+      "CrossChainSwapCreatedEntity": {
         "type": "object",
         "properties": {
           "id": {
@@ -16539,6 +16939,11 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "publicToken": {
+            "type": "string",
+            "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w",
+            "description": "Only when the caller is the shared public key: this record’s read token. Send it as `X-Record-Token` on the routes of this one record. Reading it by id (and submitting a USDT0 transfer) answers 404 without it; swap submit and cross-chain deposit still accept a request without it for now, and will require it once the deployment turns `PUBLIC_RECORD_TOKEN_REQUIRED_ON_LEGACY` on. The same create replayed with its Idempotency-Key answers the same token. Keep it like the record id: whoever holds both can read the record."
           }
         },
         "required": [
@@ -16885,6 +17290,292 @@
           "total",
           "take",
           "skip"
+        ]
+      },
+      "CrossChainSwapEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm1x2y3z4a5b6c7d8e9f0g1h2"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_DEPOSIT",
+              "DEPOSIT_DETECTED",
+              "INCOMPLETE_DEPOSIT",
+              "PROCESSING",
+              "SUCCEEDED",
+              "REFUNDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "AWAITING_DEPOSIT"
+          },
+          "providerStatus": {
+            "type": "string",
+            "example": "PENDING_DEPOSIT",
+            "description": "NEAR Intents’ own status word, verbatim."
+          },
+          "network": {
+            "type": "string",
+            "example": "public"
+          },
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "stellar"
+          },
+          "originAsset": {
+            "type": "string",
+            "example": "XLM"
+          },
+          "originContract": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "destinationChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "solana"
+          },
+          "destinationAsset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "destinationContract": {
+            "type": "object",
+            "nullable": true,
+            "example": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+          },
+          "amountIn": {
+            "type": "string",
+            "example": "100",
+            "description": "Gross, in the origin asset."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.5"
+          },
+          "amountOutEstimated": {
+            "type": "string",
+            "example": "22.189466"
+          },
+          "amountOutMin": {
+            "type": "string",
+            "example": "21.967571"
+          },
+          "slippageBps": {
+            "type": "number",
+            "example": 100
+          },
+          "recipient": {
+            "type": "string",
+            "example": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK"
+          },
+          "refundTo": {
+            "type": "string",
+            "example": "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG"
+          },
+          "depositAddress": {
+            "type": "string",
+            "example": "GDJ4JZXZELZD737NVFORH4PSSQDWFDZTKW3AIDKHYQG23ZXBPDGGQBJK",
+            "description": "Send exactly amountIn of the origin asset here."
+          },
+          "depositMemo": {
+            "type": "object",
+            "nullable": true,
+            "example": "188866795",
+            "description": "Required whenever it is set: attach it to the deposit or the deposit is lost to the swap. Always set on Stellar (a MEMO_TEXT); on another chain only if NEAR Intents issues one."
+          },
+          "depositUri": {
+            "type": "string",
+            "nullable": true,
+            "example": "web+stellar:pay?destination=GDJ4…&amount=100&memo=188866795&memo_type=MEMO_TEXT",
+            "description": "The deposit as a wallet link on the origin chain, where the chain has a wallet-link standard: SEP-7 pay, Solana Pay, EIP-681, BIP-21 style (bitcoin:, litecoin:, dogecoin:, bitcoincash:, dash:, zcash:), ton:// transfer or CIP-13 web+cardano:. Null means: pay depositAddress (and depositMemo, if set) with any wallet of that chain."
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgo…",
+            "description": "PNG data URL of a QR code: of depositUri when there is one, else of depositAddress."
+          },
+          "depositTxHash": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "amountOut": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "description": "Settled output, once NEAR Intents reports it."
+          },
+          "refundedAmount": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "originTxHashes": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "destinationTxHashes": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "timeEstimateSeconds": {
+            "type": "number",
+            "example": 22
+          },
+          "correlationId": {
+            "type": "string",
+            "example": "c5928abd-243c-4019-aebd-6cccc185cc96",
+            "description": "NEAR Intents’ id for the quote, for support requests."
+          },
+          "quoteSignature": {
+            "type": "string",
+            "example": "ed25519:Ze6U5JbqTTbXNvU5PW2g…",
+            "description": "NEAR Intents’ signature over the quote and deposit address. Keep it: it settles a dispute."
+          },
+          "idempotencyKey": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-02T12:30:00.000Z",
+            "description": "After this the deposit address refunds whatever arrives."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "providerStatus",
+          "network",
+          "originChain",
+          "originAsset",
+          "originContract",
+          "destinationChain",
+          "destinationAsset",
+          "destinationContract",
+          "amountIn",
+          "feeBps",
+          "feeAmount",
+          "amountOutEstimated",
+          "amountOutMin",
+          "slippageBps",
+          "recipient",
+          "refundTo",
+          "depositAddress",
+          "depositMemo",
+          "depositUri",
+          "qr",
+          "depositTxHash",
+          "amountOut",
+          "refundedAmount",
+          "originTxHashes",
+          "destinationTxHashes",
+          "timeEstimateSeconds",
+          "correlationId",
+          "quoteSignature",
+          "idempotencyKey",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "SubmitDepositDto": {
@@ -23955,7 +24646,7 @@
           "amount"
         ]
       },
-      "Usdt0TransferEntity": {
+      "Usdt0TransferCreatedEntity": {
         "type": "object",
         "properties": {
           "id": {
@@ -24142,6 +24833,11 @@
             "format": "date-time",
             "type": "string",
             "example": "2026-10-25T12:00:00.000Z"
+          },
+          "publicToken": {
+            "type": "string",
+            "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w",
+            "description": "Only when the caller is the shared public key: this record’s read token. Send it as `X-Record-Token` on the routes of this one record. Reading it by id (and submitting a USDT0 transfer) answers 404 without it; swap submit and cross-chain deposit still accept a request without it for now, and will require it once the deployment turns `PUBLIC_RECORD_TOKEN_REQUIRED_ON_LEGACY` on. The same create replayed with its Idempotency-Key answers the same token. Keep it like the record id: whoever holds both can read the record."
           }
         },
         "required": [
@@ -24417,6 +25113,227 @@
           "total",
           "take",
           "skip"
+        ]
+      },
+      "Usdt0TransferEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm2u0t0transfer0000000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "DELIVERED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "PENDING",
+            "description": "PENDING: built, waiting for the signature. SUBMITTED: on the Stellar ledger, LayerZero is delivering it. DELIVERED: credited on the destination network. FAILED: the Stellar transaction failed, or LayerZero gave up on the message (`failureReason`). EXPIRED: never reached the ledger before `expiresAt`. A read refreshes a PENDING or SUBMITTED transfer from the ledger and LayerZero Scan."
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "Always mainnet."
+          },
+          "source": {
+            "type": "string",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "eth",
+              "arb",
+              "bera",
+              "conflux",
+              "flare",
+              "hedera",
+              "hyperevm",
+              "ink",
+              "mantle",
+              "megaeth",
+              "monad",
+              "morph",
+              "op",
+              "plasma",
+              "pol",
+              "rootstock",
+              "sei",
+              "stable",
+              "tempo",
+              "unichain",
+              "xlayer"
+            ],
+            "example": "eth"
+          },
+          "eid": {
+            "type": "number",
+            "example": 30101
+          },
+          "receives": {
+            "type": "string",
+            "enum": [
+              "USDT",
+              "USDT0"
+            ],
+            "example": "USDT"
+          },
+          "recipient": {
+            "type": "string",
+            "example": "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+            "description": "The EVM address credited, EIP-55."
+          },
+          "amount": {
+            "type": "string",
+            "example": "12.5000001",
+            "description": "The amount asked for."
+          },
+          "amountSent": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What the OFT takes from the account: `amount` without its dust."
+          },
+          "amountReceived": {
+            "type": "string",
+            "example": "12.5",
+            "description": "What arrives, and the on-chain floor: the transaction fails rather than deliver less."
+          },
+          "dust": {
+            "type": "string",
+            "example": "0.0000001",
+            "description": "The dust left in the account (`amount` - `amountSent`)."
+          },
+          "nativeFee": {
+            "type": "string",
+            "example": "3.6664143",
+            "description": "LayerZero’s quoted messaging fee, in XLM."
+          },
+          "nativeFeeLimit": {
+            "type": "string",
+            "example": "4.3996972",
+            "description": "What the transaction offers LayerZero, in XLM: `nativeFee` plus a 20% buffer. The endpoint charges the real fee and returns the rest to the account in the same transaction."
+          },
+          "networkFee": {
+            "type": "string",
+            "example": "1.4468825",
+            "description": "The Stellar network fee, in XLM: inclusion plus Soroban resources (part of it is refunded by the network)."
+          },
+          "xdr": {
+            "type": "string",
+            "description": "The unsigned transaction (base64 XDR) to sign.",
+            "example": "AAAAAgAAAABx…(base64 XDR)…AAAAAAAAAAA="
+          },
+          "uri": {
+            "type": "string",
+            "example": "web+stellar:tx?xdr=AAAAAgAAAABx…",
+            "description": "A SEP-7 `tx` link carrying `xdr`."
+          },
+          "qr": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "A QR of `uri` as a PNG data URL, or null when the transaction is too large for one, which a Soroban transaction usually is (its ledger footprint makes the XDR several kilobytes). Sign with a connected wallet (Freighter) or the link instead."
+          },
+          "txHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The Stellar transaction hash once it reached the network (SUBMITTED, DELIVERED, FAILED); null while PENDING or EXPIRED."
+          },
+          "guid": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "LayerZero’s message id (0x + 64 hex), once the transaction landed."
+          },
+          "destinationTxHash": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The destination network’s transaction, once DELIVERED."
+          },
+          "scanStatus": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "LayerZero Scan’s own status word, verbatim (`INFLIGHT`, `CONFIRMING`, `DELIVERED`, `PAYLOAD_STORED`, ...)."
+          },
+          "scanUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The transaction on LayerZero Scan (layerzeroscan.com), once it reached the network."
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why a FAILED transfer failed."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The Idempotency-Key it was created with, if any."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:05:00.000Z",
+            "description": "When the transaction's time bounds close: submit refuses it afterwards."
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "When it was first seen accepted by the network."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-25T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "network",
+          "source",
+          "to",
+          "eid",
+          "receives",
+          "recipient",
+          "amount",
+          "amountSent",
+          "amountReceived",
+          "dust",
+          "nativeFee",
+          "nativeFeeLimit",
+          "networkFee",
+          "xdr",
+          "uri",
+          "qr",
+          "txHash",
+          "guid",
+          "destinationTxHash",
+          "scanStatus",
+          "scanUrl",
+          "failureReason",
+          "idempotencyKey",
+          "expiresAt",
+          "submittedAt",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "SubmitUsdt0TransferDto": {

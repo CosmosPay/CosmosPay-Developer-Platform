@@ -278,8 +278,13 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
             // the backup routes (the wallet's src/lib/cosmospay.ts), and X-Trace-Id rides on its
             // DeFindex calls (src/lib/defindex.ts). Same failure when missing: the sign-in dies
             // at /finish with a CORS error on cosmospay.lat/wallet and in Tauri.
+            //
+            // X-Record-Token is the read token the community server returns when the shared public
+            // key creates a swap or a USDT0 transfer; the public swap pages send it to read, submit
+            // or report that one record (src/lib/swap-api.ts). Missing here, they could create a
+            // swap and never follow it.
             allow_headers:
-              'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id,X-Wallet-Session,X-Trace-Id',
+              'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id,X-Wallet-Session,X-Trace-Id,X-Record-Token',
             // A browser hides every response header that is not safelisted, so without this
             // the throttling headers the API already sends are invisible to a web client: it
             // sees a 429 with no idea when to come back, and has to guess an interval against

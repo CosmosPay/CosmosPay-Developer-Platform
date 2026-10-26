@@ -374,7 +374,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **The browser calls the gateway with the shared public key** (`GET /v1/public-key?env=prod`,
   keyless): commission is the public consumer's plan's (`PLAN_SPECS.community.swapFeeBps`, shown on
   the page), and the server confines the key to quoting, creating, submitting and reading a swap by
-  its id. **The gateway's CORS must list both origins** (`COSMOS_API_CORS_ORIGINS`:
+  its id. **Every visitor shares that key**, so a record it creates comes back with a `publicToken`
+  that only its creator holds: `publicSwapApi` keeps it in memory (never in the URL) and sends it as
+  `X-Record-Token` to read, submit or report that record; without it the server answers 404. The
+  gateway's CORS `allow_headers` lists `X-Record-Token` (`src/utils/apisix.ts`), or the browser
+  cannot send it. **The gateway's CORS must list both origins** (`COSMOS_API_CORS_ORIGINS`:
   `https://payments.cosmospay.lat` and `https://cosmospay.lat`, as its default and `.env.example` do;
   an environment that sets its own list adds them and restarts, since the routes sync at boot), or the
   widget cannot reach it from either page. A local test needs the local origins in that list too.

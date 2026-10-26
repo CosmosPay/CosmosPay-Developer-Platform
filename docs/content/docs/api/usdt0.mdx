@@ -84,8 +84,10 @@ _openapi:
           once every 15 seconds per transfer, and moves it to SUBMITTED,
           DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery
           takes about 27 minutes on every route: LayerZero’s verifiers wait for
-          Stellar confirmations. The shared public key may call it: the transfer
-          is still scoped to the consumer, and its id is the capability.'
+          Stellar confirmations. The shared public key may call it, but only
+          with the transfer’s `publicToken` in `X-Record-Token`: without it, or
+          with another transfer’s, the answer is 404. Every other key reads its
+          own transfers as before.'
         heading: get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-layerzero-scan
       - content: 'The signed XDR must hash to the transfer’s transaction and carry a
           signature. Accepted and applied: SUBMITTED, with LayerZero’s `guid`.

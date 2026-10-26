@@ -43,9 +43,10 @@ _openapi:
         id: relay-the-signed-swap-transaction-to-its-network-checked-against-the-one-built-finalizes-status
     contents:
       - content: 'The shared public key may call it, so a swap made without an account
-          can follow its own status: the read is still scoped to the consumer,
-          so that key reaches only swaps made with it, and the swap id (a cuid)
-          is the capability. Listing swaps stays closed to the public key.'
+          can follow its own status, but only with the swap’s `publicToken` in
+          `X-Record-Token`: without it, or with another swap’s, the answer is
+          404. Every other key reads its own swaps as before. Listing swaps
+          stays closed to the public key.'
         heading: get-a-swap-by-id-on-any-chain
 ---
 
