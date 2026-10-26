@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonBadRequest, jsonConflict, jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
@@ -14,7 +14,7 @@ const paramsSchema = z.object({ id: z.string().min(1) });
 /* GET /api/organizations/:id/wallets: the organization's receiving wallets (any member: every
    payment form offers them). */
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);
@@ -32,7 +32,7 @@ export const GET: APIRoute = async (ctx) => {
    walletProofMessage for this organization, network and address within the last minutes; the
    signature is checked against the address before anything is stored. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageUsers, getRole, setUserRolePlan } from "@/lib/profile";
 import { roleLevel } from "@/lib/account-roles";
@@ -16,7 +16,7 @@ const bodySchema = z.object({
 /* PATCH /api/admin/users/:id: set a user's role and/or plan. Owner/admin only;
    only an owner may grant or modify the "owner" role. */
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const actorRole = await getRole(session.user.id).catch(() => "user" as const);

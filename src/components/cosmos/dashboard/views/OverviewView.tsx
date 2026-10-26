@@ -6,7 +6,7 @@
    day, week, month or year (a strip over paired bars); and the transaction list with the
    dashboard's filter bar, a menu per payment and rows per page. Every figure comes from the
    Payments API (/v1/summary, /v1/summary/series and the payment list); nothing is sample data. While a figure loads, a skeleton holds its place; then it counts up (Odometer). */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { planSpec } from "@/lib/plans";
@@ -131,13 +131,32 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const [rows, setRows] = useState(null);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
+  // The first look arrives in one go (product owner: never request after request): the summary,
+  // the chart's window and the transactions together, for this environment and organization.
+  // allSettled, so one that fails never holds back the others. A period changed afterwards
+  // fetches only its own part; `fetched` remembers what each part last asked for.
+  const fetched = useRef({ series: "", list: "" });
+  const seriesKey = `${env}|${chartPeriod}`;
+  const listKey = `${env}|${org.id}|${listPeriod}`;
+  const listQuery = () => ({ org: org.id || undefined, createdFrom: periodStart(listPeriod).toISOString(), take: 100 });
   useEffect(() => {
     let alive = true;
     setSum(undefined);
-    metricsApi.summary(env).then((d) => { if (alive) setSum(d); }).catch(() => { if (alive) setSum(null); });
+    setSeriesLoading(true);
+    setRows(null);
+    fetched.current = { series: seriesKey, list: listKey };
+    Promise.allSettled([metricsApi.summary(env), metricsApi.series(env, chartPeriod), payApi.list(env, listQuery())]).then(([s, w, l]) => {
+      if (!alive) return;
+      setSum(s.status === "fulfilled" ? s.value : null);
+      setSeries(w.status === "fulfilled" ? w.value : null);
+      setSeriesLoading(false);
+      setRows(l.status === "fulfilled" && Array.isArray(l.value?.data) ? l.value.data : []);
+    });
     return () => { alive = false; };
-  }, [env]);
+  }, [env, org.id]);
   useEffect(() => {
+    if (fetched.current.series === seriesKey) return;
+    fetched.current.series = seriesKey;
     let alive = true;
     setSeriesLoading(true);
     metricsApi.series(env, chartPeriod)
@@ -145,15 +164,17 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
       .catch(() => { if (alive) setSeries(null); })
       .finally(() => { if (alive) setSeriesLoading(false); });
     return () => { alive = false; };
-  }, [env, chartPeriod]);
+  }, [seriesKey]);
   useEffect(() => {
+    if (fetched.current.list === listKey) return;
+    fetched.current.list = listKey;
     let alive = true;
     setRows(null);
-    payApi.list(env, { org: org.id, createdFrom: periodStart(listPeriod).toISOString(), take: 100 })
+    payApi.list(env, listQuery())
       .then((res) => { if (alive) setRows(Array.isArray(res?.data) ? res.data : []); })
       .catch(() => { if (alive) setRows([]); });
     return () => { alive = false; };
-  }, [env, org.id, listPeriod]);
+  }, [listKey]);
 
   const num = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 });
   // Amounts arrive as exact decimal strings; grouped for reading, never re-rounded below 7 places.

@@ -97,7 +97,7 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   useEffect(() => { load(); }, [load]);
   // Live refresh while the tab is visible, so a swap settling on-chain flips its status.
   const refresh = useCallback(() => { fetchAll().then(setRows).catch(() => {}); }, [fetchAll]);
-  usePolling(refresh, 10000);
+  usePolling(refresh, 10000, { immediate: false });
 
   // A swap named from elsewhere (a notification) opens once the list is here, read by id from
   // each kind's route when the list does not hold it.

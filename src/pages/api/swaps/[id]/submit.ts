@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonError,
@@ -29,7 +29,7 @@ function cosmosErrorResponse(err: unknown): Response {
    `signedTransaction` for Solana / Monad. The Payments API checks it is the transaction
    it built before broadcasting. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;

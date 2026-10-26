@@ -6,8 +6,9 @@ import { PAGE_SIZE, PAGE_SIZES } from "@/components/cosmos/dashboard/data";
 import { activeCount, readFilters, writeFilters, type Allowed, type Filters } from "@/lib/dashboard-filters";
 
 /* Polling that pauses while the browser tab is hidden (saves resources). Fires once on
-   mount, then every `ms` only while visible; refires immediately when the tab returns. */
-export function usePolling(cb, ms) {
+   mount, then every `ms` only while visible; refires immediately when the tab returns. A view
+   that loads on its own passes `{ immediate: false }`, or every mount would ask twice at once. */
+export function usePolling(cb, ms, { immediate = true } = {}) {
   const saved = useRef(cb);
   saved.current = cb;
   useEffect(() => {
@@ -16,7 +17,7 @@ export function usePolling(cb, ms) {
     const start = () => { if (id == null) id = setInterval(() => { if (!document.hidden) tick(); }, ms); };
     const stop = () => { if (id != null) { clearInterval(id); id = null; } };
     const onVis = () => { if (document.hidden) stop(); else { tick(); start(); } };
-    tick();
+    if (immediate) tick();
     start();
     document.addEventListener("visibilitychange", onVis);
     return () => { stop(); document.removeEventListener("visibilitychange", onVis); };

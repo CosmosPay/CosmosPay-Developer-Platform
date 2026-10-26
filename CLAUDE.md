@@ -302,6 +302,25 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     the URL (`useListFilters`, read after mount so the server render matches), so a filtered list
     survives a reload and can be shared; switching views drops them. Tabs remain only for sections
     (Liquidity, Fiat) and periods (the overview), as segments, never chips.
+  - **Data loads in one go, never request after request** (product owner, 2026-10-26):
+    - `dashboard.astro` reads what the first render needs together (organizations, profile, role:
+      one `Promise.all`) and hands the shell the organizations, the active one (the
+      `cosmospay-org` cookie the shell writes) and the view the address names (`?view=`). So the
+      first render is the right view of the right organization: no request waits for the
+      organizations, and no overview mounts and fetches only to be replaced.
+    - The shell's own data (notifications, invitations, support's unread count) and the overview's
+      first look (summary, series, transactions) each go out as one `Promise.allSettled` (one that
+      fails never holds back the others); a period changed afterwards fetches only its part.
+      Views that read several lists already use `Promise.all`.
+    - `usePolling` fires on mount unless given `{ immediate: false }`: a view that loads on its
+      own passes it, or every mount asks twice at once.
+    - Each request reads the session once: `src/lib/request-session.ts` (the middleware and every
+      API route share the answer for the same request). Better Auth's cookie cache was tried and
+      left off: it only refreshes through its own endpoint, so it saved nothing here while letting
+      a revoked session work for its lifetime.
+    - Measuring: `astro dev` is far slower than the build (Vite compiles modules while the page
+      hydrates, and API routes queue behind it); time the dashboard on `npm run build` +
+      `node --env-file=.env dist/server/entry.mjs`.
   - **Every table is paged and keeps its height** (product owner, 2026-10-26): `usePaged` (`hooks.ts`)
     pages at the viewer's rows per page (`PAGE_SIZES` 10 / 20 / 50, never more than 50; one choice
     for every table, kept in the browser as `cosmospay-rows`), `Pagination` under the table always

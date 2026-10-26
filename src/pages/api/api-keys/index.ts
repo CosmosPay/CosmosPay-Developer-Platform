@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonCreated,
@@ -37,9 +37,7 @@ import type { APIRoute } from "astro";
 import { APISSIX_ROUTE_ID, COSMOS_API_URL, COSMOS_API_ENTRY } from "astro:env/server";
 
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({
-    headers: ctx.request.headers,
-  });
+  const session = await requestSession(ctx.request.headers);
 
   if (!session) {
     return jsonUnauthorized("Session required");
@@ -127,9 +125,7 @@ export const GET: APIRoute = async (ctx) => {
 
 export const POST: APIRoute = async (ctx) => {
 
-  const session = await auth.api.getSession({
-    headers: ctx.request.headers,
-  });
+  const session = await requestSession(ctx.request.headers);
 
   if (!session) {
     return jsonUnauthorized("Session required");

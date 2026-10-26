@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonCreated,
@@ -16,7 +16,7 @@ import type { APIRoute } from "astro";
 
 /* GET /api/notifications: list the signed-in user's activity notifications. */
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const items = await listNotifications(session.user.id).catch(() => null);
@@ -41,7 +41,7 @@ const createNotificationBodySchema = z.object({
 /* POST /api/notifications: create a notification. Restricted to owner/admin accounts;
    regular ("user") accounts can only read, since the system generates their notifications. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const role = await getRole(session.user.id).catch(() => "user" as const);

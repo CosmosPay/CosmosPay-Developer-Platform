@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonError,
@@ -45,9 +45,7 @@ async function denyIfMember(apiKey: { value?: { labels?: { org?: string } } }, u
 
 export const GET: APIRoute = async (ctx) => {
 
-  const session = await auth.api.getSession({
-    headers: ctx.request.headers,
-  });
+  const session = await requestSession(ctx.request.headers);
 
   if (!session) {
     return jsonUnauthorized("Session required");
@@ -91,9 +89,7 @@ export const GET: APIRoute = async (ctx) => {
 export const DELETE: APIRoute = async (ctx) => {
 
 
-  const session = await auth.api.getSession({
-    headers: ctx.request.headers,
-  });
+  const session = await requestSession(ctx.request.headers);
 
   if (!session) {
     return jsonUnauthorized("Session required");
@@ -154,9 +150,7 @@ export const DELETE: APIRoute = async (ctx) => {
 
 export const PATCH: APIRoute = async (ctx) => {
 
-  const session = await auth.api.getSession({
-    headers: ctx.request.headers,
-  });
+  const session = await requestSession(ctx.request.headers);
 
   if (!session) {
     return jsonUnauthorized("Session required");

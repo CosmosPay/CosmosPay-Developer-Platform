@@ -41,7 +41,7 @@ export function LogsView({ kind = "api", env = "dev" }) {
   const refresh = useCallback(() => {
     fetcher(env).then((r) => setRows((r && Array.isArray(r.data)) ? r.data : [])).catch(() => {});
   }, [env, kind]);
-  usePolling(refresh, 8000);
+  usePolling(refresh, 8000, { immediate: false });
 
   // Every word of the search must appear somewhere in the entry.
   const view = rows.filter((l) => matchesQuery([JSON.stringify(l)], q));

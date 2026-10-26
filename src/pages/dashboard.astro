@@ -16,25 +16,23 @@ if (!user) {
   return Astro.redirect("/login");
 }
 
+// What the first render needs, read together rather than one after another: the organizations
+// (the onboarding gate and the shell's list), the profile and the account role.
+let [orgs, profile, role] = await Promise.all([
+  listForUser(user.id).catch(() => []),
+  getProfile(user.id).catch(() => null),
+  getRole(user.id).catch(() => "user"),
+]);
+
 // Onboarding gate: a user with no organization must create their first one first.
-let orgCount = 0;
-try {
-  orgCount = (await listForUser(user.id)).length;
-} catch (e) {
-  orgCount = 0;
-}
-if (orgCount === 0) {
+if (orgs.length === 0) {
   // With onboarding enabled, send them through the wizard. With it disabled, skip
   // straight to a default organization so they land on the dashboard.
   if (ONBOARDING_ENABLED) {
     return Astro.redirect("/onboarding");
   }
-  try {
-    orgCount = (await ensureDefaultOrg(user.id, user.name)).length;
-  } catch (e) {
-    orgCount = 0;
-  }
-  if (orgCount === 0) {
+  orgs = await ensureDefaultOrg(user.id, user.name).catch(() => []);
+  if (orgs.length === 0) {
     return Astro.redirect("/onboarding");
   }
 }
@@ -42,10 +40,14 @@ if (orgCount === 0) {
 const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 // The environment last picked (Dashboard writes the cookie), so a reload opens on it.
 const env = Astro.cookies.get("cosmospay-env")?.value === "prod" ? "prod" : "dev";
+// The organization last picked (Dashboard writes the cookie), if it is still one of theirs, and
+// the view the address names: the first render is already the right view of the right
+// organization, so no view mounts only to be replaced and nothing waits for the organizations.
+const wantOrg = Astro.cookies.get("cosmospay-org")?.value;
+const orgId = orgs.some((o) => o.id === wantOrg) ? wantOrg : null;
+const view = Astro.url.searchParams.get("view");
 // Account role (user | support | admin | owner); gates staff features (support inbox,
 // user management). The first account bootstraps to "owner" (see getRole). Best-effort.
-const profile = await getProfile(user.id).catch(() => null);
-const role = await getRole(user.id).catch(() => "user");
 const plan = profile?.plan ?? DEFAULT_PLAN_ID;
 // The custom profile (displayName / avatarUrl) overrides the OAuth name + photo when set.
 // We pass both the effective values (name/image) and the raw OAuth fallbacks (authName/
@@ -64,8 +66,10 @@ const dashUser = {
 };
 // Plan/onboarding flags resolved for this account (drives plan UI gating).
 const features = planFeatures(role);
+// As /api/organizations answers them (dates as ISO strings), so the shell reads one shape.
+const initialOrgs = orgs.map((o) => ({ ...o, createdAt: new Date(o.createdAt).toISOString() }));
 ---
 
 <CosmosLayout title="Dashboard | Cosmos Pay" lang={lang} noindex nav={false} bodyClass="inst">
-  <Dashboard client:load user={dashUser} lang={lang} features={features} env={env} />
+  <Dashboard client:load user={dashUser} lang={lang} features={features} env={env} orgs={initialOrgs} orgId={orgId} view={view} />
 </CosmosLayout>

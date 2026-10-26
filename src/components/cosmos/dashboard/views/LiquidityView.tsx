@@ -61,7 +61,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
       .then((res) => setRows(Array.isArray(res?.data) ? res.data : []))
       .catch(() => {});
   }, [env, orgId]);
-  usePolling(refresh, 8000);
+  usePolling(refresh, 8000, { immediate: false });
 
   // An operation named from elsewhere (a notification) opens once the list is here.
   const [openId, clearOpen] = useUrlRequest("open");

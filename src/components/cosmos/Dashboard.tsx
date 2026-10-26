@@ -27,7 +27,7 @@ import { parseUsage, quickLinks, recordUse } from "@/lib/dashboard-usage";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
-export default function Dashboard({ user: initialUser, lang, features, env = "dev" }) {
+export default function Dashboard({ user: initialUser, lang, features, env = "dev", orgs: initialOrgs = null, orgId: initialOrgId = null, view: initialView = null }) {
   initLang(lang);
   const t = useT();
   // Plan/onboarding feature flags resolved server-side (per account role). Defaults
@@ -51,14 +51,9 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       return res;
     });
   const [theme, setTheme] = useTheme();
-  const [view, setView] = useState("overview");
-  // Allow deep-linking a view via ?view= (e.g. the nav's account item → ?view=account).
-  useEffect(() => {
-    try {
-      const v = new URLSearchParams(window.location.search).get("view");
-      if (v && t.dash.viewLabels[v] && !DISABLED_VIEWS.includes(v)) setView(v);
-    } catch (e) {}
-  }, []);
+  // The view a link names (?view=, read by the page on the server): the first render is already
+  // that view, so the overview never mounts and fetches only to be replaced.
+  const [view, setView] = useState(() => (initialView && t.dash.viewLabels[initialView] && !DISABLED_VIEWS.includes(initialView) ? initialView : "overview"));
   // Keep the URL in sync with the active view so a reload restores it (no more snapping back to Overview).
   // Moving to another view drops the last one's list filters (useListFilters keeps them in the URL).
   const shownView = useRef(null);
@@ -106,21 +101,31 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   }, []);
   useEffect(() => { noteUse(view); }, [view]);
   const [navOpen, setNavOpen] = useState(false);
-  // Real organizations (API-backed). The active org is persisted to localStorage.
-  const [orgs, setOrgs] = useState([]);
-  const [curOrg, setCurOrg] = useState(null);
+  // The organizations arrive with the page (dashboard.astro), with the one last picked (the
+  // `cosmospay-org` cookie), so every view's first requests already name it. The list is read
+  // again after a change (create, delete) or when the page came without it.
+  const [orgs, setOrgs] = useState(initialOrgs || []);
+  const [curOrg, setCurOrg] = useState(initialOrgId || (initialOrgs && initialOrgs[0] ? initialOrgs[0].id : null));
   const loadOrgs = (preferId) => orgsApi.list().then((d) => {
     const list = Array.isArray(d) ? d : [];
     setOrgs(list);
     setCurOrg((cur) => {
-      let want = preferId || cur;
-      if (!want) { try { want = localStorage.getItem("cosmospay-org"); } catch (e) {} }
+      const want = preferId || cur;
       const pick = list.find((o) => o.id === want) || list[0] || null;
       return pick ? pick.id : null;
     });
   }).catch(() => showToast(t.dash.orgs.loadError, "error"));
-  useEffect(() => { loadOrgs(); }, []);
-  useEffect(() => { try { if (curOrg) localStorage.setItem("cosmospay-org", curOrg); } catch (e) {} }, [curOrg]);
+  useEffect(() => {
+    if (!initialOrgs) { loadOrgs(); return; }
+    // The pick used to live in this browser's storage: honour it once, then the cookie carries it.
+    if (initialOrgId) return;
+    try {
+      const old = localStorage.getItem("cosmospay-org");
+      if (old && initialOrgs.some((o) => o.id === old)) setCurOrg(old);
+      localStorage.removeItem("cosmospay-org");
+    } catch (e) {}
+  }, []);
+  useEffect(() => { try { if (curOrg) document.cookie = `cosmospay-org=${encodeURIComponent(curOrg)};path=/;max-age=31536000;samesite=lax`; } catch (e) {} }, [curOrg]);
   // Real API keys (APISIX-backed), fetched from the developer API, not mocked.
   const [keys, setKeys] = useState([]);
   const [keysLoading, setKeysLoading] = useState(true);
@@ -153,8 +158,8 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       .finally(() => setNotifsLoading(false));
   };
   useEffect(() => {
-    loadNotifs();
     // Poll while visible so staff replies (and other server-emitted notifications) reach the bell.
+    // The first read is part of the shell's load below.
     const id = setInterval(() => { if (!document.hidden) loadNotifs(); }, 20000);
     return () => clearInterval(id);
   }, []);
@@ -311,15 +316,27 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   // Pending invitations addressed to my email, surfaced as a banner so I can join from
   // inside the dashboard (in addition to the emailed magic link).
   const [myInvites, setMyInvites] = useState([]);
-  const loadMyInvites = () => { invitesApi.mine().then((d) => setMyInvites(Array.isArray(d) ? d : [])).catch(() => {}); };
-  useEffect(() => { loadMyInvites(); }, []);
 
   // Unread support replies → a dot on the sidebar "Support" item. Polled while the tab is
   // visible; cleared when the user opens the relevant ticket (the read flag drops it).
   const [supportUnread, setSupportUnread] = useState(0);
+  // The shell's own data comes in one go (product owner: never request after request): the
+  // notifications, the invitations addressed to me and support's unread count together. One that
+  // fails never holds back the others (allSettled); each then polls on its own.
+  useEffect(() => {
+    Promise.allSettled([notificationsApi.list(), invitesApi.mine(), supportApi.unread()]).then(([n, i, u]) => {
+      if (n.status === "fulfilled") { setNotifs(Array.isArray(n.value) ? n.value : []); setNotifsError(false); } else setNotifsError(true);
+      setNotifsLoading(false);
+      if (i.status === "fulfilled") setMyInvites(Array.isArray(i.value) ? i.value : []);
+      if (u.status === "fulfilled") setSupportUnread((u.value && u.value.count) || 0);
+    });
+  }, []);
+  // Read again on every other view (opening a ticket clears its reply) and while visible.
+  const firstUnread = useRef(true);
   useEffect(() => {
     const load = () => { supportApi.unread().then((d) => setSupportUnread((d && d.count) || 0)).catch(() => {}); };
-    load();
+    if (firstUnread.current) firstUnread.current = false;
+    else load();
     const id = setInterval(() => { if (!document.hidden) load(); }, 15000);
     const onVis = () => { if (!document.hidden) load(); };
     document.addEventListener("visibilitychange", onVis);

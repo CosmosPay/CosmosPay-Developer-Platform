@@ -58,7 +58,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   const refresh = useCallback(() => {
     query().then((res) => setRows(Array.isArray(res?.data) ? res.data : [])).catch(() => {});
   }, [query]);
-  usePolling(refresh, 8000);
+  usePolling(refresh, 8000, { immediate: false });
 
   // A payment named from elsewhere (the overview's row menu, a notification, a customer): its
   // detail opens once the list is here, read by id when the list does not hold it. A create

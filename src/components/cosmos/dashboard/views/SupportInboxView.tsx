@@ -23,7 +23,7 @@ export function SupportInboxView() {
 
   const loadTickets = () => supportAdminApi.tickets(filter === "all" ? undefined : filter).then((d) => setTickets(Array.isArray(d) ? d : [])).catch(() => {});
   const loadTicket = (id) => supportAdminApi.ticket(id).then((d) => setTicket(d || null)).catch(() => {});
-  usePolling(loadTickets, 12000);
+  usePolling(loadTickets, 12000, { immediate: false });
   usePolling(() => { if (sel) loadTicket(sel); }, 10000);
   useEffect(() => { loadTickets(); }, [filter]);
 

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { recordLogin, touchLastSeen } from "@/lib/profile";
 import { trackActivity } from "@/lib/activity";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
@@ -166,10 +166,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Belt-and-suspenders: ensure the route was synced (no-op after the first call).
   ensureCosmosRouteSynced();
 
-  const isAuthed = await auth.api
-    .getSession({
-      headers: context.request.headers,
-    })
+  // Read once for the whole request: an API route asking again gets this same answer.
+  const isAuthed = await requestSession(context.request.headers);
 
   if (isAuthed) {
     context.locals.user = isAuthed.user;

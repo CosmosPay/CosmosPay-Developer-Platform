@@ -63,7 +63,7 @@ export function ActivityLogView({ env = "dev" }) {
   const refresh = useCallback(() => {
     activityApi.list(env, query()).then((r) => setRows((r && Array.isArray(r.data)) ? r.data : [])).catch(() => {});
   }, [env, query]);
-  usePolling(refresh, 10000);
+  usePolling(refresh, 10000, { immediate: false });
 
   // Every word of the search must appear somewhere in the entry.
   const view = rows.filter((l) => matchesQuery([JSON.stringify(l)], q));

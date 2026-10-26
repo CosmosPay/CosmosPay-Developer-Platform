@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
@@ -11,7 +11,7 @@ const paramsSchema = z.object({ id: z.string().min(1), walletId: z.string().min(
 
 /* PATCH /api/organizations/:id/wallets/:walletId: rename a wallet (`wallets:edit`). */
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);
@@ -36,7 +36,7 @@ export const PATCH: APIRoute = async (ctx) => {
 /* DELETE /api/organizations/:id/wallets/:walletId: remove a wallet (`wallets:delete`). Payment
    links already created keep their address; new ones can no longer choose it. */
 export const DELETE: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);
