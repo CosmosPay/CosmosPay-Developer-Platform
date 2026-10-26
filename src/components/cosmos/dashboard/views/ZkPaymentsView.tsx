@@ -3,8 +3,10 @@
    the amount stays hidden on-chain. The merchant receives the amount minus the 0.01% commission; the
    payer pays on the private checkout (payments.cosmospay.lat/zk/{id}); the merchant's receiving
    account is one of the organization's Stellar wallets (Settings; the create dialog offers only
-   those) with a confidential account, set up and managed in this view (ZkAccountPanel), which also
-   preselects it as the recipient of a new payment. Testnet (the sandbox) only for now. */
+   those) with a confidential account, set up and managed in this view (ZkAccountPanel, which lists
+   the wallets; without one it says the organization needs a Stellar wallet and nothing can be
+   created). The first wallet with a confidential account is the new payment's recipient by default.
+   Testnet (the sandbox) only for now. */
 import { useEffect, useMemo, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
@@ -43,9 +45,9 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
-  const [account, setAccount] = useState(null);
+  const [registered, setRegistered] = useState([]);
   const wallets = useOrgWallets(orgId);
-  const stellarWallets = useMemo(() => (wallets || []).filter((w) => w.chain === "stellar").map((w) => w.address), [wallets]);
+  const stellarWallets = useMemo(() => (wallets || []).filter((w) => w.chain === "stellar").map((w) => ({ address: w.address, label: w.label })), [wallets]);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   // Loads once the organization is known; an answer for an organization or environment the view
@@ -76,10 +78,10 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
   return (
     <>
       <ViewHead title={z.title}>
-        {canManage && config && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
+        {canManage && config && stellarWallets.length > 0 && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
       </ViewHead>
       {config === null && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{z.unavailable}</span></div>}
-      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onAccount={setAccount} />}
+      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onRegistered={setRegistered} />}
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={z.view.searchPlaceholder}
@@ -124,7 +126,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
       </div>
       {modal && config && (
         <CreateZkPaymentModal
-          orgId={orgId} env={env} config={config} canConnectWallets={canConnectWallets} defaultRecipient={account && account.registered ? account.address : ""}
+          orgId={orgId} env={env} config={config} canConnectWallets={canConnectWallets} defaultRecipient={registered[0] || ""}
           onClose={() => setModal(false)}
           onCreated={(p) => { setRows((r) => [p, ...(r || [])]); }}
         />
@@ -138,7 +140,7 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, defaultRe
   const z = t.zk;
   const keys = useMemo(() => idempotencyKeys(), []);
   const [amount, setAmount] = useState("");
-  // One of the organization's Stellar wallets: the panel's account when it is one, else the first.
+  // One of the organization's Stellar wallets: the first with a confidential account, else the first.
   const [recipient, setRecipient] = useState(defaultRecipient);
   const [description, setDescription] = useState("");
   const [expires, setExpires] = useState("1440");

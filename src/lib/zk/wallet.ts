@@ -220,9 +220,26 @@ export class ZkWallet {
 }
 
 /**
+ * Which of `addresses` hold a confidential account on the token: a read of the chain, with no
+ * wallet, key or signature. True or false per address; null where the read failed.
+ */
+export async function confidentialAccounts(deployment: ZkDeployment, addresses: readonly string[]): Promise<Record<string, boolean | null>> {
+  const client = new ChainClient({
+    rpcUrl: deployment.rpcUrl,
+    networkPassphrase: deployment.networkPassphrase,
+    contracts: { token: deployment.token.contractId, verifier: deployment.verifier, auditor: deployment.auditorRegistry },
+  });
+  const out: Record<string, boolean | null> = {};
+  await Promise.all(addresses.map(async (a) => {
+    out[a] = await client.confidentialBalance(a).then((b) => b !== null, () => null);
+  }));
+  return out;
+}
+
+/**
  * Proves a register circuit for throwaway keys, with no wallet, network or signature: the whole
  * browser proving path (bb.js and its worker, noir's wasm, the circuit) in one call. Used by the
- * development build's self-test on the account page; returns the proof's size and the time taken.
+ * development build's self-test in the private payments view; returns the proof's size and the time taken.
  */
 export async function selfTestProver(tokenContract: string, account: string): Promise<{ bytes: number; ms: number }> {
   ensureBrowserBackend();

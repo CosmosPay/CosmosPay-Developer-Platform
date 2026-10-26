@@ -60,8 +60,9 @@ export default {
     },
     account: {
       title: "保密账户",
-      connect: "连接 Freighter",
-      connected: "已连接：{account}",
+      needWallet: "要接收隐私支付，组织至少需要连接一个 Stellar 钱包。",
+      viewBalances: "查看余额",
+      wrongAccount: "Freighter 当前选择的是其他账户。请切换到 {wallet}。",
       register: "创建保密账户",
       registered: "已启用",
       notRegistered: "尚未创建",
@@ -77,8 +78,6 @@ export default {
       depositOk: "存入完成",
       withdrawOk: "提取完成",
       mergeOk: "待入账已转为可用",
-      notOrgWallet: "此账户不是组织的钱包之一。",
-      addToOrg: "添加到组织",
       done: "完成",
     },
     checkout: {

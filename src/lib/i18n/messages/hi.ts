@@ -59,9 +59,10 @@ export default {
       link: "भुगतान लिंक",
     },
     account: {
-      title: "गोपनीय खाता",
-      connect: "Freighter कनेक्ट करें",
-      connected: "{account} के रूप में कनेक्टेड",
+      title: "गोपनीय खाते",
+      needWallet: "निजी भुगतान पाने के लिए संगठन के पास कम से कम एक कनेक्टेड Stellar वॉलेट होना चाहिए।",
+      viewBalances: "बैलेंस देखें",
+      wrongAccount: "Freighter में दूसरा खाता चुना हुआ है। {wallet} पर स्विच करें।",
       register: "गोपनीय खाता बनाएँ",
       registered: "सक्रिय",
       notRegistered: "अभी नहीं बना",
@@ -77,8 +78,6 @@ export default {
       depositOk: "जमा पूरा हुआ",
       withdrawOk: "निकासी पूरी हुई",
       mergeOk: "आने वाली राशि उपलब्ध में आ गई",
-      notOrgWallet: "यह खाता संगठन के वॉलेट में से एक नहीं है।",
-      addToOrg: "संगठन में जोड़ें",
       done: "हो गया",
     },
     checkout: {

@@ -639,10 +639,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   with both hashes. The server decrypts both amounts with the auditor key and marks it paid.
   Retries never pay twice (the sent hashes are kept). The merchant's receiving account is a
   confidential account **managed inside the private payments view** (`components/ZkAccountPanel.tsx`;
-  product owner: never send them to another page for it): connect Freighter, create the account,
-  balances, move incoming to available, deposit and withdraw (the amount in a dialog, the progress
-  in the panel, with a clock while the proof runs), and the create dialog fills it in as the
-  recipient. There is no separate account page.
+  product owner: never another page, and no bare "connect Freighter"). The panel lists the
+  organization's Stellar wallets (Settings), each with whether it holds a confidential account, read
+  from the chain with no signature (`confidentialAccounts` in `src/lib/zk/wallet.ts`); its action opens
+  Freighter only when a key is needed (create the account, view balances; Freighter must have that
+  wallet selected), then incoming to available, deposit and withdraw (the amount in a dialog, the
+  progress in the row, with a clock while the proof runs). Without a Stellar wallet the view says the
+  organization needs one, offers to connect it to whoever may, and hides "create private payment".
+  The create dialog preselects the first wallet with a confidential account. No separate account page.
 - **Proofs are generated in the browser.** The private checkout is cross-origin isolated (COOP
   same-origin, COEP credentialless, set by the middleware on every `/zk` path of the payments domain,
   which owns the `/zk` prefix), so bb.js proves on several threads; the dashboard is not isolated and

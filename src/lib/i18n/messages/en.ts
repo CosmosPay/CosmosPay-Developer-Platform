@@ -61,9 +61,10 @@ export default {
       link: "Checkout link",
     },
     account: {
-      title: "Confidential account",
-      connect: "Connect Freighter",
-      connected: "Connected as {account}",
+      title: "Confidential accounts",
+      needWallet: "To receive private payments, the organization needs at least one connected Stellar wallet.",
+      viewBalances: "View balances",
+      wrongAccount: "Freighter has another account selected. Switch it to {wallet}.",
       register: "Create confidential account",
       registered: "Active",
       notRegistered: "Not created yet",
@@ -79,8 +80,6 @@ export default {
       depositOk: "Deposit completed",
       withdrawOk: "Withdrawal completed",
       mergeOk: "Incoming moved to available",
-      notOrgWallet: "This account is not one of the organization's wallets.",
-      addToOrg: "Add to the organization",
       done: "Done",
     },
     checkout: {

@@ -59,9 +59,10 @@ export default {
       link: "Lien de paiement",
     },
     account: {
-      title: "Compte confidentiel",
-      connect: "Connecter Freighter",
-      connected: "Connecté en tant que {account}",
+      title: "Comptes confidentiels",
+      needWallet: "Pour recevoir des paiements privés, l’organisation a besoin d’au moins un portefeuille Stellar connecté.",
+      viewBalances: "Voir les soldes",
+      wrongAccount: "Freighter a un autre compte sélectionné. Passez à {wallet}.",
       register: "Créer le compte confidentiel",
       registered: "Actif",
       notRegistered: "Pas encore créé",
@@ -77,8 +78,6 @@ export default {
       depositOk: "Dépôt effectué",
       withdrawOk: "Retrait effectué",
       mergeOk: "L’entrant est disponible",
-      notOrgWallet: "Ce compte ne fait pas partie des portefeuilles de l’organisation.",
-      addToOrg: "Ajouter à l’organisation",
       done: "Terminé",
     },
     checkout: {

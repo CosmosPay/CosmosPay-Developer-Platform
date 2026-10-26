@@ -822,9 +822,16 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
    pills; while it works, a status line with a turning ring (and a clock beside the proof). */
 .inst .zka { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; margin-bottom: 16px; }
 .zka-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.zka-id { min-width: 0; }
 .zka-title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
-.zka-sub { margin: 4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 13px; color: var(--ink-3); }
+/* One row per Stellar wallet of the organization; its balances open under it. */
+.zka-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.zka-row { display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-field); }
+.zka-row-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.zka-row-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.zka-row-t b { font-size: 14.5px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zka-row-t span { font-size: 12.5px; color: var(--ink-3); }
+.zka-row-st { flex: 0 0 auto; }
+.zka-row-main > .btn { flex: 0 0 auto; }
 .zka-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; }
 .zka-body:empty { display: none; }
 .zka-bals { flex: 1 1 360px; max-width: 560px; }
@@ -855,6 +862,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .wl-none { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: var(--r-field); font-size: 13.5px; color: var(--ink-2); }
 .wl-none .field-help { margin: 0; }
 @media (max-width: 600px) {
+  .zka-row-main { flex-wrap: wrap; }
+  .zka-row-main > .btn { width: 100%; justify-content: center; }
   .inst .zka { padding: 18px; }
   .zka-actions { width: 100%; }
   .zka-actions .btn { flex: 1 1 auto; }
