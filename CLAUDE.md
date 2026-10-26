@@ -228,7 +228,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     it again. On phones it shrinks to its glyph and opens over the bar.
   - **The overview** (`views/OverviewView.tsx`): a black account card (its up and down arrows step
     through the organizations and are not drawn when there is no other one, product owner; name,
-    plan, Active in the reference's orange, created date, the settled volume in USD, the plan's rate
+    plan, the plan's standing in its colour (green active, yellow paused or a payment overdue, red
+    suspended; product owner), created date, the settled volume in USD, the plan's rate
     and the environment as text split by a hairline) beside a white panel like every other one
     (product owner: no grey panel): "Quick links" as four rectangular tiles (an icon in a small
     square and the view's name; product owner: in place of the balances, which keep their own view),
@@ -344,7 +345,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       one `Promise.all`) and hands the shell the organizations, the active one (the
       `cosmospay-org` cookie the shell writes) and the view the address names (`?view=`). So the
       first render is the right view of the right organization: no request waits for the
-      organizations, and no overview mounts and fetches only to be replaced.
+      organizations, and no overview mounts and fetches only to be replaced. A failed read of the
+      organizations is not "no organizations": the onboarding gate is skipped and the shell reads
+      them itself (it used to send someone with organizations to create a first one).
     - The shell's own data (notifications, invitations, support's unread count) and the overview's
       first look (summary, series, transactions) each go out as one `Promise.allSettled` (one that
       fails never holds back the others); a period changed afterwards fetches only its part.
@@ -852,6 +855,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
 - Starter is 1% + 25¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
+- **A plan has a standing** (`src/lib/plan-status.ts`, tested): `active`, `paused`, `past_due` or
+  `suspended`, stored on the owner's profile (`profile.planStatus`, migration
+  `20261026120000_profile_plan_status`, default active). Billing has no provider yet, so staff set
+  it in the admin users view (`PATCH /api/admin/users/{id}` `planStatus`); a provider's webhooks
+  will set it later. Organizations carry their owner's (`OrganizationSummary.planStatus`) and the
+  overview's account card shows it. It changes nothing else yet (no feature is blocked).
 
 ## Rule: every API endpoint MUST be documented in OpenAPI/Swagger
 

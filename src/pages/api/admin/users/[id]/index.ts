@@ -4,6 +4,7 @@ import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, 
 import { canManageUsers, getRole, setUserRolePlan } from "@/lib/profile";
 import { roleLevel } from "@/lib/account-roles";
 import { ALL_PLAN_IDS } from "@/lib/plans";
+import { PLAN_STATUSES } from "@/lib/plan-status";
 import type { APIRoute } from "astro";
 
 const paramsSchema = z.object({ id: z.string().min(1) });
@@ -11,9 +12,11 @@ const bodySchema = z.object({
   role: z.enum(["user", "support", "admin", "owner"]).optional(),
   // Every known plan, legacy ones included: accounts still on the old free plan keep it.
   plan: z.enum(ALL_PLAN_IDS as [string, ...string[]]).optional(),
-}).refine((b) => b.role !== undefined || b.plan !== undefined, { message: "Nothing to update" });
+  // The plan's standing, until a billing provider sets it.
+  planStatus: z.enum(PLAN_STATUSES).optional(),
+}).refine((b) => b.role !== undefined || b.plan !== undefined || b.planStatus !== undefined, { message: "Nothing to update" });
 
-/* PATCH /api/admin/users/:id: set a user's role and/or plan. Owner/admin only;
+/* PATCH /api/admin/users/:id: set a user's role, plan or plan standing. Owner/admin only;
    only an owner may grant or modify the "owner" role. */
 export const PATCH: APIRoute = async (ctx) => {
   const session = await requestSession(ctx.request.headers);
@@ -30,7 +33,7 @@ export const PATCH: APIRoute = async (ctx) => {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: "bad_request" });
   }
 
-  // Role-change guards (plan changes are unrestricted):
+  // Role-change guards (plan and standing changes are unrestricted):
   if (body.data.role !== undefined) {
     const actorLevel = roleLevel(actorRole);
     // You can't change your own role.
@@ -52,5 +55,5 @@ export const PATCH: APIRoute = async (ctx) => {
   if (!updated) {
     return jsonError({ message: "Failed to update user", code: 500, status: "internal_error" });
   }
-  return jsonSuccess({ data: { userId: params.data.id, role: updated.role, plan: updated.plan }, message: "User updated" });
+  return jsonSuccess({ data: { userId: params.data.id, role: updated.role, plan: updated.plan, planStatus: updated.planStatus }, message: "User updated" });
 };

@@ -194,8 +194,16 @@ body.inst:has(.dash) { background: var(--surface); }
 .hub-gear:hover { background: rgba(255, 255, 255, .1); }
 .hub-gear svg { width: 17px; height: 17px; }
 .hub-card-mid { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12.5px; }
-.hub-status { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #FFB27A; }
-.hub-status-ic { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: #FF7A33; color: #fff; }
+/* the plan's standing, on the dark card in both themes: green active, yellow paused or a payment
+   overdue, red suspended (product owner) */
+.hub-status { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.hub-status-ic { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; }
+.hub-status.ok { color: #4ADE80; }
+.hub-status.ok .hub-status-ic { background: #22A35A; color: #fff; }
+.hub-status.warn { color: #FACC15; }
+.hub-status.warn .hub-status-ic { background: #EAB308; color: #13131A; }
+.hub-status.bad { color: #F87171; }
+.hub-status.bad .hub-status-ic { background: #DC2626; color: #fff; }
 .hub-status-ic svg { width: 10px; height: 10px; }
 .hub-created { color: rgba(255, 255, 255, .72); }
 .hub-card-bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px 18px; flex-wrap: wrap; margin-top: auto; }

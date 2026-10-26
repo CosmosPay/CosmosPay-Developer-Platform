@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi, organizations as orgsApi } from "@/lib/api-client";
 import { planSpec } from "@/lib/plans";
+import { planStatusOf, planStatusTone } from "@/lib/plan-status";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { checkoutUrl } from "@/components/cosmos/shared";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
@@ -228,7 +229,21 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
               <button type="button" className="hub-gear" onClick={() => onGo("settings")} aria-label={t.dash.viewLabels.settings} title={t.dash.viewLabels.settings}>{DI.settings}</button>
             </div>
             <div className="hub-card-mid">
-              <span className="hub-status"><span className="hub-status-ic" aria-hidden="true"><IcCheck /></span>{h.active}</span>
+              {/* The plan's standing: green active, yellow paused or overdue, red suspended. */}
+              {(() => {
+                const st = planStatusOf(org.planStatus);
+                const tone = planStatusTone(st);
+                return (
+                  <span className={`hub-status ${tone}`}>
+                    <span className="hub-status-ic" aria-hidden="true">
+                      {st === "active" ? <IcCheck /> : st === "paused" ? <svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="6" width="3.5" height="12" rx="1" /><rect x="13.5" y="6" width="3.5" height="12" rx="1" /></svg>
+                        : st === "past_due" ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 6v8" /><path d="M12 18.5v.01" /></svg>
+                        : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M7 7l10 10M17 7L7 17" /></svg>}
+                    </span>
+                    {h.planStatus[st]}
+                  </span>
+                );
+              })()}
               {created && <span className="hub-created">{fmt(h.created, { date: created })}</span>}
             </div>
             <div className="hub-card-bottom">

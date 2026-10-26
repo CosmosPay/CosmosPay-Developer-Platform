@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
+import { PLAN_STATUSES } from "@/lib/plan-status";
 import { admin as adminApi } from "@/lib/api-client";
 import { roleLevel } from "@/lib/account-roles";
 import { ROLE_OPTIONS, PLAN_OPTIONS } from "@/components/cosmos/dashboard/data";
@@ -39,7 +40,7 @@ export function UsersView({ currentUserId, currentRole }) {
         <Toolbar q={q} setQ={setQ} placeholder={u.search} />
         {loading && <TableSkeleton label={t.dash.cosmos.loading} />}
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{u.name}</th><th>{u.email}</th><th>{u.role}</th><th>{u.plan}</th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{u.name}</th><th>{u.email}</th><th>{u.role}</th><th>{u.plan}</th><th>{u.planStatus}</th></tr></thead>
             <tbody>{!error && pg.slice.map((r) => {
               const isSelf = r.id === currentUserId;
               // Can't change your own role, or that of a peer/superior.
@@ -55,10 +56,11 @@ export function UsersView({ currentUserId, currentRole }) {
                   <td className="cust">{r.email}</td>
                   <td><MiniSelect value={r.role} options={roleOpts} onChange={(v) => update(r.id, { role: v })} disabled={roleLocked} /></td>
                   <td><MiniSelect value={r.plan} options={planOpts} onChange={(v) => update(r.id, { plan: v })} /></td>
+                  <td><MiniSelect value={r.planStatus || "active"} options={PLAN_STATUSES.map((st) => ({ value: st, label: t.dash.overview.hub.planStatus[st] }))} onChange={(v) => update(r.id, { planStatus: v })} /></td>
                 </tr>
               );
             })}
-              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? u.loadError : null} />
+              <FillRows n={pg.size - (error ? 0 : pg.count)} cols={5} empty={error ? u.loadError : null} />
             </tbody>
           </table></div>
         )}

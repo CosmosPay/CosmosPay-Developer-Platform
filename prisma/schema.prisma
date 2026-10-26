@@ -99,6 +99,9 @@ model Profile {
   // enterprise, plus the legacy "community" (the free plan, no longer offered; the accounts
   // already on it keep it). New accounts start on starter (DEFAULT_PLAN_ID in src/lib/plans.ts).
   plan        String   @default("starter")
+  // The plan's standing (src/lib/plan-status.ts): active | paused | past_due | suspended. Set by
+  // staff until a billing provider's webhooks set it; the organizations this account owns show it.
+  planStatus  String   @default("active")
 
   // Defaults captured at account creation.
   region      String?
