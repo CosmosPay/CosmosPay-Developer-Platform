@@ -14,6 +14,20 @@ export function isLinkStatus(value: unknown): value is LinkStatus {
   return typeof value === "string" && (LINK_STATUSES as readonly string[]).includes(value);
 }
 
+/**
+ * A fee the merchant charges on this payment, paid to its own wallet in the same transaction
+ * (the community server's `merchantFee`). `paidBy: "payer"` means the payer sends `amount`
+ * plus it; `"recipient"` that it comes out of `amount`.
+ */
+export interface MerchantFee {
+  bps: number;
+  fixed: string;
+  amount: string;
+  asset: string;
+  wallet: string;
+  paidBy: "payer" | "recipient";
+}
+
 export interface PaymentLink {
   id: string;
   kind: "PAY" | "TX";
@@ -37,6 +51,14 @@ export interface PaymentLink {
   createdAt: string;
   /** The design the merchant picked for this page. */
   checkoutTheme: CheckoutTheme;
+  /** The merchant's own fee on this payment; null when there is none. */
+  merchantFee: MerchantFee | null;
+  /**
+   * The payment cannot be one wallet link (a Stellar link with a merchant fee: SEP-7 `pay`
+   * pays one account): the page asks for the payer's account and has the gateway build the
+   * envelope with both payments (buildPayerTransaction). `uri` is this page then.
+   */
+  payerAccountRequired: boolean;
 }
 
 /* Prisma `cuid()` (v1): "c" + lowercase base36. Checked before any request so a mistyped
@@ -55,6 +77,22 @@ const URI_SCHEMES: Record<Chain, RegExp> = {
   monad: /^ethereum:0x[0-9a-fA-F]{40}/,
 };
 const QR_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
+/* A link that builds its envelope for its payer points at the hosted checkout instead. */
+const CHECKOUT_URI = /^https?:\/\/[^\s"'<>]+$/i;
+const DECIMAL = /^\d+(\.\d+)?$/;
+
+/* The merchant fee as the server sends it, or undefined when the body's one is malformed:
+   it changes what the payer is told to pay, so a half-read fee voids the whole body. */
+function parseMerchantFee(v: unknown): MerchantFee | null | undefined {
+  if (v === undefined || v === null) return null;
+  if (typeof v !== "object" || Array.isArray(v)) return undefined;
+  const f = v as Record<string, unknown>;
+  if (typeof f.bps !== "number" || !Number.isInteger(f.bps) || f.bps < 0) return undefined;
+  for (const key of ["fixed", "amount"] as const) if (!str(f[key]) || !DECIMAL.test(f[key] as string)) return undefined;
+  if (!str(f.asset) || !str(f.wallet) || !f.wallet) return undefined;
+  if (f.paidBy !== "payer" && f.paidBy !== "recipient") return undefined;
+  return { bps: f.bps, fixed: f.fixed as string, amount: f.amount as string, asset: f.asset, wallet: f.wallet, paidBy: f.paidBy };
+}
 
 const str = (v: unknown): v is string => typeof v === "string";
 const strOrNull = (v: unknown): v is string | null => v === null || typeof v === "string";
@@ -78,7 +116,13 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
   // a deadline the page cannot read would break the countdown and the poll timing
   if (b.expiresAt !== null && !Number.isFinite(Date.parse(b.expiresAt))) return null;
   const chain = b.chain as Chain;
-  if (!URI_SCHEMES[chain].test(b.uri)) return null;
+  const merchantFee = parseMerchantFee(b.merchantFee);
+  if (merchantFee === undefined) return null;
+  // Only a Stellar link with a fee builds its envelope for its payer; anything else claiming
+  // it would hide the wallet link the payment needs.
+  const payerAccountRequired = b.payerAccountRequired === true;
+  if (payerAccountRequired && (chain !== "stellar" || !merchantFee || b.amount === null)) return null;
+  if (payerAccountRequired ? !CHECKOUT_URI.test(b.uri) : !URI_SCHEMES[chain].test(b.uri)) return null;
   if (!QR_DATA_URL.test(b.qr)) return null;
   return {
     id: b.id,
@@ -101,7 +145,108 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
     // Cosmetic, so it never invalidates a payment: a design this page does not know yet
     // (or a server that predates the field) draws the classic one.
     checkoutTheme: isCheckoutTheme(b.checkoutTheme) ? b.checkoutTheme : DEFAULT_CHECKOUT_THEME,
+    merchantFee,
+    payerAccountRequired,
   };
+}
+
+/* Exact decimal sum (no float): amounts settle payments, so 0.1 + 0.2 must be 0.3. */
+function addDecimals(a: string, b: string): string {
+  const [aw, af = ""] = a.split(".");
+  const [bw, bf = ""] = b.split(".");
+  const places = Math.max(af.length, bf.length);
+  const sum = BigInt(aw + af.padEnd(places, "0")) + BigInt(bw + bf.padEnd(places, "0"));
+  const digits = sum.toString().padStart(places + 1, "0");
+  const whole = digits.slice(0, digits.length - places);
+  const frac = places ? digits.slice(digits.length - places).replace(/0+$/, "") : "";
+  return frac ? `${whole}.${frac}` : whole;
+}
+
+/**
+ * What the payer sends: `amount`, plus the merchant fee when the payer pays it on top.
+ * Null when the payer chooses the amount.
+ */
+export function payerTotal(link: Pick<PaymentLink, "amount" | "merchantFee">): string | null {
+  if (!link.amount) return null;
+  return link.merchantFee?.paidBy === "payer" ? addDecimals(link.amount, link.merchantFee.amount) : link.amount;
+}
+
+/** A Stellar account address (G…, 56 characters of base32). The gateway checks the checksum. */
+export function isStellarAccount(value: string): boolean {
+  return /^G[A-Z2-7]{55}$/.test(value.trim());
+}
+
+/* Horizon, per network: a payer who signs with Freighter on this page submits here. */
+export const HORIZON_URL: Record<Tier, string> = {
+  public: "https://horizon.stellar.org",
+  testnet: "https://horizon-testnet.stellar.org",
+};
+
+/**
+ * Submits a signed envelope to the link's network, for a payer who signed it with Freighter
+ * here (a wallet scanning the QR submits on its own). True once Horizon accepts it; the page
+ * then follows the link, which the server settles from the ledger. Never throws.
+ */
+export async function submitSignedTransaction(
+  network: Tier,
+  signedXdr: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  try {
+    const res = await fetchImpl(`${HORIZON_URL[network]}/transactions`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+      body: `tx=${encodeURIComponent(signedXdr)}`,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export type PayerTransactionResult =
+  | { kind: "ok"; uri: string; qr: string; xdr: string }
+  | { kind: "invalid" }
+  | { kind: "closed" }
+  | { kind: "rate-limited"; retryAfterMs: number }
+  | { kind: "error" };
+
+/**
+ * Has the gateway build the envelope `account` signs for a link with a merchant fee (both
+ * payments and the link's memo): `POST /v1/payment-links/{id}/transaction`, keyless like the
+ * read. Its answer is checked as the read is: a `web+stellar:tx` link, a PNG QR, a base64
+ * envelope. Never throws.
+ */
+export async function buildPayerTransaction(
+  apiBase: string,
+  id: string,
+  account: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PayerTransactionResult> {
+  try {
+    const res = await fetchImpl(`${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}/transaction`, {
+      method: "POST",
+      headers: { accept: "application/json", "content-type": "application/json" },
+      body: JSON.stringify({ account: account.trim() }),
+      cache: "no-store",
+    });
+    if (res.status === 429) {
+      const seconds = Number(res.headers.get("retry-after"));
+      return { kind: "rate-limited", retryAfterMs: Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 30_000 };
+    }
+    if (res.status === 400) {
+      const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
+      return body?.code === "invalid_state_transition" ? { kind: "closed" } : { kind: "invalid" };
+    }
+    if (!res.ok) return { kind: "error" };
+    const b = (await res.json()) as Record<string, unknown>;
+    if (!str(b.uri) || !/^web\+stellar:tx\?/i.test(b.uri)) return { kind: "error" };
+    if (!str(b.qr) || !QR_DATA_URL.test(b.qr)) return { kind: "error" };
+    if (!str(b.xdr) || !/^[A-Za-z0-9+/=]+$/.test(b.xdr)) return { kind: "error" };
+    return { kind: "ok", uri: b.uri, qr: b.qr, xdr: b.xdr };
+  } catch {
+    return { kind: "error" };
+  }
 }
 
 export function assetSymbol(link: Pick<PaymentLink, "chain" | "asset">): string {

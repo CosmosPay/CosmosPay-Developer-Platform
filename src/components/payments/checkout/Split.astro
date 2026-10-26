@@ -4,6 +4,7 @@
 import Brand from "@/components/payments/checkout/Brand.astro";
 import Amount from "@/components/payments/checkout/Amount.astro";
 import Status from "@/components/payments/checkout/Status.astro";
+import PayerStep from "@/components/payments/checkout/PayerStep.astro";
 import Timer from "@/components/payments/checkout/Timer.astro";
 import Qr from "@/components/payments/checkout/Qr.astro";
 import WalletActions from "@/components/payments/checkout/WalletActions.astro";
@@ -50,6 +51,7 @@ const METHODS = ["qr", "wallet", "manual"] as const;
         </div>
       </div>
       <Status />
+      <PayerStep />
       <div class="ck-panels" data-open-only>
         <div class="ck-panel" role="tabpanel" id="ck-panel-qr" aria-labelledby="ck-tab-qr" data-method-panel="qr">
           <p class="ck-panel-hint">{t.methodHint.qr}</p>

@@ -844,6 +844,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .pay-record-facts dd code { font-family: var(--ff-mono); font-size: 12px; overflow-wrap: anywhere; }
 .pay-record-grid { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
 .pay-record-grid.history { grid-template-columns: minmax(0, 1fr); }
+/* the payment link form's merchant fee, inside "more options" */
+.paylink-fee { display: grid; gap: 8px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+.paylink-fee > .field-help { margin: 0; }
 /* a record's head is its route: back, its list (a link, the crumb's grey), the record */
 .page-back { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; padding: 0; }
 .page-back svg { width: 18px; height: 18px; }

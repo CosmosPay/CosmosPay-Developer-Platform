@@ -71,6 +71,21 @@ export const paymentIntentSchema = z
       example: 'classic',
       description: 'The hosted checkout design at payments.cosmospay.lat/{id}; `classic` when none was chosen.',
     }),
+    merchantFee: z
+      .object({
+        bps: z.number().openapi({ example: 150 }),
+        fixed: z.string().openapi({ example: '0.25' }),
+        amount: z.string().openapi({ example: '0.6325', description: 'The fee charged, in `asset`.' }),
+        asset: z.string().openapi({ example: 'native' }),
+        wallet: z.string().openapi({ example: 'GBDHAQXQQ75WVBUZ2IX3O7ME7JOKJUOUPUXRNDCORUJODWQCTVUEQ62R' }),
+        paidBy: z.enum(['recipient', 'payer']).openapi({ example: 'recipient' }),
+      })
+      .nullable()
+      .optional()
+      .openapi({
+        description:
+          'The organization\'s own fee on this payment, paid to its wallet in the same transaction; null without one. A Stellar payment link with one opens the hosted checkout, which asks for the payer\'s account.',
+      }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     updatedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
   })

@@ -11,6 +11,7 @@
 import { z } from "@/lib/openapi/zod";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
 import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, CHAINS, NATIVE_CODES, type Chain } from "@/lib/chains";
+import { merchantFeeSchema } from "@/schemas/merchant-fee";
 
 // An account, mint or contract on any chain; its shape is checked per chain below.
 const chainAddress = z.string().trim().min(1).max(64);
@@ -53,6 +54,7 @@ export const createPaymentIntentBodySchema = z
     msg: msgString.optional(),
     callback: callbackString.optional(),
     checkoutTheme: checkoutTheme.optional(),
+    merchantFee: merchantFeeSchema.optional(),
   })
   .superRefine((v, ctx) => {
     const chain = v.chain;
@@ -64,6 +66,14 @@ export const createPaymentIntentBodySchema = z
     const places = v.amount?.split(".")[1]?.length ?? 0;
     if (places > AMOUNT_PLACES[chain]) issue("amount", "Amount must have at most " + AMOUNT_PLACES[chain] + " decimals on " + chain + ".");
     const native = !v.assetCode || v.assetCode.toUpperCase() === NATIVE_CODES[chain];
+    // A merchant fee is a second payment in the same transaction: Stellar only for now, and it
+    // needs an amount to take it from. Its wallet is the organization's (checked by the route).
+    if (v.merchantFee) {
+      if (chain !== "stellar") issue("merchantFee", "A merchant fee is available on Stellar payments only for now.");
+      else if (!v.amount) issue("merchantFee", "A merchant fee needs an amount.");
+      else if (!ADDRESS_PATTERNS.stellar.test(v.merchantFee.wallet)) issue("merchantFee", ADDRESS_MESSAGES.stellar);
+      else if (v.merchantFee.wallet === v.destination) issue("merchantFee", "The fee goes to another wallet than the payment.");
+    }
     if (chain === "stellar") {
       if (v.kind === "tx" && !v.source) issue("source", "A source account is required for a transaction intent.");
       if (v.kind === "tx" && !v.amount) issue("amount", "An amount is required for a transaction intent.");

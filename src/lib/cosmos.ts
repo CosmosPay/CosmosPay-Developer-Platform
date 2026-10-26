@@ -260,8 +260,20 @@ export interface PaymentIntent {
   reference: string | null;
   /** The hosted checkout's design; the server answers "classic" when none was chosen. */
   checkoutTheme: CheckoutTheme;
+  /** The organization's own fee on the payment, paid to its wallet in the same transaction. */
+  merchantFee?: MerchantFee | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/* A merchant fee as the Payments API records it (amounts in the payment's asset). */
+export interface MerchantFee {
+  bps: number;
+  fixed: string;
+  amount: string;
+  asset: string;
+  wallet: string;
+  paidBy: "recipient" | "payer";
 }
 
 export interface PaymentIntentList {
@@ -282,6 +294,8 @@ export interface CreatePayInput {
   msg?: string;
   callback?: string;
   checkoutTheme?: CheckoutTheme;
+  /** The organization's own fee: bps and/or fixed, to its wallet, paid by the recipient or the payer. */
+  merchantFee?: { bps?: number; fixed?: string; wallet: string; paidBy?: "recipient" | "payer" };
 }
 
 export interface CreateTxInput extends CreatePayInput {

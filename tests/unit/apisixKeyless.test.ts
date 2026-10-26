@@ -43,9 +43,9 @@ test('the payment-link read has its own route, and no URI is listed by two route
   for (const uri of paymentLinksRouteUris('/cosmos-api/*')) assert.ok(!callback.has(uri), uri);
 });
 
-test('the payment-link route is the read and its preflight only', () => {
-  assert.deepEqual(PAYMENT_LINKS_METHODS, ['GET', 'OPTIONS']);
-  assert.equal(PAYMENT_LINKS_CORS.allow_methods, 'GET,OPTIONS');
+test('the payment-link route is the read, its preflight and the payer envelope build', () => {
+  assert.deepEqual(PAYMENT_LINKS_METHODS, ['GET', 'POST', 'OPTIONS']);
+  assert.equal(PAYMENT_LINKS_CORS.allow_methods, 'GET,POST,OPTIONS');
 });
 
 test('its CORS admits any origin, without credentials, in a shape APISIX accepts', () => {

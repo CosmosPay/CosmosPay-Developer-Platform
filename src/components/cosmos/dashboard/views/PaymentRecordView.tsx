@@ -23,6 +23,7 @@ import { StatusIcon, paymentTone } from "@/components/cosmos/dashboard/component
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { CopyRef } from "@/components/cosmos/dashboard/components/RecordLink";
+import { shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 
 const TERMINAL = ["SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 
@@ -118,6 +119,8 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
     [chain === "stellar" ? pl.modal.assetIssuer : t.dash.tokens.address[chain], data.assetIssuer],
     [F.memo, data.memo],
     [F.message, data.msg],
+    // The organization's own fee, paid to its wallet in the same transaction.
+    [F.merchantFee, data.merchantFee ? `${data.merchantFee.amount} ${assetLabel(data.merchantFee.asset, chain)} · ${shortAddress(data.merchantFee.wallet)}` : null],
     // The on-chain transaction id, only present once paid or submitted.
     [F.txHash, data.txHash],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");

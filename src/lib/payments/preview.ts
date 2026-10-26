@@ -28,5 +28,7 @@ export function previewLink(theme: CheckoutTheme, now: number = Date.now()): Pay
     expiresAt: new Date(now + PREVIEW_TTL_MS).toISOString(),
     createdAt: new Date(now).toISOString(),
     checkoutTheme: theme,
+    merchantFee: null,
+    payerAccountRequired: false,
   };
 }

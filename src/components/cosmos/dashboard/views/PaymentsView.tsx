@@ -197,6 +197,13 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const [msg, setMsg] = useState(initial?.note || "");
   const [more, setMore] = useState(!!initial?.note);
   const [checkoutTheme, setCheckoutTheme] = useState("classic");
+  // The organization's own fee on this payment (product owner, 2026-10-26: B2B through Cosmos
+  // Pay): a percentage and/or a fixed part, to one of its wallets, taken from the amount or
+  // added on top. Stellar only for now; empty means none.
+  const [feePct, setFeePct] = useState("");
+  const [feeFixed, setFeeFixed] = useState("");
+  const [feeWallet, setFeeWallet] = useState("");
+  const [feePaidBy, setFeePaidBy] = useState("recipient");
   const [busy, setBusy] = useState(false);
 
   const stellar = chain === "stellar";
@@ -229,6 +236,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const pickChain = (c) => {
     if (c === chain) return;
     setChain(c); setKind("pay"); setDestination(""); setSource(""); setAssetKey("native"); setCustomCode(""); setCustomIssuer("");
+    setFeePct(""); setFeeFixed(""); setFeeWallet("");
     if (c === "monad") setMsg("");
   };
 
@@ -241,7 +249,14 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const amountNeeded = isTx || chain === "monad";
   const amountOk = !amount.trim() || /^\d+(\.\d+)?$/.test(amount.trim());
   const memoOk = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
-  const valid = destOk && sourceOk && (!amountNeeded || amount.trim()) && amountOk && tokenOk && memoOk;
+  const mf = m.merchantFee;
+  const feeOn = stellar && (feePct.trim() !== "" || feeFixed.trim() !== "");
+  const pctNum = Number(feePct.trim() || 0);
+  const fixedNum = Number(feeFixed.trim() || 0);
+  const feePctOk = !feePct.trim() || (/^\d+(\.\d{1,2})?$/.test(feePct.trim()) && pctNum <= 10);
+  const feeFixedOk = !feeFixed.trim() || /^\d+(\.\d{1,7})?$/.test(feeFixed.trim());
+  const feeOk = !feeOn || (feePctOk && feeFixedOk && (pctNum > 0 || fixedNum > 0) && !!amount.trim() && !!feeWallet && feeWallet !== destination);
+  const valid = destOk && sourceOk && (!amountNeeded || amount.trim()) && amountOk && tokenOk && memoOk && feeOk;
 
   const submit = () => {
     if (!valid || busy) return;
@@ -259,6 +274,16 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
       ...(memo.trim() ? { memo: memo.trim() } : {}),
       ...(chain !== "monad" && msg.trim() ? { msg: msg.trim() } : {}),
       checkoutTheme,
+      ...(feeOn
+        ? {
+            merchantFee: {
+              ...(pctNum > 0 ? { bps: Math.round(pctNum * 100) } : {}),
+              ...(fixedNum > 0 ? { fixed: feeFixed.trim() } : {}),
+              wallet: feeWallet,
+              paidBy: feePaidBy,
+            },
+          }
+        : {}),
     };
     payApi.create(body)
       .then((intent) => onCreated(intent))
@@ -334,6 +359,31 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
           <div className="swap-another-in">
             <Field label={m.memo} hint={stellar ? m.memoHint : m.memoHintOther} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />
             {chain !== "monad" && <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
+            {stellar && (
+              <div className="paylink-fee" role="group" aria-labelledby="paylink-fee-l">
+                <span className="field-l" id="paylink-fee-l">{mf.title}</span>
+                <p className="field-help">{mf.hint}</p>
+                <div className="field-row">
+                  <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
+                  <Field label={mf.fixed} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.25" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
+                </div>
+                {feeOn && (
+                  <div className="arrive">
+                    <WalletSelect id="paylink-fee-wallet" orgId={orgId} chain={chain} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
+                    {feeWallet && feeWallet === destination && <p className="field-err" role="alert">{mf.sameWallet}</p>}
+                    {!amount.trim() && <p className="field-err" role="alert">{mf.needsAmount}</p>}
+                    <div className="fld">
+                      <span className="field-l" id="paylink-fee-by">{mf.paidBy}</span>
+                      <div className="seg-tabs seg-fill" role="group" aria-labelledby="paylink-fee-by">
+                        {["recipient", "payer"].map((k) => (
+                          <button key={k} type="button" className={feePaidBy === k ? "on" : ""} aria-pressed={feePaidBy === k} onClick={() => setFeePaidBy(k)}>{mf[k]}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

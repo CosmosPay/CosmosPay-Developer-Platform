@@ -84,6 +84,10 @@ export const POST: APIRoute = async (ctx) => {
   if (!(await orgHasWallet(org, rest.chain, rest.destination).catch(() => false))) {
     return jsonBadRequest("The receiving address must be one of the organization's wallets. Connect it in Settings first.");
   }
+  // The merchant fee is paid to the organization too, never to an address someone typed.
+  if (rest.merchantFee && !(await orgHasWallet(org, rest.chain, rest.merchantFee.wallet).catch(() => false))) {
+    return jsonBadRequest("The merchant fee must go to one of the organization's wallets. Connect it in Settings first.");
+  }
 
   try {
     const intent =
@@ -98,6 +102,7 @@ export const POST: APIRoute = async (ctx) => {
             msg: rest.msg,
             callback: rest.callback,
             checkoutTheme: rest.checkoutTheme,
+            merchantFee: rest.merchantFee,
           })
         : await cosmos.createPay(session.user.id, environment, {
             chain: rest.chain,
@@ -109,6 +114,7 @@ export const POST: APIRoute = async (ctx) => {
             msg: rest.msg,
             callback: rest.callback,
             checkoutTheme: rest.checkoutTheme,
+            merchantFee: rest.merchantFee,
           });
 
     // Activity notification (best-effort): records origin + date of the action.

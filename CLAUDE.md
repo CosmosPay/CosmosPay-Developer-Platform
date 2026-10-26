@@ -778,6 +778,40 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   cross-site `<script>` from `localhost` (403). Production serves it without that check. It
   carries no SRI hash because it is updated in place.
 
+### The merchant fee (B2B on top of Cosmos Pay)
+
+- **Product owner (2026-10-26): every service takes a merchant fee**, so an organization can
+  resell Cosmos Pay to other businesses and charge its own customers: a percentage (bps, up to
+  10%) and/or a fixed part, paid on-chain to a wallet it names, apart from the plan commission;
+  each request chooses whether the recipient pays it (taken from the amount) or the payer (on
+  top). The Payments API owns the rules (`merchantFee` on its routes, `src/common/merchant-fee/`
+  over there); rolled out in stages, and where a chain cannot split a payment natively the plan
+  is a contract of our own (testnet only for any deployment).
+- **Live today:** Stellar swaps and cross-chain swaps (API), and **Stellar payment links**
+  (API and dashboard). Solana and Monad links and swaps answer `merchant_fee_unsupported`;
+  private payments, USDT0 and liquidity do not take the field yet.
+- **Dashboard:** the payment link form's "more options" has the merchant fee (Stellar only):
+  percentage, fixed amount, the wallet (a `WalletSelect` of the organization's wallets, never a
+  typed address) and who pays it. `POST /api/payment-intents` takes `merchantFee`
+  (`src/schemas/merchant-fee.ts`) and refuses a fee wallet that is not one of the
+  organization's (`orgHasWallet`), as it does the destination. The payment's view lists the fee.
+- **A Stellar link with a merchant fee cannot be one SEP-7 `pay` link** (that pays one
+  account): the server stores the hosted checkout as its `uri`, and the public read answers
+  `merchantFee` and `payerAccountRequired: true`. The checkout (`PayerStep.astro` in every
+  design, `checkout.ts`) then asks for the payer's Stellar account (typed, or Freighter's),
+  calls the keyless `POST /v1/payment-links/{id}/transaction` (`buildPayerTransaction`), and
+  shows that envelope's QR and `web+stellar:tx` link, or has Freighter sign it and submits it to
+  Horizon (`submitSignedTransaction`). Until then there is no QR, and never the manual transfer:
+  paying by hand would skip the fee and leave the link unpaid. The amount shown is what the
+  payer sends (`payerTotal`: the fee added when the payer pays it), with a line naming the fee.
+  The embedded checkout opens such a link's hosted checkout in a new tab.
+- **The gateway's keyless payment-links route allows POST** (`PAYMENT_LINKS_METHODS`), for
+  that build. An environment whose routes were synced before needs a resync (the platform's
+  boot does it) or the checkout cannot build the envelope.
+- `parsePaymentLink` refuses a malformed fee and a `payerAccountRequired` link that is not a
+  Stellar link with a fee and an amount, and only then accepts an `https` `uri` (never used as
+  a wallet link).
+
 ### Checkout designs
 
 - Four designs: `classic`, `split`, `ticket`, `card` (`src/lib/payments/checkout-themes.ts`).

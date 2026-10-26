@@ -50,8 +50,12 @@ export function paymentLinksRouteUris(entry: string): string[] {
   return [`${entryPrefix(entry)}${PAYMENT_LINKS_PATH}*`];
 }
 
-/* The read and its preflight. Anything else under the prefix still meets the key-auth route. */
-export const PAYMENT_LINKS_METHODS = ['GET', 'OPTIONS'];
+/* The read, its preflight, and POST for `/{id}/transaction`: a Stellar link with a merchant fee
+   has the gateway build its payer's envelope (both payments, the link's memo) from the account
+   the payer names. That call is keyless and budgeted per address like the read, stores nothing
+   and answers only what anyone holding the link could build. Anything else under the prefix
+   still meets the key-auth route. */
+export const PAYMENT_LINKS_METHODS = ['GET', 'POST', 'OPTIONS'];
 
 /* The cors plugin of the payment-link route: ANY origin, because a merchant's own site reads
    the link (the embedded checkout) and there is no list of merchants to keep here.
