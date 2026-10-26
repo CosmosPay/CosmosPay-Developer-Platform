@@ -272,6 +272,7 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
               {fresh?.fee && <div><dt>{m.fee}</dt><dd>{num(fresh.fee.amount)} {isNear ? fresh.fee.asset : from.chain === "stellar" ? from.symbol : to.symbol} ({fresh.fee.bps} {m.bps})</dd></div>}
               {fresh?.swap && <div><dt>{m.swapped}</dt><dd>{num(fresh.swap.amount)} {from.symbol}</dd></div>}
               {isNear && fresh?.timeEstimateSeconds != null && <div><dt>{w.eta}</dt><dd>{fmt(w.seconds, { n: fresh.timeEstimateSeconds })}</dd></div>}
+              {isUsdt0 && Number(fresh?.feeAmount) > 0 && <div><dt>{m.fee}</dt><dd>{num(fresh.feeAmount)} {from.symbol} ({fresh.feeBps} {m.bps})</dd></div>}
               {isUsdt0 && fresh?.nativeFee != null && <div><dt>{w.lzFee}</dt><dd>{num(fresh.nativeFee)} XLM</dd></div>}
               {isUsdt0 && Number(fresh?.dust) > 0 && <div><dt>{w.dustNote}</dt><dd>{num(fresh.dust)} {from.symbol}</dd></div>}
               {!isUsdt0 && <div><dt>{w.slippage}</dt><dd>{slippage ? `${Number(slippage) / 100}%` : w.slippageAuto}</dd></div>}

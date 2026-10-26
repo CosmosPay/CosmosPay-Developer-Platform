@@ -664,6 +664,10 @@ export interface Usdt0Quote {
   amountSent: string;
   amountReceived: string;
   dust: string;
+  /** Cosmos Pay's commission rate, in basis points: 0 without a fee wrapper. */
+  feeBps: number;
+  /** The commission in USDT0, out of `amount`. */
+  feeAmount: string;
   /** LayerZero's fee, in XLM. */
   nativeFee: string;
   minAmount: string;
@@ -681,6 +685,10 @@ export interface Usdt0Transfer {
   amount: string;
   amountSent: string;
   amountReceived: string;
+  feeBps: number;
+  feeAmount: string;
+  /** Where the commission went; null without one. */
+  feeWallet: string | null;
   nativeFee: string;
   xdr: string | null;
   uri: string | null;

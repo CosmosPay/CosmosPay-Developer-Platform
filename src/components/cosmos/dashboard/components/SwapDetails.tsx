@@ -289,6 +289,8 @@ function Usdt0TransferDetailModal({ api, transfer, canManage, onClose }) {
     [u.recipient, data.recipient],
     [F.sent, data.amountSent ? `${data.amountSent} USDT0` : null],
     [u.arrives, data.amountReceived ? `${data.amountReceived} ${data.receives}` : null],
+    // Cosmos Pay's commission, paid by the fee wrapper (none without one).
+    [F.fee, Number(data.feeAmount) > 0 ? `${data.feeAmount} USDT0 (${data.feeBps} ${sw.modal.bps})` : null],
     [u.fee, data.nativeFee ? `${data.nativeFee} XLM` : null],
     [F.txHash, data.txHash],
     [u.destTx, data.destinationTxHash],

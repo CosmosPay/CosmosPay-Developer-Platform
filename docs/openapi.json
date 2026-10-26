@@ -13314,7 +13314,7 @@
             }
           },
           "503": {
-            "description": "`provider_unavailable`: the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network.",
+            "description": "`provider_unavailable`: the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network, or USDT0_FEE_WRAPPER is set with a plan commission and no STELLAR_SWAP_FEE_WALLET.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13426,7 +13426,7 @@
             }
           },
           "400": {
-            "description": "`merchant_fee_unsupported`: a `merchantFee` and no merchant fee wrapper configured (USDT0_MERCHANT_FEE_WRAPPER). `network_unsupported`: a dev (testnet) key; USDT0 is on Stellar mainnet only. `validation_failed`: the source account does not exist, or the recipient has a bad EIP-55 checksum. `trustline_missing`: the source does not trust USDT0. `insufficient_balance`: it holds less USDT0 than the transfer takes, or too little XLM for LayerZero’s fee limit, the network fee and its reserve (the message says how much XLM to add). `invalid_amount`: all dust, or outside the OFT’s limits. `provider_error`: the OFT refused the transfer; `message` carries its contract error. With a merchant fee, `trustline_missing` also answers a fee wallet that does not trust USDT0, and `insufficient_balance` counts the fee the holder pays on top.",
+            "description": "`merchant_fee_unsupported`: a `merchantFee` and no merchant fee wrapper configured (USDT0_FEE_WRAPPER). `network_unsupported`: a dev (testnet) key; USDT0 is on Stellar mainnet only. `validation_failed`: the source account does not exist, or the recipient has a bad EIP-55 checksum. `trustline_missing`: the source does not trust USDT0. `insufficient_balance`: it holds less USDT0 than the transfer takes, or too little XLM for LayerZero’s fee limit, the network fee and its reserve (the message says how much XLM to add). `invalid_amount`: all dust, or outside the OFT’s limits. `provider_error`: the OFT refused the transfer; `message` carries its contract error. With a merchant fee, `trustline_missing` also answers a fee wallet that does not trust USDT0, and `insufficient_balance` counts the fee the holder pays on top.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13505,7 +13505,7 @@
                       "statusCode": 400,
                       "code": "merchant_fee_unsupported",
                       "error": "Bad Request",
-                      "message": "A merchant fee is not available on USDT0 transfers on this deployment: a Soroban transaction carries one operation, so the fee needs the merchant fee wrapper (USDT0_MERCHANT_FEE_WRAPPER), which is not configured.",
+                      "message": "A merchant fee is not available on USDT0 transfers on this deployment: a Soroban transaction carries one operation, so the fee needs the fee wrapper (USDT0_FEE_WRAPPER), which is not configured.",
                       "path": "/v1/usdt0/transfers",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -13573,7 +13573,7 @@
             }
           },
           "503": {
-            "description": "`provider_unavailable`: Horizon or the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network, or USDT0_MERCHANT_FEE_WRAPPER is not the reviewed wrapper bound to USDT0's OFT and token.",
+            "description": "`provider_unavailable`: Horizon or the Soroban RPC did not answer; retry. `misconfigured`: STELLAR_RPC_URL_MAINNET serves another network, or USDT0_FEE_WRAPPER is not the reviewed wrapper bound to USDT0's OFT and token, or the plan commission has no STELLAR_SWAP_FEE_WALLET, or one that does not trust USDT0.",
             "content": {
               "application/json": {
                 "schema": {
@@ -25712,6 +25712,16 @@
             "example": "12.5000001",
             "description": "The amount asked for."
           },
+          "feeBps": {
+            "type": "number",
+            "example": 50,
+            "description": "Cosmos Pay's plan commission rate, in basis points. 0 when the deployment has no fee wrapper (USDT0_FEE_WRAPPER): a Soroban transaction has one operation, and only the wrapper can carry a fee."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.0625",
+            "description": "The commission in USDT0, out of `amount`: `amount × feeBps / 10,000`, rounded down."
+          },
           "amountSent": {
             "type": "string",
             "example": "12.5",
@@ -25753,6 +25763,8 @@
           "eid",
           "receives",
           "amount",
+          "feeBps",
+          "feeAmount",
           "amountSent",
           "amountReceived",
           "dust",
@@ -25814,7 +25826,7 @@
             "description": "Optional idempotency key. Prefer the `Idempotency-Key` request header; when both are set, the header wins. A retry with the same key and the same request returns the stored transfer; the same key with a different request is 409 `idempotency_conflict`."
           },
           "merchantFee": {
-            "description": "Your own fee on this transfer, in USDT0, paid to `wallet` (a Stellar account that trusts USDT0) in the same transaction: the operation is then the merchant fee wrapper (`USDT0_MERCHANT_FEE_WRAPPER`), which pays the fee and calls the OFT's `send` under the holder's one authorization. `paidBy: recipient` takes it from `amount` (less is sent); `payer` adds it on top. Without a configured wrapper, `merchant_fee_unsupported`.",
+            "description": "Your own fee on this transfer, in USDT0, paid to `wallet` (a Stellar account that trusts USDT0) in the same transaction: the operation is then the fee wrapper (`USDT0_FEE_WRAPPER`), which pays the fee and calls the OFT's `send` under the holder's one authorization. `paidBy: recipient` takes it from `amount` (less is sent); `payer` adds it on top. Without a configured wrapper, `merchant_fee_unsupported`.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"
@@ -25936,6 +25948,22 @@
             "example": "1.4468825",
             "description": "The Stellar network fee, in XLM: inclusion plus Soroban resources (part of it is refunded by the network)."
           },
+          "feeBps": {
+            "type": "number",
+            "example": 50,
+            "description": "Cosmos Pay's plan commission rate, in basis points. 0 when the deployment has no fee wrapper (USDT0_FEE_WRAPPER): a Soroban transaction has one operation, and only the wrapper can carry a fee."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.0625",
+            "description": "The commission in USDT0, out of `amount`: `amount × feeBps / 10,000`, rounded down."
+          },
+          "feeWallet": {
+            "type": "string",
+            "nullable": true,
+            "example": "GBFEEWALLETEXAMPLE7XKXBOL5CH6OFGYUMVJZH7H7OZQXK6U2RG3UEZW34",
+            "description": "Where the commission went (STELLAR_SWAP_FEE_WALLET); null without one."
+          },
           "xdr": {
             "type": "string",
             "description": "The unsigned transaction (base64 XDR) to sign.",
@@ -25990,7 +26018,7 @@
           },
           "merchantFee": {
             "nullable": true,
-            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the merchant fee wrapper; null without one.",
+            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the fee wrapper; null without one.",
             "type": "object",
             "allOf": [
               {
@@ -26049,6 +26077,9 @@
           "nativeFee",
           "nativeFeeLimit",
           "networkFee",
+          "feeBps",
+          "feeAmount",
+          "feeWallet",
           "xdr",
           "uri",
           "qr",
@@ -26173,6 +26204,22 @@
             "example": "1.4468825",
             "description": "The Stellar network fee, in XLM: inclusion plus Soroban resources (part of it is refunded by the network)."
           },
+          "feeBps": {
+            "type": "number",
+            "example": 50,
+            "description": "Cosmos Pay's plan commission rate, in basis points. 0 when the deployment has no fee wrapper (USDT0_FEE_WRAPPER): a Soroban transaction has one operation, and only the wrapper can carry a fee."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.0625",
+            "description": "The commission in USDT0, out of `amount`: `amount × feeBps / 10,000`, rounded down."
+          },
+          "feeWallet": {
+            "type": "string",
+            "nullable": true,
+            "example": "GBFEEWALLETEXAMPLE7XKXBOL5CH6OFGYUMVJZH7H7OZQXK6U2RG3UEZW34",
+            "description": "Where the commission went (STELLAR_SWAP_FEE_WALLET); null without one."
+          },
           "xdr": {
             "type": "string",
             "description": "The unsigned transaction (base64 XDR) to sign.",
@@ -26221,7 +26268,7 @@
           },
           "merchantFee": {
             "nullable": true,
-            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the merchant fee wrapper; null without one.",
+            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the fee wrapper; null without one.",
             "type": "object",
             "allOf": [
               {
@@ -26275,6 +26322,9 @@
           "nativeFee",
           "nativeFeeLimit",
           "networkFee",
+          "feeBps",
+          "feeAmount",
+          "feeWallet",
           "xdr",
           "uri",
           "txHash",
@@ -26427,6 +26477,22 @@
             "example": "1.4468825",
             "description": "The Stellar network fee, in XLM: inclusion plus Soroban resources (part of it is refunded by the network)."
           },
+          "feeBps": {
+            "type": "number",
+            "example": 50,
+            "description": "Cosmos Pay's plan commission rate, in basis points. 0 when the deployment has no fee wrapper (USDT0_FEE_WRAPPER): a Soroban transaction has one operation, and only the wrapper can carry a fee."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.0625",
+            "description": "The commission in USDT0, out of `amount`: `amount × feeBps / 10,000`, rounded down."
+          },
+          "feeWallet": {
+            "type": "string",
+            "nullable": true,
+            "example": "GBFEEWALLETEXAMPLE7XKXBOL5CH6OFGYUMVJZH7H7OZQXK6U2RG3UEZW34",
+            "description": "Where the commission went (STELLAR_SWAP_FEE_WALLET); null without one."
+          },
           "xdr": {
             "type": "string",
             "description": "The unsigned transaction (base64 XDR) to sign.",
@@ -26481,7 +26547,7 @@
           },
           "merchantFee": {
             "nullable": true,
-            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the merchant fee wrapper; null without one.",
+            "description": "The merchant fee the request named, in USDT0, paid to its wallet in this transaction by the fee wrapper; null without one.",
             "type": "object",
             "allOf": [
               {
@@ -26535,6 +26601,9 @@
           "nativeFee",
           "nativeFeeLimit",
           "networkFee",
+          "feeBps",
+          "feeAmount",
+          "feeWallet",
           "xdr",
           "uri",
           "qr",

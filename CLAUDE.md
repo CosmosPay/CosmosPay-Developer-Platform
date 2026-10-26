@@ -796,8 +796,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Live in the API on every service:** payment links on all three chains, swaps on all three
   (Stellar, Jupiter, and Kuru through `contracts/MerchantFeeSwapRouter.sol`), cross-chain swaps,
   private payments (a third confidential transfer), liquidity (bps of each asset) and USDT0
-  (through the Soroban wrapper `contracts/soroban/merchant-fee-oft`). The two contracts are the
-  operator's to deploy on mainnet (`KURU_MERCHANT_FEE_ROUTER`, `USDT0_MERCHANT_FEE_WRAPPER`);
+  (through the Soroban wrapper `contracts/soroban/usdt0-fee-wrapper`, which also carries Cosmos
+  Pay's plan commission: without it a USDT0 transfer charges none, and the dashboard shows the
+  commission only when `feeAmount` is above zero). The two contracts are the operator's to deploy
+  on mainnet (`KURU_MERCHANT_FEE_ROUTER`, `USDT0_FEE_WRAPPER`);
   until then those routes answer `merchant_fee_unsupported`. B2B goes straight to the API: the
   dashboard's own forms are for the organization's operations.
 - **Dashboard:** the payment link form's "more options" has the merchant fee, on every chain:
