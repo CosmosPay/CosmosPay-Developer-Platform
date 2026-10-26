@@ -1077,7 +1077,7 @@ export default {
       Active: "Aktiv",
       Delivered: "Zugestellt"
     },
-    common: { sellNeeds: "Braucht einen Preis und muss im Verkauf sein", rowActions: "Aktionen für {name}", copyId: "ID kopieren", copyUrl: "URL kopieren", copyAccount: "Konto kopieren", openNewTab: "In neuem Tab öffnen", noTxYet: "Noch keine Transaktion", paidNoDelete: "Eine abgeschlossene Zahlung kann nicht gelöscht werden", account: "Konto", orgWallet: "Wallet der Organisation", paymentsHere: "Zahlungen in der Liste", lastPayment: "Letzte Zahlung", copyValue: "{value} kopieren", notFound: "Nicht in dieser Organisation oder Umgebung vorhanden.", open: "Öffnen",
+    common: { back: "Zurück", notPayable: "Kann nicht mehr bezahlt werden", sellNeeds: "Braucht einen Preis und muss im Verkauf sein", rowActions: "Aktionen für {name}", copyId: "ID kopieren", copyUrl: "URL kopieren", copyAccount: "Konto kopieren", openNewTab: "In neuem Tab öffnen", noTxYet: "Noch keine Transaktion", paidNoDelete: "Eine abgeschlossene Zahlung kann nicht gelöscht werden", account: "Konto", orgWallet: "Wallet der Organisation", paymentsHere: "Zahlungen in der Liste", lastPayment: "Letzte Zahlung", copyValue: "{value} kopieren", notFound: "Nicht in dieser Organisation oder Umgebung vorhanden.", open: "Öffnen",
       actions: "Aktionen",
       details: "Details",
       cancel: "Abbrechen",

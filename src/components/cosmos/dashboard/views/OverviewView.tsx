@@ -84,8 +84,8 @@ function PaymentMenu({ p, onGo }) {
         { key: "open", label: cm.details, icon: DI.payments, onClick: () => openRecord("payment", p.id) },
         { key: "tab", label: cm.openNewTab, icon: DI.link, href: recordHref("payment", p.id), external: true },
         { key: "copy", label: h.copyId, icon: <IcCopy />, onClick: () => copy(p.id, t.toasts.copied) },
-        { key: "link", label: cm.copyLink, icon: <IcCopy />, onClick: () => copy(checkoutUrl(p.id), t.toasts.copied) },
-        { key: "checkout", label: t.dash.paylinks.detail.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true },
+        { key: "link", label: cm.copyLink, icon: <IcCopy />, disabled: p.status !== "PENDING", hint: cm.notPayable, onClick: () => copy(checkoutUrl(p.id), t.toasts.copied) },
+        { key: "checkout", label: t.dash.paylinks.detail.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true, disabled: p.status !== "PENDING", hint: cm.notPayable },
         { key: "explorer", label: h.explorer, icon: DI.network, href, external: true, disabled: !href, hint: cm.noTxYet },
       ]}
     />

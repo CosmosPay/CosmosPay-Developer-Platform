@@ -13,7 +13,7 @@ import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS, RECORD_VIEWS } from "@/components/cosmos/dashboard/data";
-import { OPEN_RECORD_EVENT } from "@/components/cosmos/dashboard/hooks";
+import { OPEN_RECORD_EVENT, FILTERS_EVENT } from "@/components/cosmos/dashboard/hooks";
 import {
   OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
@@ -58,59 +58,65 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   // A record on a view of its own (RECORD_VIEWS: a payment) carries its id, from the page's
   // address on load, then from openRecord.
   const [recordId, setRecordId] = useState(initialRecordId);
-  // Keep the URL in sync with the active view so a reload restores it (no more snapping back to Overview).
-  // Moving to another view drops the last one's list filters (useListFilters keeps them in the URL).
-  // Opening a record adds a history entry (`pushNext`), so Back returns to the list; a step
-  // through history (`fromHistory`) leaves the address the browser restored, filters included.
-  const shownView = useRef(null);
-  const pushNext = useRef(false);
-  const fromHistory = useRef(false);
-  useEffect(() => {
-    if (fromHistory.current) { fromHistory.current = false; shownView.current = view; return; }
-    try {
-      const url = new URL(window.location.href);
-      if (shownView.current !== null && shownView.current !== view) {
-        for (const key of [...url.searchParams.keys()]) if (key !== "view") url.searchParams.delete(key);
-      }
-      shownView.current = view;
-      if (view === "overview") url.searchParams.delete("view");
-      else url.searchParams.set("view", view);
-      if (RECORD_VIEWS[view] && recordId) url.searchParams.set("id", recordId);
-      else url.searchParams.delete("id");
-      if (pushNext.current) { pushNext.current = false; window.history.pushState({}, "", url); }
-      else window.history.replaceState({}, "", url);
-    } catch (e) {}
-  }, [view, recordId]);
-  // openRecord(view, id) from any view or widget: that record's view, as a new history entry.
-  useEffect(() => {
-    const onOpen = (e) => {
-      const { view: v, id } = (e && e.detail) || {};
-      if (!RECORD_VIEWS[v] || !id) return;
-      pushNext.current = true;
-      setRecordId(id);
-      setView(v);
-      setNavOpen(false);
-    };
-    window.addEventListener(OPEN_RECORD_EVENT, onOpen);
-    return () => window.removeEventListener(OPEN_RECORD_EVENT, onOpen);
-  }, []);
-  // Back and Forward: the view and record the address names.
+  // Every move between views is a history entry of its own (product owner: the mouse's Back
+  // returns to the previous view, not out of the dashboard). `navigate` writes the new address at
+  // once (pushState, marked `dash`), before anything adds the new view's filters to it, so each
+  // entry keeps its own filters; Back and Forward restore the view and record the address names,
+  // and a list already on screen re-reads its filters. The address the page opened at is only
+  // tidied (its view, if it named one that does not exist).
   const current = useRef({ view, recordId });
   current.current = { view, recordId };
+  const addressOf = (v, id) => {
+    const url = new URL(window.location.href);
+    url.search = "";
+    if (v !== "overview") url.searchParams.set("view", v);
+    if (RECORD_VIEWS[v] && id) url.searchParams.set("id", id);
+    return url;
+  };
+  const navigate = (v, id = null) => {
+    const same = v === current.current.view && (id || null) === (current.current.recordId || null);
+    try { if (!same) window.history.pushState({ dash: true }, "", addressOf(v, id)); } catch (e) {}
+    setRecordId(id || null);
+    setView(v);
+    setNavOpen(false);
+  };
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const want = view === "overview" ? null : view;
+      if (url.searchParams.get("view") !== want) {
+        if (want) url.searchParams.set("view", want); else url.searchParams.delete("view");
+        window.history.replaceState(window.history.state, "", url);
+      }
+    } catch (e) {}
+  }, []);
   useEffect(() => {
     const onPop = () => {
       const sp = new URLSearchParams(window.location.search);
-      const v = sp.get("view") || "overview";
-      if (!t.dash.viewLabels[v] || DISABLED_VIEWS.includes(v)) return;
-      const id = RECORD_VIEWS[v] ? sp.get("id") : null;
-      if (current.current.view === v && current.current.recordId === id) return;
-      fromHistory.current = true;
-      setRecordId(id);
+      const asked = sp.get("view") || "overview";
+      const v = t.dash.viewLabels[asked] && !DISABLED_VIEWS.includes(asked) ? asked : "overview";
+      setRecordId(RECORD_VIEWS[v] ? sp.get("id") : null);
       setView(v);
+      setAdminFilter(null);
+      window.dispatchEvent(new Event(FILTERS_EVENT));
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+  // openRecord(view, id) from any view or widget: that record's view, as a new history entry.
+  useEffect(() => {
+    const onOpen = (e) => {
+      const { view: v, id } = (e && e.detail) || {};
+      if (RECORD_VIEWS[v] && id) navigate(v, id);
+    };
+    window.addEventListener(OPEN_RECORD_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_RECORD_EVENT, onOpen);
+  }, []);
+  // A record's back button: the entry before it when the dashboard made it, else its list.
+  const goBack = () => {
+    if (window.history.state && window.history.state.dash) window.history.back();
+    else navigate(RECORD_VIEWS[view] || "overview");
+  };
   // Sandbox or production survives a reload: a cookie the page reads on the server, so the first
   // render already shows the chosen environment (no sandbox flash, no second fetch).
   const [live, setLive] = useState(env === "prod");
@@ -343,17 +349,9 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   // Cross-organization drill-down filter for the platform-admin views. Sidebar
   // navigation (go) always clears it; only goToAdmin sets it.
   const [adminFilter, setAdminFilter] = useState(null); // { consumer, label, tab? } | null
-  // Switching views drops the last view's list filters before the next one reads the URL.
-  const clearListFilters = (v) => {
-    if (v === view) return;
-    try {
-      const url = new URL(window.location.href);
-      for (const key of [...url.searchParams.keys()]) if (key !== "view") url.searchParams.delete(key);
-      window.history.replaceState(window.history.state, "", url);
-    } catch (e) {}
-  };
-  const go = (v) => { clearListFilters(v); setView(v); setAdminFilter(null); setNavOpen(false); };
-  const goToAdmin = (v, filter = null) => { clearListFilters(v); setView(v); setAdminFilter(filter); setNavOpen(false); };
+  // A view's address starts with no filters: `navigate` writes it fresh, as a history entry.
+  const go = (v) => { navigate(v); setAdminFilter(null); };
+  const goToAdmin = (v, filter = null) => { navigate(v); setAdminFilter(filter); };
 
   // Pending invitations addressed to my email, surfaced as a banner so I can join from
   // inside the dashboard (in addition to the emailed magic link).
@@ -399,7 +397,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
     switch (view) {
       // A payment on its own view; without an id, its list.
       case "payment": return recordId
-        ? <PaymentRecordView id={recordId} env={live ? "prod" : "dev"} canManage={can("payments:create")} onBack={() => go("payments")} />
+        ? <PaymentRecordView id={recordId} env={live ? "prod" : "dev"} canManage={can("payments:create")} onBack={goBack} />
         : <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "payments": return <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} onGo={go} />;
@@ -454,10 +452,27 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
           <main id="main" className="dash-content">
           <div className="topbar">
             <button type="button" className="icon-btn burger" aria-label={t.nav.menu} aria-expanded={navOpen} aria-controls="dash-side" onClick={() => setNavOpen(true)}>{DI.menu}</button>
-            <div className="page-title">
-              <h1>{t.dash.viewLabels[view]}</h1>
-              <span className="page-crumb" aria-hidden="true">/</span>
-              <OrgSwitcher variant="crumb" orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} onUpgrade={canChangePlan ? () => setModal("plan") : null} />
+            <div className={RECORD_VIEWS[view] && recordId ? "page-title route" : "page-title"}>
+              {RECORD_VIEWS[view] && recordId ? (
+                // A record's head is its route (product owner): back, its list (a link), the record.
+                <>
+                  <button type="button" className="icon-btn page-back" onClick={goBack} aria-label={t.dash.common.back} title={t.dash.common.back}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+                  </button>
+                  <a
+                    className="page-route" href={`/dashboard?view=${RECORD_VIEWS[view]}`}
+                    onClick={(e) => { if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; e.preventDefault(); go(RECORD_VIEWS[view]); }}
+                  >{t.dash.viewLabels[RECORD_VIEWS[view]]}</a>
+                  <span className="page-crumb" aria-hidden="true">/</span>
+                  <h1 title={recordId}><span className="sr-only">{t.dash.viewLabels[view]} </span>{recordId.length > 14 ? `${recordId.slice(0, 6)}…${recordId.slice(-4)}` : recordId}</h1>
+                </>
+              ) : (
+                <>
+                  <h1>{t.dash.viewLabels[view]}</h1>
+                  <span className="page-crumb" aria-hidden="true">/</span>
+                  <OrgSwitcher variant="crumb" orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} onUpgrade={canChangePlan ? () => setModal("plan") : null} />
+                </>
+              )}
             </div>
             <div className="top-actions">
               <div className="env-seg" role="group" aria-label={t.dash.env.heading}>

@@ -64,8 +64,8 @@ export function PayLinkRowActions({ intent, t, pl, onView, canManage = false, on
           { key: "open", label: cm.details, icon: DI.docs, onClick: () => onView(intent) },
           { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=payment&id=${encodeURIComponent(intent.id)}`, external: true },
           { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(intent.id, t.toasts.copied) },
-          { key: "link", label: cm.copyLink, icon: <IcCopy />, onClick: () => copy(checkoutUrl(intent.id), t.toasts.copied) },
-          { key: "checkout", label: pl.detail.openCheckout, icon: DI.payments, href: checkoutUrl(intent.id), external: true },
+          { key: "link", label: cm.copyLink, icon: <IcCopy />, disabled: intent.status !== "PENDING", hint: cm.notPayable, onClick: () => copy(checkoutUrl(intent.id), t.toasts.copied) },
+          { key: "checkout", label: pl.detail.openCheckout, icon: DI.payments, href: checkoutUrl(intent.id), external: true, disabled: intent.status !== "PENDING", hint: cm.notPayable },
           { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: url, external: true, disabled: !url, hint: cm.noTxYet },
           ...(canManage ? [{ key: "delete", label: pl.detail.delete, icon: DI.trash, danger: true, disabled: paid, hint: cm.paidNoDelete, onClick: () => onDelete(intent) }] : []),
         ]}

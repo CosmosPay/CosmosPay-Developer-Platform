@@ -12,18 +12,20 @@ interface Props {
   value: CheckoutTheme;
   onChange: (theme: CheckoutTheme) => void;
   disabled?: boolean;
-  /** Drop the label and hint (the detail modal draws its own heading). */
+  /** Drop the label and hint (the payment's view draws its own heading). */
   bare?: boolean;
+  /** Small options in one row, no descriptions (product owner: the options were too big). */
+  compact?: boolean;
 }
 
-export function CheckoutDesignPicker({ value, onChange, disabled = false, bare = false }: Props) {
+export function CheckoutDesignPicker({ value, onChange, disabled = false, bare = false, compact = false }: Props) {
   const t = useT();
   const lang = useLang();
   const d = t.dash.paylinks.design;
   const names = MESSAGES[isLocale(lang) ? lang : "en"].designs;
   const name = useId();
   return (
-    <fieldset className="design-picker" disabled={disabled} aria-label={bare ? d.label : undefined}>
+    <fieldset className={compact ? "design-picker compact" : "design-picker"} disabled={disabled} aria-label={bare ? d.label : undefined}>
       {!bare && (
         <legend className="design-picker-legend">
           <span>{d.label}</span>

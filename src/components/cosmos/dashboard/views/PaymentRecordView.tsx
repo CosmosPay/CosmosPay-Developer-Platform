@@ -2,10 +2,11 @@
    page, not in a dialog), at /dashboard?view=payment&id=<id>, a history entry of its own so Back
    returns to the list it came from. At the top, the payment at a glance: its status and amount,
    the actions (its checkout, the explorer once there is a transaction, deleting it while it is
-   not settled), its id, network, date and both accounts. Under it, the QR (it stays in view)
-   beside everything a payer or a developer may need: the checkout link, the wallet link, the
-   unsigned XDR, every field, for an open Stellar payment checking a transaction hash, and last
-   the checkout's design. The record is
+   not settled), its id, network, date and both accounts. While it can still be paid (pending),
+   the QR (it stays in view) beside everything a payer or a developer may need: the checkout
+   link, the wallet link, the unsigned XDR, every field, checking a transaction hash on Stellar,
+   and last the checkout's design. Once it cannot be paid (submitted, paid, failed, expired) it is
+   history only: its fields, and the explorer once there is a transaction. The record is
    read by id (the list's row may be stale) and followed while it is not final. */
 import { useEffect, useState } from "react";
 import { showToast, checkoutUrl } from "@/components/cosmos/shared";
@@ -48,9 +49,6 @@ export function PaymentRecordView({ id, env, canManage = false, onBack }) {
   return (
     <>
       <ViewHead title={pl.detail.eyebrow} />
-      <div className="record-back">
-        <button type="button" className="link-btn" onClick={onBack}>{t.dash.overview.hub.viewAll}</button>
-      </div>
       {data === undefined && <div className="panel"><ListSkeleton label={t.dash.cosmos.loading} rows={4} pairs={5} /></div>}
       {data === null && <div className="panel"><div className="empty">{t.dash.common.notFound}</div></div>}
       {data && <PaymentRecord data={data} setData={setData} env={env} canManage={canManage} onDeleted={onBack} />}
@@ -75,6 +73,9 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
   const paid = data.status === "SUCCEEDED";
   const tone = paymentTone(data.status);
   const canCheck = canManage && chain === "stellar" && ["PENDING", "SUBMITTED"].includes(data.status);
+  // Only a pending payment can still be paid: once submitted, paid, failed or expired the record
+  // is history (product owner), with no checkout, QR, wallet link or design to offer.
+  const payable = data.status === "PENDING";
   const hashOk = /^[0-9a-fA-F]{64}$/.test(txHash.trim());
   const check = () => {
     if (!hashOk || checking) return;
@@ -132,7 +133,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
             <Pill st={STATUS_PILL[data.status] || "ref"} tone={tone} label={(pl.status && pl.status[data.status]) || data.status} />
           </div>
           <div className="pay-record-actions">
-            <a className="btn btn-dark btn-sm" href={checkoutUrl(data.id)} target="_blank" rel="noopener noreferrer">{DI.link} {d.openCheckout}</a>
+            {payable && <a className="btn btn-dark btn-sm" href={checkoutUrl(data.id)} target="_blank" rel="noopener noreferrer">{DI.link} {d.openCheckout}</a>}
             {/* No transaction exists until the payment is submitted or paid: drawn, disabled. */}
             {explorer
               ? <a className="btn btn-outline-w btn-sm" href={explorer} target="_blank" rel="noopener noreferrer">{DI.network} {t.dash.balances.explorer}</a>
@@ -157,27 +158,27 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
         </dl>
       </section>
 
-      <div className="pay-record-grid">
-        <section className="panel pay-record-qr" aria-label={d.scan}>
+      {(payable || fields.length > 0 || canCheck) && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
+        {payable && <section className="panel pay-record-qr" aria-label={d.scan}>
           {data.qr
             ? <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
             : <div className="paylink-qr paylink-qr-skel" aria-hidden="true" />}
           <div className="paylink-qr-cap">{d.scan}</div>
           {data.qr && <a className="btn btn-soft btn-sm" href={data.qr} download={`paylink-${data.id}.png`}>{DI.download} {d.downloadQr}</a>}
-        </section>
+        </section>}
 
         <section className="panel pay-record-main paylink-detail">
           {/* The hosted page on payments.cosmospay.lat: what to send a payer who has no wallet
               open on this screen. It reads the link itself and follows its status. */}
-          <CopyBlock label={d.checkout} value={checkoutUrl(data.id)} />
-          {data.uri && (
+          {payable && <CopyBlock label={d.checkout} value={checkoutUrl(data.id)} />}
+          {payable && data.uri && (
             <CopyBlock label={d.uriLabels[chain]} value={data.uri}>
               <div className="paylink-actions">
                 <a className="btn btn-soft btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
               </div>
             </CopyBlock>
           )}
-          {data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
+          {payable && data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
           {fields.length > 0 && (
             <div className="paylink-fields">
               {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
@@ -193,14 +194,14 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
             </div>
           )}
           {/* The checkout's look last: it takes room, and the essentials come first. */}
-          {canManage && (
+          {canManage && payable && (
             <div className="paylink-block">
               <div className="paylink-block-head"><span className="field-l">{pl.design.label}</span></div>
-              <CheckoutDesignPicker bare value={data.checkoutTheme || "classic"} disabled={savingTheme} onChange={changeTheme} />
+              <CheckoutDesignPicker bare compact value={data.checkoutTheme || "classic"} disabled={savingTheme} onChange={changeTheme} />
             </div>
           )}
         </section>
-      </div>
+      </div>}
     </div>
   );
 }

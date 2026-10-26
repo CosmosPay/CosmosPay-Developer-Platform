@@ -289,9 +289,21 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       way in calls `openRecord("payment", id)` (`dashboard/hooks.ts`, an event the shell hears):
       the overview's transaction rows (the whole row), Payments' and Balances' rows, ids and menus,
       a customer's payments, a link just created; `recordHref` is its address for links and new
-      tabs. Opening a record adds a history entry, so Back returns to the list (its filters
-      restored); the shell follows Back and Forward (`popstate`). The page reads the record by id
-      on the server's `?id` and follows it while it is not final; "view all payments" returns.
+      tabs. The page reads the record by id on the server's `?id` and follows it while it is not
+      final. **Its head is its route** (product owner: never "Payment / organization"): a back
+      button, the list's name as a link, a slash and the record's short id as the h1 (the id gives
+      way on a narrow screen). The back button returns to the entry before (`history.back()`) when
+      the dashboard made the current one, else opens the list. **Only a pending payment can still
+      be paid**: once submitted, paid, failed or expired the view is history (product owner: an
+      expired link offers nothing to keep paying): no QR, checkout link, wallet link, XDR or
+      design, and its menus disable "copy link" and "open checkout" with the reason. The design
+      options there are compact (`CheckoutDesignPicker compact`: small, one row, no descriptions).
+    - **Every move between views is a history entry** (product owner: the mouse's Back went to the
+      landing): `navigate` in `Dashboard.tsx` pushes the view's address (state `{ dash: true }`)
+      for the sidebar, the search, `goFiltered`, `goToAdmin` and `openRecord` alike, before the new
+      view writes its filters, so each entry keeps its own; `popstate` restores the view and record
+      the address names and re-reads the filters (`FILTERS_EVENT`). A move to the view on screen
+      adds nothing.
     - The Balances view's tiles open their settled payments, notifications open the record their
       metadata names (`targetOf` in `NotificationsView.tsx`), a customer's payments open in Payments (searched by
       the wallet that paid, `p.source`), products and webhook endpoints open their edit forms, a
