@@ -279,9 +279,19 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     to it is a bug. What exists:
     - `goFiltered(go, view, params)` (`dashboard/hooks.ts`) opens a view already filtered: its
       `useListFilters` keys (`q`, `status`, `chain`, `date`...) or a one-off request read by
-      `useUrlRequest(key)` and dropped from the URL: `open=<id>` shows that record (Payments,
-      Swaps, Liquidity, private payments, Support's tickets; read by id when the list does not
-      hold it), `create=1` opens Payments' form (with `amount`, `asset` and `note` from a product).
+      `useUrlRequest(key)` and dropped from the URL: `open=<id>` shows that record (Swaps,
+      Liquidity, private payments, Support's tickets; read by id when the list does not hold it;
+      Payments sends it to the payment's own view), `create=1` opens Payments' form (with `amount`,
+      `asset` and `note` from a product).
+    - **A payment opens on a view of its own, never a dialog** (product owner, 2026-10-26):
+      `views/PaymentRecordView.tsx` at `/dashboard?view=payment&id=<id>` (`RECORD_VIEWS` in
+      `dashboard/data.ts` names each record view and its list; the sidebar marks the list). Every
+      way in calls `openRecord("payment", id)` (`dashboard/hooks.ts`, an event the shell hears):
+      the overview's transaction rows (the whole row), Payments' and Balances' rows, ids and menus,
+      a customer's payments, a link just created; `recordHref` is its address for links and new
+      tabs. Opening a record adds a history entry, so Back returns to the list (its filters
+      restored); the shell follows Back and Forward (`popstate`). The page reads the record by id
+      on the server's `?id` and follows it while it is not final; "view all payments" returns.
     - The Balances view's tiles open their settled payments, notifications open the record their
       metadata names (`targetOf` in `NotificationsView.tsx`), a customer's payments open in Payments (searched by
       the wallet that paid, `p.source`), products and webhook endpoints open their edit forms, a

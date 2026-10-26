@@ -19,7 +19,7 @@ import { checkoutUrl } from "@/components/cosmos/shared";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { useListFilters, usePaged, goFiltered } from "@/components/cosmos/dashboard/hooks";
+import { useListFilters, usePaged, goFiltered, openRecord, recordHref } from "@/components/cosmos/dashboard/hooks";
 import { ActivityPanel, countText, type MetricKey } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { Odometer } from "@/components/cosmos/dashboard/components/Odometer";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
@@ -81,8 +81,8 @@ function PaymentMenu({ p, onGo }) {
     <RowMenu
       label={fmt(h.rowMenu, { id: short(p.id) })}
       items={[
-        { key: "open", label: h.openPayments, icon: DI.payments, onClick: () => goFiltered(onGo, "payments", { open: p.id }) },
-        { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=payments&open=${encodeURIComponent(p.id)}`, external: true },
+        { key: "open", label: cm.details, icon: DI.payments, onClick: () => openRecord("payment", p.id) },
+        { key: "tab", label: cm.openNewTab, icon: DI.link, href: recordHref("payment", p.id), external: true },
         { key: "copy", label: h.copyId, icon: <IcCopy />, onClick: () => copy(p.id, t.toasts.copied) },
         { key: "link", label: cm.copyLink, icon: <IcCopy />, onClick: () => copy(checkoutUrl(p.id), t.toasts.copied) },
         { key: "checkout", label: t.dash.paylinks.detail.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true },
@@ -325,12 +325,13 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
           ) : (
             <ul className="hub-rows arrive" role="list">
               {pg.slice.map((p) => (
-                <li className="hub-row" key={p.id}>
+                // The whole row opens the payment's own view; its id is the link the keyboard reaches.
+                <li className="hub-row is-link" key={p.id} onClick={(e) => { if (!(e.target as HTMLElement).closest("a, button")) openRecord("payment", p.id); }}>
                   <StatusIcon tone={paymentTone(p.status)} />
                   <dl className="hub-cells">
                     {/* The id opens the payment and previews it on hover; both accounts open on their
                         explorer and copy (product owner). */}
-                    <div><dt>{h.thId}</dt><dd><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => goFiltered(onGo, "payments", { open: p.id })} copy={p.id} preview={() => <PaymentPreview p={p} status={(h.status && h.status[p.status]) || p.status} />}><code>{short(p.id)}</code></RecordLink></dd></div>
+                    <div><dt>{h.thId}</dt><dd><RecordLink href={recordHref("payment", p.id)} onOpen={() => openRecord("payment", p.id)} copy={p.id} preview={() => <PaymentPreview p={p} status={(h.status && h.status[p.status]) || p.status} />}><code>{short(p.id)}</code></RecordLink></dd></div>
                     <div><dt>{h.thStatus}</dt><dd className={`hub-st-t ${p.status === SETTLED ? "ok" : FAILED.includes(p.status) ? "fail" : "wait"}`}>{(h.status && h.status[p.status]) || p.status}</dd></div>
                     <div><dt>{h.thDate}</dt><dd>{fmtDateTime(p.createdAt)}</dd></div>
                     <div><dt>{h.thAmount}</dt><dd><span className="cell-mark"><TokenMark symbol={assetLabel(p.asset, chainOf(p))} chain={chainOf(p)} chainName={CHAIN_NAMES[chainOf(p)]} size={18} /><span><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</span></span></dd></div>

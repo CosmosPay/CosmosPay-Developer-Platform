@@ -821,6 +821,30 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .tx td.row-actions > * + * { margin-left: 6px; }
 /* a row's actions that do not apply to it are drawn disabled, so every row's buttons line up */
 .inst .icon-mini:disabled { opacity: .38; cursor: not-allowed; }
+/* a payment on its own view: the payment at a glance, then its QR beside the rest */
+.record-back { margin: -6px 0 14px; }
+.pay-record { display: flex; flex-direction: column; gap: 16px; }
+.pay-record-head { padding: 22px 24px; }
+.pay-record-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.pay-record-amount { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.pay-record-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+.pay-record-facts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 20px; margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
+.pay-record-facts > div { min-width: 0; }
+.pay-record-facts dt { font-size: 12px; color: var(--ink-3); }
+.pay-record-facts dd { margin: 4px 0 0; font-size: 13.5px; min-width: 0; }
+.pay-record-facts dd code { font-family: var(--ff-mono); font-size: 12px; overflow-wrap: anywhere; }
+.pay-record-grid { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.pay-record-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px; position: sticky; top: 92px; }
+.pay-record-main { padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 900px) {
+  .pay-record-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pay-record-grid { grid-template-columns: minmax(0, 1fr); }
+  .pay-record-qr { position: static; }
+  .pay-record-actions { margin-left: 0; }
+}
+/* a transaction row opens its payment: the whole row answers the pointer */
+.hub-row.is-link { cursor: pointer; transition: background-color .15s ease; }
+.hub-row.is-link:hover { background: var(--surface-2); }
 /* a row's leading mark: a status, a token with its network, a kind of record */
 .cell-mark { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
 .cell-mark > :last-child { min-width: 0; }

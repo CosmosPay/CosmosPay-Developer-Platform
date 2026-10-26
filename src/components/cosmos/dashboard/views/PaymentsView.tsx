@@ -7,7 +7,7 @@ import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PaymentPreview, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
-import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest, openRecord, recordHref } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
@@ -21,7 +21,7 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
-import { PayLinkDetailModal, PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, CHAIN_NAMES, NATIVE_CODES, TEST_NETWORKS, TOKEN_PRESETS, ADDRESS_PLACEHOLDERS, isAddress } from "@/lib/chains";
 import { standardAssets } from "@/lib/stellar-assets";
 import { DATE_RANGES, countBy, inRange, matchesQuery, rangeStart } from "@/lib/dashboard-filters";
@@ -40,7 +40,6 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   const [error, setError] = useState(false);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
   const [modal, setModal] = useState(false);   // create modal: true, or what to fill it with
-  const [detail, setDetail] = useState(null);  // a payment intent shown in the detail modal
   const [toDelete, setToDelete] = useState(null); // a payment intent pending delete confirmation
   const [deleting, setDeleting] = useState(false);
 
@@ -65,16 +64,13 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   }, [query]);
   usePolling(refresh, 8000, { immediate: false });
 
-  // A payment named from elsewhere (the overview's row menu, a notification, a customer): its
-  // detail opens once the list is here, read by id when the list does not hold it. A create
-  // request opens the form for whoever may create.
+  // A payment named from elsewhere (an older link, a notification): it opens on its own view. A
+  // create request opens the form for whoever may create.
   const [openId, clearOpen] = useUrlRequest("open");
   useEffect(() => {
-    if (!openId || loading) return;
-    const hit = rows.find((p) => p.id === openId);
+    if (!openId) return;
     clearOpen();
-    if (hit) { setDetail(hit); return; }
-    payApi.get(openId, env).then((p) => { if (p && p.id) setDetail(p); else showToast(t.dash.common.notFound, "error"); }).catch(() => showToast(t.dash.common.notFound, "error"));
+    openRecord("payment", openId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, loading]);
   const [createReq, clearCreate] = useUrlRequest("create");
@@ -112,8 +108,10 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
-  const onCreated = (intent) => { setModal(false); setRows((r) => [intent, ...r]); setDetail(intent); };
-  const onDeleted = (id) => { setRows((r) => r.filter((x) => x.id !== id)); setDetail(null); };
+  // A new link opens on its own view (its QR, its checkout link), as every payment does.
+  const onCreated = (intent) => { setModal(false); setRows((r) => [intent, ...r]); openRecord("payment", intent.id); };
+  const onDeleted = (id) => { setRows((r) => r.filter((x) => x.id !== id)); };
+  const view1 = (p) => openRecord("payment", p.id);
   // Delete from the table row, confirmed via the shared ConfirmModal.
   const confirmDelete = () => {
     if (!toDelete || deleting) return;
@@ -148,15 +146,15 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
         {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pl.tableHead.id}</th><th>{pl.tableHead.type}</th><th>{pl.detail.fields.network}</th><th>{pl.tableHead.amount}</th><th>{pl.tableHead.status}</th><th>{pl.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((p) => (
-              <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
+              <tr key={p.id} className="row-click" onClick={() => view1(p)}>
                 {/* The id opens the payment (a new tab with a modified click) and previews it on hover. */}
-                <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
+                <td className="tid"><RecordLink href={recordHref("payment", p.id)} onOpen={() => view1(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{pl.kinds[p.kind] || p.kind}</td>
                 <td><span className="cell-mark"><NetworkMark chain={chainOf(p)} size={18} /><span className="net-badge">{networkLabel(p)}</span></span></td>
                 <td className="amt"><PaymentAmount intent={p} pl={pl} /></td>
                 <td><Pill st={STATUS_PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={(pl.status && pl.status[p.status]) || p.status} /></td>
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
-                <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />
+                <PayLinkRowActions intent={p} t={t} pl={pl} onView={view1} canManage={canManage} onDelete={setToDelete} />
               </tr>
             ))}
               <FillRows
@@ -169,7 +167,6 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
         {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CreatePayLinkModal pl={pl} orgId={orgId} env={env} canConnectWallets={canConnectWallets} initial={modal === true ? null : modal} onClose={() => setModal(false)} onCreated={onCreated} />}
-      {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={onDeleted} />}
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </>
   );

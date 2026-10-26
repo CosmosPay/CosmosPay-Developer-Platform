@@ -1,23 +1,24 @@
-export { OverviewView } from "./OverviewView";
-export { PaymentsView } from "./PaymentsView";
+export { OverviewView } from "@/components/cosmos/dashboard/views/OverviewView";
+export { PaymentsView } from "@/components/cosmos/dashboard/views/PaymentsView";
+export { PaymentRecordView } from "@/components/cosmos/dashboard/views/PaymentRecordView";
 export { ZkPaymentsView } from "@/components/cosmos/dashboard/views/ZkPaymentsView";
-export { BalancesView } from "./BalancesView";
-export { CustomersView } from "./CustomersView";
-export { ProductsView } from "./ProductsView";
-export { SwapsView } from "./SwapsView";
-export { LiquidityView } from "./LiquidityView";
-export { BlindPayView } from "./BlindPayView";
-export { ApiKeysView } from "./ApiKeysView";
-export { WebhooksView } from "./WebhooksView";
-export { LogsView } from "./LogsView";
-export { ActivityLogView } from "./ActivityLogView";
-export { NotificationsView } from "./NotificationsView";
-export { SupportView } from "./SupportView";
-export { SupportInboxView } from "./SupportInboxView";
-export { SettingsView } from "./SettingsView";
-export { AccountView } from "./AccountView";
-export { UsersView } from "./UsersView";
+export { BalancesView } from "@/components/cosmos/dashboard/views/BalancesView";
+export { CustomersView } from "@/components/cosmos/dashboard/views/CustomersView";
+export { ProductsView } from "@/components/cosmos/dashboard/views/ProductsView";
+export { SwapsView } from "@/components/cosmos/dashboard/views/SwapsView";
+export { LiquidityView } from "@/components/cosmos/dashboard/views/LiquidityView";
+export { BlindPayView } from "@/components/cosmos/dashboard/views/BlindPayView";
+export { ApiKeysView } from "@/components/cosmos/dashboard/views/ApiKeysView";
+export { WebhooksView } from "@/components/cosmos/dashboard/views/WebhooksView";
+export { LogsView } from "@/components/cosmos/dashboard/views/LogsView";
+export { ActivityLogView } from "@/components/cosmos/dashboard/views/ActivityLogView";
+export { NotificationsView } from "@/components/cosmos/dashboard/views/NotificationsView";
+export { SupportView } from "@/components/cosmos/dashboard/views/SupportView";
+export { SupportInboxView } from "@/components/cosmos/dashboard/views/SupportInboxView";
+export { SettingsView } from "@/components/cosmos/dashboard/views/SettingsView";
+export { AccountView } from "@/components/cosmos/dashboard/views/AccountView";
+export { UsersView } from "@/components/cosmos/dashboard/views/UsersView";
 export {
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView,
   AdminCustomersView, AdminProductsView, AdminConsumersView,
-} from "./AdminViews";
+} from "@/components/cosmos/dashboard/views/AdminViews";

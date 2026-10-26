@@ -982,7 +982,7 @@ export default {
     examples: { order: "Commande nº 24", firstName: "Claire", lastName: "Martin", fullName: "Claire Martin", jobTitle: "Directrice", customerName: "Facturation Acme", payoutsName: "Versements Acme (USD)", productName: "Forfait Pro (mensuel)" },
     search: { label: "Rechercher dans le tableau de bord", placeholder: "Rechercher", pages: "Pages", searchGroup: "Rechercher", searchIn: "{place} contenant « {q} »", empty: "Aucun résultat pour « {q} »." },
     viewLabels: {
-      overview: "Aperçu",
+      overview: "Aperçu", payment: "Paiement",
       payments: "Paiements", zkPayments: "Paiements privés",
       balances: "Soldes",
       customers: "Clients",

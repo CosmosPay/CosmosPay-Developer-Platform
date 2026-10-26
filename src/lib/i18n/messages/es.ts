@@ -982,7 +982,7 @@ export default {
     examples: { order: "Pedido #24", firstName: "Ana", lastName: "Pérez", fullName: "Ana Pérez", jobTitle: "Directora", customerName: "Facturación Acme", payoutsName: "Pagos de Acme (USD)", productName: "Plan Pro (mensual)" },
     search: { label: "Buscar en el dashboard", placeholder: "Buscar", pages: "Páginas", searchGroup: "Buscar", searchIn: "{place} con “{q}”", empty: "Nada coincide con “{q}”." },
     viewLabels: {
-      overview: "Resumen",
+      overview: "Resumen", payment: "Pago",
       payments: "Pagos", zkPayments: "Pagos privados",
       balances: "Saldos",
       customers: "Clientes",

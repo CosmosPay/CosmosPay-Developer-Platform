@@ -48,6 +48,8 @@ const env = Astro.cookies.get("cosmospay-env")?.value === "prod" ? "prod" : "dev
 const wantOrg = Astro.cookies.get("cosmospay-org")?.value;
 const orgId = orgs && orgs.some((o) => o.id === wantOrg) ? wantOrg : null;
 const view = Astro.url.searchParams.get("view");
+// A record's id, for a view of one record (?view=payment&id=…).
+const id = Astro.url.searchParams.get("id");
 // Account role (user | support | admin | owner); gates staff features (support inbox,
 // user management). The first account bootstraps to "owner" (see getRole). Best-effort.
 const plan = profile?.plan ?? DEFAULT_PLAN_ID;
@@ -74,5 +76,5 @@ const initialOrgs = orgs ? orgs.map((o) => ({ ...o, createdAt: new Date(o.create
 ---
 
 <CosmosLayout title="Dashboard | Cosmos Pay" lang={lang} noindex nav={false} bodyClass="inst">
-  <Dashboard client:load user={dashUser} lang={lang} features={features} env={env} orgs={initialOrgs} orgId={orgId} view={view} />
+  <Dashboard client:load user={dashUser} lang={lang} features={features} env={env} orgs={initialOrgs} orgId={orgId} view={view} id={id} />
 </CosmosLayout>

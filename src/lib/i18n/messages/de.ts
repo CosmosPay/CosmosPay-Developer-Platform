@@ -982,7 +982,7 @@ export default {
     examples: { order: "Bestellung #24", firstName: "Anna", lastName: "Schmidt", fullName: "Anna Schmidt", jobTitle: "Geschäftsführerin", customerName: "Acme Buchhaltung", payoutsName: "Acme Auszahlungen (USD)", productName: "Pro-Tarif (monatlich)" },
     search: { label: "Dashboard durchsuchen", placeholder: "Suchen", pages: "Seiten", searchGroup: "Suchen", searchIn: "{place} mit „{q}“", empty: "Nichts passt zu „{q}“." },
     viewLabels: {
-      overview: "Übersicht",
+      overview: "Übersicht", payment: "Zahlung",
       payments: "Zahlungen", zkPayments: "Private Zahlungen",
       balances: "Guthaben",
       customers: "Kunden",

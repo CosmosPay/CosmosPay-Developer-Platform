@@ -7,10 +7,10 @@ import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PaymentPreview, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
-import { goFiltered, usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { goFiltered, usePaged, useGsapRows, openRecord, recordHref } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { PayLinkDetailModal, PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
@@ -30,7 +30,6 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
   const [bals, setBals] = useState([]);
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [detail, setDetail] = useState(null);
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -46,7 +45,6 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    setDetail(null);
     // The upstream payments list isn't network-scoped, so request a wider page and
     // filter to the active environment's network here.
     const wantNet = env === "prod" ? "public" : "testnet";
@@ -117,13 +115,13 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
         {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{pg.slice.map((p) => (
-              <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
-                <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => setDetail(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
+              <tr key={p.id} className="row-click" onClick={() => openRecord("payment", p.id)}>
+                <td className="tid"><RecordLink href={recordHref("payment", p.id)} onOpen={() => openRecord("payment", p.id)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{b.payment}</td>
                 <td className="amt"><PaymentAmount intent={p} pl={pl} /></td>
                 <td><Pill st={STATUS_PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
-                <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />
+                <PayLinkRowActions intent={p} t={t} pl={pl} onView={(x) => openRecord("payment", x.id)} canManage={canManage} onDelete={setToDelete} />
               </tr>
             ))}
               <FillRows n={pg.size - pg.count} cols={6} />
@@ -132,7 +130,6 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
         )}
         {!loading && <Pagination {...pg} />}
       </div>
-      {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={(id) => { setRecent((r) => r.filter((x) => x.id !== id)); setDetail(null); }} />}
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </>
   );

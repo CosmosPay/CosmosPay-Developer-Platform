@@ -101,6 +101,16 @@ export function goFiltered(go: (view: string) => void, view: string, params: Rec
   } catch (e) {}
 }
 
+/* A record on a view of its own (product owner: a payment opens on its own page, not a dialog):
+   `openRecord("payment", id)` asks the shell to show it at an address of its own
+   (`recordHref`) with a history entry, so Back returns to the list it came from. An event, so any
+   view or widget can open a record without the shell's functions passed down to it. */
+export const OPEN_RECORD_EVENT = "dash:open-record";
+export function openRecord(view: string, id: string) {
+  window.dispatchEvent(new CustomEvent(OPEN_RECORD_EVENT, { detail: { view, id } }));
+}
+export const recordHref = (view: string, id: string) => `/dashboard?view=${view}&id=${encodeURIComponent(id)}`;
+
 /* A one-off request in the URL, written by goFiltered from elsewhere: `open=<id>` (show that record)
    or `create=1` (open the create dialog). Read after mount (and on FILTERS_EVENT, when the view is
    already on screen), then dropped from the URL, so a reload or closing the dialog leaves the list. */

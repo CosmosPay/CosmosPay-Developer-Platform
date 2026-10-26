@@ -13,8 +13,9 @@ export const QUICK_COUNT = 4;
 /* Weighted uses a view needs before it displaces a default. */
 export const QUICK_MIN_SCORE = 3;
 export const HALF_LIFE_MS = 14 * 86_400_000;
-/* Views a quick link never points at: the overview itself and the personal account. */
-const NEVER = new Set(["overview", "account"]);
+/* Views a quick link never points at: the overview itself, the personal account, and a view of
+   one record (it needs the record). */
+const NEVER = new Set(["overview", "account", "payment"]);
 
 const decay = (n: number, at: number, now: number) => n * 0.5 ** (Math.max(0, now - at) / HALF_LIFE_MS);
 

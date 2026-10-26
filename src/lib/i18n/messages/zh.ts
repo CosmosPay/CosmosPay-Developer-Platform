@@ -595,7 +595,7 @@ export default {
     },
     examples: { order: "订单 #24", firstName: "伟", lastName: "王", fullName: "王伟", jobTitle: "总监", customerName: "Acme 财务", payoutsName: "Acme 出金 (USD)", productName: "Pro 套餐（月付）" },
     search: { label: "搜索控制台", placeholder: "搜索", pages: "页面", searchGroup: "搜索", searchIn: "在{place}中搜索“{q}”", empty: "没有与“{q}”匹配的结果。" },
-    viewLabels: { overview: "概览", payments: "支付", zkPayments: "隐私支付", balances: "余额", customers: "客户", products: "产品与链接", swaps: "兑换", crossChainSwaps: "跨链兑换", liquidity: "流动性池", blindpay: "法币", developers: "API 密钥", webhook: "Webhook", logs: "API 日志", weblogs: "Webhook 日志", activityLog: "客户端活动", activity: "通知", support: "支持", inbox: "客服收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "平台概览", adminPayments: "支付（所有组织）", adminSwaps: "兑换（所有组织）", adminFiat: "法币（所有组织）", adminCustomers: "客户（所有组织）", adminProducts: "产品（所有组织）", adminConsumers: "组织" },
+    viewLabels: { overview: "概览", payment: "付款", payments: "支付", zkPayments: "隐私支付", balances: "余额", customers: "客户", products: "产品与链接", swaps: "兑换", crossChainSwaps: "跨链兑换", liquidity: "流动性池", blindpay: "法币", developers: "API 密钥", webhook: "Webhook", logs: "API 日志", weblogs: "Webhook 日志", activityLog: "客户端活动", activity: "通知", support: "支持", inbox: "客服收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "平台概览", adminPayments: "支付（所有组织）", adminSwaps: "兑换（所有组织）", adminFiat: "法币（所有组织）", adminCustomers: "客户（所有组织）", adminProducts: "产品（所有组织）", adminConsumers: "组织" },
     sidebar: {
       label: "控制台",
       menu: { main: "主菜单", preferences: "偏好设置" },

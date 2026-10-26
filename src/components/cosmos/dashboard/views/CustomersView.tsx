@@ -4,7 +4,7 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { customers as custApi, paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDate, fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, goFiltered, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { usePaged, useGsapRows, goFiltered, useListFilters, openRecord, recordHref } from "@/components/cosmos/dashboard/hooks";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
@@ -121,7 +121,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
         {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CustomerFormModal cv={cv} cx={cx} env={env} orgId={orgId} onClose={() => setModal(false)} onSaved={onCreated} />}
-      {detail && <CustomerDetailModal cv={cv} cx={cx} customer={detail} env={env} orgId={orgId} canManage={canManage} onClose={() => setDetail(null)} onUpdated={onUpdated} onDelete={() => remove(detail)} onOpenPayment={(id) => goFiltered(onGo, "payments", { open: id })} onAllPayments={() => paymentsOf(detail)} />}
+      {detail && <CustomerDetailModal cv={cv} cx={cx} customer={detail} env={env} orgId={orgId} canManage={canManage} onClose={() => setDetail(null)} onUpdated={onUpdated} onDelete={() => remove(detail)} onOpenPayment={(id) => { setDetail(null); openRecord("payment", id); }} onAllPayments={() => paymentsOf(detail)} />}
     </>
   );
 }
@@ -239,7 +239,7 @@ function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose,
               <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>
                 {pays.map((p) => (
                   <tr key={p.id} className="row-click" tabIndex={0} onClick={() => onOpenPayment(p.id)} onKeyDown={(e) => { if (e.key === "Enter") onOpenPayment(p.id); }}>
-                    <td className="tid"><RecordLink href={`/dashboard?view=payments&open=${encodeURIComponent(p.id)}`} onOpen={() => onOpenPayment(p.id)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
+                    <td className="tid"><RecordLink href={recordHref("payment", p.id)} onOpen={() => onOpenPayment(p.id)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                     <td className="amt">{p.amount || "-"} {assetLabel(isChain(p.chain) ? p.chain : "stellar", p.asset)}</td>
                     <td><Pill st={STATUS_PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>

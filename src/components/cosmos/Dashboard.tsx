@@ -12,9 +12,10 @@ import { apiKeys as apiKeysApi, notifications as notificationsApi, account as ac
 import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS } from "@/components/cosmos/dashboard/data";
+import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS, RECORD_VIEWS } from "@/components/cosmos/dashboard/data";
+import { OPEN_RECORD_EVENT } from "@/components/cosmos/dashboard/hooks";
 import {
-  OverviewView, PaymentsView, ZkPaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
+  OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
@@ -27,7 +28,7 @@ import { parseUsage, quickLinks, recordUse } from "@/lib/dashboard-usage";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
-export default function Dashboard({ user: initialUser, lang, features, env = "dev", orgs: initialOrgs = null, orgId: initialOrgId = null, view: initialView = null }) {
+export default function Dashboard({ user: initialUser, lang, features, env = "dev", orgs: initialOrgs = null, orgId: initialOrgId = null, view: initialView = null, id: initialRecordId = null }) {
   initLang(lang);
   const t = useT();
   // Plan/onboarding feature flags resolved server-side (per account role). Defaults
@@ -54,10 +55,18 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   // The view a link names (?view=, read by the page on the server): the first render is already
   // that view, so the overview never mounts and fetches only to be replaced.
   const [view, setView] = useState(() => (initialView && t.dash.viewLabels[initialView] && !DISABLED_VIEWS.includes(initialView) ? initialView : "overview"));
+  // A record on a view of its own (RECORD_VIEWS: a payment) carries its id, from the page's
+  // address on load, then from openRecord.
+  const [recordId, setRecordId] = useState(initialRecordId);
   // Keep the URL in sync with the active view so a reload restores it (no more snapping back to Overview).
   // Moving to another view drops the last one's list filters (useListFilters keeps them in the URL).
+  // Opening a record adds a history entry (`pushNext`), so Back returns to the list; a step
+  // through history (`fromHistory`) leaves the address the browser restored, filters included.
   const shownView = useRef(null);
+  const pushNext = useRef(false);
+  const fromHistory = useRef(false);
   useEffect(() => {
+    if (fromHistory.current) { fromHistory.current = false; shownView.current = view; return; }
     try {
       const url = new URL(window.location.href);
       if (shownView.current !== null && shownView.current !== view) {
@@ -66,9 +75,42 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       shownView.current = view;
       if (view === "overview") url.searchParams.delete("view");
       else url.searchParams.set("view", view);
-      window.history.replaceState({}, "", url);
+      if (RECORD_VIEWS[view] && recordId) url.searchParams.set("id", recordId);
+      else url.searchParams.delete("id");
+      if (pushNext.current) { pushNext.current = false; window.history.pushState({}, "", url); }
+      else window.history.replaceState({}, "", url);
     } catch (e) {}
-  }, [view]);
+  }, [view, recordId]);
+  // openRecord(view, id) from any view or widget: that record's view, as a new history entry.
+  useEffect(() => {
+    const onOpen = (e) => {
+      const { view: v, id } = (e && e.detail) || {};
+      if (!RECORD_VIEWS[v] || !id) return;
+      pushNext.current = true;
+      setRecordId(id);
+      setView(v);
+      setNavOpen(false);
+    };
+    window.addEventListener(OPEN_RECORD_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_RECORD_EVENT, onOpen);
+  }, []);
+  // Back and Forward: the view and record the address names.
+  const current = useRef({ view, recordId });
+  current.current = { view, recordId };
+  useEffect(() => {
+    const onPop = () => {
+      const sp = new URLSearchParams(window.location.search);
+      const v = sp.get("view") || "overview";
+      if (!t.dash.viewLabels[v] || DISABLED_VIEWS.includes(v)) return;
+      const id = RECORD_VIEWS[v] ? sp.get("id") : null;
+      if (current.current.view === v && current.current.recordId === id) return;
+      fromHistory.current = true;
+      setRecordId(id);
+      setView(v);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   // Sandbox or production survives a reload: a cookie the page reads on the server, so the first
   // render already shows the chosen environment (no sandbox flash, no second fetch).
   const [live, setLive] = useState(env === "prod");
@@ -355,6 +397,10 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       : { key: k, label: t.dash.viewLabels[k], icon: DI[k] || DI.overview, href: `/dashboard?view=${k}` }));
     const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} canCreatePayments={can("payments:create")} env={live ? "prod" : "dev"} quick={quick} onQuickUse={noteUse} />;
     switch (view) {
+      // A payment on its own view; without an id, its list.
+      case "payment": return recordId
+        ? <PaymentRecordView id={recordId} env={live ? "prod" : "dev"} canManage={can("payments:create")} onBack={() => go("payments")} />
+        : <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "payments": return <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} onGo={go} />;
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
@@ -397,7 +443,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       <div className="dash-frame">
         <div className="nav-scrim" onClick={() => setNavOpen(false)} />
         <aside className="side" id="dash-side">
-          <Sidebar view={view === "crossChainSwaps" ? "swaps" : view} go={go} visible={visibleView} unread={unreadNotifs} supportUnread={supportUnread} />
+          <Sidebar view={view === "crossChainSwaps" ? "swaps" : RECORD_VIEWS[view] || view} go={go} visible={visibleView} unread={unreadNotifs} supportUnread={supportUnread} />
         </aside>
 
         <div className="dash-main">
