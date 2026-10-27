@@ -9,6 +9,8 @@ import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { useT, fmt } from "@/lib/i18n/index";
 import { admin as adminApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
+import { IcCopy } from "@/components/cosmos/icons";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
@@ -116,6 +118,29 @@ function OrgTd({ row, onFilter }) {
   return <td className="cust">{label}</td>;
 }
 
+/* A row's "⋮" (as every list's): copy its id and whatever else it names, and filter the current
+   view by its organization. `extra` adds the row's own items; `children` sit before the menu. */
+function AdminRowMenu({ label, id, row = null, onFilter = null, copies = [], extra = [], children = null }) {
+  const t = useT();
+  const a = t.dash.admin;
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  return (
+    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+      {children}
+      <RowMenu
+        label={fmt(cm.rowActions, { name: label || id })}
+        items={[
+          { key: "id", label: cm.copyId, icon: <IcCopy />, disabled: !id, onClick: () => copy(id, t.toasts.copied) },
+          ...copies.filter((c) => c.value).map((c) => ({ key: c.key, label: c.label, icon: <IcCopy />, onClick: () => copy(c.value, t.toasts.copied) })),
+          ...(onFilter && row && row.consumerId ? [{ key: "org", label: a.filterByOrg, icon: DI.org, onClick: () => onFilter(row) }] : []),
+          ...extra,
+        ]}
+      />
+    </td>
+  );
+}
+
 /* A removable "Organization: <label> ✕" chip shown when a consumer filter is active. */
 function FilterChip({ a, label, onClear }) {
   return (
@@ -147,7 +172,7 @@ function useAdminRows(fetcher, deps) {
 /* Owner/admin row actions for a fiat receiver in the GLOBAL admin view (no org/env on
    access/enable; admin is global). Approve is shown ONLY for pending_review (mirrors the
    org-scoped Fiat rule); otherwise the disable/enable toggle when at the provider. */
-function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved }) {
+function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved, onFilter = null }) {
   const af = a.fiat;
   const [busy, setBusy] = useState("");
   const status = (row.kycStatus || "").toLowerCase();
@@ -201,7 +226,7 @@ function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved }) {
   };
 
   return (
-    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+    <AdminRowMenu label={row.name || row.email || row.id} id={row.id} row={row} onFilter={onFilter} copies={[{ key: "email", label: a.copyEmail, value: row.email }, { key: "provider", label: a.copyProviderId, value: row.blindpayId }]}>
       {disabled
         ? <button type="button" className="btn btn-violet btn-sm" disabled={busy === "access"} onClick={toggle}>{af.enable}</button>
         : isPendingReview
@@ -211,7 +236,7 @@ function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved }) {
             : atProvider
               ? <button type="button" className="btn btn-soft btn-sm danger-soft" disabled={busy === "access"} onClick={toggle}>{af.disable}</button>
               : null}
-    </td>
+    </AdminRowMenu>
   );
 }
 
@@ -236,7 +261,7 @@ function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, heads, rows
     />
     <div className="panel">
       {!loading && (
-        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{heads.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{heads.map((h, i) => <th key={i}>{h === "" ? <span className="sr-only">{t.dash.common.actions}</span> : h}</th>)}</tr></thead>
           <tbody>
             {!error && pg.slice.map(renderRow)}
             <FillRows n={pg.size - (error ? 0 : pg.count)} cols={heads.length} empty={error ? a.loadError : null} />
@@ -372,7 +397,7 @@ export function AdminPaymentsView({ env = "dev", adminFilter, goToAdmin }) {
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ap.searchPlaceholder} tag={network} resetKey={filter}
         filters={[{ key: "status", label: t.dash.filters.status, value: filter, onChange: setFilter, options: PAY_FILTERS.map((k) => ({ value: k, label: a.filters[k] })) }]}
-        heads={[ap.tableHead.id, ap.tableHead.org, ap.tableHead.destination, ap.tableHead.amount, ap.tableHead.status, ap.tableHead.created]}
+        heads={[ap.tableHead.id, ap.tableHead.org, ap.tableHead.destination, ap.tableHead.amount, ap.tableHead.status, ap.tableHead.created, ""]}
         rows={statusFiltered}
         haystack={(p) => `${p.id || ""} ${p.txHash || ""} ${orgOf(p)} ${p.destination || ""} ${p.amount || ""} ${p.asset || ""} ${p.status || ""}`}
         empty={ap.empty}
@@ -384,6 +409,7 @@ export function AdminPaymentsView({ env = "dev", adminFilter, goToAdmin }) {
             <td className="amt">{p.amount || "-"} {assetOf(p.asset, p.chain)}</td>
             <td><Pill st={ADMIN_PILL[p.status] || "ref"} label={p.status || "-"} /></td>
             <td className="cust">{fmtDateTime(p.createdAt)}</td>
+            <AdminRowMenu id={p.id} row={p} onFilter={onOrgFilter} copies={[{ key: "tx", label: a.copyTx, value: p.txHash }, { key: "dest", label: a.copyDestination, value: p.destination }]} />
           </tr>
         )}
       />
@@ -429,7 +455,7 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
           { key: "venue", label: t.dash.filters.network, value: venue, onChange: (v) => { setVenue(v); setFilter("all"); }, options: SWAP_VENUES.map((k) => ({ value: k, label: as.venues[k] })) },
           { key: "status", label: t.dash.filters.status, value: filter, onChange: setFilter, options: filters.map((k) => ({ value: k, label: (a.filters && a.filters[k]) || as.crossStatus[k] || k })) },
         ]}
-        heads={[as.tableHead.id, as.tableHead.org, as.tableHead.route, as.tableHead.status, as.tableHead.created]}
+        heads={[as.tableHead.id, as.tableHead.org, as.tableHead.route, as.tableHead.status, as.tableHead.created, ""]}
         rows={statusFiltered}
         haystack={(s) => `${s.id || ""} ${s.txHash || ""} ${orgOf(s)} ${s.source || ""} ${s.destination || ""} ${s.sendAsset || ""} ${s.destAsset || ""} ${s.recipient || ""} ${s.refundTo || ""} ${s.depositAddress || ""} ${s.status || ""}`}
         empty={as.empty}
@@ -440,6 +466,7 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
             <td className="amt">{route(s)}</td>
             <td><Pill st={ADMIN_PILL[s.status] || "ref"} label={s.status || "-"} /></td>
             <td className="cust">{fmtDateTime(s.createdAt)}</td>
+            <AdminRowMenu id={s.id} row={s} onFilter={onOrgFilter} copies={[{ key: "tx", label: a.copyTx, value: s.txHash || s.depositTxHash }, { key: "deposit", label: a.copyDeposit, value: s.depositAddress }]} />
           </tr>
         )}
       />
@@ -474,7 +501,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
             <td className="cust">{x.type || "-"}</td>
             <td>{x.disabled ? <Pill st="fail" label={af.disabled} /> : <Pill st={fiatPill(x.kycStatus)} label={humanizeStatus(x.kycStatus) || af.statusUnknown} />}</td>
             <td className="cust">{fmtDateTime(x.createdAt)}</td>
-            <AdminReceiverActions a={a} row={x} env={env} onAccessChanged={onAccessChanged} onApproved={onApproved} />
+            <AdminReceiverActions a={a} row={x} env={env} onAccessChanged={onAccessChanged} onApproved={onApproved} onFilter={onOrgFilter} />
           </tr>
         )}
       />
@@ -484,7 +511,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
     return (
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={af.searchPayins}
-        heads={[af.payinHead.id, af.payinHead.org, af.payinHead.asset, af.payinHead.method, af.payinHead.amount, af.payinHead.status, af.payinHead.created]}
+        heads={[af.payinHead.id, af.payinHead.org, af.payinHead.asset, af.payinHead.method, af.payinHead.amount, af.payinHead.status, af.payinHead.created, ""]}
         rows={rows} empty={af.emptyPayins}
         haystack={(x) => `${x.id || ""} ${orgOf(x)} ${x.token || ""} ${x.network || ""} ${x.paymentMethod || ""} ${x.status || ""}`}
         renderRow={(x) => (
@@ -496,6 +523,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
             <td className="amt">{x.senderAmount ?? "-"} → {x.receiverAmount ?? "-"}</td>
             <td><Pill st={fiatPill(x.status)} label={humanizeStatus(x.status) || af.statusUnknown} /></td>
             <td className="cust">{fmtDateTime(x.createdAt)}</td>
+            <AdminRowMenu id={x.id} row={x} onFilter={onOrgFilter} />
           </tr>
         )}
       />
@@ -504,7 +532,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
   return (
     <AdminTable
       a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={af.searchPayouts}
-      heads={[af.payoutHead.id, af.payoutHead.org, af.payoutHead.asset, af.payoutHead.rail, af.payoutHead.amount, af.payoutHead.status, af.payoutHead.created]}
+      heads={[af.payoutHead.id, af.payoutHead.org, af.payoutHead.asset, af.payoutHead.rail, af.payoutHead.amount, af.payoutHead.status, af.payoutHead.created, ""]}
       rows={rows} empty={af.emptyPayouts}
       haystack={(x) => `${x.id || ""} ${orgOf(x)} ${x.token || ""} ${x.network || ""} ${x.rail || ""} ${x.status || ""}`}
       renderRow={(x) => (
@@ -516,6 +544,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
           <td className="amt">{x.senderAmount ?? "-"} → {x.receiverAmount ?? "-"}</td>
           <td><Pill st={fiatPill(x.status)} label={humanizeStatus(x.status) || af.statusUnknown} /></td>
           <td className="cust">{fmtDateTime(x.createdAt)}</td>
+          <AdminRowMenu id={x.id} row={x} onFilter={onOrgFilter} />
         </tr>
       )}
     />
@@ -557,7 +586,7 @@ export function AdminCustomersView({ adminFilter, goToAdmin }) {
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminCustomers", null)} />}
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ac.searchPlaceholder}
-        heads={[ac.tableHead.name, ac.tableHead.org, ac.tableHead.email, t.dash.customers.tableHead.wallets, ac.tableHead.created]}
+        heads={[ac.tableHead.name, ac.tableHead.org, ac.tableHead.email, t.dash.customers.tableHead.wallets, ac.tableHead.created, ""]}
         rows={rows} empty={ac.empty}
         haystack={(c) => `${c.name || ""} ${c.alias || ""} ${orgOf(c)} ${c.email || ""} ${(c.wallets || []).map((w) => w.address).join(" ")} ${c.id || ""}`}
         renderRow={(c) => (
@@ -567,6 +596,7 @@ export function AdminCustomersView({ adminFilter, goToAdmin }) {
             <td className="cust">{c.email || "-"}</td>
             <td className="cust">{(c.wallets || []).length ? (c.wallets.length === 1 ? shortAcct(c.wallets[0].address) : fmt(t.dash.customers.walletsCount, { n: c.wallets.length })) : "-"}</td>
             <td className="cust">{fmtDateTime(c.createdAt)}</td>
+            <AdminRowMenu label={c.name || c.email} id={c.id} row={c} onFilter={onOrgFilter} copies={[{ key: "email", label: a.copyEmail, value: c.email }]} />
           </tr>
         )}
       />
@@ -589,7 +619,7 @@ export function AdminProductsView({ adminFilter, goToAdmin }) {
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminProducts", null)} />}
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ap.searchPlaceholder}
-        heads={[ap.tableHead.name, ap.tableHead.org, ap.tableHead.price, ap.tableHead.kind, ap.tableHead.created]}
+        heads={[ap.tableHead.name, ap.tableHead.org, ap.tableHead.price, ap.tableHead.kind, ap.tableHead.created, ""]}
         rows={rows} empty={ap.empty}
         haystack={(p) => `${p.name || ""} ${orgOf(p)} ${p.kind || ""} ${p.asset || ""} ${p.id || ""}`}
         renderRow={(p) => (
@@ -599,6 +629,7 @@ export function AdminProductsView({ adminFilter, goToAdmin }) {
             <td className="amt">{p.amount ? `${p.amount} ${assetOf(p.asset, p.chain)}` : "-"}</td>
             <td className="cust">{p.kind || "-"}</td>
             <td className="cust">{fmtDateTime(p.createdAt)}</td>
+            <AdminRowMenu label={p.name} id={p.id} row={p} onFilter={onOrgFilter} />
           </tr>
         )}
       />
@@ -631,7 +662,7 @@ export function AdminConsumersView({ goToAdmin }) {
       <ViewHead title={ac.title} />
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ac.searchPlaceholder}
-        heads={[ac.tableHead.org, ac.tableHead.payments, ac.tableHead.swaps, ac.tableHead.products, ac.tableHead.customers, ac.tableHead.receivers, ac.tableHead.payins, ac.tableHead.payouts, ac.tableHead.webhooks, ac.tableHead.created]}
+        heads={[ac.tableHead.org, ac.tableHead.payments, ac.tableHead.swaps, ac.tableHead.products, ac.tableHead.customers, ac.tableHead.receivers, ac.tableHead.payins, ac.tableHead.payouts, ac.tableHead.webhooks, ac.tableHead.created, ""]}
         rows={rows} empty={ac.empty}
         haystack={(c) => `${consumerLabel(c)} ${orgNames(c).join(" ")} ${c.accountName || ""} ${c.accountEmail || ""} ${c.apisixUsername || ""} ${c.id || ""}`}
         renderRow={(c) => {
@@ -656,6 +687,14 @@ export function AdminConsumersView({ goToAdmin }) {
             {countTd(c, "payouts", "adminFiat", "payouts")}
             <td className="cust">{cnt(c, "webhookEndpoints")}</td>
             <td className="cust">{fmtDateTime(c.createdAt)}</td>
+            <AdminRowMenu
+              label={consumerLabel(c)} id={c.id}
+              copies={[{ key: "user", label: ac.copyConsumer, value: c.apisixUsername }, { key: "email", label: a.copyEmail, value: c.accountEmail }]}
+              extra={goToAdmin && c.id ? [
+                { key: "payments", label: ac.tableHead.payments, icon: DI.payments, onClick: () => goToAdmin("adminPayments", { consumer: c.id, label: consumerLabel(c) }) },
+                { key: "customers", label: ac.tableHead.customers, icon: DI.customers, onClick: () => goToAdmin("adminCustomers", { consumer: c.id, label: consumerLabel(c) }) },
+              ] : []}
+            />
           </tr>
         ); }}
       />
