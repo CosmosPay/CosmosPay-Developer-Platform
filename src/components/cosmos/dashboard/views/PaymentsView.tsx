@@ -20,6 +20,7 @@ import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
+import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
@@ -108,6 +109,14 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
 
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
+  // Several at a time (product owner, 2026-10-27): every payment but a settled one can go.
+  const canPick = (p) => p.status !== "SUCCEEDED";
+  const nameOfPay = (p) => `${amountLabel(p, pl)} (${shortAddress(p.id)})`;
+  const sel = useSelection(canManage ? view.filter(canPick).map((p) => p.id) : []);
+  const bulk = useBulkDelete({
+    sel, nameOf: (id) => { const p = rows.find((x) => x.id === id); return p ? nameOfPay(p) : id; },
+    remove: (id) => payApi.remove(id, env), onRemoved: (ids) => setRows((r) => r.filter((x) => !ids.includes(x.id))),
+  });
 
   // A new link opens on its own view (its QR, its checkout link), as every payment does.
   const onCreated = (intent) => { setModal(false); setRows((r) => [intent, ...r]); openRecord("payment", intent.id); };
@@ -140,14 +149,15 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
         date={filters.date} onDate={(v) => set("date", v)}
         active={active} onReset={reset}
         shown={view.length} total={loading ? undefined : inEnv.length} loading={loading}
-        actions={canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pl.create}</button>}
+        actions={canManage && (sel.count ? <BulkActions sel={sel} onDelete={bulk.ask} busy={bulk.busy} /> : <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pl.create}</button>)}
       />
       <div className="panel">
         {loading && <TableSkeleton label={pl.loading} cols={6} />}
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pl.tableHead.id}</th><th>{pl.tableHead.type}</th><th>{pl.detail.fields.network}</th><th>{pl.tableHead.amount}</th><th>{pl.tableHead.status}</th><th>{pl.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{canManage && <SelectHead sel={sel} pageIds={pg.slice.filter(canPick).map((p) => p.id)} />}<th>{pl.tableHead.id}</th><th>{pl.tableHead.type}</th><th>{pl.detail.fields.network}</th><th>{pl.tableHead.amount}</th><th>{pl.tableHead.status}</th><th>{pl.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => view1(p)}>
+                {canManage && <SelectCell sel={sel} id={p.id} name={nameOfPay(p)} disabled={!canPick(p)} hint={t.dash.common.paidNoDelete} />}
                 {/* The id opens the payment (a new tab with a modified click) and previews it on hover. */}
                 <td className="tid"><RecordLink href={recordHref("payment", p.id)} onOpen={() => view1(p)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{pl.kinds[p.kind] || p.kind}</td>
@@ -159,7 +169,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
               </tr>
             ))}
               <FillRows
-                n={pg.size - (error ? 0 : pg.count)} cols={7}
+                n={pg.size - (error ? 0 : pg.count)} cols={canManage ? 8 : 7}
                 empty={error ? pl.loadError : null}
               />
             </tbody>
@@ -168,6 +178,7 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
         {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CreatePayLinkModal pl={pl} orgId={orgId} env={env} canConnectWallets={canConnectWallets} initial={modal === true ? null : modal} onClose={() => setModal(false)} onCreated={onCreated} />}
+      {bulk.dialog}
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </>
   );

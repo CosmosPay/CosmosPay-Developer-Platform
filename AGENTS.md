@@ -88,6 +88,12 @@ These were said more than once; breaking one is a bug, whatever the task was.
   **long forms go in steps** (`FormSteps`), **every create opens a modal** copied from an
   existing one, and **every delete asks first** (`ConfirmModal`). The details are under "The
   institutional skin" below.
+- **A table with a delete selects several rows** (2026-10-27): `components/BulkSelect.tsx`, a
+  checkbox first in each row (disabled, with the reason, where the row cannot go: a settled
+  payment) and one in the head for the page; while rows are selected the filter row shows how many,
+  "Delete selected" and "Clear selection" in place of the create button, and the delete confirms
+  with the names before it runs (`useBulkDelete`). Payments, customers, products, webhook endpoints
+  and private accounts have it; a new deletable table gets it too.
 
 ## Three domains, one app
 

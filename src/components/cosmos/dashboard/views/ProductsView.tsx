@@ -20,6 +20,7 @@ import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink"
 import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { ViewFigures } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
+import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 
 const TYPE_TO_KIND = { Recurring: "recurring", "One-time": "one_time", "Payment link": "link" };
 const KIND_TO_TYPE = { recurring: "Recurring", one_time: "One-time", link: "Payment link" };
@@ -67,7 +68,13 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
   const kindCounts = countBy(items.filter((p) => matches(p, "kind")), (p) => p.kind);
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
-  const addButton = canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button>;
+  // Several at a time (product owner, 2026-10-27).
+  const sel = useSelection(canManage ? view.map((p) => p.id) : []);
+  const bulk = useBulkDelete({
+    sel, nameOf: (id) => items.find((x) => x.id === id)?.name || id,
+    remove: (id) => prodApi.remove(id, env, orgId), onRemoved: (ids) => setItems((x) => x.filter((i) => !ids.includes(i.id))),
+  });
+  const addButton = canManage && (sel.count ? <BulkActions sel={sel} onDelete={bulk.ask} busy={bulk.busy} /> : <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {pr.add}</button>);
 
   const onCreated = (p) => { setModal(false); setItems((x) => [p, ...x]); };
   const onUpdated = (p) => { setItems((x) => x.map((i) => (i.id === p.id ? { ...i, ...p } : i))); setDetail(null); };
@@ -117,9 +124,10 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
       />
       <div className="panel">
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th>{pr.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{canManage && <SelectHead sel={sel} pageIds={pg.slice.map((p) => p.id)} />}<th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th>{pr.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
+                {canManage && <SelectCell sel={sel} id={p.id} name={p.name} />}
                 <td className="tid">
                   <div className="cust-cell">
                     <span className="am-sq">{DI.products}</span>
@@ -151,7 +159,7 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
               </tr>
             ))}
               <FillRows
-                n={pg.size - (error ? 0 : pg.count)} cols={6}
+                n={pg.size - (error ? 0 : pg.count)} cols={canManage ? 7 : 6}
                 empty={error ? cx.loadError : null}
               />
             </tbody>
@@ -161,6 +169,7 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
         {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CreateProductModal pr={pr} env={env} orgId={orgId} onClose={() => setModal(false)} onCreated={onCreated} />}
+      {bulk.dialog}
       {toDelete && <ConfirmModal title={pr.deleteTitle} body={fmt(pr.deleteBody, { name: toDelete.name })} confirmLabel={cx.delete} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => { if (!deleting) setToDelete(null); }} />}
       {detail && <ProductDetailModal pr={pr} cx={cx} product={detail} env={env} orgId={orgId} canManage={canManage} canSell={canSell} onClose={() => setDetail(null)} onUpdated={onUpdated} onSell={() => sell(detail)} onDelete={() => setToDelete(detail)} />}
     </>

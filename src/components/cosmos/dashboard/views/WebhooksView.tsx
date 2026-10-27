@@ -19,6 +19,7 @@ import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
+import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 
 const EVENT_TYPES = [
   "PAYMENT_INTENT_CREATED",
@@ -74,7 +75,14 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
   const stateCounts = countBy(eps.filter((w) => matches(w, "status")), stateOf);
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
-  const addButton = canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button>;
+  // Several at a time (product owner, 2026-10-27).
+  const picked = useSelection(canManage ? view.map((w) => w.id) : []);
+  const bulk = useBulkDelete({
+    sel: picked, nameOf: (id) => eps.find((x) => x.id === id)?.url || id,
+    remove: (id) => whApi.remove(id, env, orgId),
+    onRemoved: (ids) => { setEps((p) => p.filter((x) => !ids.includes(x.id))); if (selected && ids.includes(selected.id)) setSelected(null); },
+  });
+  const addButton = canManage && (picked.count ? <BulkActions sel={picked} onDelete={bulk.ask} busy={bulk.busy} /> : <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {wv.add}</button>);
 
   const onCreated = (ep) => { setModal(false); setEps((p) => [ep, ...p]); if (ep.secret) setReveal({ url: ep.url, secret: ep.secret }); };
   const onEdited = (ep) => {
@@ -128,9 +136,10 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
       />
       <div className="panel">
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{canManage && <SelectHead sel={picked} pageIds={pg.slice.map((w) => w.id)} />}<th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((w) => (
               <tr key={w.id} className={`row-click${selected && selected.id === w.id ? " row-on" : ""}`} onClick={() => setSelected(w)}>
+                {canManage && <SelectCell sel={picked} id={w.id} name={w.url} />}
                 <td className="tid">
                   <span className="cell-mark"><span className="am-sq">{DI.webhook}</span>
                   <RecordLink
@@ -177,7 +186,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
               </tr>
             ))}
               <FillRows
-                n={pg.size - (error ? 0 : pg.count)} cols={5}
+                n={pg.size - (error ? 0 : pg.count)} cols={canManage ? 6 : 5}
                 empty={error ? cx.loadError : null}
               />
             </tbody>

@@ -1178,7 +1178,7 @@ export default {
       Active: "Activo",
       Delivered: "Entregado"
     },
-    common: { back: "Volver", notPayable: "Ya no se puede pagar", sellNeeds: "Necesita un precio y estar a la venta", rowActions: "Acciones de {name}", copyId: "Copiar ID", copyUrl: "Copiar URL", copyAccount: "Copiar cuenta", openNewTab: "Abrir en otra pestaña", noTxYet: "Todavía sin transacción", paidNoDelete: "Un pago completado no se puede eliminar", account: "Cuenta", orgWallet: "Billetera de la organización", paymentsHere: "Pagos en la lista", lastPayment: "Último pago", copyValue: "Copiar {value}", notFound: "No está en esta organización o entorno.", open: "Abrir",
+    common: { selectRow: "Seleccionar {name}", selectPage: "Seleccionar todo en esta página", selectedOne: "1 seleccionado", selectedN: "{n} seleccionados", deleteSelected: "Eliminar seleccionados", clearSelection: "Quitar selección", bulkTitle: "¿Eliminar {n} elementos?", bulkTitleOne: "¿Eliminar el elemento seleccionado?", bulkMore: "y {n} más", bulkDoneOne: "1 eliminado", bulkDoneN: "{n} eliminados", bulkFailed: "{n} no se pudieron eliminar; el resto sí", back: "Volver", notPayable: "Ya no se puede pagar", sellNeeds: "Necesita un precio y estar a la venta", rowActions: "Acciones de {name}", copyId: "Copiar ID", copyUrl: "Copiar URL", copyAccount: "Copiar cuenta", openNewTab: "Abrir en otra pestaña", noTxYet: "Todavía sin transacción", paidNoDelete: "Un pago completado no se puede eliminar", account: "Cuenta", orgWallet: "Billetera de la organización", paymentsHere: "Pagos en la lista", lastPayment: "Último pago", copyValue: "Copiar {value}", notFound: "No está en esta organización o entorno.", open: "Abrir",
       actions: "Acciones",
       details: "Detalles",
       cancel: "Cancelar",

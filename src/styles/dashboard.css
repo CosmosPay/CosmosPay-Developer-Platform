@@ -1213,3 +1213,18 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
   .fstep + .fstep::before { width: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .fstep-body.arrive { animation: none; } }
+
+/* ---- row selection (bulk actions): a checkbox opens each row, the filter row acts on them ---- */
+.inst .tx :is(th, td).sel { width: 1%; padding-right: 0; }
+.sel-box { appearance: none; -webkit-appearance: none; margin: 0; width: 18px; height: 18px; border: 1.5px solid var(--line-2); border-radius: 5px; background: var(--surface); display: inline-grid; place-items: center; vertical-align: middle; cursor: pointer; transition: background .12s, border-color .12s; }
+.sel-box::before { content: ""; width: 9px; height: 5px; border: solid var(--surface); border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); opacity: 0; }
+.sel-box:hover:not(:disabled) { border-color: var(--ink-3); }
+.sel-box:is(:checked, :indeterminate) { background: var(--ink); border-color: var(--ink); }
+.sel-box:checked::before { opacity: 1; }
+.sel-box:indeterminate::before { opacity: 1; width: 8px; height: 0; border-width: 0 0 2px; transform: none; }
+.sel-box:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 2px; }
+.sel-box:disabled { opacity: .35; cursor: not-allowed; }
+.inst .tx tbody tr:has(.sel-box:checked) td { background: var(--surface-2); }
+.bulk-n { font-size: 13.5px; font-weight: 600; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cfm-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; font-weight: 600; color: var(--ink); }
+.cfm-list .cfm-more { font-weight: 400; color: var(--ink-3); }

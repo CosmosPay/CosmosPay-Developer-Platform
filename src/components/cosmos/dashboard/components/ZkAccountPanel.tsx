@@ -74,6 +74,7 @@ import type { ZkNetworkConfig } from "@/lib/zk/checkout-api";
 import type { ZkBalances, ZkPhase, ZkWallet } from "@/lib/zk/wallet";
 import type { SignRequest } from "@/lib/zk/xdr-signer";
 import { ZkSignDialog } from "@/components/cosmos/dashboard/components/ZkSignDialog";
+import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 import { SUB_ACCOUNT_STARTING_BALANCE } from "@/lib/zk/sub-accounts";
 
 type Action = "create" | "open" | "merge" | "deposit" | "withdraw" | "refresh";
@@ -392,6 +393,19 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
       .finally(() => setRemoving(false));
   };
   const askRemove = (w: PrivateAccount) => { setDetail(null); setToRemove(w); };
+  // Several at a time (product owner, 2026-10-27): removed from their customers, as one is.
+  const accountName = (w: PrivateAccount) => (w.label ? `${w.customerName} (${w.label})` : w.customerName);
+  const sel = useSelection(canRemove ? rows.map((w) => w.walletId) : []);
+  const bulk = useBulkDelete({
+    sel, nameOf: (id) => { const w = all.find((x) => x.walletId === id); return w ? accountName(w) : id; },
+    remove: (id) => { const w = all.find((x) => x.walletId === id); return w ? custApi.removeWallet(w.customerId, w.walletId, env, orgId) : Promise.reject(new Error(id)); },
+    onRemoved: (ids) => {
+      const gone = all.filter((w) => ids.includes(w.walletId)).map((w) => w.address);
+      if (open && gone.includes(open)) { void wallet.current?.destroy(); wallet.current = null; setOpen(null); setBalances(null); }
+      onChanged?.();
+    },
+  });
+  const cols = COLS + (canRemove ? 1 : 0);
 
   /* What an account offers: its balances, read with the customer's signature, then, once they are
      on screen, moving incoming funds, a deposit and a withdrawal. */
@@ -484,7 +498,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
         query={filters.accq} onQuery={(v) => set("accq", v)} placeholder={za.searchPlaceholder}
         date={filters.accdate} onDate={(v) => set("accdate", v)}
         shown={rows.length} total={loading ? undefined : privateAccounts.length} active={active} onReset={reset} loading={loading}
-        actions={canAdd && <button type="button" className="btn btn-dark btn-sm" onClick={() => setAdding(true)} disabled={!provable || !!busy}>{DI.plus} {za.add}</button>}
+        actions={sel.count ? <BulkActions sel={sel} onDelete={bulk.ask} busy={bulk.busy || !!busy} /> : canAdd && <button type="button" className="btn btn-dark btn-sm" onClick={() => setAdding(true)} disabled={!provable || !!busy}>{DI.plus} {za.add}</button>}
       />
 
       {!provable && <p className="field-err zka-note" role="alert">{z.cannotProve}</p>}
@@ -496,10 +510,10 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
       )}
 
       <div className="panel">
-        {loading && <TableSkeleton label={za.title} cols={COLS} />}
+        {loading && <TableSkeleton label={za.title} cols={cols} />}
         {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx">
-            <thead><tr><th>{za.tableHead.customer}</th><th>{za.tableHead.address}</th><th>{za.spendable}</th><th>{za.receiving}</th><th>{za.tableHead.payments}</th><th>{za.tableHead.added}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+            <thead><tr>{canRemove && <SelectHead sel={sel} pageIds={pg.slice.map((w) => w.walletId)} />}<th>{za.tableHead.customer}</th><th>{za.tableHead.address}</th><th>{za.spendable}</th><th>{za.receiving}</th><th>{za.tableHead.payments}</th><th>{za.tableHead.added}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>
               {!loadError && pg.slice.map((w) => {
                 const a = actionsFor(w.address);
@@ -508,6 +522,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                 const name = w.label ? `${w.customerName} (${w.label})` : w.customerName;
                 return [
                   <tr key={w.walletId} className="row-click" onClick={() => setDetail(w.walletId)}>
+                    {canRemove && <SelectCell sel={sel} id={w.walletId} name={accountName(w)} />}
                     {/* The customer opens the account and previews it on hover; the copy is its address. */}
                     <td className="tid">
                       <span className="cell-mark">
@@ -547,11 +562,11 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                       />
                     </td>
                   </tr>,
-                  work && <tr key={`${w.walletId}:work`} className="zka-work"><td colSpan={COLS}>{work}</td></tr>,
+                  work && <tr key={`${w.walletId}:work`} className="zka-work"><td colSpan={cols}>{work}</td></tr>,
                 ];
               })}
               <FillRows
-                n={pg.size - (loadError ? 0 : pg.count) - (workingOnPage ? 1 : 0)} cols={COLS}
+                n={pg.size - (loadError ? 0 : pg.count) - (workingOnPage ? 1 : 0)} cols={cols}
                 empty={loadError ? za.loadError : null}
               />
             </tbody>

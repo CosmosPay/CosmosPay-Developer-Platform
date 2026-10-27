@@ -22,6 +22,7 @@ import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLin
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { ViewFigures } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
+import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 import { IcCopy } from "@/components/cosmos/icons";
 import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { CHAINS, CHAIN_NAMES, assetLabel, isAddress, isChain } from "@/lib/chains";
@@ -85,7 +86,14 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
   const chainCounts = countBy(rows.filter((c) => matches(c, "chain")).flatMap((c) => [...new Set(walletsOf(c).map((w) => w.chain))]), (x) => x);
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
-  const addButton = canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button>;
+  // Several at a time (product owner, 2026-10-27).
+  const nameOfCust = (c) => c.alias || c.name;
+  const sel = useSelection(canManage ? view.map((c) => c.id) : []);
+  const bulk = useBulkDelete({
+    sel, nameOf: (id) => { const c = rows.find((x) => x.id === id); return c ? nameOfCust(c) : id; },
+    remove: (id) => custApi.remove(id, env, orgId), onRemoved: (ids) => setRows((x) => x.filter((i) => !ids.includes(i.id))),
+  });
+  const addButton = canManage && (sel.count ? <BulkActions sel={sel} onDelete={bulk.ask} busy={bulk.busy} /> : <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button>);
   // The figures, from the list itself: customers, the ones with a wallet, their payments, the new ones.
   const sumPays = rows.reduce((n, c) => n + (c.payments || 0), 0);
   const sumOk = rows.reduce((n, c) => n + (c.succeeded || 0), 0);
@@ -135,11 +143,12 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
       />
       <div className="panel">
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{cv.tableHead.name}</th><th>{cv.tableHead.wallets}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{canManage && <SelectHead sel={sel} pageIds={pg.slice.map((c) => c.id)} />}<th>{cv.tableHead.name}</th><th>{cv.tableHead.wallets}</th><th>{cv.tableHead.email}</th><th>{cv.tableHead.spend}</th><th>{cv.tableHead.payments}</th><th>{cv.tableHead.since}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((c) => {
               const wallets = walletsOf(c);
               return (
                 <tr key={c.id} className="row-click" onClick={() => open(c)}>
+                  {canManage && <SelectCell sel={sel} id={c.id} name={nameOfCust(c)} />}
                   <td className="tid">
                     <div className="cust-cell">
                       <span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>
@@ -176,7 +185,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
               );
             })}
               <FillRows
-                n={pg.size - (error ? 0 : pg.count)} cols={7}
+                n={pg.size - (error ? 0 : pg.count)} cols={canManage ? 8 : 7}
                 empty={error ? cx.loadError : null}
               />
             </tbody>
@@ -186,6 +195,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
         {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CustomerFormModal cv={cv} cx={cx} env={env} orgId={orgId} onClose={() => setModal(false)} onSaved={onCreated} />}
+      {bulk.dialog}
       {toDelete && <ConfirmModal title={cv.deleteTitle} body={fmt(cv.deleteBody, { name: toDelete.alias || toDelete.name })} confirmLabel={cx.delete} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => { if (!deleting) setToDelete(null); }} />}
       {detail && <CustomerDetailModal key={detail.id} cv={cv} cx={cx} customer={detail} startEditing={editing} env={env} orgId={orgId} canManage={canManage} onClose={() => { setDetail(null); setEditing(false); }} onUpdated={onUpdated} onDelete={() => setToDelete(detail)} onOpenPayment={(id) => { setDetail(null); openRecord("payment", id); }} />}
     </>
