@@ -480,6 +480,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   minutes; replaying one only connects the same wallet again. Tested against SEP-53's own vectors
   and web3.js's documented `personal_sign` example (`tests/unit/orgWallets.test.ts`). The browser
   side is `src/lib/wallets/prove.ts`.
+- **A Stellar wallet is added with a signed XDR, not a connected wallet** (product owner,
+  2026-10-27: people hand over a signed XDR). `ConnectWalletForm`'s Stellar branch takes the address
+  and a name, then the proof transaction (`src/lib/wallets/wallet-proof-xdr.ts`: the same proof
+  message hashed into a manageData entry, sequence 1, never valid) signed with Freighter in one
+  click or in any wallet and pasted back (`signedXdr` on the connect route, no `provider`); either
+  network's signature counts, since it applies on neither. `src/lib/wallets/signed-xdr.ts` checks a
+  signed XDR in both the browser and the server, without Node's `Buffer` (a page has none). Solana
+  and Monad still prove through their wallets' message signatures.
 - **Payment forms choose, they never take a typed address**: the payment link's destination and the
   private payment's recipient are a `WalletSelect` of the organization's wallets on that network
   (whoever may connect wallets gets "connect another" inline, in the form, never a dialog on a

@@ -118,3 +118,50 @@ test("a connect request names a wallet that signs on its network and an address 
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "solana", provider: "phantom" }).success, false);
   for (const [chain, providers] of Object.entries(WALLET_PROVIDERS)) assert.ok(providers.length > 0, chain);
 });
+
+/* A Stellar wallet proven with a signed XDR (any wallet, nothing connected): the proof transaction
+   carries the proof message, can never apply, and counts only signed by the address. */
+test("Stellar: the proof transaction is fixed by the organization, the address and the time, and never applies", async () => {
+  const { walletProofTransactionXdr, WALLET_PROOF_DATA_NAME, WALLET_PROOF_PASSPHRASE } = await import("@/lib/wallets/wallet-proof-xdr");
+  const { TransactionBuilder } = await import("@stellar/stellar-sdk");
+  const kp = Keypair.random();
+  const proof = { orgId: "org_123", address: kp.publicKey(), issuedAt: "2026-10-27T12:00:00.000Z" };
+  const xdr = walletProofTransactionXdr(proof);
+  assert.equal(walletProofTransactionXdr(proof), xdr);
+  assert.notEqual(walletProofTransactionXdr({ ...proof, orgId: "org_456" }), xdr);
+  assert.notEqual(walletProofTransactionXdr({ ...proof, issuedAt: "2026-10-27T12:00:01.000Z" }), xdr);
+  const tx = TransactionBuilder.fromXDR(xdr, WALLET_PROOF_PASSPHRASE) as unknown as { sequence: string; operations: { type: string; name: string }[] };
+  assert.equal(tx.sequence, "1");
+  assert.equal(tx.operations[0].type, "manageData");
+  assert.equal(tx.operations[0].name, WALLET_PROOF_DATA_NAME);
+});
+
+test("Stellar: a signed proof XDR counts only from the address, for the public network or testnet", async () => {
+  const { checkWalletProofXdr, walletProofTransactionXdr } = await import("@/lib/wallets/wallet-proof-xdr");
+  const { Networks, TransactionBuilder } = await import("@stellar/stellar-sdk");
+  const kp = Keypair.random();
+  const proof = { orgId: "org_123", address: kp.publicKey(), issuedAt: "2026-10-27T12:00:00.000Z" };
+  const signedFor = (passphrase: string, signer: Keypair, xdr = walletProofTransactionXdr(proof)) => {
+    const tx = TransactionBuilder.fromXDR(xdr, passphrase);
+    tx.sign(signer);
+    return tx.toXDR();
+  };
+  assert.deepEqual(checkWalletProofXdr(proof, signedFor(Networks.PUBLIC, kp)), { ok: true });
+  assert.deepEqual(checkWalletProofXdr(proof, signedFor(Networks.TESTNET, kp)), { ok: true });
+  assert.deepEqual(checkWalletProofXdr(proof, signedFor(Networks.PUBLIC, Keypair.random())), { ok: false, problem: "notSigned" });
+  // Another organization's proof, signed by the same wallet, does not connect it here.
+  const other = walletProofTransactionXdr({ ...proof, orgId: "org_456" });
+  assert.deepEqual(checkWalletProofXdr(proof, signedFor(Networks.PUBLIC, kp, other)), { ok: false, problem: "otherTransaction" });
+  assert.deepEqual(checkWalletProofXdr(proof, "garbage"), { ok: false, problem: "invalid" });
+  // A G… string with a broken checksum signed nothing, and refuses without throwing.
+  assert.deepEqual(checkWalletProofXdr({ ...proof, address: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGH" }, signedFor(Networks.PUBLIC, kp)), { ok: false, problem: "notSigned" });
+});
+
+test("a connect request proves a wallet with a provider's signature, or with a signed XDR on Stellar only", () => {
+  const base = { address: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG", issuedAt: "2026-10-25T20:00:00.000Z" };
+  const signedXdr = "A".repeat(200);
+  assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar", signedXdr }).success, true);
+  assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar", signedXdr, provider: "freighter" }).success, false);
+  assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar" }).success, false);
+  assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "solana", address: "So11111111111111111111111111111111111111112", signedXdr }).success, false);
+});

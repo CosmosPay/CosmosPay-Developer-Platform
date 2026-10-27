@@ -18,8 +18,11 @@
    A per-account secret mixed into the root would close it, but Cosmos Pay is non-custodial and keeps
    no key material of anyone's (product owner, 2026-10-27): the key comes from the person's signature
    alone. Pure apart from `XdrSigner.sign`, which waits on the page. */
-import { Account, Keypair, Memo, Operation, TimeoutInfinite, TransactionBuilder, hash } from "@stellar/stellar-sdk";
+import { Account, Memo, Operation, TimeoutInfinite, TransactionBuilder, hash } from "@stellar/stellar-sdk";
 import { skSigningMessage } from "stellar-confidential-token-sdk";
+import { expiryOf, signatureOn } from "@/lib/wallets/signed-xdr";
+
+export { expiryOf, signatureOn, type SignedXdrProblem } from "@/lib/wallets/signed-xdr";
 
 /** What a signature is for: the key (twice for a new account), or one of the account's actions. */
 export type SignPurpose = "key" | "keyAgain" | "register" | "deposit" | "withdraw" | "merge" | "transfer";
@@ -44,8 +47,6 @@ export class SignCancelledError extends Error {
   }
 }
 
-export type SignedXdrProblem = "invalid" | "otherTransaction" | "notSigned";
-
 /** The manageData entry the key transaction writes; a wallet shows it to the person signing. */
 export const KEY_DATA_NAME = "cosmospay-private-key";
 const KEY_MEMO = "Cosmos Pay private account";
@@ -57,49 +58,11 @@ const KEY_MEMO = "Cosmos Pay private account";
  */
 export function keyTransactionXdr(token: string, account: string, networkPassphrase: string): string {
   return new TransactionBuilder(new Account(account, "0"), { fee: "100", networkPassphrase })
-    .addOperation(Operation.manageData({ name: KEY_DATA_NAME, value: hash(Buffer.from(skSigningMessage(token, account))) }))
+    .addOperation(Operation.manageData({ name: KEY_DATA_NAME, value: hash(skSigningMessage(token, account) as never) as never }))
     .addMemo(Memo.text(KEY_MEMO))
     .setTimeout(TimeoutInfinite)
     .build()
     .toXDR();
-}
-
-/* A signature's hint and bytes: XDR wrappers holding `value` in stellar-sdk 17, raw bytes before. */
-const bytesOf = (x: unknown): Uint8Array => (x instanceof Uint8Array ? x : new Uint8Array((x as { value: Uint8Array }).value));
-
-/** When `xdr` stops being valid (ms since the epoch), or null when it has no upper bound. */
-export function expiryOf(xdr: string, networkPassphrase: string): number | null {
-  const max = Number(TransactionBuilder.fromXDR(xdr, networkPassphrase).timeBounds?.maxTime ?? 0);
-  return max > 0 ? max * 1000 : null;
-}
-
-/**
- * `account`'s signature on `signedXdr`, when it is the transaction `unsignedXdr` (same hash) and
- * that signature verifies; otherwise why not.
- */
-export function signatureOn(
-  unsignedXdr: string,
-  signedXdr: string,
-  account: string,
-  networkPassphrase: string,
-): { ok: true; signature: Uint8Array } | { ok: false; problem: SignedXdrProblem } {
-  let signed;
-  try {
-    signed = TransactionBuilder.fromXDR(signedXdr.trim(), networkPassphrase);
-  } catch {
-    return { ok: false, problem: "invalid" };
-  }
-  const expected = TransactionBuilder.fromXDR(unsignedXdr, networkPassphrase).hash();
-  const got = signed.hash();
-  if (!Buffer.from(got).equals(Buffer.from(expected))) return { ok: false, problem: "otherTransaction" };
-  const key = Keypair.fromPublicKey(account);
-  const hint = Buffer.from(key.signatureHint());
-  for (const s of signed.signatures) {
-    if (!Buffer.from(bytesOf(s.hint)).equals(hint)) continue;
-    const signature = bytesOf(s.signature);
-    if (key.verify(Buffer.from(got), Buffer.from(signature))) return { ok: true, signature };
-  }
-  return { ok: false, problem: "notSigned" };
 }
 
 /**

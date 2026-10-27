@@ -27,7 +27,7 @@ export async function countOrgWallets(orgId: string): Promise<number> {
   return prisma.organizationWallet.count({ where: { orgId } });
 }
 
-export async function addOrgWallet(input: { orgId: string; chain: Chain; address: string; label?: string | null; provider: WalletProvider; addedById: string }): Promise<OrgWallet> {
+export async function addOrgWallet(input: { orgId: string; chain: Chain; address: string; label?: string | null; provider: WalletProvider | null; addedById: string }): Promise<OrgWallet> {
   const address = normalizeWalletAddress(input.chain, input.address);
   try {
     const row = await prisma.organizationWallet.create({

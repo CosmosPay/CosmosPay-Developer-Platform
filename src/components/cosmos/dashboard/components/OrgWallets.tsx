@@ -2,13 +2,17 @@
    nobody asks people to connect a wallet from the payments views, and members without the
    permission can neither remove one nor pick an address outside the list).
    - useOrgWallets: the list, read again whenever any of these components changes it.
-   - ConnectWalletForm: network, wallet, an optional name; the wallet shares its address and signs
-     the proof (src/lib/wallets/prove.ts), the API checks it and stores the wallet. Used in
-     Settings' dialog and inline inside a payment form (never a dialog on top of a dialog).
+   - ConnectWalletForm: network, then, on Stellar, the address, an optional name and the proof as a
+     signed XDR (product owner, 2026-10-27: people hand over a signed XDR, not their wallet):
+     Freighter in one click, or the proof transaction (src/lib/wallets/wallet-proof-xdr.ts) signed
+     in any wallet and pasted back, the way a swap is signed; on Solana and Monad the wallet shares
+     its address and signs the proof message (src/lib/wallets/prove.ts). The API checks the proof
+     and stores the wallet. Used in Settings' dialog, inline inside a payment form (never a dialog
+     on top of a dialog) and in the private accounts table.
    - OrgWalletsPanel: Settings' list, with connect / rename / remove for whoever may.
    - WalletSelect: the receiving address of a payment form, chosen from the organization's
      wallets on that network; "connect another" opens the form inline for whoever may. */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConfirmModal, Modal, showToast } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
 import { organizations as orgsApi } from "@/lib/api-client";
@@ -21,6 +25,10 @@ import { CHAINS, CHAIN_NAMES, networkName, type Chain } from "@/lib/chains";
 import { networkLogoUrl } from "@/lib/logo-urls";
 import { shortAddress, WALLET_LABEL_MAX, WALLET_PROVIDERS, walletProofMessage, type OrgWallet, type WalletProvider } from "@/lib/org-wallets";
 import { detectWallets, evmWalletName, proveWallet } from "@/lib/wallets/prove";
+import { signWithFreighter } from "@/lib/wallets/freighter";
+import { checkWalletProofXdr, walletProofTransactionXdr } from "@/lib/wallets/wallet-proof-xdr";
+import { CopyBlock } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { StrKey } from "@stellar/stellar-sdk";
 
 export const ORG_WALLETS_EVENT = "cosmospay:org-wallets";
 const announce = () => window.dispatchEvent(new Event(ORG_WALLETS_EVENT));
@@ -117,6 +125,7 @@ export function ConnectWalletForm({ orgId, chain: initial = "stellar", lockChain
           </div>
         </div>
       )}
+      {chain === "stellar" ? <StellarWalletProof orgId={orgId} onDone={onDone} onCancel={onCancel} /> : <>
       <div className="fld">
         <span className="field-l" id="wl-provider-l">{w.wallet}</span>
         <div className="net-pick" role="group" aria-labelledby="wl-provider-l">
@@ -138,7 +147,94 @@ export function ConnectWalletForm({ orgId, chain: initial = "stellar", lockChain
         <button type="button" className="btn btn-dark" onClick={connect} disabled={busy || !installed?.[provider]}>{w.connectSign}</button>
         <button type="button" className="btn btn-outline-w" onClick={onCancel} disabled={busy}>{t.dash.common.cancel}</button>
       </div>
+      </>}
     </div>
+  );
+}
+
+/* A Stellar wallet from its address and a signed XDR of the proof transaction: Freighter in one
+   click (for whichever network it is set to), or the XDR signed in any wallet and pasted back. A
+   new address issues a new proof; an expired one (ten minutes) is issued again on submit. */
+function StellarWalletProof({ orgId, onDone, onCancel }: { orgId: string; onDone: (wallet: OrgWallet) => void; onCancel: () => void }) {
+  const t = useT();
+  const w = t.dash.wallets;
+  const zs = t.zk.sign;
+  const fw = t.dash.wallet;
+  const [address, setAddress] = useState("");
+  const [label, setLabel] = useState("");
+  const [issuedAt, setIssuedAt] = useState(() => new Date().toISOString());
+  const [signed, setSigned] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [note, setNote] = useState("");
+  const account = address.trim();
+  const valid = StrKey.isValidEd25519PublicKey(account);
+  const xdr = useMemo(() => (valid ? walletProofTransactionXdr({ orgId, address: account, issuedAt }) : null), [valid, account, issuedAt, orgId]);
+  useEffect(() => { setIssuedAt(new Date().toISOString()); setSigned(""); setProblem(null); setNote(""); }, [account]);
+
+  const add = async (signedXdr: string) => {
+    if (!xdr || busy) return;
+    const check = checkWalletProofXdr({ orgId, address: account, issuedAt }, signedXdr);
+    if (!check.ok) {
+      setProblem(check.problem === "notSigned" ? fmt(zs.notSigned, { account: shortAddress(account) }) : zs[check.problem]);
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    try {
+      const wallet = await orgsApi.connectWallet(orgId, { chain: "stellar", address: account, label: label.trim() || undefined, issuedAt, signedXdr: signedXdr.trim() });
+      announce();
+      showToast(w.connected);
+      onDone(wallet);
+    } catch (e) {
+      const message = (e as Error)?.message || w.connectError;
+      // An expired proof is issued again; the person signs the new transaction.
+      if (/expired/i.test(message)) { setIssuedAt(new Date().toISOString()); setSigned(""); }
+      setProblem(message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const freighter = async () => {
+    if (!xdr || busy) return;
+    setNote("");
+    let res = await signWithFreighter(xdr, "public", account);
+    if (!res.ok && res.reason === "wrongNetwork") res = await signWithFreighter(xdr, "testnet", account);
+    if (res.ok) { await add(res.signedXdr); return; }
+    setNote(res.reason === "missing" ? fw.missing : res.reason === "wrongAccount" ? fmt(fw.wrongAccount, { account: shortAddress(account) }) : fw.declined);
+  };
+
+  return (
+    <>
+      <Field label={w.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={w.addressPlaceholder} spellCheck={false} autoComplete="off" disabled={busy} aria-invalid={account !== "" && !valid ? true : undefined} />
+      {account !== "" && !valid && <p className="field-err" role="alert">{w.invalidAddress}</p>}
+      <Field label={w.label} hint={t.dash.common.optional} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={w.labelPlaceholder} maxLength={WALLET_LABEL_MAX} disabled={busy} />
+      {xdr && (
+        <>
+          <div className="paylink-block">
+            <div className="paylink-block-head"><span className="field-l">{w.proofTitle}</span></div>
+            <p className="field-note">{w.proofDesc}</p>
+            <div className="wallet-sign">
+              <button type="button" className="btn btn-dark" disabled={busy} onClick={freighter}>{fw.freighter}</button>
+              <p className="wallet-sign-note" role="status" aria-live="polite">{note}</p>
+            </div>
+          </div>
+          <CopyBlock label={zs.xdr} value={xdr} />
+          <div className="paylink-block">
+            <div className="paylink-block-head"><label className="field-l" htmlFor="wl-signed">{zs.pasteTitle}</label></div>
+            <p className="field-note">{fmt(zs.pasteDesc, { account: shortAddress(account) })}</p>
+            <textarea id="wl-signed" className="field" rows={4} value={signed} placeholder={zs.pastePlaceholder} spellCheck={false} disabled={busy} onChange={(e) => { setSigned(e.target.value); setProblem(null); }} />
+          </div>
+        </>
+      )}
+      {busy && <p className="work-progress" role="status"><span className="work-spin" aria-hidden="true" /><span>{w.signing}</span></p>}
+      {problem && <p className="field-err" role="alert">{problem}</p>}
+      <div className="modal-actions">
+        <button type="button" className="btn btn-dark" onClick={() => add(signed)} disabled={busy || !xdr || !signed.trim()}>{w.add}</button>
+        <button type="button" className="btn btn-outline-w" onClick={onCancel} disabled={busy}>{t.dash.common.cancel}</button>
+      </div>
+    </>
   );
 }
 

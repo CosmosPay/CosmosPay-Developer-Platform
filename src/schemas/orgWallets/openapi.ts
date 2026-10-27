@@ -28,7 +28,7 @@ const walletSchema = z
 
 const connectBody = connectWalletBodySchema.openapi("ConnectOrganizationWalletBody", {
   description:
-    "`signature` is the wallet's signature over the proof message for this organization, network, address and `issuedAt` (at most 10 minutes old): SEP-53 base64 on Stellar, Ed25519 base64 on Solana, personal_sign 0x-hex on Monad.",
+    "`signature` is the wallet's signature over the proof message for this organization, network, address and `issuedAt` (at most 10 minutes old): SEP-53 base64 on Stellar, Ed25519 base64 on Solana, personal_sign 0x-hex on Monad. On Stellar, `signedXdr` instead (no `provider`): the proof transaction carrying that message (a manageData entry, sequence 1, never valid, public network passphrase), signed by the address in any wallet.",
   example: {
     chain: "stellar",
     address: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG",

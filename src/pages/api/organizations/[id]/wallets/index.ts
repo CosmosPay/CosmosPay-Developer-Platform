@@ -5,6 +5,7 @@ import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
 import { isFreshProof, MAX_ORG_WALLETS, walletProofMessage } from "@/lib/org-wallets";
 import { verifyWalletProof } from "@/lib/org-wallets-verify";
+import { checkWalletProofXdr } from "@/lib/wallets/wallet-proof-xdr";
 import { addOrgWallet, countOrgWallets, listOrgWallets, WalletAlreadyConnectedError } from "@/lib/org-wallets-store";
 import { connectWalletBodySchema } from "@/schemas/org-wallets";
 import type { APIRoute } from "astro";
@@ -29,8 +30,9 @@ export const GET: APIRoute = async (ctx) => {
 };
 
 /* POST /api/organizations/:id/wallets: connect a wallet (`wallets:create`). The wallet signed
-   walletProofMessage for this organization, network and address within the last minutes; the
-   signature is checked against the address before anything is stored. */
+   walletProofMessage for this organization, network and address within the last minutes, or, on
+   Stellar, the proof transaction carrying it (a signed XDR from any wallet); the signature is
+   checked against the address before anything is stored. */
 export const POST: APIRoute = async (ctx) => {
   const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
@@ -49,11 +51,13 @@ export const POST: APIRoute = async (ctx) => {
   if (!body || !body.ok) {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: "bad_request" });
   }
-  const { chain, address, provider, label, issuedAt, signature } = body.data;
+  const { chain, address, provider, label, issuedAt, signature, signedXdr } = body.data;
 
   if (!isFreshProof(issuedAt)) return jsonBadRequest("The wallet's signature has expired. Connect it again.");
-  const message = walletProofMessage({ orgId, chain, address, issuedAt });
-  if (!verifyWalletProof(chain, address, message, signature)) {
+  const proven = signedXdr
+    ? checkWalletProofXdr({ orgId, address, issuedAt }, signedXdr).ok
+    : verifyWalletProof(chain, address, walletProofMessage({ orgId, chain, address, issuedAt }), signature!);
+  if (!proven) {
     return jsonBadRequest("The signature was not made by this wallet.");
   }
   if ((await countOrgWallets(orgId)) >= MAX_ORG_WALLETS) {
@@ -61,7 +65,7 @@ export const POST: APIRoute = async (ctx) => {
   }
 
   try {
-    const wallet = await addOrgWallet({ orgId, chain, address, label, provider, addedById: session.user.id });
+    const wallet = await addOrgWallet({ orgId, chain, address, label, provider: provider ?? null, addedById: session.user.id });
     return jsonCreated({ data: wallet, message: "Wallet connected" });
   } catch (err) {
     if (err instanceof WalletAlreadyConnectedError) return jsonConflict(err.message);
