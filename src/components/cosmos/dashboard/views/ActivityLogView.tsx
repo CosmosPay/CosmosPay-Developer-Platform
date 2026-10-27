@@ -167,10 +167,24 @@ export function ActivityLogView({ env = "dev" }) {
           <div className="hub-section-head"><h2 id="act-top-errors">{av.topErrors}</h2></div>
           <div className="panel">
             <div className="t-scroll" tabIndex={0}><table className="tx"><thead>
-              <tr><th>{av.tableHead.detail}</th><th>{av.tableHead.count}</th></tr>
+              <tr><th>{av.tableHead.detail}</th><th>{av.tableHead.count}</th><th><span className="sr-only">{cm.actions}</span></th></tr>
             </thead>
               <tbody>{summary.topErrors.map((e) => (
-                <tr key={e.key} className="row-click" onClick={() => set("q", e.key)} title={av.filterBy}><td className="tid"><code>{e.key}</code></td><td className="cust">{e.count}</td></tr>
+                <tr key={e.key} className="row-click" onClick={() => set("q", e.key)} title={av.filterBy}>
+                  <td className="tid"><code>{e.key}</code></td>
+                  <td className="cust">{e.count}</td>
+                  {/* Searched in the log above, or copied (product owner: every row can be acted on). */}
+                  <td className="row-actions" onClick={(ev) => ev.stopPropagation()}>
+                    <button type="button" className="icon-mini" title={av.filterBy} aria-label={`${av.filterBy}: ${e.key}`} onClick={() => set("q", e.key)}>{DI.search}</button>
+                    <RowMenu
+                      label={fmt(cm.rowActions, { name: e.key })}
+                      items={[
+                        { key: "filter", label: av.filterBy, icon: DI.search, onClick: () => set("q", e.key) },
+                        { key: "copy", label: fmt(cm.copyValue, { value: av.tableHead.detail.toLowerCase() }), icon: <IcCopy />, onClick: () => copy(e.key) },
+                      ]}
+                    />
+                  </td>
+                </tr>
               ))}</tbody>
             </table></div>
           </div>

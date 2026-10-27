@@ -936,6 +936,7 @@ export default {
         desc: "创建客户以跟踪支付和余额。",
         name: "名称", email: "邮箱", add: "添加客户",
         wallets: "钱包",
+        stepDetails: "资料", stepWallets: "钱包",
         walletsHint: "该客户用于付款的钱包，可在任意网络。也可以稍后添加。",
         addAnother: "再添加一个钱包",
       },

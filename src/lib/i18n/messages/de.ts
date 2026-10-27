@@ -1410,6 +1410,7 @@ export default {
         email: "E-Mail",
         add: "Kunde hinzufügen",
         wallets: "Wallets",
+        stepDetails: "Angaben", stepWallets: "Wallets",
         walletsHint: "Die Wallets, von denen dieser Kunde zahlt, in jedem Netzwerk. Sie können sie auch später hinzufügen.",
         addAnother: "Weitere Wallet hinzufügen"
       },

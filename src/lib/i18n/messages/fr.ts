@@ -1410,6 +1410,7 @@ export default {
         email: "E-mail",
         add: "Ajouter un client",
         wallets: "Portefeuilles",
+        stepDetails: "Coordonnées", stepWallets: "Portefeuilles",
         walletsHint: "Les portefeuilles depuis lesquels ce client paie, sur n’importe quel réseau. Vous pouvez aussi les ajouter plus tard.",
         addAnother: "Ajouter un autre portefeuille"
       },

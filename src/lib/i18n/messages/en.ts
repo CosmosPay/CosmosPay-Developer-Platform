@@ -938,6 +938,7 @@ export default {
         desc: "Create a customer to track payments and balances.",
         name: "Name", email: "Email", add: "Add customer",
         wallets: "Wallets",
+        stepDetails: "Details", stepWallets: "Wallets",
         walletsHint: "The wallets this customer pays from, on any network. You can add them later too.",
         addAnother: "Add another wallet",
       },

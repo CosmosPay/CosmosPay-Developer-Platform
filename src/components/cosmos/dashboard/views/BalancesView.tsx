@@ -7,10 +7,13 @@ import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PaymentPreview, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
-import { goFiltered, usePaged, useGsapRows, openRecord, recordHref } from "@/components/cosmos/dashboard/hooks";
+import { goFiltered, usePaged, useGsapRows, openRecord, recordHref, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { TableSkeleton, ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
@@ -18,6 +21,9 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 
 const num = (s) => { const n = Number(s); return Number.isFinite(n) ? n : 0; };
+/* The settled payments' filters (a list like every other: search, network, date). */
+const DEFAULTS = { q: "", chain: "all", date: "any" };
+const ALLOWED = { chain: ["all", ...CHAINS] };
 
 /* Each balance opens the settled payments behind it (Payments, filtered to settled, its network and
    its asset); the total opens every settled payment. With nothing settled yet, whoever may create
@@ -33,6 +39,8 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
   const [failed, setFailed] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const fl = t.dash.filters;
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   const confirmDelete = () => {
     if (!toDelete || deleting) return;
@@ -62,8 +70,14 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
     return () => { alive = false; };
   }, [env]);
 
-  const pg = usePaged(recent, env);
-  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + recent.length);
+  const matches = (p, skip) =>
+    (skip === "chain" || filters.chain === "all" || chainOf(p) === filters.chain) &&
+    inRange(p.createdAt, filters.date) &&
+    matchesQuery([p.id, p.source, p.destination, p.memo, p.reference, p.asset, p.amount, amountLabel(p, pl), networkName(chainOf(p))], filters.q);
+  const shown = recent.filter((p) => matches(p, null));
+  const chainCounts = countBy(recent.filter((p) => matches(p, "chain")), (p) => chainOf(p));
+  const pg = usePaged(shown, env + JSON.stringify(filters));
+  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + shown.length);
   const max = Math.max(1, ...bals.map((x) => num(x.amount)));
   const totalSettlements = bals.reduce((a, x) => a + (x.count || 0), 0);
   const networks = new Set(bals.map((x) => x.chain)).size;
@@ -112,6 +126,14 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
       )}
       <section className="hub-section bal-recent" aria-labelledby="bal-recent-t">
       <div className="hub-section-head"><h2 id="bal-recent-t">{b.recent}</h2>{recent.length > 0 && <button type="button" className="hub-link" onClick={() => settled()}>{t.dash.overview.hub.viewAll}</button>}</div>
+      <FilterBar
+        label={fl.label}
+        query={filters.q} onQuery={(v) => set("q", v)} placeholder={pl.searchPlaceholder}
+        selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: networkName(c), icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] || 0 }))] }]}
+        date={filters.date} onDate={(v) => set("date", v)}
+        active={active} onReset={reset}
+        shown={shown.length} total={loading ? undefined : recent.length} loading={loading}
+      />
       <div className="panel">
         {loading && <TableSkeleton label={cx.loading} cols={6} />}
         {!loading && (

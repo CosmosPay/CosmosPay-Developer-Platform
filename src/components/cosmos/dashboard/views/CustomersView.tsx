@@ -22,6 +22,7 @@ import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLin
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { ViewFigures } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 import { IcCopy } from "@/components/cosmos/icons";
 import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
@@ -226,10 +227,13 @@ const walletReady = (row) => row.address.trim() !== "" && isAddress(row.chain, r
 const walletBody = (row) => ({ chain: row.chain, address: row.address.trim(), ...(row.label.trim() ? { label: row.label.trim() } : {}) });
 
 /* Create form: the customer and the wallets they pay from, on any network. */
+/* In two steps (product owner, 2026-10-27: a long form goes in steps): who the customer is, then the
+   wallets they pay from (any number, on any network, all optional). */
 function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
   const t = useT();
   const m = cv.modal;
   const cd = cx.custDetail;
+  const steps = useFormSteps(2);
   const [name, setName] = useState("");
   const [alias, setAlias] = useState("");
   const [email, setEmail] = useState("");
@@ -251,10 +255,14 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
+        <FormSteps names={[m.stepDetails, m.stepWallets]} steps={steps} />
+        <FormStep steps={steps}>
+        {steps.step === 0 && <>
         <Field label={m.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Inc." autoFocus />
         <Field label={cd.alias} hint={t.dash.common.optional} value={alias} onChange={(e) => setAlias(e.target.value)} placeholder={t.dash.examples.customerName} />
         <Field label={m.email} hint={t.dash.common.optional} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@acme.com" />
-        <div className="fld">
+        </>}
+        {steps.step === 1 && <div className="fld">
           <span className="field-l">{m.wallets}</span>
           <ul className="cust-wallet-rows" role="list">
             {wallets.map((w) => (
@@ -265,11 +273,9 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
             <button type="button" className="link-btn cust-wallet-more" onClick={() => setWallets((ws) => [...ws, newWalletRow()])}>{DI.plus} {m.addAnother}</button>
           )}
           <p className="field-help">{m.walletsHint}</p>
-        </div>
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!name.trim() || !valid || busy} onClick={submit}>{m.add}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        </div>}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={name.trim().length > 0} onCancel={onClose} submitLabel={m.add} onSubmit={submit} busy={busy} submitDisabled={!name.trim() || !valid} />
       </div>
     </Modal>
   );

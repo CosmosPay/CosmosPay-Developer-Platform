@@ -196,6 +196,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
         {!loading && <Pagination {...pg} />}
       </div>
 
+      {bulk.dialog}
       {selected && <DeliveriesPanel key={selected.id} wv={wv} cx={cx} endpoint={selected} env={env} orgId={orgId} canManage={canManage} />}
       {confirm && (
         <ConfirmModal

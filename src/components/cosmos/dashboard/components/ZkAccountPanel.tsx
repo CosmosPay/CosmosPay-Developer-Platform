@@ -610,6 +610,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
         );
       })()}
 
+      {bulk.dialog}
       {toRemove && (
         <ConfirmModal
           title={za.removeTitle} body={fmt(za.removeBody, { account: shortAddress(toRemove.address), customer: toRemove.customerName })}

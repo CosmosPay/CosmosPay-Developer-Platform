@@ -1410,6 +1410,7 @@ export default {
         email: "E-mail",
         add: "Adicionar cliente",
         wallets: "Carteiras",
+        stepDetails: "Dados", stepWallets: "Carteiras",
         walletsHint: "As carteiras de onde este cliente paga, em qualquer rede. Você também pode adicioná-las depois.",
         addAnother: "Adicionar outra carteira"
       },
