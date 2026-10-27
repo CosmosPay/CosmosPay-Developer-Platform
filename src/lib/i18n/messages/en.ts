@@ -1027,6 +1027,9 @@ export default {
       statusError: "Couldn’t update the status.",
       statuses: { open: "Open", pending: "Pending", resolved: "Resolved", closed: "Closed" },
       inboxSearch: "Search by subject, customer or message…",
+      tableHead: { subject: "Subject", priority: "Priority", status: "Status", last: "Last message", updated: "Updated" },
+      unread: "{n} unread",
+      moveTo: "Mark as {status}",
     },
     orgs: {
       permissionsLabel: "Permissions",
@@ -1124,6 +1127,9 @@ export default {
       deleteBody: "{url} stops receiving events and its deliveries are deleted.",
       rotateTitle: "Rotate the signing secret?",
       rotateBody: "{url} gets a new secret right away; events signed with the old one stop verifying until you update it.",
+      urlInvalid: "Enter a web address that starts with https://.",
+      urlRefused: "That URL can't be used: it must be a public address that resolves (not localhost or a private network).",
+      saveError: "Couldn't save the endpoint.",
     },
     activityLog: {
       sub: "What the wallet and this dashboard reported about themselves, including what never became an API call",

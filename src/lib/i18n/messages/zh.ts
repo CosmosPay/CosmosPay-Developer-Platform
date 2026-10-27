@@ -1025,6 +1025,9 @@ export default {
       statusError: "无法更新状态。",
       statuses: { open: "已开启", pending: "待回应", resolved: "已解决", closed: "已关闭" },
       inboxSearch: "按主题、客户或消息搜索…",
+      tableHead: { subject: "主题", priority: "优先级", status: "状态", last: "最新消息", updated: "更新时间" },
+      unread: "{n} 条未读",
+      moveTo: "标记为{status}",
     },
     orgs: {
       permissionsLabel: "权限",
@@ -1122,6 +1125,9 @@ export default {
       deleteBody: "{url} 将不再接收事件，其投递记录也会被删除。",
       rotateTitle: "轮换签名密钥？",
       rotateBody: "{url} 会立即获得新密钥；在你更新之前，用旧密钥签名的事件将无法通过验证。",
+      urlInvalid: "请输入以 https:// 开头的网址。",
+      urlRefused: "无法使用该 URL：必须是可解析的公网地址（不能是 localhost 或私有网络）。",
+      saveError: "无法保存该端点。",
     },
     activityLog: {
       sub: "钱包和此控制台自行上报的情况，包括从未成为 API 调用的操作",

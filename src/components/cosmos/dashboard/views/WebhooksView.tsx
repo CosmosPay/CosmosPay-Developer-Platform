@@ -85,11 +85,11 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
 
   const ping = (ep) => whApi.ping(ep.id, env, orgId)
     .then((r) => showToast(r && r.ok ? cx.pingOk : cx.pingFail, r && r.ok ? "success" : "error"))
-    .catch((e) => showToast((e && e.message) || cx.pingFail, "error"));
+    .catch(() => showToast(cx.pingFail, "error"));
 
   const toggle = (ep) => whApi.update(ep.id, env, orgId, { enabled: !ep.enabled })
     .then((u) => setEps((p) => p.map((x) => x.id === ep.id ? { ...x, ...u } : x)))
-    .catch((e) => showToast((e && e.message) || wv.title, "error"));
+    .catch(() => showToast(wv.saveError, "error"));
 
   const rotate = (ep) => whApi.rotateSecret(ep.id, env, orgId)
     .then((u) => { if (u && u.secret) setReveal({ url: ep.url, secret: u.secret }); });
@@ -102,7 +102,7 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
     setConfirming(true);
     (confirm.kind === "delete" ? remove(confirm.ep) : rotate(confirm.ep))
       .then(() => setConfirm(null))
-      .catch((e) => showToast((e && e.message) || (confirm.kind === "delete" ? cx.delete : cx.rotate), "error"))
+      .catch(() => showToast(wv.saveError, "error"))
       .finally(() => setConfirming(false));
   };
 
@@ -297,14 +297,18 @@ function WebhookFormModal({ wv, cx, env, orgId, endpoint = null, onClose, onSave
   const [ev, setEv] = useState(endpoint ? (endpoint.eventTypes || []) : ["PAYMENT_INTENT_SUCCEEDED"]);
   const [busy, setBusy] = useState(false);
   const toggle = (e) => setEv((v) => v.includes(e) ? v.filter((x) => x !== e) : [...v, e]);
+  // An address the server could call: a web URL. Whether its host is public is the server's
+  // check; its refusal reads in the user's language, never as the server's English.
+  const urlOk = /^https?:\/\/[^\s/$.?#][^\s]*$/i.test(url.trim());
+  const failure = (e) => (e && e.status === 400 ? wv.urlRefused : wv.saveError);
   const submit = () => {
-    if (!url.trim() || busy) return;
+    if (!urlOk || busy) return;
     setBusy(true);
     (endpoint
       ? whApi.update(endpoint.id, env, orgId, { url: url.trim(), eventTypes: ev }).then((u) => ({ ...endpoint, ...(u || {}), url: url.trim(), eventTypes: ev }))
       : whApi.create(env, orgId, { url: url.trim(), ...(ev.length ? { eventTypes: ev } : {}) }))
       .then((ep) => onSaved(ep))
-      .catch((e) => showToast((e && e.message) || wv.title, "error"))
+      .catch((e) => showToast(failure(e), "error"))
       .finally(() => setBusy(false));
   };
   return (
@@ -312,7 +316,8 @@ function WebhookFormModal({ wv, cx, env, orgId, endpoint = null, onClose, onSave
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{endpoint ? wv.editTitle : m.title}</h3>
-        <Field label={m.urlLabel} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://api.acme.com/hooks/cosmos" autoFocus />
+        <Field label={m.urlLabel} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://api.acme.com/hooks/cosmos" autoFocus aria-invalid={url.trim() && !urlOk ? true : undefined} />
+        {url.trim() && !urlOk && <p className="field-err" role="alert">{wv.urlInvalid}</p>}
         <label className="field-l" style={{ marginTop: 14 }}>{m.eventsLabel}</label>
         <div className="chk-list">{EVENT_TYPES.map((e) => (
           <label key={e} className={`chk${ev.includes(e) ? " on" : ""}`}>
@@ -321,7 +326,7 @@ function WebhookFormModal({ wv, cx, env, orgId, endpoint = null, onClose, onSave
           </label>
         ))}</div>
         <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!url.trim() || busy} onClick={submit}>{endpoint ? wv.save : m.add}</button>
+          <button className="btn btn-violet" disabled={!urlOk || busy} onClick={submit}>{endpoint ? wv.save : m.add}</button>
           <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
         </div>
       </div>

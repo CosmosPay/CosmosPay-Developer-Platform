@@ -303,7 +303,13 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     over its detail: the account, then its numbers; its wallet is a dialog too); "Get quote" moves on
     by itself and a changed field drops the quote. Every "add"/"create" is a dialog, never an inline form: the swap
     form ("New swap" in Swaps' filter row; the overview's "Swap" opens it with `?create=1`) and the
-    support ticket too. Dialogs stack (`ui/Modal.tsx` keeps the open ones): only the top one answers
+    support ticket too. Support (the customer's and the staff inbox) is the Payments table too:
+    figures per status, the tickets as rows (subject with its unread count, priority, status, last
+    message, updated; the inbox adds the customer and moves a ticket's status from the row's menu),
+    and a row opens its conversation in a dialog (`components/TicketDialog.tsx`: the thread, the
+    composer and, for staff, the customer, when they were last seen and the status and priority
+    pickers). The webhook form checks its URL is one before sending and words the server's refusal
+    of a non-public host (and any other failure) in the user's language. Dialogs stack (`ui/Modal.tsx` keeps the open ones): only the top one answers
     Escape and keeps Tab, so a token picker or a confirmation closes alone over its form or detail;
     a dropdown inside one (`Select`, `CountrySelect`, `MiniSelect`) closes alone on Escape too.
     The invitation says before sending what the server would refuse: an email already in the team or
@@ -414,7 +420,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     right of its tabs (`.tabs-row`). Products, Customers, Webhooks, API keys and Support have a
     filter row too. **Status is never a separate row of tabs** (product owner): the
     admin lists and the support inbox (`FilterBar`: search by subject, customer or message, status
-    with counts; a conversation, so a list beside its thread, not a table) put theirs in the same row
+    with counts) put theirs in the same row
     as their search. The filters live in
     the URL (`useListFilters`, read after mount so the server render matches), so a filtered list
     survives a reload and can be shared; switching views drops them. Tabs remain only for sections

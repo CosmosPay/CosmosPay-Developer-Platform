@@ -70,18 +70,7 @@
 .chat-composer .btn { flex: 0 0 auto; }
 
 /* ---- support inbox (staff) ---- */
-.inbox { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
-.inbox-list { padding: 6px; max-height: min(70vh, 620px); overflow-y: auto; }
-.inbox-list-h { font-size: .75rem; letter-spacing: 0; color: var(--ink-3); font-weight: 500; padding: 10px 10px 8px; }
-.inbox-item { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; background: transparent; border: 0; border-radius: 12px; padding: 10px; cursor: pointer; }
-.inbox-item:hover { background: var(--surface-2); }
-.inbox-item.active { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.inbox-item-body { min-width: 0; flex: 1; }
-.inbox-item-body b { display: block; font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.inbox-item-body span { display: block; font-size: 12.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .inbox-badge { flex: 0 0 auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #FF4D4D; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
-.inbox-chat { min-width: 0; }
-@media (max-width: 900px) { .inbox { grid-template-columns: 1fr; } .inbox-list { max-height: 280px; } }
 
 /* ---- copy pill / copy buttons ---- */
 .copy-pill { gap: 12px; }
@@ -826,17 +815,17 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 
 /* ---------------- custom scrollbars (modals + scroll areas) ---------------- */
 /* Firefox */
-.modal-overlay, .modal, .t-scroll, .chat-scroll, .inbox-list, .notif-menu, .nav-user-menu, .side-nav { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.modal-overlay, .modal, .t-scroll, .chat-scroll, .notif-menu, .nav-user-menu, .side-nav { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
 /* WebKit / Chromium: slim, rounded, padded thumb that tracks the surface colour. */
 .modal::-webkit-scrollbar, .t-scroll::-webkit-scrollbar, .chat-scroll::-webkit-scrollbar,
-.inbox-list::-webkit-scrollbar, .notif-menu::-webkit-scrollbar, .nav-user-menu::-webkit-scrollbar, .side-nav::-webkit-scrollbar { width: 11px; height: 11px; }
+.notif-menu::-webkit-scrollbar, .nav-user-menu::-webkit-scrollbar, .side-nav::-webkit-scrollbar { width: 11px; height: 11px; }
 .modal::-webkit-scrollbar-track, .t-scroll::-webkit-scrollbar-track, .chat-scroll::-webkit-scrollbar-track,
-.inbox-list::-webkit-scrollbar-track, .notif-menu::-webkit-scrollbar-track, .nav-user-menu::-webkit-scrollbar-track, .side-nav::-webkit-scrollbar-track { background: transparent; }
+.notif-menu::-webkit-scrollbar-track, .nav-user-menu::-webkit-scrollbar-track, .side-nav::-webkit-scrollbar-track { background: transparent; }
 .modal::-webkit-scrollbar-thumb, .t-scroll::-webkit-scrollbar-thumb, .chat-scroll::-webkit-scrollbar-thumb,
-.inbox-list::-webkit-scrollbar-thumb, .notif-menu::-webkit-scrollbar-thumb, .nav-user-menu::-webkit-scrollbar-thumb, .side-nav::-webkit-scrollbar-thumb {
+.notif-menu::-webkit-scrollbar-thumb, .nav-user-menu::-webkit-scrollbar-thumb, .side-nav::-webkit-scrollbar-thumb {
   background: var(--line-2); border-radius: 999px; border: 3px solid var(--surface); background-clip: padding-box; }
 .modal::-webkit-scrollbar-thumb:hover, .t-scroll::-webkit-scrollbar-thumb:hover, .chat-scroll::-webkit-scrollbar-thumb:hover,
-.inbox-list::-webkit-scrollbar-thumb:hover, .notif-menu::-webkit-scrollbar-thumb:hover, .nav-user-menu::-webkit-scrollbar-thumb:hover, .side-nav::-webkit-scrollbar-thumb:hover {
+.notif-menu::-webkit-scrollbar-thumb:hover, .nav-user-menu::-webkit-scrollbar-thumb:hover, .side-nav::-webkit-scrollbar-thumb:hover {
   background: var(--ink-3); background-clip: padding-box; }
 
 /* ---------------- org invitations (Settings' team table) ---------------- */
@@ -897,22 +886,16 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .tk-pending { color: #B45309; background: color-mix(in srgb, #D97706 16%, transparent); }
 .tk-resolved { color: #1F7A4D; background: color-mix(in srgb, #1F9D55 16%, transparent); }
 .tk-closed { color: var(--ink-3); background: var(--surface-2); border: 1px solid var(--line-2); }
-.ticket-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px; border-bottom: 1px solid var(--line); }
-.ticket-head b { font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ticket-new { padding: 22px 24px; }
-.ticket-new h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 16px; }
 .ticket-textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
 
-/* ---------------- support: consistent right-pane height + ticket meta ---------------- */
-/* Keep the right pane the same height whether it shows a chat, the new-ticket form, or
-   the empty state, so the layout doesn't jump between them. */
-.inbox-chat { min-height: min(64vh, 600px); display: flex; flex-direction: column; }
-.inbox-chat > .panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.inbox-chat > .panel > .empty { margin: auto; }
-.tk-time { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
-.ticket-head .th-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ticket-head .th-sub { font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ticket-head .th-online { color: #1F7A4D; font-weight: 600; }
+/* ---------------- support: the ticket dialog ---------------- */
+/* A ticket's conversation in its dialog (the support lists' row detail): what the list knows of it
+   above the thread, which keeps one height so the dialog does not jump as messages arrive. */
+.ticket-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: -6px 0 14px; }
+.ticket-meta .th-sub { font-size: 13px; color: var(--ink-3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticket-meta .th-online { color: #1F7A4D; font-weight: 600; }
+.ticket-chat { height: min(60vh, 540px); display: flex; flex-direction: column; }
+.ticket-last { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------------- styled native selects (custom arrow, no default chrome) ---------------- */
 .mini-select, select.field {
@@ -1032,7 +1015,7 @@ a.icon-mini { text-decoration: none; }
 [data-theme="dark"] .tk-resolved,
 [data-theme="dark"] .chat-seen,
 [data-theme="dark"] .invite-icon.good,
-[data-theme="dark"] .ticket-head .th-online { color: #7EE0A8; }
+[data-theme="dark"] .ticket-meta .th-online { color: #7EE0A8; }
 
 /* ============================================================
    LANDING: la wallet al frente
