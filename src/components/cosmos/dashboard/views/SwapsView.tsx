@@ -16,6 +16,7 @@ import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink"
 import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { showToast } from "@/components/cosmos/shared";
+import { IcCopy } from "@/components/cosmos/icons";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
@@ -79,15 +80,22 @@ function SwapRowActions({ r, onView }) {
   const [, copy] = useCopy();
   const chain = isChain(r.from) ? r.from : "stellar";
   const tx = r.raw && r.raw.txHash ? explorerTxUrl(chain, tierOf(r.raw.network), r.raw.txHash) : null;
+  const waiting = r.status === "PENDING" || r.status === "AWAITING_DEPOSIT";
   return (
     <td className="row-actions" onClick={(e) => e.stopPropagation()}>
       <button type="button" className="icon-mini" title={cm.details} aria-label={cm.details} onClick={onView}>{DI.docs}</button>
+      {/* Waiting on its signature (or, between chains, its deposit): the detail is where it goes on. */}
+      {waiting && <button type="button" className="icon-mini" title={cm.continueOp} aria-label={`${cm.continueOp}: ${shortAddress(r.id)}`} onClick={onView}>{DI.key}</button>}
+      {tx
+        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={tx} target="_blank" rel="noopener noreferrer">{DI.network}</a>
+        : <button type="button" className="icon-mini" disabled title={cm.noTxYet} aria-label={`${t.dash.balances.explorer}: ${cm.noTxYet}`}>{DI.network}</button>}
       <RowMenu
         label={fmt(cm.rowActions, { name: shortAddress(r.id) })}
         items={[
           { key: "open", label: cm.details, icon: DI.docs, onClick: onView },
+          ...(waiting ? [{ key: "continue", label: cm.continueOp, icon: DI.key, onClick: onView }] : []),
           { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=swaps&open=${encodeURIComponent(r.id)}`, external: true },
-          { key: "copy", label: cm.copyId, icon: DI.link, onClick: () => copy(r.id, t.toasts.copied) },
+          { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(r.id, t.toasts.copied) },
           { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: tx, external: true, disabled: !tx, hint: cm.noTxYet },
         ]}
       />
@@ -196,7 +204,7 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
         shown={view.length} total={loading ? undefined : rows.length} loading={loading}
       />
       <div className="panel">
-        {loading && <TableSkeleton label={sw.loading} cols={5} />}
+        {loading && <TableSkeleton label={sw.loading} cols={6} />}
         {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.chains}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((r) => (

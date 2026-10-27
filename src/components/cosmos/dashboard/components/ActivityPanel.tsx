@@ -8,7 +8,7 @@
    with the completed), liquidity (operations, with the completed), webhooks (deliveries, with the
    failed), zkVolume and zkPayments (private payments: settled volume in USD with the completed,
    and created with the expired). */
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi } from "@/lib/api-client";
 import { goFiltered } from "@/components/cosmos/dashboard/hooks";
@@ -237,4 +237,36 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
 export function ViewActivity({ env, metrics, id }: { env: string; metrics: MetricKey[]; id: string }) {
   const s = useSeries(env);
   return <ActivityPanel id={id} className="view-activity" series={s.series} loading={s.loading} period={s.period} onPeriod={s.setPeriod} metrics={metrics} />;
+}
+
+/** One figure of a list that has no activity series of its own. */
+export interface ViewFigure { key: string; label: string; value: ReactNode; sub?: ReactNode }
+
+/* The figures before a list whose numbers come from the list itself (customers, products, keys,
+   logs...): the activity panel's figure strip without its chart, so every view starts the same
+   way (product owner, 2026-10-27: figures first, then the tables). A skeleton while the list
+   loads; a dash, never a zero, when it could not be read. */
+export function ViewFigures({ items, loading = false, failed = false, label }: { items: ViewFigure[]; loading?: boolean; failed?: boolean; label: string }) {
+  return (
+    <section className="view-figures" aria-label={label} aria-busy={loading || undefined}>
+      <div className="panel hub-panel">
+        <div className={`hub-metrics n${items.length}`}>
+          {items.map((x) => (
+            <div key={x.key} className="hub-metric solo">
+              <span className="hub-metric-k">{x.label}</span>
+              {loading
+                ? <Sk className="lg" w="64%" />
+                : failed ? <b className="arrive">-</b>
+                : (
+                  <>
+                    <b className="arrive">{typeof x.value === "string" || typeof x.value === "number" ? <Odometer text={String(x.value)} /> : x.value}</b>
+                    {x.sub !== undefined && <small className="hub-sub arrive">{x.sub}</small>}
+                  </>
+                )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }

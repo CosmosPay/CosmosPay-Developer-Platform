@@ -18,6 +18,7 @@ import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
 import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
 
 const EVENT_TYPES = [
   "PAYMENT_INTENT_CREATED",
@@ -47,6 +48,9 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
   const [editing, setEditing] = useState(null); // endpoint whose URL and events are being edited
   const [reveal, setReveal] = useState(null);   // { url, secret }
   const [selected, setSelected] = useState(null); // endpoint whose deliveries are shown
+  // Deleting an endpoint and rotating its secret (which breaks the old one) are confirmed first.
+  const [confirm, setConfirm] = useState(null); // { kind: "delete" | "rotate", ep }
+  const [confirming, setConfirming] = useState(false);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
   const fl = t.dash.filters;
 
@@ -58,6 +62,8 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
       .finally(() => setLoading(false));
   }, [env]);
   useEffect(() => { load(); }, [load]);
+  // Another environment lists other endpoints: the deliveries shown belonged to this one's.
+  useEffect(() => { setSelected(null); }, [env]);
 
   // The search reads an endpoint's URL and the events it receives, by name and by code.
   const eventNames = (w) => (w.eventTypes || []).flatMap((e) => [e, (cx.eventLabels && cx.eventLabels[e]) || humanize(e)]);
@@ -86,12 +92,19 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
     .catch((e) => showToast((e && e.message) || wv.title, "error"));
 
   const rotate = (ep) => whApi.rotateSecret(ep.id, env, orgId)
-    .then((u) => { if (u && u.secret) setReveal({ url: ep.url, secret: u.secret }); })
-    .catch((e) => showToast((e && e.message) || cx.rotate, "error"));
+    .then((u) => { if (u && u.secret) setReveal({ url: ep.url, secret: u.secret }); });
 
   const remove = (ep) => whApi.remove(ep.id, env, orgId)
-    .then(() => { setEps((p) => p.filter((x) => x.id !== ep.id)); if (selected && selected.id === ep.id) setSelected(null); })
-    .catch((e) => showToast((e && e.message) || cx.delete, "error"));
+    .then(() => { setEps((p) => p.filter((x) => x.id !== ep.id)); if (selected && selected.id === ep.id) setSelected(null); });
+
+  const runConfirm = () => {
+    if (!confirm || confirming) return;
+    setConfirming(true);
+    (confirm.kind === "delete" ? remove(confirm.ep) : rotate(confirm.ep))
+      .then(() => setConfirm(null))
+      .catch((e) => showToast((e && e.message) || (confirm.kind === "delete" ? cx.delete : cx.rotate), "error"))
+      .finally(() => setConfirming(false));
+  };
 
   return (
     <>
@@ -112,10 +125,9 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
         shown={view.length} total={loading ? undefined : eps.length} loading={loading}
         actions={addButton}
       />
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <div className="panel-head"><h3>{wv.endpoints}</h3><span className="env-tag">{DI.network} {t.dash.paylinks.network[env === "prod" ? "prod" : "dev"]}</span></div>
+      <div className="panel">
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{wv.tableHead.url}</th><th>{wv.tableHead.events}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((w) => (
               <tr key={w.id} className={`row-click${selected && selected.id === w.id ? " row-on" : ""}`} onClick={() => setSelected(w)}>
                 <td className="tid">
@@ -137,25 +149,26 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
                       : <span title={names}>{text}</span>;
                   })()}
                 </td>
-                <td><Pill st={w.enabled ? "ok" : "ref"} label={w.enabled ? cx.active : cx.inactive} /></td>
-                <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
-                  {canManage && <button className="icon-mini" title={wv.edit} aria-label={wv.edit} onClick={() => setEditing(w)}>{DI.edit}</button>}
-                  {canManage && <button className="icon-mini" title={cx.ping} aria-label={cx.ping} onClick={() => ping(w)}>{DI.activity}</button>}
-                  {canManage && <button className="icon-mini" title={cx.rotate} aria-label={cx.rotate} onClick={() => rotate(w)}>{DI.key}</button>}
-                  {canManage && <button className="icon-mini" title={w.enabled ? cx.disable : cx.enable} aria-label={w.enabled ? cx.disable : cx.enable} onClick={() => toggle(w)}>{DI.network}</button>}
-                  {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(w)}>{DI.trash}</button>}
+                <td><Pill st={w.enabled ? "ok" : "ref"} tone={w.enabled ? "ok" : "off"} label={w.enabled ? cx.active : cx.inactive} /></td>
+                <td className="cust">{fmtDateTime(w.createdAt)}</td>
+                <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                  {/* The details are the endpoint's deliveries, under the table. */}
+                  <button className="icon-mini" title={cx.deliveries} aria-label={`${cx.deliveries}: ${w.url}`} onClick={() => setSelected(w)}>{DI.docs}</button>
+                  {canManage && <button className="icon-mini" title={wv.edit} aria-label={`${wv.edit}: ${w.url}`} onClick={() => setEditing(w)}>{DI.edit}</button>}
+                  {canManage && <button className="icon-mini" title={cx.ping} aria-label={`${cx.ping}: ${w.url}`} onClick={() => ping(w)}>{DI.activity}</button>}
+                  {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={`${cx.delete}: ${w.url}`} onClick={() => setConfirm({ kind: "delete", ep: w })}>{DI.trash}</button>}
                   <RowMenu
                     label={fmt(t.dash.common.rowActions, { name: w.url })}
                     items={[
-                      { key: "open", label: wv.tableHead.events, icon: DI.activity, onClick: () => setSelected(w) },
-                      { key: "url", label: t.dash.common.copyUrl, icon: DI.link, onClick: () => copyText(w.url).then(() => showToast(t.toasts.copied)).catch(() => {}) },
-                      { key: "id", label: t.dash.common.copyId, icon: DI.link, onClick: () => copyText(w.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      { key: "open", label: cx.deliveries, icon: DI.docs, onClick: () => setSelected(w) },
+                      { key: "url", label: t.dash.common.copyUrl, icon: <IcCopy />, onClick: () => copyText(w.url).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      { key: "id", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => copyText(w.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
                       ...(canManage ? [
                         { key: "edit", label: wv.edit, icon: DI.edit, onClick: () => setEditing(w) },
                         { key: "ping", label: cx.ping, icon: DI.activity, onClick: () => ping(w) },
-                        { key: "rotate", label: cx.rotate, icon: DI.key, onClick: () => rotate(w) },
-                        { key: "toggle", label: w.enabled ? cx.disable : cx.enable, icon: DI.network, onClick: () => toggle(w) },
-                        { key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => remove(w) },
+                        { key: "toggle", label: w.enabled ? cx.disable : cx.enable, icon: DI.refresh, onClick: () => toggle(w) },
+                        { key: "rotate", label: cx.rotate, icon: DI.key, onClick: () => setConfirm({ kind: "rotate", ep: w }) },
+                        { key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => setConfirm({ kind: "delete", ep: w }) },
                       ] : []),
                     ]}
                   />
@@ -163,17 +176,25 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
               </tr>
             ))}
               <FillRows
-                n={pg.size - (error ? 0 : pg.count)} cols={4}
+                n={pg.size - (error ? 0 : pg.count)} cols={5}
                 empty={error ? cx.loadError : null}
               />
             </tbody>
           </table></div>
         )}
-        {loading && <TableSkeleton label={cx.loading} />}
+        {loading && <TableSkeleton label={cx.loading} cols={5} />}
         {!loading && <Pagination {...pg} />}
       </div>
 
-      {selected && <DeliveriesPanel wv={wv} cx={cx} endpoint={selected} env={env} orgId={orgId} canManage={canManage} />}
+      {selected && <DeliveriesPanel key={selected.id} wv={wv} cx={cx} endpoint={selected} env={env} orgId={orgId} canManage={canManage} />}
+      {confirm && (
+        <ConfirmModal
+          title={confirm.kind === "delete" ? wv.deleteTitle : wv.rotateTitle}
+          body={fmt(confirm.kind === "delete" ? wv.deleteBody : wv.rotateBody, { url: confirm.ep.url })}
+          confirmLabel={confirm.kind === "delete" ? cx.delete : cx.rotate} cancelLabel={t.dash.common.cancel}
+          onConfirm={runConfirm} onClose={() => { if (!confirming) setConfirm(null); }}
+        />
+      )}
 
       {modal && <WebhookFormModal wv={wv} cx={cx} env={env} orgId={orgId} onClose={() => setModal(false)} onSaved={onCreated} />}
       {editing && <WebhookFormModal wv={wv} cx={cx} env={env} orgId={orgId} endpoint={editing} onClose={() => setEditing(null)} onSaved={onEdited} />}
@@ -188,28 +209,30 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
   const t = useT();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [only, setOnly] = useState("all");
   const [open, setOpen] = useState(null);
   const pg = usePaged(rows, only + "|" + endpoint.id);
   const load = useCallback(() => {
     setLoading(true);
     whApi.deliveries(endpoint.id, env, { take: 50, ...(only === "failed" ? { status: "FAILED" } : {}) })
-      .then((d) => setRows((d && Array.isArray(d.data)) ? d.data : []))
-      .catch(() => setRows([]))
+      .then((d) => { setRows((d && Array.isArray(d.data)) ? d.data : []); setFailed(false); })
+      .catch(() => { setRows([]); setFailed(true); })
       .finally(() => setLoading(false));
   }, [endpoint.id, env, only]);
   useEffect(() => { load(); }, [load]);
   const redeliver = (d) => whApi.redeliver(endpoint.id, d.id, env, orgId).then(() => { showToast(wv.resent); load(); }).catch((e) => showToast((e && e.message) || cx.redeliver, "error"));
+  // A second list on the page: its heading (with the endpoint and the all/failed switch), then the table.
   return (
-    <div className="panel">
-      <div className="panel-head">
-        <h3>{cx.deliveries}</h3>
-        <span className="cust" style={{ fontSize: 12.5, marginRight: "auto" }}>{endpoint.url}</span>
+    <section className="hub-section wh-deliveries" aria-labelledby="wh-deliveries-t">
+      <div className="hub-section-head">
+        <h2 id="wh-deliveries-t">{cx.deliveries} <small className="wh-deliveries-url">{endpoint.url}</small></h2>
         <div className="seg-tabs" role="group" aria-label={cx.deliveries}>
           {["all", "failed"].map((k) => <button key={k} type="button" className={only === k ? "on" : ""} aria-pressed={only === k} onClick={() => setOnly(k)}>{wv.only[k]}</button>)}
         </div>
       </div>
-      {loading && <TableSkeleton label={cx.loading} />}
+      <div className="panel">
+      {loading && <TableSkeleton label={cx.loading} cols={5} />}
       {!loading && (
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{wv.tableHead.event}</th><th>{wv.tableHead.response}</th><th>{wv.tableHead.status}</th><th>{wv.tableHead.when}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{pg.slice.map((d) => (
@@ -225,25 +248,26 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
               <td className="cust">{d.responseStatus ?? "-"}</td>
               <td><Pill st={DELIVERY_PILL[d.status] || "ref"} tone={d.status === "PENDING" ? "wait" : undefined} label={d.status} /></td>
               <td className="cust">{fmtDateTime(d.lastAttemptAt || d.createdAt)}</td>
-              <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
+              <td className="row-actions" onClick={(e) => e.stopPropagation()}>
                 <button className="icon-mini" title={wv.delivery} aria-label={wv.delivery} onClick={() => setOpen(d)}>{DI.docs}</button>
-                {canManage && <button type="button" className="btn btn-outline-w btn-sm" style={{ marginLeft: 8 }} onClick={() => redeliver(d)}>{cx.redeliver}</button>}
+                {canManage && <button type="button" className="icon-mini" title={cx.redeliver} aria-label={cx.redeliver} onClick={() => redeliver(d)}>{DI.refresh}</button>}
                 <RowMenu
                   label={fmt(t.dash.common.rowActions, { name: d.eventId || d.id })}
                   items={[
                     { key: "open", label: wv.delivery, icon: DI.docs, onClick: () => setOpen(d) },
-                    { key: "copy", label: t.dash.common.copyId, icon: DI.link, onClick: () => copyText(d.eventId || d.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                    { key: "copy", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => copyText(d.eventId || d.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
                     ...(canManage ? [{ key: "redeliver", label: cx.redeliver, icon: DI.refresh, onClick: () => redeliver(d) }] : []),
                   ]}
                 />
               </td>
             </tr>
           ))}
-            <FillRows n={pg.size - pg.count} cols={5} />
+            <FillRows n={pg.size - pg.count} cols={5} empty={failed ? cx.loadError : null} />
           </tbody>
         </table></div>
       )}
       {!loading && <Pagination {...pg} />}
+      </div>
       {open && (
         <Modal onClose={() => setOpen(null)}>
           <div className="modal-body">
@@ -261,7 +285,7 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
           </div>
         </Modal>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -315,11 +339,11 @@ function RevealSecretModal({ cx, data, onClose }) {
         <p>{cx.secretNote}</p>
         <div className="paylink-block">
           <div className="paylink-block-head"><label className="field-l">{cx.secret}</label>
-            <button type="button" className="copy-mini" title={t.toasts.copied} aria-label={t.toasts.copied} onClick={() => copyText(data.secret).then(() => showToast(t.toasts.copied))}><IcCopy /></button>
+            <button type="button" className="copy-mini" title={t.ui.copyToClipboard} aria-label={t.ui.copyToClipboard} onClick={() => copyText(data.secret).then(() => showToast(t.toasts.copied))}><IcCopy /></button>
           </div>
           <div className="paylink-code">{data.secret}</div>
         </div>
-        <div className="modal-actions"><button className="btn btn-violet" onClick={onClose}>{t.dash.common.cancel}</button></div>
+        <div className="modal-actions"><button className="btn btn-violet" onClick={onClose}>{t.ui.close}</button></div>
       </div>
     </Modal>
   );

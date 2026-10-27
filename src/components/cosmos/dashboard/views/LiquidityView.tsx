@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
+import { IcCopy } from "@/components/cosmos/icons";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { useT, fmt } from "@/lib/i18n/index";
 import { liquidity as liquidityApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -137,7 +139,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
           />
           <div className="panel">
             {!loading && (
-              <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th></tr></thead>
+              <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
                 <tbody>{!error && pg.slice.map((o) => (
                   <tr key={o.id} className="row-click" onClick={() => setDetail(o)}>
                     <td className="tid">
@@ -146,7 +148,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
                         preview={() => <PreviewCard label={lq.opsHead.id} title={o.id} headline={<><b>{lq.kind[o.kind] || o.kind}</b><span className={`hub-st-t ${(STATUS_PILL[o.status] === "ok" ? "ok" : STATUS_PILL[o.status] === "fail" ? "fail" : "wait")}`}>{lq.status[o.status] || o.status}</span></>} fields={[[lq.opsHead.pool, pairLabel(o.assetA, o.assetB)], [lq.opsHead.amounts, o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)], [lq.opsHead.created, fmtDateTime(o.createdAt)]]} />}
                        title={o.id}><code>{shortAddress(o.id)}</code></RecordLink>
                     </td>
-                    <td>{lq.kind[o.kind] || o.kind}</td>
+                    <td className="cust">{lq.kind[o.kind] || o.kind}</td>
                     <td><span className="cell-mark"><TokenMark symbol={assetLabel(o.assetA)} chain="stellar" chainName="Stellar" size={24} /><span>{pairLabel(o.assetA, o.assetB)}</span></span></td>
                     <td className="amt">{o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)}</td>
                     <td><Pill st={STATUS_PILL[o.status] || "ref"} tone={paymentTone(o.status)} label={lq.status[o.status] || o.status} /></td>
@@ -161,7 +163,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
                 </tbody>
               </table></div>
             )}
-            {loading && <TableSkeleton label={lq.loading} />}
+            {loading && <TableSkeleton label={lq.loading} cols={7} />}
             {!loading && <Pagination {...pg} />}
           </div>
         </>
@@ -204,15 +206,22 @@ function LiqRowActions({ o, onView }) {
   const cm = t.dash.common;
   const [, copy] = useCopy();
   const tx = o.txHash ? explorerTxUrl("stellar", tierOf(o.network), o.txHash) : null;
+  // Waiting on its signature: the detail is where it is signed and sent.
+  const waiting = o.status === "PENDING";
   return (
     <td className="row-actions" onClick={(e) => e.stopPropagation()}>
       <button type="button" className="icon-mini" title={cm.details} aria-label={cm.details} onClick={onView}>{DI.docs}</button>
+      {waiting && <button type="button" className="icon-mini" title={cm.continueOp} aria-label={`${cm.continueOp}: ${shortAddress(o.id)}`} onClick={onView}>{DI.key}</button>}
+      {tx
+        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={tx} target="_blank" rel="noopener noreferrer">{DI.network}</a>
+        : <button type="button" className="icon-mini" disabled title={cm.noTxYet} aria-label={`${t.dash.balances.explorer}: ${cm.noTxYet}`}>{DI.network}</button>}
       <RowMenu
         label={fmt(cm.rowActions, { name: shortAddress(o.id) })}
         items={[
           { key: "open", label: cm.details, icon: DI.docs, onClick: onView },
+          ...(waiting ? [{ key: "continue", label: cm.continueOp, icon: DI.key, onClick: onView }] : []),
           { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=liquidity&open=${encodeURIComponent(o.id)}`, external: true },
-          { key: "copy", label: cm.copyId, icon: DI.link, onClick: () => copy(o.id, t.toasts.copied) },
+          { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(o.id, t.toasts.copied) },
           { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: tx, external: true, disabled: !tx, hint: cm.noTxYet },
         ]}
       />
@@ -399,26 +408,35 @@ function DepositModal({ lq, orgId, env, prefill, onClose, onCreated }) {
       .finally(() => setBusy(false));
   };
 
+  /* Two steps (product owner, 2026-10-27: a long form goes in steps): the account and the pool's
+     pair, then how much goes in and the slippage. */
+  const steps = useFormSteps(2);
+  const pairOk = !!source.trim() && (!needsIssuerA || !!assetAIssuer.trim()) && (!needsIssuerB || !!assetBIssuer.trim());
+
   return (
     <Modal onClose={onClose}>
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.depositTitle}</h3>
-        <p>{m.depositDesc}</p>
-        <Field label={m.source} hint={m.sourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
-        <AssetSelect network={net} label={m.assetA} codeLabel={m.assetA} issuerLabel={m.assetAIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
-          code={assetACode} issuer={assetAIssuer} onCode={setAssetACode} onIssuer={setAssetAIssuer}
-          customText={t.dash.common.assetCustom} codePlaceholder="XLM" />
-        <AssetSelect network={net} label={m.assetB} codeLabel={m.assetB} issuerLabel={m.assetBIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
-          code={assetBCode} issuer={assetBIssuer} onCode={setAssetBCode} onIssuer={setAssetBIssuer}
-          customText={t.dash.common.assetCustom} codePlaceholder="USDC" />
-        <Field label={m.maxAmountA} hint={m.maxAmountAHint} value={maxAmountA} onChange={(e) => setMaxAmountA(e.target.value)} placeholder="1000" inputMode="decimal" />
-        <Field label={m.maxAmountB} hint={m.maxAmountBHint} value={maxAmountB} onChange={(e) => setMaxAmountB(e.target.value)} placeholder="100" inputMode="decimal" />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        <FormSteps names={[m.steps.pair, m.steps.amounts]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <p className="field-help">{m.depositDesc}</p>
+            <Field label={m.source} hint={m.sourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
+            <AssetSelect network={net} label={m.assetA} codeLabel={m.assetA} issuerLabel={m.assetAIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
+              code={assetACode} issuer={assetAIssuer} onCode={setAssetACode} onIssuer={setAssetAIssuer}
+              customText={t.dash.common.assetCustom} codePlaceholder="XLM" />
+            <AssetSelect network={net} label={m.assetB} codeLabel={m.assetB} issuerLabel={m.assetBIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
+              code={assetBCode} issuer={assetBIssuer} onCode={setAssetBCode} onIssuer={setAssetBIssuer}
+              customText={t.dash.common.assetCustom} codePlaceholder="USDC" />
+          </>)}
+          {steps.step === 1 && (<>
+            <Field label={m.maxAmountA} hint={m.maxAmountAHint} value={maxAmountA} onChange={(e) => setMaxAmountA(e.target.value)} placeholder="1000" inputMode="decimal" />
+            <Field label={m.maxAmountB} hint={m.maxAmountBHint} value={maxAmountB} onChange={(e) => setMaxAmountB(e.target.value)} placeholder="100" inputMode="decimal" />
+            <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
+          </>)}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={pairOk} onCancel={onClose} submitLabel={busy ? m.creating : m.create} onSubmit={submit} busy={busy} submitDisabled={!canCreate} />
       </div>
     </Modal>
   );

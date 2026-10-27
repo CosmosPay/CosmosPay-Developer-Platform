@@ -37,6 +37,7 @@ import { fromUnits, toUnits, zkSplit } from "@/lib/zk/amounts";
 import { parseZkConfig } from "@/lib/zk/checkout-api";
 import { ZkAccountPanel } from "@/components/cosmos/dashboard/components/ZkAccountPanel";
 import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 
 const STATUSES = ["PENDING", "SUCCEEDED", "EXPIRED"];
 const PILL = { SUCCEEDED: "ok", EXPIRED: "fail", PENDING: "ref" };
@@ -50,7 +51,7 @@ const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` :
 /* Every customer and their Stellar wallets, page after page (the API serves 100 at a time): the
    private accounts are customers' wallets, with no limit on how many. */
 function useCustomerAccounts(env) {
-  const [state, setState] = useState({ customers: null, accounts: null });
+  const [state, setState] = useState({ customers: null, accounts: null, error: false });
   const [tick, setTick] = useState(0);
   useEffect(() => {
     let alive = true;
@@ -66,9 +67,10 @@ function useCustomerAccounts(env) {
       const name = (c) => c.alias || c.name;
       setState({
         customers: all.map((c) => ({ id: c.id, name: name(c) })),
-        accounts: all.flatMap((c) => (c.wallets || []).filter((w) => w.chain === "stellar").map((w) => ({ walletId: w.id, address: w.address, label: w.label, customerId: c.id, customerName: name(c) }))),
+        accounts: all.flatMap((c) => (c.wallets || []).filter((w) => w.chain === "stellar").map((w) => ({ walletId: w.id, address: w.address, label: w.label, customerId: c.id, customerName: name(c), createdAt: w.createdAt }))),
+        error: false,
       });
-    })().catch(() => { if (alive) setState({ customers: [], accounts: [] }); });
+    })().catch(() => { if (alive) setState({ customers: [], accounts: [], error: true }); });
     return () => { alive = false; };
   }, [env, tick]);
   return { ...state, reload: () => setTick((n) => n + 1) };
@@ -83,7 +85,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
   const [registered, setRegistered] = useState([]);
-  const { customers, accounts, reload } = useCustomerAccounts(env);
+  const { customers, accounts, error: accountsError, reload } = useCustomerAccounts(env);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   // Loads once the organization is known; an answer for an organization or environment the view
@@ -145,11 +147,11 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
           ],
         }}
         date={filters.date} onDate={(v) => set("date", v)}
-        shown={shown.length} total={all.length} active={active} onReset={reset} loading={rows === null}
+        shown={shown.length} total={rows === null ? undefined : all.length} active={active} onReset={reset} loading={rows === null}
         actions={canCreate && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
       />
       <div className="panel" id="zk-payments">
-        {rows === null && <TableSkeleton label={t.dash.cosmos.loading} />}
+        {rows === null && <TableSkeleton label={t.dash.cosmos.loading} cols={7} />}
         {rows !== null && (
           <div className="t-scroll" tabIndex={0} ref={tref}>
             <table className="tx">
@@ -168,21 +170,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
                     <td className="cust">{p.feeAmount} XLM</td>
                     <td><Pill st={PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={z.status[p.status] || p.status} /></td>
                     <td className="cust">{fmtDateTime(p.createdAt)}</td>
-                    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
-                      <button type="button" className="icon-mini" title={z.view.detail.title} aria-label={z.view.detail.title} onClick={() => setDetail(p)}>{DI.docs}</button>
-                      <button type="button" className="icon-mini" title={z.view.copyLink} aria-label={z.view.copyLink} onClick={() => copy(p.id)}><IcCopy /></button>
-                      <a className="icon-mini" href={checkoutUrl(p.id)} target="_blank" rel="noopener" title={z.view.openCheckout} aria-label={z.view.openCheckout}>{DI.link}</a>
-                      <RowMenu
-                        label={fmt(t.dash.common.rowActions, { name: shortAddress(p.id) })}
-                        items={[
-                          { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => setDetail(p) },
-                          { key: "tab", label: t.dash.common.openNewTab, icon: DI.link, href: `/dashboard?view=zkPayments&open=${encodeURIComponent(p.id)}`, external: true },
-                          { key: "copyId", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
-                          { key: "copy", label: z.view.copyLink, icon: <IcCopy />, onClick: () => copy(p.id) },
-                          { key: "checkout", label: z.view.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true },
-                        ]}
-                      />
-                    </td>
+                    <ZkRowActions p={p} onView={() => setDetail(p)} onCopy={copy} />
                   </tr>
                 ))}
                 <FillRows
@@ -196,7 +184,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
         {rows !== null && <Pagination {...pg} />}
       </div>
       {/* The private accounts the payments go to, a table of their own under the payments. */}
-      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} env={env} accounts={accounts} customers={customers} canAdd={canAddAccounts} canRemove={canRemoveAccounts} onChanged={reload} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
+      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} env={env} accounts={accounts} loadError={accountsError} customers={customers} canAdd={canAddAccounts} canRemove={canRemoveAccounts} onChanged={reload} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
       {detail && <ZkPaymentDetailModal payment={detail} orgId={orgId} env={env} onCopy={copy} onClose={() => setDetail(null)} />}
       {modal && config && (
         <CreateZkPaymentModal
@@ -223,7 +211,6 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts,
   const recipient = list.some((a) => a.address === picked) ? picked : list[0]?.address || "";
   // The organization's own fee (as on a payment link): a percentage and/or fixed XLM, to one of its
   // Stellar wallets, taken from the amount or added on top. Empty means none.
-  const [more, setMore] = useState(false);
   const [feePct, setFeePct] = useState("");
   const [feeFixed, setFeeFixed] = useState("");
   const [feeWallet, setFeeWallet] = useState("");
@@ -271,20 +258,38 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts,
     }
   };
 
+  /* Three steps (product owner, 2026-10-27: a long form goes in steps): the amount and the
+     customer who receives it, the payment's details, and the organization's own fee (optional);
+     the split shows wherever the amount or the fee change it. */
+  const steps = useFormSteps(3);
+  const stepOk = [!!split && split.net > 0n && !!target, true, feeOk && !!split && split.net > 0n];
+  const splitRows = split && (
+    <dl className="sq-rows zk-split" aria-live="polite">
+      <div><dt>{z.merchantGets}</dt><dd>{split.net > 0n ? fromUnits(split.net) : "0"} XLM</dd></div>
+      <div><dt>{z.commission} ({z.commissionRate})</dt><dd>{fromUnits(split.fee)} XLM</dd></div>
+      {split.merchantFee > 0n && <div><dt>{z.merchantFee}</dt><dd>{fromUnits(split.merchantFee)} XLM</dd></div>}
+      {split.total !== units && <div><dt>{z.modal.payerPays}</dt><dd>{fromUnits(split.total)} XLM</dd></div>}
+    </dl>
+  );
+
   return (
     <Modal onClose={onClose} label={z.modal.title}>
       <div className="modal-body">
+        <div className="modal-eyebrow">{z.title}</div>
         <h3>{z.modal.title}</h3>
         {created ? (
           <div className="paylink-fields">
             <Field label={z.modal.link} value={checkoutUrl(created.id)} readOnly onFocus={(e) => e.target.select()} />
             <div className="modal-actions">
-              <a className="btn btn-dark" href={checkoutUrl(created.id)} target="_blank" rel="noopener">{z.view.openCheckout}</a>
-              <button type="button" className="btn btn-outline-w" onClick={onClose}>{z.account.done}</button>
+              <a className="btn btn-violet" href={checkoutUrl(created.id)} target="_blank" rel="noopener">{z.view.openCheckout}</a>
+              <button type="button" className="btn btn-soft" onClick={onClose}>{z.account.done}</button>
             </div>
           </div>
         ) : (
           <>
+            <FormSteps names={[z.modal.steps.amount, z.modal.steps.details, z.modal.steps.fee]} steps={steps} />
+            <FormStep steps={steps}>
+            {steps.step === 0 && (<>
             <div className="fld">
               <div className="sp pl-amount">
                 <div className="sp-top"><label htmlFor="zk-amount">{z.amount}</label></div>
@@ -294,14 +299,7 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts,
                 </div>
               </div>
             </div>
-            {split && (
-              <dl className="sq-rows zk-split" aria-live="polite">
-                <div><dt>{z.merchantGets}</dt><dd>{split.net > 0n ? fromUnits(split.net) : "0"} XLM</dd></div>
-                <div><dt>{z.commission} ({z.commissionRate})</dt><dd>{fromUnits(split.fee)} XLM</dd></div>
-                {split.merchantFee > 0n && <div><dt>{z.merchantFee}</dt><dd>{fromUnits(split.merchantFee)} XLM</dd></div>}
-                {split.total !== units && <div><dt>{z.modal.payerPays}</dt><dd>{fromUnits(split.total)} XLM</dd></div>}
-              </dl>
-            )}
+            {splitRows}
             {accounts === null ? (
               <p className="field-help" role="status">{t.dash.cosmos.loading}</p>
             ) : list.length > 0 ? (
@@ -313,51 +311,84 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts,
             ) : (
               <p className="field-help" role="status">{z.modal.noAccounts}</p>
             )}
+            </>)}
+            {steps.step === 1 && (<>
             <Field label={z.modal.description} hint={t.dash.common.optional} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t.dash.examples.order} maxLength={140} />
             <div className="fld">
               <span className="field-l" id="zk-expires-l">{z.modal.expires}</span>
               <Select labelledBy="zk-expires-l" value={expires} onChange={setExpires} options={EXPIRIES.map((m) => ({ value: String(m), label: z.modal.expiries[`m${m}`] }))} />
             </div>
-            {/* The organization's own fee, folded under "more options", as on a payment link. */}
-            <button type="button" className="swap-more" aria-expanded={more} aria-controls="zk-more" onClick={() => setMore((v) => !v)}>
-              {t.dash.paylinks.modal.more}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            <div className={`swap-another${more ? " open" : ""}`} id="zk-more" inert={!more}>
-              <div className="swap-another-in">
-                <div className="paylink-fee" role="group" aria-labelledby="zk-fee-l">
-                  <span className="field-l" id="zk-fee-l">{mf.title}</span>
-                  <p className="field-help">{z.modal.feeHint}</p>
-                  <div className="field-row">
-                    <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
-                    <Field label={`${mf.fixed} (XLM)`} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.5" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
-                  </div>
-                  {feeOn && (
-                    <div className="arrive">
-                      <WalletSelect id="zk-fee-wallet" orgId={orgId} chain="stellar" value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
-                      {feeSameWallet && <p className="field-err" role="alert">{mf.sameWallet}</p>}
-                      <div className="fld">
-                        <span className="field-l" id="zk-fee-by">{mf.paidBy}</span>
-                        <div className="seg-tabs seg-fill" role="group" aria-labelledby="zk-fee-by">
-                          {["recipient", "payer"].map((k) => (
-                            <button key={k} type="button" className={feePaidBy === k ? "on" : ""} aria-pressed={feePaidBy === k} onClick={() => setFeePaidBy(k)}>{mf[k]}</button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            </>)}
+            {/* The organization's own fee, as on a payment link. */}
+            {steps.step === 2 && (<>
+            <div className="paylink-fee" role="group" aria-labelledby="zk-fee-l">
+              <span className="field-l" id="zk-fee-l">{mf.title} <span className="field-hint">{t.dash.common.optional}</span></span>
+              <p className="field-help">{z.modal.feeHint}</p>
+              <div className="field-row">
+                <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
+                <Field label={`${mf.fixed} (XLM)`} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.5" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
               </div>
+              {feeOn && (
+                <div className="arrive">
+                  <WalletSelect id="zk-fee-wallet" orgId={orgId} chain="stellar" value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
+                  {feeSameWallet && <p className="field-err" role="alert">{mf.sameWallet}</p>}
+                  <div className="fld">
+                    <span className="field-l" id="zk-fee-by">{mf.paidBy}</span>
+                    <div className="seg-tabs seg-fill" role="group" aria-labelledby="zk-fee-by">
+                      {["recipient", "payer"].map((k) => (
+                        <button key={k} type="button" className={feePaidBy === k ? "on" : ""} aria-pressed={feePaidBy === k} onClick={() => setFeePaidBy(k)}>{mf[k]}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+            {splitRows}
+            </>)}
+            </FormStep>
             {problem && <p className="field-err" role="alert">{problem}</p>}
-            <div className="modal-actions">
-              <button type="button" className="btn btn-dark" onClick={submit} disabled={!ok}>{busy ? z.modal.submitting : z.modal.submit}</button>
-              <button type="button" className="btn btn-outline-w" onClick={onClose}>{t.dash.common.cancel}</button>
-            </div>
+            <FormStepsFooter
+              steps={steps} canNext={stepOk[steps.step]} onCancel={onClose}
+              submitLabel={busy ? z.modal.submitting : z.modal.submit} onSubmit={submit} busy={busy} submitDisabled={!ok}
+            />
           </>
         )}
       </div>
     </Modal>
+  );
+}
+
+/* A private payment's actions, as a payment link's (PayLinkRowActions): its detail, its link and
+   checkout while it can still be paid, its transaction on the explorer once there is one; the menu
+   adds a new tab, its id and the commission's transaction. */
+function ZkRowActions({ p, onView, onCopy }) {
+  const t = useT();
+  const z = t.zk;
+  const cm = t.dash.common;
+  const tier = p.network === "public" ? "public" : "testnet";
+  const tx = p.paymentTxHash ? explorerTxUrl("stellar", tier, p.paymentTxHash) : null;
+  const feeTx = p.feeTxHash ? explorerTxUrl("stellar", tier, p.feeTxHash) : null;
+  const payable = p.status === "PENDING";
+  return (
+    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+      <button type="button" className="icon-mini" title={z.view.detail.title} aria-label={z.view.detail.title} onClick={onView}>{DI.docs}</button>
+      <button type="button" className="icon-mini" disabled={!payable} title={payable ? z.view.copyLink : cm.notPayable} aria-label={payable ? z.view.copyLink : `${z.view.copyLink}: ${cm.notPayable}`} onClick={() => onCopy(p.id)}><IcCopy /></button>
+      {tx
+        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={tx} target="_blank" rel="noopener noreferrer">{DI.network}</a>
+        : <button type="button" className="icon-mini" disabled title={cm.noTxYet} aria-label={`${t.dash.balances.explorer}: ${cm.noTxYet}`}>{DI.network}</button>}
+      <RowMenu
+        label={fmt(cm.rowActions, { name: shortAddress(p.id) })}
+        items={[
+          { key: "open", label: cm.details, icon: DI.docs, onClick: onView },
+          { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=zkPayments&open=${encodeURIComponent(p.id)}`, external: true },
+          { key: "copyId", label: cm.copyId, icon: <IcCopy />, onClick: () => navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+          { key: "copy", label: z.view.copyLink, icon: <IcCopy />, disabled: !payable, hint: cm.notPayable, onClick: () => onCopy(p.id) },
+          { key: "checkout", label: z.view.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true, disabled: !payable, hint: cm.notPayable },
+          { key: "explorer", label: z.view.detail.paymentTx, icon: DI.network, href: tx, external: true, disabled: !tx, hint: cm.noTxYet },
+          { key: "fee", label: z.view.detail.feeTx, icon: DI.network, href: feeTx, external: true, disabled: !feeTx, hint: cm.noTxYet },
+        ]}
+      />
+    </td>
   );
 }
 

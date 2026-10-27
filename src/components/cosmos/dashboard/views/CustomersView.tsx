@@ -20,10 +20,15 @@ import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink"
 import { PaymentPreview, PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
-import { matchesQuery } from "@/lib/dashboard-filters";
+import { ViewFigures } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
+import { IcCopy } from "@/components/cosmos/icons";
+import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { CHAINS, CHAIN_NAMES, assetLabel, isAddress, isChain } from "@/lib/chains";
 
-const DEFAULTS = { q: "" };
+const DEFAULTS = { q: "", chain: "all", date: "any" };
+const ALLOWED = { chain: ["all", ...CHAINS] };
+const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_WALLETS = 20;
 const shortAcct = (a) => (a && a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
 const walletsOf = (c) => (Array.isArray(c?.wallets) ? c.wallets : []);
@@ -50,7 +55,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
   const t = useT();
   const cv = t.dash.customers;
   const cx = t.dash.cosmos;
-  const { filters, set, reset, active } = useListFilters(DEFAULTS);
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
   const q = filters.q;
   const fl = t.dash.filters;
   const [rows, setRows] = useState([]);
@@ -58,6 +63,10 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
   const [detail, setDetail] = useState(null);
+  // The detail opened straight in its edit form (the row's "Edit"), and the customer to delete.
+  const [editing, setEditing] = useState(false);
+  const [toDelete, setToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -68,10 +77,19 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
   }, [env]);
   useEffect(() => { load(); }, [load]);
 
-  const view = rows.filter((c) => matchesQuery([c.name, c.alias, c.email, ...walletsOf(c).flatMap((w) => [w.address, w.label, CHAIN_NAMES[w.chain]])], q));
-  const pg = usePaged(view, q);
+  const matches = (c, skip) =>
+    (skip === "chain" || filters.chain === "all" || walletsOf(c).some((w) => w.chain === filters.chain)) &&
+    inRange(c.createdAt, filters.date) &&
+    matchesQuery([c.name, c.alias, c.email, ...walletsOf(c).flatMap((w) => [w.address, w.label, CHAIN_NAMES[w.chain]])], q);
+  const view = rows.filter((c) => matches(c, null));
+  const chainCounts = countBy(rows.filter((c) => matches(c, "chain")).flatMap((c) => [...new Set(walletsOf(c).map((w) => w.chain))]), (x) => x);
+  const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
   const addButton = canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {cv.add}</button>;
+  // The figures, from the list itself: customers, the ones with a wallet, their payments, the new ones.
+  const sumPays = rows.reduce((n, c) => n + (c.payments || 0), 0);
+  const sumOk = rows.reduce((n, c) => n + (c.succeeded || 0), 0);
+  const recent = rows.filter((c) => c.createdAt && Date.now() - new Date(c.createdAt).getTime() < MONTH_MS).length;
 
   const onCreated = (c) => { setModal(false); setRows((x) => [c, ...x]); };
   const onUpdated = (c) => { setRows((x) => x.map((i) => (i.id === c.id ? { ...i, ...c } : i))); setDetail((d) => (d && d.id === c.id ? { ...d, ...c } : d)); };
@@ -80,16 +98,37 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
     if (wallets.length === 1) goFiltered(onGo, "payments", { q: wallets[0].address });
     else setDetail(c);
   };
-  const remove = (c) => custApi.remove(c.id, env, orgId)
-    .then(() => { setRows((x) => x.filter((i) => i.id !== c.id)); setDetail(null); })
-    .catch((e) => showToast((e && e.message) || cx.delete, "error"));
+  const open = (c, edit = false) => { setEditing(edit); setDetail(c); };
+  // Deleting a customer is confirmed first, as every delete is.
+  const confirmDelete = () => {
+    const c = toDelete;
+    if (!c || deleting) return;
+    setDeleting(true);
+    custApi.remove(c.id, env, orgId)
+      .then(() => { setRows((x) => x.filter((i) => i.id !== c.id)); setDetail(null); setToDelete(null); })
+      .catch((e) => showToast((e && e.message) || cv.deleteError, "error"))
+      .finally(() => setDeleting(false));
+  };
 
   return (
     <>
       <ViewHead title={cv.title} />
+      <ViewFigures
+        label={cv.title} loading={loading} failed={error}
+        items={[
+          { key: "customers", label: cv.figures.customers, value: rows.length },
+          { key: "wallets", label: cv.figures.withWallet, value: rows.filter((c) => walletsOf(c).length > 0).length },
+          { key: "payments", label: cv.figures.payments, value: sumPays, sub: fmt(cv.figures.succeeded, { n: sumOk }) },
+          { key: "new", label: cv.figures.recent, value: recent },
+        ]}
+      />
       <FilterBar
         label={fl.label}
         query={q} onQuery={(v) => set("q", v)} placeholder={cv.searchPlaceholder}
+        selects={[
+          { key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] || 0 }))] },
+        ]}
+        date={filters.date} onDate={(v) => set("date", v)}
         active={active} onReset={reset}
         shown={view.length} total={loading ? undefined : rows.length} loading={loading}
         actions={addButton}
@@ -100,12 +139,12 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
             <tbody>{!error && pg.slice.map((c) => {
               const wallets = walletsOf(c);
               return (
-                <tr key={c.id} className="row-click" onClick={() => setDetail(c)}>
-                  <td>
+                <tr key={c.id} className="row-click" onClick={() => open(c)}>
+                  <td className="tid">
                     <div className="cust-cell">
                       <span className="av-sm">{(c.alias || c.name || "?").slice(0, 2).toUpperCase()}</span>
                       <RecordLink
-                        onOpen={() => setDetail(c)} copy={c.id}
+                        onOpen={() => open(c)} copy={c.id}
                         preview={() => <PreviewCard label={cv.tableHead.name} title={c.id} headline={<b>{c.alias || c.name}</b>} fields={[[cv.tableHead.email, c.email || "-"], [cv.tableHead.wallets, wallets.length ? wallets.map((w) => `${CHAIN_NAMES[w.chain] || w.chain} ${shortAcct(w.address)}`).join(", ") : "-"], [cv.tableHead.spend, c.total || "0"], [cv.tableHead.payments, `${c.succeeded ?? 0}/${c.payments ?? 0}`], [cv.tableHead.since, fmtDate(c.createdAt)]]} />}
                       >{c.alias || c.name}</RecordLink>
                     </div>
@@ -115,16 +154,21 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
                   <td className="amt">{c.total || "0"}</td>
                   <td className="cust">{c.payments ? <button type="button" className="link-btn" onClick={(e) => { e.stopPropagation(); paymentsOf(c); }}>{c.succeeded ?? 0}/{c.payments}</button> : `${c.succeeded ?? 0}/${c.payments ?? 0}`}</td>
                   <td className="cust">{fmtDate(c.createdAt)}</td>
-                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
-                    <button className="icon-mini" title={cx.custDetail.title} aria-label={cx.custDetail.title} onClick={() => setDetail(c)}>{DI.docs}</button>
-                    {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(c)}>{DI.trash}</button>}
+                  <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                    <button className="icon-mini" title={t.dash.common.details} aria-label={`${t.dash.common.details}: ${c.alias || c.name}`} onClick={() => open(c)}>{DI.docs}</button>
+                    {canManage && <button className="icon-mini" title={cx.custDetail.edit} aria-label={`${cx.custDetail.edit}: ${c.alias || c.name}`} onClick={() => open(c, true)}>{DI.edit}</button>}
+                    {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={`${cx.delete}: ${c.alias || c.name}`} onClick={() => setToDelete(c)}>{DI.trash}</button>}
                     <RowMenu
                       label={fmt(t.dash.common.rowActions, { name: c.alias || c.name || c.id })}
                       items={[
-                        { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => setDetail(c) },
-                        { key: "copy", label: t.dash.common.copyId, icon: DI.link, onClick: () => navigator.clipboard?.writeText(c.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
-                        { key: "payments", label: t.dash.overview.hub.viewAll, icon: DI.payments, disabled: !c.payments, hint: cx.custDetail.noAccount, onClick: () => paymentsOf(c) },
-                        ...(canManage ? [{ key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => remove(c) }] : []),
+                        { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => open(c) },
+                        ...(canManage ? [
+                          { key: "edit", label: cx.custDetail.edit, icon: DI.edit, onClick: () => open(c, true) },
+                          { key: "wallet", label: cx.custDetail.addWallet, icon: DI.plus, disabled: wallets.length >= MAX_WALLETS, onClick: () => open(c) },
+                        ] : []),
+                        { key: "copy", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => navigator.clipboard?.writeText(c.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                        { key: "payments", label: t.dash.overview.hub.viewAll, icon: DI.payments, disabled: !c.payments, hint: wallets.length ? cx.custDetail.noPayments : cx.custDetail.noAccount, onClick: () => paymentsOf(c) },
+                        ...(canManage ? [{ key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => setToDelete(c) }] : []),
                       ]}
                     />
                   </td>
@@ -138,11 +182,12 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
             </tbody>
           </table></div>
         )}
-        {loading && <TableSkeleton label={cx.loading} />}
+        {loading && <TableSkeleton label={cx.loading} cols={7} />}
         {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CustomerFormModal cv={cv} cx={cx} env={env} orgId={orgId} onClose={() => setModal(false)} onSaved={onCreated} />}
-      {detail && <CustomerDetailModal cv={cv} cx={cx} customer={detail} env={env} orgId={orgId} canManage={canManage} onClose={() => setDetail(null)} onUpdated={onUpdated} onDelete={() => remove(detail)} onOpenPayment={(id) => { setDetail(null); openRecord("payment", id); }} onWalletPayments={(address) => { setDetail(null); goFiltered(onGo, "payments", { q: address }); }} />}
+      {toDelete && <ConfirmModal title={cv.deleteTitle} body={fmt(cv.deleteBody, { name: toDelete.alias || toDelete.name })} confirmLabel={cx.delete} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => { if (!deleting) setToDelete(null); }} />}
+      {detail && <CustomerDetailModal key={detail.id} cv={cv} cx={cx} customer={detail} startEditing={editing} env={env} orgId={orgId} canManage={canManage} onClose={() => { setDetail(null); setEditing(false); }} onUpdated={onUpdated} onDelete={() => setToDelete(detail)} onOpenPayment={(id) => { setDetail(null); openRecord("payment", id); }} onWalletPayments={(address) => { setDetail(null); goFiltered(onGo, "payments", { q: address }); }} />}
     </>
   );
 }
@@ -222,11 +267,11 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
 
 /* Drill-down: editable info, the customer's wallets (added and removed one at a time), and the
    payments any of them made. */
-function CustomerDetailModal({ cv, cx, customer, env, orgId, canManage, onClose, onUpdated, onDelete, onOpenPayment, onWalletPayments }) {
+function CustomerDetailModal({ cv, cx, customer, startEditing = false, env, orgId, canManage, onClose, onUpdated, onDelete, onOpenPayment, onWalletPayments }) {
   const t = useT();
   const cd = cx.custDetail;
   const m = cv.modal;
-  const [edit, setEdit] = useState(false);
+  const [edit, setEdit] = useState(startEditing && canManage);
   const [busy, setBusy] = useState(false);
   const [pays, setPays] = useState(null);
   const [form, setForm] = useState({ name: customer.name || "", alias: customer.alias || "", email: customer.email || "", reference: customer.reference || "", note: customer.note || "" });
@@ -320,6 +365,7 @@ function CustomerWallets({ customer, wallets, pays, env, orgId, canManage, onCha
   const cv = t.dash.customers;
   const [row, setRow] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [toRemove, setToRemove] = useState(null);
   const paidFrom = (w) => (pays || []).filter((p) => p.source === w.address).length;
 
   const add = () => {
@@ -330,9 +376,16 @@ function CustomerWallets({ customer, wallets, pays, env, orgId, canManage, onCha
       .catch((e) => showToast((e && e.message) || cd.addWallet, "error"))
       .finally(() => setBusy(false));
   };
-  const remove = (w) => custApi.removeWallet(customer.id, w.id, env, orgId)
-    .then(() => onChange(wallets.filter((x) => x.id !== w.id)))
-    .catch((e) => showToast((e && e.message) || cd.removeWallet, "error"));
+  // Removing a wallet is confirmed first, as every delete is.
+  const confirmRemove = () => {
+    const w = toRemove;
+    if (!w || busy) return;
+    setBusy(true);
+    custApi.removeWallet(customer.id, w.id, env, orgId)
+      .then(() => { onChange(wallets.filter((x) => x.id !== w.id)); setToRemove(null); })
+      .catch((e) => showToast((e && e.message) || cd.removeWallet, "error"))
+      .finally(() => setBusy(false));
+  };
 
   return (
     <section className="cust-wallets-panel" aria-label={cd.wallets}>
@@ -352,8 +405,8 @@ function CustomerWallets({ customer, wallets, pays, env, orgId, canManage, onCha
                 <td><span className="cust-cell"><NetworkMark chain={w.chain} size={24} /><span>{w.label || CHAIN_NAMES[w.chain] || w.chain}{w.label && <small className="cust-wallet-net">{CHAIN_NAMES[w.chain] || w.chain}</small>}</span></span></td>
                 <td className="cust"><AddressLink chain={w.chain} network={networkOf(env)} address={w.address} label={cd.account} /></td>
                 <td className="cust">{n ? <button type="button" className="link-btn" title={cd.walletPayments} aria-label={`${cd.walletPayments}: ${n}`} onClick={() => onWalletPayments(w.address)}>{n}</button> : <span title={cd.walletPayments}>0</span>}</td>
-                <td style={{ textAlign: "right" }}>
-                  {canManage && <button type="button" className="icon-mini danger" title={cd.removeWallet} aria-label={`${cd.removeWallet}: ${shortAcct(w.address)}`} onClick={() => remove(w)}>{DI.trash}</button>}
+                <td className="row-actions">
+                  {canManage && <button type="button" className="icon-mini danger" title={cd.removeWallet} aria-label={`${cd.removeWallet}: ${shortAcct(w.address)}`} onClick={() => setToRemove(w)}>{DI.trash}</button>}
                 </td>
               </tr>
             );
@@ -371,6 +424,7 @@ function CustomerWallets({ customer, wallets, pays, env, orgId, canManage, onCha
           </div>
         </div>
       )}
+      {toRemove && <ConfirmModal title={cv.removeWalletTitle} body={fmt(cv.removeWalletBody, { account: shortAcct(toRemove.address), name: customer.alias || customer.name })} confirmLabel={cd.removeWallet} cancelLabel={t.dash.common.cancel} onConfirm={confirmRemove} onClose={() => { if (!busy) setToRemove(null); }} />}
     </section>
   );
 }

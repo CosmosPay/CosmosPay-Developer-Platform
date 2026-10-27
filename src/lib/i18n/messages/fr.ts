@@ -61,6 +61,7 @@ export default {
       submitting: "Création…",
       created: "Paiement privé créé",
       link: "Lien de paiement",
+      steps: { amount: "Montant et client", details: "Détails", fee: "Frais" },
     },
     account: {
       title: "Comptes privés",
@@ -82,7 +83,7 @@ export default {
       withdrawOk: "Retrait effectué",
       mergeOk: "L’entrant est disponible",
       done: "Terminé",
-      tableHead: { wallet: "Portefeuille", customer: "Client", address: "Adresse", status: "Statut", payments: "Paiements reçus" },
+      tableHead: { wallet: "Portefeuille", customer: "Client", address: "Adresse", status: "Statut", payments: "Paiements reçus", added: "Ajouté" },
       detail: "Compte privé",
       paymentsTo: "Paiements privés vers ce compte",
       add: "Ajouter un compte privé",
@@ -94,6 +95,11 @@ export default {
       addHint: "L’adresse seulement : le client signe lors de la création de son compte privé, avec un XDR que vous lui envoyez.",
       remove: "Supprimer le compte privé",
       removed: "Compte privé supprimé du dashboard. Son solde privé reste au client.",
+      removeTitle: "Supprimer le compte privé ?",
+      removeBody: "{account} est retiré de {customer}. Le compte privé et son solde restent au client ; rien n’est déplacé.",
+      searchPlaceholder: "Rechercher par client, portefeuille ou adresse…",
+      noPaymentsYet: "Ce compte n’a encore reçu aucun paiement privé",
+      loadError: "Impossible de charger les comptes privés.",
       keyMismatch: "Ce compte privé a été créé avec une autre signature, hors du dashboard : il ne peut pas être ouvert ici.",
       keyFailed: "La transaction signée n’est pas la signature de {wallet}. Demandez au client de la signer avec ce compte.",
     },
@@ -1034,6 +1040,7 @@ export default {
       actionError: "Impossible d’enregistrer la modification.",
       noneForChain: "L’organisation n’a pas encore de portefeuille {network}.",
       askAdmin: "Une personne autorisée peut en connecter un dans Paramètres.",
+      steps: { address: "Adresse", sign: "Signature" },
     },
     examples: { order: "Commande nº 24", firstName: "Claire", lastName: "Martin", fullName: "Claire Martin", jobTitle: "Directrice", customerName: "Facturation Acme", payoutsName: "Versements Acme (USD)", productName: "Forfait Pro (mensuel)" },
     search: { label: "Rechercher dans le tableau de bord", placeholder: "Rechercher", pages: "Pages", searchGroup: "Rechercher", searchIn: "{place} contenant « {q} »", empty: "Aucun résultat pour « {q} »." },
@@ -1146,7 +1153,9 @@ export default {
       yes: "Oui",
       no: "Non",
       assetCustom: "Personnalisé…",
-      assetAny: "Tout actif"
+      assetAny: "Tout actif",
+      continueOp: "Continuer",
+      steps: { label: "Étapes", of: "Étape {n} sur {total}", next: "Suivant", back: "Retour" },
     },
     profileMenu: {
       account: "Paramètres du compte",
@@ -1195,7 +1204,8 @@ export default {
           write: "Écriture"
         },
         create: "Créer la clé",
-        save: "Enregistrer les modifications"
+        save: "Enregistrer les modifications",
+        steps: { details: "Informations", scopes: "Permissions" },
       },
       reveal: {
         eyebrow: "Clé d’API créée",
@@ -1309,6 +1319,7 @@ export default {
         mainnet: "Mainnet", more: "Plus d’options",
         merchantFee: { title: "Frais du marchand", pct: "Pourcentage", fixed: "Montant fixe", wallet: "Wallet qui reçoit les frais", paidBy: "Qui les paie", recipient: "Déduits du montant", payer: "Payés par le payeur, en plus du montant", hint: "Vos propres frais, dans le même paiement et à part de la commission de Cosmos Pay ; il faut un montant. Sur Stellar le checkout demande son compte au payeur, sur Solana le paiement est une transaction Solana Pay, sur Monad l'adresse de dépôt les répartit.", needsAmount: "Les frais du marchand exigent un montant.", sameWallet: "Les frais vont à un autre wallet que le paiement.", pctMax: "10 % au maximum." },
         submit: "Créer le lien",
+        steps: { amount: "Montant", destination: "Destination", fee: "Frais", design: "Design" },
       },
       detail: { check: { label: "Payé depuis un autre portefeuille ? Vérifiez sa transaction", placeholder: "Hash de la transaction", submit: "Vérifier la transaction", ok: "La transaction règle ce lien.", bad: "Cette transaction ne règle pas ce lien." },
         checkout: "Page de paiement", openCheckout: "Ouvrir la page de paiement",
@@ -1363,7 +1374,13 @@ export default {
         wallets: "Portefeuilles",
         walletsHint: "Les portefeuilles depuis lesquels ce client paie, sur n’importe quel réseau. Vous pouvez aussi les ajouter plus tard.",
         addAnother: "Ajouter un autre portefeuille"
-      }
+      },
+      figures: { customers: "Clients", withWallet: "Avec portefeuille", payments: "Paiements", succeeded: "{n} terminés", recent: "Nouveaux (30 jours)" },
+      deleteTitle: "Supprimer le client ?",
+      deleteBody: "{name} et ses portefeuilles sont supprimés. Ses paiements sont conservés.",
+      deleteError: "Impossible de supprimer le client.",
+      removeWalletTitle: "Retirer le portefeuille ?",
+      removeWalletBody: "{account} est retiré de {name}. Ses paiements sont conservés.",
     },
     products: { searchPlaceholder: "Rechercher par nom ou prix…", detail: { title: "Produit", save: "Enregistrer", active: "En vente", activeHint: "Un produit inactif est conservé mais ne peut pas être vendu.", saveError: "Impossible d'enregistrer le produit." },
       title: "Produits et liens",
@@ -1373,7 +1390,8 @@ export default {
         name: "Nom",
         price: "Prix",
         type: "Type",
-        status: "Statut"
+        status: "Statut",
+        created: "Créé",
       },
       types: {
         Recurring: "Récurrent",
@@ -1389,7 +1407,16 @@ export default {
         priceHint: "(laisser vide pour un montant fixé par le client)",
         type: "Type",
         create: "Créer un produit"
-      }
+      },
+      figures: { products: "Produits", priced: "Avec un prix" },
+      edit: "Modifier",
+      activate: "Mettre en vente",
+      deactivate: "Retirer de la vente",
+      activated: "Produit mis en vente",
+      deactivated: "Produit retiré de la vente",
+      deleteTitle: "Supprimer le produit ?",
+      deleteBody: "{name} est supprimé. Les liens de paiement déjà créés continuent de fonctionner.",
+      deleteError: "Impossible de supprimer le produit.",
     },
     apikeys: { searchPlaceholder: "Rechercher par nom ou ID de clé…", ownerPlan: "C'est l'offre du propriétaire de l'organisation qui le détermine.", liveLocked: "Votre offre n'inclut pas de clés de production.",
       readOnly: "Vous avez un accès en lecture seule. Seuls les owners et admins peuvent créer ou révoquer des clés API.",
@@ -1418,7 +1445,9 @@ export default {
       revokeBody: "« {name} » sera révoquée définitivement et toute application qui l’utilise cessera de fonctionner. Cette action est irréversible.",
       revokeConfirm: "Révoquer la clé",
       usage: "{used} / {limit}",
-      limitReached: "Vous avez atteint la limite de clés de votre forfait. Passez à un forfait supérieur pour en ajouter."
+      limitReached: "Vous avez atteint la limite de clés de votre forfait. Passez à un forfait supérieur pour en ajouter.",
+      figures: { keys: "Clés dans cet environnement", plan: "Utilisation du forfait" },
+      allRoles: "Tous les rôles",
     },
     webhooks: { searchPlaceholder: "Rechercher par URL ou événement…", resent: "Livraison renvoyée", noFailed: "Aucune livraison en échec.", only: { all: "Toutes", failed: "En échec" }, eventId: "ID de l'événement", error: "Erreur", attempts: "Tentatives", delivery: "Livraison", save: "Enregistrer", editTitle: "Modifier l'endpoint", edit: "Modifier l'endpoint", eventsOne: "1 événement",
       title: "Webhooks",
@@ -1433,7 +1462,8 @@ export default {
         status: "Statut",
         event: "Événement",
         response: "Réponse",
-        when: "Quand"
+        when: "Quand",
+        created: "Créé",
       },
       modal: {
         eyebrow: "Webhook",
@@ -1442,7 +1472,11 @@ export default {
         urlLabel: "URL de l’endpoint",
         eventsLabel: "Événements à envoyer",
         add: "Ajouter un endpoint"
-      }
+      },
+      deleteTitle: "Supprimer l’endpoint ?",
+      deleteBody: "{url} ne reçoit plus d’événements et ses livraisons sont supprimées.",
+      rotateTitle: "Renouveler le secret de signature ?",
+      rotateBody: "{url} reçoit un nouveau secret immédiatement ; les événements signés avec l’ancien ne se vérifient plus tant que vous ne l’avez pas mis à jour.",
     },
     activityLog: {
       sub: "Ce que le portefeuille et ce tableau de bord ont signalé sur eux-mêmes, y compris ce qui n'est jamais devenu un appel API",
@@ -1455,6 +1489,15 @@ export default {
       sources: { all: "Toutes les sources", wallet: "Portefeuille", dashboard: "Tableau de bord", server: "Serveur", sdk: "SDK" },
       levels: { all: "Tous les niveaux", error: "Erreur", warn: "Avertissement", info: "Info", debug: "Débogage" },
       tableHead: { level: "Niveau", source: "Source", event: "Évènement", detail: "Détail", timestamp: "Horodatage", count: "Nombre" },
+      copySession: "Copier la session",
+      filterBy: "Rechercher cette erreur dans le journal",
+      duration: "Durée",
+      network: "Réseau",
+      session: "Session",
+      received: "Reçu",
+      category: "Catégorie",
+      app: "Version de l’app",
+      platform: "Plateforme",
     },
     logs: {
       title: "Journaux d’API",
@@ -1465,12 +1508,22 @@ export default {
         endpoint: "Endpoint",
         status: "Statut",
         time: "Durée",
-        timestamp: "Horodatage"
+        timestamp: "Horodatage",
+        event: "Événement",
       },
       reqHeaders: "En-têtes de requête",
       params: "Paramètres de requête / de corps",
       response: "Réponse",
-      meta: "Méta"
+      meta: "Méta",
+      figures: { requests: "Requêtes", errors: "Erreurs", latency: "Latence moyenne", deliveries: "Livraisons", failed: "Échouées", endpoints: "Endpoints" },
+      classes: { ok: "Réussies", client: "Erreurs client (4xx)", server: "Erreurs serveur (5xx)" },
+      delivery: { SUCCEEDED: "Livrée", FAILED: "Échouée", PENDING: "En attente" },
+      allMethods: "Toutes les méthodes",
+      copyPath: "Copier le chemin",
+      attempts: "Tentatives",
+      error: "Erreur",
+      eventId: "ID de l’événement",
+      userAgent: "Agent utilisateur",
     },
     settings: {
       title: "Organisation",
@@ -1561,7 +1614,10 @@ export default {
       location: "Emplacement",
       device: "Appareil",
       ip: "Adresse IP",
-      localhost: "localhost"
+      localhost: "localhost",
+      searchPlaceholder: "Rechercher des notifications…",
+      nothingToOpen: "Rien à ouvrir",
+      copyIp: "Copier l’IP",
     },
     support: {
       searchPlaceholder: "Rechercher des tickets…",
@@ -1677,7 +1733,11 @@ export default {
       email: "Email",
       role: "Rôle",
       plan: "Forfait",
-      empty: "Aucun utilisateur trouvé."
+      empty: "Aucun utilisateur trouvé.",
+      figures: { accounts: "Comptes", staff: "Équipe", paid: "Forfaits payants", attention: "Forfaits à vérifier" },
+      allRoles: "Tous les rôles",
+      allPlans: "Tous les forfaits",
+      copyEmail: "Copier l’e-mail",
     },
     orgs: {
       permissionsLabel: "Autorisations",
@@ -1712,7 +1772,7 @@ export default {
       expires: "Expire le {date}",
       revokeInvite: "Révoquer",
       revokeError: "Impossible de révoquer l’invitation.",
-      loadError: "Impossible de charger les organisations.",
+      loadError: "Impossible de charger les membres.",
       createError: "Impossible de créer l’organisation.",
       renameError: "Impossible de renommer l’organisation.",
       deleteError: "Impossible de supprimer l’organisation.",
@@ -1737,7 +1797,10 @@ export default {
       },
       memberAddError: "Impossible d’ajouter ce membre. Vérifiez que l’email correspond à un compte Cosmos Pay.",
       memberRemoveError: "Impossible de retirer le membre.",
-      empty: "Aucun membre pour l’instant."
+      empty: "Aucun membre pour l’instant.",
+      revokeInviteTitle: "Révoquer l’invitation ?",
+      revokeInviteBody: "{email} ne pourra plus rejoindre {org} avec cette invitation.",
+      steps: { who: "E-mail et rôle", permissions: "Permissions" },
     },
     swaps: {
       title: "Swaps",
@@ -1914,6 +1977,7 @@ export default {
         slippage: "Slippage (bps)", slippageHint: "Slippage max. en points de base (facultatif, p. ex. 50).",
         create: "Générer la transaction", creating: "Génération…",
         createError: "Impossible de générer la transaction.",
+        steps: { pair: "Paire", amounts: "Montants" },
       },
       detail: {
         eyebrow: "Liquidité",

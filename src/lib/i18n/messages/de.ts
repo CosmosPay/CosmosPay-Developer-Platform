@@ -61,6 +61,7 @@ export default {
       submitting: "Wird erstellt…",
       created: "Private Zahlung erstellt",
       link: "Zahlungslink",
+      steps: { amount: "Betrag und Kunde", details: "Details", fee: "Gebühr" },
     },
     account: {
       title: "Private Konten",
@@ -82,7 +83,7 @@ export default {
       withdrawOk: "Auszahlung abgeschlossen",
       mergeOk: "Eingehendes ist jetzt verfügbar",
       done: "Fertig",
-      tableHead: { wallet: "Wallet", customer: "Kunde", address: "Adresse", status: "Status", payments: "Erhaltene Zahlungen" },
+      tableHead: { wallet: "Wallet", customer: "Kunde", address: "Adresse", status: "Status", payments: "Erhaltene Zahlungen", added: "Hinzugefügt" },
       detail: "Privates Konto",
       paymentsTo: "Private Zahlungen an dieses Konto",
       add: "Privates Konto hinzufügen",
@@ -94,6 +95,11 @@ export default {
       addHint: "Nur die Adresse: Der Kunde signiert, wenn sein privates Konto erstellt wird, mit einem XDR, das Sie ihm senden.",
       remove: "Privates Konto löschen",
       removed: "Privates Konto aus dem Dashboard gelöscht. Sein privater Saldo gehört weiterhin dem Kunden.",
+      removeTitle: "Privates Konto löschen?",
+      removeBody: "{account} wird von {customer} entfernt. Das private Konto und sein Saldo gehören weiterhin dem Kunden; nichts wird bewegt.",
+      searchPlaceholder: "Nach Kunde, Wallet oder Adresse suchen…",
+      noPaymentsYet: "Dieses Konto hat noch keine privaten Zahlungen erhalten",
+      loadError: "Die privaten Konten konnten nicht geladen werden.",
       keyMismatch: "Dieses private Konto wurde mit einer anderen Signatur außerhalb des Dashboards erstellt und kann hier nicht geöffnet werden.",
       keyFailed: "Die signierte Transaktion ist nicht die Signatur von {wallet}. Bitten Sie den Kunden, sie mit diesem Konto zu signieren.",
     },
@@ -1034,6 +1040,7 @@ export default {
       actionError: "Die Änderung konnte nicht gespeichert werden.",
       noneForChain: "Die Organisation hat noch keine {network}-Wallet.",
       askAdmin: "Eine berechtigte Person kann unter Einstellungen eine verbinden.",
+      steps: { address: "Adresse", sign: "Signatur" },
     },
     examples: { order: "Bestellung #24", firstName: "Anna", lastName: "Schmidt", fullName: "Anna Schmidt", jobTitle: "Geschäftsführerin", customerName: "Acme Buchhaltung", payoutsName: "Acme Auszahlungen (USD)", productName: "Pro-Tarif (monatlich)" },
     search: { label: "Dashboard durchsuchen", placeholder: "Suchen", pages: "Seiten", searchGroup: "Suchen", searchIn: "{place} mit „{q}“", empty: "Nichts passt zu „{q}“." },
@@ -1146,7 +1153,9 @@ export default {
       yes: "Ja",
       no: "Nein",
       assetCustom: "Benutzerdefiniert…",
-      assetAny: "Beliebig"
+      assetAny: "Beliebig",
+      continueOp: "Fortfahren",
+      steps: { label: "Schritte", of: "Schritt {n} von {total}", next: "Weiter", back: "Zurück" },
     },
     profileMenu: {
       account: "Kontoeinstellungen",
@@ -1195,7 +1204,8 @@ export default {
           write: "Schreiben"
         },
         create: "Schlüssel erstellen",
-        save: "Änderungen speichern"
+        save: "Änderungen speichern",
+        steps: { details: "Angaben", scopes: "Berechtigungen" },
       },
       reveal: {
         eyebrow: "API-Schlüssel erstellt",
@@ -1309,6 +1319,7 @@ export default {
         mainnet: "Mainnet", more: "Weitere Optionen",
         merchantFee: { title: "Händlergebühr", pct: "Prozentsatz", fixed: "Fester Betrag", wallet: "Wallet, die die Gebühr erhält", paidBy: "Wer sie zahlt", recipient: "Vom Betrag abgezogen", payer: "Vom Zahler, zusätzlich zum Betrag", hint: "Ihre eigene Gebühr, in derselben Zahlung und getrennt von der Provision von Cosmos Pay; sie braucht einen Betrag. Auf Stellar fragt der Checkout den Zahler nach seinem Konto, auf Solana ist die Zahlung eine Solana-Pay-Transaktion, auf Monad teilt die Einzahlungsadresse sie auf.", needsAmount: "Eine Händlergebühr braucht einen Betrag.", sameWallet: "Die Gebühr geht an eine andere Wallet als die Zahlung.", pctMax: "Höchstens 10 %." },
         submit: "Link erstellen",
+        steps: { amount: "Betrag", destination: "Ziel", fee: "Gebühr", design: "Design" },
       },
       detail: { check: { label: "Mit einer anderen Wallet bezahlt? Transaktion prüfen", placeholder: "Transaktions-Hash", submit: "Transaktion prüfen", ok: "Die Transaktion bezahlt diesen Link.", bad: "Diese Transaktion bezahlt diesen Link nicht." },
         checkout: "Bezahlseite", openCheckout: "Bezahlseite öffnen",
@@ -1363,7 +1374,13 @@ export default {
         wallets: "Wallets",
         walletsHint: "Die Wallets, von denen dieser Kunde zahlt, in jedem Netzwerk. Sie können sie auch später hinzufügen.",
         addAnother: "Weitere Wallet hinzufügen"
-      }
+      },
+      figures: { customers: "Kunden", withWallet: "Mit Wallet", payments: "Zahlungen", succeeded: "{n} abgeschlossen", recent: "Neu (30 Tage)" },
+      deleteTitle: "Kunden löschen?",
+      deleteBody: "{name} und die Wallets werden gelöscht. Die Zahlungen bleiben erhalten.",
+      deleteError: "Der Kunde konnte nicht gelöscht werden.",
+      removeWalletTitle: "Wallet entfernen?",
+      removeWalletBody: "{account} wird von {name} entfernt. Die Zahlungen bleiben erhalten.",
     },
     products: { searchPlaceholder: "Nach Name oder Preis suchen…", detail: { title: "Produkt", save: "Änderungen speichern", active: "Im Verkauf", activeHint: "Ein inaktives Produkt bleibt erhalten, kann aber nicht verkauft werden.", saveError: "Das Produkt konnte nicht gespeichert werden." },
       title: "Produkte & Links",
@@ -1373,7 +1390,8 @@ export default {
         name: "Name",
         price: "Preis",
         type: "Typ",
-        status: "Status"
+        status: "Status",
+        created: "Erstellt",
       },
       types: {
         Recurring: "Wiederkehrend",
@@ -1389,7 +1407,16 @@ export default {
         priceHint: "(leer lassen für kundenseitige Festlegung)",
         type: "Typ",
         create: "Produkt erstellen"
-      }
+      },
+      figures: { products: "Produkte", priced: "Mit Preis" },
+      edit: "Bearbeiten",
+      activate: "Zum Verkauf stellen",
+      deactivate: "Aus dem Verkauf nehmen",
+      activated: "Produkt im Verkauf",
+      deactivated: "Produkt aus dem Verkauf genommen",
+      deleteTitle: "Produkt löschen?",
+      deleteBody: "{name} wird gelöscht. Bereits erstellte Zahlungslinks funktionieren weiter.",
+      deleteError: "Das Produkt konnte nicht gelöscht werden.",
     },
     apikeys: { searchPlaceholder: "Nach Name oder Schlüssel-ID suchen…", ownerPlan: "Das legt der Tarif des Organisationsinhabers fest.", liveLocked: "Dein Tarif enthält keine Produktionsschlüssel.",
       readOnly: "Du hast nur Lesezugriff. Nur Owner und Admins können API-Schlüssel erstellen oder widerrufen.",
@@ -1418,7 +1445,9 @@ export default {
       revokeBody: "„{name}“ wird dauerhaft widerrufen und jede App, die ihn verwendet, funktioniert nicht mehr. Dies kann nicht rückgängig gemacht werden.",
       revokeConfirm: "Schlüssel widerrufen",
       usage: "{used} / {limit}",
-      limitReached: "Sie haben das Schlüssel-Limit Ihres Tarifs erreicht. Führen Sie ein Upgrade durch, um weitere hinzuzufügen."
+      limitReached: "Sie haben das Schlüssel-Limit Ihres Tarifs erreicht. Führen Sie ein Upgrade durch, um weitere hinzuzufügen.",
+      figures: { keys: "Schlüssel in dieser Umgebung", plan: "Tarifnutzung" },
+      allRoles: "Alle Rollen",
     },
     webhooks: { searchPlaceholder: "Nach URL oder Ereignis suchen…", resent: "Zustellung erneut gesendet", noFailed: "Keine fehlgeschlagenen Zustellungen.", only: { all: "Alle", failed: "Fehlgeschlagen" }, eventId: "Ereignis-ID", error: "Fehler", attempts: "Versuche", delivery: "Zustellung", save: "Änderungen speichern", editTitle: "Endpoint bearbeiten", edit: "Endpoint bearbeiten", eventsOne: "1 Ereignis",
       title: "Webhooks",
@@ -1433,7 +1462,8 @@ export default {
         status: "Status",
         event: "Ereignis",
         response: "Antwort",
-        when: "Wann"
+        when: "Wann",
+        created: "Erstellt",
       },
       modal: {
         eyebrow: "Webhook",
@@ -1442,7 +1472,11 @@ export default {
         urlLabel: "Endpunkt-URL",
         eventsLabel: "Zu sendende Ereignisse",
         add: "Endpunkt hinzufügen"
-      }
+      },
+      deleteTitle: "Endpoint löschen?",
+      deleteBody: "{url} erhält keine Ereignisse mehr und seine Zustellungen werden gelöscht.",
+      rotateTitle: "Signaturgeheimnis erneuern?",
+      rotateBody: "{url} erhält sofort ein neues Geheimnis; mit dem alten signierte Ereignisse lassen sich nicht mehr prüfen, bis Sie es aktualisieren.",
     },
     activityLog: {
       sub: "Was die Wallet und dieses Dashboard über sich selbst gemeldet haben, auch das, was nie zu einem API-Aufruf wurde",
@@ -1455,6 +1489,15 @@ export default {
       sources: { all: "Alle Quellen", wallet: "Wallet", dashboard: "Dashboard", server: "Server", sdk: "SDK" },
       levels: { all: "Alle Stufen", error: "Fehler", warn: "Warnung", info: "Info", debug: "Debug" },
       tableHead: { level: "Stufe", source: "Quelle", event: "Ereignis", detail: "Detail", timestamp: "Zeitstempel", count: "Anzahl" },
+      copySession: "Sitzung kopieren",
+      filterBy: "Diesen Fehler im Protokoll suchen",
+      duration: "Dauer",
+      network: "Netzwerk",
+      session: "Sitzung",
+      received: "Empfangen",
+      category: "Kategorie",
+      app: "App-Version",
+      platform: "Plattform",
     },
     logs: {
       title: "API-Logs",
@@ -1465,12 +1508,22 @@ export default {
         endpoint: "Endpunkt",
         status: "Status",
         time: "Zeit",
-        timestamp: "Zeitstempel"
+        timestamp: "Zeitstempel",
+        event: "Ereignis",
       },
       reqHeaders: "Anfrage-Header",
       params: "Query-/Body-Parameter",
       response: "Antwort",
-      meta: "Meta"
+      meta: "Meta",
+      figures: { requests: "Anfragen", errors: "Fehler", latency: "Mittlere Latenz", deliveries: "Zustellungen", failed: "Fehlgeschlagen", endpoints: "Endpoints" },
+      classes: { ok: "Erfolgreich", client: "Client-Fehler (4xx)", server: "Server-Fehler (5xx)" },
+      delivery: { SUCCEEDED: "Zugestellt", FAILED: "Fehlgeschlagen", PENDING: "Ausstehend" },
+      allMethods: "Alle Methoden",
+      copyPath: "Pfad kopieren",
+      attempts: "Versuche",
+      error: "Fehler",
+      eventId: "Ereignis-ID",
+      userAgent: "User-Agent",
     },
     settings: {
       title: "Organisation",
@@ -1561,7 +1614,10 @@ export default {
       location: "Standort",
       device: "Gerät",
       ip: "IP-Adresse",
-      localhost: "localhost"
+      localhost: "localhost",
+      searchPlaceholder: "Benachrichtigungen suchen…",
+      nothingToOpen: "Nichts zu öffnen",
+      copyIp: "IP kopieren",
     },
     support: {
       searchPlaceholder: "Tickets durchsuchen…",
@@ -1677,7 +1733,11 @@ export default {
       email: "E-Mail",
       role: "Rolle",
       plan: "Tarif",
-      empty: "Keine Benutzer gefunden."
+      empty: "Keine Benutzer gefunden.",
+      figures: { accounts: "Konten", staff: "Team", paid: "Bezahlte Tarife", attention: "Zu prüfende Tarife" },
+      allRoles: "Alle Rollen",
+      allPlans: "Alle Tarife",
+      copyEmail: "E-Mail kopieren",
     },
     orgs: {
       permissionsLabel: "Berechtigungen",
@@ -1712,7 +1772,7 @@ export default {
       expires: "Läuft ab {date}",
       revokeInvite: "Widerrufen",
       revokeError: "Einladung konnte nicht widerrufen werden.",
-      loadError: "Organisationen konnten nicht geladen werden.",
+      loadError: "Die Mitglieder konnten nicht geladen werden.",
       createError: "Organisation konnte nicht erstellt werden.",
       renameError: "Organisation konnte nicht umbenannt werden.",
       deleteError: "Organisation konnte nicht gelöscht werden.",
@@ -1737,7 +1797,10 @@ export default {
       },
       memberAddError: "Mitglied konnte nicht hinzugefügt werden. Stellen Sie sicher, dass die E-Mail zu einem Cosmos-Pay-Konto gehört.",
       memberRemoveError: "Mitglied konnte nicht entfernt werden.",
-      empty: "Noch keine Mitglieder."
+      empty: "Noch keine Mitglieder.",
+      revokeInviteTitle: "Einladung widerrufen?",
+      revokeInviteBody: "{email} kann {org} mit dieser Einladung nicht mehr beitreten.",
+      steps: { who: "E-Mail und Rolle", permissions: "Berechtigungen" },
     },
     swaps: {
       title: "Swaps",
@@ -1914,6 +1977,7 @@ export default {
         slippage: "Slippage (bps)", slippageHint: "Maximale Slippage in Basispunkten (optional, z. B. 50).",
         create: "Transaktion erstellen", creating: "Wird erstellt…",
         createError: "Die Transaktion konnte nicht erstellt werden.",
+        steps: { pair: "Paar", amounts: "Beträge" },
       },
       detail: {
         eyebrow: "Liquidität",

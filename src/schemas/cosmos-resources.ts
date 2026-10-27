@@ -44,7 +44,8 @@ export const createProductBodySchema = z.object({
   reference: z.string().trim().max(120).optional(),
 });
 
-export const updateProductBodySchema = createProductBodySchema.partial();
+/* `amount: null` clears a product's price (a customer-set amount again); the API stores the null. */
+export const updateProductBodySchema = createProductBodySchema.partial().extend({ amount: amountString.nullable().optional() });
 
 /* A customer's wallet: its network and the address there (the upstream re-checks the checksum).
    A customer holds up to 20 (MAX_CUSTOMER_WALLETS upstream). */

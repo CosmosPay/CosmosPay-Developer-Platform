@@ -13,11 +13,10 @@ import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
-import { Select } from "@/components/cosmos/dashboard/components/Select";
 
 /* ---- shared helpers ---- */
 const PAY_FILTERS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
@@ -217,20 +216,25 @@ function AdminReceiverActions({ a, row, env, onAccessChanged, onApproved }) {
 }
 
 /* Generic searchable + paginated admin table. `rows` is already status-filtered by the
-   caller; this adds the search box, pagination and row animation. */
-function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads, rows, haystack, renderRow, empty, resetKey, filters = [] }) {
+   caller; this adds the filter bar (the search and the list's selects, over the panel, as every
+   list's), pagination and row animation. */
+function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, heads, rows, haystack, renderRow, resetKey, filters = [] }) {
+  const t = useT();
   const view = q ? rows.filter((row) => haystack(row).toLowerCase().includes(q.toLowerCase())) : rows;
   const pg = usePaged(view, `${resetKey || ""}|${q}`);
-  const tref = useRef(null); useGsapRows(tref, pg.page);
+  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
+  const active = (q ? 1 : 0) + filters.filter((f) => f.value !== f.options[0].value).length;
+  const reset = () => { setQ(""); filters.forEach((f) => { if (f.value !== f.options[0].value) f.onChange(f.options[0].value); }); };
   return (
+    <>
+    <FilterBar
+      label={t.dash.filters.label}
+      query={q} onQuery={setQ} placeholder={searchPlaceholder}
+      selects={filters.map((f) => ({ key: f.key, label: f.label, value: f.value, onChange: f.onChange, options: f.options.map((o) => ({ key: o.value, label: o.label })) }))}
+      active={active} onReset={reset}
+      shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+    />
     <div className="panel">
-      <Toolbar q={q} setQ={setQ} placeholder={searchPlaceholder}>
-        {/* the list's filters, beside its search (never a row of tabs above it) */}
-        {filters.map((f) => (
-          <Select key={f.key} variant="filter" label={f.label} placeholder={f.label} active={f.value !== f.options[0].value} value={f.value} onChange={f.onChange} options={f.options} />
-        ))}
-        {tag ? <span className="env-tag">{DI.network} {tag}</span> : null}
-      </Toolbar>
       {!loading && (
         <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr>{heads.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
           <tbody>
@@ -239,9 +243,10 @@ function AdminTable({ a, loading, error, q, setQ, searchPlaceholder, tag, heads,
           </tbody>
         </table></div>
       )}
-      {loading && <TableSkeleton label={a.loading} />}
+      {loading && <TableSkeleton label={a.loading} cols={heads.length} />}
       {!loading && <Pagination {...pg} />}
     </div>
+    </>
   );
 }
 

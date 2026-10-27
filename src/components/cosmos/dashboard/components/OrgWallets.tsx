@@ -19,6 +19,7 @@ import { organizations as orgsApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { IcCopy } from "@/components/cosmos/icons";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { ListSkeleton, Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { CHAINS, CHAIN_NAMES, networkName, type Chain } from "@/lib/chains";
@@ -144,8 +145,8 @@ export function ConnectWalletForm({ orgId, chain: initial = "stellar", lockChain
       {busy && <p className="work-progress" role="status"><span className="work-spin" aria-hidden="true" /><span>{w.signing}</span></p>}
       {problem && <p className="field-err" role="alert">{problem}</p>}
       <div className="modal-actions">
-        <button type="button" className="btn btn-dark" onClick={connect} disabled={busy || !installed?.[provider]}>{w.connectSign}</button>
-        <button type="button" className="btn btn-outline-w" onClick={onCancel} disabled={busy}>{t.dash.common.cancel}</button>
+        <button type="button" className="btn btn-violet" onClick={connect} disabled={busy || !installed?.[provider]}>{w.connectSign}</button>
+        <button type="button" className="btn btn-soft" onClick={onCancel} disabled={busy}>{t.dash.common.cancel}</button>
       </div>
       </>}
     </div>
@@ -205,13 +206,20 @@ function StellarWalletProof({ orgId, onDone, onCancel }: { orgId: string; onDone
     setNote(res.reason === "missing" ? fw.missing : res.reason === "wrongAccount" ? fmt(fw.wrongAccount, { account: shortAddress(account) }) : fw.declined);
   };
 
+  /* Two steps (product owner, 2026-10-27: a long form goes in steps): the address and its name,
+     then the proof, signed in Freighter or in any wallet and pasted back. */
+  const steps = useFormSteps(2);
+
   return (
     <>
-      <Field label={w.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={w.addressPlaceholder} spellCheck={false} autoComplete="off" disabled={busy} aria-invalid={account !== "" && !valid ? true : undefined} />
-      {account !== "" && !valid && <p className="field-err" role="alert">{w.invalidAddress}</p>}
-      <Field label={w.label} hint={t.dash.common.optional} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={w.labelPlaceholder} maxLength={WALLET_LABEL_MAX} disabled={busy} />
-      {xdr && (
-        <>
+      <FormSteps names={[w.steps.address, w.steps.sign]} steps={steps} />
+      <FormStep steps={steps}>
+        {steps.step === 0 && (<>
+          <Field label={w.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={w.addressPlaceholder} spellCheck={false} autoComplete="off" disabled={busy} aria-invalid={account !== "" && !valid ? true : undefined} />
+          {account !== "" && !valid && <p className="field-err" role="alert">{w.invalidAddress}</p>}
+          <Field label={w.label} hint={t.dash.common.optional} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={w.labelPlaceholder} maxLength={WALLET_LABEL_MAX} disabled={busy} />
+        </>)}
+        {steps.step === 1 && xdr && (<>
           <div className="paylink-block">
             <div className="paylink-block-head"><span className="field-l">{w.proofTitle}</span></div>
             <p className="field-note">{w.proofDesc}</p>
@@ -226,14 +234,11 @@ function StellarWalletProof({ orgId, onDone, onCancel }: { orgId: string; onDone
             <p className="field-note">{fmt(zs.pasteDesc, { account: shortAddress(account) })}</p>
             <textarea id="wl-signed" className="field" rows={4} value={signed} placeholder={zs.pastePlaceholder} spellCheck={false} disabled={busy} onChange={(e) => { setSigned(e.target.value); setProblem(null); }} />
           </div>
-        </>
-      )}
+        </>)}
+      </FormStep>
       {busy && <p className="work-progress" role="status"><span className="work-spin" aria-hidden="true" /><span>{w.signing}</span></p>}
       {problem && <p className="field-err" role="alert">{problem}</p>}
-      <div className="modal-actions">
-        <button type="button" className="btn btn-dark" onClick={() => add(signed)} disabled={busy || !xdr || !signed.trim()}>{w.add}</button>
-        <button type="button" className="btn btn-outline-w" onClick={onCancel} disabled={busy}>{t.dash.common.cancel}</button>
-      </div>
+      <FormStepsFooter steps={steps} canNext={valid} onCancel={onCancel} submitLabel={w.add} onSubmit={() => add(signed)} busy={busy} submitDisabled={!xdr || !signed.trim()} />
     </>
   );
 }
@@ -293,7 +298,7 @@ export function OrgWalletsPanel({ orgId, perms }: { orgId: string; perms: { crea
     <div className="panel set-panel">
       <div className="panel-head">
         <h3>{w.title}</h3>
-        {perms.create && <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setConnecting(true)}>{w.connect}</button>}
+        {perms.create && <button type="button" className="btn btn-dark btn-sm" onClick={() => setConnecting(true)}>{DI.plus} {w.connect}</button>}
       </div>
       <div className="set-body">
         {wallets === undefined && <ListSkeleton label={w.title} rows={2} pairs={1} />}

@@ -13,6 +13,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
@@ -175,8 +176,9 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
 /* ---------------- create modal ---------------- */
 /* A payment link on Stellar, Solana or Monad, on the environment's network (Solana devnet and
    Monad testnet in the sandbox). Composed as the payer will meet it: the network as a choice of
-   three, the amount with its asset in one field (as a swap panel), the address that receives it,
-   then the rest folded under "more options". Transaction intents (a known payer) are Stellar's. */
+   three, the amount with its asset in one field (as a swap panel), then, a step each, the address
+   that receives it (with the memo and message), the organization's own fee and the checkout's
+   design. Transaction intents (a known payer) are Stellar's. */
 /* `initial` fills a Stellar link from elsewhere (a product): its amount, its asset (the chain's coin,
    a listed asset by code, or CODE:ISSUER as a custom one) and its name as the payer's message. */
 function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null, onClose, onCreated }) {
@@ -195,7 +197,6 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const [customIssuer, setCustomIssuer] = useState("");
   const [memo, setMemo] = useState("");
   const [msg, setMsg] = useState(initial?.note || "");
-  const [more, setMore] = useState(!!initial?.note);
   const [checkoutTheme, setCheckoutTheme] = useState("classic");
   // The organization's own fee on this payment (product owner, 2026-10-26: B2B through Cosmos
   // Pay): a percentage and/or a fixed part, to one of its wallets, taken from the amount or
@@ -296,12 +297,26 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const invalid = (ok, value) => (value.trim() && !ok ? true : undefined);
   const mark = (symbol) => <TokenMark symbol={symbol} chain={chain} chainName={CHAIN_NAMES[chain]} size={22} />;
 
+  /* Four steps (product owner, 2026-10-27: a long form goes in steps): the amount on its network,
+     where it goes (with the memo and the payer's message), the organization's own fee (optional)
+     and the checkout's design. Each one goes on only once its own fields are valid. */
+  const steps = useFormSteps(4);
+  const stepOk = [
+    amountOk && tokenOk && (!amountNeeded || !!amount.trim()),
+    destOk && sourceOk && memoOk,
+    feeOk,
+    true,
+  ];
+
   return (
     <Modal onClose={onClose}>
       <div className="modal-body paylink-form">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
+        <FormSteps names={[m.steps.amount, m.steps.destination, m.steps.fee, m.steps.design]} steps={steps} />
 
+        <FormStep steps={steps}>
+        {steps.step === 0 && (<>
         <div className="fld">
           <span className="field-l" id="paylink-chain-l">{m.chain}</span>
           <div className="net-pick" role="group" aria-labelledby="paylink-chain-l">
@@ -348,50 +363,49 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
             <Field label={stellar ? m.assetIssuer : tk.address[chain]} hint={stellar ? m.assetIssuerHint : undefined} value={customIssuer} onChange={(e) => setCustomIssuer(e.target.value)} placeholder={ADDRESS_PLACEHOLDERS[chain]} />
           </div>
         )}
+        </>)}
 
+        {steps.step === 1 && (<>
         {/* The money goes to one of the organization's wallets (Settings), never a typed address. */}
         <WalletSelect id="paylink-dest" orgId={orgId} chain={chain} value={destination} onChange={setDestination} canConnect={canConnectWallets} label={m.destination} />
         {isTx && <Field label={m.source} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" aria-invalid={invalid(sourceOk, source)} autoComplete="off" spellCheck={false} />}
+        <Field label={m.memo} hint={stellar ? m.memoHint : m.memoHintOther} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />
+        {chain !== "monad" && <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
+        </>)}
 
-        <button type="button" className="swap-more" aria-expanded={more} aria-controls="paylink-more" onClick={() => setMore((v) => !v)}>
-          {m.more}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-        </button>
-        <div className={`swap-another${more ? " open" : ""}`} id="paylink-more" inert={!more}>
-          <div className="swap-another-in">
-            <Field label={m.memo} hint={stellar ? m.memoHint : m.memoHintOther} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />
-            {chain !== "monad" && <Field label={m.message} hint={m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
-            <div className="paylink-fee" role="group" aria-labelledby="paylink-fee-l">
-              <span className="field-l" id="paylink-fee-l">{mf.title}</span>
-              <p className="field-help">{mf.hint}</p>
-              <div className="field-row">
-                <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
-                <Field label={mf.fixed} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.25" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
-              </div>
-              {feeOn && (
-                <div className="arrive">
-                  <WalletSelect id="paylink-fee-wallet" orgId={orgId} chain={chain} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
-                  {feeSameWallet && <p className="field-err" role="alert">{mf.sameWallet}</p>}
-                  {!amount.trim() && <p className="field-err" role="alert">{mf.needsAmount}</p>}
-                  <div className="fld">
-                    <span className="field-l" id="paylink-fee-by">{mf.paidBy}</span>
-                    <div className="seg-tabs seg-fill" role="group" aria-labelledby="paylink-fee-by">
-                      {["recipient", "payer"].map((k) => (
-                        <button key={k} type="button" className={feePaidBy === k ? "on" : ""} aria-pressed={feePaidBy === k} onClick={() => setFeePaidBy(k)}>{mf[k]}</button>
-                      ))}
-                    </div>
+        {steps.step === 2 && (
+          <div className="paylink-fee" role="group" aria-labelledby="paylink-fee-l">
+            <span className="field-l" id="paylink-fee-l">{mf.title} <span className="field-hint">{t.dash.common.optional}</span></span>
+            <p className="field-help">{mf.hint}</p>
+            <div className="field-row">
+              <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
+              <Field label={mf.fixed} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.25" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
+            </div>
+            {feeOn && (
+              <div className="arrive">
+                <WalletSelect id="paylink-fee-wallet" orgId={orgId} chain={chain} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
+                {feeSameWallet && <p className="field-err" role="alert">{mf.sameWallet}</p>}
+                {!amount.trim() && <p className="field-err" role="alert">{mf.needsAmount}</p>}
+                <div className="fld">
+                  <span className="field-l" id="paylink-fee-by">{mf.paidBy}</span>
+                  <div className="seg-tabs seg-fill" role="group" aria-labelledby="paylink-fee-by">
+                    {["recipient", "payer"].map((k) => (
+                      <button key={k} type="button" className={feePaidBy === k ? "on" : ""} aria-pressed={feePaidBy === k} onClick={() => setFeePaidBy(k)}>{mf[k]}</button>
+                    ))}
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
-        <CheckoutDesignPicker value={checkoutTheme} onChange={setCheckoutTheme} />
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!valid || busy} onClick={submit}>{busy ? m.submitting : m.submit}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        {steps.step === 3 && <CheckoutDesignPicker value={checkoutTheme} onChange={setCheckoutTheme} />}
+        </FormStep>
+
+        <FormStepsFooter
+          steps={steps} canNext={stepOk[steps.step]} onCancel={onClose}
+          submitLabel={busy ? m.submitting : m.submit} onSubmit={submit} busy={busy} submitDisabled={!valid}
+        />
       </div>
     </Modal>
   );

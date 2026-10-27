@@ -234,6 +234,15 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   }, [navOpen]);
   const isStaff = STAFF_ROLES.includes(user && user.role);
   const isManager = MANAGER_ROLES.includes(user && user.role);
+  // A view this account may not open (staff, managers or owners only) falls back to the overview,
+  // and so do its address and title, not only its content.
+  useEffect(() => {
+    const allowed = (isStaff || !STAFF_ONLY.includes(view)) && (isManager || !MANAGER_ONLY.includes(view)) && (isManager || !OWNER_ONLY.includes(view));
+    if (allowed) return;
+    try { window.history.replaceState(window.history.state, "", addressOf("overview")); } catch (e) {}
+    setRecordId(null);
+    setView("overview");
+  }, [view, isStaff, isManager]);
   // Mock billing plan (changeable in Settings). Limits drive the real restrictions.
   const [plan, setPlan] = useState((user && user.plan) || DEFAULT_PLAN_ID);
   const limits = planLimits(plan);
@@ -412,7 +421,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;
-      case "weblogs": return <LogsView kind="webhooks" env={live ? "prod" : "dev"} />;
+      case "weblogs": return <LogsView kind="webhooks" env={live ? "prod" : "dev"} orgId={org.id} canManage={can("webhooks:create")} />;
       case "activityLog": return <ActivityLogView env={live ? "prod" : "dev"} />;
       case "activity": return <NotificationsView notifications={visibleNotifs} loading={notifsLoading} error={notifsError} onGo={go} />;
       case "support": return <SupportView />;

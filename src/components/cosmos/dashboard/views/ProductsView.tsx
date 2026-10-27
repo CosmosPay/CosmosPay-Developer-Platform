@@ -4,26 +4,29 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { products as prodApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { usePaged, useGsapRows, goFiltered, useListFilters } from "@/components/cosmos/dashboard/hooks";
-import { IcCheck } from "@/components/cosmos/icons";
+import { fmtDate } from "@/components/cosmos/dashboard/helpers";
+import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field, Sel } from "@/components/cosmos/dashboard/components/Field";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
-import { countBy, matchesQuery } from "@/lib/dashboard-filters";
+import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
-import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { StatusIcon } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { ViewFigures } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
 
 const TYPE_TO_KIND = { Recurring: "recurring", "One-time": "one_time", "Payment link": "link" };
 const KIND_TO_TYPE = { recurring: "Recurring", one_time: "One-time", link: "Payment link" };
 const assetLabel = (a) => (!a || a === "native" ? "XLM" : a);
 const KINDS = ["recurring", "one_time", "link"];
 const STATES = ["active", "inactive"];
-const DEFAULTS = { q: "", status: "all", kind: "all" };
+const DEFAULTS = { q: "", status: "all", kind: "all", date: "any" };
 const ALLOWED = { status: ["all", ...STATES], kind: ["all", ...KINDS] };
 const stateOf = (p) => (p.active ? "active" : "inactive");
 
@@ -39,6 +42,8 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
   const [detail, setDetail] = useState(null);
+  const [toDelete, setToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
   const fl = t.dash.filters;
 
@@ -55,6 +60,7 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
   const matches = (p, skip) =>
     (skip === "status" || filters.status === "all" || stateOf(p) === filters.status) &&
     (skip === "kind" || filters.kind === "all" || p.kind === filters.kind) &&
+    inRange(p.createdAt, filters.date) &&
     matchesQuery([p.name, p.amount, assetLabel(p.asset), pr.types[KIND_TO_TYPE[p.kind]]], filters.q);
   const view = items.filter((p) => matches(p, null));
   const stateCounts = countBy(items.filter((p) => matches(p, "status")), stateOf);
@@ -66,13 +72,33 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
   const onCreated = (p) => { setModal(false); setItems((x) => [p, ...x]); };
   const onUpdated = (p) => { setItems((x) => x.map((i) => (i.id === p.id ? { ...i, ...p } : i))); setDetail(null); };
   const sell = (p) => goFiltered(onGo, "payments", { create: "1", amount: p.amount, asset: p.asset || "native", note: p.name });
-  const remove = (p) => prodApi.remove(p.id, env, orgId)
-    .then(() => { setItems((x) => x.filter((i) => i.id !== p.id)); setDetail(null); })
-    .catch((e) => showToast((e && e.message) || cx.delete, "error"));
+  // On sale or not, from the row: the same update the detail's checkbox makes.
+  const toggle = (p) => prodApi.update(p.id, env, orgId, { active: !p.active })
+    .then((u) => { setItems((x) => x.map((i) => (i.id === p.id ? { ...i, ...(u && u.id ? u : { active: !p.active }) } : i))); showToast(p.active ? pr.deactivated : pr.activated); })
+    .catch((e) => showToast((e && e.message) || pr.detail.saveError, "error"));
+  // Deleting a product is confirmed first, as every delete is.
+  const confirmDelete = () => {
+    const p = toDelete;
+    if (!p || deleting) return;
+    setDeleting(true);
+    prodApi.remove(p.id, env, orgId)
+      .then(() => { setItems((x) => x.filter((i) => i.id !== p.id)); setDetail(null); setToDelete(null); })
+      .catch((e) => showToast((e && e.message) || pr.deleteError, "error"))
+      .finally(() => setDeleting(false));
+  };
 
   return (
     <>
       <ViewHead title={pr.title} />
+      <ViewFigures
+        label={pr.title} loading={loading} failed={error}
+        items={[
+          { key: "products", label: pr.figures.products, value: items.length },
+          { key: "active", label: cx.active, value: items.filter((p) => p.active).length },
+          { key: "priced", label: pr.figures.priced, value: items.filter((p) => p.amount).length },
+          { key: "recurring", label: pr.types.Recurring, value: items.filter((p) => p.kind === "recurring").length },
+        ]}
+      />
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={pr.searchPlaceholder}
@@ -84,16 +110,17 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
           ],
         }}
         selects={[{ key: "kind", label: fl.kind, value: filters.kind, onChange: (v) => set("kind", v), options: [{ key: "all", label: fl.allKinds }, ...KINDS.map((k) => ({ key: k, label: pr.types[KIND_TO_TYPE[k]], count: kindCounts[k] || 0 }))] }]}
+        date={filters.date} onDate={(v) => set("date", v)}
         active={active} onReset={reset}
         shown={view.length} total={loading ? undefined : items.length} loading={loading}
         actions={addButton}
       />
       <div className="panel">
         {!loading && (
-          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{pr.tableHead.name}</th><th>{pr.tableHead.price}</th><th>{pr.tableHead.type}</th><th>{pr.tableHead.status}</th><th>{pr.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((p) => (
               <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
-                <td>
+                <td className="tid">
                   <div className="cust-cell">
                     <span className="am-sq">{DI.products}</span>
                     <RecordLink
@@ -104,34 +131,38 @@ export function ProductsView({ canManage = true, canSell = false, orgId, env = "
                 </td>
                 <td className="amt">{p.amount ? `${p.amount} ${assetLabel(p.asset)}` : cx.customerSet}</td>
                 <td className="cust">{pr.types[KIND_TO_TYPE[p.kind]] || p.kind}</td>
-                <td><Pill st={p.active ? "ok" : "ref"} label={p.active ? cx.active : cx.inactive} /></td>
-                <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
-                  <button className="icon-mini" title={pr.detail.title} aria-label={pr.detail.title} onClick={() => setDetail(p)}>{DI.docs}</button>
-                  {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={cx.delete} onClick={() => remove(p)}>{DI.trash}</button>}
+                <td><Pill st={p.active ? "ok" : "ref"} tone={p.active ? "ok" : "off"} label={p.active ? cx.active : cx.inactive} /></td>
+                <td className="cust">{fmtDate(p.createdAt)}</td>
+                <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="icon-mini" title={t.dash.common.details} aria-label={`${t.dash.common.details}: ${p.name}`} onClick={() => setDetail(p)}>{canManage ? DI.edit : DI.docs}</button>
+                  {canSell && <button className="icon-mini" disabled={!(p.amount && p.active)} title={p.amount && p.active ? t.dash.overview.hub.createLink : t.dash.common.sellNeeds} aria-label={`${t.dash.overview.hub.createLink}: ${p.name}`} onClick={() => sell(p)}>{DI.payments}</button>}
+                  {canManage && <button className="icon-mini danger" title={cx.delete} aria-label={`${cx.delete}: ${p.name}`} onClick={() => setToDelete(p)}>{DI.trash}</button>}
                   <RowMenu
                     label={fmt(t.dash.common.rowActions, { name: p.name })}
                     items={[
-                      { key: "open", label: pr.detail.title, icon: DI.docs, onClick: () => setDetail(p) },
-                      { key: "copy", label: t.dash.common.copyId, icon: DI.link, onClick: () => navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      { key: "open", label: canManage ? pr.edit : pr.detail.title, icon: canManage ? DI.edit : DI.docs, onClick: () => setDetail(p) },
+                      ...(canManage ? [{ key: "toggle", label: p.active ? pr.deactivate : pr.activate, icon: DI.refresh, onClick: () => toggle(p) }] : []),
                       ...(canSell ? [{ key: "sell", label: t.dash.overview.hub.createLink, icon: DI.payments, disabled: !(p.amount && p.active), hint: t.dash.common.sellNeeds, onClick: () => sell(p) }] : []),
-                      ...(canManage ? [{ key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => remove(p) }] : []),
+                      { key: "copy", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => navigator.clipboard?.writeText(p.id).then(() => showToast(t.toasts.copied)).catch(() => {}) },
+                      ...(canManage ? [{ key: "delete", label: cx.delete, icon: DI.trash, danger: true, onClick: () => setToDelete(p) }] : []),
                     ]}
                   />
                 </td>
               </tr>
             ))}
               <FillRows
-                n={pg.size - (error ? 0 : pg.count)} cols={5}
+                n={pg.size - (error ? 0 : pg.count)} cols={6}
                 empty={error ? cx.loadError : null}
               />
             </tbody>
           </table></div>
         )}
-        {loading && <TableSkeleton label={cx.loading} />}
+        {loading && <TableSkeleton label={cx.loading} cols={6} />}
         {!loading && <Pagination {...pg} />}
       </div>
       {modal && <CreateProductModal pr={pr} env={env} orgId={orgId} onClose={() => setModal(false)} onCreated={onCreated} />}
-      {detail && <ProductDetailModal pr={pr} cx={cx} product={detail} env={env} orgId={orgId} canManage={canManage} canSell={canSell} onClose={() => setDetail(null)} onUpdated={onUpdated} onSell={() => sell(detail)} onDelete={() => remove(detail)} />}
+      {toDelete && <ConfirmModal title={pr.deleteTitle} body={fmt(pr.deleteBody, { name: toDelete.name })} confirmLabel={cx.delete} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => { if (!deleting) setToDelete(null); }} />}
+      {detail && <ProductDetailModal pr={pr} cx={cx} product={detail} env={env} orgId={orgId} canManage={canManage} canSell={canSell} onClose={() => setDetail(null)} onUpdated={onUpdated} onSell={() => sell(detail)} onDelete={() => setToDelete(detail)} />}
     </>
   );
 }
@@ -148,13 +179,15 @@ function ProductDetailModal({ pr, cx, product, env, orgId, canManage, canSell, o
   const save = () => {
     if (!form.name.trim() || !amountOk || busy) return;
     setBusy(true);
+    // A cleared price is sent as null, so the product goes back to a customer-set amount.
+    const amount = form.amount.trim() || null;
     prodApi.update(product.id, env, orgId, {
       name: form.name.trim(),
-      ...(form.amount.trim() ? { amount: form.amount.trim() } : {}),
+      ...(amount || product.amount ? { amount } : {}),
       kind: TYPE_TO_KIND[form.type] || "one_time",
       active: form.active,
     })
-      .then((p) => onUpdated(p && p.id ? p : { ...product, ...form, kind: TYPE_TO_KIND[form.type] }))
+      .then((p) => onUpdated(p && p.id ? p : { ...product, name: form.name.trim(), amount, active: form.active, kind: TYPE_TO_KIND[form.type] }))
       .catch((e) => showToast((e && e.message) || d.saveError, "error"))
       .finally(() => setBusy(false));
   };
@@ -184,6 +217,7 @@ function ProductDetailModal({ pr, cx, product, env, orgId, canManage, canSell, o
           {canManage && <button className="btn btn-violet" disabled={!form.name.trim() || !amountOk || busy} onClick={save}>{d.save}</button>}
           {canSell && product.amount && product.active && <button className="btn btn-soft" onClick={onSell}>{t.dash.overview.hub.createLink}</button>}
           {canManage && <button className="btn btn-soft danger-soft" onClick={onDelete}>{DI.trash} {cx.delete}</button>}
+          <button className="btn btn-soft" onClick={onClose}>{canManage ? t.dash.common.cancel : t.ui.close}</button>
         </div>
       </div>
     </Modal>

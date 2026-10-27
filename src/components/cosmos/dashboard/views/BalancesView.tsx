@@ -13,7 +13,7 @@ import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { CHAINS, assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
-import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { TableSkeleton, ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 
@@ -30,6 +30,7 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
   const [bals, setBals] = useState([]);
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -48,9 +49,10 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
     // The upstream payments list isn't network-scoped, so request a wider page and
     // filter to the active environment's network here.
     const wantNet = env === "prod" ? "public" : "testnet";
+    setFailed(false);
     Promise.all([
-      metricsApi.balances(env).catch(() => ({ data: [] })),
-      payApi.list(env, { status: "SUCCEEDED", take: 100 }).catch(() => ({ data: [] })),
+      metricsApi.balances(env).catch(() => { if (alive) setFailed(true); return { data: [] }; }),
+      payApi.list(env, { status: "SUCCEEDED", take: 100 }).catch(() => { if (alive) setFailed(true); return { data: [] }; }),
     ]).then(([bal, pay]) => {
       if (!alive) return;
       setBals((bal && Array.isArray(bal.data)) ? bal.data : []);
@@ -74,13 +76,11 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
     // the asset by its ticker (the search reads the payment's asset as shown) or CODE:ISSUER
     ...(bal && bal.asset ? { q: bal.asset === "native" ? code(bal) : String(bal.asset) } : {}),
   });
-  const createLink = () => goFiltered(onGo, "payments", { create: "1" });
-  const startHere = canManage && <button type="button" className="btn btn-dark btn-sm" onClick={createLink}>{t.dash.overview.hub.createLink}</button>;
 
   return (
     <>
       <ViewHead title={b.title} />
-      {loading && <TableSkeleton label={cx.loading} />}
+      {loading && <ListSkeleton label={cx.loading} rows={2} pairs={2} />}
       {!loading && (
         <div className="bal-grid">
           {bals.map((bal) => (
@@ -111,7 +111,10 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
           )}
         </div>
       )}
-      <div className="panel"><div className="panel-head"><h3>{b.recent}</h3>{recent.length > 0 && <button type="button" className="hub-link" onClick={() => settled()}>{t.dash.overview.hub.viewAll}</button>}</div>
+      <section className="hub-section bal-recent" aria-labelledby="bal-recent-t">
+      <div className="hub-section-head"><h2 id="bal-recent-t">{b.recent}</h2>{recent.length > 0 && <button type="button" className="hub-link" onClick={() => settled()}>{t.dash.overview.hub.viewAll}</button>}</div>
+      <div className="panel">
+        {loading && <TableSkeleton label={cx.loading} cols={6} />}
         {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{pg.slice.map((p) => (
@@ -124,12 +127,13 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
                 <PayLinkRowActions intent={p} t={t} pl={pl} onView={(x) => openRecord("payment", x.id)} canManage={canManage} onDelete={setToDelete} />
               </tr>
             ))}
-              <FillRows n={pg.size - pg.count} cols={6} />
+              <FillRows n={pg.size - pg.count} cols={6} empty={failed ? cx.loadError : null} />
             </tbody>
           </table></div>
         )}
         {!loading && <Pagination {...pg} />}
       </div>
+      </section>
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </>
   );

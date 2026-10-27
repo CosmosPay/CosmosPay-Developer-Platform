@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { supportAdmin as supportAdminApi } from "@/lib/api-client";
@@ -22,13 +22,16 @@ export function SupportInboxView() {
   const [ticket, setTicket] = useState(null);
 
   const loadTickets = () => supportAdminApi.tickets(filter === "all" ? undefined : filter).then((d) => setTickets(Array.isArray(d) ? d : [])).catch(() => {});
-  const loadTicket = (id) => supportAdminApi.ticket(id).then((d) => setTicket(d || null)).catch(() => {});
+  // The ticket on screen is always the one selected: an answer for another (a slower request
+  // for the previous selection) is dropped.
+  const selRef = useRef(null);
+  const loadTicket = (id) => supportAdminApi.ticket(id).then((d) => { if (selRef.current === id) setTicket(d || null); }).catch(() => {});
   usePolling(loadTickets, 12000, { immediate: false });
   usePolling(() => { if (sel) loadTicket(sel); }, 10000);
   useEffect(() => { loadTickets(); }, [filter]);
 
   // Opening a ticket marks it read server-side; clear its unread badge immediately too.
-  const open = (id) => { setSel(id); setTickets((ts) => ts.map((tk) => (tk.id === id ? { ...tk, unread: 0 } : tk))); loadTicket(id).then(loadTickets); };
+  const open = (id) => { selRef.current = id; setSel(id); setTicket((cur) => (cur && cur.id === id ? cur : null)); setTickets((ts) => ts.map((tk) => (tk.id === id ? { ...tk, unread: 0 } : tk))); loadTicket(id).then(loadTickets); };
   // "Online" when active in the last 3 minutes, otherwise a "last seen" timestamp.
   const lastSeenLabel = (ts) => {
     if (!ts) return "";

@@ -276,6 +276,12 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 /* a view's own activity: two figures share the row, a single one stands alone (not a tab) */
 .hub-metrics.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .hub-metrics.n1 { grid-template-columns: minmax(0, 1fr); }
+.hub-metrics.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.hub-metrics.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* The figure strip alone (ViewFigures): no chart under it, so no rule closing it. */
+.view-figures { margin-bottom: 32px; }
+.view-figures .hub-metrics { border-bottom: 0; }
+@media (max-width: 760px) { .hub-metrics.n3, .hub-metrics.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .hub-metric.solo { cursor: default; }
 .hub-metric.solo::after { display: none; }
 .hub-metric.solo:hover { background: transparent; }
@@ -1041,15 +1047,23 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .zk-split { margin: 10px 0 0; padding: 0 2px; }
 .zk-split > div:first-child { margin-top: 0; border-top: 0; padding-top: 7px; }
 
-/* Private payments: the organization's private accounts, a table panel like every list, under the
-   payments one (ZkAccountPanel). A note, the connect form or the empty state sit under its head;
-   while an account works, a status line under its row with a turning ring (and a clock beside the
-   proof). Its signatures go through ZkSignDialog, whose clock says how long the transaction has. */
-.inst .zka { margin-top: 16px; }
+/* Private payments: the customers' private accounts, a second list under the payments one
+   (ZkAccountPanel): a section heading, the filter bar and the table, as the overview's
+   transactions. A note sits above the table; while an account works, a status line under its row
+   with a turning ring (and a clock beside the proof). Its signatures go through ZkSignDialog, whose
+   clock says how long the transaction has. */
+.inst .zka { margin-top: 40px; }
+/* Webhooks: an endpoint's deliveries, the second list of the view, named by its URL. */
+.inst .wh-deliveries { margin-top: 40px; }
+/* Client activity: the most frequent errors, a second list under the feed. */
+.inst .act-top-errors { margin-top: 40px; }
+/* Balances: the recent settlements, a second list under the balance cards. */
+.inst .bal-recent { margin-top: 32px; }
+.wh-deliveries-url { margin-left: 8px; font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--ink-3); overflow-wrap: anywhere; }
 .zks-clock { margin: 0 0 14px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .zks-clock.expired { color: #B42F2F; }
 [data-theme="dark"] .zks-clock.expired { color: #FF9B9B; }
-.zka-note { margin: 16px 20px; }
+.zka-note { margin: 0 0 16px; }
 .zka-work td { padding-top: 0; }
 /* A line saying work is under way (the confidential account, connecting a wallet): a turning ring,
    the step, and a clock where the step is long. */
@@ -1062,7 +1076,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 /* An error under a form or inside a panel: plain text in the swap widget's error red, never a box. */
 .inst .field-err { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: #B42F2F; }
 [data-theme="dark"] .inst .field-err { color: #FF9B9B; }
-.zka .zka-note.field-err { margin: 16px 20px; }
+.zka .zka-note.field-err { margin: 0 0 16px; }
+.zka > .zka-note.field-err:last-child { margin: 16px 0 0; }
 /* The organization's wallets (components/OrgWallets.tsx): Settings' rows, the connect form, and
    a payment form's receiving wallet when the organization has none on that network yet. */
 .wl-mark { flex: 0 0 auto; border-radius: 50%; object-fit: cover; }
@@ -1074,3 +1089,30 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .wl-inline { padding: 16px; border: 1px solid var(--line); border-radius: var(--r-pop); }
 .wl-none { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: var(--r-field); font-size: 13.5px; color: var(--ink-2); }
 .wl-none .field-help { margin: 0; }
+
+/* A long form in steps (components/FormSteps.tsx): the steps named across the top of the dialog,
+   numbered, the current one filled with ink, a passed one with a check (and a button back to it);
+   "step n of total" under them for whoever reads one line. Solid colours, no motion beyond the
+   body arriving. Narrow screens keep only the current step's name. */
+.fsteps { margin: 0 0 20px; }
+.fsteps ol { display: flex; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; flex-wrap: wrap; }
+.fstep { display: flex; align-items: center; gap: 8px; }
+.fstep + .fstep::before { content: ""; content: "" / ""; width: 20px; height: 1px; background: var(--line-2); }
+.fstep button { display: inline-flex; align-items: center; gap: 8px; padding: 2px 4px 2px 2px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-3); font: inherit; font-size: 13px; cursor: pointer; }
+.fstep button:disabled { cursor: default; }
+.fstep button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.fstep-n { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border-radius: 50%; border: 1px solid var(--line-2); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fstep-n svg { width: 13px; height: 13px; }
+.fstep.is-current button { color: var(--ink); font-weight: 600; }
+.fstep.is-current .fstep-n { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.fstep.is-done button, .fstep.is-reached button { color: var(--ink); }
+.fstep.is-done .fstep-n { border-color: var(--ink); color: var(--ink); }
+.fstep.is-done button:hover .fstep-l, .fstep.is-reached button:hover .fstep-l { text-decoration: underline; text-underline-offset: 3px; }
+.fsteps-of { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
+.fstep-body > :first-child { margin-top: 0; }
+.fsteps-actions { margin-top: 22px; }
+@media (max-width: 560px) {
+  .fstep:not(.is-current) .fstep-l { display: none; }
+  .fstep + .fstep::before { width: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .fstep-body.arrive { animation: none; } }

@@ -261,7 +261,33 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     their one figure (a single figure stands alone, not a tab). Each sits above its list; only the
     overview's charts link into a view. **Figures always come first, then the tables, in every view**
     (product owner, 2026-10-27): a second table (private accounts under private payments) goes after
-    the main one, never above the figures.
+    the main one, never above the figures. A list with no series of its own (customers, products,
+    API keys, logs, client activity, users) opens with `ViewFigures` (same module): the activity
+    panel's figure strip without its chart, its numbers counted from the list, a skeleton while it
+    loads and a dash when it failed. **A second list on a page** (private accounts, a webhook's
+    deliveries, the most frequent errors, recent settlements) is a `hub-section` with its `h2`
+    heading, then its own `FilterBar` (its own URL keys when the page's first list already uses
+    `q`/`status`/`date`, e.g. `accq`) and its panel, as the overview's transactions; never a title
+    inside the panel.
+  - **The view-by-view review (product owner, 2026-10-27): every list is the Payments table.** Rows
+    open their detail (a record view or a dialog that also offers the row's management actions); the
+    first cell is the record's `RecordLink` (link, copy, hover preview); a created/added date column;
+    the actions cell (`row-actions`) holds the details icon, the row's main action as an icon (edit,
+    create the private account, continue a pending swap or deposit, redeliver, sell), the explorer
+    (drawn disabled until there is a transaction) and delete, then the `RowMenu` with every action;
+    `FillRows` with the load error said as such, `Pagination`, a `TableSkeleton` with the table's
+    columns. **Every delete (and a secret rotation, an invitation's revoke) asks first**
+    (`ui/ConfirmModal.tsx`), from the row, its menu and its detail alike. A view the account may not
+    open lands on the overview, its address and title too (Dashboard.tsx).
+  - **A form with many fields or much to read goes in steps** (product owner, 2026-10-27):
+    `components/FormSteps.tsx` (`useFormSteps`, `FormSteps`, `FormStep`, `FormStepsFooter`): the
+    steps named at the top, the current one in ink and a passed one with a check (a button back to
+    it), "step n of total", the first field focused on each step, "Next" only once the step is valid
+    and the form's own action on the last. In steps: the payment link (amount, destination, fee,
+    design), the private payment (amount and customer, details, fee), the API key (details,
+    permissions), the member invitation (a dialog: email and role, permissions), the liquidity
+    deposit (pair, amounts) and the Stellar wallet (address, signature). Every "add"/"create" is a
+    dialog, never an inline form.
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
     from Monday), with the window's totals (distinct payers too) and the window before it, plus

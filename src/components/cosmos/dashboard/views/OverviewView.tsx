@@ -15,7 +15,8 @@ import { metrics as metricsApi, paymentIntents as payApi, organizations as orgsA
 import { planSpec } from "@/lib/plans";
 import { planStatusOf, planStatusTone } from "@/lib/plan-status";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
-import { checkoutUrl } from "@/components/cosmos/shared";
+import { checkoutUrl, showToast } from "@/components/cosmos/shared";
+import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
@@ -70,8 +71,9 @@ function OrgIdField({ id, label }) {
 }
 
 /* A payment's menu (RowMenu, as every list's): its detail in Payments, a new tab, its id, its
-   checkout link and page, and its transaction on the explorer, disabled until there is one. */
-function PaymentMenu({ p, onGo }) {
+   checkout link and page, its transaction on the explorer (disabled until there is one), and
+   deleting it for whoever may create payments (disabled once paid, as in Payments). */
+function PaymentMenu({ p, canDelete = false, onDelete }) {
   const t = useT();
   const h = t.dash.overview.hub;
   const cm = t.dash.common;
@@ -87,6 +89,7 @@ function PaymentMenu({ p, onGo }) {
         { key: "link", label: cm.copyLink, icon: <IcCopy />, disabled: p.status !== "PENDING", hint: cm.notPayable, onClick: () => copy(checkoutUrl(p.id), t.toasts.copied) },
         { key: "checkout", label: t.dash.paylinks.detail.openCheckout, icon: DI.payments, href: checkoutUrl(p.id), external: true, disabled: p.status !== "PENDING", hint: cm.notPayable },
         { key: "explorer", label: h.explorer, icon: DI.network, href, external: true, disabled: !href, hint: cm.noTxYet },
+        ...(canDelete ? [{ key: "delete", label: t.dash.paylinks.detail.delete, icon: DI.trash, danger: true, disabled: p.status === "SUCCEEDED", hint: cm.paidNoDelete, onClick: () => onDelete(p) }] : []),
       ]}
     />
   );
@@ -107,6 +110,15 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const [seriesLoading, setSeriesLoading] = useState(true);
   const [listPeriod, setListPeriod] = useState("month");
   const [rows, setRows] = useState(null);
+  // The payment to delete from its menu, confirmed first.
+  const [toDelete, setToDelete] = useState(null);
+  const confirmDelete = () => {
+    const p = toDelete;
+    if (!p) return;
+    payApi.remove(p.id, env)
+      .then(() => setRows((r) => (r || []).filter((x) => x.id !== p.id)))
+      .catch((e) => showToast((e && e.message) || t.dash.paylinks.deleteError, "error"));
+  };
   // The organization's wallets, so an account's card can say it is one of them.
   const [wallets, setWallets] = useState([]);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
@@ -192,7 +204,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
     const mine = all.filter((x) => x.source === addr || x.destination === addr);
     const last = mine.reduce((a, x) => (!a || x.createdAt > a ? x.createdAt : a), null);
     return [
-      ...(w ? [[cm.orgWallet, w.name || shortAddress(w.address)]] : []),
+      ...(w ? [[cm.orgWallet, w.label || shortAddress(w.address)]] : []),
       [cm.paymentsHere, num.format(mine.length)],
       ...(last ? [[cm.lastPayment, fmtDateTime(last)]] : []),
     ];
@@ -339,7 +351,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
                     <div><dt>{h.thFrom}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.source} label={h.thFrom} context={accountContext(p.source)} /></dd></div>
                     <div><dt>{h.thTo}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.destination} label={h.thTo} context={accountContext(p.destination)} /></dd></div>
                   </dl>
-                  <PaymentMenu p={p} onGo={onGo} />
+                  <PaymentMenu p={p} canDelete={canCreatePayments} onDelete={setToDelete} />
                 </li>
               ))}
               {Array.from({ length: fill }, (_, i) => <li className="hub-row row-fill" key={`fill-${i}`} aria-hidden="true" />)}
@@ -362,6 +374,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
           )}
         </div>
       </section>
+      {toDelete && <ConfirmModal title={t.dash.paylinks.detail.deleteTitle} body={fmt(t.dash.paylinks.detail.deleteBody, { id: toDelete.id })} confirmLabel={t.dash.paylinks.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </div>
   );
 }
