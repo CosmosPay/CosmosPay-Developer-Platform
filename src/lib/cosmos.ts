@@ -14,6 +14,7 @@ import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
 import { upstreamBaseUrls } from "@/lib/apisix-upstream";
 import { consoleMarker } from "@/lib/console-marker";
+import { pageRows } from "@/lib/upstream-page";
 import type { CheckoutTheme } from "@/lib/payments/checkout-themes";
 
 export type CosmosEnv = "dev" | "prod";
@@ -353,8 +354,10 @@ export interface WebhookEndpoint {
 }
 
 export const cosmosWebhooks = {
-  list: (userId: string, env: CosmosEnv) =>
-    cosmosFetch<WebhookEndpoint[]>(userId, env, "/v1/webhooks"),
+  /* The Payments API pages its endpoints (at most 100 a page): this reads the largest page and
+     returns its rows (`pageRows`), the list `/api/webhooks` documents. */
+  list: async (userId: string, env: CosmosEnv): Promise<WebhookEndpoint[]> =>
+    pageRows(await cosmosFetch<{ data: WebhookEndpoint[] } | WebhookEndpoint[]>(userId, env, "/v1/webhooks", { query: { take: 100 } })),
   get: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<WebhookEndpoint>(userId, env, `/v1/webhooks/${encodeURIComponent(id)}`),
   create: (userId: string, env: CosmosEnv, body: { url: string; description?: string; eventTypes?: string[] }) =>

@@ -27,6 +27,9 @@ const CLASSES = ["ok", "client", "server"];
 const DELIVERY = ["SUCCEEDED", "FAILED", "PENDING"];
 const DELIVERY_TONE = { SUCCEEDED: "ok", FAILED: "fail", PENDING: "wait" };
 const DELIVERY_PILL = { SUCCEEDED: "ok", FAILED: "fail", PENDING: "ref" };
+// The webhook log answers a delivery's outcome as ok / fail / pending (the Payments API's
+// analytics), the deliveries list as SUCCEEDED / FAILED / PENDING: both read as the latter here.
+const DELIVERY_OF = { ok: "SUCCEEDED", fail: "FAILED", pending: "PENDING" };
 const METHODS = ["GET", "POST", "PATCH", "PUT", "DELETE"];
 const DEFAULTS = { q: "", status: "all", method: "all", date: "any" };
 const ALLOWED = { status: ["all", ...CLASSES, ...DELIVERY], method: ["all", ...METHODS] };
@@ -60,7 +63,7 @@ export function LogsView({ kind = "api", env = "dev", orgId = "", canManage = fa
   const refresh = useCallback(() => { read().catch(() => {}); }, [read]);
   usePolling(refresh, 8000, { immediate: false });
 
-  const statusOf = (l) => (isApi ? classOf(l.statusCode) : l.status || "PENDING");
+  const statusOf = (l) => (isApi ? classOf(l.statusCode) : DELIVERY_OF[l.status] || l.status || "PENDING");
   const matches = (l, skip) =>
     (skip === "status" || filters.status === "all" || statusOf(l) === filters.status) &&
     (!isApi || skip === "method" || filters.method === "all" || (l.method || "").toUpperCase() === filters.method) &&

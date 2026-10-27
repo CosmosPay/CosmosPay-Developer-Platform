@@ -87,9 +87,10 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
     .then((r) => showToast(r && r.ok ? cx.pingOk : cx.pingFail, r && r.ok ? "success" : "error"))
     .catch(() => showToast(cx.pingFail, "error"));
 
+  // Enabling one whose host is no longer allowed is refused (400): it says why.
   const toggle = (ep) => whApi.update(ep.id, env, orgId, { enabled: !ep.enabled })
     .then((u) => setEps((p) => p.map((x) => x.id === ep.id ? { ...x, ...u } : x)))
-    .catch(() => showToast(wv.saveError, "error"));
+    .catch((e) => showToast(e && e.status === 400 ? wv.urlRefused : wv.saveError, "error"));
 
   const rotate = (ep) => whApi.rotateSecret(ep.id, env, orgId)
     .then((u) => { if (u && u.secret) setReveal({ url: ep.url, secret: u.secret }); });
@@ -207,6 +208,8 @@ export function WebhooksView({ canManage = true, orgId, env = "dev" }) {
    opens its detail: the event, every attempt's outcome and the error the endpoint answered. */
 function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
   const t = useT();
+  // A delivery's status in the reader's words, as Webhook logs says it.
+  const deliveryWord = (s) => (t.dash.logs.delivery && t.dash.logs.delivery[s]) || s;
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -241,12 +244,12 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
                 <span className="cell-mark"><StatusIcon tone={pillTone(DELIVERY_PILL[d.status] || "ref")} />
                 <RecordLink
                   onOpen={() => setOpen(d)} copy={d.eventId || d.id}
-                  preview={() => <PreviewCard label={wv.eventId} title={d.eventId || d.id} headline={<><b>{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</b><span className={`hub-st-t ${DELIVERY_PILL[d.status] === "ok" ? "ok" : DELIVERY_PILL[d.status] === "fail" ? "fail" : "wait"}`}>{d.status}</span></>} fields={[[wv.tableHead.response, d.responseStatus ?? "-"], [wv.attempts, d.attempts ?? "-"], [wv.tableHead.when, fmtDateTime(d.lastAttemptAt || d.createdAt)]]} />}
+                  preview={() => <PreviewCard label={wv.eventId} title={d.eventId || d.id} headline={<><b>{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</b><span className={`hub-st-t ${DELIVERY_PILL[d.status] === "ok" ? "ok" : DELIVERY_PILL[d.status] === "fail" ? "fail" : "wait"}`}>{deliveryWord(d.status)}</span></>} fields={[[wv.tableHead.response, d.responseStatus ?? "-"], [wv.attempts, d.attempts ?? "-"], [wv.tableHead.when, fmtDateTime(d.lastAttemptAt || d.createdAt)]]} />}
                 >{(cx.eventLabels && cx.eventLabels[d.eventType]) || humanize(d.eventType)}</RecordLink>
                 </span>
               </td>
               <td className="cust">{d.responseStatus ?? "-"}</td>
-              <td><Pill st={DELIVERY_PILL[d.status] || "ref"} tone={d.status === "PENDING" ? "wait" : undefined} label={d.status} /></td>
+              <td><Pill st={DELIVERY_PILL[d.status] || "ref"} tone={d.status === "PENDING" ? "wait" : undefined} label={deliveryWord(d.status)} /></td>
               <td className="cust">{fmtDateTime(d.lastAttemptAt || d.createdAt)}</td>
               <td className="row-actions" onClick={(e) => e.stopPropagation()}>
                 <button className="icon-mini" title={wv.delivery} aria-label={wv.delivery} onClick={() => setOpen(d)}>{DI.docs}</button>
@@ -274,7 +277,7 @@ function DeliveriesPanel({ wv, cx, endpoint, env, orgId, canManage }) {
             <div className="modal-eyebrow">{wv.delivery}</div>
             <h3>{(cx.eventLabels && cx.eventLabels[open.eventType]) || humanize(open.eventType)}</h3>
             <div className="paylink-fields" style={{ marginBottom: 18 }}>
-              {[[wv.tableHead.status, open.status], [wv.tableHead.response, open.responseStatus ?? "-"], [wv.attempts, open.attempts ?? "-"], [wv.error, open.error], [wv.eventId, open.eventId], [wv.tableHead.when, fmtDateTime(open.lastAttemptAt || open.createdAt)], [endpoint.url ? wv.tableHead.url : null, endpoint.url]]
+              {[[wv.tableHead.status, deliveryWord(open.status)], [wv.tableHead.response, open.responseStatus ?? "-"], [wv.attempts, open.attempts ?? "-"], [wv.error, open.error], [wv.eventId, open.eventId], [wv.tableHead.when, fmtDateTime(open.lastAttemptAt || open.createdAt)], [endpoint.url ? wv.tableHead.url : null, endpoint.url]]
                 .filter(([k, v]) => k && v !== null && v !== undefined && v !== "")
                 .map(([k, v]) => (<div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{String(v)}</span></div>))}
             </div>

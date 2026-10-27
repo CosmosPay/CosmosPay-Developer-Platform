@@ -309,7 +309,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     and a row opens its conversation in a dialog (`components/TicketDialog.tsx`: the thread, the
     composer and, for staff, the customer, when they were last seen and the status and priority
     pickers). The webhook form checks its URL is one before sending and words the server's refusal
-    of a non-public host (and any other failure) in the user's language. Dialogs stack (`ui/Modal.tsx` keeps the open ones): only the top one answers
+    of a non-public host (and any other failure) in the user's language. The Payments API answers
+    its lists as a page (`{ data, total, take, skip }`): `cosmosWebhooks.list` returns the page's rows
+    (`lib/upstream-page.ts` `pageRows`), as `/api/webhooks` documents (reading the page as the list
+    left the webhooks table empty). The webhook log says a delivery's outcome as ok / fail / pending;
+    `LogsView` reads them as the deliveries' SUCCEEDED / FAILED / PENDING. Dialogs stack (`ui/Modal.tsx` keeps the open ones): only the top one answers
     Escape and keeps Tab, so a token picker or a confirmation closes alone over its form or detail;
     a dropdown inside one (`Select`, `CountrySelect`, `MiniSelect`) closes alone on Escape too.
     The invitation says before sending what the server would refuse: an email already in the team or
