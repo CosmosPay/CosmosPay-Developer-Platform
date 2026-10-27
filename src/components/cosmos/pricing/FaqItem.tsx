@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IcPlus } from "./icons";
+import { IcPlus } from "@/components/cosmos/pricing/icons";
 
 export function FaqItem({ q, a }) {
   const [open, setOpen] = useState(false);

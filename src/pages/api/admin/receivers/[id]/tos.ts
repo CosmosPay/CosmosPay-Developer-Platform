@@ -1,4 +1,4 @@
-/* POST /api/admin/receivers/:id/tos — PLATFORM-ADMIN (owner) resend of the KYC verification
+/* POST /api/admin/receivers/:id/tos: PLATFORM-ADMIN (owner) resend of the KYC verification
    (terms-of-service acceptance) email for ANY fiat receiver, across every organization.
 
    The org-scoped /api/kyc/receivers/:id/tos only works for a receiver in the caller's own org;
@@ -9,7 +9,7 @@
    mail transport). More specific than the generic /api/admin/[...path] proxy, so it wins. */
 import { z } from "zod";
 import type { APIRoute } from "astro";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageUsers, getRole } from "@/lib/profile";
 import { proxyCosmosRequest } from "@/lib/cosmos";
@@ -20,13 +20,13 @@ import { renderTosEmail } from "@/lib/emails";
 const bodySchema = z.object({ redirect_url: z.string().trim().url().max(2048) });
 
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;
   if (!id) return jsonNotFound("Receiver not found");
 
-  // Platform owner/admin only — the same gate as the rest of the admin surface. The role also
+  // Platform owner/admin only: the same gate as the rest of the admin surface. The role also
   // tunes the resend cooldown (owner: immediate, admin: 1/min).
   const role = await getRole(session.user.id).catch(() => "user" as const);
   if (!canManageUsers(role)) return jsonForbidden("Platform admin access required.");

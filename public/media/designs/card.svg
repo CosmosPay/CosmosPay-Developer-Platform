@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Card checkout design"><defs><pattern id="q" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#000"/><rect x="4" y="4" width="4" height="4" fill="#000"/></pattern></defs>
+<rect width="320" height="220" fill="#13131A"/><circle cx="300" cy="-10" r="110" fill="none" stroke="#26262E" stroke-width="34"/><circle cx="10" cy="230" r="90" fill="none" stroke="#000000" stroke-width="28"/>
+<rect x="14" y="16" width="292" height="190" rx="14" fill="#fff"/>
+<circle cx="30" cy="34" r="6" fill="#000"/>
+<rect x="40" y="31" width="44" height="6" rx="3" fill="rgba(0,0,0,.55)"/>
+<rect x="110" y="24" width="17" height="22" rx="3" fill="#000"/>
+<rect x="129" y="24" width="17" height="22" rx="3" fill="#000"/>
+<rect x="152" y="24" width="17" height="22" rx="3" fill="#000"/>
+<rect x="171" y="24" width="17" height="22" rx="3" fill="#000"/>
+<rect x="24" y="56" width="84" height="14" rx="4" fill="#000"/>
+<rect x="24" y="84" width="44" height="6" rx="3" fill="#000"/>
+<rect x="24" y="94" width="58" height="4" rx="2" fill="rgba(0,0,0,.4)"/>
+<rect x="100" y="82" width="88" height="20" rx="5" fill="#fff" stroke="rgba(0,0,0,.2)"/>
+<rect x="24" y="116" width="36" height="6" rx="3" fill="#000"/>
+<rect x="24" y="126" width="54" height="4" rx="2" fill="rgba(0,0,0,.4)"/>
+<rect x="100" y="114" width="88" height="20" rx="5" fill="#fff" stroke="rgba(0,0,0,.2)"/>
+<rect x="24" y="164" width="164" height="24" rx="12" fill="#13131A"/>
+<rect x="204" y="50" width="94" height="148" rx="10" fill="#F2F2F5"/>
+<rect x="214" y="28" width="74" height="86" rx="9" fill="#fff" stroke="rgba(0,0,0,.14)"/>
+<rect x="238" y="28" width="26" height="3" fill="#2346F4"/>
+<g transform="translate(228 44)"><rect width="46" height="46" rx="4" fill="#fff" stroke="rgba(0,0,0,.12)"/><rect x="5" y="5" width="36" height="36" fill="url(#q)" opacity=".85"/><rect x="5" y="5" width="12" height="12" fill="#fff" stroke="#000" stroke-width="3"/><rect x="29" y="5" width="12" height="12" fill="#fff" stroke="#000" stroke-width="3"/><rect x="5" y="29" width="12" height="12" fill="#fff" stroke="#000" stroke-width="3"/></g>
+<rect x="222" y="100" width="34" height="5" rx="2.5" fill="rgba(0,0,0,.45)"/>
+<rect x="264" y="98" width="16" height="8" rx="4" fill="#000"/>
+<rect x="212" y="126" width="30" height="5" rx="2.5" fill="rgba(0,0,0,.4)"/>
+<rect x="262" y="126" width="28" height="5" rx="2.5" fill="#000"/>
+<line x1="204" y1="146" x2="298" y2="146" stroke="rgba(0,0,0,.25)" stroke-width="1.5" stroke-dasharray="4 3"/><circle cx="204" cy="146" r="5" fill="#fff"/><circle cx="298" cy="146" r="5" fill="#fff"/>
+<rect x="212" y="158" width="40" height="5" rx="2.5" fill="rgba(0,0,0,.4)"/>
+<rect x="212" y="170" width="62" height="14" rx="4" fill="#000"/>
+</svg>

@@ -1,14 +1,14 @@
 // Fail when the docs site's Payments API spec (docs/openapi.json) is not what the community
 // server serves today.
 //
-// docs/openapi.json is committed — production builds without the server repo next to it —
+// docs/openapi.json is committed (production builds without the server repo next to it),
 // so nothing refreshed it when the server changed, and the reference could describe routes,
 // fields and auth the server no longer has. This recomputes it from the server's spec with the
 // SAME transform generate-api uses (docs/scripts/transform-spec.mjs) and compares.
 //
 // Source, first match wins:
-//   1. OPENAPI_SRC — a file path or an http(s) URL
-//   2. ../comos-pay-community-server/openapi/openapi.json — the sibling checkout
+//   1. OPENAPI_SRC (a file path or an http(s) URL)
+//   2. ../comos-pay-community-server/openapi/openapi.json (the sibling checkout)
 // With neither it says so and exits 0: a production box has no server repo and nothing to check.
 //
 // Fix a failure with `npm run docs:api` (or a full `npm run docs:build`) and commit the result.
@@ -46,7 +46,7 @@ function differences(a, b, at = '', out = []) {
 
 const source = await readSource();
 if (!source) {
-  console.warn('[check-api-spec] no community-server spec reachable (set OPENAPI_SRC) — skipped.');
+  console.warn('[check-api-spec] no community-server spec reachable (set OPENAPI_SRC); skipped.');
   process.exit(0);
 }
 

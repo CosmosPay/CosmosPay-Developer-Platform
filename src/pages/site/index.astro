@@ -1,0 +1,19 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import Landing from "@/components/cosmos/Landing.tsx";
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const user = Astro.locals.user
+  ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
+  : null;
+---
+
+<CosmosLayout
+  nav={false}
+  title="Cosmos Pay: Developer Platform for Stellar, Solana & Monad Payments"
+  description="Issue API keys and integrate multi-chain payments on Stellar, Solana and Monad with Cosmos Pay: create payment intents, manage webhooks, products and customers, and track analytics, all from one developer dashboard."
+  lang={lang}
+  preloadCinta
+>
+  <Landing client:load user={user} lang={lang} />
+</CosmosLayout>

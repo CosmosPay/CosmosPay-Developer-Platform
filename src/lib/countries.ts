@@ -1,4 +1,4 @@
-/* countries.ts — the full country list as { code, name }[].
+/* countries.ts: the full country list as { code, name }[].
    `code` is the 2-letter uppercase country code (the value submitted to the API);
    `name` is the English short name (display only). Used by CountrySelect. */
 export interface Country {

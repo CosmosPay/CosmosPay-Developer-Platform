@@ -17,7 +17,7 @@ quote(options: QuoteSwapOptions): Promise<SwapQuoteData>
 
 **Parameters**
 
-- `options` — `QuoteSwapOptions`
+- `options`: `QuoteSwapOptions`
 
 **Returns** `Promise<SwapQuoteData>`
 
@@ -31,7 +31,7 @@ create(options: CreateSwapOptions & OnOtherChain): Promise<ChainSwap>
 
 **Parameters**
 
-- `options` — `CreateSwapOptions & OnOtherChain`
+- `options`: `CreateSwapOptions & OnOtherChain`
 
 **Returns** [`Promise<ChainSwap>`](/sdk/definitions/server/chain-swap)
 
@@ -43,7 +43,7 @@ create(options: CreateSwapOptions): Promise<Swap>
 
 **Parameters**
 
-- `options` — `CreateSwapOptions`
+- `options`: `CreateSwapOptions`
 
 **Returns** [`Promise<Swap>`](/sdk/definitions/server/swap)
 
@@ -57,7 +57,7 @@ fetch(id: string): Promise<Swap | ChainSwap>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<`[`Swap`](/sdk/definitions/server/swap)` | `[`ChainSwap`](/sdk/definitions/server/chain-swap)`>`
 
@@ -71,7 +71,7 @@ list(options: ListSwapsOptions & OnOtherChain): Promise<SwapPage<ChainSwap>>
 
 **Parameters**
 
-- `options` — `ListSwapsOptions & OnOtherChain`
+- `options`: `ListSwapsOptions & OnOtherChain`
 
 **Returns** [`Promise<SwapPage<ChainSwap>>`](/sdk/definitions/server/chain-swap)
 
@@ -83,7 +83,7 @@ list(options?: ListSwapsOptions): Promise<SwapPage<Swap>>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListSwapsOptions`
+- `options` _(optional)_: `ListSwapsOptions`
 
 **Returns** [`Promise<SwapPage<Swap>>`](/sdk/definitions/server/swap)
 
@@ -97,8 +97,8 @@ submit(id: string, options: SubmitSwapOptions): Promise<SwapSubmitOutcome | Chai
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `SubmitSwapOptions`
+- `id`: `string`
+- `options`: `SubmitSwapOptions`
 
 **Returns** `Promise<SwapSubmitOutcome | ChainSwapSubmitOutcome>`
 

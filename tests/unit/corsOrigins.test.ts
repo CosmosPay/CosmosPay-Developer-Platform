@@ -1,4 +1,4 @@
-/* corsOrigins.test.ts — COSMOS_API_CORS_ORIGINS → the APISIX cors plugin (src/lib/apisix-upstream.ts).
+/* corsOrigins.test.ts: COSMOS_API_CORS_ORIGINS → the APISIX cors plugin (src/lib/apisix-upstream.ts).
 
    Two APISIX rules shape this, and production broke on each once:
    - `null` inside allow_origins fails its schema, so the route is rejected and the sync fails;

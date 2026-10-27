@@ -1,0 +1,47 @@
+---
+// Receipt: the fields a payer copies on the left, a receipt on the right with details, a
+// tear line, the total and the wallet buttons.
+import Brand from "@/components/payments/checkout/Brand.astro";
+import Amount from "@/components/payments/checkout/Amount.astro";
+import Status from "@/components/payments/checkout/Status.astro";
+import PayerStep from "@/components/payments/checkout/PayerStep.astro";
+import Timer from "@/components/payments/checkout/Timer.astro";
+import Qr from "@/components/payments/checkout/Qr.astro";
+import WalletActions from "@/components/payments/checkout/WalletActions.astro";
+import Field from "@/components/payments/checkout/Field.astro";
+import Facts from "@/components/payments/checkout/Facts.astro";
+import Notice from "@/components/payments/checkout/Notice.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<template data-design="ticket">
+  <div class="ck-card ck-ticket">
+    <div class="ck-body">
+      <div class="ck-head"><Brand /><Timer caption={false} /></div>
+      <Amount />
+      <Status />
+      <PayerStep />
+      <div class="ck-form" data-open-only data-row="manual">
+        <p class="ck-section-title"><span class="ck-tab-icon ck-icon-manual" aria-hidden="true"></span>{t.method.manual}</p>
+        <Field name="pay-to" label={t.payTo} hint={t.payToHint} />
+        <Field name="memo" label={t.memo} hint={t.memoHint} row="memo" />
+        <Field name="amount-value" label={t.amount} hint={t.amountHint} row="amount" />
+      </div>
+      <Notice />
+    </div>
+    <aside class="ck-receipt" aria-label={t.details}>
+      <p class="ck-receipt-title"><span class="ck-tab-icon ck-icon-receipt" aria-hidden="true"></span>{t.details}</p>
+      <div class="ck-receipt-qr" data-open-only>
+        <Qr size={168} />
+        <span>{t.scanToPay}</span>
+      </div>
+      <Facts rows={["network", "asset", "desc", "expires", "tx"]} class="pp-details ck-facts" />
+      <div class="ck-tear" aria-hidden="true"></div>
+      <p class="ck-total-label">{t.youPay}</p>
+      <p class="ck-total" data-slot="total"></p>
+      <div class="ck-receipt-actions" data-open-only><WalletActions block /></div>
+    </aside>
+  </div>
+</template>

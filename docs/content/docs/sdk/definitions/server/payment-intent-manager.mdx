@@ -17,7 +17,7 @@ createTx(options: CreateTxPaymentIntentOptions): Promise<PaymentIntent>
 
 **Parameters**
 
-- `options` — `CreateTxPaymentIntentOptions`
+- `options`: `CreateTxPaymentIntentOptions`
 
 **Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
 
@@ -31,7 +31,7 @@ createPay(options: CreatePayPaymentIntentOptions): Promise<PaymentIntent>
 
 **Parameters**
 
-- `options` — `CreatePayPaymentIntentOptions`
+- `options`: `CreatePayPaymentIntentOptions`
 
 **Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
 
@@ -45,7 +45,7 @@ fetch(id: string): Promise<PaymentIntent>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
 
@@ -59,7 +59,7 @@ transitions(id: string): Promise<PaymentIntentTransitionData[]>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<PaymentIntentTransitionData[]>`
 
@@ -73,7 +73,7 @@ list(options?: ListPaymentIntentsOptions): Promise<PaymentIntentPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListPaymentIntentsOptions`
+- `options` _(optional)_: `ListPaymentIntentsOptions`
 
 **Returns** `Promise<PaymentIntentPage>`
 
@@ -87,8 +87,8 @@ update(id: string, options: UpdatePaymentIntentOptions): Promise<PaymentIntent>
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `UpdatePaymentIntentOptions`
+- `id`: `string`
+- `options`: `UpdatePaymentIntentOptions`
 
 **Returns** [`Promise<PaymentIntent>`](/sdk/definitions/server/payment-intent)
 
@@ -102,7 +102,7 @@ delete(id: string): Promise<DeletedData>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<DeletedData>`
 
@@ -116,8 +116,8 @@ validate(id: string, options: ValidatePaymentIntentOptions): Promise<ValidationO
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `ValidatePaymentIntentOptions`
+- `id`: `string`
+- `options`: `ValidatePaymentIntentOptions`
 
 **Returns** `Promise<ValidationOutcome>`
 

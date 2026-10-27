@@ -2,14 +2,14 @@ name: CI
 
 # Two jobs on every push and pull request, run in parallel:
 #
-#   verify — the unit suite plus a dependency security audit of BOTH lockfiles.
+#   verify:  the unit suite plus a dependency security audit of BOTH lockfiles.
 #            The audit used to run only in the release workflow, so a vulnerable
-#            dependency merged green and only surfaced when someone pushed to main —
+#            dependency merged green and only surfaced when someone pushed to main,
 #            which is how 19 advisories piled up before one of them blocked a release.
 #            It is cheap; run it where it can still block the merge.
-#   build  — `npm run build` runs prisma generate, builds the nested Fumadocs
+#   build:   `npm run build` runs prisma generate, builds the nested Fumadocs
 #            (Next.js) docs subproject (build-docs.mjs installs its deps on a fresh
-#            checkout), then the Astro SSR build — so a green build exercises the
+#            checkout), then the Astro SSR build, so a green build exercises the
 #            whole app.
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
       # Every route under src/pages/api must be in the OpenAPI document (or in the
       # exclusion map, with a reason). The reference is only worth opening if it is
       # complete, and "document the endpoint too" is the step that gets dropped under
-      # time pressure — this is what notices. It also exercises the spec GENERATION on a
+      # time pressure; this is what notices. It also exercises the spec GENERATION on a
       # plain `node` run, which is the other half: a registration that throws makes
       # /api/openapi.json a 500, and the route is gated off in production builds, so
       # nothing else in CI would ever call it.
@@ -65,25 +65,29 @@ jobs:
       # Dev-only tooling is excluded because it never reaches a user; a finding there is
       # Dependabot's errand, not a merge blocker.
       #
-      # package.json holds two `overrides` purely to keep this step green, and JSON cannot
+      # package.json holds three `overrides` purely to keep this step green, and JSON cannot
       # carry the reason, so it lives here:
-      #   mysql2, deepmerge-ts — both are pinned to an exact version by the `prisma` CLI,
+      #   mysql2, deepmerge-ts: both are pinned to an exact version by the `prisma` CLI,
       #   which is a devDependency but reaches the production tree anyway as an OPTIONAL
       #   PEER of @prisma/client. npm's own suggested fix is a downgrade to prisma 6, and
       #   no prisma 7.x has picked up either patch. Neither package is on a path this app
       #   executes (it is Postgres, via @prisma/adapter-pg), so the override is the honest
       #   move: patch them where they sit rather than exclude them from the audit. Drop the
       #   override once a prisma release ships the bumps itself.
+      #   toml: stellar-confidential-token-sdk keeps its own @stellar/stellar-sdk 14.6.1,
+      #   which pulls toml 3.0.0, inside the advisory range, and has no fixed release. 5.0.1
+      #   exports the same parse(), all its stellar.toml resolver calls. Drop the override
+      #   once that SDK moves to a stellar-sdk without toml or with a patched one.
       - name: Security audit (portal)
         run: npm audit --omit=dev --audit-level=low
 
-      # The docs subproject keeps its own lockfile, so the root audit cannot see it — and
+      # The docs subproject keeps its own lockfile, so the root audit cannot see it, and
       # its build output is served from public/docs by the same origin as the dashboard.
       # `--prefix` audits it straight from docs/package-lock.json; no install needed.
       #
       # docs/package.json overrides `undici` for the same reason as the root overrides above:
       # fumadocs-openapi 12 reaches it through @scalar/json-magic, which pins undici 7.24.4
-      # exactly — inside the advisory range. The override moves it to a patched 7.x; only the
+      # exactly, inside the advisory range. The override moves it to a patched 7.x; only the
       # build's spec loader runs it (the docs ship as a static export). Drop it once
       # @scalar/json-magic stops pinning a vulnerable release.
       - name: Security audit (docs)
@@ -106,7 +110,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # astro:env validates PUBLIC_ (client) vars at build time — they're inlined into
+          # astro:env validates PUBLIC_ (client) vars at build time, since they're inlined into
           # the client bundle. Any valid URL satisfies the compile check; the real value is
           # injected at deploy. Set a repo Variable to override the default.
           PUBLIC_BETTER_AUTH_URL: ${{ vars.PUBLIC_BETTER_AUTH_URL || 'https://dev.cosmospay.lat' }}
@@ -116,7 +120,7 @@ jobs:
 
       # A green build is NOT a server that runs. The build bundles src/ and leaves
       # dependencies external, so an import like `{ parse } from 'cookie'` is not resolved
-      # until node loads dist/server/entry.mjs — and a dependency that renamed an export
+      # until node loads dist/server/entry.mjs, and a dependency that renamed an export
       # between versions compiles clean and then dies on the first boot. That shipped once
       # (astro 7.3 -> cookie@2 renamed parse/serialize); this step is what sees it.
       - name: Smoke test (boot the built server)

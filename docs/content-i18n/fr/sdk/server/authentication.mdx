@@ -3,7 +3,7 @@ title: "Authentification"
 description: "Authentifiez-vous avec une seule clé API ; le réseau (testnet vs mainnet) est choisi automatiquement par le préfixe de la clé."
 ---
 
-L'authentification est volontairement minimale : une seule clé API secrète, conservée sur votre serveur. Le préfixe de la clé sélectionne aussi le réseau Stellar pour vous, il n'y a donc rien d'autre à configurer. Nouveau ici ? Voir [comment obtenir votre clé API](/api-keys).
+L'authentification est volontairement minimale : une seule clé API secrète, conservée sur votre serveur. Le préfixe de la clé sélectionne aussi testnet ou mainnet pour vous, il n'y a donc rien d'autre à configurer. Nouveau ici ? Voir [comment obtenir votre clé API](/api-keys).
 
 **Vous n'avez besoin que de votre clé API.** Tout le reste (URL de la passerelle, version de l'API) fait
 partie de la configuration partagée du SDK, maintenue par Cosmos Pay.
@@ -18,7 +18,7 @@ La clé API est envoyée sous la forme `Authorization: Bearer <apiKey>`.
 
 ## Sélection du réseau (important)
 
-Le **réseau est déterminé par le type de clé** — vous ne le configurez PAS :
+Le **réseau est déterminé par le type de clé** ; vous ne le configurez PAS :
 
 | Préfixe de clé | Réseau |
 | ---------- | ------- |
@@ -40,7 +40,7 @@ une `apiKey` pour des prototypes de confiance, mais n'envoyez jamais une clé de
 // Change the gateway for every client created afterward (once, at startup):
 Client.shared.baseURL = 'https://gateway.your-domain.com';
 
-// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+// Or per-client (rarely needed), e.g. local dev bypassing the gateway:
 const client = new Client({
   apiKey: '...',
   baseURL: 'http://localhost:3000',
@@ -49,9 +49,9 @@ const client = new Client({
 });
 ```
 
-`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sont tous facultatifs — une
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` sont tous facultatifs : une
 intégration normale ne les définit jamais.
 
 ## Références
 
-- [Client](/sdk/definitions/client) — Le point d'entrée principal du SDK — un client unique et atomique qui expose chaque ressource via son propre gestionnaire — une conception atomique à client unique.
+- [Client](/sdk/definitions/client) : le point d'entrée principal du SDK, un client unique et atomique qui expose chaque ressource via son propre gestionnaire (une conception atomique à client unique).

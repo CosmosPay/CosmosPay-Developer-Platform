@@ -15,7 +15,7 @@ constructor(client: Client)
 
 **Parameters**
 
-- `client` — [`Client`](/sdk/definitions/server/client)
+- `client`: [`Client`](/sdk/definitions/server/client)
 
 ## Properties
 
@@ -45,7 +45,7 @@ fetch(slug: string): Promise<PluginData>
 
 **Parameters**
 
-- `slug` — `string`
+- `slug`: `string`
 
 **Returns** `Promise<PluginData>`
 
@@ -59,8 +59,8 @@ install(slug: string, options: InstallPluginOptions): Promise<PluginData>
 
 **Parameters**
 
-- `slug` — `string`
-- `options` — `InstallPluginOptions`
+- `slug`: `string`
+- `options`: `InstallPluginOptions`
 
 **Returns** `Promise<PluginData>`
 
@@ -72,7 +72,7 @@ uninstall(slug: string): Promise<PluginUninstalledData>
 
 **Parameters**
 
-- `slug` — `string`
+- `slug`: `string`
 
 **Returns** `Promise<PluginUninstalledData>`
 
@@ -86,9 +86,9 @@ query<T = unknown>(slug: string, action: string, input?: Record<string, unknown>
 
 **Parameters**
 
-- `slug` — `string`
-- `action` — `string`
-- `input` _(optional)_ — `Record<string, unknown>`
+- `slug`: `string`
+- `action`: `string`
+- `input` _(optional)_: `Record<string, unknown>`
 
 **Returns** `Promise<PluginActionResultData<T>>`
 
@@ -102,9 +102,9 @@ command<T = unknown>(slug: string, action: string, input?: Record<string, unknow
 
 **Parameters**
 
-- `slug` — `string`
-- `action` — `string`
-- `input` _(optional)_ — `Record<string, unknown>`
+- `slug`: `string`
+- `action`: `string`
+- `input` _(optional)_: `Record<string, unknown>`
 
 **Returns** `Promise<PluginActionResultData<T>>`
 

@@ -1,4 +1,4 @@
-/* support-status.ts — ticket status + priority values, shared by server + client (no imports). */
+/* support-status.ts: ticket status + priority values, shared by server + client (no imports). */
 export const TICKET_STATUSES = ["open", "pending", "resolved", "closed"] as const;
 export type TicketStatus = (typeof TICKET_STATUSES)[number];
 

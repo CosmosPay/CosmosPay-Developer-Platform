@@ -1,0 +1,14 @@
+---
+// What to check before paying. Static: it holds for every link.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<aside class="ck-notice" aria-label={t.noticeTitle}>
+  <p class="ck-notice-title">{t.noticeTitle}</p>
+  <ul role="list">
+    <li>{t.notice1}</li>
+    <li>{t.notice2}</li>
+  </ul>
+</aside>

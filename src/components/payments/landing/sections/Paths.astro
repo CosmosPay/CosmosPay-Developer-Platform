@@ -1,0 +1,43 @@
+---
+// Paths section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+}
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<section class="pl-section" id="integration" aria-labelledby="pl-paths">
+  <div class="wrap">
+    <div class="pl-head pl-head-row" data-reveal>
+      <h2 id="pl-paths">{t.paths.title} {t.paths.titleBold}</h2>
+      <p class="pl-section-lede">{t.paths.lede}</p>
+    </div>
+    <ul class="pl-paths" role="list">
+      {paths.map((p, i) => {
+        const copy = t.paths[p.key];
+        return (
+          <li class="pl-path" data-reveal style={`--i: ${i}`}>
+            <div class="pl-path-visual"><Mock name={p.mock} ui={t.ui} /></div>
+            <h3>{copy.title}</h3>
+            <p class="pl-path-level">{copy.level}</p>
+            <p class="pl-path-body">{copy.body}</p>
+            <ul class="pl-checks" role="list">
+              {copy.points.map((point) => (
+                <li><span class="pl-check"><Icon name="check" /></span>{point}</li>
+              ))}
+            </ul>
+            <a class="pl-textlink" href={p.href}>{copy.link}</a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</section>

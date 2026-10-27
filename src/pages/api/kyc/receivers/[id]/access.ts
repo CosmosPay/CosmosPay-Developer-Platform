@@ -1,11 +1,11 @@
-/* PATCH /api/kyc/receivers/:id/access — owner/admin kill-switch for a fiat account.
+/* PATCH /api/kyc/receivers/:id/access: owner/admin kill-switch for a fiat account.
 
    Enables or disables a receiver for onramp/offramp. Only an organization OWNER or ADMIN
    may toggle it (the per-receiver fiat on/off control). More specific than the generic
    /api/kyc/[...path] proxy, so it wins for this path. */
 import { z } from "zod";
 import type { APIRoute } from "astro";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { isManagerRole } from "@/lib/org-permissions";
@@ -15,7 +15,7 @@ import { cosmosErrorResponse, envFromQuery } from "@/lib/cosmos-proxy";
 const bodySchema = z.object({ disabled: z.boolean() });
 
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;

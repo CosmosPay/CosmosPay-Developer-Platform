@@ -1,0 +1,18 @@
+---
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import Pricing from "@/components/cosmos/Pricing.tsx";
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const user = Astro.locals.user
+  ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
+  : null;
+---
+
+<CosmosLayout
+  nav={false}
+  title="Pricing | Cosmos Pay"
+  description="Plans for Cosmos Pay's payments, swaps and private payments as a service on Stellar, Solana and Monad: the rate per payment and per swap on each plan, its limits and what it includes."
+  lang={lang}
+>
+  <Pricing client:load user={user} lang={lang} />
+</CosmosLayout>

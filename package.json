@@ -6,10 +6,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "predev": "prisma migrate deploy && node scripts/ensure-docs.mjs",
+    "predev": "prisma migrate deploy && node scripts/ensure-docs.mjs && npm run embed:build -- --mode development",
     "dev": "astro dev --host",
-    "build": "prisma generate && npm run docs:build && astro build",
+    "build": "prisma generate && npm run docs:build && npm run embed:build && astro build",
+    "build:app": "prisma generate && npm run embed:build && astro build",
     "docs:build": "node scripts/build-docs.mjs",
+    "embed:build": "node scripts/build-embed.mjs",
     "docs:api": "npm run generate:api --prefix docs && npm run apply:i18n --prefix docs",
     "check:api-spec": "node scripts/check-api-spec.mjs",
     "prestart": "node scripts/ensure-docs.mjs",
@@ -22,7 +24,7 @@
     "db:deploy": "prisma migrate deploy",
     "sync:route": "node scripts/sync-apisix-route.mjs",
     "export:wallet-data": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/export-wallet-data.mjs",
-    "test:unit": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs --test \"tests/unit/**/*.test.ts\"",
+    "test:unit": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs --test --test-concurrency=4 \"tests/unit/**/*.test.ts\"",
     "test:smoke": "node scripts/smoke-server.mjs",
     "check:openapi": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs scripts/check-openapi-coverage.mjs",
     "test": "npm run test:unit"
@@ -31,14 +33,18 @@
     "@asteasolutions/zod-to-openapi": "^9.1.0",
     "@astrojs/node": "^11.1.6",
     "@astrojs/react": "^7.0.0",
+    "@noble/curves": "1.9.7",
+    "@noble/hashes": "2.4.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@stellar/freighter-api": "6.0.1",
     "@stellar/stellar-sdk": "^17.2.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "astro": "^7.3.5",
     "axios": "^1.20.0",
     "better-auth": "^1.7.7",
+    "buffer": "6.0.3",
     "dotenv": "^18.0.5",
     "gsap": "^3.15.0",
     "maxmind": "^5.0.7",
@@ -46,13 +52,16 @@
     "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "stellar-confidential-token-sdk": "github:brozorec/stellar-confidential-token-sdk#aad17069714713bcb36fa376d0f2a87743e8e2a7",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "prisma": "^7.10.0"
   },
   "overrides": {
     "mysql2": "^3.24.4",
-    "deepmerge-ts": "^8.0.2"
+    "deepmerge-ts": "^8.0.2",
+    "toml": "5.0.1"
   }
 }

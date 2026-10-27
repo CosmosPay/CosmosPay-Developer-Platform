@@ -3,7 +3,7 @@ title: "Autenticação"
 description: "Autentique-se com uma única chave de API; a rede (testnet vs mainnet) é escolhida automaticamente pelo prefixo da chave."
 ---
 
-A autenticação é deliberadamente mínima: uma única chave de API secreta, mantida no seu servidor. O prefixo da chave também seleciona a rede Stellar por você, então não há mais nada a configurar. É novo por aqui? Veja [como obter sua chave de API](/api-keys).
+A autenticação é deliberadamente mínima: uma única chave de API secreta, mantida no seu servidor. O prefixo da chave também seleciona testnet ou mainnet por você, então não há mais nada a configurar. É novo por aqui? Veja [como obter sua chave de API](/api-keys).
 
 **Você só precisa da sua chave de API.** Todo o resto (URL do gateway, versão da API) faz
 parte da configuração compartilhada do SDK, mantida pelo Cosmos Pay.
@@ -18,7 +18,7 @@ A chave de API é enviada como `Authorization: Bearer <apiKey>`.
 
 ## Seleção de rede (importante)
 
-A **rede é determinada pelo tipo da chave** — você NÃO a configura:
+A **rede é determinada pelo tipo da chave**. Você NÃO a configura:
 
 | Prefixo da chave | Rede |
 | ---------- | ------- |
@@ -40,7 +40,7 @@ uma `apiKey` para protótipos confiáveis, mas nunca envie uma chave de produç�
 // Change the gateway for every client created afterward (once, at startup):
 Client.shared.baseURL = 'https://gateway.your-domain.com';
 
-// Or per-client (rarely needed) — e.g. local dev bypassing the gateway:
+// Or per-client (rarely needed), e.g. local dev bypassing the gateway:
 const client = new Client({
   apiKey: '...',
   baseURL: 'http://localhost:3000',
@@ -49,9 +49,9 @@ const client = new Client({
 });
 ```
 
-`baseURL`, `version`, `gatewaySecret`, `consumerUsername` são todos opcionais — uma
+`baseURL`, `version`, `gatewaySecret`, `consumerUsername` são todos opcionais; uma
 integração normal nunca os define.
 
 ## Referências
 
-- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.
+- [Client](/sdk/definitions/client): O ponto de entrada principal do SDK, um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador (um design atômico de cliente único).

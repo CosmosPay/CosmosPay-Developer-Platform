@@ -17,7 +17,7 @@ try {
     // server responded with an error status
     console.error(err.status, err.code, err.body); // e.g. 404
   } else if (err instanceof CosmosPayRequestError) {
-    // no usable response — network / TLS / timeout / offline
+    // no usable response (network / TLS / timeout / offline)
     console.error('Network/timeout:', err.cause);
   } else {
     throw err;
@@ -25,8 +25,8 @@ try {
 }
 ```
 
-- `CosmosPayAPIError` — a API respondeu com 4xx/5xx. Campos: `status`, `code`, `body`.
-- `CosmosPayRequestError` — a requisição nunca foi concluída. Campo: `cause`.
+- `CosmosPayAPIError`: a API respondeu com 4xx/5xx. Campos: `status`, `code`, `body`.
+- `CosmosPayRequestError`: a requisição nunca foi concluída. Campo: `cause`.
 - O cliente web adiciona: `CosmosPayWebError`, `WalletNotFoundError`, `WalletError`
   (usuário recusou / bloqueado), `StellarSdkRequiredError`, `IntentError`. As classes de
   erro da API também são reexportadas de `/web`, então o `catch` funciona em todos os pontos de entrada.
@@ -35,7 +35,7 @@ try {
 ### Retries
 
 Falhas transitórias (erros de rede, `408`, `429`, `5xx`) são repetidas
-automaticamente — padrão de **2** retries, respeitando `Retry-After`. Ajuste via
+automaticamente, com padrão de **2** retries, respeitando `Retry-After`. Ajuste via
 `new Client({ retries, timeout })`.
 
 ## Observabilidade
@@ -53,11 +53,11 @@ Conecte-os ao seu logger/APM para rastrear ou medir cada requisição.
 
 ## Referências
 
-- [REST](/sdk/definitions/rest) — A camada HTTP
-- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.
-- [WebhookSignatureError](/sdk/definitions/webhook-signature-error) — Lançado quando a assinatura de um webhook falha na verificação.
-- [CosmosPayWebError](/sdk/definitions/cosmos-pay-web-error) — Classe base para todos os erros lançados pelo `@cosmosapp/pay_sdk/web`.
-- [WalletNotFoundError](/sdk/definitions/wallet-not-found-error) — Nenhuma carteira Stellar compatível pôde ser detectada no ambiente atual.
-- [WalletError](/sdk/definitions/wallet-error) — Uma carteira foi encontrada, mas a operação falhou (usuário recusou, bloqueado, etc.).
-- [StellarSdkRequiredError](/sdk/definitions/stellar-sdk-required-error) — Montar uma transação `pay` (ou enviá-la ao Horizon) requer o Stellar SDK, que é uma peer dependency opcional
-- [IntentError](/sdk/definitions/intent-error) — A intenção / requisição SEP-7 não pôde ser interpretada ou está com dados faltando.
+- [REST](/sdk/definitions/rest): A camada HTTP
+- [Client](/sdk/definitions/client): O ponto de entrada principal do SDK, um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador (um design atômico de cliente único).
+- [WebhookSignatureError](/sdk/definitions/webhook-signature-error): Lançado quando a assinatura de um webhook falha na verificação.
+- [CosmosPayWebError](/sdk/definitions/cosmos-pay-web-error): Classe base para todos os erros lançados pelo `@cosmosapp/pay_sdk/web`.
+- [WalletNotFoundError](/sdk/definitions/wallet-not-found-error): Nenhuma carteira Stellar compatível pôde ser detectada no ambiente atual.
+- [WalletError](/sdk/definitions/wallet-error): Uma carteira foi encontrada, mas a operação falhou (usuário recusou, bloqueado, etc.).
+- [StellarSdkRequiredError](/sdk/definitions/stellar-sdk-required-error): Montar uma transação `pay` (ou enviá-la ao Horizon) requer o Stellar SDK, que é uma peer dependency opcional
+- [IntentError](/sdk/definitions/intent-error): A intenção / requisição SEP-7 não pôde ser interpretada ou está com dados faltando.

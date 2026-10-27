@@ -10,6 +10,18 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { orgSwapContext } from "@/lib/organizations";
 import { prisma } from "@/lib/prisma";
 import { corsOrigins, rewriteLeavesPath, routeHost, upstreamNodes } from "@/lib/apisix-upstream";
+import {
+  callbackRouteUris,
+  entryPrefix,
+  PAYMENT_LINKS_CORS,
+  PAYMENT_LINKS_METHODS,
+  paymentLinksRouteUris,
+  ZK_CHECKOUT_CORS,
+  ZK_CHECKOUT_METHODS,
+  zkCheckoutRouteUris,
+} from "@/lib/apisix-keyless";
+
+export { callbackRouteUris, paymentLinksRouteUris, zkCheckoutRouteUris } from "@/lib/apisix-keyless";
 
 export const keyPrefix = 'cosmos_';
 
@@ -39,7 +51,7 @@ export type ApiKeyRole = 'admin' | 'user' | 'public';
 /**
  * Normalizes a credential's `role` label.
  *
- * `public` names the SHARED key embedded in the open-source wallet — one
+ * `public` names the SHARED key embedded in the open-source wallet: one
  * credential held by everyone, so the Payments service must be able to tell it
  * from an ordinary tenant's key and confine it to the routes that return no
  * per-consumer rows. It has to survive this parser AND the forwarder below: this
@@ -119,7 +131,7 @@ export async function routeExists(routeId: string): Promise<boolean> {
 
 /* -- The Cosmos API routes in APISIX --------------------------------------------
    Everything under COSMOS_API_ENTRY carries `key-auth`: an API key is the price of
-   admission, which is right for every path the wallet or an integrator calls. Three kinds
+   admission, which is right for every path the wallet or an integrator calls. Four kinds
    of path are the exception, and none by preference -- each is called by something that
    holds no key of ours and has no way to be handed one:
 
@@ -128,7 +140,13 @@ export async function routeExists(routeId: string): Promise<boolean> {
       completes, and the wallet polls a login that can never finish. Today there is one:
       the wallet's own sign-in (the Pollar bridge's left with the server's Pollar module).
       The community server declares it `@Public()` (the unguessable `state` is the
-      credential, and the transition it drives is single-shot).
+      credential, and the transition it drives is single-shot). The shared public-key read
+      rides the same route.
+
+   1b. THE PUBLIC PAYMENT-LINK READ (`/v1/payment-links/*`). The payer's browser reads it,
+      from the hosted checkout AND from the embedded checkout on any merchant's site, so its
+      CORS admits every origin (`*`, no credentials) -- which is why it is a route of its own
+      rather than a third entry on the callback route, whose CORS is the wallet's list.
 
    2. THE STANDARDS. SEP-1 discovery (`/.well-known/stellar.toml`), SEP-10 web auth and
       SEP-30 recovery are called by any Stellar wallet, not only ours, and they authenticate
@@ -143,36 +161,26 @@ export async function routeExists(routeId: string): Promise<boolean> {
 
    Each keyless route matches exact paths or narrow prefixes, never a prefix of the API, so
    nothing else loses its authentication alongside it; and each outranks the key-auth
-   route, because APISIX resolves overlapping URIs by priority, highest first. */
-
-/* Where the community server serves the callback, relative to the gateway entry:
-   `/v1/wallet/auth/oauth/callback/{provider}`, the redirect URI registered with each
-   provider (WALLET_AUTH_PUBLIC_BASE_URL over there). The trailing `*` in the URI covers the
-   segment it appends. */
-const WALLET_AUTH_CALLBACK_PATH = '/v1/wallet/auth/oauth/callback/';
-
-/* Where the community server serves the shared public key to a wallet with no account
-   (`GET /v1/public-key`, `@Public()` over there). Keyless by definition: the caller holds no
-   key yet. It rides the callback route because it wants exactly that route's shape — GET,
-   CORS for the wallet's origins, consumer headers scrubbed — and it is an exact path, so
-   nothing under it loses its authentication. It used to be served from this platform
-   (the old `/api/public-key`), which put the platform in front of every anonymous wallet. */
-const PUBLIC_KEY_PATH = '/v1/public-key';
+   route, because APISIX resolves overlapping URIs by priority, highest first. No two keyless
+   routes list the same URI (the paths and why each is keyless are in
+   src/lib/apisix-keyless.ts), except a recovery route, which is bound to its own host. */
 
 /* SEP-1 fixes discovery at the root of the host, OUTSIDE the gateway entry -- which is why
    the SEP routes check the rewrite pattern leaves it alone (sepRouteUris). */
 export const STELLAR_TOML_PATH = '/.well-known/stellar.toml';
 
-/* `/cosmos-api/*` -> `/cosmos-api`. The entry is a wildcard URI; the sibling routes
-   build their own paths under the same prefix. */
-function entryPrefix(entry: string): string {
-  return entry.trim().replace(/["']/g, '').replace(/\/+\*?$/, '');
-}
-
 /* Route ids for the keyless siblings. Derived from the main one so a deployment needs no
    extra env var, and so the set is obvious in the APISIX admin listing. */
 export function callbackRouteId(routeId: string): string {
   return `${routeId}-oauth-callbacks`;
+}
+
+export function paymentLinksRouteId(routeId: string): string {
+  return `${routeId}-payment-links`;
+}
+
+export function zkCheckoutRouteId(routeId: string): string {
+  return `${routeId}-zk-checkout`;
 }
 
 /* What the callback route was called while it only served Pollar. The sync still removes
@@ -189,13 +197,6 @@ export type RecoveryRole = 'a' | 'b';
 
 export function recoveryRouteId(routeId: string, role: RecoveryRole): string {
   return `${routeId}-sep-recovery-${role}`;
-}
-
-/* The gateway URIs the callback route is served on -- the callback and its appended
-   segment, and the public-key read. */
-export function callbackRouteUris(entry: string): string[] {
-  const prefix = entryPrefix(entry);
-  return [`${prefix}${WALLET_AUTH_CALLBACK_PATH}*`, `${prefix}${PUBLIC_KEY_PATH}`];
 }
 
 /* The gateway URIs the standards are served on. Throws when the configured rewrite would
@@ -232,9 +233,11 @@ const CONSUMER_HEADERS = [
 interface RoutePluginOptions {
   /* key-auth AND the header normalizer that only exists to feed it. */
   keyAuth: boolean;
-  /* APISIX's cors plugin. Off where the upstream answers CORS itself (the SEP routes):
-     two Access-Control-Allow-Origin headers on one response make a browser refuse it. */
-  cors: boolean;
+  /* APISIX's cors plugin: `listed` answers the origins in COSMOS_API_CORS_ORIGINS (with
+     credentials), `any` answers `*` without credentials (the public payment-link read,
+     PAYMENT_LINKS_CORS), `false` leaves it off where the upstream answers CORS itself (the SEP
+     routes): two Access-Control-Allow-Origin headers on one response make a browser refuse it. */
+  cors: 'listed' | 'any' | 'zkCheckout' | false;
   /* Leave `Authorization` for the upstream instead of stripping it. Only for routes whose
      upstream authenticates the caller by a bearer token of its own (SEP-10 / SEP-30) --
      on the key-auth route that header may BE the API key, and it must never travel on. */
@@ -249,13 +252,16 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
   const [rewritePattern, rewriteTemplate] = parseRewriteRegex();
 
   return {
-    ...(opts.cors
+    ...(opts.cors === 'any' ? { cors: { ...PAYMENT_LINKS_CORS } } : {}),
+    ...(opts.cors === 'zkCheckout' ? { cors: { ...ZK_CHECKOUT_CORS } } : {}),
+
+    ...(opts.cors === 'listed'
       ? {
           // CORS: let the wallet/site (cosmospay.lat) call the gateway from the browser.
           // Runs early (and auto-answers OPTIONS preflight before key-auth), so cross-origin
           // swap calls aren't blocked. Specific origins (not `*`) since credentials are allowed.
           cors: {
-            ...corsOrigins(COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat'),
+            ...corsOrigins(COSMOS_API_CORS_ORIGINS || 'https://cosmospay.lat,https://dev.cosmospay.lat,https://payments.cosmospay.lat'),
             allow_methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
             // Idempotency-Key is read by the swap / liquidity / payout routes; a browser
             // cannot send a non-safelisted request header unless preflight allows it here.
@@ -272,8 +278,13 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
             // the backup routes (the wallet's src/lib/cosmospay.ts), and X-Trace-Id rides on its
             // DeFindex calls (src/lib/defindex.ts). Same failure when missing: the sign-in dies
             // at /finish with a CORS error on cosmospay.lat/wallet and in Tauri.
+            //
+            // X-Record-Token is the read token the community server returns when the shared public
+            // key creates a swap or a USDT0 transfer; the public swap pages send it to read, submit
+            // or report that one record (src/lib/swap-api.ts). Missing here, they could create a
+            // swap and never follow it.
             allow_headers:
-              'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id,X-Wallet-Session,X-Trace-Id',
+              'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id,X-Wallet-Session,X-Trace-Id,X-Record-Token',
             // A browser hides every response header that is not safelisted, so without this
             // the throttling headers the API already sends are invisible to a web client: it
             // sees a 429 with no idea when to come back, and has to guess an interval against
@@ -475,15 +486,15 @@ export async function createRoute(
     // Explicit, because the keyless routes below outrank it: APISIX resolves
     // overlapping URIs by priority, highest first.
     priority: 0,
-    plugins: cosmosRoutePlugins({ keyAuth: true, cors: true, forwardAuthorization: false }),
+    plugins: cosmosRoutePlugins({ keyAuth: true, cors: 'listed', forwardAuthorization: false }),
     upstream: roundRobin(upstreamHost),
   });
 }
 
 /* The keyless sibling for the OAuth callback -- the wallet sign-in's, as an `uris` array so
-   another callback is one more entry rather than a route of its own. GET plus the
-   preflight: it serves one browser navigation and nothing else, so anything that is not
-   that navigation still meets the authenticated route. */
+   another callback is one more entry rather than a route of its own -- plus the shared
+   public-key read. GET plus the preflight: anything that is not one of those still meets the
+   authenticated route. */
 export async function createCallbackRoute(
   routeId: string,
   entry: string,
@@ -493,7 +504,47 @@ export async function createCallbackRoute(
     uris: callbackRouteUris(entry),
     priority: 10,
     methods: ['GET', 'OPTIONS'],
-    plugins: cosmosRoutePlugins({ keyAuth: false, cors: true, forwardAuthorization: false }),
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: 'listed', forwardAuthorization: false }),
+    upstream: roundRobin(upstreamHost),
+  });
+}
+
+/* The keyless route for the public payment-link read, with CORS for ANY origin (see
+   PAYMENT_LINKS_CORS for why that is safe here and nowhere else). GET plus the preflight; a
+   write under the prefix still meets the key-auth route.
+
+   Priority 15, above the callback route's 10: an APISIX that still holds the callback route
+   as an earlier release defined it (with this prefix in its `uris`, until that route's sync
+   succeeds) would otherwise match the same URI at the same priority, and which of the two
+   answers would be APISIX's choice. Synced BEFORE the callback route drops the prefix, so
+   the read is never left to the key-auth route in between. */
+export async function createPaymentLinksRoute(
+  routeId: string,
+  entry: string,
+  upstreamHost: string,
+) {
+  return putRoute(paymentLinksRouteId(routeId), {
+    uris: paymentLinksRouteUris(entry),
+    priority: 15,
+    methods: PAYMENT_LINKS_METHODS,
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: 'any', forwardAuthorization: false }),
+    upstream: roundRobin(upstreamHost),
+  });
+}
+
+/* The keyless route of the ZK checkout (`/v1/zk-checkout/*`): the payer's read of one ZK payment
+   and the confirm call, CORS for any origin (ZK_CHECKOUT_CORS). Nothing under the prefix needs
+   a consumer; the authenticated ZK routes live under `/v1/zk-payments` on the key-auth route. */
+export async function createZkCheckoutRoute(
+  routeId: string,
+  entry: string,
+  upstreamHost: string,
+) {
+  return putRoute(zkCheckoutRouteId(routeId), {
+    uris: zkCheckoutRouteUris(entry),
+    priority: 15,
+    methods: ZK_CHECKOUT_METHODS,
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: 'zkCheckout', forwardAuthorization: false }),
     upstream: roundRobin(upstreamHost),
   });
 }
@@ -588,7 +639,7 @@ type ForwardEntry = {
   e: Environment;
   // Organization the key belongs to, the org's plan, and the plan's swap commission
   // (basis points). Baked from each credential's `org` label + the owner's plan so the
-  // Payments API enforces the swap fee per organization — the client can never set or
+  // Payments API enforces the swap fee per organization; the client can never set or
   // undercut it (the forwarder overwrites these headers on every request).
   o?: string;
   pl?: string;
@@ -599,8 +650,8 @@ type ForwardEntry = {
   em?: string;
 };
 
-/* The account's verified email as the forwarder bakes it, or "" when there is none — the
-   synthetic public and bootstrap consumers have no user row — or when it is not a plain
+/* The account's verified email as the forwarder bakes it, or "" when there is none (the
+   synthetic public and bootstrap consumers have no user row) or when it is not a plain
    lowercase address. The map is embedded in a Lua long string, so only a value that cannot
    break out of it is admitted; anything else forwards as "no email" rather than as text
    nobody checked. */
@@ -622,7 +673,7 @@ async function accountEmail(userId: string): Promise<string> {
    consumer, where it IS executed for credential-authenticated requests, and switches on
    `ctx.consumer.credential_id` (the key that authenticated) to emit that key's values.
    The map is rebuilt by syncConsumerForwarder() whenever the user's keys change.
-   Runs in the `access` phase — after key-auth, before the upstream request. */
+   Runs in the `access` phase, after key-auth, before the upstream request. */
 function consumerForwardingPlugin(map: Record<string, ForwardEntry>) {
   // Embedded as a Lua long string with a `==` level so JSON quotes/brackets don't need
   // escaping; map values are sanitized in syncConsumerForwarder so they can't contain `]==]`.
@@ -641,7 +692,7 @@ return function(conf, ctx)
     ngx.req.set_header("X-Consumer-Role", entry.r or "user")
     ngx.req.set_header("X-Consumer-Env", entry.e or "dev")
     -- Always set (never append) the org/plan/fee headers so a client-supplied copy is
-    -- overwritten — the swap commission is the org plan's rate, enforced server-side.
+    -- overwritten; the swap commission is the org plan's rate, enforced server-side.
     ngx.req.set_header("X-Consumer-Org", entry.o or "")
     ngx.req.set_header("X-Consumer-Plan", entry.pl or "")
     ngx.req.set_header("X-Plan-Swap-Fee-Bps", (entry.f ~= nil) and tostring(entry.f) or "")
@@ -661,7 +712,7 @@ export async function createConsumer(
 
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 
-  // Idempotent: never overwrite an existing consumer — it carries the forwarder plugin
+  // Idempotent: never overwrite an existing consumer; it carries the forwarder plugin
   // (syncConsumerForwarder). A blind PUT here would wipe that plugin on every list call.
   const existing = await apisix.get(`/consumers/${username}`).then((r) => r.data).catch(() => null);
   if (existing) {
@@ -692,14 +743,14 @@ export async function createConsumer(
    credential_id → context map into a single consumer plugin. APISIX versions the
    per-credential consumer cache by `credential.modifiedIndex .. consumer.modifiedIndex`,
    so updating the consumer here invalidates that cache and the new values take effect on
-   the next request — including for credentials created earlier. Best-effort: failures are
+   the next request, including for credentials created earlier. Best-effort: failures are
    logged but never block the create/update/delete that triggered the sync. */
 export async function syncConsumerForwarder(userId: string) {
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 
   const credentials = await listUserApiKeys(userId).catch(() => []);
 
-  // Sorted by id so the baked map (and thus the function body) is deterministic — the
+  // Sorted by id so the baked map (and thus the function body) is deterministic; the
   // idempotency check below relies on a stable string for unchanged key sets.
   const sorted = (Array.isArray(credentials) ? credentials : [])
     .slice()

@@ -1,13 +1,13 @@
-/* index.js — barrel re-exporting the marketing section components used by the root. */
-export { Hero } from "./Hero";
-export { WalletSection } from "./WalletSection";
-export { DevKit } from "./DevKit";
-export { Marketplace } from "./Marketplace";
-export { ApiSection } from "./ApiSection";
-export { IntegrationPaths } from "./IntegrationPaths";
-export { Solutions } from "./Solutions";
-export { Stats } from "./Stats";
-export { CustomerStories } from "./CustomerStories";
-export { Testimonials } from "./Testimonials";
-export { Resources } from "./Resources";
-export { Cta } from "./Cta";
+/* index.js: barrel re-exporting the marketing section components used by the root. */
+export { Hero } from "@/components/cosmos/marketing/Hero";
+export { WalletSection } from "@/components/cosmos/marketing/WalletSection";
+export { DevKit } from "@/components/cosmos/marketing/DevKit";
+export { Marketplace } from "@/components/cosmos/marketing/Marketplace";
+export { ApiSection } from "@/components/cosmos/marketing/ApiSection";
+export { IntegrationPaths } from "@/components/cosmos/marketing/IntegrationPaths";
+export { Solutions } from "@/components/cosmos/marketing/Solutions";
+export { Stats } from "@/components/cosmos/marketing/Stats";
+export { CustomerStories } from "@/components/cosmos/marketing/CustomerStories";
+export { Testimonials } from "@/components/cosmos/marketing/Testimonials";
+export { Resources } from "@/components/cosmos/marketing/Resources";
+export { Cta } from "@/components/cosmos/marketing/Cta";

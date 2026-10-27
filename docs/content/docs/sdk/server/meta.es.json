@@ -1,6 +1,6 @@
 {
   "title": "Servidor",
-  "description": "@cosmosapp/pay_sdk — el cliente del lado del servidor.",
+  "description": "@cosmosapp/pay_sdk: el cliente del lado del servidor.",
   "pages": [
     "overview",
     "installation",

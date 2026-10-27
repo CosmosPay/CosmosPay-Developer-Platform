@@ -8,7 +8,10 @@ export const GET: APIRoute = async (ctx) => {
   const auth = await getUserId(ctx.request);
   if ("response" in auth) return auth.response;
   try {
-    const data = await cosmosCustomers.list(auth.userId, envFromQuery(ctx.url));
+    // A page of at most 100 (the API's bound); without `take`, the API's default page.
+    const take = Math.min(100, Math.max(0, Math.trunc(Number(ctx.url.searchParams.get("take")) || 0))) || undefined;
+    const skip = Math.max(0, Math.trunc(Number(ctx.url.searchParams.get("skip")) || 0)) || undefined;
+    const data = await cosmosCustomers.list(auth.userId, envFromQuery(ctx.url), { take, skip });
     return jsonSuccess({ data, message: "Customers fetched successfully" });
   } catch (err) {
     return cosmosErrorResponse(err);

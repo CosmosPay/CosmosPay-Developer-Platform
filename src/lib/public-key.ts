@@ -1,11 +1,15 @@
-/* public-key.ts — the shared API key every copy of the wallet carries.
+/* public-key.ts: the shared API key every copy of the wallet carries.
 
    The point is the first-run experience: someone installs the wallet, funds it and
-   wants to swap. Registering an account first — email, verification link, a claim
-   round trip — is a wall in front of the one thing they came to do. So the wallet
+   wants to swap. Registering an account first (email, verification link, a claim
+   round trip) is a wall in front of the one thing they came to do. So the wallet
    ships a key that already works, and the price of using it is the commission:
-   the `community` plan's 150 bps, the highest rate on the board. Registering is
+   the `community` plan's 50 bps, the highest rate on the board. Registering is
    what buys a lower one, which makes the upgrade an offer rather than a toll gate.
+   `community` is no longer offered to anyone (it was the free plan); this synthetic
+   account keeps it ON PURPOSE, as the rate card for anonymous use. Moving it to the
+   default plan (starter, 25 bps) would hand anonymous wallets the same rate a
+   registered account pays, and registering would buy nothing.
 
    THIS KEY IS NOT A SECRET. It is compiled into an open-source binary published on
    app stores; treating it as a credential would be self-deception. Everything that
@@ -13,21 +17,21 @@
 
      - It is minted with `role: 'public'`, which the Payments service's
        PublicKeyGuard recognizes and uses to confine it to handlers marked
-       @AllowPublicKey — quotes, envelope builders, on-chain reads, telemetry
+       @AllowPublicKey: quotes, envelope builders, on-chain reads, telemetry
        ingest. Every endpoint that replays what a consumer previously wrote is
        refused, because all anonymous callers ARE this one consumer and would
        otherwise read each other's history.
      - It holds only the scopes those handlers need. Not a superset "for later":
        a credential held by everyone should be exactly as wide as its job.
-     - It signs nothing. The wallet stays non-custodial — the gateway returns an
+     - It signs nothing. The wallet stays non-custodial: the gateway returns an
        unsigned envelope and the device holds the key that signs it.
 
    Rotation is therefore cheap and expected: mint a new one here
    (`GET /api/admin/public-key`), set it on the community server
    (`PUBLIC_API_KEY_DEV` / `_PROD`), and wallets pick it up from `GET /v1/public-key` on
-   their next fetch — this platform is not in that path. Wallets that cannot reach it
+   their next fetch; this platform is not in that path. Wallets that cannot reach it
    fall back to the key compiled into their build, so rotating does not brick
-   anything — it just stops being effective for old installs once the previous key
+   anything; it just stops being effective for old installs once the previous key
    is deleted. Delete deliberately. */
 import { prisma } from "@/lib/prisma";
 import { createOrg, listForUser } from "@/lib/organizations";
@@ -60,14 +64,14 @@ const PUBLIC_EMAIL = "public-key@cosmospay.invalid";
  * `webhooks:*` / `products:*` / `customers:*` (merchant configuration).
  *
  * `activity:write` IS here, and it matters: a wallet with no account still
- * crashes, and without this scope its error reports would be refused with a 403 —
+ * crashes, and without this scope its error reports would be refused with a 403,
  * blinding us to exactly the population that meets first-run failures. Events on
  * this key are anonymous by construction, so the wallet strips anything that
  * names an account or a transaction before sending.
  *
  * `swaps:read` is here only because `POST /v1/swaps/quote` requires it. It also
  * unlocks `GET /v1/swaps`, which is why the Payments service does not rely on
- * scopes alone for this key — see PublicKeyGuard.
+ * scopes alone for this key (see PublicKeyGuard).
  */
 export const PUBLIC_KEY_SCOPES = [
   "swaps:read",
@@ -100,7 +104,8 @@ async function ensurePublicAccount(): Promise<string> {
     });
   }
   // The plan is what sets the commission: the forwarder bakes the org owner's
-  // plan rate into every request this key makes, so `community` here IS its swap rate (0.5%).
+  // plan rate into every request this key makes, so `community` here IS its swap rate (0.65%).
+  // A legacy plan, deliberately: see the header. Not to be replaced by the default plan.
   await prisma.profile
     .upsert({
       where: { userId: PUBLIC_USER_ID },
@@ -141,8 +146,8 @@ async function readPublicKeys(): Promise<PublicKeys> {
  * Two things have to exist for a public key to WORK, and only one of them is a key:
  * the consumer itself, and the forwarder plugin on it that turns each credential into
  * the `X-Consumer-Role` / `-Permissions` / `-Env` / `-Org` headers the Payments service
- * reads. A key with no forwarder still authenticates — so it looks provisioned from
- * here — and then arrives upstream with role `null` and no scopes, where PermissionsGuard
+ * reads. A key with no forwarder still authenticates (so it looks provisioned from
+ * here) and then arrives upstream with role `null` and no scopes, where PermissionsGuard
  * refuses it and PublicKeyGuard does not recognise it as public. Nothing about that
  * state heals on its own, and nothing about it is visible from `GET /api/admin/public-key`, which
  * only ever asked whether a key existed.
@@ -164,12 +169,12 @@ async function healPublicConsumer(userId: string): Promise<void> {
  * Idempotent and safe to call on every request: the common path is one APISIX
  * list call, and the callers cache on top of it. Both environments are minted
  * together because a wallet switching to testnet must not have to re-fetch from a
- * different place — dev is testnet, prod is mainnet, same as everywhere else.
+ * different place: dev is testnet, prod is mainnet, same as everywhere else.
  *
  * The heal runs on EVERY call, not only when a key is missing. Returning early on
  * "both keys exist" is what let a consumer with a missing or stale forwarder sit there
  * indefinitely, handing out keys that authenticate and are then refused for having no
- * scopes — see healPublicConsumer.
+ * scopes (see healPublicConsumer).
  */
 export async function ensurePublicKeys(): Promise<PublicKeys> {
   const existing = await readPublicKeys();

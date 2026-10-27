@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getRole, isStaff } from "@/lib/profile";
 import { getTicket, listTicketMessages, markTicketRead, sendTicketMessage, updateTicket, TICKET_STATUSES, TICKET_PRIORITIES } from "@/lib/support";
@@ -9,7 +9,7 @@ const paramsSchema = z.object({ id: z.string().min(1) });
 
 /* Resolve the ticket + whether the caller may access it (owner or staff). */
 async function authorize(ctx: Parameters<APIRoute>[0]) {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return { error: jsonUnauthorized("Session required") } as const;
   const params = paramsSchema.safeParse(ctx.params);
   if (!params.success) return { error: jsonNotFound("Ticket not found") } as const;
@@ -20,7 +20,7 @@ async function authorize(ctx: Parameters<APIRoute>[0]) {
   return { session, ticket, staff } as const;
 }
 
-/* GET /api/support/tickets/:id — the ticket's messages (owner or staff). Marks the other
+/* GET /api/support/tickets/:id: the ticket's messages (owner or staff). Marks the other
    side's messages read. */
 export const GET: APIRoute = async (ctx) => {
   const a = await authorize(ctx);
@@ -34,7 +34,7 @@ export const GET: APIRoute = async (ctx) => {
 
 const sendBodySchema = z.object({ body: z.string().trim().min(1).max(4000) });
 
-/* POST /api/support/tickets/:id — add a message (owner or staff). */
+/* POST /api/support/tickets/:id: add a message (owner or staff). */
 export const POST: APIRoute = async (ctx) => {
   const a = await authorize(ctx);
   if ("error" in a) return a.error;
@@ -59,7 +59,7 @@ const patchBodySchema = z.object({
   priority: z.enum(TICKET_PRIORITIES as unknown as [string, ...string[]]).optional(),
 });
 
-/* PATCH /api/support/tickets/:id — change the ticket status and/or priority (staff only). */
+/* PATCH /api/support/tickets/:id: change the ticket status and/or priority (staff only). */
 export const PATCH: APIRoute = async (ctx) => {
   const a = await authorize(ctx);
   if ("error" in a) return a.error;

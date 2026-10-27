@@ -1,4 +1,4 @@
-/* apisixUpstream.test.ts — the pure half of the APISIX route sync (src/lib/apisix-upstream.ts).
+/* apisixUpstream.test.ts: the pure half of the APISIX route sync (src/lib/apisix-upstream.ts).
 
    The single-upstream case is asserted first and most carefully: it is what every deployment
    already runs, and a change that "added replicas" by altering the one node it produces would

@@ -5,16 +5,16 @@ description: "Verwalten Sie Ihren Produktkatalog und Ihre Kunden, einschließlic
 
 Produkte und Kunden sind optionale Kataloge, die Sie an Zahlungen anhängen können, um sie zu organisieren und darüber zu berichten.
 
-## Produkte / Preise — `client.products`
+## Produkte / Preise: `client.products`
 
 ```ts
 import { ProductKind } from '@cosmosapp/pay_sdk';
 
 const product = await client.products.create({
-  name: 'Pro plan — monthly',
+  name: 'Pro plan (monthly)',
   description: 'Priority support included.', // optional
-  amount: '49.00',                           // optional — omit for customer-set amount
-  assetCode: 'USDC',                         // optional — omit for native XLM
+  amount: '49.00',                           // optional; omit for customer-set amount
+  assetCode: 'USDC',                         // optional; omit for native XLM
   kind: ProductKind.Recurring,               // 'recurring' | 'one_time' | 'link'
   reference: 'sku_pro_monthly',              // optional
 });
@@ -30,7 +30,7 @@ await product.delete();
 `Product`-Zugriffsmethoden: `id`, `name`, `description`, `amount`, `asset`, `assetLabel`,
 `kind`, `active`, `reference`, `createdAt`, `updatedAt`.
 
-## Kunden — `client.customers`
+## Kunden: `client.customers`
 
 ```ts
 const customer = await client.customers.create({
@@ -58,5 +58,5 @@ for (const c of customers) {
 
 ## Referenzen
 
-- [Customer](/sdk/definitions/customer) — Ein Kundendatensatz, optional angereichert mit On-Chain-Zahlungsstatistiken.
-- [Product](/sdk/definitions/product) — Ein Produkt / Preis, für den der Consumer Geld verlangen kann.
+- [Customer](/sdk/definitions/customer): Ein Kundendatensatz, optional angereichert mit On-Chain-Zahlungsstatistiken.
+- [Product](/sdk/definitions/product): Ein Produkt / Preis, für den der Consumer Geld verlangen kann.

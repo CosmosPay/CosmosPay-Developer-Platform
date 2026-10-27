@@ -1,0 +1,58 @@
+---
+/* / on payments.cosmospay.lat: the gateway's home (multi-page layout).
+ *
+ * Built for a visitor who arrives cold and should reach the first payment link fast: the
+ * promise and the two facts that lower the risk (no monthly fee on Starter, testnet with no
+ * real money) next to the button; what changes and how it works; the three ways to start; the
+ * rates; four security facts and the first questions; and the main call to action again after
+ * each part where a visitor may be ready. Every topic in full has its own page
+ * (src/lib/payments/site-pages.ts), reached from the section navigation and the "see more"
+ * links. Sections come from src/components/payments/landing/sections; copy from
+ * src/lib/payments/landing-i18n.ts. */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import InlineCta from "@/components/payments/landing/InlineCta.astro";
+import { landingData } from "@/components/payments/landing/data";
+import Hero from "@/components/payments/landing/sections/Hero.astro";
+import Marks from "@/components/payments/landing/sections/Marks.astro";
+import Benefits from "@/components/payments/landing/sections/Benefits.astro";
+import Paths from "@/components/payments/landing/sections/Paths.astro";
+import How from "@/components/payments/landing/sections/How.astro";
+import Security from "@/components/payments/landing/sections/Security.astro";
+import Pricing from "@/components/payments/landing/sections/Pricing.astro";
+import Faq from "@/components/payments/landing/sections/Faq.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.meta.title} description={d.t.meta.description} indexable>
+  <LandingHead slot="head" d={d} page="home" title={d.t.meta.title} description={d.t.meta.description} />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="home" />
+    <Hero d={d} />
+    <Marks d={d} />
+    <Benefits d={d} />
+    <InlineCta d={d} more={{ href: d.links.useCases, label: d.t.pages.more.useCases }} />
+    <How d={d} />
+    <InlineCta d={d} tone="alt" more={{ href: d.links.integrations, label: d.t.pages.more.integrations }} />
+    <Paths d={d} />
+    <Pricing d={d} compact />
+    <Security d={d} compact />
+    <Faq d={d} limit={4} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

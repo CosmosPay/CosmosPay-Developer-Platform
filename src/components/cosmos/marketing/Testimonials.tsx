@@ -1,7 +1,7 @@
 /* Testimonials.tsx: /05 del deck, tres columnas de texto sin tarjetas. Es el
    descanso visual antes de recursos y del cierre. */
 import { useT } from "@/lib/i18n/index";
-import { QUOTE_META } from "./data";
+import { QUOTE_META } from "@/components/cosmos/marketing/data";
 
 export function Testimonials() {
   const t = useT();

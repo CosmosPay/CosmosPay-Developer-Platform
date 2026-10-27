@@ -24,8 +24,9 @@ Mision: desarrollar un ecosistema tecnologico simple, confiable y adaptable que
 permita operar, pagar, integrar servicios y trabajar con blockchain de forma
 mas accesible y eficiente.
 
-Vision: ser un ecosistema tecnologico referente, empezando desde Stellar y
-evolucionando hacia nuevas redes, productos y servicios digitales.
+Vision: ser un ecosistema tecnologico referente, multichain desde la base
+(Stellar, Solana y Monad) y evolucionando hacia nuevas redes, productos y servicios
+digitales.
 
 ## 2. Tono y voz
 

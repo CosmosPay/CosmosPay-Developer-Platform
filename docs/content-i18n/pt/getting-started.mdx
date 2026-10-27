@@ -1,38 +1,42 @@
 ---
 title: Primeiros passos
-description: Tudo o que você precisa antes do seu primeiro pagamento Cosmos Pay — o que é, como um pagamento flui e as duas formas de integração.
+description: Tudo o que você precisa antes do seu primeiro pagamento Cosmos Pay (o que é, como um pagamento flui e as duas formas de integração).
 ---
 
-O **Cosmos Pay** permite que você aceite pagamentos na rede [Stellar](https://stellar.org) usando
-**intenções de pagamento** SEP-7: você descreve um pagamento, o pagador o conclui a partir da própria
-carteira e você o confirma on-chain. Em torno desse núcleo você também tem **webhooks**, **produtos**,
+O **Cosmos Pay** permite que você aceite pagamentos na [Stellar](https://stellar.org),
+[Solana](https://solana.com) e [Monad](https://monad.xyz) usando **intenções de pagamento**: você descreve um pagamento, o pagador o conclui a partir da própria
+carteira e você o confirma on-chain. Em torno desse núcleo você também tem **swaps** (em cada rede e entre elas), **webhooks**, **produtos**,
 **clientes** e **análises**.
 
 Há duas formas de integração, e a maioria dos aplicativos usa ambas em conjunto:
 
 <Cards>
-  <Card title="Usar o SDK (recomendado)" href="/sdk/server/overview" description="@cosmosapp/pay_sdk — um cliente JavaScript/TypeScript tipado que cuida da autenticação, das requisições e da assinatura na carteira por você." />
+  <Card title="Usar o SDK (recomendado)" href="/sdk/server/overview" description="@cosmosapp/pay_sdk, um cliente JavaScript/TypeScript tipado que cuida da autenticação, das requisições e da assinatura na carteira por você." />
   <Card title="Chamar a API REST diretamente" href="/api" description="A API REST de Pagamentos (OpenAPI), caso você não use JavaScript ou queira controle total sobre as requisições." />
 </Cards>
 
 ## Como funciona um pagamento
 
-Todo pagamento passa pelas mesmas três etapas:
+Todo pagamento passa pelas mesmas três etapas (aqui com o SDK, na Stellar):
 
-1. **Seu servidor cria uma intenção** com sua chave de API secreta — por exemplo, `client.paymentIntents.createPay({ ... })`. Você recebe de volta um `uri` SEP-7 e um `qr` para mostrar ao pagador.
+1. **Seu servidor cria uma intenção** com sua chave de API secreta, por exemplo com `client.paymentIntents.createPay({ ... })`. Você recebe de volta um `uri` SEP-7 e um `qr` para mostrar ao pagador.
 2. **O pagador a conclui** na sua carteira Stellar (Freighter, xBull, Rabet, LOBSTR ou Albedo). No navegador isso é uma única chamada: `new WebClient().pay(intent)`, que retorna um `txHash` on-chain.
-3. **Seu servidor valida** esse hash — `intent.validate(txHash)` — o que atualiza o status do pagamento e dispara um webhook para seus endpoints.
+3. **Seu servidor valida** esse hash com `intent.validate(txHash)`, o que atualiza o status do pagamento e dispara um webhook para seus endpoints.
+
+Na Solana e na Monad, crie a intenção pela [API REST](/api/payment-intents) informando `chain`:
+você recebe um link Solana Pay ou EIP-681 em vez de um SEP-7, o pagador paga de qualquer carteira
+dessa rede, e a API de Pagamentos detecta o pagamento on-chain e dispara os mesmos webhooks.
 
 <Callout title="Testnet vs mainnet">
-Você nunca escolhe a rede no código — ela é decidida pelo **prefixo da sua chave de API**: chaves `dv_` rodam
+Você nunca escolhe a rede no código. Ela é decidida pelo **prefixo da sua chave de API**: chaves `dv_` rodam
 na **testnet**, chaves `prod_` rodam na **mainnet**. Desenvolva com uma chave `dv_` e depois troque por uma
 chave `prod_` para entrar em produção.
 </Callout>
 
 ## Antes de começar
 
-1. **Obtenha uma chave de API** — entre na plataforma para desenvolvedores e gere uma. Veja [Obtenha sua chave de API](/api-keys).
-2. **Instale o SDK** — `npm install @cosmosapp/pay_sdk` (Node.js ≥ 18). Veja [Instalação](/sdk/server/installation).
+1. **Obtenha uma chave de API**: entre na plataforma para desenvolvedores e gere uma. Veja [Obtenha sua chave de API](/api-keys).
+2. **Instale o SDK**: `npm install @cosmosapp/pay_sdk` (Node.js ≥ 18). Veja [Instalação](/sdk/server/installation).
 3. **Mantenha a chave no seu servidor.** Ela é secreta; o cliente web no navegador nunca precisa dela.
 
 ## Seu primeiro pagamento

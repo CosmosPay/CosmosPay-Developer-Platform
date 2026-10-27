@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonError,
@@ -19,7 +19,7 @@ function envFromQuery(url: URL): CosmosEnv {
 
 function cosmosErrorResponse(err: unknown): Response {
   if (err instanceof CosmosApiError) {
-    // The upstream returns 404 for an intent that isn't the caller's — surface it cleanly.
+    // The upstream returns 404 for an intent that isn't the caller's; surface it cleanly.
     if (err.status === 404) return jsonNotFound("Payment intent not found");
     return jsonError({ message: err.message, code: err.status, status: ApiStatus.BAD_REQUEST });
   }
@@ -27,7 +27,7 @@ function cosmosErrorResponse(err: unknown): Response {
 }
 
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;
@@ -42,7 +42,7 @@ export const GET: APIRoute = async (ctx) => {
 };
 
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;
@@ -62,7 +62,7 @@ export const PATCH: APIRoute = async (ctx) => {
 };
 
 export const DELETE: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;

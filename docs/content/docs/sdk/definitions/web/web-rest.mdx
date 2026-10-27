@@ -15,7 +15,7 @@ constructor(options: WebRESTOptions)
 
 **Parameters**
 
-- `options` — `WebRESTOptions`
+- `options`: `WebRESTOptions`
 
 ## Properties
 
@@ -41,7 +41,7 @@ setApiKey(apiKey: string): this
 
 **Parameters**
 
-- `apiKey` — `string`
+- `apiKey`: `string`
 
 **Returns** `this`
 
@@ -53,8 +53,8 @@ get<T>(path: string, options?: WebRequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `WebRequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `WebRequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -66,8 +66,8 @@ post<T>(path: string, options?: WebRequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `WebRequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `WebRequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -79,8 +79,8 @@ patch<T>(path: string, options?: WebRequestOptions): Promise<T>
 
 **Parameters**
 
-- `path` — `string`
-- `options` _(optional)_ — `WebRequestOptions`
+- `path`: `string`
+- `options` _(optional)_: `WebRequestOptions`
 
 **Returns** `Promise<T>`
 
@@ -92,8 +92,8 @@ request<T>(method: string, path: string, options?: WebRequestOptions): Promise<T
 
 **Parameters**
 
-- `method` — `string`
-- `path` — `string`
-- `options` _(optional)_ — `WebRequestOptions`
+- `method`: `string`
+- `path`: `string`
+- `options` _(optional)_: `WebRequestOptions`
 
 **Returns** `Promise<T>`

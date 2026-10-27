@@ -18,7 +18,9 @@ export const PATCH: APIRoute = async (ctx) => {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: ApiStatus.BAD_REQUEST });
   }
   try {
-    const data = await cosmosCustomers.update(auth.userId, envFromQuery(ctx.url), id, body.data);
+    // An emptied email is no email: null upstream clears it.
+    const fields = body.data.email === "" ? { ...body.data, email: null } : body.data;
+    const data = await cosmosCustomers.update(auth.userId, envFromQuery(ctx.url), id, fields);
     return jsonSuccess({ data, message: "Customer updated successfully" });
   } catch (err) {
     return cosmosErrorResponse(err);

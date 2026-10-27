@@ -1,11 +1,13 @@
-/* Stepper.jsx — top step indicator: (1) Label → (2) Label → …  Reached steps are clickable to edit. */
+/* Stepper.jsx, the top step indicator: (1) Label → (2) Label → …  Reached steps are clickable to edit. */
 import { Fragment } from "react";
-import { I } from "./icons";
-import { STEP_IDS } from "./data";
+import { useT } from "@/lib/i18n/index";
+import { I } from "@/components/cosmos/onboarding/icons";
+import { STEP_IDS } from "@/components/cosmos/onboarding/data";
 
 export function Stepper({ step, maxStep, names, goto }) {
+  const t = useT();
   return (
-    <nav className="obsteps" aria-label="Onboarding steps">
+    <nav className="obsteps" aria-label={t.ui.onboardingSteps}>
       {STEP_IDS.map((id, i) => {
         const state = i === step ? "current" : i < step ? "done" : "todo";
         const reachable = i <= maxStep;

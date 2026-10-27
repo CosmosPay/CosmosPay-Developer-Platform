@@ -1,0 +1,50 @@
+---
+// Card: a large countdown and labelled fields on the left; on the right a payment card
+// carrying the QR code, then the details and the total.
+import Brand from "@/components/payments/checkout/Brand.astro";
+import Amount from "@/components/payments/checkout/Amount.astro";
+import Status from "@/components/payments/checkout/Status.astro";
+import PayerStep from "@/components/payments/checkout/PayerStep.astro";
+import Timer from "@/components/payments/checkout/Timer.astro";
+import Qr from "@/components/payments/checkout/Qr.astro";
+import WalletActions from "@/components/payments/checkout/WalletActions.astro";
+import Field from "@/components/payments/checkout/Field.astro";
+import Facts from "@/components/payments/checkout/Facts.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<template data-design="card">
+  <div class="ck-card ck-cardlayout">
+    <div class="ck-body">
+      <div class="ck-head"><Brand /><Timer caption={false} /></div>
+      <Amount />
+      <Status />
+      <PayerStep />
+      <div class="ck-rows" data-open-only data-row="manual">
+        <Field name="pay-to" label={t.payTo} hint={t.payToHint} />
+        <Field name="memo" label={t.memo} hint={t.memoHint} row="memo" />
+        <Field name="amount-value" label={t.amount} hint={t.amountHint} row="amount" />
+      </div>
+      <div class="ck-card-actions" data-open-only><WalletActions block /></div>
+    </div>
+    <aside class="ck-side" aria-label={t.details}>
+      <div class="ck-token">
+        <div class="ck-token-top">
+          <span class="ck-token-chain" data-slot="chain"></span>
+          <span class="cosmos-mark ck-token-mark" aria-hidden="true"></span>
+        </div>
+        <div class="ck-token-qr" data-open-only><Qr size={148} /></div>
+        <div class="ck-token-bottom">
+          <code class="ck-token-address" data-slot="pay-to-short"></code>
+          <span class="ck-token-asset" data-slot="asset-symbol"></span>
+        </div>
+      </div>
+      <Facts rows={["network", "asset", "desc", "expires", "tx"]} class="pp-details ck-facts" />
+      <div class="ck-tear" aria-hidden="true"></div>
+      <p class="ck-total-label">{t.youPay}</p>
+      <p class="ck-total" data-slot="total"></p>
+    </aside>
+  </div>
+</template>

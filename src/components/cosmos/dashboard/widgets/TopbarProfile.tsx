@@ -4,7 +4,7 @@ import { useT } from "@/lib/i18n/index";
 import { useOutside } from "@/components/cosmos/dashboard/hooks";
 import { AccountMenuItems } from "./AccountMenuItems";
 
-/* Topbar avatar dropdown — same options as the sidebar profile menu. */
+/* Topbar avatar dropdown: same options as the sidebar profile menu. */
 export function TopbarProfile({ user, onAccount }) {
   const t = useT();
   const [open, setOpen] = useState(false);

@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Modal, IcArrow, IcChevSm } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { CASE_META, CASE_KEYS } from "./data";
+import { CASE_META, CASE_KEYS } from "@/components/cosmos/marketing/data";
 
 function CaseModal({ brand, onClose }) {
   const t = useT();
@@ -18,11 +18,12 @@ function CaseModal({ brand, onClose }) {
       </div>
       <div className="modal-body">
         <div className="modal-eyebrow">{c.eyebrow}</div>
-        <div className="cmetric">{meta.metric}</div>
+        <div className="cmetric">{item.metric || meta.metric}</div>
         <p style={{ marginTop: 0 }}>{item.label}</p>
         <p>{item.story}</p>
         <div className="mtags">{item.tags.map((tg) => <span key={tg}>{tg}</span>)}</div>
-        <a className="btn btn-violet" href="#">{c.readFull} <IcArrow /></a>
+        {/* Read the full story: no story pages yet. */}
+        {/* <a className="btn btn-violet" href="#">{c.readFull} <IcArrow /></a> */}
       </div>
     </Modal>
   );
@@ -49,7 +50,7 @@ export function CustomerStories() {
                   <div className="case-row reveal" key={brand} style={{ transitionDelay: `${i * 0.07}s` }}>
                     <div>
                       <div className="cbrand">{brand}</div>
-                      <div className="cmetric">{meta.metric}</div>
+                      <div className="cmetric">{item.metric || meta.metric}</div>
                       <div className="cmlabel">{item.label}</div>
                       <div className="ctags">{item.tags.map((tg) => <span key={tg}>{tg}</span>)}</div>
                     </div>

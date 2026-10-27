@@ -1,0 +1,75 @@
+---
+// Split: a side rail with the countdown and the payment methods as tabs; the chosen
+// method's panel beside it, and one big button to open the wallet.
+import Brand from "@/components/payments/checkout/Brand.astro";
+import Amount from "@/components/payments/checkout/Amount.astro";
+import Status from "@/components/payments/checkout/Status.astro";
+import PayerStep from "@/components/payments/checkout/PayerStep.astro";
+import Timer from "@/components/payments/checkout/Timer.astro";
+import Qr from "@/components/payments/checkout/Qr.astro";
+import WalletActions from "@/components/payments/checkout/WalletActions.astro";
+import Field from "@/components/payments/checkout/Field.astro";
+import Facts from "@/components/payments/checkout/Facts.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+const METHODS = ["qr", "wallet", "manual"] as const;
+---
+
+<template data-design="split">
+  <div class="ck-card ck-split">
+    <aside class="ck-rail">
+      <Brand />
+      <Timer />
+      <div class="ck-methods" data-open-only>
+        <p class="ck-methods-label" id="ck-methods-label">{t.methodLabel}</p>
+        <div class="ck-tabs" role="tablist" aria-labelledby="ck-methods-label" aria-orientation="vertical">
+          {METHODS.map((m) => (
+            <button
+              class="ck-tab"
+              type="button"
+              role="tab"
+              id={`ck-tab-${m}`}
+              aria-controls={`ck-panel-${m}`}
+              data-method-tab={m}
+              data-row={m === "manual" ? "manual" : undefined}
+            >
+              <span class={`ck-tab-icon ck-icon-${m}`} aria-hidden="true"></span>
+              {t.method[m]}
+            </button>
+          ))}
+        </div>
+      </div>
+    </aside>
+    <div class="ck-body">
+      <div class="ck-tiles">
+        <div class="ck-tile"><span class="ck-tab-icon ck-icon-receipt ck-tile-icon" aria-hidden="true"></span><Amount caption /></div>
+        <div class="ck-tile">
+          <span class="ck-tab-icon ck-icon-wallet ck-tile-icon" aria-hidden="true"></span>
+          <span class="ck-caption">{t.network}</span>
+          <span class="ck-tile-value" data-slot="network"></span>
+        </div>
+      </div>
+      <Status />
+      <PayerStep />
+      <div class="ck-panels" data-open-only>
+        <div class="ck-panel" role="tabpanel" id="ck-panel-qr" aria-labelledby="ck-tab-qr" data-method-panel="qr">
+          <p class="ck-panel-hint">{t.methodHint.qr}</p>
+          <Qr size={220} />
+        </div>
+        <div class="ck-panel" role="tabpanel" id="ck-panel-wallet" aria-labelledby="ck-tab-wallet" data-method-panel="wallet">
+          <p class="ck-panel-hint">{t.methodHint.wallet}</p>
+          <WalletActions primary={false} />
+        </div>
+        <div class="ck-panel" role="tabpanel" id="ck-panel-manual" aria-labelledby="ck-tab-manual" data-method-panel="manual">
+          <p class="ck-panel-hint">{t.methodHint.manual}</p>
+          <Field name="pay-to" label={t.payTo} hint={t.payToHint} />
+          <Field name="memo" label={t.memo} hint={t.memoHint} row="memo" />
+          <Field name="amount-value" label={t.amount} hint={t.amountHint} row="amount" />
+        </div>
+      </div>
+      <Facts rows={["asset", "tx"]} />
+      <a class="btn btn-dark ck-cta" data-slot="open-wallet" data-open-only>{t.openWallet}</a>
+    </div>
+  </div>
+</template>

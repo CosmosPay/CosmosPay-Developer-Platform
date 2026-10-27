@@ -3,7 +3,7 @@
    Glyph sigue viviendo aca porque lo usa el marquee de clientes. */
 import { IcArrow, CopyPill, ctaProps } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { CLIENTS } from "./data";
+import { CLIENTS } from "@/components/cosmos/marketing/data";
 
 export function Glyph({ i }) {
   const shapes = [

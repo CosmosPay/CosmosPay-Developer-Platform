@@ -2,7 +2,7 @@
    Session check, env resolution, platform-permission enforcement, and upstream
    error mapping live here so each route stays a thin pass-through. */
 import type { APIContext } from "astro";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
@@ -13,7 +13,7 @@ import { keyPrefix } from "@/utils/apisix";
 
 /** Resolve the signed-in user id, or a 401 Response. */
 export async function getUserId(request: Request): Promise<{ userId: string } | { response: Response }> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await requestSession(request.headers);
   if (!session) return { response: jsonUnauthorized("Session required") };
   return { userId: session.user.id };
 }
@@ -65,7 +65,7 @@ export function cosmosErrorResponse(err: unknown): Response {
  * (`kyc` | `onramp` | `offramp`), used by the `[...path].ts` catch-all routes. Enforces
  * session + org membership (mutations also require `payments:create`), forwards the
  * request to `/v1/<prefix>/<rest>` via proxyCosmosRequest, and wraps the upstream JSON in
- * the dashboard envelope. The swap commission rule doesn't apply here — these are fiat
+ * the dashboard envelope. The swap commission rule doesn't apply here: these are fiat
  * rails, not on-chain swaps.
  */
 export async function blindpayProxy(ctx: APIContext, prefix: string): Promise<Response> {
@@ -106,7 +106,7 @@ export async function blindpayProxy(ctx: APIContext, prefix: string): Promise<Re
 /**
  * Generic dashboard → Payments proxy for the PLATFORM-ADMIN (owner) endpoints, used by
  * the `/api/admin/[...path].ts` catch-all. Only a platform owner/admin (NOT merely an org
- * member) may reach it, verified here against the account role — and THIS is the check
+ * member) may reach it, verified here against the account role, and THIS is the check
  * that decides it, for reads as much as for writes. The Payments service keeps no admin
  * credential of its own any more: it admits the call because it came from this backend
  * (gateway secret + X-Cosmos-Internal) and records the role forwarded below on its audit
@@ -138,7 +138,7 @@ export async function adminProxy(ctx: APIContext): Promise<Response> {
       adminRole: role,
     });
     // The Payments service only knows a consumer by its APISIX username (cosmos_<userId>);
-    // resolve those to real account names/emails so the admin UI never shows a bare "—".
+    // resolve those to real account names/emails so the admin UI never shows a bare "-".
     const enriched = await enrichAdminConsumers(json);
     return status === 201
       ? jsonCreated({ data: enriched, message: "Created" })
@@ -153,7 +153,7 @@ export async function adminProxy(ctx: APIContext): Promise<Response> {
  * account. A payments consumer is `cosmos_<userId>` (one per developer account), so we
  * map it back to the dev-platform User and the organizations that user owns, and expose:
  *   - `displayName`   the org name (the user's primary org), so the UI shows an org, not
- *                     a bare user — falling back to the account name/email/id if none.
+ *                     a bare user, falling back to the account name/email/id if none.
  *   - `organizations` [{id,name}] every org the account owns (an account can own several;
  *                     payments data is per-account, so counts span all of them).
  *   - `accountName` / `accountEmail`  the underlying developer account, shown as context.

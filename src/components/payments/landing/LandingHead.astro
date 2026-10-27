@@ -1,0 +1,29 @@
+---
+// The payments landing's <head> extras (every page built from its sections renders this in
+// PaymentsLayout's head slot): the page's structured data, the hero poster preload (the home
+// only: it is the one page with the hero), the merchant embed for the live demos, and the
+// class that lets scroll reveals start hidden.
+import type { LandingData } from "@/components/payments/landing/data";
+import type { PaymentsPage } from "@/lib/payments/site-pages";
+import StructuredData from "@/components/payments/landing/StructuredData.astro";
+
+interface Props {
+  d: LandingData;
+  page: PaymentsPage | "home";
+  title: string;
+  description: string;
+}
+
+const { d, page, title, description } = Astro.props;
+---
+
+<StructuredData d={d} page={page} title={title} description={description} />
+{page === "home" && <link rel="preload" as="image" href="/media/coin-ramp-poster.webp" fetchpriority="high" />}
+<!-- The merchant embed, for the live demos of the integration options. -->
+<script is:inline src="/embed/cosmos-pay.js" defer></script>
+<!-- Scroll reveals start hidden only when this runs; if the page script never arrives,
+     the class comes off after 2.5 s and everything shows. -->
+<script is:inline>
+  document.documentElement.classList.add("pl-anim");
+  setTimeout(function () { if (!window.__plReveal) document.documentElement.classList.remove("pl-anim"); }, 2500);
+</script>

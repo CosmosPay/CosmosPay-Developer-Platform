@@ -1,6 +1,6 @@
-/* SpecPanel.jsx — right-hand live plan spec panel with tab switcher. */
+/* SpecPanel.jsx: right-hand live plan spec panel with tab switcher. */
 import { I } from "./icons";
-import { PLAN_IDS, SUPPORT_FOR, PLAN_DATA } from "./data";
+import { PLAN_IDS, SUPPORT_FOR, PLAN_DATA } from "@/components/cosmos/onboarding/data";
 
 function SpecRow({ icon, k, v, flag, no }) {
   return (<div className="spec-cell"><span className="k">{icon}{k}</span><span className={`v${flag ? (no ? " no" : " yes") : ""}`}>{v}</span></div>);
@@ -28,12 +28,13 @@ export function SpecPanel({ t, viewId, setViewId, selectedId, recId, showRec }) 
               : isRec ? <span className="spec-badge rec">{I.bolt} {ob.recommendedForYou}</span>
                 : <span className="spec-badge rec">{p.desc}</span>}
             <div className="spec-name">{t.dash.planNames[id]}</div>
-            <div className="spec-price"><span className="amt">{d.price}</span>{d.per && <span className="per">{d.per}</span>}</div>
+            <div className="spec-price"><span className="amt">{d.price}</span>{d.per && <span className="per">{t.pricing.perMo}</span>}</div>
             <div className="spec-pnote">{p.pnote}</div>
             <div className="spec-grid">
               <SpecRow icon={I.coin} k={ob.spec.perTx} v={d.perTx} />
+              <SpecRow icon={I.coin} k={ob.spec.swap} v={d.swap} />
               <SpecRow icon={I.bolt} k={ob.spec.settle} v={d.settle} />
-              <SpecRow icon={I.net} k={ob.spec.network} v="Stellar" />
+              <SpecRow icon={I.net} k={ob.spec.network} v="Stellar · Solana · Monad" />
               <SpecRow icon={I.team} k={ob.spec.team} v={p.team} />
               <SpecRow icon={I.org} k={ob.spec.orgs} v={d.orgs} />
               <SpecRow icon={I.life} k={ob.spec.support} v={ob.supportLevels[SUPPORT_FOR[id]]} />

@@ -7,7 +7,7 @@ argument-hint: "[payment task]"
 
 # Cosmos Pay: Stellar payments SDK
 
-[Cosmos Pay](https://cosmospay.lat) is a payments gateway on Stellar. `@cosmosapp/pay_sdk` gives you one server client (payment intents, webhooks, products, customers, analytics, ramps) and one browser client that detects the user's Stellar wallet and signs the payment. You create and validate on the server, and the browser only signs.
+[Cosmos Pay](https://cosmospay.lat) is a multi-chain payments gateway: Stellar, Solana and Monad. This skill covers its Stellar payment flow. `@cosmosapp/pay_sdk` gives you one server client (payment intents, webhooks, products, customers, analytics, ramps) and one browser client that detects the user's Stellar wallet and signs the payment. You create and validate on the server, and the browser only signs.
 
 ## When to use this skill
 - Charging a customer in USDC (or any Stellar asset) from a web app or backend

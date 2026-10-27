@@ -70,7 +70,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Create a notification',
     description:
-      'Owner/admin accounts only — a regular account can read its notifications but not write one, because the system generates them.',
+      'Owner/admin accounts only: a regular account can read its notifications but not write one, because the system generates them.',
     security: sessionSecurity,
     request: jsonBody(createNotificationBody),
     responses: {

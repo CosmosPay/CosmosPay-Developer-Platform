@@ -1,0 +1,46 @@
+---
+// How section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+}
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<!-- How it works. On a large enough screen the section pins under the nav and the four
+     steps play one at a time as the page scrolls, then it lets go (the script below, data-pin);
+     elsewhere they are a plain grid. -->
+<section class="pl-section pl-section-alt pl-how" aria-labelledby="pl-how" data-pin style="--n: 4">
+  <div class="pl-pin">
+    <div class="pl-pin-stage">
+      <div class="wrap">
+        <div class="pl-head pl-pin-head" data-reveal>
+          <h2 id="pl-how">{t.how.title} {t.how.titleBold}</h2>
+          <div class="pl-pin-meter" aria-hidden="true">
+            <span class="pl-pin-count" data-pin-count data-template={t.how.counter}>{t.how.counter.replace("{n}", "1").replace("{total}", "4")}</span>
+            <span class="pl-pin-bar">{[0, 1, 2, 3].map(() => <i></i>)}</span>
+          </div>
+        </div>
+        <div class="pl-how-body">
+        <ol class="pl-steps" role="list">
+          {steps.map((s, i) => (
+            <li data-reveal data-pin-item style={`--i: ${i}`}>
+              <div class="pl-step-visual"><Mock name={stepMocks[i]} ui={t.ui} /></div>
+              <div class="pl-step-top" aria-hidden="true"><span class="pl-step-num">{i + 1}</span><span class="pl-step-line" /></div>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+            </li>
+          ))}
+        </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

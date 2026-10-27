@@ -1,0 +1,49 @@
+---
+// Marks section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+}
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<!-- What customers pay with: networks, assets and wallets, in place of the customer
+     logos a gateway would show (we show none until they are real). Each row is a
+     marquee: two identical sets slide by half the track, so the loop has no seam. The
+     row labels are for assistive tech only (the product owner's call), with a list of the
+     names, since the moving copy is never read. -->
+<section class="pl-marks" aria-labelledby="pl-marks-title">
+  <h2 id="pl-marks-title" class="wrap pl-marks-title" data-reveal>{t.marks.title}</h2>
+  {marquees.map((row, r) => (
+    <div class="pl-marquee-row" data-reveal style={`--i: ${r}`}>
+      <h3 class="pl-sr">{row.label}</h3>
+      <ul class="pl-sr" role="list">{row.items.map((item) => <li>{item.name}</li>)}</ul>
+      <div class:list={["pl-marquee", { "pl-marquee-rev": r % 2 === 1 }]} aria-hidden="true">
+        <div class="pl-marquee-track">
+          {[0, 1].map(() => (
+            <div class="pl-marquee-set">
+              {[...row.items, ...row.items].map((item) => (
+                <span class="pl-brand">
+                  {item.mark ? <Mark name={item.mark} /> : item.srcDark ? (
+                    <>
+                      <img class="pl-brand-light" src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />
+                      <img class="pl-brand-dark" src={item.srcDark} alt="" width="32" height="32" loading="lazy" decoding="async" />
+                    </>
+                  ) : <img src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
+                  <span>{item.name}</span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ))}
+</section>

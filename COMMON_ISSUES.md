@@ -1,4 +1,4 @@
-# Common Issues — Guía de troubleshooting (producción)
+# Common Issues: guía de troubleshooting (producción)
 
 Guía paso a paso de los problemas que aparecieron al desplegar la Developer Platform
 en producción (`dev.cosmospay.lat`) y cómo resolverlos. El orden refleja la cadena
@@ -53,7 +53,7 @@ También se agregó `dev.cosmospay.lat` a `vite.server.allowedHosts` en `astro.c
 
 ---
 
-## 2. Error de red al loguear — dominio equivocado
+## 2. Error de red al loguear: dominio equivocado
 
 **Síntoma:** la request va a `https://dev.cosmosapp.lat/...` pero el sitio es
 `https://dev.cosmospay.lat/`.
@@ -238,9 +238,9 @@ En logs debería decir `Route "cosmos-api-keys" created/updated`.
 Bot Fight Mode: los clientes no ejecutan JavaScript.
 
 **Fix (elegir uno):**
-- **A — mantener Cloudflare:** Security → Bots → **Bot Fight Mode = Off**; Security → Settings →
+- **A. Mantener Cloudflare:** Security → Bots → **Bot Fight Mode = Off**; Security → Settings →
   **Security Level = Essentially Off**.
-- **B — recomendado para API:** poné `api.cosmospay.lat` en **DNS only (nube gris)** + cert
+- **B. Recomendado para API:** poné `api.cosmospay.lat` en **DNS only (nube gris)** + cert
   Let's Encrypt. Sin challenge nunca. Trade-off: perdés el escudo de Cloudflare en ese host.
 
 > Tener challenge activo **y** API funcionando en simultáneo requiere plan **Pro/Business**
@@ -248,7 +248,7 @@ Bot Fight Mode: los clientes no ejecutan JavaScript.
 
 ---
 
-## 10. APISIX: "missing API key" — soportar `apikey`, `Authorization` y `Bearer`
+## 10. APISIX: "missing API key" (soportar `apikey`, `Authorization` y `Bearer`)
 
 **Síntoma:** APISIX responde "missing API key" aunque mandás la credencial.
 

@@ -1,4 +1,4 @@
-/* OrgStep.jsx — step 0: organization name + industry. */
+/* OrgStep.jsx, step 0: organization name + industry. */
 import { useId } from "react";
 import { I } from "@/components/cosmos/onboarding/icons";
 import { INDUSTRY_IDS } from "@/components/cosmos/onboarding/data";

@@ -1,7 +1,7 @@
 // Guarantee the /docs site is present (and current) before `dev` and `start`.
 //
 // A full docs build (Next static export) is slow, so we only rebuild when public/docs is
-// missing or when any docs source is newer than the last build — otherwise it's a fast
+// missing or when any docs source is newer than the last build; otherwise it's a fast
 // no-op. After ensuring public/docs, if a server build exists we mirror it into
 // dist/client/docs so `npm start` serves the latest docs too.
 import { execSync } from 'node:child_process';
@@ -12,7 +12,7 @@ import path from 'node:path';
 try {
   await import('dotenv/config');
 } catch {
-  /* dotenv not installed — rely on the ambient process.env */
+  /* dotenv not installed: rely on the ambient process.env */
 }
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -43,7 +43,7 @@ function maxMtime(p) {
 // Inputs that affect the docs output: the docs app source + config, ALL docs content (the
 // committed generated content/docs/{sdk,api} + hand-written pages), the translations, the spec,
 // and the portal UI the navbar reuses. The external source repos are listed too so a local change
-// to them triggers a rebuild — but they're optional (absent on prod; generate-sdk/api just skip).
+// to them triggers a rebuild, but they're optional (absent on prod; generate-sdk/api just skip).
 const SOURCES = [
   path.join(root, 'docs', 'src'),
   path.join(root, 'docs', 'scripts'),
@@ -69,17 +69,17 @@ function needsBuild() {
 }
 
 // The docs always build from the committed content (generate-sdk/api skip when the external repos
-// are absent — see those scripts), so there's no repo dependency. Just (re)build when out of date.
+// are absent; see those scripts), so there's no repo dependency. Just (re)build when out of date.
 if (needsBuild()) {
-  console.log('[ensure-docs] /docs missing or out of date — building…');
+  console.log('[ensure-docs] /docs missing or out of date; building…');
   try {
     execSync('node scripts/build-docs.mjs', { cwd: root, stdio: 'inherit' });
   } catch {
-    // Non-fatal: don't block `dev`/`start` — serve whatever docs were already built (if any).
+    // Non-fatal: don't block `dev`/`start`; serve whatever docs were already built (if any).
     console.warn('[ensure-docs] docs build failed; continuing with existing /docs (if present).');
   }
 } else {
-  console.log('[ensure-docs] /docs is up to date — skipping build.');
+  console.log('[ensure-docs] /docs is up to date; skipping build.');
 }
 
 // Keep a built server in sync (start serves dist/client, not public/).

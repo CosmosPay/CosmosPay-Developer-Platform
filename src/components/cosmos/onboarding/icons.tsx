@@ -1,4 +1,4 @@
-/* icons.jsx — local icon map for the Onboarding wizard. */
+/* icons.jsx: local icon map for the Onboarding wizard. */
 export const I = {
   chk: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>,
   back: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>,

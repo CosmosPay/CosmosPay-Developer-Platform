@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { updateOwnProfile } from "@/lib/profile";
 import type { APIRoute } from "astro";
@@ -18,10 +18,10 @@ const bodySchema = z
   })
   .strict();
 
-/* PATCH /api/account/profile — update the signed-in account's own profile
+/* PATCH /api/account/profile: update the signed-in account's own profile
    (display name, bio, avatar). Email and role stay managed by the OAuth/SSO sign-in. */
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const body = await parseJson(ctx.request, bodySchema).catch(() => null);

@@ -68,7 +68,7 @@ const webhookEndpointSchema = z
     secret: z.string().optional().openapi({
       example: 'whsec_9f8c...',
       description:
-        'Signing secret. Returned ONLY when the endpoint is created and when the secret is rotated — store it then, it is never shown again.',
+        'Signing secret. Returned ONLY when the endpoint is created and when the secret is rotated. Store it then, it is never shown again.',
     }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     updatedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
@@ -137,7 +137,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Create a webhook endpoint',
     description:
-      'Registers a destination. The response carries the signing secret — the only time it is returned. Requires `webhooks:create` when `org` is supplied.',
+      'Registers a destination. The response carries the signing secret, the only time it is returned. Requires `webhooks:create` when `org` is supplied.',
     security: sessionSecurity,
     request: {
       query: writeQuery,
@@ -238,7 +238,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Rotate the signing secret',
     description:
-      'Issues a new signing secret and returns it — the only other time it is returned. The previous secret stops validating immediately. Requires `webhooks:edit` when `org` is supplied.',
+      'Issues a new signing secret and returns it, the only other time it is returned. The previous secret stops validating immediately. Requires `webhooks:edit` when `org` is supplied.',
     security: sessionSecurity,
     request: { params: idParam, query: writeQuery },
     responses: {

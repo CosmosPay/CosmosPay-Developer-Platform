@@ -1,0 +1,20 @@
+---
+/* /preview/{design}: one checkout design drawn with sample data, so a merchant sees it
+ * before choosing it (the landing's gallery and the dashboard link here). Nothing on it can
+ * be paid: see src/lib/payments/preview.ts. */
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import Checkout from "@/components/payments/Checkout.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { isCheckoutTheme } from "@/lib/payments/checkout-themes";
+
+const { design } = Astro.params;
+if (!isCheckoutTheme(design)) {
+  return Astro.rewrite("/404");
+}
+
+const m = MESSAGES[Astro.locals.lang ?? "en"];
+---
+
+<PaymentsLayout title={`${m.designs[design].name} · ${m.checkout.previewTitle}`} description={m.designs[design].desc}>
+  <Checkout preview={design} />
+</PaymentsLayout>

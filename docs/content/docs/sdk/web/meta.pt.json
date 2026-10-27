@@ -1,6 +1,6 @@
 {
   "title": "Web",
-  "description": "@cosmosapp/pay_sdk/web — o cliente de carteiras do navegador.",
+  "description": "@cosmosapp/pay_sdk/web: o cliente de carteiras do navegador.",
   "pages": [
     "web-client",
     "assets-wallets-addresses"

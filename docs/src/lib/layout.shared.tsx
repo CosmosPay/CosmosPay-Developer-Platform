@@ -23,7 +23,7 @@ export function baseOptions(): BaseLayoutProps {
     // Likewise hide Fumadocs' own sidebar language selector: the navbar LangSelect is the one
     // switcher, and the Fumadocs one navigated to `/<lang>` (e.g. `/en/...`) which 404s under
     // our `hideLocale:'default-locale'` scheme (en is unprefixed). `i18n:false` only turns off
-    // that UI control — content/chrome localization (RootProvider i18n) is unaffected.
+    // that UI control; content/chrome localization (RootProvider i18n) is unaffected.
     i18n: false,
     // Show the repository name next to the GitHub icon (instead of just the bare icon that
     // `githubUrl` renders). Appears in the sidebar since the top nav is disabled.

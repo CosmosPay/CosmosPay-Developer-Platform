@@ -1,0 +1,35 @@
+---
+/* /faq on payments.cosmospay.lat: every question merchants ask before they start, and the
+ * final call to action on its own canvas. */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import InlineCta from "@/components/payments/landing/InlineCta.astro";
+import { landingData } from "@/components/payments/landing/data";
+import Faq from "@/components/payments/landing/sections/Faq.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.pages.faq.meta} description={d.t.pages.faq.lede} indexable>
+  <LandingHead slot="head" d={d} page="faq" title={d.t.pages.faq.meta} description={d.t.pages.faq.lede} />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="faq" />
+    <PageHeader d={d} page="faq" art="3d-chat" />
+    <Faq d={d} bare />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

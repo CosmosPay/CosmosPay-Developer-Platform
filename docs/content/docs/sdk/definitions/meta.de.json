@@ -1,6 +1,6 @@
 {
   "title": "Definitionen",
-  "description": "Typen, Enums und jede exportierte Klasse — atomare Referenz.",
+  "description": "Typen, Enums und jede exportierte Klasse als atomare Referenz.",
   "pages": [
     "types-reference",
     "server",

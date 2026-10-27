@@ -1,6 +1,6 @@
 {
   "title": "Server",
-  "description": "@cosmosapp/pay_sdk — the server-side client.",
+  "description": "@cosmosapp/pay_sdk: the server-side client.",
   "pages": [
     "overview",
     "installation",

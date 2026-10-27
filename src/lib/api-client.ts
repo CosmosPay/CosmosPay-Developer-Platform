@@ -1,4 +1,4 @@
-/* api-client.ts — thin browser client for the same-origin developer API.
+/* api-client.ts: thin browser client for the same-origin developer API.
    Every endpoint returns the ApiEnvelope { data, code, status, message }; these
    helpers unwrap `data` and throw an Error (with the server message) on failure. */
 async function request(url, options = {}) {
@@ -19,7 +19,7 @@ async function request(url, options = {}) {
   return json ? json.data : null;
 }
 
-/* API keys CRUD — see src/pages/api/api-keys.
+/* API keys CRUD (see src/pages/api/api-keys).
    create body: { org, environment: 'dev'|'prod', permissions: string[] (>=1), role: 'user'|'admin' }
      (environment is injected from the dashboard's test/production switch, not chosen in the modal)
    create → { username, apiKey (secret, shown once), id, createdAt, updatedAt, permissions, role, environment }
@@ -31,7 +31,7 @@ export const apiKeys = {
   update: (id, body) => request(`/api/api-keys/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(body) }),
 };
 
-/* Payment intents (Stellar SEP-7 links) — proxied to the Cosmos Payments API,
+/* Payment intents (Stellar SEP-7 links), proxied to the Cosmos Payments API,
    scoped to the signed-in user's consumer. `env` is 'dev' (testnet) or 'prod' (public).
    create body: { org, environment, kind: 'pay'|'tx', destination, amount?, assetCode?,
    assetIssuer?, source? (tx only), memo?, msg?, callback? }
@@ -42,6 +42,8 @@ export const paymentIntents = {
     const qs = new URLSearchParams({ env: env || "dev" });
     if (query.org) qs.set("org", query.org);
     if (query.status) qs.set("status", query.status);
+    if (query.chain) qs.set("chain", query.chain);
+    if (query.createdFrom) qs.set("createdFrom", query.createdFrom);
     if (query.take) qs.set("take", String(query.take));
     if (query.skip) qs.set("skip", String(query.skip));
     return request(`/api/payment-intents?${qs.toString()}`);
@@ -53,7 +55,7 @@ export const paymentIntents = {
   validate: (id, env, txHash) => request(`/api/payment-intents/${encodeURIComponent(id)}/validate?env=${env || "dev"}`, { method: "POST", body: JSON.stringify({ txHash }) }),
 };
 
-/* Webhook endpoints — proxied to the Cosmos Payments API (per-user consumer).
+/* Webhook endpoints, proxied to the Cosmos Payments API (per-user consumer).
    `env` is 'dev'|'prod'; mutations pass the active `org` so the platform can
    enforce the workspace's webhooks:* permission. create/rotate return the secret once. */
 const qp = (env, org) => `?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`;
@@ -84,21 +86,25 @@ export const products = {
 
 /* Customers (merchant-managed, with derived stats). list → { data, total }. */
 export const customers = {
-  list: (env) => request(`/api/customers?env=${env || "dev"}`),
+  list: (env, page = {}) => request(`/api/customers?env=${env || "dev"}${page.take ? `&take=${page.take}` : ""}${page.skip ? `&skip=${page.skip}` : ""}`),
   create: (env, org, body) => request(`/api/customers${qp(env, org)}`, { method: "POST", body: JSON.stringify(body) }),
   update: (id, env, org, body) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "PATCH", body: JSON.stringify(body) }),
   remove: (id, env, org) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "DELETE" }),
+  addWallet: (id, env, org, body) => request(`/api/customers/${encodeURIComponent(id)}/wallets${qp(env, org)}`, { method: "POST", body: JSON.stringify(body) }),
+  removeWallet: (id, walletId, env, org) => request(`/api/customers/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}${qp(env, org)}`, { method: "DELETE" }),
 };
 
 /* Read-only dashboard aggregates derived from payments + webhooks + request logs. */
 export const metrics = {
   summary: (env) => request(`/api/cosmos/summary?env=${env || "dev"}`),
+  /* The overview chart: payments grouped by day, week, month or year, with the window before. */
+  series: (env, period = "day") => request(`/api/cosmos/series?env=${env || "dev"}&period=${encodeURIComponent(period)}`),
   balances: (env) => request(`/api/cosmos/balances?env=${env || "dev"}`),
   apiLogs: (env) => request(`/api/cosmos/logs?env=${env || "dev"}`),
   webhookLogs: (env) => request(`/api/cosmos/webhook-logs?env=${env || "dev"}`),
 };
 
-/* Client activity — what the wallet and this dashboard reported about themselves.
+/* Client activity: what the wallet and this dashboard reported about themselves.
    Distinct from `metrics.apiLogs`, which only ever sees requests that REACHED the
    Payments API: everything a client did before (or instead of) a request is here. */
 export const activity = {
@@ -117,14 +123,14 @@ export const activity = {
   },
 };
 
-/* Activity notifications — list is open to the user; create is owner/admin only (403 otherwise). */
+/* Activity notifications: list is open to the user; create is owner/admin only (403 otherwise). */
 export const notifications = {
   list: () => request("/api/notifications"),
   create: (body) => request("/api/notifications", { method: "POST", body: JSON.stringify(body) }),
   markRead: () => request("/api/notifications/read", { method: "POST", body: "{}" }),
 };
 
-/* Support tickets — customer side (own tickets). Each ticket has a subject + status. */
+/* Support tickets, customer side (own tickets). Each ticket has a subject + status. */
 export const support = {
   tickets: () => request("/api/support/tickets"),
   unread: () => request("/api/support/unread"),
@@ -133,7 +139,7 @@ export const support = {
   send: (id, body) => request(`/api/support/tickets/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify({ body }) }),
 };
 
-/* Support tickets — staff side (owner/admin/support). 403 for regular users. */
+/* Support tickets, staff side (owner/admin/support). 403 for regular users. */
 export const supportAdmin = {
   tickets: (status) => request(`/api/support/admin/tickets${status ? `?status=${encodeURIComponent(status)}` : ""}`),
   ticket: (id) => request(`/api/support/tickets/${encodeURIComponent(id)}`),
@@ -164,7 +170,7 @@ function adminQs(query = {}) {
   return s ? `?${s}` : "";
 }
 
-/* Admin (platform owner/admin). 403 otherwise — the /api/admin proxy enforces it.
+/* Admin (platform owner/admin). 403 otherwise; the /api/admin proxy enforces it.
    - users/setUser: account role management.
    - the rest are read-only, cross-organization (global) views proxied to the Payments
      API's /v1/admin/* endpoints; each returns the upstream JSON directly. */
@@ -183,11 +189,11 @@ export const admin = {
   receivers: (query = {}) => request(`/api/admin/receivers${adminQs(query)}`),
   payins: (query = {}) => request(`/api/admin/payins${adminQs(query)}`),
   payouts: (query = {}) => request(`/api/admin/payouts${adminQs(query)}`),
-  // Global enable/disable of any consumer's fiat receiver (no org/env — admin is global).
+  // Global enable/disable of any consumer's fiat receiver (no org/env; admin is global).
   setReceiverAccess: (id, disabled) => request(`/api/admin/receivers/${encodeURIComponent(id)}/access`, { method: "PATCH", body: JSON.stringify({ disabled }) }),
   // Global approve (pending_review → pending_user, emails the customer the terms link)
   // and activation (submits the tos_id) for any consumer's fiat receiver.
-  // `expected_version` pins the approval to the dossier the reviewer had on screen —
+  // `expected_version` pins the approval to the dossier the reviewer had on screen:
   // the Payments API 409s when it changed since. Undefined is dropped by JSON.stringify,
   // which is the right fallback for a row read before that field existed.
   approveReceiver: (id, redirect_url, expected_version) => request(`/api/admin/receivers/${encodeURIComponent(id)}/approve`, { method: "POST", body: JSON.stringify({ redirect_url, expected_version }) }),
@@ -202,7 +208,7 @@ export const invites = {
   accept: (id) => request("/api/invitations/accept", { method: "POST", body: JSON.stringify({ id }) }),
 };
 
-/* Same-chain swaps — proxied to the Cosmos Payments API and scoped to the active
+/* Same-chain swaps, proxied to the Cosmos Payments API and scoped to the active
    organization. `env` is 'dev' (testnet) or 'prod' (public). `chain` picks the venue:
    omitted / 'stellar' is the Stellar DEX, 'solana' Jupiter, 'monad' Kuru Flow (the last
    two mainnet only). There is NO fee parameter: the commission is the org plan's rate,
@@ -229,8 +235,22 @@ export const swaps = {
   submit: (id, org, env, signed) => request(`/api/swaps/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify(typeof signed === "string" ? { signedXdr: signed } : signed) }),
 };
 
-/* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents) — proxied to the Payments
+/* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents), proxied to the Payments
    API. Mainnet only upstream: in test mode assets and quotes work, creating is refused. */
+/* ZK payments (confidential, amount hidden on-chain; 0.18% commission). See src/pages/api/zk-payments. */
+export const zkPayments = {
+  config: (org, env) => request(`/api/zk-payments/config?env=${env || "dev"}&org=${encodeURIComponent(org)}`),
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    return request(`/api/zk-payments?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/zk-payments/${encodeURIComponent(id)}?env=${env || "dev"}&org=${encodeURIComponent(org)}`),
+  create: (body) => request("/api/zk-payments", { method: "POST", body: JSON.stringify(body) }),
+};
+
 export const crossChainSwaps = {
   assets: (org, env) => request(`/api/cross-chain-swaps/assets?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
   list: (org, env, query = {}) => {
@@ -247,7 +267,24 @@ export const crossChainSwaps = {
   reportDeposit: (id, org, env, txHash) => request(`/api/cross-chain-swaps/${encodeURIComponent(id)}/deposit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ txHash }) }),
 };
 
-/* Liquidity pools (Stellar AMM) — proxied to the Cosmos Payments API and scoped
+/* USDT0 out of Stellar through LayerZero's OFT (src/lib/usdt0.ts). Mainnet only. */
+export const usdt0 = {
+  routes: (org, env) => request(`/api/usdt0/routes?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  quote: (body) => request("/api/usdt0/quote", { method: "POST", body: JSON.stringify(body) }),
+  create: (body) => request("/api/usdt0/transfers", { method: "POST", body: JSON.stringify(body) }),
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    if (query.skip) qs.set("skip", String(query.skip));
+    return request(`/api/usdt0/transfers?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/usdt0/transfers/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  submit: (id, org, env, body) => request(`/api/usdt0/transfers/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify(body) }),
+};
+
+/* Liquidity pools (Stellar AMM), proxied to the Cosmos Payments API and scoped
    to the active organization. Non-custodial like swaps: deposit/withdraw return an
    unsigned XDR + SEP-7 URI + QR to sign, then the signed XDR is submitted back.
    deposit body: { org, environment, source, assetACode?, assetAIssuer?, assetBCode?,
@@ -281,7 +318,7 @@ export const liquidity = {
   submit: (id, org, env, signedXdr) => request(`/api/liquidity/operations/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ signedXdr }) }),
 };
 
-/* BlindPay onramp/offramp/KYC — generic same-origin proxies. Any sub-path is
+/* BlindPay onramp/offramp/KYC: generic same-origin proxies. Any sub-path is
    forwarded to the Payments API `/v1/<prefix>/<path>` with ?org=&env= and the
    response is the inner upstream JSON. Mutations require the payments:create
    permission (enforced server-side). Use the path-style helpers, e.g.
@@ -316,4 +353,9 @@ export const organizations = {
   invitations: (id) => request(`/api/organizations/${encodeURIComponent(id)}/invitations`),
   invite: (id, email, role, permissions) => request(`/api/organizations/${encodeURIComponent(id)}/invitations`, { method: "POST", body: JSON.stringify({ email, role, permissions }) }),
   revokeInvite: (id, invId) => request(`/api/organizations/${encodeURIComponent(id)}/invitations/${encodeURIComponent(invId)}`, { method: "DELETE" }),
+  // The wallets the organization receives payments in (Settings); connecting one carries its signed proof.
+  wallets: (id) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`),
+  connectWallet: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`, { method: "POST", body: JSON.stringify(body) }),
+  renameWallet: (id, walletId, label) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "PATCH", body: JSON.stringify({ label }) }),
+  removeWallet: (id, walletId) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
 };

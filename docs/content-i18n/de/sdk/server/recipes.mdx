@@ -58,7 +58,7 @@ const intent = await client.paymentIntents.createPay({
 ```ts
 const processed = new Set<string>(); // use your DB in production
 client.webhooks.on('event', (event) => {
-  if (processed.has(event.id)) return; // event.id is stable — dedupe on it
+  if (processed.has(event.id)) return; // event.id is stable, so dedupe on it
   processed.add(event.id);
   handle(event);
 });
@@ -93,5 +93,5 @@ const customer = await client.customers.create({ name: 'Acme', email: 'billing@a
 
 ## Referenzen
 
-- [Client](/sdk/definitions/client) — Der Haupteinstiegspunkt des SDK — ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt — ein atomares Single-Client-Design.
+- [Client](/sdk/definitions/client): Der Haupteinstiegspunkt des SDK. Ein einzelner, atomarer Client, der jede Ressource über ihren eigenen Manager bereitstellt (ein atomares Single-Client-Design).
 - [WebClient](/sdk/definitions/web-client)

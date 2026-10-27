@@ -1,4 +1,4 @@
-/* rate-limit.ts — the in-process first line for unauthenticated routes.
+/* rate-limit.ts: the in-process first line for unauthenticated routes.
 
    Per process and per address, in memory. It is the FIRST line, not the durable
    one: the Payments service counts the same calls in Postgres (and we forward
@@ -12,7 +12,7 @@
    is not.
 
    It was written for the (since retired) Pollar social login, and the next
-   unauthenticated route (wallet telemetry) needed exactly the same thing — so it
+   unauthenticated route (wallet telemetry) needed exactly the same thing, so it
    is here rather than copied. The counters are keyed by bucket name, so
    sharing the map between callers shares nothing else. */
 
@@ -49,7 +49,7 @@ export function allow(bucket: string, address: string, policy: RatePolicy): bool
  * The per-address key is only as honest as the address, and the address on a
  * public route comes from a proxy header the caller can write. That is fine for
  * telling one ordinary user apart from another and worth nothing against someone
- * rotating the header — who would otherwise walk through the per-address limit
+ * rotating the header, who would otherwise walk through the per-address limit
  * AND the upstream one, since we forward the same value there. The global bucket
  * is the one that cannot be rotated past.
  */

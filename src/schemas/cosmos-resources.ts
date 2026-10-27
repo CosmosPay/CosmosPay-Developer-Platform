@@ -2,12 +2,13 @@
    community server's DTOs; the upstream re-validates, so these just give fast,
    friendly client-side errors. */
 /* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
-   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive: a schema
    built before it runs has no `.openapi()` at all. These schemas are handed to the
    OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
    what guarantees the extension has run by the time they are constructed. It is the same
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
+import { CHAINS, isAddress } from "@/lib/chains";
 
 const WEBHOOK_EVENTS = [
   "PAYMENT_INTENT_CREATED",
@@ -43,26 +44,51 @@ export const createProductBodySchema = z.object({
   reference: z.string().trim().max(120).optional(),
 });
 
-export const updateProductBodySchema = createProductBodySchema.partial();
+/* `amount: null` clears a product's price (a customer-set amount again); the API stores the null. */
+export const updateProductBodySchema = createProductBodySchema.partial().extend({ amount: amountString.nullable().optional() });
 
-const stellarAddress = z.string().trim().regex(/^G[A-Z2-7]{55}$/, "Must be a valid Stellar public key (G...56 chars).");
+/* A customer's wallet: its network and the address there (the upstream re-checks the checksum).
+   A customer holds up to 20 (MAX_CUSTOMER_WALLETS upstream). */
+export const customerWalletBodySchema = z
+  .object({
+    chain: z.enum(CHAINS),
+    address: z.string().trim().min(1).max(64),
+    label: z.string().trim().max(60).optional(),
+  })
+  .refine((w) => isAddress(w.chain, w.address), { path: ["address"], message: "Must be an address on the chosen network." });
+
+const anyChainAddress = z
+  .string()
+  .trim()
+  .refine((v) => CHAINS.some((c) => isAddress(c, v)), "Must be a Stellar, Solana or Monad address.");
 
 export const createCustomerBodySchema = z.object({
   name: z.string().trim().min(1).max(120),
   alias: z.string().trim().max(120).optional(),
   note: z.string().trim().max(500).optional(),
   email: z.string().trim().email().max(160).optional(),
-  account: stellarAddress.optional(),
+  /* Deprecated upstream: one wallet, its network read from its shape. Send `wallets`. */
+  account: anyChainAddress.optional(),
+  wallets: z.array(customerWalletBodySchema).max(20).optional(),
   reference: z.string().trim().max(120).optional(),
 });
 
-export const updateCustomerBodySchema = createCustomerBodySchema.partial();
+/* The customer's own fields: wallets change through /api/customers/{id}/wallets. An empty email
+   (or null) clears it: the edit form sends what its field holds, and a customer without an email
+   must still save (the proxy forwards it as null, which the Payments API stores as none). */
+export const updateCustomerBodySchema = createCustomerBodySchema
+  .omit({ wallets: true, account: true, email: true })
+  .partial()
+  .extend({
+    account: anyChainAddress.nullable().optional(),
+    email: z.union([z.literal(""), z.string().trim().email().max(160)]).nullable().optional(),
+  });
 
 /* Body for the two receiver-approval proxies (org-scoped Fiat and platform Admin).
 
    `expected_version` is the receiver's `dossierVersion` as the reviewer read it. A review
    is a person reading the KYC dossier and then approving it, and the tenant can edit that
-   dossier in between — the status stays `pending_review` through an edit, so without this
+   dossier in between (the status stays `pending_review` through an edit), so without this
    the approval lands on whatever is stored when the request arrives. The Payments API
    answers 409 `kyc_state_invalid` when the version moved on. It is optional upstream for
    compatibility, and optional here for the same reason: a receiver read from a Payments

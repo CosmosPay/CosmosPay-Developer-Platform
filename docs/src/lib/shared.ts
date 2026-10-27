@@ -4,7 +4,7 @@ export const appName = 'Cosmos Pay Docs';
 export const docsRoute = '/';
 export const docsImageRoute = '/og';
 // Used to build the markdown URL for the "Copy Markdown" page action, which is fetched
-// client-side — so it must include the /docs basePath (Next doesn't prefix manual fetches).
+// client-side, so it must include the /docs basePath (Next doesn't prefix manual fetches).
 export const docsContentRoute = '/docs/llms.mdx';
 
 // Used for "edit on GitHub" / view-source links. Content is generated, so these point at

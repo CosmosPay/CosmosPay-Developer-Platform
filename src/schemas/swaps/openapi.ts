@@ -3,7 +3,7 @@
    /api/swaps surface in the portal API reference (/swagger + /api/openapi.json).
 
    Note: the swap commission is the calling organization's plan rate, enforced
-   server-side — there is deliberately NO fee field in any request body. */
+   server-side; there is deliberately NO fee field in any request body. */
 import {
   errors,
   jsonCreated,
@@ -160,6 +160,10 @@ const createBody = z
     source: z.string().openapi({ example: "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ" }),
     destination: z.string().optional(),
     memo: z.string().optional().openapi({ example: "123456789" }),
+    idempotencyKey: z.string().optional().openapi({
+      example: "swap-2026-10-25-001",
+      description: "One key per intended swap: a retry with the same key and request returns the swap already built; the same key with another request is refused (409).",
+    }),
   })
   .openapi("CreateSwapBody");
 

@@ -1,0 +1,129 @@
+/* ============================================================
+   Cosmos Pay: payments.css
+   The hosted checkout, the /pay handler and the error pages.
+   One centered card on the page colour, separated by hairlines,
+   no elevation (BRAND.md); tokens come from cosmos.css.
+   ============================================================ */
+
+/* status colours: semantics, the one place outside the four brand colours, with the
+   same AA-checked pairs the dashboard's chips use (text on a 14 % tint of itself). */
+:root {
+  --ok: #1F7A4D;
+  --bad: #B42318;
+}
+[data-theme="dark"] {
+  --ok: #7EE0A8;
+  --bad: #FF9C94;
+}
+
+/* Components set their own display, which beats the UA rule for [hidden]: without this a
+   hidden state, badge or button stays on screen. */
+[hidden] { display: none !important; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 1000;
+  padding: 10px 16px; background: var(--btn-bg); color: var(--btn-fg);
+  font: 600 14px/1 var(--ff-sans); border-radius: 0 0 12px 0;
+}
+.skip-link:focus { left: 0; }
+
+body { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ---- footer (the header is the general nav, from the layout) ---- */
+
+.pp-footer {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 18px;
+  max-width: 640px; width: 100%; margin: 0 auto; padding: 28px 16px 36px;
+  font-size: 13.5px; color: var(--ink-2);
+}
+.pp-footer a { text-decoration: underline; text-underline-offset: 3px; }
+.pp-lang { display: flex; align-items: center; gap: 8px; }
+.pp-lang select {
+  font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line-2); border-radius: 10px; padding: 6px 10px; min-height: 32px;
+}
+
+/* ---- the card ---- */
+.pp-main { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 28px 16px 8px; }
+.pp-card {
+  width: 100%; max-width: 560px;
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: clamp(22px, 5vw, 36px);
+  background: var(--surface);
+}
+.pp-eyebrow {
+  margin: 0 0 14px; font-size: 12.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ink-2);
+}
+.pp-title { font-size: clamp(24px, 5vw, 32px); font-weight: 300; letter-spacing: -0.03em; line-height: 1.15; margin: 0 0 10px; }
+.pp-body { margin: 0 0 18px; color: var(--ink-2); line-height: 1.6; }
+.pp-hint { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+.pp-hint:empty { display: none; }
+
+.pp-loading { display: flex; align-items: center; gap: 12px; color: var(--ink-2); min-height: 120px; }
+.pp-spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--line-2); border-top-color: var(--ink);
+  animation: pp-spin .8s linear infinite;
+}
+@keyframes pp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pp-spinner { animation: none; } }
+
+/* ---- amount + status ---- */
+/* Plain labels, not chips: the network tier and the status are text with a colour. */
+.pp-testnet { display: inline-block; margin: 0 0 14px; font-size: 13px; font-weight: 700; color: var(--accent); }
+.pp-amount { font-size: clamp(34px, 9vw, 52px); font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; margin: 0; overflow-wrap: anywhere; }
+.pp-msg { margin: 12px 0 0; font-size: 16px; overflow-wrap: anywhere; }
+
+.pp-status { margin: 20px 0 0; }
+.pp-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--ink); }
+.pp-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.pp-pill[data-phase="paid"] { color: var(--ok); }
+.pp-pill[data-phase="failed"], .pp-pill[data-phase="cancelled"] { color: var(--bad); }
+.pp-pill[data-phase="expired"] { color: var(--ink-2); }
+.pp-status .pp-body { margin: 10px 0 0; }
+
+/* ---- paying ---- */
+.pp-pay { margin: 22px 0 0; padding: 22px 0 0; border-top: 1px solid var(--line); text-align: center; }
+.pp-qr {
+  display: block; width: 240px; max-width: 100%; height: auto; margin: 0 auto 18px;
+  border-radius: var(--radius); background: #FFFFFF; padding: 10px; border: 1px solid var(--line);
+}
+.pp-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.pp-actions .btn { min-height: 44px; }
+
+/* ---- details ---- */
+.pp-details { margin: 22px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.pp-row { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.pp-row:last-child { border-bottom: 0; }
+.pp-row dt { font-size: 13.5px; color: var(--ink-2); padding-top: 2px; }
+.pp-row dd { margin: 0; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.pp-row-hint { flex-basis: 100%; margin: 0; }
+.pp-code { font-family: var(--ff-mono); font-size: 13.5px; overflow-wrap: anywhere; word-break: break-all; }
+.pp-copy {
+  font: 600 12.5px/1 var(--ff-sans); color: var(--ink); background: transparent;
+  border: 1px solid var(--line-2); border-radius: 999px; padding: 7px 12px; min-height: 28px;
+}
+.pp-copy:hover { border-color: var(--ink); }
+.pp-link { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 420px) {
+  .pp-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* ---- /pay ---- */
+.pp-block { margin: 0 0 18px; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); }
+.pp-block-plain { border: 0; padding: 0; }
+.pp-block h2 { font-size: 16px; margin: 0 0 10px; }
+.pp-block .pp-details { margin: 0; border-top: 0; }
+.pp-block .pp-actions { justify-content: flex-start; margin-top: 14px; }
+.pp-steps { margin: 0; padding-left: 20px; line-height: 1.8; font-size: 14.5px; color: var(--ink-2); }
+.pp-result {
+  margin: 12px 0 0; padding: 12px; border-radius: 10px; border: 1px solid var(--line);
+  font-size: 12.5px; white-space: pre-wrap; word-break: break-all;
+}
+
+/* ---- error pages ---- */
+.pp-error { text-align: center; }
+.pp-figure { display: block; width: 180px; height: auto; margin: 6px auto 22px; }

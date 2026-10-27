@@ -3,7 +3,7 @@ title: "Authentication"
 description: "Authenticate with a single API key; the network (testnet vs mainnet) is chosen automatically by the key prefix."
 ---
 
-Authentication is deliberately minimal: one secret API key, kept on your server. The key prefix also selects the Stellar network for you, so there is nothing else to configure. New here? See [how to get your API key](/api-keys).
+Authentication is deliberately minimal: one secret API key, kept on your server. The key prefix also selects testnet or mainnet for you, so there is nothing else to configure. New here? See [how to get your API key](/api-keys).
 
 **You only need your API key.** Everything else (gateway URL, API version) is
 part of the SDK's shared configuration, maintained by Cosmos Pay.
@@ -36,5 +36,5 @@ an `apiKey` for trusted prototypes, but never ship a production key to the brows
 
 ## References
 
-- [Client](/sdk/definitions/server/client) — The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
+- [Client](/sdk/definitions/server/client): The main entry point of the SDK — a single, atomic client that exposes every resource through its own manager — an atomic, single-client design.
 

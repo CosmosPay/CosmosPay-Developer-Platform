@@ -1,22 +1,41 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
+import { IcCopy } from "@/components/cosmos/icons";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { useT, fmt } from "@/lib/i18n/index";
 import { liquidity as liquidityApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
+import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
-import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
+import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { RecordDetail } from "@/components/cosmos/dashboard/components/RecordDetail";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { useCopy } from "@/components/cosmos/hooks/useCopy";
+import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
+import { explorerTxUrl, tierOf } from "@/lib/chains";
 
-const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
+const STATUSES = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "EXPIRED"];
+const KINDS = ["DEPOSIT", "WITHDRAW"];
+const DEFAULTS = { q: "", status: "all", kind: "all", date: "any" };
+const ALLOWED = { status: ["all", ...STATUSES], kind: ["all", ...KINDS], date: DATE_RANGES };
 const TERMINAL = ["SUCCEEDED", "FAILED"];
 
-/* "XLM / USDC" — the pool's asset pair. */
+/* "XLM / USDC": the pool's asset pair. */
 const pairLabel = (a, b) => `${assetLabel(a)} / ${assetLabel(b)}`;
 const poolShort = (id) => `${(id || "").slice(0, 8)}…`;
 const explorerTx = (o) => `https://stellar.expert/explorer/${o.network === "public" ? "public" : "testnet"}/tx/${o.txHash}`;
@@ -27,15 +46,15 @@ function opAmounts(o) {
   return `${pre}${o.amountA} ${assetLabel(o.assetA)} + ${pre}${o.amountB} ${assetLabel(o.assetB)}`;
 }
 
-export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
+export function LiquidityView({ canManage = true, canConnectWallets = false, orgId, env = "dev" }) {
   const t = useT();
   const lq = t.dash.liquidity;
   const [tab, setTab] = useState("operations");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("all");
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
+  const fl = t.dash.filters;
   const [modal, setModal] = useState(null); // { kind: 'deposit'|'withdraw', prefill? }
   const [detail, setDetail] = useState(null);
 
@@ -53,69 +72,110 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
       .then((res) => setRows(Array.isArray(res?.data) ? res.data : []))
       .catch(() => {});
   }, [env, orgId]);
-  usePolling(refresh, 8000);
+  usePolling(refresh, 8000, { immediate: false });
 
-  const view = rows.filter((o) => {
-    if (filter !== "all" && o.status !== filter) return false;
-    if (!q) return true;
-    const hay = `${o.id} ${o.source || ""} ${o.poolId || ""} ${o.assetA || ""} ${o.assetB || ""}`.toLowerCase();
-    return hay.includes(q.toLowerCase());
-  });
-  const pg = usePaged(view, q + "|" + filter);
+  // An operation named from elsewhere (a notification) opens once the list is here.
+  const [openId, clearOpen] = useUrlRequest("open");
+  useEffect(() => {
+    if (!openId || loading) return;
+    clearOpen();
+    setTab("operations");
+    const hit = rows.find((o) => o.id === openId);
+    if (hit) { setDetail(hit); return; }
+    liquidityApi.operation(openId, orgId, env).then((op) => { if (op && op.id) setDetail(op); else showToast(t.dash.common.notFound, "error"); }).catch(() => showToast(t.dash.common.notFound, "error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, loading]);
+
+  const matches = (o, skip) =>
+    (skip === "status" || filters.status === "all" || o.status === filters.status) &&
+    (skip === "kind" || filters.kind === "all" || o.kind === filters.kind) &&
+    inRange(o.createdAt, filters.date) &&
+    matchesQuery([o.id, o.source, o.poolId, o.assetA, o.assetB, o.txHash], filters.q);
+  const view = rows.filter((o) => matches(o, null));
+  const statusCounts = countBy(rows.filter((o) => matches(o, "status")), (o) => o.status);
+  const kindCounts = countBy(rows.filter((o) => matches(o, "kind")), (o) => o.kind);
+  const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
   const onCreated = (op) => { setModal(null); setRows((r) => [op, ...r]); setDetail(op); };
 
+  const actions = canManage && (
+    <>
+      <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>
+      <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setModal({ kind: "withdraw" })}>{lq.withdraw}</button>
+    </>
+  );
+
   return (
     <>
-      <ViewHead title={lq.title} sub={fmt(lq.sub, { n: rows.length })}>
-        {canManage && (
-          <>
-            <button className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>
-            <button className="btn btn-soft btn-sm" onClick={() => setModal({ kind: "withdraw" })}>{lq.withdraw}</button>
-          </>
-        )}
-      </ViewHead>
+      <ViewHead title={lq.title} />
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{lq.readOnly}</span></div>}
+      {/* Its own figures and chart: operations and the completed ones. */}
+      <ViewActivity env={env} metrics={["liquidity"]} id="liq-activity" />
 
-      <div className="filter-tabs">
-        {["operations", "pools", "positions"].map((k) => (
-          <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{lq.tabs[k]}</button>
-        ))}
+      {/* The sections. The view's two actions close each tab's filter row (product owner: the
+          view's buttons sit in the filter row, never on a row of their own). */}
+      <div className="tabs-row">
+        <div className="filter-tabs" role="group" aria-label={lq.title}>
+          {["operations", "pools", "positions"].map((k) => (
+            <button key={k} type="button" className={tab === k ? "on" : ""} aria-pressed={tab === k} onClick={() => setTab(k)}>{lq.tabs[k]}</button>
+          ))}
+        </div>
       </div>
 
       {tab === "operations" && (
         <>
-          <div className="filter-tabs">{FILTER_KEYS.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{lq.filters[k]}</button>)}</div>
+          <FilterBar
+            label={fl.label}
+            query={filters.q} onQuery={(v) => set("q", v)} placeholder={lq.searchPlaceholder}
+            status={{
+              label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+              options: [
+                { key: "all", label: lq.filters.all, count: rows.filter((o) => matches(o, "status")).length },
+                ...STATUSES.filter((st) => statusCounts[st] || filters.status === st).map((st) => ({ key: st, label: lq.status[st] || st, count: statusCounts[st] || 0, icon: <StatusIcon tone={paymentTone(st)} size={16} /> })),
+              ],
+            }}
+            selects={[{ key: "kind", label: fl.kind, value: filters.kind, onChange: (v) => set("kind", v), options: [{ key: "all", label: fl.allKinds }, ...KINDS.map((k) => ({ key: k, label: lq.kind[k] || k, count: kindCounts[k] || 0 }))] }]}
+            date={filters.date} onDate={(v) => set("date", v)}
+            active={active} onReset={reset}
+            shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+            actions={actions}
+          />
           <div className="panel">
-            <Toolbar q={q} setQ={setQ} placeholder={lq.searchPlaceholder}>
-              <span className="env-tag">{DI.network} {env === "prod" ? lq.network.prod : lq.network.dev}</span>
-            </Toolbar>
-            {!loading && !error && view.length > 0 && (
-              <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th></tr></thead>
-                <tbody>{pg.slice.map((o) => (
+            {!loading && (
+              <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{lq.opsHead.id}</th><th>{lq.opsHead.kind}</th><th>{lq.opsHead.pool}</th><th>{lq.opsHead.amounts}</th><th>{lq.opsHead.status}</th><th>{lq.opsHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+                <tbody>{!error && pg.slice.map((o) => (
                   <tr key={o.id} className="row-click" onClick={() => setDetail(o)}>
-                    <td className="tid">{o.id}</td>
-                    <td>{lq.kind[o.kind] || o.kind}</td>
-                    <td>{pairLabel(o.assetA, o.assetB)}</td>
+                    <td className="tid">
+                      <RecordLink
+                        href={`/dashboard?view=liquidity&open=${encodeURIComponent(o.id)}`} onOpen={() => setDetail(o)} copy={o.id}
+                        preview={() => <PreviewCard label={lq.opsHead.id} title={o.id} headline={<><b>{lq.kind[o.kind] || o.kind}</b><span className={`hub-st-t ${(STATUS_PILL[o.status] === "ok" ? "ok" : STATUS_PILL[o.status] === "fail" ? "fail" : "wait")}`}>{lq.status[o.status] || o.status}</span></>} fields={[[lq.opsHead.pool, pairLabel(o.assetA, o.assetB)], [lq.opsHead.amounts, o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)], [lq.opsHead.created, fmtDateTime(o.createdAt)]]} />}
+                       title={o.id}><code>{shortAddress(o.id)}</code></RecordLink>
+                    </td>
+                    <td className="cust">{lq.kind[o.kind] || o.kind}</td>
+                    <td><span className="cell-mark"><TokenMark symbol={assetLabel(o.assetA)} chain="stellar" chainName="Stellar" size={24} /><span>{pairLabel(o.assetA, o.assetB)}</span></span></td>
                     <td className="amt">{o.kind === "WITHDRAW" && o.shares ? `${o.shares} ${lq.sharesUnit}` : opAmounts(o)}</td>
-                    <td><Pill st={STATUS_PILL[o.status] || "ref"} label={lq.status[o.status] || o.status} /></td>
+                    <td><Pill st={STATUS_PILL[o.status] || "ref"} tone={paymentTone(o.status)} label={lq.status[o.status] || o.status} /></td>
                     <td className="cust">{fmtDateTime(o.createdAt)}</td>
+                    <LiqRowActions o={o} onView={() => setDetail(o)} />
                   </tr>
-                ))}</tbody>
+                ))}
+                  <FillRows
+                    n={pg.size - (error ? 0 : pg.count)} cols={7}
+                    empty={error ? lq.loadError : null}
+                  />
+                </tbody>
               </table></div>
             )}
-            {loading && <div className="empty">{lq.loading}</div>}
-            {!loading && error && <div className="empty">{lq.loadError}</div>}
-            {!loading && !error && !view.length && <div className="empty">{lq.empty}</div>}
-            {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+            {loading && <TableSkeleton label={lq.loading} cols={7} />}
+            {!loading && <Pagination {...pg} />}
           </div>
         </>
       )}
 
       {tab === "pools" && (
         <PoolsPanel
-          lq={lq} orgId={orgId} env={env} canManage={canManage}
+          lq={lq} orgId={orgId} env={env} canManage={canManage} actions={actions}
           onDeposit={(pool) => {
             const [ra, rb] = pool.reserves || [];
             setModal({
@@ -131,7 +191,7 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
 
       {tab === "positions" && (
         <PositionsPanel
-          lq={lq} orgId={orgId} env={env} canManage={canManage}
+          lq={lq} orgId={orgId} env={env} canManage={canManage} canConnectWallets={canConnectWallets} actions={actions}
           onWithdraw={(pos) => setModal({ kind: "withdraw", prefill: { poolId: pos.poolId, shares: pos.shares } })}
         />
       )}
@@ -144,7 +204,60 @@ export function LiquidityView({ canManage = true, orgId, env = "dev" }) {
 }
 
 /* ---------------- pools browser (Horizon proxy) ---------------- */
-function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
+/* An operation's actions: its detail, then its menu (a new tab, its id, its transaction). */
+function LiqRowActions({ o, onView }) {
+  const t = useT();
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  const tx = o.txHash ? explorerTxUrl("stellar", tierOf(o.network), o.txHash) : null;
+  // Waiting on its signature: the detail is where it is signed and sent.
+  const waiting = o.status === "PENDING";
+  return (
+    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+      <button type="button" className="icon-mini" title={cm.details} aria-label={cm.details} onClick={onView}>{DI.docs}</button>
+      {waiting && <button type="button" className="icon-mini" title={cm.continueOp} aria-label={`${cm.continueOp}: ${shortAddress(o.id)}`} onClick={onView}>{DI.key}</button>}
+      {tx
+        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={tx} target="_blank" rel="noopener noreferrer">{DI.network}</a>
+        : <button type="button" className="icon-mini" disabled title={cm.noTxYet} aria-label={`${t.dash.balances.explorer}: ${cm.noTxYet}`}>{DI.network}</button>}
+      <RowMenu
+        label={fmt(cm.rowActions, { name: shortAddress(o.id) })}
+        items={[
+          { key: "open", label: cm.details, icon: DI.docs, onClick: onView },
+          ...(waiting ? [{ key: "continue", label: cm.continueOp, icon: DI.key, onClick: onView }] : []),
+          { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=liquidity&open=${encodeURIComponent(o.id)}`, external: true },
+          { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(o.id, t.toasts.copied) },
+          { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: tx, external: true, disabled: !tx, hint: cm.noTxYet },
+        ]}
+      />
+    </td>
+  );
+}
+
+/* A pool's or a position's menu: its detail, its id, and the action its row offers. */
+function PoolMenu({ id, action, onOpen }) {
+  const t = useT();
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  return <RowMenu label={fmt(cm.rowActions, { name: shortAddress(id) })} items={[{ key: "open", label: cm.details, icon: DI.docs, onClick: onOpen }, ...(action ? [action] : []), { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(id, t.toasts.copied) }]} />;
+}
+
+/* A pool's or a position's detail: its figures as listed, its id to copy, and its row's action. */
+function PoolDetail({ title, eyebrow, id, fields, action, onClose }) {
+  const t = useT();
+  const [, copy] = useCopy();
+  return (
+    <RecordDetail
+      eyebrow={eyebrow} title={title} onClose={onClose}
+      fields={fields.map(([k, v]) => [k, v === null || v === undefined ? v : String(v)])}
+      actions={[
+        ...(action ? [{ ...action, kind: "dark" as const, onClick: () => { onClose(); action.onClick(); } }] : []),
+        { key: "copy", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => copy(id, t.toasts.copied) },
+      ]}
+    />
+  );
+}
+
+function PoolsPanel({ lq, orgId, env, canManage, onDeposit, actions = null }) {
   const t = useT();
   const p = lq.pools;
   const net = env === "prod" ? "public" : "testnet";
@@ -155,6 +268,11 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
   const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(null);
+  const pg = usePaged(pools, pools);
+  const reserves = (pool) => (pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ");
+  const nameOf = (pool) => (pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id));
+  const depositAction = (pool) => (canManage ? { key: "deposit", label: lq.deposit, icon: DI.plus, onClick: () => onDeposit(pool) } : null);
 
   const search = () => {
     if (loading) return;
@@ -170,8 +288,10 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
   useEffect(() => { search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="panel">
-      <div className="paylink-fields" style={{ marginBottom: 12 }}>
+    <>
+    {/* The lookup is the tab's filter row, with the view's buttons at its end. */}
+    <div className="fbar liq-lookup">
+      <div className="fbar-filters" role="search" aria-label={t.dash.filters.label}>
         <AssetSelect network={net} label={p.assetA} codeLabel={p.assetA} issuerLabel={p.assetAIssuer} hint={p.assetHint}
           code={assetACode} issuer={assetAIssuer} onCode={setAssetACode} onIssuer={setAssetAIssuer}
           customText={t.dash.common.assetCustom} anyText={t.dash.common.assetAny} allowAny codePlaceholder="XLM" />
@@ -182,69 +302,117 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
           <button className="btn btn-soft btn-sm" disabled={loading} onClick={search}>{loading ? p.searching : p.search}</button>
         </div>
       </div>
-      {loaded && pools.length > 0 && (
-        <div className="t-scroll"><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th>{canManage && <th />}</tr></thead>
-          <tbody>{pools.map((pool) => (
-            <tr key={pool.id}>
-              <td className="tid" title={pool.id}>{pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id)}</td>
+      {actions && <div className="fbar-actions">{actions}</div>}
+    </div>
+    <div className="panel">
+      {loaded && !loading && (
+        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <tbody>{pg.slice.map((pool) => (
+            <tr key={pool.id} className="row-click" onClick={() => setOpen(pool)}>
+              <td className="tid">
+                <RecordLink
+                  title={pool.id} copy={pool.id} onOpen={() => setOpen(pool)}
+                  preview={() => <PreviewCard label={p.head.pool} title={pool.id} wrap fields={[[p.head.reserves, (pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ") || "-"], [p.head.shares, pool.totalShares], [p.head.trustlines, pool.totalTrustlines], [p.head.fee, `${(pool.feeBp / 100).toFixed(2)}%`]]} />}
+                >{pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id)}</RecordLink>
+              </td>
               <td className="amt">{(pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>
               <td>{pool.totalShares}</td>
               <td>{pool.totalTrustlines}</td>
               <td>{(pool.feeBp / 100).toFixed(2)}%</td>
-              {canManage && <td><button className="btn btn-soft btn-sm" onClick={() => onDeposit(pool)}>{lq.deposit}</button></td>}
+              <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                <button type="button" className="icon-mini" title={t.dash.common.details} aria-label={t.dash.common.details} onClick={() => setOpen(pool)}>{DI.docs}</button>
+                {canManage && <button type="button" className="icon-mini" title={lq.deposit} aria-label={`${lq.deposit}: ${nameOf(pool)}`} onClick={() => onDeposit(pool)}>{DI.plus}</button>}
+                <PoolMenu id={pool.id} action={depositAction(pool)} onOpen={() => setOpen(pool)} />
+              </td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - pg.count} cols={6} />
+          </tbody>
         </table></div>
       )}
-      {loading && !loaded && <div className="empty">{p.loading}</div>}
-      {loaded && !pools.length && <div className="empty">{p.empty}</div>}
+      {loading && <TableSkeleton label={p.loading} cols={6} />}
+      {loaded && !loading && <Pagination {...pg} />}
+      {open && <PoolDetail eyebrow={p.head.pool} title={nameOf(open)} id={open.id} action={depositAction(open)} onClose={() => setOpen(null)}
+        fields={[[p.head.pool, open.id], [p.head.reserves, reserves(open)], [p.head.shares, open.totalShares], [p.head.trustlines, open.totalTrustlines], [p.head.fee, `${(open.feeBp / 100).toFixed(2)}%`]]} />}
     </div>
+    </>
   );
 }
 
-/* ---------------- positions (an account's pool shares) ---------------- */
-function PositionsPanel({ lq, orgId, env, canManage, onWithdraw }) {
+/* ---------------- positions (an account's pool shares) ----------------
+   The account is one of the organization's Stellar wallets (Settings), picked from the list as the
+   payment forms do; its positions load as soon as it is picked. */
+function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdraw, actions = null }) {
+  const t = useT();
   const p = lq.positions;
   const [account, setAccount] = useState("");
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(null);
+  const pg = usePaged(positions, positions);
+  // The latest request wins: picking another account while one loads drops the older answer.
+  const req = useRef(0);
 
   const valid = /^G[A-Z2-7]{55}$/.test(account.trim());
+  const redeemable = (pos) => (pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ");
+  const nameOf = (pos) => (pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId));
+  const withdrawAction = (pos) => (canManage ? { key: "withdraw", label: lq.withdraw, icon: DI.download, onClick: () => onWithdraw(pos) } : null);
 
-  const search = () => {
-    if (!valid || loading) return;
+  const search = (acct = account) => {
+    if (!/^G[A-Z2-7]{55}$/.test(acct.trim())) return;
+    const id = ++req.current;
     setLoading(true);
-    liquidityApi.positions(account.trim(), orgId, env)
-      .then((res) => { setPositions(Array.isArray(res?.data) ? res.data : []); setLoaded(true); })
-      .catch((err) => showToast((err && err.message) || p.error, "error"))
-      .finally(() => setLoading(false));
+    liquidityApi.positions(acct.trim(), orgId, env)
+      .then((res) => { if (id === req.current) { setPositions(Array.isArray(res?.data) ? res.data : []); setLoaded(true); } })
+      .catch((err) => { if (id === req.current) showToast((err && err.message) || p.error, "error"); })
+      .finally(() => { if (id === req.current) setLoading(false); });
   };
 
   return (
-    <div className="panel">
-      <div className="paylink-fields" style={{ marginBottom: 12 }}>
-        <Field label={p.account} hint={p.accountHint} value={account} onChange={(e) => setAccount(e.target.value)} placeholder="G…" />
+    <>
+    {/* The lookup is the tab's filter row, with the view's buttons at its end. */}
+    <div className="fbar liq-lookup">
+      <div className="fbar-filters" role="search" aria-label={t.dash.filters.label}>
+        <WalletSelect
+          orgId={orgId} chain="stellar" id="lq-positions-account" label={p.account} canConnect={canConnectWallets}
+          value={account} onChange={(a) => { setAccount(a); setLoaded(false); search(a); }}
+        />
         <div className="paylink-actions">
-          <button className="btn btn-soft btn-sm" disabled={!valid || loading} onClick={search}>{loading ? p.loadingBtn : p.load}</button>
+          <button className="btn btn-soft btn-sm" disabled={!valid || loading} onClick={() => search()}>{loading ? p.loadingBtn : p.load}</button>
         </div>
       </div>
-      {loaded && positions.length > 0 && (
-        <div className="t-scroll"><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th>{canManage && <th />}</tr></thead>
-          <tbody>{positions.map((pos) => (
-            <tr key={pos.poolId}>
-              <td className="tid" title={pos.poolId}>{pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId)}</td>
+      {actions && <div className="fbar-actions">{actions}</div>}
+    </div>
+    <div className="panel">
+      {/* Until an account is picked the table waits, empty, saying what it needs. */}
+      <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <tbody>{loaded && pg.slice.map((pos) => (
+            <tr key={pos.poolId} className="row-click" onClick={() => setOpen(pos)}>
+              <td className="tid">
+                <RecordLink
+                  title={pos.poolId} copy={pos.poolId} onOpen={() => setOpen(pos)}
+                  preview={() => <PreviewCard label={p.head.pool} title={pos.poolId} wrap fields={[[p.head.shares, pos.shares], [p.head.share, `${(pos.shareOfPoolBps / 100).toFixed(2)}%`], [p.head.redeemable, (pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ") || "-"]]} />}
+                >{pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId)}</RecordLink>
+              </td>
               <td className="amt">{pos.shares}</td>
               <td>{(pos.shareOfPoolBps / 100).toFixed(2)}%</td>
               <td className="amt">{(pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>
-              {canManage && <td><button className="btn btn-soft btn-sm" onClick={() => onWithdraw(pos)}>{lq.withdraw}</button></td>}
+              <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                <button type="button" className="icon-mini" title={t.dash.common.details} aria-label={t.dash.common.details} onClick={() => setOpen(pos)}>{DI.docs}</button>
+                {canManage && <button type="button" className="icon-mini" title={lq.withdraw} aria-label={`${lq.withdraw}: ${nameOf(pos)}`} onClick={() => onWithdraw(pos)}>{DI.download}</button>}
+                <PoolMenu id={pos.poolId} action={withdrawAction(pos)} onOpen={() => setOpen(pos)} />
+              </td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (loaded ? pg.count : 0)} cols={5} />
+          </tbody>
         </table></div>
-      )}
-      {loaded && !positions.length && <div className="empty">{p.empty}</div>}
-      {!loaded && <div className="empty">{p.prompt}</div>}
+      <Pagination {...pg} />
+      {open && <PoolDetail eyebrow={p.head.pool} title={nameOf(open)} id={open.poolId} action={withdrawAction(open)} onClose={() => setOpen(null)}
+        fields={[[p.head.pool, open.poolId], [p.head.shares, open.shares], [p.head.share, `${(open.shareOfPoolBps / 100).toFixed(2)}%`], [p.head.redeemable, redeemable(open)]]} />}
     </div>
+    </>
   );
 }
 
@@ -289,27 +457,35 @@ function DepositModal({ lq, orgId, env, prefill, onClose, onCreated }) {
       .finally(() => setBusy(false));
   };
 
+  /* Two steps (product owner, 2026-10-27: a long form goes in steps): the account and the pool's
+     pair, then how much goes in and the slippage. */
+  const steps = useFormSteps(2);
+  const pairOk = !!source.trim() && (!needsIssuerA || !!assetAIssuer.trim()) && (!needsIssuerB || !!assetBIssuer.trim());
+
   return (
     <Modal onClose={onClose}>
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.depositTitle}</h3>
-        <p>{m.depositDesc}</p>
-        <Field label={m.source} hint={m.sourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
-        <AssetSelect network={net} label={m.assetA} codeLabel={m.assetA} issuerLabel={m.assetAIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
-          code={assetACode} issuer={assetAIssuer} onCode={setAssetACode} onIssuer={setAssetAIssuer}
-          customText={t.dash.common.assetCustom} codePlaceholder="XLM" />
-        <AssetSelect network={net} label={m.assetB} codeLabel={m.assetB} issuerLabel={m.assetBIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
-          code={assetBCode} issuer={assetBIssuer} onCode={setAssetBCode} onIssuer={setAssetBIssuer}
-          customText={t.dash.common.assetCustom} codePlaceholder="USDC" />
-        <Field label={m.maxAmountA} hint={m.maxAmountAHint} value={maxAmountA} onChange={(e) => setMaxAmountA(e.target.value)} placeholder="1000" inputMode="decimal" />
-        <Field label={m.maxAmountB} hint={m.maxAmountBHint} value={maxAmountB} onChange={(e) => setMaxAmountB(e.target.value)} placeholder="100" inputMode="decimal" />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
-        <p className="field-note">{m.trustNote}</p>
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        <FormSteps names={[m.steps.pair, m.steps.amounts]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <p className="field-help">{m.depositDesc}</p>
+            <Field label={m.source} hint={m.sourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
+            <AssetSelect network={net} label={m.assetA} codeLabel={m.assetA} issuerLabel={m.assetAIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
+              code={assetACode} issuer={assetAIssuer} onCode={setAssetACode} onIssuer={setAssetAIssuer}
+              customText={t.dash.common.assetCustom} codePlaceholder="XLM" />
+            <AssetSelect network={net} label={m.assetB} codeLabel={m.assetB} issuerLabel={m.assetBIssuer} hint={m.assetHint} issuerHint={m.issuerHint}
+              code={assetBCode} issuer={assetBIssuer} onCode={setAssetBCode} onIssuer={setAssetBIssuer}
+              customText={t.dash.common.assetCustom} codePlaceholder="USDC" />
+          </>)}
+          {steps.step === 1 && (<>
+            <Field label={m.maxAmountA} hint={m.maxAmountAHint} value={maxAmountA} onChange={(e) => setMaxAmountA(e.target.value)} placeholder="1000" inputMode="decimal" />
+            <Field label={m.maxAmountB} hint={m.maxAmountBHint} value={maxAmountB} onChange={(e) => setMaxAmountB(e.target.value)} placeholder="100" inputMode="decimal" />
+            <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
+          </>)}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={pairOk} onCancel={onClose} submitLabel={busy ? m.creating : m.create} onSubmit={submit} busy={busy} submitDisabled={!canCreate} />
       </div>
     </Modal>
   );
@@ -325,7 +501,11 @@ function WithdrawModal({ lq, orgId, env, prefill, onClose, onCreated }) {
   const [slippageBps, setSlippageBps] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const canCreate = source.trim() && /^[0-9a-f]{64}$/.test(poolId.trim()) && shares.trim();
+  const positionOk = !!source.trim() && /^[0-9a-f]{64}$/.test(poolId.trim());
+  const canCreate = positionOk && shares.trim();
+  /* Two steps, as the deposit (product owner, 2026-10-27: a long form goes in steps): the position
+     (the account holding the shares and the pool), then how many shares go and the slippage. */
+  const steps = useFormSteps(2);
 
   const submit = () => {
     if (!canCreate || busy) return;
@@ -348,16 +528,19 @@ function WithdrawModal({ lq, orgId, env, prefill, onClose, onCreated }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.withdrawTitle}</h3>
-        <p>{m.withdrawDesc}</p>
-        <Field label={m.source} hint={m.withdrawSourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
-        <Field label={m.poolId} hint={m.poolIdHint} value={poolId} onChange={(e) => setPoolId(e.target.value)} placeholder="dd7b1ab8…" />
-        <Field label={m.shares} hint={m.sharesHint} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="50" inputMode="decimal" />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
-        <p className="field-note">{m.commissionNote}</p>
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        <FormSteps names={[m.steps.position, m.steps.amounts]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <p className="field-help">{m.withdrawDesc}</p>
+            <Field label={m.source} hint={m.withdrawSourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
+            <Field label={m.poolId} hint={m.poolIdHint} value={poolId} onChange={(e) => setPoolId(e.target.value)} placeholder="dd7b1ab8…" />
+          </>)}
+          {steps.step === 1 && (<>
+            <Field label={m.shares} hint={m.sharesHint} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="50" inputMode="decimal" />
+            <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
+          </>)}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={positionOk} onCancel={onClose} submitLabel={busy ? m.creating : m.create} onSubmit={submit} busy={busy} submitDisabled={!canCreate} />
       </div>
     </Modal>
   );
@@ -390,11 +573,12 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
     return () => { alive = false; clearInterval(h); };
   }, [op.id, orgId, env, data.status]);
 
-  const submit = () => {
-    if (!signed.trim() || busy) return;
+  // The signed envelope comes from Freighter or from the paste box.
+  const submit = (signedXdr = signed.trim()) => {
+    if (!signedXdr || busy) return;
     setBusy(true);
     setOutcome(null);
-    liquidityApi.submit(op.id, orgId, env, signed.trim())
+    liquidityApi.submit(op.id, orgId, env, signedXdr)
       .then((res) => {
         setOutcome(res || {});
         if (res && res.operation) setData((cur) => ({ ...cur, ...res.operation }));
@@ -422,13 +606,22 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
     [F.created, fmtDateTime(data.createdAt)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
-  const isTerminal = TERMINAL.includes(data.status);
+  // Only a built, unsigned operation can be signed.
+  const signable = canManage && !!data.xdr && data.status === "PENDING";
+  const w = useT().dash.wallet;
 
   return (
     <Modal onClose={onClose}>
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{d.eyebrow}</div>
         <h3>{data.kind === "WITHDRAW" ? d.titleWithdraw : d.titleDeposit}</h3>
+
+        {signable && (
+          <div className="paylink-block">
+            <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
+            <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
+          </div>
+        )}
 
         {data.qr && (
           <div className="paylink-qr-wrap">
@@ -453,14 +646,14 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
           {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
         </div>
 
-        {/* Submit the signed transaction (only while the operation is not yet terminal). */}
-        {canManage && data.xdr && !isTerminal && (
+        {/* Or a transaction signed in another wallet, pasted back. */}
+        {signable && (
           <div className="paylink-block">
-            <div className="paylink-block-head"><label className="field-l">{d.submitTitle}</label></div>
+            <div className="paylink-block-head"><label className="field-l" htmlFor={`liq-signed-${data.id}`}>{d.submitTitle}</label></div>
             <p className="field-note">{d.submitDesc}</p>
-            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
+            <textarea id={`liq-signed-${data.id}`} className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
             <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={submit}>{busy ? d.submitting : d.submit}</button>
+              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={() => submit()}>{busy ? d.submitting : d.submit}</button>
             </div>
           </div>
         )}

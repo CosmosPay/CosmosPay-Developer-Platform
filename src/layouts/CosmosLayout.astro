@@ -1,8 +1,13 @@
 ---
+import { messages } from "@/lib/i18n/messages/index";
 import "@/styles/cosmos.css";
 import "@/styles/views.css";
 import "@/styles/onboarding.css";
+import "@/styles/institutional.css";
 import { PUBLIC_GA_ID, PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
+import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
+import SiteNav from "@/components/cosmos/layout/SiteNav";
+import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 
 interface Props {
   title?: string;
@@ -12,35 +17,45 @@ interface Props {
   image?: string;
   /** Set true on private/auth pages so search engines don't index them. */
   noindex?: boolean;
-  /** Open Graph type — "website" for marketing pages, "article" for posts. */
+  /** Open Graph type: "website" for marketing pages, "article" for posts. */
   type?: string;
   /** Solo la landing: precarga la cinta del hero, la imagen mas grande sobre la linea de flotacion. */
   preloadCinta?: boolean;
+  /** The general nav bar, on every view. Off only where the page's own React tree renders
+   *  <Nav> (Landing, Pricing, Dashboard), so it is never drawn twice. */
+  nav?: boolean;
+  /** A skin class for <body>; "inst" puts the page on the institutional skin (the dashboard). */
+  bodyClass?: string;
 }
 
 const {
-  title = "Cosmos Pay — Developer Platform",
+  title = "Cosmos Pay Developer Platform",
   lang,
-  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API — Stellar SEP-7 payment intents, webhooks, products, customers and analytics.",
+  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API (multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers and analytics).",
   image = "/og-image.png",
   noindex = false,
   type = "website",
   preloadCinta = false,
+  nav = true,
+  bodyClass,
 } = Astro.props;
 
 // Locale comes from the cookie (set by the in-app language switcher) so SSR and the
 // first client render agree. Defaults to English.
 const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const skipLabel = ((messages as Record<string, typeof messages.en>)[locale] ?? messages.en).ui.skipToContent;
 
-// Absolute URLs for canonical + social cards. Astro.site is set in astro.config.mjs.
-const siteBase = Astro.site ?? new URL("https://dev.cosmospay.lat");
-const canonical = new URL(Astro.url.pathname, siteBase).href;
+// Absolute URLs for canonical + social cards, on the domain this page is served as and at
+// its public path: the company pages render from /site/* behind a rewrite (src/lib/hosts.ts).
+const areaOrigin = { site: SITE, dev: DEV, payments: PAYMENTS }[Astro.locals.area ?? "dev"];
+const siteBase = new URL(areaOrigin || Astro.site || "https://dev.cosmospay.lat");
+const canonical = new URL(Astro.locals.publicPath ?? Astro.url.pathname, siteBase).href;
 const ogImage = new URL(image, siteBase).href;
 const robots = noindex ? "noindex, nofollow" : "index, follow";
 const gaId = PUBLIC_GA_ID;
 const googleSiteVerification = PUBLIC_GOOGLE_SITE_VERIFICATION;
 
-// Structured data (skipped on noindex pages — search engines ignore them anyway).
+// Structured data (skipped on noindex pages; search engines ignore them anyway).
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -52,7 +67,7 @@ const jsonLd = {
     },
     {
       "@type": "WebSite",
-      name: "Cosmos Pay — Developer Platform",
+      name: Astro.locals.area === "site" ? "Cosmos Pay" : "Cosmos Pay Developer Platform",
       url: siteBase.origin,
     },
   ],
@@ -133,7 +148,7 @@ const jsonLd = {
       </Fragment>
     )}
     <style>
-      /* Keyboard skip-to-content link — visually hidden until focused. */
+      /* Keyboard skip-to-content link, visually hidden until focused. */
       .skip-link {
         position: absolute;
         left: -9999px;
@@ -150,8 +165,25 @@ const jsonLd = {
       }
     </style>
   </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main">{skipLabel}</a>
+    {nav && (
+      <SiteNav
+        client:load
+        lang={locale}
+        user={Astro.locals.user ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image } : null}
+        session={Astro.locals.area !== "payments"}
+        area={Astro.locals.area === "site" ? "site" : undefined}
+      />
+    )}
     <slot />
+
+    <script>
+      // The snap's ink fill on every button (src/scripts/ink.ts).
+      import { installInk } from "@/scripts/ink";
+
+      installInk();
+    </script>
+    <BackToTop lang={locale} />
   </body>
 </html>

@@ -2,7 +2,7 @@
 
 A [Fumadocs](https://fumadocs.dev) (Next.js, static export) subproject that documents both
 the **Cosmos Pay SDK** and the **Payments REST API**. It is built as a static site and
-mounted at **`dev.cosmospay.lat/docs`** by the Astro portal — one repo, one deploy.
+mounted at **`dev.cosmospay.lat/docs`** by the Astro portal: one repo, one deploy.
 
 ## How it fits together
 

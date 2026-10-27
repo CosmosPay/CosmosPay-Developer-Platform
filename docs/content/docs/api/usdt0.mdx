@@ -1,0 +1,110 @@
+---
+title: "USDT0 Transfers"
+description: 'USDT0 out of Stellar through LayerZero: quote, build the Soroban
+  transaction the holder signs, submit it and follow the message to its
+  destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only.'
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: The networks USDT0 can be sent to from Stellar, with what arrives there
+        (mainnet only)
+      url: '#the-networks-usdt0-can-be-sent-to-from-stellar-with-what-arrives-there-mainnet-only'
+    - depth: 2
+      title: 'Quote a USDT0 transfer from Stellar: what arrives, the dust, and
+        LayerZero’s fee in XLM; persists nothing'
+      url: '#quote-a-usdt0-transfer-from-stellar-what-arrives-the-dust-and-layerzeros-fee-in-xlm-persists-nothing'
+    - depth: 2
+      title: List the consumer's USDT0 transfers (not on the shared public key)
+      url: '#list-the-consumers-usdt0-transfers-not-on-the-shared-public-key'
+    - depth: 2
+      title: Create a USDT0 transfer from Stellar → the unsigned Soroban transaction
+        to sign (XDR + SEP-7 link)
+      url: '#create-a-usdt0-transfer-from-stellar--the-unsigned-soroban-transaction-to-sign-xdr--sep-7-link'
+    - depth: 2
+      title: Get a USDT0 transfer by id, refreshed from the Stellar ledger and
+        LayerZero Scan
+      url: '#get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-layerzero-scan'
+    - depth: 2
+      title: Relay the signed USDT0 transaction to Stellar mainnet (checked against
+        the one built) and wait for the ledger
+      url: '#relay-the-signed-usdt0-transaction-to-stellar-mainnet-checked-against-the-one-built-and-wait-for-the-ledger'
+  structuredData:
+    headings:
+      - content: The networks USDT0 can be sent to from Stellar, with what arrives there
+          (mainnet only)
+        id: the-networks-usdt0-can-be-sent-to-from-stellar-with-what-arrives-there-mainnet-only
+      - content: 'Quote a USDT0 transfer from Stellar: what arrives, the dust, and
+          LayerZero’s fee in XLM; persists nothing'
+        id: quote-a-usdt0-transfer-from-stellar-what-arrives-the-dust-and-layerzeros-fee-in-xlm-persists-nothing
+      - content: List the consumer's USDT0 transfers (not on the shared public key)
+        id: list-the-consumers-usdt0-transfers-not-on-the-shared-public-key
+      - content: Create a USDT0 transfer from Stellar → the unsigned Soroban transaction
+          to sign (XDR + SEP-7 link)
+        id: create-a-usdt0-transfer-from-stellar--the-unsigned-soroban-transaction-to-sign-xdr--sep-7-link
+      - content: Get a USDT0 transfer by id, refreshed from the Stellar ledger and
+          LayerZero Scan
+        id: get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-layerzero-scan
+      - content: Relay the signed USDT0 transaction to Stellar mainnet (checked against
+          the one built) and wait for the ledger
+        id: relay-the-signed-usdt0-transaction-to-stellar-mainnet-checked-against-the-one-built-and-wait-for-the-ledger
+    contents:
+      - content: 'USDT0 is Tether’s omnichain USDT. From Stellar it travels through
+          LayerZero’s OFT: Ethereum receives native USDT (Tether’s OFT adapter
+          unlocks it), every other network receives USDT0. All routes take an
+          EVM recipient. USDT0 exists on Stellar mainnet only: a dev (testnet)
+          key gets `available: false` and no routes.'
+        heading: the-networks-usdt0-can-be-sent-to-from-stellar-with-what-arrives-there-mainnet-only
+      - content: Simulates the OFT’s `quote_oft` and `quote_send` on Stellar mainnet.
+          The OFT carries 6 decimals and the asset has 7, so the 7th is `dust`
+          that stays in the account. `nativeFee` is LayerZero’s fee, paid in XLM
+          on top of the USDT0; `nativeFeeLimit` is what a transfer built now
+          would offer (20% more, the excess refunded in the same transaction).
+          Mainnet only.
+        heading: quote-a-usdt0-transfer-from-stellar-what-arrives-the-dust-and-layerzeros-fee-in-xlm-persists-nothing
+      - content: Answers from this service’s own table, as last refreshed; read one
+          transfer to refresh it. Refused to the shared public key, which is
+          every anonymous caller at once.
+        heading: list-the-consumers-usdt0-transfers-not-on-the-shared-public-key
+      - content: 'Builds `send` on USDT0’s LayerZero OFT: it burns the USDT0 on Stellar
+          and LayerZero delivers it to `recipient`, as native USDT on Ethereum
+          and as USDT0 elsewhere. The source signs one transaction (Freighter,
+          or the SEP-7 `uri`) and pays two fees in XLM: LayerZero’s
+          (`nativeFeeLimit` is offered, the unused part refunded in the same
+          transaction) and the network’s (`networkFee`). A 7th decimal of
+          `amount` is `dust` and stays in the account. No Cosmos Pay commission
+          is charged. Mainnet only. Submit the signed XDR to `POST
+          /v1/usdt0/transfers/{id}/submit`, then follow `GET
+          /v1/usdt0/transfers/{id}`.'
+        heading: create-a-usdt0-transfer-from-stellar--the-unsigned-soroban-transaction-to-sign-xdr--sep-7-link
+      - content: 'While PENDING or SUBMITTED, a read asks the Stellar ledger (a wallet
+          may have broadcast the transaction itself) and LayerZero Scan, at most
+          once every 15 seconds per transfer, and moves it to SUBMITTED,
+          DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery
+          takes about 27 minutes on every route: LayerZero’s verifiers wait for
+          Stellar confirmations. The shared public key may call it, but only
+          with the transfer’s `publicToken` in `X-Record-Token`: without it, or
+          with another transfer’s, the answer is 404. Every other key reads its
+          own transfers as before.'
+        heading: get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-layerzero-scan
+      - content: 'The signed XDR must hash to the transfer’s transaction and carry a
+          signature. Accepted and applied: SUBMITTED, with LayerZero’s `guid`.
+          Applied and failed: FAILED. Refused by the network: the transfer stays
+          PENDING (`submitted: false`, `reason`) and can be submitted again
+          until it expires. Waits up to 30 seconds for the ledger.'
+        heading: relay-the-signed-usdt0-transaction-to-stellar-mainnet-checked-against-the-one-built-and-wait-for-the-ledger
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/usdt0/routes","method":"get"},{"path":"/v1/usdt0/quote","method":"post"},{"path":"/v1/usdt0/transfers","method":"get"},{"path":"/v1/usdt0/transfers","method":"post"},{"path":"/v1/usdt0/transfers/{id}","method":"get"},{"path":"/v1/usdt0/transfers/{id}/submit","method":"post"}]} showTitle />
+    </>
+  );
+}

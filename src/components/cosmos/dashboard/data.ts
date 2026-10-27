@@ -1,9 +1,12 @@
 /* Mock datasets + display constants for the dashboard. All data is mock/sample
    (client-side); values are intentionally not translated. */
+import { PLAN_IDS } from "@/lib/plans";
 
-export const PAGE_SIZE = 8;
+/* Rows per page: every table offers these, at most 50 (product owner); 10 until the viewer picks. */
+export const PAGE_SIZES = [10, 20, 50];
+export const PAGE_SIZE = 10;
 
-/* ---------------- datasets (mock — values not translated) ---------------- */
+/* ---------------- datasets (mock; values not translated) ---------------- */
 export const VOL = [38,41,40,45,43,49,52,48,55,58,54,62,60,67,71,68,74,79,83,80,88,92,96,94,101,108,112,118,124,128];
 export const METRICS = [
   { k: "gross", v: "$128,430", c: "+12.4%", up: true, d: [40,44,42,50,55,60,72,90,128] },
@@ -53,8 +56,8 @@ export const BALANCES = [
 ];
 /* product rows: [name, price, typeKey, statusKey, statusLabel] */
 export const PRODUCTS0 = [
-  ["Pro plan — monthly", "49.00 USDC", "Recurring", "ok", "Active"],
-  ["Pro plan — yearly", "490.00 USDC", "Recurring", "ok", "Active"],
+  ["Pro plan (monthly)", "49.00 USDC", "Recurring", "ok", "Active"],
+  ["Pro plan (yearly)", "490.00 USDC", "Recurring", "ok", "Active"],
   ["One-time setup", "250.00 USDC", "One-time", "ok", "Active"],
   ["Donation link", "Customer-set", "Payment link", "ok", "Active"],
 ];
@@ -69,7 +72,7 @@ export const DELIVERIES = [
   ["payment.failed", "fail", "500", "1 hour ago"],
   ["customer.created", "ok", "200", "2 hours ago"],
 ];
-/* activity rows: [iconKey, detail, when] — title comes from the catalog by iconKey */
+/* activity rows: [iconKey, detail, when]; title comes from the catalog by iconKey */
 export const ACTS = [
   ["key", "sk_live_ ••• 4f2a", "1h"],
   ["webhook", "payment.succeeded", "2h"],
@@ -80,21 +83,54 @@ export const ACTS = [
 /* ---------------- display constants ---------------- */
 export const PERM_OPTIONS = ["read", "write"];
 /* Plan price tags now live in the shared plan specs: import { PLAN_PRICE } from "@/lib/plans". */
-/* Admin: assign roles + plans to accounts (owner/admin only). */
+/* Admin: assign roles + plans to accounts (owner/admin only). Only offered plans are
+   assignable; an account still on a legacy plan shows it in its own row (UsersView). */
 export const ROLE_OPTIONS = ["user", "support", "admin", "owner"];
-export const PLAN_OPTIONS = ["community", "starter", "essentials", "growth", "enterprise"];
+export const PLAN_OPTIONS = PLAN_IDS;
 
 /* ---------------- shell config ---------------- */
-export const SIDE = [
-  { sec: "Platform", items: ["overview", "payments", "balances", "customers", "products", "swaps", "crossChainSwaps", "liquidity", "blindpay"] },
-  { sec: "Build", items: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
-  { sec: "Support", items: ["support", "inbox"] },
-  { sec: "Account", items: ["activity", "settings", "account"] },
-  { sec: "Admin", items: ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"] },
+/* The sidebar, after the product owner's gateway-dashboard reference: a main menu and a
+   preferences section. An entry is a view (`view`) or a group (`group`, with its views as a
+   tree under it; the group's first view is where its own label leads). Labels are
+   t.dash.sidebar.items[view] and t.dash.sidebar.groups[group]. */
+export type SideEntry = { view: string } | { group: string; views: string[] };
+export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[] }[] = [
+  {
+    sec: "main",
+    entries: [
+      { view: "overview" },
+      { group: "payments", views: ["payments", "zkPayments", "zkAccounts", "customers", "products"] },
+      { view: "balances" },
+      { group: "swaps", views: ["swaps", "liquidity"] },
+      { view: "blindpay" },
+      { group: "developers", views: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
+    ],
+  },
+  {
+    sec: "preferences",
+    entries: [
+      { group: "settings", views: ["settings", "account"] },
+      { view: "activity" },
+      { group: "help", views: ["support", "inbox"] },
+    ],
+  },
+  {
+    sec: "Admin",
+    entries: [{ group: "admin", views: ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"] }],
+  },
 ];
+/* Views switched off for now (product owner, 2026-10-25: Fiat is disabled temporarily). They leave
+   the sidebar and the search, and a link to one (?view=blindpay from the KYC return) opens the
+   overview. The platform-admin Fiat list goes with the organizations' one (its API answers 404
+   while the BlindPay plugin is off). Delete the entries to bring the views back. */
+export const DISABLED_VIEWS = ["blindpay", "adminFiat"];
+
+/* Records shown on a view of their own (`?view=<record>&id=<id>`), with the list each belongs to:
+   the sidebar marks that list, and the record's "all" link returns to it. */
+export const RECORD_VIEWS: Record<string, string> = { payment: "payments" };
 export const STAFF_ROLES = ["owner", "admin", "support"];
 export const MANAGER_ROLES = ["owner", "admin"];
 export const STAFF_ONLY = ["inbox"];   // visible to owner/admin/support
 export const MANAGER_ONLY = [];        // (user management moved to the Admin section / OWNER_ONLY)
-// Platform-admin (cross-organization) views + user management — owner/admin account role only.
+// Platform-admin (cross-organization) views + user management: owner/admin account role only.
 export const OWNER_ONLY = ["adminOverview", "adminPayments", "adminSwaps", "adminFiat", "adminCustomers", "adminProducts", "adminConsumers", "users"];

@@ -1,6 +1,6 @@
 import { IcCheck } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { PLAN_IDS, PLAN_SPECS } from "@/lib/plans.ts";
+import { PLAN_IDS, PLAN_SPECS, swapFeePct, ESCROW_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT } from "@/lib/plans.ts";
 
 export function CompareSection() {
   const t = useT();
@@ -12,7 +12,16 @@ export function CompareSection() {
   const orgsRow = { l: p.orgsRow, v: PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxOrgs)) };
   const seatsRow = { l: p.seatsRow, v: PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxSeats)) };
   const keysRow = { l: p.keysRow, v: PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxApiKeys)) };
-  const rows = [...p.compare, orgsRow, seatsRow, keysRow];
+  // Each service's rate sits under the payment fee (the second row of p.compare), also from the
+  // specs; the merchant's own fee on each operation is on every plan.
+  const rates = p.ratesRows;
+  const rateRows = [
+    { l: rates.swaps, v: PLAN_IDS.map((id) => swapFeePct(id)) },
+    { l: rates.escrow, v: PLAN_IDS.map(() => `+${ESCROW_FEE_PCT}%`) },
+    { l: rates.privatePayments, v: PLAN_IDS.map(() => `${PRIVATE_PAYMENT_FEE_PCT}%`) },
+    { l: rates.ownFee, v: PLAN_IDS.map(() => 1) },
+  ];
+  const rows = [...p.compare.slice(0, 2), ...rateRows, ...p.compare.slice(2), orgsRow, seatsRow, keysRow];
   return (
     <section className="lp-panel compare-panel" data-panel="white">
       <div className="wrap compare">
@@ -26,7 +35,7 @@ export function CompareSection() {
             <tr key={row.l}>
               <th>{row.l}</th>
               {row.v.map((c, j) => (
-                <td key={j} className={c === 1 ? "yes" : ""}>{c === 1 ? <IcCheck /> : c === 0 ? "—" : c}</td>
+                <td key={j} className={c === 1 ? "yes" : ""}>{c === 1 ? <IcCheck /> : c === 0 ? "-" : c}</td>
               ))}
             </tr>
           ))}

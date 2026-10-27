@@ -1,11 +1,12 @@
-/* Onboarding.jsx — create-organization wizard (Organization → Goals → Plan → Review).
+/* Onboarding.jsx: create-organization wizard (Organization → Goals → Plan → Review).
    Ported from the Cosmos Pay Design "onboarding" handoff; restyled to the project's
    own tokens (acento de marca, sin monospace) and fully i18n'd. */
 import { useState, useEffect } from "react";
-import { CosmosLockup, IcArrow, IcSun, IcMoon, useTheme, useMounted, LangSelect } from "@/components/cosmos/shared";
+import { CosmosLockup, IcArrow, IcSun, IcMoon, useTheme, useMounted, LangSelect, HOME } from "@/components/cosmos/shared";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { organizations, account } from "@/lib/api-client";
-import { VOL_REC } from "./onboarding/data";
+import { VOL_REC, PLAN_IDS as ONBOARDING_PLAN_IDS } from "@/components/cosmos/onboarding/data";
+import { DEFAULT_PLAN_ID } from "@/lib/plans";
 import { I } from "./onboarding/icons";
 import { Stepper } from "./onboarding/Stepper";
 import { SpecPanel } from "./onboarding/SpecPanel";
@@ -17,7 +18,7 @@ import { ReviewStep } from "./onboarding/steps/ReviewStep";
 export default function Onboarding({ lang, features }) {
   initLang(lang);
   const [theme, setTheme] = useTheme();
-  /* mismo motivo que en ThemeToggle: el icono del tema no se pinta en el SSR */
+  /* el icono del tema depende de localStorage, que el servidor no ve: no se pinta en el SSR */
   const mounted = useMounted();
   const t = useT();
   const ob = t.onboarding;
@@ -25,8 +26,10 @@ export default function Onboarding({ lang, features }) {
   // Plan selection follows the env flags: locked to the default plan unless plan
   // changes are allowed and more than one plan is enabled.
   const feat = features || {};
-  const enabledPlans = feat.enabledPlans;
-  const defaultPlan = feat.defaultPlan || "community";
+  // Only the plans the wizard has cards for (its PLAN_IDS); the others are picked later
+  // from the dashboard.
+  const enabledPlans = Array.isArray(feat.enabledPlans) ? feat.enabledPlans.filter((id: string) => ONBOARDING_PLAN_IDS.includes(id)) : undefined;
+  const defaultPlan = ONBOARDING_PLAN_IDS.includes(feat.defaultPlan) ? feat.defaultPlan : DEFAULT_PLAN_ID;
   const planSelectable = (feat.plansEnabled ?? true) && (feat.allowUserPlanChanges ?? true) && (!enabledPlans || enabledPlans.length > 1);
   const planOptions = planSelectable ? (enabledPlans && enabledPlans.length ? enabledPlans : undefined) : [defaultPlan];
 
@@ -72,11 +75,11 @@ export default function Onboarding({ lang, features }) {
     <div className="ob">
       <section className="ob-left">
         <div className="ob-top">
-          <a className="ob-brand" href="/"><CosmosLockup height={28} color="var(--ink)" /></a>
+          <a className="ob-brand" href={HOME}><CosmosLockup height={28} color="var(--ink)" /></a>
           <div className="ob-top-r">
             <LangSelect />
-            <button className="ob-exit icon" title="Toggle theme" aria-label="Toggle theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{mounted ? (theme === "dark" ? <IcSun /> : <IcMoon />) : <span className="ic-slot" aria-hidden="true" />}</button>
-            <a className="ob-exit" href="/">{I.x} <span className="ob-exit-tx">{ob.cancel}</span></a>
+            <button className="ob-exit icon" title={t.dash.topbar.theme} aria-label={t.dash.topbar.theme} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{mounted ? (theme === "dark" ? <IcSun /> : <IcMoon />) : <span className="ic-slot" aria-hidden="true" />}</button>
+            <a className="ob-exit" href={HOME}>{I.x} <span className="ob-exit-tx">{ob.cancel}</span></a>
           </div>
         </div>
 

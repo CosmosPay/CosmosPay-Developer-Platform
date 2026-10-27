@@ -1,4 +1,4 @@
-# git-cliff configuration — builds the changelog from Conventional Commits.
+# git-cliff configuration: builds the changelog from Conventional Commits.
 # Used by .github/workflows/release.yml to fill the GitHub Release body and to
 # maintain CHANGELOG.md on the default branch.
 # Docs: https://git-cliff.org/docs/configuration

@@ -7,7 +7,7 @@ export function CopyPill({ cmd, prefix = "$" }: { cmd: string; prefix?: string }
   const t = useT();
   const [done, run] = useCopy();
   return (
-    <button type="button" className={`btn btn-ghost-pill copy-pill${done ? " done" : ""}`} onClick={() => run(cmd, t.toasts.copied)} title="Copy to clipboard" aria-label="Copy to clipboard">
+    <button type="button" className={`btn btn-ghost-pill copy-pill${done ? " done" : ""}`} onClick={() => run(cmd, t.toasts.copied)} title={t.ui.copyToClipboard} aria-label={t.ui.copyToClipboard}>
       <code>{prefix} {cmd}</code>
       <span className="copy-ic">{done ? <IcCheck /> : <IcCopy />}</span>
     </button>

@@ -1,4 +1,4 @@
-/* cosmos.ts — server-to-server client for the Cosmos Pay Payments API
+/* cosmos.ts: server-to-server client for the Cosmos Pay Payments API
    (the community NestJS service, see comos-pay-community-server).
 
    In production every request to that service must arrive through the APISIX
@@ -6,13 +6,16 @@
    consumer identity (`X-Consumer-Username`, `X-Consumer-Env`). Our dashboard is a
    trusted backend (it already holds the APISIX admin key), so instead of round-
    tripping through the data plane we call the Payments API directly and present
-   those same headers ourselves — scoping every payment intent to the signed-in
+   those same headers ourselves, scoping every payment intent to the signed-in
    user's consumer (`cosmos_<userId>`), exactly as a real API key would. */
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
+import type { Chain } from "@/lib/chains";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
 import { upstreamBaseUrls } from "@/lib/apisix-upstream";
 import { consoleMarker } from "@/lib/console-marker";
+import { pageRows } from "@/lib/upstream-page";
+import type { CheckoutTheme } from "@/lib/payments/checkout-themes";
 
 export type CosmosEnv = "dev" | "prod";
 
@@ -22,7 +25,7 @@ function consumerUsername(userId: string): string {
 }
 
 /* Round-robin across the replicas `COSMOS_API_URL` lists, the same set APISIX balances
-   across. A single entry — every deployment until replicas — always returns itself. */
+   across. A single entry (every deployment until replicas) always returns itself. */
 const BASE_URLS = upstreamBaseUrls(COSMOS_API_URL);
 let nextBase = 0;
 function baseUrl(): string {
@@ -57,7 +60,7 @@ async function cosmosFetch<T>(
     method?: string;
     body?: unknown;
     query?: Record<string, string | number | undefined>;
-    // Organization context for swaps. `swapFeeBps` is the org plan's commission — the
+    // Organization context for swaps. `swapFeeBps` is the org plan's commission; the
     // Payments API takes it from this trusted header, NEVER from the request body, so a
     // caller can't change the fee. Resolved server-side via orgSwapContext().
     org?: string;
@@ -92,7 +95,7 @@ async function cosmosFetch<T>(
     // separate API-key scopes (read/write) only restrict external key holders.
     "X-Consumer-Role": "admin",
   };
-  // Only sent when configured — but the community server always enforces it now, so
+  // Only sent when configured, but the community server always enforces it now, so
   // COSMOS_GATEWAY_SECRET must be set (and match) for these calls to succeed. The
   // console marker is keyed by the same secret: it flags this as management-console
   // traffic (excluded from the tenant's API request log, exempt from per-consumer rate
@@ -101,7 +104,7 @@ async function cosmosFetch<T>(
     headers["X-Gateway-Secret"] = COSMOS_GATEWAY_SECRET;
     headers["X-Cosmos-Internal"] = consoleMarker(COSMOS_GATEWAY_SECRET);
   }
-  // Swap context. The fee is the org plan's rate, enforced server-side — presented here
+  // Swap context. The fee is the org plan's rate, enforced server-side and presented here
   // exactly as the APISIX consumer forwarder would for an API-key caller.
   if (init.org) headers["X-Consumer-Org"] = init.org;
   if (init.swapFeeBps !== undefined) headers["X-Plan-Swap-Fee-Bps"] = String(init.swapFeeBps);
@@ -114,7 +117,10 @@ async function cosmosFetch<T>(
       headers,
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
-  } catch {
+  } catch (err) {
+    // The cause (ECONNREFUSED, ECONNRESET, a timeout…) is what tells a down service from a
+    // network fault; it carries no request data.
+    console.error(`[cosmos] ${url.pathname} failed: ${(err as { cause?: { code?: string } })?.cause?.code ?? (err as Error)?.message}`);
     throw new CosmosApiError("Could not reach the Payments service", 502);
   }
 
@@ -134,7 +140,7 @@ async function cosmosFetch<T>(
 /* Generic reverse-proxy to the Payments API for whole feature prefixes (BlindPay:
    kyc / onramp / offramp), so the dashboard can expose them without a hand-written route
    per endpoint. Presents the same gateway identity headers as cosmosFetch and forwards
-   the method, query (minus our control params), and body — including multipart bodies
+   the method, query (minus our control params), and body, including multipart bodies
    like KYC document uploads (passed through untouched). Returns the parsed JSON + status;
    throws CosmosApiError on a non-2xx so callers map it to a clean error. */
 export async function proxyCosmosRequest(opts: {
@@ -200,7 +206,7 @@ export async function proxyCosmosRequest(opts: {
         headers["Content-Type"] = "application/json";
         body = text && text.trim() ? text : undefined;
       } else if (contentType) {
-        // multipart/form-data, etc. (e.g. KYC document upload) — forward as-is.
+        // multipart/form-data, etc. (e.g. KYC document upload): forward as-is.
         headers["Content-Type"] = contentType;
         body = await opts.request.arrayBuffer();
       }
@@ -210,7 +216,10 @@ export async function proxyCosmosRequest(opts: {
   let res: Response;
   try {
     res = await fetch(url, { method, headers, body });
-  } catch {
+  } catch (err) {
+    // The cause (ECONNREFUSED, ECONNRESET, a timeout…) is what tells a down service from a
+    // network fault; it carries no request data.
+    console.error(`[cosmos] ${url.pathname} failed: ${(err as { cause?: { code?: string } })?.cause?.code ?? (err as Error)?.message}`);
     throw new CosmosApiError("Could not reach the Payments service", 502);
   }
 
@@ -233,6 +242,8 @@ export async function proxyCosmosRequest(opts: {
 export interface PaymentIntent {
   id: string;
   kind: "TX" | "PAY";
+  /** Where it settles; `network` is the tier (public or testnet) on every chain. */
+  chain: Chain;
   status: "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
   network: string;
   source: string | null;
@@ -248,8 +259,22 @@ export interface PaymentIntent {
   qr: string;       // PNG data URL of the SEP-7 URI
   txHash: string | null;
   reference: string | null;
+  /** The hosted checkout's design; the server answers "classic" when none was chosen. */
+  checkoutTheme: CheckoutTheme;
+  /** The organization's own fee on the payment, paid to its wallet in the same transaction. */
+  merchantFee?: MerchantFee | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/* A merchant fee as the Payments API records it (amounts in the payment's asset). */
+export interface MerchantFee {
+  bps: number;
+  fixed: string;
+  amount: string;
+  asset: string;
+  wallet: string;
+  paidBy: "recipient" | "payer";
 }
 
 export interface PaymentIntentList {
@@ -260,6 +285,8 @@ export interface PaymentIntentList {
 }
 
 export interface CreatePayInput {
+  /** Stellar when omitted; Solana and Monad take a payment link only. */
+  chain?: Chain;
   destination: string;
   amount?: string;
   assetCode?: string;
@@ -267,6 +294,9 @@ export interface CreatePayInput {
   memo?: string;
   msg?: string;
   callback?: string;
+  checkoutTheme?: CheckoutTheme;
+  /** The organization's own fee: bps and/or fixed, to its wallet, paid by the recipient or the payer. */
+  merchantFee?: { bps?: number; fixed?: string; wallet: string; paidBy?: "recipient" | "payer" };
 }
 
 export interface CreateTxInput extends CreatePayInput {
@@ -276,27 +306,31 @@ export interface CreateTxInput extends CreatePayInput {
 
 export interface ListIntentsQuery {
   status?: string;
+  /** Only intents on this chain; every chain when omitted. */
+  chain?: Chain;
+  /** ISO instant: only intents created at or after it (the dashboard's period views). */
+  createdFrom?: string;
   take?: number;
   skip?: number;
 }
 
 /* ---- High-level operations, each scoped to a user's consumer. ---- */
 export const cosmos = {
-  /** SEP-7 `pay` intent — no source, just a payment link + QR (no XDR). */
+  /** SEP-7 `pay` intent: no source, just a payment link + QR (no XDR). */
   createPay: (userId: string, env: CosmosEnv, input: CreatePayInput) =>
     cosmosFetch<PaymentIntent>(userId, env, "/v1/payment-intents/pay", { method: "POST", body: input }),
 
-  /** SEP-7 `tx` intent — source known, returns an unsigned XDR + tx URI + QR. */
+  /** SEP-7 `tx` intent: source known, returns an unsigned XDR + tx URI + QR. */
   createTx: (userId: string, env: CosmosEnv, input: CreateTxInput) =>
     cosmosFetch<PaymentIntent>(userId, env, "/v1/payment-intents/tx", { method: "POST", body: input }),
 
   list: (userId: string, env: CosmosEnv, query: ListIntentsQuery = {}) =>
-    cosmosFetch<PaymentIntentList>(userId, env, "/v1/payment-intents", { query: { status: query.status, take: query.take, skip: query.skip } }),
+    cosmosFetch<PaymentIntentList>(userId, env, "/v1/payment-intents", { query: { status: query.status, chain: query.chain, createdFrom: query.createdFrom, take: query.take, skip: query.skip } }),
 
   get: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<PaymentIntent>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`),
 
-  update: (userId: string, env: CosmosEnv, id: string, patch: { status?: string; txHash?: string; reference?: string }) =>
+  update: (userId: string, env: CosmosEnv, id: string, patch: { status?: string; txHash?: string; reference?: string; checkoutTheme?: CheckoutTheme }) =>
     cosmosFetch<PaymentIntent>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`, { method: "PATCH", body: patch }),
 
   remove: (userId: string, env: CosmosEnv, id: string) =>
@@ -320,8 +354,10 @@ export interface WebhookEndpoint {
 }
 
 export const cosmosWebhooks = {
-  list: (userId: string, env: CosmosEnv) =>
-    cosmosFetch<WebhookEndpoint[]>(userId, env, "/v1/webhooks"),
+  /* The Payments API pages its endpoints (at most 100 a page): this reads the largest page and
+     returns its rows (`pageRows`), the list `/api/webhooks` documents. */
+  list: async (userId: string, env: CosmosEnv): Promise<WebhookEndpoint[]> =>
+    pageRows(await cosmosFetch<{ data: WebhookEndpoint[] } | WebhookEndpoint[]>(userId, env, "/v1/webhooks", { query: { take: 100 } })),
   get: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<WebhookEndpoint>(userId, env, `/v1/webhooks/${encodeURIComponent(id)}`),
   create: (userId: string, env: CosmosEnv, body: { url: string; description?: string; eventTypes?: string[] }) =>
@@ -366,12 +402,27 @@ export const cosmosProducts = {
 };
 
 /* ---- Customers (merchant-managed, with derived payment stats). ---- */
+export interface CustomerWallet {
+  id: string;
+  chain: "stellar" | "solana" | "monad";
+  address: string;
+  label: string | null;
+  createdAt: string;
+}
+export interface CustomerWalletInput {
+  chain: CustomerWallet["chain"];
+  address: string;
+  label?: string;
+}
 export interface Customer {
   id: string;
   name: string;
   alias: string | null;
   note: string | null;
   email: string | null;
+  /** The customer's wallets, oldest first, on any network payments settle on. */
+  wallets: CustomerWallet[];
+  /** Deprecated upstream: the first wallet's address. */
   account: string | null;
   reference: string | null;
   payments?: number;
@@ -382,20 +433,27 @@ export interface Customer {
 }
 
 export const cosmosCustomers = {
-  list: (userId: string, env: CosmosEnv) =>
-    cosmosFetch<{ data: Customer[]; total: number }>(userId, env, "/v1/customers"),
-  create: (userId: string, env: CosmosEnv, body: { name: string; alias?: string; note?: string; email?: string; account?: string; reference?: string }) =>
+  /* A page of customers: at most 100 (the API's bound), from `skip`. */
+  list: (userId: string, env: CosmosEnv, page: { take?: number; skip?: number } = {}) =>
+    cosmosFetch<{ data: Customer[]; total: number }>(userId, env, "/v1/customers", { query: { take: page.take, skip: page.skip } }),
+  get: (userId: string, env: CosmosEnv, id: string) =>
+    cosmosFetch<Customer>(userId, env, `/v1/customers/${encodeURIComponent(id)}`),
+  create: (userId: string, env: CosmosEnv, body: { name: string; alias?: string; note?: string; email?: string; account?: string; wallets?: CustomerWalletInput[]; reference?: string }) =>
     cosmosFetch<Customer>(userId, env, "/v1/customers", { method: "POST", body }),
   update: (userId: string, env: CosmosEnv, id: string, body: Record<string, unknown>) =>
     cosmosFetch<Customer>(userId, env, `/v1/customers/${encodeURIComponent(id)}`, { method: "PATCH", body }),
   remove: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<{ id: string; deleted: boolean }>(userId, env, `/v1/customers/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  addWallet: (userId: string, env: CosmosEnv, id: string, body: CustomerWalletInput) =>
+    cosmosFetch<CustomerWallet>(userId, env, `/v1/customers/${encodeURIComponent(id)}/wallets`, { method: "POST", body }),
+  removeWallet: (userId: string, env: CosmosEnv, id: string, walletId: string) =>
+    cosmosFetch<{ id: string; deleted: boolean }>(userId, env, `/v1/customers/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
 };
 
 /* ---- Same-chain swaps: Stellar path payments by default, Solana through Jupiter and
    Monad through Kuru Flow with `chain`. The Payments API quotes, builds the unsigned
    transaction, and relays the signed one. The swap commission is the calling org's
-   plan rate — passed via the trusted X-Plan-Swap-Fee-Bps header (orgSwapContext),
+   plan rate, passed via the trusted X-Plan-Swap-Fee-Bps header (orgSwapContext),
    never in the body, so it can't be bypassed. ---- */
 export type SwapChain = "stellar" | "solana" | "monad";
 export interface SwapAssetAmount {
@@ -435,6 +493,9 @@ export interface Swap {
   memo: string | null;
   /** On-chain commission label ("Cosmos Swap Commission") when one was taken. */
   commissionMemo: string | null;
+  /** The trustline the transaction adds first, when the source swaps into an asset it does not
+      trust yet (the Payments API builds it in; one signature covers both). Null otherwise. */
+  trustline?: { code: string; issuer: string } | null;
   xdr: string;
   uri: string;
   txHash: string;
@@ -497,10 +558,11 @@ export interface CreateSwapInput extends QuoteSwapInput {
   source: string;
   destination?: string;
   memo?: string;
+  idempotencyKey?: string;
 }
 
 /* Each method takes the org + the org plan's swapFeeBps (resolved by the route via
-   orgSwapContext) — the fee is never sourced from the caller's body. */
+   orgSwapContext); the fee is never sourced from the caller's body. */
 export const cosmosSwaps = {
   quote: (userId: string, env: CosmosEnv, org: string, swapFeeBps: number, body: QuoteSwapInput) =>
     cosmosFetch<SwapQuote>(userId, env, "/v1/swaps/quote", { method: "POST", body, org, swapFeeBps }),
@@ -519,16 +581,20 @@ export const cosmosSwaps = {
    Mainnet only upstream: a dev key can list assets and quote, creating is refused.
    The commission is the org plan's rate, via the same trusted header as swaps. ---- */
 export interface CrossChainAsset {
-  chain: SwapChain;
+  /** The network id (stellar, solana, monad, or NEAR Intents' code: eth, btc…). */
+  chain: string;
+  chainName: string;
   symbol: string;
   assetId: string;
   decimals: number;
   contract: string | null;
+  /** NEAR Intents' reference price, indicative only (an estimate before a quote). */
+  priceUsd: number | null;
 }
 export interface CrossChainQuote {
   network: string;
-  origin: { chain: SwapChain; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null };
-  destination: { chain: SwapChain; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null; minimum: string };
+  origin: { chain: string; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null };
+  destination: { chain: string; asset: string; assetId: string; contract: string | null; amount: string; amountUsd: string | null; minimum: string };
   fee: { bps: number; amount: string; asset: string };
   slippageBps: number;
   timeEstimateSeconds: number;
@@ -538,10 +604,10 @@ export interface CrossChainSwap {
   status: "AWAITING_DEPOSIT" | "DEPOSIT_DETECTED" | "INCOMPLETE_DEPOSIT" | "PROCESSING" | "SUCCEEDED" | "REFUNDED" | "FAILED" | "EXPIRED";
   providerStatus: string;
   network: string;
-  originChain: SwapChain;
+  originChain: string;
   originAsset: string;
   originContract: string | null;
-  destinationChain: SwapChain;
+  destinationChain: string;
   destinationAsset: string;
   destinationContract: string | null;
   amountIn: string;
@@ -554,7 +620,8 @@ export interface CrossChainSwap {
   refundTo: string;
   depositAddress: string;
   depositMemo: string | null;
-  depositUri: string;
+  /** A wallet link where the network has a standard one; null: pay the address (and memo). */
+  depositUri: string | null;
   qr?: string;
   depositTxHash: string | null;
   amountOut: string | null;
@@ -576,14 +643,16 @@ export interface CrossChainSwapList {
   skip: number;
 }
 export interface CrossChainSwapInput {
-  originChain: SwapChain;
+  originChain: string;
   originAsset: string;
-  destinationChain: SwapChain;
+  destinationChain: string;
   destinationAsset: string;
   amount: string;
   recipient: string;
   refundTo: string;
   slippageBps?: number;
+  /** Create only: a retry with the same key and request returns the swap already opened. */
+  idempotencyKey?: string;
 }
 
 export const cosmosCrossChainSwaps = {
@@ -599,6 +668,155 @@ export const cosmosCrossChainSwaps = {
     cosmosFetch<CrossChainSwap>(userId, env, `/v1/cross-chain-swaps/${encodeURIComponent(id)}`, { org }),
   reportDeposit: (userId: string, env: CosmosEnv, org: string, id: string, txHash: string) =>
     cosmosFetch<CrossChainSwap>(userId, env, `/v1/cross-chain-swaps/${encodeURIComponent(id)}/deposit`, { method: "POST", body: { txHash }, org }),
+};
+
+/* ---- USDT0 out of Stellar (src/lib/usdt0.ts): LayerZero's OFT moves it 1:1 to the networks
+   /v1/usdt0/routes lists, native USDT on Ethereum, USDT0 elsewhere. Stellar mainnet only; the
+   holder signs one Soroban transaction and pays LayerZero's fee in XLM. ---- */
+export interface Usdt0RoutesView {
+  available: boolean;
+  network: string;
+  token: { code: string; issuer: string; contract: string };
+  oft: string;
+  eid: number;
+  routes: { chain: string; name: string; eid: number; receives: "USDT" | "USDT0" }[];
+}
+export interface Usdt0Quote {
+  to: string;
+  eid: number;
+  receives: "USDT" | "USDT0";
+  amount: string;
+  amountSent: string;
+  amountReceived: string;
+  dust: string;
+  /** Cosmos Pay's commission rate, in basis points: 0 without a fee wrapper. */
+  feeBps: number;
+  /** The commission in USDT0, out of `amount`. */
+  feeAmount: string;
+  /** LayerZero's fee, in XLM. */
+  nativeFee: string;
+  minAmount: string;
+  maxAmount: string;
+}
+export interface Usdt0Transfer {
+  id: string;
+  status: "PENDING" | "SUBMITTED" | "DELIVERED" | "FAILED" | "EXPIRED";
+  network: string;
+  source: string;
+  to: string;
+  eid: number;
+  receives: "USDT" | "USDT0";
+  recipient: string;
+  amount: string;
+  amountSent: string;
+  amountReceived: string;
+  feeBps: number;
+  feeAmount: string;
+  /** Where the commission went; null without one. */
+  feeWallet: string | null;
+  nativeFee: string;
+  xdr: string | null;
+  uri: string | null;
+  qr: string | null;
+  txHash: string | null;
+  guid: string | null;
+  destinationTxHash: string | null;
+  scanUrl: string | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface Usdt0TransferList {
+  data: Usdt0Transfer[];
+  total: number;
+  take: number;
+  skip: number;
+}
+export interface Usdt0QuoteInput { to: string; amount: string; source?: string }
+export interface Usdt0TransferInput { source: string; to: string; recipient: string; amount: string; idempotencyKey?: string }
+
+export const cosmosUsdt0 = {
+  routes: (userId: string, env: CosmosEnv, org: string) =>
+    cosmosFetch<Usdt0RoutesView>(userId, env, "/v1/usdt0/routes", { org }),
+  quote: (userId: string, env: CosmosEnv, org: string, body: Usdt0QuoteInput) =>
+    cosmosFetch<Usdt0Quote>(userId, env, "/v1/usdt0/quote", { method: "POST", body, org }),
+  create: (userId: string, env: CosmosEnv, org: string, body: Usdt0TransferInput) =>
+    cosmosFetch<Usdt0Transfer>(userId, env, "/v1/usdt0/transfers", { method: "POST", body, org }),
+  list: (userId: string, env: CosmosEnv, org: string, query: { status?: string; take?: number; skip?: number } = {}) =>
+    cosmosFetch<Usdt0TransferList>(userId, env, "/v1/usdt0/transfers", { query: { status: query.status, take: query.take, skip: query.skip }, org }),
+  get: (userId: string, env: CosmosEnv, org: string, id: string) =>
+    cosmosFetch<Usdt0Transfer>(userId, env, `/v1/usdt0/transfers/${encodeURIComponent(id)}`, { org }),
+  submit: (userId: string, env: CosmosEnv, org: string, id: string, signedXdr: string) =>
+    cosmosFetch<{ submitted: boolean; reason?: string; transfer: Usdt0Transfer }>(userId, env, `/v1/usdt0/transfers/${encodeURIComponent(id)}/submit`, { method: "POST", body: { signedXdr }, org }),
+};
+
+/* ---- ZK payments as a service: confidential payments on Cosmos Pay's confidential token
+   (OpenZeppelin's stellar-confidential), where the amount stays hidden on-chain. The payer
+   proves and pays in the browser; the Payments API holds the token's auditor key, checks both
+   confidential transfers (the merchant's net amount and the 0.18% commission) and marks the
+   payment paid. Testnet only for now. ---- */
+export interface ZkConfig {
+  enabled: boolean;
+  network: string;
+  rpcUrl: string;
+  networkPassphrase: string;
+  token: { contractId: string; symbol: string; decimals: number; underlying: string; deployedAtLedger: number };
+  verifier: string;
+  auditorRegistry: string;
+  auditorId: number;
+  feeBps: number;
+  feeAccount: string;
+}
+
+export type ZkPaymentStatus = "PENDING" | "SUCCEEDED" | "EXPIRED";
+
+export interface ZkPayment {
+  id: string;
+  status: ZkPaymentStatus;
+  network: string;
+  tokenContract: string;
+  amount: string;
+  netAmount: string;
+  feeAmount: string;
+  feeBps: number;
+  recipient: string;
+  feeAccount: string;
+  payer: string | null;
+  paymentTxHash: string | null;
+  feeTxHash: string | null;
+  description: string | null;
+  expiresAt: string;
+  settledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ZkPaymentList {
+  data: ZkPayment[];
+  total: number;
+  take: number;
+  skip: number;
+}
+
+export interface ZkPaymentInput {
+  amount: string;
+  /** A customer's private account (a Stellar wallet with a confidential account). */
+  recipient: string;
+  description?: string;
+  expiresInMinutes?: number;
+  idempotencyKey?: string;
+  /** The organization's own fee, a third confidential transfer to one of its wallets. */
+  merchantFee?: { bps?: number; fixed?: string; wallet: string; paidBy?: "recipient" | "payer" };
+}
+
+export const cosmosZkPayments = {
+  config: (userId: string, env: CosmosEnv, org: string) => cosmosFetch<ZkConfig>(userId, env, "/v1/zk-payments/config", { org }),
+  create: (userId: string, env: CosmosEnv, org: string, body: ZkPaymentInput) =>
+    cosmosFetch<ZkPayment>(userId, env, "/v1/zk-payments", { method: "POST", body, org }),
+  list: (userId: string, env: CosmosEnv, org: string, query: { status?: string; take?: number; skip?: number } = {}) =>
+    cosmosFetch<ZkPaymentList>(userId, env, "/v1/zk-payments", { query: { status: query.status, take: query.take, skip: query.skip }, org }),
+  get: (userId: string, env: CosmosEnv, org: string, id: string) =>
+    cosmosFetch<ZkPayment>(userId, env, `/v1/zk-payments/${encodeURIComponent(id)}`, { org }),
 };
 
 /* ---- Stellar AMM liquidity pools. Non-custodial like swaps: the Payments API
@@ -653,7 +871,7 @@ export interface LiquidityOperation {
   minPrice: string | null;
   maxPrice: string | null;
   slippageBps: number;
-  /** Plan commission (bps) taken from both assets — 0 when none applies. */
+  /** Plan commission (bps) taken from both assets; 0 when none applies. */
   feeBps: number;
   feeAmountA: string;
   feeAmountB: string;
@@ -726,8 +944,14 @@ export const cosmosLiquidity = {
 };
 
 /* ---- Read-only dashboard aggregates. ---- */
+/** How the overview chart groups payments (the Payments API's /v1/summary/series). */
+export const SERIES_PERIODS = ["day", "week", "month", "year"] as const;
+export type SeriesPeriod = (typeof SERIES_PERIODS)[number];
 export const cosmosAnalytics = {
   summary: (userId: string, env: CosmosEnv) => cosmosFetch<any>(userId, env, "/v1/summary"),
+  /** The overview chart: payments grouped by day, week, month or year, and the window before. */
+  series: (userId: string, env: CosmosEnv, period: SeriesPeriod) =>
+    cosmosFetch<any>(userId, env, "/v1/summary/series", { query: { period } }),
   balances: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/balances"),
   apiLogs: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/logs"),
   webhookLogs: (userId: string, env: CosmosEnv) => cosmosFetch<{ data: any[]; total: number }>(userId, env, "/v1/logs/webhooks"),

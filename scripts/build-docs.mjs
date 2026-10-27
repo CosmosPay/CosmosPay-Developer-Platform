@@ -3,7 +3,7 @@
 //
 // The docs build (docs/package.json `prebuild`) regenerates the SDK + API content from the
 // external repos WHEN THEY'RE PRESENT (otherwise it keeps the committed content/docs/{sdk,api} +
-// openapi.json as-is — see generate-sdk/generate-api), syncs the shared navbar, then `next build`.
+// openapi.json as-is; see generate-sdk/generate-api), syncs the shared navbar, then `next build`.
 // So this always builds: on a production box (no external repos) it builds from the committed
 // content. Output lands in docs/out (every route/asset prefixed by /docs via basePath), copied verbatim.
 import { execSync } from 'node:child_process';
