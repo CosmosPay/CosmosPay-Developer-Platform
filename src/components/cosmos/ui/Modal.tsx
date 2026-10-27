@@ -41,8 +41,12 @@ export function Modal({ onClose, children, label }: { onClose: () => void; child
       }
     };
     document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // The scroll is locked on the root, as the mobile menu does: there the root's scrollbar-gutter
+    // keeps the scrollbar's room, so the page behind does not widen and reflow (on <body> Chrome
+    // drops the gutter).
+    const page = document.documentElement;
+    const prev = page.style.overflow;
+    page.style.overflow = "hidden";
     // Move focus into the dialog: a form field if there is one, otherwise the dialog itself
     // (never auto-focus an action button; that avoids accidental confirm of destructive dialogs).
     const root = ref.current;
@@ -50,7 +54,7 @@ export function Modal({ onClose, children, label }: { onClose: () => void; child
     (field ?? root)?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      page.style.overflow = prev;
       prevFocus?.focus?.();
     };
   }, []);

@@ -165,6 +165,9 @@ html {
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   /* sin pesos falsos: si algo pide un 800 que no existe, cae al mas cercano real */
   font-synthesis: none;
+  /* The scrollbar's room is always kept: locking the scroll for a modal or the mobile menu hides
+     the scrollbar, and without it the whole page widened by its width and reflowed under them. */
+  scrollbar-gutter: stable;
 }
 body {
   margin: 0; font-family: var(--ff-sans); background: var(--bg); color: var(--ink);

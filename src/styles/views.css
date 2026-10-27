@@ -752,7 +752,10 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
    ============================================================ */
 /* El overlay es el que scrollea (no la caja interna): un modal mas alto que la
    ventana sigue siendo alcanzable, y margin:auto centra los cortos. */
-.modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); backdrop-filter: blur(5px); display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; overscroll-behavior: contain; }
+/* A solid dim, never a backdrop blur: a full-screen blur is recomputed on every frame of the fade
+   and of every scroll inside the dialog, over a bar that blurs its own backdrop, and opening or
+   scrolling a modal lagged (product owner, 2026-10-27). */
+.modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.62); display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; overscroll-behavior: contain; }
 .modal { position: relative; width: min(720px, 100%); margin: auto; background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius-lg); overflow: hidden; animation: modIn .26s cubic-bezier(.2,.7,.2,1) both; }
 @keyframes modIn { from { transform: translateY(18px) scale(.97); } to { transform: none; } }
 /* the backdrop fades in and out with the dialog; closing from inside plays the exit (Modal.tsx) */
