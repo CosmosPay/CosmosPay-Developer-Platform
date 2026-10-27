@@ -33,12 +33,22 @@ export function MiniSelect({ value, options, onChange, disabled = false }) {
       setOpen(false);
     };
     const close = () => setOpen(false);
+    // Escape closes the menu only (caught before a dialog around it hears it) and returns to the button.
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+      btnRef.current?.focus();
+    };
     document.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey, true);
     // A fixed menu would detach on scroll/resize, so just close it.
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     return () => {
       document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey, true);
       window.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };

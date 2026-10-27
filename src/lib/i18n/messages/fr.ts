@@ -1624,6 +1624,8 @@ export default {
       searchPlaceholder: "Rechercher des notifications…",
       nothingToOpen: "Rien à ouvrir",
       copyIp: "Copier l’IP",
+      figures: { total: "Notifications", week: "7 derniers jours", signIns: "Connexions", changes: "Modifications" },
+      message: "Message",
     },
     support: {
       searchPlaceholder: "Rechercher des tickets…",
@@ -1760,6 +1762,9 @@ export default {
       allRoles: "Tous les rôles",
       allPlans: "Tous les forfaits",
       copyEmail: "Copier l’e-mail",
+      one: "Compte",
+      since: "Compte depuis",
+      lastSeen: "Dernière activité",
     },
     orgs: {
       permissionsLabel: "Autorisations",
@@ -2153,6 +2158,7 @@ export default {
           accountNumber: "Numéro de compte", routingNumber: "Numéro de routage",
           add: "Ajouter un compte bancaire",
           error: "Impossible d’ajouter le compte bancaire.",
+          steps: { account: "Compte", numbers: "Coordonnées bancaires" },
         },
       },
       onramp: {

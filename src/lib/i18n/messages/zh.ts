@@ -751,6 +751,9 @@ export default {
       allRoles: "所有角色",
       allPlans: "所有套餐",
       copyEmail: "复制邮箱",
+      one: "账户",
+      since: "注册时间",
+      lastSeen: "最近活动",
     },
     org: { heading: "组织", owned: "您的组织", invited: "与您共享", locked: "已锁定：升级套餐后即可使用", create: "创建组织" },
     env: { heading: "环境", sandbox: "沙箱", production: "生产环境", testnet: "测试网环境", mainnet: "主网环境" },
@@ -981,6 +984,8 @@ export default {
       searchPlaceholder: "搜索通知…",
       nothingToOpen: "没有可打开的内容",
       copyIp: "复制 IP",
+      figures: { total: "通知", week: "最近 7 天", signIns: "登录", changes: "变更" },
+      message: "消息",
     },
     support: {
       searchPlaceholder: "搜索工单…",
@@ -1481,6 +1486,7 @@ export default {
           accountNumber: "账号", routingNumber: "路由号码",
           add: "添加银行账户",
           error: "无法添加银行账户。",
+          steps: { account: "账户", numbers: "银行信息" },
         },
       },
       onramp: {

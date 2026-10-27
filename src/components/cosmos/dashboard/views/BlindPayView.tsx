@@ -487,9 +487,8 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
                 <tr key={w.id}><td className="cust">{w.name || w.id}</td><td className="cust">{w.network}</td><td className="tid">{w.address || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
-            {canManage && !disabled && (addWallet
-              ? <AddWalletForm bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddWallet(false)} onAdded={() => { setAddWallet(false); loadWallets(); }} />
-              : <div className="paylink-actions" style={{ margin: "8px 0 18px" }}><button className="btn btn-soft btn-sm" onClick={() => setAddWallet(true)}>{DI.plus} {dt.addWallet}</button></div>)}
+            {canManage && !disabled && <div className="paylink-actions" style={{ margin: "8px 0 18px" }}><button type="button" className="btn btn-soft btn-sm" onClick={() => setAddWallet(true)}>{DI.plus} {dt.addWallet}</button></div>}
+            {addWallet && <AddWalletModal bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddWallet(false)} onAdded={() => { setAddWallet(false); loadWallets(); }} />}
 
             {/* Bank accounts */}
             <label className="field-l">{dt.banks}</label>
@@ -500,9 +499,8 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
                 <tr key={b.id}><td className="cust">{b.name || b.id}</td><td className="cust">{b.rail}</td><td className="cust">{b.country || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
-            {canManage && !disabled && (addBank
-              ? <AddBankForm bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddBank(false)} onAdded={() => { setAddBank(false); loadBanks(); }} />
-              : <div className="paylink-actions" style={{ margin: "8px 0" }}><button className="btn btn-soft btn-sm" onClick={() => setAddBank(true)}>{DI.plus} {dt.addBank}</button></div>)}
+            {canManage && !disabled && <div className="paylink-actions" style={{ margin: "8px 0" }}><button type="button" className="btn btn-soft btn-sm" onClick={() => setAddBank(true)}>{DI.plus} {dt.addBank}</button></div>}
+            {addBank && <AddBankModal bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddBank(false)} onAdded={() => { setAddBank(false); loadBanks(); }} />}
           </>
         )}
 
@@ -586,9 +584,11 @@ function FiatAccessToggle({ r, receiver, orgId, env, onChanged }) {
   );
 }
 
-function AddWalletForm({ bp, receiver, orgId, env, onClose, onAdded }) {
+/* A receiver's wallet, added in a dialog over its detail (every add is a dialog). */
+function AddWalletModal({ bp, receiver, orgId, env, onClose, onAdded }) {
   const t = useT();
   const w = bp.receivers.wallet;
+  const dt = bp.receivers.detail;
   const [name, setName] = useState("Primary wallet");
   const [network, setNetwork] = useState("stellar");
   const [address, setAddress] = useState("");
@@ -604,22 +604,30 @@ function AddWalletForm({ bp, receiver, orgId, env, onClose, onAdded }) {
       .finally(() => setBusy(false));
   };
   return (
-    <div className="paylink-block" style={{ marginBottom: 18 }}>
-      <Field label={w.name} value={name} onChange={(e) => setName(e.target.value)} />
-      <Sel label={w.network} value={network} onChange={setNetwork} options={WALLET_NETWORKS} />
-      <Field label={w.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={addressPlaceholder(network)} />
-      <Sel label={w.aa} value={aa} onChange={setAa} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
-      <div className="modal-actions">
-        <button className="btn btn-violet btn-sm" disabled={!valid || busy} onClick={submit}>{w.add}</button>
-        <button className="btn btn-soft btn-sm" onClick={onClose}>{t.dash.common.cancel}</button>
+    <Modal onClose={onClose} label={dt.addWallet}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{receiver.name || receiver.email || dt.eyebrow}</div>
+        <h3>{dt.addWallet}</h3>
+        <Field label={w.name} value={name} onChange={(e) => setName(e.target.value)} />
+        <Sel label={w.network} value={network} onChange={setNetwork} options={WALLET_NETWORKS} />
+        <Field label={w.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={addressPlaceholder(network)} />
+        <Sel label={w.aa} value={aa} onChange={setAa} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
+        <div className="modal-actions">
+          <button type="button" className="btn btn-violet" disabled={!valid || busy} onClick={submit}>{w.add}</button>
+          <button type="button" className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
+        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
-function AddBankForm({ bp, receiver, orgId, env, onClose, onAdded }) {
+/* A receiver's bank account, added in a dialog over its detail, in steps: the account (rail,
+   name, beneficiary, country), then its numbers. */
+function AddBankModal({ bp, receiver, orgId, env, onClose, onAdded }) {
   const t = useT();
   const b = bp.receivers.bank;
+  const dt = bp.receivers.detail;
+  const steps = useFormSteps(2);
   const [type, setType] = useState("ach");
   const [name, setName] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
@@ -640,18 +648,26 @@ function AddBankForm({ bp, receiver, orgId, env, onClose, onAdded }) {
       .finally(() => setBusy(false));
   };
   return (
-    <div className="paylink-block">
-      <Sel label={b.rail} value={type} onChange={setType} options={RAILS} />
-      <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.dash.examples.payoutsName} />
-      <Field label={b.beneficiary} hint={t.dash.common.optional} value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} placeholder={t.dash.examples.fullName} />
-      <CountrySelect label={b.country} hint={t.dash.common.optional} value={country} onChange={setCountry} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
-      <Field label={b.accountNumber} hint={t.dash.common.optional} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789" />
-      <Field label={b.routingNumber} hint={t.dash.common.optional} value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="021000021" />
-      <div className="modal-actions">
-        <button className="btn btn-violet btn-sm" disabled={!valid || busy} onClick={submit}>{b.add}</button>
-        <button className="btn btn-soft btn-sm" onClick={onClose}>{t.dash.common.cancel}</button>
+    <Modal onClose={onClose} label={dt.addBank}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{receiver.name || receiver.email || dt.eyebrow}</div>
+        <h3>{dt.addBank}</h3>
+        <FormSteps names={[b.steps.account, b.steps.numbers]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <Sel label={b.rail} value={type} onChange={setType} options={RAILS} />
+            <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.dash.examples.payoutsName} autoFocus />
+            <Field label={b.beneficiary} hint={t.dash.common.optional} value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} placeholder={t.dash.examples.fullName} />
+            <CountrySelect label={b.country} hint={t.dash.common.optional} value={country} onChange={setCountry} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
+          </>)}
+          {steps.step === 1 && (<>
+            <Field label={b.accountNumber} hint={t.dash.common.optional} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789" />
+            <Field label={b.routingNumber} hint={t.dash.common.optional} value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="021000021" />
+          </>)}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={!!valid} onCancel={onClose} submitLabel={b.add} onSubmit={submit} busy={busy} submitDisabled={!valid} />
       </div>
-    </div>
+    </Modal>
   );
 }
 

@@ -299,11 +299,13 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     deposit (pair, amounts), the Stellar wallet (address, signature) and BlindPay's (off while Fiat
     is): the KYC receiver (who it is, then what its type and level ask for: personal data, documents,
     source of funds; or the company, its documents, its owners), the payin (quote, confirm) and the
-    payout (quote, then the sending wallet and its signature); "Get quote" moves on by itself and a
-    changed field drops the quote. Every "add"/"create" is a dialog, never an inline form: the swap
+    payout (quote, then the sending wallet and its signature), the receiver's bank account (a dialog
+    over its detail: the account, then its numbers; its wallet is a dialog too); "Get quote" moves on
+    by itself and a changed field drops the quote. Every "add"/"create" is a dialog, never an inline form: the swap
     form ("New swap" in Swaps' filter row; the overview's "Swap" opens it with `?create=1`) and the
     support ticket too. Dialogs stack (`ui/Modal.tsx` keeps the open ones): only the top one answers
-    Escape and keeps Tab, so a token picker or a confirmation closes alone over its form or detail.
+    Escape and keeps Tab, so a token picker or a confirmation closes alone over its form or detail;
+    a dropdown inside one (`Select`, `CountrySelect`, `MiniSelect`) closes alone on Escape too.
     The invitation says before sending what the server would refuse: an email already in the team or
     invited (under the field), every seat taken (members plus pending invitations; "Invite member"
     disabled, with why); a refusal still reads in the user's language, never the server's English.
@@ -372,7 +374,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       API logs (the path) and notifications (the address, copy only). The admin lists are the
       Payments table too (`AdminViews.tsx`: `statusFigures` their figures, `IdTd` the record's
       `RecordLink`, `AdminRowMenu` the actions cell, `AdminDetail` the row's `RecordDetail`, statuses
-      in the reader's language). Card classes are `rpv-*` (`.rp` and `.wrap` are taken elsewhere).
+      in the reader's language; Fiat's KYC and transfer statuses as the organization's Fiat words
+      them). Users opens its account's detail (role, plan and plan status changed there or in the
+      row) and notifications open theirs (figures first: all, this week, sign-ins, changes; "Open"
+      still goes straight to what one names). Card classes are `rpv-*` (`.rp` and `.wrap` are
+      taken elsewhere).
     - A pending Stellar payment's detail checks a transaction hash (`/validate`) for a payer whose
       wallet never reported back.
     - An empty list stays empty (product owner, 2026-10-26: no "nothing here" text or create

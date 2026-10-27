@@ -753,6 +753,9 @@ export default {
       allRoles: "All roles",
       allPlans: "All plans",
       copyEmail: "Copy email",
+      one: "Account",
+      since: "Member since",
+      lastSeen: "Last active",
     },
     org: { heading: "Organizations", owned: "Your organizations", invited: "Shared with you", locked: "Locked: upgrade your plan to use it", create: "Create organization" },
     env: { heading: "Environment", sandbox: "Sandbox", production: "Production", testnet: "Testnet environment", mainnet: "Mainnet environment" },
@@ -983,6 +986,8 @@ export default {
       searchPlaceholder: "Search notifications…",
       nothingToOpen: "Nothing to open",
       copyIp: "Copy IP",
+      figures: { total: "Notifications", week: "Last 7 days", signIns: "Sign-ins", changes: "Changes" },
+      message: "Message",
     },
     support: {
       searchPlaceholder: "Search tickets…",
@@ -1483,6 +1488,7 @@ export default {
           accountNumber: "Account number", routingNumber: "Routing number",
           add: "Add bank account",
           error: "Couldn't add the bank account.",
+          steps: { account: "Account", numbers: "Bank details" },
         },
       },
       onramp: {

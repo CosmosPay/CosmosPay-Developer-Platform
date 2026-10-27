@@ -16,6 +16,10 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { MiniSelect } from "@/components/cosmos/dashboard/components/MiniSelect";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { RecordDetail } from "@/components/cosmos/dashboard/components/RecordDetail";
+import { DI } from "@/components/cosmos/dashboard/icons";
+import { fmtDateTime, fmtWhen } from "@/components/cosmos/dashboard/helpers";
 
 const USER_DEFAULTS = { q: "", role: "all", plan: "all" };
 
@@ -52,6 +56,28 @@ export function UsersView({ currentUserId, currentRole }) {
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
   const copy = (v) => navigator.clipboard?.writeText(v).then(() => showToast(t.toasts.copied)).catch(() => {});
   const fl = t.dash.filters;
+  const cm = t.dash.common;
+  // The account a row opens (as every list's), read from the list so an edit shows in it at once.
+  const [openId, setOpenId] = useState(null);
+  const open = rows.find((r) => r.id === openId) || null;
+  // What may be changed on an account, the same in its row and its detail.
+  const editsOf = (r) => {
+    const isSelf = r.id === currentUserId;
+    // Can't change your own role, or that of a peer/superior.
+    const roleLocked = isSelf || roleLevel(r.role) >= actorLevel;
+    // Only roles strictly below your own are assignable (plus the current one, for its label).
+    const roleOpts = ROLE_OPTIONS.filter((rr) => roleLevel(rr) < actorLevel || rr === r.role).map((rr) => ({ value: rr, label: t.dash.roleNames[rr] }));
+    // Offered plans only, plus a legacy plan (the old free one) for the row still on it, for its label.
+    const planIds = r.plan && !PLAN_OPTIONS.includes(r.plan) ? [r.plan, ...PLAN_OPTIONS] : PLAN_OPTIONS;
+    const planOpts = planIds.map((pp) => ({ value: pp, label: t.dash.planNames[pp] || pp }));
+    return {
+      isSelf,
+      role: <MiniSelect value={r.role} options={roleOpts} onChange={(v) => update(r.id, { role: v })} disabled={roleLocked} />,
+      plan: <MiniSelect value={r.plan} options={planOpts} onChange={(v) => update(r.id, { plan: v })} />,
+      planStatus: <MiniSelect value={r.planStatus || "active"} options={PLAN_STATUSES.map((st) => ({ value: st, label: t.dash.overview.hub.planStatus[st] }))} onChange={(v) => update(r.id, { planStatus: v })} />,
+    };
+  };
+  const nameOf = (r) => r.name || r.email || r.id;
   return (
     <>
       <ViewHead title={u.title} />
@@ -79,27 +105,23 @@ export function UsersView({ currentUserId, currentRole }) {
         {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{u.name}</th><th>{u.email}</th><th>{u.role}</th><th>{u.plan}</th><th>{u.planStatus}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>{!error && pg.slice.map((r) => {
-              const isSelf = r.id === currentUserId;
-              // Can't change your own role, or that of a peer/superior.
-              const roleLocked = isSelf || roleLevel(r.role) >= actorLevel;
-              // Only roles strictly below your own are assignable (plus the current one, for its label).
-              const roleOpts = ROLE_OPTIONS.filter((rr) => roleLevel(rr) < actorLevel || rr === r.role).map((rr) => ({ value: rr, label: t.dash.roleNames[rr] }));
-              // Offered plans only, plus a legacy plan (the old free one) for the row still on it, for its label.
-              const planIds = r.plan && !PLAN_OPTIONS.includes(r.plan) ? [r.plan, ...PLAN_OPTIONS] : PLAN_OPTIONS;
-              const planOpts = planIds.map((pp) => ({ value: pp, label: t.dash.planNames[pp] || pp }));
+              const ed = editsOf(r);
               return (
-                <tr key={r.id}>
-                  <td><div className="cust-cell"><span className="av-sm">{(r.name || r.email || "?").slice(0, 2).toUpperCase()}</span>{r.name || "-"}{isSelf && <span className="kg pub" style={{ marginLeft: 8 }}>{t.dash.orgs.you}</span>}</div></td>
+                <tr key={r.id} className="row-click" onClick={() => setOpenId(r.id)}>
+                  <td className="tid"><div className="cust-cell"><span className="av-sm">{(r.name || r.email || "?").slice(0, 2).toUpperCase()}</span><RecordLink onOpen={() => setOpenId(r.id)} copy={r.email} title={r.email}>{r.name || "-"}</RecordLink>{ed.isSelf && <span className="kg pub" style={{ marginLeft: 8 }}>{t.dash.orgs.you}</span>}</div></td>
                   <td className="cust">{r.email}</td>
-                  <td><MiniSelect value={r.role} options={roleOpts} onChange={(v) => update(r.id, { role: v })} disabled={roleLocked} /></td>
-                  <td><MiniSelect value={r.plan} options={planOpts} onChange={(v) => update(r.id, { plan: v })} /></td>
-                  <td><MiniSelect value={r.planStatus || "active"} options={PLAN_STATUSES.map((st) => ({ value: st, label: t.dash.overview.hub.planStatus[st] }))} onChange={(v) => update(r.id, { planStatus: v })} /></td>
-                  <td className="row-actions">
+                  {/* Changed in place: a pick here does not open the row. */}
+                  <td onClick={(e) => e.stopPropagation()}>{ed.role}</td>
+                  <td onClick={(e) => e.stopPropagation()}>{ed.plan}</td>
+                  <td onClick={(e) => e.stopPropagation()}>{ed.planStatus}</td>
+                  <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="icon-mini" title={cm.details} aria-label={`${cm.details}: ${nameOf(r)}`} onClick={() => setOpenId(r.id)}>{DI.docs}</button>
                     <RowMenu
-                      label={fmt(t.dash.common.rowActions, { name: r.name || r.email })}
+                      label={fmt(cm.rowActions, { name: nameOf(r) })}
                       items={[
+                        { key: "open", label: cm.details, icon: DI.docs, onClick: () => setOpenId(r.id) },
                         { key: "email", label: u.copyEmail, icon: <IcCopy />, disabled: !r.email, onClick: () => copy(r.email) },
-                        { key: "id", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => copy(r.id) },
+                        { key: "id", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(r.id) },
                       ]}
                     />
                   </td>
@@ -112,6 +134,28 @@ export function UsersView({ currentUserId, currentRole }) {
         )}
         {!loading && <Pagination {...pg} />}
       </div>
+      {open && (() => {
+        const ed = editsOf(open);
+        return (
+          <RecordDetail
+            eyebrow={u.one} title={nameOf(open)} onClose={() => setOpenId(null)}
+            fields={[
+              [u.name, open.name],
+              [u.email, open.email],
+              [u.role, ed.role],
+              [u.plan, ed.plan],
+              [u.planStatus, ed.planStatus],
+              [u.since, open.createdAt ? fmtDateTime(open.createdAt) : null],
+              [u.lastSeen, open.lastSeenAt ? fmtWhen(open.lastSeenAt) : null],
+              ["ID", <code key="id">{open.id}</code>],
+            ]}
+            actions={[
+              ...(open.email ? [{ key: "email", label: u.copyEmail, icon: <IcCopy />, onClick: () => copy(open.email) }] : []),
+              { key: "id", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(open.id) },
+            ]}
+          />
+        );
+      })()}
     </>
   );
 }

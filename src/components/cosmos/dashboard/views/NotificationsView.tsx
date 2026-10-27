@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useT, fmt } from "@/lib/i18n/index";
 import { showToast } from "@/components/cosmos/shared";
 import { IcCopy } from "@/components/cosmos/icons";
@@ -14,6 +14,8 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { RecordDetail } from "@/components/cosmos/dashboard/components/RecordDetail";
+import { ViewFigures } from "@/components/cosmos/dashboard/components/ActivityPanel";
 
 /* Where a notification leads: the record it is about (its id in the metadata, opened by the view's
    `open` request) or, without one, the view that lists that kind of thing. Sign-ins and deleted
@@ -57,9 +59,23 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
   const show = !loading;
   const follow = (n) => { const to = targetOf(n); if (to) goFiltered(onGo, to[0], to[1]); };
   const copy = (v) => navigator.clipboard?.writeText(v).then(() => showToast(t.toasts.copied)).catch(() => {});
+  // A row opens its detail (as every list's); "Open" goes straight to what it names.
+  const [open, setOpen] = useState(null);
+  const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+  const signIns = all.filter((n) => n.type === "auth.login").length;
   return (
     <>
       <ViewHead title={nt.title} />
+      {/* Its figures first, as every view: all of them, this week's, sign-ins and the rest. */}
+      <ViewFigures
+        label={nt.title} loading={loading} failed={!!error}
+        items={[
+          { key: "total", label: nt.figures.total, value: all.length },
+          { key: "week", label: nt.figures.week, value: all.filter((n) => new Date(n.createdAt).getTime() >= weekAgo).length },
+          { key: "signIns", label: nt.figures.signIns, value: signIns },
+          { key: "changes", label: nt.figures.changes, value: all.length - signIns },
+        ]}
+      />
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={nt.searchPlaceholder}
@@ -74,10 +90,10 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
             <tbody>{!error && pg.slice.map((n) => {
               const to = targetOf(n);
               return (
-                <tr key={n.id} className={to ? "row-click" : undefined} onClick={to ? () => follow(n) : undefined}>
-                  {/* The notification opens what it names and previews itself on hover. */}
+                <tr key={n.id} className="row-click" onClick={() => setOpen(n)}>
+                  {/* The notification opens its detail and previews itself on hover. */}
                   <td className="tid"><div className="cust-cell"><span className="am-sq">{notifIcon(n.type)}</span><div>
-                    <RecordLink onOpen={to ? () => follow(n) : undefined} preview={() => <PreviewCard label={nt.title} title={typeName(n)} wrap headline={<b>{typeName(n)}</b>} fields={[[nt.location, notifLocation(n) || "-"], [nt.device, deviceLabel(n) || "-"], [t.dash.overview.tableHead.date, fmtWhen(n.createdAt)]]} />}><b>{typeName(n)}</b></RecordLink>
+                    <RecordLink onOpen={() => setOpen(n)} preview={() => <PreviewCard label={nt.title} title={typeName(n)} wrap headline={<b>{typeName(n)}</b>} fields={[[nt.location, notifLocation(n) || "-"], [nt.device, deviceLabel(n) || "-"], [t.dash.overview.tableHead.date, fmtWhen(n.createdAt)]]} />}><b>{typeName(n)}</b></RecordLink>
                     {n.message ? <div className="as" style={{ marginTop: 2 }}>{humanizeLocal(n.message)}</div> : null}
                   </div></div></td>
                   <td className="cust">{notifLocation(n) || "-"}</td>
@@ -85,10 +101,12 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
                   <td className="cust">{deviceLabel(n) || "-"}</td>
                   <td className="cust">{fmtWhen(n.createdAt)}</td>
                   <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="icon-mini" title={cm.details} aria-label={`${cm.details}: ${typeName(n)}`} onClick={() => setOpen(n)}>{DI.docs}</button>
                     <button type="button" className="icon-mini" disabled={!to} title={to ? cm.open : nt.nothingToOpen} aria-label={cm.open} onClick={() => follow(n)}>{DI.link}</button>
                     <RowMenu
                       label={fmt(cm.rowActions, { name: typeName(n) })}
                       items={[
+                        { key: "details", label: cm.details, icon: DI.docs, onClick: () => setOpen(n) },
                         { key: "open", label: cm.open, icon: DI.link, disabled: !to, hint: nt.nothingToOpen, onClick: () => follow(n) },
                         { key: "ip", label: nt.copyIp, icon: <IcCopy />, disabled: !notifIp(n), onClick: () => copy(notifIp(n)) },
                       ]}
@@ -104,6 +122,22 @@ export function NotificationsView({ notifications, loading, error, onGo = (v) =>
         {loading && <TableSkeleton label={t.dash.cosmos.loading} cols={6} />}
         {show && <Pagination {...pg} />}
       </div>
+      {open && (
+        <RecordDetail
+          eyebrow={nt.title} title={typeName(open)} onClose={() => setOpen(null)}
+          fields={[
+            [nt.message, open.message ? humanizeLocal(open.message) : null],
+            [nt.location, notifLocation(open) || null],
+            [nt.ip, notifIp(open) || null],
+            [nt.device, deviceLabel(open) || null],
+            [t.dash.overview.tableHead.date, fmtWhen(open.createdAt)],
+          ]}
+          actions={[
+            ...(targetOf(open) ? [{ key: "open", label: cm.open, icon: DI.link, kind: "dark" as const, onClick: () => { setOpen(null); follow(open); } }] : []),
+            ...(notifIp(open) ? [{ key: "ip", label: nt.copyIp, icon: <IcCopy />, onClick: () => copy(notifIp(open)) }] : []),
+          ]}
+        />
+      )}
     </>
   );
 }

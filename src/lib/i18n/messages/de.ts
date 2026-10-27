@@ -1624,6 +1624,8 @@ export default {
       searchPlaceholder: "Benachrichtigungen suchen…",
       nothingToOpen: "Nichts zu öffnen",
       copyIp: "IP kopieren",
+      figures: { total: "Benachrichtigungen", week: "Letzte 7 Tage", signIns: "Anmeldungen", changes: "Änderungen" },
+      message: "Nachricht",
     },
     support: {
       searchPlaceholder: "Tickets durchsuchen…",
@@ -1760,6 +1762,9 @@ export default {
       allRoles: "Alle Rollen",
       allPlans: "Alle Tarife",
       copyEmail: "E-Mail kopieren",
+      one: "Konto",
+      since: "Konto seit",
+      lastSeen: "Zuletzt aktiv",
     },
     orgs: {
       permissionsLabel: "Berechtigungen",
@@ -2153,6 +2158,7 @@ export default {
           accountNumber: "Kontonummer", routingNumber: "Routing-Nummer",
           add: "Bankkonto hinzufügen",
           error: "Das Bankkonto konnte nicht hinzugefügt werden.",
+          steps: { account: "Konto", numbers: "Bankdaten" },
         },
       },
       onramp: {

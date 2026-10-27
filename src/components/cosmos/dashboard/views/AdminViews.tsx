@@ -79,6 +79,13 @@ function humanizeStatus(status) {
 }
 // A status as the list's own catalog names it, else the code made readable.
 const statusText = (labels, status) => (labels && labels[status]) || humanizeStatus(status) || "-";
+// A receiver's KYC status and a fiat transfer's status as the organization's Fiat view words them.
+const kycWord = (t, status) => {
+  const k = String(status || "").toLowerCase();
+  const m = t.dash.blindpay.receivers.statuses || {};
+  return m[k] || (["approved", "verified", "completed", "complete"].includes(k) ? m.approved : ["rejected", "denied", "failed"].includes(k) ? m.rejected : humanizeStatus(status));
+};
+const fiatWord = (t, status) => (status ? statusText(t.dash.blindpay.txStatuses, String(status).toLowerCase()) : "");
 // A cross-chain swap's status as a tone: settled, given back or failed, or still on its way.
 const crossTone = (status) => (status === "SUCCEEDED" ? "ok" : ["FAILED", "REFUNDED", "EXPIRED"].includes(status) ? "fail" : "wait");
 // The figures' counts: how many rows each tone holds, and how many organizations they span.
@@ -401,7 +408,7 @@ export function AdminOverviewView({ env = "dev", goToAdmin = null }) {
                     <label className="field-l">{ao[k]}: {(obj && obj.total) ?? 0}</label>
                     {goToAdmin && <button type="button" className="hub-link" onClick={() => goToAdmin("adminFiat", { tab: k })}>{a.viewList}</button>}
                   </div>
-                  <Breakdown obj={obj && obj.byStatus} pillOf={fiatPill} labelOf={(k) => humanizeStatus(k) || k} />
+                  <Breakdown obj={obj && obj.byStatus} pillOf={fiatPill} labelOf={(st) => (k === "receivers" ? kycWord(t, st) : fiatWord(t, st)) || st} />
                 </div>
               ))}
             </div>
@@ -569,6 +576,7 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
 
 /* ======================= Fiat (receivers / payins / payouts) ======================= */
 function FiatList({ sub, a, consumer, onOrgFilter, env }) {
+  const t = useT();
   const af = a.fiat;
   const [q, setQ] = useState("");
   const fetcher = sub === "receivers"
@@ -580,7 +588,9 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
   const [open, setOpen] = useState(null);
   const onAccessChanged = (id, disabled) => { setRows((rs) => rs.map((x) => (x.id === id ? { ...x, disabled } : x))); setOpen((o) => (o && o.id === id ? { ...o, disabled } : o)); };
   const onApproved = (id) => { setRows((rs) => rs.map((x) => (x.id === id ? { ...x, kycStatus: "pending_user" } : x))); setOpen((o) => (o && o.id === id ? { ...o, kycStatus: "pending_user" } : o)); };
-  const kycText = (x) => (x.disabled ? af.disabled : humanizeStatus(x.kycStatus) || af.statusUnknown);
+  const kycText = (x) => (x.disabled ? af.disabled : kycWord(t, x.kycStatus) || af.statusUnknown);
+  const typeText = (x) => (t.dash.blindpay.receivers.types || {})[x.type] || humanizeStatus(x.type) || "-";
+  const txText = (x) => fiatWord(t, x.status) || af.statusUnknown;
   const moneyText = (x) => `${x.senderAmount ?? "-"} → ${x.receiverAmount ?? "-"}`;
   const assetText = (x) => `${x.token || "-"}${x.network ? ` · ${x.network}` : ""}`;
   // A transfer's figures: all of them, settled, in progress and failed (the provider's words).
@@ -595,12 +605,12 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
         figures={statusFigures(a, rows, (x) => (x.disabled ? "fail" : pillTone(fiatPill(x.kycStatus)) === "ok" ? "ok" : "wait"), { ok: af.approved, wait: af.inReview, fail: af.disabled })} figuresLabel={af.tabs.receivers}
         heads={[af.receiverHead.name, af.receiverHead.org, af.receiverHead.type, af.receiverHead.status, af.receiverHead.created, ""]}
         rows={rows} empty={af.emptyReceivers}
-        haystack={(x) => `${x.name || ""} ${orgOf(x)} ${x.type || ""} ${x.kycStatus || ""} ${x.disabled ? "disabled" : ""} ${x.email || ""} ${x.id || ""} ${x.blindpayId || ""}`}
+        haystack={(x) => `${x.name || ""} ${orgOf(x)} ${x.type || ""} ${typeText(x)} ${x.kycStatus || ""} ${kycText(x)} ${x.email || ""} ${x.id || ""} ${x.blindpayId || ""}`}
         renderRow={(x) => (
           <tr key={x.id} className="row-click" onClick={() => setOpen(x)}>
             <IdTd id={x.id} label={receiverName(x)} sub={x.email && x.email !== receiverName(x) ? x.email : null} onOpen={() => setOpen(x)} />
             <OrgTd row={x} onFilter={onOrgFilter} />
-            <td className="cust">{humanizeStatus(x.type) || "-"}</td>
+            <td className="cust">{typeText(x)}</td>
             <td>{x.disabled ? <Pill st="fail" label={af.disabled} /> : <Pill st={fiatPill(x.kycStatus)} label={kycText(x)} />}</td>
             <td className="cust">{fmtDateTime(x.createdAt)}</td>
             <AdminReceiverActions a={a} row={x} env={env} onAccessChanged={onAccessChanged} onApproved={onApproved} onFilter={onOrgFilter} onOpen={() => setOpen(x)} />
@@ -615,7 +625,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
             [af.receiverHead.name, open.name],
             [af.email, open.email],
             [af.receiverHead.org, orgOf(open)],
-            [af.receiverHead.type, humanizeStatus(open.type)],
+            [af.receiverHead.type, typeText(open)],
             [af.receiverHead.status, kycText(open)],
             [af.providerId, open.blindpayId && <code key="p">{open.blindpayId}</code>],
             [a.payments.tableHead.id, <code key="id">{open.id}</code>],
@@ -636,7 +646,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
       figures={moneyFigures} figuresLabel={af.tabs[sub]}
       heads={[head.id, head.org, head.asset, payin ? head.method : head.rail, head.amount, head.status, head.created, ""]}
       rows={rows} empty={payin ? af.emptyPayins : af.emptyPayouts}
-      haystack={(x) => `${x.id || ""} ${orgOf(x)} ${x.token || ""} ${x.network || ""} ${via(x) || ""} ${x.status || ""}`}
+      haystack={(x) => `${x.id || ""} ${orgOf(x)} ${x.token || ""} ${x.network || ""} ${via(x) || ""} ${x.status || ""} ${txText(x)}`}
       renderRow={(x) => (
         <tr key={x.id} className="row-click" onClick={() => setOpen(x)}>
           <IdTd id={x.id} onOpen={() => setOpen(x)} />
@@ -644,7 +654,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
           <td className="cust">{assetText(x)}</td>
           <td className="cust">{via(x) || "-"}</td>
           <td className="amt">{moneyText(x)}</td>
-          <td><Pill st={fiatPill(x.status)} label={humanizeStatus(x.status) || af.statusUnknown} /></td>
+          <td><Pill st={fiatPill(x.status)} label={txText(x)} /></td>
           <td className="cust">{fmtDateTime(x.createdAt)}</td>
           <AdminRowMenu id={x.id} row={x} onFilter={onOrgFilter} onOpen={() => setOpen(x)} />
         </tr>
@@ -656,7 +666,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
         fields={[
           [head.id, <code key="id">{open.id}</code>],
           [head.org, orgOf(open)],
-          [head.status, humanizeStatus(open.status) || af.statusUnknown],
+          [head.status, txText(open)],
           [head.asset, assetText(open)],
           [payin ? head.method : head.rail, via(open)],
           [head.amount, moneyText(open)],

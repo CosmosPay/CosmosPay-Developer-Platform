@@ -751,6 +751,9 @@ export default {
       allRoles: "सभी भूमिकाएँ",
       allPlans: "सभी प्लान",
       copyEmail: "ईमेल कॉपी करें",
+      one: "खाता",
+      since: "खाता कब से",
+      lastSeen: "अंतिम गतिविधि",
     },
     org: { heading: "संगठन", owned: "आपके संगठन", invited: "आपके साथ शेयर किए गए", locked: "लॉक है: इसका उपयोग करने के लिए अपना प्लान अपग्रेड करें", create: "संगठन बनाएँ" },
     env: { heading: "एनवायरनमेंट", sandbox: "सैंडबॉक्स", production: "प्रोडक्शन", testnet: "टेस्टनेट एनवायरनमेंट", mainnet: "मेननेट एनवायरनमेंट" },
@@ -981,6 +984,8 @@ export default {
       searchPlaceholder: "सूचनाएँ खोजें…",
       nothingToOpen: "खोलने के लिए कुछ नहीं",
       copyIp: "IP कॉपी करें",
+      figures: { total: "सूचनाएँ", week: "पिछले 7 दिन", signIns: "साइन-इन", changes: "बदलाव" },
+      message: "संदेश",
     },
     support: {
       searchPlaceholder: "टिकट खोजें…",
@@ -1481,6 +1486,7 @@ export default {
           accountNumber: "खाता संख्या", routingNumber: "रूटिंग नंबर",
           add: "बैंक खाता जोड़ें",
           error: "बैंक खाता नहीं जोड़ा जा सका।",
+          steps: { account: "खाता", numbers: "बैंक विवरण" },
         },
       },
       onramp: {
