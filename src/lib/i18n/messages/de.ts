@@ -4,7 +4,7 @@ export default {
   zk: {
     title: "Private Zahlungen",
     commission: "Provision",
-    commissionRate: "0,01 % pro Transaktion",
+    commissionRate: "0,18 % pro Transaktion",
     amount: "Betrag",
     merchantGets: "Der Kunde erhält",
     merchantFee: "Händlergebühr",
@@ -314,15 +314,15 @@ export default {
     plans: {
       starter: {
         desc: "Echte Zahlungen auf Stellar, Solana & Monad annehmen",
-        sub: "+ 25¢ / Txn",
-        pnote: "1% + 25¢ pro Transaktion",
+        sub: "+ 18¢ / Txn",
+        pnote: "1.5% + 18¢ pro Transaktion",
         team: "Bis zu 2",
         feats: ["Teilweiser API-Zugriff", "Live- und Testschlüssel", "USDC-Abwicklung", "Bis zu 2 Mitglieder"]
       },
       growth: {
         desc: "Niedrigere Tarife für wachsende Teams",
         sub: "/Monat · ab",
-        pnote: "ab · 0,2% + 5¢ pro Txn",
+        pnote: "ab · 0,75% + 18¢ pro Txn",
         team: "Unbegrenzt",
         feats: ["Alles aus Starter", "Niedrigere Transaktionsgebühr", "Unbegrenzte Mitglieder", "Radar-Betrugstools", "Mengenrabatte", "Prioritäts-Support"]
       }
@@ -849,24 +849,24 @@ export default {
       {
         name: "Starter",
         desc: "Nehmen Sie echte Zahlungen ohne monatliche Gebühr und mit integrierter Zahlungsabsicherung an.",
-        amt: "1%",
-        txt: "+ 25¢ pro Transaktion *",
+        amt: "1.5%",
+        txt: "+ 18¢ pro Transaktion *",
         cta: "Jetzt starten",
         feats: ["Live-Zahlungen", "Test-API-Schlüssel", "Zahlungsabsicherung", "Teilweiser API-Zugriff", "Standard-Support", "Streitfalllösung", "Karten & Banküberweisungen"]
       },
       {
         name: "Essentials",
         desc: "Voller Plattformzugriff mit Streitfalllösung und jeder Zahlungsmethode.",
-        txt: "+ 0.5% + 10¢ pro Transaktion *",
+        txt: "+ 1.12% + 18¢ pro Transaktion *",
         cta: "Essentials wählen",
         feats: ["Alles aus Starter", "Voller API-Zugriff", "Zahlungsabsicherung", "Streitfalllösung", "Karten & Banküberweisungen", "Bevorzugter E-Mail-Support", "Mengenrabatte"]
       },
       {
         name: "Growth",
         desc: "Niedrigere Tarife und mehr Leistung für wachsende Teams.",
-        txt: "+ 0.2% + 5¢ pro Transaktion *",
+        txt: "+ 0.75% + 18¢ pro Transaktion *",
         cta: "Growth wählen",
-        feats: ["Alles aus Essentials", "Transaktionstarif von 0.2% + 5¢", "Unbegrenzte Teammitglieder", "Erweiterte Betrugserkennung", "Mengenrabatte", "Bevorzugter Support", "Intelligentes Payment-Routing"]
+        feats: ["Alles aus Essentials", "Transaktionstarif von 0.75% + 18¢", "Unbegrenzte Teammitglieder", "Erweiterte Betrugserkennung", "Mengenrabatte", "Bevorzugter Support", "Intelligentes Payment-Routing"]
       }
     ],
     enterprise: {
@@ -891,7 +891,7 @@ export default {
       },
       {
         l: "Gebühr pro Transaktion",
-        v: ["1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Individuell"]
+        v: ["1.5% + 18¢", "1.12% + 18¢", "0.75% + 18¢", "Individuell"]
       },
       {
         l: "Abwicklungsgeschwindigkeit",
@@ -942,7 +942,7 @@ export default {
       },
       {
         q: "Was kostet eine Transaktion?",
-        a: "Starter kostet 1% + 25¢ pro erfolgreicher Transaktion. Essentials kostet $33/mo (oder $27.50/mo bei jährlicher Abrechnung) und senkt den Tarif auf 0.5% + 10¢, während Growth $99/mo kostet und ihn auf 0.2% + 5¢ senkt. Jede Transaktion verursacht zusätzlich eine kleine Netzwerkgebühr."
+        a: "Starter kostet 1.5% + 18¢ pro erfolgreicher Transaktion. Essentials kostet $33/mo (oder $27.50/mo bei jährlicher Abrechnung) und senkt den Tarif auf 1.12% + 18¢, während Growth $99/mo kostet und ihn auf 0.75% + 18¢ senkt. Jede Transaktion verursacht zusätzlich eine kleine Netzwerkgebühr."
       },
       {
         q: "Welche Zahlungsmethoden unterstützen Sie?",

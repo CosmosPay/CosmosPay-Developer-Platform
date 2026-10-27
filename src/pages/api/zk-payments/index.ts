@@ -23,7 +23,7 @@ export const GET: APIRoute = async (ctx) => {
 
 /* Create a ZK payment: the payer pays the amount confidentially; the recipient, a customer's private
    account (product owner, 2026-10-27: private accounts are customers' wallets), receives it minus
-   the 0.01% commission and the organization's own fee, if any, which goes to one of the
+   the 0.18% commission and the organization's own fee, if any, which goes to one of the
    organization's wallets. Both must hold a confidential account on the token (the API checks it). */
 export const POST: APIRoute = async (ctx) => {
   const body = await parseJson(ctx.request, createZkPaymentBodySchema).catch(() => null);

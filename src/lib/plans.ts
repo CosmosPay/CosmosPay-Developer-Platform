@@ -30,7 +30,7 @@ export interface PlanSpec {
   maxSeats: number | null; // members allowed per organization (null = unlimited)
   mainnet: boolean; // may create production (mainnet) API keys / take live payments
   api: ApiLevel; // which API surface the plan unlocks (legacy community = simple payment-notifications API)
-  price: string; // headline price tag, e.g. "1% + 25¢", "$33/mo", "Custom"
+  price: string; // headline price tag, e.g. "1.5% + 18¢", "$33/mo", "Custom"
   perTx: string; // per-transaction fee
   settle: string; // settlement speed
   // Swap commission in basis points (50 = 0.5%) taken from the source asset on every
@@ -38,8 +38,9 @@ export interface PlanSpec {
   // injected into the gateway/consumer context (never a request param) so it can't be
   // bypassed. It is set on its own, NOT from `perTx` (the payments rate): swap rates
   // follow what other wallets charge for a swap (MetaMask 0.875%, Phantom 0.85%,
-  // LOBSTR 0.5% on XLM), payments rates follow card processors. Whole bps only (the
-  // Payments API and the swap aggregators refuse fractions), so the floor is 3 (0.03%).
+  // LOBSTR 0.5% on XLM), payments rates follow crypto gateways (BitPay). Each sits at 75% of
+  // the competitor's, rounded down (MetaMask's 0.875% -> 65 on Starter). Whole bps only (the
+  // Payments API and the swap aggregators refuse fractions), so the floor is 7 (0.07%).
   // A new rate reaches existing keys on the next start (syncAllConsumerForwarders).
   swapFeeBps: number;
 }
@@ -47,11 +48,11 @@ export interface PlanSpec {
 export const PLAN_SPECS: Record<PlanId, PlanSpec> = {
   // Legacy: the free plan, no longer offered. Kept so existing accounts on it keep working
   // (and the shared public wallet key, which pays this plan's swap rate; see public-key.ts).
-  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "-",             settle: "~5 sec", swapFeeBps: 50 },
-  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1% + 25¢", perTx: "1% + 25¢",  settle: "~5 sec", swapFeeBps: 25 },
-  essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "0.5% + 10¢",    settle: "~5 sec", swapFeeBps: 10  },
-  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.2% + 5¢",    settle: "~5 sec", swapFeeBps: 5  },
-  enterprise: { id: "enterprise", maxApiKeys: null, maxOrgs: null, maxSeats: null, mainnet: true, api: "full",          price: "Custom",       perTx: "Custom",        settle: "~5 sec", swapFeeBps: 3   },
+  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "-",             settle: "~5 sec", swapFeeBps: 65 },
+  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1.5% + 18¢",   perTx: "1.5% + 18¢",    settle: "~5 sec", swapFeeBps: 65 },
+  essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "1.12% + 18¢",   settle: "~5 sec", swapFeeBps: 26 },
+  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.75% + 18¢",   settle: "~5 sec", swapFeeBps: 13 },
+  enterprise: { id: "enterprise", maxApiKeys: null, maxOrgs: null, maxSeats: null, mainnet: true, api: "full",          price: "Custom",       perTx: "Custom",        settle: "~5 sec", swapFeeBps: 7  },
 };
 
 /* The restrictions enforced across the app, derived from the specs above. */
@@ -100,22 +101,22 @@ export function planSwapFeeBps(plan: unknown): number {
   return PLAN_SPECS[normalizePlan(plan)].swapFeeBps;
 }
 
-/* A plan's swap commission as copy shows it ("0.25%"). Pricing, the plan pickers and the
+/* A plan's swap commission as copy shows it ("0.65%"). Pricing, the plan pickers and the
    public swaps page read it from here, so no page writes a rate of its own. */
 export function swapFeePct(plan: unknown): string {
   return `${planSwapFeeBps(plan) / 100}%`;
 }
 
-/* The highest and lowest swap commission across the offered plans ("from 0.25% to 0.03%"). */
+/* The highest and lowest swap commission across the offered plans ("from 0.65% to 0.07%"). */
 export function swapFeeRange(): { max: string; min: string } {
   const bps = PLAN_IDS.map((id) => PLAN_SPECS[id].swapFeeBps);
   return { max: `${Math.max(...bps) / 100}%`, min: `${Math.min(...bps) / 100}%` };
 }
 
 /* Rates that are the same on every plan, in percent: escrow's surcharge per payment and the
-   private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 1). */
-export const ESCROW_FEE_PCT = 0.5;
-export const PRIVATE_PAYMENT_FEE_PCT = 0.01;
+   private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 18). */
+export const ESCROW_FEE_PCT = 1.95;
+export const PRIVATE_PAYMENT_FEE_PCT = 0.18;
 
 /* true when adding one more would exceed the plan's limit (null = unlimited). */
 export function atLimit(limit: number | null, count: number): boolean {

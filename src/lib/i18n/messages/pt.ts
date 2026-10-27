@@ -4,7 +4,7 @@ export default {
   zk: {
     title: "Pagamentos privados",
     commission: "Comissão",
-    commissionRate: "0,01% por transação",
+    commissionRate: "0,18% por transação",
     amount: "Valor",
     merchantGets: "O cliente recebe",
     merchantFee: "Taxa do comerciante",
@@ -314,15 +314,15 @@ export default {
     plans: {
       starter: {
         desc: "Aceite pagamentos reais na Stellar, Solana e Monad",
-        sub: "+ 25¢ / txn",
-        pnote: "1% + 25¢ por transação",
+        sub: "+ 18¢ / txn",
+        pnote: "1.5% + 18¢ por transação",
         team: "Até 2",
         feats: ["Acesso parcial à API", "Chaves ao vivo e de teste", "Liquidação em USDC", "Até 2 membros"]
       },
       growth: {
         desc: "Tarifas menores para equipes em crescimento",
         sub: "/mês · a partir de",
-        pnote: "a partir de · 0.2% + 5¢ por txn",
+        pnote: "a partir de · 0.75% + 18¢ por txn",
         team: "Ilimitado",
         feats: ["Tudo do Starter", "Taxa por transação menor", "Membros ilimitados", "Ferramentas antifraude Radar", "Descontos por volume", "Suporte prioritário"]
       }
@@ -849,24 +849,24 @@ export default {
       {
         name: "Starter",
         desc: "Receba pagamentos reais sem mensalidade e com proteção de pagamentos integrada.",
-        amt: "1%",
-        txt: "+ 25¢ por transação *",
+        amt: "1.5%",
+        txt: "+ 18¢ por transação *",
         cta: "Começar",
         feats: ["Pagamentos reais", "Chaves de API de teste", "Proteção de pagamentos", "Acesso parcial à API", "Suporte padrão", "Resolução de disputas", "Cartões e transferências bancárias"]
       },
       {
         name: "Essentials",
         desc: "Acesso total à plataforma com disputas e todos os métodos de pagamento.",
-        txt: "+ 0.5% + 10¢ por transação *",
+        txt: "+ 1.12% + 18¢ por transação *",
         cta: "Escolher Essentials",
         feats: ["Tudo do Starter", "Acesso total à API", "Proteção de pagamentos", "Resolução de disputas", "Cartões e transferências bancárias", "Suporte prioritário por e-mail", "Descontos por volume"]
       },
       {
         name: "Growth",
         desc: "Taxas menores e mais potência para equipes em crescimento.",
-        txt: "+ 0.2% + 5¢ por transação *",
+        txt: "+ 0.75% + 18¢ por transação *",
         cta: "Escolher Growth",
-        feats: ["Tudo do Essentials", "Taxa de 0.2% + 5¢ por transação", "Membros de equipe ilimitados", "Ferramentas antifraude avançadas", "Descontos por volume", "Suporte prioritário", "Roteamento inteligente de pagamentos"]
+        feats: ["Tudo do Essentials", "Taxa de 0.75% + 18¢ por transação", "Membros de equipe ilimitados", "Ferramentas antifraude avançadas", "Descontos por volume", "Suporte prioritário", "Roteamento inteligente de pagamentos"]
       }
     ],
     enterprise: {
@@ -891,7 +891,7 @@ export default {
       },
       {
         l: "Taxa por transação",
-        v: ["1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Personalizado"]
+        v: ["1.5% + 18¢", "1.12% + 18¢", "0.75% + 18¢", "Personalizado"]
       },
       {
         l: "Velocidade de liquidação",
@@ -942,7 +942,7 @@ export default {
       },
       {
         q: "Quanto custa uma transação?",
-        a: "O Starter é 1% + 25¢ por transação bem-sucedida. O Essentials é $33/mês (ou $27.50/mês cobrado anualmente) e reduz a taxa para 0.5% + 10¢, enquanto o Growth é $99/mês e a reduz para 0.2% + 5¢. Uma pequena taxa de rede também se aplica a cada transação."
+        a: "O Starter é 1.5% + 18¢ por transação bem-sucedida. O Essentials é $33/mês (ou $27.50/mês cobrado anualmente) e reduz a taxa para 1.12% + 18¢, enquanto o Growth é $99/mês e a reduz para 0.75% + 18¢. Uma pequena taxa de rede também se aplica a cada transação."
       },
       {
         q: "Quais métodos de pagamento vocês suportam?",

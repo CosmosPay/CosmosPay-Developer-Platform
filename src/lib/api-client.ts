@@ -237,7 +237,7 @@ export const swaps = {
 
 /* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents), proxied to the Payments
    API. Mainnet only upstream: in test mode assets and quotes work, creating is refused. */
-/* ZK payments (confidential, amount hidden on-chain; 0.01% commission). See src/pages/api/zk-payments. */
+/* ZK payments (confidential, amount hidden on-chain; 0.18% commission). See src/pages/api/zk-payments. */
 export const zkPayments = {
   config: (org, env) => request(`/api/zk-payments/config?env=${env || "dev"}&org=${encodeURIComponent(org)}`),
   list: (org, env, query = {}) => {

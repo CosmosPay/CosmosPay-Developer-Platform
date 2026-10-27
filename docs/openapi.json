@@ -12650,7 +12650,7 @@
                       "statusCode": 400,
                       "code": "invalid_amount",
                       "error": "Bad Request",
-                      "message": "The amount is too small: after the 0.01% commission (at least one stroop) the merchant would receive nothing.",
+                      "message": "The amount is too small: after the 0.18% commission (at least one stroop) the merchant would receive nothing.",
                       "path": "/v1/zk-payments",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -12731,7 +12731,7 @@
             "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
-        "summary": "Create a private payment: a confidential payment to a merchant registered on the token, minus the 0.01% commission",
+        "summary": "Create a private payment: a confidential payment to a merchant registered on the token, minus the 0.18% commission",
         "tags": [
           "zk-payments"
         ],
@@ -20909,7 +20909,7 @@
           },
           "fees": {
             "type": "string",
-            "description": "Commission the settled payments paid to Cosmos Pay, in XLM (0.01% of each).",
+            "description": "Commission the settled payments paid to Cosmos Pay, in XLM (0.18% of each).",
             "example": "0.214025"
           },
           "feesUsd": {
@@ -25414,8 +25414,8 @@
           },
           "feeBps": {
             "type": "number",
-            "example": 1,
-            "description": "The commission: 1 bps = 0.01%."
+            "example": 18,
+            "description": "The commission: 18 bps = 0.18%."
           },
           "feeAccount": {
             "type": "string",
@@ -25442,7 +25442,7 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "What the payer pays in total, in XLM (up to 7 decimal places). The merchant receives it minus the 0.01% commission (`netAmount`); the commission (`feeAmount`, rounded up, at least one stroop) goes to Cosmos Pay's fee account. An amount whose net would be zero is refused.",
+            "description": "What the payer pays in total, in XLM (up to 7 decimal places). The merchant receives it minus the 0.18% commission (`netAmount`); the commission (`feeAmount`, rounded up, at least one stroop) goes to Cosmos Pay's fee account. An amount whose net would be zero is refused.",
             "example": "25.5"
           },
           "recipient": {
@@ -25470,7 +25470,7 @@
             "maxLength": 255
           },
           "merchantFee": {
-            "description": "Your own fee on this payment, in XLM, paid privately like the rest: a third confidential transfer from the payer to `wallet`, which must already hold a confidential account on Cosmos Pay's token (under auditor id 0) and be neither the recipient nor the fee account. `paidBy: recipient` takes it from `amount` (the merchant receives less); `payer` adds it on top (the payer pays `amount` plus the fee). The 0.01% commission is a share of `amount` either way. Confirm then takes `merchantFeeTxHash` too.",
+            "description": "Your own fee on this payment, in XLM, paid privately like the rest: a third confidential transfer from the payer to `wallet`, which must already hold a confidential account on Cosmos Pay's token (under auditor id 0) and be neither the recipient nor the fee account. `paidBy: recipient` takes it from `amount` (the merchant receives less); `payer` adds it on top (the payer pays `amount` plus the fee). The 0.18% commission is a share of `amount` either way. Confirm then takes `merchantFeeTxHash` too.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"

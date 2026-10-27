@@ -17,6 +17,6 @@ export const POPULAR = "growth";
 import { PLAN_SPECS, swapFeePct } from "@/lib/plans";
 const orgsLabel = (n: number | null) => (n == null ? "∞" : String(n));
 export const PLAN_DATA = {
-  starter: { amt: "1%", price: "$0", per: "/mo", perTx: PLAN_SPECS.starter.perTx, swap: swapFeePct("starter"), settle: PLAN_SPECS.starter.settle, orgs: orgsLabel(PLAN_SPECS.starter.maxOrgs), live: PLAN_SPECS.starter.mainnet },
+  starter: { amt: "1.5%", price: "$0", per: "/mo", perTx: PLAN_SPECS.starter.perTx, swap: swapFeePct("starter"), settle: PLAN_SPECS.starter.settle, orgs: orgsLabel(PLAN_SPECS.starter.maxOrgs), live: PLAN_SPECS.starter.mainnet },
   growth: { amt: "$99", price: "$99", per: "/mo", perTx: PLAN_SPECS.growth.perTx, swap: swapFeePct("growth"), settle: PLAN_SPECS.growth.settle, orgs: orgsLabel(PLAN_SPECS.growth.maxOrgs), live: PLAN_SPECS.growth.mainnet },
 };

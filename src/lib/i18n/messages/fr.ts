@@ -4,7 +4,7 @@ export default {
   zk: {
     title: "Paiements privés",
     commission: "Commission",
-    commissionRate: "0,01 % par transaction",
+    commissionRate: "0,18 % par transaction",
     amount: "Montant",
     merchantGets: "Le client reçoit",
     merchantFee: "Frais du marchand",
@@ -314,15 +314,15 @@ export default {
     plans: {
       starter: {
         desc: "Acceptez de vrais paiements sur Stellar, Solana et Monad",
-        sub: "+ 25¢ / txn",
-        pnote: "1% + 25¢ par transaction",
+        sub: "+ 18¢ / txn",
+        pnote: "1.5% + 18¢ par transaction",
         team: "Jusqu’à 2",
         feats: ["Accès partiel à l’API", "Clés en direct et de test", "Règlement en USDC", "Jusqu’à 2 membres"]
       },
       growth: {
         desc: "Tarifs réduits pour les équipes en croissance",
         sub: "/mois · à partir de",
-        pnote: "à partir de · 0,2% + 5¢ par txn",
+        pnote: "à partir de · 0,75% + 18¢ par txn",
         team: "Illimité",
         feats: ["Tout de Starter", "Taux par transaction réduit", "Membres illimités", "Outils anti-fraude Radar", "Remises sur volume", "Assistance prioritaire"]
       }
@@ -849,24 +849,24 @@ export default {
       {
         name: "Starter",
         desc: "Encaissez de vrais paiements sans frais mensuels, avec une protection des paiements intégrée.",
-        amt: "1%",
-        txt: "+ 25¢ par transaction *",
+        amt: "1.5%",
+        txt: "+ 18¢ par transaction *",
         cta: "Commencer",
         feats: ["Paiements réels", "Clés API de test", "Protection des paiements", "Accès partiel à l'API", "Support standard", "Gestion des litiges", "Cartes et virements bancaires"]
       },
       {
         name: "Essentials",
         desc: "Accès complet à la plateforme avec gestion des litiges et tous les moyens de paiement.",
-        txt: "+ 0.5% + 10¢ par transaction *",
+        txt: "+ 1.12% + 18¢ par transaction *",
         cta: "Choisir Essentials",
         feats: ["Tout ce qui est inclus dans Starter", "Accès complet à l'API", "Protection des paiements", "Gestion des litiges", "Cartes et virements bancaires", "Support e-mail prioritaire", "Remises sur volume"]
       },
       {
         name: "Growth",
         desc: "Des tarifs plus bas et plus de puissance pour les équipes en croissance.",
-        txt: "+ 0.2% + 5¢ par transaction *",
+        txt: "+ 0.75% + 18¢ par transaction *",
         cta: "Choisir Growth",
-        feats: ["Tout ce qui est inclus dans Essentials", "Tarif de 0.2% + 5¢ par transaction", "Membres d’équipe illimités", "Outils antifraude avancés", "Remises sur volume", "Support prioritaire", "Routage intelligent des paiements"]
+        feats: ["Tout ce qui est inclus dans Essentials", "Tarif de 0.75% + 18¢ par transaction", "Membres d’équipe illimités", "Outils antifraude avancés", "Remises sur volume", "Support prioritaire", "Routage intelligent des paiements"]
       }
     ],
     enterprise: {
@@ -891,7 +891,7 @@ export default {
       },
       {
         l: "Frais par transaction",
-        v: ["1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Sur mesure"]
+        v: ["1.5% + 18¢", "1.12% + 18¢", "0.75% + 18¢", "Sur mesure"]
       },
       {
         l: "Vitesse de règlement",
@@ -942,7 +942,7 @@ export default {
       },
       {
         q: "Combien coûte une transaction ?",
-        a: "Starter est à 1% + 25¢ par transaction réussie. Essentials est à 33 $/mois (ou 27,50 $/mois facturé annuellement) et abaisse le tarif à 0.5% + 10¢, tandis que Growth est à 99 $/mois et le ramène à 0.2% + 5¢. Un petit frais de réseau s’applique également à chaque transaction."
+        a: "Starter est à 1.5% + 18¢ par transaction réussie. Essentials est à 33 $/mois (ou 27,50 $/mois facturé annuellement) et abaisse le tarif à 1.12% + 18¢, tandis que Growth est à 99 $/mois et le ramène à 0.75% + 18¢. Un petit frais de réseau s’applique également à chaque transaction."
       },
       {
         q: "Quels moyens de paiement prenez-vous en charge ?",

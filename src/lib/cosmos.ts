@@ -753,7 +753,7 @@ export const cosmosUsdt0 = {
 /* ---- ZK payments as a service: confidential payments on Cosmos Pay's confidential token
    (OpenZeppelin's stellar-confidential), where the amount stays hidden on-chain. The payer
    proves and pays in the browser; the Payments API holds the token's auditor key, checks both
-   confidential transfers (the merchant's net amount and the 0.01% commission) and marks the
+   confidential transfers (the merchant's net amount and the 0.18% commission) and marks the
    payment paid. Testnet only for now. ---- */
 export interface ZkConfig {
   enabled: boolean;

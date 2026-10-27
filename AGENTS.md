@@ -756,7 +756,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   say is in the section's text too, and their figures are examples, never claims. Benefits are a
   bento (wide and narrow cells swapping per row); the developers' code has REST / TypeScript SDK /
   Webhook tabs (the same `[data-tabs]` script as the use cases); pricing has a fee calculator
-  (rates parsed from `plans.ts`, escrow's 0.5% as a checkbox, a logarithmic slider); the final
+  (rates parsed from `plans.ts`, escrow's surcharge as a checkbox, a logarithmic slider); the final
   call carries the brand's astronaut (`public/brand/astronauta-telefono.svg`, inverted in dark
   mode). **Images too, not only drawn UI** (the product owner asked for images after the
   mock-ups): the brand's astronauts on the comparison table (none by the benefits heading: the product
@@ -777,7 +777,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   address) **and escrow** (the payment is held until it is released, e.g. when the order ships).
   As the product owner specified it: the payment waits in an on-chain contract (not with Cosmos
   Pay), the merchant releases it when the order ships, it goes back to the buyer if not released
-  within the deadline the merchant sets for the link, and escrow costs 0.5% per payment on top
+  within the deadline the merchant sets for the link, and escrow costs 1.95% per payment on top
   of the plan's rate. No escrow code exists in this repo, the community server, the SDK or the
   wallet yet. "What changes" carries both modes (benefits + the "two ways to settle" cards), and
   so do the comparison, the hero lede, pricing and the FAQ.
@@ -958,8 +958,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (`stellar-confidential` 0.8.0) and the TypeScript SDK `stellar-confidential-token-sdk` (MIT,
   unaudited; pinned to commit `aad1706`, the product owner approved the dependency). Cosmos Pay
   operates its own confidential token (wrapping XLM) with its own auditor registry, so it holds the
-  auditor key every account on the token is registered under. **Commission: 0.01% per transaction**
-  (1 basis point, `src/lib/zk/amounts.ts`, tested; the Payments API is the authority), taken from
+  auditor key every account on the token is registered under. **Commission: 0.18% per transaction**
+  (18 basis points, `src/lib/zk/amounts.ts`, tested; the Payments API is the authority), taken from
   the payment: the payer pays the amount, the merchant receives it minus the commission, Cosmos Pay
   the commission. **Testnet only for now**; a network without it answers "not available".
 - **Flow**: the dashboard's ZK payments view (`views/ZkPaymentsView.tsx`, Payments group) creates a
@@ -1062,8 +1062,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   stays on community on purpose (its swap rate must stay the highest; see `public-key.ts`).
 - Production leaves `ENABLED_PLANS` empty: every offered plan can be picked (product owner,
   2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
-- Starter is 1% + 25¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
+- Starter is 1.5% + 18¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
+- **Every rate is 75% of the competition's, rounded down** (product owner, 2026-10-27), so each
+  is at least 25% cheaper: payments from BitPay's tiers (2% / 1.5% / 1% + 25¢ → 1.5% / 1.12% /
+  0.75% + 18¢; the monthly fees have no counterpart and stay), swaps from MetaMask's 0.875%
+  (Starter and the public key 65 bps, then 26 / 13 / 7 on the same ladder as before), private
+  payments from Railgun's 0.25% (18 bps, the server's `ZK_PAYMENT_FEE_BPS`), escrow from
+  Escrow.com's 2.6% (1.95%). A new rate keeps that rule and changes every surface together.
 - **Every service's rate is on the pricing surfaces** (product owner, 2026-10-27: the swap
   commission was on no pricing page). `/pricing` compares, per plan, the payment fee, the swap
   commission (`swapFeePct`), escrow (`ESCROW_FEE_PCT`), private payments

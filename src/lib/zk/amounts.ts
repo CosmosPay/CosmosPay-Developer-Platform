@@ -1,13 +1,13 @@
 /* Amounts of a ZK payment. They travel as decimal strings (XLM, 7 decimals) and are proven in
    stroops. Pure, so it is unit-tested (tests/unit/zkAmounts.test.ts).
 
-   ZK payments as a service cost 0.01% per transaction (1 basis point), taken from the payment:
+   ZK payments as a service cost 0.18% per transaction (18 basis points), taken from the payment:
    the payer pays the amount, the recipient receives it minus the commission (and the
    organization's own fee, when it has one), Cosmos Pay the commission. The Payments API
    computes the same split (ceil, at least one stroop) and is the authority; this copy only shows
    it before the payment exists. */
 
-export const ZK_FEE_BPS = 1;
+export const ZK_FEE_BPS = 18;
 export const ZK_DECIMALS = 7;
 
 /** "12.5" -> 125000000n. Refuses anything but plain digits and more decimals than the asset has. */
@@ -28,7 +28,7 @@ export function fromUnits(units: bigint, decimals = ZK_DECIMALS): string {
   return `${neg ? "-" : ""}${whole}${frac ? `.${frac}` : ""}`;
 }
 
-/** The commission on `units`: 0.01%, rounded up, at least one unit. */
+/** The commission on `units`: 0.18%, rounded up, at least one unit. */
 export function zkFee(units: bigint, bps = ZK_FEE_BPS): bigint {
   if (units <= 0n) return 0n;
   const fee = (units * BigInt(bps) + 9999n) / 10000n;

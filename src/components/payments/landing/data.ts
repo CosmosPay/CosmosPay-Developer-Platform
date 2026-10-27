@@ -135,7 +135,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
       swap: t.pricing.perSwap.replace("{rate}", swapFeePct(id)),
     };
   });
-  // The fee calculator's plans: each rate parsed from plans.ts ("0.2% + 5¢"); Enterprise is custom.
+  // The fee calculator's plans: each rate parsed from plans.ts ("0.75% + 18¢"); Enterprise is custom.
   const calcPlans = (["starter", "essentials", "growth", "enterprise"] as const).map((id) => {
     const spec = PLAN_SPECS[id];
     const m = spec.perTx.match(/([\d.]+)%\s*\+\s*([\d.]+)¢/);

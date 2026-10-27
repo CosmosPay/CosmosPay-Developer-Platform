@@ -3,7 +3,7 @@
 
    ZK payments as a service: confidential payments on Cosmos Pay's confidential token
    (OpenZeppelin's stellar-confidential), where the amount stays hidden on-chain. The commission
-   is 0.01% per transaction, taken from the payment and enforced by the Payments API; there is
+   is 0.18% per transaction, taken from the payment and enforced by the Payments API; there is
    no fee field in any request body. */
 import { errors, jsonCreated, jsonOk, registerRoutes, sessionSecurity } from "@/lib/openapi/route-helpers";
 import { z } from "@/lib/openapi/zod";
@@ -29,7 +29,7 @@ const configSchema = z
     verifier: z.string(),
     auditorRegistry: z.string(),
     auditorId: z.number().openapi({ example: 0 }),
-    feeBps: z.number().openapi({ example: 1, description: "The commission in basis points: 1 is 0.01%." }),
+    feeBps: z.number().openapi({ example: 18, description: "The commission in basis points: 18 is 0.18%." }),
     feeAccount: z.string().openapi({ description: "Cosmos Pay's confidential account that receives the commission." }),
   })
   .openapi("ZkPaymentsConfig");
@@ -41,9 +41,9 @@ const paymentSchema = z
     network: z.string().openapi({ example: "testnet" }),
     tokenContract: z.string(),
     amount: z.string().openapi({ example: "100", description: "What the payer pays." }),
-    netAmount: z.string().openapi({ example: "99.99", description: "What the merchant receives: the amount minus the commission." }),
-    feeAmount: z.string().openapi({ example: "0.01", description: "The 0.01% commission, rounded up to the stroop." }),
-    feeBps: z.number().openapi({ example: 1 }),
+    netAmount: z.string().openapi({ example: "99.82", description: "What the merchant receives: the amount minus the commission." }),
+    feeAmount: z.string().openapi({ example: "0.18", description: "The 0.18% commission, rounded up to the stroop." }),
+    feeBps: z.number().openapi({ example: 18 }),
     recipient: z.string().openapi({ example: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG" }),
     feeAccount: z.string(),
     payer: z.string().nullable(),
@@ -69,7 +69,7 @@ registerRoutes([
     path: "/api/zk-payments/config",
     tags,
     summary: "Private payments configuration",
-    description: "The confidential token's setup on the environment's network: contracts, RPC, auditor id, the 0.01% commission and its account.",
+    description: "The confidential token's setup on the environment's network: contracts, RPC, auditor id, the 0.18% commission and its account.",
     security: sessionSecurity,
     request: { query: z.object({ org: orgQuery, env: envQuery }) },
     responses: { 200: jsonOk(configSchema, "GetZkPaymentsConfigResponse", "Private payments configuration fetched successfully"), 400: errors.badRequest, ...common },

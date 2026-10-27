@@ -115,7 +115,7 @@ export function startLanding(): void {
   }, { threshold: 0.6 });
 
   /* Fee calculator: the amount (typed or slid) times each plan's rate, plus its fixed cents,
-     plus escrow's 0.5% when ticked; what the merchant keeps is the rest. Rates come from the
+     plus escrow's surcharge when ticked; what the merchant keeps is the rest. Rates come from the
      rows' data attributes (plans.ts); a custom plan keeps its label. The slider is logarithmic
      (1 to 10,000 over 0–100), so small and large payments both get room on it. */
   for (const calc of document.querySelectorAll<HTMLElement>("[data-calc]")) {

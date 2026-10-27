@@ -6,7 +6,7 @@ export default {
   zk: {
     title: "Private payments",
     commission: "Commission",
-    commissionRate: "0.01% per transaction",
+    commissionRate: "0.18% per transaction",
     amount: "Amount",
     merchantGets: "The customer receives",
     merchantFee: "Merchant fee",
@@ -228,8 +228,8 @@ export default {
     specFoot: "Test keys are ready instantly. No card required to start.",
     supportLevels: { standard: "Standard", priority: "Priority" },
     plans: {
-      starter: { desc: "Take real payments on Stellar, Solana & Monad", sub: "+ 25¢ / txn", pnote: "1% + 25¢ per transaction", team: "Up to 2", feats: ["Partial API access", "Live & test keys", "USDC settlement", "Up to 2 members"] },
-      growth: { desc: "Lower rates for scaling teams", sub: "/mo · from", pnote: "from · 0.2% + 5¢ per txn", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Radar fraud tooling", "Volume discounts", "Priority support"] },
+      starter: { desc: "Take real payments on Stellar, Solana & Monad", sub: "+ 18¢ / txn", pnote: "1.5% + 18¢ per transaction", team: "Up to 2", feats: ["Partial API access", "Live & test keys", "USDC settlement", "Up to 2 members"] },
+      growth: { desc: "Lower rates for scaling teams", sub: "/mo · from", pnote: "from · 0.75% + 18¢ per txn", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Radar fraud tooling", "Volume discounts", "Priority support"] },
     },
   },
 
@@ -526,12 +526,12 @@ export default {
     perMo: "/mo",
     billedYearly: "billed yearly",
     plans: [
-      { name: "Starter", desc: "Take real payments with no monthly fee and built-in payment protection.", amt: "1%", txt: "+ 25¢ per transaction *", cta: "Get started",
+      { name: "Starter", desc: "Take real payments with no monthly fee and built-in payment protection.", amt: "1.5%", txt: "+ 18¢ per transaction *", cta: "Get started",
         feats: ["Live payments", "Test API keys", "Payment protection", "Partial API access", "Standard support", "Dispute resolution", "Cards & bank transfers"] },
-      { name: "Essentials", desc: "Full platform access with disputes and every payment method.", txt: "+ 0.5% + 10¢ per transaction *", cta: "Choose Essentials",
+      { name: "Essentials", desc: "Full platform access with disputes and every payment method.", txt: "+ 1.12% + 18¢ per transaction *", cta: "Choose Essentials",
         feats: ["Everything in Starter", "Full API access", "Payment protection", "Dispute resolution", "Cards & bank transfers", "Priority email support", "Volume discounts"] },
-      { name: "Growth", desc: "Lower rates and more power for scaling teams.", txt: "+ 0.2% + 5¢ per transaction *", cta: "Choose Growth",
-        feats: ["Everything in Essentials", "0.2% + 5¢ transaction rate", "Unlimited team members", "Advanced fraud tools", "Volume discounts", "Priority support", "Smart payment routing"] },
+      { name: "Growth", desc: "Lower rates and more power for scaling teams.", txt: "+ 0.75% + 18¢ per transaction *", cta: "Choose Growth",
+        feats: ["Everything in Essentials", "0.75% + 18¢ transaction rate", "Unlimited team members", "Advanced fraud tools", "Volume discounts", "Priority support", "Smart payment routing"] },
     ],
     enterprise: {
       name: "Enterprise",
@@ -550,7 +550,7 @@ export default {
     compareHead: ["Feature", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       { l: "Monthly fee", v: ["None", "$33 / mo", "$99 / mo", "Custom"] },
-      { l: "Per-transaction fee", v: ["1% + 25¢", "0.5% + 10¢", "0.2% + 5¢", "Custom"] },
+      { l: "Per-transaction fee", v: ["1.5% + 18¢", "1.12% + 18¢", "0.75% + 18¢", "Custom"] },
       { l: "Settlement speed", v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec"] },
       { l: "API access", v: ["Partial", "Full", "Full", "Full"] },
       { l: "Live payments", v: [1, 1, 1, 1] },
@@ -565,7 +565,7 @@ export default {
     faqTitle: "Frequently asked questions",
     faqs: [
       { q: "Do I have to pay a monthly fee?", a: "No. Starter has no monthly fee: you only pay a small fee per successful transaction. Essentials and Growth add a monthly fee in exchange for lower rates." },
-      { q: "What does a transaction cost?", a: "Starter is 1% + 25¢ per successful transaction. Essentials is $33/mo (or $27.50/mo billed annually) and lowers the rate to 0.5% + 10¢, while Growth is $99/mo and brings it down to 0.2% + 5¢. A small network fee also applies to every transaction." },
+      { q: "What does a transaction cost?", a: "Starter is 1.5% + 18¢ per successful transaction. Essentials is $33/mo (or $27.50/mo billed annually) and lowers the rate to 1.12% + 18¢, while Growth is $99/mo and brings it down to 0.75% + 18¢. A small network fee also applies to every transaction." },
       { q: "Which payment methods do you support?", a: "Starter covers our core payment methods. From Essentials up you can also accept cards, bank transfers and other local payment methods through a single integration." },
       { q: "How fast does money settle?", a: "Payments reach finality in roughly five seconds, on every plan. There are no multi-day payout delays." },
       { q: "Can I change plans later?", a: "Absolutely. Upgrade or downgrade at any time from your dashboard. Changes take effect immediately, with no calls required." },

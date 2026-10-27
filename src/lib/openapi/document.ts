@@ -58,7 +58,7 @@ export const openApiConfig: OpenAPIObjectConfig = {
     },
     {
       name: 'Private Payments',
-      description: 'Payments on Stellar whose amount stays hidden on-chain (zero-knowledge proofs), offered as a service for a 0.01% commission per transaction',
+      description: 'Payments on Stellar whose amount stays hidden on-chain (zero-knowledge proofs), offered as a service for a 0.18% commission per transaction',
     },
     {
       name: 'Liquidity',

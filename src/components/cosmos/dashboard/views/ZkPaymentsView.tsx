@@ -3,7 +3,7 @@
    the amount stays hidden on-chain. The payer pays on the private checkout
    (payments.cosmospay.lat/zk/{id}); the recipient is a customer's private account (product owner,
    2026-10-27: private accounts are customers' Stellar wallets, as many as there are), which receives
-   the amount minus the 0.01% commission and the organization's own fee, if any, paid to one of the
+   the amount minus the 0.18% commission and the organization's own fee, if any, paid to one of the
    organization's wallets (Settings). The private accounts are a table of their own under the
    payments (ZkAccountPanel), read from every page of the customers. The first one known to hold a
    confidential account is the new payment's recipient by default.

@@ -1,7 +1,7 @@
 /* The ZK checkout (payments.cosmospay.lat/zk/{id}): the payer pays a ZK payment privately.
    The payment is read from the gateway in the payer's browser (src/lib/zk/checkout-api.ts); paying
    runs entirely here: Freighter signs, bb.js proves (the page is cross-origin isolated), and the
-   confidential transfers go out (the merchant's net amount, the 0.01% commission, and the
+   confidential transfers go out (the merchant's net amount, the 0.18% commission, and the
    merchant fee when the payment has one). The Payments API then checks each on-chain, with the
    token's auditor key, before it says "paid".
    The wallet and the prover load only when the payer starts paying. */
