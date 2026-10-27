@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonError,
@@ -18,7 +18,7 @@ function envFromQuery(url: URL): CosmosEnv {
 // Validate a submitted Stellar tx against the intent (success + destination + amount +
 // memo); the upstream finalizes the status and fires its webhook event.
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;

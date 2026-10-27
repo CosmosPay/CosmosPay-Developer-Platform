@@ -3,15 +3,29 @@
    and every decision the page makes from it. Pure, so it is unit-tested under plain
    node; the browser script only wires it to the DOM. */
 import { DEFAULT_CHECKOUT_THEME, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
+import { CHAINS, CHAIN_NAMES, NATIVE_CODES, explorerTxUrl as chainExplorerTx, type Chain, type Tier } from "@/lib/chains";
 
-export const CHAINS = ["stellar", "solana", "monad"] as const;
-export type Chain = (typeof CHAINS)[number];
-export type Tier = "public" | "testnet";
+// The chain vocabulary is src/lib/chains.ts's; re-exported for the checkout and the embed.
+export { CHAINS, type Chain, type Tier };
 export type LinkStatus = "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
 export const LINK_STATUSES: readonly LinkStatus[] = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 
 export function isLinkStatus(value: unknown): value is LinkStatus {
   return typeof value === "string" && (LINK_STATUSES as readonly string[]).includes(value);
+}
+
+/**
+ * A fee the merchant charges on this payment, paid to its own wallet in the same transaction
+ * (the community server's `merchantFee`). `paidBy: "payer"` means the payer sends `amount`
+ * plus it; `"recipient"` that it comes out of `amount`.
+ */
+export interface MerchantFee {
+  bps: number;
+  fixed: string;
+  amount: string;
+  asset: string;
+  wallet: string;
+  paidBy: "payer" | "recipient";
 }
 
 export interface PaymentLink {
@@ -37,6 +51,14 @@ export interface PaymentLink {
   createdAt: string;
   /** The design the merchant picked for this page. */
   checkoutTheme: CheckoutTheme;
+  /** The merchant's own fee on this payment; null when there is none. */
+  merchantFee: MerchantFee | null;
+  /**
+   * The payment cannot be one wallet link (a Stellar link with a merchant fee: SEP-7 `pay`
+   * pays one account): the page asks for the payer's account and has the gateway build the
+   * envelope with both payments (buildPayerTransaction). `uri` is this page then.
+   */
+  payerAccountRequired: boolean;
 }
 
 /* Prisma `cuid()` (v1): "c" + lowercase base36. Checked before any request so a mistyped
@@ -51,10 +73,28 @@ export function isPaymentLinkId(id: string | undefined | null): id is string {
    refused before it can become an href. */
 const URI_SCHEMES: Record<Chain, RegExp> = {
   stellar: /^web\+stellar:(pay|tx)\?/i,
-  solana: /^solana:[1-9A-HJ-NP-Za-km-z]+/,
+  // A transfer request names the recipient; a transaction request (a link with a merchant fee)
+  // names the https endpoint the wallet asks for the transaction, URL-encoded.
+  solana: /^solana:(?:[1-9A-HJ-NP-Za-km-z]{32,44}(?:\?|$)|https%3A%2F%2F)/,
   monad: /^ethereum:0x[0-9a-fA-F]{40}/,
 };
 const QR_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
+/* A link that builds its envelope for its payer points at the hosted checkout instead. */
+const CHECKOUT_URI = /^https?:\/\/[^\s"'<>]+$/i;
+const DECIMAL = /^\d+(\.\d+)?$/;
+
+/* The merchant fee as the server sends it, or undefined when the body's one is malformed:
+   it changes what the payer is told to pay, so a half-read fee voids the whole body. */
+function parseMerchantFee(v: unknown): MerchantFee | null | undefined {
+  if (v === undefined || v === null) return null;
+  if (typeof v !== "object" || Array.isArray(v)) return undefined;
+  const f = v as Record<string, unknown>;
+  if (typeof f.bps !== "number" || !Number.isInteger(f.bps) || f.bps < 0) return undefined;
+  for (const key of ["fixed", "amount"] as const) if (!str(f[key]) || !DECIMAL.test(f[key] as string)) return undefined;
+  if (!str(f.asset) || !str(f.wallet) || !f.wallet) return undefined;
+  if (f.paidBy !== "payer" && f.paidBy !== "recipient") return undefined;
+  return { bps: f.bps, fixed: f.fixed as string, amount: f.amount as string, asset: f.asset, wallet: f.wallet, paidBy: f.paidBy };
+}
 
 const str = (v: unknown): v is string => typeof v === "string";
 const strOrNull = (v: unknown): v is string | null => v === null || typeof v === "string";
@@ -78,7 +118,13 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
   // a deadline the page cannot read would break the countdown and the poll timing
   if (b.expiresAt !== null && !Number.isFinite(Date.parse(b.expiresAt))) return null;
   const chain = b.chain as Chain;
-  if (!URI_SCHEMES[chain].test(b.uri)) return null;
+  const merchantFee = parseMerchantFee(b.merchantFee);
+  if (merchantFee === undefined) return null;
+  // Only a Stellar link with a fee builds its envelope for its payer; anything else claiming
+  // it would hide the wallet link the payment needs.
+  const payerAccountRequired = b.payerAccountRequired === true;
+  if (payerAccountRequired && (chain !== "stellar" || !merchantFee || b.amount === null)) return null;
+  if (payerAccountRequired ? !CHECKOUT_URI.test(b.uri) : !URI_SCHEMES[chain].test(b.uri)) return null;
   if (!QR_DATA_URL.test(b.qr)) return null;
   return {
     id: b.id,
@@ -101,18 +147,145 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
     // Cosmetic, so it never invalidates a payment: a design this page does not know yet
     // (or a server that predates the field) draws the classic one.
     checkoutTheme: isCheckoutTheme(b.checkoutTheme) ? b.checkoutTheme : DEFAULT_CHECKOUT_THEME,
+    merchantFee,
+    payerAccountRequired,
   };
 }
 
-const NATIVE_SYMBOL: Record<Chain, string> = { stellar: "XLM", solana: "SOL", monad: "MON" };
-const CHAIN_NAME: Record<Chain, string> = { stellar: "Stellar", solana: "Solana", monad: "Monad" };
+/* Exact decimal sum (no float): amounts settle payments, so 0.1 + 0.2 must be 0.3. */
+function addDecimals(a: string, b: string): string {
+  const [aw, af = ""] = a.split(".");
+  const [bw, bf = ""] = b.split(".");
+  const places = Math.max(af.length, bf.length);
+  const sum = BigInt(aw + af.padEnd(places, "0")) + BigInt(bw + bf.padEnd(places, "0"));
+  const digits = sum.toString().padStart(places + 1, "0");
+  const whole = digits.slice(0, digits.length - places);
+  const frac = places ? digits.slice(digits.length - places).replace(/0+$/, "") : "";
+  return frac ? `${whole}.${frac}` : whole;
+}
+
+/**
+ * What the payer sends: `amount`, plus the merchant fee when the payer pays it on top.
+ * Null when the payer chooses the amount.
+ */
+export function payerTotal(link: Pick<PaymentLink, "amount" | "merchantFee">): string | null {
+  if (!link.amount) return null;
+  return link.merchantFee?.paidBy === "payer" ? addDecimals(link.amount, link.merchantFee.amount) : link.amount;
+}
+
+/** A Stellar account address (G…, 56 characters of base32). The gateway checks the checksum. */
+export function isStellarAccount(value: string): boolean {
+  return /^G[A-Z2-7]{55}$/.test(value.trim());
+}
+
+/* Horizon, per network: a payer who signs with Freighter on this page submits here. */
+export const HORIZON_URL: Record<Tier, string> = {
+  public: "https://horizon.stellar.org",
+  testnet: "https://horizon-testnet.stellar.org",
+};
+
+/**
+ * Submits a signed envelope to the link's network, for a payer who signed it with Freighter
+ * here (a wallet scanning the QR submits on its own). True once Horizon accepts it; the page
+ * then follows the link, which the server settles from the ledger. Never throws.
+ */
+export async function submitSignedTransaction(
+  network: Tier,
+  signedXdr: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  try {
+    const res = await fetchImpl(`${HORIZON_URL[network]}/transactions`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+      body: `tx=${encodeURIComponent(signedXdr)}`,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export type PayerTransactionResult =
+  | { kind: "ok"; uri: string; qr: string; xdr: string }
+  | { kind: "invalid" }
+  | { kind: "closed" }
+  | { kind: "rate-limited"; retryAfterMs: number }
+  | { kind: "error" };
+
+/**
+ * Has the gateway build the envelope `account` signs for a link with a merchant fee (both
+ * payments and the link's memo): `POST /v1/payment-links/{id}/transaction`, keyless like the
+ * read. Its answer is checked as the read is: a `web+stellar:tx` link, a PNG QR, a base64
+ * envelope. Never throws.
+ */
+export async function buildPayerTransaction(
+  apiBase: string,
+  id: string,
+  account: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PayerTransactionResult> {
+  try {
+    const res = await fetchImpl(`${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}/transaction`, {
+      method: "POST",
+      headers: { accept: "application/json", "content-type": "application/json" },
+      body: JSON.stringify({ account: account.trim() }),
+      cache: "no-store",
+    });
+    if (res.status === 429) {
+      const seconds = Number(res.headers.get("retry-after"));
+      return { kind: "rate-limited", retryAfterMs: Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 30_000 };
+    }
+    if (res.status === 400) {
+      const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
+      return body?.code === "invalid_state_transition" ? { kind: "closed" } : { kind: "invalid" };
+    }
+    if (!res.ok) return { kind: "error" };
+    const b = (await res.json()) as Record<string, unknown>;
+    if (!str(b.uri) || !/^web\+stellar:tx\?/i.test(b.uri)) return { kind: "error" };
+    if (!str(b.qr) || !QR_DATA_URL.test(b.qr)) return { kind: "error" };
+    if (!str(b.xdr) || !/^[A-Za-z0-9+/=]+$/.test(b.xdr)) return { kind: "error" };
+    return { kind: "ok", uri: b.uri, qr: b.qr, xdr: b.xdr };
+  } catch {
+    return { kind: "error" };
+  }
+}
+
+/** What the hosted checkout reports about the payer's wallet. */
+export type CheckoutEvent = "walletOpened" | "walletClosed" | "sent";
+
+/**
+ * Tells the gateway what the payer did with a wallet: `POST /v1/payment-links/{id}/events`,
+ * keyless like the read. Informational for the merchant's dashboard (the status still follows
+ * the chain), so a failure is dropped. `keepalive` lets it leave while the page hands the payer
+ * to a wallet app. Never throws.
+ */
+export async function reportCheckoutEvent(
+  apiBase: string,
+  id: string,
+  event: CheckoutEvent,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  try {
+    const res = await fetchImpl(`${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}/events`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ event }),
+      cache: "no-store",
+      keepalive: true,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 export function assetSymbol(link: Pick<PaymentLink, "chain" | "asset">): string {
-  return !link.asset || link.asset === "native" ? NATIVE_SYMBOL[link.chain] : link.asset;
+  return !link.asset || link.asset === "native" ? NATIVE_CODES[link.chain] : link.asset;
 }
 
 export function chainName(chain: Chain): string {
-  return CHAIN_NAME[chain];
+  return CHAIN_NAMES[chain];
 }
 
 /** "25.5 XLM", or null when the payer chooses the amount. */
@@ -125,31 +298,9 @@ export function shortAddress(address: string, head = 6, tail = 6): string {
   return address.length <= head + tail + 1 ? address : `${address.slice(0, head)}…${address.slice(-tail)}`;
 }
 
-/* Explorers, the same ones the wallet links (its src/constants/chains.ts). The hash is
-   checked against the chain's alphabet so a crafted value can't become a different URL. */
-const TX_HASH: Record<Chain, RegExp> = {
-  stellar: /^[0-9a-f]{64}$/i,
-  solana: /^[1-9A-HJ-NP-Za-km-z]{43,90}$/,
-  monad: /^0x[0-9a-f]{64}$/i,
-};
-const EXPLORER_TX: Record<Chain, Record<Tier, (hash: string) => string>> = {
-  stellar: {
-    public: (h) => `https://stellar.expert/explorer/public/tx/${h}`,
-    testnet: (h) => `https://stellar.expert/explorer/testnet/tx/${h}`,
-  },
-  solana: {
-    public: (h) => `https://solscan.io/tx/${h}`,
-    testnet: (h) => `https://explorer.solana.com/tx/${h}?cluster=devnet`,
-  },
-  monad: {
-    public: (h) => `https://monadscan.com/tx/${h}`,
-    testnet: (h) => `https://testnet.monadexplorer.com/tx/${h}`,
-  },
-};
-
+/* The explorer for the transaction (src/lib/chains.ts checks the hash first). */
 export function explorerTxUrl(link: Pick<PaymentLink, "chain" | "network" | "txHash">): string | null {
-  if (!link.txHash || !TX_HASH[link.chain].test(link.txHash)) return null;
-  return EXPLORER_TX[link.chain][link.network](link.txHash);
+  return chainExplorerTx(link.chain, link.network, link.txHash);
 }
 
 /**

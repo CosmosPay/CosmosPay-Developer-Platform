@@ -78,7 +78,7 @@ export default function Onboarding({ lang, features }) {
           <a className="ob-brand" href={HOME}><CosmosLockup height={28} color="var(--ink)" /></a>
           <div className="ob-top-r">
             <LangSelect />
-            <button className="ob-exit icon" title="Toggle theme" aria-label="Toggle theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{mounted ? (theme === "dark" ? <IcSun /> : <IcMoon />) : <span className="ic-slot" aria-hidden="true" />}</button>
+            <button className="ob-exit icon" title={t.dash.topbar.theme} aria-label={t.dash.topbar.theme} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{mounted ? (theme === "dark" ? <IcSun /> : <IcMoon />) : <span className="ic-slot" aria-hidden="true" />}</button>
             <a className="ob-exit" href={HOME}>{I.x} <span className="ob-exit-tx">{ob.cancel}</span></a>
           </div>
         </div>

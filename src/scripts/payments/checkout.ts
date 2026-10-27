@@ -12,22 +12,37 @@
  * A preview page (data-preview) draws src/lib/payments/preview.ts's sample instead, reads
  * nothing and leaves every wallet button inert.
  *
+ * A Stellar link with a merchant fee (`payerAccountRequired`) cannot be one wallet link: the
+ * page asks for the payer's account (typed, or Freighter's), has the gateway build the
+ * envelope with both payments, then shows its QR and wallet link, or lets Freighter sign it
+ * and submits it to Horizon. Until then there is no QR, and never a manual transfer: paying
+ * by hand would skip the fee and leave the link unpaid.
+ *
+ * While the link is open the page also tells the gateway what the payer does with a wallet
+ * (opened, back without paying, sent: reportCheckoutEvent), for the merchant to follow a payment
+ * that is not on-chain yet. Informational only: the status still follows the chain.
+ *
  * Opened as a popup by a merchant's `<cosmos-pay-button>` (src/embed), the page also tells
  * its opener each status change (src/lib/payments/embed-protocol.ts): the id and the status,
  * nothing else.
  */
 import {
-  amountLabel,
   assetSymbol,
+  buildPayerTransaction,
   canPayWithExtension,
   chainName,
   countdown,
   explorerTxUrl,
   fetchPaymentLink,
+  isStellarAccount,
   nextPollDelay,
+  payerTotal,
   phaseOf,
+  reportCheckoutEvent,
   shortAddress,
+  submitSignedTransaction,
   webWalletUrl,
+  type CheckoutEvent,
   type LinkStatus,
   type PaymentLink,
   type Phase,
@@ -35,6 +50,7 @@ import {
 import { DEFAULT_CHECKOUT_THEME, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
 import { statusMessage } from "@/lib/payments/embed-protocol";
 import { previewLink } from "@/lib/payments/preview";
+import { signWithFreighter } from "@/lib/wallets/freighter";
 
 interface Runtime {
   phase: Record<Phase, string>;
@@ -51,6 +67,27 @@ interface Runtime {
   rateLimited: string;
   timerLabel: string;
   previewInert: string;
+  feeIncluded: string;
+  payerBuilding: string;
+  payerReady: string;
+  payerInvalid: string;
+  payerFailed: string;
+  payerClosed: string;
+  payerChange: string;
+  payerSubmit: string;
+  signing: string;
+  signSent: string;
+  signFailed: string;
+  signWrongNetwork: string;
+  freighterMissing: string;
+}
+
+/* The envelope built for this page's payer (a Stellar link with a merchant fee). */
+interface PayerEnvelope {
+  account: string;
+  uri: string;
+  qr: string;
+  xdr: string;
 }
 
 type Method = "qr" | "wallet" | "manual";
@@ -62,6 +99,12 @@ const ERROR_RETRY_MAX_MS = 60_000;
 const COPIED_MS = 2_000;
 /* The extension's content script injects window.cosmosWallet shortly after page start. */
 const EXTENSION_WAIT_MS = 900;
+/* A wallet link or the web wallet counts as opened when the page loses the payer to it within
+   this long of the click (a device without a wallet for the scheme does nothing). */
+const WALLET_OPEN_MS = 2_500;
+/* Back on the page, a payment sent just before gets a ledger to land before the page reports the
+   wallet back without paying. */
+const WALLET_BACK_GRACE_MS = 6_000;
 
 export function startCheckout(): void {
   const root = document.getElementById("checkout");
@@ -94,6 +137,7 @@ export function startCheckout(): void {
   let lastPhase: Phase | null = null;
   let lastMinute = -1;
   let toldOpener: LinkStatus | null = null;
+  let payerEnvelope: PayerEnvelope | null = null;
 
   function show(state: "loading" | "not-found" | "error" | "link") {
     root!.querySelectorAll<HTMLElement>(":scope > [data-state]").forEach((el) => {
@@ -161,7 +205,12 @@ export function startCheckout(): void {
     show("link");
 
     toggle('[data-slot="testnet"]', l.network !== "testnet");
-    const amount = amountLabel(l);
+    // What the payer sends: with a merchant fee paid on top, the amount plus it.
+    const total = payerTotal(l);
+    const amount = total ? `${total} ${assetSymbol(l)}` : null;
+    const fee = l.merchantFee;
+    text("fee-included", fee ? t.feeIncluded.replace("{amount}", `${fee.amount} ${assetSymbol(l)}`) : "");
+    toggle('[data-slot="fee-included"]', !fee);
     text("amount", amount ?? t.anyAmount);
     text("total", amount ?? t.anyAmount);
     toggle('[data-slot="amount-hint"]', amount !== null);
@@ -182,20 +231,34 @@ export function startCheckout(): void {
     // Only an open link is payable. Processing has been paid already; expired, failed and
     // cancelled must not invite a payment the merchant no longer expects.
     toggle("[data-open-only]", phase !== "open");
-    slots<HTMLImageElement>("qr").forEach((img) => { img.src = l.qr; });
+    // A link that builds its payer's envelope: the account step, then that envelope's QR and
+    // wallet link (the stored `uri` is this page). `data-payer` lets the stylesheet hide the
+    // QR and the wallet buttons until the envelope exists.
+    const payerLink = l.payerAccountRequired;
+    if (payerLink) root!.dataset.payer = payerEnvelope ? "ready" : "needed";
+    else delete root!.dataset.payer;
+    toggle("[data-payer-step]", !payerLink || phase !== "open");
+    all<HTMLButtonElement>('[data-action="sign-freighter"]').forEach((b) => { b.hidden = !payerEnvelope; });
+    const walletUri = payerLink ? payerEnvelope?.uri ?? null : l.uri;
+    slots<HTMLImageElement>("qr").forEach((img) => { img.src = payerLink ? payerEnvelope?.qr ?? l.qr : l.qr; });
     slots<HTMLAnchorElement>("open-wallet").forEach((a) => {
       if (preview) inert(a);
-      else a.href = l.uri;
+      else if (walletUri) a.href = walletUri;
+      else a.removeAttribute("href");
     });
-    const web = walletWeb && !preview ? webWalletUrl(walletWeb, l) : null;
+    const web = walletWeb && !preview && walletUri ? webWalletUrl(walletWeb, { chain: l.chain, uri: walletUri }) : null;
     slots<HTMLAnchorElement>("web-wallet").forEach((a) => {
       a.hidden = !web;
       if (web) a.href = web;
     });
     toggle('[data-slot="tx-note"]', l.kind !== "TX");
     // A TX link carries a transaction prepared for one payer: there is nothing to send by hand.
-    rows("manual", l.kind === "TX");
-    if (l.kind === "TX" && method === "manual") selectMethod("qr", false);
+    // Nor on a Stellar or Solana link with a merchant fee: a transfer by hand would skip the
+    // fee's payment, and the link settles only on both. A Monad link's deposit address splits
+    // the fee itself, so sending it the total by hand pays both.
+    const noManual = l.kind === "TX" || payerLink || (l.merchantFee !== null && l.chain !== "monad");
+    rows("manual", noManual);
+    if (noManual && method === "manual") selectMethod("qr", false);
 
     text("pay-to", l.payTo);
     text("pay-to-short", shortAddress(l.payTo));
@@ -205,7 +268,8 @@ export function startCheckout(): void {
     text("memo", l.memo);
     text("memo-text", l.memo);
     rows("amount", !l.amount);
-    text("amount-value", l.amount ?? "");
+    // By hand the payer sends the total: the amount, plus a fee paid on top.
+    text("amount-value", total ?? "");
     const tier = l.network === "public" ? t.mainnet : t.testnetTier;
     text("network", `${chainName(l.chain)} · ${tier}`);
     text("chain", chainName(l.chain));
@@ -315,6 +379,49 @@ export function startCheckout(): void {
     a.title = t.previewInert;
   }
 
+  /* ---- what the payer does with a wallet, told to the merchant's dashboard ----
+     Only while the link is open, and never from a preview. A wallet link or the web wallet
+     counts as opened once the page loses the payer to it (it hides or blurs right after the
+     click), and as back without paying once the page is shown again and, a ledger later, the
+     link is still open. The extension and Freighter answer for themselves. */
+  let walletAway = false;
+  let sentReported = false;
+  let backCheck: number | undefined;
+  function report(event: CheckoutEvent) {
+    if (preview || !link || phaseOf(link) !== "open") return;
+    if (event === "sent") sentReported = true;
+    void reportCheckoutEvent(apiBase, id, event);
+  }
+
+  function watchWalletLeave() {
+    if (preview || walletAway) return;
+    const stop = () => {
+      window.clearTimeout(giveUp);
+      window.removeEventListener("blur", left);
+      document.removeEventListener("visibilitychange", hidden);
+    };
+    const left = () => {
+      stop();
+      if (walletAway) return;
+      walletAway = true;
+      report("walletOpened");
+    };
+    const hidden = () => { if (document.hidden) left(); };
+    const giveUp = window.setTimeout(stop, WALLET_OPEN_MS);
+    window.addEventListener("blur", left);
+    document.addEventListener("visibilitychange", hidden);
+  }
+
+  function walletBack() {
+    if (!walletAway || document.hidden) return;
+    walletAway = false;
+    window.clearTimeout(backCheck);
+    backCheck = window.setTimeout(async () => {
+      await load();
+      if (!sentReported) report("walletClosed");
+    }, WALLET_BACK_GRACE_MS);
+  }
+
   /* ---- Cosmos Wallet extension (Stellar `pay` links only) ---- */
   let extensionChecked = false;
   function offerExtension(l: PaymentLink, phase: Phase) {
@@ -342,12 +449,116 @@ export function startCheckout(): void {
     if (!link || !window.cosmosWallet) return;
     button.disabled = true;
     text("ext-status", t.extOpening);
+    report("walletOpened");
     try {
       await window.cosmosWallet.requestPayment(link.uri);
+      report("sent");
       text("ext-status", t.extSent);
       void load();
     } catch {
+      report("walletClosed");
       text("ext-status", t.extFailed);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  /* ---- the payer of a Stellar link with a merchant fee ---- */
+  const payerStatus = (message: string) => text("payer-status", message);
+
+  async function preparePayer(form: HTMLFormElement) {
+    if (!link || preview) return;
+    const input = form.querySelector<HTMLInputElement>("input[name=account]");
+    const submit = form.querySelector<HTMLButtonElement>("[data-payer-submit]");
+    const account = input?.value.trim() ?? "";
+    if (!isStellarAccount(account)) {
+      input?.setAttribute("aria-invalid", "true");
+      payerStatus(t.payerInvalid);
+      input?.focus();
+      return;
+    }
+    input?.removeAttribute("aria-invalid");
+    if (submit) submit.disabled = true;
+    payerStatus(t.payerBuilding);
+    const result = await buildPayerTransaction(apiBase, id, account);
+    if (submit) submit.disabled = false;
+    switch (result.kind) {
+      case "ok":
+        payerEnvelope = { account, uri: result.uri, qr: result.qr, xdr: result.xdr };
+        payerStatus(t.payerReady);
+        if (submit) submit.textContent = t.payerChange;
+        render(link);
+        return;
+      case "closed":
+        payerStatus(t.payerClosed);
+        void load();
+        return;
+      case "rate-limited":
+        payerStatus(t.rateLimited);
+        return;
+      default:
+        payerEnvelope = null;
+        input?.setAttribute("aria-invalid", "true");
+        payerStatus(t.payerFailed);
+        render(link);
+    }
+  }
+
+  /* Freighter's account, read with the payer's consent, fills the step and builds the envelope. */
+  async function useFreighter(button: HTMLButtonElement) {
+    const form = button.closest<HTMLFormElement>("[data-payer-step]");
+    if (!form) return;
+    button.disabled = true;
+    try {
+      const api = await import("@stellar/freighter-api");
+      const connected = await api.isConnected().catch(() => ({ isConnected: false }));
+      if (!connected.isConnected) {
+        payerStatus(t.freighterMissing);
+        return;
+      }
+      const access = await api.requestAccess().catch(() => ({ address: "" }));
+      if (!access.address) {
+        payerStatus(t.signFailed);
+        return;
+      }
+      const input = form.querySelector<HTMLInputElement>("input[name=account]");
+      if (input) input.value = access.address;
+      await preparePayer(form);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  /* Freighter signs the envelope here and the page submits it; the link then settles from the
+     ledger like any other payment. */
+  async function signHere(button: HTMLButtonElement) {
+    if (!link || !payerEnvelope) return;
+    button.disabled = true;
+    payerStatus(t.signing);
+    try {
+      let opened = false;
+      const signed = await signWithFreighter(payerEnvelope.xdr, link.network, payerEnvelope.account, () => {
+        opened = true;
+        report("walletOpened");
+      });
+      if (!signed.ok) {
+        if (opened) report("walletClosed");
+        const tier = link.network === "public" ? t.mainnet : t.testnetTier;
+        payerStatus(
+          signed.reason === "missing" ? t.freighterMissing
+            : signed.reason === "wrongNetwork" ? t.signWrongNetwork.replace("{network}", tier)
+            : t.signFailed,
+        );
+        return;
+      }
+      if (!(await submitSignedTransaction(link.network, signed.signedXdr))) {
+        report("walletClosed");
+        payerStatus(t.signFailed);
+        return;
+      }
+      report("sent");
+      payerStatus(t.signSent);
+      void load();
     } finally {
       button.disabled = false;
     }
@@ -367,21 +578,35 @@ export function startCheckout(): void {
   /* One listener for every design: the mounted template's elements come and go. */
   root.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
-    const button = target.closest<HTMLElement>("[data-copy], [data-action], [data-method-tab], [aria-disabled='true']");
+    const button = target.closest<HTMLElement>("[data-copy], [data-action], [data-method-tab], [aria-disabled='true'], a[data-slot='open-wallet'], a[data-slot='web-wallet']");
     if (!button) return;
     if (button.getAttribute("aria-disabled") === "true") {
       e.preventDefault();
+    } else if (button instanceof HTMLAnchorElement) {
+      // The wallet link or the web wallet: the browser follows it, this page watches it leave.
+      if (button.href) watchWalletLeave();
     } else if (button.dataset.copy) {
       void copy(button as HTMLButtonElement);
     } else if (button.dataset.methodTab) {
       selectMethod(button.dataset.methodTab as Method, false);
     } else if (button.dataset.action === "pay-extension") {
       void payWithExtension(button as HTMLButtonElement);
+    } else if (button.dataset.action === "payer-freighter") {
+      void useFreighter(button as HTMLButtonElement);
+    } else if (button.dataset.action === "sign-freighter") {
+      void signHere(button as HTMLButtonElement);
     } else if (button.dataset.action === "retry") {
       errorDelay = 5_000;
       show("loading");
       void load();
     }
+  });
+
+  root.addEventListener("submit", (e) => {
+    const form = (e.target as HTMLElement).closest<HTMLFormElement>("[data-payer-step]");
+    if (!form) return;
+    e.preventDefault();
+    void preparePayer(form);
   });
 
   /* Arrow keys move between the method tabs (WAI-ARIA tabs pattern, automatic activation). */
@@ -407,8 +632,11 @@ export function startCheckout(): void {
   }
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && link && nextPollDelay(phaseOf(link)) !== null) void load();
+    if (document.hidden) return;
+    walletBack();
+    if (link && nextPollDelay(phaseOf(link)) !== null) void load();
   });
+  window.addEventListener("focus", walletBack);
 
   void load();
 }

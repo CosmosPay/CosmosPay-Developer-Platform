@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, IcCheck, IcArrow, PRICING } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
-import { ALL_PLAN_IDS, PLAN_IDS, PLAN_SPECS, PLAN_PRICE } from "@/lib/plans.ts";
+import { ALL_PLAN_IDS, PLAN_IDS, PLAN_SPECS, PLAN_PRICE, swapFeePct } from "@/lib/plans.ts";
 
 /* Render a spec value: booleans → check / dash, null numbers → ∞, everything else as-is. */
 function Cell({ v }) {
@@ -37,6 +37,7 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
   const rows = [
     { l: p.price, a: a.price, b: b.price },
     { l: p.perTx, a: a.perTx, b: b.perTx },
+    { l: p.swapFee, a: swapFeePct(current), b: swapFeePct(target) },
     { l: p.apiAccess, a: apiLabel(a.api), b: apiLabel(b.api) },
     { l: p.mainnet, a: a.mainnet, b: b.mainnet },
     { l: p.orgs, a: a.maxOrgs, b: b.maxOrgs },

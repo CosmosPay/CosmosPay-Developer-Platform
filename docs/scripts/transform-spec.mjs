@@ -40,8 +40,29 @@ export const TAGS = [
     name: 'cross-chain-swaps',
     title: 'Cross-chain Swaps',
     description:
-      'Swaps between Stellar, Solana and Monad, settled by NEAR Intents: quote, get a deposit ' +
-      'address, pay it, and follow the swap to its outcome.',
+      'Swaps between every network NEAR Intents reaches, settled by NEAR Intents: quote, get a ' +
+      'deposit address, pay it, and follow the swap to its outcome.',
+  },
+  {
+    name: 'usdt0',
+    title: 'USDT0 Transfers',
+    description:
+      'USDT0 out of Stellar through LayerZero: quote, build the Soroban transaction the holder signs, ' +
+      'submit it and follow the message to its destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only.',
+  },
+  {
+    name: 'zk-payments',
+    title: 'Private Payments',
+    description:
+      'Payments on Stellar whose amount stays hidden on-chain. Create a private payment, ' +
+      'list and read them; the merchant receives the amount minus the 0.01% commission.',
+  },
+  {
+    name: 'zk-checkout',
+    title: 'Private Checkout',
+    description:
+      'What the payer\'s browser reads and calls without a key: one private payment, the network\'s ' +
+      'confidential-token setup, and the confirmation of the two confidential transfers that pay it.',
   },
   {
     name: 'liquidity-pools',

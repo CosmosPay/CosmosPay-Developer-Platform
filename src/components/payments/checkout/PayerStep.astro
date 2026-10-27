@@ -1,0 +1,33 @@
+---
+// A Stellar link with a merchant fee cannot be one SEP-7 `pay` link (that pays one account):
+// the payer names their account (typed, or read from Freighter), the gateway builds the
+// envelope with both payments and the link's memo, and the page then shows its QR and wallet
+// link, or has Freighter sign it. The script shows this only on such a link.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<form class="ck-payer" data-payer-step data-open-only hidden novalidate>
+  <label class="ck-field-label" for="ck-payer-account">{t.payerTitle}</label>
+  <p class="ck-field-hint" id="ck-payer-hint">{t.payerHint}</p>
+  <div class="ck-payer-row">
+    <input
+      id="ck-payer-account"
+      class="ck-payer-input"
+      name="account"
+      type="text"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
+      placeholder={t.payerPlaceholder}
+      aria-describedby="ck-payer-hint ck-payer-status"
+    />
+    <button class="btn btn-dark btn-sm" type="submit" data-payer-submit>{t.payerSubmit}</button>
+  </div>
+  <div class="ck-payer-actions">
+    <button class="btn btn-outline-w btn-sm" type="button" data-action="payer-freighter">{t.payerFreighter}</button>
+    <button class="btn btn-dark btn-sm" type="button" data-action="sign-freighter" hidden>{t.signFreighter}</button>
+  </div>
+  <p class="pp-hint" id="ck-payer-status" data-slot="payer-status" role="status" aria-live="polite"></p>
+</form>

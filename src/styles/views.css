@@ -32,7 +32,6 @@
 .member-add { display: flex; gap: 8px; margin-bottom: 10px; }
 .member-add .field { flex: 1; }
 .member-add .btn { flex: 0 0 auto; }
-.set-member .icon-mini { width: 28px; height: 28px; flex: 0 0 auto; }
 .btn-soft.danger-soft { color: #D64545; }
 .btn-soft.danger-soft:hover { border-color: #D64545; }
 .btn-soft.danger-soft svg { width: 16px; height: 16px; }
@@ -71,18 +70,7 @@
 .chat-composer .btn { flex: 0 0 auto; }
 
 /* ---- support inbox (staff) ---- */
-.inbox { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
-.inbox-list { padding: 6px; max-height: min(70vh, 620px); overflow-y: auto; }
-.inbox-list-h { font-size: .75rem; letter-spacing: 0; color: var(--ink-3); font-weight: 500; padding: 10px 10px 8px; }
-.inbox-item { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; background: transparent; border: 0; border-radius: 12px; padding: 10px; cursor: pointer; }
-.inbox-item:hover { background: var(--surface-2); }
-.inbox-item.active { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.inbox-item-body { min-width: 0; flex: 1; }
-.inbox-item-body b { display: block; font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.inbox-item-body span { display: block; font-size: 12.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .inbox-badge { flex: 0 0 auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #FF4D4D; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
-.inbox-chat { min-width: 0; }
-@media (max-width: 900px) { .inbox { grid-template-columns: 1fr; } .inbox-list { max-height: 280px; } }
 
 /* ---- copy pill / copy buttons ---- */
 .copy-pill { gap: 12px; }
@@ -277,12 +265,39 @@
 .filter-tabs button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
 .empty { padding: 40px; text-align: center; color: var(--ink-3); font-size: 14.5px; }
+/* the one action an empty list offers (create the first one, clear the filters) sits under its words */
+.empty > div:has(.btn) { margin-top: 16px; }
 .cust-cell { display: flex; align-items: center; gap: 10px; font-weight: 600; }
 .av-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: 0 0 auto; }
 .am-sq { width: 30px; height: 30px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--accent); display: grid; place-items: center; flex: 0 0 auto; }
 .am-sq svg { width: 16px; height: 16px; }
 .link-btn { background: none; border: 0; color: var(--accent); font-family: inherit; font-weight: 600; font-size: 13.5px; cursor: pointer; }
 .icon-mini { width: 30px; height: 30px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; margin-left: 6px; vertical-align: middle; }
+.paylink-check { display: flex; gap: 10px; align-items: center; }
+.paylink-check .field { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+.cust-pays-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+/* A customer's wallets: overlapping network marks in the table, one row per wallet in the forms
+   (network, address, name, remove), its error under it. */
+.cust-wallets { display: inline-flex; align-items: center; gap: 8px; }
+.cust-wallet-marks { display: inline-flex; }
+.cust-wallet-marks .wl-mark { box-shadow: 0 0 0 2px var(--surface); }
+.cust-wallet-marks .wl-mark + .wl-mark { margin-left: -6px; }
+.cust-wallet-net { display: block; color: var(--ink-3); font-size: 12px; font-weight: 500; }
+.cust-wallets-panel { margin-bottom: 18px; }
+.cust-wallet-rows { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.cust-wallet-row { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr) minmax(0, 8.5rem) 30px; gap: 8px; align-items: center; }
+.cust-wallet-row .icon-mini { margin-left: 0; }
+.cust-wallet-addr { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+.cust-wallet-err { grid-column: 1 / -1; margin: 0; }
+.cust-wallet-more { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 0; }
+.cust-wallet-more svg { width: 14px; height: 14px; }
+.cust-wallet-add { margin-top: 10px; }
+.cust-wallets-panel .cust-pays-head .link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 0; }
+.cust-wallets-panel .cust-pays-head .link-btn svg { width: 14px; height: 14px; }
+@media (max-width: 640px) {
+  .cust-wallet-row { grid-template-columns: minmax(0, 1fr) 30px; }
+  .cust-wallet-row .cust-wallet-addr, .cust-wallet-row .cust-wallet-addr ~ .field { grid-column: 1 / -1; }
+}
 .icon-mini svg { width: 15px; height: 15px; }
 .icon-mini:hover { color: var(--ink); border-color: var(--ink-3); }
 .icon-mini.danger:hover { color: #D64545; border-color: #D64545; }
@@ -297,16 +312,18 @@
    no existe en el deck (BRAND.md, secciones 7 y 10). */
 .bal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
 .bal-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+/* a balance is a way into its payments: the whole card is the button */
+button.bal-card { display: block; width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.bal-card:not(.total):hover { border-color: var(--line-2); }
 .bal-card.total {
-  background: var(--cosmos-navy);
+  background: var(--navy);
   --ink: var(--cosmos-white); --ink-2: rgba(255,255,255,.66); --ink-3: rgba(255,255,255,.66);
   --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.20); --surface-2: rgba(255,255,255,.14);
   --accent: var(--cosmos-white); --accent-soft: rgba(255,255,255,.08); --accent-soft-2: rgba(255,255,255,.14);
   color: var(--ink);
 }
-/* en oscuro --surface ya es navy, asi que la destacada se invierte a negro para
-   que el enfasis no desaparezca contra sus tres hermanas. */
-[data-theme="dark"] .bal-card.total { background: var(--cosmos-black); border-color: rgba(255,255,255,.20); }
+/* the black card, as the overview's account card (--navy is black, a dark grey in dark mode) */
+[data-theme="dark"] .bal-card.total { border-color: rgba(255,255,255,.16); }
 .bal-chip { font-family: var(--ff-soft); font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent-soft-2); padding: 3px 9px; border-radius: 999px; }
 [data-theme="dark"] .bal-chip { color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); border-color: transparent; }
 .bal-amt { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; margin: 14px 0 4px; }
@@ -326,10 +343,6 @@
 .acct-id-meta b { font-size: 16px; font-weight: 700; color: var(--ink); }
 .acct-id-meta span { font-size: 13.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; }
 .set-note { font-size: 13px; color: var(--ink-3); line-height: 1.5; padding-top: 4px; }
-.set-member { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.set-member:last-child { border-bottom: 0; }
-.set-member b { font-size: 14px; display: block; }
-.set-member span { font-size: 12.5px; color: var(--ink-3); }
 .seg2 { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
 .seg2 button { border: 0; background: transparent; font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink-2); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
 .seg2 button.on { background: var(--surface); color: var(--ink); box-shadow: none; }
@@ -346,6 +359,8 @@
 /* note bar */
 .note-bar { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px; color: var(--ink-2); font-size: 14px; }
 .note-bar svg { width: 20px; height: 20px; color: var(--accent); flex: 0 0 auto; }
+/* a note's way out (the plan dialog, the form that fixes it) closes the line */
+.note-bar-act { margin-left: auto; flex: 0 0 auto; }
 .t-scroll { overflow-x: auto; }
 /* during the GSAP row animation, suppress the (transient) scrollbar for a clean reveal */
 .t-scroll.is-animating { overflow: hidden; }
@@ -429,7 +444,7 @@
 @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .metric, .panel, .bal-card { transition: transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s, border-color .25s; }
 .side-link.active { transition: background .2s, color .2s; }
-@media (prefers-reduced-motion: reduce) { .dash-body, .org-menu, .prof-menu, .side { animation: none !important; transition: none !important; } }
+/* The dashboard's motion runs for everyone, reduced-motion settings included (product owner). */
 
 /* form fields */
 .fld { margin-top: 14px; }
@@ -457,6 +472,10 @@ select.field { cursor: pointer; }
 
 .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
 .metric { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+/* a figure that opens the list it counts */
+button.metric-link { display: block; width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.metric-link:hover { border-color: var(--line-2); }
+.admin-fiat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .metric .ml { font-size: 13.5px; color: var(--ink-3); font-weight: 600; }
 .metric .mv { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin: 8px 0 6px; }
 .metric .mc { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
@@ -717,10 +736,19 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
    ============================================================ */
 /* El overlay es el que scrollea (no la caja interna): un modal mas alto que la
    ventana sigue siendo alcanzable, y margin:auto centra los cortos. */
-.modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); backdrop-filter: blur(5px); display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; overscroll-behavior: contain; }
+/* A solid dim, never a backdrop blur: a full-screen blur is recomputed on every frame of the fade
+   and of every scroll inside the dialog, over a bar that blurs its own backdrop, and opening or
+   scrolling a modal lagged (product owner, 2026-10-27). */
+.modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.62); display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; overscroll-behavior: contain; }
 .modal { position: relative; width: min(720px, 100%); margin: auto; background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius-lg); overflow: hidden; animation: modIn .26s cubic-bezier(.2,.7,.2,1) both; }
 @keyframes modIn { from { transform: translateY(18px) scale(.97); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .modal { animation: none; } }
+/* the backdrop fades in and out with the dialog; closing from inside plays the exit (Modal.tsx) */
+.modal-overlay { animation: ovIn .2s ease-out both; }
+.modal-overlay[data-state="closing"] { animation: ovOut .16s ease-in both; pointer-events: none; }
+.modal-overlay[data-state="closing"] .modal { animation: modOut .16s ease-in both; }
+@keyframes ovIn { from { opacity: 0; } }
+@keyframes ovOut { to { opacity: 0; } }
+@keyframes modOut { to { opacity: 0; transform: translateY(10px) scale(.98); } }
 .modal-x { position: absolute; top: 16px; right: 16px; z-index: 5; width: 38px; height: 38px; border-radius: var(--radius-btn); border: 1px solid var(--line-2); background: transparent; color: var(--ink); display: grid; place-items: center; }
 .modal-x:hover { border-color: var(--ink); }
 .modal-x svg { width: 18px; height: 18px; }
@@ -787,22 +815,21 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 
 /* ---------------- custom scrollbars (modals + scroll areas) ---------------- */
 /* Firefox */
-.modal-overlay, .modal, .t-scroll, .chat-scroll, .inbox-list, .notif-menu, .nav-user-menu, .side-nav { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.modal-overlay, .modal, .t-scroll, .chat-scroll, .notif-menu, .nav-user-menu, .side-nav { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
 /* WebKit / Chromium: slim, rounded, padded thumb that tracks the surface colour. */
 .modal::-webkit-scrollbar, .t-scroll::-webkit-scrollbar, .chat-scroll::-webkit-scrollbar,
-.inbox-list::-webkit-scrollbar, .notif-menu::-webkit-scrollbar, .nav-user-menu::-webkit-scrollbar, .side-nav::-webkit-scrollbar { width: 11px; height: 11px; }
+.notif-menu::-webkit-scrollbar, .nav-user-menu::-webkit-scrollbar, .side-nav::-webkit-scrollbar { width: 11px; height: 11px; }
 .modal::-webkit-scrollbar-track, .t-scroll::-webkit-scrollbar-track, .chat-scroll::-webkit-scrollbar-track,
-.inbox-list::-webkit-scrollbar-track, .notif-menu::-webkit-scrollbar-track, .nav-user-menu::-webkit-scrollbar-track, .side-nav::-webkit-scrollbar-track { background: transparent; }
+.notif-menu::-webkit-scrollbar-track, .nav-user-menu::-webkit-scrollbar-track, .side-nav::-webkit-scrollbar-track { background: transparent; }
 .modal::-webkit-scrollbar-thumb, .t-scroll::-webkit-scrollbar-thumb, .chat-scroll::-webkit-scrollbar-thumb,
-.inbox-list::-webkit-scrollbar-thumb, .notif-menu::-webkit-scrollbar-thumb, .nav-user-menu::-webkit-scrollbar-thumb, .side-nav::-webkit-scrollbar-thumb {
+.notif-menu::-webkit-scrollbar-thumb, .nav-user-menu::-webkit-scrollbar-thumb, .side-nav::-webkit-scrollbar-thumb {
   background: var(--line-2); border-radius: 999px; border: 3px solid var(--surface); background-clip: padding-box; }
 .modal::-webkit-scrollbar-thumb:hover, .t-scroll::-webkit-scrollbar-thumb:hover, .chat-scroll::-webkit-scrollbar-thumb:hover,
-.inbox-list::-webkit-scrollbar-thumb:hover, .notif-menu::-webkit-scrollbar-thumb:hover, .nav-user-menu::-webkit-scrollbar-thumb:hover, .side-nav::-webkit-scrollbar-thumb:hover {
+.notif-menu::-webkit-scrollbar-thumb:hover, .nav-user-menu::-webkit-scrollbar-thumb:hover, .side-nav::-webkit-scrollbar-thumb:hover {
   background: var(--ink-3); background-clip: padding-box; }
 
-/* ---------------- org invitations (settings panel) ---------------- */
-.set-subhead { font-size: .75rem; letter-spacing: 0; color: var(--ink-3); font-weight: 500; margin: 18px 0 8px; }
-.set-member.invite .av-sm.pending { background: var(--surface-2); color: var(--ink-3); border: 1px dashed var(--line-2); }
+/* ---------------- org invitations (Settings' team table) ---------------- */
+.av-sm.pending { background: var(--surface-2); color: var(--ink-3); border: 1px dashed var(--line-2); }
 
 /* ---------------- invitation magic-link landing (/invite/:token) ---------------- */
 .invite-wrap { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
@@ -859,22 +886,16 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .tk-pending { color: #B45309; background: color-mix(in srgb, #D97706 16%, transparent); }
 .tk-resolved { color: #1F7A4D; background: color-mix(in srgb, #1F9D55 16%, transparent); }
 .tk-closed { color: var(--ink-3); background: var(--surface-2); border: 1px solid var(--line-2); }
-.ticket-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px; border-bottom: 1px solid var(--line); }
-.ticket-head b { font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ticket-new { padding: 22px 24px; }
-.ticket-new h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 16px; }
 .ticket-textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
 
-/* ---------------- support: consistent right-pane height + ticket meta ---------------- */
-/* Keep the right pane the same height whether it shows a chat, the new-ticket form, or
-   the empty state, so the layout doesn't jump between them. */
-.inbox-chat { min-height: min(64vh, 600px); display: flex; flex-direction: column; }
-.inbox-chat > .panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.inbox-chat > .panel > .empty { margin: auto; }
-.tk-time { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
-.ticket-head .th-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ticket-head .th-sub { font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ticket-head .th-online { color: #1F7A4D; font-weight: 600; }
+/* ---------------- support: the ticket dialog ---------------- */
+/* A ticket's conversation in its dialog (the support lists' row detail): what the list knows of it
+   above the thread, which keeps one height so the dialog does not jump as messages arrive. */
+.ticket-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: -6px 0 14px; }
+.ticket-meta .th-sub { font-size: 13px; color: var(--ink-3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticket-meta .th-online { color: #1F7A4D; font-weight: 600; }
+.ticket-chat { height: min(60vh, 540px); display: flex; flex-direction: column; }
+.ticket-last { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------------- styled native selects (custom arrow, no default chrome) ---------------- */
 .mini-select, select.field {
@@ -994,7 +1015,7 @@ a.icon-mini { text-decoration: none; }
 [data-theme="dark"] .tk-resolved,
 [data-theme="dark"] .chat-seen,
 [data-theme="dark"] .invite-icon.good,
-[data-theme="dark"] .ticket-head .th-online { color: #7EE0A8; }
+[data-theme="dark"] .ticket-meta .th-online { color: #7EE0A8; }
 
 /* ============================================================
    LANDING: la wallet al frente
@@ -1119,3 +1140,14 @@ a.icon-mini { text-decoration: none; }
   .dk-ic { margin-bottom: 24px; }
   .xp-astro { height: 210px; }
 }
+
+/* ---- a view whose sections are tabs (Liquidity) keeps its actions on the tabs' row, at the right
+   end, instead of a row of their own above it (product owner); the section under the row arrives
+   as it did under the tabs ---- */
+.tabs-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
+.tabs-row-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+.inst .tabs-row ~ * { animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
+
+/* ---- a view head left with its title only (for assistive tech: the buttons now close the filter
+   row) takes no room, so the list starts right under the page head instead of after an empty band ---- */
+.inst .view-head:not(:has(.vh-actions > *, p)) { margin-bottom: 0; }

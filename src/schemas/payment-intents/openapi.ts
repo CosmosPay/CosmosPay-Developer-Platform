@@ -30,6 +30,7 @@ import {
   takeQuery,
 } from '@/schemas/shared/openapi-params';
 import { CHECKOUT_THEMES } from '@/lib/payments/checkout-themes';
+import { CHAINS } from '@/lib/chains';
 
 const TAG = 'Payment Intents';
 
@@ -40,10 +41,11 @@ export const paymentIntentSchema = z
       example: 'PAY',
       description: 'SEP-7 flavour: `PAY` is a payment link, `TX` carries an unsigned XDR.',
     }),
+    chain: z.enum(CHAINS).openapi({ example: 'stellar', description: 'Where the payment settles.' }),
     status: z
       .enum(['PENDING', 'SUBMITTED', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'EXPIRED'])
       .openapi({ example: 'PENDING' }),
-    network: z.string().openapi({ example: 'testnet' }),
+    network: z.string().openapi({ example: 'testnet', description: 'The tier on every chain: public (mainnet) or testnet (Solana devnet, Monad testnet).' }),
     source: z.string().nullable().openapi({ example: null }),
     destination: z
       .string()
@@ -69,6 +71,21 @@ export const paymentIntentSchema = z
       example: 'classic',
       description: 'The hosted checkout design at payments.cosmospay.lat/{id}; `classic` when none was chosen.',
     }),
+    merchantFee: z
+      .object({
+        bps: z.number().openapi({ example: 150 }),
+        fixed: z.string().openapi({ example: '0.25' }),
+        amount: z.string().openapi({ example: '0.6325', description: 'The fee charged, in `asset`.' }),
+        asset: z.string().openapi({ example: 'native' }),
+        wallet: z.string().openapi({ example: 'GBDHAQXQQ75WVBUZ2IX3O7ME7JOKJUOUPUXRNDCORUJODWQCTVUEQ62R' }),
+        paidBy: z.enum(['recipient', 'payer']).openapi({ example: 'recipient' }),
+      })
+      .nullable()
+      .optional()
+      .openapi({
+        description:
+          'The organization\'s own fee on this payment, paid to its wallet in the same transaction; null without one. A Stellar payment link with one opens the hosted checkout, which asks for the payer\'s account.',
+      }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     updatedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
   })
@@ -111,6 +128,14 @@ registerRoutes([
         org: orgQuery,
         env: envQuery,
         status: statusQuery,
+        chain: z
+          .enum(CHAINS)
+          .optional()
+          .openapi({
+            param: { name: 'chain', in: 'query' },
+            description: 'Only intents on this chain; every chain when omitted.',
+            example: 'solana',
+          }),
         createdFrom: z
           .string()
           .optional()
@@ -141,7 +166,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Create a payment intent',
     description:
-      'Creates a SEP-7 `pay` link or a `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names.',
+      'Creates a SEP-7 `pay` link or a `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise).',
     security: sessionSecurity,
     request: {
       query: z.object({ env: envQuery }),

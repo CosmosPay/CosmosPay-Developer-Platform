@@ -20,6 +20,7 @@ import {
   callbackRouteUris,
   createCallbackRoute,
   createPaymentLinksRoute,
+  createZkCheckoutRoute,
   createRecoveryRoute,
   createRoute,
   createSepRoute,
@@ -27,6 +28,8 @@ import {
   legacyCallbackRouteId,
   paymentLinksRouteId,
   paymentLinksRouteUris,
+  zkCheckoutRouteId,
+  zkCheckoutRouteUris,
   recoveryRouteId,
   routeExists,
   sepRouteId,
@@ -124,6 +127,14 @@ export async function syncCosmosRoute() {
     `${describeUris(() => paymentLinksRouteUris(COSMOS_API_ENTRY))} (CORS: any origin)`,
     paymentLinks,
     "hosted and embedded checkouts cannot read their payment link",
+  );
+
+  const zkCheckout = await attempt(() => createZkCheckoutRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL));
+  logKeyless(
+    zkCheckoutRouteId(APISSIX_ROUTE_ID),
+    `${describeUris(() => zkCheckoutRouteUris(COSMOS_API_ENTRY))} (CORS: any origin)`,
+    zkCheckout,
+    "the ZK checkout cannot read or confirm its payment",
   );
 
   const callbackId = callbackRouteId(APISSIX_ROUTE_ID);

@@ -84,7 +84,7 @@ function ProfileCard({ user, onSaveProfile }) {
     <div className="panel set-panel">
       <div className="panel-head">
         <h3>{pf.title}</h3>
-        {!editing && onSaveProfile && <button className="link-btn" onClick={startEdit}>{pf.edit}</button>}
+        {!editing && onSaveProfile && <button type="button" className="btn btn-outline-w btn-sm" onClick={startEdit}>{pf.edit}</button>}
       </div>
       <div className="set-body">
         {editing ? (
@@ -110,7 +110,6 @@ function ProfileCard({ user, onSaveProfile }) {
             </div>
             <div className="set-row"><div className="set-l">{pf.email}</div><div className="set-v">{u.email || "-"}</div></div>
             <div className="set-row"><div className="set-l">{pf.role}</div><div className="set-v"><span className="kg pub">{t.dash.roleNames[u.role] || u.role || "-"}</span></div></div>
-            <div className="set-note">{pf.editNote}</div>
             <div className="modal-actions" style={{ marginTop: 14 }}>
               <button className="btn btn-violet" disabled={!dirty || saving} onClick={save}>{saving ? pf.saving : pf.save}</button>
               <button className="btn btn-soft" disabled={saving} onClick={reset}>{t.dash.common.cancel}</button>
@@ -123,7 +122,6 @@ function ProfileCard({ user, onSaveProfile }) {
             <div className="set-row"><div className="set-l">{pf.name}</div><div className="set-v">{u.name || "-"}</div></div>
             <div className="set-row"><div className="set-l">{pf.email}</div><div className="set-v">{u.email || "-"}</div></div>
             <div className="set-row"><div className="set-l">{pf.role}</div><div className="set-v"><span className="kg pub">{t.dash.roleNames[u.role] || u.role || "-"}</span></div></div>
-            <div className="set-note">{pf.note}</div>
           </>
         )}
       </div>
@@ -142,19 +140,17 @@ export function AccountView({ user, theme, setTheme, planId, limits, orgCount, o
   const fmtLimit = (n) => (n == null ? "∞" : n);
   return (
     <>
-      <ViewHead title={ac.title} sub={ac.sub} />
+      <ViewHead title={ac.title} />
       <div className="set-grid">
         <ProfileCard user={user} onSaveProfile={onSaveProfile} />
-        {plansEnabled && <div className="panel set-panel"><div className="panel-head"><h3>{sp.title}</h3>{onChangePlan && <button className="link-btn" onClick={onChangePlan}>{sp.change}</button>}</div><div className="set-body">
+        {plansEnabled && <div className="panel set-panel"><div className="panel-head"><h3>{sp.title}</h3>{onChangePlan && <button type="button" className="btn btn-outline-w btn-sm" onClick={onChangePlan}>{sp.change}</button>}</div><div className="set-body">
           <div className="set-row"><div className="set-l">{sp.current}</div><div className="set-v"><span className="kg pub">{t.dash.planNames[planId] || planId}</span></div></div>
           <div className="set-row"><div className="set-l">{sp.orgs}</div><div className="set-v">{orgCount} / {fmtLimit(limits.maxOrgs)}</div></div>
-          <div className="set-note">{sp.perOrgNote}</div>
         </div></div>}
         <div className="panel set-panel"><div className="panel-head"><h3>{ap.title}</h3></div><div className="set-body">
           <div className="set-row"><div className="set-l">{ap.theme}</div><div className="seg2"><button className={theme === "light" ? "on" : ""} onClick={() => setTheme("light")}>{ap.light}</button><button className={theme === "dark" ? "on" : ""} onClick={() => setTheme("dark")}>{ap.dark}</button></div></div>
         </div></div>
         <div className="panel set-panel"><div className="panel-head"><h3>{ac.session.title}</h3></div><div className="set-body">
-          <div className="set-note">{ac.session.desc}</div>
           <button className="btn btn-soft danger-soft" style={{ marginTop: 8 }} onClick={() => startLogout()}>{DI.logout} {ac.session.signOut}</button>
         </div></div>
       </div>

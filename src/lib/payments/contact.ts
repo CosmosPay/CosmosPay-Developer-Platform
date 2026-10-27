@@ -4,7 +4,7 @@
    network can write, and builds the email the team receives (text, never the visitor's HTML). */
 
 /** The gateway's public contact address (the form's default destination and its fallback). */
-export const CONTACT_ADDRESS = "cosmosapplat@gmail.com";
+export const CONTACT_ADDRESS = "organization@cosmospay.lat";
 
 export const CONTACT_TOPICS = ["start", "integration", "pricing", "other"] as const;
 export type ContactTopic = (typeof CONTACT_TOPICS)[number];

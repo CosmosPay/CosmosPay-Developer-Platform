@@ -1,508 +1,254 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Modal, showToast } from "@/components/cosmos/shared";
+/* SwapsView: every swap of the organization in one list and one form, whatever the chains. On
+   one chain the Payments API routes it through that chain's market (the Stellar DEX, Jupiter on
+   Solana, Kuru Flow on Monad); between two chains NEAR Intents settles it; USDT0 out of Stellar
+   goes through LayerZero's OFT. Non-custodial: the API builds the transaction or the deposit
+   address, the person's wallet signs and pays. The form and the screens a swap opens are shared
+   with the public swap pages (components/SwapWidget.tsx, components/SwapDetails.tsx); here they
+   call the organization's proxies (orgSwapApi). */
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useT, fmt } from "@/lib/i18n/index";
-import { swaps as swapsApi } from "@/lib/api-client";
+import { swaps as swapsApi, crossChainSwaps as crossApi, usdt0 as usdt0Api } from "@/lib/api-client";
+import { orgSwapApi } from "@/lib/swap-api";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { usePaged, useGsapRows, usePolling } from "@/components/cosmos/dashboard/hooks";
+import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
+import { Modal, showToast } from "@/components/cosmos/shared";
+import { IcCopy } from "@/components/cosmos/icons";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
-import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { Field } from "@/components/cosmos/dashboard/components/Field";
-import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { useCopy } from "@/components/cosmos/hooks/useCopy";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
-import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
+import { SwapWidget } from "@/components/cosmos/dashboard/components/SwapWidget";
+import { SwapRecordDetail } from "@/components/cosmos/dashboard/components/SwapDetails";
+import { CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, networkName, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
+import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 
-const FILTER_KEYS = ["all", "PENDING", "SUBMITTED", "SUCCEEDED", "FAILED"];
-const TERMINAL = ["SUCCEEDED", "FAILED"];
-const CHAINS = ["stellar", "solana", "monad"];
-const NATIVE = { stellar: "XLM", solana: "SOL", monad: "MON" };
-/* Where each chain's swaps land when the chain (not the swap) is named. */
-const PLACEHOLDER = { stellar: "G…", solana: "Base58…", monad: "0x…" };
+/* One vocabulary for every kind: a swap on one chain (PENDING → SUBMITTED → SUCCEEDED), one
+   between chains (AWAITING_DEPOSIT → … → SUCCEEDED or REFUNDED) and USDT0 out of Stellar
+   (PENDING → SUBMITTED → DELIVERED). */
+const GROUPS = ["open", "succeeded", "refunded", "failed", "expired"];
+const groupOf = (status) =>
+  status === "SUCCEEDED" || status === "DELIVERED" ? "succeeded" : status === "FAILED" ? "failed" : status === "EXPIRED" ? "expired" : status === "REFUNDED" ? "refunded" : "open";
+const GROUP_PILL = { open: "pend", succeeded: "ok", refunded: "ref", failed: "fail", expired: "fail" };
+const TYPES = ["same", "cross", "usdt0"];
 
-/* An asset as the table shows it: the chain's ticker for "native", a long mint or
-   contract shortened, a Stellar code as is. */
-function chainAsset(asset, chain = "stellar") {
-  if (!asset || asset === "native") return NATIVE[chain] || "XLM";
-  return asset.length > 16 ? `${asset.slice(0, 4)}…${asset.slice(-4)}` : asset;
+const chainOfSwap = (s) => s.chain || "stellar";
+const asList = (res) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+
+/* Both kinds of swap as one kind of row. */
+function sameRow(s) {
+  const chain = chainOfSwap(s);
+  return {
+    key: `s:${s.id}`, kind: "same", id: s.id, from: chain, to: chain, status: s.status, createdAt: s.createdAt, raw: s,
+    sent: `${s.sendAmount ?? "-"} ${chainAssetLabel(chain, s.sendAsset)}`,
+    got: `${s.destEstimated ?? s.swapAmount ?? "-"} ${chainAssetLabel(chain, s.destAsset)}`,
+    search: [s.id, s.source, s.destination, s.sendAsset, s.destAsset, s.txHash, s.memo],
+  };
+}
+function usdt0Row(u) {
+  return {
+    key: `u:${u.id}`, kind: "usdt0", id: u.id, from: "stellar", to: u.to, status: u.status, createdAt: u.createdAt, raw: u,
+    sent: `${u.amountSent ?? u.amount} USDT0`,
+    got: `${u.amountReceived ?? "-"} ${u.receives ?? "USDT0"}`,
+    search: [u.id, u.source, u.recipient, u.txHash, u.guid],
+  };
+}
+function crossRow(x) {
+  return {
+    key: `x:${x.id}`, kind: "cross", id: x.id, from: x.originChain, to: x.destinationChain, status: x.status, createdAt: x.createdAt, raw: x,
+    sent: `${x.amountIn} ${x.originAsset}`,
+    got: `${x.amountOut || `~${x.amountOutEstimated}`} ${x.destinationAsset}`,
+    search: [x.id, x.recipient, x.refundTo, x.depositAddress, x.originAsset, x.destinationAsset],
+  };
 }
 
-/* "0.5 XLM → ~12.3 USDC": the swap's sent → received route for the table. */
-function swapRoute(s) {
-  const chain = s.chain || "stellar";
-  const sent = `${s.sendAmount ?? "-"} ${chain === "stellar" ? assetLabel(s.sendAsset) : chainAsset(s.sendAsset, chain)}`;
-  const got = `${s.destEstimated ?? s.swapAmount ?? "-"} ${chain === "stellar" ? s.destAsset || "" : chainAsset(s.destAsset, chain)}`.trim();
-  return `${sent} → ${got}`;
+/* A swap row's actions: its detail, then its menu (a new tab, its id, its transaction on the
+   explorer, disabled until there is one). */
+function SwapRowActions({ r, onView }) {
+  const t = useT();
+  const cm = t.dash.common;
+  const [, copy] = useCopy();
+  const chain = isChain(r.from) ? r.from : "stellar";
+  const tx = r.raw && r.raw.txHash ? explorerTxUrl(chain, tierOf(r.raw.network), r.raw.txHash) : null;
+  const waiting = r.status === "PENDING" || r.status === "AWAITING_DEPOSIT";
+  return (
+    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+      <button type="button" className="icon-mini" title={cm.details} aria-label={cm.details} onClick={onView}>{DI.docs}</button>
+      {/* Waiting on its signature (or, between chains, its deposit): the detail is where it goes on. */}
+      {waiting && <button type="button" className="icon-mini" title={cm.continueOp} aria-label={`${cm.continueOp}: ${shortAddress(r.id)}`} onClick={onView}>{DI.key}</button>}
+      {tx
+        ? <a className="icon-mini" title={t.dash.balances.explorer} aria-label={t.dash.balances.explorer} href={tx} target="_blank" rel="noopener noreferrer">{DI.network}</a>
+        : <button type="button" className="icon-mini" disabled title={cm.noTxYet} aria-label={`${t.dash.balances.explorer}: ${cm.noTxYet}`}>{DI.network}</button>}
+      <RowMenu
+        label={fmt(cm.rowActions, { name: shortAddress(r.id) })}
+        items={[
+          { key: "open", label: cm.details, icon: DI.docs, onClick: onView },
+          ...(waiting ? [{ key: "continue", label: cm.continueOp, icon: DI.key, onClick: onView }] : []),
+          { key: "tab", label: cm.openNewTab, icon: DI.link, href: `/dashboard?view=swaps&open=${encodeURIComponent(r.id)}`, external: true },
+          { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(r.id, t.toasts.copied) },
+          { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: tx, external: true, disabled: !tx, hint: cm.noTxYet },
+        ]}
+      />
+    </td>
+  );
 }
 
-/* The explorer each chain's transactions are read on. */
-const EXPLORERS = {
-  stellar: (s) => `https://stellar.expert/explorer/${s.network === "public" ? "public" : "testnet"}/tx/${s.txHash}`,
-  solana: (s) => `https://solscan.io/tx/${s.txHash}`,
-  monad: (s) => `https://monadscan.com/tx/${s.txHash}`,
-};
-const explorerTx = (s) => EXPLORERS[s.chain || "stellar"](s);
-
-export function SwapsView({ canManage = true, orgId, env = "dev" }) {
+export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = "all" }) {
   const t = useT();
   const sw = t.dash.swaps;
-  const [chain, setChain] = useState("stellar");
+  const cc = t.dash.crossChain;
+  const fl = t.dash.filters;
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [modal, setModal] = useState(false);
+  const defaults = useMemo(() => ({ q: "", status: "all", type: defaultType, chain: "all", date: "any" }), [defaultType]);
+  const { filters, set, reset, active } = useListFilters(defaults, { status: ["all", ...GROUPS], type: ["all", ...TYPES], chain: ["all", ...NETWORK_IDS], date: DATE_RANGES });
   const [detail, setDetail] = useState(null);
+  // The swap form, in a dialog as every create (product owner, 2026-10-27: figures first, then
+  // the list; a create opens from the filter row). The overview's "Swap" opens it too (?create=1).
+  const [swapping, setSwapping] = useState(false);
+  const api = useMemo(() => orgSwapApi(orgId, env), [orgId, env]);
+  const [createReq, clearCreate] = useUrlRequest("create");
+  useEffect(() => {
+    if (!createReq) return;
+    clearCreate();
+    if (canManage) setSwapping(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createReq]);
 
-  // Solana (Jupiter) and Monad (Kuru Flow) exist on mainnet only.
-  const unavailable = chain !== "stellar" && env !== "prod";
-
+  // Swaps on each chain, between chains and USDT0's transfers are five lists upstream; read
+  // together, newest first.
+  const fetchAll = useCallback(() => Promise.all([
+    ...CHAINS.map((c) => swapsApi.list(orgId, env, { take: 100, chain: c }).then(asList).catch(() => null)),
+    crossApi.list(orgId, env, { take: 100 }).then(asList).catch(() => null),
+    usdt0Api.list(orgId, env, { take: 100 }).then(asList).catch(() => null),
+  ]).then((parts) => {
+    if (parts.every((p) => p === null)) throw new Error("unavailable");
+    return [
+      ...parts.slice(0, CHAINS.length).flatMap((p) => (p || []).map(sameRow)),
+      ...(parts[CHAINS.length] || []).map(crossRow),
+      ...(parts[CHAINS.length + 1] || []).map(usdt0Row),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }), [orgId, env]);
   const load = useCallback(() => {
     setLoading(true);
-    swapsApi.list(orgId, env, { take: 100, chain })
-      .then((res) => { setRows(Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []); setError(false); })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [env, orgId, chain]);
+    fetchAll().then((list) => { setRows(list); setError(false); }).catch(() => setError(true)).finally(() => setLoading(false));
+  }, [fetchAll]);
   useEffect(() => { load(); }, [load]);
-  // Live refresh while the tab is visible so an on-chain submission flips status.
-  const refresh = useCallback(() => {
-    swapsApi.list(orgId, env, { take: 100, chain })
-      .then((res) => setRows(Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []))
-      .catch(() => {});
-  }, [env, orgId, chain]);
-  usePolling(refresh, 8000);
+  // Live refresh while the tab is visible, so a swap settling on-chain flips its status.
+  const refresh = useCallback(() => { fetchAll().then(setRows).catch(() => {}); }, [fetchAll]);
+  usePolling(refresh, 10000, { immediate: false });
 
-  const view = rows.filter((s) => {
-    if (filter !== "all" && s.status !== filter) return false;
-    if (!q) return true;
-    const hay = `${s.id} ${s.source || ""} ${s.destination || ""} ${s.sendAsset || ""} ${s.destAsset || ""}`.toLowerCase();
-    return hay.includes(q.toLowerCase());
-  });
-  const pg = usePaged(view, q + "|" + filter + "|" + chain);
+  // A swap named from elsewhere (a notification) opens once the list is here, read by id from
+  // each kind's route when the list does not hold it.
+  const [openId, clearOpen] = useUrlRequest("open");
+  useEffect(() => {
+    if (!openId || loading) return;
+    clearOpen();
+    const hit = rows.find((r) => r.id === openId);
+    if (hit) { setDetail(hit); return; }
+    (async () => {
+      for (const [kind, toRow] of [["same", sameRow], ["cross", crossRow], ["usdt0", usdt0Row]] as const) {
+        try { const rec = await api.get(kind, openId); if (rec && rec.id) { setDetail(toRow(rec)); return; } } catch (e) {}
+      }
+      showToast(t.dash.common.notFound, "error");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, loading]);
+
+  const matches = (r, skip) =>
+    (skip === "status" || filters.status === "all" || groupOf(r.status) === filters.status) &&
+    (skip === "type" || filters.type === "all" || r.kind === filters.type) &&
+    (skip === "chain" || filters.chain === "all" || r.from === filters.chain || r.to === filters.chain) &&
+    inRange(r.createdAt, filters.date) &&
+    matchesQuery([...r.search, r.sent, r.got, networkName(r.from), networkName(r.to)], filters.q);
+  const view = rows.filter((r) => matches(r, null));
+  const groupCounts = countBy(rows.filter((r) => matches(r, "status")), (r) => groupOf(r.status));
+  const typeCounts = countBy(rows.filter((r) => matches(r, "type")), (r) => r.kind);
+  const chainRows = rows.filter((r) => matches(r, "chain"));
+  // The networks to filter by: ours, and any other a swap went through.
+  const networks = [...new Set<string>([...CHAINS, ...rows.flatMap((r) => [r.from, r.to])])];
+  const chainCounts = Object.fromEntries(networks.map((c) => [c, chainRows.filter((r) => r.from === c || r.to === c).length]));
+
+  const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
-  const onCreated = (swap) => { setModal(false); setRows((r) => [swap, ...r]); setDetail(swap); };
+  // A swap the form opened joins the list and opens its detail (to sign, or to fund) in the form's place.
+  const onCreated = (kind, rec) => { const row = kind === "cross" ? crossRow(rec) : kind === "usdt0" ? usdt0Row(rec) : sameRow(rec); setRows((r) => [row, ...r]); setSwapping(false); setDetail(row); };
+  const statusLabel = (r) => (r.kind === "cross" ? cc.status[r.status] : sw.status[r.status]) || r.status;
+  const chainsLabel = (r) => (r.from !== r.to ? `${networkName(r.from)} → ${networkName(r.to)}` : networkName(r.from));
 
   return (
     <>
-      <ViewHead title={sw.title} sub={fmt(sw.sub, { n: rows.length })}>
-        {canManage && <button className="btn btn-dark btn-sm" disabled={unavailable} onClick={() => setModal(true)}>{DI.plus} {sw.create}</button>}
-      </ViewHead>
+      <ViewHead title={sw.title} />
+      {/* Its own figures and chart: swaps of every kind and the completed ones. */}
+      <ViewActivity env={env} metrics={["swaps"]} id="swaps-activity" />
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
-      <div className="filter-tabs" style={{ marginBottom: 8 }} aria-label={sw.chainLabel}>
-        {CHAINS.map((c) => <button key={c} className={chain === c ? "on" : ""} onClick={() => { setChain(c); setDetail(null); }}>{sw.chains[c]} · {sw.venues[c]}</button>)}
-      </div>
-      {unavailable && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.network}<span>{sw.mainnetOnly}</span></div>}
-      <div className="filter-tabs">{FILTER_KEYS.map((k) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{sw.filters[k]}</button>)}</div>
+      <FilterBar
+        label={fl.label}
+        query={filters.q} onQuery={(v) => set("q", v)} placeholder={sw.searchPlaceholder}
+        status={{
+          label: fl.status, value: filters.status, onChange: (v) => set("status", v),
+          options: [
+            { key: "all", label: fl.allStatuses, count: rows.filter((r) => matches(r, "status")).length },
+            ...GROUPS.filter((g) => groupCounts[g] || filters.status === g).map((g) => ({ key: g, label: sw.groups[g], count: groupCounts[g] || 0, icon: <StatusIcon tone={pillTone(GROUP_PILL[g])} size={16} /> })),
+          ],
+        }}
+        selects={[
+          { key: "type", label: sw.typeLabel, value: filters.type, onChange: (v) => set("type", v), options: [{ key: "all", label: sw.types.all }, ...TYPES.map((k) => ({ key: k, label: sw.types[k], count: typeCounts[k] || 0 }))] },
+          { key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...networks.map((c) => ({ key: c, label: networkName(c), icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] }))] },
+        ]}
+        date={filters.date} onDate={(v) => set("date", v)}
+        active={active} onReset={reset}
+        shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+        actions={canManage && <button type="button" className="btn btn-dark btn-sm" onClick={() => setSwapping(true)}>{DI.plus} {sw.create}</button>}
+      />
+      {swapping && (
+        <Modal onClose={() => setSwapping(false)} label={sw.create}>
+          <div className="modal-body swap-modal">
+            <SwapWidget api={api} tier={env === "prod" ? "public" : "testnet"} onCreated={onCreated} />
+          </div>
+        </Modal>
+      )}
       <div className="panel">
-        <Toolbar q={q} setQ={setQ} placeholder={sw.searchPlaceholder}>
-          <span className="env-tag">{DI.network} {env === "prod" ? sw.network.prod : sw.network.dev}</span>
-        </Toolbar>
-        {!loading && !error && view.length > 0 && (
-          <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th></tr></thead>
-            <tbody>{pg.slice.map((s) => (
-              <tr key={s.id} className="row-click" onClick={() => setDetail(s)}>
-                <td className="tid">{s.id}</td>
-                <td className="amt">{swapRoute(s)}</td>
-                <td><Pill st={STATUS_PILL[s.status] || "ref"} label={(sw.status && sw.status[s.status]) || s.status} /></td>
-                <td className="cust">{fmtDateTime(s.createdAt)}</td>
+        {loading && <TableSkeleton label={sw.loading} cols={6} />}
+        {!loading && (
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{sw.tableHead.id}</th><th>{sw.tableHead.chains}</th><th>{sw.tableHead.route}</th><th>{sw.tableHead.status}</th><th>{sw.tableHead.created}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+            <tbody>{!error && pg.slice.map((r) => (
+              <tr key={r.key} className="row-click" onClick={() => setDetail(r)}>
+                <td className="tid">
+                  <RecordLink
+                    href={`/dashboard?view=swaps&open=${encodeURIComponent(r.id)}`} onOpen={() => setDetail(r)} copy={r.id}
+                    preview={() => <PreviewCard label={sw.tableHead.id} title={r.id} headline={<><b>{r.sent} → {r.got}</b><span className={`hub-st-t ${(GROUP_PILL[groupOf(r.status)] === "ok" ? "ok" : GROUP_PILL[groupOf(r.status)] === "fail" ? "fail" : "wait")}`}>{statusLabel(r)}</span></>} fields={[[sw.tableHead.chains, chainsLabel(r)], [sw.tableHead.created, fmtDateTime(r.createdAt)]]} />}
+                   title={r.id}><code>{shortAddress(r.id)}</code></RecordLink>
+                </td>
+                <td><span className="cell-mark"><span className="net-marks"><NetworkMark chain={r.from} size={18} />{r.to && r.to !== r.from && <NetworkMark chain={r.to} size={18} />}</span><span className="net-badge">{chainsLabel(r)}</span></span></td>
+                <td className="amt"><span className="cell-mark"><TokenMark symbol={String(r.sent).split(" ").pop()} chain={r.from} chainName={networkName(r.from)} size={24} /><span>{r.sent} → {r.got}</span></span></td>
+                <td><Pill st={GROUP_PILL[groupOf(r.status)]} tone={pillTone(GROUP_PILL[groupOf(r.status)])} label={statusLabel(r)} /></td>
+                <td className="cust">{fmtDateTime(r.createdAt)}</td>
+                <SwapRowActions r={r} onView={() => setDetail(r)} />
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows
+                n={pg.size - (error ? 0 : pg.count)} cols={6}
+                empty={error ? sw.loadError : null}
+              />
+            </tbody>
           </table></div>
         )}
-        {loading && <div className="empty">{sw.loading}</div>}
-        {!loading && error && <div className="empty">{sw.loadError}</div>}
-        {!loading && !error && !view.length && <div className="empty">{sw.empty}</div>}
-        {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
-      {modal && chain === "stellar" && <CreateSwapModal sw={sw} orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
-      {modal && chain !== "stellar" && <CreateChainSwapModal sw={sw} chain={chain} orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
-      {detail && !detail.chain && <SwapDetailModal sw={sw} swap={detail} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
-      {detail && detail.chain && <ChainSwapDetailModal sw={sw} swap={detail} orgId={orgId} env={env} canManage={canManage} onClose={() => setDetail(null)} />}
+      {detail && <SwapRecordDetail api={api} kind={detail.kind} record={detail.raw} canManage={canManage} onClose={() => setDetail(null)} />}
     </>
-  );
-}
-
-/* ---------------- create modal (quote → create) ---------------- */
-function CreateSwapModal({ sw, orgId, env, onClose, onCreated }) {
-  const t = useT();
-  const m = sw.modal;
-  const [source, setSource] = useState("");
-  const [amount, setAmount] = useState("");
-  const [destAssetCode, setDestAssetCode] = useState("USDC");
-  const [destAssetIssuer, setDestAssetIssuer] = useState("");
-  const [slippageBps, setSlippageBps] = useState("");
-  const [quote, setQuote] = useState(null);
-  const [quoting, setQuoting] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const needsIssuer = !!destAssetCode.trim() && !["xlm", "native"].includes(destAssetCode.trim().toLowerCase());
-  const baseValid = amount.trim() && destAssetCode.trim() && (!needsIssuer || destAssetIssuer.trim());
-  const canCreate = baseValid && source.trim();
-
-  const quoteBody = () => ({
-    org: orgId,
-    environment: env,
-    amount: amount.trim(),
-    destAssetCode: destAssetCode.trim(),
-    ...(needsIssuer && destAssetIssuer.trim() ? { destAssetIssuer: destAssetIssuer.trim() } : {}),
-    ...(slippageBps.trim() ? { slippageBps: Number(slippageBps.trim()) } : {}),
-  });
-
-  // Re-quoting after an input change clears the stale quote so the user re-prices.
-  const onChange = (setter) => (e) => { setter(e.target.value); setQuote(null); };
-
-  const getQuote = () => {
-    if (!baseValid || quoting) return;
-    setQuoting(true);
-    swapsApi.quote(quoteBody())
-      .then((qt) => setQuote(qt))
-      .catch((err) => showToast((err && err.message) || sw.quoteError, "error"))
-      .finally(() => setQuoting(false));
-  };
-
-  const submit = () => {
-    if (!canCreate || busy) return;
-    setBusy(true);
-    swapsApi.create({ ...quoteBody(), source: source.trim() })
-      .then((swap) => onCreated(swap))
-      .catch((err) => showToast((err && err.message) || sw.createError, "error"))
-      .finally(() => setBusy(false));
-  };
-
-  const fee = quote && quote.fee;
-  const dest = quote && quote.destination;
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="modal-body">
-        <div className="modal-eyebrow">{m.eyebrow}</div>
-        <h3>{m.title}</h3>
-        <p>{m.desc}</p>
-        <Field label={m.source} hint={m.sourceHint} value={source} onChange={onChange(setSource)} placeholder="G…" autoFocus />
-        <Field label={m.amount} hint={m.amountHint} value={amount} onChange={onChange(setAmount)} placeholder="100.00" inputMode="decimal" />
-        <AssetSelect
-          network={env === "prod" ? "public" : "testnet"}
-          label={m.destAsset} codeLabel={m.destAsset} issuerLabel={m.destIssuer}
-          hint={m.destAssetHint} issuerHint={m.destIssuerHint}
-          code={destAssetCode} issuer={destAssetIssuer}
-          onCode={(v) => { setDestAssetCode(v); setQuote(null); }}
-          onIssuer={(v) => { setDestAssetIssuer(v); setQuote(null); }}
-          customText={t.dash.common.assetCustom} codePlaceholder="USDC"
-        />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={onChange(setSlippageBps)} placeholder="50" inputMode="numeric" />
-
-        <div className="paylink-actions" style={{ marginBottom: 14 }}>
-          <button className="btn btn-soft btn-sm" disabled={!baseValid || quoting} onClick={getQuote}>{quoting ? m.quoting : m.getQuote}</button>
-        </div>
-
-        {quote && (
-          <div className="paylink-fields" style={{ marginBottom: 16 }}>
-            <div className="modal-eyebrow" style={{ marginBottom: 8 }}>{m.quoteTitle}</div>
-            {dest && <CopyField label={m.estimated} value={`${dest.estimated} ${destAssetCode.trim().toUpperCase()}`} />}
-            {dest && dest.minimum != null && <CopyField label={m.minimum} value={`${dest.minimum} ${destAssetCode.trim().toUpperCase()}`} />}
-            {fee && <CopyField label={m.fee} value={`${fee.amount} ${assetLabel(fee.asset)} (${fee.bps} ${m.bps})`} />}
-            <p className="field-note">{m.feeNote}</p>
-          </div>
-        )}
-
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-/* ---------------- create modal for Solana (Jupiter) / Monad (Kuru Flow) ---------------- */
-function CreateChainSwapModal({ sw, chain, orgId, env, onClose, onCreated }) {
-  const t = useT();
-  const m = sw.modal;
-  const c = sw.chainModal;
-  const [source, setSource] = useState("");
-  const [amount, setAmount] = useState("");
-  const [sourceAssetCode, setSourceAssetCode] = useState(NATIVE[chain]);
-  const [destAssetCode, setDestAssetCode] = useState("");
-  const [slippageBps, setSlippageBps] = useState("");
-  const [quote, setQuote] = useState(null);
-  const [quoting, setQuoting] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const baseValid = amount.trim() && sourceAssetCode.trim() && destAssetCode.trim();
-  const canCreate = baseValid && source.trim();
-
-  const quoteBody = () => ({
-    org: orgId,
-    environment: env,
-    chain,
-    amount: amount.trim(),
-    sourceAssetCode: sourceAssetCode.trim(),
-    destAssetCode: destAssetCode.trim(),
-    ...(slippageBps.trim() ? { slippageBps: Number(slippageBps.trim()) } : {}),
-  });
-  const onChange = (setter) => (e) => { setter(e.target.value); setQuote(null); };
-
-  const getQuote = () => {
-    if (!baseValid || quoting) return;
-    setQuoting(true);
-    swapsApi.quote(quoteBody())
-      .then((qt) => setQuote(qt))
-      .catch((err) => showToast((err && err.message) || sw.quoteError, "error"))
-      .finally(() => setQuoting(false));
-  };
-
-  const submit = () => {
-    if (!canCreate || busy) return;
-    setBusy(true);
-    swapsApi.create({ ...quoteBody(), source: source.trim() })
-      .then((swap) => onCreated(swap))
-      .catch((err) => showToast((err && err.message) || sw.createError, "error"))
-      .finally(() => setBusy(false));
-  };
-
-  const fee = quote && quote.fee;
-  const dest = quote && quote.destination;
-  const assetHint = (hint) => fmt(hint, { native: NATIVE[chain] });
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="modal-body">
-        <div className="modal-eyebrow">{sw.chains[chain]}</div>
-        <h3>{m.title}</h3>
-        <p>{fmt(c.desc, { chain: sw.chains[chain], venue: sw.venues[chain] })}</p>
-        <Field label={m.source} hint={c.sourceHint[chain]} value={source} onChange={onChange(setSource)} placeholder={PLACEHOLDER[chain]} autoFocus />
-        <Field label={c.sourceAsset} hint={assetHint(c.sourceAssetHint)} value={sourceAssetCode} onChange={onChange(setSourceAssetCode)} placeholder={NATIVE[chain]} />
-        <Field label={m.amount} value={amount} onChange={onChange(setAmount)} placeholder="1.00" inputMode="decimal" />
-        <Field label={m.destAsset} hint={assetHint(c.destAssetHint)} value={destAssetCode} onChange={onChange(setDestAssetCode)} placeholder={PLACEHOLDER[chain]} />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={onChange(setSlippageBps)} placeholder="50" inputMode="numeric" />
-
-        <div className="paylink-actions" style={{ marginBottom: 14 }}>
-          <button className="btn btn-soft btn-sm" disabled={!baseValid || quoting} onClick={getQuote}>{quoting ? m.quoting : m.getQuote}</button>
-        </div>
-
-        {quote && (
-          <div className="paylink-fields" style={{ marginBottom: 16 }}>
-            <div className="modal-eyebrow" style={{ marginBottom: 8 }}>{m.quoteTitle}</div>
-            {dest && <CopyField label={m.estimated} value={`${dest.estimated} ${chainAsset(dest.asset, chain)}`} />}
-            {dest && dest.minimum != null && <CopyField label={m.minimum} value={`${dest.minimum} ${chainAsset(dest.asset, chain)}`} />}
-            {fee && <CopyField label={m.fee} value={`${fee.amount} ${chainAsset(fee.asset, chain)} (${fee.bps} ${m.bps})`} />}
-            <p className="field-note">{c.feeNote}</p>
-          </div>
-        )}
-
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-/* Polls a swap until it is terminal so status and txHash update live. */
-function useSwapRecord(swap, orgId, env, complete) {
-  const [data, setData] = useState(swap);
-  useEffect(() => {
-    if (complete(data)) return;
-    let alive = true;
-    swapsApi.get(swap.id, orgId, env).then((full) => { if (alive && full) setData(full); }).catch(() => {});
-    return () => { alive = false; };
-  }, [swap.id, orgId, env]);
-  useEffect(() => {
-    if (TERMINAL.includes(data.status)) return;
-    let alive = true;
-    const h = setInterval(() => {
-      if (document.hidden) return;
-      swapsApi.get(swap.id, orgId, env).then((full) => { if (alive && full) setData(full); }).catch(() => {});
-    }, 5000);
-    return () => { alive = false; clearInterval(h); };
-  }, [swap.id, orgId, env, data.status]);
-  return [data, setData];
-}
-
-/* ---------------- detail modal (QR + uri + xdr + submit signed tx) ---------------- */
-function SwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
-  const d = sw.detail;
-  // Seed with the row, then fetch the full record for the QR/uri/xdr.
-  const [data, setData] = useSwapRecord(swap, orgId, env, (s) => !!(s.qr && s.uri));
-  const [signed, setSigned] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [outcome, setOutcome] = useState(null);
-
-  const submit = () => {
-    if (!signed.trim() || busy) return;
-    setBusy(true);
-    setOutcome(null);
-    swapsApi.submit(swap.id, orgId, env, { signedXdr: signed.trim() })
-      .then((res) => {
-        setOutcome(res || {});
-        if (res && res.swap) setData((cur) => ({ ...cur, ...res.swap }));
-        if (res && res.submitted) showToast(d.submitted);
-      })
-      .catch((err) => { setOutcome({ submitted: false, reason: (err && err.message) || d.submitFailed }); })
-      .finally(() => setBusy(false));
-  };
-
-  const F = d.fields;
-  const fields = [
-    [F.id, data.id],
-    [F.status, (sw.status && sw.status[data.status]) || data.status],
-    [F.network, data.network],
-    [F.source, data.source],
-    [F.destination, data.destination],
-    [F.sent, data.sendAmount ? `${data.sendAmount} ${assetLabel(data.sendAsset)}` : null],
-    [F.received, data.destEstimated ? `${data.destEstimated} ${data.destAsset}` : null],
-    [F.minimum, data.destMin ? `${data.destMin} ${data.destAsset}` : null],
-    [F.fee, data.feeAmount ? `${data.feeAmount} ${assetLabel(data.sendAsset)} (${data.feeBps} ${sw.modal.bps})` : null],
-    [F.memo, data.memo],
-    [F.commissionMemo, data.commissionMemo],
-    [F.txHash, data.txHash],
-    [F.created, fmtDateTime(data.createdAt)],
-  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
-
-  const isTerminal = TERMINAL.includes(data.status);
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="modal-body paylink-detail">
-        <div className="modal-eyebrow">{d.eyebrow}</div>
-        <h3>{d.title}</h3>
-
-        {data.qr && (
-          <div className="paylink-qr-wrap">
-            <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
-            <div className="paylink-qr-cap">{d.scan}</div>
-            <a className="btn btn-soft btn-sm" href={data.qr} download={`swap-${data.id}.png`}>{DI.download} {d.downloadQr}</a>
-          </div>
-        )}
-
-        {data.uri && (
-          <CopyBlock label={d.uri} value={data.uri}>
-            <div className="paylink-actions">
-              <a className="btn btn-dark btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
-              {data.txHash && <a className="btn btn-soft btn-sm" href={explorerTx(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>}
-            </div>
-          </CopyBlock>
-        )}
-
-        {data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
-
-        <div className="paylink-fields">
-          {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
-        </div>
-
-        {/* Submit the signed transaction (only while the swap is not yet terminal). */}
-        {canManage && data.xdr && !isTerminal && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><label className="field-l">{d.submitTitle}</label></div>
-            <p className="field-note">{d.submitDesc}</p>
-            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={d.submitPlaceholder} />
-            <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={submit}>{busy ? d.submitting : d.submit}</button>
-            </div>
-          </div>
-        )}
-
-        <SubmitOutcome d={d} outcome={outcome} />
-      </div>
-    </Modal>
-  );
-}
-
-/* ---------------- detail modal for Solana / Monad (transaction + approval + submit) ---------------- */
-function ChainSwapDetailModal({ sw, swap, orgId, env, canManage, onClose }) {
-  const d = sw.detail;
-  const c = sw.chainDetail;
-  const chain = swap.chain;
-  const [data, setData] = useSwapRecord(swap, orgId, env, (s) => !!s.transaction);
-  const [signed, setSigned] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [outcome, setOutcome] = useState(null);
-
-  const submit = () => {
-    if (!signed.trim() || busy) return;
-    setBusy(true);
-    setOutcome(null);
-    swapsApi.submit(swap.id, orgId, env, { signedTransaction: signed.trim() })
-      .then((res) => {
-        setOutcome(res || {});
-        if (res && res.swap) setData((cur) => ({ ...cur, ...res.swap }));
-        if (res && res.submitted) showToast(d.submitted);
-      })
-      .catch((err) => { setOutcome({ submitted: false, reason: (err && err.message) || d.submitFailed }); })
-      .finally(() => setBusy(false));
-  };
-
-  const tx = data.transaction || {};
-  // Solana hands out base64 bytes; Monad a call object the wallet signs as EIP-1559.
-  const txText = tx.encoding === "base64" ? tx.data : JSON.stringify(tx, null, 2);
-  const F = d.fields;
-  const fields = [
-    [F.id, data.id],
-    [F.status, (sw.status && sw.status[data.status]) || data.status],
-    [c.provider, `${sw.venues[chain]} · ${sw.chains[chain]}`],
-    [F.source, data.source],
-    [F.sent, data.sendAmount ? `${data.sendAmount} ${chainAsset(data.sendAsset, chain)}` : null],
-    [F.received, data.destEstimated ? `${data.destEstimated} ${chainAsset(data.destAsset, chain)}` : null],
-    [F.minimum, data.destMin ? `${data.destMin} ${chainAsset(data.destAsset, chain)}` : null],
-    [F.fee, data.feeAmount ? `${data.feeAmount} ${chainAsset(data.destAsset, chain)} (${data.feeBps} ${sw.modal.bps})` : null],
-    [c.expires, data.status === "PENDING" ? fmtDateTime(data.expiresAt) : null],
-    [F.txHash, data.txHash],
-    [F.created, fmtDateTime(data.createdAt)],
-  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
-
-  const isTerminal = TERMINAL.includes(data.status);
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="modal-body paylink-detail">
-        <div className="modal-eyebrow">{d.eyebrow} · {sw.chains[chain]}</div>
-        <h3>{c.title}</h3>
-
-        {data.approval && data.status === "PENDING" && (
-          <CopyBlock label={c.approval} value={JSON.stringify(data.approval, null, 2)}>
-            <p className="field-note">{c.approvalNote}</p>
-          </CopyBlock>
-        )}
-        {data.transaction && data.status === "PENDING" && <CopyBlock label={c.transaction} value={txText} />}
-        {data.txHash && (
-          <div className="paylink-actions" style={{ marginBottom: 12 }}>
-            <a className="btn btn-soft btn-sm" href={explorerTx(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
-          </div>
-        )}
-
-        <div className="paylink-fields">
-          {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
-        </div>
-
-        {canManage && !isTerminal && data.status !== "EXPIRED" && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><label className="field-l">{d.submitTitle}</label></div>
-            <p className="field-note">{c.submitDesc}</p>
-            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={c.submitPlaceholder} />
-            <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={submit}>{busy ? d.submitting : d.submit}</button>
-            </div>
-          </div>
-        )}
-
-        <SubmitOutcome d={d} outcome={outcome} />
-      </div>
-    </Modal>
-  );
-}
-
-function SubmitOutcome({ d, outcome }) {
-  if (!outcome) return null;
-  return (
-    <div className="paylink-fields" style={{ marginTop: 8 }}>
-      <CopyField label={d.fields.status} value={outcome.submitted ? d.submitted : (outcome.reason || d.submitFailed)} />
-      {outcome.txHash && <CopyField label={d.fields.txHash} value={outcome.txHash} />}
-      {Array.isArray(outcome.resultCodes?.operations) && outcome.resultCodes.operations.length > 0 && <CopyField label={d.resultCodes} value={outcome.resultCodes.operations.join(", ")} />}
-      {typeof outcome.resultCodes === "string" && <CopyField label={d.resultCodes} value={outcome.resultCodes} />}
-    </div>
   );
 }

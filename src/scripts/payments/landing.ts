@@ -25,6 +25,24 @@ export function startLanding(): void {
     sync();
   }
 
+  /* Every logo row runs at the same speed (product owner): a row's loop is one set of its logos,
+     so its duration is that set's width over MARQUEE_SPEED. Measured again when the web font
+     lands and whenever a row changes width; without the script the CSS durations stay. */
+  const MARQUEE_SPEED = 48; // px per second
+  const tracks = [...document.querySelectorAll<HTMLElement>(".pl-marquee-track")];
+  const pace = () => {
+    for (const track of tracks) {
+      const set = track.querySelector<HTMLElement>(".pl-marquee-set");
+      if (set && set.offsetWidth > 0) track.style.animationDuration = `${(set.offsetWidth / MARQUEE_SPEED).toFixed(2)}s`;
+    }
+  };
+  pace();
+  void document.fonts?.ready.then(pace);
+  if (tracks.length && "ResizeObserver" in window) {
+    const watch = new ResizeObserver(pace);
+    tracks.forEach((track) => watch.observe(track));
+  }
+
   /* On a phone the section bar scrolls sideways and the current page can sit past its edge:
      bring that link to the middle of the bar, so the visitor sees where they are. */
   const here = document.querySelector<HTMLElement>(".pl-subnav-links [aria-current='page']");
@@ -97,7 +115,7 @@ export function startLanding(): void {
   }, { threshold: 0.6 });
 
   /* Fee calculator: the amount (typed or slid) times each plan's rate, plus its fixed cents,
-     plus escrow's 0.5% when ticked; what the merchant keeps is the rest. Rates come from the
+     plus escrow's surcharge when ticked; what the merchant keeps is the rest. Rates come from the
      rows' data attributes (plans.ts); a custom plan keeps its label. The slider is logarithmic
      (1 to 10,000 over 0–100), so small and large payments both get room on it. */
   for (const calc of document.querySelectorAll<HTMLElement>("[data-calc]")) {

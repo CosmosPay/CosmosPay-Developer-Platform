@@ -12,4 +12,4 @@ export function pageUrl(origin: string, path: string, lang?: string | null): str
 }
 
 /** Open Graph wants language_TERRITORY: the market each language is written for. */
-export const OG_LOCALES = { en: "en_US", es: "es_LA", pt: "pt_BR", fr: "fr_FR", de: "de_DE" } as const;
+export const OG_LOCALES = { en: "en_US", es: "es_LA", pt: "pt_BR", fr: "fr_FR", de: "de_DE", hi: "hi_IN", zh: "zh_CN" } as const;

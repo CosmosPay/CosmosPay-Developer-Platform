@@ -4,7 +4,7 @@
    previews) and sitemap.xml. Each has a page under src/pages/payments/ and its copy under
    `pages` in src/lib/payments/landing-i18n.ts. Pure, so the router's tests can import it. */
 
-export const PAYMENTS_PAGES = ["integrations", "use-cases", "security", "fees", "faq"] as const;
+export const PAYMENTS_PAGES = ["integrations", "swaps", "use-cases", "security", "fees", "faq"] as const;
 export type PaymentsPage = (typeof PAYMENTS_PAGES)[number];
 
 /** The public path of a gateway page: `/integrations`. */

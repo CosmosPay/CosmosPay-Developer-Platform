@@ -15,5 +15,6 @@ const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
   {caption && <span class="ck-caption">{t.toPay}</span>}
   <h1 class="pp-amount" data-slot="amount"></h1>
   <p class="pp-hint" data-slot="amount-hint" hidden>{t.anyAmountHint}</p>
+  <p class="pp-hint" data-slot="fee-included" hidden></p>
   <p class="pp-msg" data-slot="msg" hidden></p>
 </div>

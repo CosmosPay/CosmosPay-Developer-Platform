@@ -1,5 +1,6 @@
 import { useId, useMemo, useState, useEffect } from "react";
-import { Field } from "./Field";
+import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { Select } from "@/components/cosmos/dashboard/components/Select";
 import {
   standardAssets,
   matchStandard,
@@ -90,26 +91,19 @@ export function AssetSelect({
   return (
     <>
       <div className="fld">
-        <label className="field-l" htmlFor={id}>
-          {label}
-        </label>
-        <select
-          id={id}
-          className="field"
+        <span className="field-l" id={`${id}-l`}>{label}</span>
+        {/* The issuer, not just the code: mainnet carries two legitimate EURCs from different
+            issuers and twenty impostor USDCs, so a bare code does not say which asset this builds. */}
+        <Select
           value={sel}
-          onChange={(e) => pick(e.target.value)}
-        >
-          {allowAny && <option value={ANY_KEY}>{anyText}</option>}
-          {assets.map((a) => (
-            <option key={a.key} value={a.key}>
-              {/* The issuer, not just the code: mainnet carries two legitimate
-                  EURCs from different issuers and twenty impostor USDCs, so a
-                  bare code does not say which asset this option builds. */}
-              {a.issuer ? `${a.label} · ${a.issuerName}` : a.label}
-            </option>
-          ))}
-          <option value={CUSTOM_KEY}>{customText}</option>
-        </select>
+          onChange={pick}
+          labelledBy={`${id}-l`}
+          options={[
+            ...(allowAny ? [{ value: ANY_KEY, label: anyText || "" }] : []),
+            ...assets.map((a) => ({ value: a.key, label: a.label, hint: a.issuer ? a.issuerName : undefined })),
+            { value: CUSTOM_KEY, label: customText },
+          ]}
+        />
       </div>
       {isCustom && (
         <Field
