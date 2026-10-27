@@ -1017,7 +1017,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   per-account secret is mixed into the root, and the API holds no part of the key: never add one
   server-side. `ZkWallet.connect` tries roots in order: the table passes the transaction root only
   (an account made with a message signature, the private checkout's with Freighter, says it was
-  created elsewhere); the private checkout, which signs with Freighter: message, then transaction.
+  created elsewhere); the private checkout, which signs with Freighter: transaction, then message (product
+  owner, 2026-10-27: an account created at the checkout must open in the table; one registered with
+  the message root, by the checkout or by the table before it took signed XDRs, never does there).
   Then view balances, incoming to
   available, deposit and withdraw in the row menu and the detail (the amount in a dialog, the progress
   under the row or in the add dialog, with a clock while the proof runs). Without any private account

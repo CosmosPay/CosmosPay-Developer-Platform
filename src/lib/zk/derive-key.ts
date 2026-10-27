@@ -3,10 +3,11 @@
    - the protocol's signer root (stellar-confidential docs/sdk/key-derivation.md, signer roots): a
      SEP-53 signature over a message bound to the token and the account. Every conformant client
      derives the same `sk` from it. It needs a wallet that signs messages (Freighter), and is what
-     the private checkout uses first;
+     the private checkout falls back to for the accounts created with it;
    - the transaction root: the signature of the fixed key transaction (src/lib/zk/xdr-signer.ts),
      which any Stellar wallet can give, so an account is opened from a signed XDR (product owner,
-     2026-10-27). The private accounts table uses it first. Every Cosmos Pay client derives the
+     2026-10-27). The private accounts table uses it alone and the private checkout first, so an
+     account created in either opens in both. Every Cosmos Pay client derives the
      same `sk` from it; another client of the protocol would not, so an account created this way
      is opened here.
 

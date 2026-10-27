@@ -22,7 +22,7 @@ export default {
       wrongNetwork: "请将 Freighter 切换到 {network}。",
     },
     phases: {
-      keys: "在 Freighter 中签名两次以派生您的私钥",
+      keys: "在 Freighter 中签名以派生您的私钥",
       proving: "正在生成证明…",
       signing: "请在 Freighter 中确认…",
       waiting: "正在等待网络…",
@@ -97,7 +97,7 @@ export default {
       searchPlaceholder: "按客户、钱包或地址搜索…",
       noPaymentsYet: "此账户尚未收到隐私支付",
       loadError: "无法加载隐私账户。",
-      keyMismatch: "此隐私账户是在控制台之外用其他签名创建的，因此无法在这里打开。",
+      keyMismatch: "该账户是通过 Freighter 签署消息在隐私代币上注册的（在隐私结账页，或 2026-10-27 之前的控制台中），而不是签署密钥交易，因此此签名无法打开其密钥。请使用其他 Stellar 账户。",
       keyFailed: "签名后的交易不是 {wallet} 的签名。请让客户用该账户签名。",
       phases: { keys: "正在等待客户签名…", proving: "正在生成证明…", signing: "正在等待客户签名…", waiting: "正在等待网络…" },
       steps: { account: "账户", sign: "签名" },

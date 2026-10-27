@@ -22,7 +22,7 @@ export default {
       wrongNetwork: "Passez Freighter sur {network}.",
     },
     phases: {
-      keys: "Signez deux fois dans Freighter pour dériver votre clé privée",
+      keys: "Signez dans Freighter pour dériver votre clé privée",
       proving: "Génération de la preuve…",
       signing: "Approuvez dans Freighter…",
       waiting: "En attente du réseau…",
@@ -97,7 +97,7 @@ export default {
       searchPlaceholder: "Rechercher par client, portefeuille ou adresse…",
       noPaymentsYet: "Ce compte n’a encore reçu aucun paiement privé",
       loadError: "Impossible de charger les comptes privés.",
-      keyMismatch: "Ce compte privé a été créé avec une autre signature, hors du dashboard : il ne peut pas être ouvert ici.",
+      keyMismatch: "Ce compte a été enregistré sur le jeton privé en signant un message avec Freighter (sur le checkout privé, ou dans le dashboard avant le 27/10/2026), pas la transaction de clé : cette signature n’ouvre donc pas sa clé. Utilisez un autre compte Stellar.",
       keyFailed: "La transaction signée n’est pas la signature de {wallet}. Demandez au client de la signer avec ce compte.",
       phases: { keys: "En attente de la signature du client…", proving: "Génération de la preuve…", signing: "En attente de la signature du client…", waiting: "En attente du réseau…" },
       steps: { account: "Compte", sign: "Signatures" },

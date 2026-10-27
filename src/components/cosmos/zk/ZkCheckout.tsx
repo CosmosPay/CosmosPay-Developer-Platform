@@ -61,10 +61,12 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
     try {
       const { ZkWallet } = await import("@/lib/zk/wallet");
       const deployment = { network: payment.network, rpcUrl: payment.rpcUrl, networkPassphrase: payment.networkPassphrase, token: payment.token, verifier: payment.verifier, auditorRegistry: payment.auditorRegistry, auditorId: payment.auditorId };
-      // The payer signs with Freighter: its SEP-53 key root first, the key transaction's next (an
-      // account a merchant created from a signed XDR in the private accounts table).
+      // The payer signs with Freighter: the key transaction's root first, so an account created here
+      // also opens in the private accounts table, which takes only a signed XDR (an account
+      // registered here with the SEP-53 root, as this page and the table once did, would not:
+      // product owner, 2026-10-27); the SEP-53 root next, for the accounts created that way.
       const signer = async () => (await import("@/lib/zk/freighter-signer")).connectFreighter(deployment.networkPassphrase);
-      const w = wallet.current ?? (await ZkWallet.connect(deployment, await signer(), setPhase, ["message", "transaction"]));
+      const w = wallet.current ?? (await ZkWallet.connect(deployment, await signer(), setPhase, ["transaction", "message"]));
       wallet.current = w;
       const total = toUnits(payment.amount);
       if (steps.register !== "done") {

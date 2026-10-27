@@ -24,7 +24,7 @@ export default {
       wrongNetwork: "Switch Freighter to {network}.",
     },
     phases: {
-      keys: "Sign twice in Freighter to derive your private key",
+      keys: "Sign in Freighter to derive your private key",
       proving: "Generating the proof…",
       signing: "Approve in Freighter…",
       waiting: "Waiting for the network…",
@@ -99,7 +99,7 @@ export default {
       searchPlaceholder: "Search by customer, wallet or address…",
       noPaymentsYet: "No private payments to this account yet",
       loadError: "The private accounts could not be loaded.",
-      keyMismatch: "This private account was created with another signature, outside the dashboard, so it cannot be opened here.",
+      keyMismatch: "This account was registered on the private token by signing a message with Freighter (on the private checkout, or in the dashboard before 2026-10-27), not the key transaction, so this signature does not open its key. Use another Stellar account.",
       keyFailed: "The signed transaction is not {wallet}'s signature. Ask the customer to sign it with that account.",
       phases: { keys: "Waiting for the customer's signature…", proving: "Generating the proof…", signing: "Waiting for the customer's signature…", waiting: "Waiting for the network…" },
       steps: { account: "Account", sign: "Signatures" },

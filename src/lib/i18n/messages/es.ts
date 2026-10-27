@@ -22,7 +22,7 @@ export default {
       wrongNetwork: "Cambia Freighter a {network}.",
     },
     phases: {
-      keys: "Firma dos veces en Freighter para derivar tu clave privada",
+      keys: "Firma en Freighter para derivar tu clave privada",
       proving: "Generando la prueba…",
       signing: "Aprueba en Freighter…",
       waiting: "Esperando a la red…",
@@ -97,7 +97,7 @@ export default {
       searchPlaceholder: "Buscar por cliente, wallet o dirección…",
       noPaymentsYet: "Esta cuenta todavía no recibió pagos privados",
       loadError: "No se pudieron cargar las cuentas privadas.",
-      keyMismatch: "Esta cuenta privada se creó con otra firma, fuera del dashboard, así que no se puede abrir aquí.",
+      keyMismatch: "Esta cuenta se registró en el token privado firmando un mensaje con Freighter (en el checkout privado, o en el dashboard antes del 27/10/2026), no la transacción de la clave, así que esta firma no abre su clave. Usa otra cuenta de Stellar.",
       keyFailed: "La transacción firmada no es la firma de {wallet}. Pide al cliente que la firme con esa cuenta.",
       phases: { keys: "Esperando la firma del cliente…", proving: "Generando la prueba…", signing: "Esperando la firma del cliente…", waiting: "Esperando a la red…" },
       steps: { account: "Cuenta", sign: "Firmas" },
