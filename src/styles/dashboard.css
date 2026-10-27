@@ -96,6 +96,11 @@ body.inst:has(.dash) { background: var(--surface); }
 .inst .page-title h1 { margin: 0; font-size: var(--title-fs); font-weight: 600; letter-spacing: -.025em; line-height: 1.15; color: var(--ink); white-space: nowrap; }
 .page-crumb { color: var(--line-2); font-size: var(--title-fs); font-weight: 400; line-height: 1.15; }
 .org-wrap.crumb { margin: 0; min-width: 0; }
+/* A long title on a phone ("Platform overview / <organization>"): the organization's name gives
+   way first, down to its first letters and the chevron, then the title ends in an ellipsis; the
+   page never scrolls sideways. */
+.inst .page-title h1 { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.page-title > .org-wrap.crumb { flex: 0 1000 auto; min-width: 58px; }
 .org-crumb {
   display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 6px;
   border: 0; border-radius: 10px; background: transparent; cursor: pointer;

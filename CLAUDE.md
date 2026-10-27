@@ -212,7 +212,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     a slash and the organization as a breadcrumb menu (`OrgSwitcher variant="crumb"`), the three at
     one size (`--title-fs`, 24px: its letters as tall as the environment switch's selected pill;
     product owner: never an arrow, never two sizes, in proportion to the switch), Sandbox / Production
-    and the outlined "create organization" (icon only on phones). The environment survives a reload:
+    and the outlined "create organization" (icon only on phones). On a phone a long head gives way
+    instead of scrolling the page sideways: the organization's name first (down to its first letters
+    and the chevron), then the view's name ends in an ellipsis. The environment survives a reload:
     the switch writes the `cosmospay-env` cookie and `dashboard.astro` reads it, so the first render
     is already on it. A view's own h2 stays
     for assistive tech only and no view has a visible subtitle. The sidebar entries are `SIDE` in
@@ -220,7 +222,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     The sidebar's logo never moves (product owner): on a window too short for the menu only
     `.side-nav` scrolls, under it.
     `DISABLED_VIEWS` there switches a view off (out of the sidebar and the search, its link opens
-    the overview): Fiat, temporarily (product owner, 2026-10-25).
+    the overview): Fiat, temporarily (product owner, 2026-10-25), the organizations' (`blindpay`)
+    and the platform admin's (`adminFiat`, whose API answers 404 while the BlindPay plugin is off;
+    `FIAT_ON` in `AdminViews.tsx` drops the overview's fiat panel and the organizations' fiat
+    columns with it).
   - **The bar carries the dashboard's search** (`widgets/DashSearch.tsx`, passed to `Nav` as
     `search`; Ctrl K / Cmd K or "/" focus it): a combobox that finds the pages by name (and by
     their group's) and, with a query, searches payments, swaps and liquidity by writing their `q`
@@ -355,8 +360,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       the full value. Where: the overview's transactions (payment, paid by, paid to), Payments,
       Balances, Swaps, Liquidity (operations, pools, positions), private payments, Customers (the
       customer, its account, its payments), Products, API keys, webhook endpoints and deliveries,
-      API logs (the path) and notifications (the address, copy only). The admin lists keep their
-      click-to-copy ids. Card classes are `rpv-*` (`.rp` and `.wrap` are taken elsewhere).
+      API logs (the path) and notifications (the address, copy only). The admin lists are the
+      Payments table too (`AdminViews.tsx`: `statusFigures` their figures, `IdTd` the record's
+      `RecordLink`, `AdminRowMenu` the actions cell, `AdminDetail` the row's `RecordDetail`, statuses
+      in the reader's language). Card classes are `rpv-*` (`.rp` and `.wrap` are taken elsewhere).
     - A pending Stellar payment's detail checks a transaction hash (`/validate`) for a payer whose
       wallet never reported back.
     - An empty list stays empty (product owner, 2026-10-26: no "nothing here" text or create

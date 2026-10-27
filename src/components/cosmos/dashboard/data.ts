@@ -121,8 +121,9 @@ export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[]
 ];
 /* Views switched off for now (product owner, 2026-10-25: Fiat is disabled temporarily). They leave
    the sidebar and the search, and a link to one (?view=blindpay from the KYC return) opens the
-   overview. Delete the entry to bring the view back. */
-export const DISABLED_VIEWS = ["blindpay"];
+   overview. The platform-admin Fiat list goes with the organizations' one (its API answers 404
+   while the BlindPay plugin is off). Delete the entries to bring the views back. */
+export const DISABLED_VIEWS = ["blindpay", "adminFiat"];
 
 /* Records shown on a view of their own (`?view=<record>&id=<id>`), with the list each belongs to:
    the sidebar marks that list, and the record's "all" link returns to it. */
