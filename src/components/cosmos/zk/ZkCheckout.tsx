@@ -61,7 +61,10 @@ export function ZkCheckout({ id, apiBase, lang }: { id: string; apiBase: string;
     try {
       const { ZkWallet } = await import("@/lib/zk/wallet");
       const deployment = { network: payment.network, rpcUrl: payment.rpcUrl, networkPassphrase: payment.networkPassphrase, token: payment.token, verifier: payment.verifier, auditorRegistry: payment.auditorRegistry, auditorId: payment.auditorId };
-      const w = wallet.current ?? (await ZkWallet.connect(deployment, setPhase));
+      // The payer signs with Freighter: its SEP-53 key root first, the key transaction's next (an
+      // account a merchant created from a signed XDR in the private accounts table).
+      const signer = async () => (await import("@/lib/zk/freighter-signer")).connectFreighter(deployment.networkPassphrase);
+      const w = wallet.current ?? (await ZkWallet.connect(deployment, await signer(), setPhase, ["message", "transaction"]));
       wallet.current = w;
       const total = toUnits(payment.amount);
       if (steps.register !== "done") {

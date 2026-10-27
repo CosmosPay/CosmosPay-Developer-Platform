@@ -259,7 +259,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     series): Payments shows settled volume (USD) and payments, private payments their settled volume
     (USD) and the payments created (the series' `zkPayments` part), Swaps, Liquidity and Webhooks
     their one figure (a single figure stands alone, not a tab). Each sits above its list; only the
-    overview's charts link into a view.
+    overview's charts link into a view. **Figures always come first, then the tables, in every view**
+    (product owner, 2026-10-27): a second table (private accounts under private payments) goes after
+    the main one, never above the figures.
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
     from Monday), with the window's totals (distinct payers too) and the window before it, plus
@@ -898,10 +900,20 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   organization Stellar wallet (Settings) with whether it holds a confidential account, read from the
   chain with no signature (`confidentialAccounts` in `src/lib/zk/wallet.ts`), its balances once
   viewed, and the private payments it received (a count that filters the payments table). A row opens
-  the account's detail. Its action opens Freighter only when a key is needed (create the account, view
-  balances; Freighter must have that wallet selected), then incoming to available, deposit and
-  withdraw in the row menu and the detail (the amount in a dialog, the progress under the row, with a
-  clock while the proof runs). Without a Stellar wallet the view says the
+  the account's detail. It sits under the payments table. **Nothing connects a wallet** (product
+  owner, 2026-10-27: people hand over a signed XDR, not their wallet): every signature goes through
+  `components/ZkSignDialog.tsx`, the swap's signing pattern (`FreighterSign` in one click, the XDR in a
+  `CopyBlock`, the signed XDR pasted back, refused unless it is that transaction signed by the row's
+  account, with a clock for the SDK's 180 s window). `XdrSigner` (`src/lib/zk/xdr-signer.ts`) is the
+  SDK's signer. The confidential key comes from the signature of a fixed, never-valid **key
+  transaction** (`keyTransactionXdr`: sequence 1, a manageData entry binding token and account), which
+  any wallet can sign; signed twice for a new account (determinism), once for an existing one. That
+  root is Cosmos Pay's, not the protocol's SEP-53 signer root: an account created this way opens here,
+  not in another client of the protocol. `ZkWallet.connect` tries roots in order (the table:
+  transaction, then message; the private checkout, which signs with Freighter: message, then
+  transaction), so accounts made either way open in both. Then create, view balances, incoming to
+  available, deposit and withdraw in the row menu and the detail (the amount in a dialog, the progress
+  under the row, with a clock while the proof runs). Without a Stellar wallet the view says the
   organization needs one, offers to connect it to whoever may, and hides "create private payment".
   The create dialog preselects the first wallet with a confidential account. No separate account page.
 - **Proofs are generated in the browser.** The private checkout is cross-origin isolated (COOP

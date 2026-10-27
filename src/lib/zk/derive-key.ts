@@ -1,20 +1,35 @@
-/* The confidential key, derived from a Freighter signature as the protocol prescribes
-   (stellar-confidential docs/sdk/key-derivation.md, signer roots): the root is a SEP-53 signature
-   over a message bound to the token and the account, and the SDK's `deriveSk` turns it into `sk`.
-   Every conformant client derives the same `sk` for the same (token, account), so the account is
-   recoverable from the Stellar key alone, on any device.
+/* The confidential key, from one of two roots, each turned into `sk` by the SDK's `deriveSk`:
 
-   The obligations the SDK leaves to its caller live here: the signature is verified against the
-   account's key (a Freighter with another account selected would otherwise give a wrong but
-   usable key), it is requested twice and compared (a non-deterministic signer could never
-   recover the account), and it is never stored. */
+   - the protocol's signer root (stellar-confidential docs/sdk/key-derivation.md, signer roots): a
+     SEP-53 signature over a message bound to the token and the account. Every conformant client
+     derives the same `sk` from it. It needs a wallet that signs messages (Freighter), and is what
+     the private checkout uses first;
+   - the transaction root: the signature of the fixed key transaction (src/lib/zk/xdr-signer.ts),
+     which any Stellar wallet can give, so an account is opened from a signed XDR (product owner,
+     2026-10-27). The private accounts table uses it first. Every Cosmos Pay client derives the
+     same `sk` from it; another client of the protocol would not, so an account created this way
+     is opened here.
+
+   Either way the account is recoverable from the Stellar key alone, on any device. The obligations
+   the SDK leaves to its caller live here: the signature is verified against the account's key (a
+   wallet with another account selected would otherwise give a wrong but usable key), it is
+   requested twice and compared for an account not created yet (a non-deterministic signer could
+   never open it again), and it is never stored. */
 import { Keypair } from "@stellar/stellar-sdk";
 import { deriveSk, sep53Payload, skSigningMessage } from "stellar-confidential-token-sdk";
 import type { MessageSigner } from "@/lib/zk/freighter-signer";
+import { keyTransactionXdr, signatureOn, type SignPurpose } from "@/lib/zk/xdr-signer";
 
 const sameBytes = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((x, i) => x === b[i]);
 
 export class KeyDerivationError extends Error {}
+
+/** A signer of transactions, which may say what the next signature is for. */
+export interface TransactionSigner {
+  publicKey: string;
+  sign(txXdrBase64: string): Promise<string>;
+  prepare?(purpose: SignPurpose): void;
+}
 
 /** Derive this account's `sk` on `token` from two identical Freighter signatures. */
 export async function deriveSignerRootSk(signer: MessageSigner, token: string): Promise<bigint> {
@@ -34,6 +49,27 @@ export async function deriveSignerRootSk(signer: MessageSigner, token: string): 
   }
   if (!sameBytes(roots[0], roots[1])) {
     throw new KeyDerivationError("The wallet returned two different signatures for the same message, so no recoverable key could be derived");
+  }
+  return deriveSk(roots[0], token, account).sk;
+}
+
+/**
+ * Derive this account's `sk` on `token` from its signature of the key transaction: once for an
+ * account that already exists (the chain then confirms the key), twice and compared for one that
+ * does not yet.
+ */
+export async function deriveTransactionRootSk(signer: TransactionSigner, token: string, networkPassphrase: string, twice: boolean): Promise<bigint> {
+  const account = signer.publicKey;
+  const xdr = keyTransactionXdr(token, account, networkPassphrase);
+  const roots: Uint8Array[] = [];
+  for (let i = 0; i < (twice ? 2 : 1); i++) {
+    signer.prepare?.(i === 0 ? "key" : "keyAgain");
+    const check = signatureOn(xdr, await signer.sign(xdr), account, networkPassphrase);
+    if (!check.ok) throw new KeyDerivationError("The signed key transaction is not this account's signature of it, so no key was derived");
+    roots.push(check.signature);
+  }
+  if (twice && !sameBytes(roots[0], roots[1])) {
+    throw new KeyDerivationError("The wallet returned two different signatures for the same transaction, so no recoverable key could be derived");
   }
   return deriveSk(roots[0], token, account).sk;
 }

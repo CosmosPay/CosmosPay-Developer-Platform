@@ -105,8 +105,8 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
     <>
       <ViewHead title={z.title} />
       {config === null && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{z.unavailable}</span></div>}
-      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
-      {/* Its own figures and chart: settled volume in USD and the payments created. */}
+      {/* Figures first, then the tables (product owner, 2026-10-27, every view): its own figures and
+          chart, settled volume in USD and the payments created. */}
       <ViewActivity env={env} metrics={["zkVolume", "zkPayments"]} id="zk-activity" />
       <FilterBar
         label={fl.label}
@@ -169,6 +169,8 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
         )}
         {rows !== null && <Pagination {...pg} />}
       </div>
+      {/* The private accounts the payments go to, a table of their own under the payments. */}
+      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
       {detail && <ZkPaymentDetailModal payment={detail} orgId={orgId} env={env} onCopy={copy} onClose={() => setDetail(null)} />}
       {modal && config && (
         <CreateZkPaymentModal

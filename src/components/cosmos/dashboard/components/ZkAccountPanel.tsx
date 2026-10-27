@@ -4,13 +4,17 @@
    2026-10-27: the accounts in the same table format, in their own "Private accounts" section).
    Each wallet is a row saying whether it already holds a confidential account on Cosmos Pay's
    token, read from the chain with no signature, and how many private payments it received (which
-   filter the payments table). A row opens the account's detail. Its one action opens Freighter
-   only when it needs a key: "create the private account" (two signatures derive the key, kept
-   for this tab only, then a register proof and one signature) or "view balances" (the balances
-   are rebuilt from chain events and checked against the on-chain commitments, then shown in the
-   row), then incoming to available, a deposit of public XLM and a withdrawal back to public XLM.
-   Freighter must have that same account selected. The amount is asked for in a dialog; the work
-   shows its progress under the row. Without a Stellar wallet the panel says the organization
+   filter the payments table). A row opens the account's detail. Nothing connects a wallet
+   (product owner, 2026-10-27: people hand over a signed XDR, not their wallet): every signature is
+   asked for in ZkSignDialog, the way a swap's is (Freighter in one click, or the XDR signed in
+   any Stellar wallet and pasted back), and must be the row's account's. Its one action is "create
+   the private account" (the key transaction signed twice derives the key, kept for this tab only,
+   then a register proof and one more signature) or "view balances" (one signature of the key
+   transaction; the balances are rebuilt from chain events and checked against the on-chain
+   commitments, then shown in the row), then incoming to available, a deposit of public XLM and a
+   withdrawal back to public XLM. An account whose key came from a Freighter message signature
+   opens with Freighter. The amount is asked for in a dialog; the work shows its progress under
+   the row. Without a Stellar wallet the panel says the organization
    needs one, and whoever may connect wallets connects it here. Proofs are generated in this tab,
    on one thread (src/lib/zk/bb-loader.ts); nothing about the key leaves the browser. */
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -31,6 +35,8 @@ import { canProve } from "@/lib/zk/bb-loader";
 import { fromUnits, toUnits } from "@/lib/zk/amounts";
 import type { ZkNetworkConfig } from "@/lib/zk/checkout-api";
 import type { ZkBalances, ZkPhase, ZkWallet } from "@/lib/zk/wallet";
+import type { SignRequest } from "@/lib/zk/xdr-signer";
+import { ZkSignDialog } from "@/components/cosmos/dashboard/components/ZkSignDialog";
 
 type Action = "register" | "open" | "merge" | "deposit" | "withdraw" | "refresh";
 export interface PanelWallet { address: string; label: string | null }
@@ -69,6 +75,8 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
   const [dialog, setDialog] = useState<"deposit" | "withdraw" | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  // The signature the running action waits for, and how to hand it back.
+  const [signing, setSigning] = useState<{ request: SignRequest; resolve: (xdr: string) => void; reject: (e: Error) => void } | null>(null);
   const [startedAt, setStartedAt] = useState(0);
   const [now, setNow] = useState(0);
   const wallet = useRef<ZkWallet | null>(null);
@@ -104,8 +112,17 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
   }, []);
 
   const nameOf = (address: string) => orgWallets?.find((w) => w.address === address)?.label || shortAddress(address);
-  const problem = (e: unknown, address: string): string => {
+  /* What a failed action says; nothing when the person cancelled a signature. The error classes
+     come from the modules that threw them, already loaded by then. */
+  const problem = async (e: unknown, address: string): Promise<string | null> => {
+    const [{ KeyMismatchError }, { KeyDerivationError }, { SignCancelledError }] = await Promise.all([
+      import("@/lib/zk/wallet"), import("@/lib/zk/derive-key"), import("@/lib/zk/xdr-signer"),
+    ]);
+    if (e instanceof SignCancelledError) return null;
+    if (e instanceof KeyMismatchError) return za.keyMismatch;
+    if (e instanceof KeyDerivationError) return za.keyFailed;
     if (e instanceof WrongAccountError) return fmt(za.wrongAccount, { wallet: nameOf(address) });
+    if (/tx_?too_?late|txTooLate/i.test(e instanceof Error ? e.message : "")) return z.sign.expired;
     const p = (e as { problem?: string })?.problem;
     if (p === "missing") return z.freighter.missing;
     if (p === "declined") return z.freighter.declined;
@@ -114,8 +131,15 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
   };
   const DONE: Partial<Record<Action, string>> = { register: za.createdOk, merge: za.mergeOk, deposit: za.depositOk, withdraw: za.withdrawOk };
 
-  /* Runs one action for `address`: Freighter connects (it must have that account selected), the
-     action runs, then the balances are read again. */
+  /* Each signature the wallet needs opens the signing dialog (closing the account's detail) and
+     waits for it; cancelling it ends the action quietly. */
+  const requestSignature = (request: SignRequest) => new Promise<string>((resolve, reject) => {
+    setDetail(null);
+    setSigning({ request, resolve, reject });
+  });
+
+  /* Runs one action for `address`: its key from the account's signature (or this tab's), the
+     action, then the balances read again. */
   const run = async (name: Action, address: string, action: (w: ZkWallet) => Promise<unknown>) => {
     if (busy) return;
     setBusy({ action: name, address });
@@ -126,13 +150,16 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
         wallet.current = null;
       }
       if (!wallet.current) {
-        const { ZkWallet } = await import("@/lib/zk/wallet");
-        const w = await ZkWallet.connect(config, setPhase);
-        if (w.address !== address) {
-          await w.destroy();
-          throw new WrongAccountError();
-        }
-        wallet.current = w;
+        const [{ ZkWallet }, { XdrSigner }] = await Promise.all([import("@/lib/zk/wallet"), import("@/lib/zk/xdr-signer")]);
+        // A key from a Freighter message signature is opened with Freighter, on that account.
+        const legacyMessage = async (message: string) => {
+          const { connectFreighter } = await import("@/lib/zk/freighter-signer");
+          const f = await connectFreighter(config.networkPassphrase);
+          if (f.publicKey !== address) throw new WrongAccountError();
+          return f.signMessage(message);
+        };
+        const signer = new XdrSigner(address, config.networkPassphrase, requestSignature, legacyMessage);
+        wallet.current = await ZkWallet.connect(config, signer, setPhase);
       }
       await action(wallet.current);
       setPhase("waiting");
@@ -142,7 +169,7 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
       setStatus((s) => ({ ...s, [address]: b.registered }));
       if (DONE[name]) showToast(DONE[name]!);
     } catch (e) {
-      setError(problem(e, address));
+      setError(await problem(e, address));
     } finally {
       setBusy(null);
       setPhase(null);
@@ -292,6 +319,16 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
           </Modal>
         );
       })()}
+
+      {signing && (
+        <ZkSignDialog
+          key={signing.request.xdr}
+          request={signing.request}
+          network={config.network}
+          onSigned={(xdr) => { signing.resolve(xdr); setSigning(null); }}
+          onCancel={async () => { const { SignCancelledError } = await import("@/lib/zk/xdr-signer"); signing.reject(new SignCancelledError()); setSigning(null); }}
+        />
+      )}
 
       {dialog && open && balances && (
         <AmountDialog
