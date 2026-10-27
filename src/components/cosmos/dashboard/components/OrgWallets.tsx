@@ -9,7 +9,8 @@
      its address and signs the proof message (src/lib/wallets/prove.ts). The API checks the proof
      and stores the wallet. Used in Settings' dialog, inline inside a payment form (never a dialog
      on top of a dialog) and in the private accounts table.
-   - OrgWalletsPanel: Settings' list, with connect / rename / remove for whoever may.
+   - OrgWalletsSection: Settings' list, the Payments table (a row opens its detail), with connect /
+     rename / remove for whoever may.
    - WalletSelect: the receiving address of a payment form, chosen from the organization's
      wallets on that network; "connect another" opens the form inline for whoever may. */
 import { useEffect, useMemo, useState } from "react";
@@ -21,8 +22,19 @@ import { IcCopy } from "@/components/cosmos/icons";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
-import { ListSkeleton, Sk } from "@/components/cosmos/dashboard/components/Skeleton";
-import { CHAINS, CHAIN_NAMES, networkName, type Chain } from "@/lib/chains";
+import { Sk, TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { RecordDetail } from "@/components/cosmos/dashboard/components/RecordDetail";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
+import { usePaged, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { DATE_RANGES, countBy, inRange, matchesQuery, type DateRange } from "@/lib/dashboard-filters";
+import { CHAINS, CHAIN_NAMES, explorerAccountUrl, networkName, tierOf, type Chain } from "@/lib/chains";
 import { networkLogoUrl } from "@/lib/logo-urls";
 import { shortAddress, WALLET_LABEL_MAX, WALLET_PROVIDERS, walletProofMessage, type OrgWallet, type WalletProvider } from "@/lib/org-wallets";
 import { detectWallets, evmWalletName, proveWallet } from "@/lib/wallets/prove";
@@ -282,42 +294,123 @@ function RenameWalletDialog({ orgId, wallet, onClose }: { orgId: string; wallet:
   );
 }
 
-export function OrgWalletsPanel({ orgId, perms }: { orgId: string; perms: { create: boolean; edit: boolean; remove: boolean } }) {
+const WALLET_DEFAULTS = { wq: "", wchain: "all", wdate: "any" };
+const WALLET_ALLOWED = { wchain: ["all", ...CHAINS], wdate: [...DATE_RANGES] };
+const WALLET_COLS = 5;
+
+/* Settings' list of the organization's wallets (product owner, 2026-10-27: every list is the
+   Payments table): its own filter bar with the "add" button, a row that opens its detail, the
+   address to copy and open in its explorer, and rename / remove for whoever may, a removal
+   confirmed first. `wallets` is the caller's useOrgWallets (its figures count them too). */
+export function OrgWalletsSection({ orgId, wallets, perms, network }: { orgId: string; wallets: OrgWallet[] | null | undefined; perms: { create: boolean; edit: boolean; remove: boolean }; network: string }) {
   const t = useT();
   const w = t.dash.wallets;
-  const wallets = useOrgWallets(orgId);
+  const fl = t.dash.filters;
+  const cm = t.dash.common;
+  const { filters, set, reset, active } = useListFilters(WALLET_DEFAULTS, WALLET_ALLOWED);
   const [connecting, setConnecting] = useState(false);
   const [renaming, setRenaming] = useState<OrgWallet | null>(null);
   const [removing, setRemoving] = useState<OrgWallet | null>(null);
+  const [open, setOpen] = useState<OrgWallet | null>(null);
 
   const copy = (address: string) => navigator.clipboard?.writeText(address).then(() => showToast(t.toasts.copied)).catch(() => {});
   const remove = (wallet: OrgWallet) =>
-    orgsApi.removeWallet(orgId, wallet.id).then(() => { announce(); showToast(w.removed); }).catch(() => showToast(w.actionError, "error"));
+    orgsApi.removeWallet(orgId, wallet.id).then(() => { announce(); setOpen(null); showToast(w.removed); }).catch(() => showToast(w.actionError, "error"));
+
+  const all = wallets || [];
+  const matches = (x: OrgWallet, skip: string | null) =>
+    (skip === "chain" || filters.wchain === "all" || x.chain === filters.wchain) &&
+    inRange(x.createdAt, filters.wdate as DateRange) &&
+    matchesQuery([x.label, x.address, CHAIN_NAMES[x.chain]], filters.wq);
+  const rows = all.filter((x) => matches(x, null));
+  const chainCounts = countBy(all.filter((x) => matches(x, "chain")), (x) => x.chain);
+  const pg = usePaged(rows, JSON.stringify(filters));
+  const nameOf = (x: OrgWallet) => x.label || CHAIN_NAMES[x.chain];
+  const explorer = (x: OrgWallet) => explorerAccountUrl(x.chain, tierOf(network), x.address);
+  // What proved it: the wallet that signed the proof message, or a signed XDR pasted back.
+  const provenWith = (x: OrgWallet) => (x.provider === "freighter" ? "Freighter" : x.provider === "phantom" ? "Phantom" : x.provider === "solflare" ? "Solflare" : x.provider === "evm" ? w.browserWallet : w.signedXdr);
+  const items = (x: OrgWallet) => {
+    const url = explorer(x);
+    return [
+      { key: "open", label: cm.details, icon: DI.docs, onClick: () => setOpen(x) },
+      ...(perms.edit ? [{ key: "rename", label: w.rename, icon: DI.edit, onClick: () => { setOpen(null); setRenaming(x); } }] : []),
+      { key: "copy", label: cm.copyAccount, icon: <IcCopy />, onClick: () => copy(x.address) },
+      { key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: url, external: true, disabled: !url },
+      ...(perms.remove ? [{ key: "delete", label: w.remove, icon: DI.trash, danger: true, onClick: () => setRemoving(x) }] : []),
+    ];
+  };
 
   return (
-    <div className="panel set-panel">
-      <div className="panel-head">
-        <h3>{w.title}</h3>
-        {perms.create && <button type="button" className="btn btn-dark btn-sm" onClick={() => setConnecting(true)}>{DI.plus} {w.connect}</button>}
+    <section className="hub-section set-section" aria-labelledby="wl-title">
+      <div className="hub-section-head"><h2 id="wl-title">{w.title}</h2></div>
+      <FilterBar
+        label={fl.label}
+        query={filters.wq} onQuery={(v) => set("wq", v)} placeholder={w.searchPlaceholder}
+        selects={[{ key: "wchain", label: fl.network, value: filters.wchain, onChange: (v) => set("wchain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] || 0 }))] }]}
+        date={filters.wdate} onDate={(v) => set("wdate", v)}
+        active={active} onReset={reset}
+        shown={rows.length} total={wallets ? all.length : undefined} loading={wallets === undefined}
+        actions={perms.create && <button type="button" className="btn btn-dark btn-sm" onClick={() => setConnecting(true)}>{DI.plus} {w.connect}</button>}
+      />
+      <div className="panel">
+        {wallets === undefined && <TableSkeleton label={w.title} cols={WALLET_COLS} />}
+        {wallets !== undefined && (
+          <div className="t-scroll" tabIndex={0}><table className="tx">
+            <thead><tr><th>{w.tableHead.wallet}</th><th>{w.tableHead.network}</th><th>{w.tableHead.address}</th><th>{w.tableHead.added}</th><th><span className="sr-only">{cm.actions}</span></th></tr></thead>
+            <tbody>
+              {wallets && pg.slice.map((x) => {
+                const url = explorer(x);
+                const name = nameOf(x);
+                return (
+                  <tr key={x.id} className="row-click" onClick={() => setOpen(x)}>
+                    <td className="tid">
+                      <span className="cell-mark">
+                        <NetworkMark chain={x.chain} size={24} />
+                        <RecordLink
+                          onOpen={() => setOpen(x)} copy={x.address} title={x.address}
+                          preview={() => <PreviewCard label={w.detail} title={x.address} wrap headline={<b>{name}</b>} fields={[[w.tableHead.network, CHAIN_NAMES[x.chain]], [w.provenWith, provenWith(x)], [w.tableHead.added, fmtDateTime(x.createdAt)]]} />}
+                        >{name}</RecordLink>
+                      </span>
+                    </td>
+                    <td className="cust">{CHAIN_NAMES[x.chain]}</td>
+                    <td className="cust" onClick={(e) => e.stopPropagation()}><AddressLink chain={x.chain} network={network} address={x.address} label={w.tableHead.address} /></td>
+                    <td className="cust">{fmtDateTime(x.createdAt)}</td>
+                    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" className="icon-mini" title={cm.details} aria-label={`${cm.details}: ${name}`} onClick={() => setOpen(x)}>{DI.docs}</button>
+                      {perms.edit && <button type="button" className="icon-mini" title={w.rename} aria-label={`${w.rename}: ${name}`} onClick={() => setRenaming(x)}>{DI.edit}</button>}
+                      {url
+                        ? <a className="icon-mini" href={url} target="_blank" rel="noopener noreferrer" title={t.dash.balances.explorer} aria-label={`${t.dash.balances.explorer}: ${name}`}>{DI.network}</a>
+                        : <button type="button" className="icon-mini" disabled title={t.dash.balances.explorer} aria-label={`${t.dash.balances.explorer}: ${name}`}>{DI.network}</button>}
+                      {perms.remove && <button type="button" className="icon-mini danger" title={w.remove} aria-label={`${w.remove}: ${name}`} onClick={() => setRemoving(x)}>{DI.trash}</button>}
+                      <RowMenu label={fmt(cm.rowActions, { name })} items={items(x)} />
+                    </td>
+                  </tr>
+                );
+              })}
+              <FillRows n={pg.size - (wallets ? pg.count : 0)} cols={WALLET_COLS} empty={wallets === null ? w.loadError : null} />
+            </tbody>
+          </table></div>
+        )}
+        {wallets !== undefined && <Pagination {...pg} />}
       </div>
-      <div className="set-body">
-        {wallets === undefined && <ListSkeleton label={w.title} rows={2} pairs={1} />}
-        {wallets === null && <div className="empty" role="alert">{w.loadError}</div>}
-        {wallets && !wallets.length && <div className="empty" style={{ padding: "18px 8px" }}>{perms.create ? w.empty : w.emptyAsk}</div>}
-        {wallets && wallets.map((x) => (
-          <div className="set-member wl-row arrive" key={x.id}>
-            <NetworkMark chain={x.chain} />
-            <div>
-              <b>{x.label || CHAIN_NAMES[x.chain]}</b>
-              <span title={x.address}><span className="sr-only">{CHAIN_NAMES[x.chain]} </span>{shortAddress(x.address)}</span>
-            </div>
-            <span className="wl-net">{CHAIN_NAMES[x.chain]}</span>
-            <button type="button" className="icon-mini" title={t.ui.copyToClipboard} aria-label={t.ui.copyToClipboard} onClick={() => copy(x.address)}><IcCopy /></button>
-            {perms.edit && <button type="button" className="icon-mini" title={w.rename} aria-label={w.rename} onClick={() => setRenaming(x)}>{DI.edit}</button>}
-            {perms.remove && <button type="button" className="icon-mini danger" title={w.remove} aria-label={w.remove} onClick={() => setRemoving(x)}>{DI.trash}</button>}
-          </div>
-        ))}
-      </div>
+      {open && (
+        <RecordDetail
+          eyebrow={w.detail} title={nameOf(open)} onClose={() => setOpen(null)}
+          fields={[
+            [w.label, open.label],
+            [w.tableHead.network, <span key="n" className="cell-mark"><NetworkMark chain={open.chain} size={18} />{CHAIN_NAMES[open.chain]}</span>],
+            [w.tableHead.address, <AddressLink key="a" chain={open.chain} network={network} address={open.address} label={w.tableHead.address} />],
+            [w.provenWith, provenWith(open)],
+            [w.tableHead.added, fmtDateTime(open.createdAt)],
+          ]}
+          actions={[
+            ...(perms.edit ? [{ key: "rename", label: w.rename, icon: DI.edit, kind: "dark" as const, onClick: () => { setOpen(null); setRenaming(open); } }] : []),
+            { key: "copy", label: cm.copyAccount, icon: <IcCopy />, onClick: () => copy(open.address) },
+            ...(explorer(open) ? [{ key: "explorer", label: t.dash.balances.explorer, icon: DI.network, href: explorer(open) }] : []),
+            ...(perms.remove ? [{ key: "delete", label: w.remove, icon: DI.trash, kind: "danger" as const, onClick: () => setRemoving(open) }] : []),
+          ]}
+        />
+      )}
       {connecting && <ConnectWalletDialog orgId={orgId} onClose={() => setConnecting(false)} />}
       {renaming && <RenameWalletDialog orgId={orgId} wallet={renaming} onClose={() => setRenaming(null)} />}
       {removing && (
@@ -325,12 +418,12 @@ export function OrgWalletsPanel({ orgId, perms }: { orgId: string; perms: { crea
           title={w.removeTitle}
           body={fmt(w.removeBody, { name: removing.label || shortAddress(removing.address) })}
           confirmLabel={w.removeConfirm}
-          cancelLabel={t.dash.common.cancel}
+          cancelLabel={cm.cancel}
           onConfirm={() => remove(removing)}
           onClose={() => setRemoving(null)}
         />
       )}
-    </div>
+    </section>
   );
 }
 

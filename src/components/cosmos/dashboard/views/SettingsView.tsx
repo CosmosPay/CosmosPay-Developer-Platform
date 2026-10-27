@@ -1,13 +1,27 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
 import { Modal, ConfirmModal, IcCheck, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { organizations as orgsApi } from "@/lib/api-client";
 import { planLimits } from "@/lib/plans.ts";
 import { ORG_RESOURCES, ORG_ACTIONS, permKey } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
+import { IcCopy } from "@/components/cosmos/icons";
 import { fmtDate } from "@/components/cosmos/dashboard/helpers";
+import { usePaged, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { OrgWalletsPanel } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { ViewFigures } from "@/components/cosmos/dashboard/components/ActivityPanel";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { RecordDetail } from "@/components/cosmos/dashboard/components/RecordDetail";
+import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { Pill } from "@/components/cosmos/dashboard/components/Pill";
+import { StatusIcon } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { OrgWalletsSection, useOrgWallets } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 
@@ -131,76 +145,180 @@ function InviteMemberModal({ org, onClose, onInvited }) {
   );
 }
 
-/* Organization members: invite by email (role + granular permissions), edit a member's
-   role/permissions, and remove (with confirmation). Members join via the emailed magic
-   link, never added directly. Seats are per organization (the owner's plan). */
-function OrgMembersPanel({ org, orgLimits }) {
+/* The organization's people: its members and, for whoever manages it, its pending invitations,
+   read together. */
+function useTeam(org) {
+  const canManage = org.role === "owner" || org.role === "admin";
+  const [team, setTeam] = useState({ members: [], invites: [], state: "loading" }); // loading | ready | failed
+  const load = useCallback(() => {
+    if (!org.id) { setTeam({ members: [], invites: [], state: "ready" }); return; }
+    Promise.allSettled([orgsApi.members(org.id), canManage ? orgsApi.invitations(org.id) : Promise.resolve([])])
+      .then(([m, i]) => setTeam({
+        members: m.status === "fulfilled" && Array.isArray(m.value) ? m.value : [],
+        invites: i.status === "fulfilled" && Array.isArray(i.value) ? i.value : [],
+        state: m.status === "fulfilled" ? "ready" : "failed",
+      }));
+  }, [org.id, canManage]);
+  useEffect(() => { setTeam({ members: [], invites: [], state: "loading" }); load(); }, [load]);
+  return { ...team, reload: load };
+}
+
+const TEAM_DEFAULTS = { tq: "", tstatus: "all", trole: "all" };
+const TEAM_ALLOWED = { tstatus: ["all", "active", "invited"], trole: ["all", "owner", "admin", "member"] };
+const TEAM_COLS = 6;
+
+/* The team as every list (product owner, 2026-10-27: every list is the Payments table): members
+   and pending invitations in one table, filtered by status and role, a row opening its detail,
+   and for whoever manages the organization: invite (people join through the emailed magic link,
+   never added directly), edit a member's role and permissions, remove a member or revoke an
+   invitation, each confirmed first. The owner is neither edited nor removed (drawn disabled). */
+function TeamSection({ org, team, meId }) {
   const t = useT();
   const og = t.dash.orgs;
   const sv = t.dash.settings;
+  const fl = t.dash.filters;
+  const cm = t.dash.common;
   const canManage = org.role === "owner" || org.role === "admin";
-  const [members, setMembers] = useState([]);
-  const [invites, setInvites] = useState([]);
+  const { filters, set, reset, active } = useListFilters(TEAM_DEFAULTS, TEAM_ALLOWED);
   const [inviting, setInviting] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [open, setOpen] = useState(null);
   // The member to remove or the invitation to revoke, both confirmed first.
   const [confirm, setConfirm] = useState(null);
-  const [membersState, setMembersState] = useState("loading"); // loading | ready | failed
-  const loadMembers = () => {
-    if (!org.id) return;
-    orgsApi.members(org.id)
-      .then((d) => { setMembers(Array.isArray(d) ? d : []); setMembersState("ready"); })
-      .catch(() => setMembersState("failed"));
-  };
-  const loadInvites = () => { if (org.id && canManage) orgsApi.invitations(org.id).then((d) => setInvites(Array.isArray(d) ? d : [])).catch(() => {}); };
-  useEffect(() => { loadMembers(); loadInvites(); }, [org.id]);
-  const remove = (m) => orgsApi.removeMember(org.id, m.userId).then(loadMembers).catch(() => showToast(og.memberRemoveError, "error"));
-  const revoke = (id) => orgsApi.revokeInvite(org.id, id).then(loadInvites).catch(() => showToast(og.revokeError, "error"));
-  const seatLimit = orgLimits ? orgLimits.maxSeats : null;
+
+  const people = [
+    ...team.members.map((m) => ({ key: `m:${m.userId}`, kind: "member", name: m.name || m.email || "?", email: m.email, role: m.role, permissions: m.permissions || [], since: m.joinedAt, me: !!meId && m.userId === meId, member: m })),
+    ...team.invites.map((iv) => ({ key: `i:${iv.id}`, kind: "invite", name: iv.email, email: iv.email, role: iv.role, permissions: iv.permissions || [], since: iv.createdAt, expiresAt: iv.expiresAt, invite: iv })),
+  ];
+  const statusOf = (x) => (x.kind === "member" ? "active" : "invited");
+  const matches = (x, skip) =>
+    (skip === "status" || filters.tstatus === "all" || statusOf(x) === filters.tstatus) &&
+    (skip === "role" || filters.trole === "all" || x.role === filters.trole) &&
+    matchesQuery([x.name, x.email], filters.tq);
+  const rows = people.filter((x) => matches(x, null));
+  const statusCounts = countBy(people.filter((x) => matches(x, "status")), statusOf);
+  const roleCounts = countBy(people.filter((x) => matches(x, "role")), (x) => x.role);
+  const pg = usePaged(rows, JSON.stringify(filters));
+  const loading = team.state === "loading";
+  const failed = team.state === "failed";
+
+  const roleName = (r) => (og.roles && og.roles[r]) || r;
+  const nameOf = (x) => (x.me ? `${x.name} (${og.you})` : x.name);
+  const isManager = (x) => x.role === "owner" || x.role === "admin";
+  const permsLabel = (x) => (isManager(x) ? og.permsAll : !x.permissions.length ? og.permsNone : x.permissions.length === 1 ? og.permsOne : fmt(og.permsN, { n: x.permissions.length }));
+  // Each resource with the actions granted on it, as the permission picker reads them.
+  const permsList = (x) => (isManager(x)
+    ? (x.role === "owner" ? og.permsAll : og.adminAllNote)
+    : x.permissions.length
+      ? <span className="team-perms">{ORG_RESOURCES.filter((r) => ORG_ACTIONS.some((a) => x.permissions.includes(permKey(r, a)))).map((r) => <span key={r}>{og.resources[r] || r}: {ORG_ACTIONS.filter((a) => x.permissions.includes(permKey(r, a))).map((a) => og.actions[a]).join(", ")}</span>)}</span>
+      : og.permsNone);
+  const statusPill = (x) => (x.kind === "member" ? <Pill st="ok" label={og.memberStatus.active} /> : <Pill st="ref" tone="wait" label={og.memberStatus.invited} />);
+  // What a row may do: edit only a member who isn't the owner, remove anyone but the owner.
+  const editHint = (x) => (x.kind === "invite" ? og.inviteFixed : x.role === "owner" ? og.ownerFixed : null);
+  const removeHint = (x) => (x.role === "owner" ? og.ownerFixed : null);
+  const removeLabel = (x) => (x.kind === "invite" ? og.revokeInvite : og.remove);
+  const copy = (v) => navigator.clipboard?.writeText(v).then(() => showToast(t.toasts.copied)).catch(() => {});
+  const edit = (x) => { setOpen(null); setEditing(x.member); };
+  const askRemove = (x) => setConfirm(x.kind === "invite" ? { invite: x.invite } : { member: x.member });
+  const remove = (m) => orgsApi.removeMember(org.id, m.userId).then(() => { setOpen(null); team.reload(); }).catch(() => showToast(og.memberRemoveError, "error"));
+  const revoke = (id) => orgsApi.revokeInvite(org.id, id).then(() => { setOpen(null); team.reload(); }).catch(() => showToast(og.revokeError, "error"));
+  const items = (x) => [
+    { key: "open", label: cm.details, icon: DI.docs, onClick: () => setOpen(x) },
+    ...(canManage ? [{ key: "edit", label: og.editMember, icon: DI.edit, disabled: !!editHint(x), hint: editHint(x), onClick: () => edit(x) }] : []),
+    { key: "email", label: og.copyEmail, icon: <IcCopy />, disabled: !x.email, onClick: () => copy(x.email) },
+    ...(canManage ? [{ key: "delete", label: removeLabel(x), icon: DI.trash, danger: true, disabled: !!removeHint(x), hint: removeHint(x), onClick: () => askRemove(x) }] : []),
+  ];
+  const seatLimit = planLimits(org.plan).maxSeats;
+
   return (
-    <div className="panel set-panel">
-      <div className="panel-head">
-        <h3>{sv.team.title}{canManage && <span className="seat-usage">{members.length} / {seatLimit == null ? "∞" : seatLimit}</span>}</h3>
-        {canManage && <button type="button" className="btn btn-dark btn-sm" onClick={() => setInviting(true)}>{DI.plus} {og.inviteMember}</button>}
+    <section className="hub-section set-section" aria-labelledby="team-title">
+      <div className="hub-section-head">
+        <h2 id="team-title">{sv.team.title}{canManage && <span className="seat-usage">{team.members.length} / {seatLimit == null ? "∞" : seatLimit}</span>}</h2>
       </div>
-      <div className="set-body">
-        {membersState === "failed" && <div className="empty" style={{ padding: "18px 8px" }}>{og.loadError}</div>}
-        {membersState === "ready" && !members.length && <div className="empty" style={{ padding: "18px 8px" }}>{og.empty}</div>}
-        {members.map((m) => (
-          <div className="set-member" key={m.userId}>
-            <span className="av-sm">{(m.name || m.email || "?").slice(0, 2).toUpperCase()}</span>
-            <div><b>{m.name || m.email}</b><span>{m.email}</span></div>
-            <span className="kg pub" style={{ marginLeft: "auto" }}>{(og.roles && og.roles[m.role]) || m.role}</span>
-            {canManage && m.role !== "owner" && (
-              <>
-                <button className="icon-mini" title={og.editMember} aria-label={og.editMember} style={{ marginLeft: 8 }} onClick={() => setEditing(m)}>{DI.edit}</button>
-                <button className="icon-mini danger" title={og.remove} aria-label={og.remove} onClick={() => setConfirm({ member: m })}>{DI.trash}</button>
-              </>
-            )}
-          </div>
-        ))}
-        {canManage && invites.length > 0 && (
-          <>
-            <div className="set-subhead">{og.pending}</div>
-            {invites.map((iv) => (
-              <div className="set-member invite" key={iv.id}>
-                <span className="av-sm pending">{(iv.email || "?").slice(0, 2).toUpperCase()}</span>
-                <div><b>{iv.email}</b><span>{fmt(og.expires, { date: fmtDate(iv.expiresAt) })}</span></div>
-                <span className="kg" style={{ marginLeft: "auto" }}>{(og.roles && og.roles[iv.role]) || iv.role}</span>
-                <button className="icon-mini danger" title={og.revokeInvite} aria-label={og.revokeInvite} style={{ marginLeft: 8 }} onClick={() => setConfirm({ invite: iv })}>{DI.trash}</button>
-              </div>
-            ))}
-          </>
+      <FilterBar
+        label={fl.label}
+        query={filters.tq} onQuery={(v) => set("tq", v)} placeholder={og.searchPlaceholder}
+        status={canManage ? {
+          label: fl.status, value: filters.tstatus, onChange: (v) => set("tstatus", v),
+          options: [
+            { key: "all", label: fl.allStatuses, count: people.filter((x) => matches(x, "status")).length },
+            { key: "active", label: og.memberStatus.active, count: statusCounts.active || 0, icon: <StatusIcon tone="ok" size={16} /> },
+            { key: "invited", label: og.memberStatus.invited, count: statusCounts.invited || 0, icon: <StatusIcon tone="wait" size={16} /> },
+          ],
+        } : null}
+        selects={[{ key: "trole", label: og.roleLabel, value: filters.trole, onChange: (v) => set("trole", v), options: [{ key: "all", label: og.allRoles }, ...["owner", "admin", "member"].map((r) => ({ key: r, label: roleName(r), count: roleCounts[r] || 0 }))] }]}
+        active={active} onReset={reset}
+        shown={rows.length} total={loading ? undefined : people.length} loading={loading}
+        actions={canManage && <button type="button" className="btn btn-dark btn-sm" onClick={() => setInviting(true)}>{DI.plus} {og.inviteMember}</button>}
+      />
+      <div className="panel">
+        {loading && <TableSkeleton label={sv.team.title} cols={TEAM_COLS} />}
+        {!loading && (
+          <div className="t-scroll" tabIndex={0}><table className="tx">
+            <thead><tr><th>{og.tableHead.person}</th><th>{og.tableHead.role}</th><th>{og.tableHead.permissions}</th><th>{og.tableHead.status}</th><th>{og.tableHead.since}</th><th><span className="sr-only">{cm.actions}</span></th></tr></thead>
+            <tbody>
+              {!failed && pg.slice.map((x) => {
+                const name = nameOf(x);
+                return (
+                  <tr key={x.key} className="row-click" onClick={() => setOpen(x)}>
+                    <td className="tid">
+                      <div className="cust-cell">
+                        <span className={`av-sm${x.kind === "invite" ? " pending" : ""}`} aria-hidden="true">{(x.name || "?").slice(0, 2).toUpperCase()}</span>
+                        <span>
+                          <RecordLink
+                            onOpen={() => setOpen(x)} copy={x.email || undefined} title={x.email || x.name}
+                            preview={() => <PreviewCard label={x.kind === "member" ? og.memberDetail : og.inviteDetail} title={x.email || x.name} headline={<b>{name}</b>} fields={[[og.tableHead.role, roleName(x.role)], [og.tableHead.permissions, permsLabel(x)], [og.tableHead.status, x.kind === "member" ? og.memberStatus.active : fmt(og.expires, { date: fmtDate(x.expiresAt) })]]} />}
+                          >{name}</RecordLink>
+                          {x.kind === "member" && x.email && x.email !== x.name && <small className="cust-wallet-net">{x.email}</small>}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="cust">{roleName(x.role)}</td>
+                    <td className="cust">{permsLabel(x)}</td>
+                    <td title={x.kind === "invite" ? fmt(og.expires, { date: fmtDate(x.expiresAt) }) : undefined}>{statusPill(x)}</td>
+                    <td className="cust">{x.since ? fmtDate(x.since) : "-"}</td>
+                    <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" className="icon-mini" title={cm.details} aria-label={`${cm.details}: ${name}`} onClick={() => setOpen(x)}>{DI.docs}</button>
+                      {canManage && <button type="button" className="icon-mini" title={editHint(x) || og.editMember} aria-label={`${og.editMember}: ${name}`} disabled={!!editHint(x)} onClick={() => edit(x)}>{DI.edit}</button>}
+                      {canManage && <button type="button" className="icon-mini danger" title={removeHint(x) || removeLabel(x)} aria-label={`${removeLabel(x)}: ${name}`} disabled={!!removeHint(x)} onClick={() => askRemove(x)}>{DI.trash}</button>}
+                      <RowMenu label={fmt(cm.rowActions, { name })} items={items(x)} />
+                    </td>
+                  </tr>
+                );
+              })}
+              <FillRows n={pg.size - (failed ? 0 : pg.count)} cols={TEAM_COLS} empty={failed ? og.loadError : null} />
+            </tbody>
+          </table></div>
         )}
+        {!loading && <Pagination {...pg} />}
       </div>
-      {inviting && <InviteMemberModal org={org} onClose={() => setInviting(false)} onInvited={loadInvites} />}
-      {editing && <MemberEditModal org={org} member={editing} onClose={() => setEditing(null)} onSaved={loadMembers} />}
+      {open && (
+        <RecordDetail
+          eyebrow={open.kind === "member" ? og.memberDetail : og.inviteDetail} title={nameOf(open)} onClose={() => setOpen(null)}
+          fields={[
+            [t.dash.settings.teamModal.email, open.email],
+            [og.tableHead.role, roleName(open.role)],
+            [og.tableHead.permissions, permsList(open)],
+            [og.tableHead.status, statusPill(open)],
+            ...(open.kind === "member"
+              ? [[og.tableHead.since, open.since ? fmtDate(open.since) : null]]
+              : [[og.sentOn, fmtDate(open.since)], [og.expiresOn, fmtDate(open.expiresAt)]]),
+          ]}
+          actions={[
+            ...(canManage && !editHint(open) ? [{ key: "edit", label: og.editMember, icon: DI.edit, kind: "dark" as const, onClick: () => edit(open) }] : []),
+            ...(open.email ? [{ key: "email", label: og.copyEmail, icon: <IcCopy />, onClick: () => copy(open.email) }] : []),
+            ...(canManage && !removeHint(open) ? [{ key: "delete", label: removeLabel(open), icon: DI.trash, kind: "danger" as const, onClick: () => askRemove(open) }] : []),
+          ]}
+        />
+      )}
+      {inviting && <InviteMemberModal org={org} onClose={() => setInviting(false)} onInvited={team.reload} />}
+      {editing && <MemberEditModal org={org} member={editing} onClose={() => setEditing(null)} onSaved={team.reload} />}
       {confirm && confirm.member && (
         <ConfirmModal
           title={og.removeMemberTitle}
           body={fmt(og.removeMemberBody, { name: confirm.member.name || confirm.member.email, org: org.name })}
           confirmLabel={og.removeMemberConfirm}
-          cancelLabel={t.dash.common.cancel}
+          cancelLabel={cm.cancel}
           onConfirm={() => remove(confirm.member)}
           onClose={() => setConfirm(null)}
         />
@@ -210,40 +328,59 @@ function OrgMembersPanel({ org, orgLimits }) {
           title={og.revokeInviteTitle}
           body={fmt(og.revokeInviteBody, { email: confirm.invite.email, org: org.name })}
           confirmLabel={og.revokeInvite}
-          cancelLabel={t.dash.common.cancel}
+          cancelLabel={cm.cancel}
           onConfirm={() => revoke(confirm.invite.id).then(() => setConfirm(null))}
           onClose={() => setConfirm(null)}
         />
       )}
-    </div>
+    </section>
   );
 }
 
-export function SettingsView({ org, orgCount, limits, keyCount, walletPerms = { create: false, edit: false, remove: false }, onRenameOrg, onDeleteOrg }) {
+/* Settings as every view (product owner, 2026-10-27): its figures first (members and seats,
+   pending invitations, wallets, API keys), the organization's details and plan, then its lists:
+   the team and the wallets, each the Payments table with its own filter bar. */
+export function SettingsView({ org, orgCount, limits, keyCount, env = "dev", meId = null, walletPerms = { create: false, edit: false, remove: false }, onRenameOrg, onDeleteOrg }) {
   const t = useT();
   const sv = t.dash.settings;
+  const sf = sv.figures;
   const og = t.dash.orgs;
   // An organization's limits come from the OWNER's plan (the org's subscription).
   const orgLimits = planLimits(org.plan);
   const fmtLimit = (n) => (n == null ? "∞" : n);
   const canManageOrg = org.role === "owner" || org.role === "admin";
   const isOrgOwner = org.role === "owner";
+  const team = useTeam(org);
+  const wallets = useOrgWallets(org.id);
+  const networks = wallets ? new Set(wallets.map((x) => x.chain)).size : 0;
+  const copy = (v) => navigator.clipboard?.writeText(v).then(() => showToast(t.toasts.copied)).catch(() => {});
   return (
     <>
       <ViewHead title={sv.title} />
+      <ViewFigures
+        label={sv.title} loading={team.state === "loading" || (!!org.id && wallets === undefined)} failed={team.state === "failed"}
+        items={[
+          { key: "members", label: sf.members, value: team.members.length, sub: orgLimits.maxSeats == null ? sf.seatsFree : fmt(sf.seats, { n: team.members.length, max: orgLimits.maxSeats }) },
+          ...(canManageOrg ? [{ key: "invites", label: sf.invites, value: team.invites.length, sub: sf.invitesSub }] : []),
+          { key: "wallets", label: sf.wallets, value: wallets ? wallets.length : "-", sub: networks ? (networks === 1 ? sf.networksOne : fmt(sf.networksN, { n: networks })) : undefined },
+          { key: "keys", label: sf.apiKeys, value: keyCount, sub: orgLimits.maxApiKeys == null ? sf.keysFree : fmt(sf.keysLimit, { max: orgLimits.maxApiKeys }) },
+        ]}
+      />
       <div className="set-grid">
         <div className="panel set-panel"><div className="panel-head"><h3>{sv.org.title}</h3>{canManageOrg && org.id && <button type="button" className="btn btn-outline-w btn-sm" onClick={() => onRenameOrg(org)}>{og.rename}</button>}</div><div className="set-body">
           <div className="set-row"><div className="set-l">{sv.org.name}</div><div className="set-v">{org.name}</div></div>
-          <div className="set-row"><div className="set-l">{sv.org.id}</div><div className="set-v tid">{org.id || "-"}</div></div>
+          <div className="set-row"><div className="set-l">{sv.org.id}</div><div className="set-v tid">{org.id || "-"}{org.id && <button type="button" className="icon-mini" title={t.dash.common.copyId} aria-label={t.dash.common.copyId} style={{ marginLeft: 6 }} onClick={() => copy(org.id)}><IcCopy /></button>}</div></div>
           <div className="set-row"><div className="set-l">{sv.org.created}</div><div className="set-v">{org.createdAt ? fmtDate(org.createdAt) : "-"}</div></div>
-          <div className="set-row"><div className="set-l">{sv.plan.current}</div><div className="set-v"><span className="kg pub">{t.dash.planNames[org.plan] || org.plan}</span></div></div>
-          <div className="set-row"><div className="set-l">{sv.plan.seats}</div><div className="set-v">{fmtLimit(orgLimits.maxSeats)}</div></div>
-          <div className="set-row"><div className="set-l">{sv.plan.apiKeys}</div><div className="set-v">{keyCount} / {fmtLimit(orgLimits.maxApiKeys)}</div></div>
           {isOrgOwner && org.id && orgCount > 1 && <button className="btn btn-soft danger-soft" style={{ marginTop: 8 }} onClick={() => onDeleteOrg(org)}>{DI.trash} {og.delete}</button>}
         </div></div>
-        <OrgMembersPanel org={org} orgLimits={orgLimits} />
-        {org.id && <OrgWalletsPanel orgId={org.id} perms={walletPerms} />}
+        <div className="panel set-panel"><div className="panel-head"><h3>{sv.plan.title}</h3></div><div className="set-body">
+          <div className="set-row"><div className="set-l">{sv.plan.current}</div><div className="set-v">{t.dash.planNames[org.plan] || org.plan}</div></div>
+          <div className="set-row"><div className="set-l">{sv.plan.seats}</div><div className="set-v">{fmtLimit(orgLimits.maxSeats)}</div></div>
+          <div className="set-row"><div className="set-l">{sv.plan.apiKeys}</div><div className="set-v">{keyCount} / {fmtLimit(orgLimits.maxApiKeys)}</div></div>
+        </div></div>
       </div>
+      <TeamSection org={org} team={team} meId={meId} />
+      {org.id && <OrgWalletsSection orgId={org.id} wallets={wallets} perms={walletPerms} network={env === "prod" ? "public" : "testnet"} />}
     </>
   );
 }

@@ -21,6 +21,7 @@ import { FreighterSign } from "@/components/cosmos/dashboard/components/Freighte
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
+import { RecordDetail } from "@/components/cosmos/dashboard/components/RecordDetail";
 import { StatusIcon, paymentTone, pillTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
@@ -242,19 +243,14 @@ function PoolDetail({ title, eyebrow, id, fields, action, onClose }) {
   const t = useT();
   const [, copy] = useCopy();
   return (
-    <Modal onClose={onClose} label={title}>
-      <div className="modal-body">
-        <div className="modal-eyebrow">{eyebrow}</div>
-        <h3>{title}</h3>
-        <div className="paylink-fields" style={{ marginBottom: 18 }}>
-          {fields.filter(([, v]) => v !== null && v !== undefined && v !== "").map(([k, v]) => (<div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{String(v)}</span></div>))}
-        </div>
-        <div className="paylink-actions">
-          {action && <button type="button" className="btn btn-dark btn-sm" onClick={() => { onClose(); action.onClick(); }}>{action.icon} {action.label}</button>}
-          <button type="button" className="btn btn-soft btn-sm" onClick={() => copy(id, t.toasts.copied)}><IcCopy /> {t.dash.common.copyId}</button>
-        </div>
-      </div>
-    </Modal>
+    <RecordDetail
+      eyebrow={eyebrow} title={title} onClose={onClose}
+      fields={fields.map(([k, v]) => [k, v === null || v === undefined ? v : String(v)])}
+      actions={[
+        ...(action ? [{ ...action, kind: "dark" as const, onClick: () => { onClose(); action.onClick(); } }] : []),
+        { key: "copy", label: t.dash.common.copyId, icon: <IcCopy />, onClick: () => copy(id, t.toasts.copied) },
+      ]}
+    />
   );
 }
 

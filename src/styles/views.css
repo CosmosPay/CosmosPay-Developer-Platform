@@ -32,7 +32,6 @@
 .member-add { display: flex; gap: 8px; margin-bottom: 10px; }
 .member-add .field { flex: 1; }
 .member-add .btn { flex: 0 0 auto; }
-.set-member .icon-mini { width: 28px; height: 28px; flex: 0 0 auto; }
 .btn-soft.danger-soft { color: #D64545; }
 .btn-soft.danger-soft:hover { border-color: #D64545; }
 .btn-soft.danger-soft svg { width: 16px; height: 16px; }
@@ -355,10 +354,6 @@ button.bal-card:not(.total):hover { border-color: var(--line-2); }
 .acct-id-meta b { font-size: 16px; font-weight: 700; color: var(--ink); }
 .acct-id-meta span { font-size: 13.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; }
 .set-note { font-size: 13px; color: var(--ink-3); line-height: 1.5; padding-top: 4px; }
-.set-member { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.set-member:last-child { border-bottom: 0; }
-.set-member b { font-size: 14px; display: block; }
-.set-member span { font-size: 12.5px; color: var(--ink-3); }
 .seg2 { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
 .seg2 button { border: 0; background: transparent; font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink-2); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
 .seg2 button.on { background: var(--surface); color: var(--ink); box-shadow: none; }
@@ -844,9 +839,8 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .inbox-list::-webkit-scrollbar-thumb:hover, .notif-menu::-webkit-scrollbar-thumb:hover, .nav-user-menu::-webkit-scrollbar-thumb:hover, .side-nav::-webkit-scrollbar-thumb:hover {
   background: var(--ink-3); background-clip: padding-box; }
 
-/* ---------------- org invitations (settings panel) ---------------- */
-.set-subhead { font-size: .75rem; letter-spacing: 0; color: var(--ink-3); font-weight: 500; margin: 18px 0 8px; }
-.set-member.invite .av-sm.pending { background: var(--surface-2); color: var(--ink-3); border: 1px dashed var(--line-2); }
+/* ---------------- org invitations (Settings' team table) ---------------- */
+.av-sm.pending { background: var(--surface-2); color: var(--ink-3); border: 1px dashed var(--line-2); }
 
 /* ---------------- invitation magic-link landing (/invite/:token) ---------------- */
 .invite-wrap { min-height: 100vh; display: grid; place-items: center; padding: 32px; }

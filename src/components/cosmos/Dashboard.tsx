@@ -434,7 +434,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : overview;
-      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} walletPerms={{ create: can("wallets:create"), edit: can("wallets:edit"), remove: can("wallets:delete") }} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
+      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} env={live ? "prod" : "dev"} meId={user?.id} walletPerms={{ create: can("wallets:create"), edit: can("wallets:edit"), remove: can("wallets:delete") }} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
       case "account": return <AccountView user={user} theme={theme} setTheme={setTheme} planId={plan} limits={limits} orgCount={orgs.length} onChangePlan={canChangePlan ? () => setModal("plan") : null} plansEnabled={feat.plansEnabled} onSaveProfile={saveProfile} />;
       default: return overview;
     }

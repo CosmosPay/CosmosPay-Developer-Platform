@@ -1055,6 +1055,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .zka { margin-top: 40px; }
 /* Webhooks: an endpoint's deliveries, the second list of the view, named by its URL. */
 .inst .wh-deliveries { margin-top: 40px; }
+/* Settings: the team and the wallets, its lists under the organization's details. */
+.inst .set-section { margin-top: 40px; }
+.team-perms { display: flex; flex-direction: column; gap: 2px; }
 /* Client activity: the most frequent errors, a second list under the feed. */
 .inst .act-top-errors { margin-top: 40px; }
 /* Balances: the recent settlements, a second list under the balance cards. */
@@ -1078,12 +1081,10 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 [data-theme="dark"] .inst .field-err { color: #FF9B9B; }
 .zka .zka-note.field-err { margin: 0 0 16px; }
 .zka > .zka-note.field-err:last-child { margin: 16px 0 0; }
-/* The organization's wallets (components/OrgWallets.tsx): Settings' rows, the connect form, and
+/* The organization's wallets (components/OrgWallets.tsx): their network marks, the connect form, and
    a payment form's receiving wallet when the organization has none on that network yet. */
 .wl-mark { flex: 0 0 auto; border-radius: 50%; object-fit: cover; }
 .wl-mono { display: inline-grid; place-items: center; background: var(--surface-2, var(--line)); color: var(--ink); font-weight: 700; font-size: 13px; }
-.wl-row .wl-net { margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
-.wl-row .wl-net + .icon-mini { margin-left: 8px; }
 .wl-connect { display: flex; flex-direction: column; gap: 14px; }
 .wl-connect .modal-actions { margin-top: 2px; }
 .wl-inline { padding: 16px; border: 1px solid var(--line); border-radius: var(--r-pop); }

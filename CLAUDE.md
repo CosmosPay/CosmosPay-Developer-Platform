@@ -265,12 +265,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     API keys, logs, client activity, users) opens with `ViewFigures` (same module): the activity
     panel's figure strip without its chart, its numbers counted from the list, a skeleton while it
     loads and a dash when it failed. **A second list on a page** (private accounts, a webhook's
-    deliveries, the most frequent errors, recent settlements) is a `hub-section` with its `h2`
+    deliveries, the most frequent errors, recent settlements, Settings' team and wallets) is a
+    `hub-section` with its `h2`
     heading, then its own `FilterBar` (its own URL keys when the page's first list already uses
     `q`/`status`/`date`, e.g. `accq`) and its panel, as the overview's transactions; never a title
     inside the panel.
   - **The view-by-view review (product owner, 2026-10-27): every list is the Payments table.** Rows
-    open their detail (a record view or a dialog that also offers the row's management actions); the
+    open their detail (a record view or a dialog that also offers the row's management actions;
+    `components/RecordDetail.tsx` is that dialog: eyebrow, name, fields, actions); the
     first cell is the record's `RecordLink` (link, copy, hover preview); a created/added date column;
     the actions cell (`row-actions`) holds the details icon, the row's main action as an icon (edit,
     create the private account, continue a pending swap or deposit, redeliver, sell), the explorer
@@ -278,7 +280,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     `FillRows` with the load error said as such, `Pagination`, a `TableSkeleton` with the table's
     columns. **Every delete (and a secret rotation, an invitation's revoke) asks first**
     (`ui/ConfirmModal.tsx`), from the row, its menu and its detail alike. A view the account may not
-    open lands on the overview, its address and title too (Dashboard.tsx).
+    open lands on the overview, its address and title too (Dashboard.tsx). Settings opens with its
+    figures (members and seats, pending invitations, wallets, API keys), then the organization's
+    details and plan, then the team (members and pending invitations in one table, a status filter;
+    the owner's edit and remove drawn disabled) and the wallets (`OrgWalletsSection`).
   - **A form with many fields or much to read goes in steps** (product owner, 2026-10-27):
     `components/FormSteps.tsx` (`useFormSteps`, `FormSteps`, `FormStep`, `FormStepsFooter`): the
     steps named at the top, the current one in ink and a passed one with a check (a button back to
@@ -496,7 +501,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `/api/organizations/{id}/wallets` (list: any member; connect: `wallets:create`) and
   `/api/organizations/{id}/wallets/{walletId}` (rename: `wallets:edit`; remove:
   `wallets:delete`). `wallets` is a permission resource like the others (owners and admins hold
-  it implicitly). UI: `components/OrgWallets.tsx` (`OrgWalletsPanel` in Settings,
+  it implicitly). UI: `components/OrgWallets.tsx` (`OrgWalletsSection` in Settings,
   `ConnectWalletDialog`, `WalletSelect`, `useOrgWallets`).
 - **Connecting proves the wallet**: it signs `walletProofMessage` (`src/lib/org-wallets.ts`: the
   organization, the network, the address and `issuedAt`), and the route checks the signature

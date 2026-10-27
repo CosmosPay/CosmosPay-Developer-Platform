@@ -138,7 +138,7 @@ export async function listMembers(orgId: string) {
     include: { user: { select: { id: true, name: true, email: true, image: true } } },
     orderBy: { createdAt: "asc" },
   });
-  return members.map((m) => ({ userId: m.userId, role: toRole(m.role), permissions: Array.isArray(m.permissions) ? m.permissions : [], name: m.user?.name ?? null, email: m.user?.email ?? null, image: m.user?.image ?? null }));
+  return members.map((m) => ({ userId: m.userId, role: toRole(m.role), permissions: Array.isArray(m.permissions) ? m.permissions : [], name: m.user?.name ?? null, email: m.user?.email ?? null, image: m.user?.image ?? null, joinedAt: m.createdAt.toISOString() }));
 }
 
 export type AddMemberResult =

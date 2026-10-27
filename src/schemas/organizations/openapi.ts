@@ -56,6 +56,7 @@ const memberSchema = z
     name: z.string().nullable().openapi({ example: 'Ada Lovelace' }),
     email: z.string().nullable().openapi({ example: 'ada@example.com' }),
     image: z.string().nullable().openapi({ example: null }),
+    joinedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z', description: 'When they joined the organization.' }),
   })
   .openapi('OrganizationMember', { description: 'A collaborator in an organization.' });
 
