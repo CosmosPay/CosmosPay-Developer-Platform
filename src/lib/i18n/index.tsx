@@ -2,7 +2,7 @@
    - Locale is read from the `cosmospay-lang` cookie on the server (so SSR + first client
      render agree → no hydration mismatch) and persisted to both cookie + localStorage.
    - Components subscribe via useT()/useLang(); LangSelect flips the locale live with setLang(). */
-import { useSyncExternalStore } from "react";
+import { Fragment, useSyncExternalStore, type ReactNode } from "react";
 import { messages } from "@/lib/i18n/messages/index";
 
 export const DEFAULT_LOCALE = "en";
@@ -74,4 +74,13 @@ export function useT() {
 /* Interpolate {placeholder} tokens in a catalog string. */
 export function fmt(str, vars = {}) {
   return String(str).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+}
+
+/* The same with elements in place of the tokens (an address as a link, a transaction): the
+   pieces to render, so a translated sentence keeps its links where its language puts them. */
+export function fmtNodes(str: string, vars: Record<string, ReactNode> = {}): ReactNode[] {
+  return String(str).split(/(\{\w+\})/g).map((part, i) => {
+    const token = /^\{(\w+)\}$/.exec(part);
+    return <Fragment key={i}>{token && token[1] in vars ? vars[token[1]] : part}</Fragment>;
+  });
 }

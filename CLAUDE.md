@@ -76,6 +76,11 @@ These were said more than once; breaking one is a bug, whatever the task was.
   transaction (any wallet, a signed XDR), in the dashboard and first at the checkout. An account
   registered under another root cannot be opened in the dashboard, so never add another
   derivation (or change the key transaction's bytes) without a way for existing accounts.
+- **No plain-text explanations or bare references** (2026-10-27): a warning or a decision in a
+  dialog is a component (the `.zka-exists` warning panel, choice cards as radio buttons), never a
+  paragraph; a sequence is a list with who does each step; every address, transaction or contract
+  shown is a link (`AddressLink` / `TxLink`: explorer, copy, preview), and `fmtNodes` puts
+  links inside translated sentences. Load the design skills (frontend-design) for UI work.
 - **The dashboard never connects a wallet**: people hand over a signed XDR. Cosmos Pay is
   non-custodial: no key or key material of anyone's is stored, client or server.
 - **Every list is the Payments table** (figures first, filter bar with the view's buttons, a row

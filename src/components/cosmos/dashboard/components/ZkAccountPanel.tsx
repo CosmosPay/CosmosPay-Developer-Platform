@@ -44,14 +44,14 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { StrKey } from "@stellar/stellar-sdk";
 import { Modal, showToast } from "@/components/cosmos/shared";
-import { fmt, useT } from "@/lib/i18n/index";
-import { IcCopy } from "@/components/cosmos/icons";
+import { fmt, fmtNodes, useT } from "@/lib/i18n/index";
+import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { Sk, TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
-import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
+import { AddressLink, TxLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
@@ -64,7 +64,7 @@ import { customers as custApi } from "@/lib/api-client";
 import { usePaged, useGsapRows, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { inRange, matchesQuery } from "@/lib/dashboard-filters";
-import { explorerAccountUrl, explorerTxUrl, networkName } from "@/lib/chains";
+import { explorerAccountUrl, networkName } from "@/lib/chains";
 import { shortAddress } from "@/lib/org-wallets";
 import { canProve } from "@/lib/zk/bb-loader";
 import { fromUnits, toUnits } from "@/lib/zk/amounts";
@@ -412,8 +412,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
     if (!(address in created)) return <Sk w="9em" />;
     const r = created[address];
     if (!r) return "-";
-    const url = explorerTxUrl("stellar", tier, r.txHash);
-    return <>{fmtDateTime(r.at)}{url && <>{" · "}<a className="link-btn" href={url} target="_blank" rel="noopener noreferrer">{shortAddress(r.txHash)}</a></>}</>;
+    return <>{fmtNodes(za.createdAt, { date: fmtDateTime(r.at), tx: <TxLink chain="stellar" network={config.network} hash={r.txHash} label={za.createdOn} /> })}</>;
   };
 
   // The progress of the running action is a line of its own under its row: one row fewer of filler.
@@ -466,7 +465,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                     </td>
                     <td className="cust" onClick={(e) => e.stopPropagation()}>
                       <AddressLink chain="stellar" network={config.network} address={w.address} label={za.tableHead.address} />
-                      {controllers[w.address] && <small className="cust-wallet-net">{fmt(za.subOf, { base: shortAddress(controllers[w.address]) })}</small>}
+                      {controllers[w.address] && <small className="cust-wallet-net">{fmtNodes(za.subOf, { base: <AddressLink chain="stellar" network={config.network} address={controllers[w.address]} label={za.signedBy} /> })}</small>}
                     </td>
                     <td className="amt">{balanceCell(w.address, "spendable", za.spendable)}</td>
                     <td className="amt">{a.loaded ? `${fromUnits(a.loaded.receiving)} ${sym}` : "-"}</td>
@@ -632,7 +631,7 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
   // Already one of this customer's private accounts: only another one (a sub-account) can be made.
   const already = customer !== NEW_CUSTOMER && privateAccounts.some((w) => w.customerId === customer && w.address === account);
   const accountOk = valid && (customer !== NEW_CUSTOMER || name.trim() !== "");
-  const [mode, setMode] = useState<"sub" | "existing">("sub");
+  const [mode, setMode] = useState<"sub" | "existing" | null>(null);
   const working = busy || saving;
   // The second step reads the contract: whether this public account already has its private
   // account (the token keeps one per Stellar account) and since when. undefined while read; null
@@ -652,10 +651,18 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
   }, [steps.step, account]);
   const exists = known?.registered === true;
   const another = exists && (already || mode === "sub");
-  const sinceUrl = known?.since ? explorerTxUrl("stellar", config.network === "public" ? "public" : "testnet", known.since.txHash) : null;
+  const decided = !exists || already || mode !== null;
+  // Who signs every transaction: the address, for its own private account and for a sub-account.
+  const signer = <AddressLink chain="stellar" network={config.network} address={account} label={za.signedBy} />;
+  const sigs: { title: string; who: ReactNode }[] = known && (another || !exists) ? [
+    ...(another ? [{ title: fmt(za.sigSub, { amount: SUB_ACCOUNT_STARTING_BALANCE }), who: signer }] : []),
+    { title: za.sigKey, who: signer },
+    { title: za.sigProof, who: za.sigHere },
+    { title: za.sigRegister, who: signer },
+  ] : [];
 
   const submit = async () => {
-    if (!accountOk || working) return;
+    if (!accountOk || working || !decided) return;
     setProblem(null);
     if (another) {
       // A sub-account: its own address joins the customer (the table names its address from the chain).
@@ -710,51 +717,55 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
           {steps.step === 1 && (<>
             <div className="paylink-fields" style={{ marginBottom: 14 }}>
               <div className="paylink-field"><span className="pf-k">{za.tableHead.customer}</span><span className="pf-v">{customer === NEW_CUSTOMER ? name.trim() : customers?.find((c) => c.id === customer)?.name}</span></div>
-              <div className="paylink-field"><span className="pf-k">{za.tableHead.address}</span><span className="pf-v">{shortAddress(account)}</span></div>
+              <div className="paylink-field"><span className="pf-k">{za.tableHead.address}</span><span className="pf-v"><AddressLink chain="stellar" network={config.network} address={account} label={za.tableHead.address} /></span></div>
             </div>
             {!known && <p className="work-progress" role="status"><span className="work-spin" aria-hidden="true" /><span>{za.checking}</span></p>}
-            {exists && (<>
-              <p className="field-note">{fmt(already ? za.existsHere : za.exists, { account: shortAddress(account) })}</p>
-              {known?.since && (
-                <p className="field-help">
-                  {fmt(za.existsSince, { date: fmtDateTime(known.since.at) })}
-                  {sinceUrl && <>{" "}<a className="link-btn" href={sinceUrl} target="_blank" rel="noopener noreferrer">{shortAddress(known.since.txHash)}</a></>}
-                </p>
-              )}
-              {/* Another private account (a sub-account), or the address's own one. */}
-              {!already && (
-                <div className="seg-tabs seg-fill" role="group" aria-label={za.add}>
-                  {(["sub", "existing"] as const).map((k) => (
-                    <button key={k} type="button" className={mode === k ? "on" : ""} aria-pressed={mode === k} onClick={() => setMode(k)} disabled={working}>{k === "sub" ? za.modeSub : za.modeExisting}</button>
-                  ))}
+            {/* The address already has its private account: a warning with the choice. */}
+            {exists && (
+              <div className="zka-exists" role="group" aria-labelledby="zka-exists-t">
+                <div className="zka-exists-head">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M12 7.5v5.5M12 16.4v.1" /></svg>
+                  <b id="zka-exists-t">{already ? za.existsHereTitle : za.existsTitle}</b>
                 </div>
-              )}
-              {!another && <p className="field-help">{za.existingIntro}</p>}
-              {another && (<>
-                <p className="field-note">{fmt(za.subIntro, { account: shortAddress(account), amount: SUB_ACCOUNT_STARTING_BALANCE })}</p>
-                <ol className="zka-sign-steps">
-                  <li>{za.subCreate}</li>
-                  <li>{za.signKey}</li>
-                  <li>{za.signProof}</li>
-                  <li>{za.signRegister}</li>
-                </ol>
-              </>)}
-            </>)}
-            {known && !exists && (<>
-              <p className="field-note">{fmt(za.signIntro, { account: shortAddress(account) })}</p>
-              <ol className="zka-sign-steps">
-                <li>{za.signKey}</li>
-                <li>{za.signProof}</li>
-                <li>{za.signRegister}</li>
+                {known?.since && (
+                  <p className="zka-exists-meta">
+                    {fmtNodes(za.createdAt, { date: fmtDateTime(known.since.at), tx: <TxLink chain="stellar" network={config.network} hash={known.since.txHash} label={za.createdOn} /> })}
+                  </p>
+                )}
+                {!already && (
+                  <div className="zka-choices" role="radiogroup" aria-labelledby="zka-exists-t">
+                    {(["existing", "sub"] as const).map((k) => (
+                      <button key={k} type="button" role="radio" aria-checked={mode === k} className={`zka-choice${mode === k ? " on" : ""}`} onClick={() => setMode(k)} disabled={working}>
+                        <span className="zka-choice-mark" aria-hidden="true">{mode === k && <IcCheck />}</span>
+                        <span>
+                          <b>{k === "sub" ? za.modeSub : za.modeExisting}</b>
+                          <span className="zka-choice-d">{k === "sub" ? fmt(za.modeSubDesc, { amount: SUB_ACCOUNT_STARTING_BALANCE }) : za.modeExistingDesc}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* What the address signs, in order: every signature is the address's, with its own wallet. */}
+            {sigs.length > 0 && (
+              <ol className="zka-sigs" aria-label={za.sigsLabel}>
+                {sigs.map((g, i) => (
+                  <li key={g.title}>
+                    <span className="fstep-n" aria-hidden="true">{i + 1}</span>
+                    <span className="zka-sig-t">{g.title}</span>
+                    <span className="zka-sig-who">{typeof g.who === "string" ? g.who : <>{za.sigBy} {g.who}</>}</span>
+                  </li>
+                ))}
               </ol>
-            </>)}
+            )}
             {progress}
           </>)}
         </FormStep>
         {problem && <p className="field-err" role="alert">{problem}</p>}
         <FormStepsFooter
           steps={steps} canNext={accountOk} onCancel={onClose}
-          submitLabel={working ? za.creating : exists && !another ? za.addExisting : za.requestSignatures} onSubmit={submit} busy={working} submitDisabled={!accountOk || !known}
+          submitLabel={working ? za.creating : exists && mode === "existing" && !already ? za.addExisting : za.requestSignatures} onSubmit={submit} busy={working} submitDisabled={!accountOk || !known || !decided}
         />
       </div>
     </Modal>
