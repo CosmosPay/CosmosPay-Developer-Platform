@@ -141,3 +141,17 @@
 .inst .lang-btn, .inst .theme-btn { background: var(--surface); }
 .inst ::selection { background: var(--accent-soft-2); }
 .inst :focus-visible { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+/* A text field shows focus itself (its line darkens and takes the ring, or its well does with
+   :focus-within), so the square outline above would draw a second box inside the rounded one. */
+.inst :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select):focus-visible { outline: none; }
+
+/* Floating panels (the mega menu, the mobile menu, the language list, menus, modals, toasts)
+   reset to cosmos.css's page tokens, the blue brand's, so they never inherit a panel's or the
+   bar's colours. In this skin (the payments site and the dashboard) they take its tokens instead
+   (black primary, neutral greys, as the page), so a modal's button is the page's black, not navy. */
+body.inst :is(.mega, .lang-menu, .nav-user-menu, .notif-menu, .modal, .mobile-menu, .toast) {
+  --bg: inherit; --surface: inherit; --surface-2: inherit;
+  --ink: inherit; --ink-2: inherit; --ink-3: inherit; --line: inherit; --line-2: inherit;
+  --accent: inherit; --accent-d: inherit; --accent-fg: inherit; --accent-soft: inherit; --accent-soft-2: inherit;
+  --btn-bg: inherit; --btn-fg: inherit; --btn-bg-h: inherit; --btn-ink: inherit; --btn-ink-fg: inherit;
+}

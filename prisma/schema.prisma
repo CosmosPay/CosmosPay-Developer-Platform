@@ -99,6 +99,9 @@ model Profile {
   // enterprise, plus the legacy "community" (the free plan, no longer offered; the accounts
   // already on it keep it). New accounts start on starter (DEFAULT_PLAN_ID in src/lib/plans.ts).
   plan        String   @default("starter")
+  // The plan's standing (src/lib/plan-status.ts): active | paused | past_due | suspended. Set by
+  // staff until a billing provider's webhooks set it; the organizations this account owns show it.
+  planStatus  String   @default("active")
 
   // Defaults captured at account creation.
   region      String?
@@ -205,6 +208,7 @@ model Organization {
   owner       User                     @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members     OrganizationMember[]
   invitations OrganizationInvitation[]
+  wallets     OrganizationWallet[]
 
   @@index([ownerId])
   @@map("organization")
@@ -248,6 +252,29 @@ model OrganizationMember {
   @@unique([orgId, userId])
   @@index([userId])
   @@map("organization_member")
+}
+
+// The wallets an organization receives payments in. Members allowed to (`wallets:create`)
+// connect one from Settings, and the wallet signs a message naming the organization to prove it
+// is theirs (src/lib/org-wallets.ts); renaming and removing need `wallets:edit` / `wallets:delete`.
+// Payment forms offer only these, and the API refuses any other receiving address.
+// `address` is as the chain writes it (EVM lower-cased), one row per chain and address.
+model OrganizationWallet {
+  id        String   @id @default(cuid())
+  orgId     String
+  chain     String // stellar | solana | monad
+  address   String
+  label     String?
+  provider  String? // the wallet that proved it: freighter | phantom | solflare | evm
+  addedById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, chain, address])
+  @@index([orgId])
+  @@map("organization_wallet")
 }
 
 // ---------------- Wallet account provisioning (RETIRED) ----------------

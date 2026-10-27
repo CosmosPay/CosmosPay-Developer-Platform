@@ -2,7 +2,7 @@
    Session check, env resolution, platform-permission enforcement, and upstream
    error mapping live here so each route stays a thin pass-through. */
 import type { APIContext } from "astro";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
@@ -13,7 +13,7 @@ import { keyPrefix } from "@/utils/apisix";
 
 /** Resolve the signed-in user id, or a 401 Response. */
 export async function getUserId(request: Request): Promise<{ userId: string } | { response: Response }> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await requestSession(request.headers);
   if (!session) return { response: jsonUnauthorized("Session required") };
   return { userId: session.user.id };
 }

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_PLAN_ID, planLimits, planSwapFeeBps, atLimit } from "@/lib/plans";
 import { getProfile } from "@/lib/profile";
+import { planStatusOf, type PlanStatus } from "@/lib/plan-status";
 
 export type OrgRole = "owner" | "admin" | "member";
 
@@ -14,6 +15,7 @@ export interface OrgSummary {
   createdAt: Date;
   permissions: string[]; // the signed-in member's granted per-action permissions
   plan: string; // the org's plan = the OWNER's subscription plan
+  planStatus: PlanStatus; // that plan's standing (active, paused, past_due, suspended)
 }
 
 function toRole(r: unknown): OrgRole {
@@ -25,7 +27,7 @@ function toRole(r: unknown): OrgRole {
 export async function listForUser(userId: string): Promise<OrgSummary[]> {
   const memberships = await prisma.organizationMember.findMany({
     where: { userId },
-    include: { org: { include: { owner: { select: { profile: { select: { plan: true } } } } } } },
+    include: { org: { include: { owner: { select: { profile: { select: { plan: true, planStatus: true } } } } } } },
     orderBy: { createdAt: "asc" },
   });
   return memberships
@@ -38,6 +40,7 @@ export async function listForUser(userId: string): Promise<OrgSummary[]> {
       createdAt: m.org.createdAt,
       permissions: Array.isArray(m.permissions) ? m.permissions : [],
       plan: m.org.owner?.profile?.plan ?? DEFAULT_PLAN_ID,
+      planStatus: planStatusOf(m.org.owner?.profile?.planStatus),
     }));
 }
 
@@ -135,7 +138,7 @@ export async function listMembers(orgId: string) {
     include: { user: { select: { id: true, name: true, email: true, image: true } } },
     orderBy: { createdAt: "asc" },
   });
-  return members.map((m) => ({ userId: m.userId, role: toRole(m.role), permissions: Array.isArray(m.permissions) ? m.permissions : [], name: m.user?.name ?? null, email: m.user?.email ?? null, image: m.user?.image ?? null }));
+  return members.map((m) => ({ userId: m.userId, role: toRole(m.role), permissions: Array.isArray(m.permissions) ? m.permissions : [], name: m.user?.name ?? null, email: m.user?.email ?? null, image: m.user?.image ?? null, joinedAt: m.createdAt.toISOString() }));
 }
 
 export type AddMemberResult =

@@ -167,6 +167,9 @@ export default defineConfig({
       SMTP_PASS: envField.string({ context: 'server', access: 'secret', optional: true }),
       SMTP_SECURE: envField.boolean({ context: 'server', access: 'secret', optional: true, default: false }),
       SMTP_FROM: envField.string({ context: 'server', access: 'secret', optional: true }),
+      // Where the payments gateway's contact form (POST /contact) sends what visitors write; the
+      // visitor's address is the reply-to. Unset, it goes to the gateway's public contact address.
+      CONTACT_EMAIL: envField.string({ context: 'server', access: 'secret', optional: true }),
       // --- Feature flags (plans & onboarding) ---
       // Whether the multi-step onboarding wizard runs. When false, a default
       // organization is auto-provisioned and the user lands straight on the dashboard.
@@ -213,7 +216,16 @@ export default defineConfig({
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
+        // bb.js must never be bundled: it starts its wasm worker relative to its own URL. The ZK
+        // pages load it as native ESM from /zk/bb (src/pages/payments/zk/bb) (src/lib/zk/bb-loader.ts), so the
+        // SDK's default `import("@aztec/bb.js")` resolves to a stub that says so.
+        '@aztec/bb.js': fileURLToPath(new URL('./src/lib/zk/bb-stub.ts', import.meta.url)),
       },
+    },
+    // noir_js loads its wasm through `new URL(..., import.meta.url)`, which dependency
+    // pre-bundling breaks in dev; the production build handles it as an asset.
+    optimizeDeps: {
+      exclude: ['@noir-lang/noir_js', '@noir-lang/acvm_js', '@noir-lang/noirc_abi'],
     },
     // nodemailer is a server-only, runtime dependency (used by src/lib/mailer.ts for
     // invitation emails). Keep it external so the SSR build doesn't try to bundle it and

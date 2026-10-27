@@ -1,0 +1,37 @@
+---
+/* /swaps on payments.cosmospay.lat: public swaps without an account, and USDT0 out of Stellar
+ * (src/components/cosmos/swaps/PublicSwaps.tsx; the company site serves its own /swaps). The
+ * widget is the dashboard's, so its styles come along (dashboard.css is scoped to its classes). */
+import "@/styles/payments-landing.css";
+import "@/styles/dashboard.css";
+import "@/styles/public-swaps.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import { landingData } from "@/components/payments/landing/data";
+import PublicSwaps from "@/components/cosmos/swaps/PublicSwaps";
+import { API_BASE } from "@/lib/payments/urls";
+import { DOCS } from "@/components/cosmos/lib/constants";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.pages.swaps.meta} description={d.t.pages.swaps.lede} indexable>
+  <LandingHead slot="head" d={d} page="swaps" title={d.t.pages.swaps.meta} description={d.t.pages.swaps.lede} />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="swaps" />
+    <PageHeader d={d} page="swaps" art="3d-instant" />
+    <PublicSwaps client:load lang={lang} apiBase={API_BASE} docsUrl={DOCS} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

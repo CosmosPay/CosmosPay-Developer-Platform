@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonConflict, jsonError, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { acceptInvitationById } from "@/lib/invitations";
 import type { APIRoute } from "astro";
@@ -9,7 +9,7 @@ const bodySchema = z.object({ id: z.string().min(1) });
 /* POST /api/invitations/accept: accept a pending invitation from inside the dashboard.
    The invitation must be addressed to the signed-in user's email. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const body = await parseJson(ctx.request, bodySchema).catch(() => null);

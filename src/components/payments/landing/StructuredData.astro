@@ -1,0 +1,61 @@
+---
+// The gateway's structured data (schema.org JSON-LD), one graph per page: the organisation and
+// the site on every page, the page itself, the breadcrumb trail a content page shows over its
+// title (PageHeader.astro), and on /faq the questions and answers the page shows. Only what the
+// page says: no ratings, prices or claims beyond its copy. URLs come from src/lib/payments/seo.ts,
+// so they match the canonical and hreflang links.
+import type { LandingData } from "@/components/payments/landing/data";
+import type { PaymentsPage } from "@/lib/payments/site-pages";
+import { LOCALES } from "@/lib/payments/i18n";
+import { PAYMENTS } from "@/lib/payments/urls";
+import { SITE, SOCIAL } from "@/components/cosmos/lib/constants";
+import { pageUrl } from "@/lib/payments/seo";
+
+interface Props {
+  d: LandingData;
+  page: PaymentsPage | "home";
+  title: string;
+  description: string;
+}
+
+const { d, page, title, description } = Astro.props;
+const { t, lang, faq } = d;
+const asked = Astro.url.searchParams.get("lang");
+const explicit = LOCALES.find((l) => l.code === asked)?.code ?? null;
+const url = pageUrl(PAYMENTS, Astro.locals.publicPath ?? "/", explicit);
+const ORG = `${SITE}/#organization`;
+const WEBSITE = `${PAYMENTS}/#website`;
+const KEY = { integrations: "integrations", swaps: "swaps", "use-cases": "useCases", security: "security", fees: "fees", faq: "faq" } as const;
+
+const graph: Record<string, unknown>[] = [
+  { "@type": "Organization", "@id": ORG, name: "Cosmos Pay", url: `${SITE}/`, logo: `${PAYMENTS}/apple-touch-icon.png`, sameAs: Object.values(SOCIAL) },
+  { "@type": "WebSite", "@id": WEBSITE, name: "Cosmos Pay Payments", url: `${PAYMENTS}/`, inLanguage: LOCALES.map((l) => l.code), publisher: { "@id": ORG } },
+  {
+    "@type": page === "faq" ? "FAQPage" : "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: title,
+    description,
+    inLanguage: lang,
+    isPartOf: { "@id": WEBSITE },
+    ...(page !== "home" && { breadcrumb: { "@id": `${url}#breadcrumb` } }),
+    ...(page === "faq" && {
+      mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+    }),
+  },
+];
+if (page !== "home") {
+  graph.push({
+    "@type": "BreadcrumbList",
+    "@id": `${url}#breadcrumb`,
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: t.pages.home, item: pageUrl(PAYMENTS, "/", explicit) },
+      { "@type": "ListItem", position: 2, name: (t.pages[KEY[page]] as { nav: string }).nav, item: url },
+    ],
+  });
+}
+// "<" is escaped, so no string in the copy can close the script element.
+const json = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c");
+---
+
+<script type="application/ld+json" set:html={json} />

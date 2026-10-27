@@ -11,7 +11,10 @@ import { CountrySelect } from "@/components/cosmos/dashboard/components/CountryS
 import { CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { Toolbar } from "@/components/cosmos/dashboard/components/Toolbar";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
+import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 
 /* ---- display constants (technical identifiers, intentionally not translated) ---- */
 const RECEIVER_TYPES = ["individual", "business"];
@@ -24,6 +27,8 @@ const PAYOUT_NETWORKS = ["stellar", "stellar_testnet", "ethereum", "base", "arbi
 const RAILS = ["ach", "wire", "rtp", "pix", "pix_safe", "ted", "spei_bitso", "transfers_bitso", "ach_cop_bitso", "international_swift", "sepa"];
 const PAYIN_METHODS = ["ach", "wire", "pix", "ted", "spei", "transfers", "pse", "international_swift", "rtp"];
 
+// The shape of an address on each wallet network, as the field's placeholder.
+const addressPlaceholder = (net) => (net && net.indexOf("stellar") === 0 ? "G…" : net === "solana" ? "Base58…" : net === "tron" ? "T…" : "0x…");
 const chainOf = (net) => (net && net.indexOf("stellar") === 0 ? "stellar" : net && net.indexOf("solana") === 0 ? "solana" : "evm");
 
 /* Map a provider status to a status-pill class. */
@@ -155,13 +160,13 @@ function OwnerRow({ owner, index, f, bp, orgId, env, t, onChange, onRemove }) {
         <label className="field-l">{fmt(bp.receivers.modal.ownerN, { n: index + 1 })}</label>
         <button type="button" className="btn btn-soft btn-sm danger-soft" onClick={() => onRemove(index)}>{bp.receivers.modal.removeOwner}</button>
       </div>
-      <Field label={f.first_name} value={g("first_name")} onChange={setE("first_name")} placeholder="Jane" />
-      <Field label={f.last_name} value={g("last_name")} onChange={setE("last_name")} placeholder="Doe" />
+      <Field label={f.first_name} value={g("first_name")} onChange={setE("first_name")} placeholder={t.dash.examples.firstName} />
+      <Field label={f.last_name} value={g("last_name")} onChange={setE("last_name")} placeholder={t.dash.examples.lastName} />
       <Field label={f.date_of_birth} type="date" value={g("date_of_birth")} onChange={setE("date_of_birth")} />
       <Field label={f.tax_id} value={g("tax_id")} onChange={setE("tax_id")} />
       <CountrySelect label={f.country} value={g("country")} onChange={setV("country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
       <Field label={f.ownership_percentage} hint={t.dash.common.optional} value={g("ownership_percentage")} onChange={setE("ownership_percentage")} inputMode="numeric" placeholder="25" />
-      <Field label={f.title} hint={t.dash.common.optional} value={g("title")} onChange={setE("title")} placeholder="Director" />
+      <Field label={f.title} hint={t.dash.common.optional} value={g("title")} onChange={setE("title")} placeholder={t.dash.examples.jobTitle} />
       <CountrySelect label={f.id_doc_country} value={g("id_doc_country")} onChange={setV("id_doc_country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
       <Sel label={f.id_doc_type} value={g("id_doc_type")} onChange={setV("id_doc_type")} options={ID_DOC_TYPES} labels={ID_DOC_TYPE_LABELS} />
       <UploadField label={f.id_doc_front_file} value={g("id_doc_front_file")} onChange={setV("id_doc_front_file")} orgId={orgId} env={env} bp={bp} />
@@ -179,7 +184,7 @@ export function BlindPayView({ canManage = true, orgId, orgRole, env = "dev" }) 
 
   return (
     <>
-      <ViewHead title={bp.title} sub={bp.sub} />
+      <ViewHead title={bp.title} />
       <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{canManage ? bp.gate : bp.readOnly}</span></div>
       <div className="filter-tabs">{tabs.map((k) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{bp.tabs[k]}</button>)}</div>
       {tab === "receivers" && <ReceiversTab bp={bp} orgId={orgId} env={env} canManage={canManage} isManager={isManager} />}
@@ -224,22 +229,22 @@ function ReceiversTab({ bp, orgId, env, canManage, isManager }) {
       <Toolbar q={q} setQ={setQ} placeholder={r.searchPlaceholder}>
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {r.create}</button>}
       </Toolbar>
-      {!loading && !error && view.length > 0 && (
-        <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{r.tableHead.name}</th><th>{r.tableHead.type}</th><th>{r.tableHead.status}</th><th>{r.tableHead.created}</th></tr></thead>
-          <tbody>{pg.slice.map((rec) => (
+      {!loading && (
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{r.tableHead.name}</th><th>{r.tableHead.type}</th><th>{r.tableHead.status}</th><th>{r.tableHead.created}</th></tr></thead>
+          <tbody>{!error && pg.slice.map((rec) => (
             <tr key={rec.id} className="row-click" onClick={() => setDetail(rec)}>
               <td>{rec.name || rec.email || rec.id}</td>
               <td className="cust">{(r.types && r.types[rec.type]) || rec.type || "-"}</td>
               <td>{rec.disabled ? <Pill st="fail" label={r.disabled} /> : <Pill st={statusPill(rec.kycStatus)} label={kycLabel(rec.kycStatus, r)} />}</td>
               <td className="cust">{fmtDateTime(rec.createdAt)}</td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={4} empty={error ? bp.loadError : null} />
+          </tbody>
         </table></div>
       )}
-      {loading && <div className="empty">{bp.loading}</div>}
-      {!loading && error && <div className="empty">{bp.loadError}</div>}
-      {!loading && !error && !view.length && <div className="empty">{r.empty}</div>}
-      {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+      {loading && <TableSkeleton label={bp.loading} />}
+      {!loading && <Pagination {...pg} />}
       {modal && <CreateReceiverModal bp={bp} orgId={orgId} env={env} onClose={() => setModal(false)} onCreated={onCreated} />}
       {detail && <ReceiverDetailModal bp={bp} receiver={detail} orgId={orgId} env={env} canManage={canManage} isManager={isManager} onClose={() => setDetail(null)} onUpdated={onUpdated} />}
     </div>
@@ -298,6 +303,30 @@ function CreateReceiverModal({ bp, orgId, env, onClose, onCreated }) {
   const updateOwner = (i, k, v) => setOwners((o) => o.map((x, idx) => (idx === i ? { ...x, [k]: v } : x)));
   const removeOwner = (i) => setOwners((o) => o.filter((_, idx) => idx !== i));
 
+  /* The form in steps (product owner, 2026-10-27: a long form goes in steps): who it is first
+     (type, level, email, country), then what that type and level ask for, each step only on when
+     its required fields are filled. An individual: personal data, then the documents (standard
+     and enhanced) and the source of funds (enhanced). A business: the company, its documents,
+     then its owners. The type and the level are chosen on the first step, so the steps after it
+     never change under the reader. */
+  const reqFilled = (keys) => keys.filter((k) => requiredKeys.has(k)).every(filled);
+  const STEPS = isBiz
+    ? [
+      { key: "company", keys: BIZ_FIELDS.filter((k) => !k.endsWith("_file")) },
+      { key: "documents", keys: BIZ_FIELDS.filter((k) => k.endsWith("_file")) },
+      { key: "owners", keys: [], ok: owners.some(ownerComplete) },
+    ]
+    : [
+      { key: "personal", keys: IND_ALL },
+      ...(showStandard ? [{ key: "documents", keys: IND_STANDARD }] : []),
+      ...(showEnhanced ? [{ key: "funds", keys: IND_ENHANCED }] : []),
+    ];
+  const steps = useFormSteps(STEPS.length + 1);
+  const current = steps.step === 0 ? null : STEPS[steps.step - 1];
+  const canNext = steps.step === 0
+    ? filled("email") && filled("country")
+    : current && (current.ok ?? true) && reqFilled(current.keys);
+
   const submit = () => {
     if (!valid || busy) return;
     setBusy(true);
@@ -334,25 +363,26 @@ function CreateReceiverModal({ bp, orgId, env, onClose, onCreated }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
-        <Sel label={m.type} value={type} onChange={setType} options={RECEIVER_TYPES} labels={{ individual: m.individual, business: m.business }} />
-        <Sel label={m.kycType} value={kycType} onChange={setKycType} options={KYC_TYPES} />
-        <Field label={f.email} type="email" value={get("email")} onChange={setE("email")} placeholder="jane@acme.com" autoFocus />
-        <CountrySelect label={f.country} value={get("country")} onChange={set("country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
-        {visibleKeys.map(renderField)}
-        {isBiz && (
-          <>
-            <label className="field-l" style={{ marginTop: 8 }}>{m.ownersTitle}</label>
-            {owners.map((o, i) => <OwnerRow key={i} owner={o} index={i} f={f} bp={bp} orgId={orgId} env={env} t={t} onChange={updateOwner} onRemove={removeOwner} />)}
-            <div className="paylink-actions" style={{ marginBottom: 8 }}>
-              <button type="button" className="btn btn-soft btn-sm" onClick={() => setOwners((o) => [...o, {}])}>{DI.plus} {m.addOwner}</button>
-            </div>
-          </>
-        )}
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!valid || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        <FormSteps names={[m.steps.who, ...STEPS.map((s) => m.steps[s.key])]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <Sel label={m.type} value={type} onChange={setType} options={RECEIVER_TYPES} labels={{ individual: m.individual, business: m.business }} />
+            <Sel label={m.kycType} value={kycType} onChange={setKycType} options={KYC_TYPES} />
+            <Field label={f.email} type="email" value={get("email")} onChange={setE("email")} placeholder="jane@acme.com" autoFocus />
+            <CountrySelect label={f.country} value={get("country")} onChange={set("country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
+          </>)}
+          {current && current.keys.map(renderField)}
+          {current && current.key === "owners" && (
+            <>
+              <p className="field-help">{m.ownersTitle}</p>
+              {owners.map((o, i) => <OwnerRow key={i} owner={o} index={i} f={f} bp={bp} orgId={orgId} env={env} t={t} onChange={updateOwner} onRemove={removeOwner} />)}
+              <div className="paylink-actions" style={{ marginBottom: 8 }}>
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => setOwners((o) => [...o, {}])}>{DI.plus} {m.addOwner}</button>
+              </div>
+            </>
+          )}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={!!canNext} onCancel={onClose} submitLabel={busy ? m.creating : m.create} onSubmit={submit} busy={busy} submitDisabled={!valid} />
       </div>
     </Modal>
   );
@@ -450,29 +480,25 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
           <>
             {/* Wallets */}
             <label className="field-l">{dt.wallets}</label>
-            {wallets === null && <div className="empty">{bp.loading}</div>}
-            {wallets !== null && wallets.length === 0 && <div className="empty">{dt.noWallets}</div>}
-            {wallets !== null && wallets.length > 0 && (
-              <div className="t-scroll"><table className="tx"><tbody>{wallets.map((w) => (
+            {wallets === null && <TableSkeleton label={bp.loading} />}
+            {wallets !== null && (
+              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{wallets.length === 0 && <FillRows n={2} cols={3} />}{wallets.map((w) => (
                 <tr key={w.id}><td className="cust">{w.name || w.id}</td><td className="cust">{w.network}</td><td className="tid">{w.address || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
-            {canManage && !disabled && (addWallet
-              ? <AddWalletForm bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddWallet(false)} onAdded={() => { setAddWallet(false); loadWallets(); }} />
-              : <div className="paylink-actions" style={{ margin: "8px 0 18px" }}><button className="btn btn-soft btn-sm" onClick={() => setAddWallet(true)}>{DI.plus} {dt.addWallet}</button></div>)}
+            {canManage && !disabled && <div className="paylink-actions" style={{ margin: "8px 0 18px" }}><button type="button" className="btn btn-soft btn-sm" onClick={() => setAddWallet(true)}>{DI.plus} {dt.addWallet}</button></div>}
+            {addWallet && <AddWalletModal bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddWallet(false)} onAdded={() => { setAddWallet(false); loadWallets(); }} />}
 
             {/* Bank accounts */}
             <label className="field-l">{dt.banks}</label>
-            {banks === null && <div className="empty">{bp.loading}</div>}
-            {banks !== null && banks.length === 0 && <div className="empty">{dt.noBanks}</div>}
-            {banks !== null && banks.length > 0 && (
-              <div className="t-scroll"><table className="tx"><tbody>{banks.map((b) => (
+            {banks === null && <TableSkeleton label={bp.loading} />}
+            {banks !== null && (
+              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{banks.length === 0 && <FillRows n={2} cols={3} />}{banks.map((b) => (
                 <tr key={b.id}><td className="cust">{b.name || b.id}</td><td className="cust">{b.rail}</td><td className="cust">{b.country || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
-            {canManage && !disabled && (addBank
-              ? <AddBankForm bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddBank(false)} onAdded={() => { setAddBank(false); loadBanks(); }} />
-              : <div className="paylink-actions" style={{ margin: "8px 0" }}><button className="btn btn-soft btn-sm" onClick={() => setAddBank(true)}>{DI.plus} {dt.addBank}</button></div>)}
+            {canManage && !disabled && <div className="paylink-actions" style={{ margin: "8px 0" }}><button type="button" className="btn btn-soft btn-sm" onClick={() => setAddBank(true)}>{DI.plus} {dt.addBank}</button></div>}
+            {addBank && <AddBankModal bp={bp} receiver={data} orgId={orgId} env={env} onClose={() => setAddBank(false)} onAdded={() => { setAddBank(false); loadBanks(); }} />}
           </>
         )}
 
@@ -556,9 +582,11 @@ function FiatAccessToggle({ r, receiver, orgId, env, onChanged }) {
   );
 }
 
-function AddWalletForm({ bp, receiver, orgId, env, onClose, onAdded }) {
+/* A receiver's wallet, added in a dialog over its detail (every add is a dialog). */
+function AddWalletModal({ bp, receiver, orgId, env, onClose, onAdded }) {
   const t = useT();
   const w = bp.receivers.wallet;
+  const dt = bp.receivers.detail;
   const [name, setName] = useState("Primary wallet");
   const [network, setNetwork] = useState("stellar");
   const [address, setAddress] = useState("");
@@ -574,22 +602,30 @@ function AddWalletForm({ bp, receiver, orgId, env, onClose, onAdded }) {
       .finally(() => setBusy(false));
   };
   return (
-    <div className="paylink-block" style={{ marginBottom: 18 }}>
-      <Field label={w.name} value={name} onChange={(e) => setName(e.target.value)} />
-      <Sel label={w.network} value={network} onChange={setNetwork} options={WALLET_NETWORKS} />
-      <Field label={w.address} hint={w.addressHint} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="G…" />
-      <Sel label={w.aa} value={aa} onChange={setAa} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
-      <div className="modal-actions">
-        <button className="btn btn-violet btn-sm" disabled={!valid || busy} onClick={submit}>{w.add}</button>
-        <button className="btn btn-soft btn-sm" onClick={onClose}>{t.dash.common.cancel}</button>
+    <Modal onClose={onClose} label={dt.addWallet}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{receiver.name || receiver.email || dt.eyebrow}</div>
+        <h3>{dt.addWallet}</h3>
+        <Field label={w.name} value={name} onChange={(e) => setName(e.target.value)} />
+        <Sel label={w.network} value={network} onChange={setNetwork} options={WALLET_NETWORKS} />
+        <Field label={w.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={addressPlaceholder(network)} />
+        <Sel label={w.aa} value={aa} onChange={setAa} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
+        <div className="modal-actions">
+          <button type="button" className="btn btn-violet" disabled={!valid || busy} onClick={submit}>{w.add}</button>
+          <button type="button" className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
+        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
-function AddBankForm({ bp, receiver, orgId, env, onClose, onAdded }) {
+/* A receiver's bank account, added in a dialog over its detail, in steps: the account (rail,
+   name, beneficiary, country), then its numbers. */
+function AddBankModal({ bp, receiver, orgId, env, onClose, onAdded }) {
   const t = useT();
   const b = bp.receivers.bank;
+  const dt = bp.receivers.detail;
+  const steps = useFormSteps(2);
   const [type, setType] = useState("ach");
   const [name, setName] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
@@ -610,18 +646,26 @@ function AddBankForm({ bp, receiver, orgId, env, onClose, onAdded }) {
       .finally(() => setBusy(false));
   };
   return (
-    <div className="paylink-block">
-      <Sel label={b.rail} value={type} onChange={setType} options={RAILS} />
-      <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme payouts (USD)" />
-      <Field label={b.beneficiary} hint={t.dash.common.optional} value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} placeholder="Jane Doe" />
-      <CountrySelect label={b.country} hint={t.dash.common.optional} value={country} onChange={setCountry} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
-      <Field label={b.accountNumber} hint={t.dash.common.optional} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789" />
-      <Field label={b.routingNumber} hint={t.dash.common.optional} value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="021000021" />
-      <div className="modal-actions">
-        <button className="btn btn-violet btn-sm" disabled={!valid || busy} onClick={submit}>{b.add}</button>
-        <button className="btn btn-soft btn-sm" onClick={onClose}>{t.dash.common.cancel}</button>
+    <Modal onClose={onClose} label={dt.addBank}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{receiver.name || receiver.email || dt.eyebrow}</div>
+        <h3>{dt.addBank}</h3>
+        <FormSteps names={[b.steps.account, b.steps.numbers]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <Sel label={b.rail} value={type} onChange={setType} options={RAILS} />
+            <Field label={b.name} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.dash.examples.payoutsName} autoFocus />
+            <Field label={b.beneficiary} hint={t.dash.common.optional} value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} placeholder={t.dash.examples.fullName} />
+            <CountrySelect label={b.country} hint={t.dash.common.optional} value={country} onChange={setCountry} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
+          </>)}
+          {steps.step === 1 && (<>
+            <Field label={b.accountNumber} hint={t.dash.common.optional} value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789" />
+            <Field label={b.routingNumber} hint={t.dash.common.optional} value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="021000021" />
+          </>)}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={!!valid} onCancel={onClose} submitLabel={b.add} onSubmit={submit} busy={busy} submitDisabled={!valid} />
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -656,9 +700,9 @@ function OnrampTab({ bp, orgId, env, canManage }) {
       <Toolbar q={q} setQ={setQ} placeholder={o.searchPlaceholder}>
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {o.create}</button>}
       </Toolbar>
-      {!loading && !error && view.length > 0 && (
-        <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.method}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
-          <tbody>{pg.slice.map((p) => (
+      {!loading && (
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.method}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
+          <tbody>{!error && pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>
               <td className="cust">{p.token || "-"}{p.network ? ` · ${p.network}` : ""}</td>
@@ -667,20 +711,19 @@ function OnrampTab({ bp, orgId, env, canManage }) {
               <td><Pill st={statusPill(p.status)} label={fiatStatusLabel(p.status, bp.txStatuses) || o.statusUnknown} /></td>
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : null} />
+          </tbody>
         </table></div>
       )}
-      {loading && <div className="empty">{bp.loading}</div>}
-      {!loading && error && <div className="empty">{bp.loadError}</div>}
-      {!loading && !error && !view.length && <div className="empty">{o.empty}</div>}
-      {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+      {loading && <TableSkeleton label={bp.loading} />}
+      {!loading && <Pagination {...pg} />}
       {modal && <NewPayinModal bp={bp} orgId={orgId} env={env} onClose={() => setModal(false)} onDone={() => { setModal(false); load(); }} />}
     </div>
   );
 }
 
 function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
-  const t = useT();
   const o = bp.onramp;
   const m = o.modal;
   const [walletId, setWalletId] = useState("");
@@ -691,6 +734,8 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
   const [quote, setQuote] = useState(null);
   const [payin, setPayin] = useState(null);
   const [busy, setBusy] = useState(false);
+  // In steps: what to buy and how to pay, quoted; then the quote, confirmed.
+  const steps = useFormSteps(2);
 
   const validQuote = walletId.trim() && amount.trim() && Number(amount) > 0;
 
@@ -700,7 +745,7 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
     onrampApi.post("quotes", env, orgId, {
       blockchain_wallet_id: walletId.trim(), currency_type: currencyType, payment_method: method, token, request_amount: Math.round(Number(amount)),
     })
-      .then((qt) => setQuote(qt))
+      .then((qt) => { setQuote(qt || null); if (qt) steps.next(); })
       .catch((err) => showToast((err && err.message) || o.quoteError, "error"))
       .finally(() => setBusy(false));
   };
@@ -719,29 +764,30 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
         {!payin && (
           <>
-            <Field label={m.walletId} hint={m.walletIdHint} value={walletId} onChange={(e) => { setWalletId(e.target.value); setQuote(null); }} placeholder="clz9x… / bw_…" autoFocus />
-            <Sel label={m.method} value={method} onChange={(v) => { setMethod(v); setQuote(null); }} options={PAYIN_METHODS} />
-            <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); }} options={TOKENS} />
-            <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
-            <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); }} placeholder="10000" inputMode="numeric" />
-            <div className="paylink-actions" style={{ marginBottom: 12 }}>
-              <button className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{busy && !quote ? m.quoting : m.getQuote}</button>
-            </div>
-            {quote && (
-              <div className="paylink-fields" style={{ marginBottom: 14 }}>
-                <CopyField label={m.quoteId} value={quote.id} />
-                {quote.sender_amount != null && <CopyField label={m.youSend} value={String(quote.sender_amount)} />}
-                {quote.receiver_amount != null && <CopyField label={m.youReceive} value={String(quote.receiver_amount)} />}
-                {quote.expires_at != null && <CopyField label={m.expires} value={fmtDateTime(quote.expires_at * 1000)} />}
-              </div>
-            )}
-            <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!quote || busy} onClick={createPayin}>{busy && quote ? m.creating : m.create}</button>
-              <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-            </div>
+            <FormSteps names={[m.steps.quote, m.steps.confirm]} steps={steps} />
+            <FormStep steps={steps}>
+              {steps.step === 0 && (<>
+                <Field label={m.walletId} hint={m.walletIdHint} value={walletId} onChange={(e) => { setWalletId(e.target.value); setQuote(null); }} placeholder="clz9x… / bw_…" autoFocus />
+                <Sel label={m.method} value={method} onChange={(v) => { setMethod(v); setQuote(null); }} options={PAYIN_METHODS} />
+                <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); }} options={TOKENS} />
+                <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
+                <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); }} placeholder="10000" inputMode="numeric" />
+                <div className="paylink-actions" style={{ marginBottom: 12 }}>
+                  <button type="button" className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{busy && !quote ? m.quoting : m.getQuote}</button>
+                </div>
+              </>)}
+              {steps.step === 1 && quote && (
+                <div className="paylink-fields" style={{ marginBottom: 14 }}>
+                  <CopyField label={m.quoteId} value={quote.id} />
+                  {quote.sender_amount != null && <CopyField label={m.youSend} value={String(quote.sender_amount)} />}
+                  {quote.receiver_amount != null && <CopyField label={m.youReceive} value={String(quote.receiver_amount)} />}
+                  {quote.expires_at != null && <CopyField label={m.expires} value={fmtDateTime(quote.expires_at * 1000)} />}
+                </div>
+              )}
+            </FormStep>
+            <FormStepsFooter steps={steps} canNext={!!quote} onCancel={onClose} submitLabel={busy && quote ? m.creating : m.create} onSubmit={createPayin} busy={busy} submitDisabled={!quote} />
           </>
         )}
         {payin && (
@@ -790,9 +836,9 @@ function OfframpTab({ bp, orgId, env, canManage }) {
       <Toolbar q={q} setQ={setQ} placeholder={o.searchPlaceholder}>
         {canManage && <button className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {o.create}</button>}
       </Toolbar>
-      {!loading && !error && view.length > 0 && (
-        <div className="t-scroll" ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.rail}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
-          <tbody>{pg.slice.map((p) => (
+      {!loading && (
+        <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{o.tableHead.id}</th><th>{o.tableHead.asset}</th><th>{o.tableHead.rail}</th><th>{o.tableHead.amount}</th><th>{o.tableHead.status}</th><th>{o.tableHead.created}</th></tr></thead>
+          <tbody>{!error && pg.slice.map((p) => (
             <tr key={p.id}>
               <td className="tid">{p.id}</td>
               <td className="cust">{p.token || "-"}{p.network ? ` · ${p.network}` : ""}</td>
@@ -801,13 +847,13 @@ function OfframpTab({ bp, orgId, env, canManage }) {
               <td><Pill st={statusPill(p.status)} label={fiatStatusLabel(p.status, bp.txStatuses) || o.statusUnknown} /></td>
               <td className="cust">{fmtDateTime(p.createdAt)}</td>
             </tr>
-          ))}</tbody>
+          ))}
+            <FillRows n={pg.size - (error ? 0 : pg.count)} cols={6} empty={error ? bp.loadError : null} />
+          </tbody>
         </table></div>
       )}
-      {loading && <div className="empty">{bp.loading}</div>}
-      {!loading && error && <div className="empty">{bp.loadError}</div>}
-      {!loading && !error && !view.length && <div className="empty">{o.empty}</div>}
-      {!loading && !error && view.length > 0 && <Pagination {...pg} />}
+      {loading && <TableSkeleton label={bp.loading} />}
+      {!loading && <Pagination {...pg} />}
       {modal && <NewPayoutModal bp={bp} orgId={orgId} env={env} onClose={() => setModal(false)} onDone={() => { setModal(false); load(); }} />}
     </div>
   );
@@ -828,6 +874,9 @@ function NewPayoutModal({ bp, orgId, env, onClose, onDone }) {
   const [authTx, setAuthTx] = useState(null);   // unsigned tx (stellar)
   const [signed, setSigned] = useState("");
   const [busy, setBusy] = useState(false);
+  // In steps: where the money goes and how much, quoted; then the wallet that sends it and its
+  // signature.
+  const steps = useFormSteps(2);
 
   const chain = chainOf(network);
   const validQuote = bankId.trim() && amount.trim() && Number(amount) > 0;
@@ -840,7 +889,7 @@ function NewPayoutModal({ bp, orgId, env, onClose, onDone }) {
       bank_account_id: bankId.trim(), currency_type: currencyType, cover_fees: coverFees === "yes",
       request_amount: Math.round(Number(amount)), network, token,
     })
-      .then((qt) => setQuote(qt))
+      .then((qt) => { setQuote(qt || null); if (qt) steps.next(); })
       .catch((err) => showToast((err && err.message) || o.quoteError, "error"))
       .finally(() => setBusy(false));
   };
@@ -875,56 +924,49 @@ function NewPayoutModal({ bp, orgId, env, onClose, onDone }) {
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <p>{m.desc}</p>
-        <Field label={m.bankId} hint={m.bankIdHint} value={bankId} onChange={(e) => { setBankId(e.target.value); setQuote(null); setAuthTx(null); }} placeholder="clz9x… / ba_…" autoFocus />
-        <Sel label={m.network} value={network} onChange={(v) => { setNetwork(v); setQuote(null); setAuthTx(null); }} options={PAYOUT_NETWORKS} />
-        <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); }} options={TOKENS} />
-        <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
-        <Sel label={m.coverFees} value={coverFees} onChange={(v) => { setCoverFees(v); setQuote(null); }} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
-        <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); }} placeholder="10000" inputMode="numeric" />
-        <div className="paylink-actions" style={{ marginBottom: 12 }}>
-          <button className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{m.getQuote}</button>
-        </div>
-
-        {quote && (
-          <>
+        <FormSteps names={[m.steps.quote, m.steps.sign]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <Field label={m.bankId} hint={m.bankIdHint} value={bankId} onChange={(e) => { setBankId(e.target.value); setQuote(null); setAuthTx(null); }} placeholder="clz9x… / ba_…" autoFocus />
+            <Sel label={m.network} value={network} onChange={(v) => { setNetwork(v); setQuote(null); setAuthTx(null); }} options={PAYOUT_NETWORKS} />
+            <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); setAuthTx(null); }} options={TOKENS} />
+            <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); setAuthTx(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
+            <Sel label={m.coverFees} value={coverFees} onChange={(v) => { setCoverFees(v); setQuote(null); setAuthTx(null); }} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
+            <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); setAuthTx(null); }} placeholder="10000" inputMode="numeric" />
+            <div className="paylink-actions" style={{ marginBottom: 12 }}>
+              <button type="button" className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{m.getQuote}</button>
+            </div>
+          </>)}
+          {steps.step === 1 && quote && (<>
             <div className="paylink-fields" style={{ marginBottom: 12 }}>
               <CopyField label={m.quoteId} value={quote.id} />
               {quote.sender_amount != null && <CopyField label={m.youSend} value={String(quote.sender_amount)} />}
               {quote.receiver_local_amount != null && <CopyField label={m.youReceive} value={String(quote.receiver_local_amount)} />}
               {quote.expires_at != null && <CopyField label={m.expires} value={fmtDateTime(quote.expires_at * 1000)} />}
             </div>
-            <Field label={m.senderWallet} hint={m.senderWalletHint} value={senderWallet} onChange={(e) => setSenderWallet(e.target.value)} placeholder="G… / 0x…" />
-
+            <Field label={m.senderWallet} hint={m.senderWalletHint} value={senderWallet} onChange={(e) => { setSenderWallet(e.target.value); setAuthTx(null); setSigned(""); }} placeholder="G… / 0x…" />
             {isStellarLike ? (
               <>
                 <div className="paylink-actions" style={{ marginBottom: 12 }}>
-                  <button className="btn btn-soft btn-sm" disabled={!validWallet || busy} onClick={authorize}>{m.authorize}</button>
+                  <button type="button" className="btn btn-soft btn-sm" disabled={!validWallet || busy} onClick={authorize}>{m.authorize}</button>
                 </div>
                 {authTx && <CopyBlock label={m.unsignedTx} value={authTx} />}
                 {authTx && (
                   <div className="paylink-block">
-                    <div className="paylink-block-head"><label className="field-l">{m.signedTx}</label></div>
+                    <div className="paylink-block-head"><label className="field-l" htmlFor="bp-signed">{m.signedTx}</label></div>
                     <p className="field-note">{m.signedTxHint}</p>
-                    <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={m.signedTxPlaceholder} />
+                    <textarea id="bp-signed" className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={m.signedTxPlaceholder} />
                   </div>
                 )}
-                <div className="modal-actions">
-                  <button className="btn btn-violet" disabled={!authTx || !signed.trim() || busy} onClick={createPayout}>{busy ? m.creating : m.create}</button>
-                  <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-                </div>
               </>
-            ) : (
-              <>
-                <p className="field-note">{m.evmNote}</p>
-                <div className="modal-actions">
-                  <button className="btn btn-violet" disabled={!validWallet || busy} onClick={createPayout}>{busy ? m.creating : m.create}</button>
-                  <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-                </div>
-              </>
-            )}
-          </>
-        )}
+            ) : <p className="field-note">{m.evmNote}</p>}
+          </>)}
+        </FormStep>
+        <FormStepsFooter
+          steps={steps} canNext={!!quote} onCancel={onClose} busy={busy}
+          submitLabel={busy ? m.creating : m.create} onSubmit={createPayout}
+          submitDisabled={isStellarLike ? !authTx || !signed.trim() : !validWallet}
+        />
       </div>
     </Modal>
   );

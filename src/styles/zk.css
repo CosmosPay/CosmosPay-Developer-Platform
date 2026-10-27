@@ -1,0 +1,44 @@
+/* The private checkout (payments.cosmospay.lat/zk/{id}; the merchant's confidential account is a
+   panel in the dashboard's private payments view). One centred card on the institutional skin, the dashboard's shapes
+   (20px card, 12px fields, pill buttons), solid colours only. */
+.zk-page { min-height: calc(100vh - 140px); display: grid; place-items: start center; padding: 48px 16px 64px; }
+.zk-card {
+  width: min(460px, 100%); display: flex; flex-direction: column; gap: 16px; padding: 28px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 20px; color: var(--ink);
+  animation: zkIn .32s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes zkIn { from { opacity: 0; transform: translateY(8px); } }
+.zk-title { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.zk-desc, .zk-muted { margin: 0; font-size: 14px; color: var(--ink-3); }
+.zk-amount { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 16px; background: var(--surface-2); }
+.zk-amount span { font-size: 13px; color: var(--ink-3); }
+.zk-amount b { font-size: 30px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.zk-rows { margin: 0; display: flex; flex-direction: column; }
+.zk-rows > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.zk-rows > div:last-child { border-bottom: 0; }
+.zk-rows dt { color: var(--ink-3); }
+.zk-rows dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.zk-mono { font-family: var(--ff-mono); font-size: 12.5px; }
+.zk-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.zk-step { display: grid; grid-template-columns: 14px 1fr; align-items: center; column-gap: 10px; font-size: 14px; color: var(--ink-3); transition: color .2s ease; }
+.zk-step-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--line-2); transition: background-color .2s ease, border-color .2s ease, transform .2s ease; }
+.zk-step.is-active { color: var(--ink); font-weight: 600; }
+.zk-step.is-active .zk-step-dot { border-color: var(--ink); animation: zkPulse 1s ease-in-out infinite; }
+.zk-step.is-done, .zk-step.is-skipped { color: var(--ink-2); }
+.zk-step.is-done .zk-step-dot { background: var(--ink); border-color: var(--ink); }
+.zk-step.is-skipped .zk-step-dot { border-style: dashed; }
+@keyframes zkPulse { 50% { transform: scale(1.35); } }
+.zk-step .zk-phase { grid-column: 2; }
+.zk-phase { margin: 0; font-size: 12.5px; font-weight: 400; color: var(--ink-3); }
+.zk-cta { width: 100%; min-height: 48px; justify-content: center; font-size: 15px; }
+.zk-msg { margin: 0; font-size: 14px; color: var(--ink-2); }
+.zk-error { margin: 0; font-size: 14px; color: #D64545; }
+[data-theme="dark"] .zk-error { color: #FF8A8A; }
+.zk-done { display: flex; flex-direction: column; gap: 6px; }
+.zk-done b { font-size: 18px; color: #1F9D55; }
+.zk-done p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.zk-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.zk-links a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.zk-skel { height: 18px; border-radius: 6px; background: var(--line); animation: zkPulseBg 1.2s ease-in-out infinite; }
+.zk-skel.short { width: 60%; }
+@keyframes zkPulseBg { 50% { opacity: .55; } }

@@ -20,7 +20,6 @@ export function NotificationsMenu({ items, loading, error, unread = 0, onOpen, o
           <div className="notif-head">{nt.title}</div>
           {error && <div className="notif-empty">{nt.loadError}</div>}
           {!error && loading && <div className="notif-empty">…</div>}
-          {!error && !loading && !list.length && <div className="notif-empty">{nt.empty}</div>}
           {!error && list.map((n) => (
             <div className="notif-item" key={n.id}>
               <div className="notif-title">{(nt.types && nt.types[n.type]) || n.title}</div>
@@ -29,7 +28,7 @@ export function NotificationsMenu({ items, loading, error, unread = 0, onOpen, o
               {(notifIp(n) || deviceLabel(n)) && <div className="notif-meta">{[notifIp(n), deviceLabel(n)].filter(Boolean).join(" · ")}</div>}
             </div>
           ))}
-          {onViewAll && (items && items.length > 0) && (
+          {onViewAll && (
             <button className="notif-all" onClick={() => { setOpen(false); onViewAll(); }}>{nt.viewAll}</button>
           )}
         </div>

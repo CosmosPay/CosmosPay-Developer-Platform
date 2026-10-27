@@ -16,8 +16,8 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
       // { i: 2, href: "#" }, // Payouts (no page yet)
       // { i: 3, href: "#" }, // Anchors (no page yet)
       // { i: 4, href: "#" }, // Wallets (no page yet)
-      { i: 5, href: `${PAYMENTS}/#integrations` }, // Checkout
-      { i: 6, href: `${PAYMENTS}/#integration` }, // Payment Links
+      { i: 5, href: `${PAYMENTS}/integrations` }, // Checkout
+      { i: 6, href: `${PAYMENTS}/integrations` }, // Payment Links
       { i: 7, href: PRICING }, // Pricing
     ],
   },
@@ -80,8 +80,11 @@ export function Footer({ area }: { area?: Area } = {}) {
             const grp = t.footer.groups[g.key];
             return (
               <div className="foot-col" key={g.key}>
-                <h5>{grp.title}</h5>
-                {g.links.map(({ i, href }) => <a href={href === PRICING ? pricingFor(area) : localHref(href, area)} key={i}>{grp.links[i]}</a>)}
+                {/* h2: the footer's groups come after the page's own content, whose sections are h2 */}
+                <h2 className="foot-h" id={`foot-${g.key}`}>{grp.title}</h2>
+                <ul role="list" aria-labelledby={`foot-${g.key}`}>
+                  {g.links.map(({ i, href }) => <li key={i}><a href={href === PRICING ? pricingFor(area) : localHref(href, area)}>{grp.links[i]}</a></li>)}
+                </ul>
               </div>
             );
           })}

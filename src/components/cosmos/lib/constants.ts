@@ -35,6 +35,8 @@ export type Area = "site" | "dev" | "payments";
  * gateway for the company site. Elsewhere the link is returned as given. */
 export function localHref(href: string, area?: Area): string {
   if (area === "payments" && (href === PAYMENTS || href.startsWith(`${PAYMENTS}/`))) return href.slice(PAYMENTS.length) || "/";
+  // The public swaps exist on the company site too (src/pages/site/swaps.astro): there they stay local.
+  if (area === "site" && href === `${PAYMENTS}/swaps`) return "/swaps";
   return href;
 }
 
@@ -43,9 +45,9 @@ export function homeFor(area?: Area): string {
   return area === "payments" ? "/" : HOME;
 }
 
-/** Pricing: the gateway's own pricing section on payments, the pricing page elsewhere. */
+/** Pricing: the gateway's own pricing page on payments (/fees), the company's elsewhere. */
 export function pricingFor(area?: Area): string {
-  return area === "payments" ? "/#pricing" : PRICING;
+  return area === "payments" ? "/fees" : PRICING;
 }
 
 /** The platform's sign-in, landing on `next` (a path on the platform) afterwards. */

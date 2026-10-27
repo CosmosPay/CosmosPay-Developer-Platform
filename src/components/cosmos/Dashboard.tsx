@@ -1,31 +1,35 @@
 /* Dashboard.jsx: Cosmos Pay developer dashboard shell. Ported from the Design bundle.
    Auth/profile are real (Authentik session passed in via props); data is mock.
    All UI copy comes from the i18n catalog (useT). */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ConfirmModal, useTheme, showToast,
   startTracking, setTrackEnv, track, trackView,
 } from "@/components/cosmos/shared";
 import { Nav } from "@/components/cosmos/layout/Nav";
+import { SegThumb } from "@/components/cosmos/dashboard/components/SegThumb";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi } from "@/lib/api-client";
 import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { SIDE, STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY } from "@/components/cosmos/dashboard/data";
+import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS, RECORD_VIEWS } from "@/components/cosmos/dashboard/data";
+import { OPEN_RECORD_EVENT, FILTERS_EVENT } from "@/components/cosmos/dashboard/hooks";
 import {
-  OverviewView, PaymentsView, BalancesView, CustomersView, ProductsView, SwapsView, CrossChainSwapsView, LiquidityView, BlindPayView,
+  OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, ZkAccountsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
 import { OrgSwitcher } from "@/components/cosmos/dashboard/widgets/OrgSwitcher";
-import { EnvSwitcher } from "@/components/cosmos/dashboard/widgets/EnvSwitcher";
-import { ProfileMenu } from "@/components/cosmos/dashboard/widgets/ProfileMenu";
-import { NotificationsMenu } from "@/components/cosmos/dashboard/widgets/NotificationsMenu";
+import { Sidebar } from "@/components/cosmos/dashboard/widgets/Sidebar";
+import { DashSearch } from "@/components/cosmos/dashboard/widgets/DashSearch";
+import { tierOf } from "@/lib/chains";
+import { DOCS } from "@/components/cosmos/lib/constants";
+import { parseUsage, quickLinks, recordUse } from "@/lib/dashboard-usage";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
-export default function Dashboard({ user: initialUser, lang, features }) {
+export default function Dashboard({ user: initialUser, lang, features, env = "dev", orgs: initialOrgs = null, orgId: initialOrgId = null, view: initialView = null, id: initialRecordId = null }) {
   initLang(lang);
   const t = useT();
   // Plan/onboarding feature flags resolved server-side (per account role). Defaults
@@ -49,47 +53,128 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       return res;
     });
   const [theme, setTheme] = useTheme();
-  const [view, setView] = useState("overview");
-  // Allow deep-linking a view via ?view= (e.g. the nav "Account settings" → ?view=settings).
-  useEffect(() => {
-    try {
-      const v = new URLSearchParams(window.location.search).get("view");
-      if (v && t.dash.viewLabels[v]) setView(v);
-    } catch (e) {}
-  }, []);
-  // Keep the URL in sync with the active view so a reload restores it (no more snapping back to Overview).
+  // The view a link names (?view=, read by the page on the server): the first render is already
+  // that view, so the overview never mounts and fetches only to be replaced.
+  const [view, setView] = useState(() => (initialView && t.dash.viewLabels[initialView] && !DISABLED_VIEWS.includes(initialView) ? initialView : "overview"));
+  // A record on a view of its own (RECORD_VIEWS: a payment) carries its id, from the page's
+  // address on load, then from openRecord.
+  const [recordId, setRecordId] = useState(initialRecordId);
+  // Every move between views is a history entry of its own (product owner: the mouse's Back
+  // returns to the previous view, not out of the dashboard). `navigate` writes the new address at
+  // once (pushState, marked `dash`), before anything adds the new view's filters to it, so each
+  // entry keeps its own filters; Back and Forward restore the view and record the address names,
+  // and a list already on screen re-reads its filters. The address the page opened at is only
+  // tidied (its view, if it named one that does not exist).
+  const current = useRef({ view, recordId });
+  current.current = { view, recordId };
+  const addressOf = (v, id) => {
+    const url = new URL(window.location.href);
+    url.search = "";
+    if (v !== "overview") url.searchParams.set("view", v);
+    if (RECORD_VIEWS[v] && id) url.searchParams.set("id", id);
+    return url;
+  };
+  const navigate = (v, id = null) => {
+    const same = v === current.current.view && (id || null) === (current.current.recordId || null);
+    try { if (!same) window.history.pushState({ dash: true }, "", addressOf(v, id)); } catch (e) {}
+    setRecordId(id || null);
+    setView(v);
+    setNavOpen(false);
+  };
   useEffect(() => {
     try {
       const url = new URL(window.location.href);
-      if (view === "overview") url.searchParams.delete("view");
-      else url.searchParams.set("view", view);
-      window.history.replaceState({}, "", url);
+      const want = view === "overview" ? null : view;
+      if (url.searchParams.get("view") !== want) {
+        if (want) url.searchParams.set("view", want); else url.searchParams.delete("view");
+        window.history.replaceState(window.history.state, "", url);
+      }
     } catch (e) {}
-  }, [view]);
-  const [live, setLive] = useState(false);
+  }, []);
+  useEffect(() => {
+    const onPop = () => {
+      const sp = new URLSearchParams(window.location.search);
+      const asked = sp.get("view") || "overview";
+      const v = t.dash.viewLabels[asked] && !DISABLED_VIEWS.includes(asked) ? asked : "overview";
+      setRecordId(RECORD_VIEWS[v] ? sp.get("id") : null);
+      setView(v);
+      setAdminFilter(null);
+      window.dispatchEvent(new Event(FILTERS_EVENT));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  // openRecord(view, id) from any view or widget: that record's view, as a new history entry.
+  useEffect(() => {
+    const onOpen = (e) => {
+      const { view: v, id } = (e && e.detail) || {};
+      if (RECORD_VIEWS[v] && id) navigate(v, id);
+    };
+    window.addEventListener(OPEN_RECORD_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_RECORD_EVENT, onOpen);
+  }, []);
+  // A record's back button: the entry before it when the dashboard made it, else its list.
+  const goBack = () => {
+    if (window.history.state && window.history.state.dash) window.history.back();
+    else navigate(RECORD_VIEWS[view] || "overview");
+  };
+  // Sandbox or production survives a reload: a cookie the page reads on the server, so the first
+  // render already shows the chosen environment (no sandbox flash, no second fetch).
+  const [live, setLive] = useState(env === "prod");
+  const chooseEnv = (next) => {
+    setLive(next);
+    try { document.cookie = `cosmospay-env=${next ? "prod" : "dev"};path=/;max-age=31536000;samesite=lax`; } catch (e) {}
+  };
   // Activity tracking. `startTracking` also wires the uncaught-error and rejected-
   // promise handlers, which is why it runs from the shell rather than from the
   // first view that happens to want an event.
   useEffect(() => { startTracking(live ? "prod" : "dev"); track("dashboard.open", { category: "lifecycle" }); }, []);
   useEffect(() => { setTrackEnv(live ? "prod" : "dev"); }, [live]);
   useEffect(() => { trackView(view); }, [view]);
-  const [collapsed, setCollapsed] = useState(false);
+  // What this person opens, for the overview's quick links (src/lib/dashboard-usage.ts): kept in
+  // this browser per account, read after mount so the first render matches the server's. The ref
+  // makes a use stored at once (a click on the docs leaves the page before a re-render).
+  const usageKey = `cosmospay-usage:${initialUser.id}`;
+  const [usage, setUsage] = useState({});
+  const usageRef = useRef({});
+  const noteUse = (key) => {
+    const next = recordUse(usageRef.current, key);
+    if (next === usageRef.current) return;
+    usageRef.current = next;
+    try { localStorage.setItem(usageKey, JSON.stringify(next)); } catch (e) {}
+    setUsage(next);
+  };
+  useEffect(() => {
+    try { usageRef.current = parseUsage(localStorage.getItem(usageKey)); } catch (e) {}
+    setUsage(usageRef.current);
+  }, []);
+  useEffect(() => { noteUse(view); }, [view]);
   const [navOpen, setNavOpen] = useState(false);
-  // Real organizations (API-backed). The active org is persisted to localStorage.
-  const [orgs, setOrgs] = useState([]);
-  const [curOrg, setCurOrg] = useState(null);
+  // The organizations arrive with the page (dashboard.astro), with the one last picked (the
+  // `cosmospay-org` cookie), so every view's first requests already name it. The list is read
+  // again after a change (create, delete) or when the page came without it.
+  const [orgs, setOrgs] = useState(initialOrgs || []);
+  const [curOrg, setCurOrg] = useState(initialOrgId || (initialOrgs && initialOrgs[0] ? initialOrgs[0].id : null));
   const loadOrgs = (preferId) => orgsApi.list().then((d) => {
     const list = Array.isArray(d) ? d : [];
     setOrgs(list);
     setCurOrg((cur) => {
-      let want = preferId || cur;
-      if (!want) { try { want = localStorage.getItem("cosmospay-org"); } catch (e) {} }
+      const want = preferId || cur;
       const pick = list.find((o) => o.id === want) || list[0] || null;
       return pick ? pick.id : null;
     });
   }).catch(() => showToast(t.dash.orgs.loadError, "error"));
-  useEffect(() => { loadOrgs(); }, []);
-  useEffect(() => { try { if (curOrg) localStorage.setItem("cosmospay-org", curOrg); } catch (e) {} }, [curOrg]);
+  useEffect(() => {
+    if (!initialOrgs) { loadOrgs(); return; }
+    // The pick used to live in this browser's storage: honour it once, then the cookie carries it.
+    if (initialOrgId) return;
+    try {
+      const old = localStorage.getItem("cosmospay-org");
+      if (old && initialOrgs.some((o) => o.id === old)) setCurOrg(old);
+      localStorage.removeItem("cosmospay-org");
+    } catch (e) {}
+  }, []);
+  useEffect(() => { try { if (curOrg) document.cookie = `cosmospay-org=${encodeURIComponent(curOrg)};path=/;max-age=31536000;samesite=lax`; } catch (e) {} }, [curOrg]);
   // Real API keys (APISIX-backed), fetched from the developer API, not mocked.
   const [keys, setKeys] = useState([]);
   const [keysLoading, setKeysLoading] = useState(true);
@@ -122,26 +207,43 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       .finally(() => setNotifsLoading(false));
   };
   useEffect(() => {
-    loadNotifs();
     // Poll while visible so staff replies (and other server-emitted notifications) reach the bell.
+    // The first read is part of the shell's load below.
     const id = setInterval(() => { if (!document.hidden) loadNotifs(); }, 20000);
     return () => clearInterval(id);
   }, []);
   // The server emits notifications asynchronously after key actions, so refetch shortly after.
   const refreshNotifsSoon = () => { setTimeout(loadNotifs, 900); };
-  // Payment notifications are tagged with their Stellar network; surface only those
-  // matching the active environment (test → testnet, live → public). Notifications
-  // without a network (sign-ins, API keys, support) always show.
+  // Payment notifications are tagged with their network (on any chain); surface only those
+  // matching the active environment (test networks in Sandbox, mainnets in Production).
+  // Notifications without a network (sign-ins, API keys, support) always show.
   const curNet = live ? "public" : "testnet";
-  const visibleNotifs = notifs.filter((n) => { const net = n && n.metadata && n.metadata.network; return !net || net === curNet; });
+  const visibleNotifs = notifs.filter((n) => { const net = n && n.metadata && n.metadata.network; return !net || tierOf(net) === curNet; });
   const unreadNotifs = visibleNotifs.filter((n) => !n.read).length;
   const markNotifsRead = () => {
     if (!unreadNotifs) return;
     setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
     notificationsApi.markRead().catch(() => {});
   };
+  useEffect(() => { if (view === "activity") markNotifsRead(); }, [view, unreadNotifs]);
+  // The sidebar opens over the page on a phone: Escape closes it.
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e) => { if (e.key === "Escape") setNavOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [navOpen]);
   const isStaff = STAFF_ROLES.includes(user && user.role);
   const isManager = MANAGER_ROLES.includes(user && user.role);
+  // A view this account may not open (staff, managers or owners only) falls back to the overview,
+  // and so do its address and title, not only its content.
+  useEffect(() => {
+    const allowed = (isStaff || !STAFF_ONLY.includes(view)) && (isManager || !MANAGER_ONLY.includes(view)) && (isManager || !OWNER_ONLY.includes(view));
+    if (allowed) return;
+    try { window.history.replaceState(window.history.state, "", addressOf("overview")); } catch (e) {}
+    setRecordId(null);
+    setView("overview");
+  }, [view, isStaff, isManager]);
   // Mock billing plan (changeable in Settings). Limits drive the real restrictions.
   const [plan, setPlan] = useState((user && user.plan) || DEFAULT_PLAN_ID);
   const limits = planLimits(plan);
@@ -185,6 +287,10 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   const canCreateKeys = live
     ? (can("apiKeysLive:create") && orgLimits.allowLive)
     : can("apiKeysTest:create");
+  // Production on a plan without live keys: the button would vanish without a word, so the page says why.
+  const liveKeysLocked = live && can("apiKeysLive:create") && !orgLimits.allowLive;
+  // The keys go by the organization owner's plan: only that owner can lift the limit.
+  const keyUpgrade = canChangePlan && org.role === "owner" ? () => setModal("plan") : null;
   const canEditKeys = can("apiKeysTest:edit") || can("apiKeysLive:edit");
   const canDeleteKeys = can("apiKeysTest:delete") || can("apiKeysLive:delete");
   const keysSorted = keys.slice().sort(byAge);
@@ -253,21 +359,34 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   // Cross-organization drill-down filter for the platform-admin views. Sidebar
   // navigation (go) always clears it; only goToAdmin sets it.
   const [adminFilter, setAdminFilter] = useState(null); // { consumer, label, tab? } | null
-  const go = (v) => { setView(v); setAdminFilter(null); setNavOpen(false); };
-  const goToAdmin = (v, filter = null) => { setView(v); setAdminFilter(filter); setNavOpen(false); };
+  // A view's address starts with no filters: `navigate` writes it fresh, as a history entry.
+  const go = (v) => { navigate(v); setAdminFilter(null); };
+  const goToAdmin = (v, filter = null) => { navigate(v); setAdminFilter(filter); };
 
   // Pending invitations addressed to my email, surfaced as a banner so I can join from
   // inside the dashboard (in addition to the emailed magic link).
   const [myInvites, setMyInvites] = useState([]);
-  const loadMyInvites = () => { invitesApi.mine().then((d) => setMyInvites(Array.isArray(d) ? d : [])).catch(() => {}); };
-  useEffect(() => { loadMyInvites(); }, []);
 
   // Unread support replies → a dot on the sidebar "Support" item. Polled while the tab is
   // visible; cleared when the user opens the relevant ticket (the read flag drops it).
   const [supportUnread, setSupportUnread] = useState(0);
+  // The shell's own data comes in one go (product owner: never request after request): the
+  // notifications, the invitations addressed to me and support's unread count together. One that
+  // fails never holds back the others (allSettled); each then polls on its own.
+  useEffect(() => {
+    Promise.allSettled([notificationsApi.list(), invitesApi.mine(), supportApi.unread()]).then(([n, i, u]) => {
+      if (n.status === "fulfilled") { setNotifs(Array.isArray(n.value) ? n.value : []); setNotifsError(false); } else setNotifsError(true);
+      setNotifsLoading(false);
+      if (i.status === "fulfilled") setMyInvites(Array.isArray(i.value) ? i.value : []);
+      if (u.status === "fulfilled") setSupportUnread((u.value && u.value.count) || 0);
+    });
+  }, []);
+  // Read again on every other view (opening a ticket clears its reply) and while visible.
+  const firstUnread = useRef(true);
   useEffect(() => {
     const load = () => { supportApi.unread().then((d) => setSupportUnread((d && d.count) || 0)).catch(() => {}); };
-    load();
+    if (firstUnread.current) firstUnread.current = false;
+    else load();
     const id = setInterval(() => { if (!document.hidden) load(); }, 15000);
     const onVis = () => { if (!document.hidden) load(); };
     document.addEventListener("visibilitychange", onVis);
@@ -280,66 +399,101 @@ export default function Dashboard({ user: initialUser, lang, features }) {
   };
 
   const renderView = () => {
+    // The quick links: the views this person opens most (that they may open), else the defaults.
+    const quick = quickLinks(usage, (k) => k === "docs" || (!!t.dash.viewLabels[k] && visibleView(k))).map((k) => (k === "docs"
+      ? { key: k, label: t.dash.overview.hub.docs, icon: DI.docs, href: DOCS }
+      : { key: k, label: t.dash.viewLabels[k], icon: DI[k] || DI.overview, href: `/dashboard?view=${k}` }));
+    const overview = <OverviewView org={org} orgs={usableOrgs} onSwitchOrg={setCurOrg} onGo={go} canCreatePayments={can("payments:create")} env={live ? "prod" : "dev"} quick={quick} onQuickUse={noteUse} />;
     switch (view) {
-      case "payments": return <PaymentsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} />;
-      case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "products": return <ProductsView canManage={can("products:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "swaps": return <SwapsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "crossChainSwaps": return <CrossChainSwapsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "liquidity": return <LiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      // A payment on its own view; without an id, its list.
+      case "payment": return recordId
+        ? <PaymentRecordView id={recordId} env={live ? "prod" : "dev"} canManage={can("payments:create")} onBack={goBack} />
+        : <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "payments": return <PaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} onGo={go} />;
+      case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
+      case "products": return <ProductsView canManage={can("products:create")} canSell={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
+      case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "zkAccounts": return <ZkAccountsView canAdd={can("customers:create")} canRemove={can("customers:edit")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
+      // Swaps between chains live in the swaps list; the old deep link opens it filtered to them.
+      case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "liquidity": return <LiquidityView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
-      case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
+      case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;
-      case "weblogs": return <LogsView kind="webhooks" env={live ? "prod" : "dev"} />;
+      case "weblogs": return <LogsView kind="webhooks" env={live ? "prod" : "dev"} orgId={org.id} canManage={can("webhooks:create")} />;
       case "activityLog": return <ActivityLogView env={live ? "prod" : "dev"} />;
-      case "activity": return <NotificationsView notifications={visibleNotifs} loading={notifsLoading} error={notifsError} />;
+      case "activity": return <NotificationsView notifications={visibleNotifs} loading={notifsLoading} error={notifsError} onGo={go} />;
       case "support": return <SupportView />;
-      case "inbox": return isStaff ? <SupportInboxView /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "users": return isManager ? <UsersView currentUserId={user.id} currentRole={user.role} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminOverview": return isManager ? <AdminOverviewView env={live ? "prod" : "dev"} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminPayments": return isManager ? <AdminPaymentsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminSwaps": return isManager ? <AdminSwapsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminFiat": return isManager ? <AdminFiatView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
-      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
+      case "inbox": return isStaff ? <SupportInboxView /> : overview;
+      case "users": return isManager ? <UsersView currentUserId={user.id} currentRole={user.role} /> : overview;
+      case "adminOverview": return isManager ? <AdminOverviewView env={live ? "prod" : "dev"} goToAdmin={goToAdmin} /> : overview;
+      case "adminPayments": return isManager ? <AdminPaymentsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminSwaps": return isManager ? <AdminSwapsView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminFiat": return isManager ? <AdminFiatView env={live ? "prod" : "dev"} adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
+      case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : overview;
+      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} env={live ? "prod" : "dev"} meId={user?.id} walletPerms={{ create: can("wallets:create"), edit: can("wallets:edit"), remove: can("wallets:delete") }} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
       case "account": return <AccountView user={user} theme={theme} setTheme={setTheme} planId={plan} limits={limits} orgCount={orgs.length} onChangePlan={canChangePlan ? () => setModal("plan") : null} plansEnabled={feat.plansEnabled} onSaveProfile={saveProfile} />;
-      default: return <OverviewView org={org} notifications={visibleNotifs} onViewActivity={() => go("activity")} onGo={go} env={live ? "prod" : "dev"} />;
+      default: return overview;
     }
   };
 
-  return (
-    <>
-    {/* The general nav, as on every view: theme, language and the account menu live there. */}
-    <Nav theme={theme} setTheme={setTheme} user={user} sessionReady />
-    <div className={`dash${collapsed ? " collapsed" : ""}${navOpen ? " nav-open" : ""}`}>
-      <div className="nav-scrim" onClick={() => setNavOpen(false)} />
-      <aside className="side">
-        <div className="side-top">
-          <div className="side-brand-row">
-            <button className="collapse-btn" title={t.dash.sidebar.collapse} aria-label={t.dash.sidebar.collapse} onClick={() => setCollapsed((c) => !c)}>{DI.collapse}</button>
-          </div>
-          <OrgSwitcher orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} />
-          <EnvSwitcher live={live} setLive={setLive} />
-        </div>
-        <nav className="side-nav">
-          {SIDE.map((g) => { const items = g.items.filter((k) => (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k))); if (!items.length) return null; return (<div key={g.sec}><div className="side-sec lbl">{t.dash.sidebar.sections[g.sec]}</div>{items.map((k) => (<div key={k} role="button" tabIndex={0} aria-current={view === k ? "page" : undefined} aria-label={t.dash.sidebar.items[k]} className={`side-link${view === k ? " active" : ""}`} title={t.dash.sidebar.items[k]} onClick={() => go(k)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(k); } }}>{DI[k]}<span className="lbl">{t.dash.sidebar.items[k]}</span>{k === "support" && supportUnread > 0 && <span className="side-dot" />}{k === "activity" && unreadNotifs > 0 && <span className="side-count lbl">{unreadNotifs}</span>}</div>))}</div>); })}
-        </nav>
-        <ProfileMenu user={user} onAccount={() => go("account")} />
-      </aside>
+  // What this viewer's role may see in the sidebar.
+  const visibleView = (k) => !DISABLED_VIEWS.includes(k) && (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k));
 
-      <div className="dash-main">
-        <header className="topbar">
-          <button className="icon-btn burger" title={t.nav.menu} aria-label={t.nav.menu} onClick={() => setNavOpen(true)}>{DI.menu}</button>
-          <h1 className="page-title">{t.dash.viewLabels[view]}<span className="page-crumb" aria-hidden="true">→</span><span className="page-org">{org.name}</span></h1>
-          <div className="search">{DI.search}<input placeholder={t.dash.topbar.search} aria-label={t.dash.topbar.search} /></div>
-          <div className="top-actions">
-            <NotificationsMenu items={visibleNotifs} loading={notifsLoading} error={notifsError} unread={unreadNotifs} onOpen={markNotifsRead} onViewAll={() => go("activity")} />
+  return (
+    <div className={`dash${navOpen ? " nav-open" : ""}`}>
+      {/* The product owner's gateway-dashboard reference: the whole dashboard is one white frame on
+          the canvas, the sidebar (logo, main menu, preferences) on its left. */}
+      <div className="dash-frame">
+        <div className="nav-scrim" onClick={() => setNavOpen(false)} />
+        <aside className="side" id="dash-side">
+          <Sidebar view={view === "crossChainSwaps" ? "swaps" : RECORD_VIEWS[view] || view} go={go} visible={visibleView} unread={unreadNotifs} supportUnread={supportUnread} />
+        </aside>
+
+        <div className="dash-main">
+          {/* The general nav, as on every view, adapted to the frame (Nav inDash). */}
+          <Nav theme={theme} setTheme={setTheme} user={user} sessionReady inDash onAccount={() => go("account")} search={<DashSearch go={go} view={view} visible={visibleView} />} />
+          {/* The page head opens the main landmark (the nav above is the page banner), so the
+              view's h1 and the environment switch belong to the content they title. */}
+          <main id="main" className="dash-content">
+          <div className="topbar">
+            <button type="button" className="icon-btn burger" aria-label={t.nav.menu} aria-expanded={navOpen} aria-controls="dash-side" onClick={() => setNavOpen(true)}>{DI.menu}</button>
+            <div className={RECORD_VIEWS[view] && recordId ? "page-title route" : "page-title"}>
+              {RECORD_VIEWS[view] && recordId ? (
+                // A record's head is its route (product owner): back, its list (a link), the record.
+                <>
+                  <button type="button" className="icon-btn page-back" onClick={goBack} aria-label={t.dash.common.back} title={t.dash.common.back}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+                  </button>
+                  <a
+                    className="page-route" href={`/dashboard?view=${RECORD_VIEWS[view]}`}
+                    onClick={(e) => { if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; e.preventDefault(); go(RECORD_VIEWS[view]); }}
+                  >{t.dash.viewLabels[RECORD_VIEWS[view]]}</a>
+                  <span className="page-crumb" aria-hidden="true">/</span>
+                  <h1 title={recordId}><span className="sr-only">{t.dash.viewLabels[view]} </span>{recordId.length > 14 ? `${recordId.slice(0, 6)}…${recordId.slice(-4)}` : recordId}</h1>
+                </>
+              ) : (
+                <>
+                  <h1>{t.dash.viewLabels[view]}</h1>
+                  <span className="page-crumb" aria-hidden="true">/</span>
+                  <OrgSwitcher variant="crumb" orgs={orgs} current={org} onSwitch={setCurOrg} onCreate={() => setModal("org")} lockedIds={lockedOrgIds} onUpgrade={canChangePlan ? () => setModal("plan") : null} />
+                </>
+              )}
+            </div>
+            <div className="top-actions">
+              <div className="env-seg" role="group" aria-label={t.dash.env.heading}>
+                <SegThumb on={`${live}:${t.dash.env.sandbox}`} />
+                <button type="button" aria-pressed={!live} onClick={() => chooseEnv(false)}>{t.dash.env.sandbox}</button>
+                <button type="button" aria-pressed={live} onClick={() => chooseEnv(true)}>{t.dash.env.production}</button>
+              </div>
+              <button type="button" className="btn btn-outline-w btn-sm top-add" onClick={() => setModal("org")}>{DI.plus}<span className="top-add-t">{t.dash.org.create}</span></button>
+            </div>
           </div>
-        </header>
         {myInvites.length > 0 && (
           <div className="invite-bar">
             {myInvites.map((iv) => (
@@ -354,10 +508,12 @@ export default function Dashboard({ user: initialUser, lang, features }) {
             ))}
           </div>
         )}
-        <main id="main" className="dash-body" key={view}>{renderView()}</main>
+          <div className="dash-body" key={view}>{renderView()}</div>
+          </main>
+        </div>
       </div>
 
-      {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} />}
+      {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} onUpgrade={canChangePlan ? () => setModal("plan") : null} />}
       {modal === "plan" && canChangePlan && <PlanModal current={plan} enabledPlans={feat.enabledPlans} onClose={() => setModal(null)} onSelect={requestChangePlan} />}
       {renamingOrg && <RenameOrgModal current={renamingOrg} onClose={() => setRenamingOrg(null)} onRename={(name) => requestRenameOrg(renamingOrg, name)} />}
       {modal === "key" && <ApiKeyModal mode="create" onClose={() => setModal(null)} onSubmit={addKey} />}
@@ -365,6 +521,5 @@ export default function Dashboard({ user: initialUser, lang, features }) {
       {reveal && <RevealKeyModal k={reveal} onClose={() => setReveal(null)} />}
       {confirm && <ConfirmModal title={confirm.title} body={confirm.body} confirmLabel={confirm.confirmLabel} cancelLabel={t.dash.common.cancel} onConfirm={confirm.onConfirm} onClose={() => setConfirm(null)} />}
     </div>
-    </>
   );
 }

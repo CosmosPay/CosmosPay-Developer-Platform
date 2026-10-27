@@ -1,0 +1,21 @@
+---
+// A call to action between two sections (multi-page home): the main button again at the point
+// a visitor may be ready, and a link onward for one who is still reading.
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+  /** The onward link: where to read more on this topic. */
+  more?: { href: string; label: string };
+  tone?: "bg" | "alt";
+}
+
+const { d, more, tone = "bg" } = Astro.props;
+---
+
+<div class:list={["pl-inline-cta", { "pl-section-alt": tone === "alt" }]}>
+  <div class="wrap pl-inline-cta-inner" data-reveal>
+    <a class="btn btn-dark" href={d.CREATE_LINK}>{d.t.hero.primary}</a>
+    {more && <a class="pl-textlink" href={more.href}>{more.label}</a>}
+  </div>
+</div>

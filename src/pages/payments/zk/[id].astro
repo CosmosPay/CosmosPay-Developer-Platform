@@ -1,0 +1,24 @@
+---
+/* /zk/{id}: the ZK checkout, where the payer pays a ZK payment privately. The HTML is a shell:
+ * the payment is read by the browser from the gateway (GET /v1/zk-checkout/{id}), never here,
+ * and paying (proofs, Freighter, the two confidential transfers) happens in the browser too.
+ * The middleware makes every /zk page cross-origin isolated, which bb.js's prover needs. */
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import { ZkCheckout } from "@/components/cosmos/zk/ZkCheckout";
+import { messages } from "@/lib/i18n/messages/index";
+import { API_BASE } from "@/lib/payments/urls";
+import "@/styles/zk.css";
+
+const { id } = Astro.params;
+if (!id || !/^[a-z0-9]{20,40}$/.test(id)) {
+  return Astro.rewrite("/404");
+}
+const lang = Astro.locals.lang ?? "en";
+const t = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
+---
+
+<PaymentsLayout title={t.zk.checkout.title} description={t.zk.checkout.paidBody}>
+  <main id="main" class="zk-page">
+    <ZkCheckout client:only="react" id={id} apiBase={API_BASE} lang={lang} />
+  </main>
+</PaymentsLayout>

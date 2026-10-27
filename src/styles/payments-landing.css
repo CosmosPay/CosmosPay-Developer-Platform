@@ -132,7 +132,7 @@
   mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 .pl-marquee-track { display: flex; width: max-content; animation: pl-marquee 46s linear infinite; }
-.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; animation-duration: 52s; }
+.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; }
 .pl-marquee-set { display: flex; align-items: center; gap: 52px; padding-right: 52px; }
 .pl-marquee:hover .pl-marquee-track { animation-play-state: paused; }
 @keyframes pl-marquee { to { translate: -50% 0; } }
@@ -141,6 +141,10 @@
   font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; color: var(--ink);
 }
 .pl-brand img, .pl-brand .pl-mark { width: 32px; height: 32px; flex: 0 0 auto; display: block; border-radius: 8px; object-fit: contain; }
+/* a brand with a mark per theme (Pollar): the light one on light pages, the dark one on dark */
+.pl-brand img.pl-brand-dark { display: none; }
+[data-theme="dark"] .pl-brand img.pl-brand-light { display: none; }
+[data-theme="dark"] .pl-brand img.pl-brand-dark { display: block; }
 
 /* ---- sections: tone steps, no rules between them ---- */
 .pl-section { padding: clamp(80px, 10vw, 136px) 0; background: var(--bg); }
@@ -435,7 +439,7 @@
   transition: border-color .2s, background-color .2s;
 }
 .pl-calc-amount:hover { border-color: var(--line-2); }
-.pl-calc-amount:focus-within { background: var(--surface); border-color: var(--ink); }
+.pl-calc-amount:focus-within { background: var(--surface); border-color: var(--ink); box-shadow: 0 0 0 3px var(--tertiary-soft); }
 .pl-calc-amount input {
   flex: 1; min-width: 0; padding: 0; border: 0; background: none; outline: none; appearance: textfield;
   font: inherit; font-size: 2rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums;
@@ -516,10 +520,53 @@
 .pl-faq-section { padding-bottom: clamp(56px, 7vw, 96px); }
 .pl-final-wrap { padding: 0 0 clamp(80px, 10vw, 136px); }
 .pl-final {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center;
-  border-radius: 28px; padding: clamp(40px, 6vw, 80px); background: var(--accent-soft);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(32px, 5vw, 64px); align-items: start;
+  border-radius: 28px; padding: clamp(28px, 5vw, 64px); background: var(--accent-soft);
 }
-.pl-final-art { width: clamp(180px, 20vw, 280px); }
+.pl-final-art { width: clamp(150px, 15vw, 220px); margin-top: clamp(28px, 4vw, 48px); }
+
+/* the contact form beside the final call: a white card, labelled fields on the canvas tone,
+   errors and the answer in words under them */
+.pl-contact { position: relative; background: var(--surface); border-radius: 20px; padding: clamp(22px, 3vw, 36px); }
+.pl-contact h3 { margin: 0; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; color: var(--ink); }
+.pl-final .pl-contact .pl-contact-lede { margin: 8px 0 0; font-size: .9375rem; line-height: 1.5; color: var(--ink-2); }
+.pl-contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin-top: 22px; }
+.pl-field { display: grid; gap: 6px; min-width: 0; align-content: start; }
+.pl-field-wide { grid-column: 1 / -1; }
+.pl-field label { font-size: .875rem; font-weight: 600; color: var(--ink); }
+.pl-field label small { font-size: inherit; font-weight: 500; color: var(--ink-3); }
+.pl-field :is(input, select, textarea) {
+  width: 100%; margin: 0; font: inherit; font-size: 1rem; line-height: 1.4; color: var(--ink);
+  background: var(--bg); border: 1px solid var(--line-2); border-radius: 12px; padding: 11px 14px;
+  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+.pl-field :is(input, select, textarea):hover { border-color: var(--ink-3); }
+.pl-field :is(input, select, textarea):focus { background: var(--surface); border-color: var(--ink); outline: none; }
+.pl-field :is(input, select, textarea):focus-visible { outline: none; box-shadow: 0 0 0 3px var(--tertiary-soft); }
+.pl-field textarea { min-height: 116px; resize: vertical; }
+.pl-field [aria-invalid="true"] { border-color: #C2362F; }
+/* the select draws its own chevron, so it looks like the other fields */
+.pl-select { position: relative; display: block; }
+.pl-select select { appearance: none; padding-right: 40px; cursor: pointer; }
+.pl-select::after {
+  content: ""; content: "" / ""; position: absolute; right: 17px; top: 50%; width: 7px; height: 7px;
+  border-right: 1.5px solid var(--ink-3); border-bottom: 1.5px solid var(--ink-3);
+  translate: 0 -70%; rotate: 45deg; pointer-events: none;
+}
+.pl-final .pl-contact .pl-field-error { margin: 0; font-size: .8125rem; font-weight: 500; line-height: 1.4; color: #C2362F; }
+.pl-contact-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 20px; }
+.pl-contact-foot .btn { min-height: 48px; padding: 12px 24px; }
+.pl-final .pl-contact .pl-contact-privacy { flex: 1 1 200px; margin: 0; font-size: .8125rem; line-height: 1.45; color: var(--ink-3); }
+.pl-final .pl-contact .pl-contact-status { margin: 0; font-size: .9375rem; font-weight: 600; line-height: 1.45; color: var(--ink); }
+.pl-final .pl-contact .pl-contact-status:not(:empty) { margin-top: 16px; }
+.pl-final .pl-contact .pl-contact-status[data-state="sent"] { color: var(--ok, #1F7A4D); }
+.pl-final .pl-contact .pl-contact-status:is([data-state="invalid"], [data-state="limited"], [data-state="failed"]) { color: #C2362F; }
+@media (max-width: 1000px) and (min-width: 721px) { .pl-contact-grid { grid-template-columns: 1fr; } }
+/* the honeypot: off screen for people, still in the form for scripts */
+.pl-contact-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+[data-theme="dark"] .pl-field [aria-invalid="true"] { border-color: #FF8A80; }
+[data-theme="dark"] .pl-final .pl-contact :is(.pl-field-error, .pl-contact-status:is([data-state="invalid"], [data-state="limited"], [data-state="failed"])) { color: #FF8A80; }
+[data-theme="dark"] .pl-final .pl-contact .pl-contact-status[data-state="sent"] { color: #6EE7A8; }
 
 /* ---- images: the brand's astronauts, 3D renders and photos ---- */
 /* Astronauts are black outline on white fill; inverted in dark mode like the logo marks. The
@@ -530,7 +577,6 @@
 .pl-head-art { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
 .pl-head-art h2 { max-width: 720px; }
 .pl-how-body { position: relative; }
-.pl-benefits-art { flex: 0 0 auto; width: clamp(110px, 12vw, 170px); margin: -40px 3% -36px 0; }
 /* the comparison's astronaut lies on the table's top edge */
 .pl-compare-art { flex: 0 0 auto; width: clamp(180px, 19vw, 260px); margin: 0 4% -62px 0; position: relative; z-index: 1; }
 .pl-faq-art { width: clamp(170px, 18vw, 250px); margin-top: 40px; }
@@ -777,12 +823,18 @@
 @keyframes pl-float { 50% { translate: 0 -10px; rotate: -2deg; } }
 @keyframes pl-bob { 50% { translate: 0 -9px; } }
 .pl-art { animation: pl-float 6s ease-in-out infinite; }
-.pl-benefits-art { animation-duration: 7s; animation-delay: -2s; }
 .pl-compare-art { animation: pl-bob 5s ease-in-out infinite; }
 .pl-faq-art { animation-duration: 8s; animation-delay: -1s; }
 .pl-3d {
   animation: pl-bob 5.5s ease-in-out infinite;
-  transition: scale .8s cubic-bezier(.3, 1.3, .5, 1) calc(var(--i, 0) * 80ms + .15s), opacity .6s ease calc(var(--i, 0) * 80ms + .15s);
+  transition: scale .8s cubic-bezier(.3, 1.3, .5, 1) calc(var(--i, 0) * 80ms + .15s), opacity .6s ease calc(var(--i, 0) * 80ms + .15s), filter .45s ease;
+}
+/* A 3D render answers the pointer itself (product owner): its clay takes a faint tertiary blue
+   and it leans in; the card around it does not change. A filter, so the render keeps its own
+   light and shade. The only blue effect on the page (the product owner kept it here alone). */
+.pl-3d { pointer-events: auto; }
+@media (hover: hover) {
+  .pl-3d:hover { filter: sepia(.45) hue-rotate(186deg) saturate(2.4); scale: 1.06; transition: filter .45s ease, scale .5s cubic-bezier(.3, 1.3, .5, 1); }
 }
 .pl-bento-card:nth-child(2) .pl-3d { animation-delay: -1.4s; }
 .pl-bento-card:nth-child(3) .pl-3d { animation-delay: -2.8s; }
@@ -916,6 +968,91 @@
 [data-theme="dark"] .pl-bento-card { transition: box-shadow .3s ease; }
 [data-theme="dark"] .pl-bento-card:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
 
+/* ---- multi-page layout (the gateway home and its content pages) ---- */
+/* the section navigation: a sticky row under the general nav, the current page underlined in
+   ink, the main call to action at its end */
+.pl-multi { --subnav-h: 56px; }
+.pl-subnav {
+  position: sticky; top: 73px; z-index: 40; height: var(--subnav-h);
+  background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.pl-subnav-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 100%; }
+.pl-subnav-links { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; overflow-x: auto; scrollbar-width: none; }
+.pl-subnav-links::-webkit-scrollbar { display: none; }
+.pl-subnav-links a {
+  position: relative; display: block; padding: 8px 12px; white-space: nowrap; border-radius: 10px;
+  font-size: .9375rem; font-weight: 600; color: var(--ink-3); transition: color .2s;
+}
+/* hover as in the general nav: the label darkens and an underline sweeps in from the left
+   (::before; ::after is the current page's bar, which already marks it) */
+.pl-subnav-links a:not([aria-current="page"])::before {
+  content: ""; content: "" / "";
+  position: absolute; left: 12px; right: 12px; bottom: 4px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-subnav-links a:is(:hover, :focus-visible) { color: var(--ink); }
+.pl-subnav-links a:is(:hover, :focus-visible)::before { scale: 1 1; }
+.pl-subnav-links a[aria-current="page"] { color: var(--ink); }
+.pl-subnav-links a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -9px; height: 2px; background: var(--btn-bg); }
+.pl-subnav-cta { flex: 0 0 auto; }
+/* pinned stages stick under the nav and the section bar */
+.pl-multi .is-pinned .pl-pin-stage { top: calc(73px + var(--subnav-h)); height: calc(100svh - 73px - var(--subnav-h)); }
+/* The home opens with the section bar, so the hero starts under it instead of sliding up
+   under the nav, and still fills the first screen. */
+.pl-subnav + .pl-hero { margin-top: 0; padding-top: 0; min-height: calc(100svh - 73px - var(--subnav-h)); }
+@media (max-width: 900px) { .pl-subnav + .pl-hero { min-height: 0; } }
+
+/* a content page's header: title, one line on the page, a render */
+.pl-page-head { padding: clamp(48px, 7vw, 96px) 0 clamp(24px, 4vw, 48px); background: var(--bg); }
+.pl-page-head-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.pl-page-title { margin: 0; font-weight: 600; font-size: clamp(2.25rem, 3.6vw + .5rem, 3.5rem); line-height: 1.05; letter-spacing: -.035em; color: var(--ink); text-wrap: balance; }
+.pl-page-head .pl-lede { margin-top: 18px; font-size: 1.125rem; max-width: 60ch; }
+.pl-page-art { flex: 0 0 auto; width: clamp(120px, 15vw, 210px); animation: pl-bob 5.5s ease-in-out infinite; }
+.pl-page-head + .pl-section { padding-top: clamp(32px, 4vw, 56px); }
+/* the breadcrumb over a content page's title: quiet, one line, the separator not read out */
+.pl-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; list-style: none; margin: 0 0 18px; padding: 0; font-size: .875rem; color: var(--ink-3); }
+.pl-crumbs li + li::before { content: "/" / ""; margin: 0 10px; color: var(--line-2); }
+.pl-crumbs a { position: relative; color: var(--ink-2); font-weight: 500; }
+.pl-crumbs a::after {
+  content: ""; content: "" / ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-crumbs a:is(:hover, :focus-visible) { color: var(--ink); }
+.pl-crumbs a:is(:hover, :focus-visible)::after { scale: 1 1; }
+.pl-crumbs [aria-current="page"] { color: var(--ink); font-weight: 600; }
+
+/* the main call to action again, between sections, close to what it follows (product owner:
+   less space above it): the section above gives up most of its bottom padding; below it keeps
+   its own */
+.pl-inline-cta { padding: 0 0 clamp(40px, 5vw, 64px); background: var(--bg); }
+.pl-inline-cta.pl-section-alt { background: var(--surface); }
+.pl-multi .pl-section:not(.is-pinned):has(+ .pl-inline-cta) { padding-bottom: clamp(36px, 4vw, 52px); }
+
+/* Two sections on the same canvas in a row would add up their paddings (272px of nothing on a
+   desktop): they share one gap instead, half each, so the rhythm is the same everywhere. A
+   pinned section keeps its own (its stage sets the space). Before the final call, on the same
+   canvas, the section keeps a gap like any other. */
+.pl-section:not(.pl-section-alt, .is-pinned):has(+ .pl-section:not(.pl-section-alt)),
+.pl-section-alt:not(.is-pinned):has(+ .pl-section-alt) { padding-bottom: clamp(40px, 5vw, 68px); }
+.pl-section:not(.pl-section-alt) + .pl-section:not(.pl-section-alt, .is-pinned),
+.pl-section-alt + .pl-section-alt:not(.is-pinned, .pl-inline-cta) { padding-top: clamp(40px, 5vw, 68px); }
+.pl-section:not(.pl-section-alt, .is-pinned):has(+ .pl-final-wrap) { padding-bottom: clamp(48px, 6vw, 88px); }
+.pl-inline-cta-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 28px; }
+.pl-inline-cta .btn { min-height: 50px; padding: 13px 24px; }
+/* in one row with the button, so it drops the space it keeps above it elsewhere */
+.pl-inline-cta .pl-textlink { margin-top: 0; }
+
+/* the two facts that lower the risk, under the hero's buttons */
+.pl-hero-notes { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; margin: 22px 0 0; padding: 0; animation: pl-rise .9s cubic-bezier(.2, .7, .2, 1) .44s both; }
+.pl-hero-notes li { display: flex; align-items: center; gap: 8px; font-size: .9375rem; font-weight: 500; color: var(--ink-2); }
+.pl-hero-notes .pl-icon { width: 16px; height: 16px; }
+
+/* "see more" links at the end of a teaser */
+.pl-more { display: inline-block; margin-top: 24px; }
+.pl-plans-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.pl-plans-actions .pl-plans-more { margin-top: 0; }
+
 /* ---- responsive ---- */
 /* Very wide screens (1440p and up): the hero copy grows with them instead of floating small. */
 @media (min-width: 2200px) {
@@ -979,14 +1116,16 @@
   .pl-head-art { flex-wrap: wrap; gap: 8px; }
   .pl-head-art h2 { flex: 1 0 100%; }
   .pl-head-art .pl-art { margin-left: auto; }
-  .pl-benefits-art { width: 90px; margin: 0; }
   .pl-compare-art { width: 150px; margin-right: 0; }
   .pl-security-3d { width: 150px; }
   .pl-security-visual { padding-top: 96px; }
   .pl-steps li .pl-step-line { visibility: hidden; }
   .pl-calc-table th, .pl-calc-table td { padding: 14px 8px; font-size: .9375rem; }
   .pl-final { grid-template-columns: 1fr; }
-  .pl-final-art { width: 170px; grid-row: 1; }
+  .pl-final-art { width: 130px; margin-top: 24px; }
+  .pl-contact-grid { grid-template-columns: 1fr; }
+  .pl-subnav .pl-subnav-cta { display: none; }
+  .pl-page-art { width: 96px; }
   .pl-uses-tabs { grid-template-columns: 1fr; }
   /* The comparison becomes one block per topic, each value under its column's name. */
   .pl-compare, .pl-compare tbody, .pl-compare tr, .pl-compare th, .pl-compare td { display: block; width: auto; }

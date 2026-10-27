@@ -1,0 +1,89 @@
+---
+// FinalCta section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to): the final call, with the main button and the brand's astronaut on one side
+// and the contact form on the other (product owner). The form posts to /contact
+// (src/pages/payments/contact.ts; rules in src/lib/payments/contact.ts). It works without
+// JavaScript: the page comes back here with ?contact=<outcome>, shown under the form; the page
+// script posts it in place instead and marks the wrong fields. Its data comes from landingData
+// (../data.ts).
+import type { LandingData } from "@/components/payments/landing/data";
+import { CONTACT_ADDRESS, CONTACT_LIMITS, CONTACT_TOPICS, HONEYPOT } from "@/lib/payments/contact";
+
+interface Props {
+  d: LandingData;
+}
+
+const { t, CREATE_LINK, ctaMark } = Astro.props.d;
+const c = t.contact;
+const failed = c.failed.replace("{email}", CONTACT_ADDRESS);
+const OUTCOMES: Record<string, string> = { sent: c.sent, invalid: c.invalid, limited: c.limited, failed };
+const outcome = Astro.url.searchParams.get("contact") ?? "";
+const status = OUTCOMES[outcome] ?? "";
+// Where the visitor is, so the no-script answer comes back to the same page.
+const from = Astro.locals.publicPath ?? "/";
+const field = (name: string) => ({ id: `pl-contact-${name}`, error: `pl-contact-${name}-error` });
+---
+
+<section class="pl-final-wrap" id="contact" aria-labelledby="pl-final">
+  <div class="wrap">
+    <div class="pl-final" data-reveal>
+      <div class="pl-final-copy">
+        <h2 id="pl-final">{t.cta.title} <mark class="pl-hl">{ctaMark.words}</mark>{ctaMark.stop}</h2>
+        <p>{t.cta.body}</p>
+        <div class="pl-cta">
+          <a class="btn btn-dark" href={CREATE_LINK}>{t.cta.primary}</a>
+        </div>
+        <img class="pl-art pl-final-art" src="/brand/astronauta-telefono.svg" alt="" width="280" height="236" loading="lazy" decoding="async" />
+      </div>
+
+      <form class="pl-contact" method="post" action="/contact" aria-labelledby="pl-contact-title" data-contact
+            data-sending={c.sending} data-sent={c.sent} data-invalid={c.invalid} data-limited={c.limited} data-failed={failed}>
+        <h3 id="pl-contact-title">{c.title}</h3>
+        <p class="pl-contact-lede">{c.lede}</p>
+        <div class="pl-contact-grid">
+          <div class="pl-field">
+            <label for={field("name").id}>{c.name}</label>
+            <input id={field("name").id} name="name" type="text" autocomplete="name" required minlength="2" maxlength={CONTACT_LIMITS.name} aria-describedby={field("name").error} />
+            <p class="pl-field-error" id={field("name").error} data-error-for="name" data-message={c.errors.name} hidden></p>
+          </div>
+          <div class="pl-field">
+            <label for={field("email").id}>{c.email}</label>
+            <input id={field("email").id} name="email" type="email" autocomplete="email" required maxlength={CONTACT_LIMITS.email} aria-describedby={field("email").error} />
+            <p class="pl-field-error" id={field("email").error} data-error-for="email" data-message={c.errors.email} hidden></p>
+          </div>
+          <div class="pl-field">
+            <label for={field("company").id}>{c.company} <small>({c.optional})</small></label>
+            <input id={field("company").id} name="company" type="text" autocomplete="organization" maxlength={CONTACT_LIMITS.company} aria-describedby={field("company").error} />
+            <p class="pl-field-error" id={field("company").error} data-error-for="company" data-message={c.errors.company} hidden></p>
+          </div>
+          <div class="pl-field">
+            <label for={field("topic").id}>{c.topic}</label>
+            <span class="pl-select">
+              <select id={field("topic").id} name="topic" required aria-describedby={field("topic").error}>
+                {CONTACT_TOPICS.map((key) => <option value={key}>{c.topics[key]}</option>)}
+              </select>
+            </span>
+            <p class="pl-field-error" id={field("topic").error} data-error-for="topic" data-message={c.errors.topic} hidden></p>
+          </div>
+          <div class="pl-field pl-field-wide">
+            <label for={field("message").id}>{c.message}</label>
+            <textarea id={field("message").id} name="message" rows="4" required minlength={CONTACT_LIMITS.messageMin} maxlength={CONTACT_LIMITS.message} aria-describedby={field("message").error}></textarea>
+            <p class="pl-field-error" id={field("message").error} data-error-for="message" data-message={c.errors.message} hidden></p>
+          </div>
+        </div>
+        <!-- Only a script fills this in (it is off screen and out of the tab order). -->
+        <div class="pl-contact-hp" aria-hidden="true">
+          <label for="pl-contact-hp">Website</label>
+          <input id="pl-contact-hp" name={HONEYPOT} type="text" tabindex="-1" autocomplete="off" />
+        </div>
+        <input type="hidden" name="started" value={Date.now()} />
+        <input type="hidden" name="from" value={from} />
+        <div class="pl-contact-foot">
+          <button class="btn btn-dark" type="submit">{c.send}</button>
+          <p class="pl-contact-privacy">{c.privacy}</p>
+        </div>
+        <p class="pl-contact-status" role="status" data-contact-status data-state={status ? outcome : undefined}>{status}</p>
+      </form>
+    </div>
+  </div>
+</section>

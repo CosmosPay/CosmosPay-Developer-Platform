@@ -273,3 +273,18 @@
 }
 /* Over the blue page of the card design the preview note needs light ink. */
 .ck-page:has(.ck[data-design="card"]) .ck-preview-note { color: #FFFFFF; }
+
+/* A Stellar link with a merchant fee builds its payer's envelope (PayerStep.astro): until it
+   exists there is no wallet link or QR to show, only the account step. */
+#checkout[data-payer="needed"] :is([data-slot="qr"], [data-slot="open-wallet"], [data-slot="web-wallet"], .ck-receipt-qr, .ck-token-qr, #ck-panel-qr .ck-panel-hint) { display: none !important; }
+.ck-payer { display: grid; gap: 8px; margin: 14px 0 4px; }
+.ck-payer[hidden] { display: none; }
+.ck-payer-row { display: flex; gap: 8px; min-width: 0; }
+.ck-payer-input {
+  flex: 1; min-width: 0; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 12px;
+  background: var(--surface); color: var(--ink); font: 500 13.5px/1.3 var(--ff-mono);
+}
+.ck-payer-input:focus-visible { outline: none; border-color: var(--ink-3); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tertiary, #2346F4) 22%, transparent); }
+.ck-payer-input[aria-invalid="true"] { border-color: #C2410C; }
+.ck-payer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 520px) { .ck-payer-row { flex-direction: column; } }

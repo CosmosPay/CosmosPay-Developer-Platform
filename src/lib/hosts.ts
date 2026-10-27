@@ -4,7 +4,9 @@
  *
  *   cosmospay.lat           "site"      /, /pricing, /tos          (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
- *   payments.cosmospay.lat  "payments"  /, /pay, /{payment link id}, /preview/{design}
+ *   payments.cosmospay.lat  "payments"  /, its content pages (/integrations, /use-cases, /security,
+ *                                       /fees, /faq), /pay, /contact (the contact form's POST),
+ *                                       /{payment link id}, /preview/{design}
  *                                       (pages under src/pages/payments/)
  *
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
@@ -41,14 +43,29 @@ export type RouteDecision =
 /** Where the site and payments pages live in src/pages. */
 export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", payments: "/payments" };
 
+import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
+
 const SITE_PATHS = new Set(["/pricing", "/tos"]);
-/* Checkout design previews (src/pages/payments/preview/[design].astro). */
-const PAYMENTS_PREFIXES = ["/preview"];
+/* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
+   because /pricing is the company site's. */
+const PAYMENTS_PATHS = new Set(PAYMENTS_PAGE_PATHS);
+/* Checkout design previews (src/pages/payments/preview/[design].astro) and the ZK payment pages
+   (src/pages/payments/zk/: the private checkout and the prover's files); the checkout is the only
+   cross-origin isolated page. */
+const PAYMENTS_PREFIXES = ["/preview", "/zk"];
+/* The prover's files (bb.js at the SDK's pinned version, src/pages/payments/zk/bb/) are served by
+   the platform too: the dashboard proves there for the merchant's confidential account, and bb.js
+   starts its Web Worker from its own URL, which must be the page's origin. Same route, same
+   headers, on both domains. Exactly `/zk/bb/{version}/{file}` (the route whitelists both). */
+const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
 /* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts). */
 const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);
+/* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
+   src/pages/site/swaps.astro): the public swaps. The platform sends them to the gateway. */
+const DUAL_PATHS = new Set(["/swaps"]);
 /* A payment link id (Prisma cuid). Mirrors isPaymentLinkId in src/lib/payments/payment-link.ts. */
 const PAYMENT_LINK_PATH = /^\/c[a-z0-9]{20,31}$/;
 
@@ -60,11 +77,18 @@ function hostOf(origin: string): string {
   }
 }
 
+/* A dot segment as the URL parser reads it: `.` or `..`, each dot possibly written `%2e`. */
+const DOT_SEGMENT = /^(?:\.|%2e){1,2}$/i;
+
 /**
  * The path as the router will match it: percent-decoded, backslashes as slashes, repeated
  * slashes collapsed, no trailing slash. Routing on the raw pathname would let `/%70ayments/…`
  * or `//site/…` slip past the mount check and render a page on a domain that does not own it.
- * Null when the encoding is malformed.
+ * Null when the encoding is malformed, and when the decoded path holds anything the URL parser
+ * would read differently from this router: a segment that is still a dot segment
+ * (`%252e%252e` arrives as `%2e%2e`), a control character (the parser drops tabs and newlines,
+ * so `.%09.` becomes `..`), `?` or `#`. A rewrite resolves its target with `new URL`, which
+ * would otherwise climb out of the mount (`/payments/zk/%2e%2e/%2e%2e/site/tos` is `/site/tos`).
  */
 export function canonicalPath(pathname: string): string | null {
   let decoded: string;
@@ -73,6 +97,8 @@ export function canonicalPath(pathname: string): string | null {
   } catch {
     return null;
   }
+  if (/[\x00-\x1f\x7f?#]/.test(decoded)) return null;
+  if (decoded.split(/[\\/]/).some((segment) => DOT_SEGMENT.test(segment))) return null;
   const collapsed = decoded.replace(/\\/g, "/").replace(/\/{2,}/g, "/");
   return collapsed.length > 1 ? collapsed.replace(/\/+$/, "") || "/" : collapsed || "/";
 }
@@ -85,7 +111,7 @@ function underPrefix(path: string, prefix: string): boolean {
 export function ownerOf(path: string): Area | "home" | null {
   if (path === "/") return "home";
   if (SITE_PATHS.has(path)) return "site";
-  if (path === "/pay" || PAYMENT_LINK_PATH.test(path)) return "payments";
+  if (path === "/pay" || path === "/contact" || PAYMENTS_PATHS.has(path) || PAYMENT_LINK_PATH.test(path)) return "payments";
   if (PAYMENTS_PREFIXES.some((p) => underPrefix(path, p))) return "payments";
   if (DEV_PREFIXES.some((p) => underPrefix(path, p))) return "dev";
   return null;
@@ -132,10 +158,21 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
 
   if (SHARED_PATHS.has(path)) return { kind: "pass", area: primary };
 
-  const serve = (area: Area): RouteDecision =>
-    area === "dev"
-      ? { kind: "pass", area }
-      : { kind: "rewrite", area, path: path === "/" ? MOUNTS[area] : `${MOUNTS[area]}${path}` };
+  /* A rewrite into a mount, re-encoded so the middleware's `new URL` reads nothing in it a second
+     time, and refused (404) unless it still resolves inside that mount. */
+  const rewrite = (area: Area, mount: string, rest: string): RouteDecision => {
+    const target = encodeURI(rest === "/" ? mount : `${mount}${rest}`);
+    const resolved = new URL(target, "http://route.invalid").pathname;
+    return resolved === mount || resolved.startsWith(`${mount}/`) ? { kind: "rewrite", area, path: target } : { kind: "not-found", area: primary };
+  };
+  const serve = (area: Area): RouteDecision => (area === "dev" ? { kind: "pass", area } : rewrite(area, MOUNTS[area], path));
+
+  if (PROVER_FILE.test(path) && areas.has("dev") && !areas.has("payments")) return rewrite("dev", MOUNTS.payments, path);
+  if (DUAL_PATHS.has(path)) {
+    if (areas.has("payments")) return serve("payments");
+    if (areas.has("site")) return serve("site");
+    return to("payments", encodeURI(canonical));
+  }
 
   const owner = ownerOf(path);
   if (owner === "home") {

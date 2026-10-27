@@ -4,6 +4,7 @@
 import Brand from "@/components/payments/checkout/Brand.astro";
 import Amount from "@/components/payments/checkout/Amount.astro";
 import Status from "@/components/payments/checkout/Status.astro";
+import PayerStep from "@/components/payments/checkout/PayerStep.astro";
 import Timer from "@/components/payments/checkout/Timer.astro";
 import Qr from "@/components/payments/checkout/Qr.astro";
 import WalletActions from "@/components/payments/checkout/WalletActions.astro";
@@ -20,6 +21,7 @@ const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
       <div class="ck-head"><Brand /><Timer caption={false} /></div>
       <Amount />
       <Status />
+      <PayerStep />
       <div class="ck-rows" data-open-only data-row="manual">
         <Field name="pay-to" label={t.payTo} hint={t.payToHint} />
         <Field name="memo" label={t.memo} hint={t.memoHint} row="memo" />

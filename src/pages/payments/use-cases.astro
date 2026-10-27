@@ -1,0 +1,37 @@
+---
+/* /use-cases on payments.cosmospay.lat: the businesses Cosmos Pay is built for, and the
+ * comparison with cards and bank transfers. */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import InlineCta from "@/components/payments/landing/InlineCta.astro";
+import { landingData } from "@/components/payments/landing/data";
+import Compare from "@/components/payments/landing/sections/Compare.astro";
+import Uses from "@/components/payments/landing/sections/Uses.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.pages.useCases.meta} description={d.t.pages.useCases.lede} indexable>
+  <LandingHead slot="head" d={d} page="use-cases" title={d.t.pages.useCases.meta} description={d.t.pages.useCases.lede} />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="use-cases" />
+    <PageHeader d={d} page="useCases" art="3d-yours" />
+    <Uses d={d} />
+    <Compare d={d} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

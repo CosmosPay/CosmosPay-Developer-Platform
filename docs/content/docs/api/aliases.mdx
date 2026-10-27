@@ -1,5 +1,5 @@
 ---
-title: Aliases
+title: "Aliases"
 description: 'Payment handles: resolve a name to its addresses, and claim or
   manage one with a signature by each address it points at.'
 full: true
@@ -73,14 +73,14 @@ _openapi:
           for itself. One alias may hold many addresses across many networks.'
         heading: point-the-alias-at-another-address
       - content: 'Always `{ accepted: true }`, whether or not the alias exists and the
-          mailbox matched — a handle is public and the mailbox behind it is not.
+          mailbox matched: a handle is public and the mailbox behind it is not.
           When both match, the token is emailed to the mailbox on record (at
           most once a minute per alias); it never appears in the response.'
         heading: start-email-recovery-the-token-is-emailed-to-the-owner
-      - content: Needs the emailed token AND a signature from the new key. Every
-          previous address is dropped — recovery exists because the old keys are
+      - content: 'Needs the emailed token AND a signature from the new key. Every
+          previous address is dropped: recovery exists because the old keys are
           gone, and leaving them resolvable would keep whoever holds them
-          receiving payments.
+          receiving payments.'
         heading: finish-recovery-take-ownership-with-a-new-address
 ---
 

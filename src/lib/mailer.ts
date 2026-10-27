@@ -1,4 +1,5 @@
-/* mailer.ts sends transactional email (organization invitations) with two transports:
+/* mailer.ts sends transactional email (organization invitations, the gateway's contact form)
+   with two transports:
 
      1. Resend HTTP API (preferred): set RESEND_API_KEY. Sends over HTTPS (443), so it
         works even where outbound SMTP ports are blocked (e.g. OVH blocks 25/465/587).
@@ -31,6 +32,8 @@ export interface MailMessage {
   subject: string;
   html: string;
   text?: string;
+  /** Where a reply goes, e.g. the visitor who wrote through the gateway's contact form. */
+  replyTo?: string;
 }
 
 /* ---------------- transport 1: Resend HTTP API ---------------- */
@@ -56,6 +59,7 @@ async function sendViaResend(msg: MailMessage): Promise<void> {
         subject: msg.subject,
         html: msg.html,
         ...(msg.text ? { text: msg.text } : {}),
+        ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
       }),
       signal: controller.signal,
     });
@@ -118,6 +122,7 @@ async function sendViaSmtp(msg: MailMessage): Promise<void> {
     subject: msg.subject,
     html: msg.html,
     text: msg.text,
+    replyTo: msg.replyTo,
   });
 }
 

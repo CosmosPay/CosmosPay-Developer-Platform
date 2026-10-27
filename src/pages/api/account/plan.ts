@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { setOwnPlan, getRole } from "@/lib/profile";
 import { PLAN_IDS } from "@/lib/plans";
@@ -11,7 +11,7 @@ const planBodySchema = z.object({ plan: z.enum(PLAN_IDS as [string, ...string[]]
 
 /* PATCH /api/account/plan: change the signed-in account's own (mock) billing plan. */
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const body = await parseJson(ctx.request, planBodySchema).catch(() => null);

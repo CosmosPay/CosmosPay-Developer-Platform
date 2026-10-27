@@ -1,0 +1,22 @@
+---
+/* /swaps on cosmospay.lat: the same public swaps as the gateway's page (PublicSwaps), here with its
+ * own header, on the institutional skin. */
+import "@/styles/dashboard.css";
+import "@/styles/public-swaps.css";
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import PublicSwaps from "@/components/cosmos/swaps/PublicSwaps";
+import { messages } from "@/lib/i18n/messages/index";
+import { API_BASE } from "@/lib/payments/urls";
+import { DOCS } from "@/components/cosmos/lib/constants";
+
+const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const copy = ((messages as Record<string, typeof messages.en>)[lang] ?? messages.en).swapsPage;
+---
+
+<CosmosLayout title={copy.metaTitle} description={copy.metaDescription} lang={lang} bodyClass="inst">
+  <main id="main" class="pswap-page">
+    <PublicSwaps client:load lang={lang} apiBase={API_BASE} docsUrl={DOCS} showHeader />
+  </main>
+  <SiteFooter lang={lang} area="site" />
+</CosmosLayout>

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonSuccess, jsonUnauthorized } from "@/lib/http";
 import { getRole, isStaff } from "@/lib/profile";
 import { listAllTickets } from "@/lib/support";
@@ -7,7 +7,7 @@ import type { APIRoute } from "astro";
 /* GET /api/support/admin/tickets?status= returns every ticket (optionally filtered by status).
    Staff only (owner/admin/support). */
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const role = await getRole(session.user.id).catch(() => "user" as const);

@@ -65,7 +65,7 @@ jobs:
       # Dev-only tooling is excluded because it never reaches a user; a finding there is
       # Dependabot's errand, not a merge blocker.
       #
-      # package.json holds two `overrides` purely to keep this step green, and JSON cannot
+      # package.json holds three `overrides` purely to keep this step green, and JSON cannot
       # carry the reason, so it lives here:
       #   mysql2, deepmerge-ts: both are pinned to an exact version by the `prisma` CLI,
       #   which is a devDependency but reaches the production tree anyway as an OPTIONAL
@@ -74,6 +74,10 @@ jobs:
       #   executes (it is Postgres, via @prisma/adapter-pg), so the override is the honest
       #   move: patch them where they sit rather than exclude them from the audit. Drop the
       #   override once a prisma release ships the bumps itself.
+      #   toml: stellar-confidential-token-sdk keeps its own @stellar/stellar-sdk 14.6.1,
+      #   which pulls toml 3.0.0, inside the advisory range, and has no fixed release. 5.0.1
+      #   exports the same parse(), all its stellar.toml resolver calls. Drop the override
+      #   once that SDK moves to a stellar-sdk without toml or with a patched one.
       - name: Security audit (portal)
         run: npm audit --omit=dev --audit-level=low
 
