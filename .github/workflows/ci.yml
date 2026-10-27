@@ -34,6 +34,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+          check-latest: true
           cache: npm
 
       - run: npm ci
@@ -102,6 +103,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+          check-latest: true
           cache: npm
 
       - run: npm ci
