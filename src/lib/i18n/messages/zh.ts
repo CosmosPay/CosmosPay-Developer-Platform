@@ -901,7 +901,7 @@ export default {
         submit: "创建链接",
         steps: { amount: "金额", destination: "收款方", fee: "费用", design: "设计" },
       },
-      detail: { live: { wallet: "已打开钱包", walletBack: "未付款即关闭钱包", walletNow: "付款方现在打开了钱包", walletBackNow: "付款方未付款就关闭了钱包", title: "进度", created: "链接已创建", page: "付款方在支付页面", processing: "付款已发送，确认中", paid: "已支付", now: "现在", onPageNow: "付款方现在正在支付页面上", lastSeen: "付款方最后一次打开支付页面的时间：{time}", waiting: "等待付款方打开链接", processingNow: "付款已发送，网络正在确认", paidNow: "已收到付款", ended: "此链接已无法支付：{status}" }, check: { label: "通过其他钱包支付？核对其交易", placeholder: "交易哈希", submit: "核对交易", ok: "该交易已支付此链接。", bad: "该交易未支付此链接。" },
+      detail: { live: { unconfirmed: "网络尚未确认", sentUnconfirmed: "发送未确认", sentReportedNow: "付款方页面报告已发送付款；网络尚未确认", sentUnconfirmedNow: "付款方页面报告的付款未被网络确认", wallet: "已打开钱包", walletBack: "未付款即关闭钱包", walletNow: "付款方现在打开了钱包", walletBackNow: "付款方未付款就关闭了钱包", title: "进度", created: "链接已创建", page: "付款方在支付页面", processing: "付款已发送，确认中", paid: "已支付", now: "现在", onPageNow: "付款方现在正在支付页面上", lastSeen: "付款方最后一次打开支付页面的时间：{time}", waiting: "等待付款方打开链接", processingNow: "付款已发送，网络正在确认", paidNow: "已收到付款", ended: "此链接已无法支付：{status}" }, check: { label: "通过其他钱包支付？核对其交易", placeholder: "交易哈希", submit: "核对交易", ok: "该交易已支付此链接。", bad: "该交易未支付此链接。" },
         checkout: "收银台页面", openCheckout: "打开收银台",
         eyebrow: "支付链接", title: "支付链接已就绪",
         scan: "扫码支付", downloadQr: "下载二维码",

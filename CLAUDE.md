@@ -965,6 +965,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   status still follows the chain. `PaymentRecordView`'s progress draws created, on the page,
   wallet (open, or a warning when it came back without paying), sent, paid; only the furthest
   step is live.
+  **A reported `sent` is never the chain's word:** the keyless route takes it from anyone
+  holding the link, so "Payment sent, confirming" stays SUBMITTED's; a report reads "not on the
+  network yet" for `SENT_REPORT_MS`, then turns into the warning "send not confirmed".
 - `parsePaymentLink` refuses a malformed fee and a `payerAccountRequired` link that is not a
   Stellar link with a fee and an amount, and only then accepts an `https` `uri` (never used as
   a wallet link).

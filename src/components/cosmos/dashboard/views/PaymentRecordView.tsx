@@ -39,6 +39,10 @@ const ON_PAGE_MS = 30_000;
 const FOLLOW_MS = 4000;
 /* A wallet the checkout saw open, with no word since, counts as open now for this long. */
 const WALLET_OPEN_MS = 5 * 60_000;
+/* A send the checkout reported reaches the network within seconds; past this it is a warning. The
+   report is the payer's page talking (anyone holding the link can post it), never the chain: only
+   SUBMITTED or SUCCEEDED say a payment is on its way. */
+const SENT_REPORT_MS = 2 * 60_000;
 
 export function PaymentRecordView({ id, env, canManage = false, onBack }) {
   const t = useT();
@@ -95,9 +99,12 @@ function PaymentProgress({ data }) {
   // On the page now, until the payer gets further (a wallet, the payment): one step is live.
   const onPage = pending && seen !== null && now - seen < ON_PAGE_MS && walletAt === null && sentAt === null;
   const paid = status === "SUCCEEDED";
-  // Sent: the chain has it (submitted, paid), or the checkout saw the wallet send it.
-  const sent = status === "SUBMITTED" || paid || sentAt !== null;
-  const sending = status === "SUBMITTED" || (pending && sentAt !== null);
+  // Sent: the chain has it (submitted, paid). The checkout's report is told apart: unconfirmed
+  // while it is fresh, a warning once the network should have had it.
+  const sending = status === "SUBMITTED";
+  const reported = pending && sentAt !== null;
+  const reportFresh = reported && now - sentAt < SENT_REPORT_MS;
+  const sent = sending || paid || reported;
   const walletBack = pending && !sent && backAt !== null && walletAt !== null && backAt >= walletAt;
   const walletOpen = pending && !sent && !walletBack && walletAt !== null && now - walletAt < WALLET_OPEN_MS;
   const ended = ["FAILED", "CANCELLED", "EXPIRED"].includes(status);
@@ -108,7 +115,7 @@ function PaymentProgress({ data }) {
     { key: "created", label: lv.created, state: "done", at: time(data.createdAt) },
     { key: "page", label: lv.page, state: onPage ? "live" : seen !== null || walletAt !== null || sent ? "done" : "todo", at: onPage ? lv.now : time(data.checkoutSeenAt) },
     { key: "wallet", label: walletBack ? lv.walletBack : lv.wallet, state: walletOpen ? "live" : walletBack ? "warn" : walletAt !== null || sent ? "done" : "todo", at: walletBack ? time(data.checkoutWalletClosedAt) : walletOpen ? lv.now : time(data.checkoutWalletAt) },
-    { key: "sent", label: lv.processing, state: sending ? "live" : paid || (sent && ended) ? "done" : "todo", at: time(data.checkoutSentAt) },
+    { key: "sent", label: reported && !reportFresh ? lv.sentUnconfirmed : lv.processing, state: sending || reportFresh ? "live" : reported ? "warn" : paid ? "done" : "todo", at: reportFresh ? lv.unconfirmed : time(data.checkoutSentAt) },
     { key: "end", label: ended ? statusLabel : lv.paid, state: paid ? "done" : ended ? "fail" : "todo", at: paid || ended ? time(data.updatedAt) : null },
   ];
   // While it is open, the step after the last one reached is where it stands.
@@ -117,6 +124,8 @@ function PaymentProgress({ data }) {
     if (steps[last + 1]) steps[last + 1].state = "current";
   }
   const headline = sending ? lv.processingNow
+    : reportFresh ? lv.sentReportedNow
+    : reported ? lv.sentUnconfirmedNow
     : walletOpen ? lv.walletNow
     : walletBack ? lv.walletBackNow
     : onPage ? lv.onPageNow
