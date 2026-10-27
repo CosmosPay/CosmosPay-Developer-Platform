@@ -8,8 +8,11 @@ Astro SSR portal + its own REST API under `src/pages/api/`).
 ```bash
 npm run dev               # astro dev --host; predev runs `prisma migrate deploy` + scripts/ensure-docs.mjs
 npm run build             # prisma generate -> docs:build (Fumadocs export into public/docs) -> astro build
+npm run build:app         # prisma generate -> embed:build -> astro build: no docs build (563 pages on 8
+                          #   workers), docs/ untouched; enough to check a change outside the docs
 npm start                 # node dist/server/entry.mjs; prestart runs ensure-docs. Production runs under PM2
-npm test                  # = test:unit (node:test over tests/unit/**/*.test.ts; no DB, no astro:env)
+npm test                  # = test:unit (node:test over tests/unit/**/*.test.ts; no DB, no astro:env),
+                          #   4 files at a time: as fast as one per core, without holding them all
 npm run test:smoke        # boots dist/ and makes one real request; catches broken external imports
 npm run check:openapi     # fails if any src/pages/api route is missing from this app's OpenAPI document
 npm run check:api-spec    # fails if docs/openapi.json differs from the community server's spec
