@@ -861,30 +861,31 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 /* a row's actions that do not apply to it are drawn disabled, so every row's buttons line up */
 .inst .icon-mini:disabled { opacity: .38; cursor: not-allowed; }
 /* a payment on its own view: the payment at a glance, then its QR beside the rest */
-.pay-record { display: flex; flex-direction: column; gap: 16px; }
-/* A payment's progress, live (PaymentRecordView): where it stands in one line, its dot pulsing
-   while something happens now (the payer on the page, a payment being confirmed), then the four
-   steps on a rail, each marked done, live, failed or still to come. */
-.pay-live { padding: 20px 24px; }
+.pay-record { display: flex; flex-direction: column; gap: 32px; padding: 24px; }
+/* A payment's progress, live (PaymentRecordView): where it stands in one line (no dot: product
+   owner, 2026-10-27), then the four steps on a rail across the whole panel, each marked done, live
+   (pulsing), failed or still to come. */
+.pay-live { padding: 0; }
 .pay-live-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
 .pay-live-title { margin: 0; font-size: 15px; font-weight: 700; }
-.pay-live-now { display: inline-flex; align-items: center; gap: 10px; margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
-.pay-live-dot { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; background: var(--ink-3); }
-.pay-live-now.live .pay-live-dot { background: #1F9D55; animation: livePulse 1.6s ease-out infinite; }
-.pay-live-now.ok .pay-live-dot { background: #1F9D55; }
-.pay-live-now.fail .pay-live-dot { background: #D64545; }
+.pay-live-now { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.pay-live-now.fail { color: #B42F2F; }
+[data-theme="dark"] .pay-live-now.fail { color: #FF9B9B; }
 @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(31, 157, 85, .45); } 70% { box-shadow: 0 0 0 10px rgba(31, 157, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(31, 157, 85, 0); } }
-.pay-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0 0; padding: 0; list-style: none; }
-.pay-step { position: relative; display: grid; gap: 4px; padding-right: 12px; }
-/* The rail between two marks: drawn from each mark to the next, solid once the step is done. */
-.pay-step + .pay-step::before { content: ""; content: "" / ""; position: absolute; top: 11px; right: calc(100% + 4px); width: calc(100% - 32px); height: 2px; background: var(--line); }
-.pay-step:is(.done, .live, .fail)::before { background: var(--ink); }
+/* The first three steps share the width, the last takes its own: its mark ends the rail. */
+.pay-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; margin: 18px 0 0; padding: 0; list-style: none; }
+.pay-step { position: relative; display: grid; gap: 4px; justify-items: start; align-content: start; }
+/* The rail from a mark to the next one, solid once the next step is reached. */
+.pay-step:not(:last-child)::after { content: ""; content: "" / ""; position: absolute; top: 11px; left: 30px; right: 6px; height: 2px; background: var(--line); }
+.pay-step.to-reached::after { background: var(--ink); }
+.pay-step:not(:last-child) .pay-step-l, .pay-step:not(:last-child) .pay-step-at { padding-right: 16px; }
 .pay-step-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line-2); background: var(--surface); color: var(--surface); }
 .pay-step-mark svg { width: 13px; height: 13px; }
 .pay-step.done .pay-step-mark { border-color: var(--ink); background: var(--ink); }
 .pay-step.current .pay-step-mark { border-color: var(--ink); }
 .pay-step.live .pay-step-mark { border-color: #1F9D55; background: #1F9D55; animation: livePulse 1.6s ease-out infinite; }
 .pay-step.fail .pay-step-mark { border-color: #D64545; background: #D64545; }
+.pay-step.warn .pay-step-mark { border-color: #B7791F; background: #B7791F; }
 .pay-step-l { font-size: 13.5px; font-weight: 600; color: var(--ink); }
 .pay-step.todo .pay-step-l { color: var(--ink-3); font-weight: 500; }
 .pay-step-at { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
@@ -892,18 +893,18 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
   .pay-steps { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .pay-step { grid-template-columns: 24px 1fr; column-gap: 12px; padding: 0; }
   .pay-step-at { grid-column: 2; }
-  .pay-step + .pay-step::before { display: none; }
+  .pay-step:not(:last-child)::after { display: none; }
 }
-.pay-record-head { padding: 22px 24px; }
+.pay-record-head { padding: 0; }
 .pay-record-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .pay-record-amount { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
 .pay-record-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
-.pay-record-facts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 20px; margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
+.pay-record-facts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 20px; margin: 22px 0 0; }
 .pay-record-facts > div { min-width: 0; }
 .pay-record-facts dt { font-size: 12px; color: var(--ink-3); }
 .pay-record-facts dd { margin: 4px 0 0; font-size: 13.5px; min-width: 0; }
 .pay-record-facts dd code { font-family: var(--ff-mono); font-size: 12px; overflow-wrap: anywhere; }
-.pay-record-grid { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.pay-record-grid { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 32px; align-items: start; }
 .pay-record-grid.history { grid-template-columns: minmax(0, 1fr); }
 /* the payment link form's merchant fee, inside "more options" */
 .paylink-fee { display: grid; gap: 8px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
@@ -926,8 +927,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .design-picker.compact .design-opt-desc { display: none; }
 .design-picker.compact .design-opt-preview { font-size: 11.5px; }
 @media (max-width: 700px) { .design-picker.compact .design-grid { grid-template-columns: repeat(2, minmax(0, 148px)); } }
-.pay-record-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px; position: sticky; top: 92px; }
-.pay-record-main { padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+.pay-record-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0; position: sticky; top: 92px; }
+.pay-record-main { padding: 0; display: flex; flex-direction: column; gap: 16px; }
 @media (max-width: 900px) {
   .pay-record-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pay-record-grid { grid-template-columns: minmax(0, 1fr); }

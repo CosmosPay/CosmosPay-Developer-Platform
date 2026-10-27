@@ -10,8 +10,10 @@
    read by id (the list's row may be stale) and followed while it is not final, every few seconds:
    under its header, its progress live (product owner, 2026-10-27): created, the payer on the
    payment page (the hosted checkout reports when it last read the link, `checkoutSeenAt`: within
-   the last half minute means someone is on it now), processing (a transaction was sent), and paid
-   or how it ended. */
+   the last half minute means someone is on it now), the payer's wallet (the checkout reports it
+   opened, `checkoutWalletAt`, or back without paying, `checkoutWalletClosedAt`), the payment
+   sent (the checkout saw the wallet send it, `checkoutSentAt`, or the chain has it), and paid or
+   how it ended. */
 import { useEffect, useState } from "react";
 import { showToast, checkoutUrl } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
@@ -35,6 +37,8 @@ const TERMINAL = ["SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 const ON_PAGE_MS = 30_000;
 /* How often an open payment is read again. */
 const FOLLOW_MS = 4000;
+/* A wallet the checkout saw open, with no word since, counts as open now for this long. */
+const WALLET_OPEN_MS = 5 * 60_000;
 
 export function PaymentRecordView({ id, env, canManage = false, onBack }) {
   const t = useT();
@@ -66,8 +70,10 @@ export function PaymentRecordView({ id, env, canManage = false, onBack }) {
   );
 }
 
-/* The payment's progress, live: where it stands in one sentence, then its steps. "On the page"
-   holds while the checkout read the link within ON_PAGE_MS, so the clock ticks with the reads. */
+/* The payment's progress, live: its steps across the panel, and where it stands in one sentence for
+   screen readers. "On the page" holds while the checkout read the link within ON_PAGE_MS, and an
+   open wallet for WALLET_OPEN_MS, so the clock ticks with the reads. The step after the last one
+   reached is the current one while the payment is open. */
 function PaymentProgress({ data }) {
   const t = useT();
   const pl = t.dash.paylinks;
@@ -80,38 +86,58 @@ function PaymentProgress({ data }) {
     return () => clearInterval(h);
   }, [open]);
   const status = data.status;
-  const seen = data.checkoutSeenAt ? new Date(data.checkoutSeenAt).getTime() : null;
-  const onPage = status === "PENDING" && seen !== null && now - seen < ON_PAGE_MS;
-  const sent = status === "SUBMITTED" || status === "SUCCEEDED";
+  const ms = (v) => (v ? new Date(v).getTime() : null);
+  const seen = ms(data.checkoutSeenAt);
+  const walletAt = ms(data.checkoutWalletAt);
+  const backAt = ms(data.checkoutWalletClosedAt);
+  const sentAt = ms(data.checkoutSentAt);
+  const pending = status === "PENDING";
+  // On the page now, until the payer gets further (a wallet, the payment): one step is live.
+  const onPage = pending && seen !== null && now - seen < ON_PAGE_MS && walletAt === null && sentAt === null;
+  const paid = status === "SUCCEEDED";
+  // Sent: the chain has it (submitted, paid), or the checkout saw the wallet send it.
+  const sent = status === "SUBMITTED" || paid || sentAt !== null;
+  const sending = status === "SUBMITTED" || (pending && sentAt !== null);
+  const walletBack = pending && !sent && backAt !== null && walletAt !== null && backAt >= walletAt;
+  const walletOpen = pending && !sent && !walletBack && walletAt !== null && now - walletAt < WALLET_OPEN_MS;
   const ended = ["FAILED", "CANCELLED", "EXPIRED"].includes(status);
   const statusLabel = (pl.status && pl.status[status]) || status;
   const time = (v) => (v ? fmtDateTime(v) : null);
-  // Each step: its name, its state (done, live, current, fail, todo) and when, when known.
+  // Each step: its name, its state (done, live, warn, fail, todo) and when, when known.
   const steps = [
     { key: "created", label: lv.created, state: "done", at: time(data.createdAt) },
-    { key: "page", label: lv.page, state: onPage ? "live" : seen !== null || sent ? "done" : ended ? "todo" : "current", at: onPage ? lv.now : time(data.checkoutSeenAt) },
-    { key: "sent", label: lv.processing, state: status === "SUBMITTED" ? "live" : status === "SUCCEEDED" ? "done" : "todo", at: null },
-    { key: "end", label: ended ? statusLabel : lv.paid, state: status === "SUCCEEDED" ? "done" : ended ? "fail" : "todo", at: status === "SUCCEEDED" || ended ? time(data.updatedAt) : null },
+    { key: "page", label: lv.page, state: onPage ? "live" : seen !== null || walletAt !== null || sent ? "done" : "todo", at: onPage ? lv.now : time(data.checkoutSeenAt) },
+    { key: "wallet", label: walletBack ? lv.walletBack : lv.wallet, state: walletOpen ? "live" : walletBack ? "warn" : walletAt !== null || sent ? "done" : "todo", at: walletBack ? time(data.checkoutWalletClosedAt) : walletOpen ? lv.now : time(data.checkoutWalletAt) },
+    { key: "sent", label: lv.processing, state: sending ? "live" : paid || (sent && ended) ? "done" : "todo", at: time(data.checkoutSentAt) },
+    { key: "end", label: ended ? statusLabel : lv.paid, state: paid ? "done" : ended ? "fail" : "todo", at: paid || ended ? time(data.updatedAt) : null },
   ];
-  const headline = onPage ? lv.onPageNow
-    : status === "SUBMITTED" ? lv.processingNow
-    : status === "SUCCEEDED" ? lv.paidNow
+  // While it is open, the step after the last one reached is where it stands.
+  if (!paid && !ended && !steps.some((s) => s.state === "live" || s.state === "warn")) {
+    const last = steps.map((s) => s.state).lastIndexOf("done");
+    if (steps[last + 1]) steps[last + 1].state = "current";
+  }
+  const headline = sending ? lv.processingNow
+    : walletOpen ? lv.walletNow
+    : walletBack ? lv.walletBackNow
+    : onPage ? lv.onPageNow
+    : paid ? lv.paidNow
     : ended ? fmt(lv.ended, { status: statusLabel })
     : seen !== null ? fmt(lv.lastSeen, { time: fmtDateTime(data.checkoutSeenAt) })
     : lv.waiting;
-  const tone = onPage || status === "SUBMITTED" ? "live" : status === "SUCCEEDED" ? "ok" : ended ? "fail" : "wait";
   return (
-    <section className="panel pay-live" aria-labelledby="pay-live-t">
+    <section className="pay-live" aria-labelledby="pay-live-t">
       <div className="pay-live-head">
         <h2 id="pay-live-t" className="pay-live-title">{lv.title}</h2>
-        <p className={`pay-live-now ${tone}`} role="status" aria-live="polite"><i className="pay-live-dot" aria-hidden="true" />{headline}</p>
+        {/* Read out, not shown: the status and the steps already say it (product owner, 2026-10-27). */}
+        <p className="sr-only" role="status" aria-live="polite">{headline}</p>
       </div>
       <ol className="pay-steps">
-        {steps.map((s) => (
-          <li key={s.key} className={`pay-step ${s.state}`} aria-current={s.state === "live" || s.state === "current" ? "step" : undefined}>
+        {steps.map((s, i) => (
+          <li key={s.key} className={`pay-step ${s.state}${["done", "live", "warn", "fail"].includes(steps[i + 1]?.state) ? " to-reached" : ""}`} aria-current={["live", "warn", "current"].includes(s.state) ? "step" : undefined}>
             <span className="pay-step-mark" aria-hidden="true">
               {s.state === "done" && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>}
               {s.state === "fail" && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M7 7l10 10M17 7L7 17" /></svg>}
+              {s.state === "warn" && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 6v7M12 17.5v.5" /></svg>}
             </span>
             <span className="pay-step-l">{s.label}</span>
             {s.at && <span className="pay-step-at">{s.at}</span>}
@@ -191,9 +217,10 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
   return (
-    <div className="pay-record">
-      {/* The payment at a glance. */}
-      <section className="panel pay-record-head" aria-label={d.eyebrow}>
+    <div className="panel pay-record">
+      {/* One card (product owner, 2026-10-27): the payment at a glance, its progress, then what a
+          payer or a developer needs, apart by spacing, never by lines. */}
+      <section className="pay-record-head" aria-label={d.eyebrow}>
         <div className="pay-record-top">
           <div className="pay-record-amount">
             <PaymentAmount intent={data} pl={pl} size={30} />
@@ -228,7 +255,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
       <PaymentProgress data={data} />
 
       {(payable || fields.length > 0 || canCheck) && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
-        {payable && <section className="panel pay-record-qr" aria-label={d.scan}>
+        {payable && <section className="pay-record-qr" aria-label={d.scan}>
           {data.qr
             ? <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
             : <div className="paylink-qr paylink-qr-skel" aria-hidden="true" />}
@@ -236,7 +263,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
           {data.qr && <a className="btn btn-soft btn-sm" href={data.qr} download={`paylink-${data.id}.png`}>{DI.download} {d.downloadQr}</a>}
         </section>}
 
-        <section className="panel pay-record-main paylink-detail">
+        <section className="pay-record-main paylink-detail">
           {/* The hosted page on payments.cosmospay.lat: what to send a payer who has no wallet
               open on this screen. It reads the link itself and follows its status. */}
           {payable && <CopyBlock label={d.checkout} value={checkoutUrl(data.id)} />}

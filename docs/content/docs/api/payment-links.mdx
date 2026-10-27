@@ -17,6 +17,10 @@ _openapi:
         (no API key)
       url: '#build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key'
     - depth: 2
+      title: Report what the payer did with a wallet from the hosted checkout (no API
+        key)
+      url: '#report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key'
+    - depth: 2
       title: 'Solana Pay transaction request, GET: the label and icon a wallet shows
         (no API key)'
       url: '#solana-pay-transaction-request-get-the-label-and-icon-a-wallet-shows-no-api-key'
@@ -31,6 +35,9 @@ _openapi:
       - content: Build the envelope a payer signs for a Stellar link with a merchant fee
           (no API key)
         id: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: Report what the payer did with a wallet from the hosted checkout (no
+          API key)
+        id: report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key
       - content: 'Solana Pay transaction request, GET: the label and icon a wallet shows
           (no API key)'
         id: solana-pay-transaction-request-get-the-label-and-icon-a-wallet-shows-no-api-key
@@ -69,6 +76,20 @@ _openapi:
 
           Only for an open link (`PENDING`). Budgeted per client address.
         heading: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: >-
+          The hosted checkout tells what the payer did with a wallet while the
+          link is pending: `walletOpened` (the wallet link, the web wallet, the
+          extension or Freighter was opened), `walletClosed` (the wallet came
+          back without paying) and `sent` (the page saw the wallet send the
+          payment). The owner reads them as `checkoutWalletAt`,
+          `checkoutWalletClosedAt` and `checkoutSentAt` on the intent, to follow
+          a payment that is not on-chain yet.
+
+
+          **Informational only:** the status changes on what the chain says,
+          never on these. An event for a link that is no longer pending is
+          ignored. Budgeted per client address.
+        heading: report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key
       - content: A Solana payment link with a merchant fee is a Solana Pay transaction
           request (`solana:<this URL>`), because a transfer request names one
           recipient. A wallet reads this first, then POSTs the payer’s account.
@@ -89,7 +110,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"}]} showTitle />
     </>
   );
 }

@@ -954,6 +954,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **The gateway's keyless payment-links route allows POST** (`PAYMENT_LINKS_METHODS`), for
   that build. An environment whose routes were synced before needs a resync (the platform's
   boot does it) or the checkout cannot build the envelope.
+- **The checkout reports what the payer does with a wallet** (product owner, 2026-10-27: the
+  progress must see the wallet open, close and send): `reportCheckoutEvent` posts
+  `walletOpened`, `walletClosed` or `sent` to the keyless `POST /v1/payment-links/{id}/events`
+  (same route, POST), and the owner's read answers `checkoutWalletAt`, `checkoutWalletClosedAt`
+  and `checkoutSentAt`. The extension and Freighter report for themselves (`signWithFreighter`'s
+  `onOpen` runs once Freighter is there); a wallet link or the web wallet counts as opened when
+  the page blurs or hides within `WALLET_OPEN_MS` of the click, and as back without paying when
+  the page shows again and, a ledger later, the link is still open. Informational only: the
+  status still follows the chain. `PaymentRecordView`'s progress draws created, on the page,
+  wallet (open, or a warning when it came back without paying), sent, paid; only the furthest
+  step is live.
 - `parsePaymentLink` refuses a malformed fee and a `payerAccountRequired` link that is not a
   Stellar link with a fee and an amount, and only then accepts an `https` `uri` (never used as
   a wallet link).

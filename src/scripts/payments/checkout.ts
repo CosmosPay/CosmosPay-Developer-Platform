@@ -18,6 +18,10 @@
  * and submits it to Horizon. Until then there is no QR, and never a manual transfer: paying
  * by hand would skip the fee and leave the link unpaid.
  *
+ * While the link is open the page also tells the gateway what the payer does with a wallet
+ * (opened, back without paying, sent: reportCheckoutEvent), for the merchant to follow a payment
+ * that is not on-chain yet. Informational only: the status still follows the chain.
+ *
  * Opened as a popup by a merchant's `<cosmos-pay-button>` (src/embed), the page also tells
  * its opener each status change (src/lib/payments/embed-protocol.ts): the id and the status,
  * nothing else.
@@ -34,9 +38,11 @@ import {
   nextPollDelay,
   payerTotal,
   phaseOf,
+  reportCheckoutEvent,
   shortAddress,
   submitSignedTransaction,
   webWalletUrl,
+  type CheckoutEvent,
   type LinkStatus,
   type PaymentLink,
   type Phase,
@@ -93,6 +99,12 @@ const ERROR_RETRY_MAX_MS = 60_000;
 const COPIED_MS = 2_000;
 /* The extension's content script injects window.cosmosWallet shortly after page start. */
 const EXTENSION_WAIT_MS = 900;
+/* A wallet link or the web wallet counts as opened when the page loses the payer to it within
+   this long of the click (a device without a wallet for the scheme does nothing). */
+const WALLET_OPEN_MS = 2_500;
+/* Back on the page, a payment sent just before gets a ledger to land before the page reports the
+   wallet back without paying. */
+const WALLET_BACK_GRACE_MS = 6_000;
 
 export function startCheckout(): void {
   const root = document.getElementById("checkout");
@@ -367,6 +379,49 @@ export function startCheckout(): void {
     a.title = t.previewInert;
   }
 
+  /* ---- what the payer does with a wallet, told to the merchant's dashboard ----
+     Only while the link is open, and never from a preview. A wallet link or the web wallet
+     counts as opened once the page loses the payer to it (it hides or blurs right after the
+     click), and as back without paying once the page is shown again and, a ledger later, the
+     link is still open. The extension and Freighter answer for themselves. */
+  let walletAway = false;
+  let sentReported = false;
+  let backCheck: number | undefined;
+  function report(event: CheckoutEvent) {
+    if (preview || !link || phaseOf(link) !== "open") return;
+    if (event === "sent") sentReported = true;
+    void reportCheckoutEvent(apiBase, id, event);
+  }
+
+  function watchWalletLeave() {
+    if (preview || walletAway) return;
+    const stop = () => {
+      window.clearTimeout(giveUp);
+      window.removeEventListener("blur", left);
+      document.removeEventListener("visibilitychange", hidden);
+    };
+    const left = () => {
+      stop();
+      if (walletAway) return;
+      walletAway = true;
+      report("walletOpened");
+    };
+    const hidden = () => { if (document.hidden) left(); };
+    const giveUp = window.setTimeout(stop, WALLET_OPEN_MS);
+    window.addEventListener("blur", left);
+    document.addEventListener("visibilitychange", hidden);
+  }
+
+  function walletBack() {
+    if (!walletAway || document.hidden) return;
+    walletAway = false;
+    window.clearTimeout(backCheck);
+    backCheck = window.setTimeout(async () => {
+      await load();
+      if (!sentReported) report("walletClosed");
+    }, WALLET_BACK_GRACE_MS);
+  }
+
   /* ---- Cosmos Wallet extension (Stellar `pay` links only) ---- */
   let extensionChecked = false;
   function offerExtension(l: PaymentLink, phase: Phase) {
@@ -394,11 +449,14 @@ export function startCheckout(): void {
     if (!link || !window.cosmosWallet) return;
     button.disabled = true;
     text("ext-status", t.extOpening);
+    report("walletOpened");
     try {
       await window.cosmosWallet.requestPayment(link.uri);
+      report("sent");
       text("ext-status", t.extSent);
       void load();
     } catch {
+      report("walletClosed");
       text("ext-status", t.extFailed);
     } finally {
       button.disabled = false;
@@ -478,8 +536,13 @@ export function startCheckout(): void {
     button.disabled = true;
     payerStatus(t.signing);
     try {
-      const signed = await signWithFreighter(payerEnvelope.xdr, link.network, payerEnvelope.account);
+      let opened = false;
+      const signed = await signWithFreighter(payerEnvelope.xdr, link.network, payerEnvelope.account, () => {
+        opened = true;
+        report("walletOpened");
+      });
       if (!signed.ok) {
+        if (opened) report("walletClosed");
         const tier = link.network === "public" ? t.mainnet : t.testnetTier;
         payerStatus(
           signed.reason === "missing" ? t.freighterMissing
@@ -489,9 +552,11 @@ export function startCheckout(): void {
         return;
       }
       if (!(await submitSignedTransaction(link.network, signed.signedXdr))) {
+        report("walletClosed");
         payerStatus(t.signFailed);
         return;
       }
+      report("sent");
       payerStatus(t.signSent);
       void load();
     } finally {
@@ -513,10 +578,13 @@ export function startCheckout(): void {
   /* One listener for every design: the mounted template's elements come and go. */
   root.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
-    const button = target.closest<HTMLElement>("[data-copy], [data-action], [data-method-tab], [aria-disabled='true']");
+    const button = target.closest<HTMLElement>("[data-copy], [data-action], [data-method-tab], [aria-disabled='true'], a[data-slot='open-wallet'], a[data-slot='web-wallet']");
     if (!button) return;
     if (button.getAttribute("aria-disabled") === "true") {
       e.preventDefault();
+    } else if (button instanceof HTMLAnchorElement) {
+      // The wallet link or the web wallet: the browser follows it, this page watches it leave.
+      if (button.href) watchWalletLeave();
     } else if (button.dataset.copy) {
       void copy(button as HTMLButtonElement);
     } else if (button.dataset.methodTab) {
@@ -564,8 +632,11 @@ export function startCheckout(): void {
   }
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && link && nextPollDelay(phaseOf(link)) !== null) void load();
+    if (document.hidden) return;
+    walletBack();
+    if (link && nextPollDelay(phaseOf(link)) !== null) void load();
   });
+  window.addEventListener("focus", walletBack);
 
   void load();
 }

@@ -23,11 +23,18 @@ const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
 /**
  * Asks Freighter to sign `xdr` for `network`. When `signer` is given (the transaction's source),
  * an account mismatch is reported before Freighter is asked, since its signature would not count.
+ * `onOpen` runs once Freighter is there and about to show itself (the checkout reports it).
  */
-export async function signWithFreighter(xdr: string, network: StellarNetwork, signer?: string): Promise<FreighterOutcome> {
+export async function signWithFreighter(
+  xdr: string,
+  network: StellarNetwork,
+  signer?: string,
+  onOpen?: () => void,
+): Promise<FreighterOutcome> {
   const api = await import("@stellar/freighter-api");
   const connected = await withTimeout(api.isConnected().catch(() => ({ isConnected: false })), DETECT_TIMEOUT_MS, { isConnected: false });
   if (!connected.isConnected) return { ok: false, reason: "missing" };
+  onOpen?.();
 
   const access = await api.requestAccess().catch(() => ({ address: "", error: { message: "" } }));
   if (access.error || !access.address) return { ok: false, reason: "declined" };

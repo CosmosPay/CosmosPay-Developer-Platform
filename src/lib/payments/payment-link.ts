@@ -251,6 +251,35 @@ export async function buildPayerTransaction(
   }
 }
 
+/** What the hosted checkout reports about the payer's wallet. */
+export type CheckoutEvent = "walletOpened" | "walletClosed" | "sent";
+
+/**
+ * Tells the gateway what the payer did with a wallet: `POST /v1/payment-links/{id}/events`,
+ * keyless like the read. Informational for the merchant's dashboard (the status still follows
+ * the chain), so a failure is dropped. `keepalive` lets it leave while the page hands the payer
+ * to a wallet app. Never throws.
+ */
+export async function reportCheckoutEvent(
+  apiBase: string,
+  id: string,
+  event: CheckoutEvent,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  try {
+    const res = await fetchImpl(`${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}/events`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ event }),
+      cache: "no-store",
+      keepalive: true,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export function assetSymbol(link: Pick<PaymentLink, "chain" | "asset">): string {
   return !link.asset || link.asset === "native" ? NATIVE_CODES[link.chain] : link.asset;
 }

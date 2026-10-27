@@ -13,6 +13,7 @@ import {
   parsePaymentLink,
   payerTotal,
   phaseOf,
+  reportCheckoutEvent,
   shortAddress,
   submitSignedTransaction,
   webWalletUrl,
@@ -303,4 +304,20 @@ test('submitSignedTransaction posts the envelope to the link network Horizon', a
   assert.equal(called!.body, 'tx=AAAA%2B%2F%3D');
   const refused = (async () => new Response('{}', { status: 400 })) as typeof fetch;
   assert.equal(await submitSignedTransaction('public', 'AAAA', refused), false);
+});
+
+test('reportCheckoutEvent posts the event to the link and never throws', async () => {
+  let called: { url: string; body: string; keepalive?: boolean } | null = null;
+  const spy = (async (url: string | URL | Request, init?: RequestInit) => {
+    called = { url: String(url), body: String(init?.body), keepalive: init?.keepalive };
+    return new Response(null, { status: 204 });
+  }) as typeof fetch;
+  assert.equal(await reportCheckoutEvent('https://api.example/cosmos-api/', 'cmh4x2k9a0001l70g8v5q3z2w', 'walletOpened', spy), true);
+  assert.equal(called!.url, 'https://api.example/cosmos-api/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/events');
+  assert.equal(called!.body, '{"event":"walletOpened"}');
+  // It leaves while the page hands the payer to a wallet app.
+  assert.equal(called!.keepalive, true);
+  assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'sent', fakeFetch(429, {})), false);
+  const thrown = (async () => { throw new TypeError('offline'); }) as typeof fetch;
+  assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'walletClosed', thrown), false);
 });
