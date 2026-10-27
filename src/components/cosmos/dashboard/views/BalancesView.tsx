@@ -106,7 +106,6 @@ export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} 
             <div className="bal-card total">
               <div className="bal-asset"><span className="bal-total-k">{b.total}</span></div>
               <div className="bal-amt">{totalSettlements}</div>
-              <div className="bal-fiat">{cx.empty}</div>
             </div>
           )}
         </div>

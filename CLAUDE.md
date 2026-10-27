@@ -51,6 +51,33 @@ only in numeric ranges). An empty table cell shows "-" or a word. Page titles se
 (`docs/openapi.json`, `docs/content/docs/api/`) has none since the community server dropped them
 from every message and spec text (2026-10-25); a regenerated spec that brings one back is a server bug.
 
+## Standing rules from the product owner (check every UI change against them)
+
+These were said more than once; breaking one is a bug, whatever the task was.
+
+- **No empty-state text anywhere** (2026-10-26, repeated 2026-10-27): no "No X yet", "Nothing
+  here", "Add one to…" or similar in a table, a list inside a detail, a menu, a card or a form
+  field. An empty table or list is its empty rows (`FillRows`, whose `empty` is only for a load
+  error); a select with nothing to choose is disabled; a menu shows nothing. Only a load error or
+  a record that does not exist is said. Before finishing, grep the dashboard for
+  `className="empty"`, `notif-empty` and `empty={` and keep only load errors and not-found.
+- **A private account is an account on the token's contract** (2026-10-27): never list a public
+  wallet as one (the table reads the chain and shows only registered accounts). Adding one asks
+  for the customer's signatures (the key transaction, then the register) and saves nothing to the
+  customer before the contract has it. Balances show only after the customer's signature, every
+  time (no key is kept or stored).
+- **One key root for private accounts**: the confidential key comes from the signed key
+  transaction (any wallet, a signed XDR), in the dashboard and first at the checkout. An account
+  registered under another root cannot be opened in the dashboard, so never add another
+  derivation (or change the key transaction's bytes) without a way for existing accounts.
+- **The dashboard never connects a wallet**: people hand over a signed XDR. Cosmos Pay is
+  non-custodial: no key or key material of anyone's is stored, client or server.
+- **Every list is the Payments table** (figures first, filter bar with the view's buttons, a row
+  that opens its detail, icon actions and a "⋮" menu with every action, empty rows, pages),
+  **long forms go in steps** (`FormSteps`), **every create opens a modal** copied from an
+  existing one, and **every delete asks first** (`ConfirmModal`). The details are under "The
+  institutional skin" below.
+
 ## Three domains, one app
 
 | Domain | Area | Pages |
@@ -394,9 +421,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
       taken elsewhere).
     - A pending Stellar payment's detail checks a transaction hash (`/validate`) for a payer whose
       wallet never reported back.
-    - An empty list stays empty (product owner, 2026-10-26: no "nothing here" text or create
-      button inside a table; the view's first action is in its filter row); a list that failed to
-      load still says so in its middle row. A plan limit (API keys,
+    - An empty list stays empty (product owner, 2026-10-26, repeated 2026-10-27: no "nothing
+      here" text or create button anywhere, tables, detail lists, menus and form fields included;
+      the view's first action is in its filter row); a list that failed to load still says so in
+      its middle row. A plan limit (API keys,
       production keys, organizations, a locked organization) opens the plan dialog for whoever can
       change plan (keys: only the organization's owner, whose plan sets them) and says who decides
       otherwise. A control the viewer may not use (a permission) is hidden, not disabled; an

@@ -301,16 +301,16 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts,
               </div>
             </div>
             {splitRows}
+            {/* The recipient, disabled while there is none: no "nothing here" text anywhere
+                (product owner, 2026-10-27). */}
             {list === null ? (
               <p className="field-help" role="status">{t.dash.cosmos.loading}</p>
-            ) : list.length > 0 ? (
+            ) : (
               <div className="fld">
                 <span className="field-l" id="zk-recipient-l">{z.modal.recipient}</span>
-                <Select labelledBy="zk-recipient-l" value={recipient} onChange={setRecipient} options={list.map((a) => ({ value: a.address, label: optionLabel(a) }))} />
+                <Select labelledBy="zk-recipient-l" value={recipient} onChange={setRecipient} options={list.map((a) => ({ value: a.address, label: optionLabel(a) }))} disabled={list.length === 0} />
                 <p className="field-help">{z.modal.recipientHint}</p>
               </div>
-            ) : (
-              <p className="field-help" role="status">{z.modal.noAccounts}</p>
             )}
             </>)}
             {steps.step === 1 && (<>

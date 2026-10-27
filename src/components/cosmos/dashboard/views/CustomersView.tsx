@@ -335,11 +335,11 @@ function CustomerDetailModal({ cv, cx, customer, startEditing = false, env, orgI
               <label className="field-l">{cd.payments}</label>
             </div>
             {pays === null && <TableSkeleton label={cx.loading} />}
-            {/* Payments are matched by the wallets that paid: without one there is nothing to match. */}
-            {pays !== null && pays.length === 0 && !wallets.length && <div className="empty">{cd.noAccount}</div>}
-            {pays !== null && pays.length === 0 && wallets.length > 0 && <div className="empty">{cd.noPayments}</div>}
-            {pays !== null && pays.length > 0 && (
+            {/* Payments are matched by the wallets that paid. No payments is empty rows: no "nothing
+                here" text anywhere (product owner, 2026-10-27). */}
+            {pays !== null && (
               <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>
+                {pays.length === 0 && <FillRows n={3} cols={4} />}
                 {pays.map((p) => (
                   <tr key={p.id} className="row-click" tabIndex={0} onClick={() => onOpenPayment(p.id)} onKeyDown={(e) => { if (e.key === "Enter") onOpenPayment(p.id); }}>
                     <td className="tid"><RecordLink href={recordHref("payment", p.id)} onOpen={() => onOpenPayment(p.id)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
@@ -395,9 +395,9 @@ function CustomerWallets({ customer, wallets, pays, env, orgId, canManage, onCha
           <button type="button" className="link-btn" onClick={() => setRow(newWalletRow())}>{DI.plus} {cd.addWallet}</button>
         )}
       </div>
-      {wallets.length === 0 && !row && <div className="empty">{cd.noAccount}</div>}
-      {wallets.length > 0 && (
+      {(wallets.length > 0 || !row) && (
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{cd.network}</th><th>{cd.account}</th><th>{cv.tableHead.payments}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead><tbody>
+          {wallets.length === 0 && <FillRows n={2} cols={4} />}
           {wallets.map((w) => {
             const n = paidFrom(w);
             return (

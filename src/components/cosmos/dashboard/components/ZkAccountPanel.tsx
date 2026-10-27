@@ -407,7 +407,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
               })}
               <FillRows
                 n={pg.size - (loadError ? 0 : pg.count) - (workingOnPage ? 1 : 0)} cols={COLS}
-                empty={loadError ? za.loadError : privateAccounts.length === 0 ? za.empty : null}
+                empty={loadError ? za.loadError : null}
               />
             </tbody>
           </table></div>

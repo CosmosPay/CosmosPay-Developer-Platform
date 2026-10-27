@@ -416,13 +416,11 @@ export function AdminOverviewView({ env = "dev", goToAdmin = null }) {
           )}
 
           <div className="panel" style={{ marginTop: 16 }}><div className="panel-head"><h3>{ao.volume}</h3></div>
-            {Array.isArray(sum.volume) && sum.volume.length > 0 ? (
-              <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{ao.volHead.asset}</th><th>{ao.volHead.amount}</th><th>{ao.volHead.count}</th></tr></thead>
-                <tbody>{sum.volume.map((v, i) => (
+            <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{ao.volHead.asset}</th><th>{ao.volHead.amount}</th><th>{ao.volHead.count}</th></tr></thead>
+                <tbody>{(Array.isArray(sum.volume) ? sum.volume : []).map((v, i) => (
                   <tr key={i}><td>{assetOf(v.asset, v.chain)}</td><td className="amt">{v.amount}</td><td className="cust">{v.count}</td></tr>
-                ))}</tbody>
+                ))}{!(Array.isArray(sum.volume) && sum.volume.length) && <FillRows n={3} cols={3} />}</tbody>
               </table></div>
-            ) : <div className="empty">{a.empty}</div>}
           </div>
         </>
       )}
@@ -458,7 +456,6 @@ export function AdminPaymentsView({ env = "dev", adminFilter, goToAdmin }) {
         heads={[ap.tableHead.id, ap.tableHead.org, ap.tableHead.destination, ap.tableHead.amount, ap.tableHead.status, ap.tableHead.created, ""]}
         rows={statusFiltered}
         haystack={(p) => `${p.id || ""} ${p.txHash || ""} ${orgOf(p)} ${p.destination || ""} ${p.amount || ""} ${p.asset || ""} ${p.status || ""} ${statusText(labels, p.status)}`}
-        empty={ap.empty}
         renderRow={(p) => (
           <tr key={p.id} className="row-click" onClick={() => setOpen(p)}>
             <IdTd id={p.id} onOpen={() => setOpen(p)} />
@@ -540,7 +537,6 @@ export function AdminSwapsView({ env = "dev", adminFilter, goToAdmin }) {
         heads={[as.tableHead.id, as.tableHead.org, as.tableHead.route, as.tableHead.status, as.tableHead.created, ""]}
         rows={statusFiltered}
         haystack={(s) => `${s.id || ""} ${s.txHash || ""} ${orgOf(s)} ${s.source || ""} ${s.destination || ""} ${s.sendAsset || ""} ${s.destAsset || ""} ${s.recipient || ""} ${s.refundTo || ""} ${s.depositAddress || ""} ${s.status || ""} ${statusText(labels, s.status)}`}
-        empty={as.empty}
         renderRow={(s) => (
           <tr key={s.id} className="row-click" onClick={() => setOpen(s)}>
             <IdTd id={s.id} onOpen={() => setOpen(s)} />
@@ -604,7 +600,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={af.searchReceivers}
         figures={statusFigures(a, rows, (x) => (x.disabled ? "fail" : pillTone(fiatPill(x.kycStatus)) === "ok" ? "ok" : "wait"), { ok: af.approved, wait: af.inReview, fail: af.disabled })} figuresLabel={af.tabs.receivers}
         heads={[af.receiverHead.name, af.receiverHead.org, af.receiverHead.type, af.receiverHead.status, af.receiverHead.created, ""]}
-        rows={rows} empty={af.emptyReceivers}
+        rows={rows}
         haystack={(x) => `${x.name || ""} ${orgOf(x)} ${x.type || ""} ${typeText(x)} ${x.kycStatus || ""} ${kycText(x)} ${x.email || ""} ${x.id || ""} ${x.blindpayId || ""}`}
         renderRow={(x) => (
           <tr key={x.id} className="row-click" onClick={() => setOpen(x)}>
@@ -645,7 +641,7 @@ function FiatList({ sub, a, consumer, onOrgFilter, env }) {
       a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={payin ? af.searchPayins : af.searchPayouts}
       figures={moneyFigures} figuresLabel={af.tabs[sub]}
       heads={[head.id, head.org, head.asset, payin ? head.method : head.rail, head.amount, head.status, head.created, ""]}
-      rows={rows} empty={payin ? af.emptyPayins : af.emptyPayouts}
+      rows={rows}
       haystack={(x) => `${x.id || ""} ${orgOf(x)} ${x.token || ""} ${x.network || ""} ${via(x) || ""} ${x.status || ""} ${txText(x)}`}
       renderRow={(x) => (
         <tr key={x.id} className="row-click" onClick={() => setOpen(x)}>
@@ -724,7 +720,7 @@ export function AdminCustomersView({ adminFilter, goToAdmin }) {
         ]}
         figuresLabel={ac.title}
         heads={[ac.tableHead.name, ac.tableHead.org, ac.tableHead.email, t.dash.customers.tableHead.wallets, ac.tableHead.created, ""]}
-        rows={rows} empty={ac.empty}
+        rows={rows}
         haystack={(c) => `${c.name || ""} ${c.alias || ""} ${orgOf(c)} ${c.email || ""} ${walletsOf(c).map((w) => w.address).join(" ")} ${c.id || ""}`}
         renderRow={(c) => (
           <tr key={c.id} className="row-click" onClick={() => setOpen(c)}>
@@ -785,7 +781,7 @@ export function AdminProductsView({ adminFilter, goToAdmin }) {
         ]}
         figuresLabel={ap.title}
         heads={[ap.tableHead.name, ap.tableHead.org, ap.tableHead.price, ap.tableHead.kind, ap.tableHead.created, ""]}
-        rows={rows} empty={ap.empty}
+        rows={rows}
         haystack={(p) => `${p.name || ""} ${orgOf(p)} ${p.kind || ""} ${kindText(p)} ${p.asset || ""} ${p.id || ""}`}
         renderRow={(p) => (
           <tr key={p.id} className="row-click" onClick={() => setOpen(p)}>
@@ -856,7 +852,7 @@ export function AdminConsumersView({ goToAdmin }) {
         ]}
         figuresLabel={ac.title}
         heads={[ac.tableHead.org, ac.tableHead.payments, ac.tableHead.swaps, ac.tableHead.products, ac.tableHead.customers, ...(FIAT_ON ? [ac.tableHead.receivers, ac.tableHead.payins, ac.tableHead.payouts] : []), ac.tableHead.webhooks, ac.tableHead.created, ""]}
-        rows={rows} empty={ac.empty}
+        rows={rows}
         haystack={(c) => `${consumerLabel(c)} ${orgNames(c).join(" ")} ${c.accountName || ""} ${c.accountEmail || ""} ${c.apisixUsername || ""} ${c.id || ""}`}
         renderRow={(c) => {
           const names = orgNames(c);

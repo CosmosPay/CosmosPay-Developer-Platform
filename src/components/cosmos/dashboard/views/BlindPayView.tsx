@@ -481,9 +481,8 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
             {/* Wallets */}
             <label className="field-l">{dt.wallets}</label>
             {wallets === null && <TableSkeleton label={bp.loading} />}
-            {wallets !== null && wallets.length === 0 && <div className="empty">{dt.noWallets}</div>}
-            {wallets !== null && wallets.length > 0 && (
-              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{wallets.map((w) => (
+            {wallets !== null && (
+              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{wallets.length === 0 && <FillRows n={2} cols={3} />}{wallets.map((w) => (
                 <tr key={w.id}><td className="cust">{w.name || w.id}</td><td className="cust">{w.network}</td><td className="tid">{w.address || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
@@ -493,9 +492,8 @@ function ReceiverDetailModal({ bp, receiver, orgId, env, canManage, isManager, o
             {/* Bank accounts */}
             <label className="field-l">{dt.banks}</label>
             {banks === null && <TableSkeleton label={bp.loading} />}
-            {banks !== null && banks.length === 0 && <div className="empty">{dt.noBanks}</div>}
-            {banks !== null && banks.length > 0 && (
-              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{banks.map((b) => (
+            {banks !== null && (
+              <div className="t-scroll" tabIndex={0}><table className="tx"><tbody>{banks.length === 0 && <FillRows n={2} cols={3} />}{banks.map((b) => (
                 <tr key={b.id}><td className="cust">{b.name || b.id}</td><td className="cust">{b.rail}</td><td className="cust">{b.country || "-"}</td></tr>
               ))}</tbody></table></div>
             )}
