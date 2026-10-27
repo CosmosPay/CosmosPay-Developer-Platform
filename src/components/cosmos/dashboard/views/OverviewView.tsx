@@ -306,7 +306,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
         </div>
       </section>
 
-      {/* Activity by period: the figures over their paired bars, each linking into its view. */}
+      {/* Activity by period: the figures over their charts, each linking into its view. */}
       <ActivityPanel id="hub-activity" series={series} loading={seriesLoading} period={chartPeriod} onPeriod={setChartPeriod} metrics={METRICS} onGo={onGo} />
 
       {/* The transaction list: the filter bar, then one line per payment. */}

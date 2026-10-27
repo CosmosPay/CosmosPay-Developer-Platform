@@ -287,13 +287,19 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     digit by digit** (`components/Odometer.tsx`, the payments landing's effect: the card's volume,
     the activity's figures) whenever they arrive or change. "Activity" with Daily / Weekly /
     Monthly / Yearly over a row of five figures that are tabs (WAI-ARIA, arrow keys), each over its
-    own paired bars (product owner: the summary must show
-    swaps, liquidity, webhooks and their own charts, not payments only): settled volume with its
-    payers (volume and payments, an axis each), payments with the failed, swaps of every kind
-    (USDT0 included) and liquidity operations with the completed, webhook deliveries with the
-    failed (two counts on one axis, `BarChart shared`). Bars are square (product owner); the
-    volume's axis is USD (`BarChart currency`, compact on the axis, in full in the tooltip). Each
-    figure carries its growth against the window before (tertiary blue up, red down) and its chart a link into its view, filtered to the
+    own chart (product owner: the summary must show
+    swaps, liquidity, webhooks and their own charts, not payments only). **A chart tells
+    something** (product owner, 2026-10-27): `components/StackChart.tsx` splits every count by how
+    it ended (completed at the baseline, pending, not completed; webhooks delivered and failed;
+    private payments expired), the legend gives each part's window total and share, and the
+    tooltip a bucket's total, each part with its share, and what it settled in USD (payments,
+    swaps, private payments). A volume is one USD series on its own axis (`currency`): never two
+    scales on one plot. The outcome palette (`--viz-done/-wait/-fail`, its own steps in dark mode)
+    was validated with the dataviz skill's script; the amber sits under 3:1 on white, so every part
+    is also labelled in the legend, the tooltip and the hidden table. Bars are square (product
+    owner), a 2px surface gap between stacked parts, solid hairline grid. Each figure carries an
+    insight line, not a bare number (the completed or delivered share, the average ticket, what
+    swaps settled, the fees), and its growth against the window before (tertiary blue up, red down) and its chart a link into its view, filtered to the
     window where the view has a date filter. Then "Transactions" with Today / Week / Month / Year,
     the shared filter bar (settled / in progress / failed, network, search) and one line per
     payment (status icon, label over value, a menu to copy the ID, open the explorer on its chain

@@ -5,7 +5,7 @@
    one white frame on the canvas, the sidebar (logo, main menu,
    preferences) on its left, the general nav adapted on top of the content,
    a big page title with its breadcrumb, a black account card on a grey
-   panel, segmented period tabs, paired bars and a filterable list.
+   panel, segmented period tabs, stacked outcome bars and a filterable list.
    views.css keeps the shared dashboard pieces; this file restyles them.
    ============================================================ */
 
@@ -325,10 +325,17 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .hub-chart-head .hub-link { align-self: center; }
 .hub-legend { display: flex; gap: 22px; font-size: 12px; color: var(--ink-3); }
 .hub-legend span { display: inline-flex; align-items: center; gap: 7px; }
-.dot-a, .dot-b { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+/* The outcome palette (validated: light on white, dark on the dark surface; the amber sits under
+   3:1 on white, so every part also has its label, total and share in the legend, the tooltip and
+   the table). Completed at the baseline, pending, not completed. */
+.hub-panel, .bars { --viz-done: #2346F4; --viz-wait: #D9930D; --viz-fail: #D64545; }
+[data-theme="dark"] .hub-panel, [data-theme="dark"] .bars { --viz-done: #6F86FF; --viz-wait: #BF8A12; --viz-fail: #DD4F7A; }
+.dot-s { display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--viz-done); }
+.dot-s.wait { background: var(--viz-wait); }
+.dot-s.fail { background: var(--viz-fail); }
+.hub-legend b { margin-left: 2px; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.hub-legend small { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 /* the chart is where the tertiary blue lives: the first figure in blue, the second in its soft tint */
-.dot-a { background: var(--tertiary); }
-.dot-b { background: var(--tertiary-soft); }
 .hub-chart-note { margin-left: auto; font-size: 12px; color: var(--ink-3); }
 .dash-body, .hub > * { min-width: 0; }
 
@@ -377,14 +384,15 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .bars-axis-l { text-align: right; }
 .bars-plot { position: relative; min-width: 0; }
 .bars-svg { display: block; width: 100%; height: 220px; }
-.bars-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 4 4; }
+.bars-grid { stroke: var(--line); stroke-width: 1; }
 .bars-hit { fill: transparent; }
 .bars-svg g.on .bars-hit { fill: var(--accent-soft); }
-.bar-a { fill: var(--tertiary); }
-.bar-b { fill: var(--tertiary-soft); }
+.bar-s { fill: var(--viz-done); }
+.bar-s.wait { fill: var(--viz-wait); }
+.bar-s.fail { fill: var(--viz-fail); }
 /* two counts on one axis: no right axis */
 .bars.shared { grid-template-columns: 52px minmax(0, 1fr); }
-.bars.money { grid-template-columns: 76px minmax(0, 1fr) 40px; }
+.bars.shared.money { grid-template-columns: 76px minmax(0, 1fr); }
 .bars-x { display: flex; margin-top: 4px; }
 .bars-x span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: visible; }
 /* the hovered bucket's label in ink, as the reference marks "Jul" */
@@ -400,7 +408,10 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 @keyframes tipIn { from { opacity: 0; } }
 .bars-tip b { font-size: 12.5px; }
 .bars-tip span { display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, .78); }
-.bars-tip em { margin-left: auto; font-style: normal; font-weight: 700; color: #fff; }
+.bars-tip em { margin-left: auto; font-style: normal; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+.bars-tip em small { margin-left: 6px; font-size: 11.5px; font-weight: 500; color: rgba(255, 255, 255, .7); }
+.bars-tip-total { padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, .18); }
+.bars-tip span:not(.bars-tip-extra) + .bars-tip-extra { padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, .18); }
 
 /* ---- checkout design picker (create and detail modals) ---- */
 .design-picker { border: 0; padding: 0; margin: 18px 0 0; min-width: 0; }
@@ -453,7 +464,7 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 }
 @media (max-width: 520px) {
   .bars { grid-template-columns: 44px minmax(0, 1fr) 28px; padding: 8px 8px 14px; }
-  .bars.money { grid-template-columns: 60px minmax(0, 1fr) 28px; }
+  .bars.shared.money { grid-template-columns: 60px minmax(0, 1fr); }
   .design-grid { grid-template-columns: 1fr; }
 }
 
@@ -673,7 +684,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
    everyone (product owner's call), kept short and small. ---- */
 .arrive { animation: arrive .32s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes arrive { from { opacity: 0; transform: translateY(6px); } }
-.bars-svg .bar-a, .bars-svg .bar-b { transform-box: fill-box; transform-origin: 50% 100%; animation: barGrow .55s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
+.bars-svg .bar-s { transform-box: fill-box; transform-origin: 50% 100%; animation: barGrow .55s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
 @keyframes barGrow { from { transform: scaleY(0); } }
 
 /* ---- the swap widget: the pattern every swap app uses. A card with two wells ("You pay", "You

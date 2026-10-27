@@ -1,18 +1,22 @@
-/* ActivityPanel: activity by day, week, month or year as figures over paired bars, the overview's
+/* ActivityPanel: activity by day, week, month or year as figures over a chart, the overview's
    and each view's own (product owner: Payments, private payments, swaps, liquidity and webhooks
    carry their figures and charts too). Several figures are WAI-ARIA tabs, each over its own chart;
    a single one stands alone. Each carries its growth against the window before. The data is the
    Payments API's `/v1/summary/series` (one call per period: `useSeries`, or the overview's own
    batched load), and every figure counts up (Odometer).
-   Figures: volume (settled, USD, with its payers), payments (with the failed), swaps (every kind,
-   with the completed), liquidity (operations, with the completed), webhooks (deliveries, with the
-   failed), zkVolume and zkPayments (private payments: settled volume in USD with the completed,
-   and created with the expired). */
+   A chart tells something (product owner, 2026-10-27): every count is split by how it ended
+   (completed, pending, not completed: StackChart), its legend gives each part's total and share,
+   and the tooltip adds what the bucket settled in USD where the server values it (payments,
+   swaps, private payments). A volume is one amount on its own axis, never a second scale on the
+   same plot. Each figure carries an insight line, not a bare number: the completed share, the
+   average ticket, what swaps settled, the fees.
+   Figures: volume (settled, USD), payments, swaps (every kind), liquidity (operations), webhooks
+   (deliveries), zkVolume and zkPayments (private payments: settled volume in USD, and created). */
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi } from "@/lib/api-client";
 import { goFiltered } from "@/components/cosmos/dashboard/hooks";
-import { BarChart } from "@/components/cosmos/dashboard/components/BarChart";
+import { StackChart, type StackPart } from "@/components/cosmos/dashboard/components/StackChart";
 import { Odometer } from "@/components/cosmos/dashboard/components/Odometer";
 import { Sk, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
@@ -35,7 +39,7 @@ function zeroBuckets(period: SeriesPeriod) {
   return Array.from({ length: WINDOW_SIZE[period] }, (_, k) => {
     const i = WINDOW_SIZE[period] - 1 - k;
     const at = period === "day" ? Date.UTC(y, mo, d - i) : period === "week" ? Date.UTC(y, mo, monday - 7 * i) : period === "month" ? Date.UTC(y, mo - i, 1) : Date.UTC(y - i, 0, 1);
-    return { date: new Date(at).toISOString().slice(0, 10), a: 0, b: 0 };
+    return { date: new Date(at).toISOString().slice(0, 10), values: [] as number[] };
   });
 }
 /* Plural-safe counts: the singular has its own string. */
@@ -87,57 +91,83 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
   const part = (k) => (series && series[k]) || {};
   const growth = (cur, prev) => (prev > 0 ? ((cur - prev) / prev) * 100 : null);
   const pct = (g) => `${g >= 0 ? "↑" : "↓"} ${num.format(Math.round(Math.abs(g) * 10) / 10)}%`;
+  const shareFmt = new Intl.NumberFormat(lang, { style: "percent", maximumFractionDigits: 0 });
+  const share = (x, of) => (of > 0 ? shareFmt.format(x / of) : null);
+  // The completed share of a window, as its figure's insight line (nothing when nothing ran).
+  const doneShare = (done, all) => (all > 0 ? fmt(h.doneShare, { pct: share(done, all) }) : null);
   const zk = part("zkPayments");
-  // Each figure: its label, value, the line under it, growth, and its chart (two series; a shared
-  // axis for two counts of the same thing, a USD axis for a volume).
+  const sw = part("swaps");
+  const lq = part("liquidity");
+  const wh = part("webhooks");
+  // The parts a count splits into: completed at the baseline, then pending, then not completed.
+  const DONE: StackPart = { key: "done", label: h.partDone, tone: "done" };
+  const WAIT: StackPart = { key: "wait", label: h.partPending, tone: "wait" };
+  const NOT: StackPart = { key: "fail", label: h.partNotDone, tone: "fail" };
+  // [completed, pending, not completed] of a bucket or window: pending is what is neither.
+  const outcome = (x, gaveUp = "failed") => {
+    const all = (x && x.count) || 0, done = (x && x.succeeded) || 0, lost = (x && x[gaveUp]) || 0;
+    return [done, Math.max(0, all - done - lost), lost];
+  };
+  const settled = (x) => [[h.tipSettledUsd, usd(x.volumeUsd)]] as [string, string][];
+  // Each figure: its label, value, insight lines, growth, and its chart (the parts it splits into,
+  // their window totals for the legend, and one point per bucket).
   const m = {
     volume: {
-      label: h.sumVolume, value: usd(win.volumeUsd), sub: countText(win.payers, h.payersOne, h.payersN, num),
+      label: h.sumVolume, value: usd(win.volumeUsd),
+      sub: [countText(win.payers, h.payersOne, h.payersN, num), win.succeeded > 0 && Number(win.volumeUsd) > 0 ? fmt(h.avgTicket, { amount: usd(Number(win.volumeUsd) / win.succeeded) }) : null],
       growth: growth(Number(win.volumeUsd) || 0, Number(before.volumeUsd) || 0),
-      a: h.legendVolume, b: h.legendCount, shared: false, currency: "USD",
-      bars: series?.buckets?.map((x) => ({ date: x.start, a: Number(x.volumeUsd) || 0, b: x.count || 0 })),
+      parts: [{ key: "usd", label: h.legendVolume, tone: "done" }] as StackPart[], currency: "USD",
+      points: series?.buckets?.map((x) => ({ date: x.start, values: [Number(x.volumeUsd) || 0], extra: [[h.partDone, n(x.succeeded)]] as [string, string][] })),
       unpriced: win.unpriced,
     },
     payments: {
-      label: h.sumCount, value: n(win.count), sub: countText(win.failed, h.paymentsFailedOne, h.paymentsFailedN, num),
+      label: h.sumCount, value: n(win.count),
+      sub: [doneShare(win.succeeded, win.count), countText(win.failed, h.paymentsFailedOne, h.paymentsFailedN, num)],
       growth: growth(win.count || 0, before.count || 0),
-      a: h.legendCount, b: h.sumFailed, shared: true,
-      bars: series?.buckets?.map((x) => ({ date: x.start, a: x.count || 0, b: x.failed || 0 })),
+      parts: [DONE, WAIT, NOT], totals: outcome(win),
+      points: series?.buckets?.map((x) => ({ date: x.start, values: outcome(x), extra: settled(x) })),
     },
     swaps: {
-      label: h.sumSwaps, value: n(part("swaps").totals?.count), sub: countText(part("swaps").totals?.succeeded, h.doneOne, h.doneN, num),
-      growth: growth(part("swaps").totals?.count || 0, part("swaps").previous?.count || 0),
-      a: h.sumSwaps, b: h.legendDone, shared: true,
-      bars: part("swaps").buckets?.map((x) => ({ date: x.start, a: x.count || 0, b: x.succeeded || 0 })),
+      label: h.sumSwaps, value: n(sw.totals?.count),
+      sub: [sw.totals && Number(sw.totals.volumeUsd) > 0 ? fmt(h.settledAmount, { amount: usd(sw.totals.volumeUsd) }) : null, doneShare(sw.totals?.succeeded, sw.totals?.count)],
+      growth: growth(sw.totals?.count || 0, sw.previous?.count || 0),
+      parts: [DONE, WAIT, NOT], totals: outcome(sw.totals),
+      points: sw.buckets?.map((x) => ({ date: x.start, values: outcome(x), extra: settled(x) })),
     },
     liquidity: {
-      label: h.sumLiquidity, value: n(part("liquidity").totals?.count), sub: countText(part("liquidity").totals?.succeeded, h.doneOne, h.doneN, num),
-      growth: growth(part("liquidity").totals?.count || 0, part("liquidity").previous?.count || 0),
-      a: h.sumLiquidity, b: h.legendDone, shared: true,
-      bars: part("liquidity").buckets?.map((x) => ({ date: x.start, a: x.count || 0, b: x.succeeded || 0 })),
+      label: h.sumLiquidity, value: n(lq.totals?.count),
+      sub: [doneShare(lq.totals?.succeeded, lq.totals?.count), countText(lq.totals?.failed, h.paymentsFailedOne, h.paymentsFailedN, num)],
+      growth: growth(lq.totals?.count || 0, lq.previous?.count || 0),
+      parts: [DONE, WAIT, NOT], totals: outcome(lq.totals),
+      points: lq.buckets?.map((x) => ({ date: x.start, values: outcome(x) })),
     },
     webhooks: {
-      label: h.sumWebhooks, value: n(part("webhooks").totals?.deliveries), sub: countText(part("webhooks").totals?.failed, h.webhooksFailedOne, h.sumWebhooksFailed, num),
-      growth: growth(part("webhooks").totals?.deliveries || 0, part("webhooks").previous?.deliveries || 0),
-      a: h.sumWebhooks, b: h.legendDeliveriesFailed, shared: true,
-      bars: part("webhooks").buckets?.map((x) => ({ date: x.start, a: x.deliveries || 0, b: x.failed || 0 })),
+      label: h.sumWebhooks, value: n(wh.totals?.deliveries),
+      sub: [wh.totals?.deliveries > 0 ? fmt(h.deliveredShare, { pct: share(wh.totals.deliveries - (wh.totals.failed || 0), wh.totals.deliveries) }) : null, countText(wh.totals?.failed, h.webhooksFailedOne, h.sumWebhooksFailed, num)],
+      growth: growth(wh.totals?.deliveries || 0, wh.previous?.deliveries || 0),
+      parts: [{ key: "done", label: h.partDelivered, tone: "done" }, { key: "fail", label: h.legendDeliveriesFailed, tone: "fail" }] as StackPart[],
+      totals: [Math.max(0, (wh.totals?.deliveries || 0) - (wh.totals?.failed || 0)), wh.totals?.failed || 0],
+      points: wh.buckets?.map((x) => ({ date: x.start, values: [Math.max(0, (x.deliveries || 0) - (x.failed || 0)), x.failed || 0] })),
     },
     zkVolume: {
-      label: h.sumVolume, value: usd(zk.totals ? zk.totals.volumeUsd : "0"), sub: countText(zk.totals?.succeeded, h.doneOne, h.doneN, num),
+      label: h.sumVolume, value: usd(zk.totals ? zk.totals.volumeUsd : "0"),
+      sub: [countText(zk.totals?.succeeded, h.doneOne, h.doneN, num), zk.totals && Number(zk.totals.feesUsd) > 0 ? fmt(h.feesAmount, { amount: usd(zk.totals.feesUsd) }) : null],
       growth: growth(Number(zk.totals?.volumeUsd) || 0, Number(zk.previous?.volumeUsd) || 0),
-      a: h.legendVolume, b: h.legendDone, shared: false, currency: "USD",
-      bars: zk.buckets?.map((x) => ({ date: x.start, a: Number(x.volumeUsd) || 0, b: x.succeeded || 0 })),
+      parts: [{ key: "usd", label: h.legendVolume, tone: "done" }] as StackPart[], currency: "USD",
+      points: zk.buckets?.map((x) => ({ date: x.start, values: [Number(x.volumeUsd) || 0], extra: [[h.partDone, n(x.succeeded)]] as [string, string][] })),
     },
     zkPayments: {
-      label: t.dash.viewLabels.zkPayments, value: n(zk.totals?.count), sub: countText(zk.totals?.expired, h.expiredOne, h.expiredN, num),
+      label: t.dash.viewLabels.zkPayments, value: n(zk.totals?.count),
+      sub: [doneShare(zk.totals?.succeeded, zk.totals?.count), countText(zk.totals?.expired, h.expiredOne, h.expiredN, num)],
       growth: growth(zk.totals?.count || 0, zk.previous?.count || 0),
-      a: h.legendCount, b: h.legendExpired, shared: true,
-      bars: zk.buckets?.map((x) => ({ date: x.start, a: x.count || 0, b: x.expired || 0 })),
+      parts: [DONE, WAIT, { key: "fail", label: h.legendExpired, tone: "fail" }] as StackPart[], totals: outcome(zk.totals, "expired"),
+      points: zk.buckets?.map((x) => ({ date: x.start, values: outcome(x, "expired"), extra: settled(x) })),
     },
   };
   const key = metrics.includes(metric) ? metric : metrics[0];
   const cur = m[key];
-  const bars = cur.bars && cur.bars.length ? cur.bars : zeroBuckets(period);
+  const points = cur.points && cur.points.length ? cur.points : zeroBuckets(period);
+  const curTotal = cur.totals ? cur.totals.reduce((a, b) => a + b, 0) : 0;
   const curView = METRIC_VIEW[key];
   // Its view, filtered to the chart's window where the view has a date filter.
   const openMetric = () => {
@@ -164,7 +194,7 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
       <>
         <b className="arrive"><Odometer text={x.value} /></b>
         <small className="hub-sub arrive">
-          {x.sub}
+          {x.sub.filter(Boolean).map((s) => <span key={s}>{s}</span>)}
           {x.growth !== null && <em className={x.growth >= 0 ? "up" : "down"} title={h.growthTitle}><span className="sr-only">{h.growthTitle}: </span>{pct(x.growth)}</em>}
         </small>
       </>
@@ -203,9 +233,14 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
         )}
         <div id={`${id}-panel`} role={many ? "tabpanel" : undefined} aria-labelledby={many ? `${id}-m-${key}` : undefined}>
           <div className="hub-chart-head">
+            {/* Each part with its total and share of the window; the chart's table says it too. */}
             <div className="hub-legend" aria-hidden="true">
-              <span><i className="dot-a" />{cur.a}</span>
-              <span><i className="dot-b" />{cur.b}</span>
+              {cur.parts.map((p, i) => (
+                <span key={p.key}>
+                  <i className={`dot-s ${p.tone}`} />{p.label}
+                  {cur.totals && <><b>{n(cur.totals[i])}</b>{curTotal > 0 && <small>{share(cur.totals[i], curTotal)}</small>}</>}
+                </span>
+              ))}
             </div>
             {cur.unpriced > 0 && <span className="hub-chart-note">{countText(cur.unpriced, h.usdUnpricedOne, h.usdUnpricedN, num)}</span>}
             {onGo && <button type="button" className="hub-link" onClick={openMetric}>{fmt(h.goTo, { view: t.dash.viewLabels[curView] })}</button>}
@@ -213,16 +248,15 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
           {first ? <ChartSkeleton label={h.chartLabels[period]} bars={12} /> : (
             <div className={loading ? "hub-chart is-loading" : "hub-chart"}>
               {/* Remounted per figure and period, so the bars grow again from the axis. */}
-              <BarChart
-                key={`${key}-${period}-${bars.length}`}
-                data={bars}
-                label={key === "volume" ? h.chartLabels[period] : `${cur.label} (${h.chartPeriods[period]})`}
-                aLabel={cur.a}
-                bLabel={cur.b}
+              <StackChart
+                key={`${key}-${period}-${points.length}`}
+                data={points}
+                parts={cur.parts}
+                label={`${cur.label} (${h.chartPeriods[period]})`}
                 dateLabel={h.thDate}
+                totalLabel={h.tipTotal}
                 lang={lang}
                 period={period}
-                shared={cur.shared}
                 currency={cur.currency}
               />
             </div>
