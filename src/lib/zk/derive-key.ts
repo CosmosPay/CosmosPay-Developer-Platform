@@ -27,9 +27,11 @@ const sameBytes = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.e
 
 export class KeyDerivationError extends Error {}
 
-/** A signer of transactions, which may say what the next signature is for. */
+/** A signer of transactions, which may say what the next signature is for. `signerKey` signs for
+ *  `publicKey` when it is not the account itself (a sub-account's base). */
 export interface TransactionSigner {
   publicKey: string;
+  signerKey?: string;
   sign(txXdrBase64: string): Promise<string>;
   prepare?(purpose: SignPurpose): void;
 }
@@ -56,12 +58,13 @@ export async function deriveSignerRootSk(signer: MessageSigner, token: string): 
   return deriveSk(roots[0], token, account).sk;
 }
 
-/** Derive this account's `sk` on `token` from its one signature of the key transaction. */
+/** Derive this account's `sk` on `token` from its one signature of the key transaction: the
+ *  account's own, or its signer's for a sub-account (the base signs the sub-account's). */
 export async function deriveTransactionRootSk(signer: TransactionSigner, token: string, networkPassphrase: string): Promise<bigint> {
   const account = signer.publicKey;
   const xdr = keyTransactionXdr(token, account, networkPassphrase);
   signer.prepare?.("key");
-  const check = signatureOn(xdr, await signer.sign(xdr), account, networkPassphrase);
+  const check = signatureOn(xdr, await signer.sign(xdr), signer.signerKey ?? account, networkPassphrase);
   if (!check.ok) throw new KeyDerivationError("The signed key transaction is not this account's signature of it, so no key was derived");
   return deriveSk(check.signature, token, account).sk;
 }

@@ -22,7 +22,12 @@
    (the token keeps one per Stellar account, so nothing new can be derived for it): it is added with
    nothing to sign, even when its key came from another root (registered by the private checkout or
    by this table before 2026-10-26 22:23 with Freighter's message signature); it receives private
-   payments, and only its balances do not open here. Nothing connects or opens a wallet (product owner,
+   payments, and only its balances do not open here. More than one private account per address
+   (product owner, 2026-10-27): for an address that already has its own, the dialog creates a
+   sub-account (src/lib/zk/sub-accounts.ts), a new Stellar account funded by the address and whose
+   only signer is the address, and registers it; the customer signs its creation, its key
+   transaction and its register with the address's wallet. The table marks a sub-account with its
+   address, read from the chain (its signers), never stored. Nothing connects or opens a wallet (product owner,
    2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's):
    every signature is asked for in ZkSignDialog, the XDR for the customer to sign in any Stellar
    wallet and paste back, and must be the account's.
@@ -67,6 +72,7 @@ import type { ZkNetworkConfig } from "@/lib/zk/checkout-api";
 import type { ZkBalances, ZkPhase, ZkWallet } from "@/lib/zk/wallet";
 import type { SignRequest } from "@/lib/zk/xdr-signer";
 import { ZkSignDialog } from "@/components/cosmos/dashboard/components/ZkSignDialog";
+import { SUB_ACCOUNT_STARTING_BALANCE } from "@/lib/zk/sub-accounts";
 
 type Action = "create" | "open" | "merge" | "deposit" | "withdraw" | "refresh";
 /** A customer's Stellar wallet: a private account, once it holds a confidential account. */
@@ -125,6 +131,8 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   const [removing, setRemoving] = useState(false);
   // When each opened account registered on the token (undefined while read, null when unknown).
   const [created, setCreated] = useState<Record<string, { txHash: string; at: string } | null>>({});
+  // The sub-accounts among the private accounts: each one's address (its only signer), from the chain.
+  const [controllers, setControllers] = useState<Record<string, string>>({});
   // The signature the running action waits for, and how to hand it back.
   const [signing, setSigning] = useState<{ request: SignRequest; resolve: (xdr: string) => void; reject: (e: Error) => void } | null>(null);
   const [startedAt, setStartedAt] = useState(0);
@@ -154,7 +162,13 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
     const batch = unread.slice(0, STATUS_CHUNK);
     import("@/lib/zk/wallet")
       .then(({ confidentialAccounts }) => confidentialAccounts(config, batch))
-      .then((s) => { if (current) setStatus((prev) => ({ ...prev, ...s })); })
+      .then(async (s) => {
+        const registered = batch.filter((a) => s[a] === true);
+        const c = registered.length
+          ? await import("@/lib/zk/sub-accounts").then(({ controllersOf }) => controllersOf(config.rpcUrl, registered)).catch(() => ({}))
+          : {};
+        if (current) { setControllers((prev) => ({ ...prev, ...c })); setStatus((prev) => ({ ...prev, ...s })); }
+      })
       .catch(() => { if (current) setStatus((prev) => ({ ...prev, ...Object.fromEntries(batch.map((a) => [a, null])) })); });
     return () => { current = false; };
   }, [unread.slice(0, STATUS_CHUNK).join(","), config.token.contractId]);
@@ -202,7 +216,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   /* Runs one action for `address`: its key from the account's signature (or this tab's), the
      action, then the balances read again. `before` runs ahead of any signature; with `report`
      false a failure is only returned (the add dialog shows it), not shown under the table. */
-  const run = async (name: Action, address: string, action: (w: ZkWallet) => Promise<unknown>, opts: { before?: () => Promise<void>; report?: boolean } = {}): Promise<Outcome> => {
+  const run = async (name: Action, address: string, action: (w: ZkWallet) => Promise<unknown>, opts: { before?: () => Promise<void>; report?: boolean; signerKey?: string } = {}): Promise<Outcome> => {
     if (busy) return null;
     setBusy({ action: name, address });
     setError(null);
@@ -214,8 +228,9 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
       }
       if (!wallet.current) {
         const [{ ZkWallet }, { XdrSigner }] = await Promise.all([import("@/lib/zk/wallet"), import("@/lib/zk/xdr-signer")]);
-        // The customer's signed key transaction only: no wallet opens here.
-        const signer = new XdrSigner(address, config.networkPassphrase, requestSignature);
+        // The customer's signed key transaction only: no wallet opens here. A sub-account's
+        // transactions are signed by its address.
+        const signer = new XdrSigner(address, config.networkPassphrase, requestSignature, opts.signerKey ?? controllers[address] ?? address);
         wallet.current = await ZkWallet.connect(config, signer, setPhase, ["transaction"]);
       }
       await action(wallet.current);
@@ -270,6 +285,38 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
       },
     });
     return outcome === true ? { created } : outcome;
+  };
+
+  /* Another private account for `base`, which already has its own: a sub-account, created and
+     funded by the base (whose wallet signs its creation), then registered with the base's
+     signatures. Its own key signs its signer change, here, and is dropped. Resolves with its
+     address or what went wrong. */
+  const createSubAccount = async (base: string): Promise<{ address: string } | string | null> => {
+    const [{ Keypair, rpc }, sub, { expiryOf, signatureOn }, { accountExists }] = await Promise.all([
+      import("@stellar/stellar-sdk"), import("@/lib/zk/sub-accounts"), import("@/lib/zk/xdr-signer"), import("@/lib/zk/wallet"),
+    ]);
+    const key = Keypair.random();
+    const address = key.publicKey();
+    const outcome = await run("create", address, (x) => x.register(setPhase), {
+      report: false,
+      signerKey: base,
+      before: async () => {
+        if (!(await accountExists(config, base))) throw new Error(fmt(za.notFunded, { network: `${networkName("stellar")} ${config.network === "public" ? "Mainnet" : "Testnet"}` }));
+        const source = await new rpc.Server(config.rpcUrl, { allowHttp: config.rpcUrl.startsWith("http://") }).getAccount(base);
+        const xdr = sub.subAccountTransaction(base, source.sequenceNumber(), address, config.networkPassphrase);
+        const signed = await requestSignature({ purpose: "subAccount", xdr, account: base, networkPassphrase: config.networkPassphrase, expiresAt: expiryOf(xdr, config.networkPassphrase) });
+        if (!signatureOn(xdr, signed, base, config.networkPassphrase).ok) throw new Error(z.sign.notSigned.replace("{account}", shortAddress(base)));
+        setPhase("waiting");
+        try {
+          await sub.submitSubAccount(config.rpcUrl, config.networkPassphrase, signed, key);
+        } catch (e) {
+          const why = e instanceof Error ? e.message : String(e);
+          throw new Error(/underfunded|low_?reserve/i.test(why) ? fmt(za.subUnderfunded, { amount: SUB_ACCOUNT_STARTING_BALANCE }) : fmt(za.subFailed, { error: why }));
+        }
+        setControllers((c) => ({ ...c, [address]: base }));
+      },
+    });
+    return outcome === true ? { address } : outcome;
   };
 
   const provable = canProve();
@@ -417,7 +464,10 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                         </span>
                       </span>
                     </td>
-                    <td className="cust" onClick={(e) => e.stopPropagation()}><AddressLink chain="stellar" network={config.network} address={w.address} label={za.tableHead.address} /></td>
+                    <td className="cust" onClick={(e) => e.stopPropagation()}>
+                      <AddressLink chain="stellar" network={config.network} address={w.address} label={za.tableHead.address} />
+                      {controllers[w.address] && <small className="cust-wallet-net">{fmt(za.subOf, { base: shortAddress(controllers[w.address]) })}</small>}
+                    </td>
                     <td className="amt">{balanceCell(w.address, "spendable", za.spendable)}</td>
                     <td className="amt">{a.loaded ? `${fromUnits(a.loaded.receiving)} ${sym}` : "-"}</td>
                     <td className="cust">{paymentsCell(w.address)}</td>
@@ -470,6 +520,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                   [za.tableHead.wallet, opened.label || networkName("stellar")],
                   [za.tableHead.address, <AddressLink key="a" chain="stellar" network={config.network} address={opened.address} label={za.tableHead.address} />],
                   [t.dash.paylinks.detail.fields.network, `${networkName("stellar")} ${config.network === "public" ? "Mainnet" : "Testnet"}`],
+                  ...(controllers[opened.address] ? [[za.signedBy, <AddressLink key="s" chain="stellar" network={config.network} address={controllers[opened.address]} label={za.signedBy} />]] : []),
                   [za.createdOn, createdCell(opened.address)],
                   [za.spendable, a.loaded ? `${fromUnits(a.loaded.spendable)} ${sym}` : za.balancesHidden],
                   ...(a.loaded ? [[za.receiving, `${fromUnits(a.loaded.receiving)} ${sym}`]] : []),
@@ -505,6 +556,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
           privateAccounts={privateAccounts}
           busy={!!busy} progress={working ? progress(busy!.address) : null}
           onCreate={createAccount}
+          onCreateSub={createSubAccount}
           onClose={() => setAdding(false)}
           onAdded={(created) => { setAdding(false); showToast(created ? za.createdOk : za.added); onChanged?.(); }}
         />
@@ -540,11 +592,13 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
    from "add customer" (CustomerFormModal): the account (a customer already there or a new one, and
    one of the customer's Stellar wallets or a new address), then the customer's signatures that
    create it on Cosmos Pay's token. The wallet is saved to the customer only once the token has it,
-   so nothing public is ever listed as a private account. The dialog stays open (and cannot be
-   closed) while the signatures and the proof run; each signature opens over it. */
+   so nothing public is ever listed as a private account. For an address that already has its
+   own, it creates another one, a sub-account of the address, or adds the existing one. The dialog
+   stays open (and cannot be closed) while the signatures and the proof run; each signature opens
+   over it. */
 const NEW_CUSTOMER = "__new";
 const OTHER_ADDRESS = "__other";
-function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privateAccounts, busy, progress, onCreate, onClose, onAdded }: {
+function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privateAccounts, busy, progress, onCreate, onCreateSub, onClose, onAdded }: {
   config: ZkNetworkConfig;
   customers: PanelCustomer[] | null;
   env: string;
@@ -555,6 +609,7 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
   busy: boolean;
   progress: ReactNode;
   onCreate: (address: string) => Promise<{ created: boolean } | string | null>;
+  onCreateSub: (base: string) => Promise<{ address: string } | string | null>;
   onClose: () => void;
   onAdded: (created: boolean) => void;
 }) {
@@ -574,8 +629,10 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
   const existing = own.find((w) => w.walletId === choice) || null;
   const account = existing ? existing.address : address.trim();
   const valid = StrKey.isValidEd25519PublicKey(account);
+  // Already one of this customer's private accounts: only another one (a sub-account) can be made.
   const already = customer !== NEW_CUSTOMER && privateAccounts.some((w) => w.customerId === customer && w.address === account);
-  const accountOk = valid && !already && (customer !== NEW_CUSTOMER || name.trim() !== "");
+  const accountOk = valid && (customer !== NEW_CUSTOMER || name.trim() !== "");
+  const [mode, setMode] = useState<"sub" | "existing">("sub");
   const working = busy || saving;
   // The second step reads the contract: whether this public account already has its private
   // account (the token keeps one per Stellar account) and since when. undefined while read; null
@@ -594,20 +651,30 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
     return () => { current = false; };
   }, [steps.step, account]);
   const exists = known?.registered === true;
+  const another = exists && (already || mode === "sub");
   const sinceUrl = known?.since ? explorerTxUrl("stellar", config.network === "public" ? "public" : "testnet", known.since.txHash) : null;
 
   const submit = async () => {
     if (!accountOk || working) return;
     setProblem(null);
+    if (another) {
+      // A sub-account: its own address joins the customer (the table names its address from the chain).
+      const made = await onCreateSub(account);
+      if (made === null || typeof made === "string") { setProblem(made); return; }
+      await save({ chain: "stellar", address: made.address, ...(label.trim() ? { label: label.trim() } : {}) }, true);
+      return;
+    }
     const outcome = await onCreate(account);
     if (outcome === null || typeof outcome === "string") { setProblem(outcome); return; }
     // On the token now: the wallet joins the customer (unless it already was one of theirs).
     if (existing) { onAdded(outcome.created); return; }
+    await save({ chain: "stellar", address: account, ...(label.trim() ? { label: label.trim() } : {}) }, outcome.created);
+  };
+  const save = async (wallet: { chain: string; address: string; label?: string }, created: boolean) => {
     setSaving(true);
-    const wallet = { chain: "stellar", address: account, ...(label.trim() ? { label: label.trim() } : {}) };
     try {
       await (customer === NEW_CUSTOMER ? custApi.create(env, orgId, { name: name.trim(), wallets: [wallet] }) : custApi.addWallet(customer, env, orgId, wallet));
-      onAdded(outcome.created);
+      onAdded(created);
     } catch (e) {
       setProblem(fmt(za.notSaved, { error: (e && (e as Error).message) || za.add }));
     } finally {
@@ -639,7 +706,6 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
               {address.trim() !== "" && !valid && <p className="field-err" role="alert">{t.dash.wallets.invalidAddress}</p>}
               <Field label={za.walletLabel} hint={t.dash.common.optional} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t.dash.wallets.labelPlaceholder} maxLength={60} />
             </>)}
-            {already && <p className="field-err" role="alert">{za.alreadyAdded}</p>}
           </>)}
           {steps.step === 1 && (<>
             <div className="paylink-fields" style={{ marginBottom: 14 }}>
@@ -648,13 +714,31 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
             </div>
             {!known && <p className="work-progress" role="status"><span className="work-spin" aria-hidden="true" /><span>{za.checking}</span></p>}
             {exists && (<>
-              <p className="field-note">{fmt(za.exists, { account: shortAddress(account) })}</p>
+              <p className="field-note">{fmt(already ? za.existsHere : za.exists, { account: shortAddress(account) })}</p>
               {known?.since && (
                 <p className="field-help">
                   {fmt(za.existsSince, { date: fmtDateTime(known.since.at) })}
                   {sinceUrl && <>{" "}<a className="link-btn" href={sinceUrl} target="_blank" rel="noopener noreferrer">{shortAddress(known.since.txHash)}</a></>}
                 </p>
               )}
+              {/* Another private account (a sub-account), or the address's own one. */}
+              {!already && (
+                <div className="seg-tabs seg-fill" role="group" aria-label={za.add}>
+                  {(["sub", "existing"] as const).map((k) => (
+                    <button key={k} type="button" className={mode === k ? "on" : ""} aria-pressed={mode === k} onClick={() => setMode(k)} disabled={working}>{k === "sub" ? za.modeSub : za.modeExisting}</button>
+                  ))}
+                </div>
+              )}
+              {!another && <p className="field-help">{za.existingIntro}</p>}
+              {another && (<>
+                <p className="field-note">{fmt(za.subIntro, { account: shortAddress(account), amount: SUB_ACCOUNT_STARTING_BALANCE })}</p>
+                <ol className="zka-sign-steps">
+                  <li>{za.subCreate}</li>
+                  <li>{za.signKey}</li>
+                  <li>{za.signProof}</li>
+                  <li>{za.signRegister}</li>
+                </ol>
+              </>)}
             </>)}
             {known && !exists && (<>
               <p className="field-note">{fmt(za.signIntro, { account: shortAddress(account) })}</p>
@@ -670,7 +754,7 @@ function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privat
         {problem && <p className="field-err" role="alert">{problem}</p>}
         <FormStepsFooter
           steps={steps} canNext={accountOk} onCancel={onClose}
-          submitLabel={exists ? za.addExisting : working ? za.creating : za.requestSignatures} onSubmit={submit} busy={working} submitDisabled={!accountOk || !known}
+          submitLabel={working ? za.creating : exists && !another ? za.addExisting : za.requestSignatures} onSubmit={submit} busy={working} submitDisabled={!accountOk || !known}
         />
       </div>
     </Modal>

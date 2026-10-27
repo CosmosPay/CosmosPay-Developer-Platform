@@ -65,8 +65,12 @@ These were said more than once; breaking one is a bug, whatever the task was.
   wallet as one (the table reads the chain and shows only registered accounts). Adding one asks
   for the customer's signatures (the key transaction, then the register) and saves nothing to the
   customer before the contract has it. An account already on the contract is a private account
-  already (one per Stellar account; nothing new can be derived for it): it is added with no
-  signature, whatever key root registered it. Balances show only after the customer's signature,
+  already (the contract keeps one per Stellar account): it is added with no signature, whatever
+  key root registered it. **More than one private account per address** (product owner,
+  2026-10-27) are **sub-accounts**: a new Stellar account the address creates and funds (2 XLM)
+  and whose only signer is the address (its own key at weight 0), registered on the token; the
+  address signs everything (`src/lib/zk/sub-accounts.ts`). Never change the contract for it.
+  Balances show only after the customer's signature,
   every time (no key is kept or stored).
 - **One key root for private accounts**: the confidential key comes from the signed key
   transaction (any wallet, a signed XDR), in the dashboard and first at the checkout. An account
@@ -1036,7 +1040,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   contract first and says which case it is**: no private account yet (it is created, "Request
   signatures and create"), or this public account already has one (since when and in which
   transaction, from the token's `register` event, `registrationOf` in `src/lib/zk/wallet.ts`; "Add
-  the existing private account", no signature). The detail shows "Created on the contract" the same way. "Delete private account" (row menu and detail,
+  the existing private account", no signature) or another one, a sub-account of the address
+  ("Create another private account", the default: three signatures with the address, the
+  sub-account's creation, its key transaction and its register). Which accounts are sub-accounts,
+  and of which address, is read from the chain (`controllersOf`: the account's signers), never
+  stored; a sub-account's actions are signed by its address (`XdrSigner`'s `signerKey`). The
+  detail shows "Created on the contract" the same way, and "Signed by" for a sub-account. "Delete private account" (row menu and detail,
   `customers:edit`) removes the wallet from its customer, as the customer's detail does; the
   confidential account and its balance stay the customer's on-chain. **Nothing connects or opens a wallet** (product owner,
   2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's, so

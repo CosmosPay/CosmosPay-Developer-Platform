@@ -26,7 +26,7 @@ import { expiryOf, signatureOn } from "@/lib/wallets/signed-xdr";
 export { expiryOf, signatureOn, type SignedXdrProblem } from "@/lib/wallets/signed-xdr";
 
 /** What a signature is for: the key (once), or one of the account's actions. */
-export type SignPurpose = "key" | "register" | "deposit" | "withdraw" | "merge" | "transfer";
+export type SignPurpose = "key" | "subAccount" | "register" | "deposit" | "withdraw" | "merge" | "transfer";
 
 export interface SignRequest {
   purpose: SignPurpose;
@@ -69,16 +69,19 @@ export function keyTransactionXdr(token: string, account: string, networkPassphr
 /**
  * The confidential-token SDK's signer for an account the page never connects to: each
  * transaction goes to the page (`request`) and comes back signed. `prepare` names what the next
- * signature is for, so the page can say it.
+ * signature is for, so the page can say it. `signerKey` is who signs: the account itself, or, for a
+ * sub-account (src/lib/zk/sub-accounts.ts), the base address that is its only signer.
  */
 export class XdrSigner {
   readonly publicKey: string;
+  readonly signerKey: string;
   private readonly networkPassphrase: string;
   private readonly request: RequestSignature;
   private purpose: SignPurpose = "key";
 
-  constructor(publicKey: string, networkPassphrase: string, request: RequestSignature) {
+  constructor(publicKey: string, networkPassphrase: string, request: RequestSignature, signerKey: string = publicKey) {
     this.publicKey = publicKey;
+    this.signerKey = signerKey;
     this.networkPassphrase = networkPassphrase;
     this.request = request;
   }
@@ -91,11 +94,11 @@ export class XdrSigner {
     const signed = await this.request({
       purpose: this.purpose,
       xdr,
-      account: this.publicKey,
+      account: this.signerKey,
       networkPassphrase: this.networkPassphrase,
       expiresAt: expiryOf(xdr, this.networkPassphrase),
     });
-    const check = signatureOn(xdr, signed, this.publicKey, this.networkPassphrase);
+    const check = signatureOn(xdr, signed, this.signerKey, this.networkPassphrase);
     if (!check.ok) throw new Error(`The signed transaction was refused: ${check.problem}`);
     return TransactionBuilder.fromXDR(signed.trim(), this.networkPassphrase).toXDR();
   }
