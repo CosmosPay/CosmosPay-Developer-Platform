@@ -1,11 +1,12 @@
-/* ZkSignDialog: one signature for a private account, given the way a swap's is (SwapDetails):
-   Freighter in one click, or the XDR copied to any Stellar wallet and the signed XDR pasted back.
-   It says what the signature is for and, for a transaction that expires, how long is left; a
-   signed XDR that is not this transaction, signed by the account, is refused with the reason. */
+/* ZkSignDialog: one signature for a private account, which is a customer's wallet: the XDR copied
+   for the customer to sign in any Stellar wallet and the signed XDR pasted back, the copy and paste
+   half of a swap's signing (SwapDetails). No wallet opens here (product owner, 2026-10-27): the
+   account is the customer's, not the person's at the screen. It says what the signature is for
+   and, for a transaction that expires, how long is left; a signed XDR that is not this
+   transaction, signed by the account, is refused with the reason. */
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
-import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
 import { CopyBlock } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { shortAddress } from "@/lib/org-wallets";
 import { signatureOn, type SignRequest } from "@/lib/zk/xdr-signer";
@@ -15,15 +16,13 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export function ZkSignDialog({ request, network, onSigned, onCancel }: {
+export function ZkSignDialog({ request, onSigned, onCancel }: {
   request: SignRequest;
-  network: string;
   onSigned: (signedXdr: string) => void;
   onCancel: () => void;
 }) {
   const t = useT();
   const zs = t.zk.sign;
-  const w = t.dash.wallet;
   const [signed, setSigned] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -53,17 +52,12 @@ export function ZkSignDialog({ request, network, onSigned, onCancel }: {
           <p className={`zks-clock${expired ? " expired" : ""}`} role="status">{expired ? zs.expired : fmt(zs.expires, { time: clock(left) })}</p>
         )}
 
-        <div className="paylink-block">
-          <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
-          <FreighterSign xdr={request.xdr} network={network} signer={request.account} busy={expired} onSigned={accept} />
-        </div>
-
         <CopyBlock label={zs.xdr} value={request.xdr} />
 
-        {/* Or the transaction signed in another wallet, pasted back. */}
+        {/* The transaction signed by the customer, pasted back. */}
         <div className="paylink-block">
-          <div className="paylink-block-head"><label className="field-l" htmlFor="zks-signed">{zs.pasteTitle}</label></div>
-          <p className="field-note">{fmt(zs.pasteDesc, { account })}</p>
+          <div className="paylink-block-head"><label className="field-l" htmlFor="zks-signed">{zs.customerTitle}</label></div>
+          <p className="field-note">{fmt(zs.customerDesc, { account })}</p>
           <textarea
             id="zks-signed" className="field" rows={4} value={signed} placeholder={zs.pastePlaceholder} spellCheck={false}
             onChange={(e) => { setSigned(e.target.value); setProblem(null); }}

@@ -116,7 +116,7 @@ export class ZkWallet {
         if (root === "message" && !signer.signMessage) continue;
         const sk = root === "message"
           ? await deriveSignerRootSk(signer as ZkSigner & { signMessage: (m: string) => Promise<Uint8Array> }, token)
-          : await deriveTransactionRootSk(signer, token, deployment.networkPassphrase, !onchain);
+          : await deriveTransactionRootSk(signer, token, deployment.networkPassphrase);
         const candidate = deriveKeys(sk, addrF);
         if (matches(candidate)) { keys = candidate; break; }
       }

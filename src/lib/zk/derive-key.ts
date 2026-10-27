@@ -12,9 +12,11 @@
 
    Either way the account is recoverable from the Stellar key alone, on any device. The obligations
    the SDK leaves to its caller live here: the signature is verified against the account's key (a
-   wallet with another account selected would otherwise give a wrong but usable key), it is
-   requested twice and compared for an account not created yet (a non-deterministic signer could
-   never open it again), and it is never stored. */
+   wallet with another account selected would otherwise give a wrong but usable key), and it is
+   never stored. The SEP-53 root is requested twice and compared for an account not created yet, as
+   the protocol asks of a message signer. The transaction root is signed once (product owner,
+   2026-10-27: one signed XDR from the customer): a Stellar signature is Ed25519, deterministic by
+   definition (RFC 8032), so the same transaction always gives the same signature. */
 import { Keypair } from "@stellar/stellar-sdk";
 import { deriveSk, sep53Payload, skSigningMessage } from "stellar-confidential-token-sdk";
 import type { MessageSigner } from "@/lib/zk/freighter-signer";
@@ -53,23 +55,12 @@ export async function deriveSignerRootSk(signer: MessageSigner, token: string): 
   return deriveSk(roots[0], token, account).sk;
 }
 
-/**
- * Derive this account's `sk` on `token` from its signature of the key transaction: once for an
- * account that already exists (the chain then confirms the key), twice and compared for one that
- * does not yet.
- */
-export async function deriveTransactionRootSk(signer: TransactionSigner, token: string, networkPassphrase: string, twice: boolean): Promise<bigint> {
+/** Derive this account's `sk` on `token` from its one signature of the key transaction. */
+export async function deriveTransactionRootSk(signer: TransactionSigner, token: string, networkPassphrase: string): Promise<bigint> {
   const account = signer.publicKey;
   const xdr = keyTransactionXdr(token, account, networkPassphrase);
-  const roots: Uint8Array[] = [];
-  for (let i = 0; i < (twice ? 2 : 1); i++) {
-    signer.prepare?.(i === 0 ? "key" : "keyAgain");
-    const check = signatureOn(xdr, await signer.sign(xdr), account, networkPassphrase);
-    if (!check.ok) throw new KeyDerivationError("The signed key transaction is not this account's signature of it, so no key was derived");
-    roots.push(check.signature);
-  }
-  if (twice && !sameBytes(roots[0], roots[1])) {
-    throw new KeyDerivationError("The wallet returned two different signatures for the same transaction, so no recoverable key could be derived");
-  }
-  return deriveSk(roots[0], token, account).sk;
+  signer.prepare?.("key");
+  const check = signatureOn(xdr, await signer.sign(xdr), account, networkPassphrase);
+  if (!check.ok) throw new KeyDerivationError("The signed key transaction is not this account's signature of it, so no key was derived");
+  return deriveSk(check.signature, token, account).sk;
 }

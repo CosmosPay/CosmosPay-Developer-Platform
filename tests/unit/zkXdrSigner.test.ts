@@ -64,24 +64,24 @@ test('a transaction that expires says when', () => {
   assert.ok(at !== null && at >= before + 170_000 && at <= before + 190_000);
 });
 
-test('the transaction root: two equal signatures for a new account, one for an existing one, the same key every time', async () => {
+test('the transaction root: one signature, the same key every time', async () => {
   const kp = Keypair.random();
   const purposes: string[] = [];
   const signer = { publicKey: kp.publicKey(), sign: async (x: string) => signed(x, kp), prepare: (p: string) => purposes.push(p) };
-  const first = await deriveTransactionRootSk(signer, TOKEN, NET, true);
-  assert.deepEqual(purposes, ['key', 'keyAgain']);
-  const again = await deriveTransactionRootSk(signer, TOKEN, NET, false);
+  const first = await deriveTransactionRootSk(signer, TOKEN, NET);
+  assert.deepEqual(purposes, ['key']);
+  const again = await deriveTransactionRootSk(signer, TOKEN, NET);
   assert.equal(again, first);
-  assert.deepEqual(purposes, ['key', 'keyAgain', 'key']);
+  assert.deepEqual(purposes, ['key', 'key']);
   const other = Keypair.random();
-  const otherSk = await deriveTransactionRootSk({ publicKey: other.publicKey(), sign: async (x: string) => signed(x, other) }, TOKEN, NET, false);
+  const otherSk = await deriveTransactionRootSk({ publicKey: other.publicKey(), sign: async (x: string) => signed(x, other) }, TOKEN, NET);
   assert.notEqual(otherSk, first);
 });
 
 test('a signature of another account derives nothing', async () => {
   const kp = Keypair.random();
   const signer = { publicKey: kp.publicKey(), sign: async (x: string) => signed(x, Keypair.random()) };
-  await assert.rejects(deriveTransactionRootSk(signer, TOKEN, NET, false), KeyDerivationError);
+  await assert.rejects(deriveTransactionRootSk(signer, TOKEN, NET), KeyDerivationError);
 });
 
 test('XdrSigner asks the page for each signature with its purpose, and returns it only when it is this transaction signed', async () => {

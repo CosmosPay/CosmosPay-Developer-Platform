@@ -917,22 +917,28 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   signature for the rows on screen only (`confidentialAccounts` in `src/lib/zk/wallet.ts`), its
   balances once viewed, and the private payments it received (a count that filters the payments
   table). A row opens the account's detail. It sits under the payments table. "Add private account"
-  adds a Stellar address to a customer, new or already there (`customers:create`); nothing is signed
-  to add it, the customer signs when the account is created. **Nothing connects a wallet** (product
-  owner, 2026-10-27: people hand over a signed XDR, not their wallet): every signature goes through
-  `components/ZkSignDialog.tsx`, the swap's signing pattern (`FreighterSign` in one click, the XDR in a
-  `CopyBlock`, the signed XDR pasted back, refused unless it is that transaction signed by the row's
-  account, with a clock for the SDK's 180 s window). `XdrSigner` (`src/lib/zk/xdr-signer.ts`) is the
+  opens a **dialog like "add customer"** (`AddPrivateAccountModal`, the `CustomerFormModal` pattern;
+  product owner, 2026-10-27: creating is always a modal, never an inline form) that adds a Stellar
+  address to a customer, new or already there (`customers:create`); nothing is signed to add it, the
+  customer signs when the account is created. **Nothing connects or opens a wallet** (product owner,
+  2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's, so
+  never Freighter here): every signature goes through `components/ZkSignDialog.tsx`, the copy and
+  paste half of the swap's signing (the XDR in a `CopyBlock` for the customer, the signed XDR pasted
+  back, refused unless it is that transaction signed by the row's account, with a clock for the
+  SDK's 180 s window). `XdrSigner` (`src/lib/zk/xdr-signer.ts`) is the
   SDK's signer. The confidential key comes from the signature of a fixed, never-valid **key
   transaction** (`keyTransactionXdr`: sequence 1, a manageData entry binding token and account), which
-  any wallet can sign; signed twice for a new account (determinism), once for an existing one. That
+  any wallet can sign; **signed once** (product owner, 2026-10-27: one signed XDR from the customer;
+  Stellar signatures are Ed25519, deterministic by RFC 8032, so a second one proves nothing). That
   root is Cosmos Pay's, not the protocol's SEP-53 signer root: an account created this way opens here,
   not in another client of the protocol. Anyone can ask a person to sign that public transaction, and
   the signature reads the account's private balances (it moves nothing); the dialog warns about it.
   **Cosmos Pay is non-custodial and stores no key material** (product owner, 2026-10-27), so no
-  per-account secret is mixed into the root: never add one server-side. `ZkWallet.connect` tries roots in order (the table:
-  transaction, then message; the private checkout, which signs with Freighter: message, then
-  transaction), so accounts made either way open in both. Then create, view balances, incoming to
+  per-account secret is mixed into the root, and the API holds no part of the key: never add one
+  server-side. `ZkWallet.connect` tries roots in order: the table passes the transaction root only
+  (an account made with a message signature, the private checkout's with Freighter, says it was
+  created elsewhere); the private checkout, which signs with Freighter: message, then transaction.
+  Then create, view balances, incoming to
   available, deposit and withdraw in the row menu and the detail (the amount in a dialog, the progress
   under the row, with a clock while the proof runs). Without any customer wallet the table says so
   and offers "add private account"; the create dialog then says no customer has one. The dialog's

@@ -1,8 +1,9 @@
 /* Signing private-account transactions without connecting a wallet (product owner, 2026-10-27:
    people do not hand over their wallet, they hand over a signed XDR). The page builds each
-   transaction, shows it to sign (Freighter in one click, or any Stellar wallet through the copied
-   XDR) and takes the signed envelope back, checked here: the same transaction, signed by the
-   account. The same way of signing as a swap's.
+   transaction, shows its XDR for the account's owner (a customer) to sign in any Stellar wallet,
+   and takes the signed envelope back, checked here: the same transaction, signed by the account.
+   No wallet is opened in the dashboard: the account is the customer's, not the person's at the
+   screen (product owner, 2026-10-27).
 
    The private account's key needs a signature too. A wallet that signs only transactions cannot
    give the SEP-53 message signature the protocol's signer root uses, so the key comes from the
@@ -24,8 +25,8 @@ import { expiryOf, signatureOn } from "@/lib/wallets/signed-xdr";
 
 export { expiryOf, signatureOn, type SignedXdrProblem } from "@/lib/wallets/signed-xdr";
 
-/** What a signature is for: the key (twice for a new account), or one of the account's actions. */
-export type SignPurpose = "key" | "keyAgain" | "register" | "deposit" | "withdraw" | "merge" | "transfer";
+/** What a signature is for: the key (once), or one of the account's actions. */
+export type SignPurpose = "key" | "register" | "deposit" | "withdraw" | "merge" | "transfer";
 
 export interface SignRequest {
   purpose: SignPurpose;
@@ -72,18 +73,14 @@ export function keyTransactionXdr(token: string, account: string, networkPassphr
  */
 export class XdrSigner {
   readonly publicKey: string;
-  /* A SEP-53 message signature, only for an account whose key came from one (opened with
-     Freighter before transactions could be signed elsewhere). */
-  readonly signMessage?: (message: string) => Promise<Uint8Array>;
   private readonly networkPassphrase: string;
   private readonly request: RequestSignature;
   private purpose: SignPurpose = "key";
 
-  constructor(publicKey: string, networkPassphrase: string, request: RequestSignature, signMessage?: (message: string) => Promise<Uint8Array>) {
+  constructor(publicKey: string, networkPassphrase: string, request: RequestSignature) {
     this.publicKey = publicKey;
     this.networkPassphrase = networkPassphrase;
     this.request = request;
-    this.signMessage = signMessage;
   }
 
   prepare(purpose: SignPurpose): void {
