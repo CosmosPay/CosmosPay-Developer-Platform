@@ -7,6 +7,7 @@ import {
   startTracking, setTrackEnv, track, trackView,
 } from "@/components/cosmos/shared";
 import { Nav } from "@/components/cosmos/layout/Nav";
+import { SegThumb } from "@/components/cosmos/dashboard/components/SegThumb";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi } from "@/lib/api-client";
 import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
@@ -485,6 +486,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
             </div>
             <div className="top-actions">
               <div className="env-seg" role="group" aria-label={t.dash.env.heading}>
+                <SegThumb on={`${live}:${t.dash.env.sandbox}`} />
                 <button type="button" aria-pressed={!live} onClick={() => chooseEnv(false)}>{t.dash.env.sandbox}</button>
                 <button type="button" aria-pressed={live} onClick={() => chooseEnv(true)}>{t.dash.env.production}</button>
               </div>

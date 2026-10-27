@@ -117,6 +117,13 @@ body.inst:has(.dash) { background: var(--surface); }
 .env-seg button { border: 0; background: transparent; color: var(--ink-3); font: 600 13.5px/1 var(--ff-sans); padding: 9px 14px; border-radius: 9px; cursor: pointer; transition: color .2s ease, background-color .2s ease; }
 .env-seg button:hover { color: var(--ink); }
 .env-seg button[aria-pressed="true"] { background: var(--btn-bg); color: var(--btn-fg); }
+/* The pill that slides to the pressed option (SegThumb); the pressed button lets it show through. */
+.env-seg { position: relative; }
+.env-seg button { position: relative; z-index: 1; }
+.seg-thumb { position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: var(--radius-btn, 9px); background: var(--btn-bg); opacity: 0; pointer-events: none; }
+.seg-thumb.on { opacity: 1; }
+.seg-thumb.ready { transition: transform .42s cubic-bezier(.22, .9, .25, 1), width .42s cubic-bezier(.22, .9, .25, 1); }
+.env-seg:has(.seg-thumb.on) button[aria-pressed="true"] { background: transparent; }
 .top-add svg { width: 16px; height: 16px; flex: 0 0 auto; }
 /* main holds the page head and the view, so it takes the column's height */
 .dash-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -277,7 +284,8 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .hub-panel { overflow: visible; }
 /* the window's figures, split by short rules; each is a tab over its own chart: the chosen one
    in ink with a line drawn under it, the others answering the pointer with the surface tint */
-.hub-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 22px; border-bottom: 1px solid var(--line); }
+/* Each figure fills its cell edge to edge, so its hover fills it too (product owner, 2026-10-27). */
+.hub-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; border-bottom: 1px solid var(--line); }
 /* a view's own activity: two figures share the row, a single one stands alone (not a tab) */
 .hub-metrics.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .hub-metrics.n1 { grid-template-columns: minmax(0, 1fr); }
@@ -294,12 +302,13 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .view-activity { margin-bottom: 32px; }
 .hub-metric {
   position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0;
-  margin: 12px 0 0; padding: 6px 20px 18px; border: 0; border-radius: var(--r-item, 10px) var(--r-item, 10px) 0 0;
+  margin: 0; padding: 18px 22px; border: 0; border-radius: 0;
   background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color .2s ease;
 }
-.hub-metric:first-child { padding-left: 4px; }
-.hub-metric + .hub-metric::before { content: ""; content: "" / ""; position: absolute; left: 0; top: 6px; bottom: 18px; border-left: 1px solid var(--line); }
-.hub-metric::after { content: ""; content: "" / ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); transform: scaleX(0); transition: transform .28s cubic-bezier(.2, .7, .2, 1); }
+.hub-metric:first-child { padding-left: 26px; border-top-left-radius: var(--r-card, 20px); }
+.hub-metric:last-child { border-top-right-radius: var(--r-card, 20px); }
+.hub-metric + .hub-metric::before { content: ""; content: "" / ""; position: absolute; left: 0; top: 18px; bottom: 18px; border-left: 1px solid var(--line); }
+.hub-metric::after { content: ""; content: "" / ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); transform: scaleX(0); transition: transform .28s cubic-bezier(.2, .7, .2, 1); }
 .hub-metric:first-child::after { left: 0; }
 .hub-metric.on::after { transform: scaleX(1); }
 .hub-metric:hover:not(.on) { background: var(--surface-2); }
@@ -428,11 +437,11 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 @media (max-width: 900px) {
   .hub-bals { grid-template-columns: minmax(0, 1fr); }
   /* phones and tablets: the figures scroll sideways as a row of tabs */
-  .hub-metrics { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 12px; }
+  .hub-metrics { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0; }
   .hub-metrics::-webkit-scrollbar { display: none; }
-  .hub-metric { flex: 0 0 auto; min-width: 9.5em; padding-left: 12px; }
-  .hub-metric:first-child { padding-left: 12px; }
-  .hub-metric:first-child::after { left: 12px; }
+  .hub-metric { flex: 0 0 auto; min-width: 9.5em; padding-left: 16px; }
+  .hub-metric:first-child { padding-left: 16px; border-top-left-radius: 0; }
+  .hub-metric:last-child { border-top-right-radius: 0; }
 }
 @media (max-width: 600px) {
   .hub-card { padding: 18px; gap: 14px; }
@@ -588,6 +597,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 /* ---- the dropdown (Select): a field-like button and a list that pops open and closed. In the
    filter bar the button is lighter and turns ink while its filter is on. ---- */
 .dd { position: relative; min-width: 0; }
+/* An open list stacks over what follows it (a dialog's buttons), never under it. */
+.dd.open { z-index: 80; }
 .dd-btn {
   display: flex; align-items: center; gap: 8px; width: 100%; height: 42px; padding: 0 12px; text-align: left;
   border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); color: var(--ink);
@@ -851,6 +862,38 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .icon-mini:disabled { opacity: .38; cursor: not-allowed; }
 /* a payment on its own view: the payment at a glance, then its QR beside the rest */
 .pay-record { display: flex; flex-direction: column; gap: 16px; }
+/* A payment's progress, live (PaymentRecordView): where it stands in one line, its dot pulsing
+   while something happens now (the payer on the page, a payment being confirmed), then the four
+   steps on a rail, each marked done, live, failed or still to come. */
+.pay-live { padding: 20px 24px; }
+.pay-live-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
+.pay-live-title { margin: 0; font-size: 15px; font-weight: 700; }
+.pay-live-now { display: inline-flex; align-items: center; gap: 10px; margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.pay-live-dot { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; background: var(--ink-3); }
+.pay-live-now.live .pay-live-dot { background: #1F9D55; animation: livePulse 1.6s ease-out infinite; }
+.pay-live-now.ok .pay-live-dot { background: #1F9D55; }
+.pay-live-now.fail .pay-live-dot { background: #D64545; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(31, 157, 85, .45); } 70% { box-shadow: 0 0 0 10px rgba(31, 157, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(31, 157, 85, 0); } }
+.pay-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0 0; padding: 0; list-style: none; }
+.pay-step { position: relative; display: grid; gap: 4px; padding-right: 12px; }
+/* The rail between two marks: drawn from each mark to the next, solid once the step is done. */
+.pay-step + .pay-step::before { content: ""; content: "" / ""; position: absolute; top: 11px; right: calc(100% + 4px); width: calc(100% - 32px); height: 2px; background: var(--line); }
+.pay-step:is(.done, .live, .fail)::before { background: var(--ink); }
+.pay-step-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line-2); background: var(--surface); color: var(--surface); }
+.pay-step-mark svg { width: 13px; height: 13px; }
+.pay-step.done .pay-step-mark { border-color: var(--ink); background: var(--ink); }
+.pay-step.current .pay-step-mark { border-color: var(--ink); }
+.pay-step.live .pay-step-mark { border-color: #1F9D55; background: #1F9D55; animation: livePulse 1.6s ease-out infinite; }
+.pay-step.fail .pay-step-mark { border-color: #D64545; background: #D64545; }
+.pay-step-l { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.pay-step.todo .pay-step-l { color: var(--ink-3); font-weight: 500; }
+.pay-step-at { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  .pay-steps { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .pay-step { grid-template-columns: 24px 1fr; column-gap: 12px; padding: 0; }
+  .pay-step-at { grid-column: 2; }
+  .pay-step + .pay-step::before { display: none; }
+}
 .pay-record-head { padding: 22px 24px; }
 .pay-record-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .pay-record-amount { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
@@ -1150,6 +1193,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .fsteps-of { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
 .fstep-body > :first-child { margin-top: 0; }
 .fsteps-actions { margin-top: 22px; }
+/* The step body is drawn over the footer: its entry animation makes it a stacking context, so an
+   open list inside it would otherwise run under the step buttons. */
+.fstep-body { position: relative; z-index: 2; }
 @media (max-width: 560px) {
   .fstep:not(.is-current) .fstep-l { display: none; }
   .fstep + .fstep::before { width: 12px; }

@@ -45,6 +45,7 @@ export function Select({
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState(-1);
   const [up, setUp] = useState(false);
+  const [room, setRoom] = useState<number | null>(null);
   const { mounted, state } = usePresence(open, 120);
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
@@ -72,12 +73,29 @@ export function Select({
     document.addEventListener("mousedown", away);
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
-  // Room below the button, measured on opening; otherwise the list opens upwards.
+  // Room below the button, measured on opening, inside whatever clips it (a dialog scrolls and
+  // clips its body, so the window's room is not the list's): it opens where there is more room
+  // and never taller than that room, so every option can be scrolled to (product owner,
+  // 2026-10-27: the liquidity dialogs' lists ran under their buttons and could not scroll).
   useLayoutEffect(() => {
     if (!open || !wrap.current) return;
     const r = wrap.current.getBoundingClientRect();
+    let top = 0;
+    let bottom = window.innerHeight;
+    for (let el = wrap.current.parentElement; el && el !== document.body; el = el.parentElement) {
+      const o = getComputedStyle(el).overflowY;
+      if (o === "visible") continue;
+      const box = el.getBoundingClientRect();
+      top = Math.max(top, box.top);
+      bottom = Math.min(bottom, box.bottom);
+      break;
+    }
+    const below = bottom - r.bottom - 12;
+    const above = r.top - top - 12;
     const need = Math.min(320, options.length * 40 + 12);
-    setUp(window.innerHeight - r.bottom < need && r.top > need);
+    const goUp = below < need && above > below;
+    setUp(goUp);
+    setRoom(Math.max(120, Math.min(320, goUp ? above : below)));
   }, [open, options.length]);
   // The active option stays in view.
   useEffect(() => {
@@ -143,7 +161,7 @@ export function Select({
         <svg className="dd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
       </button>
       {mounted && (
-        <ul ref={list} id={listId} role="listbox" aria-labelledby={labelledBy || undefined} aria-label={labelledBy ? undefined : label} className={`dd-list${up ? " up" : ""}`} data-state={state}>
+        <ul ref={list} id={listId} role="listbox" aria-labelledby={labelledBy || undefined} aria-label={labelledBy ? undefined : label} className={`dd-list${up ? " up" : ""}`} data-state={state} style={room ? { maxHeight: room } : undefined}>
           {options.map((o, i) => (
             <li
               key={o.value}

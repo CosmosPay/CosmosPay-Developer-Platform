@@ -14530,6 +14530,12 @@
             "description": "When the intent expires if unpaid.",
             "example": "2026-06-21T13:34:56.000Z"
           },
+          "checkoutSeenAt": {
+            "type": "object",
+            "nullable": true,
+            "description": "When the hosted checkout page last read the intent: null at creation.",
+            "example": null
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -14565,6 +14571,7 @@
           "reference",
           "checkoutTheme",
           "expiresAt",
+          "checkoutSeenAt",
           "createdAt",
           "updatedAt"
         ]
@@ -14786,6 +14793,12 @@
             "description": "When the intent expires if unpaid.",
             "example": "2026-06-21T13:34:56.000Z"
           },
+          "checkoutSeenAt": {
+            "type": "object",
+            "nullable": true,
+            "description": "When the hosted checkout page last read the intent: null at creation.",
+            "example": null
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -14821,6 +14834,7 @@
           "reference",
           "checkoutTheme",
           "expiresAt",
+          "checkoutSeenAt",
           "createdAt",
           "updatedAt"
         ]
@@ -14975,6 +14989,12 @@
             "description": "When an unpaid intent expires. A payment verified later still settles it.",
             "example": "2026-06-21T13:34:56.000Z"
           },
+          "checkoutSeenAt": {
+            "type": "object",
+            "nullable": true,
+            "description": "When the hosted checkout page (payments.cosmospay.lat/{id}) last read the intent while it was open: the page polls while a payer has it open, so a value from the last 30 seconds means someone is on the payment page now. Updated at most every 10 seconds; null until a page opened it.",
+            "example": "2026-06-21T12:35:10.000Z"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -15010,6 +15030,7 @@
           "reference",
           "checkoutTheme",
           "expiresAt",
+          "checkoutSeenAt",
           "createdAt",
           "updatedAt"
         ]
@@ -20244,7 +20265,7 @@
           "amountUsd": {
             "type": "string",
             "nullable": true,
-            "description": "`amount` in USD with two decimals, valued at NEAR Intents' current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. A mainnet token is priced by its contract (on Stellar its code and issuer), so a token NEAR Intents does not list has no price; a test-network token takes the price of its mainnet namesake. When the code comes from several issuers, only the priced ones are added. Null when none is priced, or when the prices could not be read.",
+            "description": "`amount` in USD with two decimals, valued at NEAR Intents’ current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. A mainnet token is priced by its contract (on Stellar its code and issuer), so a token NEAR Intents does not list has no price; a test-network token takes the price of its mainnet namesake. When the code comes from several issuers, only the priced ones are added. Null when none is priced, or when the prices could not be read.",
             "example": "10418.42"
           }
         },
@@ -20368,7 +20389,7 @@
           "volumeUsd": {
             "type": "string",
             "nullable": true,
-            "description": "Every settled payment in USD with two decimals, valued at NEAR Intents' current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Payments in an asset with no price are left out and counted in `unpriced`. Null only when there were settled payments and NEAR Intents' prices could not be read; `0.00` when nothing settled.",
+            "description": "Every settled payment in USD with two decimals, valued at NEAR Intents’ current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Payments in an asset with no price are left out and counted in `unpriced`. Null only when there were settled payments and NEAR Intents' prices could not be read; `0.00` when nothing settled.",
             "example": "12843.17"
           },
           "unpriced": {
@@ -20439,7 +20460,7 @@
           "volumeUsd": {
             "type": "string",
             "nullable": true,
-            "description": "The bucket's settled payments in USD with two decimals, valued at NEAR Intents' current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Payments in an asset with no price add nothing (the window's `unpriced` counts them). Null only when the bucket has settled payments and NEAR Intents' prices could not be read.",
+            "description": "The bucket's settled payments in USD with two decimals, valued at NEAR Intents’ current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Payments in an asset with no price add nothing (the window's `unpriced` counts them). Null only when the bucket has settled payments and NEAR Intents' prices could not be read.",
             "example": "1790.36"
           }
         },
@@ -20474,7 +20495,7 @@
           "volumeUsd": {
             "type": "string",
             "nullable": true,
-            "description": "The window's settled payments in USD with two decimals, valued at NEAR Intents' current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Null only when the window has settled payments and NEAR Intents' prices could not be read.",
+            "description": "The window's settled payments in USD with two decimals, valued at NEAR Intents’ current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Null only when the window has settled payments and NEAR Intents' prices could not be read.",
             "example": "16982.04"
           },
           "unpriced": {
@@ -20520,7 +20541,7 @@
           "volumeUsd": {
             "type": "string",
             "nullable": true,
-            "description": "The window's settled payments in USD with two decimals, valued at NEAR Intents' current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Null only when the window has settled payments and NEAR Intents' prices could not be read.",
+            "description": "The window's settled payments in USD with two decimals, valued at NEAR Intents’ current reference price for each asset (its token list, cached for a few minutes): an indicative figure at today's price, not the price on the day each payment settled. Null only when the window has settled payments and NEAR Intents' prices could not be read.",
             "example": "16982.04"
           },
           "unpriced": {
@@ -20559,13 +20580,20 @@
             "type": "string",
             "description": "The first day of the bucket (UTC; weeks start on Monday), the same as the payments bucket at that index.",
             "example": "2026-10-01"
+          },
+          "volumeUsd": {
+            "type": "string",
+            "nullable": true,
+            "description": "The bucket’s settled swap volume in USD, two decimals: what the completed swaps sold, each asset at NEAR Intents' current price. Null when no price could be read; an asset with no price counts as zero.",
+            "example": "1250.40"
           }
         },
         "required": [
           "count",
           "succeeded",
           "failed",
-          "start"
+          "start",
+          "volumeUsd"
         ]
       },
       "SeriesSwapsByKindEntity": {
@@ -20628,6 +20656,17 @@
                 "$ref": "#/components/schemas/SeriesSwapsByKindEntity"
               }
             ]
+          },
+          "volumeUsd": {
+            "type": "string",
+            "nullable": true,
+            "description": "The window’s settled swap volume in USD, two decimals: what the completed swaps sold, each asset at NEAR Intents' current price. Null when no price could be read; an asset with no price counts as zero.",
+            "example": "1250.40"
+          },
+          "unpriced": {
+            "type": "number",
+            "description": "Completed swaps whose sold asset has no USD price (a network or token NEAR Intents does not list), left out of volumeUsd.",
+            "example": 0
           }
         },
         "required": [
@@ -20635,10 +20674,12 @@
           "succeeded",
           "failed",
           "inProgress",
-          "byKind"
+          "byKind",
+          "volumeUsd",
+          "unpriced"
         ]
       },
-      "SeriesOutcomeCountsEntity": {
+      "SeriesSwapPreviousEntity": {
         "type": "object",
         "properties": {
           "count": {
@@ -20654,12 +20695,19 @@
             "type": "number",
             "description": "Given up on: failed or expired (and, for a cross-chain swap, refunded).",
             "example": 3
+          },
+          "volumeUsd": {
+            "type": "string",
+            "nullable": true,
+            "description": "The window before’s settled swap volume in USD, two decimals: what the completed swaps sold, each asset at NEAR Intents' current price. Null when no price could be read; an asset with no price counts as zero.",
+            "example": "1250.40"
           }
         },
         "required": [
           "count",
           "succeeded",
-          "failed"
+          "failed",
+          "volumeUsd"
         ]
       },
       "SeriesSwapsEntity": {
@@ -20684,7 +20732,7 @@
             "description": "The window of the same length just before it, for growth.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/SeriesOutcomeCountsEntity"
+                "$ref": "#/components/schemas/SeriesSwapPreviousEntity"
               }
             ]
           }
@@ -20723,6 +20771,30 @@
           "succeeded",
           "failed",
           "start"
+        ]
+      },
+      "SeriesOutcomeCountsEntity": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Created in the bucket or window, any status.",
+            "example": 42
+          },
+          "succeeded": {
+            "type": "number",
+            "example": 37
+          },
+          "failed": {
+            "type": "number",
+            "description": "Given up on: failed or expired (and, for a cross-chain swap, refunded).",
+            "example": 3
+          }
+        },
+        "required": [
+          "count",
+          "succeeded",
+          "failed"
         ]
       },
       "SeriesLiquidityEntity": {

@@ -7,10 +7,14 @@
    link, the wallet link, the unsigned XDR, every field, checking a transaction hash on Stellar,
    and last the checkout's design. Once it cannot be paid (submitted, paid, failed, expired) it is
    history only: its fields, and the explorer once there is a transaction. The record is
-   read by id (the list's row may be stale) and followed while it is not final. */
+   read by id (the list's row may be stale) and followed while it is not final, every few seconds:
+   under its header, its progress live (product owner, 2026-10-27): created, the payer on the
+   payment page (the hosted checkout reports when it last read the link, `checkoutSeenAt`: within
+   the last half minute means someone is on it now), processing (a transaction was sent), and paid
+   or how it ended. */
 import { useEffect, useState } from "react";
 import { showToast, checkoutUrl } from "@/components/cosmos/shared";
-import { useT } from "@/lib/i18n/index";
+import { fmt, useT } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
@@ -19,13 +23,18 @@ import { ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton"
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 import { CopyBlock, CopyField, PaymentAmount, STATUS_PILL, assetLabel, amountLabel, chainOf, explorerUrl, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
-import { StatusIcon, paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { CopyRef } from "@/components/cosmos/dashboard/components/RecordLink";
 import { shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 
 const TERMINAL = ["SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
+/* How recent the checkout's last read must be to count as a payer on the page now: it polls every
+   few seconds and the API notes a read at most every ten. */
+const ON_PAGE_MS = 30_000;
+/* How often an open payment is read again. */
+const FOLLOW_MS = 4000;
 
 export function PaymentRecordView({ id, env, canManage = false, onBack }) {
   const t = useT();
@@ -43,7 +52,7 @@ export function PaymentRecordView({ id, env, canManage = false, onBack }) {
   useEffect(() => {
     if (!status || TERMINAL.includes(status)) return;
     let alive = true;
-    const h = setInterval(() => { if (!document.hidden) payApi.get(id, env).then((p) => { if (alive && p && p.id) setData(p); }).catch(() => {}); }, 5000);
+    const h = setInterval(() => { if (!document.hidden) payApi.get(id, env).then((p) => { if (alive && p && p.id) setData(p); }).catch(() => {}); }, FOLLOW_MS);
     return () => { alive = false; clearInterval(h); };
   }, [id, env, status]);
 
@@ -54,6 +63,62 @@ export function PaymentRecordView({ id, env, canManage = false, onBack }) {
       {data === null && <div className="panel"><div className="empty">{t.dash.common.notFound}</div></div>}
       {data && <PaymentRecord data={data} setData={setData} env={env} canManage={canManage} onDeleted={onBack} />}
     </>
+  );
+}
+
+/* The payment's progress, live: where it stands in one sentence, then its steps. "On the page"
+   holds while the checkout read the link within ON_PAGE_MS, so the clock ticks with the reads. */
+function PaymentProgress({ data }) {
+  const t = useT();
+  const pl = t.dash.paylinks;
+  const lv = pl.detail.live;
+  const [now, setNow] = useState(() => Date.now());
+  const open = !TERMINAL.includes(data.status);
+  useEffect(() => {
+    if (!open) return;
+    const h = setInterval(() => setNow(Date.now()), FOLLOW_MS);
+    return () => clearInterval(h);
+  }, [open]);
+  const status = data.status;
+  const seen = data.checkoutSeenAt ? new Date(data.checkoutSeenAt).getTime() : null;
+  const onPage = status === "PENDING" && seen !== null && now - seen < ON_PAGE_MS;
+  const sent = status === "SUBMITTED" || status === "SUCCEEDED";
+  const ended = ["FAILED", "CANCELLED", "EXPIRED"].includes(status);
+  const statusLabel = (pl.status && pl.status[status]) || status;
+  const time = (v) => (v ? fmtDateTime(v) : null);
+  // Each step: its name, its state (done, live, current, fail, todo) and when, when known.
+  const steps = [
+    { key: "created", label: lv.created, state: "done", at: time(data.createdAt) },
+    { key: "page", label: lv.page, state: onPage ? "live" : seen !== null || sent ? "done" : ended ? "todo" : "current", at: onPage ? lv.now : time(data.checkoutSeenAt) },
+    { key: "sent", label: lv.processing, state: status === "SUBMITTED" ? "live" : status === "SUCCEEDED" ? "done" : "todo", at: null },
+    { key: "end", label: ended ? statusLabel : lv.paid, state: status === "SUCCEEDED" ? "done" : ended ? "fail" : "todo", at: status === "SUCCEEDED" || ended ? time(data.updatedAt) : null },
+  ];
+  const headline = onPage ? lv.onPageNow
+    : status === "SUBMITTED" ? lv.processingNow
+    : status === "SUCCEEDED" ? lv.paidNow
+    : ended ? fmt(lv.ended, { status: statusLabel })
+    : seen !== null ? fmt(lv.lastSeen, { time: fmtDateTime(data.checkoutSeenAt) })
+    : lv.waiting;
+  const tone = onPage || status === "SUBMITTED" ? "live" : status === "SUCCEEDED" ? "ok" : ended ? "fail" : "wait";
+  return (
+    <section className="panel pay-live" aria-labelledby="pay-live-t">
+      <div className="pay-live-head">
+        <h2 id="pay-live-t" className="pay-live-title">{lv.title}</h2>
+        <p className={`pay-live-now ${tone}`} role="status" aria-live="polite"><i className="pay-live-dot" aria-hidden="true" />{headline}</p>
+      </div>
+      <ol className="pay-steps">
+        {steps.map((s) => (
+          <li key={s.key} className={`pay-step ${s.state}`} aria-current={s.state === "live" || s.state === "current" ? "step" : undefined}>
+            <span className="pay-step-mark" aria-hidden="true">
+              {s.state === "done" && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>}
+              {s.state === "fail" && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M7 7l10 10M17 7L7 17" /></svg>}
+            </span>
+            <span className="pay-step-l">{s.label}</span>
+            {s.at && <span className="pay-step-at">{s.at}</span>}
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -130,7 +195,6 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
       {/* The payment at a glance. */}
       <section className="panel pay-record-head" aria-label={d.eyebrow}>
         <div className="pay-record-top">
-          <StatusIcon tone={tone} size={30} />
           <div className="pay-record-amount">
             <PaymentAmount intent={data} pl={pl} size={30} />
             <Pill st={STATUS_PILL[data.status] || "ref"} tone={tone} label={(pl.status && pl.status[data.status]) || data.status} />
@@ -160,6 +224,8 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
           <div><dt>{h.thTo}</dt><dd><AddressLink chain={chain} network={data.network} address={data.destination} label={h.thTo} /></dd></div>
         </dl>
       </section>
+
+      <PaymentProgress data={data} />
 
       {(payable || fields.length > 0 || canCheck) && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
         {payable && <section className="panel pay-record-qr" aria-label={d.scan}>

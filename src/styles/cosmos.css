@@ -492,6 +492,14 @@ html.nav-locked { overflow: hidden; }
 .btn:is(:hover, :focus-visible) .arrow { translate: 4px 0; }
 .btn-dark, .btn-violet, .btn-primary { background: var(--btn-bg); color: var(--btn-fg); }
 .btn-danger { background: #D64545; color: #fff; --ink-fill: #8F2323; --ink-fg: #fff; }
+/* A confirmation (ConfirmModal): its mark first, a bin in the danger red for a destructive action,
+   a warning in ink otherwise, landing with a short scale so the question reads before the words. */
+.cfm-mark { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 0 16px; border-radius: 50%; background: var(--surface-2); color: var(--ink); animation: cfmMark .38s cubic-bezier(.2, .9, .3, 1.25) both; }
+.cfm-mark.danger { background: #FDECEC; color: #B42F2F; }
+[data-theme="dark"] .cfm-mark.danger { background: rgba(255, 155, 155, .12); color: #FF9B9B; }
+.cfm-mark svg { width: 24px; height: 24px; }
+.cfm-body { margin: 0; color: var(--ink-2); line-height: 1.55; }
+@keyframes cfmMark { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 /* Outlined: the outline is the label colour, and the ink paints the button in it. */
 .btn-ghost-pill, .btn-outline-w { background: transparent; border-color: var(--ink); color: var(--ink); --ink-fill: var(--ink); --ink-fg: var(--bg); }
 .btn-sm { padding: 9px 18px; font-size: .9375rem; }

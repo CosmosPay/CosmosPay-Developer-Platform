@@ -187,7 +187,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
       </div>
       {modal && <CustomerFormModal cv={cv} cx={cx} env={env} orgId={orgId} onClose={() => setModal(false)} onSaved={onCreated} />}
       {toDelete && <ConfirmModal title={cv.deleteTitle} body={fmt(cv.deleteBody, { name: toDelete.alias || toDelete.name })} confirmLabel={cx.delete} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => { if (!deleting) setToDelete(null); }} />}
-      {detail && <CustomerDetailModal key={detail.id} cv={cv} cx={cx} customer={detail} startEditing={editing} env={env} orgId={orgId} canManage={canManage} onClose={() => { setDetail(null); setEditing(false); }} onUpdated={onUpdated} onDelete={() => setToDelete(detail)} onOpenPayment={(id) => { setDetail(null); openRecord("payment", id); }} onWalletPayments={(address) => { setDetail(null); goFiltered(onGo, "payments", { q: address }); }} />}
+      {detail && <CustomerDetailModal key={detail.id} cv={cv} cx={cx} customer={detail} startEditing={editing} env={env} orgId={orgId} canManage={canManage} onClose={() => { setDetail(null); setEditing(false); }} onUpdated={onUpdated} onDelete={() => setToDelete(detail)} onOpenPayment={(id) => { setDetail(null); openRecord("payment", id); }} />}
     </>
   );
 }
@@ -267,7 +267,7 @@ function CustomerFormModal({ cv, cx, env, orgId, onClose, onSaved }) {
 
 /* Drill-down: editable info, the customer's wallets (added and removed one at a time), and the
    payments any of them made. */
-function CustomerDetailModal({ cv, cx, customer, startEditing = false, env, orgId, canManage, onClose, onUpdated, onDelete, onOpenPayment, onWalletPayments }) {
+function CustomerDetailModal({ cv, cx, customer, startEditing = false, env, orgId, canManage, onClose, onUpdated, onDelete, onOpenPayment }) {
   const t = useT();
   const cd = cx.custDetail;
   const m = cv.modal;
@@ -329,7 +329,7 @@ function CustomerDetailModal({ cv, cx, customer, startEditing = false, env, orgI
               {canManage && <button className="btn btn-soft danger-soft" onClick={onDelete}>{DI.trash} {cx.delete}</button>}
             </div>
 
-            <CustomerWallets customer={customer} wallets={wallets} pays={pays} env={env} orgId={orgId} canManage={canManage} onChange={changeWallets} onWalletPayments={onWalletPayments} />
+            <CustomerWallets customer={customer} wallets={wallets} env={env} orgId={orgId} canManage={canManage} onChange={changeWallets} />
 
             <div className="cust-pays-head">
               <label className="field-l">{cd.payments}</label>
@@ -359,14 +359,13 @@ function CustomerDetailModal({ cv, cx, customer, startEditing = false, env, orgI
 
 /* The customer's wallets, one row each: its network, its address (to the explorer), the payments it
    made (opening them in Payments), and removing it; under them, adding one. */
-function CustomerWallets({ customer, wallets, pays, env, orgId, canManage, onChange, onWalletPayments }) {
+function CustomerWallets({ customer, wallets, env, orgId, canManage, onChange }) {
   const t = useT();
   const cd = t.dash.cosmos.custDetail;
   const cv = t.dash.customers;
   const [row, setRow] = useState(null);
   const [busy, setBusy] = useState(false);
   const [toRemove, setToRemove] = useState(null);
-  const paidFrom = (w) => (pays || []).filter((p) => p.source === w.address).length;
 
   const add = () => {
     if (!row || !walletReady(row) || busy) return;
@@ -396,15 +395,13 @@ function CustomerWallets({ customer, wallets, pays, env, orgId, canManage, onCha
         )}
       </div>
       {(wallets.length > 0 || !row) && (
-        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{cd.network}</th><th>{cd.account}</th><th>{cv.tableHead.payments}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead><tbody>
-          {wallets.length === 0 && <FillRows n={2} cols={4} />}
+        <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{cd.network}</th><th>{cd.account}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead><tbody>
+          {wallets.length === 0 && <FillRows n={2} cols={3} />}
           {wallets.map((w) => {
-            const n = paidFrom(w);
             return (
               <tr key={w.id}>
                 <td><span className="cust-cell"><NetworkMark chain={w.chain} size={24} /><span>{w.label || CHAIN_NAMES[w.chain] || w.chain}{w.label && <small className="cust-wallet-net">{CHAIN_NAMES[w.chain] || w.chain}</small>}</span></span></td>
                 <td className="cust"><AddressLink chain={w.chain} network={networkOf(env)} address={w.address} label={cd.account} /></td>
-                <td className="cust">{n ? <button type="button" className="link-btn" title={cd.walletPayments} aria-label={`${cd.walletPayments}: ${n}`} onClick={() => onWalletPayments(w.address)}>{n}</button> : <span title={cd.walletPayments}>0</span>}</td>
                 <td className="row-actions">
                   {canManage && <button type="button" className="icon-mini danger" title={cd.removeWallet} aria-label={`${cd.removeWallet}: ${shortAcct(w.address)}`} onClick={() => setToRemove(w)}>{DI.trash}</button>}
                 </td>
