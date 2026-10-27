@@ -1,5 +1,5 @@
 import { useState, useId, useEffect } from "react";
-import { showToast } from "@/components/cosmos/shared";
+import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { support as supportApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -15,7 +15,8 @@ import { TicketStatusPill, TicketPriorityTag } from "@/components/cosmos/dashboa
 
 /* Customer support: a ticket system. The customer can open several tickets in parallel;
    each has a subject, a status and its own message thread. The list has the dashboard's filter
-   row (search, status) with "new ticket" at its right end. */
+   row (search, status) with "new ticket" at its right end, which opens in a dialog as every
+   create (product owner, 2026-10-27); the ticket it opens shows beside the list. */
 const DEFAULTS = { q: "", status: "all" };
 const ALLOWED = { status: ["all", ...TICKET_STATUSES] };
 
@@ -49,12 +50,15 @@ export function SupportView() {
     open(ticketReq);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketReq]);
-  const startNew = () => { setCreating(true); setSel(null); setTicket(null); setSubject(""); setFirstMsg(""); };
+  const startNew = () => { setCreating(true); setSubject(""); setFirstMsg(""); };
+  const [sending, setSending] = useState(false);
   const create = () => {
-    if (!subject.trim() || !firstMsg.trim()) return;
+    if (!subject.trim() || !firstMsg.trim() || sending) return;
+    setSending(true);
     supportApi.create(subject.trim(), firstMsg.trim())
       .then((tk) => { if (tk) { loadTickets(); open(tk.id); } })
-      .catch(() => showToast(s.createError, "error"));
+      .catch(() => showToast(s.createError, "error"))
+      .finally(() => setSending(false));
   };
   const onSend = (body) =>
     supportApi.send(sel, body)
@@ -106,19 +110,7 @@ export function SupportView() {
           ))}
         </div>
         <div className="inbox-chat">
-          {creating ? (
-            <div className="panel"><div className="ticket-new">
-              <h3>{s.newTicketTitle}</h3>
-              <label className="field-l" htmlFor={subjectId}>{s.subjectLabel}</label>
-              <input id={subjectId} className="field" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={s.subjectPlaceholder} maxLength={140} autoFocus />
-              <label className="field-l" htmlFor={msgId} style={{ marginTop: 14 }}>{s.messageLabel}</label>
-              <textarea id={msgId} className="field ticket-textarea" rows={5} value={firstMsg} onChange={(e) => setFirstMsg(e.target.value)} placeholder={s.placeholder} maxLength={4000} />
-              <div className="modal-actions">
-                <button className="btn btn-violet" disabled={!subject.trim() || !firstMsg.trim()} onClick={create}>{s.create}</button>
-                <button className="btn btn-soft" onClick={() => setCreating(false)}>{t.dash.common.cancel}</button>
-              </div>
-            </div></div>
-          ) : sel && ticket ? (
+          {sel && ticket ? (
             <div className="panel chat-panel">
               <div className="ticket-head"><b>{ticket.subject}</b><span className="tk-tags"><TicketPriorityTag priority={ticket.priority} /><TicketStatusPill status={ticket.status} /></span></div>
               <ChatPanel messages={ticket.messages} mineWhenStaff={false} placeholder={s.placeholder} sendLabel={s.send} emptyText={s.empty} youLabel={s.you} staffLabel={s.staff} seenLabel={s.seen} onSend={onSend} />
@@ -128,6 +120,22 @@ export function SupportView() {
           )}
         </div>
       </div>
+      {creating && (
+        <Modal onClose={() => setCreating(false)} label={s.newTicketTitle}>
+          <div className="modal-body">
+            <div className="modal-eyebrow">{s.title}</div>
+            <h3>{s.newTicketTitle}</h3>
+            <label className="field-l" htmlFor={subjectId}>{s.subjectLabel}</label>
+            <input id={subjectId} className="field" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={s.subjectPlaceholder} maxLength={140} />
+            <label className="field-l" htmlFor={msgId} style={{ marginTop: 14 }}>{s.messageLabel}</label>
+            <textarea id={msgId} className="field ticket-textarea" rows={5} value={firstMsg} onChange={(e) => setFirstMsg(e.target.value)} placeholder={s.placeholder} maxLength={4000} />
+            <div className="modal-actions">
+              <button type="button" className="btn btn-violet" disabled={!subject.trim() || !firstMsg.trim() || sending} onClick={create}>{s.create}</button>
+              <button type="button" className="btn btn-soft" onClick={() => setCreating(false)}>{t.dash.common.cancel}</button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }

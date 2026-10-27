@@ -1661,7 +1661,8 @@ export default {
       tickets: "Tickets",
       all: "Alle",
       statusError: "Status konnte nicht aktualisiert werden.",
-      statuses: { open: "Offen", pending: "Ausstehend", resolved: "Gelöst", closed: "Geschlossen" }
+      statuses: { open: "Offen", pending: "Ausstehend", resolved: "Gelöst", closed: "Geschlossen" },
+      inboxSearch: "Nach Betreff, Kunde oder Nachricht suchen…",
     },
     admin: { viewList: "Liste ansehen",
       loading: "Wird geladen…",
@@ -1837,6 +1838,11 @@ export default {
       copyEmail: "E-Mail kopieren",
       ownerFixed: "Der Inhaber kann weder bearbeitet noch entfernt werden",
       inviteFixed: "Eine Einladung ändert man, indem man sie widerruft und neu einlädt",
+      alreadyMember: "Diese Person ist bereits Mitglied dieser Organisation.",
+      alreadyInvited: "Für diese E-Mail gibt es bereits eine ausstehende Einladung.",
+      inviteConflict: "Einladung nicht möglich: bereits im Team oder eingeladen, oder kein Platz mehr frei.",
+      mailUnavailable: "Auf diesem Server ist keine E-Mail eingerichtet, daher können keine Einladungen gesendet werden.",
+      seatsFull: "Alle Plätze des Plans sind belegt (Mitglieder und ausstehende Einladungen). Gib einen frei oder wechsle den Plan, um jemanden einzuladen.",
     },
     swaps: {
       title: "Swaps",
@@ -2125,6 +2131,7 @@ export default {
             ownership_percentage: "Beteiligung in %", title: "Position",
           },
           create: "Empfänger erstellen", creating: "Wird erstellt…",
+          steps: { who: "Empfänger", personal: "Persönliche Daten", documents: "Dokumente", funds: "Herkunft der Mittel", company: "Unternehmen", owners: "Eigentümer" },
         },
         detail: {
           eyebrow: "Empfänger",
@@ -2169,6 +2176,7 @@ export default {
           create: "Payin erstellen", creating: "Wird erstellt…",
           payinId: "Payin-ID", status: "Status",
           instructions: "Zahlungsanweisungen", done: "Fertig",
+          steps: { quote: "Angebot", confirm: "Bestätigen" },
         },
       },
       offramp: {
@@ -2198,6 +2206,7 @@ export default {
           signedTxPlaceholder: "Signierte Transaktion…",
           evmNote: "Signieren Sie bei EVM-Netzwerken den approve-Vertrag der Quote über die API, bevor Sie den Payout erstellen.",
           create: "Payout erstellen", creating: "Wird erstellt…",
+          steps: { quote: "Angebot", sign: "Signatur" },
         },
       },
     }

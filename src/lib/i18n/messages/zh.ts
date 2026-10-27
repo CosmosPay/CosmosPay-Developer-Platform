@@ -1019,6 +1019,7 @@ export default {
       all: "全部",
       statusError: "无法更新状态。",
       statuses: { open: "已开启", pending: "待回应", resolved: "已解决", closed: "已关闭" },
+      inboxSearch: "按主题、客户或消息搜索…",
     },
     orgs: {
       permissionsLabel: "权限",
@@ -1093,6 +1094,11 @@ export default {
       copyEmail: "复制邮箱",
       ownerFixed: "所有者无法被编辑或移除",
       inviteFixed: "要修改邀请，请撤销后重新邀请",
+      alreadyMember: "此人已是该组织的成员。",
+      alreadyInvited: "该邮箱已有一个待处理的邀请。",
+      inviteConflict: "无法邀请：此人已在团队中或已被邀请，或已没有空余席位。",
+      mailUnavailable: "此服务器未配置邮件，无法发送邀请。",
+      seatsFull: "套餐的所有席位都已占用（成员和待处理的邀请）。请释放一个席位或升级套餐后再邀请。",
     },
     webhooks: { searchPlaceholder: "按 URL 或事件搜索…", resent: "已重新投递", noFailed: "没有失败的投递。", only: { all: "全部", failed: "失败" }, eventId: "事件 ID", error: "错误", attempts: "尝试次数", delivery: "投递", save: "保存更改", editTitle: "编辑端点", edit: "编辑端点", eventsOne: "1 个事件",
       title: "Webhook",
@@ -1453,6 +1459,7 @@ export default {
             ownership_percentage: "持股比例（%）", title: "职务",
           },
           create: "创建收款人", creating: "创建中…",
+          steps: { who: "收款方", personal: "个人信息", documents: "证件", funds: "资金来源", company: "公司", owners: "所有人" },
         },
         detail: {
           eyebrow: "收款人",
@@ -1497,6 +1504,7 @@ export default {
           create: "创建入金单", creating: "创建中…",
           payinId: "入金单 ID", status: "状态",
           instructions: "付款指引", done: "完成",
+          steps: { quote: "报价", confirm: "确认" },
         },
       },
       offramp: {
@@ -1526,6 +1534,7 @@ export default {
           signedTxPlaceholder: "已签名交易…",
           evmNote: "对于 EVM 网络，请在创建出金单前通过 API 签署报价中的 approve 合约。",
           create: "创建出金单", creating: "创建中…",
+          steps: { quote: "报价", sign: "签名" },
         },
       },
     },

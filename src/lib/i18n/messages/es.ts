@@ -1661,7 +1661,8 @@ export default {
       tickets: "Tickets",
       all: "Todos",
       statusError: "No se pudo actualizar el estado.",
-      statuses: { open: "Abierto", pending: "Pendiente", resolved: "Resuelto", closed: "Cerrado" }
+      statuses: { open: "Abierto", pending: "Pendiente", resolved: "Resuelto", closed: "Cerrado" },
+      inboxSearch: "Buscar por asunto, cliente o mensaje…",
     },
     admin: { viewList: "Ver lista",
       loading: "Cargando…",
@@ -1837,6 +1838,11 @@ export default {
       copyEmail: "Copiar email",
       ownerFixed: "Al propietario no se lo puede editar ni quitar",
       inviteFixed: "Una invitación se cambia revocándola e invitando de nuevo",
+      alreadyMember: "Esa persona ya es miembro de esta organización.",
+      alreadyInvited: "Ya hay una invitación pendiente para ese email.",
+      inviteConflict: "No se puede invitar: ya está en el equipo o invitada, o no quedan asientos libres.",
+      mailUnavailable: "El email no está configurado en este servidor, así que no se pueden enviar invitaciones.",
+      seatsFull: "Todos los asientos del plan están ocupados (miembros e invitaciones pendientes). Libera uno o mejora el plan para invitar a alguien.",
     },
     swaps: {
       title: "Swaps",
@@ -2125,6 +2131,7 @@ export default {
             ownership_percentage: "% de propiedad", title: "Cargo",
           },
           create: "Crear receptor", creating: "Creando…",
+          steps: { who: "Receptor", personal: "Datos personales", documents: "Documentos", funds: "Origen de fondos", company: "Empresa", owners: "Propietarios" },
         },
         detail: {
           eyebrow: "Receptor",
@@ -2169,6 +2176,7 @@ export default {
           create: "Crear payin", creating: "Creando…",
           payinId: "ID de payin", status: "Estado",
           instructions: "Instrucciones de pago", done: "Listo",
+          steps: { quote: "Cotización", confirm: "Confirmar" },
         },
       },
       offramp: {
@@ -2198,6 +2206,7 @@ export default {
           signedTxPlaceholder: "Transacción firmada…",
           evmNote: "Para redes EVM, firma el contrato approve de la cotización vía la API antes de crear el payout.",
           create: "Crear payout", creating: "Creando…",
+          steps: { quote: "Cotización", sign: "Firma" },
         },
       },
     }

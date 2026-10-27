@@ -105,7 +105,7 @@ function RolePicker({ id, role, onChange }) {
 /* Invite a member, in two steps (product owner, 2026-10-27: a long form goes in steps): the email
    and the role, then the permissions (an admin's is everything, so it says so). The invited person
    joins through the emailed link. */
-function InviteMemberModal({ org, onClose, onInvited }) {
+function InviteMemberModal({ org, team, onClose, onInvited }) {
   const t = useT();
   const og = t.dash.orgs;
   const steps = useFormSteps(2);
@@ -113,13 +113,21 @@ function InviteMemberModal({ org, onClose, onInvited }) {
   const [role, setRole] = useState("member");
   const [perms, setPerms] = useState([]);
   const [sending, setSending] = useState(false);
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  // Someone already in the team, or already invited, is said here rather than by the server.
+  const typed = email.trim().toLowerCase();
+  const taken = !typed ? null
+    : team.members.some((m) => (m.email || "").toLowerCase() === typed) ? og.alreadyMember
+      : team.invites.some((iv) => (iv.email || "").toLowerCase() === typed) ? og.alreadyInvited : null;
+  const emailOk = emailFormat && !taken;
+  // The server's reasons, in the reader's language: never its own (English) message.
+  const failure = (err) => (err && err.status === 409 ? og.inviteConflict : err && err.status === 503 ? og.mailUnavailable : og.inviteError);
   const invite = () => {
     if (!emailOk || sending) return;
     setSending(true);
     orgsApi.invite(org.id, email.trim(), role, role === "member" ? perms : [])
       .then(() => { showToast(og.invited); onInvited(); onClose(); })
-      .catch((err) => showToast((err && err.message) || og.inviteError, "error"))
+      .catch((err) => showToast(failure(err), "error"))
       .finally(() => setSending(false));
   };
   return (
@@ -131,6 +139,7 @@ function InviteMemberModal({ org, onClose, onInvited }) {
         <FormStep steps={steps}>
           {steps.step === 0 && (<>
             <Field label={og.memberEmail} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ana@acme.com" autoFocus aria-invalid={email.trim() && !emailOk ? true : undefined} />
+            {taken && <p className="field-err" role="alert">{taken}</p>}
             <RolePicker id="invite-role-l" role={role} onChange={setRole} />
             <p className="field-help">{role === "admin" ? og.roleAdminHint : og.inviteHint}</p>
           </>)}
@@ -207,10 +216,12 @@ function TeamSection({ org, team, meId }) {
   const isManager = (x) => x.role === "owner" || x.role === "admin";
   const permsLabel = (x) => (isManager(x) ? og.permsAll : !x.permissions.length ? og.permsNone : x.permissions.length === 1 ? og.permsOne : fmt(og.permsN, { n: x.permissions.length }));
   // Each resource with the actions granted on it, as the permission picker reads them.
+  // A permission the vocabulary no longer names is not listed; with none left it reads "none".
+  const grantedOn = (x) => ORG_RESOURCES.filter((r) => ORG_ACTIONS.some((a) => x.permissions.includes(permKey(r, a))));
   const permsList = (x) => (isManager(x)
     ? (x.role === "owner" ? og.permsAll : og.adminAllNote)
-    : x.permissions.length
-      ? <span className="team-perms">{ORG_RESOURCES.filter((r) => ORG_ACTIONS.some((a) => x.permissions.includes(permKey(r, a)))).map((r) => <span key={r}>{og.resources[r] || r}: {ORG_ACTIONS.filter((a) => x.permissions.includes(permKey(r, a))).map((a) => og.actions[a]).join(", ")}</span>)}</span>
+    : grantedOn(x).length
+      ? <span className="team-perms">{grantedOn(x).map((r) => <span key={r}>{og.resources[r] || r}: {ORG_ACTIONS.filter((a) => x.permissions.includes(permKey(r, a))).map((a) => og.actions[a]).join(", ")}</span>)}</span>
       : og.permsNone);
   const statusPill = (x) => (x.kind === "member" ? <Pill st="ok" label={og.memberStatus.active} /> : <Pill st="ref" tone="wait" label={og.memberStatus.invited} />);
   // What a row may do: edit only a member who isn't the owner, remove anyone but the owner.
@@ -229,6 +240,9 @@ function TeamSection({ org, team, meId }) {
     ...(canManage ? [{ key: "delete", label: removeLabel(x), icon: DI.trash, danger: true, disabled: !!removeHint(x), hint: removeHint(x), onClick: () => askRemove(x) }] : []),
   ];
   const seatLimit = planLimits(org.plan).maxSeats;
+  // A seat is a member or a pending invitation (the server's count): with none free, inviting
+  // waits, and says why.
+  const seatsFull = seatLimit != null && team.members.length + team.invites.length >= seatLimit;
 
   return (
     <section className="hub-section set-section" aria-labelledby="team-title">
@@ -249,7 +263,12 @@ function TeamSection({ org, team, meId }) {
         selects={[{ key: "trole", label: og.roleLabel, value: filters.trole, onChange: (v) => set("trole", v), options: [{ key: "all", label: og.allRoles }, ...["owner", "admin", "member"].map((r) => ({ key: r, label: roleName(r), count: roleCounts[r] || 0 }))] }]}
         active={active} onReset={reset}
         shown={rows.length} total={loading ? undefined : people.length} loading={loading}
-        actions={canManage && <button type="button" className="btn btn-dark btn-sm" onClick={() => setInviting(true)}>{DI.plus} {og.inviteMember}</button>}
+        actions={canManage && (
+          <>
+            <button type="button" className="btn btn-dark btn-sm" disabled={loading || seatsFull} title={seatsFull ? og.seatsFull : undefined} aria-describedby={seatsFull ? "team-seats-full" : undefined} onClick={() => setInviting(true)}>{DI.plus} {og.inviteMember}</button>
+            {seatsFull && <span id="team-seats-full" className="sr-only">{og.seatsFull}</span>}
+          </>
+        )}
       />
       <div className="panel">
         {loading && <TableSkeleton label={sv.team.title} cols={TEAM_COLS} />}
@@ -311,7 +330,7 @@ function TeamSection({ org, team, meId }) {
           ]}
         />
       )}
-      {inviting && <InviteMemberModal org={org} onClose={() => setInviting(false)} onInvited={team.reload} />}
+      {inviting && <InviteMemberModal org={org} team={team} onClose={() => setInviting(false)} onInvited={team.reload} />}
       {editing && <MemberEditModal org={org} member={editing} onClose={() => setEditing(null)} onSaved={team.reload} />}
       {confirm && confirm.member && (
         <ConfirmModal

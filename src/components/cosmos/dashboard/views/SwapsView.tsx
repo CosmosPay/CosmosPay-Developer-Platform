@@ -15,7 +15,7 @@ import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityP
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { usePaged, useGsapRows, usePolling, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
-import { showToast } from "@/components/cosmos/shared";
+import { Modal, showToast } from "@/components/cosmos/shared";
 import { IcCopy } from "@/components/cosmos/icons";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
@@ -114,7 +114,17 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   const defaults = useMemo(() => ({ q: "", status: "all", type: defaultType, chain: "all", date: "any" }), [defaultType]);
   const { filters, set, reset, active } = useListFilters(defaults, { status: ["all", ...GROUPS], type: ["all", ...TYPES], chain: ["all", ...NETWORK_IDS], date: DATE_RANGES });
   const [detail, setDetail] = useState(null);
+  // The swap form, in a dialog as every create (product owner, 2026-10-27: figures first, then
+  // the list; a create opens from the filter row). The overview's "Swap" opens it too (?create=1).
+  const [swapping, setSwapping] = useState(false);
   const api = useMemo(() => orgSwapApi(orgId, env), [orgId, env]);
+  const [createReq, clearCreate] = useUrlRequest("create");
+  useEffect(() => {
+    if (!createReq) return;
+    clearCreate();
+    if (canManage) setSwapping(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createReq]);
 
   // Swaps on each chain, between chains and USDT0's transfers are five lists upstream; read
   // together, newest first.
@@ -173,18 +183,17 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
-  // A swap the widget opened joins the list and opens its detail (to sign, or to fund).
-  const onCreated = (kind, rec) => { const row = kind === "cross" ? crossRow(rec) : kind === "usdt0" ? usdt0Row(rec) : sameRow(rec); setRows((r) => [row, ...r]); setDetail(row); };
+  // A swap the form opened joins the list and opens its detail (to sign, or to fund) in the form's place.
+  const onCreated = (kind, rec) => { const row = kind === "cross" ? crossRow(rec) : kind === "usdt0" ? usdt0Row(rec) : sameRow(rec); setRows((r) => [row, ...r]); setSwapping(false); setDetail(row); };
   const statusLabel = (r) => (r.kind === "cross" ? cc.status[r.status] : sw.status[r.status]) || r.status;
   const chainsLabel = (r) => (r.from !== r.to ? `${networkName(r.from)} → ${networkName(r.to)}` : networkName(r.from));
 
   return (
     <>
       <ViewHead title={sw.title} />
-      {canManage ? <SwapWidget api={api} tier={env === "prod" ? "public" : "testnet"} onCreated={onCreated} /> : <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
       {/* Its own figures and chart: swaps of every kind and the completed ones. */}
       <ViewActivity env={env} metrics={["swaps"]} id="swaps-activity" />
-      <div className="hub-section-head swaps-list-head"><h2 id="swaps-list-h">{sw.listTitle}</h2></div>
+      {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{sw.readOnly}</span></div>}
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={sw.searchPlaceholder}
@@ -202,7 +211,15 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
         date={filters.date} onDate={(v) => set("date", v)}
         active={active} onReset={reset}
         shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+        actions={canManage && <button type="button" className="btn btn-dark btn-sm" onClick={() => setSwapping(true)}>{DI.plus} {sw.create}</button>}
       />
+      {swapping && (
+        <Modal onClose={() => setSwapping(false)} label={sw.create}>
+          <div className="modal-body swap-modal">
+            <SwapWidget api={api} tier={env === "prod" ? "public" : "testnet"} onCreated={onCreated} />
+          </div>
+        </Modal>
+      )}
       <div className="panel">
         {loading && <TableSkeleton label={sw.loading} cols={6} />}
         {!loading && (

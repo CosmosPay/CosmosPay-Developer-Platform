@@ -298,7 +298,9 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
             </div>
             <div className="hub-cta">
               {canCreatePayments && <button type="button" className="btn btn-dark" onClick={() => goFiltered(onGo, "payments", { create: "1" })}>{h.createLink}</button>}
-              <button type="button" className="btn btn-outline-w" onClick={() => onGo("swaps")}>{h.newSwap}</button>
+              {/* The swap form is a dialog on the Swaps view now: this opens it there (without the
+                  right to swap, the view opens on its list). */}
+              <button type="button" className="btn btn-outline-w" onClick={() => goFiltered(onGo, "swaps", { create: "1" })}>{h.newSwap}</button>
             </div>
           </div>
         </div>

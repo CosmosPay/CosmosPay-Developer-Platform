@@ -1661,7 +1661,8 @@ export default {
       tickets: "Tickets",
       all: "Tous",
       statusError: "Impossible de mettre à jour le statut.",
-      statuses: { open: "Ouvert", pending: "En attente", resolved: "Résolu", closed: "Fermé" }
+      statuses: { open: "Ouvert", pending: "En attente", resolved: "Résolu", closed: "Fermé" },
+      inboxSearch: "Rechercher par objet, client ou message…",
     },
     admin: { viewList: "Voir la liste",
       loading: "Chargement…",
@@ -1837,6 +1838,11 @@ export default {
       copyEmail: "Copier l’e-mail",
       ownerFixed: "Le propriétaire ne peut être ni modifié ni retiré",
       inviteFixed: "Pour changer une invitation, révoquez-la et invitez à nouveau",
+      alreadyMember: "Cette personne est déjà membre de cette organisation.",
+      alreadyInvited: "Une invitation est déjà en attente pour cet e-mail.",
+      inviteConflict: "Impossible d'inviter : déjà dans l'équipe ou invitée, ou plus aucune place libre.",
+      mailUnavailable: "L'e-mail n'est pas configuré sur ce serveur, les invitations ne peuvent donc pas être envoyées.",
+      seatsFull: "Toutes les places du forfait sont prises (membres et invitations en attente). Libérez-en une ou passez à un forfait supérieur pour inviter quelqu'un.",
     },
     swaps: {
       title: "Swaps",
@@ -2125,6 +2131,7 @@ export default {
             ownership_percentage: "% de détention", title: "Fonction",
           },
           create: "Créer un bénéficiaire", creating: "Création…",
+          steps: { who: "Bénéficiaire", personal: "Données personnelles", documents: "Documents", funds: "Origine des fonds", company: "Entreprise", owners: "Propriétaires" },
         },
         detail: {
           eyebrow: "Bénéficiaire",
@@ -2169,6 +2176,7 @@ export default {
           create: "Créer le payin", creating: "Création…",
           payinId: "ID du payin", status: "Statut",
           instructions: "Instructions de paiement", done: "Terminé",
+          steps: { quote: "Devis", confirm: "Confirmer" },
         },
       },
       offramp: {
@@ -2198,6 +2206,7 @@ export default {
           signedTxPlaceholder: "Transaction signée…",
           evmNote: "Sur les réseaux EVM, signez le contrat approve de la cotation via l’API avant de créer le payout.",
           create: "Créer le payout", creating: "Création…",
+          steps: { quote: "Devis", sign: "Signature" },
         },
       },
     }

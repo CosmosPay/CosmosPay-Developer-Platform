@@ -1019,6 +1019,7 @@ export default {
       all: "सभी",
       statusError: "स्थिति अपडेट नहीं हो सकी।",
       statuses: { open: "खुला", pending: "लंबित", resolved: "हल हो गया", closed: "बंद" },
+      inboxSearch: "विषय, ग्राहक या संदेश से खोजें…",
     },
     orgs: {
       permissionsLabel: "अनुमतियाँ",
@@ -1093,6 +1094,11 @@ export default {
       copyEmail: "ईमेल कॉपी करें",
       ownerFixed: "स्वामी को न बदला जा सकता है, न हटाया जा सकता है",
       inviteFixed: "आमंत्रण बदलने के लिए उसे रद्द करें और फिर से आमंत्रित करें",
+      alreadyMember: "यह व्यक्ति पहले से इस संगठन का सदस्य है।",
+      alreadyInvited: "इस ईमेल के लिए पहले से एक लंबित आमंत्रण है।",
+      inviteConflict: "आमंत्रित नहीं किया जा सकता: वे पहले से टीम में हैं या आमंत्रित हैं, या कोई सीट खाली नहीं है।",
+      mailUnavailable: "इस सर्वर पर ईमेल सेट नहीं है, इसलिए आमंत्रण नहीं भेजे जा सकते।",
+      seatsFull: "प्लान की सभी सीटें भरी हैं (सदस्य और लंबित आमंत्रण)। किसी को आमंत्रित करने के लिए एक सीट खाली करें या प्लान अपग्रेड करें।",
     },
     webhooks: { searchPlaceholder: "URL या इवेंट से खोजें…", resent: "डिलीवरी दोबारा भेजी गई", noFailed: "कोई विफल डिलीवरी नहीं।", only: { all: "सभी", failed: "विफल" }, eventId: "इवेंट ID", error: "त्रुटि", attempts: "प्रयास", delivery: "डिलीवरी", save: "बदलाव सहेजें", editTitle: "एंडपॉइंट संपादित करें", edit: "एंडपॉइंट संपादित करें", eventsOne: "1 इवेंट",
       title: "वेबहुक",
@@ -1453,6 +1459,7 @@ export default {
             ownership_percentage: "स्वामित्व %", title: "पद",
           },
           create: "रिसीवर बनाएँ", creating: "बनाया जा रहा है…",
+          steps: { who: "प्राप्तकर्ता", personal: "व्यक्तिगत जानकारी", documents: "दस्तावेज़", funds: "धन का स्रोत", company: "कंपनी", owners: "मालिक" },
         },
         detail: {
           eyebrow: "रिसीवर",
@@ -1497,6 +1504,7 @@ export default {
           create: "पेइन बनाएँ", creating: "बनाया जा रहा है…",
           payinId: "पेइन ID", status: "स्थिति",
           instructions: "फ़ंडिंग निर्देश", done: "हो गया",
+          steps: { quote: "कोटेशन", confirm: "पुष्टि करें" },
         },
       },
       offramp: {
@@ -1526,6 +1534,7 @@ export default {
           signedTxPlaceholder: "साइन किया हुआ लेन-देन…",
           evmNote: "EVM नेटवर्क के लिए, पेआउट बनाने से पहले API के ज़रिए कोट का approve कॉन्ट्रैक्ट साइन करें।",
           create: "पेआउट बनाएँ", creating: "बनाया जा रहा है…",
+          steps: { quote: "कोटेशन", sign: "हस्ताक्षर" },
         },
       },
     },

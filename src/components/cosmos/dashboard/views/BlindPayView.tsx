@@ -14,6 +14,7 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { usePaged, useGsapRows } from "@/components/cosmos/dashboard/hooks";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 
 /* ---- display constants (technical identifiers, intentionally not translated) ---- */
 const RECEIVER_TYPES = ["individual", "business"];
@@ -302,6 +303,30 @@ function CreateReceiverModal({ bp, orgId, env, onClose, onCreated }) {
   const updateOwner = (i, k, v) => setOwners((o) => o.map((x, idx) => (idx === i ? { ...x, [k]: v } : x)));
   const removeOwner = (i) => setOwners((o) => o.filter((_, idx) => idx !== i));
 
+  /* The form in steps (product owner, 2026-10-27: a long form goes in steps): who it is first
+     (type, level, email, country), then what that type and level ask for, each step only on when
+     its required fields are filled. An individual: personal data, then the documents (standard
+     and enhanced) and the source of funds (enhanced). A business: the company, its documents,
+     then its owners. The type and the level are chosen on the first step, so the steps after it
+     never change under the reader. */
+  const reqFilled = (keys) => keys.filter((k) => requiredKeys.has(k)).every(filled);
+  const STEPS = isBiz
+    ? [
+      { key: "company", keys: BIZ_FIELDS.filter((k) => !k.endsWith("_file")) },
+      { key: "documents", keys: BIZ_FIELDS.filter((k) => k.endsWith("_file")) },
+      { key: "owners", keys: [], ok: owners.some(ownerComplete) },
+    ]
+    : [
+      { key: "personal", keys: IND_ALL },
+      ...(showStandard ? [{ key: "documents", keys: IND_STANDARD }] : []),
+      ...(showEnhanced ? [{ key: "funds", keys: IND_ENHANCED }] : []),
+    ];
+  const steps = useFormSteps(STEPS.length + 1);
+  const current = steps.step === 0 ? null : STEPS[steps.step - 1];
+  const canNext = steps.step === 0
+    ? filled("email") && filled("country")
+    : current && (current.ok ?? true) && reqFilled(current.keys);
+
   const submit = () => {
     if (!valid || busy) return;
     setBusy(true);
@@ -338,24 +363,26 @@ function CreateReceiverModal({ bp, orgId, env, onClose, onCreated }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <Sel label={m.type} value={type} onChange={setType} options={RECEIVER_TYPES} labels={{ individual: m.individual, business: m.business }} />
-        <Sel label={m.kycType} value={kycType} onChange={setKycType} options={KYC_TYPES} />
-        <Field label={f.email} type="email" value={get("email")} onChange={setE("email")} placeholder="jane@acme.com" autoFocus />
-        <CountrySelect label={f.country} value={get("country")} onChange={set("country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
-        {visibleKeys.map(renderField)}
-        {isBiz && (
-          <>
-            <label className="field-l" style={{ marginTop: 8 }}>{m.ownersTitle}</label>
-            {owners.map((o, i) => <OwnerRow key={i} owner={o} index={i} f={f} bp={bp} orgId={orgId} env={env} t={t} onChange={updateOwner} onRemove={removeOwner} />)}
-            <div className="paylink-actions" style={{ marginBottom: 8 }}>
-              <button type="button" className="btn btn-soft btn-sm" onClick={() => setOwners((o) => [...o, {}])}>{DI.plus} {m.addOwner}</button>
-            </div>
-          </>
-        )}
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!valid || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        <FormSteps names={[m.steps.who, ...STEPS.map((s) => m.steps[s.key])]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <Sel label={m.type} value={type} onChange={setType} options={RECEIVER_TYPES} labels={{ individual: m.individual, business: m.business }} />
+            <Sel label={m.kycType} value={kycType} onChange={setKycType} options={KYC_TYPES} />
+            <Field label={f.email} type="email" value={get("email")} onChange={setE("email")} placeholder="jane@acme.com" autoFocus />
+            <CountrySelect label={f.country} value={get("country")} onChange={set("country")} placeholder={bp.selectCountry} searchPlaceholder={bp.searchCountry} />
+          </>)}
+          {current && current.keys.map(renderField)}
+          {current && current.key === "owners" && (
+            <>
+              <p className="field-help">{m.ownersTitle}</p>
+              {owners.map((o, i) => <OwnerRow key={i} owner={o} index={i} f={f} bp={bp} orgId={orgId} env={env} t={t} onChange={updateOwner} onRemove={removeOwner} />)}
+              <div className="paylink-actions" style={{ marginBottom: 8 }}>
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => setOwners((o) => [...o, {}])}>{DI.plus} {m.addOwner}</button>
+              </div>
+            </>
+          )}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={!!canNext} onCancel={onClose} submitLabel={busy ? m.creating : m.create} onSubmit={submit} busy={busy} submitDisabled={!valid} />
       </div>
     </Modal>
   );
@@ -683,7 +710,6 @@ function OnrampTab({ bp, orgId, env, canManage }) {
 }
 
 function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
-  const t = useT();
   const o = bp.onramp;
   const m = o.modal;
   const [walletId, setWalletId] = useState("");
@@ -694,6 +720,8 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
   const [quote, setQuote] = useState(null);
   const [payin, setPayin] = useState(null);
   const [busy, setBusy] = useState(false);
+  // In steps: what to buy and how to pay, quoted; then the quote, confirmed.
+  const steps = useFormSteps(2);
 
   const validQuote = walletId.trim() && amount.trim() && Number(amount) > 0;
 
@@ -703,7 +731,7 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
     onrampApi.post("quotes", env, orgId, {
       blockchain_wallet_id: walletId.trim(), currency_type: currencyType, payment_method: method, token, request_amount: Math.round(Number(amount)),
     })
-      .then((qt) => setQuote(qt))
+      .then((qt) => { setQuote(qt || null); if (qt) steps.next(); })
       .catch((err) => showToast((err && err.message) || o.quoteError, "error"))
       .finally(() => setBusy(false));
   };
@@ -724,26 +752,28 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
         <h3>{m.title}</h3>
         {!payin && (
           <>
-            <Field label={m.walletId} hint={m.walletIdHint} value={walletId} onChange={(e) => { setWalletId(e.target.value); setQuote(null); }} placeholder="clz9x… / bw_…" autoFocus />
-            <Sel label={m.method} value={method} onChange={(v) => { setMethod(v); setQuote(null); }} options={PAYIN_METHODS} />
-            <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); }} options={TOKENS} />
-            <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
-            <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); }} placeholder="10000" inputMode="numeric" />
-            <div className="paylink-actions" style={{ marginBottom: 12 }}>
-              <button className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{busy && !quote ? m.quoting : m.getQuote}</button>
-            </div>
-            {quote && (
-              <div className="paylink-fields" style={{ marginBottom: 14 }}>
-                <CopyField label={m.quoteId} value={quote.id} />
-                {quote.sender_amount != null && <CopyField label={m.youSend} value={String(quote.sender_amount)} />}
-                {quote.receiver_amount != null && <CopyField label={m.youReceive} value={String(quote.receiver_amount)} />}
-                {quote.expires_at != null && <CopyField label={m.expires} value={fmtDateTime(quote.expires_at * 1000)} />}
-              </div>
-            )}
-            <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!quote || busy} onClick={createPayin}>{busy && quote ? m.creating : m.create}</button>
-              <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-            </div>
+            <FormSteps names={[m.steps.quote, m.steps.confirm]} steps={steps} />
+            <FormStep steps={steps}>
+              {steps.step === 0 && (<>
+                <Field label={m.walletId} hint={m.walletIdHint} value={walletId} onChange={(e) => { setWalletId(e.target.value); setQuote(null); }} placeholder="clz9x… / bw_…" autoFocus />
+                <Sel label={m.method} value={method} onChange={(v) => { setMethod(v); setQuote(null); }} options={PAYIN_METHODS} />
+                <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); }} options={TOKENS} />
+                <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
+                <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); }} placeholder="10000" inputMode="numeric" />
+                <div className="paylink-actions" style={{ marginBottom: 12 }}>
+                  <button type="button" className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{busy && !quote ? m.quoting : m.getQuote}</button>
+                </div>
+              </>)}
+              {steps.step === 1 && quote && (
+                <div className="paylink-fields" style={{ marginBottom: 14 }}>
+                  <CopyField label={m.quoteId} value={quote.id} />
+                  {quote.sender_amount != null && <CopyField label={m.youSend} value={String(quote.sender_amount)} />}
+                  {quote.receiver_amount != null && <CopyField label={m.youReceive} value={String(quote.receiver_amount)} />}
+                  {quote.expires_at != null && <CopyField label={m.expires} value={fmtDateTime(quote.expires_at * 1000)} />}
+                </div>
+              )}
+            </FormStep>
+            <FormStepsFooter steps={steps} canNext={!!quote} onCancel={onClose} submitLabel={busy && quote ? m.creating : m.create} onSubmit={createPayin} busy={busy} submitDisabled={!quote} />
           </>
         )}
         {payin && (
@@ -830,6 +860,9 @@ function NewPayoutModal({ bp, orgId, env, onClose, onDone }) {
   const [authTx, setAuthTx] = useState(null);   // unsigned tx (stellar)
   const [signed, setSigned] = useState("");
   const [busy, setBusy] = useState(false);
+  // In steps: where the money goes and how much, quoted; then the wallet that sends it and its
+  // signature.
+  const steps = useFormSteps(2);
 
   const chain = chainOf(network);
   const validQuote = bankId.trim() && amount.trim() && Number(amount) > 0;
@@ -842,7 +875,7 @@ function NewPayoutModal({ bp, orgId, env, onClose, onDone }) {
       bank_account_id: bankId.trim(), currency_type: currencyType, cover_fees: coverFees === "yes",
       request_amount: Math.round(Number(amount)), network, token,
     })
-      .then((qt) => setQuote(qt))
+      .then((qt) => { setQuote(qt || null); if (qt) steps.next(); })
       .catch((err) => showToast((err && err.message) || o.quoteError, "error"))
       .finally(() => setBusy(false));
   };
@@ -877,55 +910,49 @@ function NewPayoutModal({ bp, orgId, env, onClose, onDone }) {
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.title}</h3>
-        <Field label={m.bankId} hint={m.bankIdHint} value={bankId} onChange={(e) => { setBankId(e.target.value); setQuote(null); setAuthTx(null); }} placeholder="clz9x… / ba_…" autoFocus />
-        <Sel label={m.network} value={network} onChange={(v) => { setNetwork(v); setQuote(null); setAuthTx(null); }} options={PAYOUT_NETWORKS} />
-        <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); }} options={TOKENS} />
-        <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
-        <Sel label={m.coverFees} value={coverFees} onChange={(v) => { setCoverFees(v); setQuote(null); }} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
-        <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); }} placeholder="10000" inputMode="numeric" />
-        <div className="paylink-actions" style={{ marginBottom: 12 }}>
-          <button className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{m.getQuote}</button>
-        </div>
-
-        {quote && (
-          <>
+        <FormSteps names={[m.steps.quote, m.steps.sign]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <Field label={m.bankId} hint={m.bankIdHint} value={bankId} onChange={(e) => { setBankId(e.target.value); setQuote(null); setAuthTx(null); }} placeholder="clz9x… / ba_…" autoFocus />
+            <Sel label={m.network} value={network} onChange={(v) => { setNetwork(v); setQuote(null); setAuthTx(null); }} options={PAYOUT_NETWORKS} />
+            <Sel label={m.token} value={token} onChange={(v) => { setToken(v); setQuote(null); setAuthTx(null); }} options={TOKENS} />
+            <Sel label={m.currencyType} value={currencyType} onChange={(v) => { setCurrencyType(v); setQuote(null); setAuthTx(null); }} options={CURRENCY_TYPES} labels={{ sender: m.curSender, receiver: m.curReceiver }} />
+            <Sel label={m.coverFees} value={coverFees} onChange={(v) => { setCoverFees(v); setQuote(null); setAuthTx(null); }} options={BOOL} labels={{ yes: t.dash.common.yes, no: t.dash.common.no }} />
+            <Field label={m.amount} hint={m.amountHint} value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); setAuthTx(null); }} placeholder="10000" inputMode="numeric" />
+            <div className="paylink-actions" style={{ marginBottom: 12 }}>
+              <button type="button" className="btn btn-soft btn-sm" disabled={!validQuote || busy} onClick={getQuote}>{m.getQuote}</button>
+            </div>
+          </>)}
+          {steps.step === 1 && quote && (<>
             <div className="paylink-fields" style={{ marginBottom: 12 }}>
               <CopyField label={m.quoteId} value={quote.id} />
               {quote.sender_amount != null && <CopyField label={m.youSend} value={String(quote.sender_amount)} />}
               {quote.receiver_local_amount != null && <CopyField label={m.youReceive} value={String(quote.receiver_local_amount)} />}
               {quote.expires_at != null && <CopyField label={m.expires} value={fmtDateTime(quote.expires_at * 1000)} />}
             </div>
-            <Field label={m.senderWallet} hint={m.senderWalletHint} value={senderWallet} onChange={(e) => setSenderWallet(e.target.value)} placeholder="G… / 0x…" />
-
+            <Field label={m.senderWallet} hint={m.senderWalletHint} value={senderWallet} onChange={(e) => { setSenderWallet(e.target.value); setAuthTx(null); setSigned(""); }} placeholder="G… / 0x…" />
             {isStellarLike ? (
               <>
                 <div className="paylink-actions" style={{ marginBottom: 12 }}>
-                  <button className="btn btn-soft btn-sm" disabled={!validWallet || busy} onClick={authorize}>{m.authorize}</button>
+                  <button type="button" className="btn btn-soft btn-sm" disabled={!validWallet || busy} onClick={authorize}>{m.authorize}</button>
                 </div>
                 {authTx && <CopyBlock label={m.unsignedTx} value={authTx} />}
                 {authTx && (
                   <div className="paylink-block">
-                    <div className="paylink-block-head"><label className="field-l">{m.signedTx}</label></div>
+                    <div className="paylink-block-head"><label className="field-l" htmlFor="bp-signed">{m.signedTx}</label></div>
                     <p className="field-note">{m.signedTxHint}</p>
-                    <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={m.signedTxPlaceholder} />
+                    <textarea id="bp-signed" className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={m.signedTxPlaceholder} />
                   </div>
                 )}
-                <div className="modal-actions">
-                  <button className="btn btn-violet" disabled={!authTx || !signed.trim() || busy} onClick={createPayout}>{busy ? m.creating : m.create}</button>
-                  <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-                </div>
               </>
-            ) : (
-              <>
-                <p className="field-note">{m.evmNote}</p>
-                <div className="modal-actions">
-                  <button className="btn btn-violet" disabled={!validWallet || busy} onClick={createPayout}>{busy ? m.creating : m.create}</button>
-                  <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-                </div>
-              </>
-            )}
-          </>
-        )}
+            ) : <p className="field-note">{m.evmNote}</p>}
+          </>)}
+        </FormStep>
+        <FormStepsFooter
+          steps={steps} canNext={!!quote} onCancel={onClose} busy={busy}
+          submitLabel={busy ? m.creating : m.create} onSubmit={createPayout}
+          submitDisabled={isStellarLike ? !authTx || !signed.trim() : !validWallet}
+        />
       </div>
     </Modal>
   );

@@ -1021,6 +1021,7 @@ export default {
       all: "All",
       statusError: "Couldn’t update the status.",
       statuses: { open: "Open", pending: "Pending", resolved: "Resolved", closed: "Closed" },
+      inboxSearch: "Search by subject, customer or message…",
     },
     orgs: {
       permissionsLabel: "Permissions",
@@ -1095,6 +1096,11 @@ export default {
       copyEmail: "Copy email",
       ownerFixed: "The owner can't be edited or removed",
       inviteFixed: "An invitation is changed by revoking it and inviting again",
+      alreadyMember: "That person is already a member of this organization.",
+      alreadyInvited: "There is already a pending invitation for that email.",
+      inviteConflict: "They can't be invited: they're already in the team or invited, or every seat is taken.",
+      mailUnavailable: "Email isn't set up on this server, so invitations can't be sent.",
+      seatsFull: "Every seat of the plan is taken (members and pending invitations). Free one or upgrade the plan to invite someone.",
     },
     webhooks: { searchPlaceholder: "Search by URL or event…", resent: "Delivery resent", noFailed: "No failed deliveries.", only: { all: "All", failed: "Failed" }, eventId: "Event ID", error: "Error", attempts: "Attempts", delivery: "Delivery", save: "Save changes", editTitle: "Edit endpoint", edit: "Edit endpoint", eventsOne: "1 event",
       title: "Webhooks",
@@ -1455,6 +1461,7 @@ export default {
             ownership_percentage: "Ownership %", title: "Title",
           },
           create: "Create receiver", creating: "Creating…",
+          steps: { who: "Receiver", personal: "Personal data", documents: "Documents", funds: "Source of funds", company: "Company", owners: "Owners" },
         },
         detail: {
           eyebrow: "Receiver",
@@ -1499,6 +1506,7 @@ export default {
           create: "Create payin", creating: "Creating…",
           payinId: "Payin ID", status: "Status",
           instructions: "Funding instructions", done: "Done",
+          steps: { quote: "Quote", confirm: "Confirm" },
         },
       },
       offramp: {
@@ -1528,6 +1536,7 @@ export default {
           signedTxPlaceholder: "Signed transaction…",
           evmNote: "For EVM networks, sign the quote's approve contract via the API before creating the payout.",
           create: "Create payout", creating: "Creating…",
+          steps: { quote: "Quote", sign: "Sign" },
         },
       },
     },

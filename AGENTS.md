@@ -296,8 +296,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     and the form's own action on the last. In steps: the payment link (amount, destination, fee,
     design), the private payment (amount and customer, details, fee), the API key (details,
     permissions), the member invitation (a dialog: email and role, permissions), the liquidity
-    deposit (pair, amounts) and the Stellar wallet (address, signature). Every "add"/"create" is a
-    dialog, never an inline form.
+    deposit (pair, amounts), the Stellar wallet (address, signature) and BlindPay's (off while Fiat
+    is): the KYC receiver (who it is, then what its type and level ask for: personal data, documents,
+    source of funds; or the company, its documents, its owners), the payin (quote, confirm) and the
+    payout (quote, then the sending wallet and its signature); "Get quote" moves on by itself and a
+    changed field drops the quote. Every "add"/"create" is a dialog, never an inline form: the swap
+    form ("New swap" in Swaps' filter row; the overview's "Swap" opens it with `?create=1`) and the
+    support ticket too. Dialogs stack (`ui/Modal.tsx` keeps the open ones): only the top one answers
+    Escape and keeps Tab, so a token picker or a confirmation closes alone over its form or detail.
+    The invitation says before sending what the server would refuse: an email already in the team or
+    invited (under the field), every seat taken (members plus pending invitations; "Invite member"
+    disabled, with why); a refusal still reads in the user's language, never the server's English.
   - **The activity comes from `GET /api/cosmos/series?period=day|week|month|year`**, the community
     server's `GET /v1/summary/series` (30 days, 12 weeks, 12 months, 5 years, UTC buckets, weeks
     from Monday), with the window's totals (distinct payers too) and the window before it, plus
@@ -398,7 +407,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     row of their own above the list). A view whose sections are tabs (Liquidity) puts them at the
     right of its tabs (`.tabs-row`). Products, Customers, Webhooks, API keys and Support have a
     filter row too. **Status is never a separate row of tabs** (product owner): the
-    admin lists and the support inbox put theirs in the same row as their search. The filters live in
+    admin lists and the support inbox (`FilterBar`: search by subject, customer or message, status
+    with counts; a conversation, so a list beside its thread, not a table) put theirs in the same row
+    as their search. The filters live in
     the URL (`useListFilters`, read after mount so the server render matches), so a filtered list
     survives a reload and can be shared; switching views drops them. Tabs remain only for sections
     (Liquidity, Fiat) and periods (the overview), as segments, never chips.
@@ -559,8 +570,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 ### Swaps from the dashboard
 
-- **The swap form is the standard swap widget** (`components/SwapWidget.tsx`, inline at the top of
-  `views/SwapsView.tsx`; product owner: "stop making flat forms"): "You pay" and "You receive" wells
+- **The swap form is the standard swap widget** (`components/SwapWidget.tsx`, in the dialog that
+  "New swap" opens from `views/SwapsView.tsx`'s filter row, framed by it (`.swap-modal`); the
+  view starts with its figures as every one; product owner: "stop making flat forms"): "You pay" and "You receive" wells
   with a big amount and a token button naming its network, a flip between them, the quote updating on
   its own (debounced) with its details folded under the rate, the accounts the route needs, one
   button whose words say what is missing, and a slippage popover. The token picker

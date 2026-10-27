@@ -767,7 +767,11 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .slip-pop .seg-tabs { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2); }
 .slip-pop .seg-tabs button { flex: 1; padding: 8px 6px; }
 .slip-h { margin: 10px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-3); }
-.swaps-list-head { margin-top: 8px; }
+/* The swap form in its dialog (the Swaps view's "New swap"): the dialog is its frame, as narrow as
+   the form, and its head leaves the close button its corner. */
+.modal:has(> .swap-modal) { width: min(520px, 100%); }
+.swap-modal .swapper { max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.swap-modal .swapper-head { padding: 0 48px 14px 2px; }
 @media (max-width: 520px) {
   .swapper { padding: 12px; border-radius: 20px; }
   .sp-amount { font-size: 28px; }

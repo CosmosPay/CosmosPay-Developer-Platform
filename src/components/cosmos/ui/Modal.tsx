@@ -9,6 +9,10 @@ import { useT } from "@/lib/i18n/index";
    returned to the triggering element on close. Closing from inside (X, the backdrop, Escape)
    plays a short exit before `onClose` unmounts it; a parent closing it directly skips that. */
 const EXIT_MS = 160;
+/* The dialogs open, oldest first. Only the top one answers Escape and keeps Tab inside it, so a
+   dialog opened from another (a token picker in the swap form, a confirmation from a detail)
+   closes alone and the one under it stays. */
+const open: object[] = [];
 export function Modal({ onClose, children, label }: { onClose: () => void; children: ReactNode; label?: string }) {
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
@@ -26,7 +30,10 @@ export function Modal({ onClose, children, label }: { onClose: () => void; child
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => {
     const prevFocus = document.activeElement as HTMLElement | null;
+    const self = {};
+    open.push(self);
     const onKey = (e: KeyboardEvent) => {
+      if (open[open.length - 1] !== self) return;
       if (e.key === "Escape") { requestRef.current(); return; }
       if (e.key === "Tab") {
         const root = ref.current;
@@ -53,6 +60,8 @@ export function Modal({ onClose, children, label }: { onClose: () => void; child
     const field = root?.querySelector<HTMLElement>("input,textarea,select");
     (field ?? root)?.focus();
     return () => {
+      const at = open.indexOf(self);
+      if (at >= 0) open.splice(at, 1);
       document.removeEventListener("keydown", onKey);
       page.style.overflow = prev;
       prevFocus?.focus?.();
