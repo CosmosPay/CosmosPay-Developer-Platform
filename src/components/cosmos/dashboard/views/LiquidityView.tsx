@@ -229,12 +229,33 @@ function LiqRowActions({ o, onView }) {
   );
 }
 
-/* A pool's or a position's menu: its id, and the action its row offers. */
-function PoolMenu({ id, action }) {
+/* A pool's or a position's menu: its detail, its id, and the action its row offers. */
+function PoolMenu({ id, action, onOpen }) {
   const t = useT();
   const cm = t.dash.common;
   const [, copy] = useCopy();
-  return <RowMenu label={fmt(cm.rowActions, { name: shortAddress(id) })} items={[{ key: "copy", label: cm.copyId, icon: DI.link, onClick: () => copy(id, t.toasts.copied) }, ...(action ? [action] : [])]} />;
+  return <RowMenu label={fmt(cm.rowActions, { name: shortAddress(id) })} items={[{ key: "open", label: cm.details, icon: DI.docs, onClick: onOpen }, ...(action ? [action] : []), { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(id, t.toasts.copied) }]} />;
+}
+
+/* A pool's or a position's detail: its figures as listed, its id to copy, and its row's action. */
+function PoolDetail({ title, eyebrow, id, fields, action, onClose }) {
+  const t = useT();
+  const [, copy] = useCopy();
+  return (
+    <Modal onClose={onClose} label={title}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{eyebrow}</div>
+        <h3>{title}</h3>
+        <div className="paylink-fields" style={{ marginBottom: 18 }}>
+          {fields.filter(([, v]) => v !== null && v !== undefined && v !== "").map(([k, v]) => (<div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{String(v)}</span></div>))}
+        </div>
+        <div className="paylink-actions">
+          {action && <button type="button" className="btn btn-dark btn-sm" onClick={() => { onClose(); action.onClick(); }}>{action.icon} {action.label}</button>}
+          <button type="button" className="btn btn-soft btn-sm" onClick={() => copy(id, t.toasts.copied)}><IcCopy /> {t.dash.common.copyId}</button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
@@ -248,7 +269,11 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
   const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(null);
   const pg = usePaged(pools, pools);
+  const reserves = (pool) => (pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ");
+  const nameOf = (pool) => (pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id));
+  const depositAction = (pool) => (canManage ? { key: "deposit", label: lq.deposit, icon: DI.plus, onClick: () => onDeposit(pool) } : null);
 
   const search = () => {
     if (loading) return;
@@ -276,13 +301,13 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
           <button className="btn btn-soft btn-sm" disabled={loading} onClick={search}>{loading ? p.searching : p.search}</button>
         </div>
       </div>
-      {loaded && (
+      {loaded && !loading && (
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{pg.slice.map((pool) => (
-            <tr key={pool.id}>
+            <tr key={pool.id} className="row-click" onClick={() => setOpen(pool)}>
               <td className="tid">
                 <RecordLink
-                  title={pool.id} copy={pool.id}
+                  title={pool.id} copy={pool.id} onOpen={() => setOpen(pool)}
                   preview={() => <PreviewCard label={p.head.pool} title={pool.id} wrap fields={[[p.head.reserves, (pool.reserves || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ") || "-"], [p.head.shares, pool.totalShares], [p.head.trustlines, pool.totalTrustlines], [p.head.fee, `${(pool.feeBp / 100).toFixed(2)}%`]]} />}
                 >{pool.reserves?.length === 2 ? pairLabel(pool.reserves[0].asset, pool.reserves[1].asset) : poolShort(pool.id)}</RecordLink>
               </td>
@@ -290,9 +315,10 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
               <td>{pool.totalShares}</td>
               <td>{pool.totalTrustlines}</td>
               <td>{(pool.feeBp / 100).toFixed(2)}%</td>
-              <td className="row-actions">
-                {canManage && <button className="btn btn-soft btn-sm" onClick={() => onDeposit(pool)}>{lq.deposit}</button>}
-                <PoolMenu id={pool.id} action={canManage ? { key: "deposit", label: lq.deposit, icon: DI.plus, onClick: () => onDeposit(pool) } : null} />
+              <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                <button type="button" className="icon-mini" title={t.dash.common.details} aria-label={t.dash.common.details} onClick={() => setOpen(pool)}>{DI.docs}</button>
+                {canManage && <button type="button" className="icon-mini" title={lq.deposit} aria-label={`${lq.deposit}: ${nameOf(pool)}`} onClick={() => onDeposit(pool)}>{DI.plus}</button>}
+                <PoolMenu id={pool.id} action={depositAction(pool)} onOpen={() => setOpen(pool)} />
               </td>
             </tr>
           ))}
@@ -300,8 +326,10 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
           </tbody>
         </table></div>
       )}
-      {loading && !loaded && <TableSkeleton label={p.loading} />}
-      {loaded && <Pagination {...pg} />}
+      {loading && <TableSkeleton label={p.loading} cols={6} />}
+      {loaded && !loading && <Pagination {...pg} />}
+      {open && <PoolDetail eyebrow={p.head.pool} title={nameOf(open)} id={open.id} action={depositAction(open)} onClose={() => setOpen(null)}
+        fields={[[p.head.pool, open.id], [p.head.reserves, reserves(open)], [p.head.shares, open.totalShares], [p.head.trustlines, open.totalTrustlines], [p.head.fee, `${(open.feeBp / 100).toFixed(2)}%`]]} />}
     </div>
   );
 }
@@ -316,17 +344,24 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(null);
   const pg = usePaged(positions, positions);
+  // The latest request wins: picking another account while one loads drops the older answer.
+  const req = useRef(0);
 
   const valid = /^G[A-Z2-7]{55}$/.test(account.trim());
+  const redeemable = (pos) => (pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ");
+  const nameOf = (pos) => (pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId));
+  const withdrawAction = (pos) => (canManage ? { key: "withdraw", label: lq.withdraw, icon: DI.download, onClick: () => onWithdraw(pos) } : null);
 
   const search = (acct = account) => {
-    if (!/^G[A-Z2-7]{55}$/.test(acct.trim()) || loading) return;
+    if (!/^G[A-Z2-7]{55}$/.test(acct.trim())) return;
+    const id = ++req.current;
     setLoading(true);
     liquidityApi.positions(acct.trim(), orgId, env)
-      .then((res) => { setPositions(Array.isArray(res?.data) ? res.data : []); setLoaded(true); })
-      .catch((err) => showToast((err && err.message) || p.error, "error"))
-      .finally(() => setLoading(false));
+      .then((res) => { if (id === req.current) { setPositions(Array.isArray(res?.data) ? res.data : []); setLoaded(true); } })
+      .catch((err) => { if (id === req.current) showToast((err && err.message) || p.error, "error"); })
+      .finally(() => { if (id === req.current) setLoading(false); });
   };
 
   return (
@@ -343,19 +378,20 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
       {/* Until an account is picked the table waits, empty, saying what it needs. */}
       <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{loaded && pg.slice.map((pos) => (
-            <tr key={pos.poolId}>
+            <tr key={pos.poolId} className="row-click" onClick={() => setOpen(pos)}>
               <td className="tid">
                 <RecordLink
-                  title={pos.poolId} copy={pos.poolId}
+                  title={pos.poolId} copy={pos.poolId} onOpen={() => setOpen(pos)}
                   preview={() => <PreviewCard label={p.head.pool} title={pos.poolId} wrap fields={[[p.head.shares, pos.shares], [p.head.share, `${(pos.shareOfPoolBps / 100).toFixed(2)}%`], [p.head.redeemable, (pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ") || "-"]]} />}
                 >{pos.reserves?.length === 2 ? pairLabel(pos.reserves[0].asset, pos.reserves[1].asset) : poolShort(pos.poolId)}</RecordLink>
               </td>
               <td className="amt">{pos.shares}</td>
               <td>{(pos.shareOfPoolBps / 100).toFixed(2)}%</td>
               <td className="amt">{(pos.redeemable || []).map((r) => `${r.amount} ${assetLabel(r.asset)}`).join(" · ")}</td>
-              <td className="row-actions">
-                {canManage && <button className="btn btn-soft btn-sm" onClick={() => onWithdraw(pos)}>{lq.withdraw}</button>}
-                <PoolMenu id={pos.poolId} action={canManage ? { key: "withdraw", label: lq.withdraw, icon: DI.download, onClick: () => onWithdraw(pos) } : null} />
+              <td className="row-actions" onClick={(e) => e.stopPropagation()}>
+                <button type="button" className="icon-mini" title={t.dash.common.details} aria-label={t.dash.common.details} onClick={() => setOpen(pos)}>{DI.docs}</button>
+                {canManage && <button type="button" className="icon-mini" title={lq.withdraw} aria-label={`${lq.withdraw}: ${nameOf(pos)}`} onClick={() => onWithdraw(pos)}>{DI.download}</button>}
+                <PoolMenu id={pos.poolId} action={withdrawAction(pos)} onOpen={() => setOpen(pos)} />
               </td>
             </tr>
           ))}
@@ -363,6 +399,8 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
           </tbody>
         </table></div>
       <Pagination {...pg} />
+      {open && <PoolDetail eyebrow={p.head.pool} title={nameOf(open)} id={open.poolId} action={withdrawAction(open)} onClose={() => setOpen(null)}
+        fields={[[p.head.pool, open.poolId], [p.head.shares, open.shares], [p.head.share, `${(open.shareOfPoolBps / 100).toFixed(2)}%`], [p.head.redeemable, redeemable(open)]]} />}
     </div>
   );
 }
