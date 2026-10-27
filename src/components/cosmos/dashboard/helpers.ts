@@ -17,10 +17,12 @@ export function fmtDate(v) {
   return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString();
 }
 
+/* Times on the 24-hour clock: some locales (es-AR in Chrome) default to a 12-hour clock and drop
+   the a. m./p. m. mark, so 13:44 read "01:44". */
 export function fmtDateTime(v) {
   if (!v) return "";
   const d = new Date(v);
-  return isNaN(d.getTime()) ? "" : d.toLocaleString();
+  return isNaN(d.getTime()) ? "" : d.toLocaleString(undefined, { hourCycle: "h23" });
 }
 
 /* The idempotency key of one intended operation: the same terms keep their key, so a retry
@@ -48,7 +50,7 @@ export function fmtWhen(v) {
   if (!v) return "";
   const d = new Date(v);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 }
 /* Render loopback addresses as "localhost" (covers older notifications stored as ::1). */
 export function humanizeLocal(s) {

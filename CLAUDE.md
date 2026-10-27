@@ -64,8 +64,10 @@ These were said more than once; breaking one is a bug, whatever the task was.
 - **A private account is an account on the token's contract** (2026-10-27): never list a public
   wallet as one (the table reads the chain and shows only registered accounts). Adding one asks
   for the customer's signatures (the key transaction, then the register) and saves nothing to the
-  customer before the contract has it. Balances show only after the customer's signature, every
-  time (no key is kept or stored).
+  customer before the contract has it. An account already on the contract is a private account
+  already (one per Stellar account; nothing new can be derived for it): it is added with no
+  signature, whatever key root registered it. Balances show only after the customer's signature,
+  every time (no key is kept or stored).
 - **One key root for private accounts**: the confidential key comes from the signed key
   transaction (any wallet, a signed XDR), in the dashboard and first at the checkout. An account
   registered under another root cannot be opened in the dashboard, so never add another
@@ -1024,8 +1026,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   address), then the signatures: the account must exist on the network (`accountExists`, refused
   before any signature), the customer signs the key transaction, the browser proves the
   registration and the customer signs the register transaction; an account already registered
-  needs the key signature only (it confirms the key opens here). **The wallet is saved to the
-  customer (`customers:create`) only after that**, so nothing public is ever listed. Each signature
+  is added with nothing to sign (the token keeps one confidential account per Stellar account, so
+  nothing new can be derived for it, and one registered with the message root still receives
+  private payments; only its balances do not open here). **The wallet is saved to the customer
+  (`customers:create`) only after that**, so nothing public is ever listed. Each signature
   opens over the dialog, which cannot be closed while the work runs. "Delete private account" (row menu and detail,
   `customers:edit`) removes the wallet from its customer, as the customer's detail does; the
   confidential account and its balance stay the customer's on-chain. **Nothing connects or opens a wallet** (product owner,

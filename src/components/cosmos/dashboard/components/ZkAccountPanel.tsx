@@ -17,9 +17,12 @@
    create it on the token (product owner, 2026-10-27: adding a private account asks for the
    signatures; nothing is added that is not on the contract). The customer signs the key
    transaction (it derives the key, held in memory while the page is open and never stored), the
-   browser proves the registration, and the customer signs the register transaction; an account
-   already registered needs the first signature only, which confirms its key opens here. Only then
-   is the wallet saved to the customer. Nothing connects or opens a wallet (product owner,
+   browser proves the registration, and the customer signs the register transaction. Only then is
+   the wallet saved to the customer. An account already on the token is a private account already
+   (the token keeps one per Stellar account, so nothing new can be derived for it): it is added with
+   nothing to sign, even when its key came from another root (registered by the private checkout or
+   by this table before 2026-10-26 22:23 with Freighter's message signature); it receives private
+   payments, and only its balances do not open here. Nothing connects or opens a wallet (product owner,
    2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's):
    every signature is asked for in ZkSignDialog, the XDR for the customer to sign in any Stellar
    wallet and paste back, and must be the account's.
@@ -231,10 +234,27 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
     }
   };
 
-  /* The add dialog's work: the account must exist on the network (the register transaction is
-     its own), then the key signature, and the registration when it has none yet. Resolves with
+  /* The add dialog's work. An account already on the token is a private account already (one per
+     Stellar account on the token; it may have been registered elsewhere, with another key root):
+     it is added with nothing to sign. Otherwise the account must exist on the network (the
+     register transaction is its own), then the key signature and the registration. Resolves with
      whether it was created now (false: it was already registered) or what went wrong. */
   const createAccount = async (address: string): Promise<{ created: boolean } | string | null> => {
+    if (busy) return null;
+    setBusy({ action: "create", address });
+    let onToken: boolean | null = null;
+    try {
+      const { confidentialAccounts } = await import("@/lib/zk/wallet");
+      onToken = (await confidentialAccounts(config, [address]))[address] ?? null;
+    } catch {
+      onToken = null; // unread: the signatures' flow reads it again
+    } finally {
+      setBusy(null);
+    }
+    if (onToken) {
+      setStatus((s) => ({ ...s, [address]: true }));
+      return { created: false };
+    }
     let created = false;
     const outcome = await run("create", address, async (x) => {
       if (await x.isRegistered()) return;
