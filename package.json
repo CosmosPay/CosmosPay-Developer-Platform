@@ -61,6 +61,7 @@
   },
   "overrides": {
     "mysql2": "^3.24.4",
-    "deepmerge-ts": "^8.0.2"
+    "deepmerge-ts": "^8.0.2",
+    "toml": "5.0.1"
   }
 }
