@@ -1,38 +1,44 @@
 /* The private accounts, a table inside the private payments view in the format of every other list
    (product owner: never another page for it; 2026-10-27: the same table format, in their own
    "Private accounts" section, under the payments). A private account is a customer's Stellar
-   wallet (product owner, 2026-10-27: they are customers' wallets, as many as there are; the
-   organization's own wallets take its fees), so each row is one, with its customer, whether it
-   already holds a confidential account on Cosmos Pay's token (read from the chain with no
-   signature, for the page on screen, or for every row while the status filter is on), how many
-   private payments it received (which filter the payments table) and when it was added. It is a
-   list like every other (product owner, 2026-10-27): a section heading, the filter bar (search,
-   status, date, its own URL keys), the table with the customer as the link that opens and
-   previews the account, the row's icon actions and its menu, filler rows and pages. "Add private account" opens a dialog, as "add customer" does, that adds a
-   Stellar wallet to a customer, new or already there. A row opens the account's detail. Nothing
-   connects or opens a wallet (product owner, 2026-10-27: people hand over a signed XDR, not their
-   wallet, and the wallet is the customer's): every signature is asked for in ZkSignDialog, the XDR
-   for the customer to sign in any Stellar wallet and paste back, and must be the row's account's.
-   Its one action is "create the private account" (one signature of the key transaction derives the
-   key, held in memory while the page is open and never stored, so a reload asks for the signature
-   again; then a register proof and one more signature) or "view balances"
-   (the same one signature; the balances are rebuilt from chain events and checked against the
-   on-chain commitments, then shown in the row), then incoming to available, a deposit of public
-   XLM and a withdrawal back to public XLM. "Delete", in the row and the detail, once confirmed, removes the
-   wallet from its customer as the customer's detail does (`customers:edit`): the row leaves the
-   table, while the confidential account and its balance stay the customer's on-chain. The key
-   comes from the transaction root only: an
-   account whose key came from a message signature (the private checkout's, with Freighter) does
-   not open here. The amount is asked for in a dialog; the work shows its progress under the row.
-   Proofs are generated in this tab, on one thread (src/lib/zk/bb-loader.ts); nothing about the
-   key leaves the browser. */
+   wallet that holds a confidential account on Cosmos Pay's token (product owner, 2026-10-27: they
+   are customers' wallets, as many as there are; the organization's own wallets take its fees; an
+   account that is not on the token's contract is a public wallet, not a private account). So the
+   table lists only the customers' Stellar wallets the chain says are registered on the token (read
+   with no signature, a few at a time, before the table shows); a customer's other Stellar wallets
+   stay in Customers. Each row has its customer, its balances (read only with the customer's
+   signature), how many private payments it received (which filter the payments table) and when it
+   was added. It is a list like every other (product owner, 2026-10-27): a section heading, the
+   filter bar (search, date, its own URL keys), the table with the customer as the link that opens
+   and previews the account, the row's icon actions and its menu, filler rows and pages.
+
+   "Add private account" opens a dialog in two steps, as long forms do: the account (a customer, new
+   or already there, and one of their Stellar wallets or a new address), then the signatures that
+   create it on the token (product owner, 2026-10-27: adding a private account asks for the
+   signatures; nothing is added that is not on the contract). The customer signs the key
+   transaction (it derives the key, held in memory while the page is open and never stored), the
+   browser proves the registration, and the customer signs the register transaction; an account
+   already registered needs the first signature only, which confirms its key opens here. Only then
+   is the wallet saved to the customer. Nothing connects or opens a wallet (product owner,
+   2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's):
+   every signature is asked for in ZkSignDialog, the XDR for the customer to sign in any Stellar
+   wallet and paste back, and must be the account's.
+
+   A row's balances, "view balances", ask for the key signature again after a reload; once on
+   screen they offer incoming to available, a deposit of public XLM and a withdrawal back to public
+   XLM. "Delete", in the row and the detail, once confirmed, removes the wallet from its customer as
+   the customer's detail does (`customers:edit`): the row leaves the table, while the confidential
+   account and its balance stay the customer's on-chain. The key comes from the transaction root
+   only: an account whose key came from a message signature (the private checkout's, with
+   Freighter) does not open here. The amount is asked for in a dialog; the work shows its progress
+   under the row (or in the add dialog). Proofs are generated in this tab, on one thread
+   (src/lib/zk/bb-loader.ts); nothing about the key leaves the browser. */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { StrKey } from "@stellar/stellar-sdk";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
 import { IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
-import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { Sk, TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
@@ -44,12 +50,12 @@ import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPreview";
-import { StatusIcon } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
 import { customers as custApi } from "@/lib/api-client";
 import { usePaged, useGsapRows, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
+import { inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { explorerAccountUrl, networkName } from "@/lib/chains";
 import { shortAddress } from "@/lib/org-wallets";
 import { canProve } from "@/lib/zk/bb-loader";
@@ -59,17 +65,17 @@ import type { ZkBalances, ZkPhase, ZkWallet } from "@/lib/zk/wallet";
 import type { SignRequest } from "@/lib/zk/xdr-signer";
 import { ZkSignDialog } from "@/components/cosmos/dashboard/components/ZkSignDialog";
 
-type Action = "register" | "open" | "merge" | "deposit" | "withdraw" | "refresh";
+type Action = "create" | "open" | "merge" | "deposit" | "withdraw" | "refresh";
 /** A customer's Stellar wallet: a private account, once it holds a confidential account. */
 export interface PrivateAccount { walletId: string; address: string; label: string | null; customerId: string; customerName: string; createdAt: string }
 export interface PanelCustomer { id: string; name: string }
+/** Whether an action ended well (true), failed (what to say) or was cancelled (null). */
+type Outcome = true | string | null;
 
-const COLS = 8;
+const COLS = 7;
 /* Its own filters, in the URL beside the payments' (their keys are their own). */
-const STATUSES = ["registered", "notRegistered"] as const;
-const DEFAULTS = { accq: "", accstatus: "all", accdate: "any" };
-const ALLOWED = { accstatus: ["all", ...STATUSES] };
-/* The chain is read this many accounts at a time when the whole list's status is needed. */
+const DEFAULTS = { accq: "", accdate: "any" };
+/* The chain is read this many accounts at a time. */
 const STATUS_CHUNK = 25;
 
 const clock = (ms: number) => {
@@ -92,8 +98,9 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   canRemove?: boolean;
   /* Read the customers again, after a wallet was added or removed. */
   onChanged?: () => void;
-  /* The wallets holding a confidential account (the create dialog preselects the first). */
-  onRegistered?: (addresses: string[]) => void;
+  /* The wallets holding a confidential account (the payments' recipients); null until every
+     wallet was read. */
+  onRegistered?: (addresses: string[] | null) => void;
   /* The organization's private payments, to count each account's; null while they load. */
   payments?: { recipient?: string | null }[] | null;
   /* Shows the payments table filtered to one account. */
@@ -120,35 +127,33 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   const wallet = useRef<ZkWallet | null>(null);
   const sym = config.token.symbol;
   const fl = t.dash.filters;
-  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
+  const { filters, set, reset, active } = useListFilters(DEFAULTS);
   const all = accounts || [];
   const addresses = all.map((w) => w.address).join(",");
-  const stateOf = (a: string) => (status[a] === true ? "registered" : status[a] === false ? "notRegistered" : null);
-  const matches = (w: PrivateAccount, skip: "status" | null) =>
-    (skip === "status" || filters.accstatus === "all" || stateOf(w.address) === filters.accstatus) &&
-    inRange(w.createdAt, filters.accdate) &&
-    matchesQuery([w.customerName, w.label, w.address], filters.accq);
-  const rows = all.filter((w) => matches(w, null));
-  const statusCounts = countBy(all.filter((w) => matches(w, "status")), (w) => stateOf(w.address));
+  // Every wallet's place on the token is read before the table shows: only the registered ones
+  // are private accounts.
+  const unread = [...new Set(all.map((w) => w.address).filter((a) => !(a in status)))];
+  const checking = accounts !== null && unread.length > 0;
+  const privateAccounts = all.filter((w) => status[w.address] === true);
+  const unchecked = all.filter((w) => status[w.address] === null);
+  const rows = privateAccounts.filter((w) => inRange(w.createdAt, filters.accdate) && matchesQuery([w.customerName, w.label, w.address], filters.accq));
   // Back to the first page when the filters change, not when an account is added or removed.
   const pg = usePaged(rows, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + rows.length);
-  // The chain is read for the rows on screen; filtering by status needs every row's.
-  const wanted = (filters.accstatus === "all" ? pg.slice : all).map((w) => w.address).filter((a) => !(a in status));
 
-  // Which wallets already hold a confidential account: a read of the chain, no signature, a few
-  // at a time and kept once read (there may be any number of them).
+  // Which wallets hold a confidential account: a read of the chain, no signature, a few at a time
+  // and kept once read (there may be any number of them).
   useEffect(() => {
-    if (!wanted.length) return;
+    if (!unread.length) return;
     let current = true;
-    const batch = wanted.slice(0, STATUS_CHUNK);
+    const batch = unread.slice(0, STATUS_CHUNK);
     import("@/lib/zk/wallet")
       .then(({ confidentialAccounts }) => confidentialAccounts(config, batch))
       .then((s) => { if (current) setStatus((prev) => ({ ...prev, ...s })); })
       .catch(() => { if (current) setStatus((prev) => ({ ...prev, ...Object.fromEntries(batch.map((a) => [a, null])) })); });
     return () => { current = false; };
-  }, [wanted.slice(0, STATUS_CHUNK).join(","), config.token.contractId]);
-  useEffect(() => { onRegistered?.(all.map((w) => w.address).filter((a) => status[a] === true)); }, [status, addresses]);
+  }, [unread.slice(0, STATUS_CHUNK).join(","), config.token.contractId]);
+  useEffect(() => { onRegistered?.(accounts === null || checking ? null : privateAccounts.map((w) => w.address)); }, [status, addresses, checking]);
   useEffect(() => () => { wallet.current?.destroy(); }, []);
   // The proof takes a while on one thread: a clock beside it says the work is moving.
   useEffect(() => {
@@ -180,7 +185,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
     if (/tx_?too_?late|txTooLate/i.test(e instanceof Error ? e.message : "")) return z.sign.expired;
     return e instanceof Error ? e.message : String(e);
   };
-  const DONE: Partial<Record<Action, string>> = { register: za.createdOk, merge: za.mergeOk, deposit: za.depositOk, withdraw: za.withdrawOk };
+  const DONE: Partial<Record<Action, string>> = { merge: za.mergeOk, deposit: za.depositOk, withdraw: za.withdrawOk };
 
   /* Each signature the wallet needs opens the signing dialog (closing the account's detail) and
      waits for it; cancelling it ends the action quietly. */
@@ -190,12 +195,14 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   });
 
   /* Runs one action for `address`: its key from the account's signature (or this tab's), the
-     action, then the balances read again. */
-  const run = async (name: Action, address: string, action: (w: ZkWallet) => Promise<unknown>) => {
-    if (busy) return;
+     action, then the balances read again. `before` runs ahead of any signature; with `report`
+     false a failure is only returned (the add dialog shows it), not shown under the table. */
+  const run = async (name: Action, address: string, action: (w: ZkWallet) => Promise<unknown>, opts: { before?: () => Promise<void>; report?: boolean } = {}): Promise<Outcome> => {
+    if (busy) return null;
     setBusy({ action: name, address });
     setError(null);
     try {
+      await opts.before?.();
       if (wallet.current && wallet.current.address !== address) {
         await wallet.current.destroy();
         wallet.current = null;
@@ -213,16 +220,38 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
       setOpen(address);
       setStatus((s) => ({ ...s, [address]: b.registered }));
       if (DONE[name]) showToast(DONE[name]!);
+      return true;
     } catch (e) {
-      setError(await problem(e, address));
+      const said = await problem(e, address);
+      if (opts.report !== false) setError(said);
+      return said;
     } finally {
       setBusy(null);
       setPhase(null);
     }
   };
 
+  /* The add dialog's work: the account must exist on the network (the register transaction is
+     its own), then the key signature, and the registration when it has none yet. Resolves with
+     whether it was created now (false: it was already registered) or what went wrong. */
+  const createAccount = async (address: string): Promise<{ created: boolean } | string | null> => {
+    let created = false;
+    const outcome = await run("create", address, async (x) => {
+      if (await x.isRegistered()) return;
+      await x.register(setPhase);
+      created = true;
+    }, {
+      report: false,
+      before: async () => {
+        const { accountExists } = await import("@/lib/zk/wallet");
+        if (!(await accountExists(config, address))) throw new Error(fmt(za.notFunded, { network: `${networkName("stellar")} ${config.network === "public" ? "Mainnet" : "Testnet"}` }));
+      },
+    });
+    return outcome === true ? { created } : outcome;
+  };
+
   const provable = canProve();
-  const working = busy ? (phase ? z.phases[phase] : za.working) : null;
+  const working = busy ? (phase ? za.phases[phase] : za.working) : null;
   const received = (address: string) => (payments ? payments.filter((p) => p.recipient === address).length : null);
   const loadedFor = (address: string) => (open === address && balances?.registered ? balances : null);
   const copy = (address: string) => navigator.clipboard?.writeText(address).then(() => showToast(t.toasts.copied)).catch(() => {});
@@ -249,19 +278,15 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   };
   const askRemove = (w: PrivateAccount) => { setDetail(null); setToRemove(w); };
 
-  /* What an account offers: its first step (create it, or read its balances), then, once its
-     balances are on screen, moving incoming funds, a deposit and a withdrawal. */
+  /* What an account offers: its balances, read with the customer's signature, then, once they are
+     on screen, moving incoming funds, a deposit and a withdrawal. */
   const actionsFor = (address: string) => {
-    const registered = status[address];
     const loaded = loadedFor(address);
+    const view = () => run("open", address, async () => {});
     return {
-      registered,
       loaded,
-      primary: registered === false
-        ? { label: za.register, icon: DI.key, dark: true, disabled: !!busy || !provable, onClick: () => run("register", address, (x) => x.register(setPhase)) }
-        : !loaded
-          ? { label: za.viewBalances, icon: DI.balances, dark: false, disabled: !!busy || registered === undefined, onClick: () => run("open", address, async () => {}) }
-          : null,
+      view,
+      primary: !loaded ? { label: za.viewBalances, icon: DI.balances, dark: true, disabled: !!busy, onClick: view } : null,
       more: [
         ...(loaded ? [{ key: "refresh", label: za.refresh, icon: DI.refresh, disabled: !!busy, onClick: () => run("refresh", address, async () => {}) }] : []),
         ...(loaded && loaded.receiving > 0n ? [{ key: "merge", label: za.merge, icon: DI.balances, disabled: !!busy, onClick: () => run("merge", address, (x) => x.merge(setPhase)) }] : []),
@@ -273,12 +298,10 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
     };
   };
 
-  const statusPill = (registered: boolean | null | undefined) =>
-    registered === undefined ? <Sk w="5em" /> : registered === true ? <Pill st="ok" tone="ok" label={za.registered} /> : registered === false ? <Pill st="ref" tone="off" label={za.notRegistered} /> : <span>-</span>;
   const preview = (w: PrivateAccount) => () => (
     <PreviewCard
       label={za.tableHead.customer} title={w.address}
-      headline={<><b>{w.customerName}</b>{status[w.address] !== undefined && <span className={`hub-st-t ${status[w.address] ? "ok" : "off"}`}>{status[w.address] ? za.registered : za.notRegistered}</span>}</>}
+      headline={<><b>{w.customerName}</b><span className="hub-st-t ok">{za.registered}</span></>}
       fields={[[za.tableHead.wallet, w.label || networkName("stellar")], [za.tableHead.address, shortAddress(w.address)], [za.tableHead.payments, String(received(w.address) ?? "-")], [za.tableHead.added, fmtDateTime(w.createdAt)]]}
     />
   );
@@ -296,44 +319,49 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
       ? <button type="button" className="link-btn" title={za.paymentsTo} aria-label={`${za.paymentsTo}: ${n}`} onClick={(e) => { e.stopPropagation(); setDetail(null); onShowPayments(address); }}>{n}</button>
       : <span title={za.paymentsTo}>{n}</span>;
   };
+  /* A balance, or the button that asks for the customer's signature to read it. */
+  const balanceCell = (address: string, which: "spendable" | "receiving", label: string) => {
+    const a = actionsFor(address);
+    if (a.loaded) return `${fromUnits(a.loaded[which])} ${sym}`;
+    return <button type="button" className="link-btn" aria-label={`${za.viewBalances}: ${nameOf(address)} (${label})`} onClick={(e) => { e.stopPropagation(); a.view(); }} disabled={!!busy}>{za.viewBalances}</button>;
+  };
   // A row is a wallet of a customer (two customers may name the same address): kept by its id.
-  const opened = detail ? all.find((w) => w.walletId === detail) : null;
+  const opened = detail ? privateAccounts.find((w) => w.walletId === detail) : null;
 
   // The progress of the running action is a line of its own under its row: one row fewer of filler.
-  const workingOnPage = pg.slice.some((w) => progress(w.address));
+  const workingOnPage = !adding && pg.slice.some((w) => progress(w.address));
+  const loading = accounts === null || checking;
 
   return (
-    <section className="hub-section zka" aria-labelledby="zka-title" aria-busy={busy ? true : undefined}>
+    <section className="hub-section zka" aria-labelledby="zka-title" aria-busy={busy || loading ? true : undefined}>
       {/* A second list on the page: its heading, then the filter bar and the table, as the
           overview's transactions are. */}
       <div className="hub-section-head"><h2 id="zka-title">{za.title}</h2></div>
       <FilterBar
         label={fl.label}
         query={filters.accq} onQuery={(v) => set("accq", v)} placeholder={za.searchPlaceholder}
-        status={{
-          label: fl.status, value: filters.accstatus, onChange: (v) => set("accstatus", v),
-          options: [
-            { key: "all", label: fl.allStatuses, count: all.filter((w) => matches(w, "status")).length },
-            { key: "registered", label: za.registered, count: statusCounts.registered || 0, icon: <StatusIcon tone="ok" size={16} /> },
-            { key: "notRegistered", label: za.notRegistered, count: statusCounts.notRegistered || 0, icon: <StatusIcon tone="off" size={16} /> },
-          ],
-        }}
         date={filters.accdate} onDate={(v) => set("accdate", v)}
-        shown={rows.length} total={accounts === null ? undefined : all.length} active={active} onReset={reset} loading={accounts === null}
-        actions={canAdd && <button type="button" className="btn btn-dark btn-sm" onClick={() => setAdding(true)}>{DI.plus} {za.add}</button>}
+        shown={rows.length} total={loading ? undefined : privateAccounts.length} active={active} onReset={reset} loading={loading}
+        actions={canAdd && <button type="button" className="btn btn-dark btn-sm" onClick={() => setAdding(true)} disabled={!provable || !!busy}>{DI.plus} {za.add}</button>}
       />
 
       {!provable && <p className="field-err zka-note" role="alert">{z.cannotProve}</p>}
+      {!loading && unchecked.length > 0 && (
+        <p className="field-help zka-note" role="status">
+          {fmt(za.unchecked, { n: unchecked.length })}{" "}
+          <button type="button" className="link-btn" onClick={() => setStatus((s) => Object.fromEntries(Object.entries(s).filter(([, v]) => v !== null)))}>{za.checkAgain}</button>
+        </p>
+      )}
 
       <div className="panel">
-        {accounts === null && <TableSkeleton label={za.title} cols={COLS} />}
-        {accounts !== null && (
+        {loading && <TableSkeleton label={za.title} cols={COLS} />}
+        {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx">
-            <thead><tr><th>{za.tableHead.customer}</th><th>{za.tableHead.address}</th><th>{za.tableHead.status}</th><th>{za.spendable}</th><th>{za.receiving}</th><th>{za.tableHead.payments}</th><th>{za.tableHead.added}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+            <thead><tr><th>{za.tableHead.customer}</th><th>{za.tableHead.address}</th><th>{za.spendable}</th><th>{za.receiving}</th><th>{za.tableHead.payments}</th><th>{za.tableHead.added}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
             <tbody>
               {!loadError && pg.slice.map((w) => {
                 const a = actionsFor(w.address);
-                const work = progress(w.address);
+                const work = adding ? null : progress(w.address);
                 const url = explorer(w.address);
                 const name = w.label ? `${w.customerName} (${w.label})` : w.customerName;
                 return [
@@ -349,8 +377,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                       </span>
                     </td>
                     <td className="cust" onClick={(e) => e.stopPropagation()}><AddressLink chain="stellar" network={config.network} address={w.address} label={za.tableHead.address} /></td>
-                    <td>{statusPill(a.registered)}</td>
-                    <td className="amt">{a.loaded ? `${fromUnits(a.loaded.spendable)} ${sym}` : <span title={a.registered ? za.viewBalances : undefined}>-</span>}</td>
+                    <td className="amt">{balanceCell(w.address, "spendable", za.spendable)}</td>
                     <td className="amt">{a.loaded ? `${fromUnits(a.loaded.receiving)} ${sym}` : "-"}</td>
                     <td className="cust">{paymentsCell(w.address)}</td>
                     <td className="cust">{fmtDateTime(w.createdAt)}</td>
@@ -380,12 +407,12 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
               })}
               <FillRows
                 n={pg.size - (loadError ? 0 : pg.count) - (workingOnPage ? 1 : 0)} cols={COLS}
-                empty={loadError ? za.loadError : all.length === 0 ? za.empty : null}
+                empty={loadError ? za.loadError : privateAccounts.length === 0 ? za.empty : null}
               />
             </tbody>
           </table></div>
         )}
-        {accounts !== null && <Pagination {...pg} />}
+        {!loading && <Pagination {...pg} />}
       </div>
       {error && !detail && <p className="field-err zka-note" role="alert">{error}</p>}
 
@@ -402,8 +429,8 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                   [za.tableHead.wallet, opened.label || networkName("stellar")],
                   [za.tableHead.address, <AddressLink key="a" chain="stellar" network={config.network} address={opened.address} label={za.tableHead.address} />],
                   [t.dash.paylinks.detail.fields.network, `${networkName("stellar")} ${config.network === "public" ? "Mainnet" : "Testnet"}`],
-                  [za.tableHead.status, statusPill(a.registered)],
-                  ...(a.loaded ? [[za.spendable, `${fromUnits(a.loaded.spendable)} ${sym}`], [za.receiving, `${fromUnits(a.loaded.receiving)} ${sym}`]] : []),
+                  [za.spendable, a.loaded ? `${fromUnits(a.loaded.spendable)} ${sym}` : za.balancesHidden],
+                  ...(a.loaded ? [[za.receiving, `${fromUnits(a.loaded.receiving)} ${sym}`]] : []),
                   [za.tableHead.payments, paymentsCell(opened.address)],
                 ] as [string, ReactNode][]).map(([k, v]) => (
                   <div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{v}</span></div>
@@ -429,7 +456,17 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
         />
       )}
 
-      {adding && <AddPrivateAccountModal customers={customers} env={env} orgId={orgId} onClose={() => setAdding(false)} onAdded={() => { setAdding(false); onChanged?.(); }} />}
+      {adding && (
+        <AddPrivateAccountModal
+          customers={customers} env={env} orgId={orgId}
+          wallets={all.filter((w) => status[w.address] === false)}
+          privateAccounts={privateAccounts}
+          busy={!!busy} progress={working ? progress(busy!.address) : null}
+          onCreate={createAccount}
+          onClose={() => setAdding(false)}
+          onAdded={(created) => { setAdding(false); showToast(created ? za.createdOk : za.added); onChanged?.(); }}
+        />
+      )}
 
       {signing && (
         <ZkSignDialog
@@ -457,51 +494,111 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   );
 }
 
-/* A customer's Stellar wallet added as a private account, in a dialog like "add customer"
-   (CustomerFormModal): to a customer already there, or to a new one named here. Its address only:
-   the customer signs when the private account is created (the key transaction and the register),
-   so nothing is signed to add it. */
+/* "Add private account", in two steps like every long form (product owner, 2026-10-27), copied
+   from "add customer" (CustomerFormModal): the account (a customer already there or a new one, and
+   one of the customer's Stellar wallets or a new address), then the customer's signatures that
+   create it on Cosmos Pay's token. The wallet is saved to the customer only once the token has it,
+   so nothing public is ever listed as a private account. The dialog stays open (and cannot be
+   closed) while the signatures and the proof run; each signature opens over it. */
 const NEW_CUSTOMER = "__new";
-function AddPrivateAccountModal({ customers, env, orgId, onClose, onAdded }: { customers: PanelCustomer[] | null; env: string; orgId: string; onClose: () => void; onAdded: () => void }) {
+const OTHER_ADDRESS = "__other";
+function AddPrivateAccountModal({ customers, env, orgId, wallets, privateAccounts, busy, progress, onCreate, onClose, onAdded }: {
+  customers: PanelCustomer[] | null;
+  env: string;
+  orgId: string;
+  /* The customers' Stellar wallets that hold no confidential account yet. */
+  wallets: PrivateAccount[];
+  privateAccounts: PrivateAccount[];
+  busy: boolean;
+  progress: ReactNode;
+  onCreate: (address: string) => Promise<{ created: boolean } | string | null>;
+  onClose: () => void;
+  onAdded: (created: boolean) => void;
+}) {
   const t = useT();
   const za = t.zk.account;
   const [customer, setCustomer] = useState(NEW_CUSTOMER);
   const [name, setName] = useState("");
+  const [picked, setPicked] = useState("");
   const [address, setAddress] = useState("");
   const [label, setLabel] = useState("");
-  const [busy, setBusy] = useState(false);
-  const account = address.trim();
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const steps = useFormSteps(2);
+  // The customer's Stellar wallets not on the token yet: one of them, else a new address.
+  const own = customer === NEW_CUSTOMER ? [] : wallets.filter((w) => w.customerId === customer);
+  const choice = own.some((w) => w.walletId === picked) || picked === OTHER_ADDRESS ? picked : own[0]?.walletId || OTHER_ADDRESS;
+  const existing = own.find((w) => w.walletId === choice) || null;
+  const account = existing ? existing.address : address.trim();
   const valid = StrKey.isValidEd25519PublicKey(account);
-  const ready = valid && (customer !== NEW_CUSTOMER || name.trim() !== "") && !busy;
-  const wallet = { chain: "stellar", address: account, ...(label.trim() ? { label: label.trim() } : {}) };
+  const already = customer !== NEW_CUSTOMER && privateAccounts.some((w) => w.customerId === customer && w.address === account);
+  const accountOk = valid && !already && (customer !== NEW_CUSTOMER || name.trim() !== "");
+  const working = busy || saving;
 
-  const submit = () => {
-    if (!ready) return;
-    setBusy(true);
-    (customer === NEW_CUSTOMER ? custApi.create(env, orgId, { name: name.trim(), wallets: [wallet] }) : custApi.addWallet(customer, env, orgId, wallet))
-      .then(() => { showToast(za.added); onAdded(); })
-      .catch((e) => showToast((e && e.message) || za.add, "error"))
-      .finally(() => setBusy(false));
+  const submit = async () => {
+    if (!accountOk || working) return;
+    setProblem(null);
+    const outcome = await onCreate(account);
+    if (outcome === null || typeof outcome === "string") { setProblem(outcome); return; }
+    // On the token now: the wallet joins the customer (unless it already was one of theirs).
+    if (existing) { onAdded(outcome.created); return; }
+    setSaving(true);
+    const wallet = { chain: "stellar", address: account, ...(label.trim() ? { label: label.trim() } : {}) };
+    try {
+      await (customer === NEW_CUSTOMER ? custApi.create(env, orgId, { name: name.trim(), wallets: [wallet] }) : custApi.addWallet(customer, env, orgId, wallet));
+      onAdded(outcome.created);
+    } catch (e) {
+      setProblem(fmt(za.notSaved, { error: (e && (e as Error).message) || za.add }));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <Modal onClose={onClose} label={za.add}>
+    <Modal onClose={() => { if (!working) onClose(); }} label={za.add}>
       <div className="modal-body">
         <div className="modal-eyebrow">{za.title}</div>
         <h3>{za.add}</h3>
-        <div className="fld">
-          <span className="field-l" id="zka-customer-l">{za.tableHead.customer}</span>
-          <Select labelledBy="zka-customer-l" value={customer} onChange={setCustomer} options={[{ value: NEW_CUSTOMER, label: za.newCustomer }, ...(customers || []).map((c) => ({ value: c.id, label: c.name }))]} />
-        </div>
-        {customer === NEW_CUSTOMER && <Field label={za.customerName} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.dash.examples.customerName} maxLength={120} autoFocus />}
-        <Field label={t.dash.wallets.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.dash.wallets.addressPlaceholder} spellCheck={false} autoComplete="off" aria-invalid={account !== "" && !valid ? true : undefined} />
-        {account !== "" && !valid && <p className="field-err" role="alert">{t.dash.wallets.invalidAddress}</p>}
-        <Field label={za.walletLabel} hint={t.dash.common.optional} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t.dash.wallets.labelPlaceholder} maxLength={60} />
-        <p className="field-help">{za.addHint}</p>
-        <div className="modal-actions">
-          <button type="button" className="btn btn-violet" disabled={!ready} onClick={submit}>{za.add}</button>
-          <button type="button" className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        <FormSteps names={[za.steps.account, za.steps.sign]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <div className="fld">
+              <span className="field-l" id="zka-customer-l">{za.tableHead.customer}</span>
+              <Select labelledBy="zka-customer-l" value={customer} onChange={(v) => { setCustomer(v); setPicked(""); }} options={[{ value: NEW_CUSTOMER, label: za.newCustomer }, ...(customers || []).map((c) => ({ value: c.id, label: c.name }))]} />
+            </div>
+            {customer === NEW_CUSTOMER && <Field label={za.customerName} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.dash.examples.customerName} maxLength={120} autoFocus />}
+            {own.length > 0 && (
+              <div className="fld">
+                <span className="field-l" id="zka-wallet-l">{za.customerWallet}</span>
+                <Select labelledBy="zka-wallet-l" value={choice} onChange={setPicked} options={[...own.map((w) => ({ value: w.walletId, label: w.label ? `${w.label} (${shortAddress(w.address)})` : shortAddress(w.address) })), { value: OTHER_ADDRESS, label: za.otherAddress }]} />
+              </div>
+            )}
+            {!existing && (<>
+              <Field label={t.dash.wallets.address} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.dash.wallets.addressPlaceholder} spellCheck={false} autoComplete="off" aria-invalid={address.trim() !== "" && !valid ? true : undefined} />
+              {address.trim() !== "" && !valid && <p className="field-err" role="alert">{t.dash.wallets.invalidAddress}</p>}
+              <Field label={za.walletLabel} hint={t.dash.common.optional} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t.dash.wallets.labelPlaceholder} maxLength={60} />
+            </>)}
+            {already && <p className="field-err" role="alert">{za.alreadyAdded}</p>}
+          </>)}
+          {steps.step === 1 && (<>
+            <div className="paylink-fields" style={{ marginBottom: 14 }}>
+              <div className="paylink-field"><span className="pf-k">{za.tableHead.customer}</span><span className="pf-v">{customer === NEW_CUSTOMER ? name.trim() : customers?.find((c) => c.id === customer)?.name}</span></div>
+              <div className="paylink-field"><span className="pf-k">{za.tableHead.address}</span><span className="pf-v">{shortAddress(account)}</span></div>
+            </div>
+            <p className="field-note">{za.signIntro}</p>
+            <ol className="zka-sign-steps">
+              <li>{za.signKey}</li>
+              <li>{za.signProof}</li>
+              <li>{za.signRegister}</li>
+            </ol>
+            {progress}
+          </>)}
+        </FormStep>
+        {problem && <p className="field-err" role="alert">{problem}</p>}
+        <FormStepsFooter
+          steps={steps} canNext={accountOk} onCancel={onClose}
+          submitLabel={working ? za.creating : za.requestSignatures} onSubmit={submit} busy={working} submitDisabled={!accountOk}
+        />
       </div>
     </Modal>
   );

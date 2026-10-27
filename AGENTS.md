@@ -982,15 +982,23 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   fee's percentage rounded down). The accounts are **managed inside the private payments view**
   (`components/ZkAccountPanel.tsx`; product owner: never another page, and no bare "connect
   Freighter"). It is the **"Private accounts" table** (product owner, 2026-10-27: the same table
-  format as every list): one row per customer Stellar wallet (every page of `/api/customers`, 100 at a
-  time), with its customer, whether it holds a confidential account, read from the chain with no
-  signature for the rows on screen only (`confidentialAccounts` in `src/lib/zk/wallet.ts`), its
-  balances once viewed, and the private payments it received (a count that filters the payments
-  table). A row opens the account's detail. It sits under the payments table. "Add private account"
-  opens a **dialog like "add customer"** (`AddPrivateAccountModal`, the `CustomerFormModal` pattern;
-  product owner, 2026-10-27: creating is always a modal, never an inline form) that adds a Stellar
-  address to a customer, new or already there (`customers:create`); nothing is signed to add it, the
-  customer signs when the account is created. "Delete private account" (row menu and detail,
+  format as every list). **Only accounts on the token's contract are listed** (product owner,
+  2026-10-27: an account that is not on the contract is a public wallet, never a private account):
+  every customer Stellar wallet (every page of `/api/customers`, 100 at a time) is read from the
+  chain with no signature (`confidentialAccounts` in `src/lib/zk/wallet.ts`, 25 at a time) before
+  the table shows, and only the registered ones are rows, with their customer, their balances (read
+  only with the customer's signature, "view balances" in the cell, the row and the detail) and the
+  private payments they received (a count that filters the payments table). A row opens the
+  account's detail. It sits under the payments table. **"Add private account" asks for the
+  signatures** (product owner, 2026-10-27): a **dialog in two steps** (`AddPrivateAccountModal`, the
+  `CustomerFormModal` pattern with `FormSteps`; creating is always a modal): the account (a
+  customer, new or already there, and one of their Stellar wallets not on the token yet or a new
+  address), then the signatures: the account must exist on the network (`accountExists`, refused
+  before any signature), the customer signs the key transaction, the browser proves the
+  registration and the customer signs the register transaction; an account already registered
+  needs the key signature only (it confirms the key opens here). **The wallet is saved to the
+  customer (`customers:create`) only after that**, so nothing public is ever listed. Each signature
+  opens over the dialog, which cannot be closed while the work runs. "Delete private account" (row menu and detail,
   `customers:edit`) removes the wallet from its customer, as the customer's detail does; the
   confidential account and its balance stay the customer's on-chain. **Nothing connects or opens a wallet** (product owner,
   2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's, so
@@ -1010,12 +1018,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   server-side. `ZkWallet.connect` tries roots in order: the table passes the transaction root only
   (an account made with a message signature, the private checkout's with Freighter, says it was
   created elsewhere); the private checkout, which signs with Freighter: message, then transaction.
-  Then create, view balances, incoming to
+  Then view balances, incoming to
   available, deposit and withdraw in the row menu and the detail (the amount in a dialog, the progress
-  under the row, with a clock while the proof runs). Without any customer wallet the table says so
-  and offers "add private account"; the create dialog then says no customer has one. The dialog's
-  recipient is a select of the customers' accounts, the ones with a confidential account first, and
-  it follows the accounts as they load. No separate account page.
+  under the row or in the add dialog, with a clock while the proof runs). Without any private account
+  the table says so and offers "add private account"; the create dialog then says no customer has
+  one. The dialog's recipient is a select of the private accounts only (the server refuses an
+  unregistered recipient anyway), and it waits until the chain was read. No separate account page.
 - **Proofs are generated in the browser.** The private checkout is cross-origin isolated (COOP
   same-origin, COEP credentialless, set by the middleware on every `/zk` path of the payments domain,
   which owns the `/zk` prefix), so bb.js proves on several threads; the dashboard is not isolated and

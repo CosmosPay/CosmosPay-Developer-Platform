@@ -2,11 +2,11 @@
    confidential transfer on Cosmos Pay's confidential token (OpenZeppelin's stellar-confidential):
    the amount stays hidden on-chain. The payer pays on the private checkout
    (payments.cosmospay.lat/zk/{id}); the recipient is a customer's private account (product owner,
-   2026-10-27: private accounts are customers' Stellar wallets, as many as there are), which receives
-   the amount minus the 0.18% commission and the organization's own fee, if any, paid to one of the
-   organization's wallets (Settings). The private accounts are a table of their own under the
-   payments (ZkAccountPanel), read from every page of the customers. The first one known to hold a
-   confidential account is the new payment's recipient by default.
+   2026-10-27: private accounts are customers' Stellar wallets on Cosmos Pay's token, as many as there
+   are), which receives the amount minus the 0.18% commission and the organization's own fee, if any,
+   paid to one of the organization's wallets (Settings). The private accounts are a table of their
+   own under the payments (ZkAccountPanel), read from every page of the customers and checked on the
+   chain: only a wallet registered on the token is offered as a payment's recipient.
    Testnet (the sandbox) only for now. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
@@ -84,7 +84,8 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
-  const [registered, setRegistered] = useState([]);
+  // The private accounts' addresses (on the token); null until the panel read them all.
+  const [registered, setRegistered] = useState(null);
   const { customers, accounts, error: accountsError, reload } = useCustomerAccounts(env);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
@@ -197,18 +198,18 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
   );
 }
 
-function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts, registered = [], onClose, onCreated }) {
+function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts, registered = null, onClose, onCreated }) {
   const t = useT();
   const z = t.zk;
   const mf = t.dash.paylinks.modal.merchantFee;
   const keys = useMemo(() => idempotencyKeys(), []);
   const [amount, setAmount] = useState("");
-  // A customer's private account (null while the customers load), the ones known to hold a
-  // confidential account first. The one picked, else the first: the accounts and which hold one
-  // may arrive after the dialog opened.
-  const list = useMemo(() => [...(accounts || [])].sort((a, b) => Number(registered.includes(b.address)) - Number(registered.includes(a.address))), [accounts, registered]);
+  // A customer's private account: only the wallets registered on the token (null while the
+  // customers and the chain are read). The one picked, else the first: they may arrive after the
+  // dialog opened.
+  const list = useMemo(() => (accounts && registered ? accounts.filter((a) => registered.includes(a.address)) : null), [accounts, registered]);
   const [picked, setRecipient] = useState("");
-  const recipient = list.some((a) => a.address === picked) ? picked : list[0]?.address || "";
+  const recipient = (list || []).some((a) => a.address === picked) ? picked : list?.[0]?.address || "";
   // The organization's own fee (as on a payment link): a percentage and/or fixed XLM, to one of its
   // Stellar wallets, taken from the amount or added on top. Empty means none.
   const [feePct, setFeePct] = useState("");
@@ -222,7 +223,7 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts,
   const [problem, setProblem] = useState(null);
 
   const units = (() => { try { return amount.trim() ? toUnits(amount) : null; } catch { return null; } })();
-  const target = list.find((a) => a.address === recipient) || null;
+  const target = (list || []).find((a) => a.address === recipient) || null;
   const feeOn = feePct.trim() !== "" || feeFixed.trim() !== "";
   const pctNum = Number(feePct.trim() || 0);
   const fixedNum = Number(feeFixed.trim() || 0);
@@ -300,7 +301,7 @@ function CreateZkPaymentModal({ orgId, env, config, canConnectWallets, accounts,
               </div>
             </div>
             {splitRows}
-            {accounts === null ? (
+            {list === null ? (
               <p className="field-help" role="status">{t.dash.cosmos.loading}</p>
             ) : list.length > 0 ? (
               <div className="fld">

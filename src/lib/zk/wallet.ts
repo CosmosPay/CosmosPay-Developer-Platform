@@ -32,6 +32,7 @@ import {
   type KeyPair,
   type Opening,
 } from "stellar-confidential-token-sdk";
+import { Keypair, rpc, xdr } from "@stellar/stellar-sdk";
 import { ensureBrowserBackend } from "@/lib/zk/bb-loader";
 import { deriveSignerRootSk, deriveTransactionRootSk, type TransactionSigner } from "@/lib/zk/derive-key";
 import type { SignPurpose } from "@/lib/zk/xdr-signer";
@@ -269,6 +270,19 @@ export async function confidentialAccounts(deployment: ZkDeployment, addresses: 
     out[a] = await client.confidentialBalance(a).then((b) => b !== null, () => null);
   }));
   return out;
+}
+
+/**
+ * Whether `address` exists on the network: a register is the account's own transaction, so an
+ * account that was never funded cannot get a confidential account. A read, with no signature.
+ */
+export async function accountExists(deployment: ZkDeployment, address: string): Promise<boolean> {
+  // The ledger entry itself, not rpc.Server.getAccount: that one says "not found" for any failure,
+  // an unreachable RPC too, which must not read as an account that does not exist.
+  const server = new rpc.Server(deployment.rpcUrl, { allowHttp: deployment.rpcUrl.startsWith("http://") });
+  const key = xdr.LedgerKey.account(new xdr.LedgerKeyAccount({ accountId: Keypair.fromPublicKey(address).xdrPublicKey() }));
+  const { entries } = await server.getLedgerEntries(key);
+  return entries.length > 0;
 }
 
 /**

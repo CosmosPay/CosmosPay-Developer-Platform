@@ -1077,6 +1077,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 [data-theme="dark"] .zks-clock.expired { color: #FF9B9B; }
 .zka-note { margin: 0 0 16px; }
 .zka-work td { padding-top: 0; }
+/* The add dialog's signatures step: what the customer signs, in order. */
+.zka-sign-steps { display: grid; gap: 6px; margin: 8px 0 16px; padding-left: 20px; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
 /* A line saying work is under way (the confidential account, connecting a wallet): a turning ring,
    the step, and a clock where the step is long. */
 .work-progress { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13.5px; color: var(--ink-2); animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
