@@ -147,7 +147,7 @@ COMMON_ISSUES.md          # production troubleshooting runbook
 
 ## 🔧 Prerequisites
 
-- **Node.js ≥ 22.12**
+- **Node.js ≥ 22.23.4**
 - **PostgreSQL** (for the dashboard's own accounts/profile data)
 - **Authentik** OAuth2 application (the login provider)
 - **APISIX** gateway with admin API access
