@@ -430,8 +430,11 @@ export interface Customer {
 }
 
 export const cosmosCustomers = {
-  list: (userId: string, env: CosmosEnv) =>
-    cosmosFetch<{ data: Customer[]; total: number }>(userId, env, "/v1/customers"),
+  /* A page of customers: at most 100 (the API's bound), from `skip`. */
+  list: (userId: string, env: CosmosEnv, page: { take?: number; skip?: number } = {}) =>
+    cosmosFetch<{ data: Customer[]; total: number }>(userId, env, "/v1/customers", { query: { take: page.take, skip: page.skip } }),
+  get: (userId: string, env: CosmosEnv, id: string) =>
+    cosmosFetch<Customer>(userId, env, `/v1/customers/${encodeURIComponent(id)}`),
   create: (userId: string, env: CosmosEnv, body: { name: string; alias?: string; note?: string; email?: string; account?: string; wallets?: CustomerWalletInput[]; reference?: string }) =>
     cosmosFetch<Customer>(userId, env, "/v1/customers", { method: "POST", body }),
   update: (userId: string, env: CosmosEnv, id: string, body: Record<string, unknown>) =>
@@ -794,10 +797,13 @@ export interface ZkPaymentList {
 
 export interface ZkPaymentInput {
   amount: string;
+  /** A customer's private account (a Stellar wallet with a confidential account). */
   recipient: string;
   description?: string;
   expiresInMinutes?: number;
   idempotencyKey?: string;
+  /** The organization's own fee, a third confidential transfer to one of its wallets. */
+  merchantFee?: { bps?: number; fixed?: string; wallet: string; paidBy?: "recipient" | "payer" };
 }
 
 export const cosmosZkPayments = {

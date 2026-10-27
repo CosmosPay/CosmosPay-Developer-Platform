@@ -901,14 +901,24 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   merged if the confidential balance is short, then two confidential transfers (the net amount to
   the merchant, the commission to Cosmos Pay's fee account) and `POST /v1/zk-checkout/{id}/confirm`
   with both hashes. The server decrypts both amounts with the auditor key and marks it paid.
-  Retries never pay twice (the sent hashes are kept). The merchant's receiving account is a
-  confidential account **managed inside the private payments view** (`components/ZkAccountPanel.tsx`;
-  product owner: never another page, and no bare "connect Freighter"). It is the **"Private
-  accounts" table** (product owner, 2026-10-27: the same table format as every list): one row per
-  organization Stellar wallet (Settings) with whether it holds a confidential account, read from the
-  chain with no signature (`confidentialAccounts` in `src/lib/zk/wallet.ts`), its balances once
-  viewed, and the private payments it received (a count that filters the payments table). A row opens
-  the account's detail. It sits under the payments table. **Nothing connects a wallet** (product
+  Retries never pay twice (the sent hashes are kept). **A private account is a customer's Stellar
+  wallet** (product owner, 2026-10-27: they are customers' wallets, with no limit on how many; the
+  organization's own wallets, in Settings, only take its fee). The payment's recipient is one of
+  them: the create body names `customerId` and `recipient`, and `/api/zk-payments` refuses a recipient
+  that is not a Stellar wallet of that customer (`cosmosCustomers.get`); an optional `merchantFee`
+  (percentage and/or fixed XLM, from the amount or on top, as on a payment link) must go to one of the
+  organization's Stellar wallets (`orgHasWallet`), and the dialog shows the split the API makes
+  (`zkSplit` with `ZkMerchantTerms` in `src/lib/zk/amounts.ts`: the commission on the amount, the
+  fee's percentage rounded down). The accounts are **managed inside the private payments view**
+  (`components/ZkAccountPanel.tsx`; product owner: never another page, and no bare "connect
+  Freighter"). It is the **"Private accounts" table** (product owner, 2026-10-27: the same table
+  format as every list): one row per customer Stellar wallet (every page of `/api/customers`, 100 at a
+  time), with its customer, whether it holds a confidential account, read from the chain with no
+  signature for the rows on screen only (`confidentialAccounts` in `src/lib/zk/wallet.ts`), its
+  balances once viewed, and the private payments it received (a count that filters the payments
+  table). A row opens the account's detail. It sits under the payments table. "Add private account"
+  adds a Stellar address to a customer, new or already there (`customers:create`); nothing is signed
+  to add it, the customer signs when the account is created. **Nothing connects a wallet** (product
   owner, 2026-10-27: people hand over a signed XDR, not their wallet): every signature goes through
   `components/ZkSignDialog.tsx`, the swap's signing pattern (`FreighterSign` in one click, the XDR in a
   `CopyBlock`, the signed XDR pasted back, refused unless it is that transaction signed by the row's
@@ -924,9 +934,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   transaction, then message; the private checkout, which signs with Freighter: message, then
   transaction), so accounts made either way open in both. Then create, view balances, incoming to
   available, deposit and withdraw in the row menu and the detail (the amount in a dialog, the progress
-  under the row, with a clock while the proof runs). Without a Stellar wallet the view says the
-  organization needs one, offers to connect it to whoever may, and hides "create private payment".
-  The create dialog preselects the first wallet with a confidential account. No separate account page.
+  under the row, with a clock while the proof runs). Without any customer wallet the table says so
+  and offers "add private account"; the create dialog then says no customer has one. The dialog's
+  recipient is a select of the customers' accounts, the ones with a confidential account first, and
+  it follows the accounts as they load. No separate account page.
 - **Proofs are generated in the browser.** The private checkout is cross-origin isolated (COOP
   same-origin, COEP credentialless, set by the middleware on every `/zk` path of the payments domain,
   which owns the `/zk` prefix), so bb.js proves on several threads; the dashboard is not isolated and

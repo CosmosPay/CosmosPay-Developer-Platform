@@ -1,10 +1,11 @@
-/* The private accounts of the organization's Stellar wallets, a table inside the private payments
-   view in the format of every other list (product owner: never another page for it, and no bare
-   "connect Freighter": the view works from the wallets the organization connected in Settings;
-   2026-10-27: the accounts in the same table format, in their own "Private accounts" section).
-   Each wallet is a row saying whether it already holds a confidential account on Cosmos Pay's
-   token, read from the chain with no signature, and how many private payments it received (which
-   filter the payments table). A row opens the account's detail. Nothing connects a wallet
+/* The private accounts, a table inside the private payments view in the format of every other list
+   (product owner: never another page for it; 2026-10-27: the same table format, in their own
+   "Private accounts" section, under the payments). A private account is a customer's Stellar
+   wallet (product owner, 2026-10-27: they are customers' wallets, as many as there are; the
+   organization's own wallets take its fees), so each row is one, with its customer, whether it
+   already holds a confidential account on Cosmos Pay's token (read from the chain with no
+   signature, for the page on screen) and how many private payments it received (which filter the
+   payments table). "Add private account" adds a Stellar wallet to a customer, new or already there. A row opens the account's detail. Nothing connects a wallet
    (product owner, 2026-10-27: people hand over a signed XDR, not their wallet): every signature is
    asked for in ZkSignDialog, the way a swap's is (Freighter in one click, or the XDR signed in
    any Stellar wallet and pasted back), and must be the row's account's. Its one action is "create
@@ -14,10 +15,10 @@
    commitments, then shown in the row), then incoming to available, a deposit of public XLM and a
    withdrawal back to public XLM. An account whose key came from a Freighter message signature
    opens with Freighter. The amount is asked for in a dialog; the work shows its progress under
-   the row. Without a Stellar wallet the panel says the organization
-   needs one, and whoever may connect wallets connects it here. Proofs are generated in this tab,
+   the row. Proofs are generated in this tab,
    on one thread (src/lib/zk/bb-loader.ts); nothing about the key leaves the browser. */
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { StrKey } from "@stellar/stellar-sdk";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -27,7 +28,10 @@ import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
-import { ConnectWalletForm, NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { Select } from "@/components/cosmos/dashboard/components/Select";
+import { customers as custApi } from "@/lib/api-client";
 import { usePaged } from "@/components/cosmos/dashboard/hooks";
 import { networkName } from "@/lib/chains";
 import { shortAddress } from "@/lib/org-wallets";
@@ -39,7 +43,9 @@ import type { SignRequest } from "@/lib/zk/xdr-signer";
 import { ZkSignDialog } from "@/components/cosmos/dashboard/components/ZkSignDialog";
 
 type Action = "register" | "open" | "merge" | "deposit" | "withdraw" | "refresh";
-export interface PanelWallet { address: string; label: string | null }
+/** A customer's Stellar wallet: a private account, once it holds a confidential account. */
+export interface PrivateAccount { address: string; label: string | null; customerId: string; customerName: string }
+export interface PanelCustomer { id: string; name: string }
 
 class WrongAccountError extends Error {}
 
@@ -50,12 +56,18 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = false, onRegistered, payments = null, onShowPayments }: {
+export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd = false, onAdded, onRegistered, payments = null, onShowPayments }: {
   config: ZkNetworkConfig;
   orgId: string;
-  /* The organization's Stellar wallets; null while they load. */
-  orgWallets: PanelWallet[] | null;
-  canConnectWallets?: boolean;
+  env: string;
+  /* Every customer's Stellar wallets; null while they load. */
+  accounts: PrivateAccount[] | null;
+  /* The organization's customers, to add a wallet to one; null while they load. */
+  customers: PanelCustomer[] | null;
+  /* Whether this member may add customers' wallets. */
+  canAdd?: boolean;
+  /* Read the customers again, after a wallet was added. */
+  onAdded?: () => void;
   /* The wallets holding a confidential account (the create dialog preselects the first). */
   onRegistered?: (addresses: string[]) => void;
   /* The organization's private payments, to count each account's; null while they load. */
@@ -74,27 +86,29 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<"deposit" | "withdraw" | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
-  const [connecting, setConnecting] = useState(false);
+  const [adding, setAdding] = useState(false);
   // The signature the running action waits for, and how to hand it back.
   const [signing, setSigning] = useState<{ request: SignRequest; resolve: (xdr: string) => void; reject: (e: Error) => void } | null>(null);
   const [startedAt, setStartedAt] = useState(0);
   const [now, setNow] = useState(0);
   const wallet = useRef<ZkWallet | null>(null);
   const sym = config.token.symbol;
-  const rows = orgWallets || [];
+  const rows = accounts || [];
   const addresses = rows.map((w) => w.address).join(",");
   const pg = usePaged(rows, addresses);
+  const onPage = pg.slice.map((w) => w.address).filter((a) => !(a in status));
 
-  // Which wallets already hold a confidential account: a read of the chain, no signature.
+  // Which wallets on this page already hold a confidential account: a read of the chain, no
+  // signature, only for the rows on screen (there may be any number of them), kept once read.
   useEffect(() => {
-    if (!orgWallets?.length) return;
+    if (!onPage.length) return;
     let current = true;
     import("@/lib/zk/wallet")
-      .then(({ confidentialAccounts }) => confidentialAccounts(config, orgWallets.map((w) => w.address)))
-      .then((s) => { if (current) setStatus(s); })
-      .catch(() => { if (current) setStatus({}); });
+      .then(({ confidentialAccounts }) => confidentialAccounts(config, onPage))
+      .then((s) => { if (current) setStatus((prev) => ({ ...prev, ...s })); })
+      .catch(() => { if (current) setStatus((prev) => ({ ...prev, ...Object.fromEntries(onPage.map((a) => [a, null])) })); });
     return () => { current = false; };
-  }, [addresses, config.token.contractId]);
+  }, [onPage.join(","), config.token.contractId]);
   useEffect(() => { onRegistered?.(rows.map((w) => w.address).filter((a) => status[a] === true)); }, [status, addresses]);
   useEffect(() => () => { wallet.current?.destroy(); }, []);
   // The proof takes a while on one thread: a clock beside it says the work is moving.
@@ -111,7 +125,10 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
     (window as unknown as { __zkSelfTest?: unknown }).__zkSelfTest = async (token: string, account: string) => (await import("@/lib/zk/wallet")).selfTestProver(token, account);
   }, []);
 
-  const nameOf = (address: string) => orgWallets?.find((w) => w.address === address)?.label || shortAddress(address);
+  const nameOf = (address: string) => {
+    const w = rows.find((x) => x.address === address);
+    return w ? w.label || w.customerName : shortAddress(address);
+  };
   /* What a failed action says; nothing when the person cancelled a signature. The error classes
      come from the modules that threw them, already loaded by then. */
   const problem = async (e: unknown, address: string): Promise<string | null> => {
@@ -229,40 +246,38 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
     <section className="panel zka" aria-labelledby="zka-title" aria-busy={busy ? true : undefined}>
       <div className="panel-head">
         <h3 id="zka-title">{za.title}</h3>
-        {canConnectWallets && rows.length > 0 && !connecting && (
-          <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setConnecting(true)}>{DI.plus} {t.dash.wallets.connectAnother}</button>
+        {canAdd && !adding && (
+          <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setAdding(true)}>{DI.plus} {za.add}</button>
         )}
       </div>
 
       {!provable && <p className="field-err zka-note" role="alert">{z.cannotProve}</p>}
 
-      {connecting && (
+      {adding && (
         <div className="wl-inline arrive zka-note">
-          <ConnectWalletForm orgId={orgId} chain="stellar" lockChain onDone={() => setConnecting(false)} onCancel={() => setConnecting(false)} />
+          <AddPrivateAccount customers={customers} env={env} orgId={orgId} onDone={() => { setAdding(false); onAdded?.(); }} onCancel={() => setAdding(false)} />
         </div>
       )}
 
-      {orgWallets === null && <TableSkeleton label={za.title} cols={COLS} rows={2} />}
+      {accounts === null && <TableSkeleton label={za.title} cols={COLS} rows={2} />}
 
-      {orgWallets !== null && rows.length === 0 && !connecting && (
+      {accounts !== null && rows.length === 0 && !adding && (
         <div className="wl-none zka-note" role="status">
-          <span>{za.needWallet}</span>
-          {canConnectWallets
-            ? <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setConnecting(true)}>{t.dash.wallets.connect}</button>
-            : <span className="field-help">{t.dash.wallets.askAdmin}</span>}
+          <span>{za.empty}</span>
+          {canAdd && <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setAdding(true)}>{za.add}</button>}
         </div>
       )}
 
       {rows.length > 0 && (
         <div className="t-scroll" tabIndex={0}><table className="tx">
-          <thead><tr><th>{za.tableHead.wallet}</th><th>{za.tableHead.address}</th><th>{za.tableHead.status}</th><th>{za.spendable}</th><th>{za.receiving}</th><th>{za.tableHead.payments}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+          <thead><tr><th>{za.tableHead.customer}</th><th>{za.tableHead.address}</th><th>{za.tableHead.status}</th><th>{za.spendable}</th><th>{za.receiving}</th><th>{za.tableHead.payments}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>
             {pg.slice.map((w) => {
               const a = actionsFor(w.address);
               const work = progress(w.address);
               return [
                 <tr key={w.address} className="row-click" onClick={() => setDetail(w.address)}>
-                  <td><span className="cust-cell"><NetworkMark chain="stellar" size={24} /><span>{w.label || networkName("stellar")}</span></span></td>
+                  <td><span className="cust-cell"><NetworkMark chain="stellar" size={24} /><span>{w.customerName}{w.label && <small className="cust-wallet-net">{w.label}</small>}</span></span></td>
                   <td className="cust" onClick={(e) => e.stopPropagation()}><AddressLink chain="stellar" network={config.network} address={w.address} label={za.tableHead.address} /></td>
                   <td>{statusPill(a.registered)}</td>
                   <td className="amt">{a.loaded ? `${fromUnits(a.loaded.spendable)} ${sym}` : <span title={a.registered ? za.viewBalances : undefined}>-</span>}</td>
@@ -271,7 +286,7 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
                   <td style={{ textAlign: "right", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                     {a.primary && <button type="button" className={`btn ${a.primary.dark ? "btn-dark" : "btn-outline-w"} btn-sm`} onClick={a.primary.onClick} disabled={a.primary.disabled}>{a.primary.label}</button>}
                     <RowMenu
-                      label={fmt(t.dash.common.rowActions, { name: w.label || shortAddress(w.address) })}
+                      label={fmt(t.dash.common.rowActions, { name: w.label ? `${w.customerName} (${w.label})` : w.customerName })}
                       items={[
                         { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => setDetail(w.address) },
                         ...a.more,
@@ -296,9 +311,10 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
           <Modal onClose={() => setDetail(null)} label={za.detail}>
             <div className="modal-body">
               <div className="modal-eyebrow">{za.detail}</div>
-              <h3>{opened.label || shortAddress(opened.address)}</h3>
+              <h3>{opened.customerName}</h3>
               <div className="paylink-fields" style={{ marginBottom: 18 }}>
                 {([
+                  [za.tableHead.customer, opened.customerName],
                   [za.tableHead.wallet, opened.label || networkName("stellar")],
                   [za.tableHead.address, <AddressLink key="a" chain="stellar" network={config.network} address={opened.address} label={za.tableHead.address} />],
                   [t.dash.paylinks.detail.fields.network, `${networkName("stellar")} ${config.network === "public" ? "Mainnet" : "Testnet"}`],
@@ -344,6 +360,59 @@ export function ZkAccountPanel({ config, orgId, orgWallets, canConnectWallets = 
         />
       )}
     </section>
+  );
+}
+
+/* A customer's Stellar wallet added as a private account: to a customer already there, or to a new
+   one named here. Its address only: the customer proves it by signing when the private account is
+   created (the key transaction and the register), so nothing is signed to add it. */
+const NEW_CUSTOMER = "__new";
+function AddPrivateAccount({ customers, env, orgId, onDone, onCancel }: { customers: PanelCustomer[] | null; env: string; orgId: string; onDone: () => void; onCancel: () => void }) {
+  const t = useT();
+  const za = t.zk.account;
+  const [customer, setCustomer] = useState(NEW_CUSTOMER);
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [label, setLabel] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const account = address.trim();
+  const valid = StrKey.isValidEd25519PublicKey(account);
+  const ready = valid && (customer !== NEW_CUSTOMER || name.trim() !== "") && !busy;
+  const wallet = { chain: "stellar", address: account, ...(label.trim() ? { label: label.trim() } : {}) };
+
+  const add = async () => {
+    if (!ready) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      if (customer === NEW_CUSTOMER) await custApi.create(env, orgId, { name: name.trim(), wallets: [wallet] });
+      else await custApi.addWallet(customer, env, orgId, wallet);
+      showToast(za.added);
+      onDone();
+    } catch (e) {
+      setProblem((e as Error)?.message || za.add);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="wl-connect">
+      <div className="fld">
+        <span className="field-l" id="zka-customer-l">{za.tableHead.customer}</span>
+        <Select labelledBy="zka-customer-l" value={customer} onChange={setCustomer} options={[{ value: NEW_CUSTOMER, label: za.newCustomer }, ...(customers || []).map((c) => ({ value: c.id, label: c.name }))]} />
+      </div>
+      {customer === NEW_CUSTOMER && <Field label={za.customerName} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.dash.examples.customerName} maxLength={120} disabled={busy} />}
+      <Field label={t.dash.wallets.address} value={address} onChange={(e) => { setAddress(e.target.value); setProblem(null); }} placeholder={t.dash.wallets.addressPlaceholder} spellCheck={false} autoComplete="off" disabled={busy} aria-invalid={account !== "" && !valid ? true : undefined} />
+      {account !== "" && !valid && <p className="field-err" role="alert">{t.dash.wallets.invalidAddress}</p>}
+      <Field label={za.walletLabel} hint={t.dash.common.optional} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t.dash.wallets.labelPlaceholder} maxLength={60} disabled={busy} />
+      {problem && <p className="field-err" role="alert">{problem}</p>}
+      <div className="modal-actions">
+        <button type="button" className="btn btn-dark" onClick={add} disabled={!ready}>{za.add}</button>
+        <button type="button" className="btn btn-outline-w" onClick={onCancel} disabled={busy}>{t.dash.common.cancel}</button>
+      </div>
+    </div>
   );
 }
 

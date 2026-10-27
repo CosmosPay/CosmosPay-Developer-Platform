@@ -86,7 +86,13 @@ registerRoutes([
     summary: 'List customers',
     description: "Lists the account's customers for the selected environment.",
     security: sessionSecurity,
-    request: { query: z.object({ env: envQuery }) },
+    request: {
+      query: z.object({
+        env: envQuery,
+        take: z.number().int().min(1).max(100).optional().openapi({ example: 100, description: 'Page size, at most 100.' }),
+        skip: z.number().int().min(0).optional().openapi({ example: 0 }),
+      }),
+    },
     responses: {
       200: jsonOk(customerListSchema, 'ListCustomersResponse', 'Customers fetched successfully'),
       400: errors.badRequest,

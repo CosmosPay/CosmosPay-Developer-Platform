@@ -86,7 +86,7 @@ export const products = {
 
 /* Customers (merchant-managed, with derived stats). list → { data, total }. */
 export const customers = {
-  list: (env) => request(`/api/customers?env=${env || "dev"}`),
+  list: (env, page = {}) => request(`/api/customers?env=${env || "dev"}${page.take ? `&take=${page.take}` : ""}${page.skip ? `&skip=${page.skip}` : ""}`),
   create: (env, org, body) => request(`/api/customers${qp(env, org)}`, { method: "POST", body: JSON.stringify(body) }),
   update: (id, env, org, body) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "PATCH", body: JSON.stringify(body) }),
   remove: (id, env, org) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "DELETE" }),
