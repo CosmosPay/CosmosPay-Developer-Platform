@@ -3,8 +3,8 @@
    0.8.0). A signer signs every transaction: Freighter on the private checkout, the person's own
    wallet through a signed XDR in the private accounts table (src/lib/zk/xdr-signer.ts). Proofs are
    generated here with bb.js; the confidential key is derived from a signature (a SEP-53 message or
-   the key transaction, src/lib/zk/derive-key.ts) and kept in sessionStorage only (it is re-derived
-   in a new tab). Balances are rebuilt from chain events and checked against the
+   the key transaction, src/lib/zk/derive-key.ts) on every connect and kept in this object only,
+   never stored. Balances are rebuilt from chain events and checked against the
    on-chain commitments by the SDK's StateEngine.
 
    Used by the private payments panel (register, balances, merge, withdraw) and the private checkout
@@ -22,14 +22,12 @@ import {
   buildTransferWitness,
   buildWithdrawWitness,
   deriveKeys,
-  fromHex,
   proverFromArtifact,
   submitDeposit,
   submitMerge,
   submitRegister,
   submitTransfer,
   submitWithdraw,
-  toHex32,
   type CircuitProver,
   type KeyPair,
   type Opening,
@@ -69,6 +67,16 @@ export type KeyRoot = "message" | "transaction";
 /** The account is registered under a key none of the given roots derives. */
 export class KeyMismatchError extends Error {}
 
+/** Removes every confidential key an earlier version of this page left in sessionStorage. */
+function forgetStoredKeys(): void {
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith("cosmospay:zk:sk:")) sessionStorage.removeItem(key);
+    }
+  } catch (e) { /* storage unavailable: nothing was kept there */ }
+}
+
 export interface ZkBalances {
   registered: boolean;
   spendable: bigint;
@@ -102,28 +110,23 @@ export class ZkWallet {
     const addrF = addressToField(token);
     const onchain = await client.confidentialBalance(signer.publicKey);
     const matches = (k: KeyPair) => !onchain || onchain.spendingKey.equals(k.Y);
-    // Kept for this tab only: closing it forgets the key, and the next visit derives it again.
-    const cacheKey = `cosmospay:zk:sk:${token}:${signer.publicKey}`;
+    // The key is derived from the account's signature on every connect and lives in this object
+    // only (product owner, 2026-10-27: deriving the private account always asks for the
+    // signature). It used to be kept in sessionStorage, which let a reload reuse a customer's key
+    // without the customer: any key a page stored that way is removed here.
+    forgetStoredKeys();
     let keys: KeyPair | null = null;
-    try {
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) keys = deriveKeys(fromHex(cached), addrF);
-    } catch (e) { /* storage unavailable: derive again */ }
-    if (keys && !matches(keys)) keys = null;
+    onPhase?.("keys");
+    for (const root of roots) {
+      if (root === "message" && !signer.signMessage) continue;
+      const sk = root === "message"
+        ? await deriveSignerRootSk(signer as ZkSigner & { signMessage: (m: string) => Promise<Uint8Array> }, token)
+        : await deriveTransactionRootSk(signer, token, deployment.networkPassphrase);
+      const candidate = deriveKeys(sk, addrF);
+      if (matches(candidate)) { keys = candidate; break; }
+    }
     if (!keys) {
-      onPhase?.("keys");
-      for (const root of roots) {
-        if (root === "message" && !signer.signMessage) continue;
-        const sk = root === "message"
-          ? await deriveSignerRootSk(signer as ZkSigner & { signMessage: (m: string) => Promise<Uint8Array> }, token)
-          : await deriveTransactionRootSk(signer, token, deployment.networkPassphrase);
-        const candidate = deriveKeys(sk, addrF);
-        if (matches(candidate)) { keys = candidate; break; }
-      }
-      if (!keys) {
-        throw new KeyMismatchError("This account is registered on the token under a key these signatures do not derive, so it cannot be used here");
-      }
-      try { sessionStorage.setItem(cacheKey, toHex32(keys.sk)); } catch (e) { /* proceed without the cache */ }
+      throw new KeyMismatchError("This account is registered on the token under a key these signatures do not derive, so it cannot be used here");
     }
     const engine = new StateEngine({
       client,

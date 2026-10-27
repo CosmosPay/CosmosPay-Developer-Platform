@@ -14,7 +14,8 @@
    wallet, and the wallet is the customer's): every signature is asked for in ZkSignDialog, the XDR
    for the customer to sign in any Stellar wallet and paste back, and must be the row's account's.
    Its one action is "create the private account" (one signature of the key transaction derives the
-   key, kept for this tab only, then a register proof and one more signature) or "view balances"
+   key, held in memory while the page is open and never stored, so a reload asks for the signature
+   again; then a register proof and one more signature) or "view balances"
    (the same one signature; the balances are rebuilt from chain events and checked against the
    on-chain commitments, then shown in the row), then incoming to available, a deposit of public
    XLM and a withdrawal back to public XLM. "Delete", in the row and the detail, once confirmed, removes the

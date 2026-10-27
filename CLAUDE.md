@@ -965,8 +965,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Flow**: the dashboard's ZK payments view (`views/ZkPaymentsView.tsx`, Payments group) creates a
   payment through `/api/zk-payments` (OpenAPI-registered); the payer pays on the ZK checkout
   `payments.cosmospay.lat/zk/{id}` (`components/cosmos/zk/ZkCheckout.tsx`): Freighter connects, the
-  confidential key is derived from two SEP-53 signatures (`src/lib/zk/derive-key.ts`, never stored
-  beyond the tab's sessionStorage), the account registers if needed, public XLM is deposited and
+  confidential key is derived from two SEP-53 signatures (`src/lib/zk/derive-key.ts`) on every
+  connect and never stored (a reload asks for the signatures again; `ZkWallet.connect` also removes any
+  key an earlier version left in sessionStorage), the account registers if needed, public XLM is deposited and
   merged if the confidential balance is short, then two confidential transfers (the net amount to
   the merchant, the commission to Cosmos Pay's fee account) and `POST /v1/zk-checkout/{id}/confirm`
   with both hashes. The server decrypts both amounts with the auditor key and marks it paid.
