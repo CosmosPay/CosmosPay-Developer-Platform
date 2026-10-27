@@ -909,7 +909,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   transaction** (`keyTransactionXdr`: sequence 1, a manageData entry binding token and account), which
   any wallet can sign; signed twice for a new account (determinism), once for an existing one. That
   root is Cosmos Pay's, not the protocol's SEP-53 signer root: an account created this way opens here,
-  not in another client of the protocol. `ZkWallet.connect` tries roots in order (the table:
+  not in another client of the protocol. Anyone can ask a person to sign that public transaction, and
+  the signature reads the account's private balances (it moves nothing); the dialog warns about it.
+  **Cosmos Pay is non-custodial and stores no key material** (product owner, 2026-10-27), so no
+  per-account secret is mixed into the root: never add one server-side. `ZkWallet.connect` tries roots in order (the table:
   transaction, then message; the private checkout, which signs with Freighter: message, then
   transaction), so accounts made either way open in both. Then create, view balances, incoming to
   available, deposit and withdraw in the row menu and the detail (the amount in a dialog, the progress

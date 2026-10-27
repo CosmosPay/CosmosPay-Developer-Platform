@@ -15,9 +15,9 @@
    can ask the person to sign it, and that signature gives the confidential key. The key reads the
    account's private balances; it moves nothing, since every action also needs the account's own
    signature on that action's transaction. The signing dialog says so, and only the page asks for it.
-   A per-account secret mixed into the root would close it, at the cost of recovering the key from
-   the Stellar key alone (an open decision before mainnet). Pure apart from `XdrSigner.sign`, which
-   waits on the page. */
+   A per-account secret mixed into the root would close it, but Cosmos Pay is non-custodial and keeps
+   no key material of anyone's (product owner, 2026-10-27): the key comes from the person's signature
+   alone. Pure apart from `XdrSigner.sign`, which waits on the page. */
 import { Account, Keypair, Memo, Operation, TimeoutInfinite, TransactionBuilder, hash } from "@stellar/stellar-sdk";
 import { skSigningMessage } from "stellar-confidential-token-sdk";
 
