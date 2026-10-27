@@ -399,12 +399,27 @@ export const cosmosProducts = {
 };
 
 /* ---- Customers (merchant-managed, with derived payment stats). ---- */
+export interface CustomerWallet {
+  id: string;
+  chain: "stellar" | "solana" | "monad";
+  address: string;
+  label: string | null;
+  createdAt: string;
+}
+export interface CustomerWalletInput {
+  chain: CustomerWallet["chain"];
+  address: string;
+  label?: string;
+}
 export interface Customer {
   id: string;
   name: string;
   alias: string | null;
   note: string | null;
   email: string | null;
+  /** The customer's wallets, oldest first, on any network payments settle on. */
+  wallets: CustomerWallet[];
+  /** Deprecated upstream: the first wallet's address. */
   account: string | null;
   reference: string | null;
   payments?: number;
@@ -417,12 +432,16 @@ export interface Customer {
 export const cosmosCustomers = {
   list: (userId: string, env: CosmosEnv) =>
     cosmosFetch<{ data: Customer[]; total: number }>(userId, env, "/v1/customers"),
-  create: (userId: string, env: CosmosEnv, body: { name: string; alias?: string; note?: string; email?: string; account?: string; reference?: string }) =>
+  create: (userId: string, env: CosmosEnv, body: { name: string; alias?: string; note?: string; email?: string; account?: string; wallets?: CustomerWalletInput[]; reference?: string }) =>
     cosmosFetch<Customer>(userId, env, "/v1/customers", { method: "POST", body }),
   update: (userId: string, env: CosmosEnv, id: string, body: Record<string, unknown>) =>
     cosmosFetch<Customer>(userId, env, `/v1/customers/${encodeURIComponent(id)}`, { method: "PATCH", body }),
   remove: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<{ id: string; deleted: boolean }>(userId, env, `/v1/customers/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  addWallet: (userId: string, env: CosmosEnv, id: string, body: CustomerWalletInput) =>
+    cosmosFetch<CustomerWallet>(userId, env, `/v1/customers/${encodeURIComponent(id)}/wallets`, { method: "POST", body }),
+  removeWallet: (userId: string, env: CosmosEnv, id: string, walletId: string) =>
+    cosmosFetch<{ id: string; deleted: boolean }>(userId, env, `/v1/customers/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
 };
 
 /* ---- Same-chain swaps: Stellar path payments by default, Solana through Jupiter and

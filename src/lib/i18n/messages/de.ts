@@ -60,11 +60,11 @@ export default {
       link: "Zahlungslink",
     },
     account: {
-      title: "Vertrauliche Konten",
+      title: "Private Konten",
       needWallet: "Um private Zahlungen zu empfangen, braucht die Organisation mindestens eine verbundene Stellar-Wallet.",
       viewBalances: "Salden anzeigen",
       wrongAccount: "In Freighter ist ein anderes Konto ausgewählt. Wechseln Sie zu {wallet}.",
-      register: "Vertrauliches Konto erstellen",
+      register: "Privates Konto erstellen",
       registered: "Aktiv",
       notRegistered: "Noch nicht erstellt",
       spendable: "Verfügbar",
@@ -75,11 +75,14 @@ export default {
       amountLabel: "Betrag",
       refresh: "Aktualisieren",
       working: "Wird ausgeführt…",
-      createdOk: "Vertrauliches Konto erstellt",
+      createdOk: "Privates Konto erstellt",
       depositOk: "Einzahlung abgeschlossen",
       withdrawOk: "Auszahlung abgeschlossen",
       mergeOk: "Eingehendes ist jetzt verfügbar",
       done: "Fertig",
+      tableHead: { wallet: "Wallet", address: "Adresse", status: "Status", payments: "Erhaltene Zahlungen" },
+      detail: "Privates Konto",
+      paymentsTo: "Private Zahlungen an dieses Konto",
     },
     checkout: {
       title: "Private Zahlung",
@@ -1231,7 +1234,7 @@ export default {
       delete: "Löschen", deleteConfirm: "Löschen", confirmDelete: "Kann nicht rückgängig gemacht werden.",
       customerSet: "Freier Betrag", allEvents: "Alle Ereignisse", events: "Ereignisse",
       received: "Empfangen", pending: "Ausstehend",
-      custDetail: { noAccount: "Füge die Wallet-Adresse des Kunden hinzu, um seine Zahlungen zu sehen.", title: "Kunde", edit: "Bearbeiten", save: "Änderungen speichern", alias: "Alias", note: "Notiz", account: "Wallet-Adresse", accountPlaceholder: "Stellar-, Solana- oder Monad-Adresse", payments: "Zahlungen", onChain: "On-chain", noPayments: "Noch keine Zahlungen." },
+      custDetail: { noAccount: "Füge die Wallet-Adresse des Kunden hinzu, um seine Zahlungen zu sehen.", title: "Kunde", edit: "Bearbeiten", save: "Änderungen speichern", alias: "Alias", note: "Notiz", account: "Wallet-Adresse", accountPlaceholder: "Stellar-, Solana- oder Monad-Adresse", payments: "Zahlungen", onChain: "On-chain", noPayments: "Noch keine Zahlungen.", wallets: "Wallets", addWallet: "Wallet hinzufügen", network: "Netzwerk", walletLabel: "Name", walletLabelPlaceholder: "Phantom, Treasury…", removeWallet: "Wallet entfernen", invalidAddress: "Das ist keine {network}-Adresse.", walletPayments: "Zahlungen von dieser Wallet" },
     },
     filters: { label: "Liste filtern", status: "Status", network: "Netzwerk", kind: "Typ", allStatuses: "Alle", allNetworks: "Alle Netzwerke", allKinds: "Alle Typen", date: "Datum", dates: { any: "Beliebiges Datum", today: "Heute", "7d": "Letzte 7 Tage", "30d": "Letzte 30 Tage", "90d": "Letzte 90 Tage" }, shown: "{n} von {total}", clear: "Filter zurücksetzen", noMatch: "Nichts passt zu diesen Filtern." },
     tokens: { custom: "Anderer Token…", ticker: "Token-Symbol", address: { solana: "Token-Mint", monad: "Token-Vertrag" } },
@@ -1300,12 +1303,14 @@ export default {
       sub: "{n} Kunden",
       add: "Kunde hinzufügen",
       searchPlaceholder: "Kunden durchsuchen…",
+      walletsCount: "{n} Wallets",
       tableHead: {
         name: "Name",
         email: "E-Mail",
         spend: "Gesamtausgaben",
         payments: "Zahlungen",
-        since: "Seit"
+        since: "Seit",
+        wallets: "Wallets"
       },
       empty: "Keine Kunden gefunden.",
       modal: {
@@ -1314,7 +1319,10 @@ export default {
         desc: "Erstellen Sie einen Kunden, um Zahlungen und Guthaben zu verfolgen.",
         name: "Name",
         email: "E-Mail",
-        add: "Kunde hinzufügen"
+        add: "Kunde hinzufügen",
+        wallets: "Wallets",
+        walletsHint: "Die Wallets, von denen dieser Kunde zahlt, in jedem Netzwerk. Sie können sie auch später hinzufügen.",
+        addAnother: "Weitere Wallet hinzufügen"
       }
     },
     products: { searchPlaceholder: "Nach Name oder Preis suchen…", detail: { title: "Produkt", save: "Änderungen speichern", active: "Im Verkauf", activeHint: "Ein inaktives Produkt bleibt erhalten, kann aber nicht verkauft werden.", saveError: "Das Produkt konnte nicht gespeichert werden." },

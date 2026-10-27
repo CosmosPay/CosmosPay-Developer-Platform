@@ -60,11 +60,11 @@ export default {
       link: "Enlace de pago",
     },
     account: {
-      title: "Cuentas confidenciales",
+      title: "Cuentas privadas",
       needWallet: "Para recibir pagos privados, la organización necesita al menos una wallet de Stellar conectada.",
       viewBalances: "Ver saldos",
       wrongAccount: "Freighter tiene otra cuenta seleccionada. Cambia a {wallet}.",
-      register: "Crear cuenta confidencial",
+      register: "Crear cuenta privada",
       registered: "Activa",
       notRegistered: "Sin crear",
       spendable: "Disponible",
@@ -75,11 +75,14 @@ export default {
       amountLabel: "Monto",
       refresh: "Actualizar",
       working: "Procesando…",
-      createdOk: "Cuenta confidencial creada",
+      createdOk: "Cuenta privada creada",
       depositOk: "Depósito completado",
       withdrawOk: "Retiro completado",
       mergeOk: "Lo entrante pasó a disponible",
       done: "Listo",
+      tableHead: { wallet: "Wallet", address: "Dirección", status: "Estado", payments: "Pagos recibidos" },
+      detail: "Cuenta privada",
+      paymentsTo: "Pagos privados a esta cuenta",
     },
     checkout: {
       title: "Pago privado",
@@ -1231,7 +1234,7 @@ export default {
       delete: "Eliminar", deleteConfirm: "Eliminar", confirmDelete: "Esto no se puede deshacer.",
       customerSet: "Importe libre", allEvents: "Todos los eventos", events: "Eventos",
       received: "Recibido", pending: "Pendiente",
-      custDetail: { noAccount: "Añade la dirección de la wallet del cliente para ver los pagos que hizo.", title: "Cliente", edit: "Editar", save: "Guardar cambios", alias: "Alias", note: "Nota", account: "Dirección de wallet", accountPlaceholder: "Dirección en Stellar, Solana o Monad", payments: "Pagos", onChain: "On-chain", noPayments: "Aún no hay pagos." },
+      custDetail: { noAccount: "Añade la dirección de la wallet del cliente para ver los pagos que hizo.", title: "Cliente", edit: "Editar", save: "Guardar cambios", alias: "Alias", note: "Nota", account: "Dirección de wallet", accountPlaceholder: "Dirección en Stellar, Solana o Monad", payments: "Pagos", onChain: "On-chain", noPayments: "Aún no hay pagos.", wallets: "Wallets", addWallet: "Agregar wallet", network: "Red", walletLabel: "Nombre", walletLabelPlaceholder: "Phantom, tesorería…", removeWallet: "Quitar wallet", invalidAddress: "No es una dirección de {network}.", walletPayments: "Pagos desde esta wallet" },
     },
     filters: { label: "Filtrar la lista", status: "Estado", network: "Red", kind: "Tipo", allStatuses: "Todos", allNetworks: "Todas las redes", allKinds: "Todos los tipos", date: "Fecha", dates: { any: "Cualquier fecha", today: "Hoy", "7d": "Últimos 7 días", "30d": "Últimos 30 días", "90d": "Últimos 90 días" }, shown: "{n} de {total}", clear: "Quitar filtros", noMatch: "Nada coincide con estos filtros." },
     tokens: { custom: "Otro token…", ticker: "Símbolo del token", address: { solana: "Mint del token", monad: "Contrato del token" } },
@@ -1300,12 +1303,14 @@ export default {
       sub: "{n} clientes",
       add: "Añadir cliente",
       searchPlaceholder: "Buscar clientes…",
+      walletsCount: "{n} wallets",
       tableHead: {
         name: "Nombre",
         email: "Email",
         spend: "Gasto total",
         payments: "Pagos",
-        since: "Desde"
+        since: "Desde",
+        wallets: "Wallets"
       },
       empty: "No se han encontrado clientes.",
       modal: {
@@ -1314,7 +1319,10 @@ export default {
         desc: "Crea un cliente para hacer seguimiento de pagos y saldos.",
         name: "Nombre",
         email: "Email",
-        add: "Añadir cliente"
+        add: "Añadir cliente",
+        wallets: "Wallets",
+        walletsHint: "Las wallets desde las que paga este cliente, en cualquier red. También puedes agregarlas después.",
+        addAnother: "Agregar otra wallet"
       }
     },
     products: { searchPlaceholder: "Buscar por nombre o precio…", detail: { title: "Producto", save: "Guardar cambios", active: "A la venta", activeHint: "Un producto inactivo se conserva, pero no se puede vender.", saveError: "No se pudo guardar el producto." },

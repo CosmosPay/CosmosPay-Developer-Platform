@@ -552,15 +552,15 @@ export function AdminCustomersView({ adminFilter, goToAdmin }) {
       {consumer && <FilterChip a={a} label={adminFilter.label} onClear={() => goToAdmin && goToAdmin("adminCustomers", null)} />}
       <AdminTable
         a={a} loading={loading} error={error} q={q} setQ={setQ} searchPlaceholder={ac.searchPlaceholder}
-        heads={[ac.tableHead.name, ac.tableHead.org, ac.tableHead.email, ac.tableHead.account, ac.tableHead.created]}
+        heads={[ac.tableHead.name, ac.tableHead.org, ac.tableHead.email, t.dash.customers.tableHead.wallets, ac.tableHead.created]}
         rows={rows} empty={ac.empty}
-        haystack={(c) => `${c.name || ""} ${c.alias || ""} ${orgOf(c)} ${c.email || ""} ${c.account || ""} ${c.id || ""}`}
+        haystack={(c) => `${c.name || ""} ${c.alias || ""} ${orgOf(c)} ${c.email || ""} ${(c.wallets || []).map((w) => w.address).join(" ")} ${c.id || ""}`}
         renderRow={(c) => (
           <tr key={c.id}>
             <NameTd name={c.name || c.alias || c.email || c.id} ids={[c.id]} />
             <OrgTd row={c} onFilter={onOrgFilter} />
             <td className="cust">{c.email || "-"}</td>
-            <td className="cust">{shortAcct(c.account)}</td>
+            <td className="cust">{(c.wallets || []).length ? (c.wallets.length === 1 ? shortAcct(c.wallets[0].address) : fmt(t.dash.customers.walletsCount, { n: c.wallets.length })) : "-"}</td>
             <td className="cust">{fmtDateTime(c.createdAt)}</td>
           </tr>
         )}

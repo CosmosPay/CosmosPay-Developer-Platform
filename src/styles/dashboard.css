@@ -1041,27 +1041,12 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .zk-split { margin: 10px 0 0; padding: 0 2px; }
 .zk-split > div:first-child { margin-top: 0; border-top: 0; padding-top: 7px; }
 
-/* Private payments: the merchant's confidential account, a panel at the top of the view
-   (ZkAccountPanel). Its balances reuse the overview's balance tiles; its actions are the page's
-   pills; while it works, a status line with a turning ring (and a clock beside the proof). */
-.inst .zka { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; margin-bottom: 16px; }
-.zka-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.zka-title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
-/* One row per Stellar wallet of the organization; its balances open under it. */
-.zka-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.zka-row { display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-field); }
-.zka-row-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.zka-row-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
-.zka-row-t b { font-size: 14.5px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.zka-row-t span { font-size: 12.5px; color: var(--ink-3); }
-.zka-row-st { flex: 0 0 auto; }
-.zka-row-main > .btn { flex: 0 0 auto; }
-.zka-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; }
-.zka-body:empty { display: none; }
-.zka-bals { flex: 1 1 360px; max-width: 560px; }
-.zka-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.zka-actions:empty { display: none; }
-.zka-actions .btn { min-height: 44px; padding: 10px 20px; font-size: 14px; white-space: nowrap; }
+/* Private payments: the organization's private accounts, a table panel like every list
+   (ZkAccountPanel). A note, the connect form or the empty state sit under its head; while an
+   account works, a status line under its row with a turning ring (and a clock beside the proof). */
+.inst .zka { margin-bottom: 16px; }
+.zka-note { margin: 16px 20px; }
+.zka-work td { padding-top: 0; }
 /* A line saying work is under way (the confidential account, connecting a wallet): a turning ring,
    the step, and a clock where the step is long. */
 .work-progress { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13.5px; color: var(--ink-2); animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
@@ -1073,7 +1058,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 /* An error under a form or inside a panel: plain text in the swap widget's error red, never a box. */
 .inst .field-err { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: #B42F2F; }
 [data-theme="dark"] .inst .field-err { color: #FF9B9B; }
-.zka .field-err { margin: 0; }
+.zka .zka-note.field-err { margin: 16px 20px; }
 /* The organization's wallets (components/OrgWallets.tsx): Settings' rows, the connect form, and
    a payment form's receiving wallet when the organization has none on that network yet. */
 .wl-mark { flex: 0 0 auto; border-radius: 50%; object-fit: cover; }
@@ -1085,10 +1070,3 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .wl-inline { padding: 16px; border: 1px solid var(--line); border-radius: var(--r-pop); }
 .wl-none { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: var(--r-field); font-size: 13.5px; color: var(--ink-2); }
 .wl-none .field-help { margin: 0; }
-@media (max-width: 600px) {
-  .zka-row-main { flex-wrap: wrap; }
-  .zka-row-main > .btn { width: 100%; justify-content: center; }
-  .inst .zka { padding: 18px; }
-  .zka-actions { width: 100%; }
-  .zka-actions .btn { flex: 1 1 auto; }
-}

@@ -288,6 +288,28 @@
 .paylink-check { display: flex; gap: 10px; align-items: center; }
 .paylink-check .field { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 .cust-pays-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+/* A customer's wallets: overlapping network marks in the table, one row per wallet in the forms
+   (network, address, name, remove), its error under it. */
+.cust-wallets { display: inline-flex; align-items: center; gap: 8px; }
+.cust-wallet-marks { display: inline-flex; }
+.cust-wallet-marks .wl-mark { box-shadow: 0 0 0 2px var(--surface); }
+.cust-wallet-marks .wl-mark + .wl-mark { margin-left: -6px; }
+.cust-wallet-net { display: block; color: var(--ink-3); font-size: 12px; font-weight: 500; }
+.cust-wallets-panel { margin-bottom: 18px; }
+.cust-wallet-rows { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.cust-wallet-row { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr) minmax(0, 8.5rem) 30px; gap: 8px; align-items: center; }
+.cust-wallet-row .icon-mini { margin-left: 0; }
+.cust-wallet-addr { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+.cust-wallet-err { grid-column: 1 / -1; margin: 0; }
+.cust-wallet-more { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 0; }
+.cust-wallet-more svg { width: 14px; height: 14px; }
+.cust-wallet-add { margin-top: 10px; }
+.cust-wallets-panel .cust-pays-head .link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 0; }
+.cust-wallets-panel .cust-pays-head .link-btn svg { width: 14px; height: 14px; }
+@media (max-width: 640px) {
+  .cust-wallet-row { grid-template-columns: minmax(0, 1fr) 30px; }
+  .cust-wallet-row .cust-wallet-addr, .cust-wallet-row .cust-wallet-addr ~ .field { grid-column: 1 / -1; }
+}
 .icon-mini svg { width: 15px; height: 15px; }
 .icon-mini:hover { color: var(--ink); border-color: var(--ink-3); }
 .icon-mini.danger:hover { color: #D64545; border-color: #D64545; }

@@ -8,6 +8,7 @@
    what guarantees the extension has run by the time they are constructed. It is the same
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
+import { CHAINS, isAddress } from "@/lib/chains";
 
 const WEBHOOK_EVENTS = [
   "PAYMENT_INTENT_CREATED",
@@ -45,18 +46,37 @@ export const createProductBodySchema = z.object({
 
 export const updateProductBodySchema = createProductBodySchema.partial();
 
-const stellarAddress = z.string().trim().regex(/^G[A-Z2-7]{55}$/, "Must be a valid Stellar public key (G...56 chars).");
+/* A customer's wallet: its network and the address there (the upstream re-checks the checksum).
+   A customer holds up to 20 (MAX_CUSTOMER_WALLETS upstream). */
+export const customerWalletBodySchema = z
+  .object({
+    chain: z.enum(CHAINS),
+    address: z.string().trim().min(1).max(64),
+    label: z.string().trim().max(60).optional(),
+  })
+  .refine((w) => isAddress(w.chain, w.address), { path: ["address"], message: "Must be an address on the chosen network." });
+
+const anyChainAddress = z
+  .string()
+  .trim()
+  .refine((v) => CHAINS.some((c) => isAddress(c, v)), "Must be a Stellar, Solana or Monad address.");
 
 export const createCustomerBodySchema = z.object({
   name: z.string().trim().min(1).max(120),
   alias: z.string().trim().max(120).optional(),
   note: z.string().trim().max(500).optional(),
   email: z.string().trim().email().max(160).optional(),
-  account: stellarAddress.optional(),
+  /* Deprecated upstream: one wallet, its network read from its shape. Send `wallets`. */
+  account: anyChainAddress.optional(),
+  wallets: z.array(customerWalletBodySchema).max(20).optional(),
   reference: z.string().trim().max(120).optional(),
 });
 
-export const updateCustomerBodySchema = createCustomerBodySchema.partial();
+/* The customer's own fields: wallets change through /api/customers/{id}/wallets. */
+export const updateCustomerBodySchema = createCustomerBodySchema
+  .omit({ wallets: true, account: true })
+  .partial()
+  .extend({ account: anyChainAddress.nullable().optional() });
 
 /* Body for the two receiver-approval proxies (org-scoped Fiat and platform Admin).
 

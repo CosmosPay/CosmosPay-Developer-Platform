@@ -60,11 +60,11 @@ export default {
       link: "Lien de paiement",
     },
     account: {
-      title: "Comptes confidentiels",
+      title: "Comptes privés",
       needWallet: "Pour recevoir des paiements privés, l’organisation a besoin d’au moins un portefeuille Stellar connecté.",
       viewBalances: "Voir les soldes",
       wrongAccount: "Freighter a un autre compte sélectionné. Passez à {wallet}.",
-      register: "Créer le compte confidentiel",
+      register: "Créer le compte privé",
       registered: "Actif",
       notRegistered: "Pas encore créé",
       spendable: "Disponible",
@@ -75,11 +75,14 @@ export default {
       amountLabel: "Montant",
       refresh: "Actualiser",
       working: "En cours…",
-      createdOk: "Compte confidentiel créé",
+      createdOk: "Compte privé créé",
       depositOk: "Dépôt effectué",
       withdrawOk: "Retrait effectué",
       mergeOk: "L’entrant est disponible",
       done: "Terminé",
+      tableHead: { wallet: "Portefeuille", address: "Adresse", status: "Statut", payments: "Paiements reçus" },
+      detail: "Compte privé",
+      paymentsTo: "Paiements privés vers ce compte",
     },
     checkout: {
       title: "Paiement privé",
@@ -1231,7 +1234,7 @@ export default {
       delete: "Supprimer", deleteConfirm: "Supprimer", confirmDelete: "Action irréversible.",
       customerSet: "Montant libre", allEvents: "Tous les événements", events: "Événements",
       received: "Reçu", pending: "En attente",
-      custDetail: { noAccount: "Ajoutez l'adresse du portefeuille du client pour voir les paiements qu'il a effectués.", title: "Client", edit: "Modifier", save: "Enregistrer", alias: "Alias", note: "Note", account: "Adresse du wallet", accountPlaceholder: "Adresse Stellar, Solana ou Monad", payments: "Paiements", onChain: "On-chain", noPayments: "Aucun paiement pour l'instant." },
+      custDetail: { noAccount: "Ajoutez l'adresse du portefeuille du client pour voir les paiements qu'il a effectués.", title: "Client", edit: "Modifier", save: "Enregistrer", alias: "Alias", note: "Note", account: "Adresse du wallet", accountPlaceholder: "Adresse Stellar, Solana ou Monad", payments: "Paiements", onChain: "On-chain", noPayments: "Aucun paiement pour l'instant.", wallets: "Portefeuilles", addWallet: "Ajouter un portefeuille", network: "Réseau", walletLabel: "Nom", walletLabelPlaceholder: "Phantom, trésorerie…", removeWallet: "Retirer le portefeuille", invalidAddress: "Ce n’est pas une adresse {network}.", walletPayments: "Paiements depuis ce portefeuille" },
     },
     filters: { label: "Filtrer la liste", status: "Statut", network: "Réseau", kind: "Type", allStatuses: "Tous", allNetworks: "Tous les réseaux", allKinds: "Tous les types", date: "Date", dates: { any: "Toutes les dates", today: "Aujourd’hui", "7d": "7 derniers jours", "30d": "30 derniers jours", "90d": "90 derniers jours" }, shown: "{n} sur {total}", clear: "Effacer les filtres", noMatch: "Rien ne correspond à ces filtres." },
     tokens: { custom: "Autre jeton…", ticker: "Symbole du jeton", address: { solana: "Mint du jeton", monad: "Contrat du jeton" } },
@@ -1300,12 +1303,14 @@ export default {
       sub: "{n} clients",
       add: "Ajouter un client",
       searchPlaceholder: "Rechercher des clients…",
+      walletsCount: "{n} portefeuilles",
       tableHead: {
         name: "Nom",
         email: "E-mail",
         spend: "Dépense totale",
         payments: "Paiements",
-        since: "Depuis"
+        since: "Depuis",
+        wallets: "Portefeuilles"
       },
       empty: "Aucun client trouvé.",
       modal: {
@@ -1314,7 +1319,10 @@ export default {
         desc: "Créez un client pour suivre les paiements et les soldes.",
         name: "Nom",
         email: "E-mail",
-        add: "Ajouter un client"
+        add: "Ajouter un client",
+        wallets: "Portefeuilles",
+        walletsHint: "Les portefeuilles depuis lesquels ce client paie, sur n’importe quel réseau. Vous pouvez aussi les ajouter plus tard.",
+        addAnother: "Ajouter un autre portefeuille"
       }
     },
     products: { searchPlaceholder: "Rechercher par nom ou prix…", detail: { title: "Produit", save: "Enregistrer", active: "En vente", activeHint: "Un produit inactif est conservé mais ne peut pas être vendu.", saveError: "Impossible d'enregistrer le produit." },

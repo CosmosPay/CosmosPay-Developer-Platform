@@ -1647,6 +1647,29 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "409": {
+            "description": "`customer_wallet_taken`: Another of your customers already holds that wallet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "customer_wallet_taken": {
+                    "summary": "customer_wallet_taken: Another of your customers already holds that wallet",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "customer_wallet_taken",
+                      "error": "Conflict",
+                      "message": "The wallet GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO (stellar) already belongs to customer clz9xcust00002.",
+                      "path": "/v1/customers/clz9xcust00001/wallets",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
           }
@@ -1799,6 +1822,29 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "409": {
+            "description": "`customer_wallet_taken`: Another of your customers already holds that wallet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "customer_wallet_taken": {
+                    "summary": "customer_wallet_taken: Another of your customers already holds that wallet",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "customer_wallet_taken",
+                      "error": "Conflict",
+                      "message": "The wallet GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO (stellar) already belongs to customer clz9xcust00002.",
+                      "path": "/v1/customers/clz9xcust00001/wallets",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
           }
@@ -1848,6 +1894,140 @@
           }
         },
         "summary": "Delete a customer",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
+    "/v1/customers/{id}/wallets": {
+      "post": {
+        "description": "A customer holds any number of wallets (up to 20), on Stellar, Solana or Monad; payments paid from any of them count toward it. A wallet the customer already holds answers as it is.",
+        "operationId": "CustomersController_addWallet_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerWalletDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerWalletEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`customer_wallet_taken`: Another of your customers already holds that wallet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "customer_wallet_taken": {
+                    "summary": "customer_wallet_taken: Another of your customers already holds that wallet",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "customer_wallet_taken",
+                      "error": "Conflict",
+                      "message": "The wallet GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO (stellar) already belongs to customer clz9xcust00002.",
+                      "path": "/v1/customers/clz9xcust00001/wallets",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Add a wallet to a customer",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
+    "/v1/customers/{id}/wallets/{walletId}": {
+      "delete": {
+        "operationId": "CustomersController_removeWallet_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "walletId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerWalletDeletedEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Remove a wallet from a customer",
         "tags": [
           "customers"
         ]
@@ -15281,6 +15461,35 @@
           "transaction"
         ]
       },
+      "CustomerWalletDto": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "solana",
+            "description": "The chain the wallet is on."
+          },
+          "address": {
+            "type": "string",
+            "example": "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV",
+            "description": "The address on that chain: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). Payment intents whose payer (`source`) is this address count toward the customer."
+          },
+          "label": {
+            "type": "string",
+            "example": "Phantom",
+            "description": "A name for the wallet, shown beside the address."
+          }
+        },
+        "required": [
+          "chain",
+          "address"
+        ]
+      },
       "CreateCustomerDto": {
         "type": "object",
         "properties": {
@@ -15303,7 +15512,15 @@
           "account": {
             "type": "string",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "Optional account to associate the customer with, on any chain: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). Payment intents whose payer (`source`) is this account count toward the customer, whatever their chain."
+            "deprecated": true,
+            "description": "Deprecated: use `wallets`. One wallet, its chain read from its shape: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). It is added to `wallets`."
+          },
+          "wallets": {
+            "description": "The customer's wallets, on any chain payments settle on, up to 20. Payment intents paid from any of them count toward the customer. A wallet belongs to one customer: one that another customer of yours already holds answers `409 customer_wallet_taken`.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerWalletDto"
+            }
           },
           "reference": {
             "type": "string",
@@ -15312,6 +15529,45 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "CustomerWalletEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cw4f0c2a9d1b7e83c5a6f9d2e1b0c3a7f8"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad"
+            ],
+            "example": "stellar"
+          },
+          "address": {
+            "type": "string",
+            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+            "description": "The address, in its chain's stored spelling (EIP-55 on Monad)."
+          },
+          "label": {
+            "type": "object",
+            "nullable": true,
+            "example": "Treasury"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-21T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "chain",
+          "address",
+          "createdAt"
         ]
       },
       "CustomerEntity": {
@@ -15335,10 +15591,18 @@
             "nullable": true,
             "example": "ada@example.com"
           },
+          "wallets": {
+            "description": "The customer's wallets, oldest first, on any chain payments settle on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerWalletEntity"
+            }
+          },
           "account": {
             "type": "object",
             "nullable": true,
-            "description": "The account associated with this customer, if any: a Stellar account (G...), a Solana address or a Monad address, the last stored EIP-55 checksummed.",
+            "deprecated": true,
+            "description": "Deprecated: read `wallets`. The first wallet's address, kept for clients written when a customer held one account; null without wallets.",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
           },
           "note": {
@@ -15365,6 +15629,7 @@
         "required": [
           "id",
           "name",
+          "wallets",
           "createdAt",
           "updatedAt"
         ]
@@ -15390,10 +15655,18 @@
             "nullable": true,
             "example": "ada@example.com"
           },
+          "wallets": {
+            "description": "The customer's wallets, oldest first, on any chain payments settle on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerWalletEntity"
+            }
+          },
           "account": {
             "type": "object",
             "nullable": true,
-            "description": "The account associated with this customer, if any: a Stellar account (G...), a Solana address or a Monad address, the last stored EIP-55 checksummed.",
+            "deprecated": true,
+            "description": "Deprecated: read `wallets`. The first wallet's address, kept for clients written when a customer held one account; null without wallets.",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
           },
           "note": {
@@ -15418,7 +15691,7 @@
           },
           "payments": {
             "type": "number",
-            "description": "Payment intents, on any chain, whose payer (`source`) is this customer’s account, on the network the API key targets.",
+            "description": "Payment intents whose payer (`source`) is one of this customer’s wallets, on that wallet's chain and the network the API key targets.",
             "example": 12
           },
           "succeeded": {
@@ -15435,6 +15708,7 @@
         "required": [
           "id",
           "name",
+          "wallets",
           "createdAt",
           "updatedAt",
           "payments",
@@ -15491,14 +15765,15 @@
             "type": "string",
             "example": "billing@acme.com"
           },
-          "account": {
-            "type": "string",
-            "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "Optional account to associate the customer with, on any chain: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). Payment intents whose payer (`source`) is this account count toward the customer, whatever their chain."
-          },
           "reference": {
             "type": "string",
             "example": "cust_001"
+          },
+          "account": {
+            "type": "object",
+            "nullable": true,
+            "deprecated": true,
+            "description": "Deprecated: manage wallets with `POST` and `DELETE /v1/customers/{id}/wallets`. The customer's first wallet: an address replaces it (or adds one), its chain read from its shape; null removes it."
           }
         }
       },
@@ -15508,6 +15783,23 @@
           "id": {
             "type": "string",
             "example": "clz9xcust00001"
+          },
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "deleted"
+        ]
+      },
+      "CustomerWalletDeletedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cw4f0c2a9d1b7e83c5a6f9d2e1b0c3a7f8"
           },
           "deleted": {
             "type": "boolean",
@@ -26723,6 +27015,7 @@
               "account_disabled",
               "payload_expired",
               "rate_limited",
+              "customer_wallet_taken",
               "alias_taken",
               "alias_name_invalid",
               "alias_challenge_invalid",

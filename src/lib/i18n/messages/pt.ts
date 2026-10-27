@@ -60,11 +60,11 @@ export default {
       link: "Link de pagamento",
     },
     account: {
-      title: "Contas confidenciais",
+      title: "Contas privadas",
       needWallet: "Para receber pagamentos privados, a organização precisa de pelo menos uma carteira Stellar conectada.",
       viewBalances: "Ver saldos",
       wrongAccount: "O Freighter está com outra conta selecionada. Mude para {wallet}.",
-      register: "Criar conta confidencial",
+      register: "Criar conta privada",
       registered: "Ativa",
       notRegistered: "Ainda não criada",
       spendable: "Disponível",
@@ -75,11 +75,14 @@ export default {
       amountLabel: "Valor",
       refresh: "Atualizar",
       working: "Processando…",
-      createdOk: "Conta confidencial criada",
+      createdOk: "Conta privada criada",
       depositOk: "Depósito concluído",
       withdrawOk: "Saque concluído",
       mergeOk: "O que chegou passou para disponível",
       done: "Pronto",
+      tableHead: { wallet: "Carteira", address: "Endereço", status: "Status", payments: "Pagamentos recebidos" },
+      detail: "Conta privada",
+      paymentsTo: "Pagamentos privados para esta conta",
     },
     checkout: {
       title: "Pagamento privado",
@@ -1231,7 +1234,7 @@ export default {
       delete: "Eliminar", deleteConfirm: "Eliminar", confirmDelete: "Não é possível anular.",
       customerSet: "Valor livre", allEvents: "Todos os eventos", events: "Eventos",
       received: "Recebido", pending: "Pendente",
-      custDetail: { noAccount: "Adicione o endereço da carteira do cliente para ver os pagamentos que ela fez.", title: "Cliente", edit: "Editar", save: "Guardar alterações", alias: "Alias", note: "Nota", account: "Endereço da carteira", accountPlaceholder: "Endereço na Stellar, Solana ou Monad", payments: "Pagamentos", onChain: "On-chain", noPayments: "Ainda não há pagamentos." },
+      custDetail: { noAccount: "Adicione o endereço da carteira do cliente para ver os pagamentos que ela fez.", title: "Cliente", edit: "Editar", save: "Guardar alterações", alias: "Alias", note: "Nota", account: "Endereço da carteira", accountPlaceholder: "Endereço na Stellar, Solana ou Monad", payments: "Pagamentos", onChain: "On-chain", noPayments: "Ainda não há pagamentos.", wallets: "Carteiras", addWallet: "Adicionar carteira", network: "Rede", walletLabel: "Nome", walletLabelPlaceholder: "Phantom, tesouraria…", removeWallet: "Remover carteira", invalidAddress: "Não é um endereço de {network}.", walletPayments: "Pagamentos desta carteira" },
     },
     filters: { label: "Filtrar a lista", status: "Status", network: "Rede", kind: "Tipo", allStatuses: "Todos", allNetworks: "Todas as redes", allKinds: "Todos os tipos", date: "Data", dates: { any: "Qualquer data", today: "Hoje", "7d": "Últimos 7 dias", "30d": "Últimos 30 dias", "90d": "Últimos 90 dias" }, shown: "{n} de {total}", clear: "Limpar filtros", noMatch: "Nada corresponde a estes filtros." },
     tokens: { custom: "Outro token…", ticker: "Símbolo do token", address: { solana: "Mint do token", monad: "Contrato do token" } },
@@ -1300,12 +1303,14 @@ export default {
       sub: "{n} clientes",
       add: "Adicionar cliente",
       searchPlaceholder: "Buscar clientes…",
+      walletsCount: "{n} carteiras",
       tableHead: {
         name: "Nome",
         email: "E-mail",
         spend: "Gasto total",
         payments: "Pagamentos",
-        since: "Desde"
+        since: "Desde",
+        wallets: "Carteiras"
       },
       empty: "Nenhum cliente encontrado.",
       modal: {
@@ -1314,7 +1319,10 @@ export default {
         desc: "Crie um cliente para acompanhar pagamentos e saldos.",
         name: "Nome",
         email: "E-mail",
-        add: "Adicionar cliente"
+        add: "Adicionar cliente",
+        wallets: "Carteiras",
+        walletsHint: "As carteiras de onde este cliente paga, em qualquer rede. Você também pode adicioná-las depois.",
+        addAnother: "Adicionar outra carteira"
       }
     },
     products: { searchPlaceholder: "Pesquisar por nome ou preço…", detail: { title: "Produto", save: "Salvar alterações", active: "À venda", activeHint: "Um produto inativo é mantido, mas não pode ser vendido.", saveError: "Não foi possível salvar o produto." },

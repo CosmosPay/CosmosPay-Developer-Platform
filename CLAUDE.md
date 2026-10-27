@@ -449,6 +449,16 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   test network has none. Other tokens go by ticker and mint / contract (`TokenSelect`).
   `payment-link.ts` re-exports its chain list and explorer from there.
 
+### Customers and their wallets
+
+- **A customer holds wallets on several networks** (product owner, 2026-10-27; the server's
+  `customer_wallet`, unique per organization, network and address). `views/CustomersView.tsx`: the
+  table shows each customer's network marks and how many wallets; the create form takes any number of
+  wallets (network, address checked against that network as it is typed, name); the detail lists them
+  with the payments each made (opening Payments searched by that wallet) and adds or removes one
+  (`/api/customers/{id}/wallets`, `customers:edit`). A customer's payments are those any of its wallets
+  paid. `account` is the server's deprecated first wallet: never read it in new code.
+
 ### Organization wallets
 
 - **The organization's receiving wallets live in Settings** (product owner, 2026-10-25: asking people
@@ -883,12 +893,15 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   with both hashes. The server decrypts both amounts with the auditor key and marks it paid.
   Retries never pay twice (the sent hashes are kept). The merchant's receiving account is a
   confidential account **managed inside the private payments view** (`components/ZkAccountPanel.tsx`;
-  product owner: never another page, and no bare "connect Freighter"). The panel lists the
-  organization's Stellar wallets (Settings), each with whether it holds a confidential account, read
-  from the chain with no signature (`confidentialAccounts` in `src/lib/zk/wallet.ts`); its action opens
-  Freighter only when a key is needed (create the account, view balances; Freighter must have that
-  wallet selected), then incoming to available, deposit and withdraw (the amount in a dialog, the
-  progress in the row, with a clock while the proof runs). Without a Stellar wallet the view says the
+  product owner: never another page, and no bare "connect Freighter"). It is the **"Private
+  accounts" table** (product owner, 2026-10-27: the same table format as every list): one row per
+  organization Stellar wallet (Settings) with whether it holds a confidential account, read from the
+  chain with no signature (`confidentialAccounts` in `src/lib/zk/wallet.ts`), its balances once
+  viewed, and the private payments it received (a count that filters the payments table). A row opens
+  the account's detail. Its action opens Freighter only when a key is needed (create the account, view
+  balances; Freighter must have that wallet selected), then incoming to available, deposit and
+  withdraw in the row menu and the detail (the amount in a dialog, the progress under the row, with a
+  clock while the proof runs). Without a Stellar wallet the view says the
   organization needs one, offers to connect it to whoever may, and hides "create private payment".
   The create dialog preselects the first wallet with a confidential account. No separate account page.
 - **Proofs are generated in the browser.** The private checkout is cross-origin isolated (COOP

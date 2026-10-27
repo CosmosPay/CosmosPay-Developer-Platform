@@ -5,7 +5,8 @@
    account is one of the organization's Stellar wallets (Settings; the create dialog offers only
    those) with a confidential account, set up and managed in this view (ZkAccountPanel, which lists
    the wallets; without one it says the organization needs a Stellar wallet and nothing can be
-   created). The first wallet with a confidential account is the new payment's recipient by default.
+   created), a table of private accounts in the same format as the payments one. The first wallet
+   with a confidential account is the new payment's recipient by default.
    Testnet (the sandbox) only for now. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
@@ -85,6 +86,8 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
   const canCreate = canManage && config && stellarWallets.length > 0;
   const zkConfig = useMemo(() => (config ? parseZkConfig(config) : null), [config]);
 
+  // An account's count of payments received filters the payments table to it.
+  const showPaymentsTo = (address) => { set("q", address); document.getElementById("zk-payments")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const copy = (id) => navigator.clipboard?.writeText(checkoutUrl(id)).then(() => showToast(t.toasts.copied)).catch(() => {});
   const [detail, setDetail] = useState(null);
   // A private payment named from elsewhere opens once the list is here.
@@ -102,7 +105,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
     <>
       <ViewHead title={z.title} />
       {config === null && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.link}<span>{z.unavailable}</span></div>}
-      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onRegistered={setRegistered} />}
+      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} orgWallets={wallets === undefined ? null : stellarWallets} canConnectWallets={canConnectWallets} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
       {/* Its own figures and chart: settled volume in USD and the payments created. */}
       <ViewActivity env={env} metrics={["zkVolume", "zkPayments"]} id="zk-activity" />
       <FilterBar
@@ -119,7 +122,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, o
         shown={shown.length} total={all.length} active={active} onReset={reset} loading={rows === null}
         actions={canCreate && <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal(true)}>{DI.plus} {z.view.create}</button>}
       />
-      <div className="panel">
+      <div className="panel" id="zk-payments">
         {rows === null && <TableSkeleton label={t.dash.cosmos.loading} />}
         {rows !== null && (
           <div className="t-scroll" tabIndex={0} ref={tref}>

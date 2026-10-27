@@ -90,6 +90,8 @@ export const customers = {
   create: (env, org, body) => request(`/api/customers${qp(env, org)}`, { method: "POST", body: JSON.stringify(body) }),
   update: (id, env, org, body) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "PATCH", body: JSON.stringify(body) }),
   remove: (id, env, org) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "DELETE" }),
+  addWallet: (id, env, org, body) => request(`/api/customers/${encodeURIComponent(id)}/wallets${qp(env, org)}`, { method: "POST", body: JSON.stringify(body) }),
+  removeWallet: (id, walletId, env, org) => request(`/api/customers/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}${qp(env, org)}`, { method: "DELETE" }),
 };
 
 /* Read-only dashboard aggregates derived from payments + webhooks + request logs. */
