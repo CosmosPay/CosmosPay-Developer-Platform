@@ -88,7 +88,7 @@ export default {
     },
     sign: {
       eyebrow: "Assinatura",
-      key: { title: "Assine para abrir a conta privada", desc: "Esta transação nunca pode ser enviada à rede: a assinatura dela abre a chave da conta privada, aqui ou em qualquer dispositivo. Assine só aqui e não a compartilhe." },
+      key: { title: "Assine para abrir a conta privada", desc: "Esta transação nunca pode ser enviada à rede: a assinatura dela abre a chave da conta privada, aqui ou em qualquer dispositivo. Assine só aqui: quem tiver essa assinatura pode ver os saldos privados da conta (não movê-los). Se outra página ou app pedir para assiná-la, não assine." },
       keyAgain: { title: "Assine mais uma vez", desc: "A mesma transação de novo. Duas assinaturas iguais mostram que a sua carteira sempre a assina igual, então a conta pode ser aberta de novo depois." },
       register: { title: "Assine para criar a conta privada", desc: "Esta transação registra as chaves da conta no token privado." },
       deposit: { title: "Assine o depósito", desc: "Esta transação passa XLM público para o saldo privado da conta." },

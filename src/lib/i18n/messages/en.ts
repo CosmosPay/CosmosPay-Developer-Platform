@@ -90,7 +90,7 @@ export default {
     },
     sign: {
       eyebrow: "Signature",
-      key: { title: "Sign to open the private account", desc: "This transaction can never be sent to the network: its signature opens the private account's key, here or on any device. Sign it only here and don't share it." },
+      key: { title: "Sign to open the private account", desc: "This transaction can never be sent to the network: its signature opens the private account's key, here or on any device. Sign it only here: whoever holds that signature can read the account's private balances (not move them). If another page or app asks you to sign it, don't." },
       keyAgain: { title: "Sign it once more", desc: "The same transaction again. Two equal signatures show your wallet always signs it the same way, so the account can be opened again later." },
       register: { title: "Sign to create the private account", desc: "This transaction registers the account's keys on the private token." },
       deposit: { title: "Sign the deposit", desc: "This transaction moves public XLM into the account's private balance." },

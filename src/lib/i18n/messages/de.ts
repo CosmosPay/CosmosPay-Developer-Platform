@@ -88,7 +88,7 @@ export default {
     },
     sign: {
       eyebrow: "Signatur",
-      key: { title: "Signieren, um das private Konto zu öffnen", desc: "Diese Transaktion kann nie an das Netzwerk gesendet werden: Ihre Signatur öffnet den Schlüssel des privaten Kontos, hier oder auf jedem Gerät. Signieren Sie sie nur hier und geben Sie sie nicht weiter." },
+      key: { title: "Signieren, um das private Konto zu öffnen", desc: "Diese Transaktion kann nie an das Netzwerk gesendet werden: Ihre Signatur öffnet den Schlüssel des privaten Kontos, hier oder auf jedem Gerät. Signieren Sie sie nur hier: Wer diese Signatur hat, kann die privaten Guthaben des Kontos lesen (nicht bewegen). Fordert eine andere Seite oder App Sie auf, sie zu signieren, lehnen Sie ab." },
       keyAgain: { title: "Noch einmal signieren", desc: "Dieselbe Transaktion erneut. Zwei gleiche Signaturen zeigen, dass Ihre Wallet sie immer gleich signiert, damit sich das Konto später wieder öffnen lässt." },
       register: { title: "Signieren, um das private Konto zu erstellen", desc: "Diese Transaktion registriert die Schlüssel des Kontos auf dem privaten Token." },
       deposit: { title: "Einzahlung signieren", desc: "Diese Transaktion verschiebt öffentliche XLM in das private Guthaben des Kontos." },

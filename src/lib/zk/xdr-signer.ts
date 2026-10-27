@@ -9,8 +9,15 @@
    signature of a fixed transaction instead (`keyTransactionXdr`): built from the token and the
    account alone, so every wallet that signs it gives the same signature, and impossible to apply
    (sequence 1 is behind every existing account). That signature is the root the SDK's `deriveSk`
-   takes, like the SEP-53 one; it is never stored or sent (src/lib/zk/derive-key.ts). Pure apart
-   from `XdrSigner.sign`, which waits on the page. */
+   takes, like the SEP-53 one; it is never stored or sent (src/lib/zk/derive-key.ts).
+
+   The risk it carries, as the SEP-53 root does: the transaction is built from public data, so anyone
+   can ask the person to sign it, and that signature gives the confidential key. The key reads the
+   account's private balances; it moves nothing, since every action also needs the account's own
+   signature on that action's transaction. The signing dialog says so, and only the page asks for it.
+   A per-account secret mixed into the root would close it, at the cost of recovering the key from
+   the Stellar key alone (an open decision before mainnet). Pure apart from `XdrSigner.sign`, which
+   waits on the page. */
 import { Account, Keypair, Memo, Operation, TimeoutInfinite, TransactionBuilder, hash } from "@stellar/stellar-sdk";
 import { skSigningMessage } from "stellar-confidential-token-sdk";
 

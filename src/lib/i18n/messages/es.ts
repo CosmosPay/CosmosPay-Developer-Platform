@@ -88,7 +88,7 @@ export default {
     },
     sign: {
       eyebrow: "Firma",
-      key: { title: "Firma para abrir la cuenta privada", desc: "Esta transacción nunca puede enviarse a la red: su firma abre la clave de la cuenta privada, aquí o en cualquier dispositivo. Fírmala solo aquí y no la compartas." },
+      key: { title: "Firma para abrir la cuenta privada", desc: "Esta transacción nunca puede enviarse a la red: su firma abre la clave de la cuenta privada, aquí o en cualquier dispositivo. Fírmala solo aquí: quien tenga esa firma puede ver los saldos privados de la cuenta (no moverlos). Si otra página o app te pide firmarla, no lo hagas." },
       keyAgain: { title: "Fírmala una vez más", desc: "La misma transacción otra vez. Dos firmas iguales muestran que tu wallet siempre la firma igual, así la cuenta se puede volver a abrir más adelante." },
       register: { title: "Firma para crear la cuenta privada", desc: "Esta transacción registra las claves de la cuenta en el token privado." },
       deposit: { title: "Firma el depósito", desc: "Esta transacción pasa XLM público al saldo privado de la cuenta." },

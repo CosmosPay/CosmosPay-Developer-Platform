@@ -88,7 +88,7 @@ export default {
     },
     sign: {
       eyebrow: "Signature",
-      key: { title: "Signez pour ouvrir le compte privé", desc: "Cette transaction ne peut jamais être envoyée au réseau : sa signature ouvre la clé du compte privé, ici ou sur n’importe quel appareil. Signez-la seulement ici et ne la partagez pas." },
+      key: { title: "Signez pour ouvrir le compte privé", desc: "Cette transaction ne peut jamais être envoyée au réseau : sa signature ouvre la clé du compte privé, ici ou sur n’importe quel appareil. Signez-la seulement ici : qui détient cette signature peut lire les soldes privés du compte (pas les déplacer). Si une autre page ou application vous demande de la signer, refusez." },
       keyAgain: { title: "Signez-la encore une fois", desc: "La même transaction à nouveau. Deux signatures identiques montrent que votre portefeuille la signe toujours de la même façon, pour que le compte puisse être rouvert plus tard." },
       register: { title: "Signez pour créer le compte privé", desc: "Cette transaction enregistre les clés du compte sur le jeton privé." },
       deposit: { title: "Signez le dépôt", desc: "Cette transaction fait passer des XLM publics vers le solde privé du compte." },
