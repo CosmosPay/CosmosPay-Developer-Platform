@@ -920,7 +920,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   opens a **dialog like "add customer"** (`AddPrivateAccountModal`, the `CustomerFormModal` pattern;
   product owner, 2026-10-27: creating is always a modal, never an inline form) that adds a Stellar
   address to a customer, new or already there (`customers:create`); nothing is signed to add it, the
-  customer signs when the account is created. **Nothing connects or opens a wallet** (product owner,
+  customer signs when the account is created. "Delete private account" (row menu and detail,
+  `customers:edit`) removes the wallet from its customer, as the customer's detail does; the
+  confidential account and its balance stay the customer's on-chain. **Nothing connects or opens a wallet** (product owner,
   2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's, so
   never Freighter here): every signature goes through `components/ZkSignDialog.tsx`, the copy and
   paste half of the swap's signing (the XDR in a `CopyBlock` for the customer, the signed XDR pasted

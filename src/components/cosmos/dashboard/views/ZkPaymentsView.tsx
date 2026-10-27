@@ -66,7 +66,7 @@ function useCustomerAccounts(env) {
       const name = (c) => c.alias || c.name;
       setState({
         customers: all.map((c) => ({ id: c.id, name: name(c) })),
-        accounts: all.flatMap((c) => (c.wallets || []).filter((w) => w.chain === "stellar").map((w) => ({ address: w.address, label: w.label, customerId: c.id, customerName: name(c) }))),
+        accounts: all.flatMap((c) => (c.wallets || []).filter((w) => w.chain === "stellar").map((w) => ({ walletId: w.id, address: w.address, label: w.label, customerId: c.id, customerName: name(c) }))),
       });
     })().catch(() => { if (alive) setState({ customers: [], accounts: [] }); });
     return () => { alive = false; };
@@ -74,7 +74,7 @@ function useCustomerAccounts(env) {
   return { ...state, reload: () => setTick((n) => n + 1) };
 }
 
-export function ZkPaymentsView({ canManage = false, canConnectWallets = false, canAddAccounts = false, orgId, env = "dev" }) {
+export function ZkPaymentsView({ canManage = false, canConnectWallets = false, canAddAccounts = false, canRemoveAccounts = false, orgId, env = "dev" }) {
   const t = useT();
   const z = t.zk;
   const fl = t.dash.filters;
@@ -196,7 +196,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
         {rows !== null && <Pagination {...pg} />}
       </div>
       {/* The private accounts the payments go to, a table of their own under the payments. */}
-      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} env={env} accounts={accounts} customers={customers} canAdd={canAddAccounts} onAdded={reload} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
+      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} env={env} accounts={accounts} customers={customers} canAdd={canAddAccounts} canRemove={canRemoveAccounts} onChanged={reload} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
       {detail && <ZkPaymentDetailModal payment={detail} orgId={orgId} env={env} onCopy={copy} onClose={() => setDetail(null)} />}
       {modal && config && (
         <CreateZkPaymentModal

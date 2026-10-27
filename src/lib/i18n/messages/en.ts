@@ -94,6 +94,8 @@ export default {
       empty: "No private accounts yet. Add a customer's Stellar wallet to create one.",
       added: "Private account added",
       addHint: "Just the address: the customer signs when their private account is created, with an XDR you send them.",
+      remove: "Delete private account",
+      removed: "Private account deleted from the dashboard. Its private balance is still the customer's.",
       keyMismatch: "This private account was created with another signature, outside the dashboard, so it cannot be opened here.",
       keyFailed: "The signed transaction is not {wallet}'s signature. Ask the customer to sign it with that account.",
     },

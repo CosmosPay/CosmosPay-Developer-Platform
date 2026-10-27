@@ -92,6 +92,8 @@ export default {
       empty: "Todavía no hay cuentas privadas. Agrega la wallet de Stellar de un cliente para crear una.",
       added: "Cuenta privada agregada",
       addHint: "Solo la dirección: el cliente firma cuando se crea su cuenta privada, con un XDR que le envías.",
+      remove: "Eliminar cuenta privada",
+      removed: "Cuenta privada eliminada del dashboard. Su saldo privado sigue siendo del cliente.",
       keyMismatch: "Esta cuenta privada se creó con otra firma, fuera del dashboard, así que no se puede abrir aquí.",
       keyFailed: "La transacción firmada no es la firma de {wallet}. Pide al cliente que la firme con esa cuenta.",
     },

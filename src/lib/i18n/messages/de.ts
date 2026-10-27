@@ -92,6 +92,8 @@ export default {
       empty: "Noch keine privaten Konten. Fügen Sie die Stellar-Wallet eines Kunden hinzu, um eines zu erstellen.",
       added: "Privates Konto hinzugefügt",
       addHint: "Nur die Adresse: Der Kunde signiert, wenn sein privates Konto erstellt wird, mit einem XDR, das Sie ihm senden.",
+      remove: "Privates Konto löschen",
+      removed: "Privates Konto aus dem Dashboard gelöscht. Sein privater Saldo gehört weiterhin dem Kunden.",
       keyMismatch: "Dieses private Konto wurde mit einer anderen Signatur außerhalb des Dashboards erstellt und kann hier nicht geöffnet werden.",
       keyFailed: "Die signierte Transaktion ist nicht die Signatur von {wallet}. Bitten Sie den Kunden, sie mit diesem Konto zu signieren.",
     },

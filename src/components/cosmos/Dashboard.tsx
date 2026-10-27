@@ -404,7 +404,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
       case "products": return <ProductsView canManage={can("products:create")} canSell={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
       case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} canAddAccounts={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} canAddAccounts={can("customers:create")} canRemoveAccounts={can("customers:edit")} orgId={org.id} env={live ? "prod" : "dev"} />;
       // Swaps between chains live in the swaps list; the old deep link opens it filtered to them.
       case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "liquidity": return <LiquidityView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;

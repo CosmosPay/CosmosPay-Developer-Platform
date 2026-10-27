@@ -92,6 +92,8 @@ export default {
       empty: "Pas encore de compte privé. Ajoutez le portefeuille Stellar d’un client pour en créer un.",
       added: "Compte privé ajouté",
       addHint: "L’adresse seulement : le client signe lors de la création de son compte privé, avec un XDR que vous lui envoyez.",
+      remove: "Supprimer le compte privé",
+      removed: "Compte privé supprimé du dashboard. Son solde privé reste au client.",
       keyMismatch: "Ce compte privé a été créé avec une autre signature, hors du dashboard : il ne peut pas être ouvert ici.",
       keyFailed: "La transaction signée n’est pas la signature de {wallet}. Demandez au client de la signer avec ce compte.",
     },

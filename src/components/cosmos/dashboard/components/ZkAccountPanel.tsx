@@ -14,7 +14,10 @@
    key, kept for this tab only, then a register proof and one more signature) or "view balances"
    (the same one signature; the balances are rebuilt from chain events and checked against the
    on-chain commitments, then shown in the row), then incoming to available, a deposit of public
-   XLM and a withdrawal back to public XLM. The key comes from the transaction root only: an
+   XLM and a withdrawal back to public XLM. "Delete", in the row menu and the detail, removes the
+   wallet from its customer as the customer's detail does (`customers:edit`): the row leaves the
+   table, while the confidential account and its balance stay the customer's on-chain. The key
+   comes from the transaction root only: an
    account whose key came from a message signature (the private checkout's, with Freighter) does
    not open here. The amount is asked for in a dialog; the work shows its progress under the row.
    Proofs are generated in this tab, on one thread (src/lib/zk/bb-loader.ts); nothing about the
@@ -46,7 +49,7 @@ import { ZkSignDialog } from "@/components/cosmos/dashboard/components/ZkSignDia
 
 type Action = "register" | "open" | "merge" | "deposit" | "withdraw" | "refresh";
 /** A customer's Stellar wallet: a private account, once it holds a confidential account. */
-export interface PrivateAccount { address: string; label: string | null; customerId: string; customerName: string }
+export interface PrivateAccount { walletId: string; address: string; label: string | null; customerId: string; customerName: string }
 export interface PanelCustomer { id: string; name: string }
 
 const COLS = 7;
@@ -56,7 +59,7 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd = false, onAdded, onRegistered, payments = null, onShowPayments }: {
+export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd = false, canRemove = false, onChanged, onRegistered, payments = null, onShowPayments }: {
   config: ZkNetworkConfig;
   orgId: string;
   env: string;
@@ -64,10 +67,11 @@ export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd
   accounts: PrivateAccount[] | null;
   /* The organization's customers, to add a wallet to one; null while they load. */
   customers: PanelCustomer[] | null;
-  /* Whether this member may add customers' wallets. */
+  /* Whether this member may add customers' wallets, and remove them. */
   canAdd?: boolean;
-  /* Read the customers again, after a wallet was added. */
-  onAdded?: () => void;
+  canRemove?: boolean;
+  /* Read the customers again, after a wallet was added or removed. */
+  onChanged?: () => void;
   /* The wallets holding a confidential account (the create dialog preselects the first). */
   onRegistered?: (addresses: string[]) => void;
   /* The organization's private payments, to count each account's; null while they load. */
@@ -188,6 +192,17 @@ export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd
   const loadedFor = (address: string) => (open === address && balances?.registered ? balances : null);
   const copy = (address: string) => navigator.clipboard?.writeText(address).then(() => showToast(t.toasts.copied)).catch(() => {});
   const amountDialog = (kind: "deposit" | "withdraw") => { setDetail(null); setDialog(kind); };
+  /* Removes the wallet from its customer, as the customer's detail does, so the row leaves the
+     table. The confidential account and its balance stay the customer's on-chain: nothing moves. */
+  const remove = (w: PrivateAccount) => custApi.removeWallet(w.customerId, w.walletId, env, orgId)
+    .then(async () => {
+      if (wallet.current?.address === w.address) { await wallet.current.destroy(); wallet.current = null; }
+      if (open === w.address) { setOpen(null); setBalances(null); }
+      setDetail(null);
+      showToast(za.removed);
+      onChanged?.();
+    })
+    .catch((e) => showToast((e && e.message) || za.remove, "error"));
 
   /* What an account offers: its first step (create it, or read its balances), then, once its
      balances are on screen, moving incoming funds, a deposit and a withdrawal. */
@@ -229,7 +244,8 @@ export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd
       ? <button type="button" className="link-btn" title={za.paymentsTo} aria-label={`${za.paymentsTo}: ${n}`} onClick={(e) => { e.stopPropagation(); setDetail(null); onShowPayments(address); }}>{n}</button>
       : <span title={za.paymentsTo}>{n}</span>;
   };
-  const opened = detail ? rows.find((w) => w.address === detail) : null;
+  // A row is a wallet of a customer (two customers may name the same address): kept by its id.
+  const opened = detail ? rows.find((w) => w.walletId === detail) : null;
 
   return (
     <section className="panel zka" aria-labelledby="zka-title" aria-busy={busy ? true : undefined}>
@@ -259,7 +275,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd
               const a = actionsFor(w.address);
               const work = progress(w.address);
               return [
-                <tr key={w.address} className="row-click" onClick={() => setDetail(w.address)}>
+                <tr key={w.walletId} className="row-click" onClick={() => setDetail(w.walletId)}>
                   <td><span className="cust-cell"><NetworkMark chain="stellar" size={24} /><span>{w.customerName}{w.label && <small className="cust-wallet-net">{w.label}</small>}</span></span></td>
                   <td className="cust" onClick={(e) => e.stopPropagation()}><AddressLink chain="stellar" network={config.network} address={w.address} label={za.tableHead.address} /></td>
                   <td>{statusPill(a.registered)}</td>
@@ -271,14 +287,15 @@ export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd
                     <RowMenu
                       label={fmt(t.dash.common.rowActions, { name: w.label ? `${w.customerName} (${w.label})` : w.customerName })}
                       items={[
-                        { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => setDetail(w.address) },
+                        { key: "open", label: t.dash.common.details, icon: DI.docs, onClick: () => setDetail(w.walletId) },
                         ...a.more,
                         { key: "copy", label: t.dash.common.copyAccount, icon: DI.link, onClick: () => copy(w.address) },
+                        ...(canRemove ? [{ key: "delete", label: za.remove, icon: DI.trash, danger: true, disabled: busy?.address === w.address, onClick: () => remove(w) }] : []),
                       ]}
                     />
                   </td>
                 </tr>,
-                work && <tr key={`${w.address}:work`} className="zka-work"><td colSpan={COLS}>{work}</td></tr>,
+                work && <tr key={`${w.walletId}:work`} className="zka-work"><td colSpan={COLS}>{work}</td></tr>,
               ];
             })}
             <FillRows n={pg.size - pg.count} cols={COLS} />
@@ -313,13 +330,14 @@ export function ZkAccountPanel({ config, orgId, env, accounts, customers, canAdd
               <div className="paylink-actions">
                 {a.primary && <button type="button" className={`btn ${a.primary.dark ? "btn-dark" : "btn-outline-w"} btn-sm`} onClick={a.primary.onClick} disabled={a.primary.disabled}>{a.primary.label}</button>}
                 {a.more.map((m) => <button key={m.key} type="button" className="btn btn-soft btn-sm" onClick={m.onClick} disabled={m.disabled}>{m.icon} {m.label}</button>)}
+                {canRemove && <button type="button" className="btn btn-soft danger-soft btn-sm" onClick={() => remove(opened)} disabled={busy?.address === opened.address}>{DI.trash} {za.remove}</button>}
               </div>
             </div>
           </Modal>
         );
       })()}
 
-      {adding && <AddPrivateAccountModal customers={customers} env={env} orgId={orgId} onClose={() => setAdding(false)} onAdded={() => { setAdding(false); onAdded?.(); }} />}
+      {adding && <AddPrivateAccountModal customers={customers} env={env} orgId={orgId} onClose={() => setAdding(false)} onAdded={() => { setAdding(false); onChanged?.(); }} />}
 
       {signing && (
         <ZkSignDialog

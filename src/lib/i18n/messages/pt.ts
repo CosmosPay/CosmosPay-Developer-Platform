@@ -92,6 +92,8 @@ export default {
       empty: "Ainda não há contas privadas. Adicione a carteira Stellar de um cliente para criar uma.",
       added: "Conta privada adicionada",
       addHint: "Só o endereço: o cliente assina quando a conta privada dele é criada, com um XDR que você envia.",
+      remove: "Excluir conta privada",
+      removed: "Conta privada excluída do dashboard. O saldo privado continua sendo do cliente.",
       keyMismatch: "Esta conta privada foi criada com outra assinatura, fora do dashboard, então não pode ser aberta aqui.",
       keyFailed: "A transação assinada não é a assinatura de {wallet}. Peça ao cliente que a assine com essa conta.",
     },
