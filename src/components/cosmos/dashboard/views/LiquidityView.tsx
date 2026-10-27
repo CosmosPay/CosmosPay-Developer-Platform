@@ -99,6 +99,13 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
 
   const onCreated = (op) => { setModal(null); setRows((r) => [op, ...r]); setDetail(op); };
 
+  const actions = canManage && (
+    <>
+      <button type="button" className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>
+      <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setModal({ kind: "withdraw" })}>{lq.withdraw}</button>
+    </>
+  );
+
   return (
     <>
       <ViewHead title={lq.title} />
@@ -106,19 +113,14 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
       {/* Its own figures and chart: operations and the completed ones. */}
       <ViewActivity env={env} metrics={["liquidity"]} id="liq-activity" />
 
-      {/* The sections, with the view's two actions at the row's right end (they serve every tab). */}
+      {/* The sections. The view's two actions close each tab's filter row (product owner: the
+          view's buttons sit in the filter row, never on a row of their own). */}
       <div className="tabs-row">
         <div className="filter-tabs" role="group" aria-label={lq.title}>
           {["operations", "pools", "positions"].map((k) => (
             <button key={k} type="button" className={tab === k ? "on" : ""} aria-pressed={tab === k} onClick={() => setTab(k)}>{lq.tabs[k]}</button>
           ))}
         </div>
-        {canManage && (
-          <div className="tabs-row-actions">
-            <button className="btn btn-dark btn-sm" onClick={() => setModal({ kind: "deposit" })}>{DI.plus} {lq.deposit}</button>
-            <button className="btn btn-soft btn-sm" onClick={() => setModal({ kind: "withdraw" })}>{lq.withdraw}</button>
-          </div>
-        )}
       </div>
 
       {tab === "operations" && (
@@ -137,6 +139,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
             date={filters.date} onDate={(v) => set("date", v)}
             active={active} onReset={reset}
             shown={view.length} total={loading ? undefined : rows.length} loading={loading}
+            actions={actions}
           />
           <div className="panel">
             {!loading && (
@@ -172,7 +175,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
 
       {tab === "pools" && (
         <PoolsPanel
-          lq={lq} orgId={orgId} env={env} canManage={canManage}
+          lq={lq} orgId={orgId} env={env} canManage={canManage} actions={actions}
           onDeposit={(pool) => {
             const [ra, rb] = pool.reserves || [];
             setModal({
@@ -188,7 +191,7 @@ export function LiquidityView({ canManage = true, canConnectWallets = false, org
 
       {tab === "positions" && (
         <PositionsPanel
-          lq={lq} orgId={orgId} env={env} canManage={canManage} canConnectWallets={canConnectWallets}
+          lq={lq} orgId={orgId} env={env} canManage={canManage} canConnectWallets={canConnectWallets} actions={actions}
           onWithdraw={(pos) => setModal({ kind: "withdraw", prefill: { poolId: pos.poolId, shares: pos.shares } })}
         />
       )}
@@ -254,7 +257,7 @@ function PoolDetail({ title, eyebrow, id, fields, action, onClose }) {
   );
 }
 
-function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
+function PoolsPanel({ lq, orgId, env, canManage, onDeposit, actions = null }) {
   const t = useT();
   const p = lq.pools;
   const net = env === "prod" ? "public" : "testnet";
@@ -285,8 +288,10 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
   useEffect(() => { search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="panel">
-      <div className="paylink-fields" style={{ marginBottom: 12 }}>
+    <>
+    {/* The lookup is the tab's filter row, with the view's buttons at its end. */}
+    <div className="fbar liq-lookup">
+      <div className="fbar-filters" role="search" aria-label={t.dash.filters.label}>
         <AssetSelect network={net} label={p.assetA} codeLabel={p.assetA} issuerLabel={p.assetAIssuer} hint={p.assetHint}
           code={assetACode} issuer={assetAIssuer} onCode={setAssetACode} onIssuer={setAssetAIssuer}
           customText={t.dash.common.assetCustom} anyText={t.dash.common.assetAny} allowAny codePlaceholder="XLM" />
@@ -297,6 +302,9 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
           <button className="btn btn-soft btn-sm" disabled={loading} onClick={search}>{loading ? p.searching : p.search}</button>
         </div>
       </div>
+      {actions && <div className="fbar-actions">{actions}</div>}
+    </div>
+    <div className="panel">
       {loaded && !loading && (
         <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.reserves}</th><th>{p.head.shares}</th><th>{p.head.trustlines}</th><th>{p.head.fee}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{pg.slice.map((pool) => (
@@ -327,13 +335,14 @@ function PoolsPanel({ lq, orgId, env, canManage, onDeposit }) {
       {open && <PoolDetail eyebrow={p.head.pool} title={nameOf(open)} id={open.id} action={depositAction(open)} onClose={() => setOpen(null)}
         fields={[[p.head.pool, open.id], [p.head.reserves, reserves(open)], [p.head.shares, open.totalShares], [p.head.trustlines, open.totalTrustlines], [p.head.fee, `${(open.feeBp / 100).toFixed(2)}%`]]} />}
     </div>
+    </>
   );
 }
 
 /* ---------------- positions (an account's pool shares) ----------------
    The account is one of the organization's Stellar wallets (Settings), picked from the list as the
    payment forms do; its positions load as soon as it is picked. */
-function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdraw }) {
+function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdraw, actions = null }) {
   const t = useT();
   const p = lq.positions;
   const [account, setAccount] = useState("");
@@ -361,8 +370,10 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
   };
 
   return (
-    <div className="panel">
-      <div className="paylink-fields" style={{ marginBottom: 12 }}>
+    <>
+    {/* The lookup is the tab's filter row, with the view's buttons at its end. */}
+    <div className="fbar liq-lookup">
+      <div className="fbar-filters" role="search" aria-label={t.dash.filters.label}>
         <WalletSelect
           orgId={orgId} chain="stellar" id="lq-positions-account" label={p.account} canConnect={canConnectWallets}
           value={account} onChange={(a) => { setAccount(a); setLoaded(false); search(a); }}
@@ -371,6 +382,9 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
           <button className="btn btn-soft btn-sm" disabled={!valid || loading} onClick={() => search()}>{loading ? p.loadingBtn : p.load}</button>
         </div>
       </div>
+      {actions && <div className="fbar-actions">{actions}</div>}
+    </div>
+    <div className="panel">
       {/* Until an account is picked the table waits, empty, saying what it needs. */}
       <div className="t-scroll" tabIndex={0}><table className="tx"><thead><tr><th>{p.head.pool}</th><th>{p.head.shares}</th><th>{p.head.share}</th><th>{p.head.redeemable}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
           <tbody>{loaded && pg.slice.map((pos) => (
@@ -398,6 +412,7 @@ function PositionsPanel({ lq, orgId, env, canManage, canConnectWallets, onWithdr
       {open && <PoolDetail eyebrow={p.head.pool} title={nameOf(open)} id={open.poolId} action={withdrawAction(open)} onClose={() => setOpen(null)}
         fields={[[p.head.pool, open.poolId], [p.head.shares, open.shares], [p.head.share, `${(open.shareOfPoolBps / 100).toFixed(2)}%`], [p.head.redeemable, redeemable(open)]]} />}
     </div>
+    </>
   );
 }
 
@@ -486,7 +501,11 @@ function WithdrawModal({ lq, orgId, env, prefill, onClose, onCreated }) {
   const [slippageBps, setSlippageBps] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const canCreate = source.trim() && /^[0-9a-f]{64}$/.test(poolId.trim()) && shares.trim();
+  const positionOk = !!source.trim() && /^[0-9a-f]{64}$/.test(poolId.trim());
+  const canCreate = positionOk && shares.trim();
+  /* Two steps, as the deposit (product owner, 2026-10-27: a long form goes in steps): the position
+     (the account holding the shares and the pool), then how many shares go and the slippage. */
+  const steps = useFormSteps(2);
 
   const submit = () => {
     if (!canCreate || busy) return;
@@ -509,15 +528,19 @@ function WithdrawModal({ lq, orgId, env, prefill, onClose, onCreated }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{m.eyebrow}</div>
         <h3>{m.withdrawTitle}</h3>
-        <p>{m.withdrawDesc}</p>
-        <Field label={m.source} hint={m.withdrawSourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
-        <Field label={m.poolId} hint={m.poolIdHint} value={poolId} onChange={(e) => setPoolId(e.target.value)} placeholder="dd7b1ab8…" />
-        <Field label={m.shares} hint={m.sharesHint} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="50" inputMode="decimal" />
-        <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
-        <div className="modal-actions">
-          <button className="btn btn-violet" disabled={!canCreate || busy} onClick={submit}>{busy ? m.creating : m.create}</button>
-          <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
-        </div>
+        <FormSteps names={[m.steps.position, m.steps.amounts]} steps={steps} />
+        <FormStep steps={steps}>
+          {steps.step === 0 && (<>
+            <p className="field-help">{m.withdrawDesc}</p>
+            <Field label={m.source} hint={m.withdrawSourceHint} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" autoFocus />
+            <Field label={m.poolId} hint={m.poolIdHint} value={poolId} onChange={(e) => setPoolId(e.target.value)} placeholder="dd7b1ab8…" />
+          </>)}
+          {steps.step === 1 && (<>
+            <Field label={m.shares} hint={m.sharesHint} value={shares} onChange={(e) => setShares(e.target.value)} placeholder="50" inputMode="decimal" />
+            <Field label={m.slippage} hint={m.slippageHint} value={slippageBps} onChange={(e) => setSlippageBps(e.target.value)} placeholder="50" inputMode="numeric" />
+          </>)}
+        </FormStep>
+        <FormStepsFooter steps={steps} canNext={positionOk} onCancel={onClose} submitLabel={busy ? m.creating : m.create} onSubmit={submit} busy={busy} submitDisabled={!canCreate} />
       </div>
     </Modal>
   );

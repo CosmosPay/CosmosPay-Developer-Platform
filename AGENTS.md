@@ -474,7 +474,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     own buttons at the row's right end** (`FilterBar actions`;
     product owner: create payment, add product, new ticket... sit at the filters' height, never on a
     row of their own above the list). A view whose sections are tabs (Liquidity) puts them at the
-    right of its tabs (`.tabs-row`). Products, Customers, Webhooks, API keys and Support have a
+    end of each tab's filter row (a lookup, as the pools' assets or the positions' account, is that
+    row: `.fbar.liq-lookup`), never beside the tabs. Products, Customers, Webhooks, API keys and Support have a
     filter row too. **Status is never a separate row of tabs** (product owner): the
     admin lists and the support inbox (`FilterBar`: search by subject, customer or message, status
     with counts) put theirs in the same row

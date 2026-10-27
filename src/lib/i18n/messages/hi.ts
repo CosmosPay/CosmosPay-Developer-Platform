@@ -1391,7 +1391,7 @@ export default {
         slippage: "स्लिपेज (bps)", slippageHint: "बेसिस पॉइंट में अधिकतम स्लिपेज (वैकल्पिक, जैसे 50)।",
         create: "लेन-देन बनाएँ", creating: "बनाया जा रहा है…",
         createError: "लेन-देन नहीं बनाया जा सका।",
-        steps: { pair: "जोड़ी", amounts: "राशियाँ" },
+        steps: { position: "पोज़िशन", pair: "जोड़ी", amounts: "राशियाँ" },
       },
       detail: {
         eyebrow: "लिक्विडिटी",

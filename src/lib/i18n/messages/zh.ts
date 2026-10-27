@@ -1391,7 +1391,7 @@ export default {
         slippage: "滑点（bps）", slippageHint: "最大滑点，以基点为单位（可选，例如 50）。",
         create: "构建交易", creating: "构建中…",
         createError: "无法构建交易。",
-        steps: { pair: "交易对", amounts: "金额" },
+        steps: { position: "持仓", pair: "交易对", amounts: "金额" },
       },
       detail: {
         eyebrow: "流动性",

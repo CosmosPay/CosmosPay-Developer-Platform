@@ -1228,3 +1228,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .bulk-n { font-size: 13.5px; font-weight: 600; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cfm-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; font-weight: 600; color: var(--ink); }
 .cfm-list .cfm-more { font-weight: 400; color: var(--ink-3); }
+
+/* Liquidity's pool and position lookups are their tab's filter row (fields with their labels). */
+.fbar.liq-lookup { align-items: flex-end; }
+.fbar.liq-lookup .fbar-filters { align-items: flex-end; flex: 1 1 auto; }
+.fbar.liq-lookup .fbar-filters > .fld, .fbar.liq-lookup .fbar-filters > div { margin: 0; min-width: 220px; }
+.fbar.liq-lookup .paylink-actions { margin: 0; }

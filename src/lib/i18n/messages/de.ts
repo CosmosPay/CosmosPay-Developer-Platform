@@ -2063,7 +2063,7 @@ export default {
         slippage: "Slippage (bps)", slippageHint: "Maximale Slippage in Basispunkten (optional, z. B. 50).",
         create: "Transaktion erstellen", creating: "Wird erstellt…",
         createError: "Die Transaktion konnte nicht erstellt werden.",
-        steps: { pair: "Paar", amounts: "Beträge" },
+        steps: { position: "Position", pair: "Paar", amounts: "Beträge" },
       },
       detail: {
         eyebrow: "Liquidität",

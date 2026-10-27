@@ -1393,7 +1393,7 @@ export default {
         slippage: "Slippage (bps)", slippageHint: "Max slippage in basis points (optional, e.g. 50).",
         create: "Build transaction", creating: "Building…",
         createError: "Couldn't build the transaction.",
-        steps: { pair: "Pair", amounts: "Amounts" },
+        steps: { position: "Position", pair: "Pair", amounts: "Amounts" },
       },
       detail: {
         eyebrow: "Liquidity",

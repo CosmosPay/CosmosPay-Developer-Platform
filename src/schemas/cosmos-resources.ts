@@ -73,11 +73,16 @@ export const createCustomerBodySchema = z.object({
   reference: z.string().trim().max(120).optional(),
 });
 
-/* The customer's own fields: wallets change through /api/customers/{id}/wallets. */
+/* The customer's own fields: wallets change through /api/customers/{id}/wallets. An empty email
+   (or null) clears it: the edit form sends what its field holds, and a customer without an email
+   must still save (the proxy forwards it as null, which the Payments API stores as none). */
 export const updateCustomerBodySchema = createCustomerBodySchema
-  .omit({ wallets: true, account: true })
+  .omit({ wallets: true, account: true, email: true })
   .partial()
-  .extend({ account: anyChainAddress.nullable().optional() });
+  .extend({
+    account: anyChainAddress.nullable().optional(),
+    email: z.union([z.literal(""), z.string().trim().email().max(160)]).nullable().optional(),
+  });
 
 /* Body for the two receiver-approval proxies (org-scoped Fiat and platform Admin).
 
