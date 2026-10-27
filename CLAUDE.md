@@ -1019,8 +1019,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the table shows, and only the registered ones are rows, with their customer, their balances (read
   only with the customer's signature, "view balances" in the cell, the row and the detail) and the
   private payments they received (a count that filters the payments table). A row opens the
-  account's detail. It sits under the payments table. **"Add private account" asks for the
-  signatures** (product owner, 2026-10-27): a **dialog in two steps** (`AddPrivateAccountModal`, the
+  account's detail. It sits under the payments table. **"Create private account" asks for the
+  signatures** (product owner, 2026-10-27: "añado mi pública y no me crea una privada"; the button
+  and the dialog say create, the person passes the public account and the contract holds its
+  private account): a **dialog in two steps** (`AddPrivateAccountModal`, the
   `CustomerFormModal` pattern with `FormSteps`; creating is always a modal): the account (a
   customer, new or already there, and one of their Stellar wallets not on the token yet or a new
   address), then the signatures: the account must exist on the network (`accountExists`, refused
@@ -1030,7 +1032,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   nothing new can be derived for it, and one registered with the message root still receives
   private payments; only its balances do not open here). **The wallet is saved to the customer
   (`customers:create`) only after that**, so nothing public is ever listed. Each signature
-  opens over the dialog, which cannot be closed while the work runs. "Delete private account" (row menu and detail,
+  opens over the dialog, which cannot be closed while the work runs. **The second step reads the
+  contract first and says which case it is**: no private account yet (it is created, "Request
+  signatures and create"), or this public account already has one (since when and in which
+  transaction, from the token's `register` event, `registrationOf` in `src/lib/zk/wallet.ts`; "Add
+  the existing private account", no signature). The detail shows "Created on the contract" the same way. "Delete private account" (row menu and detail,
   `customers:edit`) removes the wallet from its customer, as the customer's detail does; the
   confidential account and its balance stay the customer's on-chain. **Nothing connects or opens a wallet** (product owner,
   2026-10-27: people hand over a signed XDR, not their wallet, and the wallet is the customer's, so

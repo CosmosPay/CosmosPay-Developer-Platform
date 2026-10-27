@@ -59,7 +59,7 @@ import { customers as custApi } from "@/lib/api-client";
 import { usePaged, useGsapRows, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { inRange, matchesQuery } from "@/lib/dashboard-filters";
-import { explorerAccountUrl, networkName } from "@/lib/chains";
+import { explorerAccountUrl, explorerTxUrl, networkName } from "@/lib/chains";
 import { shortAddress } from "@/lib/org-wallets";
 import { canProve } from "@/lib/zk/bb-loader";
 import { fromUnits, toUnits } from "@/lib/zk/amounts";
@@ -123,6 +123,8 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   const [adding, setAdding] = useState(false);
   const [toRemove, setToRemove] = useState<PrivateAccount | null>(null);
   const [removing, setRemoving] = useState(false);
+  // When each opened account registered on the token (undefined while read, null when unknown).
+  const [created, setCreated] = useState<Record<string, { txHash: string; at: string } | null>>({});
   // The signature the running action waits for, and how to hand it back.
   const [signing, setSigning] = useState<{ request: SignRequest; resolve: (xdr: string) => void; reject: (e: Error) => void } | null>(null);
   const [startedAt, setStartedAt] = useState(0);
@@ -347,6 +349,25 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   };
   // A row is a wallet of a customer (two customers may name the same address): kept by its id.
   const opened = detail ? privateAccounts.find((w) => w.walletId === detail) : null;
+  useEffect(() => {
+    const address = opened?.address;
+    if (!address || address in created) return;
+    let current = true;
+    import("@/lib/zk/wallet")
+      .then(({ registrationOf }) => registrationOf(config, address))
+      .catch(() => null)
+      .then((r) => { if (current) setCreated((c) => ({ ...c, [address]: r })); });
+    return () => { current = false; };
+  }, [opened?.address]);
+  const tier = config.network === "public" ? "public" : "testnet";
+  /* When the private account was created on the contract, with its transaction. */
+  const createdCell = (address: string) => {
+    if (!(address in created)) return <Sk w="9em" />;
+    const r = created[address];
+    if (!r) return "-";
+    const url = explorerTxUrl("stellar", tier, r.txHash);
+    return <>{fmtDateTime(r.at)}{url && <>{" · "}<a className="link-btn" href={url} target="_blank" rel="noopener noreferrer">{shortAddress(r.txHash)}</a></>}</>;
+  };
 
   // The progress of the running action is a line of its own under its row: one row fewer of filler.
   const workingOnPage = !adding && pg.slice.some((w) => progress(w.address));
@@ -449,6 +470,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
                   [za.tableHead.wallet, opened.label || networkName("stellar")],
                   [za.tableHead.address, <AddressLink key="a" chain="stellar" network={config.network} address={opened.address} label={za.tableHead.address} />],
                   [t.dash.paylinks.detail.fields.network, `${networkName("stellar")} ${config.network === "public" ? "Mainnet" : "Testnet"}`],
+                  [za.createdOn, createdCell(opened.address)],
                   [za.spendable, a.loaded ? `${fromUnits(a.loaded.spendable)} ${sym}` : za.balancesHidden],
                   ...(a.loaded ? [[za.receiving, `${fromUnits(a.loaded.receiving)} ${sym}`]] : []),
                   [za.tableHead.payments, paymentsCell(opened.address)],
@@ -478,7 +500,7 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
 
       {adding && (
         <AddPrivateAccountModal
-          customers={customers} env={env} orgId={orgId}
+          config={config} customers={customers} env={env} orgId={orgId}
           wallets={all.filter((w) => status[w.address] === false)}
           privateAccounts={privateAccounts}
           busy={!!busy} progress={working ? progress(busy!.address) : null}
@@ -522,7 +544,8 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
    closed) while the signatures and the proof run; each signature opens over it. */
 const NEW_CUSTOMER = "__new";
 const OTHER_ADDRESS = "__other";
-function AddPrivateAccountModal({ customers, env, orgId, wallets, privateAccounts, busy, progress, onCreate, onClose, onAdded }: {
+function AddPrivateAccountModal({ config, customers, env, orgId, wallets, privateAccounts, busy, progress, onCreate, onClose, onAdded }: {
+  config: ZkNetworkConfig;
   customers: PanelCustomer[] | null;
   env: string;
   orgId: string;
@@ -554,6 +577,24 @@ function AddPrivateAccountModal({ customers, env, orgId, wallets, privateAccount
   const already = customer !== NEW_CUSTOMER && privateAccounts.some((w) => w.customerId === customer && w.address === account);
   const accountOk = valid && !already && (customer !== NEW_CUSTOMER || name.trim() !== "");
   const working = busy || saving;
+  // The second step reads the contract: whether this public account already has its private
+  // account (the token keeps one per Stellar account) and since when. undefined while read; null
+  // registered when the read failed (the signatures' flow reads it again).
+  const [onChain, setOnChain] = useState<{ address: string; registered: boolean | null; since: { txHash: string; at: string } | null } | undefined>(undefined);
+  const known = onChain && onChain.address === account ? onChain : undefined;
+  useEffect(() => {
+    if (steps.step !== 1 || !valid || known) return;
+    let current = true;
+    (async () => {
+      const { confidentialAccounts, registrationOf } = await import("@/lib/zk/wallet");
+      const registered = await confidentialAccounts(config, [account]).then((r) => r[account] ?? null, () => null);
+      const since = registered ? await registrationOf(config, account).catch(() => null) : null;
+      if (current) setOnChain({ address: account, registered, since });
+    })();
+    return () => { current = false; };
+  }, [steps.step, account]);
+  const exists = known?.registered === true;
+  const sinceUrl = known?.since ? explorerTxUrl("stellar", config.network === "public" ? "public" : "testnet", known.since.txHash) : null;
 
   const submit = async () => {
     if (!accountOk || working) return;
@@ -605,19 +646,31 @@ function AddPrivateAccountModal({ customers, env, orgId, wallets, privateAccount
               <div className="paylink-field"><span className="pf-k">{za.tableHead.customer}</span><span className="pf-v">{customer === NEW_CUSTOMER ? name.trim() : customers?.find((c) => c.id === customer)?.name}</span></div>
               <div className="paylink-field"><span className="pf-k">{za.tableHead.address}</span><span className="pf-v">{shortAddress(account)}</span></div>
             </div>
-            <p className="field-note">{za.signIntro}</p>
-            <ol className="zka-sign-steps">
-              <li>{za.signKey}</li>
-              <li>{za.signProof}</li>
-              <li>{za.signRegister}</li>
-            </ol>
+            {!known && <p className="work-progress" role="status"><span className="work-spin" aria-hidden="true" /><span>{za.checking}</span></p>}
+            {exists && (<>
+              <p className="field-note">{fmt(za.exists, { account: shortAddress(account) })}</p>
+              {known?.since && (
+                <p className="field-help">
+                  {fmt(za.existsSince, { date: fmtDateTime(known.since.at) })}
+                  {sinceUrl && <>{" "}<a className="link-btn" href={sinceUrl} target="_blank" rel="noopener noreferrer">{shortAddress(known.since.txHash)}</a></>}
+                </p>
+              )}
+            </>)}
+            {known && !exists && (<>
+              <p className="field-note">{fmt(za.signIntro, { account: shortAddress(account) })}</p>
+              <ol className="zka-sign-steps">
+                <li>{za.signKey}</li>
+                <li>{za.signProof}</li>
+                <li>{za.signRegister}</li>
+              </ol>
+            </>)}
             {progress}
           </>)}
         </FormStep>
         {problem && <p className="field-err" role="alert">{problem}</p>}
         <FormStepsFooter
           steps={steps} canNext={accountOk} onCancel={onClose}
-          submitLabel={working ? za.creating : za.requestSignatures} onSubmit={submit} busy={working} submitDisabled={!accountOk}
+          submitLabel={exists ? za.addExisting : working ? za.creating : za.requestSignatures} onSubmit={submit} busy={working} submitDisabled={!accountOk || !known}
         />
       </div>
     </Modal>

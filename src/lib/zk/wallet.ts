@@ -32,7 +32,7 @@ import {
   type KeyPair,
   type Opening,
 } from "stellar-confidential-token-sdk";
-import { Keypair, rpc, xdr } from "@stellar/stellar-sdk";
+import { Address, Keypair, nativeToScVal, rpc, xdr } from "@stellar/stellar-sdk";
 import { ensureBrowserBackend } from "@/lib/zk/bb-loader";
 import { deriveSignerRootSk, deriveTransactionRootSk, type TransactionSigner } from "@/lib/zk/derive-key";
 import type { SignPurpose } from "@/lib/zk/xdr-signer";
@@ -283,6 +283,36 @@ export async function accountExists(deployment: ZkDeployment, address: string): 
   const key = xdr.LedgerKey.account(new xdr.LedgerKeyAccount({ accountId: Keypair.fromPublicKey(address).xdrPublicKey() }));
   const { entries } = await server.getLedgerEntries(key);
   return entries.length > 0;
+}
+
+/**
+ * When, and in which transaction, `address` registered its confidential account on the token: the
+ * token's `register` event naming it. Null when the RPC no longer keeps that ledger (it keeps a
+ * window of recent ones) or the account never registered. A read, with no signature.
+ */
+export async function registrationOf(deployment: ZkDeployment, address: string): Promise<{ txHash: string; at: string } | null> {
+  const server = new rpc.Server(deployment.rpcUrl, { allowHttp: deployment.rpcUrl.startsWith("http://") });
+  const topics = [[nativeToScVal("register", { type: "symbol" }).toXDR("base64"), new Address(address).toScVal().toXDR("base64")]];
+  const filters: rpc.Api.EventFilter[] = [{ type: "contract", contractIds: [deployment.token.contractId], topics }];
+  let start = deployment.token.deployedAtLedger;
+  let cursor: string | undefined;
+  // Each answer covers a range of ledgers: page on until the event or the latest ledger.
+  for (let i = 0; i < 40; i++) {
+    let res: rpc.Api.GetEventsResponse;
+    try {
+      res = await server.getEvents(cursor ? { filters, cursor, limit: 10 } : { filters, startLedger: start, limit: 10 });
+    } catch (e) {
+      // A start older than the RPC's window: from the oldest ledger it keeps.
+      const oldest = /between (\d+) and \d+/.exec(e instanceof Error ? e.message : String(e));
+      if (!cursor && oldest && Number(oldest[1]) > start) { start = Number(oldest[1]); continue; }
+      throw e;
+    }
+    const ev = res.events[0];
+    if (ev) return { txHash: ev.txHash, at: ev.ledgerClosedAt };
+    if (!res.cursor || res.cursor === cursor) return null;
+    cursor = res.cursor;
+  }
+  return null;
 }
 
 /**
