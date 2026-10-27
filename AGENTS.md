@@ -312,11 +312,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     (USD) and the payments created (the series' `zkPayments` part), Swaps, Liquidity and Webhooks
     their one figure (a single figure stands alone, not a tab). Each sits above its list; only the
     overview's charts link into a view. **Figures always come first, then the tables, in every view**
-    (product owner, 2026-10-27): a second table (private accounts under private payments) goes after
-    the main one, never above the figures. A list with no series of its own (customers, products,
+    (product owner, 2026-10-27): a second table goes after the main one, never above the figures. A list with no series of its own (customers, products,
     API keys, logs, client activity, users) opens with `ViewFigures` (same module): the activity
     panel's figure strip without its chart, its numbers counted from the list, a skeleton while it
-    loads and a dash when it failed. **A second list on a page** (private accounts, a webhook's
+    loads and a dash when it failed. **A second list on a page** (a webhook's
     deliveries, the most frequent errors, recent settlements, Settings' team and wallets) is a
     `hub-section` with its `h2`
     heading, then its own `FilterBar` (its own URL keys when the page's first list already uses
@@ -1038,17 +1037,21 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (percentage and/or fixed XLM, from the amount or on top, as on a payment link) must go to one of the
   organization's Stellar wallets (`orgHasWallet`), and the dialog shows the split the API makes
   (`zkSplit` with `ZkMerchantTerms` in `src/lib/zk/amounts.ts`: the commission on the amount, the
-  fee's percentage rounded down). The accounts are **managed inside the private payments view**
-  (`components/ZkAccountPanel.tsx`; product owner: never another page, and no bare "connect
-  Freighter"). It is the **"Private accounts" table** (product owner, 2026-10-27: the same table
+  fee's percentage rounded down). The accounts are **a view of their own, "Private accounts"**
+  (`views/ZkAccountsView.tsx` with `components/ZkAccountPanel.tsx`, beside Private payments in the
+  sidebar; product owner, 2026-10-27: separate the two views; no bare "connect Freighter"):
+  figures first (the accounts and sub-accounts, the customers holding them, the private payments
+  they received), then the **"Private accounts" table** (product owner, 2026-10-27: the same table
   format as every list). **Only accounts on the token's contract are listed** (product owner,
   2026-10-27: an account that is not on the contract is a public wallet, never a private account):
   every customer Stellar wallet (every page of `/api/customers`, 100 at a time) is read from the
   chain with no signature (`confidentialAccounts` in `src/lib/zk/wallet.ts`, 25 at a time) before
   the table shows, and only the registered ones are rows, with their customer, their balances (read
   only with the customer's signature, "view balances" in the cell, the row and the detail) and the
-  private payments they received (a count that filters the payments table). A row opens the
-  account's detail. It sits under the payments table. **"Create private account" asks for the
+  private payments they received (a count that opens Private payments filtered to the account,
+  `q`). A row opens the account's detail. Private payments reads the same customers
+  (`useCustomerAccounts`) and the chain (`useRegisteredAccounts`) for its recipients, with no
+  table of accounts. **"Create private account" asks for the
   signatures** (product owner, 2026-10-27: "añado mi pública y no me crea una privada"; the button
   and the dialog say create, the person passes the public account and the contract holds its
   private account): a **dialog in two steps** (`AddPrivateAccountModal`, the

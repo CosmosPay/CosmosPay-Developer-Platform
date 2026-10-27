@@ -4,15 +4,16 @@
    (payments.cosmospay.lat/zk/{id}); the recipient is a customer's private account (product owner,
    2026-10-27: private accounts are customers' Stellar wallets on Cosmos Pay's token, as many as there
    are), which receives the amount minus the 0.18% commission and the organization's own fee, if any,
-   paid to one of the organization's wallets (Settings). The private accounts are a table of their
-   own under the payments (ZkAccountPanel), read from every page of the customers and checked on the
-   chain: only a wallet registered on the token is offered as a payment's recipient.
+   paid to one of the organization's wallets (Settings). The private accounts are a view of their own
+   (ZkAccountsView; product owner, 2026-10-27: separate views); here they are read from every page of
+   the customers and checked on the chain, so only a wallet registered on the token is offered as a
+   payment's recipient. Private accounts link here filtered to one account (`q`).
    Testnet (the sandbox) only for now. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { IcCopy } from "@/components/cosmos/icons";
-import { zkPayments as zkApi, customers as custApi } from "@/lib/api-client";
+import { zkPayments as zkApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime, idempotencyKeys } from "@/components/cosmos/dashboard/helpers";
 import { ViewActivity } from "@/components/cosmos/dashboard/components/ActivityPanel";
@@ -35,7 +36,7 @@ import { PAYMENTS } from "@/components/cosmos/lib/constants";
 import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { fromUnits, toUnits, zkSplit } from "@/lib/zk/amounts";
 import { parseZkConfig } from "@/lib/zk/checkout-api";
-import { ZkAccountPanel } from "@/components/cosmos/dashboard/components/ZkAccountPanel";
+import { useCustomerAccounts, useRegisteredAccounts } from "@/components/cosmos/dashboard/components/ZkAccountPanel";
 import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 
@@ -48,35 +49,7 @@ const EXPIRIES = [60, 1440, 10080];
 const checkoutUrl = (id) => `${PAYMENTS}/zk/${id}`;
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
 
-/* Every customer and their Stellar wallets, page after page (the API serves 100 at a time): the
-   private accounts are customers' wallets, with no limit on how many. */
-function useCustomerAccounts(env) {
-  const [state, setState] = useState({ customers: null, accounts: null, error: false });
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      const all = [];
-      for (let skip = 0; ; skip += 100) {
-        const page = await custApi.list(env, { take: 100, skip });
-        const rows = Array.isArray(page?.data) ? page.data : [];
-        all.push(...rows);
-        if (rows.length < 100 || all.length >= (page?.total ?? all.length)) break;
-      }
-      if (!alive) return;
-      const name = (c) => c.alias || c.name;
-      setState({
-        customers: all.map((c) => ({ id: c.id, name: name(c) })),
-        accounts: all.flatMap((c) => (c.wallets || []).filter((w) => w.chain === "stellar").map((w) => ({ walletId: w.id, address: w.address, label: w.label, customerId: c.id, customerName: name(c), createdAt: w.createdAt }))),
-        error: false,
-      });
-    })().catch(() => { if (alive) setState({ customers: [], accounts: [], error: true }); });
-    return () => { alive = false; };
-  }, [env, tick]);
-  return { ...state, reload: () => setTick((n) => n + 1) };
-}
-
-export function ZkPaymentsView({ canManage = false, canConnectWallets = false, canAddAccounts = false, canRemoveAccounts = false, orgId, env = "dev" }) {
+export function ZkPaymentsView({ canManage = false, canConnectWallets = false, orgId, env = "dev" }) {
   const t = useT();
   const z = t.zk;
   const fl = t.dash.filters;
@@ -84,9 +57,7 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(false);
   const [modal, setModal] = useState(false);
-  // The private accounts' addresses (on the token); null until the panel read them all.
-  const [registered, setRegistered] = useState(null);
-  const { customers, accounts, error: accountsError, reload } = useCustomerAccounts(env);
+  const { accounts } = useCustomerAccounts(env);
   const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   // Loads once the organization is known; an answer for an organization or environment the view
@@ -114,9 +85,8 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + shown.length);
   const canCreate = canManage && config;
   const zkConfig = useMemo(() => (config ? parseZkConfig(config) : null), [config]);
-
-  // An account's count of payments received filters the payments table to it.
-  const showPaymentsTo = (address) => { set("q", address); document.getElementById("zk-payments")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  // The private accounts' addresses (on the token): a payment's recipients; null until all read.
+  const registered = useRegisteredAccounts(zkConfig, accounts);
   const copy = (id) => navigator.clipboard?.writeText(checkoutUrl(id)).then(() => showToast(t.toasts.copied)).catch(() => {});
   const [detail, setDetail] = useState(null);
   // A private payment named from elsewhere opens once the list is here.
@@ -184,8 +154,6 @@ export function ZkPaymentsView({ canManage = false, canConnectWallets = false, c
         )}
         {rows !== null && <Pagination {...pg} />}
       </div>
-      {/* The private accounts the payments go to, a table of their own under the payments. */}
-      {zkConfig && <ZkAccountPanel key={`${orgId}:${env}`} config={zkConfig} orgId={orgId} env={env} accounts={accounts} loadError={accountsError} customers={customers} canAdd={canAddAccounts} canRemove={canRemoveAccounts} onChanged={reload} onRegistered={setRegistered} payments={rows} onShowPayments={showPaymentsTo} />}
       {detail && <ZkPaymentDetailModal payment={detail} orgId={orgId} env={env} onCopy={copy} onClose={() => setDetail(null)} />}
       {modal && config && (
         <CreateZkPaymentModal

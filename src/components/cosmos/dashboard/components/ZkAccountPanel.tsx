@@ -1,16 +1,17 @@
-/* The private accounts, a table inside the private payments view in the format of every other list
-   (product owner: never another page for it; 2026-10-27: the same table format, in their own
-   "Private accounts" section, under the payments). A private account is a customer's Stellar
+/* The private accounts, the Private accounts view's table (product owner, 2026-10-27: private
+   payments and private accounts are views of their own; the same table format as every list),
+   after its figures (accounts and sub-accounts, the customers holding them, the private payments
+   they received). A private account is a customer's Stellar
    wallet that holds a confidential account on Cosmos Pay's token (product owner, 2026-10-27: they
    are customers' wallets, as many as there are; the organization's own wallets take its fees; an
    account that is not on the token's contract is a public wallet, not a private account). So the
    table lists only the customers' Stellar wallets the chain says are registered on the token (read
    with no signature, a few at a time, before the table shows); a customer's other Stellar wallets
    stay in Customers. Each row has its customer, its balances (read only with the customer's
-   signature), how many private payments it received (which filter the payments table) and when it
-   was added. It is a list like every other (product owner, 2026-10-27): a section heading, the
-   filter bar (search, date, its own URL keys), the table with the customer as the link that opens
-   and previews the account, the row's icon actions and its menu, filler rows and pages.
+   signature), how many private payments it received (which opens Private payments filtered to it)
+   and when it was added. It is a list like every other (product owner, 2026-10-27): the filter bar
+   (search, date, its own URL keys), the table with the customer as the link that opens and
+   previews the account, the row's icon actions and its menu, filler rows and pages.
 
    "Add private account" opens a dialog in two steps, as long forms do: the account (a customer, new
    or already there, and one of their Stellar wallets or a new address), then the signatures that
@@ -44,7 +45,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { StrKey } from "@stellar/stellar-sdk";
 import { Modal, showToast } from "@/components/cosmos/shared";
-import { fmt, fmtNodes, useT } from "@/lib/i18n/index";
+import { fmt, fmtNodes, useLang, useT } from "@/lib/i18n/index";
 import { IcCheck, IcCopy } from "@/components/cosmos/icons";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { Sk, TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
@@ -62,6 +63,7 @@ import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
 import { customers as custApi } from "@/lib/api-client";
 import { usePaged, useGsapRows, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { ViewFigures, countText } from "@/components/cosmos/dashboard/components/ActivityPanel";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { explorerAccountUrl, networkName } from "@/lib/chains";
@@ -87,12 +89,60 @@ const DEFAULTS = { accq: "", accdate: "any" };
 /* The chain is read this many accounts at a time. */
 const STATUS_CHUNK = 25;
 
+/* Every customer and their Stellar wallets, page after page (the API serves 100 at a time): the
+   private accounts are customers' wallets, with no limit on how many. Both private views read it. */
+export function useCustomerAccounts(env: string) {
+  const [state, setState] = useState<{ customers: PanelCustomer[] | null; accounts: PrivateAccount[] | null; error: boolean }>({ customers: null, accounts: null, error: false });
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const all: any[] = [];
+      for (let skip = 0; ; skip += 100) {
+        const page = await custApi.list(env, { take: 100, skip });
+        const rows = Array.isArray(page?.data) ? page.data : [];
+        all.push(...rows);
+        if (rows.length < 100 || all.length >= (page?.total ?? all.length)) break;
+      }
+      if (!alive) return;
+      const name = (c) => c.alias || c.name;
+      setState({
+        customers: all.map((c) => ({ id: c.id, name: name(c) })),
+        accounts: all.flatMap((c) => (c.wallets || []).filter((w) => w.chain === "stellar").map((w) => ({ walletId: w.id, address: w.address, label: w.label, customerId: c.id, customerName: name(c), createdAt: w.createdAt }))),
+        error: false,
+      });
+    })().catch(() => { if (alive) setState({ customers: [], accounts: [], error: true }); });
+    return () => { alive = false; };
+  }, [env, tick]);
+  return { ...state, reload: () => setTick((n) => n + 1) };
+}
+
+/* The private accounts' addresses: which customers' Stellar wallets are registered on the token,
+   read from the chain with no signature, a few at a time (null until every wallet was read). What
+   a private payment may be sent to, outside the accounts' own table. */
+export function useRegisteredAccounts(config: ZkNetworkConfig | null, accounts: PrivateAccount[] | null): string[] | null {
+  const [status, setStatus] = useState<Record<string, boolean | null>>({});
+  const unread = config && accounts ? [...new Set(accounts.map((w) => w.address).filter((a) => !(a in status)))] : [];
+  useEffect(() => {
+    if (!config || !unread.length) return;
+    let current = true;
+    const batch = unread.slice(0, STATUS_CHUNK);
+    import("@/lib/zk/wallet")
+      .then(({ confidentialAccounts }) => confidentialAccounts(config, batch))
+      .then((s) => { if (current) setStatus((prev) => ({ ...prev, ...s })); })
+      .catch(() => { if (current) setStatus((prev) => ({ ...prev, ...Object.fromEntries(batch.map((a) => [a, null])) })); });
+    return () => { current = false; };
+  }, [unread.slice(0, STATUS_CHUNK).join(","), config?.token.contractId]);
+  if (!config || !accounts || unread.length) return null;
+  return [...new Set(accounts.map((w) => w.address).filter((a) => status[a] === true))];
+}
+
 const clock = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false, customers, canAdd = false, canRemove = false, onChanged, onRegistered, payments = null, onShowPayments }: {
+export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false, customers, canAdd = false, canRemove = false, onChanged, payments = null, onShowPayments }: {
   config: ZkNetworkConfig;
   orgId: string;
   env: string;
@@ -107,15 +157,13 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   canRemove?: boolean;
   /* Read the customers again, after a wallet was added or removed. */
   onChanged?: () => void;
-  /* The wallets holding a confidential account (the payments' recipients); null until every
-     wallet was read. */
-  onRegistered?: (addresses: string[] | null) => void;
   /* The organization's private payments, to count each account's; null while they load. */
-  payments?: { recipient?: string | null }[] | null;
-  /* Shows the payments table filtered to one account. */
+  payments?: { recipient?: string | null; status?: string }[] | null;
+  /* Opens the private payments filtered to one account. */
   onShowPayments?: (address: string) => void;
 }) {
   const t = useT();
+  const lang = useLang();
   const z = t.zk;
   const za = z.account;
   const [status, setStatus] = useState<Record<string, boolean | null>>({});
@@ -142,7 +190,6 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   const fl = t.dash.filters;
   const { filters, set, reset, active } = useListFilters(DEFAULTS);
   const all = accounts || [];
-  const addresses = all.map((w) => w.address).join(",");
   // Every wallet's place on the token is read before the table shows: only the registered ones
   // are private accounts.
   const unread = [...new Set(all.map((w) => w.address).filter((a) => !(a in status)))];
@@ -172,7 +219,6 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
       .catch(() => { if (current) setStatus((prev) => ({ ...prev, ...Object.fromEntries(batch.map((a) => [a, null])) })); });
     return () => { current = false; };
   }, [unread.slice(0, STATUS_CHUNK).join(","), config.token.contractId]);
-  useEffect(() => { onRegistered?.(accounts === null || checking ? null : privateAccounts.map((w) => w.address)); }, [status, addresses, checking]);
   useEffect(() => () => { wallet.current?.destroy(); }, []);
   // The proof takes a while on one thread: a clock beside it says the work is moving.
   useEffect(() => {
@@ -418,12 +464,21 @@ export function ZkAccountPanel({ config, orgId, env, accounts, loadError = false
   // The progress of the running action is a line of its own under its row: one row fewer of filler.
   const workingOnPage = !adding && pg.slice.some((w) => progress(w.address));
   const loading = accounts === null || checking;
+  // The view's figures (figures first, then the table): the accounts and how many are
+  // sub-accounts, the customers holding them, and the private payments they received.
+  const num = new Intl.NumberFormat(lang);
+  const h = t.dash.overview.hub;
+  const own = new Set(privateAccounts.map((w) => w.address));
+  const paidTo = (payments || []).filter((p) => p.recipient && own.has(p.recipient));
+  const figures = [
+    { key: "accounts", label: za.title, value: num.format(privateAccounts.length), sub: countText(privateAccounts.filter((w) => controllers[w.address]).length, za.figSubOne, za.figSubN, num) },
+    { key: "customers", label: za.figCustomers, value: num.format(new Set(privateAccounts.map((w) => w.customerId)).size), sub: countText((customers || []).length, za.figCustomersOfOne, za.figCustomersOf, num) },
+    { key: "payments", label: za.figPayments, value: num.format(paidTo.length), sub: countText(paidTo.filter((p) => p.status === "SUCCEEDED").length, h.doneOne, h.doneN, num) },
+  ];
 
   return (
-    <section className="hub-section zka" aria-labelledby="zka-title" aria-busy={busy || loading ? true : undefined}>
-      {/* A second list on the page: its heading, then the filter bar and the table, as the
-          overview's transactions are. */}
-      <div className="hub-section-head"><h2 id="zka-title">{za.title}</h2></div>
+    <section className="zka" aria-label={za.title} aria-busy={busy || loading ? true : undefined}>
+      <ViewFigures label={za.figLabel} items={figures} loading={loading || payments === null} failed={loadError} />
       <FilterBar
         label={fl.label}
         query={filters.accq} onQuery={(v) => set("accq", v)} placeholder={za.searchPlaceholder}

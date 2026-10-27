@@ -62,7 +62,7 @@ export default {
       link: "Link de pagamento",
       steps: { amount: "Valor e cliente", details: "Detalhes", fee: "Taxa" },
     },
-    account: {
+    account: { figSubOne: "1 subconta", figSubN: "{n} subcontas", figCustomers: "Clientes com conta privada", figCustomersOfOne: "de 1 cliente", figCustomersOf: "de {n} clientes", figPayments: "Pagamentos privados recebidos", figLabel: "Resumo das contas privadas",
       title: "Contas privadas",
       needWallet: "Para receber pagamentos privados, a organização precisa de pelo menos uma carteira Stellar conectada.",
       viewBalances: "Ver saldos",
@@ -1084,7 +1084,7 @@ export default {
     search: { label: "Pesquisar no painel", placeholder: "Pesquisar", pages: "Páginas", searchGroup: "Pesquisar", searchIn: "{place} com “{q}”", empty: "Nada corresponde a “{q}”." },
     viewLabels: {
       overview: "Visão geral", payment: "Pagamento",
-      payments: "Pagamentos", zkPayments: "Pagamentos privados",
+      payments: "Pagamentos", zkPayments: "Pagamentos privados", zkAccounts: "Contas privadas",
       balances: "Saldos",
       customers: "Clientes",
       products: "Produtos e links",
@@ -1124,7 +1124,7 @@ export default {
       },
       items: {
         overview: "Visão geral",
-        payments: "Pagamentos", zkPayments: "Pagamentos privados",
+        payments: "Pagamentos", zkPayments: "Pagamentos privados", zkAccounts: "Contas privadas",
         balances: "Saldos",
         customers: "Clientes",
         products: "Produtos",

@@ -2,6 +2,7 @@ export { OverviewView } from "@/components/cosmos/dashboard/views/OverviewView";
 export { PaymentsView } from "@/components/cosmos/dashboard/views/PaymentsView";
 export { PaymentRecordView } from "@/components/cosmos/dashboard/views/PaymentRecordView";
 export { ZkPaymentsView } from "@/components/cosmos/dashboard/views/ZkPaymentsView";
+export { ZkAccountsView } from "@/components/cosmos/dashboard/views/ZkAccountsView";
 export { BalancesView } from "@/components/cosmos/dashboard/views/BalancesView";
 export { CustomersView } from "@/components/cosmos/dashboard/views/CustomersView";
 export { ProductsView } from "@/components/cosmos/dashboard/views/ProductsView";

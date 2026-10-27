@@ -62,7 +62,7 @@ export default {
       link: "Zahlungslink",
       steps: { amount: "Betrag und Kunde", details: "Details", fee: "Gebühr" },
     },
-    account: {
+    account: { figSubOne: "1 Unterkonto", figSubN: "{n} Unterkonten", figCustomers: "Kunden mit privatem Konto", figCustomersOfOne: "von 1 Kunde", figCustomersOf: "von {n} Kunden", figPayments: "Erhaltene private Zahlungen", figLabel: "Private Konten im Überblick",
       title: "Private Konten",
       needWallet: "Um private Zahlungen zu empfangen, braucht die Organisation mindestens eine verbundene Stellar-Wallet.",
       viewBalances: "Salden anzeigen",
@@ -1084,7 +1084,7 @@ export default {
     search: { label: "Dashboard durchsuchen", placeholder: "Suchen", pages: "Seiten", searchGroup: "Suchen", searchIn: "{place} mit „{q}“", empty: "Nichts passt zu „{q}“." },
     viewLabels: {
       overview: "Übersicht", payment: "Zahlung",
-      payments: "Zahlungen", zkPayments: "Private Zahlungen",
+      payments: "Zahlungen", zkPayments: "Private Zahlungen", zkAccounts: "Private Konten",
       balances: "Guthaben",
       customers: "Kunden",
       products: "Produkte & Links",
@@ -1124,7 +1124,7 @@ export default {
       },
       items: {
         overview: "Übersicht",
-        payments: "Zahlungen", zkPayments: "Private Zahlungen",
+        payments: "Zahlungen", zkPayments: "Private Zahlungen", zkAccounts: "Private Konten",
         balances: "Guthaben",
         customers: "Kunden",
         products: "Produkte",
