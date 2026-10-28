@@ -1,4 +1,4 @@
-/* POST /api/kyc/receivers/:id/tos — request a terms-of-service link for a receiver.
+/* POST /api/kyc/receivers/:id/tos: request a terms-of-service link for a receiver.
 
    More specific than the generic /api/kyc/[...path] proxy, so it wins for this path.
    It forwards to the Payments API (which rate-limits the email channel to once/day and
@@ -6,7 +6,7 @@
    here via the dashboard mailer (the Payments service has no mail transport). */
 import { z } from "zod";
 import type { APIRoute } from "astro";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { isManagerRole } from "@/lib/org-permissions";
@@ -21,7 +21,7 @@ const bodySchema = z.object({
 });
 
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;

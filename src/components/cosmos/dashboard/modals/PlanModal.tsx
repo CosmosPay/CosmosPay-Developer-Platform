@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { Modal, IcCheck, IcArrow } from "@/components/cosmos/shared";
+import { Modal, IcCheck, IcArrow, PRICING } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
-import { PLAN_IDS, PLAN_SPECS, PLAN_PRICE } from "@/lib/plans.ts";
+import { ALL_PLAN_IDS, PLAN_IDS, PLAN_SPECS, PLAN_PRICE, swapFeePct } from "@/lib/plans.ts";
 
 /* Render a spec value: booleans → check / dash, null numbers → ∞, everything else as-is. */
 function Cell({ v }) {
   if (v === true) return <IcCheck />;
-  if (v === false) return <span className="pcm-no">—</span>;
+  if (v === false) return <span className="pcm-no">-</span>;
   if (v === null) return <span>∞</span>;
   return <span>{v}</span>;
 }
 
-/* Plan switcher — always shows a full side-by-side comparison (in the style of the
+/* Plan switcher: always shows a full side-by-side comparison (in the style of the
    pricing page) between the current plan and a selected one, built entirely from the
    shared plan specs (@/lib/plans), so org counts, mainnet support, fees and limits stay
    in sync everywhere. Selecting routes through a confirmation (onSelect) before applying. */
@@ -19,13 +19,16 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
   const t = useT();
   const p = t.dash.settings.plan;
   const names = t.dash.planNames;
-  const curIdx = PLAN_IDS.indexOf(current);
-  // Only offer the env-enabled plans (always keep the current one visible).
-  const ids = PLAN_IDS.filter((id) => !enabledPlans || !enabledPlans.length || enabledPlans.includes(id) || id === current);
+  // Upgrade/downgrade follows the full ladder, so leaving a legacy plan reads as an upgrade.
+  const curIdx = ALL_PLAN_IDS.indexOf(current);
+  // Only offer the env-enabled plans that are still offered; always keep the current one
+  // visible, even a legacy plan (the old free one), which can't be picked again.
+  const offered = PLAN_IDS.filter((id) => !enabledPlans || !enabledPlans.length || enabledPlans.includes(id));
+  const ids = ALL_PLAN_IDS.filter((id) => offered.includes(id) || id === current);
   // Default the comparison to the first other enabled plan (or the current one).
   const [target, setTarget] = useState(ids.find((id) => id !== current) || current);
   const isSame = target === current;
-  const isUpgrade = PLAN_IDS.indexOf(target) > curIdx;
+  const isUpgrade = ALL_PLAN_IDS.indexOf(target) > curIdx;
   const a = PLAN_SPECS[current];
   const b = PLAN_SPECS[target];
 
@@ -34,6 +37,7 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
   const rows = [
     { l: p.price, a: a.price, b: b.price },
     { l: p.perTx, a: a.perTx, b: b.perTx },
+    { l: p.swapFee, a: swapFeePct(current), b: swapFeePct(target) },
     { l: p.apiAccess, a: apiLabel(a.api), b: apiLabel(b.api) },
     { l: p.mainnet, a: a.mainnet, b: b.mainnet },
     { l: p.orgs, a: a.maxOrgs, b: b.maxOrgs },
@@ -91,7 +95,7 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
         {isSame
           ? <button className="btn btn-soft" disabled>{p.current}</button>
           : <button className="btn btn-violet" onClick={() => { onSelect(target); onClose(); }}>{fmt(p.switchTo, { plan: names[target] })} <IcArrow /></button>}
-        <a className="btn btn-soft" href="/pricing">{t.dash.common.viewPlans}</a>
+        <a className="btn btn-soft" href={PRICING}>{t.dash.common.viewPlans}</a>
         <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
       </div>
     </div></Modal>

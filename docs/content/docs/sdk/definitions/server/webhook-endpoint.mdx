@@ -15,8 +15,8 @@ constructor(client: Client, data: WebhookEndpointData | WebhookEndpointWithSecre
 
 **Parameters**
 
-- `client` — [`Client`](/sdk/definitions/server/client)
-- `data` — `WebhookEndpointData | WebhookEndpointWithSecretData`
+- `client`: [`Client`](/sdk/definitions/server/client)
+- `data`: `WebhookEndpointData | WebhookEndpointWithSecretData`
 
 ## Properties
 
@@ -112,7 +112,7 @@ edit(options: UpdateWebhookEndpointOptions): Promise<this>
 
 **Parameters**
 
-- `options` — `UpdateWebhookEndpointOptions`
+- `options`: `UpdateWebhookEndpointOptions`
 
 **Returns** `Promise<this>`
 
@@ -166,7 +166,7 @@ fetchDeliveries(options?: ListWebhookDeliveriesOptions): Promise<WebhookDelivery
 
 **Parameters**
 
-- `options` _(optional)_ — `ListWebhookDeliveriesOptions`
+- `options` _(optional)_: `ListWebhookDeliveriesOptions`
 
 **Returns** `Promise<WebhookDeliveryPage>`
 

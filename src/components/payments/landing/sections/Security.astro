@@ -1,0 +1,40 @@
+---
+// Security section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+  /** The home's teaser: four facts and a link to the security page. */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<section class="pl-section" aria-labelledby="pl-security">
+  <div class="wrap pl-split">
+    <div class="pl-head pl-head-sticky" data-reveal>
+      <h2 id="pl-security">{t.security.title} {t.security.titleBold}</h2>
+      <div class="pl-security-visual">
+        <img class="pl-3d pl-security-3d" src="/media/landing/3d-security.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
+        <Mock name="explorer" ui={t.ui} />
+      </div>
+      {compact && <a class="pl-textlink pl-more" href={links.security}>{t.pages.more.security}</a>}
+    </div>
+    <ul class="pl-facts-list" role="list">
+      {(compact ? security.slice(0, 4) : security).map((s, i) => (
+        <li data-reveal style={`--i: ${i}`}>
+          <span class="pl-fact-icon"><Icon name={s.icon} /></span>
+          <h3>{s.title}</h3>
+          <p>{s.body}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

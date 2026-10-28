@@ -1,5 +1,5 @@
 // The docs site's view of the Payments API spec: the community server's openapi.json,
-// with public-facing auth and tag headings — and NOTHING else changed.
+// with public-facing auth and tag headings, and NOTHING else changed.
 //
 // Pure, and shared by the two scripts that must agree on it: `generate-api.mjs` writes
 // docs/openapi.json through it, and `scripts/check-api-spec.mjs` recomputes it from the
@@ -15,7 +15,7 @@
 //     API key. That is replaced with one bearer scheme. SEP-30's own token (`sep-token`)
 //     is NOT the gateway's and is kept.
 //   - public routes keep `security: []`. An empty requirement list is a statement ("no
-//     credentials"), not an absence — deleting it made every public route inherit the
+//     credentials"), not an absence; deleting it made every public route inherit the
 //     API-key requirement, and the reference told readers to send a key the SEP-10 and
 //     SEP-30 endpoints never read.
 
@@ -27,7 +27,7 @@ export const TAGS = [
   {
     name: 'payment-intents',
     title: 'Payment Intents',
-    description: 'Create, fetch, update, cancel and validate Stellar (SEP-7) payment intents.',
+    description: 'Create, fetch, update, cancel and validate payment intents on Stellar (SEP-7), Solana (Solana Pay) and Monad (EIP-681).',
   },
   {
     name: 'swaps',
@@ -40,8 +40,29 @@ export const TAGS = [
     name: 'cross-chain-swaps',
     title: 'Cross-chain Swaps',
     description:
-      'Swaps between Stellar, Solana and Monad, settled by NEAR Intents: quote, get a deposit ' +
-      'address, pay it, and follow the swap to its outcome.',
+      'Swaps between every network NEAR Intents reaches, settled by NEAR Intents: quote, get a ' +
+      'deposit address, pay it, and follow the swap to its outcome.',
+  },
+  {
+    name: 'usdt0',
+    title: 'USDT0 Transfers',
+    description:
+      'USDT0 out of Stellar through LayerZero: quote, build the Soroban transaction the holder signs, ' +
+      'submit it and follow the message to its destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only.',
+  },
+  {
+    name: 'zk-payments',
+    title: 'Private Payments',
+    description:
+      'Payments on Stellar whose amount stays hidden on-chain. Create a private payment, ' +
+      'list and read them; the merchant receives the amount minus the 0.01% commission.',
+  },
+  {
+    name: 'zk-checkout',
+    title: 'Private Checkout',
+    description:
+      'What the payer\'s browser reads and calls without a key: one private payment, the network\'s ' +
+      'confidential-token setup, and the confirmation of the two confidential transfers that pay it.',
   },
   {
     name: 'liquidity-pools',
@@ -54,6 +75,14 @@ export const TAGS = [
     description:
       'The asset registry: which (code, issuer) pairs exist per network and who issues them. ' +
       '`verified` is a claim about the issuer’s identity, not about quality.',
+  },
+  {
+    name: 'payment-links',
+    title: 'Payment Links',
+    description:
+      'The payer’s view of one payment link, served without a key to the hosted checkout ' +
+      'on payments.cosmospay.lat. The link id is the capability: anyone holding it can read ' +
+      'the amount, the address to pay and the live status, and nothing about the merchant.',
   },
   {
     name: 'public-key',
@@ -133,7 +162,7 @@ export const TAGS = [
     name: 'activity',
     title: 'Client Activity',
     description:
-      'Report what your own client did — errors, timings, transactions — and read it back. ' +
+      'Report what your own client did (errors, timings, transactions) and read it back. ' +
       'Unlike the API logs, which only ever see requests that reached this service, these are ' +
       'the events that happen entirely on a device: a crash, a cancelled signature, a screen ' +
       'that failed before any request left it.',

@@ -1,9 +1,9 @@
 ---
 title: "WalletRegistry"
-description: "Registry of the supported browser wallet adapters — detects which wallets are installed and resolves the right adapter."
+description: "Registry of the supported browser wallet adapters; it detects which wallets are installed and resolves the right adapter."
 ---
 
-Registry of the supported browser wallet adapters — detects which wallets are installed and resolves the right adapter.
+Registry of the supported browser wallet adapters; it detects which wallets are installed and resolves the right adapter.
 
 ## Constructor
 
@@ -15,7 +15,7 @@ constructor(adapters?: WalletAdapter[])
 
 **Parameters**
 
-- `adapters` _(optional)_ — `WalletAdapter[]`
+- `adapters` _(optional)_: `WalletAdapter[]`
 
 ## Methods
 
@@ -29,8 +29,8 @@ register(adapter: WalletAdapter, prepend?: boolean): this
 
 **Parameters**
 
-- `adapter` — `WalletAdapter`
-- `prepend` _(optional)_ — `boolean`
+- `adapter`: `WalletAdapter`
+- `prepend` _(optional)_: `boolean`
 
 **Returns** `this`
 
@@ -44,7 +44,7 @@ unregister(id: string): this
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `this`
 
@@ -58,7 +58,7 @@ get(id: string): WalletAdapter | undefined
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `WalletAdapter | undefined`
 
@@ -102,6 +102,6 @@ detect(preferred?: string): Promise<WalletAdapter>
 
 **Parameters**
 
-- `preferred` _(optional)_ — `string`
+- `preferred` _(optional)_: `string`
 
 **Returns** `Promise<WalletAdapter>`

@@ -3,7 +3,7 @@
    va en panel navy, el momento de marca que pide BRAND.md. */
 import { IcArrow } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { MARKETPLACE_URL } from "./data";
+import { MARKETPLACE_URL } from "@/components/cosmos/marketing/data";
 
 export function Marketplace() {
   const t = useT();

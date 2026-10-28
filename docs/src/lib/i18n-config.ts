@@ -1,8 +1,8 @@
 import { defineI18n } from 'fumadocs-core/i18n';
 
 // URL-based docs i18n. The default language (en) stays unprefixed (/docs/sdk/...) and the
-// others get a locale segment (/docs/es/sdk/...) — `hideLocale: 'default-locale'`. Per-locale
-// content lives in dot-suffixed siblings (overview.es.mdx, meta.es.json — `parser: 'dot'`),
+// others get a locale segment (/docs/es/sdk/...) via `hideLocale: 'default-locale'`. Per-locale
+// content lives in dot-suffixed siblings (overview.es.mdx, meta.es.json, via `parser: 'dot'`),
 // and any page without a translation falls back to English (`fallbackLanguage: 'en'`). The
 // language codes mirror the portal's LangSelect (lib/i18n).
 export const DOCS_LANGUAGES = ['en', 'es', 'fr', 'de', 'pt'] as const;

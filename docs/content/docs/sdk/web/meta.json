@@ -1,6 +1,6 @@
 {
   "title": "Web",
-  "description": "@cosmosapp/pay_sdk/web — the browser wallet client.",
+  "description": "@cosmosapp/pay_sdk/web: the browser wallet client.",
   "pages": [
     "web-client",
     "assets-wallets-addresses"

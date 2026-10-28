@@ -5,28 +5,29 @@
 
    NOTE: there is deliberately NO fee/commission field here. The swap commission is the
    calling organization's plan rate, resolved server-side (orgSwapContext) and injected
-   into the gateway headers — it can never be passed as a parameter. */
+   into the gateway headers; it can never be passed as a parameter. */
 /* `z` comes from @/lib/openapi/zod, not from "zod": that module applies
-   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive — a schema
+   extendZodWithOpenApi, and with zod v4 the extension is NOT retroactive: a schema
    built before it runs has no `.openapi()` at all. These schemas are handed to the
    OpenAPI registration in ./<module>/openapi.ts, and importing the extended `z` here is
    what guarantees the extension has run by the time they are constructed. It is the same
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
+import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, CHAINS, NETWORK_IDS, isChain, type Chain } from "@/lib/chains";
 
-export const SWAP_CHAINS = ["stellar", "solana", "monad"] as const;
-export type SwapChain = (typeof SWAP_CHAINS)[number];
+export const SWAP_CHAINS = CHAINS;
+export type SwapChain = Chain;
 
-const STELLAR_ADDRESS = /^G[A-Z2-7]{55}$/;
-const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const STELLAR_ADDRESS = ADDRESS_PATTERNS.stellar;
+const SOLANA_ADDRESS = ADDRESS_PATTERNS.solana;
+const EVM_ADDRESS = ADDRESS_PATTERNS.monad;
 
 /* What an account address looks like on each chain (shape only; the Payments API checks
    the checksum). A missing chain is Stellar, as upstream. */
 const ADDRESS_RULES: Record<SwapChain, { re: RegExp; message: string }> = {
-  stellar: { re: STELLAR_ADDRESS, message: "Must be a valid Stellar public key (G...56 chars)." },
-  solana: { re: SOLANA_ADDRESS, message: "Must be a valid Solana address (base58)." },
-  monad: { re: EVM_ADDRESS, message: "Must be a valid Monad (EVM) address (0x + 40 hex)." },
+  stellar: { re: ADDRESS_PATTERNS.stellar, message: ADDRESS_MESSAGES.stellar },
+  solana: { re: ADDRESS_PATTERNS.solana, message: ADDRESS_MESSAGES.solana },
+  monad: { re: ADDRESS_PATTERNS.monad, message: ADDRESS_MESSAGES.monad },
 };
 
 /* How each chain spells a swap asset: a Stellar code, or the native ticker / `native` /
@@ -45,6 +46,9 @@ const decimalString = z.string().trim().regex(/^\d+(\.\d+)?$/, "Amount must be a
 const assetString = z.string().trim().min(1).max(64);
 const memoString = z.string().trim().regex(/^\d+$/, "Memo must be a numeric MEMO_ID.").max(20);
 const slippageBps = z.number().int().min(0).max(10000);
+/* One key per intended swap: a retry with the same key and request answers the swap already
+   built instead of building a second one (the Payments API keeps it per consumer). */
+const idempotencyKey = z.string().trim().min(1).max(255);
 
 export const cosmosEnvSchema = z.enum(["dev", "prod"]).default("dev");
 export const swapChainSchema = z.enum(SWAP_CHAINS);
@@ -121,18 +125,19 @@ export const createSwapBodySchema = z
     source: z.string().trim().min(1).max(64),
     destination: z.string().trim().min(1).max(64).optional(),
     memo: memoString.optional(),
+    idempotencyKey: idempotencyKey.optional(),
   })
   .superRefine(checkChain);
 
 /* A Stellar swap is submitted as `signedXdr`, a Solana or Monad one as
-   `signedTransaction` — exactly one of the two. */
+   `signedTransaction`: exactly one of the two. */
 export const submitSwapBodySchema = z
   .object({
     signedXdr: z.string().trim().min(1).max(100000).optional(),
     signedTransaction: z.string().trim().min(1).max(100000).optional(),
   })
   .refine((v) => (v.signedXdr === undefined) !== (v.signedTransaction === undefined), {
-    message: "Send signedXdr (Stellar) or signedTransaction (Solana, Monad) — exactly one.",
+    message: "Send exactly one of signedXdr (Stellar) or signedTransaction (Solana, Monad).",
     path: ["signedXdr"],
   });
 
@@ -142,40 +147,54 @@ export type SubmitSwapBody = z.infer<typeof submitSwapBodySchema>;
 
 /* ---- Cross-chain swaps (NEAR Intents) ---- */
 
+/* Every network NEAR Intents reaches through the Payments API (src/lib/chains.ts NETWORK_IDS). */
+export const crossChainNetworkSchema = z.enum(NETWORK_IDS as [string, ...string[]]);
+/* An address on a network this app has no rule for: one word of address characters, the
+   Payments API checks the network's real format. */
+const LOOSE_ADDRESS = /^[A-Za-z0-9:._-]{2,128}$/;
+/* The most decimals any NEAR Intents token carries (wNEAR's 24). */
+const NEAR_MAX_PLACES = 24;
+
 const crossChainShape = {
   org: z.string().trim().min(1).max(64),
   environment: cosmosEnvSchema,
-  originChain: swapChainSchema,
+  originChain: crossChainNetworkSchema,
   originAsset: z.string().trim().min(1).max(128),
-  destinationChain: swapChainSchema,
+  destinationChain: crossChainNetworkSchema,
   destinationAsset: z.string().trim().min(1).max(128),
   amount: decimalString,
-  recipient: z.string().trim().min(1).max(64),
-  refundTo: z.string().trim().min(1).max(64),
+  recipient: z.string().trim().min(1).max(128),
+  refundTo: z.string().trim().min(1).max(128),
   slippageBps: slippageBps.optional(),
 };
 
 function checkCrossChain(
-  v: { originChain: SwapChain; destinationChain: SwapChain; recipient: string; refundTo: string; amount: string },
+  v: { originChain: string; destinationChain: string; recipient: string; refundTo: string; amount: string },
   ctx: z.RefinementCtx,
 ) {
-  if (v.originChain === v.destinationChain) {
-    ctx.addIssue({ code: "custom", path: ["destinationChain"], message: "Both legs on one chain is a swap, not a cross-chain swap." });
+  // Within Stellar, Solana or Monad their own market settles a swap (POST /api/swaps); within
+  // any other network NEAR Intents may.
+  if (v.originChain === v.destinationChain && isChain(v.originChain)) {
+    ctx.addIssue({ code: "custom", path: ["destinationChain"], message: `A swap within ${v.originChain} goes through its own market: use /api/swaps.` });
   }
-  if (!ADDRESS_RULES[v.destinationChain].re.test(v.recipient)) {
-    ctx.addIssue({ code: "custom", path: ["recipient"], message: ADDRESS_RULES[v.destinationChain].message });
-  }
-  if (!ADDRESS_RULES[v.originChain].re.test(v.refundTo)) {
-    ctx.addIssue({ code: "custom", path: ["refundTo"], message: ADDRESS_RULES[v.originChain].message });
-  }
+  const check = (chain: string, value: string, key: "recipient" | "refundTo") => {
+    if (isChain(chain) ? !ADDRESS_RULES[chain].re.test(value) : !LOOSE_ADDRESS.test(value)) {
+      ctx.addIssue({ code: "custom", path: [key], message: isChain(chain) ? ADDRESS_RULES[chain].message : `Must be an address on ${chain}.` });
+    }
+  };
+  check(v.destinationChain, v.recipient, "recipient");
+  check(v.originChain, v.refundTo, "refundTo");
   const places = v.amount.split(".")[1]?.length ?? 0;
-  if (places > AMOUNT_PLACES[v.originChain]) {
-    ctx.addIssue({ code: "custom", path: ["amount"], message: `Amount must have at most ${AMOUNT_PLACES[v.originChain]} decimals on ${v.originChain}.` });
+  const max = isChain(v.originChain) ? AMOUNT_PLACES[v.originChain] : NEAR_MAX_PLACES;
+  if (places > max) {
+    ctx.addIssue({ code: "custom", path: ["amount"], message: `Amount must have at most ${max} decimals on ${v.originChain}.` });
   }
 }
 
 export const quoteCrossChainSwapBodySchema = z.object(crossChainShape).superRefine(checkCrossChain);
-export const createCrossChainSwapBodySchema = z.object(crossChainShape).superRefine(checkCrossChain);
+export const createCrossChainSwapBodySchema = z
+  .object({ ...crossChainShape, idempotencyKey: idempotencyKey.optional() })
+  .superRefine(checkCrossChain);
 
 /* The deposit transaction id, in the origin chain's own spelling. */
 export const reportDepositBodySchema = z.object({

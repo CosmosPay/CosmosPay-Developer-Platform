@@ -2,8 +2,8 @@
 //
 //   SDK                         (root separator)
 //   └─ @cosmosapp/pay_sdk       (the sdk/ folder)
-//      ├─ Server                (server entry — prose from llms/*.md)
-//      ├─ Web                   (browser entry — prose from llms/*.md)
+//      ├─ Server                (server entry; prose from llms/*.md)
+//      ├─ Web                   (browser entry; prose from llms/*.md)
 //      └─ Definitions           (Types & enums + ONE atomic page per class, discord.js-style)
 //
 // Prose pages come from the SDK's llms/NN-*.md; class references are parsed (with JSDoc,
@@ -27,17 +27,17 @@ const CATEGORY = {
 };
 
 const SECTION_META = {
-  server: { title: 'Server', description: '@cosmosapp/pay_sdk — the server-side client.' },
-  web: { title: 'Web', description: '@cosmosapp/pay_sdk/web — the browser wallet client.' },
-  definitions: { title: 'Definitions', description: 'Types, enums and every exported class — atomic reference.' },
+  server: { title: 'Server', description: '@cosmosapp/pay_sdk: the server-side client.' },
+  web: { title: 'Web', description: '@cosmosapp/pay_sdk/web: the browser wallet client.' },
+  definitions: { title: 'Definitions', description: 'Types, enums and every exported class, as an atomic reference.' },
 };
 
 // Short descriptions for classes whose .d.ts has no JSDoc, so their definition page and every
 // "References"/"Related" link that points at them still carries an explanation.
 const CURATED_DOC = {
-  WebClient: "The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key.",
+  WebClient: "The browser wallet client that detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key.",
   WebREST: 'The browser-side HTTP layer the web client uses to talk to the Cosmos Pay gateway.',
-  WalletRegistry: 'Registry of the supported browser wallet adapters — detects which wallets are installed and resolves the right adapter.',
+  WalletRegistry: 'Registry of the supported browser wallet adapters; it detects which wallets are installed and resolves the right adapter.',
   FreighterAdapter: 'Wallet adapter for the Freighter browser extension.',
   XBullAdapter: 'Wallet adapter for the xBull wallet.',
   RabetAdapter: 'Wallet adapter for the Rabet wallet.',
@@ -46,9 +46,9 @@ const CURATED_DOC = {
 };
 
 const META = {
-  overview: { description: 'What the SDK is, its server and browser entry points, the three-step payment flow, and the key facts you must know.', intro: 'This is the mental model for the whole SDK — read it first. It explains why there are two entry points (server and browser) and how a single payment moves through three steps.' },
+  overview: { description: 'What the SDK is, its server and browser entry points, the three-step payment flow, and the key facts you must know.', intro: 'This is the mental model for the whole SDK, so read it first. It explains why there are two entry points (server and browser) and how a single payment moves through three steps.' },
   installation: { description: 'Install @cosmosapp/pay_sdk, the optional Stellar peer dependency, and the ESM / CommonJS import styles.', intro: 'Add the package to any Node.js project. Browser wallet support is an optional extra you only install when you actually need it.' },
-  authentication: { description: 'Authenticate with a single API key; the network (testnet vs mainnet) is chosen automatically by the key prefix.', intro: 'Authentication is deliberately minimal: one secret API key, kept on your server. The key prefix also selects the Stellar network for you, so there is nothing else to configure. New here? See [how to get your API key](/api-keys).' },
+  authentication: { description: 'Authenticate with a single API key; the network (testnet vs mainnet) is chosen automatically by the key prefix.', intro: 'Authentication is deliberately minimal: one secret API key, kept on your server. The key prefix also selects testnet or mainnet for you, so there is nothing else to configure. New here? See [how to get your API key](/api-keys).' },
   quickstart: { description: 'The smallest end-to-end flow: create a payment intent, complete it in the wallet, and validate the transaction.', intro: 'If you just want to see a payment work end to end, start here. The first example is the shortest possible integration; the second shows the realistic server-creates / browser-completes split.' },
   client: { description: 'The Client object: the managers it exposes, its constructor options, and the self-acting structures it returns.', intro: 'Almost everything you do goes through a single `Client` instance. It groups the API into one manager per resource and returns objects that can act on themselves.' },
   'payment-intents': { description: 'Create, fetch, list, edit, cancel, delete and validate Stellar SEP-7 payment intents.', intro: 'A payment intent represents one payment you want a user to make. It is the core resource of the API and the manager you will reach for most often.' },
@@ -142,7 +142,7 @@ function jsdocText(docLines) {
     .replace(/\*\/\s*$/, '')
     .split('\n')
     .map((l) => l.replace(/^\s*\*\s?/, ''));
-  // Keep only the leading description — stop at the first @tag (drops @example code, @param…).
+  // Keep only the leading description: stop at the first @tag (drops @example code, @param…).
   const desc = [];
   for (const l of lines) {
     if (l.trim().startsWith('@')) break;
@@ -235,7 +235,7 @@ function extractClasses(dtsPath, entry) {
       if (t.endsWith(';') || (t.endsWith('}') && !t.includes('=>'))) {
         const sig = buf.join(' ').replace(/;$/, '').trim();
         const memberDoc = jsdocText(mdoc);
-        // Skip internal/local-dev members — external API users only ever use their
+        // Skip internal/local-dev members: external API users only ever use their
         // `Authorization` API key, never the gateway handshake. Caught either by the SDK's
         // "internal / local dev" doc marker or by an internal credential in the signature
         // (e.g. setGatewayCredentials(secret, consumerUsername), on any class).
@@ -253,8 +253,8 @@ function extractClasses(dtsPath, entry) {
 }
 
 /** Render a TS type string as inline code, hyperlinking identifiers that have their own
- *  definition page (discord.js-style). The common case — a single referenced class, e.g.
- *  `PaymentIntentManager` or `Promise<PaymentIntent>` — links the whole expression as one
+ *  definition page (discord.js-style). The common case (a single referenced class, e.g.
+ *  `PaymentIntentManager` or `Promise<PaymentIntent>`) links the whole expression as one
  *  clean monospace pill. Types referencing several classes link each one individually so
  *  every target stays reachable. Nothing linkable → a plain code span. */
 function linkType(type, selfName) {
@@ -302,7 +302,7 @@ function relatedClasses(c) {
 function renderClassPage(c) {
   const summary = c.doc || `The ${c.name} class.`;
   const parts = [`---\ntitle: ${yaml(c.name)}\ndescription: ${yaml((summary.slice(0, 175)).trim())}\n---\n`];
-  // Lead with the class explanation only — the entry-point ("Exported from @cosmosapp/pay_sdk")
+  // Lead with the class explanation only; the entry-point ("Exported from @cosmosapp/pay_sdk")
   // and "Declared as class …" boilerplate is redundant with the sidebar grouping + signatures.
   if (c.doc) parts.push(`${escapeMdxText(c.doc)}\n`);
 
@@ -343,7 +343,7 @@ function renderCallable(m, heading, selfName) {
   parts.push('```ts\n' + m.signature + '\n```\n');
   if (m.params && m.params.length) {
     parts.push('**Parameters**\n');
-    for (const p of m.params) parts.push(`- \`${p.name}\`${p.optional ? ' _(optional)_' : ''} — ${p.type ? linkType(p.type, selfName) : '`unknown`'}`);
+    for (const p of m.params) parts.push(`- \`${p.name}\`${p.optional ? ' _(optional)_' : ''}: ${p.type ? linkType(p.type, selfName) : '`unknown`'}`);
     parts.push('');
   }
   if (m.returns) parts.push(`**Returns** ${linkType(m.returns, selfName)}\n`);
@@ -352,10 +352,10 @@ function renderCallable(m, heading, selfName) {
 
 // --- Generate -----------------------------------------------------------------------------
 // The SDK docs are GENERATED from the external SDK repo (its llms/ + built dist/*.d.ts). That repo
-// only exists on dev/build machines — on a production box it's absent, and we DON'T want the docs
+// only exists on dev/build machines; on a production box it's absent, and we DON'T want the docs
 // to depend on it. The generated content is committed, so here we just skip (leaving it in place).
 if (!fs.existsSync(SDK_LLMS)) {
-  console.warn(`[generate-sdk] SDK source not found at ${SDK_LLMS} — keeping the committed content/docs/sdk as-is.`);
+  console.warn(`[generate-sdk] SDK source not found at ${SDK_LLMS}; keeping the committed content/docs/sdk as-is.`);
   process.exit(0);
 }
 const files = fs.readdirSync(SDK_LLMS).filter((f) => /^\d\d-.+\.md$/.test(f)).sort();
@@ -390,7 +390,7 @@ function extractImportedSymbols(md) {
 fs.rmSync(OUT, { recursive: true, force: true });
 const sections = { server: [], web: [], definitions: [] };
 
-// Pass A — render every page body (so we can index what each one documents before wiring refs).
+// Pass A: render every page body (so we can index what each one documents before wiring refs).
 const pages = files.map((f) => {
   const slug = f.replace(/^\d\d-/, '').replace(/\.md$/, '');
   const raw = fs.readFileSync(path.join(SDK_LLMS, f), 'utf8');
@@ -402,14 +402,14 @@ const pages = files.map((f) => {
     cat: CATEGORY[slug] || 'server',
     title,
     out,
-    description: meta.description || firstParagraph(out) || `${title || slug} — Cosmos Pay SDK.`,
+    description: meta.description || firstParagraph(out) || `${title || slug} in the Cosmos Pay SDK.`,
     intro: meta.intro ? `${meta.intro}\n\n` : '',
   };
 });
 
 // The assets/wallets/addresses page documents a set of NON-class exports (Assets, Wallets,
 // resolveAddress, …). Map each symbol it imports to that page, so examples elsewhere that import
-// them get a reference too — not just the exported classes.
+// them get a reference too, not just the exported classes.
 const CATALOG_INDEX = new Map();
 const catalogPage = pages.find((p) => p.slug === 'assets-wallets-addresses');
 if (catalogPage) {
@@ -424,7 +424,7 @@ if (catalogPage) {
 }
 const SYMBOL_INDEX = new Map([...CLASS_INDEX, ...CATALOG_INDEX]);
 
-// Pass B — append a "References" section (every SDK symbol imported in the page's examples, plus
+// Pass B: append a "References" section (every SDK symbol imported in the page's examples, plus
 // any class named in its prose) and write each page.
 for (const p of pages) {
   const selfPath = PROSE_PATH(p.slug);
@@ -441,7 +441,7 @@ for (const p of pages) {
     refsBlock =
       '\n\n## References\n\n' +
       refs
-        .map((r) => `- [${r.name}](${r.path})${r.summary ? ` — ${escapeMdxText(r.summary.split('. ')[0])}` : ''}`)
+        .map((r) => `- [${r.name}](${r.path})${r.summary ? `: ${escapeMdxText(r.summary.split('. ')[0])}` : ''}`)
         .join('\n') +
       '\n';
   }
@@ -473,27 +473,27 @@ for (const c of webClasses) fs.writeFileSync(path.join(defWebDir, `${kebab(c.nam
 const SECTION_META_I18N = {
   es: {
     root: 'SDK de JavaScript / TypeScript para Cosmos Pay.',
-    server: { title: 'Servidor', description: '@cosmosapp/pay_sdk — el cliente del lado del servidor.' },
-    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web — el cliente de billeteras del navegador.' },
-    definitions: { title: 'Definiciones', description: 'Tipos, enums y cada clase exportada — referencia atómica.' },
+    server: { title: 'Servidor', description: '@cosmosapp/pay_sdk: el cliente del lado del servidor.' },
+    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web: el cliente de billeteras del navegador.' },
+    definitions: { title: 'Definiciones', description: 'Tipos, enums y cada clase exportada, como referencia atómica.' },
   },
   fr: {
     root: 'SDK JavaScript / TypeScript pour Cosmos Pay.',
-    server: { title: 'Serveur', description: '@cosmosapp/pay_sdk — le client côté serveur.' },
-    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web — le client de portefeuilles du navigateur.' },
-    definitions: { title: 'Définitions', description: 'Types, enums et chaque classe exportée — référence atomique.' },
+    server: { title: 'Serveur', description: '@cosmosapp/pay_sdk : le client côté serveur.' },
+    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web : le client de portefeuilles du navigateur.' },
+    definitions: { title: 'Définitions', description: 'Types, enums et chaque classe exportée, en référence atomique.' },
   },
   de: {
     root: 'JavaScript-/TypeScript-SDK für Cosmos Pay.',
-    server: { title: 'Server', description: '@cosmosapp/pay_sdk — der serverseitige Client.' },
-    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web — der Browser-Wallet-Client.' },
-    definitions: { title: 'Definitionen', description: 'Typen, Enums und jede exportierte Klasse — atomare Referenz.' },
+    server: { title: 'Server', description: '@cosmosapp/pay_sdk: der serverseitige Client.' },
+    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web: der Browser-Wallet-Client.' },
+    definitions: { title: 'Definitionen', description: 'Typen, Enums und jede exportierte Klasse als atomare Referenz.' },
   },
   pt: {
     root: 'SDK JavaScript / TypeScript para o Cosmos Pay.',
-    server: { title: 'Servidor', description: '@cosmosapp/pay_sdk — o cliente do lado do servidor.' },
-    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web — o cliente de carteiras do navegador.' },
-    definitions: { title: 'Definições', description: 'Tipos, enums e cada classe exportada — referência atômica.' },
+    server: { title: 'Servidor', description: '@cosmosapp/pay_sdk: o cliente do lado do servidor.' },
+    web: { title: 'Web', description: '@cosmosapp/pay_sdk/web: o cliente de carteiras do navegador.' },
+    definitions: { title: 'Definições', description: 'Tipos, enums e cada classe exportada, como referência atômica.' },
   },
 };
 const serverDefSlugs = serverClasses.map((c) => kebab(c.name));

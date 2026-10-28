@@ -2,36 +2,36 @@
 //
 // WHY THIS EXISTS. `astro build` can emit a dist/ that cannot be imported. The build
 // bundles src/ but leaves dependencies EXTERNAL, so nothing resolves `import … from
-// 'cookie'` until node loads the entry — and a dependency that renamed an export
+// 'cookie'` until node loads the entry, and a dependency that renamed an export
 // between two versions produces a green build and a server that dies on its first boot
 // with `does not provide an export named 'parse'`. That is exactly what shipped: astro
 // 7.3 moved to cookie@2, which renamed `parse`/`serialize` to
 // `parseCookie`/`stringifyCookie`. A build-only CI cannot see it. This can.
 //
 // WHAT IT ASSERTS. A bad external import kills the process during startup, before it
-// ever listens — so "boots, stays up, and answers an HTTP request" is a complete guard
+// ever listens, so "boots, stays up, and answers an HTTP request" is a complete guard
 // for that class. The probe is `/api/openapi.json`: no database, no upstream.
 //
 // It accepts 200 OR 404, and that is deliberate. `apiDocsEnabled` is
 // `import.meta.env.DEV || API_DOCS_ENABLED`, and API_DOCS_ENABLED is an astro:env field
-// with `access: 'public'` — INLINED AT BUILD, not read at runtime (see src/lib/api-docs.ts).
+// with `access: 'public'`, so it is INLINED AT BUILD, not read at runtime (see src/lib/api-docs.ts).
 // So a production build serves 404 here and no runtime env can change it. Both statuses
 // prove the same thing: the entry and its chunks resolved and the router ran. Gating on
 // 200 would only mean CI had to build with a flag production does not use, making the
 // artifact under test differ from the artifact that ships. When the spec IS served, the
-// document is validated too — generating it eagerly imports every
+// document is validated too: generating it eagerly imports every
 // `src/schemas/**/openapi.ts` (see lib/openapi/auto-load.ts).
 //
 // READINESS IS TIED TO OUR CHILD, NOT TO THE PORT. The first version of this script
 // polled the port until something answered, and a stale server left listening by an
-// earlier run answered for it — so it reported a green boot for a dist/ that could not
+// earlier run answered for it, so it reported a green boot for a dist/ that could not
 // be imported at all. A smoke test that can pass while the thing it tests is dead is
 // worse than no smoke test. Now the port is checked to be free BEFORE spawning (an
 // occupied port is a hard error, never a silent pass) and readiness comes from the
 // child's own stdout.
 //
 // The env below is DUMMY. astro:env validates that the vars are present and typed at
-// startup, not that they point anywhere real — nothing here connects to a database or
+// startup, not that they point anywhere real; nothing here connects to a database or
 // to APISIX, so the values only have to satisfy the schema in astro.config.mjs.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -45,7 +45,7 @@ const PORT = Number(process.env.SMOKE_PORT || 4399);
 const BOOT_TIMEOUT_MS = 60_000;
 
 if (!existsSync(entry)) {
-  console.error(`[smoke] ${entry} not found — run \`npm run build\` first.`);
+  console.error(`[smoke] ${entry} not found; run \`npm run build\` first.`);
   process.exit(1);
 }
 
@@ -96,7 +96,7 @@ let settled = false;
 let resolveReady;
 const ready = new Promise((r) => (resolveReady = r));
 
-/** Print whatever the server said before dying — the import error lives in there. */
+/** Print whatever the server said before dying; the import error lives in there. */
 function fail(message) {
   if (settled) return;
   settled = true;
@@ -108,8 +108,8 @@ function fail(message) {
 
 function absorb(chunk) {
   output += chunk;
-  // @astrojs/node standalone announces itself once the HTTP server is up. This — not a
-  // successful connection to the port — is what proves OUR process is the one serving.
+  // @astrojs/node standalone announces itself once the HTTP server is up. This (not a
+  // successful connection to the port) is what proves OUR process is the one serving.
   if (/Server listening on/i.test(output)) resolveReady(true);
 }
 server.stdout.on('data', absorb);
@@ -136,19 +136,31 @@ if (res.status !== 200 && res.status !== 404) {
   fail(`GET /api/openapi.json returned ${res.status}; expected 200 (spec served) or 404 (spec disabled)`);
 }
 
-let detail = 'spec disabled by API_DOCS_ENABLED (404) — boot and routing verified';
+let detail = 'spec disabled by API_DOCS_ENABLED (404), boot and routing verified';
 if (res.status === 200) {
   const body = await res.json().catch(() => null);
   if (!body || typeof body.openapi !== 'string') {
     fail(`GET /api/openapi.json did not return an OpenAPI document (got: ${JSON.stringify(body)?.slice(0, 200)})`);
   }
   const paths = Object.keys(body.paths || {}).length;
-  if (paths === 0) fail('the OpenAPI document has no paths — the schema auto-load found nothing');
+  if (paths === 0) fail('the OpenAPI document has no paths; the schema auto-load found nothing');
   detail = `served ${paths} documented paths`;
 }
+
+// The merchant embed is a static file `npm run build` bundles into public/ BEFORE astro build
+// copies public/ into dist/client. Served here, the order of that chain held; a 404 means
+// merchants' pages would load nothing from /embed/cosmos-pay.js.
+const embed = await fetch(`http://${HOST}:${PORT}/embed/cosmos-pay.js`, { signal: AbortSignal.timeout(15_000) }).catch(
+  (e) => fail(`GET /embed/cosmos-pay.js never completed: ${e.message}`),
+);
+const embedBody = embed.status === 200 ? await embed.text() : '';
+if (!/javascript/i.test(embed.headers.get('content-type') || '') || !embedBody.includes('cosmos-pay-checkout')) {
+  fail(`GET /embed/cosmos-pay.js returned ${embed.status} (${embed.headers.get('content-type')}); expected the embed bundle. Did the build run embed:build before astro build?`);
+}
+detail += `; embed bundle served (${(embedBody.length / 1024).toFixed(1)} KiB)`;
 
 settled = true;
 server.removeAllListeners('exit');
 server.kill();
-console.log(`[smoke] OK — compiled server booted and answered on ${HOST}:${PORT}: ${detail}`);
+console.log(`[smoke] OK: compiled server booted and answered on ${HOST}:${PORT}; ${detail}`);
 process.exit(0);

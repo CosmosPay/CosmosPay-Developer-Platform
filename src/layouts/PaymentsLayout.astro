@@ -1,0 +1,127 @@
+---
+// The platform's base (cosmos.css) under the institutional skin (institutional.css, on <body
+// class="inst">); payments.css adds the checkout's own layout.
+import "@/styles/cosmos.css";
+import "@/styles/institutional.css";
+import "@/styles/payments.css";
+import SiteNav from "@/components/cosmos/layout/SiteNav";
+import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
+import { LOCALES, MESSAGES } from "@/lib/payments/i18n";
+import { PAYMENTS, TERMS } from "@/lib/payments/urls";
+import { OG_LOCALES, pageUrl } from "@/lib/payments/seo";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Only the landing is indexed: payment pages are personal and short-lived. */
+  indexable?: boolean;
+  /** For the nav: the landing's hero is a paper panel the bar sits over. */
+  overPanel?: "white";
+}
+
+const { title, description = "", indexable = false, overPanel } = Astro.props;
+const lang = Astro.locals.lang ?? "en";
+const t = MESSAGES[lang];
+// An indexable page exists once per language at ?lang=<code>, and the bare path follows the
+// visitor (x-default): each version names itself canonical and lists the others (hreflang), so
+// search engines index every language instead of folding them into the English one.
+const path = Astro.locals.publicPath ?? "/";
+const asked = Astro.url.searchParams.get("lang");
+const explicit = LOCALES.find((l) => l.code === asked)?.code ?? null;
+const canonical = pageUrl(PAYMENTS, path, explicit);
+
+// The language picker is a plain GET form, so it must carry the page's own query along
+// (/pay?uri=… would otherwise lose the payment it is showing).
+const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {indexable ? (
+      <Fragment>
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href={canonical} />
+        <meta property="og:url" content={canonical} />
+        {LOCALES.map((l) => <link rel="alternate" hreflang={l.code} href={pageUrl(PAYMENTS, path, l.code)} />)}
+        <link rel="alternate" hreflang="x-default" href={pageUrl(PAYMENTS, path)} />
+      </Fragment>
+    ) : (
+      <meta name="robots" content="noindex, nofollow" />
+    )}
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="generator" content={Astro.generator} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+
+    <!-- Link previews (chat apps unfurl payment links): generic on purpose, the amount
+         and the address are not in the HTML until the browser reads them. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cosmos Pay" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:image" content={`${PAYMENTS}/og-image.png`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={OG_LOCALES[lang]} />
+    {LOCALES.filter((l) => l.code !== lang).map((l) => <meta property="og:locale:alternate" content={OG_LOCALES[l.code]} />)}
+
+    <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />
+    <slot name="head" />
+
+    <script is:inline>
+      // The visitor's saved theme, else the system's, set before paint so there is no flash.
+      // It follows the system until a theme is picked in the nav (useTheme saves it then).
+      (function () {
+        var root = document.documentElement;
+        var mq = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+        var saved = function () { try { return localStorage.getItem("cosmospay-theme"); } catch (e) { return null; } };
+        var apply = function () { root.setAttribute("data-theme", saved() || (mq && mq.matches ? "dark" : "light")); };
+        apply();
+        if (mq && mq.addEventListener) mq.addEventListener("change", apply);
+      })();
+    </script>
+  </head>
+  <body class="inst" data-area="payments">
+    <a class="skip-link" href="#main">{t.skip}</a>
+    <!-- The general nav, as on every view. It never reads the platform session here: the
+         payments domain is not an allowed origin for it (src/lib/allowed-origins.ts). -->
+    <SiteNav client:load lang={lang} session={false} reloadOnLang overPanel={overPanel} area="payments" />
+
+    <slot />
+
+    <slot name="footer">
+      <footer class="pp-footer">
+        <span>{t.footer.by}</span>
+        <a href={TERMS}>{t.footer.terms}</a>
+        <form class="pp-lang" method="get">
+          {keep.map(([name, value]) => <input type="hidden" name={name} value={value} />)}
+          <label for="pp-lang-select">{t.footer.language}</label>
+          <select id="pp-lang-select" name="lang">
+            {LOCALES.map((l) => <option value={l.code} selected={l.code === lang} lang={l.code}>{l.name}</option>)}
+          </select>
+          <button class="btn btn-outline-w btn-sm" type="submit">{t.footer.change}</button>
+        </form>
+      </footer>
+    </slot>
+
+    <script>
+      // The snap's ink fill on every button (src/scripts/ink.ts).
+      import { installInk } from "@/scripts/ink";
+
+      installInk();
+    </script>
+    <BackToTop lang={lang} />
+  </body>
+</html>

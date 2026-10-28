@@ -27,7 +27,7 @@ quote(options: QuoteCrossChainSwapOptions): Promise<CrossChainQuoteData>
 
 **Parameters**
 
-- `options` — `QuoteCrossChainSwapOptions`
+- `options`: `QuoteCrossChainSwapOptions`
 
 **Returns** `Promise<CrossChainQuoteData>`
 
@@ -41,7 +41,7 @@ create(options: CreateCrossChainSwapOptions): Promise<CrossChainSwap>
 
 **Parameters**
 
-- `options` — `CreateCrossChainSwapOptions`
+- `options`: `CreateCrossChainSwapOptions`
 
 **Returns** [`Promise<CrossChainSwap>`](/sdk/definitions/server/cross-chain-swap)
 
@@ -53,7 +53,7 @@ fetch(id: string): Promise<CrossChainSwap>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** [`Promise<CrossChainSwap>`](/sdk/definitions/server/cross-chain-swap)
 
@@ -65,7 +65,7 @@ list(options?: ListCrossChainSwapsOptions): Promise<CrossChainSwapPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListCrossChainSwapsOptions`
+- `options` _(optional)_: `ListCrossChainSwapsOptions`
 
 **Returns** `Promise<CrossChainSwapPage>`
 
@@ -79,8 +79,8 @@ reportDeposit(id: string, txHash: string): Promise<CrossChainSwap>
 
 **Parameters**
 
-- `id` — `string`
-- `txHash` — `string`
+- `id`: `string`
+- `txHash`: `string`
 
 **Returns** [`Promise<CrossChainSwap>`](/sdk/definitions/server/cross-chain-swap)
 

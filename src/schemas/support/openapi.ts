@@ -2,7 +2,7 @@
 
    Access has two shapes here and the reference should say which is which: a customer
    reaches their OWN tickets, staff (owner/admin/support) reach every ticket. Both use the
-   same `/api/support/tickets/{id}` routes — the difference is who is answered 403 — while
+   same `/api/support/tickets/{id}` routes (the difference is who is answered 403), while
    `/api/support/admin/tickets` is staff-only by definition.
 
    The status/priority vocabularies are imported from lib/support-status.ts so the
@@ -163,7 +163,7 @@ registerRoutes([
       params: idParam,
       ...jsonBody(
         z
-          .object({ body: z.string().max(4000).openapi({ example: 'Thanks — retries are flowing again.' }) })
+          .object({ body: z.string().max(4000).openapi({ example: 'Thanks, retries are flowing again.' }) })
           .openapi('SendSupportMessageBody'),
       ),
     },
@@ -213,7 +213,7 @@ registerRoutes([
     path: '/api/support/unread',
     tags: [TAG],
     summary: 'Unread reply count',
-    description: 'Number of unread staff replies for the signed-in account — drives the sidebar dot.',
+    description: 'Number of unread staff replies for the signed-in account, which drives the sidebar dot.',
     security: sessionSecurity,
     responses: {
       200: jsonOk(

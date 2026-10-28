@@ -1,0 +1,88 @@
+---
+/* /pay is the web+stellar: (SEP-7) protocol-handler page. Moved here from the developer
+ * platform (dev.cosmospay.lat/pay, which now redirects to this page with its query intact,
+ * so handlers browsers registered there keep working).
+ *
+ * Browser extensions cannot register protocol handlers on Chrome, but a regular https page
+ * CAN. This page is that bridge:
+ *
+ *   1. The user clicks "Activate" once → navigator.registerProtocolHandler registers
+ *      `${origin}/pay?uri=%s` for `web+stellar:`.
+ *   2. From then on any web+stellar:pay?… link opens this page with the URI. The page shows
+ *      the whole request (asset issuer, who claims to ask, where the result goes) and hands
+ *      it to the Cosmos Wallet extension (window.cosmosWallet.requestPayment → approval
+ *      window → sign → submit) only when the payer presses the button: any site can send a
+ *      browser here with a URI of its choosing, so arriving is not consent.
+ *   3. No extension? A fallback button deep-links the web wallet, which reads ?uri= itself.
+ */
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { WALLET_WEB } from "@/lib/payments/urls";
+
+const messages = MESSAGES[Astro.locals.lang ?? "en"];
+const t = messages.pay;
+const runtimeJson = JSON.stringify({
+  activated: t.activated,
+  activateFail: t.activateFail,
+  paying: t.paying,
+  noExt: t.noExt,
+  review: t.review,
+  mainnet: messages.checkout.mainnet,
+  testnet: messages.checkout.testnetTier,
+  success: t.success,
+  hash: t.hash,
+  invalid: t.invalid,
+}).replace(/</g, "\\u003c");
+---
+
+<PaymentsLayout title={t.title} description={t.sub}>
+  <main id="main" class="pp-main">
+    <section class="pp-card" id="pay" data-wallet-web={WALLET_WEB} aria-labelledby="pay-title">
+      <p class="pp-eyebrow">SEP-7 · web+stellar:</p>
+      <h1 class="pp-title" id="pay-title">{t.heading}</h1>
+      <p class="pp-body">{t.sub}</p>
+
+      <div class="pp-block" data-slot="incoming" hidden>
+        <h2>{t.incoming}</h2>
+        <dl class="pp-details">
+          <div class="pp-row"><dt>{t.dest}</dt><dd><code class="pp-code" data-slot="dest">-</code></dd></div>
+          <div class="pp-row"><dt>{t.amount}</dt><dd data-slot="amount">-</dd></div>
+          <div class="pp-row"><dt>{messages.checkout.network}</dt><dd data-slot="network">-</dd></div>
+          <div class="pp-row" data-slot="issuer-row" hidden><dt>{t.issuer}</dt><dd><code class="pp-code" data-slot="issuer">-</code></dd></div>
+          <div class="pp-row" data-slot="memo-row" hidden><dt>{t.memo}</dt><dd><code class="pp-code" data-slot="memo">-</code></dd></div>
+          <div class="pp-row" data-slot="origin-row" hidden><dt>{t.origin}</dt><dd data-slot="origin">-</dd></div>
+          <div class="pp-row" data-slot="callback-row" hidden><dt>{t.callback}</dt><dd data-slot="callback">-</dd></div>
+        </dl>
+        <p class="pp-hint">{t.network}</p>
+        <div class="pp-actions">
+          <button class="btn btn-dark" type="button" data-action="pay-extension" hidden>{t.payExt}</button>
+          <a class="btn btn-outline-w" data-slot="web-wallet" hidden>{t.payWeb}</a>
+        </div>
+        <p class="pp-hint" data-slot="status" role="status" aria-live="polite">{t.waiting}</p>
+        <pre class="pp-result" data-slot="result" hidden></pre>
+      </div>
+
+      <div class="pp-block pp-block-plain">
+        <button class="btn btn-dark" type="button" data-action="register">{t.activate}</button>
+        <p class="pp-hint" data-slot="register-status" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="pp-block">
+        <h2>{t.how}</h2>
+        <ol class="pp-steps">
+          <li>{t.how1}</li>
+          <li>{t.how2}</li>
+          <li>{t.how3}</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <script type="application/json" id="pay-i18n" set:html={runtimeJson} />
+</PaymentsLayout>
+
+<script>
+  import { startPayHandler } from "@/scripts/payments/pay-handler";
+
+  startPayHandler();
+</script>

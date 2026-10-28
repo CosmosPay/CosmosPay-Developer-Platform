@@ -1,4 +1,4 @@
-/* geo.ts — best-effort request geolocation from CDN/proxy headers (+ client IP).
+/* geo.ts: best-effort request geolocation from CDN/proxy headers (+ client IP).
    Country comes from a CDN header (Cloudflare/Vercel/etc.); region falls back to a
    coarse continent derived from the country. No external geo-IP calls are made. */
 
@@ -50,7 +50,7 @@ export function clientCity(headers: Headers): string | null {
   return v ? decodeURIComponent(v) : null;
 }
 
-const SUPPORTED_LANGS = ["en", "es", "pt", "fr", "de"];
+const SUPPORTED_LANGS = ["en", "es", "pt", "fr", "de", "hi", "zh"];
 export function clientLanguage(headers: Headers): string | null {
   const al = headers.get("accept-language");
   if (!al) return null;
@@ -85,7 +85,7 @@ export function clientUserAgent(headers: Headers): string | null {
 }
 
 export interface ResolvedLocation {
-  ip: string | null;        // display IP — "localhost" when the request is local
+  ip: string | null;        // display IP; "localhost" when the request is local
   publicIp: string | null;  // resolved public IP (real client IP, or the dev machine's public IP)
   country: string | null;
   region: string | null;

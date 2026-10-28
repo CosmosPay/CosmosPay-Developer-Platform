@@ -1,0 +1,12 @@
+---
+// The card's own header: the Cosmos Pay mark and what the page is.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<div class="ck-brand">
+  <span class="cosmos-mark ck-mark" aria-hidden="true"></span>
+  <span class="ck-eyebrow">{t.eyebrow}</span>
+  <span class="pp-testnet" data-slot="testnet" hidden>{t.testnetTier}</span>
+</div>

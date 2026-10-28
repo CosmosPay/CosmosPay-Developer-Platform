@@ -1,4 +1,4 @@
-/* notifications.ts — activity notifications (sign-ins, API-key actions, …).
+/* notifications.ts: activity notifications (sign-ins, API-key actions, …).
    System code creates them directly via createNotification(); the public POST
    endpoint is gated to owner/admin accounts (see src/pages/api/notifications). */
 import { prisma } from "@/lib/prisma";

@@ -11,7 +11,7 @@ export function TicketStatusPill({ status }) {
 export function TicketPriorityTag({ priority }) {
   const t = useT();
   const labels = t.dash.support.priorities || {};
-  // "normal" is the default — don't clutter the list with it; only flag notable priorities.
+  // "normal" is the default, so don't clutter the list with it; only flag notable priorities.
   if (!priority || priority === "normal") return null;
   return <span className={`tk-prio tk-prio-${priority}`}>{labels[priority] || priority}</span>;
 }

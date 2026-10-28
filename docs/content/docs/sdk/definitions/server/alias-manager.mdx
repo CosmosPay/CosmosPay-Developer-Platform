@@ -15,7 +15,7 @@ constructor(client: Client)
 
 **Parameters**
 
-- `client` — [`Client`](/sdk/definitions/server/client)
+- `client`: [`Client`](/sdk/definitions/server/client)
 
 ## Properties
 
@@ -87,7 +87,7 @@ availability(name: string): Promise<AliasAvailabilityData>
 
 **Parameters**
 
-- `name` — `string`
+- `name`: `string`
 
 **Returns** `Promise<AliasAvailabilityData>`
 
@@ -101,7 +101,7 @@ createChallenge(options: CreateAliasChallengeOptions): Promise<AliasChallengeDat
 
 **Parameters**
 
-- `options` — `CreateAliasChallengeOptions`
+- `options`: `CreateAliasChallengeOptions`
 
 **Returns** `Promise<AliasChallengeData>`
 
@@ -115,7 +115,7 @@ claim(options: ClaimAliasOptions): Promise<OwnedAliasData>
 
 **Parameters**
 
-- `options` — `ClaimAliasOptions`
+- `options`: `ClaimAliasOptions`
 
 **Returns** `Promise<OwnedAliasData>`
 
@@ -129,8 +129,8 @@ addAddress(name: string, options: AddAliasAddressOptions): Promise<AliasAddressD
 
 **Parameters**
 
-- `name` — `string`
-- `options` — `AddAliasAddressOptions`
+- `name`: `string`
+- `options`: `AddAliasAddressOptions`
 
 **Returns** `Promise<AliasAddressData>`
 
@@ -144,8 +144,8 @@ removeAddress(name: string, addressId: string): Promise<AliasDeletedData>
 
 **Parameters**
 
-- `name` — `string`
-- `addressId` — `string`
+- `name`: `string`
+- `addressId`: `string`
 
 **Returns** `Promise<AliasDeletedData>`
 
@@ -159,7 +159,7 @@ release(name: string): Promise<AliasDeletedData>
 
 **Parameters**
 
-- `name` — `string`
+- `name`: `string`
 
 **Returns** `Promise<AliasDeletedData>`
 
@@ -173,8 +173,8 @@ startRecovery(name: string, email: string): Promise<AliasRecoveryStartedData>
 
 **Parameters**
 
-- `name` — `string`
-- `email` — `string`
+- `name`: `string`
+- `email`: `string`
 
 **Returns** `Promise<AliasRecoveryStartedData>`
 
@@ -188,8 +188,8 @@ completeRecovery(name: string, options: CompleteAliasRecoveryOptions): Promise<O
 
 **Parameters**
 
-- `name` — `string`
-- `options` — `CompleteAliasRecoveryOptions`
+- `name`: `string`
+- `options`: `CompleteAliasRecoveryOptions`
 
 **Returns** `Promise<OwnedAliasData>`
 

@@ -25,7 +25,7 @@ Um único cliente expõe cada recurso por meio do seu próprio gerenciador.
 
 ```ts
 new Client({
-  apiKey: 'prod_xxx',          // required — the only thing you normally set
+  apiKey: 'prod_xxx',          // required; the only thing you normally set
   webhookSecret: 'whsec_...',  // default secret for the webhook listener
   timeout: 30_000,             // ms (default 30000)
   retries: 2,                  // network errors / 429 / 5xx (default 2)
@@ -54,14 +54,14 @@ client.setGatewayCredentials(secret, consumerUsername); // local-dev direct acce
 ## Os objetos retornados são "estruturas"
 
 Os métodos dos gerenciadores retornam instâncias ricas (`PaymentIntent`, `WebhookEndpoint`,
-`Product`, `Customer`) que podem agir sobre si mesmas e expõem acessadores tipados —
+`Product`, `Customer`) que podem agir sobre si mesmas e expõem acessadores tipados,
 por exemplo, `intent.isPay`, `intent.assetLabel`, `await intent.validate(txHash)`,
 `await endpoint.disable()`. Chame `.toJSON()` para obter o payload bruto.
 
 ## Referências
 
-- [Customer](/sdk/definitions/customer) — Um registro de cliente, opcionalmente enriquecido com estatísticas de pagamento on-chain.
-- [PaymentIntent](/sdk/definitions/payment-intent) — Uma intenção de pagamento SEP-7 da Stellar
-- [Product](/sdk/definitions/product) — Um produto / preço pelo qual o consumidor pode cobrar.
-- [WebhookEndpoint](/sdk/definitions/webhook-endpoint) — Um endpoint de webhook registrado
-- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.
+- [Customer](/sdk/definitions/customer): Um registro de cliente, opcionalmente enriquecido com estatísticas de pagamento on-chain.
+- [PaymentIntent](/sdk/definitions/payment-intent): Uma intenção de pagamento SEP-7 da Stellar
+- [Product](/sdk/definitions/product): Um produto / preço pelo qual o consumidor pode cobrar.
+- [WebhookEndpoint](/sdk/definitions/webhook-endpoint): Um endpoint de webhook registrado
+- [Client](/sdk/definitions/client): O ponto de entrada principal do SDK, um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador (um design atômico de cliente único).

@@ -20,7 +20,7 @@ import { create } from 'zbsearch';
  *
  * fumadocs 16.15 swapped the static search engine from Orama to ZBSearch (its rename):
  * `oramaStaticClient` / `initOrama` are now deprecated aliases of `staticClient` / `initDB`,
- * and the instance has to come from `zbsearch`'s `create` — an Orama one fails to compile,
+ * and the instance has to come from `zbsearch`'s `create`. An Orama one fails to compile,
  * which is what broke the docs build on the 16.11 → 16.15 bump. Only the module PATH keeps
  * the old `orama-static` name upstream.
  *

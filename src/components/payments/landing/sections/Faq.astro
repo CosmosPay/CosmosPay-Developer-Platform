@@ -1,0 +1,39 @@
+---
+// Faq section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+  /** Show only the first few questions, with a link to the FAQ page. */
+  limit?: number;
+  /** On the FAQ page, whose header already names it: the heading is kept for assistive tech only. */
+  bare?: boolean;
+}
+const { limit, bare = false } = Astro.props;
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+const shown = limit ? faq.slice(0, limit) : faq;
+---
+
+<section class="pl-section pl-faq-section" aria-labelledby="pl-faq">
+  <div class="wrap pl-split">
+    <div class="pl-head pl-head-sticky" data-reveal>
+      <h2 id="pl-faq" class:list={[{ "pl-sr": bare }]}>{t.faq.title} {t.faq.titleBold}</h2>
+      {limit && <a class="pl-textlink pl-more" href={links.faq}>{t.pages.more.faq}</a>}
+      <img class="pl-art pl-faq-art" src="/brand/astronauta-pensando.svg" alt="" width="200" height="237" loading="lazy" decoding="async" />
+    </div>
+    <div class="pl-faq">
+      {shown.map((f, i) => (
+        <details data-reveal style={`--i: ${i}`}>
+          <summary>{f.q}</summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

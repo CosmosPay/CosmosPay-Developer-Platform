@@ -4,11 +4,13 @@
 
    Several routes are synced, not one. The main one carries key-auth and serves the whole
    API; the others are keyless, each for callers that hold no API key of ours: the OAuth
-   callback a browser lands on (the wallet sign-in's), the SEP-1/10/30
+   callback a browser lands on (the wallet sign-in's), the public payment-link read (hosted
+   and embedded checkouts, CORS for any origin), the SEP-1/10/30
    standards any Stellar wallet calls, and -- when configured -- the same standards on each
    recovery server's own host. See the header over the route section in utils/apisix.ts:
-   without the callback route no sign-in can finish a single handshake, and without
-   the SEP route no wallet can discover or reach account recovery.
+   without the callback route no sign-in can finish a single handshake, without the
+   payment-link route no checkout can read its link, and without the SEP route no wallet can
+   discover or reach account recovery.
 
    COSMOS_API_URL (and each recovery upstream) may be a comma-separated list of `host:port`
    replicas; APISIX balances across them round-robin. */
@@ -17,11 +19,17 @@ import {
   callbackRouteId,
   callbackRouteUris,
   createCallbackRoute,
+  createPaymentLinksRoute,
+  createZkCheckoutRoute,
   createRecoveryRoute,
   createRoute,
   createSepRoute,
   deleteRoute,
   legacyCallbackRouteId,
+  paymentLinksRouteId,
+  paymentLinksRouteUris,
+  zkCheckoutRouteId,
+  zkCheckoutRouteUris,
   recoveryRouteId,
   routeExists,
   sepRouteId,
@@ -62,7 +70,7 @@ function describeUris(uris: () => string[]): string {
    is for -- and that is worth a line in the log that says so. */
 function logKeyless(id: string, uris: string, result: SyncResult, consequence: string) {
   if ("error" in result) {
-    console.warn(`[apisix] Failed to sync public route "${id}" (${uris}) — ${consequence}: ${result.error}`);
+    console.warn(`[apisix] Failed to sync public route "${id}" (${uris}); ${consequence}: ${result.error}`);
   } else {
     console.info(`[apisix] Route "${id}" ${result.created ? "created" : "updated"} -> ${uris} (no key-auth)`);
   }
@@ -111,13 +119,31 @@ export async function syncCosmosRoute() {
     console.info(`[apisix] Route "${APISSIX_ROUTE_ID}" ${result.created ? "created" : "updated"} -> ${COSMOS_API_URL}`);
   }
 
+  /* Before the callback route: an earlier release served the payment-link read there, and
+     this route must be in place (it outranks that one) before the callback route lets go. */
+  const paymentLinks = await attempt(() => createPaymentLinksRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL));
+  logKeyless(
+    paymentLinksRouteId(APISSIX_ROUTE_ID),
+    `${describeUris(() => paymentLinksRouteUris(COSMOS_API_ENTRY))} (CORS: any origin)`,
+    paymentLinks,
+    "hosted and embedded checkouts cannot read their payment link",
+  );
+
+  const zkCheckout = await attempt(() => createZkCheckoutRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL));
+  logKeyless(
+    zkCheckoutRouteId(APISSIX_ROUTE_ID),
+    `${describeUris(() => zkCheckoutRouteUris(COSMOS_API_ENTRY))} (CORS: any origin)`,
+    zkCheckout,
+    "the ZK checkout cannot read or confirm its payment",
+  );
+
   const callbackId = callbackRouteId(APISSIX_ROUTE_ID);
   const callback = await attempt(() => createCallbackRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL));
   logKeyless(
     callbackId,
     describeUris(() => callbackRouteUris(COSMOS_API_ENTRY)),
     callback,
-    "the wallet sign-in will not complete",
+    "the wallet sign-in will not complete and wallets cannot read the shared public key",
   );
 
   /* Retire the Pollar-only route this one replaced, where it lingers: it is keyless and

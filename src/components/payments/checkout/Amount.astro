@@ -1,0 +1,20 @@
+---
+// The page's heading: what the payer is asked to pay, and the merchant's message.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+interface Props {
+  /** A caption above the amount ("To pay"). */
+  caption?: boolean;
+}
+
+const { caption = false } = Astro.props;
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<div class="ck-amount">
+  {caption && <span class="ck-caption">{t.toPay}</span>}
+  <h1 class="pp-amount" data-slot="amount"></h1>
+  <p class="pp-hint" data-slot="amount-hint" hidden>{t.anyAmountHint}</p>
+  <p class="pp-hint" data-slot="fee-included" hidden></p>
+  <p class="pp-msg" data-slot="msg" hidden></p>
+</div>

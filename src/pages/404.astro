@@ -1,12 +1,21 @@
 ---
-// Custom Not Found page — Astro serves this for any unmatched route (replacing its default).
+// Custom Not Found page: Astro serves this for any unmatched route (replacing its default),
+// and src/middleware.ts for a path the requested domain does not own. On the payments
+// domain it is that domain's page, in the payer's language.
 import ErrorPage from "@/components/ErrorPage.astro";
+import PaymentsErrorPage from "@/components/payments/ErrorPage.astro";
+
+const payments = Astro.locals.area === "payments";
 
 Astro.response.status = 404;
 ---
 
-<ErrorPage
-  code="404"
-  title="Page not found"
-  message="The page you're looking for doesn't exist or may have moved. Check the URL, or head back and try again."
-/>
+{payments ? (
+  <PaymentsErrorPage code={404} />
+) : (
+  <ErrorPage
+    code="404"
+    title="Page not found"
+    message="The page you're looking for doesn't exist or may have moved. Check the URL, or head back and try again."
+  />
+)}

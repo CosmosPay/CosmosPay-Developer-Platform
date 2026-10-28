@@ -5,7 +5,7 @@ description: "Lee el resumen de tu cuenta, los saldos y los registros, y comprue
 
 Estos endpoints de solo lectura te dan visibilidad operativa: cuánto has recaudado, la actividad reciente y si el servicio está en funcionamiento.
 
-## Analíticas (solo lectura) — `client.analytics`
+## Analíticas (solo lectura): `client.analytics`
 
 ```ts
 const summary  = await client.analytics.summary();   // totals, volume, webhook health, 30-day series
@@ -20,7 +20,7 @@ expired, successRate }, volume: [...], webhooks: { endpoints, deliveries, ... } 
 `balances()` → `{ data: [{ asset, amount, pending, count }], total }`
 donde `amount`/`pending` son cadenas decimales y `count` es la cantidad de pagos.
 
-## Salud (sondas públicas) — `client.health`
+## Salud (sondas públicas): `client.health`
 
 ```ts
 await client.health.liveness();        // → true when the service is up

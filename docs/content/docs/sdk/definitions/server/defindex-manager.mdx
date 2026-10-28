@@ -15,7 +15,7 @@ constructor(client: Client)
 
 **Parameters**
 
-- `client` — [`Client`](/sdk/definitions/server/client)
+- `client`: [`Client`](/sdk/definitions/server/client)
 
 ## Properties
 
@@ -45,7 +45,7 @@ vault<T = unknown>(vault: string): Promise<T>
 
 **Parameters**
 
-- `vault` — `string`
+- `vault`: `string`
 
 **Returns** `Promise<T>`
 
@@ -59,8 +59,8 @@ balance<T = unknown>(vault: string, account: string): Promise<T>
 
 **Parameters**
 
-- `vault` — `string`
-- `account` — `string`
+- `vault`: `string`
+- `account`: `string`
 
 **Returns** `Promise<T>`
 
@@ -72,8 +72,8 @@ deposit<T = unknown>(vault: string, options: DefindexDepositOptions): Promise<T>
 
 **Parameters**
 
-- `vault` — `string`
-- `options` — `DefindexDepositOptions`
+- `vault`: `string`
+- `options`: `DefindexDepositOptions`
 
 **Returns** `Promise<T>`
 
@@ -85,8 +85,8 @@ withdraw<T = unknown>(vault: string, options: DefindexWithdrawOptions): Promise<
 
 **Parameters**
 
-- `vault` — `string`
-- `options` — `DefindexWithdrawOptions`
+- `vault`: `string`
+- `options`: `DefindexWithdrawOptions`
 
 **Returns** `Promise<T>`
 
@@ -100,7 +100,7 @@ submit<T = unknown>(xdr: string): Promise<T>
 
 **Parameters**
 
-- `xdr` — `string`
+- `xdr`: `string`
 
 **Returns** `Promise<T>`
 

@@ -1,6 +1,6 @@
 ---
-// Branded error page (404 / 500 / …). Static — no React islands — so it renders reliably even
-// when something is broken. Themed via the cosmos.css variables loaded by CosmosLayout.
+// Branded error page (404 / 500 / …). Static apart from the layout's nav island, so it renders
+// reliably even when something is broken (the nav is server-rendered too). Themed via the cosmos.css variables loaded by CosmosLayout.
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 
 interface Props {
@@ -18,12 +18,9 @@ const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const astro = String(code) === "500" ? "astronauta-acostado.svg" : "astronauta-pensando.svg";
 ---
 
-<CosmosLayout title={`${code} — ${title} · Cosmos Pay`} noindex={true} lang={locale}>
+<CosmosLayout title={`${code}: ${title} | Cosmos Pay`} noindex={true} lang={locale}>
   <main id="main" class="errp">
     <div class="errp-inner">
-      <a class="errp-brand" href="/">
-        <span class="cosmos-lockup" role="img" aria-label="Cosmos Pay"></span>
-      </a>
       <div class="errp-code">{code}</div>
       <h1 class="errp-title">{title}</h1>
       <p class="errp-msg">{message}</p>
@@ -37,7 +34,7 @@ const astro = String(code) === "500" ? "astronauta-acostado.svg" : "astronauta-p
 
   <style>
     .errp {
-      min-height: 100vh;
+      min-height: calc(100vh - 72px);
       display: grid;
       place-items: center;
       padding: 40px 20px;
@@ -48,16 +45,6 @@ const astro = String(code) === "500" ? "astronauta-acostado.svg" : "astronauta-p
     .errp-inner {
       text-align: center;
       max-width: 480px;
-    }
-    .errp-brand {
-      display: inline-flex;
-      align-items: center;
-      margin-bottom: 30px;
-      color: var(--ink, #000000);
-      text-decoration: none;
-    }
-    .errp-brand .cosmos-lockup {
-      height: 32px;
     }
     .errp-code {
       font-weight: 300;

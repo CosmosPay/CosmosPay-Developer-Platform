@@ -21,7 +21,7 @@ const endpoint = await client.webhooks.create({
     WebhookEventType.PaymentIntentFailed,
   ], // omit/empty → receive ALL events
 });
-console.log(endpoint.secret); // whsec_… — returned ONCE, store it now!
+console.log(endpoint.secret); // whsec_… (returned ONCE, store it now!)
 
 await endpoint.disable();        // pause
 await endpoint.enable();         // resume
@@ -39,7 +39,7 @@ Também existem as formas no gerenciador: `client.webhooks.list()`, `.fetch(id)`
 `.update(id, {...})`, `.delete(id)`, `.rotateSecret(id)`, `.ping(id)`,
 `.fetchDeliveries(id, {...})`, `.redeliver(id, deliveryId)`.
 
-## Receber eventos — `client.webhooks.on(...)`
+## Receber eventos: `client.webhooks.on(...)`
 
 Inscreva-se com o tipo bruto, o alias em camelCase ou `event` para todos:
 
@@ -102,7 +102,7 @@ Assinaturas inválidas lançam `WebhookSignatureError`.
 
 ```ts
 interface WebhookEvent {
-  id: string;        // stable — use for idempotency
+  id: string;        // stable; use for idempotency
   type: WebhookEventType;
   createdAt: string;
   data: PaymentIntentData;
@@ -115,5 +115,5 @@ Tipos de evento: `PAYMENT_INTENT_CREATED`, `PAYMENT_INTENT_UPDATED`,
 
 ## Referências
 
-- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.
-- [WebhookSignatureError](/sdk/definitions/webhook-signature-error) — Lançado quando a assinatura de um webhook falha na verificação.
+- [Client](/sdk/definitions/client): O ponto de entrada principal do SDK, um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador (um design atômico de cliente único).
+- [WebhookSignatureError](/sdk/definitions/webhook-signature-error): Lançado quando a assinatura de um webhook falha na verificação.

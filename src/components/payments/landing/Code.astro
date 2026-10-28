@@ -1,0 +1,24 @@
+---
+// A highlighted code sample for the payments landing (tokens from highlight.ts, coloured by
+// payments-landing.css's .tk-* rules). `numbered` adds the line-number gutter; the raw code
+// rides along in data-raw so the page's copy buttons copy it exactly (the rendered lines are
+// spans without newlines between them). A sample that can scroll sideways is focusable, so a
+// keyboard can scroll it; one inside a decorative mock-up is not.
+import { highlightLines, type CodeLang } from "@/lib/payments/highlight";
+
+interface Props {
+  code: string;
+  lang: CodeLang;
+  numbered?: boolean;
+  focusable?: boolean;
+  id?: string;
+  class?: string;
+}
+
+const { code, lang, numbered = false, focusable = true, id, class: extra } = Astro.props;
+const lines = highlightLines(code, lang);
+---
+
+<pre class:list={["pl-codeblock", { "is-numbered": numbered }, extra]} id={id} data-raw={code} data-lang={lang} tabindex={focusable ? 0 : undefined} translate="no"><code>{lines.map((line) => (
+  <span class="pl-line">{line.length ? line.map((t) => <span class={`tk-${t.kind}`}>{t.text}</span>) : " "}</span>
+))}</code></pre>

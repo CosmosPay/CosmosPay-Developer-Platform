@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonError,
@@ -23,7 +23,7 @@ function cosmosErrorResponse(err: unknown): Response {
 /* Price a swap. The commission shown is the organization plan's rate (resolved here,
    never accepted from the caller), so the quote reflects exactly what will be charged. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const body = await parseJson(ctx.request, quoteSwapBodySchema).catch(() => null);
@@ -35,7 +35,7 @@ export const POST: APIRoute = async (ctx) => {
   const membership = await getMembership(org, session.user.id).catch(() => null);
   if (!membership) return jsonForbidden("You are not a member of this organization.");
 
-  // The fee is the org plan's rate — resolved server-side, never from the body.
+  // The fee is the org plan's rate, resolved server-side, never from the body.
   const { swapFeeBps } = await orgSwapContext(org);
 
   try {

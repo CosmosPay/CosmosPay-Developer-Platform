@@ -13,7 +13,8 @@ export function PricingCta({ user }) {
           <h2>{p.ctaTitle}<span className="num" aria-hidden="true">/04</span></h2>
           <p>{p.ctaDesc}</p>
           <div className="row">
-            <a className="btn btn-white" href="#">{p.contactSales} <IcArrow /></a>
+            {/* Contact sales: no contact page yet. */}
+            {/* <a className="btn btn-white" href="#">{p.contactSales} <IcArrow /></a> */}
             <a className="btn btn-outline-w" {...ctaProps(user)}>{p.openDashboard}</a>
           </div>
         </div>

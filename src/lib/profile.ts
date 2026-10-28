@@ -1,9 +1,11 @@
-/* profile.ts — Cosmos Pay per-account data (role, region/country/language defaults)
+/* profile.ts: Cosmos Pay per-account data (role, region/country/language defaults)
    and sign-in location capture. Profiles are created lazily on first authenticated
    request so headers (geo) are available. */
 import { prisma } from "@/lib/prisma";
 import { clientLanguage, geoLocate } from "@/lib/geo";
 import { safeNotify } from "@/lib/notifications";
+import { DEFAULT_PLAN_ID } from "@/lib/plans";
+import { planStatusOf } from "@/lib/plan-status";
 import type { APIContext } from "astro";
 
 export type AccountRole = "user" | "admin" | "owner" | "support";
@@ -76,7 +78,7 @@ export async function listUsersWithProfile(limit = 200) {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { profile: { select: { role: true, plan: true, lastSeenAt: true } } },
+    include: { profile: { select: { role: true, plan: true, planStatus: true, lastSeenAt: true } } },
   });
   return users.map((u) => ({
     id: u.id,
@@ -85,16 +87,18 @@ export async function listUsersWithProfile(limit = 200) {
     image: u.image,
     createdAt: u.createdAt,
     role: u.profile?.role ?? "user",
-    plan: u.profile?.plan ?? "community",
+    plan: u.profile?.plan ?? DEFAULT_PLAN_ID,
+    planStatus: planStatusOf(u.profile?.planStatus),
     lastSeenAt: u.profile?.lastSeenAt ?? null,
   }));
 }
 
 /* Admin: set a user's role and/or plan. */
-export async function setUserRolePlan(userId: string, data: { role?: string; plan?: string }) {
-  const patch: { role?: string; plan?: string } = {};
+export async function setUserRolePlan(userId: string, data: { role?: string; plan?: string; planStatus?: string }) {
+  const patch: { role?: string; plan?: string; planStatus?: string } = {};
   if (data.role !== undefined) patch.role = data.role;
   if (data.plan !== undefined) patch.plan = data.plan;
+  if (data.planStatus !== undefined) patch.planStatus = data.planStatus;
   return prisma.profile.upsert({ where: { userId }, update: patch, create: { userId, ...patch } });
 }
 

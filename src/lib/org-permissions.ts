@@ -1,10 +1,12 @@
-/* org-permissions.ts — per-action permissions for organization collaborators.
+/* org-permissions.ts: per-action permissions for organization collaborators.
    Pure data (no server-only imports) so it's shared by the API and the React islands.
 
    Roles: owner / admin / member. Owners and admins implicitly have EVERY permission.
    "member" collaborators get exactly the actions granted to them, per resource and per
-   action (create / edit / delete), e.g. "webhooks:create" or "apiKeysLive:delete". */
-export const ORG_RESOURCES = ["apiKeysTest", "apiKeysLive", "webhooks", "products", "customers", "payments"] as const;
+   action (create / edit / delete), e.g. "webhooks:create" or "apiKeysLive:delete".
+   "wallets" are the organization's receiving wallets (Settings): create connects one, edit
+   renames it, delete removes it. */
+export const ORG_RESOURCES = ["apiKeysTest", "apiKeysLive", "webhooks", "products", "customers", "payments", "wallets"] as const;
 export const ORG_ACTIONS = ["create", "edit", "delete"] as const;
 
 export type OrgResource = (typeof ORG_RESOURCES)[number];

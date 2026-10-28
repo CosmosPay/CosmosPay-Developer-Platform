@@ -4,7 +4,7 @@
 // LangSelect), so the docs chrome follows the same language switch as the rest of the portal.
 //
 // Note: this localizes the UI chrome. The documentation content itself is English-only
-// (its sources — the SDK llms files and the OpenAPI spec — are English).
+// (its sources, the SDK llms files and the OpenAPI spec, are English).
 type T = Record<string, string>;
 
 const es: T = {

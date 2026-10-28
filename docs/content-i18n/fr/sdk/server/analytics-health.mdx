@@ -5,7 +5,7 @@ description: "Lisez le résumé de votre compte, vos soldes et journaux, et vér
 
 Ces points de terminaison en lecture seule vous offrent une visibilité opérationnelle : combien vous avez encaissé, l'activité récente, et si le service est actif.
 
-## Analyses (lecture seule) — `client.analytics`
+## Analyses (lecture seule) : `client.analytics`
 
 ```ts
 const summary  = await client.analytics.summary();   // totals, volume, webhook health, 30-day series
@@ -20,7 +20,7 @@ expired, successRate }, volume: [...], webhooks: { endpoints, deliveries, ... } 
 `balances()` → `{ data: [{ asset, amount, pending, count }], total }`
 où `amount`/`pending` sont des chaînes décimales et `count` est le nombre de paiements.
 
-## Santé (sondes publiques) — `client.health`
+## Santé (sondes publiques) : `client.health`
 
 ```ts
 await client.health.liveness();        // → true when the service is up

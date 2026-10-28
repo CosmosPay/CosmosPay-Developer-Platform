@@ -2,7 +2,7 @@
  * Resolve the `@/…` path alias when running under plain Node.
  *
  * `tsconfig.json`'s `paths` is a type-checker instruction; it does not exist at
- * runtime, and type stripping only erases types — it hands Node the bare specifier
+ * runtime, and type stripping only erases types: it hands Node the bare specifier
  * `@/lib/plans`, which Node cannot resolve. Vite/Astro apply the alias for the app
  * build (`astro.config.mjs` → `resolve.alias`), so this hook is the equivalent for
  * `node --test`.
@@ -23,7 +23,7 @@ const CANDIDATES = ['', '.ts', '.tsx', '/index.ts', '/index.tsx'];
 /**
  * A candidate only counts when it is a FILE. `@/schemas/swaps` is both `swaps.ts` and a
  * `swaps/` directory (the module's Zod schemas next to its OpenAPI registration), and the
- * bundler picks the file — resolving to the directory instead hands node something it
+ * bundler picks the file; resolving to the directory instead hands node something it
  * cannot import.
  */
 function firstFile(base) {
@@ -32,7 +32,7 @@ function firstFile(base) {
     try {
       if (statSync(candidate).isFile()) return candidate;
     } catch {
-      /* no such path — try the next extension */
+      /* no such path; try the next extension */
     }
   }
   return null;

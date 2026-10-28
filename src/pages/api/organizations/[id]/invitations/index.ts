@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonConflict, jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageOrg, getMembership } from "@/lib/organizations";
 import { createInvitation, listPendingInvitations } from "@/lib/invitations";
@@ -8,9 +8,9 @@ import type { APIRoute } from "astro";
 
 const paramsSchema = z.object({ id: z.string().min(1) });
 
-/* GET /api/organizations/:id/invitations — pending invitations (owner/admin). */
+/* GET /api/organizations/:id/invitations: pending invitations (owner/admin). */
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);
@@ -31,10 +31,10 @@ const inviteBodySchema = z.object({
   permissions: z.array(z.string()).optional().default([]),
 });
 
-/* POST /api/organizations/:id/invitations — invite someone by email (owner/admin).
+/* POST /api/organizations/:id/invitations: invite someone by email (owner/admin).
    Creates a 3-day magic-link token and emails it; no member is added until they accept. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);

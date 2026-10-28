@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageOrg, deleteOrg, getMembership, listForUser, renameOrg } from "@/lib/organizations";
 import type { APIRoute } from "astro";
@@ -7,9 +7,9 @@ import type { APIRoute } from "astro";
 const paramsSchema = z.object({ id: z.string().min(1) });
 const renameSchema = z.object({ name: z.string().trim().min(1).max(60) });
 
-/* GET /api/organizations/:id — a single org the user is a member of. */
+/* GET /api/organizations/:id: a single org the user is a member of. */
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);
@@ -21,9 +21,9 @@ export const GET: APIRoute = async (ctx) => {
   return jsonSuccess({ data: { id: params.data.id, role: membership.role }, message: "Organization loaded" });
 };
 
-/* PATCH /api/organizations/:id — rename (org owner/admin). */
+/* PATCH /api/organizations/:id: rename (org owner/admin). */
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);
@@ -43,9 +43,9 @@ export const PATCH: APIRoute = async (ctx) => {
   return jsonSuccess({ data: { id: updated.id, name: updated.name }, message: "Organization updated" });
 };
 
-/* DELETE /api/organizations/:id — delete (org owner only). */
+/* DELETE /api/organizations/:id: delete (org owner only). */
 export const DELETE: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);

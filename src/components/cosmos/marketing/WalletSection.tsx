@@ -4,8 +4,8 @@
    de cada archivo va en el boton: nadie baja 75 MB sin enterarse antes. */
 import { IcArrow, IcChevSm } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { WALLET_LINKS, WALLET_MORE, WALLET_VERSION, ANDROID_SIZE } from "./data";
-import { WALLET_ICONS } from "./icons";
+import { WALLET_LINKS, WALLET_MORE, WALLET_VERSION, ANDROID_SIZE } from "@/components/cosmos/marketing/data";
+import { WALLET_ICONS } from "@/components/cosmos/marketing/icons";
 
 /* todo lo que sale del dominio se abre aparte y sin pasarle el referrer */
 const EXT = { target: "_blank", rel: "noopener noreferrer" } as const;

@@ -1,16 +1,18 @@
-/* Landing.jsx — Cosmos Pay Developer Platform marketing landing.
+/* Landing.jsx: Cosmos Pay Developer Platform marketing landing.
    Ported from the Design bundle; all copy resolved through the i18n catalog (useT).
    Thin root: section components live under ./marketing. */
-import { Nav, Footer, useTheme, useReveal } from "@/components/cosmos/shared";
+import { Nav, Footer, useTheme, useReveal, useDevSession } from "@/components/cosmos/shared";
+import type { User } from "@/components/cosmos/lib/types";
 import { initLang } from "@/lib/i18n/index";
 import {
   Hero, WalletSection, DevKit, ApiSection, IntegrationPaths, Solutions, Stats,
   CustomerStories, Testimonials, Resources, Marketplace, Cta,
-} from "./marketing";
+} from "@/components/cosmos/marketing";
 
 /* ---------------- root ---------------- */
-export default function Landing({ user = null, lang }) {
+export default function Landing({ user: serverUser = null, lang }: { user?: User | null; lang?: string }) {
   initLang(lang);
+  const { user, ready } = useDevSession(serverUser);
   const [theme, setTheme] = useTheme();
   useReveal();
   return (
@@ -18,7 +20,7 @@ export default function Landing({ user = null, lang }) {
       {/* la barra hereda el color del primer panel: al pasar la wallet arriba
           el panel de entrada es blanco, y con overPanel="black" los links
           quedaban blancos sobre blanco. */}
-      <Nav theme={theme} setTheme={setTheme} user={user} overPanel="white" />
+      <Nav theme={theme} setTheme={setTheme} user={user} sessionReady={ready} overPanel="white" area="site" />
       <main id="main">
         {/* La wallet es lo primero que se ve, sin scrollear: quien entra a
             cosmospay.lat viene a conseguirla, no a leer sobre la API. El hero

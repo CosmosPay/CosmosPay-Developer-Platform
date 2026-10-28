@@ -1,0 +1,1142 @@
+/* ============================================================
+   Cosmos Pay: payments-landing.css
+   payments.cosmospay.lat's landing (src/pages/payments/index.astro), on the
+   institutional skin (institutional.css).
+
+   Type and structure stay quiet: one typeface (Open Sauce One) on five sizes,
+   headings in one colour, no labels above headings, no all-caps, no numbering
+   unless the content is a sequence, no arrows on links. Surfaces are told apart
+   by tone (--bg / --surface), not by outlines or resting shadows; lines appear
+   only where they carry structure (table rows, FAQ items, the steps' track).
+   Solid colours only, no dark bands in light mode. The motion is where the page
+   is loud (see "motion" below): the hero video, the logo marquees, the reveals.
+   Buttons are the snap's pills (cosmos.css).
+   ============================================================ */
+
+/* Reveals start shifted (the code block from the right): clip, so nothing widens the page.
+   clip, not hidden: it makes no scroll container, so the sticky headings keep working. */
+.pl { display: block; overflow-x: clip; }
+
+/* ---- type scale: 60 / 40 / 22 / 17 / 14 ---- */
+.pl-head { max-width: 720px; margin: 0 0 48px; }
+.pl-head h2, .pl-final h2 {
+  margin: 0; font-weight: 600; font-size: clamp(2rem, 3.3vw, 2.5rem); line-height: 1.12;
+  letter-spacing: -.025em; text-wrap: balance; color: var(--ink);
+}
+.pl-lede, .pl-section-lede { margin: 0; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); max-width: 54ch; }
+.pl-head .pl-section-lede { margin-top: 20px; }
+.pl-textlink {
+  position: relative; display: inline-flex; align-items: center; margin-top: 20px;
+  font-weight: 600; font-size: .9375rem; color: var(--accent);
+}
+/* The snap's underline sweep. */
+.pl-textlink::after {
+  content: ""; content: "" / "";
+  position: absolute; left: 0; right: 0; bottom: -3px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-textlink:is(:hover, :focus-visible)::after { scale: 1 1; }
+.pl-cta { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.pl-cta .btn { min-height: 50px; padding: 13px 24px; }
+.pl-icon { width: 22px; height: 22px; display: block; }
+.pl-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.pl-footnote { margin: 16px 0 0; font-size: .875rem; line-height: 1.55; color: var(--ink-3); max-width: 80ch; }
+.pl-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.pl-checks li { display: flex; align-items: flex-start; gap: 12px; font-size: 1rem; line-height: 1.5; color: var(--ink); }
+.pl-check { flex: 0 0 auto; margin-top: 2px; color: var(--accent); }
+.pl-check .pl-icon { width: 18px; height: 18px; }
+
+/* ---- hero ---- */
+/* The hero runs up under the nav (72px + its 1px border; the bar is transparent at the top of
+   the page), so the video reaches the top edge, and it fills the first screen at any size. */
+.pl-hero {
+  position: relative; overflow: hidden; isolation: isolate; background: var(--bg);
+  margin-top: -73px; padding-top: 73px;
+  min-height: 100svh;
+  display: flex; align-items: center;
+}
+/* The video is the header's background, anchored right: the start of its frame sits at the
+   left edge of this area. Drawn on white, it multiplies onto the light page; in dark mode it
+   is inverted with its hue turned back (white becomes black, the coins keep their colours)
+   and lightens onto the page, so the hero follows the theme. Its left edge fades out, so the
+   ramp never starts at a hard line. */
+/* No z-index here: a stacking context would cut the video off from the hero's background,
+   which is what it has to blend with. The copy sits above it instead. Its fade-in still makes
+   it one (an opacity animation does, even once finished), so it carries the page colour
+   itself: the video blends with that, and no lighter band shows behind the white frame. */
+.pl-hero-media { position: absolute; top: 0; right: 0; bottom: 0; width: 58%; background: var(--bg); }
+.pl-video {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; object-position: 0% 62%;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 22%);
+}
+[data-theme="dark"] .pl-video { filter: invert(1) hue-rotate(180deg); mix-blend-mode: lighten; }
+.pl-hero-inner { position: relative; z-index: 1; width: 100%; }
+.pl-hero-copy { max-width: 620px; padding: 56px 0 80px; }
+.pl-hero-title {
+  /* two lines at every width: 32px on a phone, 60px from a laptop up */
+  margin: 0; font-weight: 600; font-size: clamp(2rem, 4.2vw + .5rem, 3.75rem); line-height: 1.04;
+  letter-spacing: -.035em; color: var(--ink); text-wrap: balance;
+}
+.pl-hero .pl-lede { margin-top: 28px; font-size: 1.125rem; }
+/* The snap's highlighter (packages/site in Cosmos-Metamask-Adapter), in black as the product
+   owner asked: a solid block behind the words, painted left to right, with white ink on it.
+   Dark mode inverts it (white block, black ink) so it still reads. A pseudo-element, not a
+   gradient. */
+.pl-hl {
+  --hl: #13131A; --hl-ink: #FFFFFF;
+  position: relative; isolation: isolate; color: var(--hl-ink); background: none; padding: 0 .08em;
+}
+[data-theme="dark"] .pl-hl { --hl: #FFFFFF; --hl-ink: #13131A; }
+.pl-hl::before {
+  content: ""; content: "" / "";
+  position: absolute; z-index: -1; inset: 6% 0 0; border-radius: .08em;
+  background: var(--hl); transform-origin: left; animation: pl-hl .8s cubic-bezier(.65, 0, .35, 1) .7s both;
+}
+@keyframes pl-hl { from { scale: 0 1; } }
+/* the ink turns white as the block arrives, so the word never sits white on the page */
+.pl-hl { animation: pl-hl-ink .8s cubic-bezier(.65, 0, .35, 1) .7s both; }
+@keyframes pl-hl-ink { from { color: var(--ink); } }
+/* in the final call the band waits until the panel has risen in */
+.pl-final .pl-hl::before { animation: none; transition: scale .8s cubic-bezier(.65, 0, .35, 1) .5s; }
+.pl-final .pl-hl { animation: none; transition: color .8s cubic-bezier(.65, 0, .35, 1) .5s; }
+.pl-anim .pl-final:not(.is-in) .pl-hl::before { scale: 0 1; }
+.pl-anim .pl-final:not(.is-in) .pl-hl { color: var(--ink); }
+.pl-motion {
+  position: absolute; right: 24px; bottom: 22px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 8px 16px;
+  border: 1.5px solid var(--ink); border-radius: 999px; background: var(--surface); color: var(--ink);
+  font: 700 .8125rem/1 var(--ff-sans); cursor: pointer;
+}
+.pl-motion-icon { width: 10px; height: 12px; border-left: 3px solid currentColor; border-right: 3px solid currentColor; }
+.pl-motion[data-state="paused"] .pl-motion-icon {
+  border: 0; width: 0; height: 0;
+  border-left: 10px solid currentColor; border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+}
+
+/* ---- marks: networks, assets and wallets as two marquees, where a gateway shows its logo wall.
+   Only the marquees show; they run for everyone (reduced motion included, the product
+   owner's call, like the hero video), and hovering a row holds it. ---- */
+.pl-marks { background: var(--surface); padding: 40px 0; overflow: hidden; }
+.pl-marks .pl-marks-title { padding-bottom: 26px; font-size: 1rem; font-weight: 600; line-height: 1.5; color: var(--ink-2); }
+.pl-marquee-row + .pl-marquee-row { margin-top: 26px; }
+/* The edges fade out through a mask (no colour is painted), so logos slide in and out softly. */
+.pl-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.pl-marquee-track { display: flex; width: max-content; animation: pl-marquee 46s linear infinite; }
+.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; }
+.pl-marquee-set { display: flex; align-items: center; gap: 52px; padding-right: 52px; }
+.pl-marquee:hover .pl-marquee-track { animation-play-state: paused; }
+@keyframes pl-marquee { to { translate: -50% 0; } }
+.pl-brand {
+  display: inline-flex; align-items: center; gap: 12px; white-space: nowrap;
+  font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; color: var(--ink);
+}
+.pl-brand img, .pl-brand .pl-mark { width: 32px; height: 32px; flex: 0 0 auto; display: block; border-radius: 8px; object-fit: contain; }
+/* a brand with a mark per theme (Pollar): the light one on light pages, the dark one on dark */
+.pl-brand img.pl-brand-dark { display: none; }
+[data-theme="dark"] .pl-brand img.pl-brand-light { display: none; }
+[data-theme="dark"] .pl-brand img.pl-brand-dark { display: block; }
+
+/* ---- sections: tone steps, no rules between them ---- */
+.pl-section { padding: clamp(80px, 10vw, 136px) 0; background: var(--bg); }
+.pl-section-alt { background: var(--surface); }
+.pl-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; align-items: start; }
+.pl-split > .pl-head { margin: 0; }
+.pl-head-sticky { position: sticky; top: 112px; }
+.pl-head-row { max-width: none; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+.pl-head-row .pl-section-lede { margin: 0; justify-self: end; }
+
+/* benefits: a bento of four, each over a piece of the product that shows it (Mock.astro);
+   the wide and narrow cells swap from one row to the next */
+.pl-bento { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
+.pl-bento-card { grid-column: span 6; display: flex; flex-direction: column; padding: 10px 10px 32px; background: var(--surface); border-radius: var(--radius-lg); }
+.pl-bento-card:nth-child(4n + 1), .pl-bento-card:nth-child(4n + 4) { grid-column: span 7; }
+.pl-bento-card:nth-child(4n + 2), .pl-bento-card:nth-child(4n + 3) { grid-column: span 5; }
+.pl-bento-visual {
+  position: relative; display: grid; align-items: end; justify-items: start; min-height: 300px; padding: 28px; margin-bottom: 26px;
+  overflow: hidden; background: var(--bg); border-radius: calc(var(--radius-lg) - 8px);
+}
+.pl-bento-3d { position: absolute; top: 12px; right: 12px; width: clamp(140px, 40%, 220px); }
+.pl-bento-visual .pl-mk { position: relative; max-width: 360px; }
+.pl-bento-visual .pl-mk-card { margin-inline: 0; }
+.pl-bento-card h3 { margin: 0 22px 10px; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); text-wrap: balance; }
+.pl-bento-card p { margin: 0 22px; max-width: 54ch; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+
+/* settlement: instant or escrow, side by side, each with its three steps */
+.pl-settle { margin-top: clamp(64px, 8vw, 104px); }
+.pl-settle-head { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: end; margin-bottom: 32px; }
+.pl-settle-title { margin: 0; font-weight: 600; font-size: clamp(1.5rem, 2.4vw, 1.875rem); line-height: 1.2; letter-spacing: -.02em; color: var(--ink); text-wrap: balance; }
+.pl-settle-head .pl-section-lede { justify-self: end; }
+.pl-settle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.pl-settle-card { display: grid; gap: 14px; align-content: start; padding: clamp(28px, 4vw, 40px); background: var(--surface); border-radius: var(--radius-lg); }
+.pl-settle-card h4 { margin: 0; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.pl-settle-card > p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+.pl-settle-card .pl-mk-flow { margin-bottom: 14px; }
+.pl-settle-steps { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.pl-settle-steps li { position: relative; display: flex; gap: 14px; align-items: flex-start; padding-bottom: 20px; font-size: 1rem; line-height: 1.45; color: var(--ink); }
+.pl-settle-steps li:last-child { padding-bottom: 0; }
+/* the line from one step to the next */
+.pl-settle-steps li:not(:last-child)::after {
+  content: ""; content: "" / "";
+  position: absolute; left: 13px; top: 32px; bottom: 4px; width: 1.5px; background: var(--line-2);
+  transform-origin: top; transition: scale .6s cubic-bezier(.2, .7, .2, 1) calc(var(--j, 0) * 160ms + .4s);
+}
+.pl-settle-num {
+  flex: 0 0 auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--btn-bg); color: var(--btn-fg); font-size: .8125rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  transition: scale .5s cubic-bezier(.3, 1.5, .5, 1) calc(var(--j, 0) * 160ms + .25s);
+}
+/* escrow's middle step is the hold: an open ring instead of a filled dot */
+.pl-settle-card.is-escrow li:nth-child(2) .pl-settle-num { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.pl-anim .pl-settle-card:not(.is-in) .pl-settle-num { scale: .3; }
+.pl-anim .pl-settle-card:not(.is-in) .pl-settle-steps li::after { scale: 1 0; }
+
+/* comparison: cards and transfers next to Cosmos Pay, our column on the accent tint */
+.pl-compare-card { background: var(--bg); border-radius: var(--radius-lg); overflow: hidden; }
+.pl-compare { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 1rem; }
+.pl-compare th, .pl-compare td { padding: 20px 28px; text-align: left; vertical-align: top; line-height: 1.55; }
+.pl-compare thead th { font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+.pl-compare thead th:first-child { width: 24%; }
+.pl-compare tbody tr { border-top: 1px solid var(--line); }
+.pl-compare tbody th { font-weight: 600; color: var(--ink); }
+.pl-compare td { color: var(--ink-2); }
+.pl-compare .pl-compare-us { background: var(--accent-soft); color: var(--ink); }
+.pl-compare thead .pl-compare-us { color: var(--accent); }
+.pl-compare-val { display: flex; gap: 12px; align-items: flex-start; }
+
+/* integration paths: three columns on one panel, not three cards */
+.pl-paths {
+  list-style: none; margin: 0; padding: clamp(28px, 4vw, 48px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 56px;
+  background: var(--surface); border-radius: var(--radius-lg);
+}
+/* Each column spans the list's six rows (visual, title, effort, body, checks, link) as a
+   subgrid, so the check lists and links of all three line up whatever the body's length. */
+.pl-path { display: grid; grid-row: span 6; grid-template-rows: subgrid; row-gap: 0; }
+.pl-path-visual {
+  display: grid; place-items: center; min-height: 236px; padding: 24px 20px; margin-bottom: 28px;
+  background: var(--bg); border-radius: calc(var(--radius-lg) - 8px);
+}
+.pl-path h3 { margin: 0; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); }
+.pl-path-level { margin: 6px 0 0; font-size: .875rem; font-weight: 600; color: var(--accent); }
+.pl-path-body { margin: 16px 0 24px; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+.pl-path .pl-checks { align-self: start; }
+.pl-path .pl-textlink { justify-self: start; align-self: end; margin-top: 28px; }
+
+/* how it works: a real sequence, so numbered, on one track */
+.pl-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+/* each step spans four subgrid rows (screen, number, title, body) so the four line up */
+.pl-steps li { display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; }
+.pl-step-visual {
+  display: grid; place-items: center; min-height: 212px; padding: 20px 18px; margin-bottom: 26px;
+  background: var(--bg); border-radius: var(--radius-lg);
+}
+/* the number, and the track from it to the next step */
+.pl-step-top { display: flex; align-items: center; gap: 14px; }
+.pl-step-line { flex: 1; height: 1.5px; background: var(--line-2); transform-origin: left; }
+.pl-steps li:last-child .pl-step-line { visibility: hidden; }
+.pl-step-num {
+  display: grid; place-items: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; font-size: 1rem; font-variant-numeric: tabular-nums;
+}
+.pl-steps h3 { margin: 22px 0 8px; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.pl-steps p { margin: 0; color: var(--ink-2); line-height: 1.6; font-size: 1rem; }
+
+/* integration options: a grid, the two live demos in wide cells, the rest in a row of four;
+   each card is its visual, its name, what it costs to set up, and its code folded away */
+.pl-anchor { position: absolute; }
+.pl-int-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; }
+/* each card spans two subgrid rows (visual, body), so the visuals of a row match in height */
+.pl-int-card { grid-column: span 3; grid-row: span 2; display: grid; grid-template-rows: subgrid; row-gap: 0; padding: 10px 10px 26px; background: var(--surface); border-radius: var(--radius-lg); }
+.pl-int-card.is-live { grid-column: span 6; }
+.pl-int-visual {
+  position: relative; display: grid; place-items: center; min-height: 250px; padding: 20px; margin-bottom: 22px;
+  background: var(--bg); border-radius: calc(var(--radius-lg) - 8px); overflow: hidden;
+}
+.pl-int-card.is-live .pl-int-visual { min-height: 460px; padding: 28px; }
+/* the live checkout drawn a little smaller, so its cell does not tower over the button's */
+.pl-demo-embed cosmos-pay-checkout { zoom: .86; }
+/* under the live button, the window it opens */
+.pl-demo-window { width: 100%; margin-top: 8px; }
+.pl-demo-window .pl-mk { zoom: .78; }
+.pl-int-card:not(.is-live) .pl-int-visual .pl-mk { zoom: .82; }
+.pl-int-body { display: flex; flex-direction: column; flex: 1; padding: 0 14px; }
+.pl-int-body h3 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.25; color: var(--ink); }
+.pl-int-card.is-live .pl-int-body h3 { font-size: 1.375rem; }
+.pl-int-tag { margin: 6px 0 12px; font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+.pl-int-text { margin: 0; max-width: 54ch; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+.pl-int-body .pl-textlink { align-self: flex-start; margin-top: auto; padding-top: 18px; }
+/* the code, folded: a summary that turns its plus, the snippet sliding open */
+.pl-int-code { margin-top: 16px; interpolate-size: allow-keywords; }
+.pl-int-code summary {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+  font-size: .9375rem; font-weight: 600; color: var(--ink);
+}
+.pl-int-code summary::-webkit-details-marker { display: none; }
+.pl-int-code summary::before {
+  content: "+"; content: "+" / ""; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  font-size: 1rem; line-height: 1; border: 1.5px solid var(--line-2); transition: rotate .3s cubic-bezier(.2, .7, .2, 1), border-color .25s;
+}
+.pl-int-code[open] summary::before { rotate: 45deg; border-color: var(--ink); }
+.pl-int-code::details-content { block-size: 0; overflow: hidden; transition: block-size .4s cubic-bezier(.2, .7, .2, 1), content-visibility .4s allow-discrete; }
+.pl-int-code[open]::details-content { block-size: auto; }
+.pl-int-code .pl-snippet { margin-top: 14px; }
+/* the live pay button, on a store's checkout line */
+.pl-demo-store { display: grid; justify-items: center; gap: 18px; width: 100%; max-width: 380px; }
+.pl-demo-product { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.pl-demo-product b { display: block; font-weight: 600; color: var(--ink); }
+.pl-demo-price { display: block; margin-top: 2px; font-size: .875rem; color: var(--ink-3); }
+.pl-demo-thumb { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 12px; background: var(--accent-soft-2); }
+.pl-demo-hint { margin: 0; font-size: .8125rem; line-height: 1.45; text-align: center; color: var(--ink-3); }
+.pl-int-visual cosmos-pay-button { display: block; }
+/* the live embedded checkout, and the events it sends to the page */
+.pl-demo-embed { display: grid; gap: 14px; width: 100%; max-width: 380px; }
+.pl-demo-log { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin: 0; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: .8125rem; color: var(--ink-3); }
+.pl-demo-log code { font: 12px/1.4 var(--ff-mono); color: var(--tk-key); }
+/* plugins, coming soon: the platforms' glyphs */
+.pl-int-logos { display: flex; gap: 28px; color: var(--ink); }
+.pl-int-logo { display: grid; justify-items: center; gap: 10px; font-size: .8125rem; font-weight: 600; color: var(--ink-2); }
+.pl-int-logo svg { width: 52px; height: 52px; padding: 18px; box-sizing: content-box; background: var(--surface); border: 1px solid var(--line); border-radius: 50%; color: var(--ink); }
+.pl-int-plugins .pl-int-tag { color: var(--tertiary); }
+/* a snippet to paste: language, copy button, highlighted code */
+.pl-snippet { margin-top: 24px; background: var(--bg); border-radius: 16px; overflow: hidden; }
+.pl-snippet-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 18px; border-bottom: 1px solid var(--line); }
+.pl-snippet-lang { font-size: .8125rem; font-weight: 600; color: var(--ink-3); }
+.pl-snippet .pl-codeblock { padding: 14px 18px 16px; font-size: 12.5px; }
+
+/* use cases: the businesses on the left, the selected one on the right */
+.pl-uses { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 32px; align-items: start; }
+.pl-uses-tabs { display: grid; gap: 4px; }
+.pl-uses-tab {
+  width: 100%; padding: 16px 20px; text-align: left; cursor: pointer;
+  background: transparent; border: 0; border-radius: 14px;
+  font: 600 1.0625rem/1.3 var(--ff-sans); color: var(--ink-3);
+  transition: background-color .2s, color .2s;
+}
+.pl-uses-tab:hover { color: var(--ink); }
+.pl-uses-tab[aria-selected="true"] { color: var(--ink); background: var(--bg); }
+.pl-uses-panel { padding: clamp(28px, 4vw, 48px); background: var(--bg); border-radius: var(--radius-lg); }
+.pl-uses-panel:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 48px; align-items: center; }
+/* the business's photo, with its paid order over the corner */
+.pl-uses-visual { position: relative; padding-bottom: 28px; }
+.pl-uses-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 20px; filter: grayscale(1) contrast(1.06); }
+.pl-uses-visual .pl-mk { position: absolute; left: -36px; bottom: 0; width: calc(100% - 20px); }
+.pl-uses-visual .pl-mk-card { margin-inline: 0; max-width: 300px; }
+.pl-uses-panel[hidden] { display: none; }
+.pl-uses-panel h3 { margin: 0 0 14px; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); }
+.pl-uses-body { margin: 0 0 28px; max-width: 58ch; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); }
+.pl-uses-built { margin: 28px 0 0; font-size: .9375rem; color: var(--ink-2); }
+
+/* security: a two-column list beside its heading; the heading carries an explorer card,
+   each fact a line icon */
+.pl-security-visual { position: relative; margin-top: 32px; max-width: 380px; padding-top: 120px; }
+.pl-security-3d { position: absolute; top: 0; right: 0; width: 190px; }
+.pl-security-visual .pl-mk { position: relative; }
+.pl-security-visual .pl-mk-card { margin-inline: 0; }
+.pl-fact-icon { display: block; margin-bottom: 14px; color: var(--ink); }
+.pl-fact-icon .pl-icon { width: 24px; height: 24px; }
+.pl-facts-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 48px; }
+.pl-facts-list h3 { margin: 0 0 8px; font-size: 1.0625rem; font-weight: 600; color: var(--ink); }
+.pl-facts-list p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+
+/* developers: the code follows the theme too */
+.pl-dev { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; align-items: center; }
+.pl-dev .pl-head { margin-bottom: 28px; }
+.pl-code { margin: 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); color: var(--ink); }
+/* the editor's bar: window dots, the tabs, the copy button */
+.pl-code-bar { display: flex; align-items: center; gap: 14px; padding: 0 12px 0 18px; border-bottom: 1px solid var(--line); }
+.pl-code-dots { display: flex; gap: 6px; flex: 0 0 auto; }
+.pl-code-dots i, .pl-mk-dots i { display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--line-2); }
+.pl-code-tabs { display: flex; gap: 4px; flex: 1; min-width: 0; padding-top: 8px; overflow-x: auto; }
+.pl-code-tab {
+  position: relative; flex: 0 0 auto; padding: 12px 12px 14px; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink-3); transition: color .2s;
+}
+.pl-code-tab:hover, .pl-code-tab[aria-selected="true"] { color: var(--ink); }
+/* the selected tab's rule slides in under it */
+.pl-code-tab::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px;
+  background: var(--btn-bg); scale: 0 1; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-code-tab[aria-selected="true"]::after { scale: 1 1; }
+.pl-code-panel:not([hidden]) { animation: pl-fade .35s ease; }
+/* as tall as the longest sample (the webhook), so switching tabs does not move the page */
+.pl-code .pl-codeblock { min-height: 22rem; padding: 18px 22px 8px 10px; }
+.pl-code-note { margin: 0; padding: 0 22px 22px 70px; font: 13px/1.7 var(--ff-mono); color: var(--ink-3); }
+
+/* ---- code: highlighted samples (Code.astro, highlight.ts) in the page's palette ---- */
+.pl {
+  --tk-kw: #6E40C9; --tk-str: #1F7A4D; --tk-num: #B45309; --tk-key: #2346F4;
+  --tk-fn: #13131A; --tk-com: #6A6A75; --tk-punc: #6A6A75; --tk-tag: #6E40C9; --tk-attr: #2346F4;
+}
+[data-theme="dark"] .pl {
+  --tk-kw: #C4A7FF; --tk-str: #7EE0A8; --tk-num: #F5B97A; --tk-key: #8FA3FF;
+  --tk-fn: #FFFFFF; --tk-com: #8A8A96; --tk-punc: #8A8A96; --tk-tag: #C4A7FF; --tk-attr: #8FA3FF;
+}
+.pl-codeblock { margin: 0; overflow-x: auto; font: 13px/1.75 var(--ff-mono); color: var(--ink); tab-size: 2; }
+.pl-codeblock code { display: block; min-width: max-content; font: inherit; }
+.pl-line { display: block; min-height: 1.75em; white-space: pre; }
+.pl-codeblock.is-numbered { counter-reset: pl-line; }
+.pl-codeblock.is-numbered .pl-line::before {
+  counter-increment: pl-line; content: counter(pl-line); content: counter(pl-line) / "";
+  display: inline-block; width: 2.4em; margin-right: 1.4em; text-align: right; color: var(--ink-3); opacity: .6; user-select: none;
+}
+.tk-kw, .tk-tag { color: var(--tk-kw); }
+.tk-str { color: var(--tk-str); }
+.tk-num { color: var(--tk-num); }
+.tk-key, .tk-attr, .tk-flag { color: var(--tk-key); }
+.tk-fn { color: var(--tk-fn); font-weight: 700; }
+.tk-com { color: var(--tk-com); font-style: italic; }
+.tk-punc { color: var(--tk-punc); }
+/* copy: a small light pill; it paints blue under the pointer like the other light buttons */
+.pl-copy {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; cursor: pointer;
+  font: inherit; font-size: .8125rem; font-weight: 600; color: var(--ink); background: var(--surface);
+  border: 1.5px solid var(--line-2); border-radius: 999px; transition: color .25s, background-color .25s, border-color .25s;
+}
+.pl-copy::before {
+  content: ""; width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 3px;
+  box-shadow: 3px -3px 0 -1.5px var(--surface), 3px -3px 0 0 currentColor;
+}
+@media (hover: hover) { .pl-copy:hover { color: var(--out-ink-fg); background: var(--out-ink); border-color: var(--out-ink); } }
+.pl-copy.is-done { color: var(--ok); border-color: var(--ok); background: var(--surface); }
+
+/* pricing: one panel, a column per plan; the lowest rate sits on the accent tint */
+.pl-plans {
+  list-style: none; margin: 0; padding: 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
+  background: var(--surface); border-radius: var(--radius-lg);
+}
+.pl-plan { display: flex; flex-direction: column; gap: 6px; padding: 24px 22px; border-radius: calc(var(--radius-lg) - 6px); }
+.pl-plan-best { background: var(--accent-soft); }
+.pl-plan-name { font-weight: 600; color: var(--ink); }
+.pl-plan-rate { margin-top: 12px; font-size: clamp(1.5rem, 2.2vw, 2rem); font-weight: 600; letter-spacing: -.03em; color: var(--ink); }
+.pl-plan-sub { font-size: .875rem; color: var(--ink-2); }
+.pl-plan-price { margin-top: auto; padding-top: 16px; font-size: .875rem; color: var(--ink-2); }
+.pl-plans-more { margin-top: 32px; }
+/* fee calculator: the amount on the left, what each plan charges and leaves on the right */
+.pl-calc {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: start;
+  margin-top: 24px; padding: clamp(28px, 4vw, 48px); background: var(--surface); border-radius: var(--radius-lg);
+}
+.pl-calc h3 { margin: 0 0 24px; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.pl-calc-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.pl-calc-head h3 { margin: 0; }
+/* the render sits on a tile of the canvas tone: white clay would vanish on the white card */
+.pl-calc-3d { width: 72px; padding: 6px; background: var(--bg); border-radius: 18px; }
+.pl-calc-label { display: block; margin-bottom: 8px; font-size: .875rem; font-weight: 600; color: var(--ink-2); }
+/* the amount: a quiet tinted field that takes an outline in ink while it is being typed in */
+.pl-calc-amount {
+  display: flex; align-items: baseline; gap: 10px; padding: 14px 20px;
+  background: var(--bg); border: 1.5px solid transparent; border-radius: 16px;
+  transition: border-color .2s, background-color .2s;
+}
+.pl-calc-amount:hover { border-color: var(--line-2); }
+.pl-calc-amount:focus-within { background: var(--surface); border-color: var(--ink); box-shadow: 0 0 0 3px var(--tertiary-soft); }
+.pl-calc-amount input {
+  flex: 1; min-width: 0; padding: 0; border: 0; background: none; outline: none; appearance: textfield;
+  font: inherit; font-size: 2rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.pl-calc-amount input:focus-visible { outline: none; }
+.pl-calc-amount input::-webkit-inner-spin-button, .pl-calc-amount input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.pl-calc-amount span { font-weight: 600; color: var(--ink-3); }
+/* the slider: a thin track, an ink fill up to the thumb's centre (--pos, set by the script),
+   and a black thumb ringed in the card's colour */
+.pl-calc-slider { position: relative; height: 28px; margin: 24px 0 4px; }
+.pl-calc-slider::before, .pl-calc-fill {
+  content: ""; position: absolute; left: 0; top: 50%; height: 4px; margin-top: -2px; border-radius: 99px;
+}
+.pl-calc-slider::before { right: 0; background: var(--line-2); }
+.pl-calc-fill { width: calc(11px + (100% - 22px) * var(--pos, 0)); background: var(--btn-bg); }
+.pl-calc-range { position: relative; display: block; width: 100%; height: 28px; margin: 0; background: transparent; appearance: none; cursor: pointer; }
+.pl-calc-range::-webkit-slider-runnable-track { height: 28px; background: transparent; }
+.pl-calc-range::-moz-range-track { height: 28px; background: transparent; }
+.pl-calc-range::-webkit-slider-thumb {
+  appearance: none; box-sizing: border-box; width: 22px; height: 22px; margin-top: 3px; border-radius: 50%;
+  background: var(--btn-bg); border: 4px solid var(--surface); box-shadow: 0 0 0 1.5px var(--btn-bg);
+  transition: scale .2s cubic-bezier(.3, 1.5, .5, 1);
+}
+.pl-calc-range::-moz-range-thumb {
+  box-sizing: border-box; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--btn-bg); border: 4px solid var(--surface); box-shadow: 0 0 0 1.5px var(--btn-bg);
+  transition: scale .2s cubic-bezier(.3, 1.5, .5, 1);
+}
+.pl-calc-range:is(:hover, :active)::-webkit-slider-thumb { scale: 1.15; }
+.pl-calc-range:is(:hover, :active)::-moz-range-thumb { scale: 1.15; }
+.pl-calc .pl-calc-range:focus-visible { outline: none; }
+.pl-calc-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+.pl-calc-range:focus-visible::-moz-range-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+/* escrow: a switch, outlined when off, filled in ink when on, the knob sliding across */
+.pl-calc-escrow { position: relative; display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 22px; font-weight: 500; color: var(--ink); cursor: pointer; }
+.pl-calc-switch-input { position: absolute; left: 0; top: 50%; width: 40px; height: 24px; margin: -12px 0 0; opacity: 0; cursor: pointer; }
+.pl-calc-switch {
+  position: relative; flex: 0 0 auto; width: 40px; height: 24px; border-radius: 99px;
+  border: 1.5px solid var(--ink-3); transition: background-color .25s, border-color .25s;
+}
+.pl-calc-switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--ink-3); transition: translate .3s cubic-bezier(.3, 1.4, .5, 1), background-color .25s;
+}
+.pl-calc-switch-input:checked + .pl-calc-switch { background: var(--btn-bg); border-color: var(--btn-bg); }
+.pl-calc-switch-input:checked + .pl-calc-switch::after { translate: 16px 0; background: var(--btn-fg); }
+.pl-calc-switch-input:focus-visible + .pl-calc-switch { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+.pl-calc-table { width: 100%; border-collapse: collapse; font-size: 1rem; font-variant-numeric: tabular-nums; }
+.pl-calc-table th, .pl-calc-table td { padding: 16px 14px; text-align: right; vertical-align: top; border-top: 1px solid var(--line); }
+.pl-calc-table th:first-child { text-align: left; }
+.pl-calc-table thead th { padding-top: 0; border-top: 0; font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+.pl-calc-table tbody th { font-weight: 600; color: var(--ink); }
+.pl-calc-table small { display: block; margin-top: 2px; font-size: .8125rem; font-weight: 400; color: var(--ink-3); }
+.pl-calc-table td { color: var(--ink-2); white-space: nowrap; }
+.pl-calc-table td:last-child { font-weight: 600; color: var(--ink); }
+/* the lowest rate on the accent tint, as in the plans above */
+.pl-calc-table tr.is-best > * { background: var(--accent-soft); }
+
+/* faq: rules between questions, no box around them */
+.pl-faq details { border-top: 1px solid var(--line); }
+.pl-faq details:last-child { border-bottom: 1px solid var(--line); }
+.pl-faq summary {
+  display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  padding: 22px 0; cursor: pointer; list-style: none; font-size: 1.0625rem; font-weight: 600; color: var(--ink);
+}
+.pl-faq summary::-webkit-details-marker { display: none; }
+.pl-faq summary::after {
+  content: "+"; content: "+" / "";
+  flex: 0 0 auto; font-size: 1.5rem; font-weight: 400; line-height: 1; color: var(--ink-2);
+  transition: rotate .25s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-faq details[open] summary::after { rotate: 45deg; }
+.pl-faq p { margin: 0 0 24px; max-width: 64ch; color: var(--ink-2); line-height: 1.6; }
+
+/* the FAQ and the final call share one canvas; the call is a tinted panel on it */
+.pl-closing { background: var(--surface); }
+.pl-closing .pl-section { background: transparent; }
+.pl-faq-section { padding-bottom: clamp(56px, 7vw, 96px); }
+.pl-final-wrap { padding: 0 0 clamp(80px, 10vw, 136px); }
+.pl-final {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(32px, 5vw, 64px); align-items: start;
+  border-radius: 28px; padding: clamp(28px, 5vw, 64px); background: var(--accent-soft);
+}
+.pl-final-art { width: clamp(150px, 15vw, 220px); margin-top: clamp(28px, 4vw, 48px); }
+
+/* the contact form beside the final call: a white card, labelled fields on the canvas tone,
+   errors and the answer in words under them */
+.pl-contact { position: relative; background: var(--surface); border-radius: 20px; padding: clamp(22px, 3vw, 36px); }
+.pl-contact h3 { margin: 0; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; color: var(--ink); }
+.pl-final .pl-contact .pl-contact-lede { margin: 8px 0 0; font-size: .9375rem; line-height: 1.5; color: var(--ink-2); }
+.pl-contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin-top: 22px; }
+.pl-field { display: grid; gap: 6px; min-width: 0; align-content: start; }
+.pl-field-wide { grid-column: 1 / -1; }
+.pl-field label { font-size: .875rem; font-weight: 600; color: var(--ink); }
+.pl-field label small { font-size: inherit; font-weight: 500; color: var(--ink-3); }
+.pl-field :is(input, select, textarea) {
+  width: 100%; margin: 0; font: inherit; font-size: 1rem; line-height: 1.4; color: var(--ink);
+  background: var(--bg); border: 1px solid var(--line-2); border-radius: 12px; padding: 11px 14px;
+  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+.pl-field :is(input, select, textarea):hover { border-color: var(--ink-3); }
+.pl-field :is(input, select, textarea):focus { background: var(--surface); border-color: var(--ink); outline: none; }
+.pl-field :is(input, select, textarea):focus-visible { outline: none; box-shadow: 0 0 0 3px var(--tertiary-soft); }
+.pl-field textarea { min-height: 116px; resize: vertical; }
+.pl-field [aria-invalid="true"] { border-color: #C2362F; }
+/* the select draws its own chevron, so it looks like the other fields */
+.pl-select { position: relative; display: block; }
+.pl-select select { appearance: none; padding-right: 40px; cursor: pointer; }
+.pl-select::after {
+  content: ""; content: "" / ""; position: absolute; right: 17px; top: 50%; width: 7px; height: 7px;
+  border-right: 1.5px solid var(--ink-3); border-bottom: 1.5px solid var(--ink-3);
+  translate: 0 -70%; rotate: 45deg; pointer-events: none;
+}
+.pl-final .pl-contact .pl-field-error { margin: 0; font-size: .8125rem; font-weight: 500; line-height: 1.4; color: #C2362F; }
+.pl-contact-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 20px; }
+.pl-contact-foot .btn { min-height: 48px; padding: 12px 24px; }
+.pl-final .pl-contact .pl-contact-privacy { flex: 1 1 200px; margin: 0; font-size: .8125rem; line-height: 1.45; color: var(--ink-3); }
+.pl-final .pl-contact .pl-contact-status { margin: 0; font-size: .9375rem; font-weight: 600; line-height: 1.45; color: var(--ink); }
+.pl-final .pl-contact .pl-contact-status:not(:empty) { margin-top: 16px; }
+.pl-final .pl-contact .pl-contact-status[data-state="sent"] { color: var(--ok, #1F7A4D); }
+.pl-final .pl-contact .pl-contact-status:is([data-state="invalid"], [data-state="limited"], [data-state="failed"]) { color: #C2362F; }
+@media (max-width: 1000px) and (min-width: 721px) { .pl-contact-grid { grid-template-columns: 1fr; } }
+/* the honeypot: off screen for people, still in the form for scripts */
+.pl-contact-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+[data-theme="dark"] .pl-field [aria-invalid="true"] { border-color: #FF8A80; }
+[data-theme="dark"] .pl-final .pl-contact :is(.pl-field-error, .pl-contact-status:is([data-state="invalid"], [data-state="limited"], [data-state="failed"])) { color: #FF8A80; }
+[data-theme="dark"] .pl-final .pl-contact .pl-contact-status[data-state="sent"] { color: #6EE7A8; }
+
+/* ---- images: the brand's astronauts, 3D renders and photos ---- */
+/* Astronauts are black outline on white fill; inverted in dark mode like the logo marks. The
+   renders are matte white clay, which reads on both canvases as they are. */
+.pl-art, .pl-3d { display: block; height: auto; pointer-events: none; user-select: none; }
+[data-theme="dark"] .pl-art { filter: invert(1); }
+/* a heading with an astronaut beside it */
+.pl-head-art { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
+.pl-head-art h2 { max-width: 720px; }
+.pl-how-body { position: relative; }
+/* the comparison's astronaut lies on the table's top edge */
+.pl-compare-art { flex: 0 0 auto; width: clamp(180px, 19vw, 260px); margin: 0 4% -62px 0; position: relative; z-index: 1; }
+.pl-faq-art { width: clamp(170px, 18vw, 250px); margin-top: 40px; }
+.pl-final h2 { max-width: 20ch; }
+.pl-final p { margin: 20px 0 0; max-width: 52ch; font-size: 1.0625rem; line-height: 1.6; color: var(--ink-2); }
+
+/* ---- product mock-ups (Mock.astro): small pieces of the interface, drawn with the page's tokens ---- */
+/* each mock-up is a size container, so its parts rearrange for the room it gets, not the viewport */
+.pl-mk { width: 100%; container-type: inline-size; font-size: .875rem; line-height: 1.4; color: var(--ink); text-align: left; }
+.pl-mk code { font: 12px/1.4 var(--ff-mono); color: var(--ink-2); overflow-wrap: anywhere; }
+.pl-mk-card {
+  display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 340px; margin-inline: auto; padding: 4px 18px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  transition: translate .4s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-mk-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; color: var(--ink-2); }
+.pl-mk-row + .pl-mk-row { border-top: 1px solid var(--line); }
+.pl-mk-head { justify-content: flex-start; color: var(--ink); }
+.pl-mk-head b { font-weight: 600; }
+.pl-mk-head code, .pl-mk-amt { margin-left: auto; }
+.pl-mk-amt { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+.pl-mk-ico {
+  display: grid; place-items: center; flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--ink);
+}
+.pl-mk-ico svg:not(.pl-mark), .pl-mk-dot svg {
+  width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.pl-mk-ico .pl-mark { width: 15px; height: 15px; }
+.pl-mk-ok { background: var(--btn-bg); color: var(--btn-fg); }
+.pl-mk-good { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; color: var(--ok); }
+.pl-mk-good::before, .pl-mk-wait::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+/* held in escrow: not settled yet, so ink rather than the paid green */
+.pl-mk-wait { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; color: var(--ink); }
+.pl-mk-strong { font-weight: 600; color: var(--ink); }
+.pl-mk-muted { font-weight: 500; color: var(--ink-3); }
+.pl-mk-label { display: block; padding: 12px 0 8px; font-weight: 600; color: var(--ink); }
+.pl-mk-center { justify-items: center; gap: 12px; padding: 18px 18px 20px; text-align: center; }
+.pl-mk-center .pl-mk-head { padding: 0; }
+.pl-mk-center .pl-mk-label { padding: 0; }
+.pl-mk-big { font-size: 1.5rem; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
+.pl-mk-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 8px 18px;
+  border-radius: 999px; background: var(--btn-bg); color: var(--btn-fg); font-size: .8125rem; font-weight: 600;
+}
+.pl-mk-btn-xs { flex: 0 0 auto; padding: 6px 12px; border-radius: 999px; background: var(--btn-bg); color: var(--btn-fg); font-size: .75rem; font-weight: 600; }
+/* a QR stays dark on white in both themes, as a scanner needs it */
+.pl-mk img { display: block; padding: 4px; background: #FFFFFF; border-radius: 8px; }
+
+/* race: a payment against a card payout */
+.pl-mk-race { display: grid; grid-template-columns: 92px minmax(48px, 1fr) auto; align-items: center; gap: 12px; padding: 14px 0; }
+.pl-mk-race + .pl-mk-race { border-top: 1px solid var(--line); }
+.pl-mk-race > span:first-child { font-weight: 600; }
+.pl-mk-race b { font-weight: 600; white-space: nowrap; }
+.pl-mk-track { height: 8px; border-radius: 99px; background: var(--accent-soft); overflow: hidden; }
+.pl-mk-track i { display: block; height: 100%; border-radius: inherit; transform-origin: left; }
+.pl-mk-fast { background: var(--btn-bg); }
+.pl-mk-slow { background: var(--line-2); scale: .3 1; }
+.pl-mk-race .pl-mk-muted { font-weight: 500; }
+/* narrow: tighter columns, and the card payout time may take two lines */
+@container (max-width: 330px) {
+  .pl-mk-race { grid-template-columns: 76px minmax(28px, 1fr) auto; gap: 8px; }
+  .pl-mk-race b { max-width: 88px; white-space: normal; text-align: right; }
+}
+/* escrow: paid, held, shipped, released */
+.pl-mk-states { list-style: none; margin: 0; padding: 16px 0 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pl-mk-states li { position: relative; display: grid; justify-items: center; align-content: start; gap: 10px; text-align: center; font-size: .8125rem; font-weight: 600; color: var(--ink); }
+.pl-mk-states li:not(:last-child)::after {
+  content: ""; position: absolute; top: 13px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 2px;
+  background: var(--btn-bg); transform-origin: left;
+}
+.pl-mk-dot { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--btn-bg); color: var(--btn-fg); }
+.pl-mk-dot:empty::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--btn-fg); }
+.pl-mk--escrow .pl-mk-card { max-width: 380px; }
+/* too narrow for four columns: the states stack, the line running down between them */
+@container (max-width: 359px) {
+  .pl-mk-states { grid-template-columns: 1fr; }
+  .pl-mk-states li { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; text-align: left; }
+  .pl-mk-states li:last-child { padding-bottom: 0; }
+  .pl-mk-states li:not(:last-child)::after { top: 28px; bottom: 0; left: 13px; right: auto; width: 2px; height: auto; transform-origin: top; }
+  .is-in .pl-mk-states li:not(:last-child)::after { animation-name: pl-mk-grow-y; }
+}
+/* balance: money arriving at the merchant's own address */
+.pl-mk-incoming { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); color: var(--ink-2); }
+.pl-mk-incoming b { font-weight: 600; color: var(--ok); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* flow: wallet → (contract →) your address, a payment travelling along the wire */
+.pl-mk-flow { display: flex; align-items: flex-start; gap: 8px; padding: 18px 16px; background: var(--bg); border-radius: 16px; }
+.pl-mk-node { display: grid; justify-items: center; gap: 8px; flex: 0 1 112px; min-width: 0; text-align: center; font-size: .75rem; font-weight: 600; line-height: 1.3; color: var(--ink); }
+.pl-mk-node .pl-mk-ico { width: 42px; height: 42px; background: var(--surface); border: 1px solid var(--line); }
+.pl-mk-node .pl-mk-ico svg:not(.pl-mark), .pl-mk-node .pl-mk-ico .pl-mark { width: 18px; height: 18px; }
+.pl-mk-node-hold .pl-mk-ico, .pl-mk-node-end .pl-mk-ico { background: var(--btn-bg); color: var(--btn-fg); border-color: transparent; }
+.pl-mk-wire { position: relative; flex: 1 1 auto; min-width: 20px; height: 10px; margin-top: 16px; overflow: hidden; }
+.pl-mk-wire::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 2px; background: var(--line-2); }
+.pl-mk-wire i { position: absolute; inset: 0; translate: -100% 0; }
+.pl-mk-wire i::after { content: ""; position: absolute; right: 0; top: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--btn-bg); }
+/* link: the payment link, ready to copy or scan */
+.pl-mk-field { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border: 1px solid var(--line-2); border-radius: 12px; }
+.pl-mk-field code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; color: var(--ink); }
+.pl-mk-qrrow { display: flex; align-items: center; gap: 14px; padding: 14px 0 12px; color: var(--ink-2); }
+/* code: the SDK call */
+.pl-mk-code {
+  width: 100%; max-width: 340px; margin: 0 auto; padding: 18px 20px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  font: 12px/1.75 var(--ff-mono); color: var(--ink); white-space: pre;
+}
+
+/* step screens */
+.pl-mk-form { display: grid; gap: 6px; padding: 6px 0; font-size: .75rem; font-weight: 600; color: var(--ink-3); }
+.pl-mk-input { padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 10px; font-size: .875rem; font-weight: 500; color: var(--ink); }
+.pl-mk--step-create .pl-mk-btn { margin: 10px 0 14px; }
+.pl-mk-chat { gap: 8px; padding: 16px; }
+.pl-mk-bubble { justify-self: end; max-width: 88%; padding: 9px 14px; border-radius: 16px 16px 4px 16px; background: var(--btn-bg); color: var(--btn-fg); }
+.pl-mk-bubble-link { font: 12px/1.4 var(--ff-mono); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.pl-mk-pulse { position: relative; }
+.pl-mk-pulse::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 2px var(--btn-bg); opacity: 0; }
+.pl-mk--step-confirm .pl-mk-row:not(.pl-mk-head) { flex-direction: column; align-items: flex-start; gap: 4px; }
+/* integration options: a browser window around the checkout or a store page */
+.pl-mk-browser { width: 100%; max-width: 460px; margin-inline: auto; background: var(--surface); border: 1px solid var(--line-2); border-radius: 14px; overflow: hidden; }
+.pl-mk-chrome { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.pl-mk-dots { display: flex; gap: 5px; flex: 0 0 auto; }
+.pl-mk-dots i { width: 9px; height: 9px; }
+.pl-mk-url { flex: 1; min-width: 0; padding: 4px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 11px/1.4 var(--ff-mono); color: var(--ink-3); background: var(--surface); border-radius: 99px; }
+.pl-mk-page { position: relative; min-height: 270px; padding: 20px; background: var(--bg); }
+.pl-mk-page-center { display: grid; place-items: center; }
+.pl-mk-page .pl-mk-card { max-width: 250px; }
+.pl-mk-product { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.pl-mk-product b { display: block; font-weight: 600; }
+.pl-mk-thumb { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; background: var(--accent-soft-2); }
+.pl-mk-btn-wide { display: flex; gap: 8px; width: 62%; min-height: 40px; margin-top: 12px; }
+.pl-mk-ico-xs { width: 18px; height: 18px; background: transparent; color: inherit; }
+.pl-mk-ico-xs .pl-mark { width: 14px; height: 14px; }
+.pl-mk-popup { position: absolute; right: 16px; bottom: 16px; width: 46%; background: var(--surface); border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; }
+.pl-mk-chrome-sm { padding: 6px 8px; gap: 8px; }
+.pl-mk-chrome-sm .pl-mk-dots i { width: 7px; height: 7px; }
+.pl-mk-chrome-sm .pl-mk-url { font-size: 9.5px; padding: 2px 8px; }
+.pl-mk-popup-body { display: grid; justify-items: center; gap: 8px; padding: 12px; }
+.pl-mk-popup-body .pl-mk-big { font-size: 1.0625rem; }
+.pl-mk-popup-body img { width: 56px; height: 56px; }
+.pl-mk-page-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 14px; align-items: start; }
+.pl-mk-product-col { flex-direction: column; align-items: stretch; gap: 8px; }
+.pl-mk-thumb-lg { width: 100%; height: 84px; }
+.pl-mk-line { display: block; height: 7px; border-radius: 4px; background: var(--accent-soft-2); }
+.pl-mk-line-short { width: 60%; }
+.pl-mk-page .pl-mk-embed { gap: 8px; padding: 14px; }
+.pl-mk-embed .pl-mk-big { font-size: 1.125rem; }
+.pl-mk-embed img { width: 68px; height: 68px; }
+/* explorer */
+.pl-mk-linkline { padding: 12px 0; border-top: 1px solid var(--line); font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- motion ----
+   The product owner wants the page alive: the hero comes in line by line, every block rises
+   in the first time it scrolls into view (data-reveal; --i staggers siblings by 80ms), the
+   steps' track draws itself, checks pop, tabs and answers slide open, and the logos run.
+   Reveals start hidden only under .pl-anim, which an inline script in the head adds (and
+   takes back after 2.5 s if the page script never arrives), so without JavaScript the page
+   is complete at rest. Only opacity, translate and scale move. */
+@keyframes pl-rise { from { opacity: 0; translate: 0 32px; } }
+@keyframes pl-fade { from { opacity: 0; } }
+@keyframes pl-panel { from { opacity: 0; translate: 18px 0; } }
+.pl-hero-line { display: block; }
+.pl-hero-line, .pl-hero .pl-lede, .pl-hero .pl-cta, .pl-hero .pl-textlink { animation: pl-rise .9s cubic-bezier(.2, .7, .2, 1) both; }
+.pl-hero-line + .pl-hero-line { animation-delay: .12s; }
+.pl-hero .pl-lede { animation-delay: .26s; }
+.pl-hero .pl-cta { animation-delay: .38s; }
+.pl-hero .pl-textlink { animation-delay: .5s; }
+.pl-hero-media { animation: pl-fade 1.4s ease .1s both; }
+.pl-motion { animation: pl-fade .6s ease 1s both; }
+
+.pl-anim [data-reveal] {
+  opacity: 0; translate: 0 28px;
+  transition: opacity .7s cubic-bezier(.2, .7, .2, 1), translate .7s cubic-bezier(.2, .7, .2, 1);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+.pl-anim [data-reveal].is-in { opacity: 1; translate: none; }
+/* the final call grows into place */
+.pl-anim .pl-final[data-reveal] { translate: none; scale: .96; transition-property: opacity, scale; }
+.pl-anim .pl-final[data-reveal].is-in { scale: 1; }
+/* the code slides in from the side it sits on */
+.pl-anim .pl-code[data-reveal] { translate: 40px 0; }
+.pl-anim .pl-code[data-reveal].is-in { translate: none; }
+
+/* checks pop once their row or column is in */
+.pl-check { transition: scale .45s cubic-bezier(.3, 1.5, .5, 1) .25s; }
+.pl-anim [data-reveal]:not(.is-in) .pl-check { scale: 0; }
+.pl-anim .pl-path [data-reveal]:not(.is-in) .pl-check, .pl-anim .pl-path:not(.is-in) .pl-check { scale: 0; }
+.pl-path .pl-checks li:nth-child(2) .pl-check { transition-delay: .35s; }
+.pl-path .pl-checks li:nth-child(3) .pl-check { transition-delay: .45s; }
+
+/* steps: the number pops, then the track to the next one draws */
+.pl-step-num { transition: scale .5s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .1s); }
+.pl-step-line { transition: scale .8s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms + .35s); }
+.pl-anim .pl-steps li:not(.is-in) .pl-step-num { scale: .3; }
+.pl-anim .pl-steps li:not(.is-in) .pl-step-line { scale: 0 1; }
+
+/* Mock-ups play once their block is in (or their tab opens): the rows arrive one after the
+   other, ticks pop, bars fill. Their resting state is the finished one, so without the page
+   script they simply show it. */
+@keyframes pl-mk-in { from { opacity: 0; translate: 0 10px; } }
+@keyframes pl-mk-pop { from { scale: 0; } }
+@keyframes pl-mk-grow { from { scale: 0 1; } }
+@keyframes pl-mk-grow-y { from { scale: 1 0; } }
+.is-in .pl-mk-card > *, .is-in .pl-mk-code { animation: pl-mk-in .6s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 80ms + .3s); }
+.is-in .pl-mk-card > :nth-child(2) { animation-delay: calc(var(--i, 0) * 80ms + .48s); }
+.is-in .pl-mk-card > :nth-child(3) { animation-delay: calc(var(--i, 0) * 80ms + .66s); }
+.is-in .pl-mk-card > :nth-child(4) { animation-delay: calc(var(--i, 0) * 80ms + .84s); }
+.is-in .pl-mk-ok { animation: pl-mk-pop .5s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both; }
+.is-in .pl-mk-fast { animation: pl-mk-grow .9s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms + .6s) both; }
+.is-in .pl-mk-slow { animation: pl-mk-grow 5s linear calc(var(--i, 0) * 80ms + .8s) both; }
+.is-in .pl-mk-race:first-child b { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + 1.4s) both; }
+/* escrow: each state lights up in turn, the line to the next one drawing behind it */
+.is-in .pl-mk-states .pl-mk-dot { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) both; }
+.is-in .pl-mk-states li::after { animation: pl-mk-grow .45s cubic-bezier(.2, .7, .2, 1) both; }
+.is-in .pl-mk-states li:nth-child(1) .pl-mk-dot { animation-delay: calc(var(--i, 0) * 80ms + .5s); }
+.is-in .pl-mk-states li:nth-child(1)::after { animation-delay: calc(var(--i, 0) * 80ms + .75s); }
+.is-in .pl-mk-states li:nth-child(2) .pl-mk-dot { animation-delay: calc(var(--i, 0) * 80ms + 1.05s); }
+.is-in .pl-mk-states li:nth-child(2)::after { animation-delay: calc(var(--i, 0) * 80ms + 1.7s); }
+.is-in .pl-mk-states li:nth-child(3) .pl-mk-dot { animation-delay: calc(var(--i, 0) * 80ms + 2s); }
+.is-in .pl-mk-states li:nth-child(3)::after { animation-delay: calc(var(--i, 0) * 80ms + 2.25s); }
+.is-in .pl-mk-states li:nth-child(4) .pl-mk-dot { animation-delay: calc(var(--i, 0) * 80ms + 2.55s); }
+/* the flow's nodes pop in order */
+.is-in .pl-mk-node .pl-mk-ico { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) both; animation-delay: calc(var(--i, 0) * 80ms + .4s); }
+.is-in .pl-mk-node:nth-child(3) .pl-mk-ico { animation-delay: calc(var(--i, 0) * 80ms + .6s); }
+.is-in .pl-mk-node:nth-child(5) .pl-mk-ico { animation-delay: calc(var(--i, 0) * 80ms + .8s); }
+/* a payment travels the wire, over and over; on escrow it waits at the contract first */
+@keyframes pl-mk-travel { 0% { translate: -100% 0; opacity: 0; } 10% { opacity: 1; } 70% { translate: 0 0; opacity: 1; } 80%, 100% { translate: 0 0; opacity: 0; } }
+@keyframes pl-mk-travel-in { 0% { translate: -100% 0; opacity: 0; } 5% { opacity: 1; } 35% { translate: 0 0; opacity: 1; } 40%, 100% { translate: 0 0; opacity: 0; } }
+@keyframes pl-mk-travel-out { 0%, 60% { translate: -100% 0; opacity: 0; } 65% { opacity: 1; } 95% { translate: 0 0; opacity: 1; } 100% { translate: 0 0; opacity: 0; } }
+@keyframes pl-mk-hold { 0%, 36% { scale: 1; } 42% { scale: 1.12; } 48%, 100% { scale: 1; } }
+.pl-mk--flow-instant .pl-mk-wire i { animation: pl-mk-travel 2.6s cubic-bezier(.5, 0, .3, 1) infinite; }
+.pl-mk--flow-escrow .pl-mk-wire i { animation: pl-mk-travel-in 5s cubic-bezier(.5, 0, .3, 1) infinite; }
+.pl-mk--flow-escrow .pl-mk-wire-late i { animation-name: pl-mk-travel-out; }
+.pl-mk-node-hold .pl-mk-ico { animation: pl-mk-hold 5s ease-in-out infinite; }
+.is-in .pl-mk-node-hold .pl-mk-ico { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both, pl-mk-hold 5s ease-in-out infinite; }
+/* the pay button is pressed, then the checkout window opens over the store */
+@keyframes pl-mk-window { from { opacity: 0; scale: .85; translate: 0 12px; } }
+.is-in .pl-mk-popup { animation: pl-mk-window .6s cubic-bezier(.3, 1.3, .5, 1) .9s both; transform-origin: 70% 100%; }
+/* the approve button keeps calling for the tap */
+@keyframes pl-mk-ring { from { scale: 1; opacity: .55; } to { scale: 1.25 1.6; opacity: 0; } }
+.pl-mk-pulse::after { animation: pl-mk-ring 1.8s cubic-bezier(.2, .7, .2, 1) infinite; }
+/* the cards lift a little under the pointer */
+.pl-bento-card:hover .pl-mk-card, .pl-path:hover .pl-mk-card, .pl-steps li:hover .pl-mk-card { translate: 0 -4px; }
+/* the astronauts drift and the renders bob, each on its own beat; the renders also grow in
+   with their block */
+@keyframes pl-float { 50% { translate: 0 -10px; rotate: -2deg; } }
+@keyframes pl-bob { 50% { translate: 0 -9px; } }
+.pl-art { animation: pl-float 6s ease-in-out infinite; }
+.pl-compare-art { animation: pl-bob 5s ease-in-out infinite; }
+.pl-faq-art { animation-duration: 8s; animation-delay: -1s; }
+.pl-3d {
+  animation: pl-bob 5.5s ease-in-out infinite;
+  transition: scale .8s cubic-bezier(.3, 1.3, .5, 1) calc(var(--i, 0) * 80ms + .15s), opacity .6s ease calc(var(--i, 0) * 80ms + .15s), filter .45s ease;
+}
+/* A 3D render answers the pointer itself (product owner): its clay takes a faint tertiary blue
+   and it leans in; the card around it does not change. A filter, so the render keeps its own
+   light and shade. The only blue effect on the page (the product owner kept it here alone). */
+.pl-3d { pointer-events: auto; }
+@media (hover: hover) {
+  .pl-3d:hover { filter: sepia(.45) hue-rotate(186deg) saturate(2.4); scale: 1.06; transition: filter .45s ease, scale .5s cubic-bezier(.3, 1.3, .5, 1); }
+}
+.pl-bento-card:nth-child(2) .pl-3d { animation-delay: -1.4s; }
+.pl-bento-card:nth-child(3) .pl-3d { animation-delay: -2.8s; }
+.pl-bento-card:nth-child(4) .pl-3d { animation-delay: -4.1s; }
+.pl-anim [data-reveal]:not(.is-in) .pl-3d { scale: .55; opacity: 0; }
+/* a use case's photo settles in when its tab opens */
+@keyframes pl-photo { from { scale: 1.06; opacity: .4; } }
+.pl-uses-panel:not([hidden]) .pl-uses-photo { animation: pl-photo 1s cubic-bezier(.2, .7, .2, 1); }
+
+/* the selected business slides in when its tab is chosen */
+.pl-uses-panel:not([hidden]) { animation: pl-panel .45s cubic-bezier(.2, .7, .2, 1); }
+
+/* hover */
+.pl-plan { transition: background-color .25s, translate .3s cubic-bezier(.2, .7, .2, 1); }
+.pl-plan:hover { translate: 0 -4px; }
+.pl-plan:not(.pl-plan-best):hover { background: var(--bg); }
+.pl-steps li:hover .pl-step-num { scale: 1.08; }
+/* the row tints gently under the pointer; the transition is restated with the reveal's, or
+   the reveal's (higher specificity) would leave the colour snapping */
+.pl-compare tbody tr > * { transition: background-color .45s ease; }
+.pl-compare tbody tr:hover > * { background-color: var(--surface); }
+.pl-compare tbody tr:hover > .pl-compare-us { background-color: var(--accent-soft-2); }
+.pl-anim .pl-compare tbody tr[data-reveal] {
+  transition: opacity .7s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms), translate .7s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms);
+}
+
+/* FAQ answers open smoothly where the browser can size to auto */
+.pl-faq { interpolate-size: allow-keywords; }
+.pl-faq details::details-content {
+  block-size: 0; overflow: hidden;
+  transition: block-size .35s cubic-bezier(.2, .7, .2, 1), content-visibility .35s allow-discrete;
+}
+.pl-faq details[open]::details-content { block-size: auto; }
+
+/* ---- pinned sections (data-pin, wired by the page script): a runway of --n steps; the stage
+   sticks under the nav (73px) while the page scrolls through it ---- */
+.pl-section.is-pinned { padding: 0; }
+.is-pinned .pl-pin { height: calc(100svh + (var(--n) - 1) * 35svh); }
+/* the counter and the bar beside the heading, only while pinned */
+.pl-pin-head { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.pl-pin-head h2 { max-width: 720px; }
+.pl-pin-meter { display: none; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 10px; padding-bottom: 6px; }
+.is-pinned .pl-pin-meter { display: flex; }
+.pl-pin-count { font-size: .9375rem; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-pin-bar { display: flex; gap: 6px; }
+.pl-pin-bar i { position: relative; width: 44px; height: 4px; border-radius: 4px; background: var(--line-2); overflow: hidden; }
+.pl-pin-bar i::after { content: ""; position: absolute; inset: 0; background: var(--btn-bg); transform-origin: left; scale: var(--f, 0) 1; }
+.is-pinned .pl-pin-stage { position: sticky; top: 73px; height: calc(100svh - 73px); display: flex; flex-direction: column; justify-content: center; }
+.is-pinned .pl-head { margin-bottom: 32px; }
+/* the stage is a flex column: without this its centred .wrap would shrink to its content */
+.is-pinned .pl-pin-stage > .wrap { width: 100%; }
+
+/* how it works, pinned: the steps on a rail on the left, the current step's screen on the right */
+.pl-how.is-pinned .pl-steps { display: block; position: relative; min-height: 420px; padding-right: 56%; }
+.pl-how.is-pinned .pl-steps li { display: grid; grid-row: auto; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 20px; padding-bottom: 28px; }
+.pl-how.is-pinned .pl-steps li:last-child { padding-bottom: 0; }
+.pl-how.is-pinned .pl-step-top { grid-column: 1; grid-row: 1 / span 2; align-self: start; position: relative; z-index: 1; }
+.pl-how.is-pinned .pl-step-line { display: none; }
+.pl-how.is-pinned .pl-steps h3 { grid-column: 2; margin: 6px 0 6px; }
+.pl-how.is-pinned .pl-steps p { grid-column: 2; max-width: 40ch; }
+.pl-how.is-pinned .pl-step-visual {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 52%; min-height: 0; margin: 0;
+  transition: opacity .5s ease, translate .8s cubic-bezier(.2, .8, .2, 1), scale .8s cubic-bezier(.2, .8, .2, 1);
+}
+/* the screen fills its stage: the mock-up drawn larger */
+.pl-how.is-pinned .pl-step-visual .pl-mk { zoom: 1.35; }
+/* the next screen rises in from below, zooming up; the one before leaves upwards */
+.pl-how.is-pinned li:not(.is-reached) .pl-step-visual { opacity: 0; translate: 0 90px; scale: .86; pointer-events: none; }
+.pl-how.is-pinned li.is-reached:not(.is-current) .pl-step-visual { opacity: 0; translate: 0 -70px; scale: .92; pointer-events: none; }
+.pl-how.is-pinned .pl-steps :is(h3, p) { transition: opacity .5s ease, translate .6s cubic-bezier(.2, .7, .2, 1); }
+.pl-how.is-pinned li:not(.is-reached) :is(h3, p) { opacity: 0; translate: 0 14px; }
+.pl-how.is-pinned li.is-reached:not(.is-current) :is(h3, p) { opacity: .45; }
+.pl-how.is-pinned .pl-step-num { transition: background-color .4s, color .4s, box-shadow .4s, scale .5s cubic-bezier(.3, 1.5, .5, 1); }
+.pl-how.is-pinned li:not(.is-reached) .pl-step-num { background: var(--surface); color: var(--ink-3); box-shadow: inset 0 0 0 1.5px var(--line-2); }
+.pl-how.is-pinned li.is-current .pl-step-num { scale: 1.1; }
+/* the rail, and its fill following the scroll (--p) */
+.pl-how.is-pinned .pl-steps::before, .pl-how.is-pinned .pl-steps::after {
+  content: ""; content: "" / ""; position: absolute; left: 19px; top: 20px; bottom: 64px; width: 2px; border-radius: 2px;
+}
+.pl-how.is-pinned .pl-steps::before { background: var(--line-2); }
+.pl-how.is-pinned .pl-steps::after { background: var(--btn-bg); transform-origin: top; scale: 1 var(--p, 0); }
+
+/* use cases, pinned: the panel steadier and shorter, a progress line under the tabs */
+.pl-uses-section.is-pinned .pl-uses-photo { aspect-ratio: 1; }
+/* each business slides up into place, its photo settling from a closer zoom */
+@keyframes pl-panel-in { from { opacity: 0; translate: 0 60px; scale: .96; } }
+@keyframes pl-photo-in { from { opacity: .3; scale: 1.16; } }
+.pl-uses-section.is-pinned .pl-uses-panel:not([hidden]) { animation: pl-panel-in .7s cubic-bezier(.2, .8, .2, 1); }
+.pl-uses-section.is-pinned .pl-uses-panel:not([hidden]) .pl-uses-photo { animation: pl-photo-in 1.1s cubic-bezier(.2, .8, .2, 1); }
+.pl-uses-section.is-pinned .pl-uses-panel { padding: clamp(24px, 3vw, 40px); }
+
+/* ---- figures that count up (data-odo): each digit a strip of 0–9 spinning into place; the
+   strips start one after another, each speeding up and settling ---- */
+.pl-odo { display: inline-flex; align-items: flex-start; line-height: 1.2em; white-space: pre; font-variant-numeric: tabular-nums; }
+.pl-odo-d { display: block; height: 1.2em; overflow: hidden; }
+.pl-odo-s { display: flex; flex-direction: column; transition: translate 1.5s cubic-bezier(.7, 0, .15, 1) calc(var(--k, 0) * 110ms); }
+.pl-odo-s > span { display: block; height: 1.2em; line-height: 1.2em; }
+.pl-odo.is-on .pl-odo-s { translate: 0 calc(var(--to, 0) * -1.2em); }
+
+/* ---- dark mode: depth from hairlines and the blue, never from shadows. The landing's own
+   canvas takes a navy tint (the product owner wanted more colour in dark), so its tokens are
+   redefined inside .pl only; the nav, footer and other pages keep the neutral dark. ---- */
+[data-theme="dark"] .pl {
+  --bg: #090B14; --surface: #121729; --surface-2: #181E33;
+  --line: rgba(143, 163, 255, .13); --line-2: rgba(143, 163, 255, .24);
+  --accent-soft: rgba(143, 163, 255, .09); --accent-soft-2: rgba(143, 163, 255, .18);
+}
+[data-theme="dark"] .pl-section, [data-theme="dark"] .pl-final-wrap { background: #090B14; }
+[data-theme="dark"] :is(.pl-section-alt, .pl-closing, .pl-marks) { background: #0E1222; }
+[data-theme="dark"] .pl-mk-ok, [data-theme="dark"] .pl-how.is-pinned li.is-current .pl-step-num { background: var(--tertiary); color: #090B14; }
+[data-theme="dark"] .pl-textlink::after { background: var(--tertiary); }
+[data-theme="dark"] .pl-faq summary:hover { color: var(--tertiary); }
+[data-theme="dark"] .pl-pin-bar i::after { background: var(--tertiary); }
+[data-theme="dark"] .pl-pin-count { color: var(--tertiary); }
+[data-theme="dark"] .pl-int-card.is-live { box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .28); }
+[data-theme="dark"] :is(.pl-bento-card, .pl-settle-card, .pl-paths, .pl-plans, .pl-calc, .pl-compare-card, .pl-uses-panel, .pl-int-card, .pl-code, .pl-final, .pl-snippet) {
+  box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .12);
+}
+[data-theme="dark"] :is(.pl-bento-visual, .pl-path-visual, .pl-step-visual, .pl-int-visual) { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); }
+[data-theme="dark"] .pl-section + .pl-section { border-top: 1px solid rgba(255, 255, 255, .05); }
+[data-theme="dark"] .pl-check { color: var(--tertiary); }
+[data-theme="dark"] .pl-compare .pl-compare-us { background: rgba(143, 163, 255, .08); }
+[data-theme="dark"] .pl-compare thead .pl-compare-us { color: var(--tertiary); }
+[data-theme="dark"] .pl-compare tbody tr:hover > .pl-compare-us { background-color: rgba(143, 163, 255, .14); }
+[data-theme="dark"] .pl-plan-best { background: rgba(143, 163, 255, .1); box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .35); }
+[data-theme="dark"] .pl-calc-table tr.is-best > * { background: rgba(143, 163, 255, .1); }
+
+[data-theme="dark"] .pl-uses-tab[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--tertiary); }
+[data-theme="dark"] .pl-code-tab::after { background: var(--tertiary); }
+[data-theme="dark"] .pl-how.is-pinned .pl-steps::after { background: var(--tertiary); }
+[data-theme="dark"] .pl-bento-card { transition: box-shadow .3s ease; }
+[data-theme="dark"] .pl-bento-card:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
+
+/* ---- multi-page layout (the gateway home and its content pages) ---- */
+/* the section navigation: a sticky row under the general nav, the current page underlined in
+   ink, the main call to action at its end */
+.pl-multi { --subnav-h: 56px; }
+.pl-subnav {
+  position: sticky; top: 73px; z-index: 40; height: var(--subnav-h);
+  background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.pl-subnav-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 100%; }
+.pl-subnav-links { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; overflow-x: auto; scrollbar-width: none; }
+.pl-subnav-links::-webkit-scrollbar { display: none; }
+.pl-subnav-links a {
+  position: relative; display: block; padding: 8px 12px; white-space: nowrap; border-radius: 10px;
+  font-size: .9375rem; font-weight: 600; color: var(--ink-3); transition: color .2s;
+}
+/* hover as in the general nav: the label darkens and an underline sweeps in from the left
+   (::before; ::after is the current page's bar, which already marks it) */
+.pl-subnav-links a:not([aria-current="page"])::before {
+  content: ""; content: "" / "";
+  position: absolute; left: 12px; right: 12px; bottom: 4px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-subnav-links a:is(:hover, :focus-visible) { color: var(--ink); }
+.pl-subnav-links a:is(:hover, :focus-visible)::before { scale: 1 1; }
+.pl-subnav-links a[aria-current="page"] { color: var(--ink); }
+.pl-subnav-links a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -9px; height: 2px; background: var(--btn-bg); }
+.pl-subnav-cta { flex: 0 0 auto; }
+/* pinned stages stick under the nav and the section bar */
+.pl-multi .is-pinned .pl-pin-stage { top: calc(73px + var(--subnav-h)); height: calc(100svh - 73px - var(--subnav-h)); }
+/* The home opens with the section bar, so the hero starts under it instead of sliding up
+   under the nav, and still fills the first screen. */
+.pl-subnav + .pl-hero { margin-top: 0; padding-top: 0; min-height: calc(100svh - 73px - var(--subnav-h)); }
+@media (max-width: 900px) { .pl-subnav + .pl-hero { min-height: 0; } }
+
+/* a content page's header: title, one line on the page, a render */
+.pl-page-head { padding: clamp(48px, 7vw, 96px) 0 clamp(24px, 4vw, 48px); background: var(--bg); }
+.pl-page-head-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.pl-page-title { margin: 0; font-weight: 600; font-size: clamp(2.25rem, 3.6vw + .5rem, 3.5rem); line-height: 1.05; letter-spacing: -.035em; color: var(--ink); text-wrap: balance; }
+.pl-page-head .pl-lede { margin-top: 18px; font-size: 1.125rem; max-width: 60ch; }
+.pl-page-art { flex: 0 0 auto; width: clamp(120px, 15vw, 210px); animation: pl-bob 5.5s ease-in-out infinite; }
+.pl-page-head + .pl-section { padding-top: clamp(32px, 4vw, 56px); }
+/* the breadcrumb over a content page's title: quiet, one line, the separator not read out */
+.pl-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; list-style: none; margin: 0 0 18px; padding: 0; font-size: .875rem; color: var(--ink-3); }
+.pl-crumbs li + li::before { content: "/" / ""; margin: 0 10px; color: var(--line-2); }
+.pl-crumbs a { position: relative; color: var(--ink-2); font-weight: 500; }
+.pl-crumbs a::after {
+  content: ""; content: "" / ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1.5px; background: currentColor;
+  scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
+}
+.pl-crumbs a:is(:hover, :focus-visible) { color: var(--ink); }
+.pl-crumbs a:is(:hover, :focus-visible)::after { scale: 1 1; }
+.pl-crumbs [aria-current="page"] { color: var(--ink); font-weight: 600; }
+
+/* the main call to action again, between sections, close to what it follows (product owner:
+   less space above it): the section above gives up most of its bottom padding; below it keeps
+   its own */
+.pl-inline-cta { padding: 0 0 clamp(40px, 5vw, 64px); background: var(--bg); }
+.pl-inline-cta.pl-section-alt { background: var(--surface); }
+.pl-multi .pl-section:not(.is-pinned):has(+ .pl-inline-cta) { padding-bottom: clamp(36px, 4vw, 52px); }
+
+/* Two sections on the same canvas in a row would add up their paddings (272px of nothing on a
+   desktop): they share one gap instead, half each, so the rhythm is the same everywhere. A
+   pinned section keeps its own (its stage sets the space). Before the final call, on the same
+   canvas, the section keeps a gap like any other. */
+.pl-section:not(.pl-section-alt, .is-pinned):has(+ .pl-section:not(.pl-section-alt)),
+.pl-section-alt:not(.is-pinned):has(+ .pl-section-alt) { padding-bottom: clamp(40px, 5vw, 68px); }
+.pl-section:not(.pl-section-alt) + .pl-section:not(.pl-section-alt, .is-pinned),
+.pl-section-alt + .pl-section-alt:not(.is-pinned, .pl-inline-cta) { padding-top: clamp(40px, 5vw, 68px); }
+.pl-section:not(.pl-section-alt, .is-pinned):has(+ .pl-final-wrap) { padding-bottom: clamp(48px, 6vw, 88px); }
+.pl-inline-cta-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 28px; }
+.pl-inline-cta .btn { min-height: 50px; padding: 13px 24px; }
+/* in one row with the button, so it drops the space it keeps above it elsewhere */
+.pl-inline-cta .pl-textlink { margin-top: 0; }
+
+/* the two facts that lower the risk, under the hero's buttons */
+.pl-hero-notes { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; margin: 22px 0 0; padding: 0; animation: pl-rise .9s cubic-bezier(.2, .7, .2, 1) .44s both; }
+.pl-hero-notes li { display: flex; align-items: center; gap: 8px; font-size: .9375rem; font-weight: 500; color: var(--ink-2); }
+.pl-hero-notes .pl-icon { width: 16px; height: 16px; }
+
+/* "see more" links at the end of a teaser */
+.pl-more { display: inline-block; margin-top: 24px; }
+.pl-plans-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.pl-plans-actions .pl-plans-more { margin-top: 0; }
+
+/* ---- responsive ---- */
+/* Very wide screens (1440p and up): the hero copy grows with them instead of floating small. */
+@media (min-width: 2200px) {
+  .pl-hero-copy { max-width: 820px; }
+  .pl-hero-title { font-size: 5rem; }
+  .pl-hero .pl-lede { font-size: 1.375rem; max-width: 46ch; }
+}
+/* Short screens (a 720p laptop under its browser bars): the hero tightens so the whole of it fits. */
+@media (min-width: 901px) and (max-height: 640px) {
+  .pl-hero-copy { padding: 24px 0 40px; }
+  .pl-hero .pl-lede { margin-top: 18px; }
+  .pl-hero .pl-cta { margin-top: 24px; }
+  .pl-hero .pl-textlink { margin-top: 14px; }
+}
+@media (max-width: 1100px) {
+  .pl-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pl-int-card.is-live { grid-column: 1 / -1; }
+  .pl-int-card { grid-column: span 6; }
+  .pl-bento-card:nth-child(n) { grid-column: span 6; }
+  .pl-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 48px; }
+  .pl-steps li:nth-child(2n) .pl-step-line { visibility: hidden; }
+  .pl-uses-panel:not([hidden]) { grid-template-columns: 1fr; gap: 32px; }
+  .pl-uses-visual { max-width: 560px; padding-bottom: 0; }
+  .pl-uses-photo { aspect-ratio: 3 / 2; }
+  .pl-uses-visual .pl-mk { position: relative; left: auto; bottom: auto; width: calc(100% - 40px); margin: -64px 0 0 20px; }
+  .pl-calc { grid-template-columns: 1fr; gap: 32px; }
+  .pl-hero-copy { max-width: 520px; }
+  .pl-hero-media { width: 54%; }
+}
+@media (max-width: 900px) {
+  /* One column: the copy first, the video under it, full width. */
+  .pl-hero { flex-direction: column; align-items: stretch; min-height: 0; }
+  .pl-hero-inner { order: 1; }
+  .pl-hero-media { order: 2; }
+  .pl-hero-copy { max-width: none; padding: 40px 0 8px; }
+  .pl-hero-media { position: relative; width: 100%; height: clamp(240px, 62vw, 460px); }
+  .pl-video {
+    object-position: 50% 70%;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18%); mask-image: linear-gradient(180deg, transparent 0, #000 18%);
+  }
+  .pl-split, .pl-dev, .pl-head-row { grid-template-columns: 1fr; gap: 32px; }
+  .pl-head-sticky { position: static; }
+  .pl-head-row .pl-section-lede { justify-self: start; }
+  .pl-settle-head { grid-template-columns: 1fr; gap: 16px; }
+  .pl-settle-head .pl-section-lede { justify-self: start; }
+  .pl-paths { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .pl-path + .pl-path { margin-top: 40px; }
+  .pl-uses { grid-template-columns: 1fr; gap: 16px; }
+  .pl-uses-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .pl-steps, .pl-facts-list, .pl-settle-grid { grid-template-columns: 1fr; }
+  .pl-int-card, .pl-int-card.is-live { grid-column: 1 / -1; }
+  .pl-int-visual, .pl-int-card.is-live .pl-int-visual { min-height: 0; padding: 18px; }
+  .pl-plans { grid-template-columns: 1fr; }
+  .pl-bento-card:nth-child(n) { grid-column: 1 / -1; }
+  .pl-path-visual, .pl-step-visual { min-height: 0; }
+  .pl-bento-visual { min-height: 310px; padding: 20px; }
+  .pl-bento-3d { width: 46%; }
+  /* the title takes the whole line; the astronaut goes under it, on the right */
+  .pl-head-art { flex-wrap: wrap; gap: 8px; }
+  .pl-head-art h2 { flex: 1 0 100%; }
+  .pl-head-art .pl-art { margin-left: auto; }
+  .pl-compare-art { width: 150px; margin-right: 0; }
+  .pl-security-3d { width: 150px; }
+  .pl-security-visual { padding-top: 96px; }
+  .pl-steps li .pl-step-line { visibility: hidden; }
+  .pl-calc-table th, .pl-calc-table td { padding: 14px 8px; font-size: .9375rem; }
+  .pl-final { grid-template-columns: 1fr; }
+  .pl-final-art { width: 130px; margin-top: 24px; }
+  .pl-contact-grid { grid-template-columns: 1fr; }
+  .pl-subnav .pl-subnav-cta { display: none; }
+  .pl-page-art { width: 96px; }
+  .pl-uses-tabs { grid-template-columns: 1fr; }
+  /* The comparison becomes one block per topic, each value under its column's name. */
+  .pl-compare, .pl-compare tbody, .pl-compare tr, .pl-compare th, .pl-compare td { display: block; width: auto; }
+  .pl-compare thead { display: none; }
+  .pl-compare tbody tr:first-child { border-top: 0; }
+  .pl-compare tbody th { padding: 22px 20px 10px; font-size: 1.0625rem; }
+  .pl-compare td, .pl-compare td.pl-compare-us { padding: 10px 20px 14px; }
+  .pl-compare td::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: .875rem; font-weight: 600; color: var(--ink-3); }
+  .pl-compare td.pl-compare-us::before { color: var(--accent); }
+  .pl-motion { right: 16px; bottom: 16px; }
+}
+/* Motion runs in full for everyone, reduced-motion settings included: the product owner's call
+   (2026-10-24), the same as for the hero video and the logo marquees. The video keeps its pause
+   button and the marquees stop under the pointer. */

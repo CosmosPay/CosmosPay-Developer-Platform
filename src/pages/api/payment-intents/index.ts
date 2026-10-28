@@ -1,8 +1,10 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
+import { isChain } from "@/lib/chains";
 import {
   ApiStatus,
   jsonCreated,
   jsonError,
+  jsonBadRequest,
   jsonForbidden,
   jsonSuccess,
   jsonUnauthorized,
@@ -10,6 +12,7 @@ import {
 } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
+import { orgHasWallet } from "@/lib/org-wallets-store";
 import { cosmos, CosmosApiError, type CosmosEnv } from "@/lib/cosmos";
 import { createPaymentIntentBodySchema } from "@/schemas/payment-intents";
 import { safeNotify } from "@/lib/notifications";
@@ -30,7 +33,7 @@ function cosmosErrorResponse(err: unknown): Response {
 }
 
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   // Payment intents are scoped to the signed-in user's consumer. When an org is
@@ -43,11 +46,16 @@ export const GET: APIRoute = async (ctx) => {
 
   const env = envFromQuery(ctx.url);
   const status = ctx.url.searchParams.get("status") || undefined;
+  const chainParam = ctx.url.searchParams.get("chain");
+  const chain = isChain(chainParam) ? chainParam : undefined;
   const take = Number(ctx.url.searchParams.get("take")) || undefined;
   const skip = Number(ctx.url.searchParams.get("skip")) || undefined;
+  // Only a parseable instant is forwarded, normalised to ISO; anything else is ignored.
+  const createdFromRaw = ctx.url.searchParams.get("createdFrom");
+  const createdFrom = createdFromRaw && !Number.isNaN(Date.parse(createdFromRaw)) ? new Date(createdFromRaw).toISOString() : undefined;
 
   try {
-    const list = await cosmos.list(session.user.id, env, { status, take, skip });
+    const list = await cosmos.list(session.user.id, env, { status, chain, createdFrom, take, skip });
     return jsonSuccess({ data: list, message: "Payment intents fetched successfully" });
   } catch (err) {
     return cosmosErrorResponse(err);
@@ -55,7 +63,7 @@ export const GET: APIRoute = async (ctx) => {
 };
 
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const body = await parseJson(ctx.request, createPaymentIntentBodySchema).catch(() => null);
@@ -63,13 +71,22 @@ export const POST: APIRoute = async (ctx) => {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: ApiStatus.BAD_REQUEST });
   }
 
-  // Payment links belong to an organization — the caller must be a member and hold
+  // Payment links belong to an organization: the caller must be a member and hold
   // the `payments:create` permission (owners/admins implicitly have it).
   const { org, environment, kind, ...rest } = body.data;
   const membership = await getMembership(org, session.user.id).catch(() => null);
   if (!membership) return jsonForbidden("You are not a member of this organization.");
   if (!hasOrgPermission(membership.role, membership.permissions, "payments:create")) {
     return jsonForbidden("You don't have permission to create payment links in this organization.");
+  }
+  // The money goes to one of the organization's wallets (Settings), never to an address someone
+  // typed: the dashboard offers only those, and this is what holds when a request skips it.
+  if (!(await orgHasWallet(org, rest.chain, rest.destination).catch(() => false))) {
+    return jsonBadRequest("The receiving address must be one of the organization's wallets. Connect it in Settings first.");
+  }
+  // The merchant fee is paid to the organization too, never to an address someone typed.
+  if (rest.merchantFee && !(await orgHasWallet(org, rest.chain, rest.merchantFee.wallet).catch(() => false))) {
+    return jsonBadRequest("The merchant fee must go to one of the organization's wallets. Connect it in Settings first.");
   }
 
   try {
@@ -84,8 +101,11 @@ export const POST: APIRoute = async (ctx) => {
             memo: rest.memo,
             msg: rest.msg,
             callback: rest.callback,
+            checkoutTheme: rest.checkoutTheme,
+            merchantFee: rest.merchantFee,
           })
         : await cosmos.createPay(session.user.id, environment, {
+            chain: rest.chain,
             destination: rest.destination,
             amount: rest.amount,
             assetCode: rest.assetCode,
@@ -93,9 +113,11 @@ export const POST: APIRoute = async (ctx) => {
             memo: rest.memo,
             msg: rest.msg,
             callback: rest.callback,
+            checkoutTheme: rest.checkoutTheme,
+            merchantFee: rest.merchantFee,
           });
 
-    // Activity notification (best-effort) — records origin + date of the action.
+    // Activity notification (best-effort): records origin + date of the action.
     const loc = await geoLocate(ctx.request.headers, ctx.clientAddress).catch(() => null);
     safeNotify({
       userId: session.user.id,

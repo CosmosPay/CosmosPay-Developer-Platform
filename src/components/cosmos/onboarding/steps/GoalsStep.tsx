@@ -1,4 +1,4 @@
-/* GoalsStep.jsx — step 1: goals (multi-select) + volume segmented control. */
+/* GoalsStep.jsx, step 1: goals (multi-select) + volume segmented control. */
 import { I } from "@/components/cosmos/onboarding/icons";
 import { GOAL_IDS, VOLUME_IDS } from "@/components/cosmos/onboarding/data";
 

@@ -1,9 +1,9 @@
 ---
 title: "WebClient"
-description: "The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key."
+description: "The browser wallet client that detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key."
 ---
 
-The browser wallet client — detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key.
+The browser wallet client that detects the user's Stellar wallet, then builds, signs and submits the transaction. It never touches your secret key.
 
 ## Constructor
 
@@ -15,7 +15,7 @@ constructor(options?: WebClientOptions)
 
 **Parameters**
 
-- `options` _(optional)_ — `WebClientOptions`
+- `options` _(optional)_: `WebClientOptions`
 
 ## Properties
 
@@ -103,8 +103,8 @@ registerWallet(adapter: WalletAdapter, prepend?: boolean): this
 
 **Parameters**
 
-- `adapter` — `WalletAdapter`
-- `prepend` _(optional)_ — `boolean`
+- `adapter`: `WalletAdapter`
+- `prepend` _(optional)_: `boolean`
 
 **Returns** `this`
 
@@ -128,8 +128,8 @@ pay(input: PayableInput, options?: PayOptions): Promise<PayResult>
 
 **Parameters**
 
-- `input` — `PayableInput`
-- `options` _(optional)_ — `PayOptions`
+- `input`: `PayableInput`
+- `options` _(optional)_: `PayOptions`
 
 **Returns** `Promise<PayResult>`
 
@@ -143,8 +143,8 @@ buildTransaction(input: PayableInput, options?: PayOptions): Promise<{ xdr: stri
 
 **Parameters**
 
-- `input` — `PayableInput`
-- `options` _(optional)_ — `PayOptions`
+- `input`: `PayableInput`
+- `options` _(optional)_: `PayOptions`
 
 **Returns** `Promise<{ xdr: string`
 
@@ -158,7 +158,7 @@ createPay(options: CreatePayPaymentIntentOptions): Promise<PaymentIntentData>
 
 **Parameters**
 
-- `options` — `CreatePayPaymentIntentOptions`
+- `options`: `CreatePayPaymentIntentOptions`
 
 **Returns** `Promise<PaymentIntentData>`
 
@@ -172,7 +172,7 @@ createTx(options: CreateTxPaymentIntentOptions): Promise<PaymentIntentData>
 
 **Parameters**
 
-- `options` — `CreateTxPaymentIntentOptions`
+- `options`: `CreateTxPaymentIntentOptions`
 
 **Returns** `Promise<PaymentIntentData>`
 
@@ -186,8 +186,8 @@ validate(intentId: string, txHash: string): Promise<ValidationOutcomeData>
 
 **Parameters**
 
-- `intentId` — `string`
-- `txHash` — `string`
+- `intentId`: `string`
+- `txHash`: `string`
 
 **Returns** `Promise<ValidationOutcomeData>`
 

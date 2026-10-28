@@ -1,7 +1,7 @@
 /* Inline SVG icon set + brand mark, shared across every island. */
 
 /* ---------------- brand mark ---------------- */
-/* Black logo on light theme, white logo on dark theme — swapped in CSS via [data-theme]. */
+/* Black logo on light theme, white logo on dark theme, swapped in CSS via [data-theme]. */
 /* Isotipo de marca (la C con el trazo que la atraviesa). Es un <span> con la
    mascara del SVG mono y fondo currentColor, asi toma el color del texto y
    sigue al tema sin duplicar archivos. `color` lo pisa cuando hace falta. */

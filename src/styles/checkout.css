@@ -1,0 +1,290 @@
+/* ============================================================
+   Cosmos Pay: checkout.css
+   The four hosted-checkout designs (src/components/payments/checkout/),
+   on the institutional skin. One DOM vocabulary (.ck-*), four layouts
+   keyed by .ck[data-design], each after one of the reference shots the
+   product owner picked:
+     classic: one white card on the canvas
+     split:   a payment-method rail beside the form, a soft blue glow
+     ticket:  form + receipt with a tear line, on a violet-blue sweep
+     card:    big countdown, labelled rows, a payment card, on blue waves
+   ============================================================ */
+
+.ck-page {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 36px 16px 28px; position: relative; isolation: isolate;
+}
+
+/* Static on purpose: the backdrop below is positioned against .ck-page, so it fills the
+   band between the nav and the footer and never paints over either. */
+.ck { width: 100%; max-width: 560px; }
+.ck[data-design="split"], .ck[data-design="ticket"], .ck[data-design="card"] { max-width: 1080px; }
+
+/* ---- the page behind each design ---- */
+/* Flat colours and flat shapes only: no gradients, no blur. */
+.ck-backdrop { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.ck-backdrop::before, .ck-backdrop::after { content: ""; content: "" / ""; position: absolute; }
+/* Split: one large soft-blue disc rising from the right, where the reference has its glow. */
+.ck[data-design="split"] .ck-backdrop::before {
+  right: -14%; top: -30%; width: 62vmax; aspect-ratio: 1; border-radius: 50%; background: var(--accent-soft);
+}
+/* Receipt: a neutral grey page with a page-coloured sweep from the bottom left (the reference's
+   layout, in the skin's palette: black primary, greys secondary, blue only as a detail). */
+.ck[data-design="ticket"] .ck-backdrop { background: #D6D6DC; }
+[data-theme="dark"] .ck[data-design="ticket"] .ck-backdrop { background: #24242C; }
+.ck[data-design="ticket"] .ck-backdrop::before {
+  left: -30%; bottom: -55%; width: 120%; height: 95%;
+  background: var(--bg); border-top-right-radius: 100% 100%;
+}
+/* Card: a black page crossed by two flat ribbons of darker and lighter blacks. */
+.ck[data-design="card"] .ck-backdrop { background: #13131A; }
+.ck[data-design="card"] .ck-backdrop::before {
+  right: -18%; top: -40%; width: 70%; aspect-ratio: 1; border-radius: 50%;
+  border: 90px solid #26262E;
+}
+.ck[data-design="card"] .ck-backdrop::after {
+  left: -16%; bottom: -46%; width: 58%; aspect-ratio: 1; border-radius: 50%;
+  border: 70px solid #000000;
+}
+
+/* ---- cards ---- */
+.ck-card {
+  width: 100%;
+  border: 1px solid var(--line); border-radius: 24px;
+  background: var(--surface); box-shadow: var(--shadow-lg);
+}
+.ck-solo { max-width: 560px; margin: 0 auto; padding: clamp(22px, 5vw, 36px); }
+.ck-classic { padding: clamp(24px, 5vw, 38px); }
+.ck-split, .ck-ticket, .ck-cardlayout { display: grid; padding: 16px; gap: 0; }
+.ck-split { grid-template-columns: minmax(260px, 340px) 1fr; }
+.ck-ticket { grid-template-columns: 1fr minmax(300px, 350px); }
+.ck-cardlayout { grid-template-columns: 1fr minmax(300px, 370px); border-radius: 18px; }
+.ck-body { padding: 24px clamp(18px, 3.2vw, 42px); min-width: 0; }
+
+/* ---- shared pieces ---- */
+.ck-brand { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 22px; }
+.ck .ck-mark {
+  width: 34px; height: 34px; border-radius: 50%; color: #fff; background-color: var(--btn-bg);
+  -webkit-mask: none; mask: none; position: relative;
+}
+.ck .ck-mark::after {
+  content: ""; content: "" / "";
+  position: absolute; inset: 7px; background: #fff;
+  -webkit-mask: url(/brand/isotipo-mono.svg) no-repeat center / contain; mask: url(/brand/isotipo-mono.svg) no-repeat center / contain;
+}
+.ck-eyebrow { font-size: 16px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.ck-brand .pp-testnet { margin: 0; }
+.ck-caption { display: block; font-size: 14px; color: var(--ink-2); margin: 0 0 6px; }
+.ck-amount { margin: 0 0 4px; }
+
+.ck-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ck-head .ck-brand { margin-bottom: 20px; }
+
+.ck-timer { display: flex; flex-direction: column; gap: 8px; }
+.ck-timer-caption { font-size: 12.5px; color: var(--ink-2); }
+.ck-digits { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.ck-d {
+  display: grid; place-items: center; min-width: 32px; height: 40px; padding: 0 2px;
+  border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface);
+  font-size: 18px; font-weight: 500; color: var(--ink);
+}
+.ck-sep { font-weight: 600; color: var(--ink-2); padding: 0 1px; }
+
+.ck-fields { margin: 22px 0 0; border-top: 1px solid var(--line); }
+.ck-field { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; }
+.ck-field + .ck-field { border-top: 1px solid var(--line); }
+.ck-field-text { display: flex; flex-direction: column; gap: 3px; }
+.ck-field-label { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.ck-field-hint { font-size: 13px; color: var(--ink-3); line-height: 1.45; }
+.ck-field-box { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ck-field-box .pp-code { flex: 1; min-width: 0; color: var(--ink); }
+
+.ck-tab-icon {
+  display: inline-block; width: 22px; height: 22px; flex: 0 0 auto; background-color: currentColor;
+  -webkit-mask: var(--icon) no-repeat center / contain; mask: var(--icon) no-repeat center / contain;
+}
+.ck-icon-qr { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Crect x='3.5' y='3.5' width='6.5' height='6.5' rx='1.2'/%3E%3Crect x='14' y='3.5' width='6.5' height='6.5' rx='1.2'/%3E%3Crect x='3.5' y='14' width='6.5' height='6.5' rx='1.2'/%3E%3Cpath d='M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 19h2M19 14h1.5'/%3E%3C/svg%3E"); }
+.ck-icon-wallet { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3'/%3E%3Crect x='4' y='8' width='16.5' height='11' rx='2.5'/%3E%3Cpath d='M15.5 13.5h2'/%3E%3C/svg%3E"); }
+.ck-icon-manual { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.5 3.5 10 14M20.5 3.5 14 20.5l-4-6.5-6.5-4z'/%3E%3C/svg%3E"); }
+.ck-icon-receipt { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3.5h12v17l-2.5-1.5-2 1.5-1.5-1.5-1.5 1.5-2-1.5L6 20.5z'/%3E%3Cpath d='M9 8h6M9 11.5h6M9 15h3.5'/%3E%3C/svg%3E"); }
+
+/* Facts as a receipt: label left, value right. */
+.ck-facts { margin: 6px 0 0; border-top: 0; }
+.ck-facts .pp-row { grid-template-columns: auto 1fr; padding: 11px 0; border-bottom: 0; }
+.ck-facts .pp-row dt { color: var(--ink-3); font-size: 14px; }
+.ck-facts .pp-row dd { justify-content: flex-end; text-align: right; font-weight: 600; font-size: 14.5px; color: var(--ink); }
+.ck-facts .pp-code { font-family: var(--ff-sans); }
+
+/* The tear line between details and total: dashed, with a notch cut at each edge in the
+   card's own colour. */
+.ck-tear { position: relative; height: 1px; margin: 18px -24px; border-top: 2px dashed var(--line-2); }
+.ck-tear::before, .ck-tear::after {
+  content: ""; content: "" / "";
+  position: absolute; top: -13px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface);
+}
+.ck-tear::before { left: -12px; }
+.ck-tear::after { right: -12px; }
+.ck-total-label { margin: 0; font-size: 15px; color: var(--ink-2); }
+.ck-total { margin: 6px 0 0; font-size: clamp(28px, 3.6vw, 34px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; color: var(--ink); overflow-wrap: anywhere; }
+
+.ck-actions-block { flex-direction: column; align-items: stretch; }
+.ck-actions-block .btn { width: 100%; min-height: 50px; }
+.ck-cta { width: 100%; min-height: 58px; margin-top: 24px; font-size: 1.0625rem; }
+
+.ck-notice { margin: 28px 0 0; padding: 4px 0 4px 18px; border-left: 4px solid #F5B400; }
+.ck-notice-title { margin: 0 0 8px; font-weight: 600; font-size: 15px; color: var(--ink); }
+.ck-notice ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 13.5px; line-height: 1.7; }
+
+/* ---- Classic ---- */
+.ck-classic .pp-pay { text-align: center; }
+.ck-classic .ck-fields { margin-top: 22px; }
+
+/* ---- Split ---- */
+.ck-rail {
+  display: flex; flex-direction: column; gap: 30px;
+  background: var(--surface-2); border-radius: 20px; padding: 30px 0 30px 26px;
+}
+.ck-rail .ck-brand { margin: 0; padding-right: 22px; }
+.ck-rail .ck-timer { padding-right: 22px; }
+.ck-methods-label { margin: 6px 0 14px; font-size: 18px; font-weight: 600; color: var(--ink); }
+.ck-tabs { display: flex; flex-direction: column; gap: 4px; }
+/* The chosen method is a white block that runs into the form, as in the reference. */
+.ck-tab {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 14px 18px;
+  border: 0; border-radius: 16px 0 0 16px; background: transparent; color: var(--ink);
+  font: 500 17px/1.2 var(--ff-sans); text-align: left; cursor: pointer;
+  transition: background .2s;
+}
+.ck-tab:hover { background: color-mix(in srgb, var(--surface) 55%, transparent); }
+.ck-tab[aria-selected="true"] { background: var(--surface); font-weight: 600; }
+.ck-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ck-tile { position: relative; border: 1px solid var(--line-2); border-radius: 18px; padding: 16px 20px; min-width: 0; background: var(--surface-2); }
+.ck-split .pp-amount { font-size: clamp(24px, 2.8vw, 30px); font-weight: 600; letter-spacing: -.02em; }
+.ck-tile-value { display: block; font-size: 20px; font-weight: 600; color: var(--ink); }
+.ck-tile-icon { position: absolute; top: 16px; right: 16px; width: 20px; height: 20px; color: var(--ink-3); }
+.ck-panels { margin: 26px 0 0; }
+.ck-panel { padding: 0; }
+.ck-panel-hint { margin: 0 0 18px; color: var(--ink-3); font-size: 15px; }
+.ck-panel[data-method-panel="qr"] { text-align: center; }
+.ck-panel .ck-field { padding: 10px 0 14px; border-top: 0; }
+.ck-panel .ck-field-label { font-size: 19px; }
+.ck-panel .ck-field-box { border: 1.5px solid var(--line-2); border-radius: 14px; padding: 12px 12px 12px 18px; min-height: 58px; }
+.ck-panel .ck-field-box .pp-code { font-family: var(--ff-sans); font-size: 16px; }
+
+/* ---- Receipt (ticket) ---- */
+.ck-ticket .ck-d {
+  background: var(--btn-bg); color: #fff; border-color: transparent;
+  min-width: 30px; height: 34px; font-size: 16px; border-radius: 6px;
+}
+.ck-ticket .ck-sep { color: var(--ink); }
+.ck-ticket .pp-amount { font-size: clamp(30px, 4vw, 40px); font-weight: 600; letter-spacing: -.03em; }
+.ck-section-title { display: flex; align-items: center; gap: 12px; margin: 28px 0 8px; font-size: 20px; font-weight: 500; color: var(--ink); }
+.ck-section-title .ck-tab-icon { color: var(--accent); }
+.ck-form .ck-field { border-top: 0; padding: 10px 0; }
+.ck-form .ck-field-box, .ck-rows .ck-field-box {
+  border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 8px 8px 16px; min-height: 50px; background: var(--surface);
+}
+.ck-receipt, .ck-side {
+  background: var(--surface-2); border-radius: 20px; padding: 30px 26px 30px;
+  display: flex; flex-direction: column; min-width: 0;
+}
+.ck-receipt-title { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 20px; font-weight: 600; font-size: 16px; color: var(--ink); }
+.ck-receipt-title .ck-tab-icon { color: var(--accent); }
+.ck-receipt-qr { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); margin: 0 0 12px; }
+.ck-receipt-qr .pp-qr, .ck-token-qr .pp-qr { margin: 0; }
+.ck-receipt .ck-tear::before, .ck-receipt .ck-tear::after,
+.ck-side .ck-tear::before, .ck-side .ck-tear::after { background: var(--surface); }
+.ck-receipt .ck-total { text-align: center; }
+.ck-receipt .ck-total-label { text-align: center; }
+.ck-receipt-actions { margin-top: 20px; }
+
+/* ---- Card ---- */
+.ck-cardlayout .ck-d {
+  background: #1C2541; color: #fff; border-color: transparent;
+  min-width: 40px; height: 54px; font-size: 28px; font-weight: 600; border-radius: 8px;
+}
+[data-theme="dark"] .ck-cardlayout .ck-d { background: #EEEEF1; color: #13131A; }
+.ck-cardlayout .ck-sep { font-size: 24px; color: var(--ink); }
+.ck-cardlayout .pp-amount { font-size: clamp(30px, 4vw, 40px); font-weight: 600; letter-spacing: -.03em; }
+.ck-rows { margin: 18px 0 0; }
+.ck-rows .ck-field {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: 22px;
+  padding: 12px 0; border-top: 0;
+}
+.ck-rows .ck-field-label { font-size: 17px; }
+.ck-rows .ck-field-box { background: var(--surface-2); min-height: 58px; justify-content: space-between; }
+.ck-card-actions { margin-top: 26px; }
+.ck-card-actions .ck-primary { min-height: 60px; font-size: 1.0625rem; }
+.ck-side { padding-top: 0; margin-top: 56px; }
+/* The payment card is a physical object: white with black ink in both themes. */
+.ck-token {
+  --ink: #0E1A3A; --ink-2: #4B5571; --line: #E3E8F1;
+  align-self: center; width: min(260px, 100%); margin: -44px 0 22px;
+  background: #fff; color: #0E1A3A;
+  border: 1px solid var(--line); border-radius: 20px; padding: 18px 18px 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 18px 40px -18px rgba(14, 26, 58, .35);
+}
+.ck-token::before {
+  content: ""; content: "" / "";
+  display: block; align-self: center; width: 70px; height: 5px; margin-top: -18px; border-radius: 0 0 5px 5px;
+  background: #2346F4;
+}
+.ck-token-top, .ck-token-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ck-token-chain { font-weight: 600; font-size: 15px; }
+.ck-token-mark { width: 26px; height: 26px; color: #13131A; }
+.ck-token-qr { display: flex; justify-content: center; }
+.ck-token-qr .pp-qr { border: 0; padding: 0; }
+.ck-token-address { font-family: var(--ff-mono); font-size: 12.5px; color: var(--ink-2); }
+.ck-token-asset { font-weight: 700; font-size: 16px; }
+
+/* ---- after payment: the total turns green ---- */
+.ck[data-phase="paid"] .ck-total { color: var(--ok); }
+
+/* ---- preview bar ---- */
+.ck-preview-bar {
+  width: 100%; max-width: 1080px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px; margin: 0 0 20px;
+}
+.ck-preview-note { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.ck-preview-switch { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+.ck-preview-switch a { padding: 7px 14px; border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+.ck-preview-switch a:hover { color: var(--ink); }
+.ck-preview-switch a[aria-current="page"] { background: var(--btn-bg); color: var(--btn-fg); }
+.ck [aria-disabled="true"] { cursor: not-allowed; opacity: .55; }
+
+/* ---- narrow screens: every design becomes one column ---- */
+@media (max-width: 880px) {
+  .ck-split, .ck-ticket, .ck-cardlayout { grid-template-columns: 1fr; padding: 10px; }
+  .ck-body { padding: 22px 16px; }
+  .ck-rail { gap: 18px; padding: 20px 16px; }
+  .ck-rail .ck-brand, .ck-rail .ck-timer { padding-right: 0; }
+  .ck-tabs { flex-direction: row; overflow-x: auto; }
+  .ck-tab { flex: 1 0 auto; width: auto; min-height: 50px; border-radius: 14px; font-size: 15px; }
+  .ck-side { margin-top: 52px; }
+  .ck-rows .ck-field { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (max-width: 480px) {
+  .ck-tiles { grid-template-columns: 1fr; }
+  .ck-cardlayout .ck-d { min-width: 32px; height: 44px; font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ck-tab { transition: none; }
+}
+/* Over the blue page of the card design the preview note needs light ink. */
+.ck-page:has(.ck[data-design="card"]) .ck-preview-note { color: #FFFFFF; }
+
+/* A Stellar link with a merchant fee builds its payer's envelope (PayerStep.astro): until it
+   exists there is no wallet link or QR to show, only the account step. */
+#checkout[data-payer="needed"] :is([data-slot="qr"], [data-slot="open-wallet"], [data-slot="web-wallet"], .ck-receipt-qr, .ck-token-qr, #ck-panel-qr .ck-panel-hint) { display: none !important; }
+.ck-payer { display: grid; gap: 8px; margin: 14px 0 4px; }
+.ck-payer[hidden] { display: none; }
+.ck-payer-row { display: flex; gap: 8px; min-width: 0; }
+.ck-payer-input {
+  flex: 1; min-width: 0; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 12px;
+  background: var(--surface); color: var(--ink); font: 500 13.5px/1.3 var(--ff-mono);
+}
+.ck-payer-input:focus-visible { outline: none; border-color: var(--ink-3); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tertiary, #2346F4) 22%, transparent); }
+.ck-payer-input[aria-invalid="true"] { border-color: #C2410C; }
+.ck-payer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 520px) { .ck-payer-row { flex-direction: column; } }

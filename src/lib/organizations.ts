@@ -1,8 +1,9 @@
-/* organizations.ts — workspaces owned by users, with members + org-level roles.
+/* organizations.ts: workspaces owned by users, with members + org-level roles.
    Plan limits (maxOrgs) are enforced on creation. */
 import { prisma } from "@/lib/prisma";
-import { planLimits, planSwapFeeBps, atLimit } from "@/lib/plans";
+import { DEFAULT_PLAN_ID, planLimits, planSwapFeeBps, atLimit } from "@/lib/plans";
 import { getProfile } from "@/lib/profile";
+import { planStatusOf, type PlanStatus } from "@/lib/plan-status";
 
 export type OrgRole = "owner" | "admin" | "member";
 
@@ -14,6 +15,7 @@ export interface OrgSummary {
   createdAt: Date;
   permissions: string[]; // the signed-in member's granted per-action permissions
   plan: string; // the org's plan = the OWNER's subscription plan
+  planStatus: PlanStatus; // that plan's standing (active, paused, past_due, suspended)
 }
 
 function toRole(r: unknown): OrgRole {
@@ -25,7 +27,7 @@ function toRole(r: unknown): OrgRole {
 export async function listForUser(userId: string): Promise<OrgSummary[]> {
   const memberships = await prisma.organizationMember.findMany({
     where: { userId },
-    include: { org: { include: { owner: { select: { profile: { select: { plan: true } } } } } } },
+    include: { org: { include: { owner: { select: { profile: { select: { plan: true, planStatus: true } } } } } } },
     orderBy: { createdAt: "asc" },
   });
   return memberships
@@ -37,7 +39,8 @@ export async function listForUser(userId: string): Promise<OrgSummary[]> {
       ownerId: m.org.ownerId,
       createdAt: m.org.createdAt,
       permissions: Array.isArray(m.permissions) ? m.permissions : [],
-      plan: m.org.owner?.profile?.plan ?? "community",
+      plan: m.org.owner?.profile?.plan ?? DEFAULT_PLAN_ID,
+      planStatus: planStatusOf(m.org.owner?.profile?.planStatus),
     }));
 }
 
@@ -89,7 +92,7 @@ export async function createOrg(userId: string, name: string, bypassLimit = fals
   const org = await prisma.organization.create({ data: { name: name.trim(), ownerId: userId, metadata: (metadata ?? undefined) as never } });
   await prisma.organizationMember.create({ data: { orgId: org.id, userId, role: "owner" } });
   const ownerProfile = await getProfile(userId).catch(() => null);
-  return { ok: true, org: { id: org.id, name: org.name, role: "owner", ownerId: org.ownerId, createdAt: org.createdAt, permissions: [], plan: ownerProfile?.plan ?? "community" } };
+  return { ok: true, org: { id: org.id, name: org.name, role: "owner", ownerId: org.ownerId, createdAt: org.createdAt, permissions: [], plan: ownerProfile?.plan ?? DEFAULT_PLAN_ID } };
 }
 
 export async function getMembership(orgId: string, userId: string) {
@@ -97,7 +100,7 @@ export async function getMembership(orgId: string, userId: string) {
 }
 
 /* An organization's resource limits (API keys, seats, …) are governed by the org OWNER's
-   plan — NOT the plan of whoever happens to be acting. This keeps keys/seats per
+   plan, NOT the plan of whoever happens to be acting. This keeps keys/seats per
    organization rather than per account. */
 export async function orgOwnerPlanLimits(orgId: string) {
   const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { ownerId: true } });
@@ -106,14 +109,14 @@ export async function orgOwnerPlanLimits(orgId: string) {
 }
 
 /* The organization's plan + swap commission (bps), governed by the org OWNER's plan
-   — NOT whoever is acting, and never a request parameter. This is the single source
+   (NOT whoever is acting, and never a request parameter). This is the single source
    of the swap fee: the dashboard passes it to the Payments API on swap calls, and the
    APISIX consumer forwarder bakes it into the gateway headers for API-key callers, so
    the rate is enforced per organization and can't be bypassed. */
 export async function orgSwapContext(orgId: string): Promise<{ plan: string; swapFeeBps: number }> {
   const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { ownerId: true } });
   const ownerProfile = org ? await getProfile(org.ownerId).catch(() => null) : null;
-  const plan = ownerProfile?.plan ?? "community";
+  const plan = ownerProfile?.plan ?? DEFAULT_PLAN_ID;
   return { plan, swapFeeBps: planSwapFeeBps(plan) };
 }
 
@@ -135,7 +138,7 @@ export async function listMembers(orgId: string) {
     include: { user: { select: { id: true, name: true, email: true, image: true } } },
     orderBy: { createdAt: "asc" },
   });
-  return members.map((m) => ({ userId: m.userId, role: toRole(m.role), permissions: Array.isArray(m.permissions) ? m.permissions : [], name: m.user?.name ?? null, email: m.user?.email ?? null, image: m.user?.image ?? null }));
+  return members.map((m) => ({ userId: m.userId, role: toRole(m.role), permissions: Array.isArray(m.permissions) ? m.permissions : [], name: m.user?.name ?? null, email: m.user?.email ?? null, image: m.user?.image ?? null, joinedAt: m.createdAt.toISOString() }));
 }
 
 export type AddMemberResult =

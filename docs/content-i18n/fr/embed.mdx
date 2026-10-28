@@ -1,0 +1,134 @@
+---
+title: "Intégrer un paiement : bouton de paiement et checkout intégré"
+description: Encaissez sur votre propre site avec une seule balise script, au moyen d'un bouton qui ouvre le checkout hébergé ou d'un checkout compact dessiné dans votre page.
+---
+
+Chaque lien de paiement que vous créez a un **checkout hébergé** à `https://payments.cosmospay.lat/{id}`.
+Pour encaisser sans faire quitter votre site au payeur, ajoutez un script, puis l'un de ces deux éléments :
+
+- **Bouton de paiement** : `<cosmos-pay-button>` dessine un bouton. Un clic ouvre le checkout hébergé
+  dans une fenêtre pop-up, et le bouton prévient votre page quand le statut change.
+- **Checkout intégré** : `<cosmos-pay-checkout>` dessine un checkout compact dans votre page, avec le
+  montant, le réseau, le code QR, un bouton **Ouvrir dans le wallet** et le statut en direct.
+
+Les deux prennent l'**id du lien de paiement** : l'`id` de l'intention de paiement que vous avez créée
+sur votre serveur (la dernière partie de son URL de checkout). Créez d'abord l'intention, comme expliqué dans
+[Intentions de paiement](/sdk/server/payment-intents).
+
+## Ajouter le script
+
+```html
+<script src="https://payments.cosmospay.lat/embed/cosmos-pay.js" defer></script>
+```
+
+Une fois par page, n'importe où. Les éléments sont des custom elements standard : ils fonctionnent en
+HTML simple comme dans n'importe quel framework. Le script **ne demande aucune clé d'API** : ne mettez
+jamais votre clé dans une page web.
+
+## Bouton de paiement
+
+```html
+<cosmos-pay-button link="cmh4x2k9a0001l70g8v5q3z2w"></cosmos-pay-button>
+```
+
+- Le libellé est « Payer avec Cosmos Pay », dans la langue du payeur. Le texte placé dans l'élément le
+  remplace : `<cosmos-pay-button link="…">Payer la commande #1001</cosmos-pay-button>`.
+- Un clic ouvre le checkout hébergé dans un pop-up de 480×780. Si le navigateur bloque le pop-up,
+  le même onglet va au checkout.
+- Tant que le pop-up est ouvert, le bouton déclenche les [événements](#événements) ci-dessous à chaque
+  changement de statut.
+- Pour le restyler, ciblez sa partie : `cosmos-pay-button::part(button) { … }`.
+
+## Checkout intégré
+
+```html
+<cosmos-pay-checkout link="cmh4x2k9a0001l70g8v5q3z2w" lang="fr" theme="auto"></cosmos-pay-checkout>
+```
+
+Il affiche le montant et l'actif (« Montant libre » quand le payeur le choisit), la description du
+lien, le réseau, le code QR, **Ouvrir dans le wallet**, le statut et l'expiration quand le lien en a
+une. Il lit le lien depuis le navigateur du payeur et le tient à jour (toutes les 5 secondes en
+attente du paiement, toutes les 3 pendant que le réseau le confirme, toutes les 30 une fois expiré)
+et s'arrête quand le paiement est payé, échoué ou annulé.
+
+- Par défaut, il fait au plus 420px de large. Changez-le en CSS sur l'élément :
+  `cosmos-pay-checkout { max-width: none; }`.
+- Ce n'est pas un iframe : les pages de paiement refusent d'être affichées dans un cadre, à dessein.
+  L'élément dessine sa propre interface dans un shadow root, les styles de votre page ne l'atteignent donc pas.
+- Affichez-en **un par paiement**. Chacun lit son lien environ 12 fois par minute, et cette lecture est
+  limitée par adresse du payeur.
+
+## Attributs
+
+| Attribut | Élément | Valeurs | Par défaut |
+| :--- | :--- | :--- | :--- |
+| `link` | les deux | L'id du lien de paiement | Obligatoire |
+| `lang` | les deux | `en`, `es`, `pt`, `fr`, `de` (une balise régionale comme `fr-CA` fonctionne aussi) | La langue du navigateur du payeur, sinon `en` |
+| `theme` | les deux | `light`, `dark`, `auto` (suit le réglage système du payeur) | `light` |
+| `demo` | les deux | Présent, affiche un exemple qui ne peut pas être réglé, sans lien ni requête (pour les vitrines) : le bouton ouvre le checkout d’exemple ; le checkout intégré parcourt ses états et déclenche ses événements | Désactivé |
+
+Sur le bouton, `lang` fixe le libellé et, quand vous l'indiquez, aussi la langue du checkout hébergé.
+Sans lui, le checkout utilise la langue du payeur.
+
+## Événements
+
+Les deux éléments déclenchent ces événements sur eux-mêmes. Ils remontent (bubble) : vous pouvez aussi
+les écouter sur `document`.
+
+| Événement | Quand | `detail` |
+| :--- | :--- | :--- |
+| `cosmospay:status` | Le statut du paiement change (et une fois à la première lecture) | `{ id, status }` |
+| `cosmospay:paid` | Le statut passe à `SUCCEEDED` | `{ id, status }` |
+
+`status` est l'une des valeurs de l'API : `PENDING`, `SUBMITTED`, `SUCCEEDED`, `FAILED`, `CANCELLED`,
+`EXPIRED`. `SUBMITTED` signifie que le paiement a été envoyé et que le réseau le confirme. `EXPIRED`
+n'est pas définitif : un paiement vérifié en retard peut encore faire passer un lien expiré à `SUCCEEDED`.
+
+```js
+const checkout = document.querySelector('cosmos-pay-checkout');
+
+checkout.addEventListener('cosmospay:status', (event) => {
+  console.log(event.detail.id, event.detail.status);
+});
+
+checkout.addEventListener('cosmospay:paid', async () => {
+  // Update the page, then ask YOUR server whether the order is paid.
+  const res = await fetch('/orders/1001/status');
+  // …
+});
+```
+
+<Callout type="warn" title="Les événements sont des indications pour l'interface, pas une preuve de paiement">
+N'importe quel script de la page peut déclencher les mêmes événements, et un payeur peut modifier la
+page. Utilisez-les pour mettre à jour ce que voit le payeur, jamais pour livrer une commande. Confirmez
+chaque paiement **sur votre serveur** : via le [webhook](/sdk/server/webhooks) (`PAYMENT_INTENT_SUCCEEDED`)
+ou en lisant l'intention avec votre clé (`client.paymentIntents.fetch(id)`, ou `GET /v1/payment-intents/{id}`
+dans l'[API REST](/api/payment-intents)).
+</Callout>
+
+Le bouton de paiement n'a des nouvelles du checkout que tant que son pop-up est ouvert, et seulement si
+le navigateur garde les deux fenêtres reliées. Si votre page envoie
+`Cross-Origin-Opener-Policy: same-origin`, utilisez plutôt `same-origin-allow-popups`, sinon le bouton
+ne reçoit aucune mise à jour. Quand le pop-up est bloqué et que le checkout s'ouvre dans le même onglet,
+il n'y a aucun événement, mais votre serveur reçoit quand même le webhook.
+
+## Content Security Policy
+
+Si votre site envoie une `Content-Security-Policy`, autorisez :
+
+| Directive | Valeur | Pourquoi |
+| :--- | :--- | :--- |
+| `script-src` | `https://payments.cosmospay.lat` | Le script lui-même |
+| `connect-src` | `https://api.cosmospay.lat` | Le checkout intégré lit son lien depuis l'API |
+| `img-src` | `data:` | Le code QR est une data URL |
+
+Les éléments n'ont besoin d'aucun style ni script inline. Le script est mis à jour à la même adresse à
+chaque version : il est donc publié sans hash `integrity` fixe.
+
+## Étapes suivantes
+
+<Cards>
+  <Card title="Intentions de paiement" href="/sdk/server/payment-intents" description="Créez le paiement dont vous intégrez le lien." />
+  <Card title="Webhooks" href="/sdk/server/webhooks" description="Confirmez le paiement sur votre serveur dès qu'il aboutit." />
+  <Card title="API des liens de paiement" href="/api/payment-links" description="La lecture sans clé qu'utilisent les deux éléments." />
+</Cards>

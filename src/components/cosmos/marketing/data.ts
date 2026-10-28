@@ -1,17 +1,19 @@
-/* data.js — non-component constants for the marketing landing.
+/* data.js: non-component constants for the marketing landing.
    Brand names + code snippets are not translated. */
 
 /* Company names for the hero "Trusted by engineering teams at" strip.
-   These were placeholder/mock names — replace them with your real customers.
+   These were placeholder/mock names; replace them with your real customers.
    While this array is empty the whole strip is hidden (see Hero.tsx), so no mock
    names ever appear. Add your own as plain strings, e.g.:
      export const CLIENTS = ["Acme", "Globex", "Initech"];
    To show logos instead of names, swap the <Marquee> render in Hero.tsx. */
+import { DOCS } from "@/components/cosmos/lib/constants";
+
 export const CLIENTS: string[] = [];
 
 export const API_SNIPPET = `import { Client } from '@cosmosapp/pay_sdk';
 
-// Bring only your API key — the gateway is pre-configured.
+// Bring only your API key: the gateway is pre-configured.
 const client = new Client({ apiKey: process.env.COSMOS_PAY_API_KEY });
 
 // Create a Stellar SEP-7 payment intent
@@ -23,7 +25,7 @@ const intent = await client.paymentIntents.createPay({
 
 console.log(intent.uri); // web+stellar:pay?destination=...`;
 
-/* code examples for the solutions modals, keyed by item — never translated.
+/* code examples for the solutions modals, keyed by item; never translated.
    Use the real @cosmosapp/pay_sdk API surface so the snippets stay accurate. */
 export const SOL_EX = {
   pay: ["await client.paymentIntents.createPay({", "  destination: 'GA3K7X9PLQ...',", "  amount: '250.00',", "  assetCode: 'USDC',", "});", "// → intent.uri + intent.qr"],
@@ -101,5 +103,5 @@ export const WALLET_MORE = [
 
 /* El comando del SDK y el indice en texto plano para los asistentes de codigo. */
 export const SDK_INSTALL = "npm i @cosmosapp/pay_sdk";
-export const LLMS_TXT = "https://cosmospay.lat/docs/llms.txt";
+export const LLMS_TXT = `${DOCS}/llms.txt`;
 export const MARKETPLACE_URL = "https://cosmosapp.lat";

@@ -1,13 +1,14 @@
 /* OpenAPI registration for the platform-admin surface (src/pages/api/admin/**).
 
-   WHO MAY CALL THESE: a platform owner/admin, decided here against the account role —
+   WHO MAY CALL THESE: a platform owner/admin, decided here against the account role;
    being an owner of some organization is not enough. The Payments service holds no admin
    credential of its own any more; it admits these calls because they arrive from this
    backend (gateway secret + `X-Cosmos-Internal`) and audits them under the account, so
    this check is the only one in play. */
 import { errors, jsonOk, registerRoutes, sessionSecurity } from '@/lib/openapi/route-helpers';
 import { z } from '@/lib/openapi/zod';
-import { PLAN_IDS } from '@/lib/plans';
+import { ALL_PLAN_IDS } from '@/lib/plans';
+import { PLAN_STATUSES } from '@/lib/plan-status';
 import { approveReceiverBodySchema } from '@/schemas/cosmos-resources';
 import {
   envQuery,
@@ -31,7 +32,14 @@ const adminUserSchema = z
     image: z.string().nullable().openapi({ example: null }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     role: accountRole,
-    plan: z.enum(PLAN_IDS as unknown as [string, ...string[]]).openapi({ example: 'community' }),
+    plan: z.enum(ALL_PLAN_IDS as unknown as [string, ...string[]]).openapi({
+      example: 'starter',
+      description: "The account's plan. `community` is the legacy free plan: no longer offered, kept by the accounts already on it.",
+    }),
+    planStatus: z.enum(PLAN_STATUSES).openapi({
+      example: 'active',
+      description: "The plan's standing: `active`, `paused`, `past_due` (a payment is overdue) or `suspended`. Set by staff until a billing provider sets it.",
+    }),
     lastSeenAt: z.string().nullable().openapi({ example: '2026-09-17T12:30:00.000Z' }),
   })
   .openapi('AdminUser', { description: 'An account as the admin console lists it.' });
@@ -42,7 +50,7 @@ const receiverApprovalSchema = z
     emailed: z.boolean().openapi({
       example: true,
       description:
-        'Whether the terms-of-service email actually went out. False when mail is not configured or delivery failed — the approval still stands.',
+        'Whether the terms-of-service email actually went out. False when mail is not configured or delivery failed; the approval still stands.',
     }),
     email: z.string().nullable().openapi({ example: 'customer@example.com' }),
     receiver: passthroughObject('FiatReceiver', 'The receiver as the Payments API returns it.').nullable(),
@@ -65,7 +73,7 @@ const receiverParam = pathParam('id', 'rcv_clx9z8a1b0000', 'Fiat receiver id.');
 const adminProxyPathParam = pathParam(
   'path',
   'consumers',
-  'Everything after /api/admin/ — forwarded to the Payments API as /v1/admin/<path>.',
+  'Everything after /api/admin/, forwarded to the Payments API as /v1/admin/<path>.',
 );
 
 const adminProxyResponses = {
@@ -129,9 +137,9 @@ registerRoutes([
     method: 'patch',
     path: '/api/admin/users/{id}',
     tags: [TAG],
-    summary: "Set an account's role or plan",
+    summary: "Set an account's role, plan or plan standing",
     description:
-      'Plan changes are unrestricted for an admin. Role changes are not: you cannot change your own role, you can only assign a role strictly below your own, and you cannot touch an account at or above your level. Each of those is a 403.',
+      'Plan changes are unrestricted for an admin, and accept the legacy `community` plan for accounts still on it. Role changes are not: you cannot change your own role, you can only assign a role strictly below your own, and you cannot touch an account at or above your level. Each of those is a 403.',
     security: sessionSecurity,
     request: {
       params: pathParam('id', 'usr_abc', 'Account id.'),
@@ -139,9 +147,10 @@ registerRoutes([
         z
           .object({
             role: accountRole.optional(),
-            plan: z.enum(PLAN_IDS as unknown as [string, ...string[]]).optional(),
+            plan: z.enum(ALL_PLAN_IDS as unknown as [string, ...string[]]).optional().openapi({ example: 'starter' }),
+            planStatus: z.enum(PLAN_STATUSES).optional().openapi({ example: 'past_due' }),
           })
-          .openapi('UpdateAdminUserBody', { description: 'At least one of `role` or `plan`.' }),
+          .openapi('UpdateAdminUserBody', { description: 'At least one of `role`, `plan` or `planStatus`.' }),
       ),
     },
     responses: {
@@ -149,7 +158,8 @@ registerRoutes([
         z.object({
           userId: z.string().openapi({ example: 'usr_abc' }),
           role: accountRole,
-          plan: z.enum(PLAN_IDS as unknown as [string, ...string[]]),
+          plan: z.enum(ALL_PLAN_IDS as unknown as [string, ...string[]]).openapi({ example: 'starter' }),
+          planStatus: z.enum(PLAN_STATUSES).openapi({ example: 'active' }),
         }),
         'UpdateAdminUserResponse',
         'User updated',
@@ -167,7 +177,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Approve any fiat receiver',
     description:
-      "The platform-wide twin of `/api/kyc/receivers/{id}/approve`: it reaches receivers in ANY organization. Moves the receiver from `pending_review` to `pending_user` and emails the customer the hosted terms-of-service link (the Payments service has no mailer). `expected_version` is the dossier version the reviewer read — the upstream answers 409 when the tenant edited the dossier in between.",
+      "The platform-wide twin of `/api/kyc/receivers/{id}/approve`: it reaches receivers in ANY organization. Moves the receiver from `pending_review` to `pending_user` and emails the customer the hosted terms-of-service link (the Payments service has no mailer). `expected_version` is the dossier version the reviewer read; the upstream answers 409 when the tenant edited the dossier in between.",
     security: sessionSecurity,
     request: {
       params: receiverParam,
@@ -225,7 +235,7 @@ registerRoutes([
     tags: [TAG],
     summary: `Admin proxy (${method.toUpperCase()})`,
     description:
-      'Catch-all forward to the Payments API admin surface — summary, consumers, payment-intents, swaps, customers, products, receivers, payins, payouts. The response is the upstream payload, with consumer references resolved to the owning organization and account so the console never shows a bare `cosmos_<id>`. More specific admin routes win over this one.',
+      'Catch-all forward to the Payments API admin surface (summary, consumers, payment-intents, swaps, customers, products, receivers, payins, payouts). The response is the upstream payload, with consumer references resolved to the owning organization and account so the console never shows a bare `cosmos_<id>`. More specific admin routes win over this one.',
     security: sessionSecurity,
     request: {
       params: adminProxyPathParam,

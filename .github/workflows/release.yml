@@ -4,7 +4,7 @@ name: Release
 #   0. Builds, runs the unit suite and audits both lockfiles (`verify` job). The
 #      release job `needs` it, so nothing is versioned/tagged unless the build is
 #      green, the tests pass and the shipped deps are clean. CI runs the same three
-#      checks on every PR — this is the last gate, not the first one.
+#      checks on every PR; this is the last gate, not the first one.
 #   1. Picks a semver bump from the pushed commit messages (feat -> minor,
 #      fix/anything -> patch, `!:` or `BREAKING CHANGE` -> major).
 #   2. Bumps package.json, regenerates CHANGELOG.md (git-cliff), commits both back
@@ -32,6 +32,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+          check-latest: true
           cache: npm
 
       - run: npm ci
@@ -74,6 +75,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+          check-latest: true
           cache: npm
 
       - run: npm ci

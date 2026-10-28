@@ -25,7 +25,7 @@ Un seul client expose chaque ressource via son propre gestionnaire.
 
 ```ts
 new Client({
-  apiKey: 'prod_xxx',          // required — the only thing you normally set
+  apiKey: 'prod_xxx',          // required; the only thing you normally set
   webhookSecret: 'whsec_...',  // default secret for the webhook listener
   timeout: 30_000,             // ms (default 30000)
   retries: 2,                  // network errors / 429 / 5xx (default 2)
@@ -54,14 +54,14 @@ client.setGatewayCredentials(secret, consumerUsername); // local-dev direct acce
 ## Les objets renvoyés sont des « structures »
 
 Les méthodes des gestionnaires renvoient des instances riches (`PaymentIntent`, `WebhookEndpoint`,
-`Product`, `Customer`) qui peuvent agir sur elles-mêmes et exposent des accesseurs typés —
+`Product`, `Customer`) qui peuvent agir sur elles-mêmes et exposent des accesseurs typés,
 par ex. `intent.isPay`, `intent.assetLabel`, `await intent.validate(txHash)`,
 `await endpoint.disable()`. Appelez `.toJSON()` pour la charge utile brute.
 
 ## Références
 
-- [Customer](/sdk/definitions/customer) — Un enregistrement client, éventuellement enrichi de statistiques de paiement sur la chaîne.
-- [PaymentIntent](/sdk/definitions/payment-intent) — Une intention de paiement Stellar SEP-7
-- [Product](/sdk/definitions/product) — Un produit / prix que le consommateur peut facturer.
-- [WebhookEndpoint](/sdk/definitions/webhook-endpoint) — Un point de terminaison webhook enregistré
-- [Client](/sdk/definitions/client) — Le point d'entrée principal du SDK — un client unique et atomique qui expose chaque ressource via son propre gestionnaire — une conception atomique à client unique.
+- [Customer](/sdk/definitions/customer) : un enregistrement client, éventuellement enrichi de statistiques de paiement sur la chaîne.
+- [PaymentIntent](/sdk/definitions/payment-intent) : une intention de paiement Stellar SEP-7
+- [Product](/sdk/definitions/product) : un produit / prix que le consommateur peut facturer.
+- [WebhookEndpoint](/sdk/definitions/webhook-endpoint) : un point de terminaison webhook enregistré
+- [Client](/sdk/definitions/client) : le point d'entrée principal du SDK, un client unique et atomique qui expose chaque ressource via son propre gestionnaire (une conception atomique à client unique).

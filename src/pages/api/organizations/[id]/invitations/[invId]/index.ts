@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized } from "@/lib/http";
 import { canManageOrg, getMembership } from "@/lib/organizations";
 import { revokeInvitation } from "@/lib/invitations";
@@ -7,9 +7,9 @@ import type { APIRoute } from "astro";
 
 const paramsSchema = z.object({ id: z.string().min(1), invId: z.string().min(1) });
 
-/* DELETE /api/organizations/:id/invitations/:invId — revoke a pending invitation (owner/admin). */
+/* DELETE /api/organizations/:id/invitations/:invId: revoke a pending invitation (owner/admin). */
 export const DELETE: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);

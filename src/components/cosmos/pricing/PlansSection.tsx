@@ -1,17 +1,18 @@
 import { IcCheck, IcArrow, ctaProps } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { PLAN_IDS, PLAN_SPECS } from "@/lib/plans.ts";
-import { PLAN_META } from "./data";
-import { Price } from "./Price";
+import { PLAN_IDS, PLAN_SPECS, swapFeePct } from "@/lib/plans.ts";
+import { PLAN_META } from "@/components/cosmos/pricing/data";
+import { Price } from "@/components/cosmos/pricing/Price";
 
 const fmtLimit = (n) => (n == null ? "∞" : String(n));
 
-/* Per-plan limits (organizations, seats per org, API keys) pulled from the shared specs
-   (@/lib/plans) so each card always reflects the real plan. */
+/* Per-plan swap commission and limits (organizations, seats per org, API keys) pulled from the
+   shared specs (@/lib/plans) so each card always reflects the real plan. */
 function PlanLimits({ spec, p }) {
   if (!spec) return null;
   return (
     <div className="plan-limits">
+      <div className="pl-row"><span>{p.ratesRows.swaps}</span><b>{swapFeePct(spec.id)}</b></div>
       <div className="pl-row"><span>{p.orgsRow}</span><b>{fmtLimit(spec.maxOrgs)}</b></div>
       <div className="pl-row"><span>{p.seatsRow}</span><b>{fmtLimit(spec.maxSeats)}</b></div>
       <div className="pl-row"><span>{p.keysRow}</span><b>{fmtLimit(spec.maxApiKeys)}</b></div>
@@ -30,8 +31,7 @@ export function PlansSection({ user, billing }) {
           const meta = PLAN_META[i];
           const spec = PLAN_SPECS[PLAN_IDS[i]];
           return (
-            <div className={`plan reveal${meta.featured ? " featured" : ""}${i === p.plans.length - 1 ? " wide-plan" : ""}`} key={plan.name} style={{ transitionDelay: `${i * 0.06}s` }}>
-              {meta.tag && plan.tag && <span className="plan-tag">{plan.tag}</span>}
+            <div className={`plan reveal${meta.featured ? " featured" : ""}`} key={plan.name} style={{ transitionDelay: `${i * 0.06}s` }}>
               {meta.featured && <span className="plan-tag">{p.popular}</span>}
               <div className="pname">{plan.name}</div>
               <div className="pdesc">{plan.desc}</div>
@@ -56,7 +56,8 @@ export function PlansSection({ user, billing }) {
           <div className="ent-cta">
             <div className="ent-price">{p.enterprise.price}</div>
             <div className="ent-subt">{p.enterprise.subt}</div>
-            <a className="btn btn-dark" href="#">{p.enterprise.cta} <IcArrow /></a>
+            {/* Contact sales: no contact page yet. */}
+            {/* <a className="btn btn-dark" href="#">{p.enterprise.cta} <IcArrow /></a> */}
           </div>
         </div>
       </div>

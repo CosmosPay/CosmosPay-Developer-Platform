@@ -1,0 +1,56 @@
+---
+// Benefits section of the payments landing (see src/pages/payments/index.astro for the page
+// it belongs to). Its data comes from landingData (../data.ts).
+import Icon from "@/components/payments/landing/Icon.astro";
+import Mark from "@/components/payments/landing/Mark.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+
+interface Props {
+  d: LandingData;
+}
+
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+---
+
+<section class="pl-section" aria-labelledby="pl-benefits">
+  <div class="wrap">
+    <div class="pl-head" data-reveal>
+      <h2 id="pl-benefits">{t.benefits.title} {t.benefits.titleBold}</h2>
+    </div>
+    <ul class="pl-bento" role="list">
+      {benefits.map((b, i) => (
+        <li class="pl-bento-card" data-reveal style={`--i: ${i}`}>
+          <div class="pl-bento-visual">
+            <img class="pl-3d pl-bento-3d" src={`/media/landing/3d-${b.key}.webp`} alt="" width="400" height="400" loading="lazy" decoding="async" />
+            <Mock name={b.mock} ui={t.ui} />
+          </div>
+          <h3>{b.title}</h3>
+          <p>{b.body}</p>
+        </li>
+      ))}
+    </ul>
+
+    <div class="pl-settle">
+      <div class="pl-settle-head" data-reveal>
+        <h3 class="pl-settle-title">{t.settle.title} {t.settle.titleBold}</h3>
+        <p class="pl-section-lede">{t.settle.lede}</p>
+      </div>
+      <div class="pl-settle-grid">
+        {settleModes.map((mode, i) => (
+          <article class:list={["pl-settle-card", { "is-escrow": mode.key === "escrow" }]} data-reveal style={`--i: ${i}`}>
+            <Mock name={mode.key === "escrow" ? "flow-escrow" : "flow-instant"} ui={t.ui} />
+            <h4>{mode.title}</h4>
+            <p>{mode.body}</p>
+            <ol class="pl-settle-steps" role="list">
+              {mode.steps.map((step, j) => (
+                <li style={`--j: ${j}`}><span class="pl-settle-num" aria-hidden="true">{j + 1}</span><span>{step}</span></li>
+              ))}
+            </ol>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

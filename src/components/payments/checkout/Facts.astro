@@ -1,0 +1,32 @@
+---
+// The payment's details as a definition list. Rows without a value stay hidden.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+interface Props {
+  /** Which rows to draw, in order. */
+  rows: ("network" | "asset" | "memo" | "desc" | "expires" | "tx")[];
+  class?: string;
+}
+
+const { rows, class: className = "pp-details" } = Astro.props;
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<dl class={className}>
+  {rows.map((r) => {
+    switch (r) {
+      case "network":
+        return <div class="pp-row"><dt>{t.network}</dt><dd data-slot="network"></dd></div>;
+      case "asset":
+        return <div class="pp-row"><dt>{t.asset}</dt><dd data-slot="asset"></dd></div>;
+      case "memo":
+        return <div class="pp-row" data-row="memo" hidden><dt>{t.memo}</dt><dd><code class="pp-code" data-slot="memo-text"></code></dd></div>;
+      case "desc":
+        return <div class="pp-row" data-row="desc" hidden><dt>{t.descLabel}</dt><dd data-slot="desc"></dd></div>;
+      case "expires":
+        return <div class="pp-row" data-row="expires" hidden><dt>{t.expires}</dt><dd><time data-slot="expires"></time></dd></div>;
+      case "tx":
+        return <div class="pp-row" data-row="tx" hidden><dt>{t.transaction}</dt><dd><a class="pp-link" data-slot="tx" target="_blank" rel="noopener noreferrer">{t.explorer}</a></dd></div>;
+    }
+  })}
+</dl>

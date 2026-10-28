@@ -5,16 +5,16 @@ description: "Administra tu catálogo de productos y tus clientes, incluidas sus
 
 Los productos y los clientes son catálogos opcionales que puedes asociar a los pagos para organizarlos y generar informes sobre ellos.
 
-## Productos / precios — `client.products`
+## Productos / precios: `client.products`
 
 ```ts
 import { ProductKind } from '@cosmosapp/pay_sdk';
 
 const product = await client.products.create({
-  name: 'Pro plan — monthly',
+  name: 'Pro plan (monthly)',
   description: 'Priority support included.', // optional
-  amount: '49.00',                           // optional — omit for customer-set amount
-  assetCode: 'USDC',                         // optional — omit for native XLM
+  amount: '49.00',                           // optional; omit for customer-set amount
+  assetCode: 'USDC',                         // optional; omit for native XLM
   kind: ProductKind.Recurring,               // 'recurring' | 'one_time' | 'link'
   reference: 'sku_pro_monthly',              // optional
 });
@@ -30,7 +30,7 @@ await product.delete();
 Accesores de `Product`: `id`, `name`, `description`, `amount`, `asset`, `assetLabel`,
 `kind`, `active`, `reference`, `createdAt`, `updatedAt`.
 
-## Clientes — `client.customers`
+## Clientes: `client.customers`
 
 ```ts
 const customer = await client.customers.create({
@@ -58,5 +58,5 @@ Accesores de `Customer`: `id`, `name`, `alias`, `note`, `email`,
 
 ## Referencias
 
-- [Customer](/sdk/definitions/customer) — Un registro de cliente, opcionalmente enriquecido con estadísticas de pago en cadena.
-- [Product](/sdk/definitions/product) — Un producto / precio por el que el consumidor puede cobrar.
+- [Customer](/sdk/definitions/customer): Un registro de cliente, opcionalmente enriquecido con estadísticas de pago en cadena.
+- [Product](/sdk/definitions/product): Un producto / precio por el que el consumidor puede cobrar.

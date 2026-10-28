@@ -1,0 +1,24 @@
+---
+/* /{id}: the hosted checkout for one payment link.
+ *
+ * The HTML is a shell: the link itself is read by the browser from the gateway
+ * (GET /v1/payment-links/{id}) and then polled until it settles. Reading it here, on the
+ * server, would put every payer behind this server's single address, and the gateway's
+ * budget for that public read is per address (see src/scripts/payments/checkout.ts).
+ */
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import Checkout from "@/components/payments/Checkout.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { isPaymentLinkId } from "@/lib/payments/payment-link";
+
+const { id } = Astro.params;
+if (!isPaymentLinkId(id)) {
+  return Astro.rewrite("/404");
+}
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+---
+
+<PaymentsLayout title={t.title} description={t.description}>
+  <Checkout id={id} />
+</PaymentsLayout>

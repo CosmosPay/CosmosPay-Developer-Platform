@@ -7,7 +7,7 @@ const config = {
   // This docs app lives in a subfolder of the Astro portal, which has its own
   // package-lock.json. Pin the root to docs/ so Next/Turbopack doesn't infer the parent as
   // the workspace root and try to compile the portal's Astro files (e.g. src/middleware.ts).
-  // The shared navbar is not imported across the boundary — scripts/sync-portal-ui.mjs
+  // The shared navbar is not imported across the boundary: scripts/sync-portal-ui.mjs
   // copies it into this tree so everything resolves locally.
   turbopack: { root: import.meta.dirname },
   outputFileTracingRoot: import.meta.dirname,

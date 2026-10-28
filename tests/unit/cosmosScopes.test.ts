@@ -1,6 +1,6 @@
-/* cosmosScopes.test.ts — the scope catalog IS the API-key picker: a resource missing
-   here is a scope the dashboard cannot grant at all — a key is then refused with
-   `insufficient_scope` on that resource — so the resources are pinned by name and not
+/* cosmosScopes.test.ts: the scope catalog IS the API-key picker. A resource missing
+   here is a scope the dashboard cannot grant at all (a key is then refused with
+   `insufficient_scope` on that resource), so the resources are pinned by name and not
    merely counted. */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';

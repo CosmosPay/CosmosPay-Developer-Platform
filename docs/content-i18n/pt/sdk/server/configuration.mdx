@@ -7,14 +7,14 @@ A maioria das integrações não precisa de nada disto. Aqui se documenta cada o
 
 ```ts
 new Client({
-  apiKey: 'prod_xxx',            // required — the only thing you normally set
+  apiKey: 'prod_xxx',            // required; the only thing you normally set
   webhookSecret: 'whsec_...',    // default secret for the webhook listener
   timeout: 30_000,               // ms (default 30000)
   retries: 2,                    // network errors / 429 / 5xx (default 2)
   headers: { 'X-Trace': 'abc' }, // extra headers on every request
   fetch: customFetch,            // custom fetch implementation
 
-  // Advanced / internal — pre-filled from Client.shared, rarely overridden:
+  // Advanced / internal (pre-filled from Client.shared, rarely overridden):
   baseURL: 'https://api.cosmospay.lat/cosmos-api', // gateway URL (default)
   version: 'v1',                 // route prefix
   gatewaySecret: '...',          // direct access (X-Gateway-Secret), local dev
@@ -24,7 +24,7 @@ new Client({
 
 ## Variáveis de ambiente (convenção)
 
-O SDK não lê nada do ambiente por conta própria — você passa os valores. Convenção
+O SDK não lê nada do ambiente por conta própria; você passa os valores. Convenção
 comum usada ao longo da documentação/exemplos:
 
 | Variável | Usada para |
@@ -49,4 +49,4 @@ new Client({
 
 ## Referências
 
-- [Client](/sdk/definitions/client) — O ponto de entrada principal do SDK — um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador — um design atômico de cliente único.
+- [Client](/sdk/definitions/client): O ponto de entrada principal do SDK, um único cliente atômico que expõe cada recurso por meio do seu próprio gerenciador (um design atômico de cliente único).

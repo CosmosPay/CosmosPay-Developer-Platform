@@ -1,16 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ConfirmModal, showToast } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi, paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
+import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
+import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
+import { PaymentPreview, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { goFiltered, usePaged, useGsapRows, openRecord, recordHref, useListFilters } from "@/components/cosmos/dashboard/hooks";
+import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { ViewHead } from "@/components/cosmos/dashboard/components/ViewHead";
-import { PayLinkDetailModal, PayLinkRowActions, STATUS_PILL } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf } from "@/components/cosmos/dashboard/components/PayLinkDetail";
+import { CHAINS, assetLabel as chainAsset, isChain, networkName } from "@/lib/chains";
+import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { TableSkeleton, ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
+import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
+import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 
 const num = (s) => { const n = Number(s); return Number.isFinite(n) ? n : 0; };
+/* The settled payments' filters (a list like every other: search, network, date). */
+const DEFAULTS = { q: "", chain: "all", date: "any" };
+const ALLOWED = { chain: ["all", ...CHAINS] };
 
-export function BalancesView({ canManage = false, env = "dev" }) {
+/* Each balance opens the settled payments behind it (Payments, filtered to settled, its network and
+   its asset); the total opens every settled payment. With nothing settled yet, whoever may create
+   payments is offered the payment link that starts it. */
+export function BalancesView({ canManage = false, env = "dev", onGo = (v) => {} }) {
   const t = useT();
   const b = t.dash.balances;
   const cx = t.dash.cosmos;
@@ -18,9 +36,11 @@ export function BalancesView({ canManage = false, env = "dev" }) {
   const [bals, setBals] = useState([]);
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [detail, setDetail] = useState(null);
+  const [failed, setFailed] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const fl = t.dash.filters;
+  const { filters, set, reset, active } = useListFilters(DEFAULTS, ALLOWED);
 
   const confirmDelete = () => {
     if (!toDelete || deleting) return;
@@ -34,64 +54,107 @@ export function BalancesView({ canManage = false, env = "dev" }) {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    setDetail(null);
     // The upstream payments list isn't network-scoped, so request a wider page and
     // filter to the active environment's network here.
     const wantNet = env === "prod" ? "public" : "testnet";
+    setFailed(false);
     Promise.all([
-      metricsApi.balances(env).catch(() => ({ data: [] })),
-      payApi.list(env, { status: "SUCCEEDED", take: 50 }).catch(() => ({ data: [] })),
+      metricsApi.balances(env).catch(() => { if (alive) setFailed(true); return { data: [] }; }),
+      payApi.list(env, { status: "SUCCEEDED", take: 100 }).catch(() => { if (alive) setFailed(true); return { data: [] }; }),
     ]).then(([bal, pay]) => {
       if (!alive) return;
       setBals((bal && Array.isArray(bal.data)) ? bal.data : []);
       const rows = (pay && Array.isArray(pay.data)) ? pay.data : [];
-      setRecent(rows.filter((p) => !p.network || p.network === wantNet).slice(0, 8));
+      setRecent(rows.filter((p) => !p.network || p.network === wantNet));
     }).finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [env]);
 
+  const matches = (p, skip) =>
+    (skip === "chain" || filters.chain === "all" || chainOf(p) === filters.chain) &&
+    inRange(p.createdAt, filters.date) &&
+    matchesQuery([p.id, p.source, p.destination, p.memo, p.reference, p.asset, p.amount, amountLabel(p, pl), networkName(chainOf(p))], filters.q);
+  const shown = recent.filter((p) => matches(p, null));
+  const chainCounts = countBy(recent.filter((p) => matches(p, "chain")), (p) => chainOf(p));
+  const pg = usePaged(shown, env + JSON.stringify(filters));
+  const tref = useRef(null); useGsapRows(tref, pg.page + "|" + shown.length);
   const max = Math.max(1, ...bals.map((x) => num(x.amount)));
   const totalSettlements = bals.reduce((a, x) => a + (x.count || 0), 0);
+  const networks = new Set(bals.map((x) => x.chain)).size;
+  // A balance names its asset by the chain's coin for "native" and by the code of a CODE:ISSUER
+  // asset; its mark and name go by that.
+  const code = (bal) => (isChain(bal.chain) ? chainAsset(bal.chain, bal.asset) : String(bal.asset).split(":")[0]);
+  const settled = (bal = null) => goFiltered(onGo, "payments", {
+    status: "SUCCEEDED",
+    ...(bal && CHAINS.includes(bal.chain || "stellar") ? { chain: bal.chain || "stellar" } : {}),
+    // the asset by its ticker (the search reads the payment's asset as shown) or CODE:ISSUER
+    ...(bal && bal.asset ? { q: bal.asset === "native" ? code(bal) : String(bal.asset) } : {}),
+  });
 
   return (
     <>
-      <ViewHead title={b.title} sub={b.sub} />
-      {loading && <div className="empty">{cx.loading}</div>}
+      <ViewHead title={b.title} />
+      {loading && <ListSkeleton label={cx.loading} rows={2} pairs={2} />}
       {!loading && (
         <div className="bal-grid">
           {bals.map((bal) => (
-            <div className="bal-card" key={bal.asset}>
-              <div className="bal-asset"><span className="bal-chip">{bal.asset}</span></div>
+            <button type="button" className="bal-card" key={`${bal.chain || "stellar"}:${bal.asset}`} onClick={() => settled(bal)}>
+              {/* The asset with its logo and the network it settles on, as text (no chip). */}
+              <div className="bal-asset">
+                <TokenMark symbol={code(bal)} chain={bal.chain || "stellar"} chainName={networkName(bal.chain || "stellar")} size={28} />
+                <span className="bal-asset-name"><b>{code(bal)}</b> {networkName(bal.chain || "stellar")}</span>
+              </div>
               <div className="bal-amt">{bal.amount}</div>
               <div className="bal-fiat">{num(bal.pending) > 0 ? `${cx.pending}: ${bal.pending}` : `${bal.count}× ${cx.received}`}</div>
               <div className="bal-bar"><span style={{ width: Math.round((num(bal.amount) / max) * 100) + "%" }} /></div>
-            </div>
+            </button>
           ))}
-          <div className="bal-card total">
-            <div className="bal-asset"><span style={{ color: "rgba(255,255,255,.7)", fontSize: 13, fontWeight: 600 }}>{b.total}</span></div>
-            <div className="bal-amt">{totalSettlements}</div>
-            <div className="bal-fiat">{bals.length ? `${bals.length} ${cx.events}` : cx.empty}</div>
-          </div>
+          {/* Amounts in different assets do not add up: the black card counts settlements instead. */}
+          {bals.length > 0 ? (
+            <button type="button" className="bal-card total" onClick={() => settled()}>
+              <div className="bal-asset"><span className="bal-total-k">{b.total}</span></div>
+              <div className="bal-amt">{totalSettlements}</div>
+              <div className="bal-fiat">{fmt(b.across, { assets: bals.length, networks })}</div>
+            </button>
+          ) : (
+            <div className="bal-card total">
+              <div className="bal-asset"><span className="bal-total-k">{b.total}</span></div>
+              <div className="bal-amt">{totalSettlements}</div>
+            </div>
+          )}
         </div>
       )}
-      <div className="panel"><div className="panel-head"><h3>{b.recent}</h3></div>
-        {!loading && recent.length > 0 && (
-          <div className="t-scroll"><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th></th></tr></thead>
-            <tbody>{recent.map((p) => (
-              <tr key={p.id} className="row-click" onClick={() => setDetail(p)}>
-                <td className="tid">{p.id}</td>
+      <section className="hub-section bal-recent" aria-labelledby="bal-recent-t">
+      <div className="hub-section-head"><h2 id="bal-recent-t">{b.recent}</h2>{recent.length > 0 && <button type="button" className="hub-link" onClick={() => settled()}>{t.dash.overview.hub.viewAll}</button>}</div>
+      <FilterBar
+        label={fl.label}
+        query={filters.q} onQuery={(v) => set("q", v)} placeholder={pl.searchPlaceholder}
+        selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: networkName(c), icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] || 0 }))] }]}
+        date={filters.date} onDate={(v) => set("date", v)}
+        active={active} onReset={reset}
+        shown={shown.length} total={loading ? undefined : recent.length} loading={loading}
+      />
+      <div className="panel">
+        {loading && <TableSkeleton label={cx.loading} cols={6} />}
+        {!loading && (
+          <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx"><thead><tr><th>{b.tableHead.transaction}</th><th>{b.tableHead.type}</th><th>{b.tableHead.amount}</th><th>{b.tableHead.status}</th><th>{b.tableHead.date}</th><th><span className="sr-only">{t.dash.common.actions}</span></th></tr></thead>
+            <tbody>{pg.slice.map((p) => (
+              <tr key={p.id} className="row-click" onClick={() => openRecord("payment", p.id)}>
+                <td className="tid"><RecordLink href={recordHref("payment", p.id)} onOpen={() => openRecord("payment", p.id)} copy={p.id} preview={() => <PaymentPreview p={p} />} title={p.id}><code>{shortAddress(p.id)}</code></RecordLink></td>
                 <td className="cust">{b.payment}</td>
-                <td className="amt">+{p.amount || "—"} {p.asset === "native" ? "XLM" : p.asset}</td>
-                <td><Pill st={STATUS_PILL[p.status] || "ref"} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
+                <td className="amt"><PaymentAmount intent={p} pl={pl} /></td>
+                <td><Pill st={STATUS_PILL[p.status] || "ref"} tone={paymentTone(p.status)} label={(t.dash.paylinks.status && t.dash.paylinks.status[p.status]) || p.status} /></td>
                 <td className="cust">{fmtDateTime(p.createdAt)}</td>
-                <PayLinkRowActions intent={p} t={t} pl={pl} onView={setDetail} canManage={canManage} onDelete={setToDelete} />
+                <PayLinkRowActions intent={p} t={t} pl={pl} onView={(x) => openRecord("payment", x.id)} canManage={canManage} onDelete={setToDelete} />
               </tr>
-            ))}</tbody>
+            ))}
+              <FillRows n={pg.size - pg.count} cols={6} empty={failed ? cx.loadError : null} />
+            </tbody>
           </table></div>
         )}
-        {!loading && !recent.length && <div className="empty">{cx.empty}</div>}
+        {!loading && <Pagination {...pg} />}
       </div>
-      {detail && <PayLinkDetailModal pl={pl} intent={detail} env={env} canManage={canManage} onClose={() => setDetail(null)} onDeleted={(id) => { setRecent((r) => r.filter((x) => x.id !== id)); setDetail(null); }} />}
+      </section>
       {toDelete && <ConfirmModal title={pl.detail.deleteTitle} body={fmt(pl.detail.deleteBody, { id: toDelete.id })} confirmLabel={pl.detail.deleteConfirm} cancelLabel={t.dash.common.cancel} onConfirm={confirmDelete} onClose={() => setToDelete(null)} />}
     </>
   );

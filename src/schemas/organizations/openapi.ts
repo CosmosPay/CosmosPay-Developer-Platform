@@ -2,8 +2,8 @@
    organizations, their members and their pending invitations.
 
    Two things the reference has to get right because they are what callers trip on:
-   a caller who is not a member is answered 404, not 403 — an org they cannot see does
-   not exist for them — and the permission list is imported from lib/org-permissions.ts
+   a caller who is not a member is answered 404, not 403 (an org they cannot see does
+   not exist for them), and the permission list is imported from lib/org-permissions.ts
    rather than retyped, so a new resource shows up here the day it is added there. */
 import {
   errors,
@@ -13,6 +13,7 @@ import {
   sessionSecurity,
 } from '@/lib/openapi/route-helpers';
 import { z } from '@/lib/openapi/zod';
+import { PLAN_STATUSES } from '@/lib/plan-status';
 import { ORG_PERMISSIONS } from '@/lib/org-permissions';
 import { idParam, jsonBody, pathParam } from '@/schemas/shared/openapi-params';
 
@@ -37,8 +38,12 @@ const orgSummarySchema = z
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     permissions: z.array(orgPermission).openapi({ example: [] }),
     plan: z.string().openapi({
-      example: 'community',
-      description: "The OWNER's plan — it governs the org's seat and resource limits.",
+      example: 'starter',
+      description: "The OWNER's plan: it governs the org's seat and resource limits. `community` is the legacy free plan, kept by the accounts already on it.",
+    }),
+    planStatus: z.enum(PLAN_STATUSES).openapi({
+      example: 'active',
+      description: "That plan's standing: `active`, `paused`, `past_due` (a payment is overdue) or `suspended`.",
     }),
   })
   .openapi('OrganizationSummary', { description: 'An organization as the caller sees it.' });
@@ -51,6 +56,7 @@ const memberSchema = z
     name: z.string().nullable().openapi({ example: 'Ada Lovelace' }),
     email: z.string().nullable().openapi({ example: 'ada@example.com' }),
     image: z.string().nullable().openapi({ example: null }),
+    joinedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z', description: 'When they joined the organization.' }),
   })
   .openapi('OrganizationMember', { description: 'A collaborator in an organization.' });
 
@@ -112,7 +118,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'List my organizations',
     description:
-      'Every organization the signed-in account is a member of, oldest first. No organization is created implicitly — the first one is made during onboarding.',
+      'Every organization the signed-in account is a member of, oldest first. No organization is created implicitly; the first one is made during onboarding.',
     security: sessionSecurity,
     responses: {
       200: jsonOk(z.array(orgSummarySchema), 'ListOrganizationsResponse', 'Organizations loaded'),
@@ -187,7 +193,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Delete an organization',
     description:
-      'Owner only, and refused with 403 when it is the last organization the account has — everyone keeps at least one.',
+      'Owner only, and refused with 403 when it is the last organization the account has: everyone keeps at least one.',
     security: sessionSecurity,
     request: { params: orgIdParam },
     responses: {
@@ -204,7 +210,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'List members',
     description:
-      'Any member may read the roster. Members are not added directly — invite by email instead.',
+      'Any member may read the roster. Members are not added directly; invite by email instead.',
     security: sessionSecurity,
     request: { params: orgIdParam },
     responses: {

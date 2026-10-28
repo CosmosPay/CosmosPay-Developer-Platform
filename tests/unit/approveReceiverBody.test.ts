@@ -1,10 +1,10 @@
-/* approveReceiverBody.test.ts — the body both receiver-approval proxies accept.
+/* approveReceiverBody.test.ts: the body both receiver-approval proxies accept.
 
    `expected_version` is what pins an approval to the dossier the reviewer actually read:
    an edit leaves the receiver in `pending_review`, so without a version the approval
    lands on whatever is stored when the request arrives and the reviewer cannot tell.
    It must survive the schema (an approval that silently dropped it would look like it
-   worked), and it must stay optional — a receiver read from a Payments deployment that
+   worked), and it must stay optional: a receiver read from a Payments deployment that
    predates the field carries no version to send. */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';

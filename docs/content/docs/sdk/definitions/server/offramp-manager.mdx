@@ -15,7 +15,7 @@ constructor(client: Client)
 
 **Parameters**
 
-- `client` — [`Client`](/sdk/definitions/server/client)
+- `client`: [`Client`](/sdk/definitions/server/client)
 
 ## Properties
 
@@ -39,7 +39,7 @@ quote(options: CreatePayoutQuoteOptions): Promise<PayoutQuoteData>
 
 **Parameters**
 
-- `options` — `CreatePayoutQuoteOptions`
+- `options`: `CreatePayoutQuoteOptions`
 
 **Returns** `Promise<PayoutQuoteData>`
 
@@ -53,7 +53,7 @@ authorize(options: AuthorizePayoutOptions): Promise<AuthorizePayoutData>
 
 **Parameters**
 
-- `options` — `AuthorizePayoutOptions`
+- `options`: `AuthorizePayoutOptions`
 
 **Returns** `Promise<AuthorizePayoutData>`
 
@@ -67,7 +67,7 @@ createPayout(options: CreatePayoutOptions): Promise<PayoutData>
 
 **Parameters**
 
-- `options` — `CreatePayoutOptions`
+- `options`: `CreatePayoutOptions`
 
 **Returns** `Promise<PayoutData>`
 
@@ -81,7 +81,7 @@ payouts(options?: ListPayoutsOptions): Promise<PayoutPage>
 
 **Parameters**
 
-- `options` _(optional)_ — `ListPayoutsOptions`
+- `options` _(optional)_: `ListPayoutsOptions`
 
 **Returns** `Promise<PayoutPage>`
 
@@ -95,7 +95,7 @@ payout(id: string): Promise<PayoutData>
 
 **Parameters**
 
-- `id` — `string`
+- `id`: `string`
 
 **Returns** `Promise<PayoutData>`
 
@@ -109,8 +109,8 @@ attachDocument(id: string, options: AttachPayoutDocumentOptions): Promise<Payout
 
 **Parameters**
 
-- `id` — `string`
-- `options` — `AttachPayoutDocumentOptions`
+- `id`: `string`
+- `options`: `AttachPayoutDocumentOptions`
 
 **Returns** `Promise<PayoutDocumentData>`
 

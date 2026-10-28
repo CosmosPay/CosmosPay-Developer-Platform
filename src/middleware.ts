@@ -1,9 +1,13 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { recordLogin, touchLastSeen } from "@/lib/profile";
 import { trackActivity } from "@/lib/activity";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
+import { MOUNTS, routeRequest } from "@/lib/hosts";
+import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
+import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
+import { LANG_COOKIE, resolveLocale } from "@/lib/payments/i18n";
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
 // COSMOS_API_URL. Runs once per process (idempotent), non-blocking.
@@ -39,10 +43,35 @@ function applyCors(headers: Headers, origin: string, request: Request): void {
   headers.set("Vary", vary && !/(^|,)\s*origin\s*(,|$)/i.test(vary) ? `${vary}, Origin` : vary || "Origin");
 }
 
+/* --- Domains ---
+   This one process answers cosmospay.lat, dev.cosmospay.lat and payments.cosmospay.lat. Which
+   domain owns which route, and what a request for someone else's route becomes, is the table
+   in src/lib/hosts.ts; the origins come from PUBLIC_SITE_URL / PUBLIC_BETTER_AUTH_URL /
+   PUBLIC_PAYMENTS_URL. Static files (dist/client) are served before this runs, on every
+   domain, which is fine for assets; the docs export under /docs is kept to the platform domain by
+   nginx (see README). */
+const ORIGINS = { site: SITE, dev: DEV, payments: PAYMENTS };
+
+/* One year: the lifetime the language cookie has everywhere. */
+const LANG_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/* The payments domain shows people where to send money, so it must never render inside
+   someone else's frame (a framed checkout with an overlaid address is the attack). */
+const PAYMENTS_SECURITY_HEADERS: Record<string, string> = {
+  "Content-Security-Policy": "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+function underPaymentsMount(routePattern: string | undefined): boolean {
+  return !!routePattern && (routePattern === MOUNTS.payments || routePattern.startsWith(`${MOUNTS.payments}/`));
+}
+
 /* --- Activity: this app's own API surface ---
    The Payments service logs what reaches IT. Nothing logged what reaches US, so
-   the half of a session that never leaves this app — signing in, minting a key,
-   loading the dashboard — was invisible in the activity feed while an API-key
+   the half of a session that never leaves this app (signing in, minting a key,
+   loading the dashboard) was invisible in the activity feed while an API-key
    call from a script was not. Recorded here, once, rather than in forty route
    handlers that would each have to remember.
 
@@ -67,7 +96,7 @@ function trackApiRequest(context: {
   const method = context.request.method.toUpperCase();
   // A successful read is not activity worth a row. The dashboard polls notifications
   // every 20s and unread support replies every 15s per open tab, so recording every
-  // 200 GET would bury the events somebody actually goes looking for — and would grow
+  // 200 GET would bury the events somebody actually goes looking for, and would grow
   // the table by two rows a minute per idle tab. A FAILED read is kept: a 500 on a
   // poll is exactly the invisible breakage this feed exists for.
   const read = method === "GET" || method === "HEAD";
@@ -92,7 +121,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const origin = context.request.headers.get("origin");
   const corsOk = isAllowedOrigin(origin);
 
-  // Answer CORS preflight directly — before auth/route work (preflight carries no creds).
+  // Answer CORS preflight directly, before auth/route work (preflight carries no creds).
   if (context.request.method === "OPTIONS") {
     const headers = new Headers();
     if (corsOk) applyCors(headers, origin, context.request);
@@ -106,13 +135,39 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return new Response(null, { status: 204 });
   }
 
+  // Route by domain before any database work: a redirect needs no session.
+  const decision = routeRequest(
+    {
+      hostname: context.url.hostname,
+      pathname: context.url.pathname,
+      search: context.url.search,
+      method: context.request.method.toUpperCase(),
+    },
+    ORIGINS,
+  );
+  if (decision.kind === "redirect") {
+    return new Response(null, { status: decision.status, headers: { Location: decision.location } });
+  }
+  context.locals.area = decision.area;
+  context.locals.publicPath = context.url.pathname;
+
+  if (decision.area === "payments") {
+    const query = context.url.searchParams.get("lang");
+    const lang = resolveLocale({
+      query,
+      cookie: context.cookies.get(LANG_COOKIE)?.value,
+      acceptLanguage: context.request.headers.get("accept-language"),
+    });
+    context.locals.lang = lang;
+    // An explicit choice (the footer picker submits ?lang=) sticks for the next visit.
+    if (query === lang) context.cookies.set(LANG_COOKIE, lang, { path: "/", maxAge: LANG_COOKIE_MAX_AGE, sameSite: "lax" });
+  }
+
   // Belt-and-suspenders: ensure the route was synced (no-op after the first call).
   ensureCosmosRouteSynced();
 
-  const isAuthed = await auth.api
-    .getSession({
-      headers: context.request.headers,
-    })
+  // Read once for the whole request: an API route asking again gets this same answer.
+  const isAuthed = await requestSession(context.request.headers);
 
   if (isAuthed) {
     context.locals.user = isAuthed.user;
@@ -120,7 +175,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Best-effort: ensure the profile exists and capture sign-in location once per
     // session (emits a sign-in notification). Never blocks or fails the request.
     recordLogin(isAuthed, context).catch(() => {});
-    // Track "last online" (throttled write — see touchLastSeen).
+    // Track "last online" (throttled write; see touchLastSeen).
     touchLastSeen(isAuthed.user.id).catch(() => {});
   } else {
     context.locals.user = null;
@@ -128,7 +183,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const startedAt = performance.now();
-  const response = await next();
+  // The site and payments pages render from their internal mounts; the public URL stays.
+  const response =
+    decision.kind === "rewrite"
+      ? await next(new URL(decision.path + context.url.search, context.url))
+      : decision.kind === "not-found"
+        ? await next("/404")
+        : await next();
+  // By the page that rendered as well as by the domain asked: a payments page must never
+  // leave without these, whatever path reached it.
+  if (decision.area === "payments" || underPaymentsMount(context.routePattern)) {
+    for (const [name, value] of Object.entries(PAYMENTS_SECURITY_HEADERS)) response.headers.set(name, value);
+    // The ZK payment pages prove in the browser: bb.js needs SharedArrayBuffer, so they are
+    // cross-origin isolated (src/lib/zk/bb-assets.ts).
+    if (context.url.pathname === "/zk" || context.url.pathname.startsWith("/zk/")) {
+      for (const [name, value] of Object.entries(ZK_ISOLATION_HEADERS)) response.headers.set(name, value);
+    }
+  }
   if (corsOk) applyCors(response.headers, origin, context.request);
   trackApiRequest(context, response.status, startedAt);
   return response;
