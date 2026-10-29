@@ -152,6 +152,8 @@ export default {
       invalid: "这不是已签名交易的 XDR。",
       otherTransaction: "这是另一笔交易。请不加修改地签署上面的 XDR。",
       notSigned: "此交易不是由 {account} 签名的。",
+      otherNetwork: "此签名属于另一个网络。此交易在 {network} 上：请在钱包中选择 {network}（在 Cosmos Wallet 中为“交易网络”），然后重新签名。",
+      network: "网络",
       txAccount: "交易账户",
       signer: "签名账户",
       subTitle: "用地址签名，而不是子账户",

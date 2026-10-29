@@ -152,6 +152,8 @@ export default {
       invalid: "यह साइन किए गए लेन-देन का XDR नहीं है।",
       otherTransaction: "यह कोई दूसरा लेन-देन है। ऊपर का XDR बिना बदले साइन करें।",
       notSigned: "यह लेन-देन {account} से साइन नहीं किया गया है।",
+      otherNetwork: "यह हस्ताक्षर किसी दूसरे नेटवर्क का है। यह लेन-देन {network} पर है: वॉलेट में {network} चुनें (Cosmos Wallet में “Transaction network” के तहत) और फिर से साइन करें।",
+      network: "नेटवर्क",
       txAccount: "लेन-देन का खाता",
       signer: "हस्ताक्षरकर्ता",
       subTitle: "पते से हस्ताक्षर होता है, उप-खाते से नहीं",

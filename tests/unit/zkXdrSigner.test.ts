@@ -57,6 +57,19 @@ test('a signed XDR counts only as this transaction, signed by the account', () =
   assert.deepEqual(signatureOn(xdr, xdr, kp.publicKey(), NET), { ok: false, problem: 'notSigned' });
 });
 
+test('a signature for the same transaction on another network is told apart from a missing one', () => {
+  // a wallet signs for the network it is set to: Cosmos Wallet on Mainnet signing this Testnet one
+  const kp = Keypair.random();
+  const xdr = keyTransactionXdr(TOKEN, kp.publicKey(), NET);
+  const onMainnet = TransactionBuilder.fromXDR(xdr, Networks.PUBLIC);
+  onMainnet.sign(kp);
+  assert.deepEqual(signatureOn(xdr, onMainnet.toXDR(), kp.publicKey(), NET), { ok: false, problem: 'otherNetwork' });
+  // another key on another network is still just not signed by the account
+  const other = TransactionBuilder.fromXDR(xdr, Networks.PUBLIC);
+  other.sign(Keypair.random());
+  assert.deepEqual(signatureOn(xdr, other.toXDR(), kp.publicKey(), NET), { ok: false, problem: 'notSigned' });
+});
+
 test('a transaction that expires says when', () => {
   const kp = Keypair.random();
   const before = Date.now();

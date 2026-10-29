@@ -189,7 +189,12 @@ function StellarWalletProof({ orgId, onDone, onCancel }: { orgId: string; onDone
     if (!xdr || busy) return;
     const check = checkWalletProofXdr({ orgId, address: account, issuedAt }, signedXdr);
     if (!check.ok) {
-      setProblem(check.problem === "notSigned" ? fmt(zs.notSigned, { account: shortAddress(account) }) : zs[check.problem]);
+      // The proof is taken on Mainnet or Testnet: only a third network's signature is "another network".
+      setProblem(
+        check.problem === "notSigned" ? fmt(zs.notSigned, { account: shortAddress(account) })
+          : check.problem === "otherNetwork" ? fmt(zs.otherNetwork, { network: "Mainnet" })
+          : zs[check.problem],
+      );
       return;
     }
     setBusy(true);
