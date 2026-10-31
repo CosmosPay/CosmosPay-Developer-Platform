@@ -1,6 +1,6 @@
 ---
 title: "ChainSwap"
-description: "A same-chain swap on Solana (built by Jupiter) or Monad (built by Kuru Flow), from `client.swaps` with `chain: 'solana' | 'monad'`. Non-custodial like a Stellar {@link Swap}:"
+description: "A same-chain swap on Solana (built by Jupiter) or Monad (built by Kuru Flow), from client.swaps with chain: 'solana' | 'monad'."
 ---
 
 A same-chain swap on Solana (built by Jupiter) or Monad (built by Kuru Flow), from `client.swaps` with `chain: 'solana' | 'monad'`. Non-custodial like a Stellar &#123;@link Swap&#125;: sign &#123;@link transaction&#125; in the wallet that owns &#123;@link source&#125;, then `await swap.submit({ signedTransaction })`. The server checks it is the transaction it built before broadcasting it. On Monad, when &#123;@link approval&#125; is set, send and confirm that `approve` call first.
