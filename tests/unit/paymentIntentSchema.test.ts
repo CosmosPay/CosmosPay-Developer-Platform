@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { createPaymentIntentBodySchema } from '@/schemas/payment-intents';
 
 const STELLAR = 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ';
+const FEE_WALLET = 'GBDHAQXQQ75WVBUZ2IX3O7ME7JOKJUOUPUXRNDCORUJODWQCTVUEQ62R';
+const USDC_ISSUER = 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5';
 const SOLANA = 'So11111111111111111111111111111111111111112';
 const SOLANA_USDC = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
 const MONAD = '0x754704bc059f8c67012fed69bc8a327a5aafb603';
@@ -49,4 +51,13 @@ test('Stellar keeps seven decimals and an issuer for a non-native asset', () => 
   assert.deepEqual(issues({ destination: STELLAR, amount: '1.12345678' }), ['amount']);
   assert.deepEqual(issues({ destination: STELLAR, assetCode: 'USDC' }), ['assetIssuer']);
   assert.deepEqual(issues({ destination: STELLAR, assetCode: 'XLM' }), []);
+});
+
+test('a link with a merchant fee is checked, not thrown on', () => {
+  const link = { destination: STELLAR, amount: '10', assetCode: 'USDC', assetIssuer: USDC_ISSUER };
+  const fee = { bps: 150, fixed: '0.2', wallet: FEE_WALLET, paidBy: 'payer' };
+  assert.deepEqual(issues({ ...link, merchantFee: fee }), []);
+  assert.deepEqual(issues({ ...link, merchantFee: { ...fee, fixed: '0.12345678' } }), ['merchantFee']);
+  assert.deepEqual(issues({ ...link, merchantFee: { ...fee, wallet: STELLAR } }), ['merchantFee']);
+  assert.deepEqual(issues({ ...link, amount: undefined, merchantFee: fee }), ['merchantFee']);
 });

@@ -152,6 +152,8 @@ export default {
       invalid: "Ce n’est pas le XDR d’une transaction signée.",
       otherTransaction: "C’est une autre transaction. Signez le XDR ci-dessus sans le modifier.",
       notSigned: "Cette transaction n’est pas signée par {account}.",
+      otherNetwork: "Cette signature est pour un autre réseau. Cette transaction est sur {network} : choisissez {network} dans le wallet (dans Cosmos Wallet, sous « Réseau de la transaction ») et signez-la à nouveau.",
+      network: "Réseau",
       txAccount: "Compte de la transaction",
       signer: "Signe avec",
       subTitle: "Se signe avec l’adresse, pas avec le sous-compte",
