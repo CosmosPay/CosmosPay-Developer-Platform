@@ -234,6 +234,26 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   sign-in still lead to the platform, where they live. The payments error page's button goes
   to `/` too: a payments page never sends the payer to the company site.
 
+### The company home (cosmospay.lat)
+
+- `src/pages/site/index.astro` renders `components/cosmos/Landing.tsx`: the wallet panel first
+  (it holds the page's only h1, what Cosmos Pay is, with the brand's line as its tag), the
+  developers' hero (an h2), then DevKit, Api, Integration, Solutions, Stats (with "What is Cosmos
+  Pay?"), Stories, Resources, Marketplace and the final call. Its title and description are
+  `landing.meta` in the visitor's language.
+- **Only checkable claims, as on the gateway** (product owner, 2026-10-31): every figure is a
+  product fact computed in `marketing/data.ts` (the chains a payment settles on, `NETWORK_IDS`
+  for swaps, Starter's rate from `plans.ts`, the checkout designs and languages), never a volume,
+  an uptime, a request count or a customer. Stories are use cases with no company names or
+  figures; there is no testimonials section until there are real customers to quote; Resources
+  link only to docs pages that exist. What the product lacks (GraphQL, a CLI, "Elements",
+  invoicing, custodial wallets, card or bank payments, disputes, uptime SLAs, SSO) is not
+  advertised anywhere, the nav and `/pricing` included.
+- **Headings read as text:** a section number (/01, /02...) is `data-num` on the heading, drawn
+  by `[data-num]::after` in cosmos.css, never a span inside it; a title on two lines is one text
+  node with a newline (`white-space: pre-line`), never a bare `<br>`, so extracted text keeps its
+  spaces.
+
 ### The institutional skin (payments site and dashboard)
 
 - `src/styles/institutional.css`, switched on by `class="inst"` on `<body>` (`PaymentsLayout`
