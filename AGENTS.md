@@ -787,14 +787,29 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   with cards and bank transfers, three integration paths (no code, hosted, API), how it works,
   integration options, use cases by business (WAI-ARIA tabs), security, developers, pricing, and
   the FAQ with the final call.
-- **Integration options** (`#integrations`; `#designs` stays as an anchor inside it for old
-  links) replaced the checkout-designs gallery at the product owner's request: a grid (no tabs)
-  where the pay button and the embedded checkout run for real in wide cells (the embed's `demo`
-  mode: a sample nothing can pay, no API request; the embedded one logs its events under it),
-  then hosted checkout, payment links and QR, API and SDK, and e-commerce plugins (WooCommerce,
-  Shopify: "coming soon", not built). Code is folded behind "view code" with a copy button. The pay button and the
-  embedded checkout are the embed script's elements (see "Embedding a payment"). The four
-  checkout designs still exist (dashboard, `/preview/{design}`); only the gallery left.
+- **Integration options** (`#integrations` on `/integrations`; `#designs` stays as an anchor
+  inside it for old links; each card is `#integration-<key>`) replaced the checkout-designs
+  gallery at the product owner's request: a grid of cards (two columns from 1024px, one below;
+  no tabs between options), and **every option runs a demo on the page**, because "view code"
+  and "read the docs" alone showed nothing (product owner, 2026-10-25). The pay button and the
+  embedded checkout are the embed script's elements in `demo` mode (the button opens
+  `/preview/classic` in a popup, drawn over a store page; the embedded one logs the
+  `cosmospay:*` events it fires beside it); the hosted checkout picks one of the four designs
+  (radio buttons as a segmented control) and opens its `/preview/{design}` in a new tab; payment
+  links is a form that draws what the payer sees; API and SDK is a console that prints the
+  request, the 201 and the webhook, one per press of its button. Plugins (WooCommerce, Shopify)
+  are "coming soon", not built, and link to the contact form. Their sample data is
+  `src/lib/payments/integration-demo.ts` (pure, tested: the API's real shapes, sample values
+  shortened with an ellipsis); their behaviour `src/scripts/payments/integration-demos.ts`
+  (text through textContent, code through highlight.ts's tokens, one status region per demo
+  for what the visitor's action changed; nothing changes on its own).
+- **The code sits behind a Demo / Code tab pair inside each card** (WAI-ARIA tabs, the page's
+  `[data-tabs]` script) instead of a disclosure: the old "view code" fold widened its card (the
+  subgrid column was `auto` and the code `max-content`) and pushed the row apart. Both panels
+  share one grid cell, the hidden one `visibility: hidden` (with `!important` against the base
+  reset's `[hidden] { display: none !important }`), so switching never moves the page; every
+  part of the card keeps `min-width: 0` and a long line scrolls inside its `pre`. Each panel is a
+  size container, so the demos rearrange for the card's width (`@container`, never the viewport).
 - **"How it works" and the use cases are pinned** on screens of at least 1000×700 (`data-pin`,
   wired by the page script): the section's stage is `position: sticky` under the nav inside a
   runway of `--n` steps of plain height (35svh per step), and the scroll position picks the
@@ -804,7 +819,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the plain grid / tabs.
 - **Code is highlighted** in the page's palette by `src/lib/payments/highlight.ts` (a small
   tokenizer for bash, TypeScript, JSON and HTML; tested) through `Code.astro`, which keeps the
-  raw code in `data-raw` for the copy buttons. No highlighting library and no HTML strings.
+  raw code in `data-raw` for the copy buttons, or as spans built from the same tokens in the
+  browser (the API demo's console). No highlighting library and no HTML strings. The samples in
+  `data.ts` are template literals indented like the code around them: wrap each in `dedent()`,
+  or every line after the first shows two stray spaces.
 - **The FAQ and the final call are separate sections** in the multi-page layout (the product
   owner asked to see them apart); `.pl-closing` (one canvas for both) remains for the single page.
 - **The landing's dark mode has more colour** (product owner): inside `.pl` the dark tokens take a
@@ -938,7 +956,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the checkout's wording (`src/embed/i18n.ts`, enforced by `embedI18n.test.ts`): change both
   together. Element fields must not shadow `HTMLElement` properties (`lang`, `id`). A `demo`
   attribute shows a sample nothing can pay, with no request (the button opens
-  `/preview/classic`; the inline checkout plays open → confirming → paid): the landing's live
+  `/preview/classic`; the inline checkout adds a button that stands in for the payer: pressed,
+  it plays confirming → paid and stays there; pressed again, it starts over, as
+  `DEMO_SEQUENCE` in `options.ts` says). It never changes on its own: an auto-playing loop broke
+  WCAG 2.2.2 and made screen readers announce every state forever. The button stays in place
+  from "simulate" to "play it again", so keyboard focus is never lost. The landing's live
   demos use it.
 - Locally, load the script from a `*.cosmospay.localhost` page: Vite's dev server refuses a
   cross-site `<script>` from `localhost` (403). Production serves it without that check. It
