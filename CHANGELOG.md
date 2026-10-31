@@ -2,6 +2,121 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.9.0] - 2026-10-28
+
+### Features
+- Serve cosmospay.lat and payments.cosmospay.lat from this app, routed by domain (e99d10b)
+- Landing, checkout designs and an institutional dashboard (d0966de)
+- Show the product in the landing's sections (83c7e5b)
+- Landing images, cleaner calculator, button inks by colour (f4a86be)
+- Retire the free Community plan, Starter by default (422a0d4)
+- Pay button and embedded checkout for merchant sites (5930953)
+- Integration options, pinned sections and counters on the landing (ae666b0)
+- Demo mode for showcases (8258a77)
+- Live integration demos, pinned-section counters, navy dark mode (5070297)
+- Multi-page gateway alternative (270ea25)
+- Accessible nav on every device, multilingual SEO, blue interactions (9ed134d)
+- Contact form in the final call (e322c4c)
+- Follow the gateway reference strictly and make swaps signable (7f26056)
+- Frameless shell, one filter bar, skeletons, payment links and swaps on every chain (20da2ad)
+- Standard swap widget for every NEAR Intents network, one-row filters, animated popups (fd592ef)
+- Search, one shape for every control, metrics beyond payments, token logos (135baf5)
+- One speed for every logo row; animate tab panels and the chart tip (01e20d0)
+- ZK payments as a service, Hindi and Chinese, and a fully translated dashboard (db0c4ff)
+- Call ZK payments "private payments" wherever a person reads (11aaae8)
+- Switch the Fiat view off for now (053951d)
+- Manage the confidential account inside the private payments view (cb9a171)
+- The organization's wallets, connected in Settings, chosen in payment forms (12c5d57)
+- Say before signing when the swap also adds a trustline (acd9a5f)
+- Private payments start from the organization's wallets, not "connect Freighter" (8e28e54)
+- Public swaps and USDT0 out of Stellar; a dashboard where everything named opens (6bd2a9d)
+- USD settled volume, quick links, and tables that keep their height (f33a68b)
+- Ids that open and preview, accounts that link and copy, each list's own activity (33e8f41)
+- Every reference copies, and previews whatever it can (da27051)
+- Every row an icon and a menu, status marks, network logos, empty tables (30a9aa2)
+- The plan's standing in colour on the account card (23a2c9f)
+- A payment opens on a view of its own (20657f7)
+- Show Cosmos Pay's commission on USDT0 transfers (3b93fc6)
+- Publish every service's rate and cache logos for a year (08aeeaa)
+- Customers with wallets on several networks, private accounts as a table (653d73a)
+- Private accounts signed with an XDR, figures before tables (372702f)
+- Add a Stellar wallet with a signed XDR, not a connected wallet (5b37c8f)
+- Private accounts are customers' Stellar wallets (e6360ca)
+- One customer signature, no Freighter, add account in a modal (8e61701)
+- Delete private accounts from the dashboard (28fe360)
+- Every list on the Payments table pattern, deletes confirmed, long forms in steps (37f8bd6)
+- Pools and positions open their detail, icon actions (5056cc5)
+- Every admin row ends with its menu (b5238cb)
+- Team and wallets as the Payments table, figures first (4778324)
+- Admin lists as the Payments table, figures first (d3d5756)
+- Long forms in steps, every create in a dialog (a037954)
+- Users and notifications open their detail, fiat adds in dialogs (928ceab)
+- Tickets as the Payments table, the conversation in a dialog (33e02b2)
+- Every rate at 75% of the competition's (343ed99)
+- "Create private account" says from the contract what it creates (b711c9d)
+- More than one private account per address, through sub-accounts (8d72e74)
+- A payment followed live; the environment switch slides; fixes (13353e2)
+- Follow the payer's wallet on a payment's progress (8dcbf40)
+- Activity charts that compare outcomes (386997f)
+- Private accounts on a view of their own (e57d268)
+- Select several rows and delete them at once (d25550e)
+
+### Bug Fixes
+- Plan buttons name the plan, LinkedIn in the footer (d72fd32)
+- Drop "Inc." from the footer and centre section heads (286632c)
+- No lighter band behind the hero video (16c1b63)
+- Footer copyright is just "© 2026 Cosmos Pay" (c0f486c)
+- Section bar first on the home, inline calls aligned (fdf428d)
+- Blue only on the 3D renders' hover (ab650fc)
+- Tighter space around the repeated call, nav hover on the section bar (d850ca7)
+- Even spacing, less space above the repeated call, no first astronaut (d26717e)
+- Contact form limits a client cannot forge or exceed (1cffa28)
+- Contact form's overall cap is a circuit breaker, not a lockout (371d661)
+- Plan and role labels lose their tint as well as their padding (250eaf0)
+- Refuse dot segments that survive the decode, match prover files exactly (0265af6)
+- Read paths as the URL parser will, and keep rewrites inside their mount (28480ca)
+- Give the browser the global Buffer the confidential-token SDK expects (cf9aa71)
+- The public pages read their own records only, with the record token (f495e8f)
+- One size for the page title, a slash for its breadcrumb, the environment kept (b3b9e11)
+- Say what the private key signature exposes, and document it (a2f0bcb)
+- List endpoints from the API's page, word log statuses (3d3d0e7)
+- Clear both production dependency audits (bb865d4)
+- Derive the private key from a signature on every connect (4d9768e)
+- Adding a private account asks for the signatures and registers it (8918aab)
+- The checkout derives from the key transaction first; say why a key does not match (be646dc)
+- No empty-state text anywhere; standing rules in the agent files (ca1d8c3)
+- An account already on the token is added with no signature; 24-hour times (a53c985)
+- A warning with the choice, links, and who signs each transaction (21039c5)
+- A reported send is not the chain's (35f1f12)
+- Findings of the view-by-view sweep (5f8a069)
+- Findings of the functional pass (0447589)
+
+### Miscellaneous
+- Remove every em dash from copy, code and docs (6bd2aea)
+- History per view, a record's head is its route, expired payments are history (7d4cc60)
+- Mark the chosen checkout design, scale the network badge to its token (b785e0f)
+- Offer only what can be swapped, and mark each network in the picker (51a8395)
+- An app-only build, unit tests on four processes (9b1c4ea)
+
+### Performance
+- Load in one go, read the session once per request (5bd019a)
+- Modals open without a backdrop blur or a page reflow (607e4cf)
+
+### Documentation
+- Describe the platform as multi-chain (Stellar, Solana and Monad) (5dd457a)
+- Document the public payment-link read (18b3d78)
+- The multi-page gateway in CLAUDE.md and AGENTS.md (6ed0277)
+- Regenerate the reference from the server: swap trustlines, no em dashes (6447818)
+- Non-custodial, so the private key root takes no stored secret (0c773ef)
+
+### Dependencies
+- Bump the minor-and-patch group (13 updates) (7a6359a)
+
+## [0.8.0] - 2026-10-07
+
+### Features
+- Payment rates at twice the swap rate — Starter 1%, Growth 0.2% (40527be)
+
 ## [0.7.0] - 2026-10-07
 
 ### Features

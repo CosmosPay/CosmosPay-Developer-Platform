@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageOrg, getMembership, removeMember, updateMember } from "@/lib/organizations";
 import { sanitizePermissions } from "@/lib/org-permissions";
@@ -15,7 +15,7 @@ const patchBodySchema = z.object({
 /* PATCH /api/organizations/:id/members/:userId: update a member's role + per-action
    permissions (owner/admin only; the owner can't be changed). */
 export const PATCH: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);
@@ -46,7 +46,7 @@ export const PATCH: APIRoute = async (ctx) => {
 
 /* DELETE /api/organizations/:id/members/:userId: remove a member (owner/admin; never the owner). */
 export const DELETE: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const params = paramsSchema.safeParse(ctx.params);

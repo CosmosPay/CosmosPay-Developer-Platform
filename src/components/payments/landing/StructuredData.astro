@@ -25,7 +25,7 @@ const explicit = LOCALES.find((l) => l.code === asked)?.code ?? null;
 const url = pageUrl(PAYMENTS, Astro.locals.publicPath ?? "/", explicit);
 const ORG = `${SITE}/#organization`;
 const WEBSITE = `${PAYMENTS}/#website`;
-const KEY = { integrations: "integrations", "use-cases": "useCases", security: "security", fees: "fees", faq: "faq" } as const;
+const KEY = { integrations: "integrations", swaps: "swaps", "use-cases": "useCases", security: "security", fees: "fees", faq: "faq" } as const;
 
 const graph: Record<string, unknown>[] = [
   { "@type": "Organization", "@id": ORG, name: "Cosmos Pay", url: `${SITE}/`, logo: `${PAYMENTS}/apple-touch-icon.png`, sameAs: Object.values(SOCIAL) },

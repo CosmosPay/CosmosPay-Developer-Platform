@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getRole, isStaff } from "@/lib/profile";
 import { getTicket, listTicketMessages, markTicketRead, sendTicketMessage, updateTicket, TICKET_STATUSES, TICKET_PRIORITIES } from "@/lib/support";
@@ -9,7 +9,7 @@ const paramsSchema = z.object({ id: z.string().min(1) });
 
 /* Resolve the ticket + whether the caller may access it (owner or staff). */
 async function authorize(ctx: Parameters<APIRoute>[0]) {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return { error: jsonUnauthorized("Session required") } as const;
   const params = paramsSchema.safeParse(ctx.params);
   if (!params.success) return { error: jsonNotFound("Ticket not found") } as const;

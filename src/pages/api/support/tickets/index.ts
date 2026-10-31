@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { jsonCreated, jsonError, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { createTicket, listMyTickets } from "@/lib/support";
 import type { APIRoute } from "astro";
 
 /* GET /api/support/tickets: the signed-in customer's own tickets. */
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const tickets = await listMyTickets(session.user.id).catch(() => null);
@@ -21,7 +21,7 @@ const createBodySchema = z.object({
 
 /* POST /api/support/tickets: open a new ticket with its first message. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const body = await parseJson(ctx.request, createBodySchema).catch(() => null);

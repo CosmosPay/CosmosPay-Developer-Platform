@@ -1,4 +1,4 @@
-/* i18n.ts: the embed's end-user copy, in the five languages Cosmos Pay ships.
+/* i18n.ts: the embed's end-user copy, in the languages of the payments site's catalog.
 
    It lives in the bundle (public/embed/cosmos-pay.js runs on a merchant's page and cannot
    read the payments site's catalog at runtime), and it is a copy of that catalog's wording on
@@ -10,7 +10,7 @@
    (`checkout.body.paid`). `by` is the hosted page's footer line; `demo` is the line a `demo`
    checkout shows on top, and `demoPay` / `demoAgain` label the button that plays it. */
 
-export const EMBED_LOCALES = ["en", "es", "pt", "fr", "de"] as const;
+export const EMBED_LOCALES = ["en", "es", "pt", "fr", "de", "hi", "zh"] as const;
 export type EmbedLocale = (typeof EMBED_LOCALES)[number];
 
 const en = {
@@ -249,4 +249,94 @@ const de: EmbedMessages = {
   },
 };
 
-export const EMBED_MESSAGES: Record<EmbedLocale, EmbedMessages> = { en, es, pt, fr, de };
+const hi: EmbedMessages = {
+  button: {
+    label: "Cosmos Pay से भुगतान करें",
+    newWindow: "नई विंडो में खुलता है",
+  },
+  by: "Cosmos Pay द्वारा भुगतान",
+  demo: "डेमो: एक सैंपल भुगतान, जिसे चुकाया नहीं जा सकता।",
+  checkout: {
+    eyebrow: "भुगतान अनुरोध",
+    loading: "भुगतान लोड हो रहा है…",
+    anyAmount: "कोई भी राशि",
+    anyAmountHint: "आप अपने वॉलेट में राशि चुनते हैं।",
+    testnet: "टेस्ट नेटवर्क: कोई असली फ़ंड ट्रांसफ़र नहीं होता",
+    phase: {
+      open: "भुगतान का इंतज़ार",
+      processing: "भुगतान की पुष्टि हो रही है",
+      paid: "भुगतान हो गया",
+      failed: "भुगतान विफल",
+      cancelled: "रद्द",
+      expired: "समय-सीमा समाप्त",
+    },
+    body: {
+      open: "अपने वॉलेट ऐप से कोड स्कैन करें, या इसी डिवाइस पर लिंक खोलें।",
+      processing: "भुगतान भेज दिया गया है। नेटवर्क की पुष्टि का इंतज़ार है।",
+      paid: "भुगतान की पुष्टि हो गई है।",
+      failed: "भुगतान पूरा नहीं हुआ। व्यापारी से नया लिंक माँगें।",
+      cancelled: "व्यापारी ने यह पेमेंट लिंक रद्द कर दिया है।",
+      expired: "इस पेमेंट लिंक की समय-सीमा समाप्त हो गई है। व्यापारी से नया लिंक माँगें।",
+    },
+    qrAlt: "इस भुगतान अनुरोध वाला QR कोड। इसे अपने वॉलेट ऐप से स्कैन करें।",
+    openWallet: "वॉलेट में खोलें",
+    network: "नेटवर्क",
+    mainnet: "मेननेट",
+    testnetTier: "टेस्टनेट",
+    asset: "एसेट",
+    expires: "समाप्ति",
+    notFoundTitle: "पेमेंट लिंक नहीं मिला",
+    notFoundBody: "लिंक जाँचें, या व्यापारी से इसे दोबारा भेजने को कहें।",
+    errorTitle: "यह भुगतान लोड नहीं हो सका",
+    errorBody: "अपना कनेक्शन जाँचें। हम कोशिश करते रहेंगे।",
+    rateLimited: "आपके नेटवर्क से बहुत ज़्यादा अनुरोध आए हैं। थोड़ी देर में फिर कोशिश करेंगे।",
+    retry: "फिर कोशिश करें",
+  },
+};
+
+const zh: EmbedMessages = {
+  button: {
+    label: "使用 Cosmos Pay 支付",
+    newWindow: "在新窗口中打开",
+  },
+  by: "支付服务由 Cosmos Pay 提供",
+  demo: "演示：这是一笔示例支付，无法实际付款。",
+  checkout: {
+    eyebrow: "支付请求",
+    loading: "正在加载支付信息…",
+    anyAmount: "任意金额",
+    anyAmountHint: "金额由您在钱包中自行选择。",
+    testnet: "测试网络：不涉及真实资金",
+    phase: {
+      open: "等待支付",
+      processing: "正在确认支付",
+      paid: "已支付",
+      failed: "支付失败",
+      cancelled: "已取消",
+      expired: "已过期",
+    },
+    body: {
+      open: "请使用钱包 App 扫描二维码，或在本设备上打开链接。",
+      processing: "支付已提交，正在等待网络确认。",
+      paid: "支付已确认。",
+      failed: "支付未成功。请向商家索取新的链接。",
+      cancelled: "商家已取消此支付链接。",
+      expired: "此支付链接已过期。请向商家索取新的链接。",
+    },
+    qrAlt: "包含此支付请求的二维码。请使用钱包 App 扫描。",
+    openWallet: "在钱包中打开",
+    network: "网络",
+    mainnet: "主网",
+    testnetTier: "测试网",
+    asset: "资产",
+    expires: "过期时间",
+    notFoundTitle: "未找到支付链接",
+    notFoundBody: "请检查链接，或请商家重新发送。",
+    errorTitle: "无法加载此支付",
+    errorBody: "请检查网络连接。我们会持续重试。",
+    rateLimited: "您所在网络的请求过多，稍后将自动重试。",
+    retry: "重试",
+  },
+};
+
+export const EMBED_MESSAGES: Record<EmbedLocale, EmbedMessages> = { en, es, pt, fr, de, hi, zh };

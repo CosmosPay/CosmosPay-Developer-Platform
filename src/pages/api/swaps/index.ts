@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import {
   ApiStatus,
   jsonCreated,
@@ -37,7 +37,7 @@ function cosmosErrorResponse(err: unknown): Response {
 
 /* List the consumer's swaps (scoped to an organization the caller belongs to). */
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const org = ctx.url.searchParams.get("org");
@@ -63,7 +63,7 @@ export const GET: APIRoute = async (ctx) => {
 /* Build a swap (unsigned XDR + tx URI + QR) for the customer's wallet to sign. The
    commission is the org plan's rate, resolved here and never taken from the body. */
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const body = await parseJson(ctx.request, createSwapBodySchema).catch(() => null);
@@ -92,6 +92,7 @@ export const POST: APIRoute = async (ctx) => {
       source: rest.source,
       destination: rest.destination,
       memo: rest.memo,
+      idempotencyKey: rest.idempotencyKey,
     });
 
     const loc = await geoLocate(ctx.request.headers, ctx.clientAddress).catch(() => null);

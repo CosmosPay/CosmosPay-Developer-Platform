@@ -17,7 +17,7 @@
    that stands in for the payer: pressed, the sample confirms and turns to paid, firing the
    usual events; pressed again, it starts over. Nothing changes until it is pressed). */
 import {
-  amountLabel,
+  payerTotal,
   assetSymbol,
   chainName,
   fetchPaymentLink,
@@ -367,7 +367,9 @@ export class CosmosPayCheckout extends HTMLElement {
     this.show("link");
 
     ui.testnet.hidden = l.network !== "testnet";
-    const amount = amountLabel(l);
+    // What the payer sends: with a merchant fee paid on top, the amount plus it.
+    const total = payerTotal(l);
+    const amount = total ? `${total} ${assetSymbol(l)}` : null;
     ui.amount.textContent = amount ?? t.anyAmount;
     ui.hint.hidden = amount !== null;
     ui.msg.textContent = l.msg ?? "";
@@ -391,6 +393,15 @@ export class CosmosPayCheckout extends HTMLElement {
     if (l.uri) {
       ui.wallet.href = l.uri;
       ui.wallet.removeAttribute("aria-disabled");
+      // A Stellar link with a merchant fee points at the hosted checkout, where the payer names
+      // their account: a new tab, so the merchant's page stays.
+      if (l.payerAccountRequired) {
+        ui.wallet.target = "_blank";
+        ui.wallet.rel = "noopener";
+      } else {
+        ui.wallet.removeAttribute("target");
+        ui.wallet.removeAttribute("rel");
+      }
     } else {
       ui.wallet.removeAttribute("href");
       ui.wallet.setAttribute("aria-disabled", "true");

@@ -8,6 +8,7 @@ import path from 'node:path';
 import node from '@astrojs/node';
 
 import react from '@astrojs/react';
+import { loadEnv } from 'vite';
 
 // Dev-only: `astro dev` (Vite) serves exact files from public/ but doesn't resolve directory
 // requests (/docs/, /docs/sdk/overview/) to their index.html, so the statically-exported
@@ -81,6 +82,19 @@ function cosmosDocsDevStatic() {
     },
   };
 }
+
+// The three public origins (src/components/cosmos/lib/constants.ts reads the same variables,
+// with the same defaults), as hostnames for security.allowedDomains below.
+const buildEnv = { ...loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), ''), ...process.env };
+const PUBLIC_DOMAINS = [
+  ...new Set(
+    [
+      buildEnv.PUBLIC_SITE_URL || 'https://cosmospay.lat',
+      buildEnv.PUBLIC_BETTER_AUTH_URL || 'https://dev.cosmospay.lat',
+      buildEnv.PUBLIC_PAYMENTS_URL || 'https://payments.cosmospay.lat',
+    ].map((origin) => new URL(origin).hostname),
+  ),
+];
 
 // https://astro.build/config
 export default defineConfig({
@@ -216,7 +230,16 @@ export default defineConfig({
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
+        // bb.js must never be bundled: it starts its wasm worker relative to its own URL. The ZK
+        // pages load it as native ESM from /zk/bb (src/pages/payments/zk/bb) (src/lib/zk/bb-loader.ts), so the
+        // SDK's default `import("@aztec/bb.js")` resolves to a stub that says so.
+        '@aztec/bb.js': fileURLToPath(new URL('./src/lib/zk/bb-stub.ts', import.meta.url)),
       },
+    },
+    // noir_js loads its wasm through `new URL(..., import.meta.url)`, which dependency
+    // pre-bundling breaks in dev; the production build handles it as an asset.
+    optimizeDeps: {
+      exclude: ['@noir-lang/noir_js', '@noir-lang/acvm_js', '@noir-lang/noirc_abi'],
     },
     // nodemailer is a server-only, runtime dependency (used by src/lib/mailer.ts for
     // invitation emails). Keep it external so the SSR build doesn't try to bundle it and
@@ -233,6 +256,11 @@ export default defineConfig({
 
   security: {
     checkOrigin: false,
+    // Astro takes Request.url's host from the Host header only for these domains; for any other
+    // it falls back to the server's own address. The middleware routes by hostname
+    // (src/lib/hosts.ts), so without them every request behind nginx looks like localhost and
+    // lands on the platform, and the site and payments pages redirect to themselves.
+    allowedDomains: PUBLIC_DOMAINS.map((hostname) => ({ hostname })),
   },
 
   integrations: [react()],

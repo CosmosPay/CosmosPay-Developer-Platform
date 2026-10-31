@@ -16,9 +16,12 @@ import {
   PAYMENT_LINKS_CORS,
   PAYMENT_LINKS_METHODS,
   paymentLinksRouteUris,
+  ZK_CHECKOUT_CORS,
+  ZK_CHECKOUT_METHODS,
+  zkCheckoutRouteUris,
 } from "@/lib/apisix-keyless";
 
-export { callbackRouteUris, paymentLinksRouteUris } from "@/lib/apisix-keyless";
+export { callbackRouteUris, paymentLinksRouteUris, zkCheckoutRouteUris } from "@/lib/apisix-keyless";
 
 export const keyPrefix = 'cosmos_';
 
@@ -176,6 +179,10 @@ export function paymentLinksRouteId(routeId: string): string {
   return `${routeId}-payment-links`;
 }
 
+export function zkCheckoutRouteId(routeId: string): string {
+  return `${routeId}-zk-checkout`;
+}
+
 /* What the callback route was called while it only served Pollar. The sync still removes
    it where it lingers: it is a keyless route onto a path the server no longer serves. */
 export function legacyCallbackRouteId(routeId: string): string {
@@ -230,7 +237,7 @@ interface RoutePluginOptions {
      credentials), `any` answers `*` without credentials (the public payment-link read,
      PAYMENT_LINKS_CORS), `false` leaves it off where the upstream answers CORS itself (the SEP
      routes): two Access-Control-Allow-Origin headers on one response make a browser refuse it. */
-  cors: 'listed' | 'any' | false;
+  cors: 'listed' | 'any' | 'zkCheckout' | false;
   /* Leave `Authorization` for the upstream instead of stripping it. Only for routes whose
      upstream authenticates the caller by a bearer token of its own (SEP-10 / SEP-30) --
      on the key-auth route that header may BE the API key, and it must never travel on. */
@@ -246,6 +253,7 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
 
   return {
     ...(opts.cors === 'any' ? { cors: { ...PAYMENT_LINKS_CORS } } : {}),
+    ...(opts.cors === 'zkCheckout' ? { cors: { ...ZK_CHECKOUT_CORS } } : {}),
 
     ...(opts.cors === 'listed'
       ? {
@@ -270,8 +278,13 @@ function cosmosRoutePlugins(opts: RoutePluginOptions) {
             // the backup routes (the wallet's src/lib/cosmospay.ts), and X-Trace-Id rides on its
             // DeFindex calls (src/lib/defindex.ts). Same failure when missing: the sign-in dies
             // at /finish with a CORS error on cosmospay.lat/wallet and in Tauri.
+            //
+            // X-Record-Token is the read token the community server returns when the shared public
+            // key creates a swap or a USDT0 transfer; the public swap pages send it to read, submit
+            // or report that one record (src/lib/swap-api.ts). Missing here, they could create a
+            // swap and never follow it.
             allow_headers:
-              'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id,X-Wallet-Session,X-Trace-Id',
+              'Content-Type,Authorization,apikey,Idempotency-Key,X-Cosmos-Trace-Id,X-Wallet-Session,X-Trace-Id,X-Record-Token',
             // A browser hides every response header that is not safelisted, so without this
             // the throttling headers the API already sends are invisible to a web client: it
             // sees a 429 with no idea when to come back, and has to guess an interval against
@@ -515,6 +528,23 @@ export async function createPaymentLinksRoute(
     priority: 15,
     methods: PAYMENT_LINKS_METHODS,
     plugins: cosmosRoutePlugins({ keyAuth: false, cors: 'any', forwardAuthorization: false }),
+    upstream: roundRobin(upstreamHost),
+  });
+}
+
+/* The keyless route of the ZK checkout (`/v1/zk-checkout/*`): the payer's read of one ZK payment
+   and the confirm call, CORS for any origin (ZK_CHECKOUT_CORS). Nothing under the prefix needs
+   a consumer; the authenticated ZK routes live under `/v1/zk-payments` on the key-auth route. */
+export async function createZkCheckoutRoute(
+  routeId: string,
+  entry: string,
+  upstreamHost: string,
+) {
+  return putRoute(zkCheckoutRouteId(routeId), {
+    uris: zkCheckoutRouteUris(entry),
+    priority: 15,
+    methods: ZK_CHECKOUT_METHODS,
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: 'zkCheckout', forwardAuthorization: false }),
     upstream: roundRobin(upstreamHost),
   });
 }

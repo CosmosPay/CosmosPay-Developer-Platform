@@ -31,7 +31,12 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
             <div class="pl-marquee-set">
               {[...row.items, ...row.items].map((item) => (
                 <span class="pl-brand">
-                  {item.mark ? <Mark name={item.mark} /> : <img src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
+                  {item.mark ? <Mark name={item.mark} /> : item.srcDark ? (
+                    <>
+                      <img class="pl-brand-light" src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />
+                      <img class="pl-brand-dark" src={item.srcDark} alt="" width="32" height="32" loading="lazy" decoding="async" />
+                    </>
+                  ) : <img src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
                   <span>{item.name}</span>
                 </span>
               ))}

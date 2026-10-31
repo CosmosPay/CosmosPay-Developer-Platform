@@ -34,7 +34,8 @@
 // startup, not that they point anywhere real; nothing here connects to a database or
 // to APISIX, so the values only have to satisfy the schema in astro.config.mjs.
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import http from 'node:http';
 import net from 'node:net';
 import path from 'node:path';
 
@@ -159,8 +160,68 @@ if (!/javascript/i.test(embed.headers.get('content-type') || '') || !embedBody.i
 }
 detail += `; embed bundle served (${(embedBody.length / 1024).toFixed(1)} KiB)`;
 
+// HOST ROUTING. One process answers three domains, and src/middleware.ts routes by the host
+// of Request.url. Astro takes that host from the Host header only for the domains in
+// `security.allowedDomains`; for any other it falls back to the server's own address. With the
+// list empty, every request behind nginx was the platform and the company site's pages answered
+// a 301 to themselves (v0.9.0 shipped like that). The hosts come from the build's own manifest,
+// because the PUBLIC_* origins are inlined at build and this step may not see the same env.
+// Each one is asked for /pricing, which only the company site serves: no host may answer with a
+// redirect to the very URL it was asked, and one of them must serve the page.
+const trusted = trustedHosts();
+if (trusted.length === 0) {
+  fail('the build trusts no Host header (security.allowedDomains is empty): every domain would be routed as the platform');
+}
+let servedOn = null;
+for (const host of trusted) {
+  const res = await getWithHost('/pricing', host).catch((e) => fail(`GET https://${host}/pricing never completed: ${e.message}`));
+  const self = `https://${host}/pricing`;
+  if (res.status >= 300 && res.status < 400 && res.location === self) {
+    fail(`GET ${self} redirected to itself (${res.status}): the Host header was not honoured`);
+  }
+  if (res.status === 200) servedOn = host;
+}
+if (!servedOn) fail(`no trusted host (${trusted.join(', ')}) served /pricing: the company site is unreachable`);
+detail += `; host routing verified (${trusted.join(', ')}; /pricing on ${servedOn})`;
+
 settled = true;
 server.removeAllListeners('exit');
 server.kill();
 console.log(`[smoke] OK: compiled server booted and answered on ${HOST}:${PORT}; ${detail}`);
 process.exit(0);
+
+/** The hostnames the build lists in security.allowedDomains, read from the serialized manifest. */
+function trustedHosts() {
+  for (const file of serverModules(path.join(root, 'dist', 'server'))) {
+    const match = /"allowedDomains":(\[[^\]]*\])/.exec(readFileSync(file, 'utf8'));
+    if (match) return JSON.parse(match[1]).map((pattern) => pattern.hostname).filter(Boolean);
+  }
+  fail('could not find allowedDomains in the built server manifest (dist/server)');
+}
+
+/** Every .mjs under dir, the top level first (the manifest is in entry.mjs or beside it). */
+function serverModules(dir) {
+  const entries = readdirSync(dir, { withFileTypes: true });
+  const files = entries.filter((e) => e.isFile() && e.name.endsWith('.mjs')).map((e) => path.join(dir, e.name));
+  const dirs = entries.filter((e) => e.isDirectory()).map((e) => path.join(dir, e.name));
+  return [...files, ...dirs.flatMap(serverModules)];
+}
+
+/**
+ * A GET with the Host header nginx would send (fetch may not set Host), without following
+ * redirects. Resolves the status and the Location header.
+ */
+function getWithHost(pathname, host) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(
+      { host: HOST, port: PORT, path: pathname, method: 'GET', headers: { host, 'x-forwarded-proto': 'https' }, timeout: 15_000 },
+      (res) => {
+        res.resume();
+        res.on('end', () => resolve({ status: res.statusCode, location: res.headers.location ?? null }));
+      },
+    );
+    req.on('timeout', () => req.destroy(new Error('timed out')));
+    req.on('error', reject);
+    req.end();
+  });
+}

@@ -8,7 +8,7 @@
    the customer BlindPay's hosted terms-of-service link (the Payments service has no mailer).
    More specific than the generic /api/admin/[...path] proxy, so it wins for this path. */
 import type { APIRoute } from "astro";
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageUsers, getRole } from "@/lib/profile";
 import { proxyCosmosRequest } from "@/lib/cosmos";
@@ -18,7 +18,7 @@ import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderTosEmail } from "@/lib/emails";
 
 export const POST: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const id = ctx.params.id;

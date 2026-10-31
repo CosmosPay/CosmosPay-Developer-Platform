@@ -55,6 +55,17 @@ const generated = fs
   .map((f) => f.replace(/\.mdx$/, ''));
 const ordered = [...order.filter((s) => generated.includes(s)), ...generated.filter((s) => !order.includes(s))];
 
+// fumadocs titles each page from its tag's name ("zk-payments" becomes "Zk payments"); the page
+// heading people read is TAGS' title, so it replaces the generated one.
+for (const s of generated) {
+  if (!titleOf[s]) continue;
+  const file = path.join(OUT, `${s}.mdx`);
+  const page = fs.readFileSync(file, 'utf8');
+  const titled = page.replace(/^(---\r?\n[\s\S]*?)^title: .*$/m, `$1title: ${JSON.stringify(titleOf[s])}`);
+  if (titled === page) throw new Error(`[generate-api] ${s}.mdx has no frontmatter title to replace`);
+  fs.writeFileSync(file, titled, 'utf8');
+}
+
 fs.writeFileSync(
   path.join(OUT, 'meta.json'),
   JSON.stringify(

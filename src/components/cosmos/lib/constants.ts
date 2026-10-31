@@ -35,6 +35,8 @@ export type Area = "site" | "dev" | "payments";
  * gateway for the company site. Elsewhere the link is returned as given. */
 export function localHref(href: string, area?: Area): string {
   if (area === "payments" && (href === PAYMENTS || href.startsWith(`${PAYMENTS}/`))) return href.slice(PAYMENTS.length) || "/";
+  // The public swaps exist on the company site too (src/pages/site/swaps.astro): there they stay local.
+  if (area === "site" && href === `${PAYMENTS}/swaps`) return "/swaps";
   return href;
 }
 

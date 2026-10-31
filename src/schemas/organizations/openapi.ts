@@ -13,6 +13,7 @@ import {
   sessionSecurity,
 } from '@/lib/openapi/route-helpers';
 import { z } from '@/lib/openapi/zod';
+import { PLAN_STATUSES } from '@/lib/plan-status';
 import { ORG_PERMISSIONS } from '@/lib/org-permissions';
 import { idParam, jsonBody, pathParam } from '@/schemas/shared/openapi-params';
 
@@ -40,6 +41,10 @@ const orgSummarySchema = z
       example: 'starter',
       description: "The OWNER's plan: it governs the org's seat and resource limits. `community` is the legacy free plan, kept by the accounts already on it.",
     }),
+    planStatus: z.enum(PLAN_STATUSES).openapi({
+      example: 'active',
+      description: "That plan's standing: `active`, `paused`, `past_due` (a payment is overdue) or `suspended`.",
+    }),
   })
   .openapi('OrganizationSummary', { description: 'An organization as the caller sees it.' });
 
@@ -51,6 +56,7 @@ const memberSchema = z
     name: z.string().nullable().openapi({ example: 'Ada Lovelace' }),
     email: z.string().nullable().openapi({ example: 'ada@example.com' }),
     image: z.string().nullable().openapi({ example: null }),
+    joinedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z', description: 'When they joined the organization.' }),
   })
   .openapi('OrganizationMember', { description: 'A collaborator in an organization.' });
 

@@ -1,7 +1,7 @@
 /* Shared plumbing for the cross-chain swap proxy routes (underscore file, not a
    route). Same shape as the swaps and liquidity routes: session → org membership →
    forward to the Payments API, mapping CosmosApiError to a clean envelope. */
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonError, jsonForbidden, jsonUnauthorized } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { CosmosApiError, type CosmosEnv } from "@/lib/cosmos";
@@ -30,7 +30,7 @@ export async function requireOrgMember(
   request: Request,
   org: string | null,
 ): Promise<{ ok: true; userId: string; org: string; membership: { role: string; permissions: string[] } } | { ok: false; response: Response }> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await requestSession(request.headers);
   if (!session) return { ok: false, response: jsonUnauthorized("Session required") };
   if (!org) {
     return { ok: false, response: jsonError({ message: "An organization is required", code: 400, status: ApiStatus.BAD_REQUEST }) };

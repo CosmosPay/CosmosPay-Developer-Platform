@@ -42,6 +42,7 @@ export const paymentIntents = {
     const qs = new URLSearchParams({ env: env || "dev" });
     if (query.org) qs.set("org", query.org);
     if (query.status) qs.set("status", query.status);
+    if (query.chain) qs.set("chain", query.chain);
     if (query.createdFrom) qs.set("createdFrom", query.createdFrom);
     if (query.take) qs.set("take", String(query.take));
     if (query.skip) qs.set("skip", String(query.skip));
@@ -85,15 +86,19 @@ export const products = {
 
 /* Customers (merchant-managed, with derived stats). list → { data, total }. */
 export const customers = {
-  list: (env) => request(`/api/customers?env=${env || "dev"}`),
+  list: (env, page = {}) => request(`/api/customers?env=${env || "dev"}${page.take ? `&take=${page.take}` : ""}${page.skip ? `&skip=${page.skip}` : ""}`),
   create: (env, org, body) => request(`/api/customers${qp(env, org)}`, { method: "POST", body: JSON.stringify(body) }),
   update: (id, env, org, body) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "PATCH", body: JSON.stringify(body) }),
   remove: (id, env, org) => request(`/api/customers/${encodeURIComponent(id)}${qp(env, org)}`, { method: "DELETE" }),
+  addWallet: (id, env, org, body) => request(`/api/customers/${encodeURIComponent(id)}/wallets${qp(env, org)}`, { method: "POST", body: JSON.stringify(body) }),
+  removeWallet: (id, walletId, env, org) => request(`/api/customers/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}${qp(env, org)}`, { method: "DELETE" }),
 };
 
 /* Read-only dashboard aggregates derived from payments + webhooks + request logs. */
 export const metrics = {
   summary: (env) => request(`/api/cosmos/summary?env=${env || "dev"}`),
+  /* The overview chart: payments grouped by day, week, month or year, with the window before. */
+  series: (env, period = "day") => request(`/api/cosmos/series?env=${env || "dev"}&period=${encodeURIComponent(period)}`),
   balances: (env) => request(`/api/cosmos/balances?env=${env || "dev"}`),
   apiLogs: (env) => request(`/api/cosmos/logs?env=${env || "dev"}`),
   webhookLogs: (env) => request(`/api/cosmos/webhook-logs?env=${env || "dev"}`),
@@ -232,6 +237,20 @@ export const swaps = {
 
 /* Cross-chain swaps (Stellar ⇄ Solana ⇄ Monad, NEAR Intents), proxied to the Payments
    API. Mainnet only upstream: in test mode assets and quotes work, creating is refused. */
+/* ZK payments (confidential, amount hidden on-chain; 0.18% commission). See src/pages/api/zk-payments. */
+export const zkPayments = {
+  config: (org, env) => request(`/api/zk-payments/config?env=${env || "dev"}&org=${encodeURIComponent(org)}`),
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    return request(`/api/zk-payments?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/zk-payments/${encodeURIComponent(id)}?env=${env || "dev"}&org=${encodeURIComponent(org)}`),
+  create: (body) => request("/api/zk-payments", { method: "POST", body: JSON.stringify(body) }),
+};
+
 export const crossChainSwaps = {
   assets: (org, env) => request(`/api/cross-chain-swaps/assets?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
   list: (org, env, query = {}) => {
@@ -246,6 +265,23 @@ export const crossChainSwaps = {
   quote: (body) => request("/api/cross-chain-swaps/quote", { method: "POST", body: JSON.stringify(body) }),
   create: (body) => request("/api/cross-chain-swaps", { method: "POST", body: JSON.stringify(body) }),
   reportDeposit: (id, org, env, txHash) => request(`/api/cross-chain-swaps/${encodeURIComponent(id)}/deposit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify({ txHash }) }),
+};
+
+/* USDT0 out of Stellar through LayerZero's OFT (src/lib/usdt0.ts). Mainnet only. */
+export const usdt0 = {
+  routes: (org, env) => request(`/api/usdt0/routes?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  quote: (body) => request("/api/usdt0/quote", { method: "POST", body: JSON.stringify(body) }),
+  create: (body) => request("/api/usdt0/transfers", { method: "POST", body: JSON.stringify(body) }),
+  list: (org, env, query = {}) => {
+    const qs = new URLSearchParams({ env: env || "dev" });
+    if (org) qs.set("org", org);
+    if (query.status) qs.set("status", query.status);
+    if (query.take) qs.set("take", String(query.take));
+    if (query.skip) qs.set("skip", String(query.skip));
+    return request(`/api/usdt0/transfers?${qs.toString()}`);
+  },
+  get: (id, org, env) => request(`/api/usdt0/transfers/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
+  submit: (id, org, env, body) => request(`/api/usdt0/transfers/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify(body) }),
 };
 
 /* Liquidity pools (Stellar AMM), proxied to the Cosmos Payments API and scoped
@@ -317,4 +353,9 @@ export const organizations = {
   invitations: (id) => request(`/api/organizations/${encodeURIComponent(id)}/invitations`),
   invite: (id, email, role, permissions) => request(`/api/organizations/${encodeURIComponent(id)}/invitations`, { method: "POST", body: JSON.stringify({ email, role, permissions }) }),
   revokeInvite: (id, invId) => request(`/api/organizations/${encodeURIComponent(id)}/invitations/${encodeURIComponent(invId)}`, { method: "DELETE" }),
+  // The wallets the organization receives payments in (Settings); connecting one carries its signed proof.
+  wallets: (id) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`),
+  connectWallet: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`, { method: "POST", body: JSON.stringify(body) }),
+  renameWallet: (id, walletId, label) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "PATCH", body: JSON.stringify({ label }) }),
+  removeWallet: (id, walletId) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
 };

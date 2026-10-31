@@ -5,9 +5,11 @@
 import type Mark from "@/components/payments/landing/Mark.astro";
 import type { ComponentProps } from "astro/types";
 import { LANDING } from "@/lib/payments/landing-i18n";
-import { PLAN_SPECS } from "@/lib/plans";
+import { PLAN_SPECS, swapFeePct, ESCROW_FEE_PCT } from "@/lib/plans";
 import { DOCS, PRICING, loginTo } from "@/components/cosmos/lib/constants";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
+import { NETWORK_IDS, networkName } from "@/lib/chains";
+import { networkLogoUrl, tokenLogoUrl } from "@/lib/logo-urls";
 import { MESSAGES, type Locale } from "@/lib/payments/i18n";
 import { CHECKOUT_THEMES, themeThumbnail } from "@/lib/payments/checkout-themes";
 import { DEMO_ASSETS, SAMPLE_LINK_ID } from "@/lib/payments/integration-demo";
@@ -19,8 +21,8 @@ export type LandingLayout = "single" | "multi";
 export function landingData(lang: Locale, layout: LandingLayout = "single") {
   const t = LANDING[lang];
   const links = layout === "multi"
-    ? { integrations: "/integrations", useCases: "/use-cases", security: "/security", fees: "/fees", faq: "/faq" }
-    : { integrations: "#integrations", useCases: "#pl-uses", security: "#pl-security", fees: "#pricing", faq: "#pl-faq" };
+    ? { integrations: "/integrations", swaps: "/swaps", useCases: "/use-cases", security: "/security", fees: "/fees", faq: "/faq" }
+    : { integrations: "#integrations", swaps: "/swaps", useCases: "#pl-uses", security: "#pl-security", fees: "#pricing", faq: "#pl-faq" };
 
   const CREATE_LINK = loginTo("/dashboard?view=payments");
   const CONTACT = `mailto:${CONTACT_ADDRESS}`;
@@ -29,7 +31,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
   // The snap's highlighter marks one phrase in the hero and in the final call; a closing full
   // stop stays outside the mark.
   const marked = (text: string) => {
-    const [, words = text, stop = ""] = text.match(/^(.*?)([.!?]*)$/) ?? [];
+    const [, words = text, stop = ""] = text.match(/^(.*?)([.!?。！？।]*)$/) ?? [];
     return { words, stop };
   };
   const heroMark = marked(t.hero.titleMark);
@@ -40,8 +42,16 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
   // adapters), Monad and EURC from Trust Wallet's assets, Stellar's mark in currentColor so it
   // follows the theme (Mark.astro), Cosmos from public/brand. Files in public/media/brands.
   type MarkName = ComponentProps<typeof Mark>["name"];
-  type Brand = { name: string; src?: string; mark?: MarkName };
-  const brand = (name: string, file: string): Brand => ({ name, src: `/media/brands/${file}` });
+  type Brand = { name: string; src?: string; srcDark?: string; mark?: MarkName };
+  const brand = (name: string, file: string, dark?: string): Brand => ({ name, src: `/media/brands/${file}`, srcDark: dark && `/media/brands/${dark}` });
+  // The networks NEAR Intents swaps between (beyond the three a payment settles on) and the
+  // tokens people hold most there, each with its official logo (src/lib/token-logos.ts).
+  const SETTLE = ["stellar", "solana", "monad"];
+  const SWAP_TOKENS = ["USDT", "USDT0", "DAI", "WBTC", "cbBTC"];
+  const swapRow: Brand[] = [
+    ...NETWORK_IDS.filter((id) => !SETTLE.includes(id) && networkLogoUrl(id)).map((id) => ({ name: networkName(id), src: networkLogoUrl(id) })),
+    ...SWAP_TOKENS.filter((sym) => tokenLogoUrl(sym)).map((sym) => ({ name: sym, src: tokenLogoUrl(sym) })),
+  ];
   const marquees: { label: string; items: Brand[] }[] = [
     {
       label: t.marks.chains,
@@ -56,6 +66,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
         brand("MON", "monad.webp"),
       ],
     },
+    { label: t.marks.swaps, items: swapRow },
     {
       label: t.marks.wallets,
       items: [
@@ -67,6 +78,9 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
         brand("Rabet", "rabet.webp"),
         brand("Phantom", "phantom.svg"),
         brand("Solflare", "solflare.svg"),
+        // Pollar's brand kit: the blue mark on light, the white one on dark (its icon mark only
+        // ever appears with the name beside it, as the kit asks).
+        brand("Pollar", "pollar.webp", "pollar-dark.webp"),
       ],
     },
   ];
@@ -119,17 +133,18 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
       rate: custom ? t.pricing.custom : spec.perTx,
       unit: custom ? "" : t.pricing.perPayment,
       monthly: custom ? "" : monthly,
+      swap: t.pricing.perSwap.replace("{rate}", swapFeePct(id)),
     };
   });
-  // The fee calculator's plans: each rate parsed from plans.ts ("0.2% + 5¢"); Enterprise is custom.
+  // The fee calculator's plans: each rate parsed from plans.ts ("0.75% + 18¢"); Enterprise is custom.
   const calcPlans = (["starter", "essentials", "growth", "enterprise"] as const).map((id) => {
     const spec = PLAN_SPECS[id];
     const m = spec.perTx.match(/([\d.]+)%\s*\+\s*([\d.]+)¢/);
     const monthly = spec.price.endsWith("/mo") ? t.calc.perMonth.replace("{price}", spec.price.replace("/mo", "")) : "";
     return { id, name: id[0].toUpperCase() + id.slice(1), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, monthly };
   });
-  const ESCROW_PCT = 0.5;
-  const faq = (["wallet", "account", "wallets", "custody", "escrow", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
+  const ESCROW_PCT = ESCROW_FEE_PCT;
+  const faq = (["wallet", "account", "wallets", "custody", "service", "escrow", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
 
   // Code samples are written indented like the code around them; this takes that indent off
   // every line after the first, so the page shows them flush left.

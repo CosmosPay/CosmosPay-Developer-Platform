@@ -1,5 +1,5 @@
 ---
-title: Payment links
+title: "Payment Links"
 description: 'The payer’s view of one payment link, served without a key to the
   hosted checkout on payments.cosmospay.lat. The link id is the capability:
   anyone holding it can read the amount, the address to pay and the live status,
@@ -12,10 +12,38 @@ _openapi:
     - depth: 2
       title: Read a payment link as its payer sees it (no API key)
       url: '#read-a-payment-link-as-its-payer-sees-it-no-api-key'
+    - depth: 2
+      title: Build the envelope a payer signs for a Stellar link with a merchant fee
+        (no API key)
+      url: '#build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key'
+    - depth: 2
+      title: Report what the payer did with a wallet from the hosted checkout (no API
+        key)
+      url: '#report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key'
+    - depth: 2
+      title: 'Solana Pay transaction request, GET: the label and icon a wallet shows
+        (no API key)'
+      url: '#solana-pay-transaction-request-get-the-label-and-icon-a-wallet-shows-no-api-key'
+    - depth: 2
+      title: 'Solana Pay transaction request, POST: the transaction the payer signs
+        (no API key)'
+      url: '#solana-pay-transaction-request-post-the-transaction-the-payer-signs-no-api-key'
   structuredData:
     headings:
       - content: Read a payment link as its payer sees it (no API key)
         id: read-a-payment-link-as-its-payer-sees-it-no-api-key
+      - content: Build the envelope a payer signs for a Stellar link with a merchant fee
+          (no API key)
+        id: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: Report what the payer did with a wallet from the hosted checkout (no
+          API key)
+        id: report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key
+      - content: 'Solana Pay transaction request, GET: the label and icon a wallet shows
+          (no API key)'
+        id: solana-pay-transaction-request-get-the-label-and-icon-a-wallet-shows-no-api-key
+      - content: 'Solana Pay transaction request, POST: the transaction the payer signs
+          (no API key)'
+        id: solana-pay-transaction-request-post-the-transaction-the-payer-signs-no-api-key
     contents:
       - content: >-
           For a hosted checkout page: amount, asset, network, the address to pay
@@ -36,6 +64,43 @@ _openapi:
           (`x-cosmos-rate-limit`): poll at most every few seconds and honour
           `Retry-After`.
         heading: read-a-payment-link-as-its-payer-sees-it-no-api-key
+      - content: >-
+          A SEP-7 `pay` link pays one account, so a Stellar payment link with a
+          merchant fee (`payerAccountRequired` on the link) asks for its payer:
+          given their account, this builds the unsigned envelope with both
+          payments (to the merchant, and the fee to its wallet) and the link’s
+          MEMO_ID, and its `web+stellar:tx` link and QR. The link settles on any
+          transaction that pays both with the memo, so nothing is stored and a
+          lapsed envelope is simply built again.
+
+
+          Only for an open link (`PENDING`). Budgeted per client address.
+        heading: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: >-
+          The hosted checkout tells what the payer did with a wallet while the
+          link is pending: `walletOpened` (the wallet link, the web wallet, the
+          extension or Freighter was opened), `walletClosed` (the wallet came
+          back without paying) and `sent` (the page saw the wallet send the
+          payment). The owner reads them as `checkoutWalletAt`,
+          `checkoutWalletClosedAt` and `checkoutSentAt` on the intent, to follow
+          a payment that is not on-chain yet.
+
+
+          **Informational only:** the status changes on what the chain says,
+          never on these. An event for a link that is no longer pending is
+          ignored. Budgeted per client address.
+        heading: report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key
+      - content: A Solana payment link with a merchant fee is a Solana Pay transaction
+          request (`solana:<this URL>`), because a transfer request names one
+          recipient. A wallet reads this first, then POSTs the payer’s account.
+        heading: solana-pay-transaction-request-get-the-label-and-icon-a-wallet-shows-no-api-key
+      - content: Given the payer’s `account`, the unsigned transaction (base64) with the
+          link’s memo, the transfer to the merchant carrying the link’s
+          reference, and the merchant fee’s transfer to its wallet (creating
+          their token accounts first when missing, paid by the payer). The link
+          settles from the ledger, found by its reference; nothing is stored.
+          Only for an open link.
+        heading: solana-pay-transaction-request-post-the-transaction-the-payer-signs-no-api-key
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
@@ -45,7 +110,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"}]} showTitle />
     </>
   );
 }

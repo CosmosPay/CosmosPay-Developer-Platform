@@ -1,17 +1,18 @@
 import { IcCheck, IcArrow, ctaProps } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { PLAN_IDS, PLAN_SPECS } from "@/lib/plans.ts";
+import { PLAN_IDS, PLAN_SPECS, swapFeePct } from "@/lib/plans.ts";
 import { PLAN_META } from "@/components/cosmos/pricing/data";
 import { Price } from "@/components/cosmos/pricing/Price";
 
 const fmtLimit = (n) => (n == null ? "∞" : String(n));
 
-/* Per-plan limits (organizations, seats per org, API keys) pulled from the shared specs
-   (@/lib/plans) so each card always reflects the real plan. */
+/* Per-plan swap commission and limits (organizations, seats per org, API keys) pulled from the
+   shared specs (@/lib/plans) so each card always reflects the real plan. */
 function PlanLimits({ spec, p }) {
   if (!spec) return null;
   return (
     <div className="plan-limits">
+      <div className="pl-row"><span>{p.ratesRows.swaps}</span><b>{swapFeePct(spec.id)}</b></div>
       <div className="pl-row"><span>{p.orgsRow}</span><b>{fmtLimit(spec.maxOrgs)}</b></div>
       <div className="pl-row"><span>{p.seatsRow}</span><b>{fmtLimit(spec.maxSeats)}</b></div>
       <div className="pl-row"><span>{p.keysRow}</span><b>{fmtLimit(spec.maxApiKeys)}</b></div>

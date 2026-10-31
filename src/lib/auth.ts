@@ -28,13 +28,20 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  // Link an Authentik ("ak") sign-in to an existing user with the same (verified) email.
-  // This is what lets a CosmosPay account auto-provisioned from the wallet be picked up
-  // when that user later logs in at auth.cosmospay.lat, instead of creating a duplicate.
+  /* Link an Authentik ("ak") sign-in to an existing user with the same email ONLY when
+     Authentik says that address is verified. This is what lets a CosmosPay account
+     auto-provisioned from the wallet be picked up when that user later logs in at
+     auth.cosmospay.lat, instead of creating a duplicate.
+     Never list "ak" in `trustedProviders`: Better Auth links a trusted provider's sign-in
+     by email whatever its `email_verified` says, so any Authentik account that merely holds
+     someone's address becomes that person here. That is how accounts were taken over on
+     2026-10-11 (Authentik then let anyone sign up or switch to an address they did not own,
+     and identified users by email). Authentik sends `email_verified: true` only once the
+     address was confirmed (the `email_verified` attribute the enrollment's confirmation
+     sets), and identifies users by UUID, not email. */
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["ak"],
     },
   },
   plugins: [

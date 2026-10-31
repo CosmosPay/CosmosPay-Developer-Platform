@@ -132,7 +132,7 @@
   mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 .pl-marquee-track { display: flex; width: max-content; animation: pl-marquee 46s linear infinite; }
-.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; animation-duration: 52s; }
+.pl-marquee-rev .pl-marquee-track { animation-direction: reverse; }
 .pl-marquee-set { display: flex; align-items: center; gap: 52px; padding-right: 52px; }
 .pl-marquee:hover .pl-marquee-track { animation-play-state: paused; }
 @keyframes pl-marquee { to { translate: -50% 0; } }
@@ -141,6 +141,10 @@
   font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; color: var(--ink);
 }
 .pl-brand img, .pl-brand .pl-mark { width: 32px; height: 32px; flex: 0 0 auto; display: block; border-radius: 8px; object-fit: contain; }
+/* a brand with a mark per theme (Pollar): the light one on light pages, the dark one on dark */
+.pl-brand img.pl-brand-dark { display: none; }
+[data-theme="dark"] .pl-brand img.pl-brand-light { display: none; }
+[data-theme="dark"] .pl-brand img.pl-brand-dark { display: block; }
 
 /* ---- sections: tone steps, no rules between them ---- */
 .pl-section { padding: clamp(80px, 10vw, 136px) 0; background: var(--bg); }
@@ -560,7 +564,7 @@
   transition: border-color .2s, background-color .2s;
 }
 .pl-calc-amount:hover { border-color: var(--line-2); }
-.pl-calc-amount:focus-within { background: var(--surface); border-color: var(--ink); }
+.pl-calc-amount:focus-within { background: var(--surface); border-color: var(--ink); box-shadow: 0 0 0 3px var(--tertiary-soft); }
 .pl-calc-amount input {
   flex: 1; min-width: 0; padding: 0; border: 0; background: none; outline: none; appearance: textfield;
   font: inherit; font-size: 2rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums;
@@ -659,11 +663,11 @@
 .pl-field :is(input, select, textarea) {
   width: 100%; margin: 0; font: inherit; font-size: 1rem; line-height: 1.4; color: var(--ink);
   background: var(--bg); border: 1px solid var(--line-2); border-radius: 12px; padding: 11px 14px;
-  transition: border-color .2s ease, background-color .2s ease;
+  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
 }
 .pl-field :is(input, select, textarea):hover { border-color: var(--ink-3); }
 .pl-field :is(input, select, textarea):focus { background: var(--surface); border-color: var(--ink); outline: none; }
-.pl-field :is(input, select, textarea):focus-visible { outline: 2px solid var(--tertiary); outline-offset: 2px; }
+.pl-field :is(input, select, textarea):focus-visible { outline: none; box-shadow: 0 0 0 3px var(--tertiary-soft); }
 .pl-field textarea { min-height: 116px; resize: vertical; }
 .pl-field [aria-invalid="true"] { border-color: #C2362F; }
 /* the select draws its own chevron, so it looks like the other fields */

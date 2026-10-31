@@ -9,14 +9,14 @@
 
    Session-gated to platform owners/admins: the key is not a secret (it ships inside an
    open-source wallet), but minting accounts and credentials is not an anonymous action. */
-import { auth } from "@/lib/auth";
+import { requestSession } from "@/lib/request-session";
 import { ApiStatus, jsonError, jsonForbidden, jsonSuccess, jsonUnauthorized } from "@/lib/http";
 import { canManageUsers, getRole } from "@/lib/profile";
 import { ensurePublicKeys, PUBLIC_CONSUMER } from "@/lib/public-key";
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async (ctx) => {
-  const session = await auth.api.getSession({ headers: ctx.request.headers });
+  const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
 
   const role = await getRole(session.user.id).catch(() => "user" as const);

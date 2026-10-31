@@ -50,7 +50,15 @@ export const openApiConfig: OpenAPIObjectConfig = {
     },
     {
       name: 'Cross-chain Swaps',
-      description: 'Swaps between Stellar, Solana and Monad, settled by NEAR Intents',
+      description: 'Swaps between every network NEAR Intents reaches, settled by NEAR Intents',
+    },
+    {
+      name: 'USDT0',
+      description: 'USDT0 out of Stellar through LayerZero: native USDT on Ethereum, USDT0 on the other networks it reaches; Stellar mainnet only',
+    },
+    {
+      name: 'Private Payments',
+      description: 'Payments on Stellar whose amount stays hidden on-chain (zero-knowledge proofs), offered as a service for a 0.18% commission per transaction',
     },
     {
       name: 'Liquidity',

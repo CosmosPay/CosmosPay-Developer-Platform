@@ -39,7 +39,9 @@ test('lang: the attribute when shipped, else the browser languages, else English
   assert.equal(resolveLang('FR_ca', []), 'fr');
   assert.equal(resolveLang('ja', ['ja-JP', 'de-AT', 'en']), 'de');
   assert.equal(resolveLang(null, ['es-419', 'en']), 'es');
-  assert.equal(resolveLang('', ['zh-CN']), 'en');
+  assert.equal(resolveLang('', ['ko-KR']), 'en');
+  assert.equal(resolveLang('', ['zh-CN']), 'zh');
+  assert.equal(resolveLang('hi-IN', []), 'hi');
   assert.equal(resolveLang(undefined), 'en');
   assert.equal(supportedLang('de'), 'de');
   assert.equal(supportedLang('xx'), null);
