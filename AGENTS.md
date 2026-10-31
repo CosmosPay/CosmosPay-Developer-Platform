@@ -149,6 +149,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   "Redirect URI Error".
 - Sign-out from the company site is a credentialed cross-origin call
   to `/api/auth/sign-out`: keep `https://cosmospay.lat` in `src/lib/allowed-origins.ts`.
+- **An Authentik sign-in links to an existing user by email only when Authentik says the address
+  is verified** (`email_verified`). Never list `ak` in `accountLinking.trustedProviders`
+  (`src/lib/auth.ts`): Better Auth links a trusted provider's sign-in by email whatever that flag
+  says, so any Authentik account holding someone's address becomes them here. Accounts were taken
+  over that way on 2026-10-11, while the Authentik provider identified users by email (`sub`) and
+  let anyone sign up or switch to an address they did not own. The provider's `sub` is the
+  Authentik user's UUID since 2026-10-31, and its `email` scope sends the `email_verified`
+  attribute the enrollment's confirmation sets.
 
 ### The payments domain
 
