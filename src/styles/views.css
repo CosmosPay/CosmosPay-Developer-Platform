@@ -1024,6 +1024,12 @@ a.icon-mini { text-decoration: none; }
    ============================================================ */
 
 /* ---- /01 la wallet: tres caminos y el personaje ---- */
+/* The wallet is the first screen: its blocks rise in on their own (CSS) as the page paints,
+   with the same motion as every other .reveal, instead of staying invisible until the landing
+   hydrates and useReveal marks them. Its figure is the first screen's largest element, so it
+   decides LCP. The animation's end state holds, so useReveal's .in later changes nothing. */
+.wallet .reveal { animation: wallet-rise .4s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes wallet-rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 .wallet-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: center; }
 .wallet-grid > * { min-width: 0; }
 /* el encabezado respira menos que en los capitulos tecnicos: aca lo que
@@ -1088,6 +1094,8 @@ a.icon-mini { text-decoration: none; }
 /* Los PNG del personaje traen alrededor de un tercio de aire transparente,
    asi que la caja siempre se ve mas grande que la figura: a 420px de caja
    el astronauta medía unos 277px y quedaba chico al lado del titular. */
+/* Each figure is an <img> in a <picture> (AVIF / WebP / PNG): the wrapper adds no box. */
+.wallet-figure picture { display: contents; }
 .wfig { display: block; width: auto; height: 560px; max-width: 100%; }
 .wfig-dark { display: none; }
 [data-theme="dark"] .wfig-light { display: none; }
