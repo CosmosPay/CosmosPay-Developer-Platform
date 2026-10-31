@@ -256,6 +256,8 @@ const hi: EmbedMessages = {
   },
   by: "Cosmos Pay द्वारा भुगतान",
   demo: "डेमो: एक सैंपल भुगतान, जिसे चुकाया नहीं जा सकता।",
+  demoPay: "भुगतान सिम्युलेट करें",
+  demoAgain: "फिर से देखें",
   checkout: {
     eyebrow: "भुगतान अनुरोध",
     loading: "भुगतान लोड हो रहा है…",
@@ -301,6 +303,8 @@ const zh: EmbedMessages = {
   },
   by: "支付服务由 Cosmos Pay 提供",
   demo: "演示：这是一笔示例支付，无法实际付款。",
+  demoPay: "模拟支付",
+  demoAgain: "再看一遍",
   checkout: {
     eyebrow: "支付请求",
     loading: "正在加载支付信息…",
