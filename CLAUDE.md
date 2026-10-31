@@ -119,6 +119,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `PUBLIC_PAYMENTS_URL`**, inlined at build. An unknown host (IP, health check, smoke test) is
   the platform. Links that may render on another domain than their target are absolute, from
   `src/components/cosmos/lib/constants.ts`.
+- **The same three hostnames are `security.allowedDomains` in `astro.config.mjs`.** Astro takes
+  the request's host from the Host header only for those; any other host becomes the server's
+  own address. Without them every request behind nginx is the platform and the site and
+  payments pages answer a 301 to themselves (v0.9.0 shipped like that). `npm run test:smoke`
+  asks each trusted host for `/pricing` and fails on a redirect to itself.
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
@@ -144,6 +149,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   "Redirect URI Error".
 - Sign-out from the company site is a credentialed cross-origin call
   to `/api/auth/sign-out`: keep `https://cosmospay.lat` in `src/lib/allowed-origins.ts`.
+- **An Authentik sign-in links to an existing user by email only when Authentik says the address
+  is verified** (`email_verified`). Never list `ak` in `accountLinking.trustedProviders`
+  (`src/lib/auth.ts`): Better Auth links a trusted provider's sign-in by email whatever that flag
+  says, so any Authentik account holding someone's address becomes them here. Accounts were taken
+  over that way on 2026-10-11, while the Authentik provider identified users by email (`sub`) and
+  let anyone sign up or switch to an address they did not own. The provider's `sub` is the
+  Authentik user's UUID since 2026-10-31, and its `email` scope sends the `email_verified`
+  attribute the enrollment's confirmation sets.
 
 ### The payments domain
 
