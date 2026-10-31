@@ -13,7 +13,7 @@ export function FaqSection() {
     <section className="lp-panel faq-panel" data-panel="black">
       <div className="wrap">
         <div className="faq">
-          <h2>{p.faqTitle}<span className="num" aria-hidden="true">/03</span></h2>
+          <h2 data-num="/03">{p.faqTitle}</h2>
           {p.faqs.map((f) => <FaqItem key={f.q} q={f.q} a={fmt(f.a, rates)} />)}
         </div>
       </div>

@@ -663,8 +663,7 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .case-list { margin-top: 64px; }
 .case-row { border-top: 1px solid var(--line); padding: 32px 0; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; }
 .case-row:last-child { border-bottom: 1px solid var(--line); }
-.case-row .cbrand { font-weight: 500; font-size: .875rem; color: var(--ink-2); margin-bottom: 16px; }
-.cmetric { font-size: 2.5rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1; color: var(--ink); }
+.cmetric { font-size: 2.5rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1; color: var(--ink); margin: 0; }
 .cmlabel { font-size: 1rem; color: var(--ink-2); margin: 12px 0 16px; max-width: 34ch; }
 .ctags { display: flex; flex-wrap: wrap; gap: 8px; }
 .ctags span { font-size: .75rem; font-weight: 500; color: var(--ink-2); background: transparent; border: 1px solid var(--line); padding: 4px 12px; border-radius: var(--radius-btn); }
@@ -672,23 +671,13 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 /* el astronauta: una sola pose en toda la landing, en su blanco con contorno negro */
 .astro { grid-column: 3; justify-self: end; height: 360px; width: auto; display: block; }
 
-/* ---- /05 testimonios: tres columnas de texto, sin tarjetas ---- */
-.q-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px; }
-.quote { background: none; border: 0; padding: 0; display: flex; flex-direction: column; }
-.quote .qmark { font-family: var(--ff-sans); font-weight: 300; font-size: 3rem; line-height: .8; color: var(--ink-2); margin-bottom: 14px; }
-.quote p { font-size: 1.25rem; line-height: 1.4; color: var(--ink); margin: 0 0 28px; flex: 1; }
-.quote .qp { display: flex; align-items: center; gap: 12px; }
-.quote .qav { width: 42px; height: 42px; border-radius: 50%; background: transparent; border: 1px solid var(--line-2); color: var(--ink); display: grid; place-items: center; font-weight: 500; font-size: .8125rem; flex: 0 0 auto; }
-.quote .qn b { font-size: .9375rem; font-weight: 500; display: block; color: var(--ink); }
-.quote .qn span { font-size: .875rem; color: var(--ink-2); }
-
-/* ---- /06 recursos: lista editorial 2x2, sin miniaturas ---- */
+/* ---- /07 recursos: lista editorial 2x2, sin miniaturas; each item links to its docs page ---- */
 .news-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 64px; }
 .news-item { border-top: 1px solid var(--line); padding: 32px 0; display: flex; flex-direction: column; gap: 12px; }
 .news-item:nth-child(3), .news-item:nth-child(4) { border-bottom: 1px solid var(--line); }
 .news-tag { font-weight: 500; font-size: .75rem; color: var(--ink-3); }
-.news-item h4 { font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin: 0; line-height: 1.25; transition: color .3s ease; }
-.news-item:hover h4 { color: var(--accent); }
+.news-item h3 { font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin: 0; line-height: 1.25; transition: color .3s ease; }
+.news-item:hover h3 { color: var(--accent); }
 .news-item p { font-size: .875rem; color: var(--ink-2); margin: 0; flex: 1; }
 
 /* ---- cierre: los dos atajos como filas con hairline ---- */
@@ -716,8 +705,6 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
   .ip-grid { grid-template-columns: 1fr; }
   .sol-bento { grid-template-columns: 1fr; }
   .sol-tile.feat { grid-column: span 1; }
-  .q-grid { grid-template-columns: 1fr; gap: 0; }
-  .quote + .quote { border-top: 1px solid var(--line); padding-top: 32px; margin-top: 32px; }
 }
 @media (max-width: 720px) {
   .news-list { grid-template-columns: 1fr; }
@@ -1035,7 +1022,10 @@ a.icon-mini { text-decoration: none; }
 /* el encabezado respira menos que en los capitulos tecnicos: aca lo que
    importa son los botones que vienen abajo, no el aire */
 .wallet .section-head { margin-bottom: 40px; }
-.wallet .section-head h2 { max-width: 13ch; }
+/* the page's h1 (what Cosmos Pay is) is longer than the brand line it replaced: a little
+   smaller and wider, so it still sits in three lines */
+.wallet .section-head h1 { max-width: 18ch; font-size: clamp(2.5rem, 4.6vw, 4rem); }
+.wallet .section-head .hero-tag { margin-bottom: 24px; }
 .wallet-ways { display: grid; gap: 12px; }
 
 /* cada camino es una fila-boton: icono, texto y flecha. El primero va relleno
@@ -1135,6 +1125,7 @@ a.icon-mini { text-decoration: none; }
   .xp-astro { justify-self: center; height: 230px; }
 }
 @media (max-width: 720px) {
+  .wallet .section-head h1 { font-size: clamp(2.25rem, 9vw, 3rem); max-width: none; }
   .wway { padding: 16px 18px; gap: 14px; }
   .wway-ic { width: 38px; height: 38px; }
   .wway-ic svg { width: 19px; height: 19px; }

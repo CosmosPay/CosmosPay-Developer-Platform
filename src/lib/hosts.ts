@@ -10,7 +10,9 @@
  *                                       (pages under src/pages/payments/)
  *
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
- * its owner (query kept); a path nobody owns is a 404 on the site and payments domains. The
+ * its owner (query kept); a path nobody owns is a 404 on the site and payments domains. A page of
+ * the site or the gateway has one address: asked with a trailing slash (`/pricing/`), a GET is a
+ * 301 to the address without it, so search engines never index two copies. The
  * site and payments pages live under internal mounts (/site, /payments) and are reached by a
  * rewrite, so their public URLs have no prefix, and the mounts themselves are never public:
  * asked directly, they redirect to the public address.
@@ -61,8 +63,9 @@ const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
-/* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts). */
-const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);
+/* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts,
+   llms.txt.ts, src/pages/.well-known/*). */
+const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/.well-known/security.txt", "/.well-known/api-catalog"]);
 /* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
    src/pages/site/swaps.astro): the public swaps. The platform sends them to the gateway. */
 const DUAL_PATHS = new Set(["/swaps"]);
@@ -165,7 +168,15 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
     const resolved = new URL(target, "http://route.invalid").pathname;
     return resolved === mount || resolved.startsWith(`${mount}/`) ? { kind: "rewrite", area, path: target } : { kind: "not-found", area: primary };
   };
-  const serve = (area: Area): RouteDecision => (area === "dev" ? { kind: "pass", area } : rewrite(area, MOUNTS[area], path));
+  /* A page of the site or the gateway has one address, without a trailing slash (`/pricing/` is
+     a 301 to `/pricing`, query kept). Only for GET and HEAD: a form's POST keeps its target. The
+     platform keeps its paths as they are (the docs' static export lives under /docs/…/). */
+  const slashed = req.pathname.length > 1 && req.pathname.endsWith("/") && (req.method === "GET" || req.method === "HEAD");
+  const serve = (area: Area): RouteDecision => {
+    if (area === "dev") return { kind: "pass", area };
+    if (slashed && canonical !== "/") return to(area, encodeURI(canonical));
+    return rewrite(area, MOUNTS[area], path);
+  };
 
   if (PROVER_FILE.test(path) && areas.has("dev") && !areas.has("payments")) return rewrite("dev", MOUNTS.payments, path);
   if (DUAL_PATHS.has(path)) {

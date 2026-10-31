@@ -9,7 +9,7 @@ export function PricingHero({ billing, setBilling }) {
   return (
     <section className="lp-panel pricing-hero" data-panel="black">
       <div className="wrap">
-        <h1>{p.title}<span className="num" aria-hidden="true">/01</span></h1>
+        <h1 data-num="/01">{p.title}</h1>
         <p>{p.lede}</p>
         <div className="seg">
           <button className={billing === "monthly" ? "on" : ""} onClick={() => setBilling("monthly")}>{p.monthly}</button>

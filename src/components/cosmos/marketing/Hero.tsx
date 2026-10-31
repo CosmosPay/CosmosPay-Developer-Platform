@@ -24,20 +24,18 @@ function Marquee() {
 export function Hero({ user }) {
   const t = useT();
   const headline = t.landing.hero.headline;
-  /* el catalogo trae el titular partido por "->"; la flecha del sitio viejo se
-     va y las dos mitades quedan como dos lineas del titulo Light */
-  const parts = headline.split("->");
+  /* The catalog splits the headline at "->": the two halves are two lines of the Light title.
+     They stay in one text node joined by a newline (CSS white-space: pre-line breaks it), so a
+     text extractor reads "Write less code move more money", never the halves run together.
+     An h2: the page's h1 is the first panel's (WalletSection). */
+  const title = headline.split("->").map((part: string) => part.trim()).join("\n");
   return (
     <section className="lp-panel hero" data-panel="navy">
       <div className="wrap">
         <div className="hero-grid">
           <div className="hero-copy reveal in">
             <div className="hero-tag">{t.landing.hero.tagline}</div>
-            <h1>
-              {parts[0].trim()}
-              {parts.length > 1 && <br />}
-              {parts.length > 1 && parts[1].trim()}
-            </h1>
+            <h2 className="hero-title">{title}</h2>
             <p className="lede">{t.landing.hero.lede}</p>
             <div className="hero-cta">
               <a className="btn btn-dark" {...ctaProps(user)}>{t.landing.hero.getKeys} <IcArrow /></a>

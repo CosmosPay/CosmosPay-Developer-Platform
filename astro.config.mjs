@@ -84,8 +84,11 @@ function cosmosDocsDevStatic() {
 }
 
 // The three public origins (src/components/cosmos/lib/constants.ts reads the same variables,
-// with the same defaults), as hostnames for security.allowedDomains below.
+// with the same defaults), as hostnames for security.allowedDomains below, plus the company
+// site's www host: src/lib/hosts.ts answers it with a 301 to the apex, which it can only do when
+// Astro trusts that Host header (otherwise the request is read as the platform's).
 const buildEnv = { ...loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), ''), ...process.env };
+const SITE_HOST = new URL(buildEnv.PUBLIC_SITE_URL || 'https://cosmospay.lat').hostname;
 const PUBLIC_DOMAINS = [
   ...new Set(
     [
@@ -94,6 +97,7 @@ const PUBLIC_DOMAINS = [
       buildEnv.PUBLIC_PAYMENTS_URL || 'https://payments.cosmospay.lat',
     ].map((origin) => new URL(origin).hostname),
   ),
+  ...(SITE_HOST === 'localhost' || /^[\d.]+$/.test(SITE_HOST) ? [] : [`www.${SITE_HOST}`]),
 ];
 
 // https://astro.build/config
