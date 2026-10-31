@@ -68,8 +68,7 @@ export const createPaymentIntentBodySchema = z
       const value = v[key];
       if (value !== undefined && !ADDRESS_PATTERNS[chain].test(value)) issue(key, ADDRESS_MESSAGES[chain]);
     }
-    const places = v.amount?.split(".")[1]?.length ?? 0;
-    if (places > AMOUNT_PLACES[chain]) issue("amount", "Amount must have at most " + AMOUNT_PLACES[chain] + " decimals on " + chain + ".");
+    if (places(v.amount) > AMOUNT_PLACES[chain]) issue("amount", "Amount must have at most " + AMOUNT_PLACES[chain] + " decimals on " + chain + ".");
     const native = !v.assetCode || v.assetCode.toUpperCase() === NATIVE_CODES[chain];
     // A merchant fee is a second payment in the same transaction (Stellar, Solana) or a split at
     // the deposit address (Monad), and it needs an amount to take it from. Its wallet is the
