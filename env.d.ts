@@ -8,7 +8,7 @@ declare namespace App {
     area: import("@/lib/hosts").Area;
     /** The public path, before any internal rewrite to /site or /payments. */
     publicPath: string;
-    /** Payments pages only: ?lang= → cookie → Accept-Language → en. */
+    /** Company site and payments pages: ?lang= → cookie → Accept-Language → en (src/middleware.ts). */
     lang?: import("@/lib/payments/i18n").Locale;
   }
 }

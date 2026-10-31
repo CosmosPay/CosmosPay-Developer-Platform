@@ -1,21 +1,29 @@
 ---
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import Pricing from "@/components/cosmos/Pricing.tsx";
-import { PLAN_SPECS } from "@/lib/plans";
+import { SITE } from "@/components/cosmos/lib/constants";
+import { siteMeta } from "@/lib/seo/site-meta";
+import { plansProductNode } from "@/lib/seo/schema";
 
-const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// The language the middleware resolved: ?lang= (each language has its own address), then the
+// cookie, then Accept-Language.
+const lang = Astro.locals.lang ?? "en";
+const meta = siteMeta("pricing", lang);
+// The plans with a fixed price, as offers, read from src/lib/plans.ts like the page itself.
+const product = plansProductNode({ url: `${SITE}/pricing`, site: SITE, description: meta.description, image: `${SITE}/og-image.png` });
 const user = Astro.locals.user
   ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
   : null;
-// Rates come from plans.ts, never written here (under 160 characters for the result snippet).
-const description = `Starter has no monthly fee and charges ${PLAN_SPECS.starter.perTx} per payment. Compare each plan's payment fee, swap commission, escrow and private-payment rate.`;
 ---
 
 <CosmosLayout
   nav={false}
-  title="Plans and pricing | Cosmos Pay"
-  description={description}
+  title={meta.title}
+  description={meta.description}
   lang={lang}
+  breadcrumb={["home", "pricing"]}
+  mainEntity={product["@id"] as string}
+  schema={[product]}
 >
   <Pricing client:load user={user} lang={lang} />
 </CosmosLayout>

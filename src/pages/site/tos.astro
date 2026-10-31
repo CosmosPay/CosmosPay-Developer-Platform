@@ -3,16 +3,22 @@
  *   1. the crypto payment gateway (payments API, swaps, fiat on/off-ramp), and
  *   2. the Cosmos Pay non-custodial wallet for Stellar, Solana and Monad (app + browser extension).
  *
- * Public page; language follows the site cookie (EN default, full ES version).
+ * Public page in English and Spanish (PAGE_LANGS.tos): ?lang=es or a Spanish visitor gets the
+ * Spanish text, any other language the English one (its canonical is then the English version).
  * The wallet links here from its onboarding consent checkbox (TERMS_URL).
  * NOTE: template terms; have counsel review before relying on them legally.
  */
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import { PAGE_LANGS, TOS_LAST_UPDATED, siteMeta } from "@/lib/seo/site-meta";
 
-const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// The language the middleware resolved: ?lang= (each language has its own address), then the
+// cookie, then Accept-Language.
+const lang = Astro.locals.lang ?? "en";
 const es = lang === "es";
+const meta = siteMeta("tos", lang);
 
-const LAST_UPDATED = "2026-10-09";
+// Also the sitemap's lastmod for this page.
+const LAST_UPDATED = TOS_LAST_UPDATED;
 
 type Section = { h: string; ps: string[] };
 
@@ -173,11 +179,7 @@ const esC: typeof en = {
 const t = es ? esC : en;
 ---
 
-<CosmosLayout
-  title={`${t.title} | Cosmos Pay`}
-  lang={lang}
-  description="Cosmos Pay Terms and Conditions: crypto payment gateway and non-custodial wallet for Stellar, Solana and Monad."
->
+<CosmosLayout title={meta.title} lang={lang} description={meta.description} langs={PAGE_LANGS.tos} breadcrumb={["home", "tos"]}>
   <main class="tos-wrap">
     <article class="tos">
       <h1>{t.title}</h1>

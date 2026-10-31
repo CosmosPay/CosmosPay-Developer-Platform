@@ -1,15 +1,16 @@
 ---
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import Landing from "@/components/cosmos/Landing.tsx";
-import { messages } from "@/lib/i18n/messages/index";
+import { siteMeta } from "@/lib/seo/site-meta";
+import { companyProductNodes } from "@/lib/seo/org";
 
-const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// The language the middleware resolved: ?lang= (each language has its own address), then the
+// cookie, then Accept-Language.
+const lang = Astro.locals.lang ?? "en";
+const meta = siteMeta("home", lang);
 const user = Astro.locals.user
   ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
   : null;
-// The title and description say what the company site is (a stablecoin payments API, checkout and
-// wallet on Stellar, Solana and Monad, for Latin America), in the visitor's language.
-const meta = (messages[lang as keyof typeof messages] ?? messages.en).landing.meta;
 ---
 
 <CosmosLayout
@@ -17,7 +18,8 @@ const meta = (messages[lang as keyof typeof messages] ?? messages.en).landing.me
   title={meta.title}
   description={meta.description}
   lang={lang}
-  preloadCinta
+  preloadImage={{ light: "/brand/personaje/celular-negro.png", dark: "/brand/personaje/celular-sticker.png" }}
+  schema={companyProductNodes()}
 >
   <Landing client:load user={user} lang={lang} />
 </CosmosLayout>
