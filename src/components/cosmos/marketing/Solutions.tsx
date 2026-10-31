@@ -2,9 +2,12 @@
    destacada y sus modales. */
 import { useState } from "react";
 import { Modal, IcArrow, IcCheck, ctaProps } from "@/components/cosmos/shared";
-import { useT } from "@/lib/i18n/index";
-import { SOL_EX, SOL_META } from "@/components/cosmos/marketing/data";
+import { useT, fmt } from "@/lib/i18n/index";
+import { SOL_EX, SOL_META, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
 import { IcExpand, SOL_ICONS } from "@/components/cosmos/marketing/icons";
+
+/* `{n}` in an item's copy is the number of networks cross-chain swaps reach (NETWORK_IDS). */
+const VARS = { n: SWAP_NETWORKS };
 
 function PayMock() {
   const t = useT();
@@ -33,8 +36,8 @@ function SolModal({ itemKey, onClose, user }) {
       <div className="modal-body">
         <div className="modal-eyebrow">{s.eyebrow}</div>
         <h3>{item.t}</h3>
-        <p>{item.long}</p>
-        <ul className="modal-points">{item.points.map((p) => <li key={p}><IcCheck />{p}</li>)}</ul>
+        <p>{fmt(item.long, VARS)}</p>
+        <ul className="modal-points">{item.points.map((p) => <li key={p}><IcCheck />{fmt(p, VARS)}</li>)}</ul>
         <a className="btn btn-violet" {...ctaProps(user)}>{s.startBuilding} <IcArrow /></a>
       </div>
     </Modal>
@@ -51,7 +54,7 @@ export function Solutions({ user }) {
       <span className="trazo-deco trazo-1" aria-hidden="true" />
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{s.title}<span className="num" aria-hidden="true">/05</span></h2>
+          <h2 data-num="/05">{s.title}</h2>
           <p>{s.lede}</p>
         </div>
         <div className="sol-bento">
@@ -64,7 +67,7 @@ export function Solutions({ user }) {
                 <button className="expand-c" onClick={() => setOpen(m.i)} aria-label={item.t}><IcExpand /></button>
                 {m.feat && <PayMock />}
                 <div className="sti">{SOL_ICONS[m.i]}</div>
-                <div className="st-body"><h3>{item.t}</h3><p>{item.d}</p></div>
+                <div className="st-body"><h3>{item.t}</h3><p>{fmt(item.d, VARS)}</p></div>
               </div>
             );
           })}

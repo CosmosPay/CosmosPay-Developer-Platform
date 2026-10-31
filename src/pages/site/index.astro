@@ -1,17 +1,21 @@
 ---
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import Landing from "@/components/cosmos/Landing.tsx";
+import { messages } from "@/lib/i18n/messages/index";
 
 const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const user = Astro.locals.user
   ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
   : null;
+// The title and description say what the company site is (a stablecoin payments API, checkout and
+// wallet on Stellar, Solana and Monad, for Latin America), in the visitor's language.
+const meta = (messages[lang as keyof typeof messages] ?? messages.en).landing.meta;
 ---
 
 <CosmosLayout
   nav={false}
-  title="Cosmos Pay: Developer Platform for Stellar, Solana & Monad Payments"
-  description="Issue API keys and integrate multi-chain payments on Stellar, Solana and Monad with Cosmos Pay: create payment intents, manage webhooks, products and customers, and track analytics, all from one developer dashboard."
+  title={meta.title}
+  description={meta.description}
   lang={lang}
   preloadCinta
 >

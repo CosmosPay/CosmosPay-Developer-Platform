@@ -1,17 +1,20 @@
 ---
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import Pricing from "@/components/cosmos/Pricing.tsx";
+import { PLAN_SPECS } from "@/lib/plans";
 
 const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const user = Astro.locals.user
   ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
   : null;
+// Rates come from plans.ts, never written here (under 160 characters for the result snippet).
+const description = `Starter has no monthly fee and charges ${PLAN_SPECS.starter.perTx} per payment. Compare each plan's payment fee, swap commission, escrow and private-payment rate.`;
 ---
 
 <CosmosLayout
   nav={false}
-  title="Pricing | Cosmos Pay"
-  description="Plans for Cosmos Pay's payments, swaps and private payments as a service on Stellar, Solana and Monad: the rate per payment and per swap on each plan, its limits and what it includes."
+  title="Plans and pricing | Cosmos Pay"
+  description={description}
   lang={lang}
 >
   <Pricing client:load user={user} lang={lang} />

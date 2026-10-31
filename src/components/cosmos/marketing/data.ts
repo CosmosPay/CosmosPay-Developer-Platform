@@ -8,6 +8,10 @@
      export const CLIENTS = ["Acme", "Globex", "Initech"];
    To show logos instead of names, swap the <Marquee> render in Hero.tsx. */
 import { DOCS } from "@/components/cosmos/lib/constants";
+import { CHAINS, NETWORK_IDS } from "@/lib/chains";
+import { PLAN_SPECS } from "@/lib/plans";
+import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
+import { LOCALES } from "@/lib/i18n/locales";
 
 export const CLIENTS: string[] = [];
 
@@ -31,7 +35,7 @@ export const SOL_EX = {
   pay: ["await client.paymentIntents.createPay({", "  destination: 'GA3K7X9PLQ...',", "  amount: '250.00',", "  assetCode: 'USDC',", "});", "// → intent.uri + intent.qr"],
   coin: ["const { data } = await", "  client.analytics.balances();", "// [{ asset: 'USDC', amount: '48,210.00' },", "//  { asset: 'EURC', amount: '12,540.00' }]"],
   globe: ["await client.paymentIntents.createPay({", "  destination: 'GD...receiver',", "  amount: '1000',", "  assetCode: 'USDC',", "}); // settles in ~5s"],
-  ramp: ["client.webhooks.on(", "  'paymentIntentSucceeded',", "  (event) => settle(event.data),", ");"],
+  swap: ["await client.crossChainSwaps.create({", "  originChain: 'stellar', originAsset: 'XLM',", "  amount: '100',", "  destinationChain: 'solana',", "  destinationAsset: 'USDC',", "  recipient, refundTo,", "}); // pay swap.depositAddress"],
   wallet: ["import { WebClient } from", "  '@cosmosapp/pay_sdk/web';", "const { txHash } =", "  await new WebClient().pay(intent);"],
 };
 /* El bento no se pinta con gradientes: la ficha destacada es un panel navy y
@@ -41,26 +45,35 @@ export const SOL_META = [
   { i: "pay", feat: true },
   { i: "coin" },
   { i: "globe" },
-  { i: "ramp" },
+  { i: "swap" },
   { i: "wallet" },
 ];
-export const STAT_VALUES = [{ n: "99.99", u: "%" }, { n: "<70", u: "ms" }, { n: "130", u: "+" }, { n: "8.4", u: "B" }];
-export const SCALE_VALUES = ["500M+", "10k+", "~5s", "99.999%"];
+/* Every figure on the home is a product fact the code backs, never a volume, an uptime or a
+   customer count: the networks a payment settles on (CHAINS), the networks cross-chain swaps
+   reach (NETWORK_IDS), Starter's rate (plans.ts) and the settlement time on Stellar. The
+   labels come from the catalog; `{fixed}` in them is Starter's fixed part. */
+const [STARTER_PCT, STARTER_FIXED] = PLAN_SPECS.starter.perTx.split(" + ");
+export const SWAP_NETWORKS = NETWORK_IDS.length;
+export const STAT_VALUES = [
+  { n: String(CHAINS.length), u: "" },
+  { n: String(SWAP_NETWORKS), u: "" },
+  { n: STARTER_PCT, u: "" },
+  { n: "~5", u: "s" },
+];
+export const STAT_VARS = { fixed: STARTER_FIXED };
+/* The integration facts beside the paths: checkout designs, the languages the checkout speaks,
+   the one script tag that embeds it and the two key sets (test dv_, live prod_). */
+export const SCALE_VALUES = [String(CHECKOUT_THEMES.length), String(LOCALES.length), "1", "2"];
 export const PATH_NUMS = ["01", "02", "03"];
-/* Los casos son filas separadas por hairline, sin cubierta de color ni glifo:
-   de la ficha vieja solo sobrevive la cifra. */
-export const CASE_META = {
-  Northwind: { metric: "+38%" },
-  Lumio: { metric: "6 wks" },
-  Helios: { metric: "$2.4B" },
-};
-export const QUOTE_META = [{ av: "MC", n: "Maya Chen" }, { av: "DO", n: "Daniel Ortiz" }, { av: "PN", n: "Priya Nair" }];
 
-export const API_CARD_KEYS = ["payments", "stablecoin", "anchor"];
+/* The use cases the stories section walks through, by catalog key. No customer names or
+   figures: these are the flows the product runs today (payments landing: use cases). */
+export const STORY_KEYS = ["stores", "services", "digital"];
+
+export const API_CARD_KEYS = ["payments", "stablecoin", "swaps"];
 // The SDK is JavaScript/TypeScript only, shipped as two entry points:
 // `@cosmosapp/pay_sdk` (server) and `@cosmosapp/pay_sdk/web` (browser wallets).
 export const SDK_KEYS = ["node", "web"];
-export const CASE_KEYS = ["Northwind", "Lumio", "Helios"];
 
 /* ============================================================
    LA WALLET

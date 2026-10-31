@@ -31,8 +31,12 @@ export function WalletSection() {
       <div className="wrap">
         <div className="wallet-grid">
           <div className="wallet-copy">
+            {/* The first thing on screen, so it holds the page's h1: what Cosmos Pay is, with the
+                brand's line over it. The section number is drawn by CSS (data-num), outside the
+                heading's text. */}
             <div className="section-head reveal">
-              <h2>{w.title}<span className="num" aria-hidden="true">/01</span></h2>
+              <div className="hero-tag">{w.tag}</div>
+              <h1 data-num="/01">{w.title}</h1>
               <p>{w.lede}</p>
             </div>
 
