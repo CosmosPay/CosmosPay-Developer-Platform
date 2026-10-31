@@ -19,7 +19,11 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
      in dark mode it is inverted (hue kept) and lightens onto it. -->
 <section class="pl-hero" aria-labelledby="pl-hero-title">
   <div class="pl-hero-media" aria-hidden="true">
-    <video class="pl-video" autoplay muted loop playsinline preload="auto" poster="/media/coin-ramp-poster.webp" disablepictureinpicture data-hero-video>
+    {/* No autoplay and nothing preloaded: the poster is the first screen, and the page script
+        starts the video once the page has loaded (landing.ts), so its megabyte never competes
+        with what that screen needs. preload="metadata" is not enough: Chrome opens the file at
+        once and, on a fast connection, reads all of it before the load event. */}
+    <video class="pl-video" muted loop playsinline preload="none" poster="/media/coin-ramp-poster.webp" disablepictureinpicture data-hero-video>
       <source src="/media/coin-ramp-1280.webm" type="video/webm" media="(max-width: 900px)" />
       <source src="/media/coin-ramp-1280.mp4" type="video/mp4" media="(max-width: 900px)" />
       <source src="/media/coin-ramp.webm" type="video/webm" />

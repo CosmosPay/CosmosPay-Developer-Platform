@@ -25,7 +25,9 @@ const shown = limit ? faq.slice(0, limit) : faq;
     <div class="pl-head pl-head-sticky" data-reveal>
       <h2 id="pl-faq" class:list={[{ "pl-sr": bare }]}>{t.faq.title} {t.faq.titleBold}</h2>
       {limit && <a class="pl-textlink pl-more" href={links.faq}>{t.pages.more.faq}</a>}
-      <img class="pl-art pl-faq-art" src="/brand/astronauta-pensando.svg" alt="" width="200" height="237" loading="lazy" decoding="async" />
+      {/* On the FAQ page (bare) the section opens the page and its astronaut is the first
+          screen's largest image on phones: it loads at once and first. Elsewhere it is far down. */}
+      <img class="pl-art pl-faq-art" src="/brand/astronauta-pensando.svg" alt="" width="200" height="237" loading={bare ? "eager" : "lazy"} fetchpriority={bare ? "high" : undefined} decoding="async" />
     </div>
     <div class="pl-faq">
       {shown.map((f, i) => (

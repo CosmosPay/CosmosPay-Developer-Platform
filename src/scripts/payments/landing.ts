@@ -6,15 +6,18 @@ export function startLanding(): void {
   /* The hero video plays on its own, always: the product owner wants it moving for every
      visitor (reduced-motion included), so it is the one exception to that preference on this
      site. It is paused only while off screen (no work nobody sees) and by its own button,
-     which is always there (WCAG 2.2.2: it loops for longer than 5 s). */
+     which is always there (WCAG 2.2.2: it loops for longer than 5 s). It starts once the page
+     has loaded and the browser is idle: until then the poster is the first screen, and the
+     video's download does not compete with the fonts, styles and scripts the page needs. */
   const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
   const button = document.querySelector<HTMLButtonElement>("[data-motion]");
   const label = button?.querySelector<HTMLElement>("[data-motion-label]");
   if (video && button && label) {
     let paused = false;
     let visible = true;
+    let started = false;
     const sync = () => {
-      if (!paused && visible) void video.play().catch(() => { /* autoplay refused: the poster stays */ });
+      if (started && !paused && visible) void video.play().catch(() => { /* autoplay refused: the poster stays */ });
       else video.pause();
       button.setAttribute("aria-pressed", String(paused));
       label.textContent = paused ? button.dataset.play! : button.dataset.pause!;
@@ -23,6 +26,13 @@ export function startLanding(): void {
     button.addEventListener("click", () => { paused = !paused; sync(); });
     new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); }).observe(video);
     sync();
+    const start = () => { started = true; sync(); };
+    const whenIdle = () => {
+      if ("requestIdleCallback" in window) requestIdleCallback(start, { timeout: 2000 });
+      else setTimeout(start, 200);
+    };
+    if (document.readyState === "complete") whenIdle();
+    else window.addEventListener("load", whenIdle, { once: true });
   }
 
   /* Every logo row runs at the same speed (product owner): a row's loop is one set of its logos,
