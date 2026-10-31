@@ -79,5 +79,8 @@ test("demo: a boolean attribute, the sample checkout it opens, the states it pla
   assert.equal(previewUrl("https://payments.cosmospay.lat", "es"), "https://payments.cosmospay.lat/preview/classic?lang=es");
   // open, then confirming, then paid: a demo never shows a failure or a refund
   assert.deepEqual(DEMO_SEQUENCE.map((s) => s.status), ["PENDING", "SUBMITTED", "SUCCEEDED"]);
-  assert.ok(DEMO_SEQUENCE.every((s) => s.ms >= 1000));
+  // it waits for the visitor while open and once paid (nothing changes on its own, WCAG 2.2.2);
+  // only the confirmation runs by itself, briefly
+  assert.deepEqual(DEMO_SEQUENCE.map((s) => s.ms === null), [true, false, true]);
+  assert.ok(DEMO_SEQUENCE.every((s) => s.ms === null || (s.ms >= 1000 && s.ms <= 5000)));
 });

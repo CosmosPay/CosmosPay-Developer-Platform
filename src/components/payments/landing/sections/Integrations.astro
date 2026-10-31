@@ -1,81 +1,257 @@
 ---
-// Integrations section of the payments landing (see src/pages/payments/index.astro for the page
-// it belongs to). Its data comes from landingData (../data.ts).
-import Icon from "@/components/payments/landing/Icon.astro";
-import Mark from "@/components/payments/landing/Mark.astro";
-import Mock from "@/components/payments/landing/Mock.astro";
+// Integration options of the payments gateway (/integrations): every way to take a payment,
+// each with a demo that runs on the page and, where there is code to paste, that code behind a
+// Demo / Code tab pair (WAI-ARIA tabs, the page's [data-tabs] script). Both panels share one grid
+// cell, so switching never moves the page and a wide snippet scrolls inside its own box.
+// Data from landingData (../data.ts); the demos' behaviour is src/scripts/payments/integration-demos.ts.
+// Every demo is a sample: nothing on it can be paid and nothing is sent anywhere.
 import Code from "@/components/payments/landing/Code.astro";
 import type { LandingData } from "@/components/payments/landing/data";
+import { demoCheckoutAddress } from "@/lib/payments/integration-demo";
 
 interface Props {
   d: LandingData;
 }
 
-const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+const { t, lang, DOCS, CREATE_LINK, PAY_ORIGIN, integrations, PLUGINS, designs, checkoutCopy, demoAssets } = Astro.props.d;
+const it = t.integrations;
+const LANG_NAME = { html: "HTML", ts: "TypeScript" } as const;
+const checkoutAddress = demoCheckoutAddress(PAY_ORIGIN);
+// What each option links to under its demo.
+const more = {
+  button: { href: `${DOCS}/embed`, label: it.embedDocs },
+  embedded: { href: `${DOCS}/embed`, label: it.embedDocs },
+  hosted: { href: CREATE_LINK, label: t.paths.nocode.link },
+  links: { href: CREATE_LINK, label: t.paths.nocode.link },
+  api: { href: `${DOCS}/api`, label: it.apiDocs },
+  plugins: { href: "#contact", label: it.notify },
+} as const;
+const [firstDesign] = designs;
 ---
 
-<!-- Integration options: how the payment shows up on the merchant's site. #designs stays as
-     an anchor here for the links that still point at the old designs gallery. -->
+<!-- #designs stays as an anchor here for the links that still point at the old designs gallery. -->
 <section class="pl-section" id="integrations" aria-labelledby="pl-integrations">
   <span id="designs" class="pl-anchor" aria-hidden="true"></span>
   <div class="wrap">
     <div class="pl-head pl-head-row" data-reveal>
-      <h2 id="pl-integrations">{t.integrations.title} {t.integrations.titleBold}</h2>
-      <p class="pl-section-lede">{t.integrations.lede}</p>
+      <h2 id="pl-integrations">{it.title} {it.titleBold}</h2>
+      <p class="pl-section-lede">{it.lede}</p>
     </div>
-    <ul class="pl-int-grid" role="list">
-      {integrations.map((it, i) => (
-        <li class:list={["pl-int-card", `pl-int-${it.key}`, { "is-live": it.live }]} data-reveal style={`--i: ${i}`}>
-          <div class="pl-int-visual">
-            {it.key === "button" && (
-              <div class="pl-demo-store">
-                <div class="pl-demo-product">
-                  <span class="pl-demo-thumb" aria-hidden="true"></span>
-                  <span><b>{t.ui.product}</b><span class="pl-demo-price">25.00 USDC</span></span>
+    <ul class="pl-dm-grid" role="list">
+      {integrations.map((opt, i) => {
+        const copy = it[opt.key];
+        const id = `pl-dm-${opt.key}`;
+        const tabbed = opt.lang !== null;
+        return (
+          <li class:list={["pl-dm", `pl-dm--${opt.key}`]} id={`integration-${opt.key}`} data-reveal style={`--i: ${i % 2}`}>
+            <div class="pl-dm-copy">
+              <h3 id={`${id}-title`}>{copy.title}</h3>
+              <p class:list={["pl-dm-tag", { "is-soon": opt.key === "plugins" }]}>{copy.tag}</p>
+              <p class="pl-dm-text">{copy.body}</p>
+            </div>
+
+            <div class="pl-dm-box" data-tabs={tabbed ? "" : undefined}>
+              {opt.key !== "plugins" && (
+                <div class="pl-dm-bar">
+                  {tabbed ? (
+                    <div class="pl-dm-tabs" role="tablist" aria-labelledby={`${id}-title`}>
+                      <button type="button" class="pl-dm-tab" role="tab" id={`${id}-tab-demo`} aria-controls={`${id}-demo`} aria-selected="true">{it.demo}</button>
+                      <button type="button" class="pl-dm-tab" role="tab" id={`${id}-tab-code`} aria-controls={`${id}-code`} aria-selected="false" tabindex="-1">{it.code}</button>
+                    </div>
+                  ) : (
+                    <div class="pl-dm-tabs"><span class="pl-dm-tab is-static">{it.demo}</span></div>
+                  )}
+                  <span class="pl-dm-flag">{it.sample}</span>
                 </div>
-                <cosmos-pay-button demo lang={lang} data-demo-theme></cosmos-pay-button>
-                <p class="pl-demo-hint">{t.integrations.tryIt}</p>
-                <div class="pl-demo-window"><Mock name="browser-hosted" ui={t.ui} /></div>
-              </div>
-            )}
-            {it.key === "embedded" && (
-              <div class="pl-demo-embed">
-                <cosmos-pay-checkout demo lang={lang} data-demo-theme data-demo-events></cosmos-pay-checkout>
-                <p class="pl-demo-log"><span>{t.integrations.events}</span><code data-demo-log>cosmospay:status · PENDING</code></p>
-              </div>
-            )}
-            {it.key === "plugins" && (
-              <div class="pl-int-logos" aria-hidden="true">
-                {PLUGINS.map((p) => (
-                  <span class="pl-int-logo"><svg viewBox="0 0 24 24" width="34" height="34"><path fill="currentColor" d={p.path} /></svg><span>{p.name}</span></span>
-                ))}
-              </div>
-            )}
-            {it.mock && <Mock name={it.mock} ui={t.ui} />}
-          </div>
-          <div class="pl-int-body">
-            <h3>{t.integrations[it.key].title}</h3>
-            <p class="pl-int-tag">{t.integrations[it.key].tag}</p>
-            <p class="pl-int-text">{t.integrations[it.key].body}</p>
-            {it.lang && (
-              <details class="pl-int-code">
-                <summary>{t.integrations.viewCode}</summary>
-                <div class="pl-snippet">
-                  <div class="pl-snippet-bar">
-                    <span class="pl-snippet-lang">{it.lang === "html" ? "HTML" : "TypeScript"}</span>
-                    <button type="button" class="pl-copy" data-copy={`pl-int-code-${it.key}`} data-copied={t.code.copied}><span data-copy-label>{t.code.copy}</span></button>
+              )}
+
+              <div class="pl-dm-panels">
+                <div
+                  class="pl-dm-panel"
+                  id={`${id}-demo`}
+                  role={tabbed ? "tabpanel" : undefined}
+                  aria-labelledby={tabbed ? `${id}-tab-demo` : undefined}
+                  tabindex={tabbed ? 0 : undefined}
+                >
+                  {opt.key === "button" && (
+                    <div class="pl-dm-stage pl-dm-stage-button">
+                      <div class="pl-dm-site">
+                        <div class="pl-dm-chrome" aria-hidden="true"><span class="pl-dm-dots"><i></i><i></i><i></i></span><span class="pl-dm-url">{it.store}</span></div>
+                        <div class="pl-dm-site-body">
+                          <div class="pl-dm-item">
+                            <span class="pl-dm-thumb" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" width="26" height="26"><path d="M5 8h11v6.5a4.5 4.5 0 0 1-4.5 4.5h-2A4.5 4.5 0 0 1 5 14.5V8Z" /><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16" /><path d="M8.5 3.5c-.6.9.6 1.6 0 2.5M12 3.5c-.6.9.6 1.6 0 2.5" /></svg>
+                            </span>
+                            <span class="pl-dm-item-name">{t.ui.product}</span>
+                            <span class="pl-dm-item-price">25.00 USDC</span>
+                          </div>
+                          <p class="pl-dm-total"><span>{it.total}</span><b>25.00 USDC</b></p>
+                          <cosmos-pay-button demo lang={lang} data-demo-theme></cosmos-pay-button>
+                          <p class="pl-dm-hint">{it.tryIt}</p>
+                        </div>
+                      </div>
+                      <!-- the window the button opens, over the store (drawn: the real one opens on a click) -->
+                      <div class="pl-dm-popup" aria-hidden="true">
+                        <div class="pl-dm-chrome"><span class="pl-dm-dots"><i></i><i></i><i></i></span><span class="pl-dm-url" translate="no">{checkoutAddress}</span></div>
+                        <img src={firstDesign.thumb} alt="" width="320" height="220" loading="lazy" decoding="async" />
+                      </div>
+                    </div>
+                  )}
+
+                  {opt.key === "embedded" && (
+                    <div class="pl-dm-stage pl-dm-stage-embed">
+                      <cosmos-pay-checkout demo lang={lang} data-demo-theme data-demo-events></cosmos-pay-checkout>
+                      <div class="pl-dm-log">
+                        <p class="pl-dm-log-title" id={`${id}-log`}>{it.events}</p>
+                        <ol class="pl-dm-log-list" aria-labelledby={`${id}-log`} data-demo-log>
+                          <li><code translate="no">cosmospay:status</code><span>PENDING</span></li>
+                        </ol>
+                        <p class="pl-dm-log-hint">{it.eventsHint}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {opt.key === "hosted" && (
+                    <div class="pl-dm-stage pl-dm-stage-hosted" data-hosted-demo>
+                      <div class="pl-dm-window">
+                        <div class="pl-dm-chrome" aria-hidden="true"><span class="pl-dm-dots"><i></i><i></i><i></i></span><span class="pl-dm-url" translate="no">{checkoutAddress}</span></div>
+                        <img class="pl-dm-shot" src={firstDesign.thumb} alt={`${it.designs}: ${firstDesign.name}`} width="320" height="220" loading="lazy" decoding="async" data-hosted-shot />
+                      </div>
+                      <fieldset class="pl-dm-designs">
+                        <legend class="pl-dm-legend">{it.designs}</legend>
+                        <div class="pl-dm-seg">
+                          {designs.map((design, j) => (
+                            <label class="pl-dm-seg-opt">
+                              <input
+                                type="radio"
+                                name="pl-dm-design"
+                                value={design.id}
+                                checked={j === 0}
+                                aria-describedby="pl-dm-design-desc"
+                                data-thumb={design.thumb}
+                                data-preview={design.preview}
+                                data-name={design.name}
+                                data-desc={design.desc}
+                              />
+                              <span>{design.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <p class="pl-dm-desc" id="pl-dm-design-desc" data-hosted-desc>{firstDesign.desc}</p>
+                      <a class="btn btn-dark" href={firstDesign.preview} target="_blank" rel="noopener" data-hosted-open>{it.open}<span class="pl-sr"> {it.newTab}</span></a>
+                    </div>
+                  )}
+
+                  {opt.key === "links" && (
+                    <div class="pl-dm-stage pl-dm-stage-links" data-links-demo data-created={it.created}>
+                      <form class="pl-dm-form" novalidate aria-labelledby="pl-dm-link-form" data-links-form>
+                        <p class="pl-dm-form-title" id="pl-dm-link-form">{it.form}</p>
+                        <div class="pl-field">
+                          <label for="pl-dm-link-amount">{it.amount}</label>
+                          <input id="pl-dm-link-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" value="25.00" aria-describedby="pl-dm-link-amount-hint" />
+                          <p class="pl-dm-field-hint" id="pl-dm-link-amount-hint">{it.amountHint}</p>
+                          <p class="pl-field-error" id="pl-dm-link-amount-error" hidden>{it.amountError}</p>
+                        </div>
+                        <div class="pl-field">
+                          <label for="pl-dm-link-asset">{it.asset}</label>
+                          <span class="pl-select">
+                            <select id="pl-dm-link-asset" name="asset">
+                              {demoAssets.map((asset) => <option value={asset}>{asset}</option>)}
+                            </select>
+                          </span>
+                        </div>
+                        <div class="pl-field">
+                          <label for="pl-dm-link-msg">{it.message}</label>
+                          <input id="pl-dm-link-msg" name="msg" type="text" maxlength="300" autocomplete="off" value={t.ui.orderPaid} />
+                        </div>
+                        <button type="submit" class="btn btn-dark">{it.create}</button>
+                      </form>
+                      <div class="pl-dm-result" data-links-result>
+                        <p class="pl-dm-result-link"><span>{it.yourLink}</span><code translate="no">{checkoutAddress}</code></p>
+                        <div class="pl-dm-pay">
+                          <p class="pl-dm-pay-eyebrow">{checkoutCopy.eyebrow}</p>
+                          <p class="pl-dm-pay-testnet">{checkoutCopy.testnet}</p>
+                          <p class="pl-dm-pay-amount" data-links-amount data-any={checkoutCopy.anyAmount}>25.00 USDC</p>
+                          <p class="pl-dm-pay-hint" data-links-any hidden>{checkoutCopy.anyAmountHint}</p>
+                          <p class="pl-dm-pay-msg" data-links-msg>{t.ui.orderPaid}</p>
+                          <p class="pl-dm-pay-status">{checkoutCopy.phase.open}</p>
+                          <img class="pl-dm-pay-qr" src="/media/sample-qr.png" alt="" width="112" height="112" loading="lazy" decoding="async" />
+                          <span class="pl-dm-pay-btn" aria-hidden="true">{checkoutCopy.openWallet}</span>
+                        </div>
+                      </div>
+                      <p class="pl-sr" role="status" data-links-status></p>
+                    </div>
+                  )}
+
+                  {opt.key === "api" && (
+                    <div
+                      class="pl-dm-stage pl-dm-stage-api"
+                      data-api-demo
+                      data-origin={PAY_ORIGIN}
+                      data-send={it.send}
+                      data-simulate={it.simulate}
+                      data-restart={it.restart}
+                      data-sent={it.sent}
+                      data-paid={it.paid}
+                      data-request={it.request}
+                      data-response={it.response}
+                      data-webhook={it.webhook}
+                      data-checkout={it.checkout}
+                    >
+                      <form class="pl-dm-api-form" novalidate data-api-form>
+                        <div class="pl-field">
+                          <label for="pl-dm-api-amount">{it.amount}</label>
+                          <input id="pl-dm-api-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" value="25" />
+                        </div>
+                        <div class="pl-field">
+                          <label for="pl-dm-api-asset">{it.asset}</label>
+                          <span class="pl-select">
+                            <select id="pl-dm-api-asset" name="asset">
+                              {demoAssets.map((asset) => <option value={asset}>{asset}</option>)}
+                            </select>
+                          </span>
+                        </div>
+                        <button type="submit" class="btn btn-dark" data-api-run>{it.send}</button>
+                        <p class="pl-field-error pl-dm-api-error" id="pl-dm-api-amount-error" hidden>{it.amountError}</p>
+                      </form>
+                      <div class="pl-dm-console" role="region" aria-label={it.console} tabindex="0" data-api-console>
+                        <p class="pl-dm-console-idle" data-api-idle>{it.idle}</p>
+                        <ol class="pl-dm-console-list" data-api-list></ol>
+                      </div>
+                      <p class="pl-dm-note">{it.nothingSent}</p>
+                      <p class="pl-sr" role="status" data-api-status></p>
+                    </div>
+                  )}
+
+                  {opt.key === "plugins" && (
+                    <div class="pl-dm-stage pl-dm-stage-soon">
+                      <div class="pl-dm-logos" aria-hidden="true">
+                        {PLUGINS.map((p) => (
+                          <span class="pl-dm-logo"><svg viewBox="0 0 24 24" width="34" height="34"><path fill="currentColor" d={p.path} /></svg><span>{p.name}</span></span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {tabbed && (
+                  <div class="pl-dm-panel pl-dm-panel-code" id={`${id}-code`} role="tabpanel" aria-labelledby={`${id}-tab-code`} hidden>
+                    <div class="pl-snippet-bar">
+                      <span class="pl-snippet-lang">{LANG_NAME[opt.lang]}</span>
+                      <button type="button" class="pl-copy" data-copy={`${id}-snippet`} data-copied={t.code.copied} aria-describedby={`${id}-title`}><span data-copy-label>{t.code.copy}</span></button>
+                    </div>
+                    <Code code={opt.code} lang={opt.lang} id={`${id}-snippet`} numbered />
                   </div>
-                  <Code code={it.code} lang={it.lang} id={`pl-int-code-${it.key}`} />
-                </div>
-              </details>
-            )}
-            {it.key === "links" && <a class="pl-textlink" href={CREATE_LINK}>{t.paths.nocode.link}</a>}
-            {it.live && <a class="pl-textlink" href={`${DOCS}/embed`}>{t.paths.api.link}</a>}
-            {it.key === "api" && <a class="pl-textlink" href={DOCS}>{t.paths.api.link}</a>}
-          </div>
-        </li>
-      ))}
+                )}
+              </div>
+            </div>
+
+            <p class="pl-dm-more"><a class="pl-textlink" href={more[opt.key].href}>{more[opt.key].label}</a></p>
+          </li>
+        );
+      })}
     </ul>
-    <p class="pl-footnote">{t.integrations.note}</p>
+    <p class="pl-footnote">{it.note}</p>
   </div>
 </section>

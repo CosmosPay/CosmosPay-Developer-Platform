@@ -63,7 +63,7 @@ ou é cancelado.
 | `link` | ambos | O id do link de pagamento | Obrigatório |
 | `lang` | ambos | `en`, `es`, `pt`, `fr`, `de` (uma tag regional como `pt-BR` também funciona) | O idioma do navegador do pagador, senão `en` |
 | `theme` | ambos | `light`, `dark`, `auto` (segue a configuração do sistema do pagador) | `light` |
-| `demo` | ambos | Presente, mostra um exemplo que não pode ser pago, sem link nem requisições (para vitrines): o botão abre o checkout de exemplo; o checkout incorporado percorre seus estados e dispara seus eventos | Desligado |
+| `demo` | ambos | Presente, mostra um exemplo que não pode ser pago, sem link nem requisições (para vitrines): o botão abre o checkout de exemplo; o checkout incorporado ganha um botão que faz o papel de quem paga: ao pressioná-lo, o exemplo é confirmado e passa a pago, disparando seus eventos; pressionado de novo, recomeça | Desligado |
 
 No botão, `lang` define o rótulo e, quando informado, também o idioma do checkout hospedado. Sem ele,
 o checkout usa o idioma do próprio pagador.

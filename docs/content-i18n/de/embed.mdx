@@ -66,7 +66,7 @@ und hört auf, sobald die Zahlung bezahlt, fehlgeschlagen oder storniert ist.
 | `link` | beide | Die ID des Zahlungslinks | Pflicht |
 | `lang` | beide | `en`, `es`, `pt`, `fr`, `de` (ein regionaler Tag wie `de-AT` funktioniert auch) | Die Browsersprache des Zahlers, sonst `en` |
 | `theme` | beide | `light`, `dark`, `auto` (folgt der Systemeinstellung des Zahlers) | `light` |
-| `demo` | beide | Gesetzt, zeigt ein Beispiel, das nicht bezahlt werden kann, ohne Link und ohne Anfragen (für Präsentationen): Der Button öffnet den Beispiel-Checkout; der eingebettete Checkout durchläuft seine Zustände und löst seine Ereignisse aus | Aus |
+| `demo` | beide | Gesetzt, zeigt ein Beispiel, das nicht bezahlt werden kann, ohne Link und ohne Anfragen (für Präsentationen): Der Button öffnet den Beispiel-Checkout; der eingebettete Checkout bekommt einen Button, der für die zahlende Person steht: gedrückt, wird das Beispiel bestätigt und bezahlt und löst seine Ereignisse aus; erneut gedrückt, beginnt es von vorn | Aus |
 
 Beim Button legt `lang` die Beschriftung fest und, wenn angegeben, auch die Sprache des gehosteten
 Checkouts. Ohne `lang` nutzt der Checkout die Sprache des Zahlers.

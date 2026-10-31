@@ -8,7 +8,7 @@
    only exist here (`button.*`) and one sentence that does not fit inline: the hosted page's
    "paid" line tells the payer they may close the page, and inline there is no page to close
    (`checkout.body.paid`). `by` is the hosted page's footer line; `demo` is the line a `demo`
-   checkout shows on top. */
+   checkout shows on top, and `demoPay` / `demoAgain` label the button that plays it. */
 
 export const EMBED_LOCALES = ["en", "es", "pt", "fr", "de"] as const;
 export type EmbedLocale = (typeof EMBED_LOCALES)[number];
@@ -20,6 +20,8 @@ const en = {
   },
   by: "Payments by Cosmos Pay",
   demo: "Demo: a sample payment that can’t be paid.",
+  demoPay: "Simulate the payment",
+  demoAgain: "Play it again",
   checkout: {
     eyebrow: "Payment request",
     loading: "Loading payment…",
@@ -66,6 +68,8 @@ const es: EmbedMessages = {
   },
   by: "Pagos por Cosmos Pay",
   demo: "Demo: un pago de ejemplo que no se puede pagar.",
+  demoPay: "Simular el pago",
+  demoAgain: "Verlo de nuevo",
   checkout: {
     eyebrow: "Solicitud de pago",
     loading: "Cargando el pago…",
@@ -111,6 +115,8 @@ const pt: EmbedMessages = {
   },
   by: "Pagamentos por Cosmos Pay",
   demo: "Demo: um pagamento de exemplo que não pode ser pago.",
+  demoPay: "Simular o pagamento",
+  demoAgain: "Ver de novo",
   checkout: {
     eyebrow: "Solicitação de pagamento",
     loading: "Carregando o pagamento…",
@@ -156,6 +162,8 @@ const fr: EmbedMessages = {
   },
   by: "Paiements par Cosmos Pay",
   demo: "Démo : un paiement d’exemple qui ne peut pas être réglé.",
+  demoPay: "Simuler le paiement",
+  demoAgain: "Revoir la démo",
   checkout: {
     eyebrow: "Demande de paiement",
     loading: "Chargement du paiement…",
@@ -201,6 +209,8 @@ const de: EmbedMessages = {
   },
   by: "Zahlungen von Cosmos Pay",
   demo: "Demo: eine Beispielzahlung, die nicht bezahlt werden kann.",
+  demoPay: "Zahlung simulieren",
+  demoAgain: "Noch einmal ansehen",
   checkout: {
     eyebrow: "Zahlungsanforderung",
     loading: "Zahlung wird geladen…",
