@@ -145,8 +145,9 @@ The option shapes are in the docs. Read the page before writing code against a r
 - **Don't trust the browser's `txHash` alone.** Always call `validate` (or wait for the webhook) before fulfilling.
 
 ## Full documentation for agents
-- Index: https://cosmospay.lat/docs/llms.txt
-- Everything in one file: https://cosmospay.lat/docs/llms-full.txt
-- Any page as Markdown: `https://cosmospay.lat/docs/llms.mdx/<path>/content.md` (e.g. `sdk/server/quickstart`)
+- Index: https://dev.cosmospay.lat/docs/llms.txt
+- Everything in one file: https://dev.cosmospay.lat/docs/llms-full.txt
+- Any page as Markdown: `https://dev.cosmospay.lat/docs/llms.mdx/<path>/content.md` (e.g. `sdk/server/quickstart`)
+- The Payments REST API as OpenAPI: https://dev.cosmospay.lat/docs/openapi.json
 - Offline: after installing, read `node_modules/@cosmosapp/pay_sdk/llms/llms-full.txt`
 - Runnable examples: https://github.com/CosmosPay/CosmosJS_SDK/tree/main/examples
