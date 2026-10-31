@@ -43,6 +43,16 @@ if (!fs.existsSync(outDir)) {
   process.exit(1);
 }
 
+// The files search engines and agents read besides the pages: served at /docs/<file>, linked
+// from the pages, llms.txt and the AI page. A route that silently stopped exporting would only
+// show up as a 404 in production.
+const PUBLISHED = ['sitemap.xml', 'llms.txt', 'llms-full.txt', 'openapi.json'];
+const missing = PUBLISHED.filter((file) => !fs.existsSync(path.join(outDir, file)));
+if (missing.length) {
+  console.error(`[build-docs] the export is missing ${missing.join(', ')} (docs/src/app routes)`);
+  process.exit(1);
+}
+
 fs.rmSync(destDir, { recursive: true, force: true });
 fs.mkdirSync(path.dirname(destDir), { recursive: true });
 fs.cpSync(outDir, destDir, { recursive: true });
