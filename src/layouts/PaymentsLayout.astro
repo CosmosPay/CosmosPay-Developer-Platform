@@ -8,7 +8,9 @@ import SiteNav from "@/components/cosmos/layout/SiteNav";
 import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 import { LOCALES, MESSAGES } from "@/lib/payments/i18n";
 import { PAYMENTS, TERMS } from "@/lib/payments/urls";
+import { SOCIAL } from "@/components/cosmos/lib/constants";
 import { OG_LOCALES, pageUrl } from "@/lib/payments/seo";
+import { explicitLang, hreflangAlternates } from "@/lib/seo/lang-urls";
 
 interface Props {
   title: string;
@@ -26,9 +28,16 @@ const t = MESSAGES[lang];
 // visitor (x-default): each version names itself canonical and lists the others (hreflang), so
 // search engines index every language instead of folding them into the English one.
 const path = Astro.locals.publicPath ?? "/";
-const asked = Astro.url.searchParams.get("lang");
-const explicit = LOCALES.find((l) => l.code === asked)?.code ?? null;
+const codes = LOCALES.map((l) => l.code);
+const explicit = explicitLang(Astro.url.searchParams.get("lang"), codes);
 const canonical = pageUrl(PAYMENTS, path, explicit);
+const alternates = hreflangAlternates(PAYMENTS, path, codes);
+// The share image: the gateway's own (the hero's coin ramp) on the indexed pages; payment links
+// and previews keep the brand card, since a payer's chat app shows it next to a request for money.
+const share = indexable
+  ? { url: `${PAYMENTS}/media/coin-ramp-poster.jpg`, type: "image/jpeg", width: 1600, height: 900 }
+  : { url: `${PAYMENTS}/og-image.png`, type: "image/png", width: 1200, height: 630 };
+const xHandle = `@${new URL(SOCIAL.x).pathname.split("/").filter(Boolean)[0]}`;
 
 // The language picker is a plain GET form, so it must carry the page's own query along
 // (/pay?uri=… would otherwise lose the payment it is showing).
@@ -47,8 +56,7 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={canonical} />
         <meta property="og:url" content={canonical} />
-        {LOCALES.map((l) => <link rel="alternate" hreflang={l.code} href={pageUrl(PAYMENTS, path, l.code)} />)}
-        <link rel="alternate" hreflang="x-default" href={pageUrl(PAYMENTS, path)} />
+        {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
       </Fragment>
     ) : (
       <meta name="robots" content="noindex, nofollow" />
@@ -70,11 +78,19 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
     <meta property="og:site_name" content="Cosmos Pay" />
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
-    <meta property="og:image" content={`${PAYMENTS}/og-image.png`} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image" content={share.url} />
+    <meta property="og:image:type" content={share.type} />
+    <meta property="og:image:width" content={String(share.width)} />
+    <meta property="og:image:height" content={String(share.height)} />
+    <meta property="og:image:alt" content="Cosmos Pay" />
     <meta property="og:locale" content={OG_LOCALES[lang]} />
     {LOCALES.filter((l) => l.code !== lang).map((l) => <meta property="og:locale:alternate" content={OG_LOCALES[l.code]} />)}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content={xHandle} />
+    <meta name="twitter:title" content={title} />
+    {description && <meta name="twitter:description" content={description} />}
+    <meta name="twitter:image" content={share.url} />
+    <meta name="twitter:image:alt" content="Cosmos Pay" />
 
     <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />

@@ -10,11 +10,13 @@ import { messages } from "@/lib/i18n/messages/index";
 import { API_BASE } from "@/lib/payments/urls";
 import { DOCS } from "@/components/cosmos/lib/constants";
 
-const lang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// The language the middleware resolved: ?lang= (each language has its own address), then the
+// cookie, then Accept-Language.
+const lang = Astro.locals.lang ?? "en";
 const copy = ((messages as Record<string, typeof messages.en>)[lang] ?? messages.en).swapsPage;
 ---
 
-<CosmosLayout title={copy.metaTitle} description={copy.metaDescription} lang={lang} bodyClass="inst">
+<CosmosLayout title={copy.metaTitle} description={copy.metaDescription} lang={lang} bodyClass="inst" breadcrumb={["home", "swaps"]}>
   <main id="main" class="pswap-page">
     <PublicSwaps client:load lang={lang} apiBase={API_BASE} docsUrl={DOCS} showHeader />
   </main>

@@ -1,15 +1,19 @@
 ---
-// The gateway's structured data (schema.org JSON-LD), one graph per page: the organisation and
-// the site on every page, the page itself, the breadcrumb trail a content page shows over its
-// title (PageHeader.astro), and on /faq the questions and answers the page shows. Only what the
-// page says: no ratings, prices or claims beyond its copy. URLs come from src/lib/payments/seo.ts,
-// so they match the canonical and hreflang links.
+// The gateway's structured data (schema.org JSON-LD), one graph per page: the organisation (the
+// same node the company site publishes, src/lib/seo/org.ts) and the site on every page, the page
+// itself, the breadcrumb trail a content page shows over its title (PageHeader.astro), and what
+// the page is about: the gateway as a service on the home, the swaps on /swaps, the plans with a
+// fixed price on /fees (from src/lib/plans.ts) and, on /faq, the questions and answers the page
+// shows. Only what the page says: no ratings, reviews or claims beyond its copy. URLs come from
+// src/lib/seo/lang-urls.ts, so they match the canonical and hreflang links.
 import type { LandingData } from "@/components/payments/landing/data";
 import type { PaymentsPage } from "@/lib/payments/site-pages";
 import { LOCALES } from "@/lib/payments/i18n";
 import { PAYMENTS } from "@/lib/payments/urls";
-import { SITE, SOCIAL } from "@/components/cosmos/lib/constants";
-import { pageUrl } from "@/lib/payments/seo";
+import { SITE } from "@/components/cosmos/lib/constants";
+import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
+import { ORGANIZATION_NODE } from "@/lib/seo/org";
+import { jsonLdText, plansProductNode, serviceNode, webPageNodes, webSiteNode, type JsonLdNode } from "@/lib/seo/schema";
 
 interface Props {
   d: LandingData;
@@ -20,42 +24,51 @@ interface Props {
 
 const { d, page, title, description } = Astro.props;
 const { t, lang, faq } = d;
-const asked = Astro.url.searchParams.get("lang");
-const explicit = LOCALES.find((l) => l.code === asked)?.code ?? null;
+const codes = LOCALES.map((l) => l.code);
+const explicit = explicitLang(Astro.url.searchParams.get("lang"), codes);
 const url = pageUrl(PAYMENTS, Astro.locals.publicPath ?? "/", explicit);
-const ORG = `${SITE}/#organization`;
-const WEBSITE = `${PAYMENTS}/#website`;
 const KEY = { integrations: "integrations", swaps: "swaps", "use-cases": "useCases", security: "security", fees: "fees", faq: "faq" } as const;
 
-const graph: Record<string, unknown>[] = [
-  { "@type": "Organization", "@id": ORG, name: "Cosmos Pay", url: `${SITE}/`, logo: `${PAYMENTS}/apple-touch-icon.png`, sameAs: Object.values(SOCIAL) },
-  { "@type": "WebSite", "@id": WEBSITE, name: "Cosmos Pay Payments", url: `${PAYMENTS}/`, inLanguage: LOCALES.map((l) => l.code), publisher: { "@id": ORG } },
-  {
-    "@type": page === "faq" ? "FAQPage" : "WebPage",
-    "@id": `${url}#webpage`,
+// What the page is about, by page. Entity @ids do not carry ?lang=: one service, one set of plans.
+const about: JsonLdNode | null =
+  page === "home"
+    ? serviceNode({ id: `${PAYMENTS}/#service`, name: "Cosmos Pay Payments", serviceType: "Payment gateway", description, url: `${PAYMENTS}/`, site: SITE })
+    : page === "swaps"
+      ? serviceNode({ id: `${PAYMENTS}/swaps#service`, name: "Cosmos Pay Swaps", serviceType: "Token swaps", description, url: `${PAYMENTS}/swaps`, site: SITE })
+      : page === "fees"
+        ? plansProductNode({ url: `${PAYMENTS}/fees`, site: SITE, description, image: `${PAYMENTS}/media/coin-ramp-poster.jpg` })
+        : null;
+
+const graph: JsonLdNode[] = [
+  ORGANIZATION_NODE,
+  webSiteNode({
+    origin: PAYMENTS,
+    name: "Cosmos Pay Payments",
+    site: SITE,
+    langs: codes,
+    description: "Payment links, a hosted checkout and a payments API to accept stablecoins on Stellar, Solana and Monad.",
+  }),
+  ...webPageNodes({
     url,
     name: title,
     description,
-    inLanguage: lang,
-    isPartOf: { "@id": WEBSITE },
-    ...(page !== "home" && { breadcrumb: { "@id": `${url}#breadcrumb` } }),
-    ...(page === "faq" && {
-      mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
-    }),
-  },
+    lang,
+    origin: PAYMENTS,
+    types: page === "faq" ? ["WebPage", "FAQPage"] : undefined,
+    breadcrumb:
+      page === "home"
+        ? undefined
+        : [
+            { name: t.pages.home, url: pageUrl(PAYMENTS, "/", explicit) },
+            { name: (t.pages[KEY[page]] as { nav: string }).nav, url },
+          ],
+    mainEntity:
+      page === "faq"
+        ? faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } }))
+        : (about?.["@id"] as string | undefined),
+  }),
+  ...(about ? [about] : []),
 ];
-if (page !== "home") {
-  graph.push({
-    "@type": "BreadcrumbList",
-    "@id": `${url}#breadcrumb`,
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: t.pages.home, item: pageUrl(PAYMENTS, "/", explicit) },
-      { "@type": "ListItem", position: 2, name: (t.pages[KEY[page]] as { nav: string }).nav, item: url },
-    ],
-  });
-}
-// "<" is escaped, so no string in the copy can close the script element.
-const json = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c");
 ---
 
-<script type="application/ld+json" set:html={json} />
+<script type="application/ld+json" set:html={jsonLdText(graph)} />

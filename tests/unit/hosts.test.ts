@@ -32,7 +32,7 @@ test('ownerOf assigns every public path to one domain', () => {
 test('cosmospay.lat renders only the company site', () => {
   assert.deepEqual(route('cosmospay.lat', '/'), { kind: 'rewrite', area: 'site', path: '/site' });
   assert.deepEqual(route('cosmospay.lat', '/pricing'), { kind: 'rewrite', area: 'site', path: '/site/pricing' });
-  assert.deepEqual(route('cosmospay.lat', '/tos/'), { kind: 'rewrite', area: 'site', path: '/site/tos' });
+  assert.deepEqual(route('cosmospay.lat', '/tos'), { kind: 'rewrite', area: 'site', path: '/site/tos' });
   assert.deepEqual(route('cosmospay.lat', '/dashboard', '?view=settings'), {
     kind: 'redirect', location: 'https://dev.cosmospay.lat/dashboard?view=settings', status: 301,
   });
@@ -143,10 +143,31 @@ test('www goes to the apex, path and query kept', () => {
   assert.deepEqual(route('www.cosmospay.lat', '/pricing', '?lang=es'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing?lang=es', status: 301 });
 });
 
-test('robots.txt and sitemap.xml answer on every domain, as that domain', () => {
-  assert.deepEqual(route('cosmospay.lat', '/robots.txt'), { kind: 'pass', area: 'site' });
-  assert.deepEqual(route('payments.cosmospay.lat', '/sitemap.xml'), { kind: 'pass', area: 'payments' });
-  assert.deepEqual(route('dev.cosmospay.lat', '/robots.txt'), { kind: 'pass', area: 'dev' });
+test('robots.txt, sitemap.xml, llms.txt and the /.well-known files answer on every domain, as that domain', () => {
+  for (const path of ['/robots.txt', '/sitemap.xml', '/llms.txt', '/.well-known/security.txt', '/.well-known/api-catalog']) {
+    assert.deepEqual(route('cosmospay.lat', path), { kind: 'pass', area: 'site' }, path);
+    assert.deepEqual(route('payments.cosmospay.lat', path), { kind: 'pass', area: 'payments' }, path);
+    assert.deepEqual(route('dev.cosmospay.lat', path), { kind: 'pass', area: 'dev' }, path);
+  }
+  // Any other /.well-known path is nobody's: a 404 on the site and the gateway.
+  assert.deepEqual(route('cosmospay.lat', '/.well-known/nope'), { kind: 'not-found', area: 'site' });
+});
+
+test('a page of the site or the gateway asked with a trailing slash is a 301 to its one address', () => {
+  assert.deepEqual(route('cosmospay.lat', '/pricing/'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing', status: 301 });
+  assert.deepEqual(route('cosmospay.lat', '/tos/', '?lang=es'), { kind: 'redirect', location: 'https://cosmospay.lat/tos?lang=es', status: 301 });
+  assert.deepEqual(route('cosmospay.lat', '/swaps//'), { kind: 'redirect', location: 'https://cosmospay.lat/swaps', status: 301 });
+  assert.deepEqual(route('payments.cosmospay.lat', '/faq/'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/faq', status: 301 });
+  assert.deepEqual(route('payments.cosmospay.lat', '/swaps/', '?lang=de'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/swaps?lang=de', status: 301 });
+  assert.deepEqual(route('payments.cosmospay.lat', `${LINK}/`), { kind: 'redirect', location: `https://payments.cosmospay.lat${LINK}`, status: 301 });
+  assert.deepEqual(route('cosmospay.lat', '/pricing/', '', 'HEAD'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing', status: 301 });
+  // The home is "/" already; a form's POST keeps its target; the platform keeps its paths.
+  assert.deepEqual(route('cosmospay.lat', '/'), { kind: 'rewrite', area: 'site', path: '/site' });
+  assert.deepEqual(route('payments.cosmospay.lat', '/contact/', '', 'POST'), { kind: 'rewrite', area: 'payments', path: '/payments/contact' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/dashboard/'), { kind: 'pass', area: 'dev' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/docs/getting-started/'), { kind: 'pass', area: 'dev' });
+  // Someone else's page with a slash still goes straight to its owner, in one hop.
+  assert.deepEqual(route('payments.cosmospay.lat', '/pricing/'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing', status: 301 });
 });
 
 test('an unknown host is the platform', () => {
