@@ -13,7 +13,7 @@ import type { Locale } from "@/lib/payments/i18n";
 
 const en = {
   meta: {
-    title: "Cosmos Pay Payments: accept stablecoins on Stellar, Solana and Monad",
+    title: "Stablecoin payment gateway for Latin America | Cosmos Pay",
     description:
       "Payment links, a hosted checkout and a payments API for businesses. Customers pay from their own wallet on Stellar, Solana or Monad, and you get paid at your address, instantly or through escrow.",
   },
@@ -194,6 +194,8 @@ const en = {
   faq: {
     title: "Questions",
     titleBold: "and answers.",
+    what: { q: "What is Cosmos Pay?", a: "Cosmos Pay is a stablecoin payment gateway for businesses in Latin America. You create a payment link, a hosted checkout or a payment intent through the API; your customer pays from their own wallet on Stellar, Solana or Monad; and the money goes to an address you control, instantly or through escrow." },
+    assets: { q: "Which currencies can I charge in?", a: "USDC, EURC, the network’s own coin (XLM, SOL or MON) or any other token on Stellar, Solana or Monad, such as USDT on Solana: you name it by its issuer, mint or contract when you create the link. Your customer pays in that asset, and you receive that same asset." },
     wallet: { q: "Do I need my own crypto wallet?", a: "Yes. Payments settle to an address you control on each network you accept, so the funds are yours from the first payment." },
     account: {
       q: "Do my customers need an account?",
@@ -283,12 +285,12 @@ const en = {
     nav: "Cosmos Pay Payments sections",
     crumbs: "Breadcrumb",
     home: "Overview",
-    integrations: { nav: "Integration", title: "Integrate Cosmos Pay", lede: "From a payment link with no code to your own payment screen with the API. Pick how you charge and how the payment looks on your site.", meta: "Integration options | Cosmos Pay Payments" },
-    useCases: { nav: "Use cases", title: "Use cases", lede: "How stores, services, digital products and creators take stablecoins, and what changes next to cards and bank transfers.", meta: "Use cases | Cosmos Pay Payments" },
-    security: { nav: "Security", title: "Security", lede: "Every payment can be checked on the network, your keys stay yours and no other site can frame the payment pages.", meta: "Security | Cosmos Pay Payments" },
-    fees: { nav: "Pricing", title: "Pricing", lede: "A rate per payment by plan, with no monthly fee on Starter. Work out what you keep before you start.", meta: "Pricing and fees | Cosmos Pay Payments" },
-    faq: { nav: "FAQ", title: "Frequently asked questions", lede: "Wallets, escrow, refunds, testing and fees: what merchants ask before they start.", meta: "FAQ | Cosmos Pay Payments" },
-    swaps: { nav: "Swaps", title: "Swaps", lede: "Swap tokens across 35+ networks and send USDT0 from Stellar, with no account.", meta: "Swaps | Cosmos Pay Payments" },
+    integrations: { nav: "Integration", title: "Add stablecoin payments to your site", lede: "From a payment link with no code to your own payment screen with the API. Pick how you charge and how the payment looks on your site.", meta: "Stablecoin checkout, pay button and API | Cosmos Pay" },
+    useCases: { nav: "Use cases", title: "How businesses get paid in stablecoins", lede: "How stores, services, digital products and creators take stablecoins, and what changes next to cards and bank transfers.", meta: "Stablecoin payment use cases for businesses | Cosmos Pay" },
+    security: { nav: "Security", title: "Payments you can check on-chain", lede: "Every payment can be checked on the network, your keys stay yours and no other site can frame the payment pages.", meta: "Non-custodial payments, verified on-chain | Cosmos Pay" },
+    fees: { nav: "Pricing", title: "Stablecoin payment fees", lede: "A rate per payment by plan, with no monthly fee on Starter. Work out what you keep before you start.", meta: "Stablecoin payment fees and calculator | Cosmos Pay" },
+    faq: { nav: "FAQ", title: "Stablecoin payments FAQ", lede: "Wallets, escrow, refunds, testing and fees: what merchants ask before they start.", meta: "Stablecoin payments FAQ: wallets, fees, refunds | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Swap tokens across networks, no account", lede: "Swap tokens across 35+ networks and send USDT0 from Stellar, with no account.", meta: "Cross-chain swaps and USDT0 from Stellar | Cosmos Pay" },
     more: { integrations: "See every integration option", fees: "Work out your fees", security: "See how payments are protected", faq: "See every question", useCases: "See every use case" },
     notes: ["No monthly fee on Starter", "Try it on testnet with no real money"],
   },
@@ -322,7 +324,7 @@ export type LandingMessages = typeof en;
 
 const es: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments: acepta stablecoins en Stellar, Solana y Monad",
+    title: "Pasarela de pagos cripto: cobrar en USDC y USDT | Cosmos Pay",
     description:
       "Enlaces de pago, un checkout alojado y una API de pagos para empresas. Tus clientes pagan desde su propia wallet en Stellar, Solana o Monad y cobras en tu dirección, al instante o con escrow.",
   },
@@ -503,6 +505,8 @@ const es: LandingMessages = {
   faq: {
     title: "Preguntas",
     titleBold: "y respuestas.",
+    what: { q: "¿Qué es Cosmos Pay?", a: "Cosmos Pay es una pasarela de pagos en stablecoins para negocios de Latinoamérica. El negocio crea un enlace de pago, un checkout alojado o un intento de pago con la API; el cliente paga desde su propia wallet en Stellar, Solana o Monad, y el dinero llega a una dirección que el negocio controla, al instante o con escrow." },
+    assets: { q: "¿En qué monedas se puede cobrar?", a: "En USDC, EURC, la moneda propia de cada red (XLM, SOL o MON) o cualquier otro token en Stellar, Solana o Monad, como USDT en Solana: se indica por su emisor, mint o contrato al crear el enlace. El cliente paga en ese activo y el negocio recibe ese mismo activo." },
     wallet: { q: "¿Necesito mi propia wallet cripto?", a: "Sí. Los pagos se liquidan en una dirección que controlas en cada red que aceptes, así los fondos son tuyos desde el primer pago." },
     account: {
       q: "¿Mis clientes necesitan una cuenta?",
@@ -592,12 +596,12 @@ const es: LandingMessages = {
     nav: "Secciones de Cosmos Pay Payments",
     crumbs: "Ruta de navegación",
     home: "Inicio",
-    integrations: { nav: "Integración", title: "Integra Cosmos Pay", lede: "Desde un enlace de pago sin código hasta tu propia pantalla de pago con la API. Elige cómo cobras y cómo se ve el pago en tu sitio.", meta: "Opciones de integración | Cosmos Pay Payments" },
-    useCases: { nav: "Casos de uso", title: "Casos de uso", lede: "Cómo cobran con stablecoins las tiendas, los servicios, los productos digitales y los creadores, y qué cambia frente a tarjetas y transferencias.", meta: "Casos de uso | Cosmos Pay Payments" },
-    security: { nav: "Seguridad", title: "Seguridad", lede: "Cada pago se puede verificar en la red, tus claves siguen siendo tuyas y ningún otro sitio puede incrustar las páginas de pago.", meta: "Seguridad | Cosmos Pay Payments" },
-    fees: { nav: "Precios", title: "Precios", lede: "Una tarifa por pago según tu plan, sin cuota mensual en Starter. Calcula cuánto recibes antes de empezar.", meta: "Precios y comisiones | Cosmos Pay Payments" },
-    faq: { nav: "Preguntas", title: "Preguntas frecuentes", lede: "Wallets, escrow, reembolsos, pruebas y comisiones: lo que preguntan los comercios antes de empezar.", meta: "Preguntas frecuentes | Cosmos Pay Payments" },
-    swaps: { nav: "Swaps", title: "Swaps", lede: "Cambia tokens entre más de 35 redes y envía USDT0 desde Stellar, sin crear una cuenta.", meta: "Swaps | Cosmos Pay Payments" },
+    integrations: { nav: "Integración", title: "Pagos en stablecoins para tu sitio", lede: "Desde un enlace de pago sin código hasta tu propia pantalla de pago con la API. Elige cómo cobras y cómo se ve el pago en tu sitio.", meta: "Checkout cripto, botón de pago y API | Cosmos Pay" },
+    useCases: { nav: "Casos de uso", title: "Cómo cobran los negocios en stablecoins", lede: "Cómo cobran con stablecoins las tiendas, los servicios, los productos digitales y los creadores, y qué cambia frente a tarjetas y transferencias.", meta: "Cobrar en USDC: casos de uso para negocios | Cosmos Pay" },
+    security: { nav: "Seguridad", title: "Pagos que se verifican on-chain", lede: "Cada pago se puede verificar en la red, tus claves siguen siendo tuyas y ningún otro sitio puede incrustar las páginas de pago.", meta: "Pagos cripto sin custodia, verificados on-chain | Cosmos Pay" },
+    fees: { nav: "Precios", title: "Comisiones por cobrar en stablecoins", lede: "Una tarifa por pago según tu plan, sin cuota mensual en Starter. Calcula cuánto recibes antes de empezar.", meta: "Comisiones de la pasarela de pagos cripto | Cosmos Pay" },
+    faq: { nav: "Preguntas", title: "Preguntas frecuentes sobre cobrar en cripto", lede: "Wallets, escrow, reembolsos, pruebas y comisiones: lo que preguntan los comercios antes de empezar.", meta: "Preguntas frecuentes sobre pagos cripto | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sin cuenta", lede: "Cambia tokens entre más de 35 redes y envía USDT0 desde Stellar, sin crear una cuenta.", meta: "Swaps cripto entre redes y USDT0 desde Stellar | Cosmos Pay" },
     more: { integrations: "Ver todas las opciones de integración", fees: "Calcular mis comisiones", security: "Ver cómo protegemos los pagos", faq: "Ver todas las preguntas", useCases: "Ver todos los casos de uso" },
     notes: ["Sin cuota mensual en Starter", "Prueba en testnet sin dinero real"],
   },
@@ -630,7 +634,7 @@ const es: LandingMessages = {
 
 const pt: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments: aceite stablecoins na Stellar, Solana e Monad",
+    title: "Gateway de pagamento cripto em USDC e USDT | Cosmos Pay",
     description:
       "Links de pagamento, um checkout hospedado e uma API de pagamentos para empresas. Seus clientes pagam com a própria carteira na Stellar, Solana ou Monad e você recebe no seu endereço, na hora ou com escrow.",
   },
@@ -811,6 +815,8 @@ const pt: LandingMessages = {
   faq: {
     title: "Perguntas",
     titleBold: "e respostas.",
+    what: { q: "O que é o Cosmos Pay?", a: "O Cosmos Pay é um gateway de pagamento em stablecoins para empresas da América Latina. Você cria um link de pagamento, um checkout hospedado ou uma intenção de pagamento pela API; seu cliente paga com a própria carteira na Stellar, Solana ou Monad; e o dinheiro vai para um endereço que você controla, na hora ou com escrow." },
+    assets: { q: "Em quais moedas posso cobrar?", a: "Em USDC, EURC, a moeda da própria rede (XLM, SOL ou MON) ou qualquer outro token na Stellar, Solana ou Monad, como USDT na Solana: você indica o emissor, o mint ou o contrato ao criar o link. Seu cliente paga nesse ativo, e você recebe o mesmo ativo." },
     wallet: { q: "Preciso da minha própria carteira cripto?", a: "Sim. Os pagamentos são liquidados num endereço que você controla em cada rede que aceitar, então os fundos são seus desde o primeiro pagamento." },
     account: {
       q: "Meus clientes precisam de uma conta?",
@@ -900,12 +906,12 @@ const pt: LandingMessages = {
     nav: "Seções do Cosmos Pay Payments",
     crumbs: "Trilha de navegação",
     home: "Início",
-    integrations: { nav: "Integração", title: "Integre o Cosmos Pay", lede: "De um link de pagamento sem código até sua própria tela de pagamento com a API. Escolha como cobra e como o pagamento aparece no seu site.", meta: "Opções de integração | Cosmos Pay Payments" },
-    useCases: { nav: "Casos de uso", title: "Casos de uso", lede: "Como lojas, serviços, produtos digitais e criadores recebem em stablecoins, e o que muda em relação a cartões e transferências.", meta: "Casos de uso | Cosmos Pay Payments" },
-    security: { nav: "Segurança", title: "Segurança", lede: "Cada pagamento pode ser verificado na rede, suas chaves continuam suas e nenhum outro site pode incorporar as páginas de pagamento.", meta: "Segurança | Cosmos Pay Payments" },
-    fees: { nav: "Preços", title: "Preços", lede: "Uma tarifa por pagamento conforme o plano, sem mensalidade no Starter. Calcule quanto você recebe antes de começar.", meta: "Preços e tarifas | Cosmos Pay Payments" },
-    faq: { nav: "Perguntas", title: "Perguntas frequentes", lede: "Carteiras, escrow, reembolsos, testes e tarifas: o que os comerciantes perguntam antes de começar.", meta: "Perguntas frequentes | Cosmos Pay Payments" },
-    swaps: { nav: "Swaps", title: "Swaps", lede: "Troque tokens entre mais de 35 redes e envie USDT0 da Stellar, sem criar conta.", meta: "Swaps | Cosmos Pay Payments" },
+    integrations: { nav: "Integração", title: "Pagamentos em stablecoins no seu site", lede: "De um link de pagamento sem código até sua própria tela de pagamento com a API. Escolha como cobra e como o pagamento aparece no seu site.", meta: "Checkout cripto, botão de pagamento e API | Cosmos Pay" },
+    useCases: { nav: "Casos de uso", title: "Como as empresas recebem em stablecoins", lede: "Como lojas, serviços, produtos digitais e criadores recebem em stablecoins, e o que muda em relação a cartões e transferências.", meta: "Receber em USDC: casos de uso para empresas | Cosmos Pay" },
+    security: { nav: "Segurança", title: "Pagamentos verificáveis on-chain", lede: "Cada pagamento pode ser verificado na rede, suas chaves continuam suas e nenhum outro site pode incorporar as páginas de pagamento.", meta: "Pagamentos sem custódia, verificados on-chain | Cosmos Pay" },
+    fees: { nav: "Preços", title: "Taxas para receber em stablecoins", lede: "Uma tarifa por pagamento conforme o plano, sem mensalidade no Starter. Calcule quanto você recebe antes de começar.", meta: "Taxas do gateway de pagamento cripto | Cosmos Pay" },
+    faq: { nav: "Perguntas", title: "Perguntas frequentes sobre receber em cripto", lede: "Carteiras, escrow, reembolsos, testes e tarifas: o que os comerciantes perguntam antes de começar.", meta: "Perguntas frequentes sobre pagamentos cripto | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sem conta", lede: "Troque tokens entre mais de 35 redes e envie USDT0 da Stellar, sem criar conta.", meta: "Swaps cripto entre redes e USDT0 da Stellar | Cosmos Pay" },
     more: { integrations: "Ver todas as opções de integração", fees: "Calcular minhas tarifas", security: "Ver como protegemos os pagamentos", faq: "Ver todas as perguntas", useCases: "Ver todos os casos de uso" },
     notes: ["Sem mensalidade no Starter", "Teste na testnet sem dinheiro real"],
   },
@@ -938,7 +944,7 @@ const pt: LandingMessages = {
 
 const fr: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments : acceptez les stablecoins sur Stellar, Solana et Monad",
+    title: "Passerelle de paiement crypto en USDC | Cosmos Pay",
     description:
       "Des liens de paiement, un checkout hébergé et une API de paiement pour les entreprises. Vos clients paient depuis leur propre wallet sur Stellar, Solana ou Monad, et vous êtes payé à votre adresse, instantanément ou via un escrow.",
   },
@@ -1119,6 +1125,8 @@ const fr: LandingMessages = {
   faq: {
     title: "Questions",
     titleBold: "et réponses.",
+    what: { q: "Qu’est-ce que Cosmos Pay ?", a: "Cosmos Pay est une passerelle de paiement en stablecoins pour les entreprises d’Amérique latine. Vous créez un lien de paiement, un checkout hébergé ou une intention de paiement via l’API ; votre client paie depuis son propre wallet sur Stellar, Solana ou Monad ; et l’argent arrive à une adresse que vous contrôlez, instantanément ou via un escrow." },
+    assets: { q: "Dans quelles devises puis-je encaisser ?", a: "En USDC, en EURC, dans la monnaie du réseau (XLM, SOL ou MON) ou dans tout autre jeton sur Stellar, Solana ou Monad, comme l’USDT sur Solana : vous l’indiquez par son émetteur, son mint ou son contrat en créant le lien. Votre client paie dans cet actif, et vous recevez ce même actif." },
     wallet: { q: "Ai-je besoin de mon propre wallet crypto ?", a: "Oui. Les paiements sont réglés sur une adresse que vous contrôlez pour chaque réseau accepté : les fonds sont à vous dès le premier paiement." },
     account: {
       q: "Mes clients ont-ils besoin d’un compte ?",
@@ -1208,12 +1216,12 @@ const fr: LandingMessages = {
     nav: "Sections de Cosmos Pay Payments",
     crumbs: "Fil d’Ariane",
     home: "Accueil",
-    integrations: { nav: "Intégration", title: "Intégrez Cosmos Pay", lede: "D’un lien de paiement sans code à votre propre écran de paiement avec l’API. Choisissez comment vous encaissez et à quoi ressemble le paiement sur votre site.", meta: "Options d’intégration | Cosmos Pay Payments" },
-    useCases: { nav: "Cas d’usage", title: "Cas d’usage", lede: "Comment les boutiques, les services, les produits numériques et les créateurs encaissent en stablecoins, et ce qui change par rapport aux cartes et aux virements.", meta: "Cas d’usage | Cosmos Pay Payments" },
-    security: { nav: "Sécurité", title: "Sécurité", lede: "Chaque paiement se vérifie sur le réseau, vos clés restent les vôtres et aucun autre site ne peut intégrer les pages de paiement.", meta: "Sécurité | Cosmos Pay Payments" },
-    fees: { nav: "Tarifs", title: "Tarifs", lede: "Un tarif par paiement selon votre offre, sans abonnement mensuel avec Starter. Calculez ce que vous recevez avant de commencer.", meta: "Tarifs et frais | Cosmos Pay Payments" },
-    faq: { nav: "Questions", title: "Questions fréquentes", lede: "Wallets, escrow, remboursements, tests et frais : ce que les marchands demandent avant de commencer.", meta: "Questions fréquentes | Cosmos Pay Payments" },
-    swaps: { nav: "Swaps", title: "Swaps", lede: "Échangez des jetons entre plus de 35 réseaux et envoyez de l’USDT0 depuis Stellar, sans compte.", meta: "Swaps | Cosmos Pay Payments" },
+    integrations: { nav: "Intégration", title: "Des paiements en stablecoins sur votre site", lede: "D’un lien de paiement sans code à votre propre écran de paiement avec l’API. Choisissez comment vous encaissez et à quoi ressemble le paiement sur votre site.", meta: "Checkout crypto, bouton de paiement et API | Cosmos Pay" },
+    useCases: { nav: "Cas d’usage", title: "Comment les entreprises encaissent en stablecoins", lede: "Comment les boutiques, les services, les produits numériques et les créateurs encaissent en stablecoins, et ce qui change par rapport aux cartes et aux virements.", meta: "Cas d’usage des paiements en USDC | Cosmos Pay" },
+    security: { nav: "Sécurité", title: "Des paiements vérifiables on-chain", lede: "Chaque paiement se vérifie sur le réseau, vos clés restent les vôtres et aucun autre site ne peut intégrer les pages de paiement.", meta: "Paiements non dépositaires vérifiés on-chain | Cosmos Pay" },
+    fees: { nav: "Tarifs", title: "Frais des paiements en stablecoins", lede: "Un tarif par paiement selon votre offre, sans abonnement mensuel avec Starter. Calculez ce que vous recevez avant de commencer.", meta: "Frais de paiement en stablecoins et calculateur | Cosmos Pay" },
+    faq: { nav: "Questions", title: "FAQ des paiements en stablecoins", lede: "Wallets, escrow, remboursements, tests et frais : ce que les marchands demandent avant de commencer.", meta: "FAQ paiements crypto : wallets, frais | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Échangez des jetons entre réseaux, sans compte", lede: "Échangez des jetons entre plus de 35 réseaux et envoyez de l’USDT0 depuis Stellar, sans compte.", meta: "Swaps entre réseaux et USDT0 depuis Stellar | Cosmos Pay" },
     more: { integrations: "Voir toutes les options d’intégration", fees: "Calculer mes frais", security: "Voir comment les paiements sont protégés", faq: "Voir toutes les questions", useCases: "Voir tous les cas d’usage" },
     notes: ["Sans abonnement mensuel avec Starter", "Testez sur le testnet sans argent réel"],
   },
@@ -1246,7 +1254,7 @@ const fr: LandingMessages = {
 
 const de: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments: Stablecoins auf Stellar, Solana und Monad akzeptieren",
+    title: "Krypto-Zahlungsgateway für USDC und Stablecoins | Cosmos Pay",
     description:
       "Zahlungslinks, ein gehosteter Checkout und eine Zahlungs-API für Unternehmen. Deine Kunden zahlen aus ihrer eigenen Wallet auf Stellar, Solana oder Monad, und du wirst an deine Adresse bezahlt, sofort oder per Escrow.",
   },
@@ -1427,6 +1435,8 @@ const de: LandingMessages = {
   faq: {
     title: "Fragen",
     titleBold: "und Antworten.",
+    what: { q: "Was ist Cosmos Pay?", a: "Cosmos Pay ist ein Zahlungsgateway für Stablecoins für Unternehmen in Lateinamerika. Du erstellst einen Zahlungslink, einen gehosteten Checkout oder per API eine Zahlungsabsicht; dein Kunde zahlt aus seiner eigenen Wallet auf Stellar, Solana oder Monad; und das Geld geht an eine Adresse, die du kontrollierst, sofort oder per Escrow." },
+    assets: { q: "In welchen Währungen kann ich kassieren?", a: "In USDC, EURC, der eigenen Coin des Netzwerks (XLM, SOL oder MON) oder jedem anderen Token auf Stellar, Solana oder Monad, etwa USDT auf Solana: Du gibst ihn beim Erstellen des Links über seinen Herausgeber, Mint oder Contract an. Dein Kunde zahlt in diesem Asset, und du erhältst dasselbe Asset." },
     wallet: { q: "Brauche ich eine eigene Krypto-Wallet?", a: "Ja. Zahlungen werden an eine Adresse abgewickelt, die du in jedem akzeptierten Netzwerk kontrollierst, also gehört das Geld ab der ersten Zahlung dir." },
     account: {
       q: "Brauchen meine Kunden ein Konto?",
@@ -1516,12 +1526,12 @@ const de: LandingMessages = {
     nav: "Bereiche von Cosmos Pay Payments",
     crumbs: "Brotkrümelnavigation",
     home: "Übersicht",
-    integrations: { nav: "Integration", title: "Cosmos Pay integrieren", lede: "Vom Zahlungslink ohne Code bis zu deinem eigenen Zahlungsbildschirm mit der API. Wähle, wie du kassierst und wie die Zahlung auf deiner Website aussieht.", meta: "Integrationsoptionen | Cosmos Pay Payments" },
-    useCases: { nav: "Anwendungsfälle", title: "Anwendungsfälle", lede: "Wie Shops, Dienstleister, digitale Produkte und Creator Stablecoins annehmen, und was sich gegenüber Karten und Überweisungen ändert.", meta: "Anwendungsfälle | Cosmos Pay Payments" },
-    security: { nav: "Sicherheit", title: "Sicherheit", lede: "Jede Zahlung lässt sich im Netzwerk prüfen, deine Schlüssel bleiben deine und keine andere Website kann die Zahlungsseiten einbetten.", meta: "Sicherheit | Cosmos Pay Payments" },
-    fees: { nav: "Preise", title: "Preise", lede: "Ein Satz pro Zahlung je nach Tarif, ohne Monatsgebühr bei Starter. Rechne aus, was dir bleibt, bevor du startest.", meta: "Preise und Gebühren | Cosmos Pay Payments" },
-    faq: { nav: "Fragen", title: "Häufige Fragen", lede: "Wallets, Escrow, Erstattungen, Tests und Gebühren: was Händler vor dem Start fragen.", meta: "Häufige Fragen | Cosmos Pay Payments" },
-    swaps: { nav: "Swaps", title: "Swaps", lede: "Tauschen Sie Token über mehr als 35 Netzwerke und senden Sie USDT0 von Stellar, ohne Konto.", meta: "Swaps | Cosmos Pay Payments" },
+    integrations: { nav: "Integration", title: "Stablecoin-Zahlungen auf deiner Website", lede: "Vom Zahlungslink ohne Code bis zu deinem eigenen Zahlungsbildschirm mit der API. Wähle, wie du kassierst und wie die Zahlung auf deiner Website aussieht.", meta: "Krypto-Checkout, Bezahlbutton und API | Cosmos Pay" },
+    useCases: { nav: "Anwendungsfälle", title: "Wie Unternehmen Stablecoins annehmen", lede: "Wie Shops, Dienstleister, digitale Produkte und Creator Stablecoins annehmen, und was sich gegenüber Karten und Überweisungen ändert.", meta: "USDC annehmen: Anwendungsfälle für Unternehmen | Cosmos Pay" },
+    security: { nav: "Sicherheit", title: "Zahlungen, die du on-chain prüfen kannst", lede: "Jede Zahlung lässt sich im Netzwerk prüfen, deine Schlüssel bleiben deine und keine andere Website kann die Zahlungsseiten einbetten.", meta: "Nicht verwahrte Zahlungen, on-chain geprüft | Cosmos Pay" },
+    fees: { nav: "Preise", title: "Gebühren für Stablecoin-Zahlungen", lede: "Ein Satz pro Zahlung je nach Tarif, ohne Monatsgebühr bei Starter. Rechne aus, was dir bleibt, bevor du startest.", meta: "Gebühren für Stablecoin-Zahlungen und Rechner | Cosmos Pay" },
+    faq: { nav: "Fragen", title: "Häufige Fragen zu Stablecoin-Zahlungen", lede: "Wallets, Escrow, Erstattungen, Tests und Gebühren: was Händler vor dem Start fragen.", meta: "FAQ zu Krypto-Zahlungen: Wallets, Gebühren | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Token zwischen Netzwerken tauschen, ohne Konto", lede: "Tauschen Sie Token über mehr als 35 Netzwerke und senden Sie USDT0 von Stellar, ohne Konto.", meta: "Cross-Chain-Swaps und USDT0 von Stellar | Cosmos Pay" },
     more: { integrations: "Alle Integrationsoptionen ansehen", fees: "Meine Gebühren berechnen", security: "So schützen wir Zahlungen", faq: "Alle Fragen ansehen", useCases: "Alle Anwendungsfälle ansehen" },
     notes: ["Keine Monatsgebühr bei Starter", "Im Testnet ohne echtes Geld testen"],
   },
@@ -1554,7 +1564,7 @@ const de: LandingMessages = {
 
 const hi: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments: Stellar, Solana और Monad पर स्टेबलकॉइन स्वीकार करें",
+    title: "स्टेबलकॉइन पेमेंट गेटवे: USDC में भुगतान लें | Cosmos Pay",
     description:
       "कारोबारों के लिए पेमेंट लिंक, होस्टेड चेकआउट और पेमेंट्स API। ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करते हैं, और पैसा आपके पते पर आता है: तुरंत या एस्क्रो के ज़रिए।",
   },
@@ -1735,6 +1745,8 @@ const hi: LandingMessages = {
   faq: {
     title: "सवाल",
     titleBold: "और जवाब।",
+    what: { q: "Cosmos Pay क्या है?", a: "Cosmos Pay लैटिन अमेरिका के कारोबारों के लिए एक स्टेबलकॉइन पेमेंट गेटवे है। आप पेमेंट लिंक, होस्टेड चेकआउट या API से पेमेंट इंटेंट बनाते हैं; आपका ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करता है; और पैसा तुरंत या एस्क्रो के ज़रिए आपके नियंत्रण वाले पते पर पहुँचता है।" },
+    assets: { q: "मैं किन मुद्राओं में भुगतान ले सकता हूँ?", a: "USDC, EURC, नेटवर्क का अपना कॉइन (XLM, SOL या MON) या Stellar, Solana या Monad पर कोई भी दूसरा टोकन, जैसे Solana पर USDT: लिंक बनाते समय आप उसे उसके इश्यूअर, मिंट या कॉन्ट्रैक्ट से बताते हैं। आपका ग्राहक उसी एसेट में भुगतान करता है, और आपको वही एसेट मिलता है।" },
     wallet: { q: "क्या मुझे अपना क्रिप्टो वॉलेट चाहिए?", a: "हाँ। आप जो भी नेटवर्क स्वीकार करते हैं, हर एक पर भुगतान आपके नियंत्रण वाले पते पर सेटल होते हैं, इसलिए पहले भुगतान से ही फ़ंड आपके होते हैं।" },
     account: {
       q: "क्या मेरे ग्राहकों को अकाउंट चाहिए?",
@@ -1824,12 +1836,12 @@ const hi: LandingMessages = {
     nav: "Cosmos Pay Payments के सेक्शन",
     crumbs: "ब्रेडक्रंब",
     home: "ओवरव्यू",
-    integrations: { nav: "इंटीग्रेशन", title: "Cosmos Pay इंटीग्रेट करें", lede: "बिना कोड वाले पेमेंट लिंक से लेकर API से बनी आपकी अपनी पेमेंट स्क्रीन तक। चुनें कि आप भुगतान कैसे लेंगे और आपकी साइट पर भुगतान कैसा दिखेगा।", meta: "इंटीग्रेशन के विकल्प | Cosmos Pay Payments" },
-    useCases: { nav: "उपयोग के उदाहरण", title: "उपयोग के उदाहरण", lede: "स्टोर, सेवाएँ, डिजिटल प्रोडक्ट और क्रिएटर स्टेबलकॉइन में भुगतान कैसे लेते हैं, और कार्ड व बैंक ट्रांसफ़र की तुलना में क्या बदलता है।", meta: "उपयोग के उदाहरण | Cosmos Pay Payments" },
-    security: { nav: "सुरक्षा", title: "सुरक्षा", lede: "हर भुगतान को नेटवर्क पर जाँचा जा सकता है, आपकी कीज़ आपकी ही रहती हैं और कोई दूसरी साइट पेमेंट पेजों को फ़्रेम नहीं कर सकती।", meta: "सुरक्षा | Cosmos Pay Payments" },
-    fees: { nav: "प्राइसिंग", title: "प्राइसिंग", lede: "प्लान के हिसाब से प्रति भुगतान एक दर, Starter पर कोई मासिक शुल्क नहीं। शुरू करने से पहले जानें कि आपके हाथ में कितना आएगा।", meta: "प्राइसिंग और शुल्क | Cosmos Pay Payments" },
-    faq: { nav: "FAQ", title: "अक्सर पूछे जाने वाले सवाल", lede: "वॉलेट, एस्क्रो, रिफ़ंड, टेस्टिंग और शुल्क: शुरू करने से पहले व्यापारी क्या पूछते हैं।", meta: "FAQ | Cosmos Pay Payments" },
-    swaps: { nav: "स्वैप", title: "स्वैप", lede: "बिना खाते के 35+ नेटवर्क पर टोकन स्वैप करें और Stellar से USDT0 भेजें।", meta: "स्वैप | Cosmos Pay Payments" },
+    integrations: { nav: "इंटीग्रेशन", title: "अपनी साइट पर स्टेबलकॉइन भुगतान जोड़ें", lede: "बिना कोड वाले पेमेंट लिंक से लेकर API से बनी आपकी अपनी पेमेंट स्क्रीन तक। चुनें कि आप भुगतान कैसे लेंगे और आपकी साइट पर भुगतान कैसा दिखेगा।", meta: "स्टेबलकॉइन चेकआउट, पे बटन और API | Cosmos Pay" },
+    useCases: { nav: "उपयोग के उदाहरण", title: "कारोबार स्टेबलकॉइन में भुगतान कैसे लेते हैं", lede: "स्टोर, सेवाएँ, डिजिटल प्रोडक्ट और क्रिएटर स्टेबलकॉइन में भुगतान कैसे लेते हैं, और कार्ड व बैंक ट्रांसफ़र की तुलना में क्या बदलता है।", meta: "स्टेबलकॉइन भुगतान: कारोबारों के लिए उपयोग | Cosmos Pay" },
+    security: { nav: "सुरक्षा", title: "भुगतान जिन्हें आप ऑन-चेन जाँच सकते हैं", lede: "हर भुगतान को नेटवर्क पर जाँचा जा सकता है, आपकी कीज़ आपकी ही रहती हैं और कोई दूसरी साइट पेमेंट पेजों को फ़्रेम नहीं कर सकती।", meta: "नॉन-कस्टोडियल भुगतान, ऑन-चेन सत्यापित | Cosmos Pay" },
+    fees: { nav: "प्राइसिंग", title: "स्टेबलकॉइन भुगतान का शुल्क", lede: "प्लान के हिसाब से प्रति भुगतान एक दर, Starter पर कोई मासिक शुल्क नहीं। शुरू करने से पहले जानें कि आपके हाथ में कितना आएगा।", meta: "स्टेबलकॉइन भुगतान शुल्क और कैलकुलेटर | Cosmos Pay" },
+    faq: { nav: "FAQ", title: "स्टेबलकॉइन भुगतान: अक्सर पूछे जाने वाले सवाल", lede: "वॉलेट, एस्क्रो, रिफ़ंड, टेस्टिंग और शुल्क: शुरू करने से पहले व्यापारी क्या पूछते हैं।", meta: "स्टेबलकॉइन भुगतान FAQ: वॉलेट, शुल्क, रिफ़ंड | Cosmos Pay" },
+    swaps: { nav: "स्वैप", title: "बिना खाते के नेटवर्कों के बीच टोकन स्वैप करें", lede: "बिना खाते के 35+ नेटवर्क पर टोकन स्वैप करें और Stellar से USDT0 भेजें।", meta: "क्रॉस-चेन स्वैप और Stellar से USDT0 | Cosmos Pay" },
     more: { integrations: "इंटीग्रेशन के सभी विकल्प देखें", fees: "अपने शुल्क का हिसाब लगाएँ", security: "देखें कि भुगतान कैसे सुरक्षित रहते हैं", faq: "सभी सवाल देखें", useCases: "उपयोग के सभी उदाहरण देखें" },
     notes: ["Starter पर कोई मासिक शुल्क नहीं", "टेस्टनेट पर बिना असली पैसे के आज़माएँ"],
   },
@@ -1862,7 +1874,7 @@ const hi: LandingMessages = {
 
 const zh: LandingMessages = {
   meta: {
-    title: "Cosmos Pay Payments：在 Stellar、Solana 和 Monad 上接受稳定币支付",
+    title: "稳定币支付网关：收取 USDC 和 USDT | Cosmos Pay",
     description:
       "面向企业的支付链接、托管收银台和支付 API。客户在 Stellar、Solana 或 Monad 上使用自己的钱包付款，款项进入您的地址，可即时到账，也可通过担保交易结算。",
   },
@@ -2043,6 +2055,8 @@ const zh: LandingMessages = {
   faq: {
     title: "常见问题",
     titleBold: "与解答。",
+    what: { q: "Cosmos Pay 是什么？", a: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付网关。您可以创建支付链接、托管收银台，或通过 API 创建支付意图；客户在 Stellar、Solana 或 Monad 上用自己的钱包付款；款项即时或通过担保交易进入您掌控的地址。" },
+    assets: { q: "可以用哪些币种收款？", a: "USDC、EURC、各网络的原生币（XLM、SOL 或 MON），或 Stellar、Solana、Monad 上的任何其他代币，例如 Solana 上的 USDT：创建链接时按发行方、铸币地址（mint）或合约指定即可。客户以该资产付款，您收到的也是同一资产。" },
     wallet: { q: "我需要自己的加密钱包吗？", a: "需要。在您接受的每个网络上，支付都会结算到您掌控的地址，因此从第一笔支付起，资金就归您所有。" },
     account: {
       q: "我的客户需要注册账户吗？",
@@ -2132,12 +2146,12 @@ const zh: LandingMessages = {
     nav: "Cosmos Pay Payments 版块",
     crumbs: "面包屑导航",
     home: "概览",
-    integrations: { nav: "集成", title: "集成 Cosmos Pay", lede: "从无需代码的支付链接，到使用 API 构建的专属支付界面。选择您的收款方式，以及支付在您网站上的呈现方式。", meta: "集成选项 | Cosmos Pay Payments" },
-    useCases: { nav: "使用场景", title: "使用场景", lede: "网店、服务商、数字商品和创作者如何接受稳定币支付，以及与银行卡和银行转账相比有何不同。", meta: "使用场景 | Cosmos Pay Payments" },
-    security: { nav: "安全", title: "安全", lede: "每笔支付都可在网络上核查，密钥始终归您所有，其他网站也无法嵌入支付页面。", meta: "安全 | Cosmos Pay Payments" },
-    fees: { nav: "价格", title: "价格", lede: "按套餐收取单笔费率，Starter 无月费。开始之前，先算算您能收到多少。", meta: "价格与费用 | Cosmos Pay Payments" },
-    faq: { nav: "常见问题", title: "常见问题", lede: "钱包、担保交易、退款、测试和费用：商家在开始前会问的问题。", meta: "常见问题 | Cosmos Pay Payments" },
-    swaps: { nav: "兑换", title: "兑换", lede: "无需账户，在 35 个以上网络之间兑换代币，并从 Stellar 发送 USDT0。", meta: "兑换 | Cosmos Pay Payments" },
+    integrations: { nav: "集成", title: "在您的网站上接受稳定币支付", lede: "从无需代码的支付链接，到使用 API 构建的专属支付界面。选择您的收款方式，以及支付在您网站上的呈现方式。", meta: "稳定币收银台、支付按钮和 API | Cosmos Pay" },
+    useCases: { nav: "使用场景", title: "企业如何收取稳定币付款", lede: "网店、服务商、数字商品和创作者如何接受稳定币支付，以及与银行卡和银行转账相比有何不同。", meta: "稳定币收款：企业使用场景 | Cosmos Pay" },
+    security: { nav: "安全", title: "可在链上核查的支付", lede: "每笔支付都可在网络上核查，密钥始终归您所有，其他网站也无法嵌入支付页面。", meta: "非托管支付，链上核验 | Cosmos Pay" },
+    fees: { nav: "价格", title: "稳定币支付费用", lede: "按套餐收取单笔费率，Starter 无月费。开始之前，先算算您能收到多少。", meta: "稳定币支付费用与计算器 | Cosmos Pay" },
+    faq: { nav: "常见问题", title: "稳定币支付常见问题", lede: "钱包、担保交易、退款、测试和费用：商家在开始前会问的问题。", meta: "稳定币支付常见问题：钱包、费用、退款 | Cosmos Pay" },
+    swaps: { nav: "兑换", title: "无需账户，跨网络兑换代币", lede: "无需账户，在 35 个以上网络之间兑换代币，并从 Stellar 发送 USDT0。", meta: "跨链兑换与从 Stellar 发送 USDT0 | Cosmos Pay" },
     more: { integrations: "查看全部集成选项", fees: "计算您的费用", security: "了解支付如何受到保护", faq: "查看全部问题", useCases: "查看全部使用场景" },
     notes: ["Starter 无月费", "在测试网上试用，不涉及真实资金"],
   },
