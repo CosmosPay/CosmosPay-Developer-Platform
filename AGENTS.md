@@ -119,6 +119,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `PUBLIC_PAYMENTS_URL`**, inlined at build. An unknown host (IP, health check, smoke test) is
   the platform. Links that may render on another domain than their target are absolute, from
   `src/components/cosmos/lib/constants.ts`.
+- **The same three hostnames are `security.allowedDomains` in `astro.config.mjs`.** Astro takes
+  the request's host from the Host header only for those; any other host becomes the server's
+  own address. Without them every request behind nginx is the platform and the site and
+  payments pages answer a 301 to themselves (v0.9.0 shipped like that). `npm run test:smoke`
+  asks each trusted host for `/pricing` and fails on a redirect to itself.
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
