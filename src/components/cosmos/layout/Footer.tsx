@@ -49,7 +49,9 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
   {
     key: "resources",
     links: [
-      { i: 0, href: `${DOCS}/getting-started` }, // Guides
+      // The gateway's guides hub (src/lib/payments/site-pages.ts); the docs keep their own
+      // getting-started guide under Developers > Documentation and the nav's Tutorials.
+      { i: 0, href: `${PAYMENTS}/learn` }, // Guides
       // { i: 1, href: "#" }, // Blog (no page yet)
       // { i: 2, href: "#" }, // Customer stories (no page yet)
       { i: 3, href: `${DASH}?view=support` }, // Support

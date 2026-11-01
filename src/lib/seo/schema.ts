@@ -267,6 +267,76 @@ export function productNodes({ site, docs, apiBase, wallet }: ProductNodesInput)
   ];
 }
 
+export interface ArticleInput {
+  /** The canonical URL of the version shown (with its ?lang= when it has one). */
+  url: string;
+  type: "Article" | "TechArticle";
+  /** The page's h1. */
+  headline: string;
+  description: string;
+  lang: string;
+  /** The WebSite it belongs to (its origin) and the company that writes it (its site). */
+  origin: string;
+  site: string;
+  /** ISO dates, as the page states them. */
+  published: string;
+  modified: string;
+  image?: string;
+}
+
+/** A guide as an article written and published by the company itself (the shared Organization),
+ *  the main content of its WebPage (`${url}#webpage`). */
+export function articleNode(a: ArticleInput): JsonLdNode {
+  const org = { "@id": orgId(a.site) };
+  return {
+    "@type": a.type,
+    "@id": `${a.url}#article`,
+    headline: a.headline,
+    description: a.description,
+    inLanguage: a.lang,
+    url: a.url,
+    mainEntityOfPage: { "@id": `${a.url}#webpage` },
+    isPartOf: { "@id": websiteId(a.origin) },
+    author: org,
+    publisher: org,
+    datePublished: a.published,
+    dateModified: a.modified,
+    ...(a.image && { image: a.image }),
+  };
+}
+
+export interface HowToInput {
+  /** The canonical URL of the version shown; each step is an anchor on it (`#step-1`…). */
+  url: string;
+  name: string;
+  description: string;
+  lang: string;
+  /** The steps as the page numbers them. */
+  steps: readonly { name: string; text: string }[];
+}
+
+/** The numbered steps a guide shows, as a HowTo (only for steps the page itself shows). */
+export function howToNode(h: HowToInput): JsonLdNode {
+  return {
+    "@type": "HowTo",
+    "@id": `${h.url}#howto`,
+    name: h.name,
+    description: h.description,
+    inLanguage: h.lang,
+    step: h.steps.map((s, i) => ({ "@type": "HowToStep", position: i + 1, name: s.name, text: s.text, url: `${h.url}#step-${i + 1}` })),
+  };
+}
+
+/** A hub's list of pages, in its order, each by its address and name. */
+export function itemListNode(id: string, items: readonly { name: string; url: string }[]): JsonLdNode {
+  return {
+    "@type": "ItemList",
+    "@id": id,
+    numberOfItems: items.length,
+    itemListElement: items.map((it, i) => ({ "@type": "ListItem", position: i + 1, name: it.name, url: it.url })),
+  };
+}
+
 /** The script element's text: one graph, with "<" escaped so no string can close the element. */
 export function jsonLdText(graph: JsonLdNode[]): string {
   return JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c");

@@ -3,18 +3,26 @@
 // home (it mirrors the URL, /faq is Home > FAQ, and StructuredData.astro states the same trail
 // for search engines), its title as the page's h1, one line on what it covers, and a 3D clay
 // render on the right (3dicons, CC0). The general nav and the section navigation sit above it.
+// A guide passes its own words (`copy`), the hub between home and itself (`parent`: /learn) and
+// the line under its lede (`byline`: when it was last updated, and by whom).
 import type { LandingData } from "@/components/payments/landing/data";
 
 type PageKey = "integrations" | "swaps" | "useCases" | "security" | "fees" | "faq" | "compare" | "stellar" | "solana" | "monad";
 interface Props {
   d: LandingData;
-  page: PageKey;
+  page?: PageKey;
+  /** The page's words when they are not the landing catalog's `pages` entry. */
+  copy?: { nav: string; title: string; lede: string };
+  /** A crumb between the home and this page. */
+  parent?: { name: string; href: string };
+  /** The line under the lede (a guide's date and author). */
+  byline?: { text: string; datetime?: string; by?: string };
   /** A render from public/media/landing, e.g. "3d-security". */
   art: string;
 }
 
-const { d, page, art } = Astro.props;
-const copy = d.t.pages[page] as { nav: string; title: string; lede: string };
+const { d, page, art, parent, byline } = Astro.props;
+const copy = Astro.props.copy ?? (d.t.pages[page ?? "faq"] as { nav: string; title: string; lede: string });
 ---
 
 <header class="pl-page-head">
@@ -23,11 +31,18 @@ const copy = d.t.pages[page] as { nav: string; title: string; lede: string };
       <nav class="pl-crumbs" aria-label={d.t.pages.crumbs}>
         <ol role="list">
           <li><a href="/">{d.t.pages.home}</a></li>
+          {parent && <li><a href={parent.href}>{parent.name}</a></li>}
           <li><span aria-current="page">{copy.nav}</span></li>
         </ol>
       </nav>
       <h1 class="pl-page-title">{copy.title}</h1>
       <p class="pl-lede">{copy.lede}</p>
+      {byline && (
+        <p class="pl-byline">
+          {byline.datetime ? <time datetime={byline.datetime}>{byline.text}</time> : <span>{byline.text}</span>}
+          {byline.by && <span>{byline.by}</span>}
+        </p>
+      )}
     </div>
     <img class="pl-3d pl-page-art" src={`/media/landing/${art}.webp`} alt="" width="400" height="400" decoding="async" />
   </div>

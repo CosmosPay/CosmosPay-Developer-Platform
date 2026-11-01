@@ -1,0 +1,192 @@
+---
+// One guide of the gateway (src/pages/payments/learn/<slug>.astro, registered in
+// src/lib/payments/site-pages.ts): answer first (the header's lede answers the question the guide's
+// title asks), then its blocks in the order src/lib/payments/learn/index.ts gives (sections, the
+// numbered steps, the network comparison), its questions when it has them, the related guides and
+// the final call. The words are the guides' catalog (src/lib/payments/learn/<lang>.ts); links are
+// keys of src/lib/payments/learn/links.ts; rates come from src/lib/plans.ts.
+//
+// Its JSON-LD (StructuredData.astro): the WebPage, its BreadcrumbList (Overview > Guides > the
+// guide, as the header draws it), the article written and published by the shared Organization
+// with the dates the page shows, a HowTo of the steps where the page numbers them, and an FAQPage
+// of the questions it shows.
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import Mock from "@/components/payments/landing/Mock.astro";
+import Faq from "@/components/payments/landing/sections/Faq.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
+import NetworkTable from "@/components/payments/learn/NetworkTable.astro";
+import { landingData } from "@/components/payments/landing/data";
+import { GUIDE_CONFIG, fill, guideCopy } from "@/lib/payments/learn/index";
+import { isExternal, learnHrefs, type LearnLink } from "@/lib/payments/learn/links";
+import { GUIDE_DATES, pagePath, type Guide } from "@/lib/payments/site-pages";
+import { LOCALES } from "@/lib/payments/i18n";
+import { PAYMENTS } from "@/lib/payments/urls";
+import { SITE } from "@/components/cosmos/lib/constants";
+import { PLAN_SPECS } from "@/lib/plans";
+import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
+import { articleNode, howToNode, type JsonLdNode } from "@/lib/seo/schema";
+
+interface Props {
+  guide: Guide;
+}
+
+const { guide } = Astro.props;
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+const { t, learn, DOCS } = d;
+const g = guideCopy(learn, guide);
+const cfg = GUIDE_CONFIG[guide];
+const dates = GUIDE_DATES[guide];
+const page = `learn/${guide}` as const;
+const HREF = learnHrefs(DOCS);
+const vars = { starterRate: PLAN_SPECS.starter.perTx };
+const text = (s: string) => fill(s, vars);
+const linksOf = (links: Partial<Record<LearnLink, string>> | undefined) =>
+  Object.entries(links ?? {}).map(([key, label]) => ({ href: HREF[key as LearnLink], label: label as string }));
+
+// The questions as the page shows them, rates filled in.
+const questions = g.faq ? Object.values(g.faq).map((f) => ({ q: text(f.q), a: text(f.a) })) : undefined;
+const steps = g.steps ? Object.values(g.steps.items).map((s) => ({ title: text(s.title), body: text(s.body) })) : [];
+
+// The date the guide was last changed, as the reader's language writes it.
+const updated = fill(learn.ui.updated, {
+  date: new Intl.DateTimeFormat(lang, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${dates.modified}T00:00:00Z`)),
+});
+
+// The addresses the JSON-LD names, the same the layout gives as canonical and hreflang.
+const explicit = explicitLang(Astro.url.searchParams.get("lang"), LOCALES.map((l) => l.code));
+const url = pageUrl(PAYMENTS, Astro.locals.publicPath ?? pagePath(page), explicit);
+const trail = [
+  { name: t.pages.home, url: pageUrl(PAYMENTS, "/", explicit) },
+  { name: learn.hub.nav, url: pageUrl(PAYMENTS, pagePath("learn"), explicit) },
+  { name: g.nav, url },
+];
+const nodes: JsonLdNode[] = [
+  articleNode({
+    url,
+    type: cfg.type,
+    headline: g.title,
+    description: g.description,
+    lang,
+    origin: PAYMENTS,
+    site: SITE,
+    published: dates.published,
+    modified: dates.modified,
+    image: `${PAYMENTS}/media/coin-ramp-poster.jpg`,
+  }),
+  ...(cfg.howTo && g.steps ? [howToNode({ url, name: text(g.steps.title), description: g.lede, lang, steps: steps.map((s) => ({ name: s.title, text: s.body })) })] : []),
+];
+---
+
+<PaymentsLayout title={g.meta} description={g.description} indexable>
+  <LandingHead
+    slot="head"
+    d={d}
+    page={page}
+    title={g.meta}
+    description={g.description}
+    faq={questions}
+    embed={false}
+    trail={trail}
+    mainEntity={`${url}#article`}
+    nodes={nodes}
+  />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current={page} />
+    <article class="pl-guide-article">
+      <PageHeader
+        d={d}
+        copy={{ nav: g.nav, title: g.title, lede: text(g.lede) }}
+        parent={{ name: learn.hub.nav, href: d.pageLinks.learn }}
+        byline={{ text: updated, datetime: dates.modified, by: learn.ui.by }}
+        art={cfg.art}
+      />
+
+      <div class="pl-section pl-guide">
+        <div class="wrap pl-guide-body">
+          {cfg.order.map((key) => {
+            const mock = cfg.mocks[key];
+            const visual = mock && (
+              <div class="pl-guide-visual" data-reveal style="--i: 1">
+                <Mock name={mock} ui={t.ui} />
+              </div>
+            );
+            if (key === "table") {
+              const table = learn.guides.networks.table;
+              return (
+                <section class="pl-guide-block pl-guide-wide" aria-labelledby="g-table">
+                  <div class="pl-guide-text" data-reveal>
+                    <h2 id="g-table">{table.title}</h2>
+                  </div>
+                  <NetworkTable d={d} />
+                </section>
+              );
+            }
+            if (key === "steps" && g.steps) {
+              return (
+                <section class="pl-guide-block" aria-labelledby="g-steps">
+                  <div class="pl-guide-text">
+                    <h2 id="g-steps" data-reveal>{text(g.steps.title)}</h2>
+                    <ol class="pl-guide-steps" role="list">
+                      {steps.map((s, i) => (
+                        <li id={`step-${i + 1}`} data-reveal style={`--i: ${i}`}>
+                          <h3>{s.title}</h3>
+                          <p>{s.body}</p>
+                        </li>
+                      ))}
+                    </ol>
+                    {g.steps.links && (
+                      <p class="pl-guide-links">
+                        {linksOf(g.steps.links).map((l) => <a class="pl-textlink" href={l.href} rel={isExternal(l.href) ? "noopener" : undefined}>{l.label}</a>)}
+                      </p>
+                    )}
+                  </div>
+                  {visual}
+                </section>
+              );
+            }
+            const s = g.sections[key];
+            if (!s) return null;
+            return (
+              <section class="pl-guide-block" aria-labelledby={`g-${key}`}>
+                <div class="pl-guide-text" data-reveal>
+                  <h2 id={`g-${key}`}>{text(s.title)}</h2>
+                  {s.body?.map((p) => <p>{text(p)}</p>)}
+                  {s.points && (
+                    <ul class="pl-guide-points" role="list">
+                      {s.points.map((p) => <li>{text(p)}</li>)}
+                    </ul>
+                  )}
+                  {s.links && (
+                    <p class="pl-guide-links">
+                      {linksOf(s.links).map((l) => <a class="pl-textlink" href={l.href} rel={isExternal(l.href) ? "noopener" : undefined}>{l.label}</a>)}
+                    </p>
+                  )}
+                </div>
+                {visual}
+              </section>
+            );
+          })}
+        </div>
+      </div>
+
+      {questions && <Faq d={d} items={questions} heading={`${t.faq.title} ${t.faq.titleBold}`} />}
+    </article>
+    <GuideLinks d={d} guides={cfg.related} heading={learn.ui.more} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

@@ -1,0 +1,61 @@
+---
+// The comparison in the "Stellar vs Solana vs Monad" guide: the three networks a payment settles on,
+// side by side, as Cosmos Pay supports them. The words are the guide's (`table` in
+// src/lib/payments/learn/); the facts that are data come from the repository, never written by
+// hand: the assets with a preset and the test networks from src/lib/chains.ts and
+// src/lib/stellar-assets.ts (through src/lib/payments/network-pages.ts), the wallets each network
+// page names, and Starter's rate from src/lib/plans.ts. Each network's column heading links its page.
+import type { LandingData } from "@/components/payments/landing/data";
+import { CHAINS, CHAIN_NAMES, TEST_NETWORKS, type Chain } from "@/lib/chains";
+import { NETWORK_WALLETS, networkPresets } from "@/lib/payments/network-pages";
+import { PLAN_SPECS } from "@/lib/plans";
+import { fill } from "@/lib/payments/learn/index";
+
+interface Props {
+  d: LandingData;
+}
+
+const { d } = Astro.props;
+const { lang, pageLinks } = d;
+const table = d.learn.guides.networks.table;
+const wallets = new Intl.ListFormat(lang, { style: "long", type: "disjunction" });
+const codes = (chain: Chain, tier: "public" | "testnet") =>
+  networkPresets(chain)
+    .filter((r) => r.tier === tier)
+    .map((r) => r.code)
+    .join(", ");
+const vars = { starterRate: PLAN_SPECS.starter.perTx };
+
+// One cell per network for every row, in the catalog's order.
+const rows = Object.entries(table.rows).map(([key, row]) => {
+  const cell = (chain: Chain): string => {
+    if (key === "presets") return codes(chain, "public");
+    if (key === "test") return `${TEST_NETWORKS[chain]} (${codes(chain, "testnet")})`;
+    if ("value" in row) return fill(row.value, vars);
+    const text = (row as Record<Chain, string>)[chain];
+    return fill(text, { ...vars, wallets: wallets.format(NETWORK_WALLETS[chain]) });
+  };
+  return { key, k: row.k, cells: CHAINS.map((chain) => ({ chain, text: cell(chain) })) };
+});
+---
+
+<div class="pl-compare-card pl-guide-table" data-reveal>
+  <table class="pl-compare pl-guide-net">
+    <caption class="pl-sr">{table.caption}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{table.topic}</th>
+        {CHAINS.map((chain) => <th scope="col"><a href={pageLinks[chain]}>{CHAIN_NAMES[chain]}</a></th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr>
+          <th scope="row">{r.k}</th>
+          {r.cells.map((c) => <td data-label={CHAIN_NAMES[c.chain]}>{c.text}</td>)}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="pl-footnote" data-reveal>{table.note}</p>

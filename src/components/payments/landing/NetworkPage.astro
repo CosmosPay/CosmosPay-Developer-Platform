@@ -3,7 +3,8 @@
 // registered in src/lib/payments/site-pages.ts): answer first (the header's lede), then how a
 // payment works there, the assets with a preset, what it costs (the plans' rates, from
 // src/lib/plans.ts), the request that creates a link, and the questions specific to it, which
-// the page's JSON-LD repeats as an FAQPage. Copy: `pages.<chain>`, `network` and
+// the page's JSON-LD repeats as an FAQPage, then the guides that compare the networks and walk
+// through a first payment. Copy: `pages.<chain>`, `network` and
 // `networks.<chain>` in src/lib/payments/landing-i18n.ts.
 import "@/styles/payments-landing.css";
 import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
@@ -18,6 +19,7 @@ import NetworkCode from "@/components/payments/landing/sections/NetworkCode.astr
 import Pricing from "@/components/payments/landing/sections/Pricing.astro";
 import Faq from "@/components/payments/landing/sections/Faq.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
 import { CHAIN_NAMES, type Chain } from "@/lib/chains";
 import { PRIVATE_PAYMENT_FEE_PCT } from "@/lib/plans";
 
@@ -46,6 +48,7 @@ const ART: Record<Chain, string> = { stellar: "3d-instant", solana: "3d-final", 
     <Pricing d={d} compact heading={d.t.network.feesTitle} lede={d.t.networks[chain].feesLede} />
     <NetworkCode d={d} chain={chain} />
     <Faq d={d} items={questions} heading={`${d.t.network.faqTitle.replace("{network}", name)} ${d.t.network.faqTitleBold}`} current={chain} />
+    <GuideLinks d={d} guides={["stellar-vs-solana-vs-monad", "accept-usdc-payments"]} />
     <FinalCta d={d} />
   </main>
 

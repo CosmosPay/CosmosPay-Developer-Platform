@@ -31,7 +31,7 @@ npm run indexnow          # dry run: the live sitemaps' URLs IndexNow would get;
 - **The product speaks English, Spanish, Portuguese, French, German, Hindi and Simplified Chinese**
   (`en es pt fr de hi zh`) on every surface: the platform's catalog (`src/lib/i18n/messages/*.ts`,
   the languages and their flags in `src/lib/i18n/locales.ts`), the payments catalogs
-  (`src/lib/payments/i18n.ts`, `landing-i18n.ts`), the embed (`src/embed/i18n.ts`), Open Graph
+  (`src/lib/payments/i18n.ts`, `landing-i18n.ts`, the guides' `src/lib/payments/learn/<lang>.ts`), the embed (`src/embed/i18n.ts`), Open Graph
   locales (`src/lib/seo/lang-urls.ts`), the company site's search titles (`src/lib/seo/site-meta.ts`),
   `BackToTop.astro` and `src/lib/geo.ts`. A new language goes into all of them. The docs (Fumadocs) stay in five.
 - **Nothing on screen is hardcoded English**: every label, placeholder, aria-label and example value
@@ -39,8 +39,8 @@ npm run indexnow          # dry run: the live sitemaps' URLs IndexNow would get;
   for sample data in placeholders). **Never build a plural with a suffix** (`{s}`): give the
   singular and the plural their own strings (`atLimitOne` / `atLimit`).
 - **Every catalog mirrors English key for key** with the same `{placeholders}` and no empty string:
-  `tests/unit/dashboardI18n.test.ts` (the platform), `paymentsI18n.test.ts` and `embedI18n.test.ts`
-  enforce it. URLs are not copy: links live in the components (`NAV_LINKS`), not the catalogs.
+  `tests/unit/dashboardI18n.test.ts` (the platform), `paymentsI18n.test.ts` (the gateway and its
+  guides) and `embedI18n.test.ts` enforce it. URLs are not copy: links live in the components (`NAV_LINKS`), not the catalogs.
 - **The browser downloads one catalog, the page's language** (`src/lib/i18n/index.tsx`): each
   language is its own chunk, the one `<html lang>` names loaded before the islands hydrate (keep
   it equal to the islands' `lang`, or they wait for theirs), another one when it is picked
@@ -109,7 +109,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -819,6 +819,23 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   questions, which its JSON-LD repeats as an FAQPage. They are not in the section bar: the footer's
   "Networks" group (every domain), the home's networks marquee and the FAQ's network line link them.
   Settlement time is said only where the copy already states it (about 5 seconds on Stellar).
+  **The guides** (product owner, 2026-11-01): `/learn` lists them (`LEARN_PAGES`, `GUIDES` and
+  `GUIDE_DATES` in `site-pages.ts`) and each is `/learn/<slug>` (`src/pages/payments/learn/`,
+  `src/components/payments/learn/GuidePage.astro`), answer first: the header's lede answers the
+  question the title asks in two or three sentences, then the blocks `GUIDE_CONFIG`
+  (`src/lib/payments/learn/index.ts`) orders (sections, numbered steps, the network comparison built
+  from `chains.ts`, `network-pages.ts` and `plans.ts`), its questions, related guides and the final
+  call. Copy in `src/lib/payments/learn/<lang>.ts`, one file per language mirroring `en.ts`; links
+  are keys of `learn/links.ts` (the gateway's pages, docs pages that exist, and the primary source
+  of any claim about another company). No legal, regulatory or tax content, no figure that is not a
+  product fact (product owner). Each guide shows its last update, and that date is its JSON-LD
+  `dateModified` and its sitemap `lastmod`: change `GUIDE_DATES` with the text. JSON-LD: the page,
+  its BreadcrumbList (Overview > Guides > the guide), an Article or TechArticle by the shared
+  Organization, a HowTo only where the page numbers the steps, an FAQPage only for questions it
+  shows; the hub is a CollectionPage with the guides' ItemList. `tests/unit/paymentsLearn.test.ts`
+  keeps every title within 60 characters and every description within 155 in all seven languages.
+  The section bar ends with the hub, the footer's Resources > Guides leads to it, and /faq, the
+  network pages and /integrations link guides (`GuideLinks.astro`).
   **`/compare`** sets each rate beside the published one it is 75% of (see "Plans").
   It is the first thing under the nav on every page, the home included (product owner: no
   waiting for it), so there the hero starts under it instead of running up under the nav. Its

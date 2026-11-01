@@ -1,0 +1,28 @@
+---
+// A section that points to some of the gateway's guides and to their hub: under a guide (its
+// related guides) and on the pages whose readers ask what the guides answer (/faq, the network
+// pages, /integrations). The words are the guides' catalog (src/lib/payments/learn/).
+import type { LandingData } from "@/components/payments/landing/data";
+import GuideList from "@/components/payments/learn/GuideList.astro";
+import type { Guide } from "@/lib/payments/site-pages";
+
+interface Props {
+  d: LandingData;
+  guides: readonly Guide[];
+  /** The section's heading; "Related guides" when not given. */
+  heading?: string;
+}
+
+const { d, guides, heading } = Astro.props;
+const { learn, pageLinks } = d;
+---
+
+<section class="pl-section pl-section-alt pl-guides-related" aria-labelledby="pl-guides">
+  <div class="wrap pl-split">
+    <div class="pl-head" data-reveal>
+      <h2 id="pl-guides">{heading ?? learn.ui.related}</h2>
+      <a class="pl-textlink" href={pageLinks.learn}>{learn.ui.all}</a>
+    </div>
+    <GuideList d={d} guides={guides} level={3} />
+  </div>
+</section>

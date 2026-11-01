@@ -57,7 +57,7 @@ export function startLanding(): void {
 
   /* On a phone the section bar scrolls sideways and the current page can sit past its edge:
      bring that link to the middle of the bar, so the visitor sees where they are. */
-  const here = document.querySelector<HTMLElement>(".pl-subnav-links [aria-current='page']");
+  const here = document.querySelector<HTMLElement>(".pl-subnav-links [aria-current]");
   const bar = here?.closest<HTMLElement>(".pl-subnav-links");
   const centre = () => {
     if (!here || !bar || bar.scrollWidth <= bar.clientWidth) return;

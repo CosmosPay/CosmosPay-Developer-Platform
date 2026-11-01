@@ -11,6 +11,7 @@ import InlineCta from "@/components/payments/landing/InlineCta.astro";
 import { landingData } from "@/components/payments/landing/data";
 import Faq from "@/components/payments/landing/sections/Faq.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
@@ -23,6 +24,7 @@ const d = landingData(lang, "multi");
     <Subnav d={d} current="faq" />
     <PageHeader d={d} page="faq" art="3d-chat" />
     <Faq d={d} bare />
+    <GuideLinks d={d} guides={["stablecoin-payment-gateway", "accept-usdc-payments", "whatsapp-payment-links", "stellar-vs-solana-vs-monad"]} />
     <FinalCta d={d} />
   </main>
 
