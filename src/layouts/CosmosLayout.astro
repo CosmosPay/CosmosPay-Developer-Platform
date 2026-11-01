@@ -14,13 +14,16 @@ import { DEFAULT_LANG, canonicalUrl, explicitLang, hreflangAlternates, ogLocale,
 import { crossHostCanonical } from "@/lib/seo/cross-host";
 import { markdownAlternate } from "@/lib/seo/markdown-urls";
 import { modifiedAt } from "@/lib/seo/page-dates-build";
+import { pageShareImage, type ShareImage } from "@/lib/seo/og-image-urls";
 import type { JsonLdNode } from "@/lib/seo/schema";
 
 interface Props {
   title?: string;
   lang?: string;
   description?: string;
-  /** OG/Twitter share image (absolute path under /public). */
+  /** OG/Twitter share image (absolute path under /public), 1200x630 PNG. Without it, an indexable
+   *  page of the company site names its own card (src/lib/seo/og-images.ts) and every other page
+   *  the brand card. */
   image?: string;
   /** Set true on private/auth pages so search engines don't index them. */
   noindex?: boolean;
@@ -59,7 +62,7 @@ const {
   title = "Cosmos Pay Developer Platform",
   lang,
   description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API (multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers and analytics).",
-  image = "/og-image.png",
+  image,
   noindex = false,
   type = "website",
   preloadImage,
@@ -109,7 +112,15 @@ const crumbs = (breadcrumb ?? []).map((page, i, all) => ({
 }));
 // When the page last changed: the date it states, else its sources' last commit (page-dates.ts).
 const dateModified = multilingual ? modifiedAt("site", path, contentLang) : null;
-const ogImage = new URL(image, siteBase).href;
+// The share image: a page's own `image`, else the card of the page in the language shown (the
+// gateway's card where the gateway's page is the canonical one: /swaps), else the brand card.
+const card = multilingual
+  ? elsewhere
+    ? pageShareImage("payments", new URL(elsewhere).pathname, contentLang, PAYMENTS)
+    : pageShareImage("site", path, contentLang, SITE)
+  : null;
+const share: ShareImage =
+  (!image && card) || { url: new URL(image ?? "/og-image.png", siteBase).href, type: "image/png", width: 1200, height: 630, alt: "Cosmos Pay" };
 const robots = noindex ? "noindex, nofollow" : "index, follow";
 const gaId = PUBLIC_GA_ID;
 const googleSiteVerification = PUBLIC_GOOGLE_SITE_VERIFICATION;
@@ -167,11 +178,11 @@ const themeScript =
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={ogImage} />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Cosmos Pay" />
+    <meta property="og:image" content={share.url} />
+    <meta property="og:image:type" content={share.type} />
+    <meta property="og:image:width" content={String(share.width)} />
+    <meta property="og:image:height" content={String(share.height)} />
+    <meta property="og:image:alt" content={share.alt} />
     <meta property="og:locale" content={ogLocale(contentLang)} />
     {multilingual && langs.filter((l) => l !== contentLang).map((l) => <meta property="og:locale:alternate" content={ogLocale(l)} />)}
 
@@ -180,8 +191,8 @@ const themeScript =
     <meta name="twitter:site" content={xHandle} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={ogImage} />
-    <meta name="twitter:image:alt" content="Cosmos Pay" />
+    <meta name="twitter:image" content={share.url} />
+    <meta name="twitter:image:alt" content={share.alt} />
 
     <!-- The page's JSON-LD graph (company site; the platform's pages are not indexed). -->
     {multilingual && (
@@ -190,7 +201,7 @@ const themeScript =
         title={title}
         description={description}
         lang={contentLang}
-        image={ogImage}
+        image={share}
         breadcrumb={crumbs}
         mainEntity={mainEntity}
         pageType={pageType}

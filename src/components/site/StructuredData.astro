@@ -19,8 +19,8 @@ interface Props {
   title: string;
   description: string;
   lang: string;
-  /** The share image (absolute). */
-  image: string;
+  /** The share image (absolute URL and size), the page's primaryImageOfPage. */
+  image: { url: string; width: number; height: number };
   breadcrumb?: Crumb[];
   mainEntity?: string;
   /** The page's schema.org type when it is more specific than WebPage ("AboutPage"). */
@@ -46,7 +46,7 @@ const graph: JsonLdNode[] = [
     breadcrumb,
     mainEntity,
     ...(home && { about: ORGANIZATION_ID }),
-    image: { url: image, width: 1200, height: 630 },
+    image: { url: image.url, width: image.width, height: image.height },
     dateModified,
   }),
   ...schema,

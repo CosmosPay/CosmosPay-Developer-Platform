@@ -8,7 +8,7 @@ Astro SSR portal + its own REST API under `src/pages/api/`).
 ```bash
 npm run dev               # astro dev --host; predev runs `prisma migrate deploy` + scripts/ensure-docs.mjs
 npm run build             # prisma generate -> docs:build (Fumadocs export into public/docs) -> astro build
-npm run build:app         # prisma generate -> embed:build -> astro build: no docs build (563 pages on 8
+npm run build:app         # prisma generate -> embed:build -> og:build -> astro build: no docs build (563 pages on 8
                           #   workers), docs/ untouched; enough to check a change outside the docs
 npm start                 # node dist/server/entry.mjs; prestart runs ensure-docs. Production runs under PM2
 npm test                  # = test:unit (node:test over tests/unit/**/*.test.ts; no DB, no astro:env),
@@ -19,6 +19,8 @@ npm run check:api-spec    # fails if docs/openapi.json differs from the communit
                           #   (OPENAPI_SRC, else the sibling checkout; exits 0 when neither exists)
 npm run docs:api          # regenerates docs/openapi.json + the API pages inside docs/
 npm run embed:build       # bundles src/embed into public/embed/cosmos-pay.js (run by build and predev)
+npm run og:build          # draws every indexable page's share card per language into src/assets/og
+                          #   (run by build, build:app and predev; redraws only what changed)
 npm run db:migrate        # prisma migrate dev (db:deploy = migrate deploy, db:generate, db:push)
 npm run sync:route        # re-points every APISIX route's upstream at COSMOS_API_URL, no restart
 npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
@@ -932,8 +934,38 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   payment in words (a percentage plus a fixed part is no price of its own), Essentials and Growth
   at their monthly fee, Enterprise (custom) none. Only what the page and `plans.ts` say: no
   ratings, reviews or claims beyond them. The wallet's SoftwareApplication carries no
-  `softwareVersion` (a number written by hand goes stale with the next release). The indexed pages share the hero's
-  poster (`/media/coin-ramp-poster.jpg`) as their image; payment links keep the brand card.
+  `softwareVersion` (a number written by hand goes stale with the next release). Each indexed page names its own
+  share card (below); payment links keep the brand card.
+- **Every indexable page of the company site and the gateway has its own share card in each of
+  its languages** (og:image, twitter:image and the page's JSON-LD image; product owner, 2026-11-01):
+  a 1200x630 PNG of the page's own h1 in that language (the words its Markdown version opens with;
+  the gateway home's two hero lines with the black highlighter on its marked words), the brand's
+  lockup (`public/brand/lockup-cosmos-pay-mono.svg`, never typed), the host's label after it on the
+  gateway ("Payments") and the host at the foot. Two skins, as the hosts look: the company site is
+  BRAND.md's black panel with the title in Open Sauce One Light and the brand's ribbon
+  (`public/brand/cinta.png`) on the right; the gateway is the institutional skin (its canvas and
+  black ink, SemiBold at the pages' tracking, solid colours only). **No generative step:** what a
+  card says is `src/lib/seo/og-images.ts` (pure: the cards come from the registry the sitemap reads,
+  `indexable.ts`, so a new page gets its card in every language; `/tos` has two, the company `/swaps`
+  names the gateway's), drawn by `src/lib/og/` (HarfBuzz through `harfbuzzjs` shapes every run,
+  so Hindi conjuncts and vowel signs come out right, and draws the glyphs as paths; `@resvg/resvg-js`
+  rasterises the SVG; both pinned) from the brand's own WOFF2 files in `public/fonts` (decoded by
+  `wawoff2`) with per-grapheme fallback to Noto Sans Devanagari and Noto Sans SC
+  (`@fontsource-variable/*`, pinned, OFL; Chinese loads only the slices a title needs). A title is
+  set as large as fits three lines, its lines balanced, never splitting "Cosmos Pay", never
+  starting a line with closing punctuation. **A title that does not fit, or a character no face
+  has (tofu), fails the build** with the page and language named. `npm run og:build`
+  (`scripts/build-og-images.mjs`, run by `build`, `build:app` and `predev` before astro) writes the
+  cards to `src/assets/og/` (git-ignored) and redraws only the cards whose words, renderer, brand
+  files, fonts or pinned versions changed (`manifest.json` there; about 4 s for all 135 from
+  scratch). Vite fingerprints them under `/_astro/` (`src/lib/seo/og-image-urls.ts`, like
+  `logo-urls.ts`), so they are cached a year as immutable and a changed title is a new URL; the
+  payments robots.txt allows `/_astro/` already. Without the drawn cards (a server built without
+  og:build) a page falls back to the brand card (`/og-image.png`, the company site and the
+  platform) or the hero's poster (the gateway). Payment links, `/pay` and previews keep the brand
+  card. `tests/unit/ogImages.test.ts` lays out every card in every language (fit and glyphs) and
+  checks each title against the page's h1; `npm run test:smoke` asks every address of both
+  sitemaps for its tags and fetches every card (200 image/png, 1200x630, immutable).
 - **The company site (cosmospay.lat) speaks every language at its own address too**: the
   middleware sets `locals.lang` for the `site` area as for payments (an indexable page's language
   is its address, English at the bare path) and the site pages read it, never the cookie.
