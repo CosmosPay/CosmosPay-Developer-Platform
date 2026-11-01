@@ -13,6 +13,7 @@ import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeeP
 import { LEARN_PAGES, PAYMENTS_PAGES, isLearnPage, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
 import { NETWORK_IDS } from "@/lib/chains";
 import { pageUrl } from "@/lib/seo/lang-urls";
+import { markdownUrl } from "@/lib/seo/markdown-urls";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, WALLET_RELEASES } from "@/lib/seo/schema";
 
 export interface LlmsInput {
@@ -23,6 +24,24 @@ export interface LlmsInput {
   wallet: { webApp: string; chromeStore: string };
   /** The company's public profiles (name → URL), in the order to list them. */
   profiles: Record<string, string>;
+}
+
+/** The company's one-paragraph summary: the quote under the H1 of its llms.txt and llms-full.txt. */
+export const SITE_SUMMARY =
+  "Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM).";
+
+/** The gateway's one-paragraph summary, under the H1 of its llms.txt and llms-full.txt. */
+export function paymentsSummary(site: string): string {
+  return `Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond.`;
+}
+
+/** The Markdown versions of a host's pages, for its llms.txt: every page in one file, and each at
+ *  its own address with `.md` (src/lib/seo/markdown-urls.ts). */
+function markdownSection(origin: string, example: string): string {
+  return `## Markdown
+
+- [Every page of this site in one file](${origin}/llms-full.txt): the English text of each page linked here on ${new URL(origin).host}, under its title and address
+- Each page is also Markdown at its own address with .md (${markdownUrl(origin, example)}; the home is ${markdownUrl(origin, "/")}), in every language it is written in (${markdownUrl(origin, example, "es")})`;
 }
 
 const planName = (id: string): string => id.charAt(0).toUpperCase() + id.slice(1);
@@ -69,7 +88,7 @@ export function siteLlmsTxt({ site, dev, payments, wallet, profiles }: LlmsInput
   const gateway = PAYMENTS_PAGES.filter((p) => !isLearnPage(p)).map(line);
   return `# Cosmos Pay
 
-> Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM).
+> ${SITE_SUMMARY}
 
 Key facts:
 
@@ -96,6 +115,8 @@ ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
 ## Guides
 
 ${LEARN_PAGES.map(line).join("\n")}
+
+${markdownSection(site, "/pricing")}
 
 ## Developers
 
@@ -143,7 +164,7 @@ export function paymentsLlmsTxt({ site, dev, payments }: LlmsInput): string {
   const pages = PAYMENTS_PAGES.filter((p) => !isLearnPage(p)).map(line);
   return `# Cosmos Pay Payments
 
-> Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond.
+> ${paymentsSummary(site)}
 
 How a payment works:
 
@@ -183,6 +204,8 @@ Each page above is in English; every other language is the same address with ?la
   ]
     .map(([name, code]) => `[${name}](${pay("/", code)})`)
     .join(", ")}.
+
+${markdownSection(payments, "/faq")}
 
 ## Developers
 

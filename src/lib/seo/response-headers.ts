@@ -11,6 +11,8 @@
      asked with GET (English, or a 302 to the visitor's language: src/lib/seo/lang-urls.ts) and
      the noindex pages that pick their language in place (payment links, /pay). An address that
      names its language (?lang=es) does not vary, and neither does a bare page asked without GET.
+   - Vary: Accept on a page that has a Markdown version, asked with GET or HEAD: an Accept that
+     prefers text/markdown gets that version in place (src/lib/seo/markdown-urls.ts).
 
    A header the response already carries is left as it is. Pure, so tests/unit/seoResponseHeaders.test.ts covers it. */
 
@@ -22,6 +24,9 @@ export interface ResponseHeaderOptions {
   https: boolean;
   /** The answer depends on the cookie or Accept-Language, not only on the address. */
   negotiatedLang: boolean;
+  /** The answer depends on Accept: the page would have answered its Markdown version to an Accept
+   *  that prefers it. */
+  negotiatedType?: boolean;
 }
 
 function addVary(headers: Headers, names: string[]): void {
@@ -32,13 +37,14 @@ function addVary(headers: Headers, names: string[]): void {
   if (missing.length) headers.set("Vary", [current, ...missing].filter(Boolean).join(", "));
 }
 
-function apply(headers: Headers, { https, negotiatedLang }: ResponseHeaderOptions): void {
+function apply(headers: Headers, { https, negotiatedLang, negotiatedType = false }: ResponseHeaderOptions): void {
   if (https && !headers.has("Strict-Transport-Security")) headers.set("Strict-Transport-Security", HSTS);
   if (!headers.has("Referrer-Policy")) headers.set("Referrer-Policy", REFERRER_POLICY);
   const type = headers.get("Content-Type") ?? "";
   const html = /^text\/html\b/i.test(type);
   if (html && !/;\s*charset=/i.test(type)) headers.set("Content-Type", "text/html; charset=utf-8");
   if (html && negotiatedLang) addVary(headers, ["Accept-Language", "Cookie"]);
+  if (html && negotiatedType) addVary(headers, ["Accept"]);
 }
 
 /** The response with those headers. A response whose headers cannot change (one a route passed

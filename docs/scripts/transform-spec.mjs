@@ -55,7 +55,8 @@ export const TAGS = [
     title: 'Private Payments',
     description:
       'Payments on Stellar whose amount stays hidden on-chain. Create a private payment, ' +
-      'list and read them; the merchant receives the amount minus the 0.01% commission.',
+      'list and read them; the merchant receives the amount minus the private-payment commission ' +
+      '(see https://cosmospay.lat/pricing).',
   },
   {
     name: 'zk-checkout',

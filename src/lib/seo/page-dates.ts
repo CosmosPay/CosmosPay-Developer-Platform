@@ -37,7 +37,13 @@ export function newestDate(sources: readonly string[], dates: Readonly<Record<st
 
 const catalog = (lang: string): string => `src/lib/i18n/messages/${lang}.ts`;
 const LANDING_COPY = "src/lib/payments/landing-i18n.ts";
-const LANDING_PARTS = ["src/components/payments/landing/sections/", "src/components/payments/landing/data.ts", "src/components/payments/landing/PageHeader.astro"];
+const LANDING_PARTS = [
+  "src/components/payments/landing/sections/",
+  "src/components/payments/landing/data.ts",
+  "src/lib/payments/landing-content.ts",
+  "src/components/payments/landing/PageHeader.astro",
+];
+const PUBLIC_SWAPS = ["src/components/cosmos/swaps/", "src/lib/public-swaps.ts"];
 const PLANS = "src/lib/plans.ts";
 
 /** The files the company site's page at `path` is made from, in `lang`. */
@@ -48,11 +54,11 @@ export function siteSources(path: string, lang: string): string[] | null {
     case "/pricing":
       return ["src/pages/site/pricing.astro", "src/components/cosmos/Pricing.tsx", "src/components/cosmos/pricing/", "src/lib/seo/site-meta.ts", catalog(lang), PLANS];
     case "/about":
-      return ["src/pages/site/about.astro", "src/lib/seo/site-meta.ts", catalog(lang)];
+      return ["src/pages/site/about.astro", "src/lib/site/about.ts", "src/lib/seo/site-meta.ts", catalog(lang)];
     case "/swaps":
-      return ["src/pages/site/swaps.astro", "src/components/cosmos/swaps/", catalog(lang), PLANS];
+      return ["src/pages/site/swaps.astro", ...PUBLIC_SWAPS, catalog(lang), PLANS];
     case "/tos":
-      return ["src/pages/site/tos.astro"];
+      return ["src/pages/site/tos.astro", "src/lib/site/terms.ts"];
     default:
       return null;
   }
@@ -64,7 +70,7 @@ const PAYMENTS_EXTRA: Partial<Record<PaymentsPage | "home", string[]>> = {
   fees: [PLANS],
   compare: [PLANS, "src/lib/payments/compare.ts"],
   integrations: ["src/lib/payments/integration-demo.ts"],
-  swaps: ["src/components/cosmos/swaps/", PLANS],
+  swaps: [...PUBLIC_SWAPS, PLANS],
 };
 const NETWORK_SOURCES = ["src/components/payments/landing/NetworkPage.astro", "src/lib/payments/network-pages.ts", "src/lib/stellar-assets.ts", "src/lib/chains.ts", PLANS];
 

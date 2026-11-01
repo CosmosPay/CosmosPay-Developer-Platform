@@ -53,7 +53,108 @@ _openapi:
         id: browse-on-chain-liquidity-pools-horizon-proxy
       - content: Get a liquidity pool by id (Horizon proxy)
         id: get-a-liquidity-pool-by-id-horizon-proxy
-    contents: []
+    contents:
+      - content: >-
+          Builds a `liquidityPoolDeposit` on the key's network for `source` to
+          sign (preceded by the pool-share trustline when the account has none),
+          stores it as `PENDING` and emits `LIQUIDITY_CREATED`. Leave
+          `maxAmountB` out to match the pool’s current ratio (an empty pool
+          needs both amounts, which set its price); the price bounds bracket the
+          pool price by `slippageBps` (default 50, cap 500 unless configured).
+          Deposits pay no plan commission; a `merchantFee` is paid from each
+          asset, and `source` must trust both assets and afford the amounts plus
+          its reserve (`trustline_missing`, `insufficient_balance`). An
+          `Idempotency-Key` (header or body) makes a retry return the same
+          operation.
+
+
+          Requires the `liquidity:write` or `swaps:write` scope. The shared
+          public key may call it.
+        heading: build-a-pool-deposit--unsigned-xdr--sep-7-tx-uri--qr-for-the-wallet-to-sign
+      - content: >-
+          Builds a `liquidityPoolWithdraw` of `shares` from `poolId` on the
+          key's network for `source` to sign, with minimum amounts of each
+          reserve set from the current reserves less `slippageBps`, stores it as
+          `PENDING` and emits `LIQUIDITY_CREATED`. The plan commission is
+          charged only on the gain over the cost basis of shares deposited
+          through this service, out of the withdrawn reserves; a `merchantFee`
+          is a share of the minimum amounts. A withdrawal from the same pool
+          that may already be on-chain blocks another one for that account
+          (`operation_in_flight`); an `Idempotency-Key` (header or body) makes a
+          retry return the same operation.
+
+
+          Requires the `liquidity:write` or `swaps:write` scope. The shared
+          public key may call it.
+        heading: build-a-pool-withdrawal-burn-shares--unsigned-xdr--sep-7-tx-uri--qr
+      - content: >-
+          Reads `account`'s pool-share trustlines from Horizon on the key's
+          network and, per pool, its shares, its share of the pool in basis
+          points, the reserves and what those shares redeem now. Ledger data,
+          not this consumer's rows: any account can be read, and nothing is
+          stored.
+
+
+          Requires the `liquidity:read` or `swaps:read` scope. The shared public
+          key may call it.
+        heading: an-accounts-pool-share-positions-with-redeemable-amounts
+      - content: >-
+          The deposits and withdrawals built through this service, newest first,
+          optionally filtered by `kind` and `status`. Paginated with `take`
+          (default 20, max 100) and `skip`; the answer is `{ data, total, take,
+          skip }`. Only operations on the key's network are listed (a `prod` key
+          sees mainnet, a `dev` key testnet).
+
+
+          Requires the `liquidity:read` or `swaps:read` scope.
+        heading: list-the-consumers-liquidity-pool-operations
+      - content: >-
+          One deposit or withdrawal this consumer built: its unsigned XDR, SEP-7
+          `uri` and QR, its status, and the commission and merchant fee it
+          carries. Answered from this service's own table, which submit and the
+          settlement observer keep current.
+
+
+          Requires the `liquidity:read` or `swaps:read` scope.
+        heading: get-a-liquidity-pool-operation-by-id
+      - content: >-
+          `signedXdr` must hash to the operation's stored transaction and carry
+          a signature, checked before anything about the operation is answered.
+          It is broadcast through Horizon and the answer is `SUCCEEDED` or
+          `submitted: false` with the result codes (a `FAILED` operation can be
+          resubmitted up to 3 times while its envelope is valid); an unreachable
+          Horizon is a 503 that leaves it resubmittable. Emits
+          `LIQUIDITY_SUBMITTED`, then `LIQUIDITY_SUCCEEDED` or
+          `LIQUIDITY_FAILED`, and a settled deposit records the cost basis the
+          withdrawal commission is charged against.
+
+
+          Requires the `liquidity:write` or `swaps:write` scope. The shared
+          public key may call it.
+        heading: relay-the-signed-transaction-to-the-network-hash-checked-finalizes-status
+      - content: >-
+          Horizon's pool list on the key's network, in descending order,
+          optionally narrowed to pools holding one or two assets
+          (`assetACode`/`assetAIssuer`, `assetBCode`/`assetBIssuer`) or to those
+          an `account` holds shares in. Paged by Horizon cursor, not
+          `take`/`skip`: `limit` per page (default 20, max 100), and the
+          answer's `cursor` fetches the next page (null when the page is not
+          full). Nothing is stored.
+
+
+          Requires the `liquidity:read` or `swaps:read` scope. The shared public
+          key may call it.
+        heading: browse-on-chain-liquidity-pools-horizon-proxy
+      - content: >-
+          One pool read from Horizon on the key's network: its fee, trustline
+          count, total shares and reserves. `poolId` is the 64-character
+          lowercase hex pool id; any other shape is `validation_failed`, and a
+          pool that does not exist on that network is a 404.
+
+
+          Requires the `liquidity:read` or `swaps:read` scope. The shared public
+          key may call it.
+        heading: get-a-liquidity-pool-by-id-horizon-proxy
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}

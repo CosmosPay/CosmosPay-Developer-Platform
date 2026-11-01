@@ -24,13 +24,11 @@ _openapi:
       title: Delete a receiver
       url: '#delete-a-receiver'
     - depth: 2
-      title: Approve a pending-review receiver (admin-only review gate); sends the
-        customer the terms link and returns it
-      url: '#approve-a-pending-review-receiver-admin-only-review-gate-sends-the-customer-the-terms-link-and-returns-it'
+      title: Approve a receiver's KYC review and get its terms-of-service link
+      url: '#approve-a-receivers-kyc-review-and-get-its-terms-of-service-link'
     - depth: 2
-      title: Request a terms-of-service link for a receiver ('code' returns the URL;
-        'email' sends it, max once/day)
-      url: '#request-a-terms-of-service-link-for-a-receiver-code-returns-the-url-email-sends-it-max-onceday'
+      title: Request a terms-of-service link for an approved receiver
+      url: '#request-a-terms-of-service-link-for-an-approved-receiver'
     - depth: 2
       title: Enable an inactive receiver with an accepted terms-of-service id
       url: '#enable-an-inactive-receiver-with-an-accepted-terms-of-service-id'
@@ -84,12 +82,10 @@ _openapi:
         id: update-a-receiver-once-it-is-at-blindpay-identity-fields-need-an-elevated-key
       - content: Delete a receiver
         id: delete-a-receiver
-      - content: Approve a pending-review receiver (admin-only review gate); sends the
-          customer the terms link and returns it
-        id: approve-a-pending-review-receiver-admin-only-review-gate-sends-the-customer-the-terms-link-and-returns-it
-      - content: Request a terms-of-service link for a receiver ('code' returns the URL;
-          'email' sends it, max once/day)
-        id: request-a-terms-of-service-link-for-a-receiver-code-returns-the-url-email-sends-it-max-onceday
+      - content: Approve a receiver's KYC review and get its terms-of-service link
+        id: approve-a-receivers-kyc-review-and-get-its-terms-of-service-link
+      - content: Request a terms-of-service link for an approved receiver
+        id: request-a-terms-of-service-link-for-an-approved-receiver
       - content: Enable an inactive receiver with an accepted terms-of-service id
         id: enable-an-inactive-receiver-with-an-accepted-terms-of-service-id
       - content: Enable or disable a fiat account (admin-only kill-switch for
@@ -117,7 +113,217 @@ _openapi:
         id: list-available-bank-rails
       - content: Get the field schema required by a rail
         id: get-the-field-schema-required-by-a-rail
-    contents: []
+    contents:
+      - content: >-
+          Reads the local mirror only, newest first, on the BlindPay instance of
+          the key's network. Paginated with `take` (default 100, max 100) and
+          `skip`; answers `{ data, total, take, skip }`, where `total` counts
+          every matching receiver. The stored KYC dossier (tax id, documents,
+          owners) is never returned.
+
+
+          Requires the `kyc:read` scope.
+        heading: list-the-consumers-receivers
+      - content: >-
+          Stores the receiver here and sends nothing to BlindPay yet: it is
+          created there only by `POST /v1/kyc/receivers/{id}/enable`, after the
+          review and the customer's acceptance of the terms. A body with KYC
+          data (tax id, date of birth, documents, legal name, formation date or
+          owners) starts in `pending_review`, a bare registration in `inactive`.
+          The receiver belongs to the BlindPay instance of the key's network
+          (production for a mainnet key, development otherwise), and the stored
+          dossier is never returned.
+
+
+          Requires the `kyc:write` scope.
+        heading: create-a-receiver-start-kyckyb
+      - content: >-
+          For a receiver that already exists at BlindPay, reads it there and
+          updates the local mirror first, so `kycStatus` is BlindPay's current
+          one; when BlindPay cannot be reached, the stored row is answered
+          instead of an error. A receiver not yet at BlindPay (`inactive`,
+          `pending_review`, `pending_user`) is answered from the local row.
+
+
+          Requires the `kyc:read` scope.
+        heading: get-a-receiver-refreshes-kyc-status-from-blindpay
+      - content: >-
+          Before the receiver exists at BlindPay, the patch is merged into the
+          stored registration, any change bumps `dossierVersion`, and editing a
+          `pending_user` receiver (or adding KYC data to an `inactive` one)
+          moves it to `pending_review`. After that the patch is sent to
+          BlindPay, and a key without the admin role may change only
+          `external_id` and `image_url`. `tos_id` is always ignored: the
+          accepted terms cannot be changed.
+
+
+          Requires the `kyc:write` scope.
+        heading: update-a-receiver-once-it-is-at-blindpay-identity-fields-need-an-elevated-key
+      - content: >-
+          Deletes the receiver at BlindPay when it was ever created there, then
+          the local row, and records the deletion in the audit log. A receiver
+          that never reached BlindPay is deleted locally only.
+
+
+          Requires the `kyc:write` scope.
+        heading: delete-a-receiver
+      - content: >-
+          The review gate before anything reaches BlindPay: only a key with the
+          admin role may approve (any other key gets 403 `kyc_review_required`),
+          and only a `pending_review` receiver. It requests BlindPay's hosted
+          terms-of-service link for `redirect_url` (https, on this consumer's
+          allow-list), moves the receiver to `pending_user` and returns the link
+          with the receiver's email; nothing is emailed, the caller delivers it.
+          Send `expected_version` (the `dossierVersion` you reviewed) so an edit
+          made since is a 409 `kyc_state_invalid` instead of an approval of
+          unreviewed data.
+
+
+          Requires the `kyc:write` scope.
+        heading: approve-a-receivers-kyc-review-and-get-its-terms-of-service-link
+      - content: >-
+          Only for a `pending_user` receiver (approved, terms not yet accepted);
+          any other status is 400 `kyc_state_invalid`. Requests a fresh hosted
+          link from BlindPay for `redirect_url` (https, on this consumer's
+          allow-list) and returns it with the receiver's email. `channel: email`
+          sends nothing itself: it records the send, allowed once per 24 hours
+          per receiver (400 `validation_failed` inside that window, 409
+          `kyc_state_invalid` when two race), and the caller emails the returned
+          link; `channel: code` (the default) has no such limit.
+
+
+          Requires the `kyc:write` scope.
+        heading: request-a-terms-of-service-link-for-an-approved-receiver
+      - content: >-
+          Creates the receiver at BlindPay: replays the stored registration with
+          the `tos_id` the customer got by accepting the terms, then replaces
+          the local placeholder id with BlindPay's and mirrors BlindPay's KYC
+          status. Only a `pending_user` receiver whose current `dossierVersion`
+          is the approved one; otherwise, or when another enable is running, 409
+          `kyc_state_invalid`. A receiver already at BlindPay is not created
+          again: it is refreshed from BlindPay and returned.
+
+
+          Requires the `kyc:write` scope.
+        heading: enable-an-inactive-receiver-with-an-accepted-terms-of-service-id
+      - content: >-
+          Sets `disabled` on the receiver. While disabled, onramp, offramp and
+          adding wallets, bank accounts or virtual accounts for it are refused
+          with 403 `account_disabled`, whatever its KYC status. Only a key with
+          the admin role may call it (any other key gets 403
+          `insufficient_scope`), so a tenant cannot lift a switch an operator
+          set. Local only: nothing is sent to BlindPay.
+
+
+          Requires the `kyc:write` scope.
+        heading: enable-or-disable-a-fiat-account-admin-only-kill-switch-for-onrampofframp
+      - content: >-
+          Fetches from BlindPay the message the customer signs in their own
+          wallet to prove an EOA wallet is theirs. Sign it, then register the
+          wallet with `POST /v1/kyc/receivers/{receiverId}/wallets` and its
+          `signature_tx_hash` instead of an `address`. Nothing is stored.
+
+
+          Requires the `kyc:read` scope.
+        heading: get-the-message-to-sign-for-the-secure-wallet-flow
+      - content: >-
+          Reads the local mirror, newest first; BlindPay is not called.
+          Paginated with `take` (default 100, max 100) and `skip`; answers `{
+          data, total, take, skip }`.
+
+
+          Requires the `kyc:read` scope.
+        heading: list-a-receivers-wallets
+      - content: >-
+          Registers the wallet at BlindPay under the receiver and mirrors it
+          locally. Send `address` (account abstraction or the non-secure flow),
+          or the `signature_tx_hash` of the message from `GET
+          /v1/kyc/receivers/{receiverId}/wallets/sign-message` (secure EOA
+          flow). `network` is one of BlindPay's: Stellar, Solana, Tron,
+          Ethereum, Base, Arbitrum, Polygon or one of their test networks. A
+          disabled receiver is refused with 403 `account_disabled`.
+
+
+          Requires the `kyc:write` scope.
+        heading: register-a-blockchain-wallet-for-a-receiver
+      - content: >-
+          Deletes the wallet at BlindPay, then its local row. A wallet id this
+          receiver does not have answers `deleted: true` without calling
+          BlindPay, so repeating a delete succeeds.
+
+
+          Requires the `kyc:write` scope.
+        heading: delete-a-wallet
+      - content: >-
+          Reads the local mirror, newest first; BlindPay is not called, and
+          account numbers are never returned. Paginated with `take` (default
+          100, max 100) and `skip`; answers `{ data, total, take, skip }`.
+
+
+          Requires the `kyc:read` scope.
+        heading: list-a-receivers-bank-accounts
+      - content: >-
+          Creates the account at BlindPay under the receiver and mirrors it;
+          offramp payouts settle to it. `type` names the rail, and only that
+          rail's fields are needed (`GET /v1/kyc/bank-details?rail=` lists
+          them). The response carries identifiers only (`rail`, `name`,
+          `country`), never the account numbers. A disabled receiver is refused
+          with 403 `account_disabled`.
+
+
+          Requires the `kyc:write` scope.
+        heading: add-a-fiat-bank-account-for-a-receiver
+      - content: >-
+          Deletes the account at BlindPay, then its local row. An id this
+          receiver does not have answers `deleted: true` without calling
+          BlindPay, so repeating a delete succeeds.
+
+
+          Requires the `kyc:write` scope.
+        heading: delete-a-bank-account
+      - content: >-
+          Multipart: one `file` part (JPEG, PNG, WebP, HEIC/HEIF or PDF, up to
+          10 MB, its bytes checked against the declared type) and an optional
+          `bucket` (`onboarding` by default, `avatar` or `limit_increase`).
+          BlindPay stores the file on the instance of the key's network and
+          nothing is kept here; pass the returned `file_url` in the receiver's
+          `*_file` fields. BlindPay keeps a stored file even when a later step
+          fails, which is why the route is budgeted per address and per
+          consumer.
+
+
+          Requires the `kyc:write` scope.
+        heading: upload-a-kyc-document-returns-its-file_url
+      - content: >-
+          Asks BlindPay for a hosted terms-of-service page and returns its URL;
+          after acceptance BlindPay redirects to `redirect_url` (https, on this
+          consumer's allow-list) with a `tos_id` query parameter. With
+          `receiver_id` (the BlindPay id of a receiver this consumer owns,
+          otherwise 404) the terms are for that existing receiver.
+          `idempotency_key` is forwarded to BlindPay and generated when omitted;
+          every call creates a record there, hence the budgets.
+
+
+          Requires the `kyc:write` scope.
+        heading: start-tos-acceptance-returns-the-hosted-url-first-kyc-step
+      - content: >-
+          Relays BlindPay's catalog of bank rails on the instance of the key's
+          network (production for a mainnet key, development otherwise). Nothing
+          is stored; the body is BlindPay's answer as returned.
+
+
+          Requires the `kyc:read` scope.
+        heading: list-available-bank-rails
+      - content: >-
+          Relays BlindPay's field schema for the `rail` query parameter
+          (required: 400 `validation_failed` without it), the fields `POST
+          /v1/kyc/receivers/{receiverId}/bank-accounts` needs for that rail.
+          Answered as BlindPay returns it, from the instance of the key's
+          network.
+
+
+          Requires the `kyc:read` scope.
+        heading: get-the-field-schema-required-by-a-rail
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}

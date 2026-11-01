@@ -4,6 +4,11 @@
    crawler does. */
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
 import { isIndexNowKey, keyFilePath } from "@/lib/seo/indexnow";
+import { markdownPath } from "@/lib/seo/markdown-urls";
+
+/* The payments domain's indexable pages: the home and its content pages. Each is allowed at its
+   address and at its Markdown version's (src/lib/seo/markdown-urls.ts), in every language. */
+const PAYMENTS_ALLOWED_PAGES = ["/", ...PAYMENTS_PAGE_PATHS].flatMap((path) => (path === "/" ? [markdownPath(path)] : [path, markdownPath(path)]));
 
 export type RobotsArea = "site" | "dev" | "payments";
 
@@ -42,6 +47,7 @@ const PAYMENTS_RESOURCES = [
   "/site.webmanifest",
   "/sitemap.xml",
   "/llms.txt",
+  "/llms-full.txt",
   "/.well-known/",
 ];
 
@@ -83,13 +89,14 @@ Sitemap: ${dev}/docs/sitemap.xml
 `;
     case "payments":
       return `# Cosmos Pay payments: the landing and its content pages are content, in every language
-# (English at the bare path, the others at ?lang=), with the files they load. Payment links are
-# personal and short-lived, and the design previews are samples: everything else stays out.
+# (English at the bare path, the others at ?lang=), each also as Markdown at its address with .md
+# (the home's is /index.md), with the files they load. Payment links are personal and
+# short-lived, and the design previews are samples: everything else stays out.
 User-agent: *
 ${CONTENT_SIGNAL}
 Allow: /$
 Allow: /?lang=
-${PAYMENTS_PAGE_PATHS.map((p) => `Allow: ${p}$\nAllow: ${p}?lang=`).join("\n")}
+${PAYMENTS_ALLOWED_PAGES.map((p) => `Allow: ${p}$\nAllow: ${p}?lang=`).join("\n")}
 ${[...PAYMENTS_RESOURCES, ...keyFile].map((p) => `Allow: ${p}`).join("\n")}
 Disallow: /
 
