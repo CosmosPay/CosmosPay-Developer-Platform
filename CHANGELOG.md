@@ -2,6 +2,17 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.13.0] - 2026-11-01
+
+### Features
+- Every page as Markdown and llms-full.txt on the site and the gateway (a6e4a68)
+
+### Refactor
+- Share the data the pages render with pure modules (118c872)
+
+### Documentation
+- Describe every operation, and no written private-payment rate (60c8661)
+
 ## [0.12.0] - 2026-11-01
 
 ### Features
