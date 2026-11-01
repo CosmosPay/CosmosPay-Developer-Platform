@@ -145,7 +145,20 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The payments robots.txt
   blocks everything but its pages, so every file those pages load (`/_astro/`, `/fonts/`,
   `/media/`, `/brand/`, `/embed/`, icons, share images) needs its `Allow` there, or Google renders
-  them unstyled. The platform's sitemap is an index of the docs' own `/docs/sitemap.xml`.
+  them unstyled. Each indexable page (and its `.md`) is open at its address, with any query
+  string and at its trailing-slash form (`pageAllowRules`: `/faq$`, `/faq?`, `/faq/$`, `/faq/?`):
+  assistants share links with `?utm_source=` and the slash form is a 301 to follow; payment links,
+  `/pay`, `/preview`, `/zk`, `/contact` and everything else stay out. The platform's sitemap is
+  an index of the docs' own `/docs/sitemap.xml`.
+- **Every link to a docs page is its trailing-slash address** (nginx 301s the slashless form):
+  `DOCS` is `<platform>/docs/` and a page is `docsHref("/api")` (`constants.ts`), or
+  `docsLink(root, path)` / `docsRoot(dev)` in pure code (`src/lib/urls.ts`). Never write
+  `${DOCS}/x`. The smoke test, `build-docs.mjs` and the Markdown and llms tests fail on one.
+- **When a page last changed** (`src/lib/seo/page-dates.ts`): the date it states, else the newest
+  commit among its own sources, else the build. A catalog (`landing-i18n.ts`, `messages/<lang>.ts`,
+  `learn/<lang>.ts`) counts by the blocks a page reads (`landing-i18n.ts#es.faq`), dated by
+  `git blame` (`scripts/page-dates.mjs`), never as a whole file; shared chrome never dates a page.
+  /faq, /compare and the network pages show the date under their lede (`pages.updated`).
 - **IndexNow** (Bing, which also feeds ChatGPT search and Copilot, Yandex and the rest) learns
   about new and changed pages from `npm run indexnow` (`scripts/indexnow.mjs`, helpers in
   `src/lib/seo/indexnow.ts`, tested): it reads each domain's live sitemap (following the
@@ -164,6 +177,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   parameters kept byte for byte). The middleware adds HSTS (https origins, no includeSubDomains),
   `Referrer-Policy`, `charset=utf-8` on HTML and `Vary: Accept-Language, Cookie` on a bare path
   whose language follows the visitor (`src/lib/seo/response-headers.ts`).
+- **Google Analytics runs only on the company site's indexable pages** (privacy, 2026-11-01):
+  `analyticsEnabled` (`src/lib/analytics.ts`) gates the tag in `CosmosLayout`: never on the
+  platform (dashboard, `/invite/<token>`, KYC returns, onboarding), the gateway or the docs, whose
+  addresses can carry tokens, queries or personal data. `analyticsSnippet` reports `page_location`
+  and `page_path` with `lang` as the only query parameter and the referrer without a query.
 
 ### One auth for all three domains
 
@@ -833,9 +851,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   product fact (product owner). Each guide shows its last update, and that date is its JSON-LD
   `dateModified` and its sitemap `lastmod`: change `GUIDE_DATES` with the text. JSON-LD: the page,
   its BreadcrumbList (Overview > Guides > the guide), an Article or TechArticle by the shared
-  Organization, a HowTo only where the page numbers the steps, an FAQPage only for questions it
-  shows; the hub is a CollectionPage with the guides' ItemList. `tests/unit/paymentsLearn.test.ts`
-  keeps every title within 60 characters and every description within 155 in all seven languages.
+  Organization, an FAQPage only for questions it shows, never a HowTo (Google retired its rich
+  results; the numbered steps stay); the hub is a CollectionPage with the guides' ItemList.
+  `tests/unit/paymentsLearn.test.ts` keeps every title within 60 characters and every description
+  within 155 in all seven languages.
   The section bar ends with the hub, the footer's Resources > Guides leads to it, and /faq, the
   network pages and /integrations link guides (`GuideLinks.astro`).
   **`/compare`** sets each rate beside the published one it is 75% of (see "Plans").

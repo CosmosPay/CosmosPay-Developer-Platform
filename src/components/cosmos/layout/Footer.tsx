@@ -1,5 +1,5 @@
 import { useLang, useT } from "@/lib/i18n/index";
-import { ABOUT, PRICING, DASH, DOCS, TERMS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
+import { ABOUT, PRICING, DASH, DOCS, TERMS, PAYMENTS, docsHref, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
 import { CosmosLockup } from "@/components/cosmos/icons";
 import { SocialLinks } from "@/components/cosmos/layout/Social";
 
@@ -38,9 +38,9 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
     key: "developers",
     links: [
       { i: 0, href: DOCS }, // Documentation
-      { i: 1, href: `${DOCS}/api` }, // API reference
-      { i: 2, href: `${DOCS}/sdk/server/overview` }, // SDKs & libraries
-      { i: 3, href: `${DOCS}/sdk/server/webhooks` }, // Webhooks
+      { i: 1, href: docsHref("/api") }, // API reference
+      { i: 2, href: docsHref("/sdk/server/overview") }, // SDKs & libraries
+      { i: 3, href: docsHref("/sdk/server/webhooks") }, // Webhooks
       // { i: 4, href: "#" }, // API status (no status page yet)
       // { i: 5, href: "#" }, // Changelog (no public changelog page yet)
       { i: 6, href: DASH }, // Dashboard

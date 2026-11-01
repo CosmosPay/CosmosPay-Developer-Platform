@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, type FocusEvent, type ReactNode } from "react";
 import { useLang, useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
-import { DASH, DOCS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
+import { DASH, DOCS, PAYMENTS, docsHref, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
 import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
 import { CosmosLockup, IcNChev, IcDocs } from "@/components/cosmos/icons";
 import { ThemeToggle } from "@/components/cosmos/layout/ThemeToggle";
@@ -35,10 +35,10 @@ const NAV_LINKS: Record<string, NavLink[]> = {
   // E-commerce, Fintech, Gaming, Travel & mobility) has no page yet, so the item is off.
   // solutions: [],
   developers: [
-    [0, 0, `${DOCS}/api`], // API reference
-    [0, 1, `${DOCS}/sdk/server/overview`], // SDKs & libraries
-    [0, 2, `${DOCS}/sdk/server/webhooks`], // Webhooks
-    [0, 3, `${DOCS}/getting-started`], // Sandbox
+    [0, 0, docsHref("/api")], // API reference
+    [0, 1, docsHref("/sdk/server/overview")], // SDKs & libraries
+    [0, 2, docsHref("/sdk/server/webhooks")], // Webhooks
+    [0, 3, docsHref("/getting-started")], // Sandbox
     // [1, 0, "#"], // CLI (not a product: there is no CLI)
     // [1, 1, "#"], // Status (no status page yet)
     // [1, 2, "#"], // Changelog (no public changelog page yet)
@@ -46,7 +46,7 @@ const NAV_LINKS: Record<string, NavLink[]> = {
   ],
   resources: [
     [0, 0, DOCS], // Documentation
-    [0, 1, `${DOCS}/getting-started`], // Tutorials
+    [0, 1, docsHref("/getting-started")], // Tutorials
     // [0, 2, "#"], // Blog (no page yet)
     // [0, 3, "#"], // Customer stories (no page yet)
     // [1, 0, "#"], // Help center (no page yet)
@@ -58,7 +58,7 @@ const NAV_LINKS: Record<string, NavLink[]> = {
 /* The featured card of an item, only where its call to action leads somewhere. */
 const FEATURED_HREFS: Record<string, string> = {
   // products: "#", // Cosmos Sessions 2026 (no page yet)
-  developers: `${DOCS}/getting-started`, // Quickstart
+  developers: docsHref("/getting-started"), // Quickstart
 };
 
 /* An item's columns reduced to the links above, hrefs attached (kept on the gateway when the

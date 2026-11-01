@@ -5,6 +5,7 @@
 // The code is not translated; the note under it is.
 import Code from "@/components/payments/landing/Code.astro";
 import type { LandingData } from "@/components/payments/landing/data";
+import { docsHref } from "@/components/cosmos/lib/constants";
 import { CHAIN_NAMES, type Chain } from "@/lib/chains";
 import { payLinkCurl } from "@/lib/payments/network-pages";
 
@@ -14,7 +15,7 @@ interface Props {
 }
 
 const { d, chain } = Astro.props;
-const { t, DOCS, links } = d;
+const { t, links } = d;
 const n = t.networks[chain];
 const id = `pl-net-code-${chain}`;
 ---
@@ -27,8 +28,8 @@ const id = `pl-net-code-${chain}`;
         <p class="pl-section-lede">{t.network.codeLede}</p>
       </div>
       <div class="pl-cta">
-        <a class="btn btn-dark" href={`${DOCS}/api/payment-intents/`}>{t.network.docs}</a>
-        <a class="btn btn-outline-w" href={`${DOCS}/getting-started/`}>{t.network.guide}</a>
+        <a class="btn btn-dark" href={docsHref("/api/payment-intents")}>{t.network.docs}</a>
+        <a class="btn btn-outline-w" href={docsHref("/getting-started")}>{t.network.guide}</a>
       </div>
       <a class="pl-textlink" href={links.integrations}>{t.network.integrations}</a>
     </div>

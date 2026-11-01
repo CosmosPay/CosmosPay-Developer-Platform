@@ -1,14 +1,14 @@
 /* ApiSection.tsx: /01 del deck, los tres modulos de la API mas el bloque de
    documentacion con el terminal y los dos SDK. */
-import { useCopy, hl, IcArrow, IcChevSm, IcCheck, IcCopy, DOCS } from "@/components/cosmos/shared";
+import { useCopy, hl, IcArrow, IcChevSm, IcCheck, IcCopy, DOCS, docsHref } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { API_SNIPPET, API_CARD_DOCS, API_CARD_KEYS, SDK_DOCS, SDK_KEYS, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
 import { API_ICONS, SDK_ICONS } from "@/components/cosmos/marketing/icons";
 
 // Deep links into the docs site (served by the developer platform at /docs): each SDK button to its
 // guide and each card to its own reference page (marketing/data.ts).
-const SDK_HREF: Record<string, string> = Object.fromEntries(Object.entries(SDK_DOCS).map(([key, path]) => [key, `${DOCS}${path}`]));
-const CARD_HREF: Record<string, string> = Object.fromEntries(Object.entries(API_CARD_DOCS).map(([key, path]) => [key, `${DOCS}${path}`]));
+const SDK_HREF: Record<string, string> = Object.fromEntries(Object.entries(SDK_DOCS).map(([key, path]) => [key, docsHref(path)]));
+const CARD_HREF: Record<string, string> = Object.fromEntries(Object.entries(API_CARD_DOCS).map(([key, path]) => [key, docsHref(path)]));
 
 function TermCopy({ text }) {
   const t = useT();

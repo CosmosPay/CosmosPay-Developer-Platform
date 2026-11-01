@@ -1,12 +1,12 @@
 /* IntegrationPaths.tsx: /02 del deck, las cuatro cifras de escala al lado del
    titulo y los tres caminos de integracion como fichas navy. */
-import { IcChevSm, DASH, DOCS } from "@/components/cosmos/shared";
+import { IcChevSm, DASH, docsHref } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { SCALE_VALUES, PATH_NUMS, PATH_TARGETS } from "@/components/cosmos/marketing/data";
 
 // Targets for the three integration-path CTAs, by position (marketing/data.ts PATH_TARGETS):
 // the dashboard, the embed guide, the docs.
-const PATH_HREFS = PATH_TARGETS.map((target) => (target.to === "dashboard" ? DASH : `${DOCS}${target.path}`));
+const PATH_HREFS = PATH_TARGETS.map((target) => (target.to === "dashboard" ? DASH : docsHref(target.path)));
 
 function pathMock(n, ig) {
   if (n === "01") return null; // filled by caller with translated link text

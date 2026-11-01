@@ -4,6 +4,7 @@
    it says. src/pages/site/about.astro renders it and the page's Markdown version
    (src/lib/seo/site-markdown.ts) reads it too, so both list the same things in the same order.
    The sources of each fact are named in the page's header comment. Pure: the origins come in. */
+import { docsLink, docsRoot } from "@/lib/urls";
 
 export interface AboutOrigins {
   site: string;
@@ -26,7 +27,7 @@ export const ABOUT_NETWORKS = ["stellar", "solana", "monad"] as const;
 /** Where each part of the page leads, on the given origins. A check's links name their label in
  *  the catalog (`a` or `b` of `about.checks.items.<key>`). */
 export function aboutLinks({ site, dev, payments }: AboutOrigins) {
-  const docs = `${dev}/docs`;
+  const docs = docsRoot(dev);
   return {
     // What Cosmos Pay makes, each with the page that shows it.
     products: [
@@ -41,7 +42,7 @@ export function aboutLinks({ site, dev, payments }: AboutOrigins) {
     checks: [
       { key: "keys", links: [{ label: "a", href: `${payments}/security` }] },
       { key: "rates", links: [{ label: "a", href: `${site}/pricing` }, { label: "b", href: `${payments}/compare` }] },
-      { key: "docs", links: [{ label: "a", href: `${docs}/` }, { label: "b", href: `${docs}/openapi.json` }] },
+      { key: "docs", links: [{ label: "a", href: docs }, { label: "b", href: docsLink(docs, "/openapi.json") }] },
     ] as const,
     support: `${dev}/dashboard?view=support`,
   };

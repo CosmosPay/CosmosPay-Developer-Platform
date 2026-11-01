@@ -9,5 +9,9 @@ export const PUBLIC_GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? '';
 // defaults as the portal's astro.config.mjs.
 export const PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cosmospay.lat';
 export const PUBLIC_PAYMENTS_URL = process.env.NEXT_PUBLIC_PAYMENTS_URL || 'https://payments.cosmospay.lat';
+// The Payments API's base (the WebAPI node's serviceUrl, lib/payments/urls.ts) and the web wallet,
+// with the portal's defaults.
+export const PUBLIC_PAYMENTS_API_URL = process.env.NEXT_PUBLIC_PAYMENTS_API_URL || 'https://api.cosmospay.lat/cosmos-api';
+export const PUBLIC_WALLET_WEB_URL = process.env.NEXT_PUBLIC_WALLET_WEB_URL || 'https://cosmospay.lat/wallet/';
 export const PUBLIC_GOOGLE_SITE_VERIFICATION =
   process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? '';

@@ -1,11 +1,11 @@
 /* Resources.tsx: /07 del deck, las cuatro piezas de contenido como lista editorial 2x2, sin
    miniaturas. Each one is a page of the public documentation that exists today; the targets
    live here by position (the catalogs carry the labels, in the same order in every language). */
-import { IcChevSm, DOCS } from "@/components/cosmos/shared";
+import { IcChevSm, docsHref } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { RESOURCE_DOCS } from "@/components/cosmos/marketing/data";
 
-const RESOURCE_HREFS = RESOURCE_DOCS.map((path) => `${DOCS}${path}`);
+const RESOURCE_HREFS = RESOURCE_DOCS.map((path) => docsHref(path));
 
 export function Resources() {
   const t = useT();

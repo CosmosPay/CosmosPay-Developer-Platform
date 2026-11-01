@@ -41,26 +41,32 @@ test('without the build dates, lastmod only where the page states a date', () =>
   }
 });
 
-test('with the build dates every entry has a lastmod: the stated one, its sources last commit, else the build', () => {
+test('with the build dates every entry has a lastmod: the stated one, its own sources last commit, else the build', () => {
   const dates: DateInput = {
     built: '2026-11-01T12:00:00.000Z',
     dates: {
       'src/pages/site/about.astro': '2026-10-30T10:00:00-03:00',
-      'src/lib/i18n/messages/es.ts': '2026-10-31T09:00:00-03:00',
-      'src/lib/i18n/messages/en.ts': '2026-10-20T09:00:00-03:00',
+      // A catalog file's own date is another page's change; its blocks date the pages.
+      'src/lib/i18n/messages/es.ts': '2026-11-01T09:00:00-03:00',
+      'src/lib/payments/landing-i18n.ts': '2026-11-01T09:00:00-03:00',
       'src/pages/payments/faq.astro': '2026-10-25T09:00:00-03:00',
-      'src/lib/payments/landing-i18n.ts': '2026-10-28T09:00:00-03:00',
+    },
+    blocks: {
+      'src/lib/i18n/messages/es.ts': { 'default.about': '2026-10-31T09:00:00-03:00' },
+      'src/lib/i18n/messages/en.ts': { 'default.pricing': '2026-10-20T09:00:00-03:00', 'default.dash': '2026-11-01T09:00:00-03:00' },
+      'src/lib/payments/landing-i18n.ts': { 'en.faq.escrow': '2026-10-28T09:00:00-03:00', 'en.pages.fees': '2026-11-01T09:00:00-03:00' },
     },
   };
   const site = siteEntries(ORIGINS.site, dates);
   for (const e of site) assert.ok(e.lastmod, e.loc);
   const lastmod = (loc: string) => [...site, ...paymentsEntries(ORIGINS.payments, dates)].find((e) => e.loc === loc)?.lastmod;
   assert.equal(lastmod('https://cosmospay.lat/about'), '2026-10-30T10:00:00-03:00');
-  assert.equal(lastmod('https://cosmospay.lat/about?lang=es'), '2026-10-31T09:00:00-03:00', 'each language by its own catalog');
+  assert.equal(lastmod('https://cosmospay.lat/about?lang=es'), '2026-10-31T09:00:00-03:00', 'each language by its own copy');
   assert.equal(lastmod('https://cosmospay.lat/tos?lang=es'), TOS_LAST_UPDATED, 'a stated date wins');
   assert.equal(lastmod('https://payments.cosmospay.lat/faq'), '2026-10-28T09:00:00-03:00');
   assert.equal(lastmod('https://payments.cosmospay.lat/learn/accept-usdc-payments'), GUIDE_DATES['accept-usdc-payments'].modified);
-  assert.equal(lastmod('https://cosmospay.lat/pricing'), '2026-10-20T09:00:00-03:00');
+  assert.equal(lastmod('https://cosmospay.lat/pricing'), '2026-10-20T09:00:00-03:00', 'its copy, not the dashboard strings in the same file');
+  assert.notEqual(lastmod('https://payments.cosmospay.lat/faq'), lastmod('https://payments.cosmospay.lat/fees'), "one page's change dates only that page");
   assert.equal(siteEntries(ORIGINS.site, { built: '2026-11-01T12:00:00.000Z', dates: {} })[0].lastmod, '2026-11-01T12:00:00.000Z', 'no git: the build');
 });
 

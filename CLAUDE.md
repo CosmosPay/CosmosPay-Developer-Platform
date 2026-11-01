@@ -145,7 +145,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The payments robots.txt
   blocks everything but its pages, so every file those pages load (`/_astro/`, `/fonts/`,
   `/media/`, `/brand/`, `/embed/`, icons, share images) needs its `Allow` there, or Google renders
-  them unstyled. The platform's sitemap is an index of the docs' own `/docs/sitemap.xml`.
+  them unstyled. Each indexable page (and its `.md`) is open at its address, with **any query
+  string** and at its trailing-slash form (`pageAllowRules`: `/faq$`, `/faq?`, `/faq/$`, `/faq/?`),
+  because assistants and newsletters share links with `?utm_source=` and the slash form is a 301
+  a crawler must follow; payment links, `/pay`, `/preview`, `/zk`, `/contact` and everything else
+  stay out (`tests/unit/seoRobots.test.ts` reads the file as Google does). The platform's sitemap
+  is an index of the docs' own `/docs/sitemap.xml`.
+- **Every link to a docs page is its trailing-slash address** (nginx 301s the slashless form):
+  `DOCS` is `<platform>/docs/` and a page is `docsHref("/api")` (`constants.ts`), or
+  `docsLink(root, path)` / `docsRoot(dev)` in pure code (`src/lib/urls.ts`; files such as
+  `llms.txt` keep their name). Never write `${DOCS}/x`. `npm run test:smoke` fails on a slashless
+  docs link in any page of either sitemap (and in the docs pages it reads), `build-docs.mjs` on one
+  in any exported docs page, the Markdown and llms tests on one in the builders.
 - **Every indexable page of the company site and the gateway is also Markdown**, for assistants
   and agents, as the docs are. **The scheme:** the page's address with `.md` (`/pricing.md`,
   `/learn/accept-usdc-payments.md`; the home's is `/index.md`), each language at `?lang=` as for the
@@ -212,6 +223,16 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   page asked with GET (its 200 and its 302, which is also `Cache-Control: private, no-cache`) and
   the noindex pages; an address that names its language and a bare page asked without GET do not
   vary (`src/lib/seo/response-headers.ts`).
+- **Google Analytics runs only on the company site's indexable pages** (privacy, 2026-11-01):
+  `PUBLIC_GA_ID` loads gtag.js through `CosmosLayout` only where `analyticsEnabled`
+  (`src/lib/analytics.ts`) says so: `area === "site"`, not noindex, a page of
+  `indexablePages("site")`. Never on the platform (the dashboard and its search filters,
+  `/invite/<token>`, the KYC returns, onboarding, `/swagger`), the gateway (payment links, `/pay`
+  with its URI, private checkouts) or the docs, whose addresses can carry tokens, queries or
+  personal data. As defence in depth the snippet (`analyticsSnippet`) reports `page_location` and
+  `page_path` with `lang` as the only query parameter and no fragment, and `page_referrer` without
+  either. `tests/unit/analytics.test.ts` runs the snippet and checks where it may load; a new
+  layout or page type never adds its own tag.
 
 ### One auth for all three domains
 
@@ -885,8 +906,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   product fact (product owner). Each guide shows its last update, and that date is its JSON-LD
   `dateModified` and its sitemap `lastmod`: change `GUIDE_DATES` with the text. JSON-LD: the page,
   its BreadcrumbList (Overview > Guides > the guide), an Article or TechArticle by the shared
-  Organization, a HowTo only where the page numbers the steps, an FAQPage only for questions it
-  shows; the hub is a CollectionPage with the guides' ItemList. `tests/unit/paymentsLearn.test.ts`
+  Organization, an FAQPage only for questions it shows; never a HowTo (Google retired its rich
+  results; the numbered steps stay on the page; the smoke test fails on one); the hub is a
+  CollectionPage with the guides' ItemList. `tests/unit/paymentsLearn.test.ts`
   keeps every title within 60 characters and every description within 155 in all seven languages.
   The section bar ends with the hub, the footer's Resources > Guides leads to it, and /faq, the
   network pages and /integrations link guides (`GuideLinks.astro`).
@@ -914,15 +936,26 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   in place (a visitor who prefers another one is redirected: see "one address per language").
   `src/lib/seo/lang-urls.ts` (re-exported by `src/lib/payments/seo.ts`) builds those URLs for
   everything that names them (`pageUrl` drops `en`): the canonical (each version names itself),
-  the hreflang links and `og:locale` (+ alternates) in `PaymentsLayout`, `robots.txt` (`Allow:
-  <path>$` and `<path>?lang=`), the sitemap (one entry per language, each with its alternates),
+  the hreflang links and `og:locale` (+ alternates) in `PaymentsLayout`, `robots.txt` (each page
+  with any query string), the sitemap (one entry per language, each with its alternates),
   llms.txt and the JSON-LD. The company site works the same way (below). **When a page last
   changed** is `src/lib/seo/page-dates.ts` (tested): the date it states (the terms, each guide),
-  else the newest git commit among its source files (the page, its sections, its copy in the
-  language shown, the data it renders; never the SEO plumbing), else the build. The commit
-  dates are read once per build by the `virtual:page-dates` Vite plugin in `astro.config.mjs`
-  (one `git log` over `src`; empty in a shallow clone such as CI's, so every page then dates to
-  the build). It is each page's WebPage `dateModified` and its sitemap `lastmod` on both hosts.
+  else the newest git commit among its **own** sources (the page, the sections only it draws or
+  that draw its content, its data such as `plans.ts` or `compare.ts`), else the build; the guides'
+  hub also takes the newest guide's date. Shared chrome (nav, footer, section bar, final call,
+  `PageHeader`, `data.ts`, `landing-content.ts`, layouts, structured data) never dates a page.
+  **A catalog counts by its blocks, never as a file**: `landing-i18n.ts`, the platform's
+  `messages/<lang>.ts` and the guides' `learn/<lang>.ts` (`CATALOG_FILES`) hold many pages' copy,
+  so a page names the blocks it reads in the language shown (`landing-i18n.ts#es.faq`,
+  `messages/fr.ts#default.about`), each dated by `git blame` (the newest commit touching one of
+  its lines; comments and uncommitted lines date nothing; `catalogLinePaths` reads the keys by
+  indentation, two levels under the top-level object). A new page or section adds its sources
+  there. `scripts/page-dates.mjs` reads it all once per build (one `git log` over `src`, one blame
+  per catalog; empty in a shallow clone such as CI's, so every page then dates to the build) for
+  the `virtual:page-dates` Vite plugin in `astro.config.mjs`. It is each page's WebPage
+  `dateModified` and its sitemap `lastmod` on both hosts, and **/faq, /compare and the network
+  pages show it** under their lede (`PageHeader` byline, `pages.updated` in the seven languages,
+  `updatedByline` in `page-dates-build.ts`; their Markdown versions say it too).
   `StructuredData.astro` (rendered by `LandingHead`) emits one JSON-LD graph per page: the shared
   Organization (`src/lib/seo/org.ts`), WebSite, the page (`["WebPage", "FAQPage"]` on `/faq`, with
   the questions the page shows, and its `dateModified`), a BreadcrumbList matching the breadcrumb
@@ -1672,8 +1705,19 @@ consumer headers.
   docs source is newer than the last build. `scripts/build-docs.mjs` fails the build when the
   docs sitemap or any page's hreflang lists a URL that is not exported, is `noindex` (the English
   fallback copies under `/docs/{es,fr,de,pt}/`) or is not its own canonical
-  (`node scripts/build-docs.mjs --check` runs only that against `docs/out`). Docs SEO details
-  (headings, JSON-LD by the shared Organization's @id, datePublished from git) are in
+  (`node scripts/build-docs.mjs --check` runs only that against `docs/out`), and when a page links
+  a slashless docs path or names a Markdown alternate the export lacks. **The docs publish the
+  company's nodes as the portal builds them**: `docs/scripts/sync-portal-ui.mjs` copies
+  `src/lib/seo/schema.ts` (with `plans.ts`, `payments/contact.ts`, `payments/urls.ts`), so every
+  docs page with a graph defines the same Organization node as cosmospay.lat, and the docs home and
+  the API reference the same WebAPI (`apiNode`) and SDK (`sdkNode`) nodes as the company home; the
+  smoke test compares them byte for byte. Each docs page's Markdown is at its address with `.md`
+  (`/docs/getting-started.md`, `/docs/index.md`, `/docs/es/embed.md`: written after the build by
+  `docs/scripts/write-markdown-pages.mjs` from `/docs/llms.mdx/<page>/content.md`, which stays for
+  the "Copy Markdown" button), named by the page's alternate link and by every entry of
+  `/docs/llms.txt`. `Accept: text/markdown` is **not** negotiated on the docs: the Node server hands
+  out the static export before the middleware runs, so a page always answers HTML there (that would
+  take an nginx rule). More docs SEO details (headings, datePublished from git) are in
   `docs/README.md`.
 - **Two OpenAPI documents, not one.** `docs/openapi.json` is the community server's Payments API
   spec, committed and checked by `npm run check:api-spec`. `/api/openapi.json` is THIS app's own

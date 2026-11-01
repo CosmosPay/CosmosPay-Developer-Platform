@@ -19,9 +19,11 @@ interface Window {
   cosmosWallet?: { requestPayment(uri: string): Promise<unknown> };
 }
 
-/** When each source file under src/ last changed, from git, read at build by astro.config.mjs
- *  (empty without git history), and when the build ran: src/lib/seo/page-dates.ts. */
+/** When each source file under src/ and each block of the catalogs last changed, from git, read
+ *  at build by astro.config.mjs (scripts/page-dates.mjs; empty without git history), and when the
+ *  build ran: src/lib/seo/page-dates.ts. */
 declare module "virtual:page-dates" {
   export const GIT_DATES: Readonly<Record<string, string>>;
+  export const GIT_BLOCKS: Readonly<Record<string, Readonly<Record<string, string>>>>;
   export const BUILT_AT: string;
 }

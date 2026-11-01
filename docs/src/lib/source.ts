@@ -72,8 +72,22 @@ export function getPageImage(page: DocsPage) {
   };
 }
 
-/** The page's Markdown (`/docs/llms.mdx/[<lang>/]<slug>/content.md`). A translation has its
- *  own; an English fallback copy points at the English page's. */
+/** The absolute address of a page's Markdown, as the company site and the gateway name theirs:
+ *  the page's own path with `.md` (https://dev.cosmospay.lat/docs/getting-started.md,
+ *  /docs/es/embed.md), the root's `index.md` (/docs/index.md, /docs/es/index.md). A translation has
+ *  its own; an English fallback copy points at the English page's. The export writes these files
+ *  after the build from the llms.mdx route's (scripts/write-markdown-pages.mjs); the page's
+ *  `<link rel="alternate" type="text/markdown">` and llms.txt name them. */
+export function markdownPageUrl(page: DocsPage): string {
+  const lang = contentLanguage(page);
+  const prefix = lang === DEFAULT_DOCS_LANGUAGE ? '' : `/${lang}`;
+  return `${docsOrigin}${prefix}/${page.slugs.length ? `${page.slugs.join('/')}.md` : 'index.md'}`;
+}
+
+/** The page's Markdown as the llms.mdx route exports it (`/docs/llms.mdx/[<lang>/]<slug>/content.md`),
+ *  which the "Copy Markdown" button fetches (it works under `next dev` too, where the `.md` files
+ *  above are not written). A translation has its own; an English fallback copy points at the
+ *  English page's. */
 export function getPageMarkdownUrl(page: DocsPage) {
   const lang = contentLanguage(page);
   const segments = [...(lang === DEFAULT_DOCS_LANGUAGE ? [] : [lang]), ...page.slugs, 'content.md'];

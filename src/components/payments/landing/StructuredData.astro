@@ -7,10 +7,10 @@
 // the plans on /fees (the same Product node, by @id, that the company site's /pricing publishes,
 // from src/lib/plans.ts) and, on /faq and the network pages, the questions and answers the page
 // shows (`faq`). A guide (/learn and /learn/<slug>) passes its own trail
-// (`trail`: Overview > Guides > the guide), its page types and its nodes (the article, the HowTo of
-// the steps it shows, the hub's list: src/components/payments/learn/). Only what the page says: no
-// ratings, reviews or claims beyond its copy. URLs come from src/lib/seo/lang-urls.ts, so they
-// match the canonical and hreflang links.
+// (`trail`: Overview > Guides > the guide), its page types and its nodes (the article, the hub's
+// list: src/components/payments/learn/; never a HowTo, whose rich results Google retired). Only
+// what the page says: no ratings, reviews or claims beyond its copy. URLs come from
+// src/lib/seo/lang-urls.ts, so they match the canonical and hreflang links.
 import type { LandingData } from "@/components/payments/landing/data";
 import type { NetworkPage, PaymentsPage, SectionPage } from "@/lib/payments/site-pages";
 import { LOCALES } from "@/lib/payments/i18n";
@@ -35,7 +35,7 @@ interface Props {
   pageTypes?: string[];
   /** What the page mainly shows, by @id, when it is not its questions. */
   mainEntity?: string;
-  /** The page's own nodes (an article, a HowTo, a list). */
+  /** The page's own nodes (an article, a list). */
   nodes?: JsonLdNode[];
 }
 

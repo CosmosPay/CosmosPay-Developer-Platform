@@ -230,13 +230,23 @@ detail += `; llms-full.txt and /index.md served on ${fullOn} hosts`;
 // poster) means that step did not run. Each card answers 200 image/png, 1200x630, with the
 // immutable Cache-Control /_astro/ gets. Payment links keep the brand card, and the company's
 // /swaps names the gateway's card (its canonical page).
+//
+// The same pass reads each page's links and JSON-LD: no link to a docs page without its trailing
+// slash (nginx answers that form with a 301; src/lib/urls.ts docsLink), no HowTo node (Google
+// retired its rich results), and one Organization node, byte for byte the same on every page.
 const cards = new Map();
 let cardPages = 0;
 let paymentsHost = null;
+let devHost = null;
+let organization = null;
+let homeProducts = null;
 for (const host of keyHosts) {
   const map = await getWithHost('/sitemap.xml', host).catch((e) => fail(`GET https://${host}/sitemap.xml never completed: ${e.message}`));
   if (map.status !== 200) fail(`GET https://${host}/sitemap.xml returned ${map.status}`);
-  if (!map.body.includes('<urlset')) continue; // the platform's is an index of the docs' own
+  if (!map.body.includes('<urlset')) {
+    devHost = host; // the platform's is an index of the docs' own
+    continue;
+  }
   for (const [, loc] of map.body.matchAll(/<loc>([^<]+)<\/loc>/g)) {
     const url = new URL(loc.replace(/&amp;/g, '&'));
     if (!trusted.includes(url.host)) fail(`${host}/sitemap.xml lists ${url.href}, on a host the build does not trust`);
@@ -254,6 +264,15 @@ for (const host of keyHosts) {
     cards.set(url.href, { page: url.href, image: image.href, host: url.host });
     if (url.pathname === '/stellar') paymentsHost = url.host;
     cardPages++;
+    const slashless = slashlessDocsLinks(page.body, url.href);
+    if (slashless.length) fail(`${url.href} links ${slashless.length} docs page(s) without the trailing slash (a 301 each): ${slashless.slice(0, 5).join(', ')}`);
+    const graph = jsonLdNodes(page.body);
+    if (graph.some((node) => typesOf(node).includes('HowTo'))) fail(`${url.href} publishes a HowTo node`);
+    const org = graph.filter((node) => typesOf(node).includes('Organization'));
+    if (org.length !== 1) fail(`${url.href} defines ${org.length} Organization nodes; expected the shared one`);
+    organization ??= JSON.stringify(org[0]);
+    if (JSON.stringify(org[0]) !== organization) fail(`${url.href} defines another Organization than the other pages`);
+    if (url.host === servedOn && url.pathname === '/' && !url.search) homeProducts = graph;
   }
 }
 if (cardPages === 0) fail('no sitemap listed a page to check the share cards of');
@@ -273,13 +292,90 @@ if (paymentsHost) {
     fail(`https://${servedOn}/swaps names og:image ${swapsImage}; expected the gateway's /swaps card`);
   }
 }
-detail += `; share cards: ${cardPages} pages, each its own 1200x630 PNG`;
+detail += `; share cards: ${cardPages} pages, each its own 1200x630 PNG; no slashless docs link, no HowTo, one Organization`;
+
+// THE DOCS (the static export under /docs on the platform): each page carries the company's
+// Organization, the same node as every company and gateway page; the API reference and the docs
+// home publish the Payments API and the SDK as the company home does, identical (when this build's
+// docs root is the docs' own, dev.cosmospay.lat); the home has its BreadcrumbList; no page links a
+// slashless docs path; and each page's Markdown answers at its address with .md, the one its
+// <link rel="alternate" type="text/markdown"> names.
+if (devHost && existsSync(path.join(root, 'dist', 'client', 'docs', 'index.html'))) {
+  if (!homeProducts) fail(`the company home (https://${servedOn}/) was not in its sitemap`);
+  const homeNode = (id) => homeProducts.find((node) => node['@id'] === id);
+  // The company home's Payments API names its docs root; when it is this platform's own, the docs'
+  // copies of the API and SDK nodes must match it byte for byte.
+  const sameRoot = homeProducts.find((node) => typesOf(node).includes('WebAPI'))?.documentation === `https://${devHost}/docs/`;
+  for (const docsPath of ['/docs/', '/docs/getting-started/', '/docs/api/payment-intents/', '/docs/es/']) {
+    const res = await getWithHost(docsPath, devHost).catch((e) => fail(`GET ${docsPath} never completed: ${e.message}`));
+    if (res.status !== 200) fail(`GET https://${devHost}${docsPath} returned ${res.status}`);
+    const pageUrl = `https://${devHost}${docsPath}`;
+    const slashless = slashlessDocsLinks(res.body, pageUrl);
+    if (slashless.length) fail(`${pageUrl} links ${slashless.length} docs page(s) without the trailing slash: ${slashless.slice(0, 5).join(', ')}`);
+    const graph = jsonLdNodes(res.body);
+    const org = graph.filter((node) => typesOf(node).includes('Organization'));
+    if (org.length !== 1 || JSON.stringify(org[0]) !== organization) fail(`${pageUrl} does not define the shared Organization node the company and gateway pages define`);
+    if (graph.some((node) => typesOf(node).includes('HowTo'))) fail(`${pageUrl} publishes a HowTo node`);
+    for (const node of graph.filter((n) => typesOf(n).some((t) => t === 'WebAPI' || t === 'SoftwareSourceCode'))) {
+      const home = homeNode(node['@id']);
+      if (!home) fail(`${pageUrl} publishes ${node['@id']}, which the company home does not`);
+      if (sameRoot && JSON.stringify(home) !== JSON.stringify(node)) fail(`${pageUrl} publishes ${node['@id']} with other values than the company home`);
+    }
+    if (docsPath.endsWith('/docs/') && !graph.some((node) => typesOf(node).includes('BreadcrumbList'))) fail(`${pageUrl} has no BreadcrumbList`);
+    const alternate = [...res.body.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) => /type="text\/markdown"/.test(tag))?.match(/href="([^"]+)"/)?.[1];
+    if (!alternate || !/\.md$/.test(alternate)) fail(`${pageUrl} names no .md Markdown alternate (got ${alternate})`);
+    const md = await getWithHost(new URL(alternate).pathname, devHost).catch((e) => fail(`GET ${alternate} never completed: ${e.message}`));
+    if (md.status !== 200 || !/^text\/markdown/.test(md.type ?? '') || !/^# /.test(md.body)) fail(`GET ${alternate} returned ${md.status} (${md.type}); expected the page as Markdown`);
+  }
+  detail += '; docs: shared Organization and product nodes, BreadcrumbList on the home, .md pages served';
+} else {
+  detail += '; docs not built (no dist/client/docs), docs checks skipped';
+}
 
 settled = true;
 server.removeAllListeners('exit');
 server.kill();
 console.log(`[smoke] OK: compiled server booted and answered on ${HOST}:${PORT}; ${detail}`);
 process.exit(0);
+
+/** The links of an HTML page (href attributes) that lead to a docs page on a host this build serves
+ *  without the page's trailing slash: what src/lib/urls.ts docsLink never writes. Files (a name
+ *  with an extension: llms.txt, openapi.json, page.md) are exempt. */
+function slashlessDocsLinks(html, base) {
+  const found = [];
+  for (const [, raw] of html.matchAll(/\shref="([^"]+)"/g)) {
+    let url;
+    try {
+      url = new URL(raw.replace(/&amp;/g, '&'), base);
+    } catch {
+      continue;
+    }
+    if (!trusted.includes(url.host) || (url.pathname !== '/docs' && !url.pathname.startsWith('/docs/'))) continue;
+    const last = url.pathname.split('/').pop();
+    if (!url.pathname.endsWith('/') && !last.includes('.')) found.push(url.href);
+  }
+  return [...new Set(found)];
+}
+
+/** Every node of every JSON-LD script on the page (each script one graph, or one node). */
+function jsonLdNodes(html) {
+  const nodes = [];
+  for (const [, text] of html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)) {
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      fail(`a JSON-LD script does not parse: ${text.slice(0, 120)}`);
+    }
+    nodes.push(...(Array.isArray(data['@graph']) ? data['@graph'] : [data]));
+  }
+  return nodes;
+}
+
+/** A node's schema.org types, as a list. */
+function typesOf(node) {
+  return [].concat(node['@type'] ?? []);
+}
 
 /** The hostnames the build lists in security.allowedDomains, read from the serialized manifest. */
 function trustedHosts() {
