@@ -102,6 +102,63 @@ function extractTitleAndBody(md) {
   return { title, body: lines.slice(i).join('\n').replace(/^\n+/, '') };
 }
 
+// A page's frontmatter description is its meta description and the line under its title, so
+// it is plain text that ends where a sentence or a word does: JSDoc `{@link X}` (and
+// `{@link X | label}`) becomes its label, code spans and emphasis lose their marks, and text
+// longer than MAX_DESCRIPTION is cut after the last sentence that keeps at least MIN_SENTENCE
+// characters, else after the last whole word (never inside a parenthesis), with an ellipsis.
+// Cutting at a fixed length left "...so you can operate on it di".
+const MAX_DESCRIPTION = 160;
+const MIN_SENTENCE = 80;
+// Left off the end of a word cut so it does not trail on a joining word: "timings, the..." reads
+// as "timings...". The class is spaces, punctuation and the SDK's spaced dash (U+2014).
+const DANGLING = /(?:[\s,;:(\u2014-]+|\s+(?:the|a|an|and|or|of|to|in|on|for|with|by|from|as|its|their|that|which))+$/i;
+
+function plainText(s) {
+  return String(s || '')
+    .replace(/\{@link(?:code|plain)?\s+([^}|\s]+)\s*(?:\|\s*)?([^}]*)\}/g, (_, target, label) => label.trim() || target)
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\*\*([^*]*)\*\*/g, '$1')
+    .replace(/\*([^*]*)\*/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Index just past the last sentence end ('.', '!' or '?' before a space or the end) at or
+ *  before `max`, skipping abbreviations such as "e.g." and "i.e."; -1 when there is none. */
+function lastSentenceEnd(text, max) {
+  let end = -1;
+  const re = /[.!?](?=\s|$)/g;
+  let m;
+  while ((m = re.exec(text)) && m.index < max) {
+    if (/\b(?:e\.g|i\.e|etc|vs)$/i.test(text.slice(0, m.index))) continue;
+    end = m.index + 1;
+  }
+  return end;
+}
+
+function summarize(s, max = MAX_DESCRIPTION) {
+  const text = plainText(s);
+  // A summary that stops on a colon introduced a list the description cannot show.
+  if (text.length <= max && !text.endsWith(':')) return text;
+  const sentence = lastSentenceEnd(text, max);
+  if (sentence >= MIN_SENTENCE) return text.slice(0, sentence);
+  if (text.length <= max) return text;
+  return `${clip(text, max)}…`;
+}
+
+/** The longest prefix of `text` within `max` that ends a word, with no parenthesis left open
+ *  and no joining word or punctuation at its end. */
+function clip(text, max) {
+  let head = /\s/.test(text[max] ?? ' ') ? text.slice(0, max) : text.slice(0, max).replace(/\s+\S*$/, '');
+  const open = (t) => (t.match(/\(/g) || []).length > (t.match(/\)/g) || []).length;
+  while (open(head)) head = head.slice(0, head.lastIndexOf('('));
+  // A colon followed by a word or two ("directly: await") introduced what was cut off.
+  const colon = head.lastIndexOf(': ');
+  if (colon > 0 && head.length - colon <= 12) head = head.slice(0, colon);
+  return head.replace(DANGLING, '');
+}
+
 function firstParagraph(body) {
   const lines = body.split(/\r?\n/);
   let j = 0;
@@ -112,9 +169,7 @@ function firstParagraph(body) {
     buf.push(lines[j]);
     j++;
   }
-  let p = buf.join(' ').replace(/`([^`]*)`/g, '$1').replace(/\*\*([^*]*)\*\*/g, '$1').replace(/\*([^*]*)\*/g, '$1').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim();
-  if (p.length > 180) p = p.slice(0, 177).trimEnd() + '…';
-  return p;
+  return summarize(buf.join(' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'));
 }
 
 // --- .d.ts parsing into structured classes -----------------------------------------------
@@ -301,7 +356,7 @@ function relatedClasses(c) {
 
 function renderClassPage(c) {
   const summary = c.doc || `The ${c.name} class.`;
-  const parts = [`---\ntitle: ${yaml(c.name)}\ndescription: ${yaml((summary.slice(0, 175)).trim())}\n---\n`];
+  const parts = [`---\ntitle: ${yaml(c.name)}\ndescription: ${yaml(summarize(summary))}\n---\n`];
   // Lead with the class explanation only; the entry-point ("Exported from @cosmosapp/pay_sdk")
   // and "Declared as class …" boilerplate is redundant with the sidebar grouping + signatures.
   if (c.doc) parts.push(`${escapeMdxText(c.doc)}\n`);

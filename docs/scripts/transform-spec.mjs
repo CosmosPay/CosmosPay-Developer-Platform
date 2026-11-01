@@ -147,6 +147,11 @@ export const TAGS = [
       'and proves the person’s inbox on its own.',
   },
   {
+    name: 'wallet-easy-recovery',
+    title: 'Wallet Easy Recovery',
+    description: 'Move a wallet between two devices through a five-minute mailbox this service cannot open.',
+  },
+  {
     name: 'webhooks',
     title: 'Webhooks',
     description: 'Register endpoints, manage them, and inspect delivery attempts for payment events.',

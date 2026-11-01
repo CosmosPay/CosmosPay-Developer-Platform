@@ -1,6 +1,6 @@
 ---
 title: "LiquidityOperation"
-description: "One deposit into, or withdrawal from, a Stellar liquidity pool. The server builds the envelope and the wallet signs it, so an operation is a two-step object: it arrives `PENDI"
+description: "One deposit into, or withdrawal from, a Stellar liquidity pool. The server builds the envelope and the wallet signs it, so an operation is a two-step object…"
 ---
 
 One deposit into, or withdrawal from, a Stellar liquidity pool. The server builds the envelope and the wallet signs it, so an operation is a two-step object: it arrives `PENDING` carrying an unsigned `xdr`, and reaches `SUBMITTED`/`SUCCEEDED` only once the signed envelope comes back through `submit()`. Both steps are available on the instance — `await operation.submit({ signedXdr })` — so a caller never has to keep the id and the manager in scope alongside it.

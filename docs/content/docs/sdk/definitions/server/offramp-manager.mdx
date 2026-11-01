@@ -1,6 +1,6 @@
 ---
 title: "OfframpManager"
-description: "Stablecoin → fiat — `client.offramp`. Four steps, and the middle one is the one people miss: **quote**, **authorize** (which builds the unsigned transaction that moves the sta"
+description: "Stablecoin → fiat — client.offramp. Four steps, and the middle one is the one people miss: quote, authorize…"
 ---
 
 Stablecoin → fiat — `client.offramp`. Four steps, and the middle one is the one people miss: **quote**, **authorize** (which builds the unsigned transaction that moves the stablecoin), the wallet signs it, and only then **create the payout** with that signature attached. A payout created without a signed transfer is a payout with nothing behind it. `authorize` is for the chains that need a transaction built for them (Stellar, Solana). On EVM the quote itself carries the `approve` contract payload, so the caller signs that instead and goes straight to `createPayout`.
