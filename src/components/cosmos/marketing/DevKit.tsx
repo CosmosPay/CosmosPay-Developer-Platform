@@ -2,8 +2,11 @@
    Un comando y un link: el asistente de codigo hace el resto. */
 import { CopyPill, IcArrow, DOCS } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { SDK_INSTALL, LLMS_TXT } from "@/components/cosmos/marketing/data";
+import { SDK_INSTALL } from "@/components/cosmos/marketing/data";
 import { DEV_ICONS } from "@/components/cosmos/marketing/icons";
+
+/* The docs' plain-text index for coding assistants. */
+const LLMS_TXT = `${DOCS}/llms.txt`;
 
 export function DevKit() {
   const t = useT();

@@ -135,7 +135,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
-- **`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/security.txt`,
+- **`robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, `/.well-known/security.txt`,
   `/.well-known/api-catalog` and the IndexNow key file are per-domain endpoints** (`SHARED_PATHS`
   in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
   `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
@@ -144,6 +144,31 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   blocks everything but its pages, so every file those pages load (`/_astro/`, `/fonts/`,
   `/media/`, `/brand/`, `/embed/`, icons, share images) needs its `Allow` there, or Google renders
   them unstyled. The platform's sitemap is an index of the docs' own `/docs/sitemap.xml`.
+- **Every indexable page of the company site and the gateway is also Markdown**, for assistants
+  and agents, as the docs are. **The scheme:** the page's address with `.md` (`/pricing.md`,
+  `/learn/accept-usdc-payments.md`; the home's is `/index.md`), each language at `?lang=` as for the
+  page (English bare; `?lang=en`, a case variant, a language the page is not written in and an
+  uppercase path are a 301 to the one address), `text/markdown; charset=utf-8` with
+  `Link: <the page>; rel="canonical"`, served by `src/pages/[...page].md.ts` (`markdownRequest` in
+  `src/lib/seo/page-markdown.ts`, scheme in `src/lib/seo/markdown-urls.ts`) on the host whose page
+  it is: `hosts.ts` routes a `.md` path like its page (a 301 from the other hosts, a trailing slash
+  a 301 too), and the company's `/swaps` has none (its canonical is the gateway's). `/llms-full.txt`
+  (`src/lib/seo/llms-full.ts`) is every indexable page of that host in English in one file, each
+  under `## <title>` with its address, in sitemap order (`src/lib/seo/indexable.ts`, which the
+  sitemap reads too); the platform's redirects to the docs' own. Every page names its version in
+  `<link rel="alternate" type="text/markdown">` (both layouts), both llms.txt files link them, and
+  the payments robots.txt `Allow`s each `.md` path and `llms-full.txt`. A GET or HEAD of the page
+  itself whose `Accept` names `text/markdown` at least as high as `text/html` (`prefersMarkdown`;
+  browsers never name it) gets the same Markdown in place (`private, no-cache`, with
+  `Content-Location`), so those pages' HTML carries `Vary: Accept`. **The Markdown is built from
+  what each page renders, never scraped:** `src/lib/seo/site-markdown.ts` and `payments-markdown.ts`
+  walk a page's sections in its order, reading the same catalogs and data as its components
+  (`landingContent` in `src/lib/payments/landing-content.ts`, the pure part of the gateway's
+  `landingData`; `marketing/data.ts`; `src/lib/site/about.ts` and `terms.ts`;
+  `src/lib/public-swaps.ts`; every rate from `plans.ts`). A new section, page or list on one of
+  these pages goes into its builder too: `tests/unit/seoMarkdown.test.ts` and `seoLlmsFull.test.ts`
+  check every registered page in every language (its title and address, its sections, links in the
+  page's language, the rates of `plans.ts`, escrow's label, no em dash).
 - **IndexNow** (Bing, which also feeds ChatGPT search and Copilot, Yandex and the rest) learns
   about new and changed pages from `npm run indexnow` (`scripts/indexnow.mjs`, helpers in
   `src/lib/seo/indexnow.ts`, tested): it reads each domain's live sitemap (following the
@@ -872,8 +897,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   instead of adding their paddings;
   each content page opens with `PageHeader.astro` (its h1, one line, a clay render).
 - **Every section is a component** in `src/components/payments/landing/sections/`, reading
-  `landingData(lang, layout)` (`data.ts`); `layout` "multi" turns topic anchors into page links
-  (`links`). Teaser variants: `<Pricing compact>` (no calculator), `<Security compact>` (four
+  `landingData(lang, layout)` (`data.ts`: the pure `landingContent` of
+  `src/lib/payments/landing-content.ts`, the words, lists, rates and code the sections draw and the
+  pages' Markdown versions read, plus the links and logo files); `layout` "multi" turns topic
+  anchors into page links (`links`). Teaser variants: `<Pricing compact>` (no calculator), `<Security compact>` (four
   facts), `<Faq limit={4}>`, `<Faq bare>` (heading for assistive tech only, under a page
   header). The page behaviour is `src/scripts/payments/landing.ts` (`startLanding()`), the head
   extras `LandingHead.astro`. Pinned stages stick under the nav and the section bar

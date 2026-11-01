@@ -8,12 +8,9 @@
    (src/lib/seo/page-dates.ts: the date it states, else its sources' last commit, else the build);
    without those dates only the pages that state a date carry one. src/pages/sitemap.xml.ts serves
    it. Pure, so tests/unit/seoSitemap.test.ts covers it. */
-import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
-import { LOCALES as PAYMENTS_LOCALES } from "@/lib/payments/i18n";
 import { hreflangAlternates, pageUrl, type Alternate } from "@/lib/seo/lang-urls";
-import { SITE_PATHS_CANONICAL_ON_PAYMENTS } from "@/lib/seo/cross-host";
 import { pageModified, statedDate, type DateInput } from "@/lib/seo/page-dates";
-import { PAGE_LANGS, SITE_PAGE_PATHS, type SitePage } from "@/lib/seo/site-meta";
+import { indexablePages } from "@/lib/seo/indexable";
 
 export type SitemapArea = "site" | "dev" | "payments";
 
@@ -42,23 +39,17 @@ export function inEveryLanguage(origin: string, path: string, langs: readonly st
   });
 }
 
-/* The company site's pages, those canonical on the gateway left out. */
-const SITE_PAGES: SitePage[] = (["home", "pricing", "swaps", "tos", "about"] as const).filter(
-  (page) => !SITE_PATHS_CANONICAL_ON_PAYMENTS.includes(SITE_PAGE_PATHS[page]),
-);
-
 const lastmodFor =
   (area: "site" | "payments", dates?: DateInput): LastmodOf =>
   (path, lang) =>
     dates ? pageModified(area, path, lang, dates) : statedDate(area, path);
 
 export function siteEntries(origin: string, dates?: DateInput): SitemapEntry[] {
-  return SITE_PAGES.flatMap((page) => inEveryLanguage(origin, SITE_PAGE_PATHS[page], PAGE_LANGS[page], lastmodFor("site", dates)));
+  return indexablePages("site").flatMap((page) => inEveryLanguage(origin, page.path, page.langs, lastmodFor("site", dates)));
 }
 
 export function paymentsEntries(origin: string, dates?: DateInput): SitemapEntry[] {
-  const langs = PAYMENTS_LOCALES.map((l) => l.code);
-  return ["/", ...PAYMENTS_PAGE_PATHS].flatMap((path) => inEveryLanguage(origin, path, langs, lastmodFor("payments", dates)));
+  return indexablePages("payments").flatMap((page) => inEveryLanguage(origin, page.path, page.langs, lastmodFor("payments", dates)));
 }
 
 const xml = (value: string): string =>

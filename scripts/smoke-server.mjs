@@ -203,6 +203,26 @@ for (const host of keyHosts) {
 }
 detail += `; IndexNow key file served on ${keyHosts.length} hosts`;
 
+// THE PAGES AS MARKDOWN. /llms-full.txt answers on the company site and the gateway with every
+// indexable page in one file (the platform redirects it to the docs' own), and each of those hosts
+// answers its home as Markdown at /index.md (src/lib/seo/page-markdown.ts). Both are built from the
+// catalogs at request time, so a builder that throws on the built bundle answers 500 here.
+let fullOn = 0;
+for (const host of keyHosts) {
+  const full = await getWithHost('/llms-full.txt', host).catch((e) => fail(`GET https://${host}/llms-full.txt never completed: ${e.message}`));
+  if (full.status === 301 && /\/docs\/llms-full\.txt$/.test(full.location ?? '')) continue;
+  if (full.status !== 200 || !/^text\/plain/.test(full.type ?? '') || !/^# Cosmos Pay/.test(full.body) || !/\nURL: https?:\/\//.test(full.body)) {
+    fail(`GET https://${host}/llms-full.txt returned ${full.status} (${full.type}); expected the pages as text, or a 301 to the docs' own`);
+  }
+  const home = await getWithHost('/index.md', host).catch((e) => fail(`GET https://${host}/index.md never completed: ${e.message}`));
+  if (home.status !== 200 || !/^text\/markdown/.test(home.type ?? '') || !/^# .+\n\nURL: /.test(home.body)) {
+    fail(`GET https://${host}/index.md returned ${home.status} (${home.type}); expected the home as Markdown`);
+  }
+  fullOn++;
+}
+if (fullOn === 0) fail(`no trusted host (${keyHosts.join(', ')}) served /llms-full.txt`);
+detail += `; llms-full.txt and /index.md served on ${fullOn} hosts`;
+
 settled = true;
 server.removeAllListeners('exit');
 server.kill();
@@ -228,7 +248,7 @@ function serverModules(dir) {
 
 /**
  * A GET with the Host header nginx would send (fetch may not set Host), without following
- * redirects. Resolves the status, the Location header and the body.
+ * redirects. Resolves the status, the Location and Content-Type headers and the body.
  */
 function getWithHost(pathname, host) {
   return new Promise((resolve, reject) => {
@@ -238,7 +258,7 @@ function getWithHost(pathname, host) {
         let body = '';
         res.setEncoding('utf8');
         res.on('data', (chunk) => (body += chunk));
-        res.on('end', () => resolve({ status: res.statusCode, location: res.headers.location ?? null, body }));
+        res.on('end', () => resolve({ status: res.statusCode, location: res.headers.location ?? null, type: res.headers['content-type'] ?? null, body }));
       },
     );
     req.on('timeout', () => req.destroy(new Error('timed out')));

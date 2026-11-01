@@ -17,7 +17,8 @@
  * 301 to the address without it, so search engines never index two copies. The
  * site and payments pages live under internal mounts (/site, /payments) and are reached by a
  * rewrite, so their public URLs have no prefix, and the mounts themselves are never public:
- * asked directly, they redirect to the public address.
+ * asked directly, they redirect to the public address. Each of those pages also has a Markdown
+ * version at its address with `.md` (src/lib/seo/markdown-urls.ts), owned by the same domain.
  *
  * Pure (no astro:env), so tests/unit/hosts.test.ts covers the whole table; src/middleware.ts
  * applies it with the configured origins.
@@ -50,6 +51,7 @@ export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", pay
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
 import { isKeyFilePath } from "@/lib/seo/indexnow";
 import { pageLanguages } from "@/lib/seo/lang-urls";
+import { markdownOwners, pageOfMarkdown } from "@/lib/seo/markdown-urls";
 
 const SITE_PATHS = new Set(["/pricing", "/tos", "/about"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
@@ -68,10 +70,10 @@ const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
 /* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts,
-   llms.txt.ts, src/pages/.well-known/*). The IndexNow key file is one too (src/pages/[key].txt.ts):
-   its name is the key, read at runtime, so it is matched by its shape (`isSharedPath`) and the
-   route answers 404 for any name but the configured key. */
-const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/.well-known/security.txt", "/.well-known/api-catalog"]);
+   llms.txt.ts, llms-full.txt.ts, src/pages/.well-known/*). The IndexNow key file is one too
+   (src/pages/[key].txt.ts): its name is the key, read at runtime, so it is matched by its shape
+   (`isSharedPath`) and the route answers 404 for any name but the configured key. */
+const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/.well-known/security.txt", "/.well-known/api-catalog"]);
 const isSharedPath = (path: string): boolean => SHARED_PATHS.has(path) || isKeyFilePath(path);
 /* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
    src/pages/site/swaps.astro): the public swaps. The platform sends them to the gateway. */
@@ -205,6 +207,18 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
     if (slashed && canonical !== "/") return to(area, encodeURI(canonical));
     return rewrite(area, MOUNTS[area], path);
   };
+
+  /* The Markdown version of an indexable page (`/pricing.md`, the home's `/index.md`:
+     src/lib/seo/markdown-urls.ts) is answered by src/pages/[...page].md.ts on the host whose page
+     it is, and is a 301 there from the others, as the page is. The platform's own home has none,
+     so there `/index.md` falls through like any path nobody owns. */
+  const markdownPage = pageOfMarkdown(path);
+  if (markdownPage !== null) {
+    const owners = markdownOwners(markdownPage);
+    const here = owners.find((area) => areas.has(area));
+    if (here) return slashed ? to(here, encodeURI(canonical)) : { kind: "pass", area: here };
+    if (owners.length > 0 && markdownPage !== "/") return to(owners[0], encodeURI(canonical));
+  }
 
   if (PROVER_FILE.test(path) && areas.has("dev") && !areas.has("payments")) return rewrite("dev", MOUNTS.payments, path);
   if (DUAL_PATHS.has(path)) {

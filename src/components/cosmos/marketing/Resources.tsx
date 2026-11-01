@@ -3,13 +3,9 @@
    live here by position (the catalogs carry the labels, in the same order in every language). */
 import { IcChevSm, DOCS } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
+import { RESOURCE_DOCS } from "@/components/cosmos/marketing/data";
 
-const RESOURCE_HREFS = [
-  `${DOCS}/getting-started`, // Getting started
-  `${DOCS}/embed`, // Embed a pay button or checkout
-  `${DOCS}/sdk/server/webhooks`, // Webhooks in the SDK
-  `${DOCS}/api-keys`, // Get your API key
-];
+const RESOURCE_HREFS = RESOURCE_DOCS.map((path) => `${DOCS}${path}`);
 
 export function Resources() {
   const t = useT();
