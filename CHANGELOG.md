@@ -2,6 +2,12 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.21.0] - 2026-11-01
+
+### Features
+- Llms-full.txt in two parts, guides and SDK, and the REST API reference (7aed381)
+- Answer each FAQ in a passage that stands on its own (91ce7f7)
+
 ## [0.20.1] - 2026-11-01
 
 ### Bug Fixes
