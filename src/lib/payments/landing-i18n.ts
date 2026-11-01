@@ -179,6 +179,8 @@ const en = {
     environments: { title: "Keys per environment", body: "Test and live API keys are separate and scoped to one organization, with roles and permissions for your team." },
     expiry: { title: "Links that expire", body: "A link can carry a deadline: the checkout counts down and stops asking for the payment once it passes." },
     docs: { title: "Open documentation", body: "The API reference, the SDK and the guides are public, with an OpenAPI spec you can check the API against." },
+    webhooks: { title: "Signed webhooks", body: "Every event sent to your server is signed with HMAC-SHA256 and your endpoint’s secret, so your server can refuse one that did not come from Cosmos Pay." },
+    report: { title: "Report a security issue", body: "Write to the address in our security.txt. We answer in English or Spanish.", link: "Read security.txt" },
   },
   developers: {
     title: "A few lines",
@@ -618,6 +620,8 @@ const es: LandingMessages = {
     environments: { title: "Claves por entorno", body: "Las claves de API de prueba y live están separadas y limitadas a una organización, con roles y permisos para tu equipo." },
     expiry: { title: "Enlaces que vencen", body: "Un enlace puede tener fecha límite: el checkout hace la cuenta regresiva y deja de pedir el pago cuando vence." },
     docs: { title: "Documentación abierta", body: "La referencia de la API, el SDK y las guías son públicos, con una especificación OpenAPI contra la que puedes comprobar la API." },
+    webhooks: { title: "Webhooks firmados", body: "Cada evento que enviamos a tu servidor va firmado con HMAC-SHA256 y el secreto de tu endpoint, así tu servidor puede rechazar uno que no venga de Cosmos Pay." },
+    report: { title: "Reporta un problema de seguridad", body: "Escribe a la dirección de nuestro security.txt. Respondemos en inglés o en español.", link: "Ver security.txt" },
   },
   developers: {
     title: "Unas pocas líneas",
@@ -1053,6 +1057,8 @@ const pt: LandingMessages = {
     environments: { title: "Chaves por ambiente", body: "As chaves de API de teste e live são separadas e restritas a uma organização, com funções e permissões para a sua equipe." },
     expiry: { title: "Links que expiram", body: "Um link pode ter prazo: o checkout faz a contagem regressiva e deixa de pedir o pagamento quando ele termina." },
     docs: { title: "Documentação aberta", body: "A referência da API, o SDK e os guias são públicos, com uma especificação OpenAPI para você conferir a API." },
+    webhooks: { title: "Webhooks assinados", body: "Cada evento enviado ao seu servidor é assinado com HMAC-SHA256 e o segredo do seu endpoint, para que o seu servidor possa recusar um que não venha da Cosmos Pay." },
+    report: { title: "Reporte um problema de segurança", body: "Escreva para o endereço do nosso security.txt. Respondemos em inglês ou espanhol.", link: "Ver security.txt" },
   },
   developers: {
     title: "Poucas linhas",
@@ -1488,6 +1494,8 @@ const fr: LandingMessages = {
     environments: { title: "Des clés par environnement", body: "Les clés d’API de test et live sont séparées et limitées à une organisation, avec des rôles et des permissions pour votre équipe." },
     expiry: { title: "Des liens qui expirent", body: "Un lien peut avoir une échéance : le checkout fait le compte à rebours et cesse de demander le paiement une fois passée." },
     docs: { title: "Une documentation ouverte", body: "La référence de l’API, le SDK et les guides sont publics, avec une spécification OpenAPI pour vérifier l’API." },
+    webhooks: { title: "Webhooks signés", body: "Chaque événement envoyé à votre serveur est signé en HMAC-SHA256 avec le secret de votre endpoint, pour que votre serveur puisse refuser celui qui ne vient pas de Cosmos Pay." },
+    report: { title: "Signaler un problème de sécurité", body: "Écrivez à l’adresse indiquée dans notre security.txt. Nous répondons en anglais ou en espagnol.", link: "Lire le security.txt" },
   },
   developers: {
     title: "Quelques lignes",
@@ -1923,6 +1931,8 @@ const de: LandingMessages = {
     environments: { title: "Schlüssel pro Umgebung", body: "Test- und Live-API-Schlüssel sind getrennt und auf eine Organisation beschränkt, mit Rollen und Berechtigungen für dein Team." },
     expiry: { title: "Links, die ablaufen", body: "Ein Link kann eine Frist haben: Der Checkout zählt herunter und fordert die Zahlung danach nicht mehr an." },
     docs: { title: "Offene Dokumentation", body: "API-Referenz, SDK und Anleitungen sind öffentlich, mit einer OpenAPI-Spezifikation, an der du die API prüfen kannst." },
+    webhooks: { title: "Signierte Webhooks", body: "Jedes Ereignis an deinen Server ist mit HMAC-SHA256 und dem Secret deines Endpunkts signiert, damit dein Server eines ablehnen kann, das nicht von Cosmos Pay kommt." },
+    report: { title: "Sicherheitsproblem melden", body: "Schreib an die Adresse in unserer security.txt. Wir antworten auf Englisch oder Spanisch.", link: "security.txt lesen" },
   },
   developers: {
     title: "Ein paar Zeilen",
@@ -2358,6 +2368,8 @@ const hi: LandingMessages = {
     environments: { title: "हर एनवायरनमेंट की अलग कीज़", body: "टेस्ट और लाइव API कीज़ अलग-अलग होती हैं और एक ही संगठन तक सीमित रहती हैं, आपकी टीम के लिए रोल और परमिशन के साथ।" },
     expiry: { title: "समय-सीमा वाले लिंक", body: "लिंक में डेडलाइन जोड़ी जा सकती है: चेकआउट काउंटडाउन दिखाता है और समय पूरा होने पर भुगतान माँगना बंद कर देता है।" },
     docs: { title: "खुला डॉक्यूमेंटेशन", body: "API रेफ़रेंस, SDK और गाइड सार्वजनिक हैं, साथ में एक OpenAPI स्पेसिफ़िकेशन, जिससे आप API को जाँच सकते हैं।" },
+    webhooks: { title: "हस्ताक्षरित वेबहुक", body: "आपके सर्वर को भेजा गया हर इवेंट HMAC-SHA256 और आपके एंडपॉइंट के सीक्रेट से हस्ताक्षरित होता है, ताकि आपका सर्वर Cosmos Pay से न आए इवेंट को अस्वीकार कर सके।" },
+    report: { title: "सुरक्षा समस्या की रिपोर्ट करें", body: "हमारी security.txt में दिए पते पर लिखें। हम अंग्रेज़ी या स्पेनिश में जवाब देते हैं।", link: "security.txt देखें" },
   },
   developers: {
     title: "कोड की",
@@ -2793,6 +2805,8 @@ const zh: LandingMessages = {
     environments: { title: "按环境区分密钥", body: "测试和正式 API 密钥相互独立，且仅限于一个组织使用，并为您的团队提供角色和权限管理。" },
     expiry: { title: "可设置截止时间的链接", body: "链接可以设置截止时间：收银台会倒计时，截止后便不再请求付款。" },
     docs: { title: "公开文档", body: "API 参考、SDK 和指南均公开提供，并附有 OpenAPI 规范，供您对照检查 API。" },
+    webhooks: { title: "签名的 Webhook", body: "发往您服务器的每个事件都使用 HMAC-SHA256 和您端点的密钥签名，您的服务器可以据此拒绝并非来自 Cosmos Pay 的事件。" },
+    report: { title: "报告安全问题", body: "请发送邮件至我们 security.txt 中列出的地址。我们使用英语或西班牙语回复。", link: "查看 security.txt" },
   },
   developers: {
     title: "只需",

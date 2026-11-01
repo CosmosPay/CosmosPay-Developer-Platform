@@ -121,14 +121,21 @@ export function landingContent(lang: Locale) {
   const PAY_ORIGIN = "https://payments.cosmospay.lat";
   const EMBED_TAG = `<script src="${PAY_ORIGIN}/embed/cosmos-pay.js" defer></script>`;
   const useCases = (["stores", "services", "digital", "donations"] as const).map((key) => ({ key, ...t.useCases[key] }));
+  // The home shows the first four; /security shows them all. `report` links the domain's own
+  // security.txt (src/lib/seo/well-known.ts, every domain), its label from the catalog.
   const security = ([
     ["onchain", "chain"],
     ["keys", "key"],
     ["framing", "frame"],
     ["environments", "layers"],
+    ["webhooks", "webhook"],
     ["expiry", "clock"],
     ["docs", "book"],
-  ] as const).map(([key, icon]) => ({ icon, ...t.security[key] }));
+    ["report", "check"],
+  ] as const).map(([key, icon]) => {
+    const fact = t.security[key] as { title: string; body: string; link?: string };
+    return { icon, title: fact.title, body: fact.body, ...(fact.link && { link: { label: fact.link, href: "/.well-known/security.txt" } }) };
+  });
   // Plan names are product names (untranslated); "Custom" and "$33/mo" are written out per language.
   const plans = (["starter", "essentials", "growth", "enterprise"] as const).map((id) => {
     const spec = PLAN_SPECS[id];
