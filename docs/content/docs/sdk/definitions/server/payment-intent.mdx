@@ -32,6 +32,14 @@ kind: PaymentIntentKind
 status: PaymentIntentStatus
 ```
 
+### chain
+
+Chain the payment settles on.
+
+```ts
+chain: PaymentChain
+```
+
 ### network
 
 ```ts
@@ -60,7 +68,7 @@ amount: string | null
 
 ### asset
 
-Asset code, or `native` for XLM.
+Asset code, or `native` for the chain's coin (XLM, SOL or MON).
 
 ```ts
 asset: string
@@ -180,7 +188,7 @@ get isPending(): boolean
 
 ### get
 
-Human-readable asset label (`XLM` for native).
+Human-readable asset label (the chain's coin for native: `XLM`, `SOL` or `MON`).
 
 ```ts
 get assetLabel(): string
