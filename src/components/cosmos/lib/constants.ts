@@ -4,7 +4,7 @@
    (src/lib/hosts.ts). A link that may be rendered on another domain than its target is
    absolute, so it never takes a redirect hop. */
 import { PUBLIC_BETTER_AUTH_URL, PUBLIC_PAYMENTS_URL, PUBLIC_SITE_URL } from "astro:env/client";
-import { loginUrl, normalizeOrigin } from "@/lib/urls";
+import { docsLink, docsRoot, loginUrl, normalizeOrigin } from "@/lib/urls";
 import { localizeHref } from "@/lib/seo/lang-urls";
 
 export const SITE = normalizeOrigin(PUBLIC_SITE_URL);
@@ -17,7 +17,7 @@ export const PRICING = `${SITE}/pricing`;
 export const TERMS = `${SITE}/tos`;
 export const ABOUT = `${SITE}/about`;
 export const DASH = `${DEV}/dashboard`;
-export const DOCS = `${DEV}/docs`;
+export const DOCS = docsRoot(DEV);
 export const LOGIN = loginUrl(DEV);
 
 /* The company's social profiles (the footer's icons). */
@@ -62,6 +62,12 @@ export function homeFor(area?: Area, lang?: string | null): string {
 /** Pricing: the gateway's own pricing page on payments (/fees), the company's elsewhere. */
 export function pricingFor(area?: Area, lang?: string | null): string {
   return langHref(area === "payments" ? "/fees" : PRICING, lang, area);
+}
+
+/** A page of the docs at its canonical address, with its trailing slash (`docsHref("/api")` is
+ *  <platform>/docs/api/): a slashless docs link costs a 301 (docsLink in src/lib/urls.ts). */
+export function docsHref(path: string): string {
+  return docsLink(DOCS, path);
 }
 
 /** The platform's sign-in, landing on `next` (a path on the platform) afterwards. */

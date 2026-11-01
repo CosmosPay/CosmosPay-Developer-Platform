@@ -15,7 +15,7 @@ export const ORGANIZATION_NODE: JsonLdNode = organizationNode(SITE, sameAsProfil
 export function companyProductNodes(): JsonLdNode[] {
   return productNodes({
     site: SITE,
-    docs: `${DOCS}/`,
+    docs: DOCS,
     apiBase: API_BASE,
     wallet: { webApp: WALLET_LINKS.webapp, chromeStore: chromeStoreListing(WALLET_LINKS.chrome) },
   });

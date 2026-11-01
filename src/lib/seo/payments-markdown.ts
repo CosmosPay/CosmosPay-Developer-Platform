@@ -22,7 +22,7 @@ import { CHAINS, CHAIN_NAMES, NETWORK_IDS, TEST_NETWORKS, type Chain } from "@/l
 import { PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, planSwapFeeBps, swapFeePct, swapFeeRange, type PlanId } from "@/lib/plans";
 import { publicSwapCalls, USDT0_OTHER_NETWORKS_BEFORE_ROUTES } from "@/lib/public-swaps";
 import { messages } from "@/lib/i18n/messages/index";
-import { loginUrl } from "@/lib/urls";
+import { docsLink, docsRoot, loginUrl } from "@/lib/urls";
 import { localizeHref, pageUrl } from "@/lib/seo/lang-urls";
 import { code, h, link, ol, p, table, term, ul, type Block, type MarkdownInput, type PageDoc } from "@/lib/seo/markdown";
 
@@ -206,11 +206,11 @@ function integrations({ d, lang, docs, create, self }: Ctx): Block[] {
   const t = d.t;
   const it = t.integrations;
   const more = {
-    button: { href: `${docs}/embed`, label: it.embedDocs },
-    embedded: { href: `${docs}/embed`, label: it.embedDocs },
+    button: { href: docsLink(docs, "/embed"), label: it.embedDocs },
+    embedded: { href: docsLink(docs, "/embed"), label: it.embedDocs },
     hosted: { href: create, label: t.paths.nocode.link },
     links: { href: create, label: t.paths.nocode.link },
-    api: { href: `${docs}/api`, label: it.apiDocs },
+    api: { href: docsLink(docs, "/api"), label: it.apiDocs },
     plugins: { href: `${self}#contact`, label: it.notify },
   } as const;
   const designs = CHECKOUT_THEMES.map((id) => MESSAGES[lang].designs[id]);
@@ -238,7 +238,7 @@ function developers({ d, docs }: Ctx): Block[] {
     h(2, head(t.developers.title, t.developers.titleBold)),
     p(t.developers.lede),
     ul([t.developers.rest, t.developers.sdk, t.developers.webhooks, t.developers.keys]),
-    ul([link(t.developers.docs, docs), link(t.developers.reference, `${docs}/api`)]),
+    ul([link(t.developers.docs, docs), link(t.developers.reference, docsLink(docs, "/api"))]),
     ...d.codeTabs.flatMap((tab) => [h(3, t.devTabs[tab.key]), code(tab.code, tab.lang)]),
     p(t.developers.codeComment),
   ];
@@ -342,7 +342,7 @@ function networkCode({ d, docs, page }: Ctx, chain: Chain): Block[] {
   return [
     h(2, t.network.codeTitle.replace("{network}", CHAIN_NAMES[chain])),
     p(t.network.codeLede),
-    ul([link(t.network.docs, `${docs}/api/payment-intents/`), link(t.network.guide, `${docs}/getting-started/`), link(t.network.integrations, page("/integrations"))]),
+    ul([link(t.network.docs, docsLink(docs, "/api/payment-intents")), link(t.network.guide, docsLink(docs, "/getting-started")), link(t.network.integrations, page("/integrations"))]),
     code(payLinkCurl(chain), "bash"),
     p(t.networks[chain].codeNote),
   ];
@@ -381,7 +381,7 @@ function swapsPage(ctx: Ctx): Block[] {
     h(2, sp.apiTitle),
     p(fill(sp.apiLede, rates)),
     ...publicSwapCalls(input.api).flatMap((call) => [h(3, labels[call.key]), code(call.code, "bash")]),
-    p(link(sp.apiDocs, `${docs}/api`)),
+    p(link(sp.apiDocs, docsLink(docs, "/api"))),
     h(2, sp.faqTitle),
     ...sp.faq.flatMap((x) => [h(3, x.q), p(fill(x.a, rates))]),
   ];
@@ -535,7 +535,7 @@ export function paymentsPageDoc(path: string, lang: string, input: MarkdownInput
     lang: locale,
     d,
     input,
-    docs: `${input.dev}/docs`,
+    docs: docsRoot(input.dev),
     create: loginUrl(input.dev, "/dashboard?view=payments"),
     page: (to) => localizeHref(pageUrl(input.payments, to), lang, hosts),
     at: (href) => localizeHref(href, lang, hosts),

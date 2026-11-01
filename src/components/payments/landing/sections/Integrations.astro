@@ -7,23 +7,24 @@
 // Every demo is a sample: nothing on it can be paid and nothing is sent anywhere.
 import Code from "@/components/payments/landing/Code.astro";
 import type { LandingData } from "@/components/payments/landing/data";
+import { docsHref } from "@/components/cosmos/lib/constants";
 import { demoCheckoutAddress } from "@/lib/payments/integration-demo";
 
 interface Props {
   d: LandingData;
 }
 
-const { t, lang, DOCS, CREATE_LINK, PAY_ORIGIN, integrations, PLUGINS, designs, checkoutCopy, demoAssets } = Astro.props.d;
+const { t, lang, CREATE_LINK, PAY_ORIGIN, integrations, PLUGINS, designs, checkoutCopy, demoAssets } = Astro.props.d;
 const it = t.integrations;
 const LANG_NAME = { html: "HTML", ts: "TypeScript" } as const;
 const checkoutAddress = demoCheckoutAddress(PAY_ORIGIN);
 // What each option links to under its demo.
 const more = {
-  button: { href: `${DOCS}/embed`, label: it.embedDocs },
-  embedded: { href: `${DOCS}/embed`, label: it.embedDocs },
+  button: { href: docsHref("/embed"), label: it.embedDocs },
+  embedded: { href: docsHref("/embed"), label: it.embedDocs },
   hosted: { href: CREATE_LINK, label: t.paths.nocode.link },
   links: { href: CREATE_LINK, label: t.paths.nocode.link },
-  api: { href: `${DOCS}/api`, label: it.apiDocs },
+  api: { href: docsHref("/api"), label: it.apiDocs },
   plugins: { href: "#contact", label: it.notify },
 } as const;
 const [firstDesign] = designs;
