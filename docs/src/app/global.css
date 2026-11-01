@@ -32,3 +32,68 @@ html > body[data-scroll-locked] {
 .prose :is(p, li, td, th, blockquote, figcaption) a:hover {
   color: var(--violet, #6b47ff);
 }
+
+/* The API reference's own repeated elements, with short class names because they repeat hundreds
+   of times on the larger pages (each Tailwind list was most of the exported HTML). In the
+   components layer, so a utility on the same element still wins (hover, aria-expanded...). */
+@layer components {
+  /* Schema properties (components/api/schema-ui.tsx): the row, its head, name, type and
+     description. `not-prose` and `group/property` stay in the markup: other selectors match them. */
+  .api-prop {
+    @apply scroll-m-20 border-t py-2.5 first:border-t-0;
+  }
+  .api-prop-head {
+    @apply flex flex-wrap items-center gap-x-2 gap-y-1;
+  }
+  .api-prop-name {
+    @apply text-[0.8125rem] font-medium;
+  }
+  .api-type {
+    @apply font-mono text-xs text-fd-muted-foreground;
+  }
+  .api-desc {
+    @apply flex flex-col gap-2 text-fd-muted-foreground;
+  }
+
+  /* The responses of an operation (components/api/responses.tsx), one row per status: its
+     code (a button when there is a schema to open), its description, and the schema under them
+     once opened. */
+  .api-resps {
+    @apply rounded-xl border bg-fd-card px-3;
+  }
+  .api-resp {
+    @apply grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 border-t py-2 first:border-t-0;
+  }
+  .api-resp-code {
+    @apply inline-flex items-center gap-1 rounded-md px-1.5 font-mono text-[0.8125rem] leading-6 font-medium text-fd-muted-foreground;
+  }
+  button.api-resp-code {
+    @apply transition-colors hover:bg-fd-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring;
+  }
+  /* A chevron, turned down while the schema is open. */
+  button.api-resp-code::after {
+    content: '';
+    @apply size-1.5 -translate-y-px rotate-45 border-e-[1.5px] border-t-[1.5px] border-current opacity-60 transition-transform;
+  }
+  button.api-resp-code[aria-expanded='true']::after {
+    @apply translate-y-[-3px] rotate-135;
+  }
+  .api-s2 {
+    @apply text-green-600 dark:text-green-400;
+  }
+  .api-s3 {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+  .api-s4 {
+    @apply text-yellow-600 dark:text-yellow-400;
+  }
+  .api-s5 {
+    @apply text-red-600 dark:text-red-400;
+  }
+  .api-resp-desc {
+    @apply text-fd-muted-foreground;
+  }
+  .api-resp-body {
+    @apply col-span-full mt-2.5 flex flex-col gap-2.5;
+  }
+}
