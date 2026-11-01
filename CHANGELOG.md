@@ -2,6 +2,17 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.12.0] - 2026-11-01
+
+### Features
+- A guides hub at /learn with four guides in seven languages (9e9dc01)
+- One English URL per page, page dates, one plans Product (256fe7b)
+- Links keep the page's language, sticky language, /tos redirect (1649ab9)
+
+### Bug Fixes
+- Clean heading text, JSON-LD by the shared Organization, export check (64ce2b1)
+- Precise custody claims, computed counts, short descriptions (f133eb9)
+
 ## [0.11.0] - 2026-11-01
 
 ### Features
