@@ -61,6 +61,7 @@ if (missing.length) {
 
 checkIndexableUrls(outDir);
 checkLinksAndMarkdown(outDir);
+checkPageSizes(outDir);
 
 if (checkOnly) process.exit(0);
 
@@ -68,6 +69,35 @@ fs.rmSync(destDir, { recursive: true, force: true });
 fs.mkdirSync(path.dirname(destDir), { recursive: true });
 fs.cpSync(outDir, destDir, { recursive: true });
 console.log(`[build-docs] copied ${outDir} -> ${destDir}`);
+
+/**
+ * Every exported page's HTML stays under HTML_BUDGET. The API reference pages once weighed 0.8
+ * to 1.9 MB each (the whole OpenAPI document serialized into every page, every schema rendered),
+ * near Googlebot's 2 MB fetch limit and slow to parse; docs/README.md ("API reference page size")
+ * says what keeps them small and what to do when the spec outgrows the budget. Exits 1 naming
+ * each page over it.
+ */
+function checkPageSizes(out) {
+  const HTML_BUDGET = 500 * 1000;
+  const pages = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      if (entry.isDirectory()) return entry.name === '_next' ? [] : pages(path.join(dir, entry.name));
+      return entry.name.endsWith('.html') ? [path.join(dir, entry.name)] : [];
+    });
+  const sizes = pages(out)
+    .map((file) => ({ where: path.relative(out, file).split(path.sep).join('/'), bytes: fs.statSync(file).size }))
+    .sort((a, b) => b.bytes - a.bytes);
+  const kb = (bytes) => `${Math.round(bytes / 1000)} KB`;
+  const over = sizes.filter(({ bytes }) => bytes > HTML_BUDGET);
+  if (over.length) {
+    console.error(
+      `[build-docs] ${over.length} page(s) over the ${kb(HTML_BUDGET)} HTML budget (docs/README.md, "API reference page size"):\n` +
+        over.map(({ where, bytes }) => `  ${where}: ${kb(bytes)}`).join('\n'),
+    );
+    process.exit(1);
+  }
+  console.log(`[build-docs] size check: ${sizes.length} pages under ${kb(HTML_BUDGET)} of HTML, the largest ${sizes[0]?.where} at ${kb(sizes[0]?.bytes ?? 0)}`);
+}
 
 /**
  * Every exported page links the docs at their canonical, trailing-slash addresses (nginx answers a
