@@ -1,6 +1,6 @@
 ---
 title: "LiquidityManager"
-description: "Liquidity pools — `client.liquidity`. Two surfaces in one manager, because they are two halves of the same job: *browsing* pools and positions (read-only, straight off Horizon"
+description: "Liquidity pools — client.liquidity. Two surfaces in one manager, because they are two halves of the same job: browsing pools and positions…"
 ---
 
 Liquidity pools — `client.liquidity`. Two surfaces in one manager, because they are two halves of the same job: *browsing* pools and positions (read-only, straight off Horizon), and *operating* on them (deposit / withdraw), which produces an unsigned envelope for a wallet to sign and a `submit()` to relay it back. The managed structure is the OPERATION, not the pool: a pool is a public on-chain object with no lifecycle of its own, while an operation is a thing this consumer created, can re-read and can push to the network.

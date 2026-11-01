@@ -92,11 +92,16 @@ export function previewUrl(paymentsOrigin: string, lang: EmbedLocale | null = nu
   return url.href;
 }
 
-/** The states a `demo` checkout plays, and how long it stays in each (ms); then it starts over. */
-export const DEMO_SEQUENCE: readonly { status: LinkStatus; ms: number }[] = [
-  { status: "PENDING", ms: 7_000 },
+/**
+ * The states a `demo` checkout walks through, and how long it stays in each (ms). `null` waits
+ * for the visitor: the sample stays open until its demo button is pressed, and paid until it is
+ * pressed again. Nothing changes on its own for longer than a moment (WCAG 2.2.2), and a screen
+ * reader hears each state once, when the visitor asked for it.
+ */
+export const DEMO_SEQUENCE: readonly { status: LinkStatus; ms: number | null }[] = [
+  { status: "PENDING", ms: null },
   { status: "SUBMITTED", ms: 2_500 },
-  { status: "SUCCEEDED", ms: 5_000 },
+  { status: "SUCCEEDED", ms: null },
 ];
 
 /** The window name: one popup per link, so a second click finds the first window. */

@@ -1,6 +1,6 @@
 ---
 title: "AliasManager"
-description: "Payment handles — `client.aliases`. A handle names one or more Stellar addresses, so a payer can send to `@ada` instead of a 56-character key. Every address on a handle proved"
+description: "Payment handles — client.aliases. A handle names one or more Stellar addresses, so a payer can send to @ada instead of a 56-character key."
 ---
 
 Payment handles — `client.aliases`. A handle names one or more Stellar addresses, so a payer can send to `@ada` instead of a 56-character key. Every address on a handle proved control of itself: claiming a handle or pointing it somewhere new takes a signature, by that address, over a challenge the server issued. The SDK never holds the key — ask for a challenge, sign its `message` where the key lives, and send the signature back.

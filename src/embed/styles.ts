@@ -81,6 +81,7 @@ export const CHECKOUT_CSS = `${BASE}
 .pay { margin: 16px 0 0; padding: 16px 0 0; border-top: 1px solid var(--cp-line); display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .qr { display: block; width: 200px; max-width: 100%; height: auto; aspect-ratio: 1 / 1; padding: 8px; background: #FFFFFF; border: 1px solid var(--cp-line); border-radius: 12px; }
 .pay .btn { width: 100%; }
+.demo-run { width: 100%; margin-top: 16px; }
 .facts { margin: 16px 0 0; padding: 2px 14px; background: var(--cp-surface-2); border-radius: 12px; }
 .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--cp-line); font-size: 14px; }
 .row:last-child { border-bottom: 0; }

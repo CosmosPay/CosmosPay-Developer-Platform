@@ -1,6 +1,6 @@
 ---
 title: "OnrampManager"
-description: "Fiat → stablecoin — `client.onramp`. Three steps, in this order and no other: **quote** (a price, valid for about five minutes), **payin** (created FROM that quote, and what r"
+description: "Fiat → stablecoin — client.onramp. Three steps, in this order and no other: quote (a price, valid for about five minutes), payin…"
 ---
 
 Fiat → stablecoin — `client.onramp`. Three steps, in this order and no other: **quote** (a price, valid for about five minutes), **payin** (created FROM that quote, and what returns the funding instructions the payer acts on), then the money arrives off-band and the payin status moves on its own. There is no structure class here on purpose. A payin has no action of its own — it is a mirror of the provider's record, read and re-read — so an object with a client back-reference would carry a `fetch()` and nothing else.
