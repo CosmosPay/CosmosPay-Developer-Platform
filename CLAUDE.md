@@ -138,7 +138,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
 - **`robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, `auth.md`, `/.well-known/security.txt`,
-  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json` and the IndexNow key file are
+  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json`, Bing's `/BingSiteAuth.xml` and the IndexNow key file are
   per-domain endpoints** (`SHARED_PATHS`
   in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
   `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
@@ -1708,6 +1708,9 @@ consumer headers.
   and the public server flags (`API_DOCS_ENABLED`, `ONBOARDING_ENABLED`, `PLANS_ENABLED`, …):
   changing them in `.env` takes a rebuild, not a restart. `PUBLIC_BETTER_AUTH_URL` must equal
   `BETTER_AUTH_URL` and be in `.env` with its production value BEFORE `npm run build`.
+- **Bing Webmaster Tools verifies the three sites through `/BingSiteAuth.xml`** (`src/lib/seo/bing-site-auth.ts`,
+  `src/pages/BingSiteAuth.xml.ts`): the account's user code in `BING_SITE_AUTH` (production `.env`, runtime read).
+  Removing it unverifies them. The payments robots.txt allows the file.
 - **IndexNow after a deploy.** Once: generate a key
   (`node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"`), set
   `INDEXNOW_KEY` in the production `.env` and restart so the process reloads it (it is read at

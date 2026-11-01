@@ -82,6 +82,8 @@ const SHARED_PATHS = new Set([
   "/.well-known/security.txt",
   "/.well-known/api-catalog",
   "/.well-known/agent-skills/index.json",
+  // Bing Webmaster Tools' ownership file (src/pages/BingSiteAuth.xml.ts), lowercased like `path`.
+  "/bingsiteauth.xml",
 ]);
 const isSharedPath = (path: string): boolean => SHARED_PATHS.has(path) || isKeyFilePath(path);
 /* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
