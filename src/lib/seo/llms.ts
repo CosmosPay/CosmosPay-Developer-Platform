@@ -15,6 +15,7 @@ import { NETWORK_IDS } from "@/lib/chains";
 import { pageUrl } from "@/lib/seo/lang-urls";
 import { markdownUrl } from "@/lib/seo/markdown-urls";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, WALLET_RELEASES } from "@/lib/seo/schema";
+import { AGENT_SKILLS_INDEX_PATH, COSMOS_PAY_SKILL_REPO } from "@/lib/seo/agent-skills";
 
 export interface LlmsInput {
   site: string;
@@ -43,6 +44,10 @@ function markdownSection(origin: string, example: string): string {
 - [Every page of this site in one file](${origin}/llms-full.txt): the English text of each page linked here on ${new URL(origin).host}, under its title and address
 - Each page is also Markdown at its own address with .md (${markdownUrl(origin, example)}; the home is ${markdownUrl(origin, "/")}), in every language it is written in (${markdownUrl(origin, example, "es")})`;
 }
+
+/** The line linking a host's /auth.md (src/lib/seo/auth-md.ts). */
+const authLine = (origin: string): string =>
+  `- [Authentication for AI agents](${origin}/auth.md): an API key a person creates in the dashboard, or the shared public key for the operations open without an account; there is no OAuth flow for agents`;
 
 const planName = (id: string): string => id.charAt(0).toUpperCase() + id.slice(1);
 
@@ -125,12 +130,14 @@ ${markdownSection(site, "/pricing")}
 - [Full docs as one file](${docs}/llms-full.txt)
 - [Getting started](${docs}/getting-started/): how a payment works and the two ways to integrate
 - [Get an API key](${docs}/api-keys/): its environment picks testnet or mainnet, its scopes what it may call
+${authLine(site)}
 - [Server SDK quickstart](${docs}/sdk/server/quickstart/): create a payment intent, complete it in the wallet, validate it
 - [Payments REST API reference](${docs}/api/): payment intents, payment links, webhooks, products, customers, swaps, on-ramp and off-ramp
 - [OpenAPI document](${docs}/openapi.json): the Payments REST API's contract
 - [Webhooks](${docs}/sdk/server/webhooks/): events signed with HMAC-SHA256
 - [Embed a payment](${docs}/embed/): a pay button or an embedded checkout from one script tag
 - [Using the docs with AI](${docs}/ai/)
+- [Cosmos Pay agent skill](${COSMOS_PAY_SKILL_REPO}): a SKILL.md for coding agents that integrate Cosmos Pay, listed in the [agent skills index](${site}${AGENT_SKILLS_INDEX_PATH})
 - [SDK on npm: ${SDK_PACKAGE}](${SDK_NPM}): \`npm i ${SDK_PACKAGE}\` (Node.js 18 or later); browser entry point \`${SDK_PACKAGE}/web\`
 - [Source code on GitHub](${GITHUB_ORG})
 
@@ -210,6 +217,7 @@ ${markdownSection(payments, "/faq")}
 ## Developers
 
 - [Payments API and SDK docs](${docs}/): the index for LLMs is ${docs}/llms.txt
+${authLine(payments)}
 - [Payment intents API](${docs}/api/payment-intents/)
 - [Payment links API](${docs}/api/payment-links/)
 - [Webhooks](${docs}/sdk/server/webhooks/): events signed with HMAC-SHA256

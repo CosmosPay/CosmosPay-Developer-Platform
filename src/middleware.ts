@@ -6,7 +6,7 @@ import { defineMiddleware } from "astro:middleware";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
 import { MOUNTS, canonicalPath, languagesOf, routeRequest } from "@/lib/hosts";
 import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
-import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
+import { DEV, DOCS, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 import { DEFAULT_LOCALE, LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
 import { DEFAULT_LANG, explicitLang, isCrawler, langRedirect, normalizeLangQuery } from "@/lib/seo/lang-urls";
 import { responseHeaders } from "@/lib/seo/response-headers";
@@ -14,6 +14,7 @@ import { markdownAlternate, markdownLanguages, prefersMarkdown } from "@/lib/seo
 import { markdownHeaders, pageDoc, versionLang } from "@/lib/seo/page-markdown";
 import { renderPage } from "@/lib/seo/markdown";
 import { MARKDOWN_INPUT } from "@/lib/seo/markdown-config";
+import { discoveryLinks, pageMarkdownLink } from "@/lib/seo/link-headers";
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
 // COSMOS_API_URL. Runs once per process (idempotent), non-blocking.
@@ -279,9 +280,26 @@ export const onRequest = defineMiddleware(async (context, next) => {
       for (const [name, value] of Object.entries(ZK_ISOLATION_HEADERS)) response.headers.set(name, value);
     }
   }
-  // HSTS, Referrer-Policy, the HTML charset, and Vary on the pages whose language follows the
-  // visitor (src/lib/seo/response-headers.ts).
-  const served = responseHeaders(response, { https: areaOrigin.startsWith("https://"), negotiatedLang, negotiatedType });
+  // An indexable page of the company site or the gateway names in a Link header its llms.txt, the
+  // API catalog, the OpenAPI document, the docs, its sitemap and its Markdown version, for agents
+  // that read only the headers (src/lib/seo/link-headers.ts).
+  const links =
+    languagePage && markdownPage !== null && response.status === 200 && (method === "GET" || method === "HEAD")
+      ? discoveryLinks({
+          docs: DOCS,
+          markdown: pageMarkdownLink({
+            area: decision.area as "site" | "payments",
+            path: markdownPage,
+            asked: askedLang,
+            langs: pageLangs ?? null,
+            allLangs: LANG_CODES,
+            origins: { site: SITE, payments: PAYMENTS },
+          }),
+        })
+      : undefined;
+  // HSTS, Referrer-Policy, the HTML charset, Vary on the pages whose language follows the visitor,
+  // and those links (src/lib/seo/response-headers.ts).
+  const served = responseHeaders(response, { https: areaOrigin.startsWith("https://"), negotiatedLang, negotiatedType, links });
   if (corsOk) applyCors(served.headers, origin, context.request);
   trackApiRequest(context, served.status, startedAt);
   return served;

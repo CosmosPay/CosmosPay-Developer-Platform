@@ -76,6 +76,14 @@ test('the company file points developers at the docs, the OpenAPI document and t
   assert.ok(files.payments.includes('https://cosmospay.lat/about)'));
 });
 
+test('each file links the auth.md of its host, and the company file the agent skill and its index', () => {
+  assert.ok(files.site.includes('(https://cosmospay.lat/auth.md)'));
+  assert.ok(files.payments.includes('(https://payments.cosmospay.lat/auth.md)'));
+  for (const text of Object.values(files)) assert.match(text, /there is no OAuth flow for agents/);
+  assert.ok(files.site.includes('(https://github.com/CosmosPay/CosmosPay-Skill)'));
+  assert.ok(files.site.includes('(https://cosmospay.lat/.well-known/agent-skills/index.json)'));
+});
+
 test('escrow is offered at its price but every line that names it says it is coming soon', () => {
   for (const [name, text] of Object.entries(files)) {
     // Escrow.com is the provider escrow's rate is compared against, not our escrow.

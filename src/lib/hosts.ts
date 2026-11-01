@@ -70,10 +70,19 @@ const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
 /* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts,
-   llms.txt.ts, llms-full.txt.ts, src/pages/.well-known/*). The IndexNow key file is one too
-   (src/pages/[key].txt.ts): its name is the key, read at runtime, so it is matched by its shape
+   llms.txt.ts, llms-full.txt.ts, auth.md.ts, src/pages/.well-known/*). The IndexNow key file is one
+   too (src/pages/[key].txt.ts): its name is the key, read at runtime, so it is matched by its shape
    (`isSharedPath`) and the route answers 404 for any name but the configured key. */
-const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/.well-known/security.txt", "/.well-known/api-catalog"]);
+const SHARED_PATHS = new Set([
+  "/robots.txt",
+  "/sitemap.xml",
+  "/llms.txt",
+  "/llms-full.txt",
+  "/auth.md",
+  "/.well-known/security.txt",
+  "/.well-known/api-catalog",
+  "/.well-known/agent-skills/index.json",
+]);
 const isSharedPath = (path: string): boolean => SHARED_PATHS.has(path) || isKeyFilePath(path);
 /* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
    src/pages/site/swaps.astro): the public swaps. The platform sends them to the gateway. */
