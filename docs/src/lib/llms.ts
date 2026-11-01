@@ -35,9 +35,57 @@ function attribute(attrs: string, name: string): string | undefined {
   return match ? (match[1] ?? match[2]) : undefined;
 }
 
-/** Plain Markdown out of the processed MDX: <Card>s become list items, links become absolute. */
+/** A <Callout> as a Markdown blockquote: its title in bold, then its text. */
+function calloutToQuote(attrs: string, body: string): string {
+  const title = attribute(attrs, 'title');
+  const lines = [...(title ? [`**${title}**`, ''] : []), ...body.replace(/\s+$/, '').split(/\r?\n/)];
+  return lines.map((line) => (line.trim() ? `> ${line.trim()}` : '>')).join('\n');
+}
+
+/**
+ * Fumadocs' MDX leftovers outside code blocks: a heading's explicit id (`## Title [#id]`) goes,
+ * and a <Callout> becomes a blockquote. Agents and search engines read these files as plain
+ * Markdown, where both were noise (SEO re-audit, 2026-11-01). Fenced code is left as written.
+ */
+export function stripMdxLeftovers(markdown: string): string {
+  const out: string[] = [];
+  let fence: string | null = null;
+  let callout: { attrs: string; body: string[] } | null = null;
+  for (const line of markdown.split('\n')) {
+    const marker = /^[ \t]*(`{3,}|~{3,})/.exec(line)?.[1];
+    if (fence) {
+      if (marker && marker[0] === fence[0] && marker.length >= fence.length) fence = null;
+      (callout ? callout.body : out).push(line);
+      continue;
+    }
+    if (marker) {
+      fence = marker;
+      (callout ? callout.body : out).push(line);
+      continue;
+    }
+    if (callout) {
+      if (/^[ \t]*<\/Callout>[ \t]*\r?$/.test(line)) {
+        out.push(calloutToQuote(callout.attrs, callout.body.join('\n')));
+        callout = null;
+      } else callout.body.push(line);
+      continue;
+    }
+    const open = /^[ \t]*<Callout\b([^>]*)>[ \t]*\r?$/.exec(line);
+    if (open) {
+      callout = { attrs: open[1] ?? '', body: [] };
+      continue;
+    }
+    out.push(line.replace(/^(#{1,6}[ \t].*?)[ \t]+\[#[^\]\s]+\][ \t]*(\r?)$/, '$1$2'));
+  }
+  // An unclosed callout keeps its text rather than losing it.
+  if (callout) out.push(calloutToQuote(callout.attrs, callout.body.join('\n')));
+  return out.join('\n');
+}
+
+/** Plain Markdown out of the processed MDX: <Card>s become list items, <Callout>s blockquotes,
+ *  headings lose their explicit ids, links become absolute. */
 function toPortableMarkdown(markdown: string): string {
-  return markdown
+  return stripMdxLeftovers(markdown)
     .replace(/^[ \t]*<\/?Cards>[ \t]*\r?\n?/gm, '')
     .replace(/^[ \t]*<Card\b([^>]*?)\/>/gm, (whole, attrs: string) => {
       const title = attribute(attrs, 'title');
