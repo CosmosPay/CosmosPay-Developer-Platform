@@ -66,6 +66,10 @@ test('a page links to its site and, below the home, to its breadcrumb trail', ()
   assert.equal(webPageNodes({ url: `${SITE}/`, name: 'Cosmos Pay', lang: 'en', origin: SITE }).length, 1);
   // A FAQ page is a WebPage and a FAQPage.
   assert.deepEqual(webPageNodes({ url: `${SITE}/faq`, name: 'FAQ', lang: 'en', origin: SITE, types: ['WebPage', 'FAQPage'] })[0]['@type'], ['WebPage', 'FAQPage']);
+  // The about page is an AboutPage whose main entity is the organisation itself.
+  const [about] = webPageNodes({ url: `${SITE}/about?lang=en`, name: 'About Cosmos Pay', lang: 'en', origin: SITE, types: ['AboutPage'], mainEntity: `${SITE}/#organization` });
+  assert.equal(about['@type'], 'AboutPage');
+  assert.deepEqual(about.mainEntity, { '@id': 'https://cosmospay.lat/#organization' });
 });
 
 test('the website names its languages and its publisher', () => {

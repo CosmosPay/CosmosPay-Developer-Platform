@@ -27,6 +27,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
             <Mock name={b.mock} ui={t.ui} />
           </div>
           <h3>{b.title}</h3>
+          {b.soon && <p class="pl-soon">{t.soon}</p>}
           <p>{b.body}</p>
         </li>
       ))}
@@ -42,6 +43,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
           <article class:list={["pl-settle-card", { "is-escrow": mode.key === "escrow" }]} data-reveal style={`--i: ${i}`}>
             <Mock name={mode.key === "escrow" ? "flow-escrow" : "flow-instant"} ui={t.ui} />
             <h4>{mode.title}</h4>
+            {mode.soon && <p class="pl-soon">{t.soon}</p>}
             <p>{mode.body}</p>
             <ol class="pl-settle-steps" role="list">
               {mode.steps.map((step, j) => (

@@ -16,6 +16,7 @@ test('ownerOf assigns every public path to one domain', () => {
   assert.equal(ownerOf('/'), 'home');
   assert.equal(ownerOf('/pricing'), 'site');
   assert.equal(ownerOf('/tos'), 'site');
+  assert.equal(ownerOf('/about'), 'site');
   assert.equal(ownerOf('/pay'), 'payments');
   assert.equal(ownerOf('/contact'), 'payments');
   assert.equal(ownerOf(LINK), 'payments');
@@ -33,6 +34,9 @@ test('cosmospay.lat renders only the company site', () => {
   assert.deepEqual(route('cosmospay.lat', '/'), { kind: 'rewrite', area: 'site', path: '/site' });
   assert.deepEqual(route('cosmospay.lat', '/pricing'), { kind: 'rewrite', area: 'site', path: '/site/pricing' });
   assert.deepEqual(route('cosmospay.lat', '/tos'), { kind: 'rewrite', area: 'site', path: '/site/tos' });
+  assert.deepEqual(route('cosmospay.lat', '/about', '?lang=es'), { kind: 'rewrite', area: 'site', path: '/site/about' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/about'), { kind: 'redirect', location: 'https://cosmospay.lat/about', status: 301 });
+  assert.deepEqual(route('payments.cosmospay.lat', '/about'), { kind: 'redirect', location: 'https://cosmospay.lat/about', status: 301 });
   assert.deepEqual(route('cosmospay.lat', '/dashboard', '?view=settings'), {
     kind: 'redirect', location: 'https://dev.cosmospay.lat/dashboard?view=settings', status: 301,
   });
