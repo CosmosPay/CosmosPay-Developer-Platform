@@ -30,27 +30,46 @@ _openapi:
       - content: Claim the sealed wallet with the code on the old device
         id: claim-the-sealed-wallet-with-the-code-on-the-old-device
     contents:
-      - content: Send a fresh X25519 public key; keep its private half on the device.
-          Show a QR with the returned `id` and that key — nothing else, no
-          secret and no server URL. The session lives five minutes.
+      - content: >-
+          Send a fresh X25519 public key; keep its private half on the device.
+          Show a QR with the returned `id` and that key: nothing else, no secret
+          and no server URL. The session lives five minutes.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: open-a-session-on-the-new-device
-      - content: 'Both devices poll it: the new one waits for `offered` to ask for the
+      - content: >-
+          Both devices poll it: the new one waits for `offered` to ask for the
           code, the old one for `claimed` to stop showing it. Answers the status
           and the expiry only, never the key, the sealed wallet or the code. An
-          unknown, expired or burned session is a 404.'
+          unknown, expired or burned session is a 404.
+
+
+          Requires the `payments:read` scope. The shared public key may call it.
         heading: poll-a-session
-      - content: 'After the person confirmed and unlocked on the old device: seal the
+      - content: >-
+          After the person confirmed and unlocked on the old device: seal the
           wallet to the `receiverKey` read from the QR (ECIES, on the device),
           generate a random five-digit code, send both here and show the code.
           Accepted once per session, while it is `open`: the first offer wins
-          and any later one is a 409. Only a hash of the code is stored.'
+          and any later one is a 409. Only a hash of the code is stored.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: offer-the-sealed-wallet-from-the-old-device
-      - content: 'The right code answers the sealed wallet, once: the session reads
+      - content: >-
+          The right code answers the sealed wallet, once: the session reads
           `claimed` from then on and no longer holds it. A wrong code is a 422
           with `details.attemptsLeft`; the fifth wrong code deletes the session
-          and answers 410. Before the old device offered, the answer is 409 —
+          and answers 410. Before the old device offered, the answer is 409:
           poll for `offered` first. A malformed code is a 400 and costs no
-          attempt.'
+          attempt.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: claim-the-sealed-wallet-with-the-code-on-the-old-device
 ---
 

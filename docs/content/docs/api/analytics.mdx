@@ -10,9 +10,8 @@ _openapi:
       title: 'Overview metrics: totals, settled volume, webhook health, 30-day series'
       url: '#overview-metrics-totals-settled-volume-webhook-health-30-day-series'
     - depth: 2
-      title: Payments, swaps, liquidity and webhooks grouped by day, week, month or
-        year, with the window before for growth
-      url: '#payments-swaps-liquidity-and-webhooks-grouped-by-day-week-month-or-year-with-the-window-before-for-growth'
+      title: Activity per day, week, month or year, with the window before
+      url: '#activity-per-day-week-month-or-year-with-the-window-before'
     - depth: 2
       title: Settled (and pending) amount per asset
       url: '#settled-and-pending-amount-per-asset'
@@ -27,9 +26,8 @@ _openapi:
       - content: 'Overview metrics: totals, settled volume, webhook health, 30-day
           series'
         id: overview-metrics-totals-settled-volume-webhook-health-30-day-series
-      - content: Payments, swaps, liquidity and webhooks grouped by day, week, month or
-          year, with the window before for growth
-        id: payments-swaps-liquidity-and-webhooks-grouped-by-day-week-month-or-year-with-the-window-before-for-growth
+      - content: Activity per day, week, month or year, with the window before
+        id: activity-per-day-week-month-or-year-with-the-window-before
       - content: Settled (and pending) amount per asset
         id: settled-and-pending-amount-per-asset
       - content: Recent API requests reaching the service (with details)
@@ -37,15 +35,59 @@ _openapi:
       - content: Recent webhook deliveries across all endpoints (with details)
         id: recent-webhook-deliveries-across-all-endpoints-with-details
     contents:
-      - content: The settled volume per asset, and every asset valued in USD at NEAR
+      - content: >-
+          The settled volume per asset, and every asset valued in USD at NEAR
           Intents' current reference price (`volumeUsd`, indicative). Without
           those prices the USD fields are null and the rest answers as usual.
+
+
+          Requires the `payments:read` scope.
         heading: overview-metrics-totals-settled-volume-webhook-health-30-day-series
-      - content: Payments carry their settled volume in USD too (`volumeUsd`), each
-          asset valued at NEAR Intents' current reference price (indicative).
-          Without those prices the USD fields are null and the rest answers as
-          usual.
-        heading: payments-swaps-liquidity-and-webhooks-grouped-by-day-week-month-or-year-with-the-window-before-for-growth
+      - content: >-
+          Payments, swaps, liquidity operations, webhook deliveries and private
+          payments, each grouped into the buckets of `period` (UTC, weeks from
+          Monday, a quiet bucket a zero), with the totals of the window and of
+          the window before, for growth. Payments carry their settled volume in
+          USD too (`volumeUsd`), each asset valued at NEAR Intents' current
+          reference price (indicative). Without those prices the USD fields are
+          null and the rest answers as usual.
+
+
+          Requires the `payments:read` scope.
+        heading: activity-per-day-week-month-or-year-with-the-window-before
+      - content: >-
+          Per chain and asset, what this consumer's payment intents settled
+          (`amount`, with their `count`) and what is still `PENDING` or
+          `SUBMITTED` (`pending`), on the API key’s network only (mainnet for a
+          production key, testnet for a test key). Largest settled amount first,
+          as `{ data, total }` with no paging. Reused per consumer and network
+          for a few seconds (10 by default), so a new payment can take that long
+          to show.
+
+
+          Requires the `payments:read` scope.
+        heading: settled-and-pending-amount-per-asset
+      - content: >-
+          This consumer's requests, newest first, with method, path, status
+          code, duration, client IP and user agent; the dashboard’s own console
+          calls are left out. `status` is `ok` below 400, `pending` for a 4xx
+          and `fail` for a 5xx. Paged with `take` (default and maximum 100) and
+          `skip`; answers `{ data, total, take, skip }`, never cached.
+
+
+          Requires the `payments:read` scope.
+        heading: recent-api-requests-reaching-the-service-with-details
+      - content: >-
+          Deliveries to every webhook endpoint of this consumer, newest first:
+          the endpoint and its `url`, `eventType`, `eventId`, `attempts`, the
+          last `responseStatus` and `error`, and `status` (`ok` when delivered,
+          `fail` when failed, `pending` otherwise). The payload is never
+          included. Paged with `take` (default and maximum 100) and `skip`;
+          answers `{ data, total, take, skip }`, never cached.
+
+
+          Requires the `webhooks:read` scope.
+        heading: recent-webhook-deliveries-across-all-endpoints-with-details
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}

@@ -2,45 +2,56 @@
 title: "Private Payments"
 description: Payments on Stellar whose amount stays hidden on-chain. Create a
   private payment, list and read them; the merchant receives the amount minus
-  the 0.01% commission.
+  the private-payment commission (see https://cosmospay.lat/pricing).
 full: true
 _openapi:
   preload:
     - ./openapi.json
   toc:
     - depth: 2
-      title: "The private payments setup of the API key's network: token, registries,
-        auditor id, commission, fee account"
-      url: '#the-private-payments-setup-of-the-api-keys-network-token-registries-auditor-id-commission-fee-account'
+      title: The private payments setup of the API key's network
+      url: '#the-private-payments-setup-of-the-api-keys-network'
     - depth: 2
       title: List the consumer's private payments
       url: '#list-the-consumers-private-payments'
     - depth: 2
-      title: 'Create a private payment: a confidential payment to a merchant
-        registered on the token, minus the 0.18% commission'
-      url: '#create-a-private-payment-a-confidential-payment-to-a-merchant-registered-on-the-token-minus-the-018-commission'
+      title: Create a private payment (0.18% commission)
+      url: '#create-a-private-payment-018-commission'
     - depth: 2
       title: Get a private payment by id
       url: '#get-a-private-payment-by-id'
   structuredData:
     headings:
-      - content: "The private payments setup of the API key's network: token,
-          registries, auditor id, commission, fee account"
-        id: the-private-payments-setup-of-the-api-keys-network-token-registries-auditor-id-commission-fee-account
+      - content: The private payments setup of the API key's network
+        id: the-private-payments-setup-of-the-api-keys-network
       - content: List the consumer's private payments
         id: list-the-consumers-private-payments
-      - content: 'Create a private payment: a confidential payment to a merchant
-          registered on the token, minus the 0.18% commission'
-        id: create-a-private-payment-a-confidential-payment-to-a-merchant-registered-on-the-token-minus-the-018-commission
+      - content: Create a private payment (0.18% commission)
+        id: create-a-private-payment-018-commission
       - content: Get a private payment by id
         id: get-a-private-payment-by-id
     contents:
-      - content: What a dashboard needs to set a merchant up on the confidential token
+      - content: >-
+          What a dashboard needs to set a merchant up on the confidential token
           (register, read the balance, withdraw). `enabled` is false on a
           network where private payments do not run yet (mainnet today). The
           same shape as the keyless `GET /v1/zk-checkout/config?network=`.
-        heading: the-private-payments-setup-of-the-api-keys-network-token-registries-auditor-id-commission-fee-account
-      - content: "A private payment hides its amount on-chain: it is paid with
+
+
+          Requires the `payments:read` scope.
+        heading: the-private-payments-setup-of-the-api-keys-network
+      - content: >-
+          Newest first, optionally filtered by `status` as it reads now (a
+          `PENDING` payment past `expiresAt` reads, and filters, as `EXPIRED`).
+          Paginated with `take` (default 20, max 100) and `skip`; the answer is
+          `{ data, total, take, skip }`. Only payments on the key's network are
+          listed (a `prod` key sees mainnet, a `dev` key testnet).
+
+
+          Requires the `payments:read` scope.
+        heading: list-the-consumers-private-payments
+      - content: >-
+          A private payment hides its amount on-chain: it is paid with
           confidential transfers on Cosmos Pay's confidential token, proven with
           zero-knowledge proofs (hence `zk` in the paths). Prices the payment
           (`amount` = `netAmount` + `feeAmount`, the fee rounded up and at least
@@ -49,8 +60,22 @@ _openapi:
           makes two confidential transfers (net to the merchant, fee to the fee
           account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`.
           With a `merchantFee`, a third transfer pays it to its wallet, which
-          must hold a confidential account on the token too."
-        heading: create-a-private-payment-a-confidential-payment-to-a-merchant-registered-on-the-token-minus-the-018-commission
+          must hold a confidential account on the token too.
+
+
+          Requires the `payments:write` scope.
+        heading: create-a-private-payment-018-commission
+      - content: >-
+          One of your private payments: its amounts (`amount`, `netAmount`,
+          `feeAmount`), recipient, payer and the hashes of the transfers that
+          settled it. `status` reads as it is now: a `PENDING` payment past
+          `expiresAt` reads `EXPIRED`, and can still settle with transfers that
+          closed in time. The payer's view of it is the keyless `GET
+          /v1/zk-checkout/{id}`.
+
+
+          Requires the `payments:read` scope.
+        heading: get-a-private-payment-by-id
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
