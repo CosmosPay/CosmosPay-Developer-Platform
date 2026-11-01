@@ -276,6 +276,8 @@ export function sdkNode(site: string): JsonLdNode {
     runtimePlatform: "Node.js 18 or later",
     codeRepository: SDK_REPO,
     url: SDK_NPM,
+    // Apache-2.0, as the SDK's LICENSE file and npm metadata state.
+    license: "https://www.apache.org/licenses/LICENSE-2.0",
     author: org,
     publisher: org,
   };

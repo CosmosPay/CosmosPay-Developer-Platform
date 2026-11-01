@@ -1,8 +1,10 @@
 ---
 /* /learn on payments.cosmospay.lat: the hub of the gateway's guides (src/lib/payments/site-pages.ts
  * GUIDES), each with its title and one line on what it answers. The section bar and the footer's
- * Resources group link it. Its JSON-LD is a CollectionPage whose main entity is the list of guides,
- * each guide's article as its own page states it, and the BreadcrumbList (Overview > Guides). */
+ * Resources group link it. Its JSON-LD is a CollectionPage whose main entity is the list of guides
+ * (each by its address and name) and the BreadcrumbList (Overview > Guides). Each guide's Article
+ * lives on the guide's own page, next to the WebPage it names as mainEntityOfPage: repeated here,
+ * those references pointed at nodes this page does not define (SEO re-audit, 2026-11-01). */
 import "@/styles/payments-landing.css";
 import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
 import SiteFooter from "@/components/cosmos/layout/SiteFooter";
@@ -12,14 +14,12 @@ import PageHeader from "@/components/payments/landing/PageHeader.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
 import GuideList from "@/components/payments/learn/GuideList.astro";
 import { landingData } from "@/components/payments/landing/data";
-import { GUIDE_CONFIG, guideCopy } from "@/lib/payments/learn/index";
-import { GUIDES, GUIDE_DATES, pagePath } from "@/lib/payments/site-pages";
+import { guideCopy } from "@/lib/payments/learn/index";
+import { GUIDES, pagePath } from "@/lib/payments/site-pages";
 import { LOCALES } from "@/lib/payments/i18n";
 import { PAYMENTS } from "@/lib/payments/urls";
-import { SITE } from "@/components/cosmos/lib/constants";
 import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
-import { articleNode, itemListNode } from "@/lib/seo/schema";
-import { pageShareImage } from "@/lib/seo/og-image-urls";
+import { itemListNode } from "@/lib/seo/schema";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
@@ -32,24 +32,7 @@ const guides = GUIDES.map((guide) => {
   const copy = guideCopy(learn, guide);
   return { guide, copy, url: pageUrl(PAYMENTS, pagePath(`learn/${guide}`), explicit) };
 });
-const nodes = [
-  itemListNode(`${url}#guides`, guides.map((g) => ({ name: g.copy.title, url: g.url }))),
-  ...guides.map((g) =>
-    articleNode({
-      url: g.url,
-      type: GUIDE_CONFIG[g.guide].type,
-      headline: g.copy.title,
-      description: g.copy.description,
-      lang,
-      origin: PAYMENTS,
-      site: SITE,
-      published: GUIDE_DATES[g.guide].published,
-      modified: GUIDE_DATES[g.guide].modified,
-      // Each guide's share card in the hub's language, as its own page states it.
-      image: pageShareImage("payments", pagePath(`learn/${g.guide}`), lang, PAYMENTS)?.url ?? `${PAYMENTS}/media/coin-ramp-poster.jpg`,
-    }),
-  ),
-];
+const nodes = [itemListNode(`${url}#guides`, guides.map((g) => ({ name: g.copy.title, url: g.url })))];
 const trail = [
   { name: t.pages.home, url: pageUrl(PAYMENTS, "/", explicit) },
   { name: hub.nav, url },
