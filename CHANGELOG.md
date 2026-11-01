@@ -2,6 +2,14 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.14.0] - 2026-11-01
+
+### Features
+- A share card per page and language on the site and the gateway (6217923)
+
+### Documentation
+- Sync the DeFindex routes with the server (7f7d329)
+
 ## [0.13.0] - 2026-11-01
 
 ### Features
