@@ -73,7 +73,7 @@ test('every guide is registered: a catalog entry, a config, dates and a routed p
   assert.equal(guideOf('learn/nope'), null);
 });
 
-test('every block a guide draws has its words, and steps are a HowTo only where the page shows them', () => {
+test('every block a guide draws has its words, and numbered steps have at least three', () => {
   for (const guide of GUIDES) {
     const cfg = GUIDE_CONFIG[guide];
     const copy = guideCopy(LEARN.en, guide);
@@ -81,7 +81,7 @@ test('every block a guide draws has its words, and steps are a HowTo only where 
     assert.deepEqual([...blocks].sort(), Object.keys(copy.sections).sort(), `${guide}: every section drawn once`);
     assert.equal(cfg.order.includes('steps'), Boolean(copy.steps), `${guide}: steps`);
     assert.equal(cfg.order.includes('table'), guide === 'stellar-vs-solana-vs-monad', `${guide}: table`);
-    if (cfg.howTo) assert.ok(copy.steps && Object.keys(copy.steps.items).length >= 3, `${guide}: a HowTo needs its steps`);
+    if (copy.steps) assert.ok(Object.keys(copy.steps.items).length >= 3, `${guide}: numbered steps need at least three`);
     for (const key of Object.keys(cfg.mocks)) assert.ok(cfg.order.includes(key), `${guide}: mock beside ${key}`);
     for (const related of cfg.related) assert.notEqual(related, guide);
   }

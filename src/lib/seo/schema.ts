@@ -328,28 +328,6 @@ export function articleNode(a: ArticleInput): JsonLdNode {
   };
 }
 
-export interface HowToInput {
-  /** The canonical URL of the version shown; each step is an anchor on it (`#step-1`…). */
-  url: string;
-  name: string;
-  description: string;
-  lang: string;
-  /** The steps as the page numbers them. */
-  steps: readonly { name: string; text: string }[];
-}
-
-/** The numbered steps a guide shows, as a HowTo (only for steps the page itself shows). */
-export function howToNode(h: HowToInput): JsonLdNode {
-  return {
-    "@type": "HowTo",
-    "@id": `${h.url}#howto`,
-    name: h.name,
-    description: h.description,
-    inLanguage: h.lang,
-    step: h.steps.map((s, i) => ({ "@type": "HowToStep", position: i + 1, name: s.name, text: s.text, url: `${h.url}#step-${i + 1}` })),
-  };
-}
-
 /** A hub's list of pages, in its order, each by its address and name. */
 export function itemListNode(id: string, items: readonly { name: string; url: string }[]): JsonLdNode {
   return {

@@ -1,7 +1,7 @@
 /* The gateway's guides: their copy in the seven languages of the payments catalog (one file per
    language, each mirroring en.ts key for key, tests/unit/paymentsI18n.test.ts), and what each guide
-   page draws besides its words: the order of its blocks, the schema.org type of its article, whether
-   its steps are a HowTo, its header render and the interface mock-ups beside its steps and sections
+   page draws besides its words: the order of its blocks, the schema.org type of its article, its
+   header render and the interface mock-ups beside its steps and sections
    (src/components/payments/landing/Mock.astro, decorative). The pages are registered in
    src/lib/payments/site-pages.ts and drawn by src/components/payments/learn/GuidePage.astro. Pure. */
 import type { Locale } from "@/lib/payments/i18n";
@@ -65,8 +65,6 @@ export interface GuideConfig {
   type: "TechArticle" | "Article";
   /** The blocks in page order: a section key, "steps" or "table" (the network comparison). */
   order: readonly string[];
-  /** The steps are a HowTo in the JSON-LD (only where the page shows them as numbered steps). */
-  howTo: boolean;
   /** The header's 3D render (public/media/landing). */
   art: string;
   /** Mock-ups beside a block (by block key). */
@@ -79,7 +77,6 @@ export const GUIDE_CONFIG: Record<Guide, GuideConfig> = {
   "accept-usdc-payments": {
     type: "TechArticle",
     order: ["need", "payer", "ways", "steps", "network", "cost"],
-    howTo: true,
     art: "3d-link",
     mocks: { ways: "link", steps: "checkout" },
     related: ["whatsapp-payment-links", "stellar-vs-solana-vs-monad", "stablecoin-payment-gateway"],
@@ -87,7 +84,6 @@ export const GUIDE_CONFIG: Record<Guide, GuideConfig> = {
   "whatsapp-payment-links": {
     type: "TechArticle",
     order: ["before", "steps", "customer", "know"],
-    howTo: true,
     art: "3d-chat",
     mocks: { steps: "step-share", customer: "checkout" },
     related: ["accept-usdc-payments", "stablecoin-payment-gateway", "stellar-vs-solana-vs-monad"],
@@ -95,7 +91,6 @@ export const GUIDE_CONFIG: Record<Guide, GuideConfig> = {
   "stablecoin-payment-gateway": {
     type: "Article",
     order: ["stablecoin", "does", "settle", "fees", "custody", "fit"],
-    howTo: false,
     art: "3d-yours",
     mocks: { does: "step-confirm" },
     related: ["accept-usdc-payments", "stellar-vs-solana-vs-monad", "whatsapp-payment-links"],
@@ -103,7 +98,6 @@ export const GUIDE_CONFIG: Record<Guide, GuideConfig> = {
   "stellar-vs-solana-vs-monad": {
     type: "TechArticle",
     order: ["table", "choose", "fees"],
-    howTo: false,
     art: "3d-final",
     mocks: {},
     related: ["accept-usdc-payments", "stablecoin-payment-gateway", "whatsapp-payment-links"],
