@@ -8,8 +8,9 @@
 //
 // Its JSON-LD (StructuredData.astro): the WebPage, its BreadcrumbList (Overview > Guides > the
 // guide, as the header draws it), the article written and published by the shared Organization
-// with the dates the page shows, a HowTo of the steps where the page numbers them, and an FAQPage
-// of the questions it shows.
+// with the dates the page shows, and an FAQPage of the questions it shows. The numbered steps stay
+// on the page, but carry no HowTo: Google retired HowTo rich results, so the node would be weight
+// with no effect (the article already covers the page).
 import "@/styles/payments-landing.css";
 import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
 import SiteFooter from "@/components/cosmos/layout/SiteFooter";
@@ -30,7 +31,7 @@ import { PAYMENTS } from "@/lib/payments/urls";
 import { SITE } from "@/components/cosmos/lib/constants";
 import { PLAN_SPECS } from "@/lib/plans";
 import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
-import { articleNode, howToNode, type JsonLdNode } from "@/lib/seo/schema";
+import { articleNode, type JsonLdNode } from "@/lib/seo/schema";
 import { pageShareImage } from "@/lib/seo/og-image-urls";
 
 interface Props {
@@ -82,7 +83,6 @@ const nodes: JsonLdNode[] = [
     // The guide's share card in the page's language (og:image), else the hero's poster.
     image: pageShareImage("payments", pagePath(page), lang, PAYMENTS)?.url ?? `${PAYMENTS}/media/coin-ramp-poster.jpg`,
   }),
-  ...(cfg.howTo && g.steps ? [howToNode({ url, name: text(g.steps.title), description: g.lede, lang, steps: steps.map((s) => ({ name: s.title, text: s.body })) })] : []),
 ];
 ---
 

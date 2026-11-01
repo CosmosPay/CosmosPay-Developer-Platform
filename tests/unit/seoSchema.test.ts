@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   GITHUB_ORG,
   articleNode,
-  howToNode,
   itemListNode,
   chromeStoreListing,
   SDK_NPM,
@@ -194,14 +193,6 @@ test('a guide is an article by the shared organization, the main content of its 
   assert.equal(node.datePublished, '2026-11-01');
   assert.equal(node.dateModified, '2026-11-02');
   assert.equal('image' in node, false);
-});
-
-test('a HowTo numbers its steps and points each at its anchor on the page', () => {
-  const url = `${PAY}/learn/whatsapp-payment-links`;
-  const node = howToNode({ url, name: 'Send a link', description: 'd', lang: 'en', steps: [{ name: 'Create', text: 'a' }, { name: 'Send', text: 'b' }] });
-  const steps = node.step as Record<string, unknown>[];
-  assert.equal(steps.length, 2);
-  assert.deepEqual(steps[1], { '@type': 'HowToStep', position: 2, name: 'Send', text: 'b', url: `${url}#step-2` });
 });
 
 test('a hub lists its pages in order', () => {

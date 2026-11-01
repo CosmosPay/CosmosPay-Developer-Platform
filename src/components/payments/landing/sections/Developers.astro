@@ -6,6 +6,7 @@ import Mark from "@/components/payments/landing/Mark.astro";
 import Mock from "@/components/payments/landing/Mock.astro";
 import Code from "@/components/payments/landing/Code.astro";
 import type { LandingData } from "@/components/payments/landing/data";
+import { docsHref } from "@/components/cosmos/lib/constants";
 
 interface Props {
   d: LandingData;
@@ -28,7 +29,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
       </ul>
       <div class="pl-cta">
         <a class="btn btn-dark" href={DOCS}>{t.developers.docs}</a>
-        <a class="btn btn-outline-w" href={`${DOCS}/api`}>{t.developers.reference}</a>
+        <a class="btn btn-outline-w" href={docsHref("/api")}>{t.developers.reference}</a>
       </div>
     </div>
     <div class="pl-code" data-reveal style="--i: 2" data-tabs>

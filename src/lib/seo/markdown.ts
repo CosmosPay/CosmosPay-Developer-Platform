@@ -36,6 +36,9 @@ export interface MarkdownInput {
   api: string;
   /** The company's public profiles (name → URL), in the order the About page lists them. */
   profiles: Record<string, string>;
+  /** When an indexable page last changed (ISO; src/lib/seo/page-dates.ts), for the pages that say
+   *  so under their lede. Without it they say nothing. */
+  modified?: (area: "site" | "payments", path: string, lang: string) => string | null;
 }
 
 export const h = (level: number, text: string): Block => ({ kind: "h", level, text });

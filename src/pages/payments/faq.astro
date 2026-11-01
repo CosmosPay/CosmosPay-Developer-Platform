@@ -1,6 +1,7 @@
 ---
-/* /faq on payments.cosmospay.lat: every question merchants ask before they start, and the
- * final call to action on its own canvas. */
+/* /faq on payments.cosmospay.lat: every question merchants ask before they start, the day the page
+ * last changed under its lede (src/lib/seo/page-dates.ts), and the final call to action on its
+ * own canvas. */
 import "@/styles/payments-landing.css";
 import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
 import SiteFooter from "@/components/cosmos/layout/SiteFooter";
@@ -13,11 +14,13 @@ import { pageMeta } from "@/lib/payments/landing-i18n";
 import Faq from "@/components/payments/landing/sections/Faq.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
 import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
+import { updatedByline } from "@/lib/seo/page-dates-build";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
 // Its search title and description, with any `{n}` filled (the same words its JSON-LD states).
 const meta = pageMeta(d.t, "faq");
+const byline = updatedByline("payments", "/faq", lang, d.t.pages.updated);
 ---
 
 <PaymentsLayout title={meta.title} description={meta.description} indexable>
@@ -25,7 +28,7 @@ const meta = pageMeta(d.t, "faq");
 
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current="faq" />
-    <PageHeader d={d} page="faq" art="3d-chat" />
+    <PageHeader d={d} page="faq" art="3d-chat" byline={byline} />
     <Faq d={d} bare />
     <GuideLinks d={d} guides={["stablecoin-payment-gateway", "accept-usdc-payments", "whatsapp-payment-links", "stellar-vs-solana-vs-monad"]} />
     <FinalCta d={d} />

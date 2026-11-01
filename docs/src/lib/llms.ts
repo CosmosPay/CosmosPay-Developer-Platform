@@ -1,13 +1,15 @@
 import type * as PageTree from 'fumadocs-core/page-tree';
 import { appName, docsOrigin } from '@/lib/shared';
 import { DEFAULT_DOCS_LANGUAGE, DOCS_LANGUAGES, DOCS_LOCALE_ITEMS } from '@/lib/i18n-config';
-import { canonicalUrl, docsUrl, type DocsPage, isTranslation, source } from '@/lib/source';
+import { canonicalUrl, docsUrl, type DocsPage, isTranslation, markdownPageUrl, source } from '@/lib/source';
 import { renderOpenAPITagMarkdown } from '@/lib/openapi-markdown';
 
-// The docs as text for LLMs and coding agents: /docs/llms.txt (the index), /docs/llms-full.txt
-// (every English page in one file) and /docs/llms.mdx/<page>/content.md (one page). Links are
-// absolute (https://dev.cosmospay.lat/docs/...) so they resolve wherever the text is pasted, and
-// the API reference pages carry their operations rendered from openapi.json.
+// The docs as text for LLMs and coding agents: /docs/llms.txt (the index, which links each page's
+// Markdown), /docs/llms-full.txt (every English page in one file) and each page as Markdown at its
+// own address with .md (/docs/<page>.md, written from /docs/llms.mdx/<page>/content.md after the
+// build: scripts/write-markdown-pages.mjs). Links are absolute (https://dev.cosmospay.lat/docs/...)
+// so they resolve wherever the text is pasted, and the API reference pages carry their operations
+// rendered from openapi.json.
 
 export const LLMS_SUMMARY =
   'Developer documentation for Cosmos Pay: the @cosmosapp/pay_sdk JavaScript/TypeScript SDK and the Payments REST API for accepting payments on Stellar (SEP-7), Solana (Solana Pay) and Monad (EIP-681), plus swaps, webhooks, products, customers and analytics.';
@@ -81,7 +83,7 @@ function listItem(label: string, description: string, depth: number): string {
 function indexNode(node: PageTree.Item | PageTree.Folder, depth: number, out: string[]) {
   if (node.type === 'page') {
     const page = source.getNodePage(node, DEFAULT_DOCS_LANGUAGE);
-    if (page) out.push(listItem(`[${page.data.title}](${docsUrl(page.slugs)})`, nodeDescription(node), depth));
+    if (page) out.push(listItem(`[${page.data.title}](${markdownPageUrl(page)})`, nodeDescription(node), depth));
     return;
   }
   out.push(listItem(nodeTitle(node), nodeDescription(node), depth));
@@ -117,7 +119,7 @@ const HEADER = [
   '',
   `> ${LLMS_SUMMARY}`,
   '',
-  `Every page is also served as Markdown at ${docsOrigin}/llms.mdx/<page>/content.md (for example ${docsOrigin}/llms.mdx/getting-started/content.md). The Payments REST API is described as OpenAPI 3.0 at ${docsOrigin}/openapi.json.`,
+  `Each link below is the page as Markdown, at the page's address with .md (${docsOrigin}/getting-started.md is ${docsOrigin}/getting-started/; the home is ${docsOrigin}/index.md), in every language it is translated to (${docsOrigin}/es/embed.md). The docs are a static export, so the page's own address answers HTML whatever the Accept header asks: request the .md address for Markdown. The Payments REST API is described as OpenAPI 3.0 at ${docsOrigin}/openapi.json.`,
 ];
 
 /** /docs/llms.txt: the English pages by sidebar section, then the translations and the files. */
@@ -143,7 +145,9 @@ export function llmsIndex(): string {
     const name = DOCS_LOCALE_ITEMS.find((item) => item.locale === lang)?.name ?? lang;
     const translated = source.getPages(lang).filter(isTranslation).length;
     if (translated) {
-      out.push(listItem(`[${name}](${docsUrl([], lang)})`, `${translated} pages translated; the other pages are in English`, 0));
+      const home = source.getPage([], lang);
+      const link = home && isTranslation(home) ? markdownPageUrl(home) : docsUrl([], lang);
+      out.push(listItem(`[${name}](${link})`, `${translated} pages translated; the other pages are in English`, 0));
     }
   }
 

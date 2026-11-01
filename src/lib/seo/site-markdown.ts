@@ -10,7 +10,7 @@
 import { messages } from "@/lib/i18n/messages/index";
 import { PLAN_IDS, PLAN_SPECS, ESCROW_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT, swapFeePct, type PlanId } from "@/lib/plans";
 import { NETWORK_IDS } from "@/lib/chains";
-import { loginUrl } from "@/lib/urls";
+import { docsLink, docsRoot, loginUrl } from "@/lib/urls";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, chromeStoreListing } from "@/lib/seo/schema";
 import { localizeHref, pageUrl } from "@/lib/seo/lang-urls";
@@ -82,7 +82,7 @@ function home({ c, input, docs, login, at, lang }: Ctx): Block[] {
   const self = pageUrl(input.site, "/", lang);
   const pathHref = (i: number): string => {
     const target = PATH_TARGETS[i];
-    return target.to === "dashboard" ? `${input.dev}/dashboard` : `${docs}${target.path}`;
+    return target.to === "dashboard" ? `${input.dev}/dashboard` : docsLink(docs, target.path);
   };
   return [
     // The wallet panel: the page's h1, what Cosmos Pay is.
@@ -115,18 +115,18 @@ function home({ c, input, docs, login, at, lang }: Ctx): Block[] {
     code(SDK_INSTALL, "bash"),
     h(3, d.llmsTitle),
     p(d.llmsDesc),
-    ul([link(d.llmsBtn, `${docs}/llms.txt`), link(d.docsBtn, docs)]),
+    ul([link(d.llmsBtn, docsLink(docs, "/llms.txt")), link(d.docsBtn, docs)]),
     // The API.
     h(2, a.title),
     p(a.lede),
     ...API_CARD_KEYS.flatMap((key) => {
       const card = a.cards[key as keyof typeof a.cards];
-      return [h(3, card.title), p(fill(card.desc, nets)), p(link(card.link, `${docs}${API_CARD_DOCS[key]}`))];
+      return [h(3, card.title), p(fill(card.desc, nets)), p(link(card.link, docsLink(docs, API_CARD_DOCS[key])))];
     }),
     h(3, a.docsTitle),
     p(a.docsDesc),
     code(API_SNIPPET, "ts"),
-    ul([...SDK_KEYS.map((key) => link(a.sdkBtns[key as keyof typeof a.sdkBtns], `${docs}${SDK_DOCS[key]}`)), link(a.exploreDocs, docs)]),
+    ul([...SDK_KEYS.map((key) => link(a.sdkBtns[key as keyof typeof a.sdkBtns], docsLink(docs, SDK_DOCS[key]))), link(a.exploreDocs, docs)]),
     // The integration paths, with the facts beside them.
     h(2, ig.title),
     p(ig.lede),
@@ -154,7 +154,7 @@ function home({ c, input, docs, login, at, lang }: Ctx): Block[] {
     // Resources: pages of the public docs.
     h(2, r.title),
     p(r.lede),
-    ul(r.items.map((item, i) => term(`${link(item.t, `${docs}${RESOURCE_DOCS[i]}`)} (${item.tag})`, item.d))),
+    ul(r.items.map((item, i) => term(`${link(item.t, docsLink(docs, RESOURCE_DOCS[i]))} (${item.tag})`, item.d))),
     // The marketplace.
     h(2, m.title),
     p(m.lede),
@@ -309,7 +309,7 @@ export function sitePageDoc(path: string, lang: string, input: MarkdownInput): P
     lang,
     c,
     input,
-    docs: `${input.dev}/docs`,
+    docs: docsRoot(input.dev),
     login: loginUrl(input.dev, "/dashboard"),
     at: (href) => localizeHref(href, lang, hosts),
   };

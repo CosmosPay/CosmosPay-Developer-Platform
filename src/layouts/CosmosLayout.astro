@@ -16,6 +16,7 @@ import { markdownAlternate } from "@/lib/seo/markdown-urls";
 import { modifiedAt } from "@/lib/seo/page-dates-build";
 import { pageShareImage, type ShareImage } from "@/lib/seo/og-image-urls";
 import type { JsonLdNode } from "@/lib/seo/schema";
+import { analyticsEnabled, analyticsSnippet } from "@/lib/analytics";
 
 interface Props {
   title?: string;
@@ -122,7 +123,9 @@ const card = multilingual
 const share: ShareImage =
   (!image && card) || { url: new URL(image ?? "/og-image.png", siteBase).href, type: "image/png", width: 1200, height: 630, alt: "Cosmos Pay" };
 const robots = noindex ? "noindex, nofollow" : "index, follow";
-const gaId = PUBLIC_GA_ID;
+// Google Analytics only on the company site's indexable pages, never on the platform (the dashboard,
+// invitations and KYC returns carry tokens and searches in their addresses): src/lib/analytics.ts.
+const analytics = analyticsEnabled({ gaId: PUBLIC_GA_ID, area: Astro.locals.area, path, noindex }) ? analyticsSnippet(PUBLIC_GA_ID) : null;
 const googleSiteVerification = PUBLIC_GOOGLE_SITE_VERIFICATION;
 const xHandle = `@${new URL(SOCIAL.x).pathname.split("/").filter(Boolean)[0]}`;
 
@@ -218,15 +221,11 @@ const themeScript =
     <!-- The persisted theme before paint (no flash), then the page's LCP image for that theme. -->
     <script is:inline set:html={themeScript} />
 
-    {/* Google Analytics: the queue starts now (the page view keeps its time), and gtag.js
-        (about 150 KB) is fetched once the page has loaded and the browser is idle, so it never
-        competes with the first screen nor runs during it. */}
-    {gaId && (
-      <script
-        is:inline
-        set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');(function(){function load(){var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=${gaId}';document.head.appendChild(s);}function idle(){if('requestIdleCallback' in window)requestIdleCallback(load,{timeout:3000});else setTimeout(load,1);}if(document.readyState==='complete')idle();else window.addEventListener('load',idle,{once:true});})();`}
-      />
-    )}
+    {/* Google Analytics, on the company site's indexable pages only (src/lib/analytics.ts): the
+        queue starts now (the page view keeps its time) with the address stripped of every query
+        parameter but lang, and gtag.js (about 150 KB) is fetched once the page has loaded and the
+        browser is idle, so it never competes with the first screen nor runs during it. */}
+    {analytics && <script is:inline set:html={analytics} />}
     <style>
       /* Keyboard skip-to-content link, visually hidden until focused. */
       .skip-link {

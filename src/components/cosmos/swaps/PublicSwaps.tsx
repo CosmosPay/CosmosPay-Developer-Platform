@@ -17,6 +17,7 @@ import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
 import { swapFeePct, swapFeeRange } from "@/lib/plans";
 import { NETWORK_IDS } from "@/lib/chains";
 import { publicSwapCalls, usdt0OtherNetworks } from "@/lib/public-swaps";
+import { docsLink } from "@/lib/urls";
 
 export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false }: { lang: string; apiBase: string; docsUrl: string; showHeader?: boolean }) {
   initLang(lang);
@@ -108,7 +109,7 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
             </li>
           ))}
         </ol>
-        <a className="btn btn-outline-w" href={`${docsUrl}/api`}>{p.apiDocs}</a>
+        <a className="btn btn-outline-w" href={docsLink(docsUrl, "/api")}>{p.apiDocs}</a>
       </section>
 
       <section className="pswap-faq wrap" aria-labelledby="pswap-faq">

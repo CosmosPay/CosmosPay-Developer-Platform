@@ -43,13 +43,18 @@ Each page's metadata comes from `src/lib/seo.ts` (through `generateMetadata` in
 `src/app/(docs)/[[...slug]]/page.tsx`): a title unique within its language ("Webhooks | SDK",
 then the " | Cosmos Pay Docs" template), the description, an absolute trailing-slash canonical,
 hreflang between the page and its real translations (+ `x-default`), Open Graph / Twitter with
-the portal's `/og-image.png`, a `text/markdown` alternate pointing at its `content.md`, and a
-JSON-LD graph (TechArticle + BreadcrumbList; the docs home is a WebPage with the API and SDK).
+the portal's `/og-image.png`, a `text/markdown` alternate pointing at its Markdown address
+(`/docs/<page>.md`), and a JSON-LD graph (the company's Organization, TechArticle +
+BreadcrumbList; the docs home is a WebPage with its BreadcrumbList, the API and the SDK).
 
-- **JSON-LD.** The company's Organization is referenced by `@id` only
-  (`https://cosmospay.lat/#organization`, published by cosmospay.lat), never restated here. The
-  WebSite is `https://dev.cosmospay.lat/docs/#website`. `datePublished` is the commit that added
-  the page's source files (the later one, when there are two) and `dateModified` their last
+- **JSON-LD.** The company's nodes are the portal's own: `scripts/sync-portal-ui.mjs` copies
+  `src/lib/seo/schema.ts` (and the `plans.ts`, `payments/contact.ts` and `payments/urls.ts` it
+  reads), so every page with a graph defines the Organization (`https://cosmospay.lat/#organization`)
+  exactly as cosmospay.lat does (`organizationNode` over the same `SOCIAL` profiles), and the docs
+  home and the API reference publish the Payments API (`apiNode`, `#api`) and the SDK
+  (`sdkNode`, `#sdk`) as the company home does; the portal's `npm run test:smoke` compares them
+  byte for byte. The WebSite is `https://dev.cosmospay.lat/docs/#website`. `datePublished` is the
+  commit that added the page's source files (the later one, when there are two) and `dateModified` their last
   change (`src/lib/last-modified.ts`, one `git log` pass; a translation dates from its
   `content-i18n/<lang>/` file, an API page also from `openapi.json`). Without git history (shallow
   clone, untracked file) `datePublished` falls back to `dateModified`, and when that is not a git
@@ -69,13 +74,22 @@ JSON-LD graph (TechArticle + BreadcrumbList; the docs home is a WebPage with the
   page in every language, with alternates and `lastmod` from git, or the file's modification
   time in a shallow clone), `llms.txt`, `llms-full.txt` (English only, the API reference rendered
   from `openapi.json` by `src/lib/openapi-markdown.ts`), `llms.mdx/[<lang>/]<slug>/content.md`
-  and `openapi.json` (this folder's spec, as the API reference renders it).
+  (what the "Copy Markdown" button fetches; `scripts/write-markdown-pages.mjs`, run as
+  `postbuild`, copies each to the page's own Markdown address, `/docs/[<lang>/]<slug>.md` and
+  `/docs/[<lang>/]index.md` for a home, the one the page's alternate link and every `llms.txt`
+  entry name) and `openapi.json` (this folder's spec, as the API reference renders it).
   `scripts/build-docs.mjs` fails the portal build if one of them is missing.
+- **No `Accept` negotiation.** The company site and the gateway answer a page's own address with
+  Markdown when `Accept` prefers `text/markdown`; the docs cannot: the portal's Node server hands
+  out this static export before its middleware runs, so a docs page always answers HTML. Agents
+  read the `.md` address the page and `llms.txt` name (an nginx rule could add negotiation later).
 - **Export check.** `scripts/build-docs.mjs` then reads `out/sitemap.xml` (every `<loc>` and
   `xhtml:link`) and every exported page's `<link rel="alternate" hreflang>`, and fails the build,
   naming the URLs, if one of them has no exported page, is `noindex` or is canonical to another
-  URL (a fallback copy listed by mistake). `node scripts/build-docs.mjs --check` runs only the
-  checks against an existing `docs/out`.
+  URL (a fallback copy listed by mistake); and it fails when a page links a docs page without its
+  trailing slash (nginx answers that form with a 301) or names a Markdown alternate the export
+  lacks. `node scripts/build-docs.mjs --check` runs only the checks against an existing
+  `docs/out`.
 
 ## Develop
 

@@ -4,6 +4,7 @@ import { paymentsLlmsTxt, siteLlmsTxt, type LlmsInput } from '@/lib/seo/llms';
 import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
 import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 import { NETWORK_IDS } from '@/lib/chains';
+import { isSlashlessDocsLink } from '@/lib/urls';
 
 const INPUT: LlmsInput = {
   site: 'https://cosmospay.lat',
@@ -26,6 +27,8 @@ test('links are absolute Markdown links, and nothing uses an em dash', () => {
     const links = [...text.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
     assert.ok(links.length > 10, name);
     for (const href of links) assert.match(href, /^https:\/\//, `${name}: ${href}`);
+    // A docs page is linked at its trailing-slash address: the slashless one is a 301.
+    for (const href of links) assert.ok(!isSlashlessDocsLink(href, `${INPUT.dev}/docs/`), `${name}: ${href}`);
   }
 });
 
