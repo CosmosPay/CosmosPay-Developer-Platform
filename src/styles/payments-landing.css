@@ -1087,15 +1087,15 @@
 }
 /* hover as in the general nav: the label darkens and an underline sweeps in from the left
    (::before; ::after is the current page's bar, which already marks it) */
-.pl-subnav-links a:not([aria-current="page"])::before {
+.pl-subnav-links a:not([aria-current])::before {
   content: ""; content: "" / "";
   position: absolute; left: 12px; right: 12px; bottom: 4px; height: 1.5px; background: currentColor;
   scale: 0 1; transform-origin: left; transition: scale .3s cubic-bezier(.2, .7, .2, 1);
 }
 .pl-subnav-links a:is(:hover, :focus-visible) { color: var(--ink); }
 .pl-subnav-links a:is(:hover, :focus-visible)::before { scale: 1 1; }
-.pl-subnav-links a[aria-current="page"] { color: var(--ink); }
-.pl-subnav-links a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -9px; height: 2px; background: var(--btn-bg); }
+.pl-subnav-links a[aria-current] { color: var(--ink); }
+.pl-subnav-links a[aria-current]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -9px; height: 2px; background: var(--btn-bg); }
 .pl-subnav-cta { flex: 0 0 auto; }
 /* pinned stages stick under the nav and the section bar */
 .pl-multi .is-pinned .pl-pin-stage { top: calc(73px + var(--subnav-h)); height: calc(100svh - 73px - var(--subnav-h)); }
@@ -1192,6 +1192,53 @@ a.pl-brand:hover > span { text-decoration-line: underline; }
 @media (max-width: 720px) {
   .pl-net-facts > div { grid-template-columns: minmax(0, 1fr); }
   .pl-rates tbody th[rowspan] { border-top: 0; }
+}
+
+/* ---- the guides (/learn and /learn/<slug>) ---- */
+/* a guide's date and author, under its lede */
+.pl-byline { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 18px 0 0; font-size: .875rem; color: var(--ink-3); }
+/* the guide reads in one column; a mock-up, where a block has one, sits beside it */
+.pl-guide-body { display: grid; gap: clamp(56px, 7vw, 88px); }
+.pl-guide-block { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 32px 64px; align-items: start; }
+.pl-guide-wide { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.pl-guide-text { max-width: 68ch; min-width: 0; }
+.pl-guide-text h2 { margin: 0 0 16px; font-weight: 600; font-size: clamp(1.625rem, 2.4vw, 2rem); line-height: 1.18; letter-spacing: -.02em; text-wrap: balance; color: var(--ink); }
+.pl-guide-text p { margin: 0 0 14px; font-size: 1.0625rem; line-height: 1.7; color: var(--ink-2); }
+.pl-guide-points { margin: 4px 0 0; padding: 0 0 0 1.25em; display: grid; gap: 12px; font-size: 1.0625rem; line-height: 1.65; color: var(--ink-2); }
+.pl-guide-points li::marker { color: var(--ink-3); }
+.pl-guide-links { display: flex; flex-wrap: wrap; gap: 0 28px; margin: 8px 0 0; }
+.pl-guide-links .pl-textlink { margin-top: 12px; }
+.pl-guide-visual { position: sticky; top: calc(73px + var(--subnav-h) + 32px); min-width: 0; }
+.pl-guide-visual .pl-mk { max-width: 340px; }
+/* numbered steps: a real sequence, so numbered, joined by a line */
+.pl-guide-steps { list-style: none; margin: 8px 0 0; padding: 0; counter-reset: pl-step; }
+.pl-guide-steps li { position: relative; padding: 0 0 28px 56px; counter-increment: pl-step; scroll-margin-top: calc(73px + var(--subnav-h) + 24px); }
+.pl-guide-steps li::before {
+  content: counter(pl-step); position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; font-size: .9375rem; font-variant-numeric: tabular-nums;
+}
+.pl-guide-steps li::after { content: ""; position: absolute; left: 18px; top: 44px; bottom: 8px; width: 1px; background: var(--line); }
+.pl-guide-steps li:last-child { padding-bottom: 0; }
+.pl-guide-steps li:last-child::after { display: none; }
+.pl-guide-steps h3 { margin: 6px 0 6px; font-size: 1.1875rem; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; color: var(--ink); }
+.pl-guide-steps p { margin: 0; }
+/* the network comparison: the networks' names lead to their pages */
+.pl-guide-net thead th:first-child { width: 22%; }
+.pl-guide-net thead th a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.pl-guide-net thead th a:is(:hover, :focus-visible) { text-decoration-color: currentColor; }
+.pl-guide-net td { overflow-wrap: anywhere; }
+/* the list of guides: the hub's, and a few under a guide or on the pages that point to them */
+.pl-guide-list { list-style: none; margin: 0; padding: 0; }
+.pl-guide-list li { padding: 26px 0; border-top: 1px solid var(--line); }
+.pl-guide-list li:last-child { border-bottom: 1px solid var(--line); }
+.pl-guide-list-title { margin: 0 0 8px; font-size: 1.375rem; font-weight: 600; line-height: 1.25; letter-spacing: -.02em; text-wrap: balance; }
+.pl-guide-list-title a { color: var(--ink); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 4px; transition: text-decoration-color .2s; }
+.pl-guide-list-title a:is(:hover, :focus-visible) { text-decoration-color: currentColor; }
+.pl-guide-list p { margin: 0; max-width: 64ch; line-height: 1.6; color: var(--ink-2); }
+.pl-learn .pl-guide-list-title { font-size: clamp(1.375rem, 2vw, 1.75rem); }
+@media (max-width: 1000px) {
+  .pl-guide-block { grid-template-columns: minmax(0, 1fr); }
+  .pl-guide-visual { position: static; }
 }
 
 /* ---- responsive ---- */

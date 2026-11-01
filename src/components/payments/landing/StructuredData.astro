@@ -4,17 +4,19 @@
 // itself, the breadcrumb trail a content page shows over its title (PageHeader.astro), and what
 // the page is about: the gateway as a service on the home, the swaps on /swaps, the plans with a
 // fixed price on /fees (from src/lib/plans.ts) and, on /faq and the network pages, the questions
-// and answers the page shows (`faq`). Only what the page says: no ratings, reviews or claims
-// beyond its copy. URLs come from src/lib/seo/lang-urls.ts, so they match the canonical and
-// hreflang links.
+// and answers the page shows (`faq`). A guide (/learn and /learn/<slug>) passes its own trail
+// (`trail`: Overview > Guides > the guide), its page types and its nodes (the article, the HowTo of
+// the steps it shows, the hub's list: src/components/payments/learn/). Only what the page says: no
+// ratings, reviews or claims beyond its copy. URLs come from src/lib/seo/lang-urls.ts, so they
+// match the canonical and hreflang links.
 import type { LandingData } from "@/components/payments/landing/data";
-import type { PaymentsPage } from "@/lib/payments/site-pages";
+import type { NetworkPage, PaymentsPage, SectionPage } from "@/lib/payments/site-pages";
 import { LOCALES } from "@/lib/payments/i18n";
 import { PAYMENTS } from "@/lib/payments/urls";
 import { SITE } from "@/components/cosmos/lib/constants";
 import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
 import { ORGANIZATION_NODE } from "@/lib/seo/org";
-import { jsonLdText, plansProductNode, serviceNode, webPageNodes, webSiteNode, type JsonLdNode } from "@/lib/seo/schema";
+import { jsonLdText, plansProductNode, serviceNode, webPageNodes, webSiteNode, type Crumb, type JsonLdNode } from "@/lib/seo/schema";
 
 interface Props {
   d: LandingData;
@@ -23,9 +25,17 @@ interface Props {
   description: string;
   /** The questions and answers the page shows, as it shows them; the page is then an FAQPage. */
   faq?: readonly { q: string; a: string }[];
+  /** The breadcrumb trail, home first and this page last, where the page draws a longer one. */
+  trail?: Crumb[];
+  /** schema.org types of the page node when it is more than a WebPage (FAQPage is added for `faq`). */
+  pageTypes?: string[];
+  /** What the page mainly shows, by @id, when it is not its questions. */
+  mainEntity?: string;
+  /** The page's own nodes (an article, a HowTo, a list). */
+  nodes?: JsonLdNode[];
 }
 
-const { d, page, title, description, faq } = Astro.props;
+const { d, page, title, description, faq, trail, pageTypes, mainEntity, nodes = [] } = Astro.props;
 const { t, lang } = d;
 const codes = LOCALES.map((l) => l.code);
 const explicit = explicitLang(Astro.url.searchParams.get("lang"), codes);
@@ -41,8 +51,9 @@ const KEY = {
   stellar: "stellar",
   solana: "solana",
   monad: "monad",
-} as const satisfies Record<PaymentsPage, keyof typeof t.pages>;
+} as const satisfies Record<SectionPage | NetworkPage, keyof typeof t.pages>;
 const questions = faq ?? (page === "faq" ? d.faq : undefined);
+const types = [...(pageTypes ?? ["WebPage"]), ...(questions ? ["FAQPage"] : [])];
 
 // What the page is about, by page. Entity @ids do not carry ?lang=: one service, one set of plans.
 const about: JsonLdNode | null =
@@ -69,19 +80,21 @@ const graph: JsonLdNode[] = [
     description,
     lang,
     origin: PAYMENTS,
-    types: questions ? ["WebPage", "FAQPage"] : undefined,
+    types,
     breadcrumb:
-      page === "home"
+      trail ??
+      (page === "home" || !(page in KEY)
         ? undefined
         : [
             { name: t.pages.home, url: pageUrl(PAYMENTS, "/", explicit) },
-            { name: (t.pages[KEY[page]] as { nav: string }).nav, url },
-          ],
+            { name: (t.pages[KEY[page as keyof typeof KEY]] as { nav: string }).nav, url },
+          ]),
     mainEntity: questions
       ? questions.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } }))
-      : (about?.["@id"] as string | undefined),
+      : (mainEntity ?? (about?.["@id"] as string | undefined)),
   }),
   ...(about ? [about] : []),
+  ...nodes,
 ];
 ---
 

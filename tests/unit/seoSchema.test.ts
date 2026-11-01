@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   GITHUB_ORG,
+  articleNode,
+  howToNode,
+  itemListNode,
   chromeStoreListing,
   SDK_NPM,
   jsonLdText,
@@ -136,4 +139,45 @@ test('the Chrome Web Store link is the listing by id, without its slug or interf
     'https://chromewebstore.google.com/detail/jibiahkbhhmddnahglhffkejcfhalbgj',
   );
   assert.equal(chromeStoreListing('https://example.com/other'), 'https://example.com/other');
+});
+
+const PAY = 'https://payments.cosmospay.lat';
+
+test('a guide is an article by the shared organization, the main content of its page', () => {
+  const url = `${PAY}/learn/accept-usdc-payments?lang=es`;
+  const node = articleNode({
+    url,
+    type: 'TechArticle',
+    headline: 'Cómo aceptar pagos en USDC',
+    description: 'Una guía.',
+    lang: 'es',
+    origin: PAY,
+    site: SITE,
+    published: '2026-11-01',
+    modified: '2026-11-02',
+  });
+  assert.equal(node['@type'], 'TechArticle');
+  assert.equal(node['@id'], `${url}#article`);
+  assert.equal(node.inLanguage, 'es');
+  assert.deepEqual(node.author, { '@id': 'https://cosmospay.lat/#organization' });
+  assert.deepEqual(node.publisher, node.author);
+  assert.deepEqual(node.mainEntityOfPage, { '@id': `${url}#webpage` });
+  assert.deepEqual(node.isPartOf, { '@id': `${PAY}/#website` });
+  assert.equal(node.datePublished, '2026-11-01');
+  assert.equal(node.dateModified, '2026-11-02');
+  assert.equal('image' in node, false);
+});
+
+test('a HowTo numbers its steps and points each at its anchor on the page', () => {
+  const url = `${PAY}/learn/whatsapp-payment-links`;
+  const node = howToNode({ url, name: 'Send a link', description: 'd', lang: 'en', steps: [{ name: 'Create', text: 'a' }, { name: 'Send', text: 'b' }] });
+  const steps = node.step as Record<string, unknown>[];
+  assert.equal(steps.length, 2);
+  assert.deepEqual(steps[1], { '@type': 'HowToStep', position: 2, name: 'Send', text: 'b', url: `${url}#step-2` });
+});
+
+test('a hub lists its pages in order', () => {
+  const list = itemListNode(`${PAY}/learn#guides`, [{ name: 'A', url: `${PAY}/learn/a` }, { name: 'B', url: `${PAY}/learn/b` }]);
+  assert.equal(list.numberOfItems, 2);
+  assert.deepEqual((list.itemListElement as Record<string, unknown>[])[0], { '@type': 'ListItem', position: 1, name: 'A', url: `${PAY}/learn/a` });
 });

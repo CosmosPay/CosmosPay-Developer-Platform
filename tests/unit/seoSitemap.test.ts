@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { paymentsEntries, siteEntries, sitemapXml } from '@/lib/seo/sitemap';
 import { TOS_LAST_UPDATED } from '@/lib/seo/site-meta';
-import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
+import { GUIDES, GUIDE_DATES, PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 
 const ORIGINS = { site: 'https://cosmospay.lat', dev: 'https://dev.cosmospay.lat', payments: 'https://payments.cosmospay.lat' };
 
@@ -30,7 +30,11 @@ test('each entry names all the versions of its page, itself included', () => {
 test('lastmod only where the page states a date', () => {
   const entries = siteEntries(ORIGINS.site);
   for (const e of entries) assert.equal(e.lastmod, e.loc.includes('/tos') ? TOS_LAST_UPDATED : undefined, e.loc);
-  assert.ok(paymentsEntries(ORIGINS.payments).every((e) => e.lastmod === undefined));
+  // On the gateway only the guides state a date (when each was last updated).
+  for (const e of paymentsEntries(ORIGINS.payments)) {
+    const guide = GUIDES.find((g) => new URL(e.loc).pathname === `/learn/${g}`);
+    assert.equal(e.lastmod, guide ? GUIDE_DATES[guide].modified : undefined, e.loc);
+  }
 });
 
 test('the gateway lists its home and every content page in every language', () => {

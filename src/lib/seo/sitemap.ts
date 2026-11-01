@@ -5,7 +5,7 @@
    platform's sitemap is an index pointing at it. lastmod only where the page states a date: a
    build date on every entry would teach crawlers to ignore the field. src/pages/sitemap.xml.ts
    serves it. Pure, so tests/unit/seoSitemap.test.ts covers it. */
-import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
+import { GUIDES, GUIDE_DATES, PAYMENTS_PAGE_PATHS, pagePath } from "@/lib/payments/site-pages";
 import { LOCALES as PAYMENTS_LOCALES } from "@/lib/payments/i18n";
 import { hreflangAlternates, type Alternate } from "@/lib/seo/lang-urls";
 import { PAGE_LANGS, SITE_PAGE_PATHS, TOS_LAST_UPDATED, type SitePage } from "@/lib/seo/site-meta";
@@ -38,9 +38,12 @@ export function siteEntries(origin: string): SitemapEntry[] {
   return SITE_PAGES.flatMap((page) => inEveryLanguage(origin, SITE_PAGE_PATHS[page], PAGE_LANGS[page], SITE_LASTMOD[page]));
 }
 
+/* The gateway's pages that state a date: each guide shows when it was last updated. */
+const PAYMENTS_LASTMOD: Record<string, string> = Object.fromEntries(GUIDES.map((g) => [pagePath(`learn/${g}`), GUIDE_DATES[g].modified]));
+
 export function paymentsEntries(origin: string): SitemapEntry[] {
   const langs = PAYMENTS_LOCALES.map((l) => l.code);
-  return ["/", ...PAYMENTS_PAGE_PATHS].flatMap((path) => inEveryLanguage(origin, path, langs));
+  return ["/", ...PAYMENTS_PAGE_PATHS].flatMap((path) => inEveryLanguage(origin, path, langs, PAYMENTS_LASTMOD[path]));
 }
 
 const xml = (value: string): string =>

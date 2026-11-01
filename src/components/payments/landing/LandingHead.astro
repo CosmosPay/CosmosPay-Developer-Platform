@@ -6,6 +6,7 @@
 import type { LandingData } from "@/components/payments/landing/data";
 import type { PaymentsPage } from "@/lib/payments/site-pages";
 import StructuredData from "@/components/payments/landing/StructuredData.astro";
+import type { Crumb, JsonLdNode } from "@/lib/seo/schema";
 
 interface Props {
   d: LandingData;
@@ -16,12 +17,17 @@ interface Props {
   faq?: readonly { q: string; a: string }[];
   /** Load the merchant embed (only pages with a live demo need it). */
   embed?: boolean;
+  /** A guide's own structured data (StructuredData.astro): its trail, page types and nodes. */
+  trail?: Crumb[];
+  pageTypes?: string[];
+  mainEntity?: string;
+  nodes?: JsonLdNode[];
 }
 
-const { d, page, title, description, faq, embed = true } = Astro.props;
+const { d, page, title, description, faq, embed = true, trail, pageTypes, mainEntity, nodes } = Astro.props;
 ---
 
-<StructuredData d={d} page={page} title={title} description={description} faq={faq} />
+<StructuredData d={d} page={page} title={title} description={description} faq={faq} trail={trail} pageTypes={pageTypes} mainEntity={mainEntity} nodes={nodes} />
 {page === "home" && <link rel="preload" as="image" href="/media/coin-ramp-poster.webp" fetchpriority="high" />}
 {/* The merchant embed, for the live demos of the integration options. */}
 {embed && <script is:inline src="/embed/cosmos-pay.js" defer></script>}

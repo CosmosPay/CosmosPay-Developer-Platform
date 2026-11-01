@@ -3,9 +3,10 @@
 // the general nav, the current one marked, and the main call to action at its end so it is one
 // click away on every screen. The general nav stays above it, as on every page. The network
 // pages are not in this row (the footer, the home's marquee and the FAQ link them): on one, no
-// item is current.
+// item is current. The row ends with the guides' hub (/learn): the page on the hub, and the section
+// the reader is in on every guide (aria-current="true").
 import type { LandingData } from "@/components/payments/landing/data";
-import { SECTION_PAGES, pagePath, type PaymentsPage, type SectionPage } from "@/lib/payments/site-pages";
+import { SECTION_PAGES, isLearnPage, pagePath, type PaymentsPage, type SectionPage } from "@/lib/payments/site-pages";
 
 interface Props {
   d: LandingData;
@@ -13,7 +14,7 @@ interface Props {
 }
 
 const { d, current } = Astro.props;
-const { t, CREATE_LINK } = d;
+const { t, learn, pageLinks, CREATE_LINK } = d;
 const KEY: Record<SectionPage, keyof typeof t.pages> = {
   integrations: "integrations",
   swaps: "swaps",
@@ -23,9 +24,11 @@ const KEY: Record<SectionPage, keyof typeof t.pages> = {
   compare: "compare",
   faq: "faq",
 };
+const mark = (here: boolean) => (here ? "page" : undefined);
 const items = [
-  { href: "/", label: t.pages.home, here: current === "home" },
-  ...SECTION_PAGES.map((page) => ({ href: pagePath(page), label: (t.pages[KEY[page]] as { nav: string }).nav, here: current === page })),
+  { href: "/", label: t.pages.home, here: mark(current === "home") },
+  ...SECTION_PAGES.map((page) => ({ href: pagePath(page), label: (t.pages[KEY[page]] as { nav: string }).nav, here: mark(current === page) })),
+  { href: pageLinks.learn, label: learn.hub.nav, here: current === "learn" ? "page" : isLearnPage(current) ? "true" : undefined },
 ];
 ---
 
@@ -33,7 +36,7 @@ const items = [
   <div class="wrap pl-subnav-inner">
     <ul class="pl-subnav-links" role="list">
       {items.map((it) => (
-        <li><a href={it.href} aria-current={it.here ? "page" : undefined}>{it.label}</a></li>
+        <li><a href={it.href} aria-current={it.here}>{it.label}</a></li>
       ))}
     </ul>
     <a class="btn btn-dark btn-sm pl-subnav-cta" href={CREATE_LINK}>{t.hero.primary}</a>

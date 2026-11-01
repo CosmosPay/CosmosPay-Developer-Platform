@@ -1,0 +1,30 @@
+---
+// A list of the gateway's guides (src/lib/payments/site-pages.ts GUIDES): each guide's title as a
+// link and its one-line summary, in the order given. The hub (/learn) lists them all under its h1
+// (level 2); a related-guides section lists a few under its own heading (level 3).
+import type { LandingData } from "@/components/payments/landing/data";
+import { guideCopy } from "@/lib/payments/learn/index";
+import { pagePath, type Guide } from "@/lib/payments/site-pages";
+
+interface Props {
+  d: LandingData;
+  guides: readonly Guide[];
+  level?: 2 | 3;
+}
+
+const { d, guides, level = 3 } = Astro.props;
+const Heading = level === 2 ? "h2" : "h3";
+const items = guides.map((guide) => {
+  const copy = guideCopy(d.learn, guide);
+  return { href: pagePath(`learn/${guide}`), title: copy.title, summary: copy.summary };
+});
+---
+
+<ul class="pl-guide-list" role="list">
+  {items.map((it, i) => (
+    <li data-reveal style={`--i: ${i}`}>
+      <Heading class="pl-guide-list-title"><a href={it.href}>{it.title}</a></Heading>
+      <p>{it.summary}</p>
+    </li>
+  ))}
+</ul>

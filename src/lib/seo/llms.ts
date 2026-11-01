@@ -9,7 +9,7 @@
    src/pages/site/tos.astro. Escrow is offered and priced but not built yet: every line that names it
    says it is coming soon. No em dashes. Pure, so tests/unit/seoLlms.test.ts covers it. */
 import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from "@/lib/plans";
-import { PAYMENTS_PAGES, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
+import { LEARN_PAGES, PAYMENTS_PAGES, isLearnPage, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
 import { pageUrl } from "@/lib/seo/lang-urls";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, WALLET_RELEASES } from "@/lib/seo/schema";
 
@@ -52,13 +52,19 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   stellar: ["Stellar payments", "SEP-7 payment links, the Stellar assets with a preset, the wallets that pay, the API request and questions"],
   solana: ["Solana payments", "Solana Pay links, USDC and SOL presets, the wallets that pay, the API request and questions"],
   monad: ["Monad payments", "EIP-681 links to a deposit address per payment, USDC and MON presets, the API request and questions"],
+  learn: ["Guides", "the gateway's guides to accepting stablecoin payments"],
+  "learn/accept-usdc-payments": ["How to accept USDC payments online", "a payment link, the hosted checkout or the API; what the merchant and the payer need; testing on a test network first"],
+  "learn/whatsapp-payment-links": ["Payment links on WhatsApp", "create a payment link in the dashboard, send it in a chat or as a printed QR code, and see when it is paid"],
+  "learn/stablecoin-payment-gateway": ["What is a stablecoin payment gateway?", "stablecoins, settlement to the merchant's own address, network fees, custodial and non-custodial gateways"],
+  "learn/stellar-vs-solana-vs-monad": ["Stellar vs Solana vs Monad for accepting payments", "the three networks compared as Cosmos Pay supports them: link standard, matching, assets with a preset, test networks, fees"],
 };
 
 /** /llms.txt of the company site (cosmospay.lat). */
 export function siteLlmsTxt({ site, dev, payments, wallet, profiles }: LlmsInput): string {
   const docs = `${dev}/docs`;
   const pay = (path: string) => pageUrl(payments, path, "en");
-  const gateway = PAYMENTS_PAGES.map((p) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`);
+  const line = (p: PaymentsPage) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`;
+  const gateway = PAYMENTS_PAGES.filter((p) => !isLearnPage(p)).map(line);
   return `# Cosmos Pay
 
 > Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM).
@@ -83,6 +89,10 @@ ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
 ## Swaps
 
 - [Swaps](${pay("/swaps")}): ${PAGE_LABELS.swaps[1]}
+
+## Guides
+
+${LEARN_PAGES.map(line).join("\n")}
 
 ## Developers
 
@@ -126,7 +136,8 @@ ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
 export function paymentsLlmsTxt({ site, dev, payments }: LlmsInput): string {
   const docs = `${dev}/docs`;
   const pay = (path: string, lang = "en") => pageUrl(payments, path, lang);
-  const pages = PAYMENTS_PAGES.map((p) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`);
+  const line = (p: PaymentsPage) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`;
+  const pages = PAYMENTS_PAGES.filter((p) => !isLearnPage(p)).map(line);
   return `# Cosmos Pay Payments
 
 > Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond.
@@ -152,6 +163,10 @@ Facts:
 
 - [Overview](${pay("/")}): the gateway in one page
 ${pages.join("\n")}
+
+## Guides
+
+${LEARN_PAGES.map(line).join("\n")}
 
 ## Other languages
 

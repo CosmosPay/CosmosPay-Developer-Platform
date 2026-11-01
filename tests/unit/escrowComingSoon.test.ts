@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { LANDING } from "@/lib/payments/landing-i18n";
+import { LEARN } from "@/lib/payments/learn/index";
 import { messages } from "@/lib/i18n/messages/index";
 
 /* Escrow is offered and priced (ESCROW_FEE_PCT) but not built yet (product owner, 2026-11-01): every
@@ -43,6 +44,15 @@ for (const [lang, t] of Object.entries(LANDING)) {
     assert.deepEqual(unlabelled.map(([key]) => key), []);
     // The escrow FAQ's answer opens with the label, since its question cannot carry it.
     assert.ok(t.faq.escrow.a.toLowerCase().includes(label), "faq.escrow.a");
+  });
+}
+
+/* The guides (src/lib/payments/learn/) carry the gateway's label for it too (`soon`). */
+for (const [lang, t] of Object.entries(LEARN)) {
+  test(`gateway guides (${lang}): every string that names escrow says it is coming soon`, () => {
+    const label = LANDING[lang as keyof typeof LANDING].soon.toLowerCase();
+    const unlabelled = Object.entries(flatten(t)).filter(([, value]) => typeof value === "string" && mentions(value) && !value.toLowerCase().includes(label));
+    assert.deepEqual(unlabelled.map(([key]) => key), []);
   });
 }
 
