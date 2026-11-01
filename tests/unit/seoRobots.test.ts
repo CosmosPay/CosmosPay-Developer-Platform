@@ -71,9 +71,13 @@ test('payments: its pages and everything they load are crawlable', () => {
     '/.well-known/api-catalog',
     '/.well-known/agent-skills/index.json',
     '/auth.md',
+    // Bing Webmaster Tools' ownership file (src/lib/seo/bing-site-auth.ts).
+    '/BingSiteAuth.xml',
   ]) {
     assert.ok(allowed(robots, url), url);
   }
+  // Only that file under that name: its variants stay out like any other path.
+  for (const url of ['/BingSiteAuth.xml?x=1', '/BingSiteAuth.xml/', '/bingsiteauth.xml']) assert.ok(!allowed(robots, url), url);
 });
 
 test('payments: an indexable page stays open with any query string and at its trailing-slash form', () => {
