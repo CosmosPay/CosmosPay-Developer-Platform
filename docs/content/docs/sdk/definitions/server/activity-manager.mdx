@@ -1,6 +1,6 @@
 ---
 title: "ActivityManager"
-description: "The client event stream — `client.activity`. This is the trail the wallet, the dashboard and your own server write to: errors, screen views, timings, the operations they built"
+description: "The client event stream — client.activity. This is the trail the wallet, the dashboard and your own server write to: errors, screen views, timings…"
 ---
 
 The client event stream — `client.activity`. This is the trail the wallet, the dashboard and your own server write to: errors, screen views, timings, the operations they built. It exists because a console is not a trail — an extension popup's console dies with the popup and a phone's WebView console needs a cable — and because the failures worth having are the ones that never reach the API at all. Two rules the writers are expected to keep, and neither is enforceable here: report only what the user consented to, and never put memo text or anything that names a counterparty in `props`.

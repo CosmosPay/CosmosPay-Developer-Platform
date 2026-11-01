@@ -27,6 +27,22 @@ export const DOCS_LOCALE_ITEMS = [
   { locale: 'de', name: 'Deutsch' },
 ];
 
+export function isDocsLanguage(code: string | undefined): code is DocsLanguage {
+  return Boolean(code) && (DOCS_LANGUAGES as readonly string[]).includes(code as string);
+}
+
+/** Split route segments into the language and the page slug. A leading non-default locale
+ *  (`['es', 'sdk', ...]`) selects that language; anything else is a default-language slug.
+ *  This keeps the default language at the unprefixed root (/docs/sdk/...) and the others under
+ *  /docs/<lang>/..., which a static export needs (no middleware to rewrite locales). */
+export function splitLocale(segments: string[] | undefined): { lang: DocsLanguage; slug: string[] } {
+  const segs = segments ?? [];
+  if (isDocsLanguage(segs[0]) && segs[0] !== DEFAULT_DOCS_LANGUAGE) {
+    return { lang: segs[0], slug: segs.slice(1) };
+  }
+  return { lang: DEFAULT_DOCS_LANGUAGE, slug: segs };
+}
+
 /** Extract the active locale from a (basePath-stripped) pathname like `/es/sdk/...`. */
 export function localeFromPath(pathname: string): DocsLanguage {
   const seg = pathname.split('/').filter(Boolean)[0];
