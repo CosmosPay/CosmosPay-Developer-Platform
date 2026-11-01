@@ -35,7 +35,17 @@ La comunicacion es: clara, cercana, segura, profesional, agil, actual.
 Cosmos habla como una tecnologia en la que podes confiar. Voz directa, clara y
 segura. Evita el lenguaje excesivamente corporativo o tecnico y prioriza una
 comunicacion humana, precisa y actual. Puede ser juvenil y cercana, pero nunca
-pierde solidez. Voseo rioplatense en español.
+pierde solidez.
+
+**Tratamiento en español** (decision del product owner, 2026-11-01):
+
+- El sitio de la empresa (cosmospay.lat) puede usar voseo rioplatense, como
+  esta escrito hoy.
+- La pasarela de pagos (payments.cosmospay.lat), el checkout, el embed y la
+  documentacion usan tú: es el tratamiento neutro para toda Latinoamerica.
+- El copy nuevo en español sigue a la superficie donde se publica: voseo
+  posible en el sitio de la empresa, tú en la pasarela, el checkout, el embed
+  y la documentacion. El copy existente no se reescribe por esta regla.
 
 **Direccion creativa**: estetica tecnologica y profesional con lenguaje visual
 cercano, joven y dinamico. Formas curvas, composiciones limpias, ilustraciones
