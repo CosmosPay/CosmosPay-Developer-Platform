@@ -152,7 +152,7 @@ export default {
       invalid: "यह साइन किए गए लेन-देन का XDR नहीं है।",
       otherTransaction: "यह कोई दूसरा लेन-देन है। ऊपर का XDR बिना बदले साइन करें।",
       notSigned: "यह लेन-देन {account} से साइन नहीं किया गया है।",
-      otherNetwork: "यह हस्ताक्षर किसी दूसरे नेटवर्क का है। यह लेन-देन {network} पर है: वॉलेट में {network} चुनें (Cosmos Wallet में “Transaction network” के तहत) और फिर से साइन करें।",
+      otherNetwork: "यह हस्ताक्षर किसी दूसरे नेटवर्क का है। यह लेन-देन {network} पर है: वॉलेट में {network} चुनें (Cosmos Pay Wallet में “Transaction network” के तहत) और फिर से साइन करें।",
       network: "नेटवर्क",
       txAccount: "लेन-देन का खाता",
       signer: "हस्ताक्षरकर्ता",
@@ -714,7 +714,7 @@ export default {
 
   about: {
     title: "Cosmos Pay के बारे में",
-    lede: "Cosmos Pay कारोबारों के लिए स्टेबलकॉइन भुगतान बनाता है: पेमेंट्स API, होस्टेड चेकआउट और पेमेंट लिंक, स्वैप, निजी भुगतान और नॉन-कस्टोडियल Cosmos Wallet, Stellar, Solana और Monad पर।",
+    lede: "Cosmos Pay कारोबारों के लिए स्टेबलकॉइन भुगतान बनाता है: पेमेंट्स API, होस्टेड चेकआउट और पेमेंट लिंक, स्वैप, निजी भुगतान और नॉन-कस्टोडियल Cosmos Pay Wallet, Stellar, Solana और Monad पर।",
     disambiguation: "Cosmos Pay (cosmospay.lat) और Cosmos Network (ATOM) अलग-अलग प्रोजेक्ट हैं।",
     facts: {
       networks: "नेटवर्क",
@@ -733,7 +733,7 @@ export default {
         checkout: { t: "होस्टेड चेकआउट और पेमेंट लिंक", d: "QR कोड के साथ एक पेमेंट लिंक और हमारा होस्ट किया हुआ चेकआउट पेज, चार डिज़ाइन और सात भाषाओं में। पे बटन या एम्बेडेड चेकआउट के लिए एक script टैग काफ़ी है।", a: "इंटीग्रेशन के विकल्प देखें" },
         swaps: { t: "स्वैप", d: "{n} नेटवर्क के बीच टोकन स्वैप करें और Stellar से USDT0 भेजें, बिना खाते के।", a: "स्वैप खोलें" },
         private: { t: "निजी भुगतान", d: "Stellar पर ऐसे भुगतान जिनकी राशि ज़ीरो-नॉलेज प्रूफ़ के पीछे ऑन-चेन छिपी रहती है। फ़िलहाल टेस्टनेट पर।", a: "जानें ये कैसे काम करते हैं" },
-        wallet: { t: "Cosmos Wallet", d: "Stellar, Solana और Monad के लिए नॉन-कस्टोडियल वॉलेट: वेब ऐप, ब्राउज़र एक्सटेंशन और Android, Windows, macOS और Linux के लिए ऐप। कीज़ डिवाइस पर ही बनती और एन्क्रिप्ट होती हैं।", a: "वॉलेट पाएँ" },
+        wallet: { t: "Cosmos Pay Wallet", d: "Stellar, Solana और Monad के लिए नॉन-कस्टोडियल वॉलेट: वेब ऐप, ब्राउज़र एक्सटेंशन और Android, Windows, macOS और Linux के लिए ऐप। कीज़ डिवाइस पर ही बनती और एन्क्रिप्ट होती हैं।", a: "वॉलेट पाएँ" },
       },
     },
     code: {
@@ -747,7 +747,7 @@ export default {
         server: "पेमेंट्स API का सर्वर: पेमेंट इंटेंट और लिंक, वेबहुक, स्वैप और निजी भुगतान।",
         platform: "यह साइट, पेमेंट्स साइट, डैशबोर्ड और डॉक्यूमेंटेशन।",
         sdk: "JavaScript और TypeScript SDK, जो npm पर @cosmosapp/pay_sdk नाम से प्रकाशित है।",
-        wallet: "Cosmos Wallet: वेब ऐप, ब्राउज़र एक्सटेंशन, और डेस्कटॉप व Android ऐप।",
+        wallet: "Cosmos Pay Wallet: वेब ऐप, ब्राउज़र एक्सटेंशन, और डेस्कटॉप व Android ऐप।",
         skill: "एक स्किल जो AI कोडिंग असिस्टेंट को Cosmos Pay इंटीग्रेट करना सिखाती है।",
       },
     },

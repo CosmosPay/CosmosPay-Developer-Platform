@@ -1,5 +1,5 @@
 /* pay-handler.ts is the browser half of /pay: register this page as the web+stellar:
-   handler, show an incoming SEP-7 `pay` URI in full, and hand it to the Cosmos Wallet
+   handler, show an incoming SEP-7 `pay` URI in full, and hand it to the Cosmos Pay Wallet
    extension (or the web wallet when there is no extension) only on the payer's click. The
    URI arrives in the query string, which any site can choose, so it is never handed over on
    arrival. */
