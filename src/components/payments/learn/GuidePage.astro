@@ -128,6 +128,13 @@ const nodes: JsonLdNode[] = [
                     <h2 id="g-table">{table.title}</h2>
                   </div>
                   <NetworkTable d={d} />
+                  {table.links && (
+                    <div class="pl-guide-text" data-reveal>
+                      <p class="pl-guide-links">
+                        {linksOf(table.links).map((l) => <a class="pl-textlink" href={l.href} rel={isExternal(l.href) ? "noopener" : undefined}>{l.label}</a>)}
+                      </p>
+                    </div>
+                  )}
                 </section>
               );
             }

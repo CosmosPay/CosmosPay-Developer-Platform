@@ -159,6 +159,7 @@ export const de: LearnMessages = {
             "Es beobachtet das Netzwerk und ordnet jede Zahlung über ein Memo, einen Referenzschlüssel oder eine eigens dafür angelegte Adresse ihrer Anforderung zu.",
             "Es meldet dem Unternehmen, sobald das Netzwerk die Zahlung bestätigt: im Dashboard und über einen signierten Webhook an seinen Server.",
           ],
+          links: { sep7: "Der Standard SEP-7 (Stellar)", solanaPay: "Die Solana-Pay-Spezifikation", eip681: "Der Standard EIP-681 (Ethereum)" },
         },
         settle: {
           title: "Wo die Zahlung abgewickelt wird",
@@ -223,6 +224,7 @@ export const de: LearnMessages = {
           rate: { k: "Satz von Cosmos Pay", value: "Der Satz deines Tarifs ({starterRate} bei Starter)" },
         },
         note: "Voreingestellte Assets sind die, die das Dashboard mit Namen anbietet; die Seite jedes Netzwerks listet ihre Adressen. Jeden anderen Token gibst du über seinen Herausgeber, Mint oder Contract an.",
+        links: { sep7: "Der Standard SEP-7 (Stellar)", solanaPay: "Die Solana-Pay-Spezifikation", eip681: "Der Standard EIP-681 (Ethereum)" },
       },
       sections: {
         choose: {

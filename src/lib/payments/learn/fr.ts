@@ -159,6 +159,7 @@ export const fr: LearnMessages = {
             "Elle surveille le réseau et rattache chaque paiement à sa demande, par un mémo, une clé de référence ou une adresse créée pour ce paiement.",
             "Elle prévient l’entreprise dès que le réseau confirme le paiement, dans un tableau de bord et par un webhook signé envoyé à son serveur.",
           ],
+          links: { sep7: "La norme SEP-7 (Stellar)", solanaPay: "La spécification Solana Pay", eip681: "La norme EIP-681 (Ethereum)" },
         },
         settle: {
           title: "Où l’argent est réglé",
@@ -223,6 +224,7 @@ export const fr: LearnMessages = {
           rate: { k: "Tarif Cosmos Pay", value: "Le tarif de votre offre ({starterRate} avec Starter)" },
         },
         note: "Les actifs préconfigurés sont ceux que le tableau de bord propose par leur nom ; la page de chaque réseau donne leurs adresses. Tout autre jeton s’indique par son émetteur, son mint ou son contrat.",
+        links: { sep7: "La norme SEP-7 (Stellar)", solanaPay: "La spécification Solana Pay", eip681: "La norme EIP-681 (Ethereum)" },
       },
       sections: {
         choose: {
