@@ -10,6 +10,28 @@ import { WALLET_ICONS } from "@/components/cosmos/marketing/icons";
 /* todo lo que sale del dominio se abre aparte y sin pasarle el referrer */
 const EXT = { target: "_blank", rel: "noopener noreferrer" } as const;
 
+/* The character as AVIF at four widths (lossless WebP for browsers without AVIF, the original
+   PNG in public/ for the rest), from src/assets so Vite fingerprints them under /_astro/ and
+   browsers keep them for a year. `no-inline` keeps each one a file instead of a data URI here. */
+const FIGURES = import.meta.glob<string>("/src/assets/brand/personaje/*.{avif,webp}", { eager: true, query: "?no-inline", import: "default" });
+const FIGURE_WIDTHS = [360, 540, 720, 1081];
+/* The box is 560px tall, 420px under 1040px and 360px under 720px (views.css), and square. */
+const FIGURE_SIZES = "(max-width: 720px) 360px, (max-width: 1040px) 420px, 560px";
+
+/* The light panel's figure is the first thing on the page, the largest element of the first
+   screen on phones: it loads at once and first. The dark twin only shows in the dark theme. */
+function Figure({ name, className, first = false }: { name: string; className: string; first?: boolean }) {
+  const avif = FIGURE_WIDTHS.map((w) => `${FIGURES[`/src/assets/brand/personaje/${name}-${w}.avif`]} ${w}w`).join(", ");
+  return (
+    <picture>
+      <source type="image/avif" srcSet={avif} sizes={FIGURE_SIZES} />
+      <source type="image/webp" srcSet={FIGURES[`/src/assets/brand/personaje/${name}.webp`]} />
+      <img className={className} src={`/brand/personaje/${name}.png`} alt="" width="1081" height="1081"
+           loading={first ? "eager" : "lazy"} fetchPriority={first ? "high" : undefined} decoding={first ? undefined : "async"} />
+    </picture>
+  );
+}
+
 function Way({ icon, href, title, sub, size, main = false, external = true }) {
   return (
     <a className={`wway${main ? " wway-main" : ""}`} href={href} {...(external ? EXT : {})}>
@@ -31,8 +53,12 @@ export function WalletSection() {
       <div className="wrap">
         <div className="wallet-grid">
           <div className="wallet-copy">
+            {/* The first thing on screen, so it holds the page's h1: what Cosmos Pay is, with the
+                brand's line over it. The section number is drawn by CSS (data-num), outside the
+                heading's text. */}
             <div className="section-head reveal">
-              <h2>{w.title}<span className="num" aria-hidden="true">/01</span></h2>
+              <div className="hero-tag">{w.tag}</div>
+              <h1 data-num="/01">{w.title}</h1>
               <p>{w.lede}</p>
             </div>
 
@@ -74,10 +100,8 @@ export function WalletSection() {
               vuelve negro y entra la version sticker, que tiene contorno
               blanco (BRAND.md, seccion 5). */}
           <div className="wallet-figure reveal" aria-hidden="true">
-            <img className="wfig wfig-light" src="/brand/personaje/celular-negro.png" alt=""
-                 width="1081" height="1081" loading="lazy" decoding="async" />
-            <img className="wfig wfig-dark" src="/brand/personaje/celular-sticker.png" alt=""
-                 width="1081" height="1081" loading="lazy" decoding="async" />
+            <Figure name="celular-negro" className="wfig wfig-light" first />
+            <Figure name="celular-sticker" className="wfig wfig-dark" />
           </div>
         </div>
       </div>

@@ -2,19 +2,24 @@
    (src/components/payments/landing/sections): the hero video, scroll reveals, the digit
    counters, the fee calculator, the pinned sections, the tabs, the live demos, the copy
    buttons and the contact form. Each part looks for its own elements and does nothing on a page without them. */
+import { startIntegrationDemos } from "@/scripts/payments/integration-demos";
+
 export function startLanding(): void {
   /* The hero video plays on its own, always: the product owner wants it moving for every
      visitor (reduced-motion included), so it is the one exception to that preference on this
      site. It is paused only while off screen (no work nobody sees) and by its own button,
-     which is always there (WCAG 2.2.2: it loops for longer than 5 s). */
+     which is always there (WCAG 2.2.2: it loops for longer than 5 s). It starts once the page
+     has loaded and the browser is idle: until then the poster is the first screen, and the
+     video's download does not compete with the fonts, styles and scripts the page needs. */
   const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
   const button = document.querySelector<HTMLButtonElement>("[data-motion]");
   const label = button?.querySelector<HTMLElement>("[data-motion-label]");
   if (video && button && label) {
     let paused = false;
     let visible = true;
+    let started = false;
     const sync = () => {
-      if (!paused && visible) void video.play().catch(() => { /* autoplay refused: the poster stays */ });
+      if (started && !paused && visible) void video.play().catch(() => { /* autoplay refused: the poster stays */ });
       else video.pause();
       button.setAttribute("aria-pressed", String(paused));
       label.textContent = paused ? button.dataset.play! : button.dataset.pause!;
@@ -23,6 +28,13 @@ export function startLanding(): void {
     button.addEventListener("click", () => { paused = !paused; sync(); });
     new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); }).observe(video);
     sync();
+    const start = () => { started = true; sync(); };
+    const whenIdle = () => {
+      if ("requestIdleCallback" in window) requestIdleCallback(start, { timeout: 2000 });
+      else setTimeout(start, 200);
+    };
+    if (document.readyState === "complete") whenIdle();
+    else window.addEventListener("load", whenIdle, { once: true });
   }
 
   /* Every logo row runs at the same speed (product owner): a row's loop is one set of its logos,
@@ -247,21 +259,8 @@ export function startLanding(): void {
   }
   setPinMode();
 
-  /* The live demos (the embed's demo mode) follow the page's theme, and the embedded one's
-     events are written out under it, as a merchant's page would receive them. */
-  const demoTheme = () => {
-    const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-    for (const el of document.querySelectorAll("[data-demo-theme]")) el.setAttribute("theme", theme);
-  };
-  demoTheme();
-  new MutationObserver(demoTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  for (const demo of document.querySelectorAll<HTMLElement>("[data-demo-events]")) {
-    const log = demo.parentElement?.querySelector<HTMLElement>("[data-demo-log]");
-    demo.addEventListener("cosmospay:status", (event) => {
-      const { status } = (event as CustomEvent<{ status: string }>).detail;
-      if (log) log.textContent = status === "SUCCEEDED" ? "cosmospay:paid · SUCCEEDED" : `cosmospay:status · ${status}`;
-    });
-  }
+  /* The integration options' demos (src/scripts/payments/integration-demos.ts). */
+  startIntegrationDemos();
 
   /* Copy buttons: data-copy names the code block to copy; data-copy-panel copies the block in
      the selected panel of its tabs. The label says it worked for two seconds; a live region

@@ -19,6 +19,16 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
       { i: 5, href: `${PAYMENTS}/integrations` }, // Checkout
       { i: 6, href: `${PAYMENTS}/integrations` }, // Payment Links
       { i: 7, href: PRICING }, // Pricing
+      { i: 8, href: `${PAYMENTS}/compare` }, // Fee comparison
+    ],
+  },
+  {
+    // The gateway's page for each network a payment settles on (src/lib/payments/site-pages.ts).
+    key: "networks",
+    links: [
+      { i: 0, href: `${PAYMENTS}/stellar` }, // Stellar payments
+      { i: 1, href: `${PAYMENTS}/solana` }, // Solana payments
+      { i: 2, href: `${PAYMENTS}/monad` }, // Monad payments
     ],
   },
   // Solutions: SaaS & subscriptions, Marketplaces, E-commerce, Platforms, Embedded finance,
@@ -77,7 +87,7 @@ export function Footer({ area }: { area?: Area } = {}) {
                  width="120" height="150" loading="lazy" decoding="async" />
           </div>
           {FOOT_GROUPS.map((g) => {
-            const grp = t.footer.groups[g.key];
+            const grp = (t.footer.groups as Record<string, { title: string; links: string[] }>)[g.key];
             return (
               <div className="foot-col" key={g.key}>
                 {/* h2: the footer's groups come after the page's own content, whose sections are h2 */}

@@ -5,12 +5,16 @@
  *   cosmospay.lat           "site"      /, /pricing, /tos          (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
  *   payments.cosmospay.lat  "payments"  /, its content pages (/integrations, /use-cases, /security,
- *                                       /fees, /faq), /pay, /contact (the contact form's POST),
+ *                                       /fees, /compare, /faq, /stellar, /solana, /monad: every
+ *                                       page in src/lib/payments/site-pages.ts), /pay, /contact (the
+ *                                       contact form's POST),
  *                                       /{payment link id}, /preview/{design}
  *                                       (pages under src/pages/payments/)
  *
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
- * its owner (query kept); a path nobody owns is a 404 on the site and payments domains. The
+ * its owner (query kept); a path nobody owns is a 404 on the site and payments domains. A page of
+ * the site or the gateway has one address: asked with a trailing slash (`/pricing/`), a GET is a
+ * 301 to the address without it, so search engines never index two copies. The
  * site and payments pages live under internal mounts (/site, /payments) and are reached by a
  * rewrite, so their public URLs have no prefix, and the mounts themselves are never public:
  * asked directly, they redirect to the public address.
@@ -44,6 +48,7 @@ export type RouteDecision =
 export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", payments: "/payments" };
 
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
+import { isKeyFilePath } from "@/lib/seo/indexnow";
 
 const SITE_PATHS = new Set(["/pricing", "/tos"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
@@ -61,8 +66,12 @@ const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
-/* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts). */
-const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);
+/* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts,
+   llms.txt.ts, src/pages/.well-known/*). The IndexNow key file is one too (src/pages/[key].txt.ts):
+   its name is the key, read at runtime, so it is matched by its shape (`isSharedPath`) and the
+   route answers 404 for any name but the configured key. */
+const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/.well-known/security.txt", "/.well-known/api-catalog"]);
+const isSharedPath = (path: string): boolean => SHARED_PATHS.has(path) || isKeyFilePath(path);
 /* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
    src/pages/site/swaps.astro): the public swaps. The platform sends them to the gateway. */
 const DUAL_PATHS = new Set(["/swaps"]);
@@ -156,7 +165,7 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
     if (underPrefix(path, MOUNTS[area])) return to(area, encodeURI(canonical.slice(MOUNTS[area].length)) || "/");
   }
 
-  if (SHARED_PATHS.has(path)) return { kind: "pass", area: primary };
+  if (isSharedPath(path)) return { kind: "pass", area: primary };
 
   /* A rewrite into a mount, re-encoded so the middleware's `new URL` reads nothing in it a second
      time, and refused (404) unless it still resolves inside that mount. */
@@ -165,7 +174,15 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
     const resolved = new URL(target, "http://route.invalid").pathname;
     return resolved === mount || resolved.startsWith(`${mount}/`) ? { kind: "rewrite", area, path: target } : { kind: "not-found", area: primary };
   };
-  const serve = (area: Area): RouteDecision => (area === "dev" ? { kind: "pass", area } : rewrite(area, MOUNTS[area], path));
+  /* A page of the site or the gateway has one address, without a trailing slash (`/pricing/` is
+     a 301 to `/pricing`, query kept). Only for GET and HEAD: a form's POST keeps its target. The
+     platform keeps its paths as they are (the docs' static export lives under /docs/…/). */
+  const slashed = req.pathname.length > 1 && req.pathname.endsWith("/") && (req.method === "GET" || req.method === "HEAD");
+  const serve = (area: Area): RouteDecision => {
+    if (area === "dev") return { kind: "pass", area };
+    if (slashed && canonical !== "/") return to(area, encodeURI(canonical));
+    return rewrite(area, MOUNTS[area], path);
+  };
 
   if (PROVER_FILE.test(path) && areas.has("dev") && !areas.has("payments")) return rewrite("dev", MOUNTS.payments, path);
   if (DUAL_PATHS.has(path)) {

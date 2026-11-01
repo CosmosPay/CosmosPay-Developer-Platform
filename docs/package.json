@@ -11,6 +11,7 @@
     "dev": "next dev",
     "prebuild": "npm run generate",
     "build": "next build",
+    "postbuild": "node scripts/set-html-lang.mjs",
     "start": "serve out",
     "types:check": "fumadocs-mdx && next typegen && tsc --noEmit",
     "postinstall": "fumadocs-mdx",

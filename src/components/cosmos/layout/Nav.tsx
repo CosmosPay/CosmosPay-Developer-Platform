@@ -21,15 +21,15 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     [0, 0, PAYMENTS], // Payments
     [0, 1, `${PAYMENTS}/integrations`], // Checkout
     [0, 2, `${PAYMENTS}/integrations`], // Payment Links
-    // [0, 3, "#"], // Invoicing (no page yet)
+    // [0, 3, "#"], // Invoicing (not a product: no invoicing exists)
     // [1, 0, "#"], // Payouts (no page yet)
     // [1, 1, "#"], // Cross-border (no page yet)
     // [1, 2, "#"], // Anchors (no page yet)
     [1, 3, `${PAYMENTS}/swaps`], // Swaps (the gateway's, or the company site's own)
     // [2, 0, "#"], // Stablecoins (no page yet)
     // [2, 1, "#"], // Wallets (no page yet)
-    // [2, 2, "#"], // Ledger (no page yet)
-    // [2, 3, "#"], // Radar (no page yet)
+    // [2, 2, "#"], // Ledger (not a product)
+    // [2, 3, "#"], // Radar (not a product: no fraud tooling exists)
   ],
   // Solutions: every link (SaaS & subscriptions, Marketplaces, Platforms, Embedded finance,
   // E-commerce, Fintech, Gaming, Travel & mobility) has no page yet, so the item is off.
@@ -39,7 +39,7 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     [0, 1, `${DOCS}/sdk/server/overview`], // SDKs & libraries
     [0, 2, `${DOCS}/sdk/server/webhooks`], // Webhooks
     [0, 3, `${DOCS}/getting-started`], // Sandbox
-    // [1, 0, "#"], // CLI (no page yet)
+    // [1, 0, "#"], // CLI (not a product: there is no CLI)
     // [1, 1, "#"], // Status (no status page yet)
     // [1, 2, "#"], // Changelog (no public changelog page yet)
     // [1, 3, "#"], // Postman (no collection published yet)

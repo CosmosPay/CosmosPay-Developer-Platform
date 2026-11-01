@@ -1,14 +1,20 @@
 /* ApiSection.tsx: /01 del deck, los tres modulos de la API mas el bloque de
    documentacion con el terminal y los dos SDK. */
 import { useCopy, hl, IcArrow, IcChevSm, IcCheck, IcCopy, DOCS } from "@/components/cosmos/shared";
-import { useT } from "@/lib/i18n/index";
-import { API_SNIPPET, API_CARD_KEYS, SDK_KEYS } from "@/components/cosmos/marketing/data";
+import { useT, fmt } from "@/lib/i18n/index";
+import { API_SNIPPET, API_CARD_KEYS, SDK_KEYS, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
 import { API_ICONS, SDK_ICONS } from "@/components/cosmos/marketing/icons";
 
 // Deep links into the docs site (served by the developer platform at /docs).
 const SDK_HREF: Record<string, string> = {
   web: `${DOCS}/sdk/web/web-client`,
   node: `${DOCS}/sdk/server/overview`,
+};
+// Each card links to its own reference page, named in the catalog (`cards.*.link`).
+const CARD_HREF: Record<string, string> = {
+  payments: `${DOCS}/api/payment-intents`,
+  stablecoin: `${DOCS}/api/assets`,
+  swaps: `${DOCS}/api/swaps`,
 };
 
 function TermCopy({ text }) {
@@ -24,7 +30,7 @@ export function ApiSection() {
     <section className="lp-panel api" data-panel="white" id="api">
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{a.title}<span className="num" aria-hidden="true">/03</span></h2>
+          <h2 data-num="/03">{a.title}</h2>
           <p>{a.lede}</p>
         </div>
         <div className="api-cards">
@@ -32,8 +38,8 @@ export function ApiSection() {
             <div className="api-card reveal" key={key} style={{ transitionDelay: `${i * 0.08}s` }}>
               <div className="ic">{API_ICONS[key]}</div>
               <h3>{a.cards[key].title}</h3>
-              <p>{a.cards[key].desc}</p>
-              <a className="docs-link" href={`${DOCS}/api`}>{a.docsLink} <IcChevSm /></a>
+              <p>{fmt(a.cards[key].desc, { n: SWAP_NETWORKS })}</p>
+              <a className="docs-link" href={CARD_HREF[key]}>{a.cards[key].link} <IcChevSm /></a>
             </div>
           ))}
         </div>

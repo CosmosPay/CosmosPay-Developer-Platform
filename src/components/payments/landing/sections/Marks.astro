@@ -18,7 +18,9 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
      logos a gateway would show (we show none until they are real). Each row is a
      marquee: two identical sets slide by half the track, so the loop has no seam. The
      row labels are for assistive tech only (the product owner's call), with a list of the
-     names, since the moving copy is never read. -->
+     names, since the moving copy is never read. The three networks a payment settles on are
+     links to their pages for the pointer (a hovered row holds still); out of the tab order,
+     since the moving copy is hidden from assistive tech: the FAQ and the footer link them too. -->
 <section class="pl-marks" aria-labelledby="pl-marks-title">
   <h2 id="pl-marks-title" class="wrap pl-marks-title" data-reveal>{t.marks.title}</h2>
   {marquees.map((row, r) => (
@@ -29,17 +31,20 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
         <div class="pl-marquee-track">
           {[0, 1].map(() => (
             <div class="pl-marquee-set">
-              {[...row.items, ...row.items].map((item) => (
-                <span class="pl-brand">
-                  {item.mark ? <Mark name={item.mark} /> : item.srcDark ? (
-                    <>
-                      <img class="pl-brand-light" src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />
-                      <img class="pl-brand-dark" src={item.srcDark} alt="" width="32" height="32" loading="lazy" decoding="async" />
-                    </>
-                  ) : <img src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
-                  <span>{item.name}</span>
-                </span>
-              ))}
+              {[...row.items, ...row.items].map((item) => {
+                const Tag = item.href ? "a" : "span";
+                return (
+                  <Tag class="pl-brand" href={item.href} tabindex={item.href ? -1 : undefined}>
+                    {item.mark ? <Mark name={item.mark} /> : item.srcDark ? (
+                      <>
+                        <img class="pl-brand-light" src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />
+                        <img class="pl-brand-dark" src={item.srcDark} alt="" width="32" height="32" loading="lazy" decoding="async" />
+                      </>
+                    ) : <img src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
+                    <span>{item.name}</span>
+                  </Tag>
+                );
+              })}
             </div>
           ))}
         </div>

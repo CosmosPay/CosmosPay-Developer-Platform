@@ -1,11 +1,11 @@
-import { source } from '@/lib/source';
-import { llms } from 'fumadocs-core/source';
+import { llmsIndex } from '@/lib/llms';
 
 export const revalidate = false;
 
-export async function GET() {
-  // Prefix the basePath (/docs) onto the relative links so they resolve when fetched.
-  // `index()` returns a promise since fumadocs-core 16.15.13.
-  const index = await llms(source).index();
-  return new Response(index.replace(/\]\(\//g, '](/docs/'));
+// The docs index for LLMs (llmstxt.org): "# Cosmos Pay Docs", a one-line summary, then every
+// English page with its description. Translations are one line per language, not a second list.
+export function GET() {
+  return new Response(llmsIndex(), {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
 }

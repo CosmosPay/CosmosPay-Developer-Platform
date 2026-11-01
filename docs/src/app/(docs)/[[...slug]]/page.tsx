@@ -1,4 +1,4 @@
-import { getPageMarkdownUrl, source } from '@/lib/source';
+import { contentLanguage, docsPath, getPageMarkdownUrl, isTranslation, pageLanguages, source } from '@/lib/source';
 import {
   DocsBody,
   DocsDescription,
@@ -17,28 +17,37 @@ import { openapi } from '@/lib/openapi';
 import { OpenAPIPage } from '@/components/api-page';
 import { baseOptions } from '@/lib/layout.shared';
 import { MobileSidebarTrigger } from '@/components/mobile-sidebar-trigger';
-import { DOCS_LANGUAGES, DEFAULT_DOCS_LANGUAGE } from '@/lib/i18n-config';
+import { LanguageLinks } from '@/components/language-links';
+import { DEFAULT_DOCS_LANGUAGE, DOCS_LOCALE_ITEMS, splitLocale } from '@/lib/i18n-config';
+import { DOCS_TRANSLATIONS } from '@/lib/docs-i18n';
+import { pageJsonLd, pageMetadata, serializeJsonLd } from '@/lib/seo';
 
 // The route is a single optional catch-all. When the first segment is a (non-default) locale
-// it selects the language; everything after it is the page slug. This keeps the default
-// language at the unprefixed root (/docs/sdk/...) and other locales under /docs/<lang>/... ,
-// which is what we need for a static export (no Next middleware to rewrite locales).
-function parseParams(slug?: string[]): { lang: string; slug: string[] } {
-  const segs = slug ?? [];
-  if (segs.length && (DOCS_LANGUAGES as readonly string[]).includes(segs[0]) && segs[0] !== DEFAULT_DOCS_LANGUAGE) {
-    return { lang: segs[0], slug: segs.slice(1) };
-  }
-  return { lang: DEFAULT_DOCS_LANGUAGE, slug: segs };
-}
+// it selects the language; everything after it is the page slug (see splitLocale).
 
 export default async function Page(props: PageProps<'/[[...slug]]'>) {
   const params = await props.params;
-  const { lang, slug } = parseParams(params.slug);
+  const { lang, slug } = splitLocale(params.slug);
   const page = source.getPage(slug, lang);
   if (!page) notFound();
 
   const MDX = page.data.body;
   const markdownUrl = getPageMarkdownUrl(page).url;
+  const jsonLd = pageJsonLd(page);
+  // An English page listed under a locale prefix (no translation yet): the chrome follows the
+  // locale, the content is English, so the article says so for assistive tech and translators.
+  const contentLang = isTranslation(page) ? undefined : contentLanguage(page);
+
+  // Plain links to this page in the other languages it is written in: crawlable, unlike the
+  // navbar's language picker, which navigates from script.
+  const languageLinks = pageLanguages(slug)
+    .filter((l) => l !== lang)
+    .map((l) => ({
+      lang: l,
+      href: `/docs${docsPath(slug, l)}`,
+      name: DOCS_LOCALE_ITEMS.find((item) => item.locale === l)?.name ?? l,
+    }));
+  const languagesLabel = DOCS_TRANSLATIONS[lang]?.['Choose a language(language switcher)'] ?? 'Choose a language';
 
   // API reference pages carry an `_openapi` frontmatter block; load their schema(s)
   // server-side so the client <OpenAPIPage> renders without fetching at runtime.
@@ -47,10 +56,21 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
 
   // The sidebar/page tree is per-locale, so build it for the active language. The global
   // Cosmos navbar is rendered in the root layout, so Fumadocs' own top nav stays disabled.
+  // Sidebar links are not prefetched: on a static export every visible link fetched its RSC
+  // payload up front (about 80 requests per page), and a click loads only the one it needs.
   return (
-    <DocsLayout tree={source.getPageTree(lang)} {...baseOptions()} nav={{ enabled: false }}>
+    <DocsLayout
+      tree={source.getPageTree(lang)}
+      {...baseOptions()}
+      nav={{ enabled: false }}
+      sidebar={{
+        prefetch: false,
+        footer: languageLinks.length ? <LanguageLinks label={languagesLabel} links={languageLinks} /> : undefined,
+      }}
+    >
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />}
       <MobileSidebarTrigger />
-      <DocsPage toc={page.data.toc} full={page.data.full}>
+      <DocsPage toc={page.data.toc} full={page.data.full} lang={contentLang}>
         <DocsTitle>{page.data.title}</DocsTitle>
         <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
         <div className="flex flex-row gap-2 items-center border-b pb-6">
@@ -77,7 +97,9 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
 
 export async function generateStaticParams() {
   // Enumerate every language × page. The default language keeps its bare slug; other locales
-  // are prefixed with their code so the exported paths match the URL scheme above.
+  // are prefixed with their code so the exported paths match the URL scheme above. Pages a
+  // locale has no translation for are exported too (the localized sidebar links them), as
+  // English copies that are noindex and canonical to the English page (lib/seo.ts).
   return source.generateParams().map(({ lang, slug }) =>
     lang === DEFAULT_DOCS_LANGUAGE ? { slug } : { slug: [lang, ...slug] },
   );
@@ -85,12 +107,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(props: PageProps<'/[[...slug]]'>): Promise<Metadata> {
   const params = await props.params;
-  const { lang, slug } = parseParams(params.slug);
+  const { lang, slug } = splitLocale(params.slug);
   const page = source.getPage(slug, lang);
   if (!page) notFound();
 
-  return {
-    title: page.data.title,
-    description: page.data.description,
-  };
+  return pageMetadata(page);
 }

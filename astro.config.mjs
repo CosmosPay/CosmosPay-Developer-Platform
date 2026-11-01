@@ -8,6 +8,7 @@ import path from 'node:path';
 import node from '@astrojs/node';
 
 import react from '@astrojs/react';
+import { loadEnv } from 'vite';
 
 // Dev-only: `astro dev` (Vite) serves exact files from public/ but doesn't resolve directory
 // requests (/docs/, /docs/sdk/overview/) to their index.html, so the statically-exported
@@ -81,6 +82,23 @@ function cosmosDocsDevStatic() {
     },
   };
 }
+
+// The three public origins (src/components/cosmos/lib/constants.ts reads the same variables,
+// with the same defaults), as hostnames for security.allowedDomains below, plus the company
+// site's www host: src/lib/hosts.ts answers it with a 301 to the apex, which it can only do when
+// Astro trusts that Host header (otherwise the request is read as the platform's).
+const buildEnv = { ...loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), ''), ...process.env };
+const SITE_HOST = new URL(buildEnv.PUBLIC_SITE_URL || 'https://cosmospay.lat').hostname;
+const PUBLIC_DOMAINS = [
+  ...new Set(
+    [
+      buildEnv.PUBLIC_SITE_URL || 'https://cosmospay.lat',
+      buildEnv.PUBLIC_BETTER_AUTH_URL || 'https://dev.cosmospay.lat',
+      buildEnv.PUBLIC_PAYMENTS_URL || 'https://payments.cosmospay.lat',
+    ].map((origin) => new URL(origin).hostname),
+  ),
+  ...(SITE_HOST === 'localhost' || /^[\d.]+$/.test(SITE_HOST) ? [] : [`www.${SITE_HOST}`]),
+];
 
 // https://astro.build/config
 export default defineConfig({
@@ -201,6 +219,13 @@ export default defineConfig({
       // all Search Console needs to verify ownership. Empty = no tag (local dev).
       // (Search Console can also verify via the existing Google Analytics property.)
       PUBLIC_GOOGLE_SITE_VERIFICATION: envField.string({ context: 'client', access: 'public', optional: true, default: '' }),
+      // --- SEO / IndexNow (Bing, which feeds ChatGPT search and Copilot, Yandex and the rest) ---
+      // The key every domain serves at /<key>.txt (src/pages/[key].txt.ts) and the payments
+      // robots.txt allows; `npm run indexnow` (scripts/indexnow.mjs) submits the sitemaps' URLs
+      // with it. 8 to 128 characters: letters, digits and "-". The key is public by design;
+      // `access: 'secret'` only makes it a runtime read (a restart that reloads .env, no rebuild).
+      // Unset: /<key>.txt answers 404 and the script refuses to run.
+      INDEXNOW_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
 
@@ -242,6 +267,11 @@ export default defineConfig({
 
   security: {
     checkOrigin: false,
+    // Astro takes Request.url's host from the Host header only for these domains; for any other
+    // it falls back to the server's own address. The middleware routes by hostname
+    // (src/lib/hosts.ts), so without them every request behind nginx looks like localhost and
+    // lands on the platform, and the site and payments pages redirect to themselves.
+    allowedDomains: PUBLIC_DOMAINS.map((hostname) => ({ hostname })),
   },
 
   integrations: [react()],

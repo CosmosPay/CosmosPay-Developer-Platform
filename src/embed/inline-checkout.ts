@@ -13,8 +13,9 @@
 
    Attributes: `link` (required), `lang` (en/es/pt/fr/de; default from the browser, then
    English), `theme` (light/dark/auto; default light), `demo` (no link and no request: it
-   draws the payments site's sample, which nothing can pay, says so on top, and plays its
-   states (open, confirming, paid), firing the usual events, for showcases). */
+   draws the payments site's sample, which nothing can pay, says so on top, and adds a button
+   that stands in for the payer: pressed, the sample confirms and turns to paid, firing the
+   usual events; pressed again, it starts over. Nothing changes until it is pressed). */
 import {
   payerTotal,
   assetSymbol,
@@ -74,6 +75,7 @@ export class CosmosPayCheckout extends HTMLElement {
     pay: HTMLElement;
     qr: HTMLImageElement;
     wallet: HTMLAnchorElement;
+    demoRun: HTMLButtonElement;
     network: Row;
     asset: Row;
     expires: Row;
@@ -147,6 +149,11 @@ export class CosmosPayCheckout extends HTMLElement {
     qr.height = 200;
     qr.decoding = "async";
     const wallet = el("a", "btn", pay);
+    // The demo's stand-in for the payer. Outside .pay, which hides once the sample is paid, so
+    // the button (and the keyboard focus on it) stays put from "pay" to "play it again".
+    const demoRun = el("button", "btn demo-run", view);
+    demoRun.type = "button";
+    demoRun.hidden = true;
     const facts = el("dl", "facts", view);
     const row = (): Row => {
       const r = el("div", "row", facts);
@@ -166,7 +173,7 @@ export class CosmosPayCheckout extends HTMLElement {
     this.card = card;
     this.ui = {
       eyebrow, demoNote, loadingText, notFoundTitle, notFoundBody, errorTitle, errorBody, retry, testnet,
-      amount, hint, msg, status, statusBody, pay, qr, wallet, network, asset, expires, expiresTime, by,
+      amount, hint, msg, status, statusBody, pay, qr, wallet, demoRun, network, asset, expires, expiresTime, by,
     };
     shadow.append(card);
 
@@ -175,6 +182,7 @@ export class CosmosPayCheckout extends HTMLElement {
       this.show("loading");
       void this.load();
     });
+    demoRun.addEventListener("click", this.onDemoRun);
   }
 
   connectedCallback(): void {
@@ -212,8 +220,7 @@ export class CosmosPayCheckout extends HTMLElement {
     this.ui.demoNote.hidden = !this.demo;
     if (this.demo) {
       this.linkId = null;
-      this.demoStep = 0;
-      this.playDemo();
+      this.showDemo(0);
       return;
     }
     const raw = this.getAttribute("link");
@@ -230,21 +237,41 @@ export class CosmosPayCheckout extends HTMLElement {
     void this.load();
   }
 
-  /* The demo: the sample link (src/lib/payments/preview.ts; its URI is empty, so the wallet
-     button stays inert) in each state of DEMO_SEQUENCE in turn, forever. Never a request. */
-  private playDemo(): void {
+  /* The demo: the sample link (src/lib/payments/preview.ts; its URI is empty, so there is no
+     wallet to open) at a step of DEMO_SEQUENCE. A step with a time moves on by itself; one
+     without waits for the demo button. Never a request. */
+  private showDemo(step: number): void {
     const generation = this.generation;
-    const step = DEMO_SEQUENCE[this.demoStep % DEMO_SEQUENCE.length];
+    this.demoStep = step;
+    const { status, ms } = DEMO_SEQUENCE[step];
     const sample = previewLink("classic");
-    const link: PaymentLink = { ...sample, status: step.status, qr: new URL(sample.qr, PAYMENTS_ORIGIN).href };
+    const link: PaymentLink = { ...sample, status, qr: new URL(sample.qr, PAYMENTS_ORIGIN).href };
     this.link = link;
     this.render(link);
     window.clearTimeout(this.timer);
+    if (ms === null) return;
     this.timer = window.setTimeout(() => {
       if (generation !== this.generation || !this.isConnected) return;
-      this.demoStep++;
-      this.playDemo();
-    }, step.ms);
+      this.showDemo(step + 1);
+    }, ms);
+  }
+
+  /* The demo button: from a waiting step to the next one; from the last, back to the start.
+     While a timed step runs it is aria-disabled and does nothing. */
+  private onDemoRun = (): void => {
+    if (!this.demo || DEMO_SEQUENCE[this.demoStep].ms !== null) return;
+    this.showDemo(this.demoStep + 1 < DEMO_SEQUENCE.length ? this.demoStep + 1 : 0);
+  };
+
+  private renderDemoButton(): void {
+    const button = this.ui.demoRun;
+    button.hidden = !this.demo;
+    if (!this.demo) return;
+    const last = this.demoStep === DEMO_SEQUENCE.length - 1;
+    button.textContent = last ? this.t.demoAgain : this.t.demoPay;
+    button.classList.toggle("btn-quiet", last);
+    if (DEMO_SEQUENCE[this.demoStep].ms !== null) button.setAttribute("aria-disabled", "true");
+    else button.removeAttribute("aria-disabled");
   }
 
   private schedule(ms: number): void {
@@ -360,7 +387,9 @@ export class CosmosPayCheckout extends HTMLElement {
     // cancelled must not invite a payment the merchant no longer expects.
     ui.pay.hidden = phase !== "open";
     if (ui.qr.getAttribute("src") !== l.qr) ui.qr.src = l.qr;
-    // The demo's sample has no URI: the button stays, but leads nowhere and says so.
+    // The demo's sample has no URI: its own button stands in for the wallet's. A real link
+    // without one keeps the button, leading nowhere and saying so.
+    ui.wallet.hidden = this.demo;
     if (l.uri) {
       ui.wallet.href = l.uri;
       ui.wallet.removeAttribute("aria-disabled");
@@ -396,6 +425,7 @@ export class CosmosPayCheckout extends HTMLElement {
       emitStatus(this, l.id, l.status);
     }
 
+    this.renderDemoButton();
     // The demo plays its own states; nothing is read.
     if (this.demo) return;
     const delay = nextPollDelay(phase);

@@ -4,8 +4,10 @@
    account is the customer's, not the person's at the screen. It says what the signature is for,
    which account the transaction is and which one signs it (both as links), and, for a transaction
    that expires, how long is left. A sub-account's transaction is signed by its address, its only
-   signer: a warning says so, since there is no other key to look for. A signed XDR that is not this
-   transaction, signed by that account, is refused with the reason. */
+   signer: a warning says so, since there is no other key to look for. It names the network to sign
+   on, since a wallet signs for the one it is set to, and a signature for another network is told
+   apart from a missing one. A signed XDR that is not this transaction, signed by that account, is
+   refused with the reason. */
 import { useEffect, useMemo, useState } from "react";
 import { Networks, TransactionBuilder } from "@stellar/stellar-sdk";
 import { Modal } from "@/components/cosmos/shared";
@@ -40,6 +42,7 @@ export function ZkSignDialog({ request, onSigned, onCancel }: {
   const account = shortAddress(request.account);
   const copy = zs[request.purpose];
   const network = request.networkPassphrase === Networks.PUBLIC ? "public" : "testnet";
+  const networkLabel = network === "public" ? "Mainnet" : "Testnet";
   // The transaction's own account: another one than the signer's for a sub-account.
   const source = useMemo(() => {
     try { return TransactionBuilder.fromXDR(request.xdr, request.networkPassphrase).source; } catch { return request.account; }
@@ -50,7 +53,11 @@ export function ZkSignDialog({ request, onSigned, onCancel }: {
   const accept = (xdr: string) => {
     const check = signatureOn(request.xdr, xdr, request.account, request.networkPassphrase);
     if (check.ok) { onSigned(xdr.trim()); return; }
-    setProblem(check.problem === "notSigned" ? fmt(zs.notSigned, { account }) : zs[check.problem]);
+    setProblem(
+      check.problem === "notSigned" ? fmt(zs.notSigned, { account })
+        : check.problem === "otherNetwork" ? fmt(zs.otherNetwork, { network: networkLabel })
+        : zs[check.problem],
+    );
   };
 
   return (
@@ -64,6 +71,7 @@ export function ZkSignDialog({ request, onSigned, onCancel }: {
         <div className="paylink-fields zks-who">
           {forSub && <div className="paylink-field"><span className="pf-k">{zs.txAccount}</span><span className="pf-v">{link(source, zs.txAccount)}</span></div>}
           <div className="paylink-field"><span className="pf-k">{zs.signer}</span><span className="pf-v">{link(request.account, zs.signer)}</span></div>
+          <div className="paylink-field"><span className="pf-k">{zs.network}</span><span className="pf-v">{networkLabel}</span></div>
         </div>
         {forSub && (
           <div className="zka-exists" role="note">

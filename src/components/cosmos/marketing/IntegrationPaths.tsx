@@ -6,8 +6,9 @@ import { SCALE_VALUES, PATH_NUMS } from "@/components/cosmos/marketing/data";
 
 // Targets for the three integration-path CTAs (by position, because the catalogs only carry the
 // translated label, and the order is the same in every language): No-code → dashboard,
-// Prebuilt UI → browser SDK, Build-your-own (the REST/SDK "API" path) → the docs.
-const PATH_HREFS = [DASH, `${DOCS}/sdk/web/web-client`, DOCS];
+// Prebuilt UI → the embed guide (pay button and embedded checkout), Build-your-own (the REST/SDK
+// "API" path) → the docs.
+const PATH_HREFS = [DASH, `${DOCS}/embed`, DOCS];
 
 function pathMock(n, ig) {
   if (n === "01") return null; // filled by caller with translated link text
@@ -17,7 +18,7 @@ function pathMock(n, ig) {
     <div className="ip-mock">
       <div className="ip-checkout">
         <div className="ipc-amt">19.99 <span>USDC</span></div>
-        <div className="ipc-field">you@company.com</div>
+        <div className="ipc-field">Stellar</div>
         <div className="ipc-btn">{ig.mockPay}</div>
       </div>
     </div>
@@ -35,7 +36,7 @@ export function IntegrationPaths() {
       <div className="wrap">
         <div className="ip-head">
           <div className="section-head reveal">
-            <h2>{ig.title}<span className="num" aria-hidden="true">/04</span></h2>
+            <h2 data-num="/04">{ig.title}</h2>
             <p>{ig.lede}</p>
           </div>
           <div className="ip-scale reveal">

@@ -63,7 +63,7 @@ payment is paid, failed or cancelled.
 | `link` | both | The payment link id | Required |
 | `lang` | both | `en`, `es`, `pt`, `fr`, `de` (a regional tag such as `es-AR` works too) | The payer's browser language, else `en` |
 | `theme` | both | `light`, `dark`, `auto` (follows the payer's system setting) | `light` |
-| `demo` | both | Present to show a sample that can't be paid, with no link and no request (for showcases): the button opens the sample checkout; the embedded checkout plays its states and fires its events | Off |
+| `demo` | both | Present to show a sample that can't be paid, with no link and no request (for showcases): the button opens the sample checkout; the embedded checkout adds a button that stands in for the payer: pressed, the sample confirms and turns to paid, firing its events; pressed again, it starts over | Off |
 
 On the button, `lang` sets the label and, when you give it, the hosted checkout's language too.
 Without it, the checkout uses the payer's own language.

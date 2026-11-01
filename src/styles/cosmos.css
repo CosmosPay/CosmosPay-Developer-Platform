@@ -511,14 +511,20 @@ html.nav-locked { overflow: hidden; }
    El gesto del deck: Light gigante arriba a la izquierda, en dos lineas,
    con la numeracion /0n chiquita pegada a la ultima palabra.
    ============================================================ */
-.hero h1, .section-head h2, .stats-title, .cta-panel h2 {
+.hero h2, .section-head :is(h1, h2), .stats-title, .cta-panel h2 {
   font-weight: 300; font-size: clamp(2.75rem, 6vw, 5rem); line-height: 1.0;
   letter-spacing: -0.02em; text-wrap: balance; margin: 0;
 }
-.hero h1 { max-width: none; }
+/* the hero's two lines are one text node split by a newline (Hero.tsx) */
+.hero h2 { max-width: none; white-space: pre-line; }
 .stats-title, .cta-panel h2 { max-width: 14ch; }
-.section-head h2 { max-width: 15ch; }
-.section-head h2 .num, .cta-panel h2 .num, .pricing-hero h1 .num, .compare h2 .num, .faq h2 .num {
+.section-head :is(h1, h2) { max-width: 15ch; }
+/* The section number (/01, /02...) after a heading's last word. Drawn from data-num, so it
+   is not part of the heading's text: extracted text and the document outline read the
+   title alone. The "/ ''" alternative keeps it from screen readers too (where supported;
+   the first declaration is the fallback). */
+[data-num]::after {
+  content: attr(data-num); content: attr(data-num) / "";
   font-weight: 500; font-size: .75rem; color: var(--ink-3); letter-spacing: 0;
   white-space: nowrap; margin-left: .6em; vertical-align: baseline;
 }
@@ -625,7 +631,13 @@ html.nav-locked { overflow: hidden; }
    ============================================================ */
 .stats { padding: 120px 0; }
 .stats-grid { display: grid; grid-template-columns: 6fr 1fr 5fr; align-items: start; }
-.stats-title { grid-column: 1; }
+.stats-copy { grid-column: 1; min-width: 0; }
+/* one sentence per line, from newlines in one text node (Stats.tsx) */
+.stats-title { white-space: pre-line; }
+/* what Cosmos Pay is: a short answer under the brand's line */
+.stats-about { margin-top: 56px; max-width: 46ch; }
+.stats-about h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.01em; margin: 0 0 12px; color: var(--ink); }
+.stats-about p { font-size: 1rem; line-height: 1.55; color: var(--ink-2); margin: 0; }
 .stats-figs { grid-column: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
 .stat { border-top: 1px solid var(--line); padding: 24px 0; }
 .stat .num { font-size: 3.5rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1; color: var(--ink); }
@@ -646,7 +658,7 @@ html.nav-locked { overflow: hidden; }
    FOOTER
    ============================================================ */
 .footer { border-top: 1px solid var(--line); padding: 80px 0 48px; }
-.foot-grid { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 40px; }
+.foot-grid { display: grid; grid-template-columns: 1.6fr repeat(5, 1fr); gap: 40px; }
 .foot-brand p { color: var(--ink-2); font-size: .9375rem; max-width: 24em; margin: 16px 0 0; }
 /* el personaje del pie: figura, no icono (minimo 180px, BRAND.md seccion 5) */
 .foot-astro { display: block; height: 190px; width: auto; margin: 28px 0 0; }
@@ -689,7 +701,7 @@ html.nav-locked { overflow: hidden; }
   .api-card .ic { margin-bottom: 24px; }
   .foot-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
   .stats-grid { grid-template-columns: 1fr; gap: 56px; }
-  .stats-title, .stats-figs { grid-column: 1; }
+  .stats-copy, .stats-figs { grid-column: 1; }
   .cta-grid { grid-template-columns: 1fr; gap: 56px; }
 }
 @media (max-width: 720px) {
@@ -697,8 +709,9 @@ html.nav-locked { overflow: hidden; }
   .lp-panel { padding: 80px 0; }
   .link-login { display: none; }
 
-  .hero h1, .stats-title, .cta-panel h2 { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
-  .section-head h2 { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
+  .hero h2, .stats-title, .cta-panel h2 { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
+  .section-head :is(h1, h2) { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
+  .stats-about { margin-top: 40px; }
   .section-head { margin-bottom: 56px; }
 
   .hero { display: block; padding: 136px 0 0; min-height: 0; }

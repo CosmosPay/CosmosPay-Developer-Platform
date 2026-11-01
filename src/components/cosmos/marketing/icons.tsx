@@ -5,7 +5,7 @@ export const IcExpand = () => (<svg viewBox="0 0 24 24" fill="none" stroke="curr
 export const API_ICONS = {
   payments: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3" /></svg>),
   stablecoin: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v10M14.2 9.3C13.8 8.5 13 8 12 8c-1.3 0-2.3.8-2.3 1.8 0 2.3 4.6 1.2 4.6 3.6 0 1-1 1.8-2.3 1.8-1 0-1.8-.5-2.2-1.3" /></svg>),
-  anchor: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="2" /><path d="M12 7v13M5 12a7 7 0 0014 0M5 12H3m16 0h2" /></svg>),
+  swaps: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M21 16l-4 4-4-4" /></svg>),
 };
 
 export const SDK_ICONS = {
@@ -20,7 +20,7 @@ export const SOL_ICONS = {
   pay: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3" /></svg>,
   coin: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v10M14.2 9.3C13.8 8.5 13 8 12 8c-1.3 0-2.3.8-2.3 1.8 0 2.3 4.6 1.2 4.6 3.6 0 1-1 1.8-2.3 1.8-1 0-1.8-.5-2.2-1.3" /></svg>,
   globe: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.7 2.6 15.3 0 18M12 3C9.4 5.7 9.4 18.3 12 21" /></svg>,
-  ramp: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5" /></svg>,
+  swap: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5" /></svg>,
   wallet: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h15a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><path d="M3 7l13-3 2 3" /><circle cx="17" cy="13" r="1.3" /></svg>,
 };
 

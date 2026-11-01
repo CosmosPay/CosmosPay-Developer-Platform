@@ -1,7 +1,15 @@
-/* Resources.tsx: /06 del deck, las cuatro piezas de contenido como lista
-   editorial 2x2, sin miniaturas. */
-import { IcChevSm } from "@/components/cosmos/shared";
+/* Resources.tsx: /07 del deck, las cuatro piezas de contenido como lista editorial 2x2, sin
+   miniaturas. Each one is a page of the public documentation that exists today; the targets
+   live here by position (the catalogs carry the labels, in the same order in every language). */
+import { IcChevSm, DOCS } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
+
+const RESOURCE_HREFS = [
+  `${DOCS}/getting-started`, // Getting started
+  `${DOCS}/embed`, // Embed a pay button or checkout
+  `${DOCS}/sdk/server/webhooks`, // Webhooks in the SDK
+  `${DOCS}/api-keys`, // Get your API key
+];
 
 export function Resources() {
   const t = useT();
@@ -10,19 +18,17 @@ export function Resources() {
     <section className="lp-panel resources" data-panel="white" id="resources">
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{r.title}<span className="num" aria-hidden="true">/08</span></h2>
+          <h2 data-num="/07">{r.title}</h2>
           <p>{r.lede}</p>
         </div>
         <div className="news-list">
           {r.items.map((n, i) => (
-            /* No article pages yet: each item is a card, not a link (href="#" and its
-               "read more" stay commented out until the posts exist). */
-            <article className="news-item reveal" key={n.t} style={{ transitionDelay: `${(i % 2) * 0.06}s` }}>
-              <div className="news-tag">{n.tag}</div>
-              <h4>{n.t}</h4>
+            <a className="news-item reveal" key={n.t} href={RESOURCE_HREFS[i]} style={{ transitionDelay: `${(i % 2) * 0.06}s` }}>
+              <span className="news-tag">{n.tag}</span>
+              <h3>{n.t}</h3>
               <p>{n.d}</p>
-              {/* <span className="card-link">{r.readMore} <IcChevSm /></span> */}
-            </article>
+              <span className="card-link">{r.readMore} <IcChevSm /></span>
+            </a>
           ))}
         </div>
       </div>

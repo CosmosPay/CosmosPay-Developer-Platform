@@ -1,0 +1,55 @@
+---
+// A network page's first section (/stellar, /solana, /monad): how a payment works there, as
+// facts: the link standard, the wallets that pay it (logos from the home's wallet marquee,
+// src/lib/payments/network-pages.ts names them), how a payment is matched to its link, where
+// the money goes and the test network. The words are the catalog's `networks.<chain>`.
+import Mark from "@/components/payments/landing/Mark.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+import { CHAIN_NAMES, type Chain } from "@/lib/chains";
+import { NETWORK_WALLETS } from "@/lib/payments/network-pages";
+
+interface Props {
+  d: LandingData;
+  chain: Chain;
+}
+
+const { d, chain } = Astro.props;
+const { t, walletRow } = d;
+const n = t.networks[chain];
+const wallets = NETWORK_WALLETS[chain].flatMap((name) => walletRow.filter((w) => w.name === name));
+const facts = [
+  { key: "link", term: t.network.link, text: n.link },
+  { key: "wallets", term: t.network.walletsTitle, text: n.walletsLede },
+  { key: "match", term: t.network.match, text: n.match },
+  { key: "settle", term: t.network.settle, text: n.settle },
+  { key: "sandbox", term: t.network.sandbox, text: n.sandbox },
+];
+---
+
+<section class="pl-section" aria-labelledby="pl-net-facts">
+  <div class="wrap pl-split">
+    <div class="pl-head" data-reveal>
+      <h2 id="pl-net-facts">{t.network.factsTitle.replace("{network}", CHAIN_NAMES[chain])}</h2>
+    </div>
+    <dl class="pl-net-facts">
+      {facts.map((f, i) => (
+        <div data-reveal style={`--i: ${i}`}>
+          <dt>{f.term}</dt>
+          <dd>
+            {f.text}
+            {f.key === "wallets" && wallets.length > 0 && (
+              <ul class="pl-net-wallets" role="list">
+                {wallets.map((w) => (
+                  <li class="pl-brand">
+                    {w.mark ? <Mark name={w.mark} /> : <img src={w.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
+                    <span>{w.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</section>

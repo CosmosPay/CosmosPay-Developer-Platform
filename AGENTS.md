@@ -22,6 +22,8 @@ npm run embed:build       # bundles src/embed into public/embed/cosmos-pay.js (r
 npm run db:migrate        # prisma migrate dev (db:deploy = migrate deploy, db:generate, db:push)
 npm run sync:route        # re-points every APISIX route's upstream at COSMOS_API_URL, no restart
 npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
+npm run indexnow          # dry run: the live sitemaps' URLs IndexNow would get; `-- --submit` sends
+                          #   them (`--since <date>`, `--only site,payments,dev`, `--list`)
 ```
 
 ## Languages: seven, everywhere
@@ -30,8 +32,8 @@ npm run export:wallet-data # dumps the retired wallet tables to JSON for the com
   (`en es pt fr de hi zh`) on every surface: the platform's catalog (`src/lib/i18n/messages/*.ts`,
   the languages and their flags in `src/lib/i18n/locales.ts`), the payments catalogs
   (`src/lib/payments/i18n.ts`, `landing-i18n.ts`), the embed (`src/embed/i18n.ts`), Open Graph
-  locales (`src/lib/payments/seo.ts`), `BackToTop.astro` and `src/lib/geo.ts`. A new language goes
-  into all of them. The docs (Fumadocs) stay in five.
+  locales (`src/lib/seo/lang-urls.ts`), the company site's search titles (`src/lib/seo/site-meta.ts`),
+  `BackToTop.astro` and `src/lib/geo.ts`. A new language goes into all of them. The docs (Fumadocs) stay in five.
 - **Nothing on screen is hardcoded English**: every label, placeholder, aria-label and example value
   comes from the catalog (`ui.*` for shared bits such as close, search and select; `dash.examples.*`
   for sample data in placeholders). **Never build a plural with a suffix** (`{s}`): give the
@@ -39,6 +41,12 @@ npm run export:wallet-data # dumps the retired wallet tables to JSON for the com
 - **Every catalog mirrors English key for key** with the same `{placeholders}` and no empty string:
   `tests/unit/dashboardI18n.test.ts` (the platform), `paymentsI18n.test.ts` and `embedI18n.test.ts`
   enforce it. URLs are not copy: links live in the components (`NAV_LINKS`), not the catalogs.
+- **The browser downloads one catalog, the page's language** (`src/lib/i18n/index.tsx`): each
+  language is its own chunk, the one `<html lang>` names loaded before the islands hydrate (keep
+  it equal to the islands' `lang`, or they wait for theirs), another one when it is picked
+  (`setLang` waits for it). The server holds all seven. Never import
+  `@/lib/i18n/messages/index` from client code: it bundles all seven (about 150 KB compressed)
+  into every page.
 
 ## Writing rule: no em dashes
 
@@ -99,9 +107,9 @@ These were said more than once; breaking one is a bug, whatever the task was.
 
 | Domain | Area | Pages |
 | :--- | :--- | :--- |
-| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/tos` |
+| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/faq`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -119,10 +127,41 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `PUBLIC_PAYMENTS_URL`**, inlined at build. An unknown host (IP, health check, smoke test) is
   the platform. Links that may render on another domain than their target are absolute, from
   `src/components/cosmos/lib/constants.ts`.
+- **The same three hostnames are `security.allowedDomains` in `astro.config.mjs`.** Astro takes
+  the request's host from the Host header only for those; any other host becomes the server's
+  own address. Without them every request behind nginx is the platform and the site and
+  payments pages answer a 301 to themselves (v0.9.0 shipped like that). `npm run test:smoke`
+  asks each trusted host for `/pricing` and fails on a redirect to itself.
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
-- **`robots.txt` and `sitemap.xml` are per-domain endpoints**; never add them to `public/`.
+- **`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/security.txt`,
+  `/.well-known/api-catalog` and the IndexNow key file are per-domain endpoints** (`SHARED_PATHS`
+  in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
+  `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
+  the product owner's decision
+  (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The payments robots.txt
+  blocks everything but its pages, so every file those pages load (`/_astro/`, `/fonts/`,
+  `/media/`, `/brand/`, `/embed/`, icons, share images) needs its `Allow` there, or Google renders
+  them unstyled. The platform's sitemap is an index of the docs' own `/docs/sitemap.xml`.
+- **IndexNow** (Bing, which also feeds ChatGPT search and Copilot, Yandex and the rest) learns
+  about new and changed pages from `npm run indexnow` (`scripts/indexnow.mjs`, helpers in
+  `src/lib/seo/indexnow.ts`, tested): it reads each domain's live sitemap (following the
+  platform's index into the docs), keeps the URLs on that host (`--since` keeps those whose
+  lastmod is on or after a date) and, with `--submit`, posts them to `api.indexnow.org` in
+  batches of at most 10,000. Dry run without it. Each domain proves the submission with its key
+  file, `/<INDEXNOW_KEY>.txt` (`src/pages/[key].txt.ts`): `hosts.ts` lets any path of a key's
+  shape through on every domain (`isKeyFilePath`, since the key is only known at runtime) and the
+  route answers 404 for any other name or without a key; the payments robots.txt `Allow`s that
+  one file. `INDEXNOW_KEY` is public by design; `access: 'secret'` only makes it a runtime read.
+  The script refuses to run without it, and `--submit` skips a domain whose key file does not
+  answer with the key (IndexNow would answer 403) or whose origin is not public https.
+- **A site or gateway page has one address**: asked with a trailing slash, a GET is a 301 to it
+  without (`routeRequest`), and a `?lang=` the pages do not take as written (`ES`, `pt-BR`, `xx`,
+  twice) is a 301 to the language it names, or to the bare path (`normalizeLangQuery`, other
+  parameters kept byte for byte). The middleware adds HSTS (https origins, no includeSubDomains),
+  `Referrer-Policy`, `charset=utf-8` on HTML and `Vary: Accept-Language, Cookie` on a bare path
+  whose language follows the visitor (`src/lib/seo/response-headers.ts`).
 
 ### One auth for all three domains
 
@@ -144,6 +183,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   "Redirect URI Error".
 - Sign-out from the company site is a credentialed cross-origin call
   to `/api/auth/sign-out`: keep `https://cosmospay.lat` in `src/lib/allowed-origins.ts`.
+- **An Authentik sign-in links to an existing user by email only when Authentik says the address
+  is verified** (`email_verified`). Never list `ak` in `accountLinking.trustedProviders`
+  (`src/lib/auth.ts`): Better Auth links a trusted provider's sign-in by email whatever that flag
+  says, so any Authentik account holding someone's address becomes them here. Accounts were taken
+  over that way on 2026-10-11, while the Authentik provider identified users by email (`sub`) and
+  let anyone sign up or switch to an address they did not own. The provider's `sub` is the
+  Authentik user's UUID since 2026-10-31, and its `email` scope sends the `email_verified`
+  attribute the enrollment's confirmation sets.
 
 ### The payments domain
 
@@ -220,6 +267,26 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (`localHref` / `homeFor` / `pricingFor` in `src/components/cosmos/lib/constants.ts`). Docs and
   sign-in still lead to the platform, where they live. The payments error page's button goes
   to `/` too: a payments page never sends the payer to the company site.
+
+### The company home (cosmospay.lat)
+
+- `src/pages/site/index.astro` renders `components/cosmos/Landing.tsx`: the wallet panel first
+  (it holds the page's only h1, what Cosmos Pay is, with the brand's line as its tag), the
+  developers' hero (an h2), then DevKit, Api, Integration, Solutions, Stats (with "What is Cosmos
+  Pay?"), Stories, Resources, Marketplace and the final call. Its title and description are
+  `landing.meta` in the visitor's language.
+- **Only checkable claims, as on the gateway** (product owner, 2026-10-31): every figure is a
+  product fact computed in `marketing/data.ts` (the chains a payment settles on, `NETWORK_IDS`
+  for swaps, Starter's rate from `plans.ts`, the checkout designs and languages), never a volume,
+  an uptime, a request count or a customer. Stories are use cases with no company names or
+  figures; there is no testimonials section until there are real customers to quote; Resources
+  link only to docs pages that exist. What the product lacks (GraphQL, a CLI, "Elements",
+  invoicing, custodial wallets, card or bank payments, disputes, uptime SLAs, SSO) is not
+  advertised anywhere, the nav and `/pricing` included.
+- **Headings read as text:** a section number (/01, /02...) is `data-num` on the heading, drawn
+  by `[data-num]::after` in cosmos.css, never a span inside it; a title on two lines is one text
+  node with a newline (`white-space: pre-line`), never a bare `<br>`, so extracted text keeps its
+  spaces.
 
 ### The institutional skin (payments site and dashboard)
 
@@ -722,8 +789,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   listed once in `src/lib/payments/site-pages.ts` (routing in `hosts.ts`, `robots.txt`,
   `sitemap.xml`): `/integrations` (options with the live demos, the developers' code, the
   three paths), `/use-cases` (businesses, the comparison with cards), `/security`, `/fees`
-  (plans and calculator; `/pricing` is the company site's) and `/faq`. A sticky section bar
-  (`Subnav.astro`) under the general nav links them and ends with the main call to action.
+  (plans and calculator; `/pricing` is the company site's), `/compare` and `/faq`. A sticky section bar
+  (`Subnav.astro`) under the general nav links them (`SECTION_PAGES`) and ends with the main call to action.
+  **One page per network a payment settles on** (`NETWORK_PAGES`: `/stellar`, `/solana`, `/monad`,
+  `NetworkPage.astro`), answer first: the link standard, the wallets, how a payment is matched,
+  where the money goes, the test network, the presets (read from `stellar-assets.ts` and
+  `chains.ts` through `src/lib/payments/network-pages.ts`, never written), the plans' rates, the
+  create-pay request (built from `docs/openapi.json`'s shape and tested against it) and its own
+  questions, which its JSON-LD repeats as an FAQPage. They are not in the section bar: the footer's
+  "Networks" group (every domain), the home's networks marquee and the FAQ's network line link them.
+  Settlement time is said only where the copy already states it (about 5 seconds on Stellar).
+  **`/compare`** sets each rate beside the published one it is 75% of (see "Plans").
   It is the first thing under the nav on every page, the home included (product owner: no
   waiting for it), so there the hero starts under it instead of running up under the nav. Its
   links hover as the general nav's do (an underline sweeps in), and the repeated call to action
@@ -741,13 +817,30 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   sideways and the script centres the current page in it.
 - **Search engines get every language.** An indexable gateway page exists once per language at
   `?lang=<code>` (the language resolution reads it first) and its bare path is the x-default.
-  `src/lib/payments/seo.ts` builds those URLs for everything that names them: the canonical (each
-  version names itself), the hreflang links and `og:locale` (+ alternates) in `PaymentsLayout`,
-  `robots.txt` (`Allow: <path>?lang=`) and the sitemap (every version with its alternates).
-  `StructuredData.astro` (rendered by `LandingHead`) emits one JSON-LD graph per page:
-  Organization, WebSite, the page (a FAQPage on `/faq`, with the questions the page shows) and a
-  BreadcrumbList matching the breadcrumb `PageHeader.astro` draws over a content page's title.
-  Only what the page says: no ratings, prices or claims beyond its copy.
+  `src/lib/seo/lang-urls.ts` (re-exported by `src/lib/payments/seo.ts`) builds those URLs for
+  everything that names them: the canonical (each version names itself), the hreflang links and
+  `og:locale` (+ alternates) in `PaymentsLayout`, `robots.txt` (`Allow: <path>?lang=`) and the
+  sitemap (every version with its alternates). The company site works the same way (below).
+  `StructuredData.astro` (rendered by `LandingHead`) emits one JSON-LD graph per page: the shared
+  Organization (`src/lib/seo/org.ts`), WebSite, the page (`["WebPage", "FAQPage"]` on `/faq`, with
+  the questions the page shows), a BreadcrumbList matching the breadcrumb `PageHeader.astro` draws
+  over a content page's title, a Service on `/` and `/swaps`, and on `/fees` a Product whose
+  Offers are the plans with a fixed monthly price in `src/lib/plans.ts`. Only what the page and
+  `plans.ts` say: no ratings, reviews or claims beyond them. The indexed pages share the hero's
+  poster (`/media/coin-ramp-poster.jpg`) as their image; payment links keep the brand card.
+- **The company site (cosmospay.lat) speaks every language at its own address too**: the
+  middleware resolves `locals.lang` for the `site` area as for payments (?lang → cookie →
+  Accept-Language → en) and the site pages read it, never the cookie. `CosmosLayout` emits, for a
+  site page, the canonical per language, the hreflang links (+ x-default), `og:locale` with its
+  alternates, and the page's titles and descriptions come from `src/lib/seo/site-meta.ts`
+  (seven languages; `/swaps` uses its catalog's `swapsPage.metaTitle`). A page whose text exists
+  in fewer languages declares them (`langs`, `PAGE_LANGS`: `/tos` is English and Spanish); its
+  other versions name the English one canonical. Its JSON-LD (`src/components/site/StructuredData.astro`)
+  is the shared Organization, WebSite, WebPage and BreadcrumbList (`breadcrumb`), plus the
+  page's own nodes (`schema`): the Payments API, the SDK and the wallet on `/`, the plans'
+  Product on `/pricing`. A language picked in the nav rewrites the address's `?lang=` (a script
+  in the layout's head), so a reload keeps it. `preloadImage` names the page's LCP image per
+  theme; the home's is the wallet section's figure, not the hero's ribbon.
 
 - `/` on payments is `src/pages/payments/index.astro`: server-rendered, copy in
   `src/lib/payments/landing-i18n.ts` (seven languages, parity-tested), rates read from
@@ -764,7 +857,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   anchored right. It multiplies onto the light page; in dark mode it is inverted with its hue
   turned back and lightens onto the page, so the hero follows the theme. It **plays on its own for
   everyone** (the product owner's call, the one exception to reduced motion), pauses only off
-  screen, and always has its pause button (WCAG 2.2.2). Its container must not get a z-index: a
+  screen, and always has its pause button (WCAG 2.2.2). It has no `autoplay` and preloads nothing:
+  `landing.ts` starts it once the page has loaded and the browser is idle, so the poster is the
+  first screen and the video never competes with it. Its container must not get a z-index: a
   stacking context would cut the video off from the background it blends with. Its fade-in
   makes it one anyway, so it carries the page colour (`--bg`) for the video to blend with;
   without it a lighter band shows behind the white frame.
@@ -774,14 +869,29 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   with cards and bank transfers, three integration paths (no code, hosted, API), how it works,
   integration options, use cases by business (WAI-ARIA tabs), security, developers, pricing, and
   the FAQ with the final call.
-- **Integration options** (`#integrations`; `#designs` stays as an anchor inside it for old
-  links) replaced the checkout-designs gallery at the product owner's request: a grid (no tabs)
-  where the pay button and the embedded checkout run for real in wide cells (the embed's `demo`
-  mode: a sample nothing can pay, no API request; the embedded one logs its events under it),
-  then hosted checkout, payment links and QR, API and SDK, and e-commerce plugins (WooCommerce,
-  Shopify: "coming soon", not built). Code is folded behind "view code" with a copy button. The pay button and the
-  embedded checkout are the embed script's elements (see "Embedding a payment"). The four
-  checkout designs still exist (dashboard, `/preview/{design}`); only the gallery left.
+- **Integration options** (`#integrations` on `/integrations`; `#designs` stays as an anchor
+  inside it for old links; each card is `#integration-<key>`) replaced the checkout-designs
+  gallery at the product owner's request: a grid of cards (two columns from 1024px, one below;
+  no tabs between options), and **every option runs a demo on the page**, because "view code"
+  and "read the docs" alone showed nothing (product owner, 2026-10-25). The pay button and the
+  embedded checkout are the embed script's elements in `demo` mode (the button opens
+  `/preview/classic` in a popup, drawn over a store page; the embedded one logs the
+  `cosmospay:*` events it fires beside it); the hosted checkout picks one of the four designs
+  (radio buttons as a segmented control) and opens its `/preview/{design}` in a new tab; payment
+  links is a form that draws what the payer sees; API and SDK is a console that prints the
+  request, the 201 and the webhook, one per press of its button. Plugins (WooCommerce, Shopify)
+  are "coming soon", not built, and link to the contact form. Their sample data is
+  `src/lib/payments/integration-demo.ts` (pure, tested: the API's real shapes, sample values
+  shortened with an ellipsis); their behaviour `src/scripts/payments/integration-demos.ts`
+  (text through textContent, code through highlight.ts's tokens, one status region per demo
+  for what the visitor's action changed; nothing changes on its own).
+- **The code sits behind a Demo / Code tab pair inside each card** (WAI-ARIA tabs, the page's
+  `[data-tabs]` script) instead of a disclosure: the old "view code" fold widened its card (the
+  subgrid column was `auto` and the code `max-content`) and pushed the row apart. Both panels
+  share one grid cell, the hidden one `visibility: hidden` (with `!important` against the base
+  reset's `[hidden] { display: none !important }`), so switching never moves the page; every
+  part of the card keeps `min-width: 0` and a long line scrolls inside its `pre`. Each panel is a
+  size container, so the demos rearrange for the card's width (`@container`, never the viewport).
 - **"How it works" and the use cases are pinned** on screens of at least 1000×700 (`data-pin`,
   wired by the page script): the section's stage is `position: sticky` under the nav inside a
   runway of `--n` steps of plain height (35svh per step), and the scroll position picks the
@@ -791,7 +901,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the plain grid / tabs.
 - **Code is highlighted** in the page's palette by `src/lib/payments/highlight.ts` (a small
   tokenizer for bash, TypeScript, JSON and HTML; tested) through `Code.astro`, which keeps the
-  raw code in `data-raw` for the copy buttons. No highlighting library and no HTML strings.
+  raw code in `data-raw` for the copy buttons, or as spans built from the same tokens in the
+  browser (the API demo's console). No highlighting library and no HTML strings. The samples in
+  `data.ts` are template literals indented like the code around them: wrap each in `dedent()`,
+  or every line after the first shows two stray spaces.
 - **The FAQ and the final call are separate sections** in the multi-page layout (the product
   owner asked to see them apart); `.pl-closing` (one canvas for both) remains for the single page.
 - **The landing's dark mode has more colour** (product owner): inside `.pl` the dark tokens take a
@@ -841,7 +954,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   payment settles on (Stellar, Solana, Monad and their assets), the networks and tokens NEAR Intents
   swaps between (`NETWORK_IDS` with a logo, plus a few stablecoins and wrapped BTC), and the
   wallets, Pollar among them (its brand kit's blue mark on light pages, the white one on dark, and
-  only ever beside its name, as the kit asks).
+  only ever beside its name, as the kit asks). Stellar, Solana and Monad in the first row link to
+  their pages, for the pointer only (`tabindex=-1`: the moving copy is `aria-hidden`).
   **Every row runs at the same speed** (product owner): `landing.ts` sets each row's duration
   from the width of one set (48 px/s), so a longer row loops more slowly instead of moving
   faster. Two identical sets slide by half the track; the moving copy is `aria-hidden`, and a visually
@@ -925,7 +1039,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the checkout's wording (`src/embed/i18n.ts`, enforced by `embedI18n.test.ts`): change both
   together. Element fields must not shadow `HTMLElement` properties (`lang`, `id`). A `demo`
   attribute shows a sample nothing can pay, with no request (the button opens
-  `/preview/classic`; the inline checkout plays open → confirming → paid): the landing's live
+  `/preview/classic`; the inline checkout adds a button that stands in for the payer: pressed,
+  it plays confirming → paid and stays there; pressed again, it starts over, as
+  `DEMO_SEQUENCE` in `options.ts` says). It never changes on its own: an auto-playing loop broke
+  WCAG 2.2.2 and made screen readers announce every state forever. The button stays in place
+  from "simulate" to "play it again", so keyboard focus is never lost. The landing's live
   demos use it.
 - Locally, load the script from a `*.cosmospay.localhost` page: Vite's dev server refuses a
   cross-site `<script>` from `localhost` (403). Production serves it without that check. It
@@ -1162,6 +1280,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (Starter and the public key 65 bps, then 26 / 13 / 7 on the same ladder as before), private
   payments from Railgun's 0.25% (18 bps, the server's `ZK_PAYMENT_FEE_BPS`), escrow from
   Escrow.com's 2.6% (1.95%). A new rate keeps that rule and changes every surface together.
+  Those published rates, the page each was read on and the date are `src/lib/payments/compare.ts`
+  (the gateway's `/compare`; `tests/unit/paymentsCompare.test.ts` checks the 75% rule against
+  `plans.ts`). Read them again on the providers' pages before changing that date; a rate that
+  cannot be read on its provider's own page leaves the table.
 - **Every service's rate is on the pricing surfaces** (product owner, 2026-10-27: the swap
   commission was on no pricing page). `/pricing` compares, per plan, the payment fee, the swap
   commission (`swapFeePct`), escrow (`ESCROW_FEE_PCT`), private payments
@@ -1361,6 +1483,12 @@ consumer headers.
   and the public server flags (`API_DOCS_ENABLED`, `ONBOARDING_ENABLED`, `PLANS_ENABLED`, …):
   changing them in `.env` takes a rebuild, not a restart. `PUBLIC_BETTER_AUTH_URL` must equal
   `BETTER_AUTH_URL` and be in `.env` with its production value BEFORE `npm run build`.
+- **IndexNow after a deploy.** Once: generate a key
+  (`node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"`), set
+  `INDEXNOW_KEY` in the production `.env` and restart so the process reloads it (it is read at
+  runtime, no rebuild: `pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat`;
+  check `https://<each domain>/<key>.txt` answers the key). Then, after every deploy that
+  changes indexable pages, run `npm run indexnow` (dry run) and `npm run indexnow -- --submit`.
 - **Deploy with `npm ci && npm run build`, never `npm install`.** Dependencies are external to
   `dist/`, so a caret that resolves a new minor against an old build only fails when the server
   boots (`does not provide an export named …`, PM2 restart-looping). `npm run test:smoke` is

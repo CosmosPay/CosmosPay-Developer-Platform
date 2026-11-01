@@ -1,8 +1,8 @@
 import { docs } from 'collections/server';
 import { loader } from 'fumadocs-core/source';
 import { openapiPlugin } from 'fumadocs-openapi/server';
-import { docsContentRoute, docsImageRoute, docsRoute } from './shared';
-import { i18n } from './i18n-config';
+import { docsContentRoute, docsImageRoute, docsOrigin, docsRoute } from '@/lib/shared';
+import { DEFAULT_DOCS_LANGUAGE, DOCS_LANGUAGES, type DocsLanguage, i18n, isDocsLanguage } from '@/lib/i18n-config';
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
@@ -16,7 +16,54 @@ export const source = loader({
   plugins: [openapiPlugin()],
 });
 
-export function getPageImage(page: (typeof source)['$inferPage']) {
+export type DocsPage = (typeof source)['$inferPage'];
+
+/**
+ * Whether a page is written in the language it is listed under. With `fallbackLanguage`, every
+ * locale also lists the English pages it has no translation for (so the localized sidebar is
+ * complete); those copies point at the English file. They stay browsable but are not
+ * translations: they are noindex, canonical to the English URL, and left out of hreflang,
+ * the sitemap and the llms files.
+ */
+export function isTranslation(page: DocsPage): boolean {
+  if (!page.locale || page.locale === DEFAULT_DOCS_LANGUAGE) return true;
+  const original = source.getPage(page.slugs, DEFAULT_DOCS_LANGUAGE);
+  if (!original) return true;
+  if (page.absolutePath && original.absolutePath) return page.absolutePath !== original.absolutePath;
+  return page.data !== original.data;
+}
+
+/** The language a page's content is written in: its own, or English for a fallback copy. */
+export function contentLanguage(page: DocsPage): DocsLanguage {
+  return isTranslation(page) && isDocsLanguage(page.locale) ? page.locale : DEFAULT_DOCS_LANGUAGE;
+}
+
+/** The languages a page is written in, English first: the page and its real translations. */
+export function pageLanguages(slugs: string[]): DocsLanguage[] {
+  return DOCS_LANGUAGES.filter((lang) => {
+    const page = source.getPage(slugs, lang);
+    return Boolean(page && isTranslation(page));
+  });
+}
+
+/** The path the export serves a page at in a language, without the /docs basePath. Trailing
+ *  slash, as `trailingSlash: true` writes every page as <route>/index.html. */
+export function docsPath(slugs: string[], lang: DocsLanguage = DEFAULT_DOCS_LANGUAGE): string {
+  const segments = lang === DEFAULT_DOCS_LANGUAGE ? slugs : [lang, ...slugs];
+  return segments.length ? `/${segments.join('/')}/` : '/';
+}
+
+/** The absolute URL of a page in a language (https://dev.cosmospay.lat/docs/es/x/). */
+export function docsUrl(slugs: string[], lang: DocsLanguage = DEFAULT_DOCS_LANGUAGE): string {
+  return `${docsOrigin}${docsPath(slugs, lang)}`;
+}
+
+/** The one URL a page's content is canonical at: its own, or the English page's for a copy. */
+export function canonicalUrl(page: DocsPage): string {
+  return docsUrl(page.slugs, contentLanguage(page));
+}
+
+export function getPageImage(page: DocsPage) {
   const segments = [...page.slugs, 'image.png'];
 
   return {
@@ -25,23 +72,14 @@ export function getPageImage(page: (typeof source)['$inferPage']) {
   };
 }
 
-export function getPageMarkdownUrl(page: (typeof source)['$inferPage']) {
-  const segments = [...page.slugs, 'content.md'];
+/** The page's Markdown (`/docs/llms.mdx/[<lang>/]<slug>/content.md`). A translation has its
+ *  own; an English fallback copy points at the English page's. */
+export function getPageMarkdownUrl(page: DocsPage) {
+  const lang = contentLanguage(page);
+  const segments = [...(lang === DEFAULT_DOCS_LANGUAGE ? [] : [lang]), ...page.slugs, 'content.md'];
 
   return {
     segments,
     url: `${docsContentRoute}/${segments.join('/')}`,
   };
-}
-
-// The site is mounted under /docs (next.config basePath), but page.url is baseUrl-relative
-// ('/sdk/...'). Prefix it so the URLs printed into llms.txt / llms-full.txt / *.md resolve.
-const BASE_PATH = '/docs';
-
-export async function getLLMText(page: (typeof source)['$inferPage']) {
-  const processed = await page.data.getText('processed');
-
-  return `# ${page.data.title} (${BASE_PATH}${page.url})
-
-${processed}`;
 }

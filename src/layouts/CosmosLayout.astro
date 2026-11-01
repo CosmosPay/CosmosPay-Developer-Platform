@@ -5,9 +5,13 @@ import "@/styles/views.css";
 import "@/styles/onboarding.css";
 import "@/styles/institutional.css";
 import { PUBLIC_GA_ID, PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
-import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
+import { DEV, PAYMENTS, SITE, SOCIAL } from "@/components/cosmos/lib/constants";
 import SiteNav from "@/components/cosmos/layout/SiteNav";
 import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
+import StructuredData from "@/components/site/StructuredData.astro";
+import { SITE_LANGS, SITE_PAGE_PATHS, crumbName, type SitePage } from "@/lib/seo/site-meta";
+import { canonicalUrl, explicitLang, hreflangAlternates, ogLocale } from "@/lib/seo/lang-urls";
+import type { JsonLdNode } from "@/lib/seo/schema";
 
 interface Props {
   title?: string;
@@ -19,8 +23,19 @@ interface Props {
   noindex?: boolean;
   /** Open Graph type: "website" for marketing pages, "article" for posts. */
   type?: string;
-  /** Solo la landing: precarga la cinta del hero, la imagen mas grande sobre la linea de flotacion. */
-  preloadCinta?: boolean;
+  /** The page's largest image above the fold (its LCP element), fetched at high priority before
+   *  the body is parsed. `dark` is the one the dark theme shows instead, when they differ; only
+   *  the theme's own image is requested. */
+  preloadImage?: { light: string; dark?: string };
+  /** Company site: the languages the page's own text is written in (its hreflang versions).
+   *  Every site language by default; /tos exists in English and Spanish only. */
+  langs?: readonly string[];
+  /** Company site: the pages of the breadcrumb trail, ending at this one (JSON-LD BreadcrumbList). */
+  breadcrumb?: SitePage[];
+  /** Company site: what the page is mainly about (the @id of a node in `schema`). */
+  mainEntity?: string;
+  /** Company site: nodes this page adds to its JSON-LD graph (src/lib/seo/schema.ts). */
+  schema?: JsonLdNode[];
   /** The general nav bar, on every view. Off only where the page's own React tree renders
    *  <Nav> (Landing, Pricing, Dashboard), so it is never drawn twice. */
   nav?: boolean;
@@ -35,43 +50,64 @@ const {
   image = "/og-image.png",
   noindex = false,
   type = "website",
-  preloadCinta = false,
+  preloadImage,
   nav = true,
   bodyClass,
+  langs = SITE_LANGS,
+  breadcrumb,
+  mainEntity,
+  schema = [],
 } = Astro.props;
 
-// Locale comes from the cookie (set by the in-app language switcher) so SSR and the
-// first client render agree. Defaults to English.
-const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+// The language: the page's own, else the middleware's (?lang= → cookie → Accept-Language on the
+// company site), else the cookie the in-app language switcher sets, so SSR and the first client
+// render agree. Defaults to English.
+const locale = lang ?? Astro.locals.lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const skipLabel = ((messages as Record<string, typeof messages.en>)[locale] ?? messages.en).ui.skipToContent;
 
 // Absolute URLs for canonical + social cards, on the domain this page is served as and at
 // its public path: the company pages render from /site/* behind a rewrite (src/lib/hosts.ts).
 const areaOrigin = { site: SITE, dev: DEV, payments: PAYMENTS }[Astro.locals.area ?? "dev"];
 const siteBase = new URL(areaOrigin || Astro.site || "https://dev.cosmospay.lat");
-const canonical = new URL(Astro.locals.publicPath ?? Astro.url.pathname, siteBase).href;
+const path = Astro.locals.publicPath ?? Astro.url.pathname;
+// The company site exists once per language at ?lang=<code>, its bare path following the visitor
+// (x-default), like the gateway (src/lib/seo/lang-urls.ts): each version names itself canonical
+// and lists the others, so search engines index every language instead of only English.
+const multilingual = Astro.locals.area === "site" && !noindex;
+const asked = explicitLang(Astro.url.searchParams.get("lang"), SITE_LANGS);
+const canonical = multilingual ? canonicalUrl(SITE, path, asked, langs, SITE_LANGS) : new URL(path, siteBase).href;
+const alternates = multilingual && langs.length > 1 ? hreflangAlternates(SITE, path, langs) : [];
+// The language the page's text is in: a /tos version in a language it is not written in shows English.
+const contentLang = langs.includes(locale) ? locale : (langs[0] ?? "en");
+// The trail in the version's language, each step at its address in that language.
+const crumbs = (breadcrumb ?? []).map((page, i, all) => ({
+  name: crumbName(page, contentLang),
+  url: i === all.length - 1 ? canonical : canonicalUrl(SITE, SITE_PAGE_PATHS[page], asked, SITE_LANGS),
+}));
 const ogImage = new URL(image, siteBase).href;
 const robots = noindex ? "noindex, nofollow" : "index, follow";
 const gaId = PUBLIC_GA_ID;
 const googleSiteVerification = PUBLIC_GOOGLE_SITE_VERIFICATION;
+const xHandle = `@${new URL(SOCIAL.x).pathname.split("/").filter(Boolean)[0]}`;
 
-// Structured data (skipped on noindex pages; search engines ignore them anyway).
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      name: "Cosmos Pay",
-      url: siteBase.origin,
-      logo: new URL("/android-chrome-512x512.png", siteBase).href,
-    },
-    {
-      "@type": "WebSite",
-      name: Astro.locals.area === "site" ? "Cosmos Pay" : "Cosmos Pay Developer Platform",
-      url: siteBase.origin,
-    },
-  ],
-};
+// The theme is applied before paint (default light); then the LCP image of that theme is
+// requested at once, at high priority, instead of when the parser reaches its <img>. On the
+// company site, a language picked in the nav (setLang changes <html lang> without a reload) also
+// becomes the address's ?lang=, when the address names one: it would win over the new choice on
+// the next load.
+const lcp = preloadImage ? JSON.stringify(preloadImage).replace(/</g, "\\u003c") : "";
+const themeScript =
+  `(function(){var d=document.documentElement,t;try{t=localStorage.getItem("cosmospay-theme")||"light"}catch(e){t="light"}` +
+  `d.setAttribute("data-theme",t);` +
+  (lcp
+    ? `var s=${lcp},l=document.createElement("link");l.rel="preload";l.as="image";` +
+      `l.href=(t==="dark"&&s.dark)||s.light;l.setAttribute("fetchpriority","high");document.head.appendChild(l);`
+    : "") +
+  (multilingual
+    ? `if(window.MutationObserver&&window.URL)new MutationObserver(function(){var u=new URL(location.href),q=u.searchParams.get("lang");` +
+      `if(q&&d.lang&&q!==d.lang){u.searchParams.set("lang",d.lang);history.replaceState(history.state,"",u.href)}}).observe(d,{attributes:true,attributeFilter:["lang"]});`
+    : "") +
+  `})();`;
 ---
 
 <!doctype html>
@@ -86,6 +122,7 @@ const jsonLd = {
       <meta name="google-site-verification" content={googleSiteVerification} />
     )}
     <link rel="canonical" href={canonical} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
     <meta name="generator" content={Astro.generator} />
 
     <!-- Icons / PWA -->
@@ -105,18 +142,33 @@ const jsonLd = {
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content={locale} />
+    <meta property="og:image:alt" content="Cosmos Pay" />
+    <meta property="og:locale" content={ogLocale(contentLang)} />
+    {multilingual && langs.filter((l) => l !== contentLang).map((l) => <meta property="og:locale:alternate" content={ogLocale(l)} />)}
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content={xHandle} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="Cosmos Pay" />
 
-    {!noindex && (
-      <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+    <!-- The page's JSON-LD graph (company site; the platform's pages are not indexed). -->
+    {multilingual && (
+      <StructuredData
+        url={canonical}
+        title={title}
+        description={description}
+        lang={contentLang}
+        image={ogImage}
+        breadcrumb={crumbs}
+        mainEntity={mainEntity}
+        schema={schema}
+      />
     )}
 
     <!-- Tipografia de marca (Open Sauce One) servida desde /public/fonts; el @font-face
@@ -124,28 +176,17 @@ const jsonLd = {
     <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Light es el peso de todos los titulares; sin preload el h1 salta al llegar la fuente. -->
     <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />
-    {preloadCinta && (
-      <link rel="preload" as="image" href="/brand/cinta.webp" fetchpriority="high" />
-    )}
+    <!-- The persisted theme before paint (no flash), then the page's LCP image for that theme. -->
+    <script is:inline set:html={themeScript} />
 
-    <script is:inline>
-      // Apply persisted theme before paint to avoid a flash.
-      try {
-        const t = localStorage.getItem("cosmospay-theme") || "light";
-        document.documentElement.setAttribute("data-theme", t);
-      } catch (e) {
-        document.documentElement.setAttribute("data-theme", "light");
-      }
-    </script>
-
+    {/* Google Analytics: the queue starts now (the page view keeps its time), and gtag.js
+        (about 150 KB) is fetched once the page has loaded and the browser is idle, so it never
+        competes with the first screen nor runs during it. */}
     {gaId && (
-      <Fragment>
-        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
-        <script
-          is:inline
-          set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`}
-        />
-      </Fragment>
+      <script
+        is:inline
+        set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');(function(){function load(){var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=${gaId}';document.head.appendChild(s);}function idle(){if('requestIdleCallback' in window)requestIdleCallback(load,{timeout:3000});else setTimeout(load,1);}if(document.readyState==='complete')idle();else window.addEventListener('load',idle,{once:true});})();`}
+      />
     )}
     <style>
       /* Keyboard skip-to-content link, visually hidden until focused. */

@@ -152,6 +152,8 @@ export default {
       invalid: "Isso não é o XDR de uma transação assinada.",
       otherTransaction: "É outra transação. Assine o XDR acima sem alterá-lo.",
       notSigned: "Essa transação não está assinada por {account}.",
+      otherNetwork: "Essa assinatura é de outra rede. Esta transação é da {network}: escolha {network} na wallet (na Cosmos Wallet, em “Rede da transação”) e assine de novo.",
+      network: "Rede",
       txAccount: "Conta da transação",
       signer: "Assina com",
       subTitle: "Assina-se com o endereço, não com a subconta",
@@ -429,7 +431,7 @@ export default {
               },
               {
                 t: "Carteiras",
-                s: "Custodial e não custodial"
+                s: "Carteira sem custódia"
               },
               {
                 t: "Livro-razão",
@@ -503,11 +505,11 @@ export default {
             links: [
               {
                 t: "Referência da API",
-                s: "REST e GraphQL"
+                s: "REST, com especificação OpenAPI"
               },
               {
                 t: "SDKs e bibliotecas",
-                s: "Seis linguagens tipadas"
+                s: "SDK tipado de JS / TS"
               },
               {
                 t: "Webhooks",
@@ -543,7 +545,7 @@ export default {
         ],
         featured: {
           title: "Início rápido",
-          desc: "Vá do zero à sua primeira cobrança em menos de cinco minutos.",
+          desc: "Crie uma chave de teste e sua primeira intenção de pagamento.",
           cta: "Começar a construir"
         }
       },
@@ -609,12 +611,16 @@ export default {
     openDashboard: "Abrir painel"
   },
   footer: {
-    tagline: "A infraestrutura de pagamentos para desenvolvedores. Uma API, todos os trilhos.",
+    tagline: "Pagamentos em stablecoins, swaps e uma carteira sem custódia na Stellar, Solana e Monad.",
     copyright: "© 2026 Cosmos Pay",
     groups: {
       products: {
         title: "Produtos",
-        links: ["Pagamentos", "Stablecoins", "Repasses", "Anchors", "Carteiras", "Checkout", "Links de pagamento", "Preços"]
+        links: ["Pagamentos", "Stablecoins", "Repasses", "Anchors", "Carteiras", "Checkout", "Links de pagamento", "Preços", "Comparar tarifas"]
+      },
+      networks: {
+        title: "Redes",
+        links: ["Pagamentos na Stellar", "Pagamentos na Solana", "Pagamentos na Monad"]
       },
       solutions: {
         title: "Soluções",
@@ -635,16 +641,21 @@ export default {
     }
   },
   landing: {
+    meta: {
+      title: "Cosmos Pay | API de pagamentos em stablecoins e carteira",
+      description: "Receba em USDC e outras stablecoins na Stellar, Solana e Monad com uma API de pagamentos, um checkout hospedado e uma carteira sem custódia.",
+    },
     hero: {
       tagline: "O teu mundo digital em movimento.",
       headline: "Escreva menos código -> movimente mais dinheiro",
-      lede: "A infraestrutura de pagamentos para desenvolvedores. Uma API para movimentar dinheiro na Stellar, Solana e Monad: stablecoins e ativos digitais que liquidam em segundos, em mais de 130 países, com taxas de frações de centavo.",
+      lede: "Uma chave de API para links de pagamento, um checkout hospedado, swaps e webhooks assinados na Stellar, Solana e Monad. Desenvolva na testnet sem dinheiro real e entre em produção quando estiver pronto.",
       getKeys: "Obter chaves de API",
-      trustedBy: "Com a confiança de equipes de engenharia de"
+      trustedBy: "Com a confiança de equipes de engenharia de",
     },
     wallet: {
-      title: "O teu mundo digital numa wallet.",
-      lede: "Instale no Chrome, teste direto no navegador ou leve no celular. A mesma conta em todo lugar, na Stellar, Solana e Monad.",
+      tag: "O teu mundo digital numa wallet.",
+      title: "Pagamentos em stablecoins e uma carteira para a América Latina.",
+      lede: "A Cosmos Pay é uma API de pagamentos em stablecoins, um checkout hospedado e uma carteira sem custódia na Stellar, Solana e Monad. Use a carteira no Chrome, na web ou no Android.",
       chrome: { t: "Instalar no Chrome", s: "Extensão oficial na Chrome Web Store." },
       web: { t: "Testar no navegador", s: "Abra o web app agora, sem instalar nada." },
       android: { t: "Baixar para Android", s: "APK assinado. Libere \"Instalar apps desconhecidos\" para o seu navegador, abra o arquivo e instale." },
@@ -652,7 +663,10 @@ export default {
       versionLabel: "Versão",
       download: "Baixar",
       more: {
-        firefox: { t: "Firefox", s: "Sem assinatura. Acesse about:debugging, escolha \"Este Firefox\", depois \"Carregar extensão temporária\" e selecione o manifest.json do zip." },
+        firefox: {
+          t: "Firefox",
+          s: "Sem assinatura. Acesse about:debugging, escolha \"Este Firefox\", depois \"Carregar extensão temporária\" e selecione o manifest.json do zip.",
+        },
         windows: { t: "Windows", s: "O SmartScreen avisa na primeira vez: clique em \"Mais informações\" e depois em \"Executar assim mesmo\"." },
         macos: { t: "macOS (Apple Silicon)", s: "O Gatekeeper bloqueia na primeira vez: clique com o botão direito no app e escolha \"Abrir\"." },
         linux: { t: "Linux", s: "AppImage: rode chmod +x antes. Precisa de glibc 2.39 ou superior." },
@@ -671,177 +685,169 @@ export default {
     },
     api: {
       kicker: "// a plataforma",
-      title: "APIs poderosas",
-      lede: "Nossas APIs modulares permitem que desenvolvedores integrem fluxos financeiros complexos em minutos, não em meses.",
-      docsLink: "Ver documentação da API",
+      title: "Uma API para pagamentos e swaps.",
+      lede: "Intenções de pagamento, links de pagamento, swaps e webhooks com uma única chave de API, documentados com OpenAPI.",
       cards: {
         payments: {
           title: "Pagamentos",
-          desc: "Envie e receba pagamentos na Stellar, Solana e Monad com finalidade em segundos e taxas próximas de zero."
+          desc: "Crie intenções de pagamento e links de pagamento na Stellar, Solana e Monad. Seus clientes pagam com a própria carteira, e o dinheiro chega a um endereço que você controla.",
+          link: "API de intenções de pagamento",
         },
         stablecoin: {
           title: "Stablecoins",
-          desc: "Liquide em USDC e outros ativos na Stellar, Solana e Monad, on-chain e em tempo real."
+          desc: "Cobre em USDC, EURC, na moeda da própria rede ou em qualquer outro token, indicado pelo emissor, mint ou contrato.",
+          link: "API de ativos",
         },
-        anchor: {
-          title: "Anchors",
-          desc: "Conecte-se a anchors Stellar para entradas e saídas fiduciárias em moedas locais."
-        }
+        swaps: {
+          title: "Swaps",
+          desc: "Cote e execute swaps na DEX da Stellar, na Jupiter e na Kuru, ou entre {n} redes pela NEAR Intents.",
+          link: "API de swaps",
+        },
       },
-      docsTitle: "Documentação de primeira linha",
-      docsDesc: "Feita por desenvolvedores, para desenvolvedores. Guias interativos, uma referência OpenAPI detalhada e um SDK JavaScript / TypeScript totalmente tipado para o servidor e o navegador.",
-      sdkBtns: {
-        node: "SDK Node.js / TypeScript",
-        web: "SDK para navegador / Web"
-      },
+      docsTitle: "Documentação pública",
+      docsDesc: "Guias, uma referência OpenAPI e um SDK tipado de JavaScript e TypeScript para o servidor e o navegador.",
+      sdkBtns: { node: "SDK Node.js / TypeScript", web: "SDK para navegador / Web" },
       exploreDocs: "Explorar toda a documentação",
       copy: "Copiar",
-      copied: "Copiado"
+      copied: "Copiado",
     },
     integration: {
       kicker: "// desenvolvedores",
-      title: "Infraestrutura confiável e extensível.",
-      lede: "Construída para lidar com as maiores cargas de trabalho do mundo e para encaixar em qualquer stack que você já use.",
-      scale: ["requisições de API / dia", "requisições / s", "finalidade on-chain", "disponibilidade"],
+      title: "Comece com um link e chegue à API depois.",
+      lede: "Todos os caminhos levam ao mesmo checkout, ao mesmo painel e aos mesmos webhooks: você pode cobrar sem código hoje e adicionar a API depois.",
+      scale: ["designs de checkout", "idiomas do checkout", "tag script para incorporar o checkout", "conjuntos de chaves: teste e produção"],
       paths: [
         {
           t: "Sem código",
-          d: "Crie links de pagamento e faturamento direto do seu painel, sem necessidade de engenharia.",
-          a: "Explorar sem código"
+          d: "Crie links de pagamento no painel e compartilhe por chat, email ou QR code. Sem engenharia.",
+          a: "Criar um link de pagamento",
         },
         {
           t: "UI pré-construída",
-          d: "Adicione o Checkout ou os Elements e aceite pagamentos na Stellar, Solana e Monad em minutos, com componentes que combinam com sua marca.",
-          a: "Ver componentes"
+          d: "Adicione um botão de pagamento ou um checkout incorporado com uma tag script, ou envie os clientes para o checkout hospedado.",
+          a: "Ler o guia de incorporação",
         },
         {
           t: "Construa o seu",
-          d: "Use nossas APIs REST + GraphQL, SDKs tipados e CLI para criar uma integração multichain totalmente sob medida.",
-          a: "Ler a documentação"
-        }
+          d: "Use a API REST, documentada com OpenAPI, e o SDK de TypeScript para montar seu próprio fluxo de pagamento na Stellar, Solana e Monad.",
+          a: "Ler a documentação",
+        },
       ],
       mockLink: "Link de pagamento · 19.99 USDC",
-      mockPay: "Pagar"
+      mockPay: "Pagar",
     },
     solutions: {
       kicker: "// soluções",
-      title: "Feito para todo modelo de negócio.",
-      lede: "Da sua primeira transação a bilhões em volume, a Cosmos Pay se adapta à forma como sua empresa movimenta dinheiro na Stellar, Solana e Monad.",
+      title: "O que você pode construir.",
+      lede: "Receba pagamentos, liquide em stablecoins, receba de clientes no exterior, faça swaps entre redes e deixe seus clientes pagarem com a carteira que já usam.",
       eyebrow: "Solução",
       startBuilding: "Começar a construir",
       items: {
         pay: {
           t: "Aceite pagamentos multichain",
-          d: "Envie e receba pagamentos na Stellar, Solana e Monad com finalidade em segundos e taxas medidas em frações de centavo.",
-          long: "Aceite pagamentos de qualquer pessoa com uma carteira Stellar, Solana ou Monad. Os fundos atingem a finalidade em segundos e liquidam direto na sua conta, sem chargebacks, sem intermediários e sem retenções de vários dias.",
-          points: ["Finalidade de liquidação em segundos", "Taxas em frações de centavo", "Envie e receba na Stellar, Solana e Monad", "Webhooks em tempo real em cada pagamento"]
+          d: "Receba na Stellar, Solana ou Monad pela própria carteira do cliente, em um endereço que você controla.",
+          long: "Aceite pagamentos de qualquer pessoa com uma carteira Stellar, Solana ou Monad. Um pagamento vale quando a rede o confirma (cerca de 5 segundos na Stellar), não pode sofrer chargeback e chega ao seu endereço, não a um saldo que você precisa solicitar.",
+          points: [
+            "Links de pagamento SEP-7, Solana Pay e EIP-681",
+            "Cerca de 5 segundos para liquidar na Stellar",
+            "Sem chargeback em um pagamento confirmado",
+            "Um webhook assinado para cada pagamento",
+          ],
         },
         coin: {
           t: "Liquidação em stablecoins",
-          d: "Liquide em USDC e outros ativos na Stellar, Solana e Monad, on-chain e em tempo real.",
-          long: "Mantenha e liquide saldos em USDC e outras stablecoins reguladas na Stellar, Solana e Monad. Cada transação é registrada on-chain e reconciliada automaticamente no seu ledger em tempo real.",
-          points: ["Stablecoins reguladas lastreadas 1:1", "Liquidação on-chain e auditável", "Ledger multiativos em tempo real", "Reconciliação automática"]
+          d: "Cobre em USDC, EURC ou qualquer token na Stellar, Solana e Monad, e receba esse mesmo ativo.",
+          long: "Defina o preço de cada pagamento em USDC, EURC, na moeda da própria rede ou em qualquer outro token, indicado pelo emissor, mint ou contrato. O cliente paga nesse ativo e você o recebe no seu endereço. Cada pagamento guarda o hash da transação, e o painel mostra seus saldos por ativo e o volume liquidado em USD.",
+          points: [
+            "USDC, EURC ou o token que você indicar",
+            "Um hash de transação para cada pagamento",
+            "Saldos por ativo no painel",
+            "Volume liquidado em USD",
+          ],
         },
         globe: {
           t: "Dinheiro internacional",
-          d: "Alcance mais de 130 países por redes abertas e globais, sem bancos correspondentes.",
-          long: "Movimente dinheiro entre fronteiras da mesma forma que faz localmente. Stellar, Solana e Monad alcançam mais de 130 países sem bancos correspondentes, então os repasses chegam em segundos em vez de dias.",
-          points: ["Mais de 130 países, uma única API", "Sem atrasos de bancos correspondentes", "Câmbio transparente e antecipado", "Liquida em segundos"]
+          d: "Receba de clientes no exterior com o mesmo link e a mesma tarifa em qualquer país, sem transferências internacionais nem horário bancário.",
+          long: "Envie um link de pagamento para um cliente em outro país. Ele paga com qualquer carteira e, na Stellar, o dinheiro chega ao seu endereço cerca de 5 segundos depois da aprovação, sem bancos correspondentes e sem calendário de repasses.",
+          points: [
+            "O mesmo link e a mesma tarifa em qualquer país",
+            "Sem bancos correspondentes",
+            "Todos os dias, a qualquer hora",
+            "Cerca de 5 segundos na Stellar",
+          ],
         },
-        ramp: {
-          t: "Entradas e saídas",
-          d: "Conecte-se a anchors Stellar para depósitos e saques em moeda local.",
-          long: "Permita que os usuários transitem entre moeda local e ativos digitais por meio de anchors Stellar regulados. Depósitos e saques em dezenas de moedas locais, totalmente tratados pelos padrões SEP.",
-          points: ["Rede de anchors regulada", "Dezenas de moedas locais", "Fluxos padrão SEP-6 / SEP-24", "KYC tratado pelo anchor"]
+        swap: {
+          t: "Swaps entre redes",
+          d: "Troque tokens entre {n} redes, com ou sem conta.",
+          long: "Faça swaps na DEX da Stellar, na Jupiter (Solana) e na Kuru (Monad), ou entre {n} redes pela NEAR Intents, e envie USDT0 da Stellar pela LayerZero. Cada swap é uma transação que a pessoa assina ou um endereço de depósito que ela paga, então ninguém fica com os fundos. A página pública de swaps e a API dela não pedem conta.",
+          points: ["DEX da Stellar, Jupiter e Kuru", "{n} redes pela NEAR Intents", "USDT0 da Stellar pela LayerZero", "Uma API pública de swaps, sem conta"],
         },
         wallet: {
-          t: "Carteiras embarcadas",
-          d: "Crie carteiras custodial ou não custodial na Stellar, Solana e Monad para seus usuários.",
-          long: "Dê a cada usuário uma carteira multichain (Stellar, Solana e Monad) dentro do seu produto. Escolha carteiras custodial que você gerencia ou carteiras não custodial controladas pelos seus usuários. Ambas são provisionadas com uma única chamada de API.",
-          points: ["Custodial ou não custodial", "Provisionamento em uma chamada", "Gerenciamento de chaves integrado", "Saldos multiativos"]
-        }
+          t: "Pagamentos de qualquer carteira",
+          d: "Seus clientes pagam com a Cosmos Pay Wallet ou com qualquer carteira que abra links SEP-7, Solana Pay ou EIP-681.",
+          long: "Ninguém precisa de conta para pagar você. O checkout abre a carteira do próprio cliente pelo padrão de links de pagamento de cada rede, e a Cosmos Pay nunca pede uma chave: o cliente aprova na carteira dele e você recebe no seu endereço.",
+          points: [
+            "Freighter, xBull, LOBSTR e outras na Stellar",
+            "Phantom e Solflare na Solana",
+            "Qualquer carteira EVM na Monad",
+            "Cosmos Pay Wallet para Chrome, web e Android",
+          ],
+        },
       },
-      payMock: {
-        received: "Pagamento recebido",
-        via: "via Stellar · 4.2s",
-        fee: "taxa $0.00001"
-      }
+      payMock: { received: "Pagamento recebido", via: "via Stellar · 4.2s", fee: "taxa de rede 0.00001 XLM" },
     },
     stats: {
       title: "Simples. Seguro. Sem limites.",
-      items: ["SLA de disponibilidade da API", "tempo de resposta p99", "países suportados", "chamadas de API / mês"]
+      question: "O que é a Cosmos Pay?",
+      answer: "A Cosmos Pay é uma plataforma de pagamentos em stablecoins para empresas da América Latina. Os comerciantes recebem na Stellar, Solana e Monad com links de pagamento, um checkout hospedado ou uma API, e o dinheiro chega a um endereço que eles controlam. Ela também oferece swaps entre redes e uma carteira sem custódia.",
+      items: [
+        "redes para receber: Stellar, Solana e Monad",
+        "redes para fazer swaps",
+        "+ {fixed} por pagamento no Starter, sem mensalidade",
+        "para liquidar um pagamento na Stellar",
+      ],
     },
-    customers: {
-      kicker: "// clientes",
-      title: "Impulsionando empresas de todos os tamanhos.",
-      lede: "De startups em estágio inicial a empresas de capital aberto, as equipes constroem e escalam seus pagamentos na Cosmos Pay.",
-      eyebrow: "Caso de cliente",
-      readStory: "Ler caso",
-      readFull: "Ler caso completo",
+    stories: {
+      title: "Como as empresas usam.",
+      lede: "Três formas comuns de receber em stablecoins com a Cosmos Pay, e as partes do produto que cada uma usa.",
+      eyebrow: "Caso de uso",
+      readStory: "Como funciona",
       items: {
-        Northwind: {
-          label: "liquidação internacional mais rápida após migrar para a Cosmos Pay.",
-          tags: ["Pagamentos", "Stablecoins", "Carteiras"],
-          story: "A Northwind migrou seu checkout global para a Cosmos Pay na Stellar, Solana e Monad, reduzindo a liquidação de dias para segundos e cortando custos de câmbio em mais de 30 mercados, tudo isso mantendo um único ledger reconciliado."
+        stores: {
+          t: "Lojas online",
+          label: "Stablecoins ao lado dos seus outros meios de pagamento, com uma intenção de pagamento por pedido.",
+          tags: ["API de pagamentos", "Webhooks", "Checkout hospedado"],
+          story: "O servidor da loja cria uma intenção de pagamento para cada pedido e envia o cliente para o checkout hospedado, ou o abre a partir de um botão de pagamento. O cliente paga com a própria carteira, e um webhook assinado marca o pedido como pago. Com escrow, o pagamento espera em um contrato on-chain até o pedido ser enviado.",
         },
-        Lumio: {
-          metric: "6 sem.",
-          label: "para lançar assinaturas em USDC em 40 países.",
-          tags: ["Faturamento", "USDC", "Anchors"],
-          story: "A Lumio substituiu uma colcha de retalhos de processadores regionais pela Cosmos Pay, lançando assinaturas denominadas em USDC em 40 países em apenas seis semanas, usando anchors para entradas e saídas locais."
+        services: {
+          t: "Serviços para o exterior",
+          label: "Receba de clientes de outros países em USDC ou EURC com um link de pagamento, sem transferências nem horário bancário.",
+          tags: ["Links de pagamento", "Painel"],
+          story: "Cada trabalho tem o próprio link de pagamento, enviado por email ou chat, com a referência na mensagem do pagamento. O cliente paga com qualquer carteira no país dele e, na Stellar, o dinheiro chega ao seu endereço cerca de 5 segundos depois.",
         },
-        Helios: {
-          label: "liquidados a vendedores no mundo todo pela Stellar, Solana e Monad.",
-          tags: ["Repasses", "Connect", "Rampas"],
-          story: "A Helios faz repasses a uma base global de vendedores inteiramente on-chain. No ano passado, liquidou US$ 2,4 bilhões a vendedores em 58 países, com fundos chegando em segundos e total transparência on-chain."
-        }
-      }
-    },
-    testimonials: {
-      kicker: "// depoimentos",
-      title: "Adorado por desenvolvedores e equipes financeiras.",
-      items: {
-        MC: {
-          q: "A Cosmos Pay nos permitiu movimentar dinheiro entre fronteiras em segundos. Substituímos três provedores por uma única API multichain.",
-          r: "VP de Engenharia, Vertexa"
+        digital: {
+          t: "Produtos digitais",
+          label: "Venda cursos, licenças e downloads, e entregue assim que o pagamento é confirmado.",
+          tags: ["API de pagamentos", "Webhooks", "Testnet"],
+          story: "O webhook que confirma o pagamento dispara a entrega. Com as chaves de teste, você roda todo o fluxo na testnet antes, sem dinheiro real, e um pagamento confirmado não sofre chargeback depois do download.",
         },
-        DO: {
-          q: "A documentação é a melhor que já usei. Liquidamos nosso primeiro pagamento em USDC antes do almoço no primeiro dia.",
-          r: "Fundador, Quanta"
-        },
-        PN: {
-          q: "A reconciliação costumava levar uma semana. A liquidação on-chain agora faz isso para nós em tempo real.",
-          r: "Chefe de Finanças, Riverstone"
-        }
-      }
+      },
     },
     resources: {
       kicker: "// recursos",
-      title: "O que está acontecendo.",
-      lede: "Novidades de produto, guias aprofundados e histórias de engenharia da equipe que constrói a Cosmos Pay.",
-      readMore: "Ler mais",
+      title: "Guias e referências.",
+      lede: "A documentação é pública: veja como funciona antes de criar uma conta.",
+      readMore: "Ler",
       items: [
-        {
-          tag: "Relatório",
-          t: "O panorama de 2026 dos pagamentos em stablecoins",
-          d: "Como as equipes estão movimentando dinheiro na Stellar, Solana e Monad em escala global."
-        },
-        {
-          tag: "Changelog",
-          t: "Os webhooks de liquidação multichain estão em disponibilidade geral",
-          d: "Receba eventos em tempo real no momento em que um pagamento atinge a finalidade."
-        },
+        { tag: "Guia", t: "Primeiros passos", d: "O que é a Cosmos Pay, como um pagamento flui e as duas formas de integrar." },
         {
           tag: "Guia",
-          t: "Projetando webhooks idempotentes",
-          d: "Padrões para tratamento de eventos confiável e exatamente uma vez."
+          t: "Incorpore um botão de pagamento ou o checkout",
+          d: "Receba no seu próprio site com uma tag script: um botão que abre o checkout hospedado, ou um checkout dentro da sua página.",
         },
-        {
-          tag: "Blog",
-          t: "Escalando para 8 bilhões de requisições por mês",
-          d: "Por dentro da infraestrutura que impulsiona a Cosmos Pay."
-        }
-      ]
+        { tag: "Referência", t: "Webhooks no SDK", d: "Registre endpoints, receba eventos e verifique as assinaturas HMAC-SHA256." },
+        { tag: "Guia", t: "Obtenha sua chave de API", d: "Chaves de teste e de produção, as permissões de cada uma e como criá-las no painel." },
+      ],
     },
     marketplace: {
       title: "E se você também quiser vender?",
@@ -852,20 +858,14 @@ export default {
       label: "Uma nova forma de mover o seu mundo digital.",
       thanks: "Obrigado pela confiança.",
       title: "Comece a construir hoje.",
-      desc: "Crie um sandbox gratuito na testnet e entre em produção na Stellar, Solana e Monad no momento em que estiver pronto.",
+      desc: "Crie uma conta, desenvolva na testnet sem dinheiro real e entre em produção na Stellar, Solana e Monad quando estiver pronto.",
       getKeys: "Obter chaves de API",
       talk: "Falar com a engenharia",
       helpers: [
-        {
-          b: "Veja quanto você vai pagar",
-          s: "Preços transparentes baseados em uso, sem surpresas."
-        },
-        {
-          b: "Começar a construir",
-          s: "Pegue suas chaves de API e faça seu primeiro pagamento hoje."
-        }
-      ]
-    }
+        { b: "Veja quanto você vai pagar", s: "Uma tarifa por pagamento, sem mensalidade no Starter." },
+        { b: "Começar a construir", s: "Crie suas chaves de API e faça seu primeiro pagamento na testnet." },
+      ],
+    },
   },
   pricing: {
     kicker: "// preços",
@@ -881,130 +881,108 @@ export default {
     plans: [
       {
         name: "Starter",
-        desc: "Receba pagamentos reais sem mensalidade e com proteção de pagamentos integrada.",
+        desc: "Receba pagamentos reais sem mensalidade.",
         amt: "1.5%",
         txt: "+ 18¢ por transação *",
         cta: "Começar",
-        feats: ["Pagamentos reais", "Chaves de API de teste", "Proteção de pagamentos", "Acesso parcial à API", "Suporte padrão", "Resolução de disputas", "Cartões e transferências bancárias"]
+        feats: [
+          "Pagamentos reais na Stellar, Solana e Monad",
+          "Chaves de API de teste na testnet",
+          "Links de pagamento e checkout hospedado",
+          "Swaps e webhooks assinados",
+          "Acesso parcial à API",
+          "Suporte padrão",
+          "Acesso total à API",
+        ],
       },
       {
         name: "Essentials",
-        desc: "Acesso total à plataforma com disputas e todos os métodos de pagamento.",
+        desc: "Acesso total à API e tarifas menores por pagamento e por swap.",
         txt: "+ 1.12% + 18¢ por transação *",
         cta: "Escolher Essentials",
-        feats: ["Tudo do Starter", "Acesso total à API", "Proteção de pagamentos", "Resolução de disputas", "Cartões e transferências bancárias", "Suporte prioritário por e-mail", "Descontos por volume"]
+        feats: [
+          "Tudo do Starter",
+          "Acesso total à API",
+          "Tarifas menores por pagamento e por swap",
+          "Chaves de API ilimitadas",
+          "Suporte prioritário por email",
+        ],
       },
       {
         name: "Growth",
-        desc: "Taxas menores e mais potência para equipes em crescimento.",
+        desc: "Nossas menores tarifas publicadas, para equipes que processam mais.",
         txt: "+ 0.75% + 18¢ por transação *",
         cta: "Escolher Growth",
-        feats: ["Tudo do Essentials", "Taxa de 0.75% + 18¢ por transação", "Membros de equipe ilimitados", "Ferramentas antifraude avançadas", "Descontos por volume", "Suporte prioritário", "Roteamento inteligente de pagamentos"]
-      }
+        feats: ["Tudo do Essentials", "Nossas menores tarifas publicadas", "Membros ilimitados por organização", "Suporte prioritário"],
+      },
     ],
     enterprise: {
       name: "Enterprise",
-      desc: "Taxas personalizadas e infraestrutura dedicada para as empresas de maior volume.",
-      feats: ["Taxas por transação personalizadas", "Infraestrutura dedicada", "SLA de disponibilidade de 99.99%", "SSO / SAML + logs de auditoria", "Arquiteto de soluções dedicado", "Suporte prioritário 24/7"],
+      desc: "Tarifas personalizadas para empresas com alto volume.",
+      feats: ["Tarifas por transação personalizadas", "A menor comissão por swap", "Organizações, membros e chaves de API ilimitados", "Suporte prioritário"],
       price: "Personalizado",
       subt: "Taxas baseadas em volume",
-      cta: "Falar com vendas"
+      cta: "Falar com vendas",
     },
-    footnote: "* Cada transação também inclui uma pequena taxa de rede. O Starter cobre nossos recursos essenciais de pagamento; Essentials e Growth liberam acesso total à API, resolução de disputas e todos os métodos de pagamento, incluindo cartões e transferências bancárias.",
+    footnote: "* A taxa de rede é paga pela carteira de quem paga; na Monad, a taxa do relay de depósito é descontada e mostrada no checkout. Essentials e Growth somam acesso total à API, tarifas menores e limites maiores de organizações, membros e chaves de API.",
     compareTitle: "Comparar planos",
     orgsRow: "Organizações",
     seatsRow: "Membros por organização",
     keysRow: "Chaves de API",
-    ratesRows: { swaps: "Comissão por swap", escrow: "Escrow, por pagamento", privatePayments: "Pagamentos privados", ownFee: "Sua própria taxa em cada operação" },
+    ratesRows: {
+      swaps: "Comissão por swap",
+      escrow: "Escrow, por pagamento",
+      privatePayments: "Pagamentos privados",
+      ownFee: "Sua própria taxa em cada operação",
+    },
     compareHead: ["Recurso", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
-      {
-        l: "Mensalidade",
-        v: ["Sem mensalidade", "$33 / mo", "$99 / mo", "Personalizado"]
-      },
-      {
-        l: "Taxa por transação",
-        v: ["1.5% + 18¢", "1.12% + 18¢", "0.75% + 18¢", "Personalizado"]
-      },
-      {
-        l: "Velocidade de liquidação",
-        v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec"]
-      },
-      {
-        l: "Acesso à API",
-        v: ["Parcial", "Completo", "Completo", "Completo"]
-      },
-      {
-        l: "Pagamentos reais",
-        v: [1, 1, 1, 1]
-      },
-      {
-        l: "Proteção de pagamentos",
-        v: [1, 1, 1, 1]
-      },
-      {
-        l: "Resolução de disputas",
-        v: [0, 1, 1, 1]
-      },
-      {
-        l: "Cartões e transferências bancárias",
-        v: [0, 1, 1, 1]
-      },
-      {
-        l: "Ferramentas antifraude avançadas",
-        v: [0, 0, 1, 1]
-      },
-      {
-        l: "Descontos por volume",
-        v: [0, 0, 1, 1]
-      },
-      {
-        l: "SSO / SAML",
-        v: [0, 0, 0, 1]
-      },
-      {
-        l: "Suporte",
-        v: ["Padrão", "Prioritário por e-mail", "Prioritário", "24/7 dedicado"]
-      }
+      { l: "Mensalidade", v: ["Sem mensalidade", "$33 / mo", "$99 / mo", "Personalizado"] },
+      { l: "Taxa por transação", v: ["1.5% + 18¢", "1.12% + 18¢", "0.75% + 18¢", "Personalizado"] },
+      { l: "Liquidação na Stellar", v: ["~5 sec", "~5 sec", "~5 sec", "~5 sec"] },
+      { l: "Acesso à API", v: ["Parcial", "Completo", "Completo", "Completo"] },
+      { l: "Pagamentos reais", v: [1, 1, 1, 1] },
+      { l: "Chaves de API de teste", v: [1, 1, 1, 1] },
+      { l: "Suporte", v: ["Padrão", "Prioritário por e-mail", "Prioritário", "Prioritário"] },
     ],
     faqTitle: "Perguntas frequentes",
     faqs: [
       {
         q: "Preciso pagar uma mensalidade?",
-        a: "Não. O Starter não tem mensalidade: você paga apenas uma pequena taxa por transação bem-sucedida. Essentials e Growth acrescentam uma mensalidade em troca de taxas menores."
+        a: "Não. O Starter não tem mensalidade: você paga apenas uma pequena taxa por transação bem-sucedida. Essentials e Growth acrescentam uma mensalidade em troca de taxas menores.",
       },
       {
         q: "Quanto custa uma transação?",
-        a: "O Starter é 1.5% + 18¢ por transação bem-sucedida. O Essentials é $33/mês (ou $27.50/mês cobrado anualmente) e reduz a taxa para 1.12% + 18¢, enquanto o Growth é $99/mês e a reduz para 0.75% + 18¢. Uma pequena taxa de rede também se aplica a cada transação."
+        a: "O Starter é 1.5% + 18¢ por transação bem-sucedida. O Essentials é $33/mês (ou $27.50/mês cobrado anualmente) e reduz a taxa para 1.12% + 18¢, enquanto o Growth é $99/mês e a reduz para 0.75% + 18¢. A taxa de rede é paga pela carteira de quem paga.",
       },
       {
         q: "Quais métodos de pagamento vocês suportam?",
-        a: "O Starter cobre nossos métodos de pagamento essenciais. A partir do Essentials você também pode aceitar cartões, transferências bancárias e outros métodos de pagamento locais por meio de uma única integração."
+        a: "Stablecoins e outros tokens na Stellar, Solana e Monad: USDC, EURC, a moeda da própria rede ou o token que você indicar, pagos com a própria carteira do cliente. A Cosmos Pay não aceita pagamentos com cartão nem transferências bancárias.",
       },
       {
         q: "Com que rapidez o dinheiro liquida?",
-        a: "Os pagamentos atingem a finalidade em cerca de cinco segundos, em todos os planos. Não há atrasos de repasse de vários dias."
+        a: "Na Stellar, um pagamento é final cerca de cinco segundos depois que o cliente o aprova, em todos os planos. Não há calendário de repasses: o dinheiro vai para um endereço que você controla.",
       },
       {
         q: "Posso mudar de plano depois?",
-        a: "Com certeza. Faça upgrade ou downgrade a qualquer momento pelo seu painel. As mudanças entram em vigor imediatamente, sem necessidade de ligações."
+        a: "Com certeza. Faça upgrade ou downgrade a qualquer momento pelo seu painel. As mudanças entram em vigor imediatamente, sem necessidade de ligações.",
       },
       {
         q: "Quanto custa um swap?",
-        a: "Cada plano tem sua própria comissão por swap: {starter} no Starter, {essentials} no Essentials, {growth} no Growth e {enterprise} no Enterprise. Sem conta, a página pública de swaps e a API dela cobram {public}. As taxas das redes são à parte, e cada cotação mostra as taxas antes de você assinar."
+        a: "Cada plano tem sua própria comissão por swap: {starter} no Starter, {essentials} no Essentials, {growth} no Growth e {enterprise} no Enterprise. Sem conta, a página pública de swaps e a API dela cobram {public}. As taxas das redes são à parte, e cada cotação mostra as taxas antes de você assinar.",
       },
       {
         q: "Posso oferecer esses serviços aos meus clientes?",
-        a: "Sim. A Cosmos Pay é pagamentos, swaps, gateway de pagamento e pagamentos privados como serviço: nós operamos todo o serviço, e você só informa os endereços de carteira que recebem o dinheiro e assina com a sua carteira. Cada operação paga a tarifa do seu plano, e você pode somar sua própria taxa, paga à carteira que escolher."
-      }
+        a: "Sim. A Cosmos Pay é pagamentos, swaps, gateway de pagamento e pagamentos privados como serviço: nós operamos todo o serviço, e você só informa os endereços de carteira que recebem o dinheiro e assina com a sua carteira. Cada operação paga a tarifa do seu plano, e você pode somar sua própria taxa, paga à carteira que escolher.",
+      },
     ],
     ctaTitle: "Ainda tem dúvidas?",
-    ctaDesc: "Converse com nossa equipe sobre preços por volume, conformidade ou migração de outro provedor.",
+    ctaDesc: "Escreva para nós pelo Suporte no painel sobre preços por volume, tarifas Enterprise ou migração de outro provedor.",
     contactSales: "Falar com vendas",
-    openDashboard: "Abrir painel"
+    openDashboard: "Abrir painel",
   },
   swapsPage: {
-    metaTitle: "Swaps | Cosmos Pay",
+    metaTitle: "Swaps de tokens entre redes, sem conta | Cosmos Pay",
     metaDescription: "Troque tokens entre mais de 35 redes e envie USDT0 da Stellar para 21 redes, sem criar conta: sua carteira assina e ninguém guarda seus fundos. Com API pública de swaps.",
     title: "Troque entre redes, sem criar conta",
     lede: "Escolha com o que paga e o que recebe. Sua carteira assina e os fundos nunca passam pela Cosmos Pay.",

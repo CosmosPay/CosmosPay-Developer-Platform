@@ -11,17 +11,22 @@ interface Props {
   d: LandingData;
   /** The home's teaser: the plans, and a link to the page with the calculator. */
   compact?: boolean;
+  /** A network page's own heading and lede over the same plans. */
+  heading?: string;
+  lede?: string;
+  /** The section's tone: "alt" for the surface canvas. */
+  tone?: "alt";
 }
-const { compact = false } = Astro.props;
+const { compact = false, heading, lede, tone } = Astro.props;
 
-const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+const { layout, links, pageLinks, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
 ---
 
-<section class="pl-section" id="pricing" aria-labelledby="pl-pricing">
+<section class:list={["pl-section", { "pl-section-alt": tone === "alt" }]} id="pricing" aria-labelledby="pl-pricing">
   <div class="wrap">
     <div class="pl-head pl-head-row" data-reveal>
-      <h2 id="pl-pricing">{t.pricing.title} {t.pricing.titleBold}</h2>
-      <p class="pl-section-lede">{t.pricing.lede}</p>
+      <h2 id="pl-pricing">{heading ?? `${t.pricing.title} ${t.pricing.titleBold}`}</h2>
+      <p class="pl-section-lede">{lede ?? t.pricing.lede}</p>
     </div>
     <ul class="pl-plans" role="list">
       {plans.map((p, i) => (
@@ -73,6 +78,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
     <div class="pl-plans-actions">
       {compact && <a class="btn btn-dark pl-plans-more" href={links.fees}>{t.pages.more.fees}</a>}
       <a class="btn btn-outline-w pl-plans-more" href={PRICING}>{t.pricing.compare}</a>
+      {!compact && <a class="btn btn-outline-w pl-plans-more" href={pageLinks.compare}>{t.pages.more.compare}</a>}
     </div>
   </div>
 </section>

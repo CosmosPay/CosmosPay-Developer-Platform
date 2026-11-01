@@ -12,7 +12,7 @@ export function DevKit() {
     <section className="lp-panel devkit" data-panel="black" id="sdk">
       <div className="wrap">
         <div className="section-head reveal">
-          <h2>{d.title}<span className="num" aria-hidden="true">/02</span></h2>
+          <h2 data-num="/02">{d.title}</h2>
           <p>{d.lede}</p>
         </div>
         <div className="dk-grid">
