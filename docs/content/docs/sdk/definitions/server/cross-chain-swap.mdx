@@ -1,6 +1,6 @@
 ---
 title: "CrossChainSwap"
-description: "A swap between two chains, settled by NEAR Intents — `client.crossChainSwaps`. Pay exactly {@link amountIn} of the origin asset to {@link depositAddress} (with {@link depositM"
+description: "A swap between two chains, settled by NEAR Intents — client.crossChainSwaps. Pay exactly amountIn of the origin asset to depositAddress…"
 ---
 
 A swap between two chains, settled by NEAR Intents — `client.crossChainSwaps`. Pay exactly &#123;@link amountIn&#125; of the origin asset to &#123;@link depositAddress&#125; (with &#123;@link depositMemo&#125; on Stellar, as a MEMO_TEXT) — &#123;@link depositUri&#125; is that payment as a wallet link. NEAR Intents pays &#123;@link recipient&#125; on the destination chain, or refunds &#123;@link refundTo&#125;. The server follows it; poll with `await swap.fetch()` or subscribe to the `CROSS_CHAIN_SWAP_*` webhooks.

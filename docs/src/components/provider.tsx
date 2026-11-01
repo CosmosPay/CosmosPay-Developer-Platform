@@ -47,6 +47,12 @@ export function Provider({ children }: { children: ReactNode }) {
   // the chip wrongly showed "EN" on a localized page. Runs before the child <DocsNav> renders.
   initLang(locale);
 
+  // The exported HTML already carries the page's language (scripts/set-html-lang.mjs); the root
+  // layout is shared by every locale, so a client-side navigation into another one updates it.
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   // On arrival, reconcile with the portal's shared `cosmospay-lang` choice:
   //  - landed on the default (en) URL but the user picked another language on the portal →
   //    forward to that localized URL once, so the docs follow the navbar selection;
