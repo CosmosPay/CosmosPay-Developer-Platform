@@ -120,8 +120,15 @@ export const TAGS = [
   {
     name: 'kyc',
     title: 'KYC',
-    description:
-      'Receivers, KYC documents, blockchain wallets, bank accounts, and the rail catalogue.',
+    description: 'Receivers, their review and terms of service, and KYC documents.',
+  },
+  {
+    // Not a server tag: transformSpec moves the KYC wallet, bank-account and rail operations here
+    // (KYC_ACCOUNTS), so neither page passes the 500 KB HTML budget (scripts/build-docs.mjs). The
+    // KYC page reached 512 KB once every schema carried a description (server v1.8.5).
+    name: 'kyc-accounts',
+    title: 'KYC wallets and bank accounts',
+    description: "A receiver's blockchain wallets and fiat bank accounts, the bank rails and the fields each rail asks for.",
   },
   {
     // The server tags this one in PascalCase, unlike the rest; the name must match it.
@@ -181,6 +188,8 @@ const INTERNAL_HEADERS = new Set(['x-gateway-secret', 'x-consumer-username']);
 /** Schemes the server declares that are not the gateway's, and so survive. */
 const KEPT_SCHEMES = new Set(['sep-token']);
 const HTTP_METHODS = new Set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']);
+/** The KYC operations the docs show on their own page (the `kyc-accounts` tag above). */
+const KYC_ACCOUNTS = /\/(?:wallets|bank-accounts)(?:\/|$)|^\/v1\/kyc\/(?:rails|bank-details)$/;
 
 /** Every tag the operations use, in document order. */
 export function tagsUsed(spec) {
@@ -211,6 +220,14 @@ export function transformSpec(source, options = {}) {
     );
   }
   spec.tags = TAGS.map((t) => ({ name: t.name, description: t.description }));
+  for (const [route, methods] of Object.entries(spec.paths || {})) {
+    if (!KYC_ACCOUNTS.test(route)) continue;
+    for (const [m, op] of Object.entries(methods)) {
+      if (HTTP_METHODS.has(m) && Array.isArray(op?.tags) && op.tags.includes('kyc')) {
+        op.tags = op.tags.map((t) => (t === 'kyc' ? 'kyc-accounts' : t));
+      }
+    }
+  }
   if (!Array.isArray(spec.servers) || spec.servers.length === 0 || spec.servers.every((s) => /localhost/.test(s.url))) {
     spec.servers = [{ url: options.gateway || GATEWAY_DEFAULT, description: 'Cosmos Pay API' }];
   }
