@@ -11,7 +11,7 @@ import {
   pageLanguages,
   source,
 } from '@/lib/source';
-import { pageLastModified } from '@/lib/last-modified';
+import { pageJsonLdDates } from '@/lib/last-modified';
 
 // Search and social metadata for every docs page: the title, the canonical URL, hreflang
 // between a page and its real translations, the Markdown alternate, Open Graph / Twitter and
@@ -31,8 +31,11 @@ const OG_LOCALES: Record<DocsLanguage, string> = {
  *  content/docs/meta.json ("SDK", "REST API"), e.g. "Webhooks | SDK" and "Webhooks | REST API". */
 const SECTION_LABELS: Record<string, string> = { sdk: 'SDK', api: 'REST API' };
 
-const ORGANIZATION_ID = 'https://cosmospay.lat/#organization';
-const WEBSITE_ID = `${docsOrigin}#website`;
+// The company site (cosmospay.lat) publishes the Organization node; the docs only refer to it by
+// @id and never restate it, so the two cannot disagree.
+const ORGANIZATION = { '@id': 'https://cosmospay.lat/#organization' };
+const WEBSITE_URL = `${docsOrigin}/`;
+const WEBSITE_ID = `${WEBSITE_URL}#website`;
 const API_ID = 'https://cosmospay.lat/#api';
 const SDK_ID = 'https://cosmospay.lat/#sdk';
 
@@ -108,26 +111,13 @@ export function pageMetadata(page: DocsPage): Metadata {
 
 type JsonLd = Record<string, unknown>;
 
-const organization: JsonLd = {
-  '@type': 'Organization',
-  '@id': ORGANIZATION_ID,
-  name: 'Cosmos Pay',
-  url: 'https://cosmospay.lat/',
-  logo: {
-    '@type': 'ImageObject',
-    url: 'https://cosmospay.lat/android-chrome-512x512.png',
-    width: 512,
-    height: 512,
-  },
-};
-
 const website: JsonLd = {
   '@type': 'WebSite',
   '@id': WEBSITE_ID,
   name: appName,
-  url: `${docsOrigin}/`,
+  url: WEBSITE_URL,
   inLanguage: ['en', 'es', 'pt', 'fr', 'de'],
-  publisher: { '@id': ORGANIZATION_ID },
+  publisher: ORGANIZATION,
 };
 
 /** The Payments API and the SDK as entities, with the ids the company site refers to them by.
@@ -143,7 +133,7 @@ function productNodes(lang: DocsLanguage): JsonLd[] {
       description: api?.data.description,
       url: docsUrl(['api'], lang),
       documentation: docsUrl([], lang),
-      provider: { '@id': ORGANIZATION_ID },
+      provider: ORGANIZATION,
       termsOfService: 'https://cosmospay.lat/tos',
     },
     {
@@ -156,7 +146,7 @@ function productNodes(lang: DocsLanguage): JsonLd[] {
       codeRepository: 'https://github.com/CosmosPay/CosmosJS_SDK',
       url: sdk ? docsUrl(sdk.slugs, lang) : undefined,
       targetProduct: { '@id': API_ID },
-      author: { '@id': ORGANIZATION_ID },
+      author: ORGANIZATION,
     },
   ];
 }
@@ -179,23 +169,23 @@ function breadcrumb(page: DocsPage, url: string): JsonLd {
 }
 
 /**
- * The page's JSON-LD graph: the Organization and the docs WebSite, then a TechArticle with its
- * BreadcrumbList (the docs home is a WebPage with the API and SDK entities instead). Undefined
- * for an English fallback copy: its content is the English page's, which carries the graph.
+ * The page's JSON-LD graph: the docs WebSite, then a TechArticle with its BreadcrumbList (the docs
+ * home is a WebPage with the API and SDK entities instead). The Organization is referenced by @id
+ * only. datePublished and dateModified come from git (lib/last-modified.ts) or are left out.
+ * Undefined for an English fallback copy: its content is the English page's, which carries the
+ * graph.
  */
 export function pageJsonLd(page: DocsPage): JsonLd | undefined {
   if (!isTranslation(page)) return undefined;
   const lang = contentLanguage(page);
   const url = canonicalUrl(page);
-  const modified = pageLastModified(page);
-  const dateModified = modified?.fromGit ? modified.date.toISOString() : undefined;
+  const { datePublished, dateModified } = pageJsonLdDates(page);
   const isOpenAPI = Boolean((page.data as { _openapi?: unknown })._openapi) || page.slugs[0] === 'api';
 
   if (!page.slugs.length) {
     return {
       '@context': 'https://schema.org',
       '@graph': [
-        organization,
         website,
         {
           '@type': 'WebPage',
@@ -206,7 +196,8 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
           inLanguage: lang,
           isPartOf: { '@id': WEBSITE_ID },
           about: [{ '@id': API_ID }, { '@id': SDK_ID }],
-          publisher: { '@id': ORGANIZATION_ID },
+          publisher: ORGANIZATION,
+          datePublished,
           dateModified,
         },
         ...productNodes(lang),
@@ -217,7 +208,6 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
   return {
     '@context': 'https://schema.org',
     '@graph': [
-      organization,
       website,
       {
         '@type': 'TechArticle',
@@ -230,9 +220,10 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
         isPartOf: { '@id': WEBSITE_ID },
         about: isOpenAPI ? { '@id': API_ID } : undefined,
         image: ogImage.url,
-        author: { '@id': ORGANIZATION_ID },
-        publisher: { '@id': ORGANIZATION_ID },
+        author: ORGANIZATION,
+        publisher: ORGANIZATION,
         breadcrumb: { '@id': `${url}#breadcrumb` },
+        datePublished,
         dateModified,
       },
       breadcrumb(page, url),

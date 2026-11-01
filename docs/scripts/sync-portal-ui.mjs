@@ -19,6 +19,8 @@ const COPIES = [
   // The route constants build absolute links with these (pure, no Astro imports).
   ['lib/urls.ts', 'lib/urls.ts'],
   ['lib/safe-next.ts', 'lib/safe-next.ts'],
+  // SiteNav keeps the page's ?lang= in step with the picker through it (pure, no imports).
+  ['lib/seo/lang-urls.ts', 'lib/seo/lang-urls.ts'],
   ['styles/cosmos.css', 'styles/cosmos.css'],
 ];
 

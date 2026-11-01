@@ -46,4 +46,5 @@ next-env.d.ts
 /src/lib/auth-client.ts
 /src/lib/urls.ts
 /src/lib/safe-next.ts
+/src/lib/seo/lang-urls.ts
 /src/styles/cosmos.css
