@@ -6,7 +6,9 @@ import path from 'node:path';
 // That left every LLM output (llms-full.txt, the per-page content.md) without the API reference.
 // This renders a tag's operations as plain Markdown from the same docs/openapi.json instead:
 // method and path, summary, description, parameters, the request body's top-level fields and
-// the responses. The full contract stays one request away at /docs/openapi.json.
+// the responses with theirs (the page itself shows a response's schema only once its status is
+// opened, components/api/responses.tsx). The full contract stays one request away at
+// /docs/openapi.json.
 
 interface SchemaObject {
   $ref?: string;
@@ -112,9 +114,10 @@ function fieldLine(name: string, schema: SchemaObject | undefined, required: boo
   return `- \`${name}\` (${meta})${text || values ? `: ${text}${values}` : ''}`;
 }
 
-/** The top-level fields of a body schema, merging `allOf` parts. */
+/** The top-level fields of a body schema, merging `allOf` parts (an array's: its items'). */
 function bodyFields(doc: OpenAPIDocument, schema: SchemaObject | undefined): string[] {
-  const resolved = resolveSchema(doc, schema);
+  let resolved = resolveSchema(doc, schema);
+  if (resolved?.type === 'array') resolved = resolveSchema(doc, resolved.items);
   if (!resolved) return [];
   const parts = resolved.allOf?.length ? resolved.allOf.map((part) => resolveSchema(doc, part)) : [resolved];
   const lines: string[] = [];
@@ -127,21 +130,29 @@ function bodyFields(doc: OpenAPIDocument, schema: SchemaObject | undefined): str
   return lines;
 }
 
-function responseLine(status: string, response: ResponseObject): string {
+/** A response as a list item, its body's top-level fields as a list under it. A named schema's
+ *  fields are listed once per page (`listed`): the error envelope alone is on every operation. */
+function responseLines(doc: OpenAPIDocument, status: string, response: ResponseObject, listed: Set<string>): string[] {
   const schema = response.content?.['application/json']?.schema;
   const body = schema ? ` (\`${typeLabel(schema)}\`)` : '';
   const text = inline(response.description);
-  return `- ${status}${body}${text ? `: ${text}` : ''}`;
+  const line = `- ${status}${body}${text ? `: ${text}` : ''}`;
+  const named = schema?.$ref ? refName(schema.$ref) : undefined;
+  if (named && listed.has(named)) return [line];
+  if (named) listed.add(named);
+  return [line, ...bodyFields(doc, schema).map((field) => `  ${field}`)];
 }
 
 /** `shared` collects the shared responses (components/responses: the same errors on most
- *  operations) the operation refers to, listed once per page instead of once per operation. */
+ *  operations) the operation refers to, listed once per page instead of once per operation;
+ *  `listed` the response schemas whose fields the page already lists. */
 function renderOperation(
   doc: OpenAPIDocument,
   method: string,
   route: string,
   op: OperationObject,
   shared: Set<string>,
+  listed: Set<string>,
 ): string {
   const out: string[] = [];
   out.push(`## ${inline(op.summary) || `${method.toUpperCase()} ${route}`}`, '');
@@ -176,7 +187,7 @@ function renderOperation(
         shared.add(name);
         out.push(`- \`${status}\`: ${name} (see Shared responses)`);
       } else {
-        out.push(responseLine(`\`${status}\``, response));
+        out.push(...responseLines(doc, `\`${status}\``, response, listed));
       }
     }
     out.push('');
@@ -195,17 +206,18 @@ export function renderOpenAPITagMarkdown(tagSlug: string): string {
   const server = doc.servers?.[0]?.url;
   if (server) out.push(`Base URL: \`${server}\``, '');
   const shared = new Set<string>();
+  const listed = new Set<string>();
   for (const [route, item] of Object.entries(doc.paths)) {
     for (const method of METHODS) {
       const op = item[method];
-      if (op && matches(op.tags)) out.push(renderOperation(doc, method, route, op, shared));
+      if (op && matches(op.tags)) out.push(renderOperation(doc, method, route, op, shared, listed));
     }
   }
   if (shared.size) {
     out.push('## Shared responses', '');
     for (const name of shared) {
       const response = doc.components?.responses?.[name];
-      if (response) out.push(responseLine(`**${name}**`, response));
+      if (response) out.push(...responseLines(doc, `**${name}**`, response, listed));
     }
   }
   return out.join('\n').trim();
