@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LOCALES } from '@/lib/payments/i18n';
 import { GUIDE_CONFIG, GUIDE_KEYS, LEARN, guideCopy } from '@/lib/payments/learn/index';
-import { isExternal, learnHrefs } from '@/lib/payments/learn/links';
+import { isExternal, learnHrefs, SOURCE_LINKS } from '@/lib/payments/learn/links';
 import { GUIDES, GUIDE_DATES, LEARN_PAGES, PAYMENTS_PAGE_PATHS, guideOf, pagePath } from '@/lib/payments/site-pages';
 
 /* The guides (/learn and /learn/<slug>): what search engines read first (the <title> and the meta
@@ -104,7 +104,7 @@ test('every link in the guides leads somewhere, and only sources leave Cosmos Pa
     assert.ok(key in hrefs, `${entry} has no target`);
   }
   for (const [key, href] of Object.entries(hrefs)) {
-    if (isExternal(href)) assert.ok(key.startsWith('circle'), `${key} leaves the site`);
+    if (isExternal(href)) assert.ok((SOURCE_LINKS as readonly string[]).includes(key), `${key} leaves the site`);
     else assert.ok(href.startsWith('/') || href.startsWith('https://dev.cosmospay.lat/docs/'), key);
   }
   for (const guide of GUIDES) assert.ok(Object.values(hrefs).includes(pagePath(`learn/${guide}`) as never), guide);

@@ -3,7 +3,8 @@
    here. Gateway pages are same-origin paths (they render on the payments domain); the docs live on
    the platform (`docs` is its /docs root, src/components/cosmos/lib/constants.ts DOCS), each at its
    trailing-slash address (docsLink); the only
-   external links are the sources of a claim about another company. Pure, so
+   external links are the sources of a claim about another company or of a standard it publishes
+   (SOURCE_LINKS). Pure, so
    tests/unit/paymentsLearn.test.ts checks that every key the catalogs use leads somewhere. */
 import { pagePath, type Guide } from "@/lib/payments/site-pages";
 import { docsLink } from "@/lib/urls";
@@ -38,8 +39,16 @@ export function learnHrefs(docs: string) {
     // Primary sources for what the guides say about Circle's stablecoins (read 2026-11-01).
     circleUsdc: "https://www.circle.com/usdc",
     circleEurc: "https://www.circle.com/eurc",
+    // The payment-request standards the guides name, at their publishers (read 2026-11-01).
+    // docs.solanapay.com no longer resolves; the Solana Foundation hosts the spec on solana.com.
+    sep7: "https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0007.md",
+    solanaPay: "https://solana.com/docs/tools/solana-pay/specification/version1-1",
+    eip681: "https://eips.ethereum.org/EIPS/eip-681",
   } as const;
 }
+
+/** The targets that leave Cosmos Pay: each is the primary source of a claim the guides make. */
+export const SOURCE_LINKS = ["circleUsdc", "circleEurc", "sep7", "solanaPay", "eip681"] as const;
 
 export type LearnLink = keyof ReturnType<typeof learnHrefs>;
 

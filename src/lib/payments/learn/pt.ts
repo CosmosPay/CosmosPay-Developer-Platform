@@ -159,6 +159,7 @@ export const pt: LearnMessages = {
             "Monitora a rede e associa cada pagamento à sua solicitação, por um memo, uma chave de referência ou um endereço criado para aquele pagamento.",
             "Avisa a empresa quando a rede confirma o pagamento, num dashboard e por um webhook assinado enviado ao servidor dela.",
           ],
+          links: { sep7: "O padrão SEP-7 (Stellar)", solanaPay: "A especificação do Solana Pay", eip681: "O padrão EIP-681 (Ethereum)" },
         },
         settle: {
           title: "Onde o dinheiro é liquidado",
@@ -223,6 +224,7 @@ export const pt: LearnMessages = {
           rate: { k: "Tarifa da Cosmos Pay", value: "A tarifa do seu plano ({starterRate} no Starter)" },
         },
         note: "Os ativos predefinidos são os que o dashboard oferece pelo nome; a página de cada rede lista os endereços deles. Qualquer outro token é indicado pelo emissor, mint ou contrato.",
+        links: { sep7: "O padrão SEP-7 (Stellar)", solanaPay: "A especificação do Solana Pay", eip681: "O padrão EIP-681 (Ethereum)" },
       },
       sections: {
         choose: {

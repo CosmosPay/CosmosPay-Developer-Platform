@@ -167,6 +167,7 @@ export const en = {
             "It watches the network and matches each payment to its request, by a memo, a reference key or an address made for that payment.",
             "It tells the business once the network confirms the payment, in a dashboard and through a signed webhook to its server.",
           ],
+          links: { sep7: "The SEP-7 standard (Stellar)", solanaPay: "The Solana Pay specification", eip681: "The EIP-681 standard (Ethereum)" },
         },
         settle: {
           title: "Where the money settles",
@@ -231,6 +232,7 @@ export const en = {
           rate: { k: "Cosmos Pay rate", value: "Your plan’s rate ({starterRate} on Starter)" },
         },
         note: "The assets with a preset are the ones the dashboard offers by name; each network’s page lists their addresses. Any other token goes by its issuer, mint or contract.",
+        links: { sep7: "The SEP-7 standard (Stellar)", solanaPay: "The Solana Pay specification", eip681: "The EIP-681 standard (Ethereum)" },
       },
       sections: {
         choose: {
