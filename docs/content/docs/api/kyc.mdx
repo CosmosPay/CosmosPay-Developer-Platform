@@ -1,7 +1,6 @@
 ---
 title: "KYC"
-description: Receivers, KYC documents, blockchain wallets, bank accounts, and
-  the rail catalogue.
+description: Receivers, their review and terms of service, and KYC documents.
 full: true
 _openapi:
   preload:
@@ -37,38 +36,11 @@ _openapi:
         onramp/offramp)
       url: '#enable-or-disable-a-fiat-account-admin-only-kill-switch-for-onrampofframp'
     - depth: 2
-      title: Get the message to sign for the secure wallet flow
-      url: '#get-the-message-to-sign-for-the-secure-wallet-flow'
-    - depth: 2
-      title: List a receiver's wallets
-      url: '#list-a-receivers-wallets'
-    - depth: 2
-      title: Register a blockchain wallet for a receiver
-      url: '#register-a-blockchain-wallet-for-a-receiver'
-    - depth: 2
-      title: Delete a wallet
-      url: '#delete-a-wallet'
-    - depth: 2
-      title: List a receiver's bank accounts
-      url: '#list-a-receivers-bank-accounts'
-    - depth: 2
-      title: Add a fiat bank account for a receiver
-      url: '#add-a-fiat-bank-account-for-a-receiver'
-    - depth: 2
-      title: Delete a bank account
-      url: '#delete-a-bank-account'
-    - depth: 2
       title: Upload a KYC document; returns its file_url
       url: '#upload-a-kyc-document-returns-its-file_url'
     - depth: 2
       title: Start ToS acceptance; returns the hosted URL (first KYC step)
       url: '#start-tos-acceptance-returns-the-hosted-url-first-kyc-step'
-    - depth: 2
-      title: List available bank rails
-      url: '#list-available-bank-rails'
-    - depth: 2
-      title: Get the field schema required by a rail
-      url: '#get-the-field-schema-required-by-a-rail'
   structuredData:
     headings:
       - content: List the consumer's receivers
@@ -91,28 +63,10 @@ _openapi:
       - content: Enable or disable a fiat account (admin-only kill-switch for
           onramp/offramp)
         id: enable-or-disable-a-fiat-account-admin-only-kill-switch-for-onrampofframp
-      - content: Get the message to sign for the secure wallet flow
-        id: get-the-message-to-sign-for-the-secure-wallet-flow
-      - content: List a receiver's wallets
-        id: list-a-receivers-wallets
-      - content: Register a blockchain wallet for a receiver
-        id: register-a-blockchain-wallet-for-a-receiver
-      - content: Delete a wallet
-        id: delete-a-wallet
-      - content: List a receiver's bank accounts
-        id: list-a-receivers-bank-accounts
-      - content: Add a fiat bank account for a receiver
-        id: add-a-fiat-bank-account-for-a-receiver
-      - content: Delete a bank account
-        id: delete-a-bank-account
       - content: Upload a KYC document; returns its file_url
         id: upload-a-kyc-document-returns-its-file_url
       - content: Start ToS acceptance; returns the hosted URL (first KYC step)
         id: start-tos-acceptance-returns-the-hosted-url-first-kyc-step
-      - content: List available bank rails
-        id: list-available-bank-rails
-      - content: Get the field schema required by a rail
-        id: get-the-field-schema-required-by-a-rail
     contents:
       - content: >-
           Reads the local mirror only, newest first, on the BlindPay instance of
@@ -218,70 +172,6 @@ _openapi:
           Requires the `kyc:write` scope.
         heading: enable-or-disable-a-fiat-account-admin-only-kill-switch-for-onrampofframp
       - content: >-
-          Fetches from BlindPay the message the customer signs in their own
-          wallet to prove an EOA wallet is theirs. Sign it, then register the
-          wallet with `POST /v1/kyc/receivers/{receiverId}/wallets` and its
-          `signature_tx_hash` instead of an `address`. Nothing is stored.
-
-
-          Requires the `kyc:read` scope.
-        heading: get-the-message-to-sign-for-the-secure-wallet-flow
-      - content: >-
-          Reads the local mirror, newest first; BlindPay is not called.
-          Paginated with `take` (default 100, max 100) and `skip`; answers `{
-          data, total, take, skip }`.
-
-
-          Requires the `kyc:read` scope.
-        heading: list-a-receivers-wallets
-      - content: >-
-          Registers the wallet at BlindPay under the receiver and mirrors it
-          locally. Send `address` (account abstraction or the non-secure flow),
-          or the `signature_tx_hash` of the message from `GET
-          /v1/kyc/receivers/{receiverId}/wallets/sign-message` (secure EOA
-          flow). `network` is one of BlindPay's: Stellar, Solana, Tron,
-          Ethereum, Base, Arbitrum, Polygon or one of their test networks. A
-          disabled receiver is refused with 403 `account_disabled`.
-
-
-          Requires the `kyc:write` scope.
-        heading: register-a-blockchain-wallet-for-a-receiver
-      - content: >-
-          Deletes the wallet at BlindPay, then its local row. A wallet id this
-          receiver does not have answers `deleted: true` without calling
-          BlindPay, so repeating a delete succeeds.
-
-
-          Requires the `kyc:write` scope.
-        heading: delete-a-wallet
-      - content: >-
-          Reads the local mirror, newest first; BlindPay is not called, and
-          account numbers are never returned. Paginated with `take` (default
-          100, max 100) and `skip`; answers `{ data, total, take, skip }`.
-
-
-          Requires the `kyc:read` scope.
-        heading: list-a-receivers-bank-accounts
-      - content: >-
-          Creates the account at BlindPay under the receiver and mirrors it;
-          offramp payouts settle to it. `type` names the rail, and only that
-          rail's fields are needed (`GET /v1/kyc/bank-details?rail=` lists
-          them). The response carries identifiers only (`rail`, `name`,
-          `country`), never the account numbers. A disabled receiver is refused
-          with 403 `account_disabled`.
-
-
-          Requires the `kyc:write` scope.
-        heading: add-a-fiat-bank-account-for-a-receiver
-      - content: >-
-          Deletes the account at BlindPay, then its local row. An id this
-          receiver does not have answers `deleted: true` without calling
-          BlindPay, so repeating a delete succeeds.
-
-
-          Requires the `kyc:write` scope.
-        heading: delete-a-bank-account
-      - content: >-
           Multipart: one `file` part (JPEG, PNG, WebP, HEIC/HEIF or PDF, up to
           10 MB, its bytes checked against the declared type) and an optional
           `bucket` (`onboarding` by default, `avatar` or `limit_increase`).
@@ -306,24 +196,6 @@ _openapi:
 
           Requires the `kyc:write` scope.
         heading: start-tos-acceptance-returns-the-hosted-url-first-kyc-step
-      - content: >-
-          Relays BlindPay's catalog of bank rails on the instance of the key's
-          network (production for a mainnet key, development otherwise). Nothing
-          is stored; the body is BlindPay's answer as returned.
-
-
-          Requires the `kyc:read` scope.
-        heading: list-available-bank-rails
-      - content: >-
-          Relays BlindPay's field schema for the `rail` query parameter
-          (required: 400 `validation_failed` without it), the fields `POST
-          /v1/kyc/receivers/{receiverId}/bank-accounts` needs for that rail.
-          Answered as BlindPay returns it, from the instance of the key's
-          network.
-
-
-          Requires the `kyc:read` scope.
-        heading: get-the-field-schema-required-by-a-rail
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
@@ -333,7 +205,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/kyc/receivers","method":"get"},{"path":"/v1/kyc/receivers","method":"post"},{"path":"/v1/kyc/receivers/{id}","method":"get"},{"path":"/v1/kyc/receivers/{id}","method":"patch"},{"path":"/v1/kyc/receivers/{id}","method":"delete"},{"path":"/v1/kyc/receivers/{id}/approve","method":"post"},{"path":"/v1/kyc/receivers/{id}/tos","method":"post"},{"path":"/v1/kyc/receivers/{id}/enable","method":"post"},{"path":"/v1/kyc/receivers/{id}/access","method":"patch"},{"path":"/v1/kyc/receivers/{receiverId}/wallets/sign-message","method":"get"},{"path":"/v1/kyc/receivers/{receiverId}/wallets","method":"get"},{"path":"/v1/kyc/receivers/{receiverId}/wallets","method":"post"},{"path":"/v1/kyc/receivers/{receiverId}/wallets/{id}","method":"delete"},{"path":"/v1/kyc/receivers/{receiverId}/bank-accounts","method":"get"},{"path":"/v1/kyc/receivers/{receiverId}/bank-accounts","method":"post"},{"path":"/v1/kyc/receivers/{receiverId}/bank-accounts/{id}","method":"delete"},{"path":"/v1/kyc/upload","method":"post"},{"path":"/v1/kyc/terms-of-service","method":"post"},{"path":"/v1/kyc/rails","method":"get"},{"path":"/v1/kyc/bank-details","method":"get"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/kyc/receivers","method":"get"},{"path":"/v1/kyc/receivers","method":"post"},{"path":"/v1/kyc/receivers/{id}","method":"get"},{"path":"/v1/kyc/receivers/{id}","method":"patch"},{"path":"/v1/kyc/receivers/{id}","method":"delete"},{"path":"/v1/kyc/receivers/{id}/approve","method":"post"},{"path":"/v1/kyc/receivers/{id}/tos","method":"post"},{"path":"/v1/kyc/receivers/{id}/enable","method":"post"},{"path":"/v1/kyc/receivers/{id}/access","method":"patch"},{"path":"/v1/kyc/upload","method":"post"},{"path":"/v1/kyc/terms-of-service","method":"post"}]} showTitle />
     </>
   );
 }

@@ -18,6 +18,7 @@
     "onramp",
     "offramp",
     "kyc",
+    "kyc-accounts",
     "defindex",
     "wallet-auth",
     "recovery",
