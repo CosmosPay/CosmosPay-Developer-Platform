@@ -3,6 +3,7 @@
    through on every domain. Pure, so tests/unit/seoRobots.test.ts reads every rule the way a
    crawler does. */
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
+import { isIndexNowKey, keyFilePath } from "@/lib/seo/indexnow";
 
 export type RobotsArea = "site" | "dev" | "payments";
 
@@ -45,8 +46,12 @@ const PAYMENTS_RESOURCES = [
 ];
 
 /** robots.txt for one domain. */
-export function robotsTxt(area: RobotsArea, origins: RobotsOrigins): string {
+export function robotsTxt(area: RobotsArea, origins: RobotsOrigins, indexNowKey?: string): string {
   const { site, dev, payments } = origins;
+  /* The IndexNow key file (INDEXNOW_KEY, src/pages/[key].txt.ts) is how the engines check a
+     submission. The payments domain blocks everything it does not name, so it names the file; the
+     other two leave it open already. The key is public by design. */
+  const keyFile = isIndexNowKey(indexNowKey) ? [`${keyFilePath(indexNowKey)}$`] : [];
   switch (area) {
     case "site":
       return `# Cosmos Pay company site. Every page exists once per language (?lang=, src/lib/seo/lang-urls.ts).
@@ -85,7 +90,7 @@ ${CONTENT_SIGNAL}
 Allow: /$
 Allow: /?lang=
 ${PAYMENTS_PAGE_PATHS.map((p) => `Allow: ${p}$\nAllow: ${p}?lang=`).join("\n")}
-${PAYMENTS_RESOURCES.map((p) => `Allow: ${p}`).join("\n")}
+${[...PAYMENTS_RESOURCES, ...keyFile].map((p) => `Allow: ${p}`).join("\n")}
 Disallow: /
 
 Sitemap: ${payments}/sitemap.xml

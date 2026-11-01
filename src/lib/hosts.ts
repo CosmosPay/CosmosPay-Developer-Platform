@@ -48,6 +48,7 @@ export type RouteDecision =
 export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", payments: "/payments" };
 
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
+import { isKeyFilePath } from "@/lib/seo/indexnow";
 
 const SITE_PATHS = new Set(["/pricing", "/tos"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
@@ -66,8 +67,11 @@ const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
    a 404 instead of a redirect (it still never renders there). */
 const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
 /* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts,
-   llms.txt.ts, src/pages/.well-known/*). */
+   llms.txt.ts, src/pages/.well-known/*). The IndexNow key file is one too (src/pages/[key].txt.ts):
+   its name is the key, read at runtime, so it is matched by its shape (`isSharedPath`) and the
+   route answers 404 for any name but the configured key. */
 const SHARED_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/.well-known/security.txt", "/.well-known/api-catalog"]);
+const isSharedPath = (path: string): boolean => SHARED_PATHS.has(path) || isKeyFilePath(path);
 /* Pages both the gateway and the company site serve, each its own (src/pages/payments/swaps.astro,
    src/pages/site/swaps.astro): the public swaps. The platform sends them to the gateway. */
 const DUAL_PATHS = new Set(["/swaps"]);
@@ -161,7 +165,7 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
     if (underPrefix(path, MOUNTS[area])) return to(area, encodeURI(canonical.slice(MOUNTS[area].length)) || "/");
   }
 
-  if (SHARED_PATHS.has(path)) return { kind: "pass", area: primary };
+  if (isSharedPath(path)) return { kind: "pass", area: primary };
 
   /* A rewrite into a mount, re-encoded so the middleware's `new URL` reads nothing in it a second
      time, and refused (404) unless it still resolves inside that mount. */

@@ -27,7 +27,8 @@
     "test:unit": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs --test --test-concurrency=4 \"tests/unit/**/*.test.ts\"",
     "test:smoke": "node scripts/smoke-server.mjs",
     "check:openapi": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs scripts/check-openapi-coverage.mjs",
-    "test": "npm run test:unit"
+    "test": "npm run test:unit",
+    "indexnow": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs scripts/indexnow.mjs"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^9.1.0",

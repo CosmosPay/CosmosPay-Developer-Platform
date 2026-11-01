@@ -219,6 +219,13 @@ export default defineConfig({
       // all Search Console needs to verify ownership. Empty = no tag (local dev).
       // (Search Console can also verify via the existing Google Analytics property.)
       PUBLIC_GOOGLE_SITE_VERIFICATION: envField.string({ context: 'client', access: 'public', optional: true, default: '' }),
+      // --- SEO / IndexNow (Bing, which feeds ChatGPT search and Copilot, Yandex and the rest) ---
+      // The key every domain serves at /<key>.txt (src/pages/[key].txt.ts) and the payments
+      // robots.txt allows; `npm run indexnow` (scripts/indexnow.mjs) submits the sitemaps' URLs
+      // with it. 8 to 128 characters: letters, digits and "-". The key is public by design;
+      // `access: 'secret'` only makes it a runtime read (a restart that reloads .env, no rebuild).
+      // Unset: /<key>.txt answers 404 and the script refuses to run.
+      INDEXNOW_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
 

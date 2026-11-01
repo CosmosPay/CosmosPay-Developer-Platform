@@ -81,3 +81,23 @@ test('the company site is open but for the web wallet; the platform only opens i
   for (const url of ['/docs/', '/docs/getting-started/', '/docs/llms.txt']) assert.ok(allowed(dev, url), url);
   for (const url of ['/login', '/dashboard', '/api/openapi.json', '/swagger', '/invite/abc']) assert.ok(!allowed(dev, url), url);
 });
+
+test('the IndexNow key file is crawlable on every domain, and the payments domain names it', () => {
+  const key = '0f1e2d3c4b5a69788796a5b4c3d2e1f0';
+  for (const area of ['site', 'dev', 'payments'] as const) {
+    const robots = robotsTxt(area, ORIGINS, key);
+    assert.ok(allowed(robots, `/${key}.txt`), area);
+  }
+  const payments = robotsTxt('payments', ORIGINS, key);
+  assert.ok(payments.split('\n').includes(`Allow: /${key}.txt$`));
+  // Only that file: anything else still stays out, the key's own name included.
+  for (const url of [`/${key}.txt?x=1`, `/${key}.txt/`, `/${key}`, '/0123456789abcdef.txt', '/cmh4x2k9a0001l70g8v5q3z2w']) {
+    assert.ok(!allowed(payments, url), url);
+  }
+  // No key configured, or one the protocol refuses: no line, and nothing else changes.
+  assert.equal(robotsTxt('payments', ORIGINS, undefined), robotsTxt('payments', ORIGINS));
+  assert.equal(robotsTxt('payments', ORIGINS, 'short'), robotsTxt('payments', ORIGINS));
+  assert.equal(robotsTxt('payments', ORIGINS, '../etc/passwd'), robotsTxt('payments', ORIGINS));
+  assert.ok(!allowed(robotsTxt('payments', ORIGINS), `/${key}.txt`));
+  for (const area of ['site', 'dev'] as const) assert.equal(robotsTxt(area, ORIGINS, key), robotsTxt(area, ORIGINS), area);
+});

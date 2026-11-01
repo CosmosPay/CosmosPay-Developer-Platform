@@ -44,6 +44,8 @@ const entry = path.join(root, 'dist', 'server', 'entry.mjs');
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.SMOKE_PORT || 4399);
 const BOOT_TIMEOUT_MS = 60_000;
+/* An IndexNow key of the protocol's shape (src/lib/seo/indexnow.ts), only for this run. */
+const SMOKE_INDEXNOW_KEY = 'smoke-indexnow-key-0123';
 
 if (!existsSync(entry)) {
   console.error(`[smoke] ${entry} not found; run \`npm run build\` first.`);
@@ -88,6 +90,8 @@ const env = {
   COSMOS_API_URL: process.env.COSMOS_API_URL || 'http://127.0.0.1:3000',
   COSMOS_API_ENTRY: process.env.COSMOS_API_ENTRY || '/v1',
   COSMOS_API_REWRITE: process.env.COSMOS_API_REWRITE || '/',
+  // Always this one: the key file check below asks for exactly it.
+  INDEXNOW_KEY: SMOKE_INDEXNOW_KEY,
 };
 
 const server = spawn(process.execPath, [entry], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -184,6 +188,21 @@ for (const host of trusted) {
 if (!servedOn) fail(`no trusted host (${trusted.join(', ')}) served /pricing: the company site is unreachable`);
 detail += `; host routing verified (${trusted.join(', ')}; /pricing on ${servedOn})`;
 
+// INDEXNOW KEY FILE. Every domain must answer /<INDEXNOW_KEY>.txt with the key itself
+// (src/pages/[key].txt.ts, let through by src/lib/hosts.ts on every domain), or IndexNow refuses
+// that host's submissions (403). The key is read at runtime, so the env above reaches it. Any
+// other name is a 404. The www host redirects every path to the apex, so it is not asked.
+const keyHosts = trusted.filter((host) => !host.startsWith('www.'));
+for (const host of keyHosts) {
+  const own = await getWithHost(`/${SMOKE_INDEXNOW_KEY}.txt`, host).catch((e) => fail(`GET https://${host}/<key>.txt never completed: ${e.message}`));
+  if (own.status !== 200 || own.body !== SMOKE_INDEXNOW_KEY) {
+    fail(`GET https://${host}/${SMOKE_INDEXNOW_KEY}.txt returned ${own.status} "${own.body.slice(0, 80)}"; expected 200 with the key`);
+  }
+  const other = await getWithHost('/0123456789abcdef.txt', host).catch((e) => fail(`GET https://${host}/0123456789abcdef.txt never completed: ${e.message}`));
+  if (other.status !== 404) fail(`GET https://${host}/0123456789abcdef.txt returned ${other.status}; expected 404 for a name that is not the key`);
+}
+detail += `; IndexNow key file served on ${keyHosts.length} hosts`;
+
 settled = true;
 server.removeAllListeners('exit');
 server.kill();
@@ -209,15 +228,17 @@ function serverModules(dir) {
 
 /**
  * A GET with the Host header nginx would send (fetch may not set Host), without following
- * redirects. Resolves the status and the Location header.
+ * redirects. Resolves the status, the Location header and the body.
  */
 function getWithHost(pathname, host) {
   return new Promise((resolve, reject) => {
     const req = http.request(
       { host: HOST, port: PORT, path: pathname, method: 'GET', headers: { host, 'x-forwarded-proto': 'https' }, timeout: 15_000 },
       (res) => {
-        res.resume();
-        res.on('end', () => resolve({ status: res.statusCode, location: res.headers.location ?? null }));
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => resolve({ status: res.statusCode, location: res.headers.location ?? null, body }));
       },
     );
     req.on('timeout', () => req.destroy(new Error('timed out')));
