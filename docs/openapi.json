@@ -10956,7 +10956,7 @@
         },
         "summary": "Get the message to sign for the secure wallet flow",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:read"
@@ -11028,7 +11028,7 @@
         },
         "summary": "Register a blockchain wallet for a receiver",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:write"
@@ -11102,7 +11102,7 @@
         },
         "summary": "List a receiver's wallets",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:read"
@@ -11169,7 +11169,7 @@
         },
         "summary": "Delete a wallet",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:write"
@@ -11241,7 +11241,7 @@
         },
         "summary": "Add a fiat bank account for a receiver",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:write"
@@ -11315,7 +11315,7 @@
         },
         "summary": "List a receiver's bank accounts",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:read"
@@ -11382,7 +11382,7 @@
         },
         "summary": "Delete a bank account",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:write"
@@ -11683,7 +11683,7 @@
         },
         "summary": "List available bank rails",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:read"
@@ -11735,7 +11735,7 @@
         },
         "summary": "Get the field schema required by a rail",
         "tags": [
-          "kyc"
+          "kyc-accounts"
         ],
         "x-cosmos-scopes": [
           "kyc:read"
@@ -15639,7 +15639,11 @@
     },
     {
       "name": "kyc",
-      "description": "Receivers, KYC documents, blockchain wallets, bank accounts, and the rail catalogue."
+      "description": "Receivers, their review and terms of service, and KYC documents."
+    },
+    {
+      "name": "kyc-accounts",
+      "description": "A receiver's blockchain wallets and fiat bank accounts, the bank rails and the fields each rail asks for."
     },
     {
       "name": "DeFindex",
