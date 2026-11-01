@@ -50,7 +50,7 @@ export function signatureOn(
     if (key.verify(got, signature as never)) return { ok: true, signature };
   }
   // The account's signature for the same transaction on another network: the wallet was set to
-  // that network (Cosmos Wallet signs for the one it is on unless told otherwise). Said apart,
+  // that network (Cosmos Pay Wallet signs for the one it is on unless told otherwise). Said apart,
   // since "not signed" sends the person looking for a key they already used.
   for (const other of KNOWN_PASSPHRASES.filter((p) => p !== networkPassphrase)) {
     const there = bytesOf(TransactionBuilder.fromXDR(signedXdr.trim(), other).hash());

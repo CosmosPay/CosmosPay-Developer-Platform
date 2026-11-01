@@ -152,7 +152,7 @@ export default {
       invalid: "这不是已签名交易的 XDR。",
       otherTransaction: "这是另一笔交易。请不加修改地签署上面的 XDR。",
       notSigned: "此交易不是由 {account} 签名的。",
-      otherNetwork: "此签名属于另一个网络。此交易在 {network} 上：请在钱包中选择 {network}（在 Cosmos Wallet 中为“交易网络”），然后重新签名。",
+      otherNetwork: "此签名属于另一个网络。此交易在 {network} 上：请在钱包中选择 {network}（在 Cosmos Pay Wallet 中为“交易网络”），然后重新签名。",
       network: "网络",
       txAccount: "交易账户",
       signer: "签名账户",
@@ -634,7 +634,7 @@ export default {
 
   about: {
     title: "关于 Cosmos Pay",
-    lede: "Cosmos Pay 为企业打造稳定币支付：支付 API、托管收银台和支付链接、兑换、隐私支付，以及非托管的 Cosmos Wallet，支持 Stellar、Solana 和 Monad。",
+    lede: "Cosmos Pay 为企业打造稳定币支付：支付 API、托管收银台和支付链接、兑换、隐私支付，以及非托管的 Cosmos Pay Wallet，支持 Stellar、Solana 和 Monad。",
     disambiguation: "Cosmos Pay（cosmospay.lat）与 Cosmos Network（ATOM）是不同的项目。",
     facts: {
       networks: "网络",
@@ -653,7 +653,7 @@ export default {
         checkout: { t: "托管收银台和支付链接", d: "带二维码的支付链接和由我们托管的收银台页面，提供四种设计和七种语言。支付按钮或嵌入式收银台只需一个 script 标签。", a: "查看集成方式" },
         swaps: { t: "兑换", d: "无需账户，在 {n} 个网络之间兑换代币，并从 Stellar 发送 USDT0。", a: "打开兑换" },
         private: { t: "隐私支付", d: "Stellar 上的支付，其金额借助零知识证明在链上保持隐藏。目前仅在测试网上提供。", a: "了解其工作方式" },
-        wallet: { t: "Cosmos Wallet", d: "适用于 Stellar、Solana 和 Monad 的非托管钱包：网页应用、浏览器扩展，以及 Android、Windows、macOS 和 Linux 应用。密钥在设备上生成并加密。", a: "获取钱包" },
+        wallet: { t: "Cosmos Pay Wallet", d: "适用于 Stellar、Solana 和 Monad 的非托管钱包：网页应用、浏览器扩展，以及 Android、Windows、macOS 和 Linux 应用。密钥在设备上生成并加密。", a: "获取钱包" },
       },
     },
     code: {
@@ -667,7 +667,7 @@ export default {
         server: "支付 API 服务器：支付意图和支付链接、Webhook、兑换和隐私支付。",
         platform: "本网站、支付网站、控制台和文档。",
         sdk: "JavaScript 和 TypeScript SDK，以 @cosmosapp/pay_sdk 之名发布在 npm 上。",
-        wallet: "Cosmos Wallet：网页应用、浏览器扩展，以及桌面和 Android 应用。",
+        wallet: "Cosmos Pay Wallet：网页应用、浏览器扩展，以及桌面和 Android 应用。",
         skill: "一个教 AI 编程助手集成 Cosmos Pay 的技能。",
       },
     },

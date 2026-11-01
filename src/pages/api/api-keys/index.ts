@@ -223,7 +223,7 @@ export const POST: APIRoute = async (ctx) => {
         name: rotated.name,
         description: rotated.description,
       },
-      message: "API key limit reached for this Cosmos Wallet account; your existing key was rotated and returned.",
+      message: "API key limit reached for this Cosmos Pay Wallet account; your existing key was rotated and returned.",
     });
   }
 

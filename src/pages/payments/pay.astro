@@ -10,7 +10,7 @@
  *      `${origin}/pay?uri=%s` for `web+stellar:`.
  *   2. From then on any web+stellar:pay?… link opens this page with the URI. The page shows
  *      the whole request (asset issuer, who claims to ask, where the result goes) and hands
- *      it to the Cosmos Wallet extension (window.cosmosWallet.requestPayment → approval
+ *      it to the Cosmos Pay Wallet extension (window.cosmosWallet.requestPayment → approval
  *      window → sign → submit) only when the payer presses the button: any site can send a
  *      browser here with a URI of its choosing, so arriving is not consent.
  *   3. No extension? A fallback button deep-links the web wallet, which reads ?uri= itself.

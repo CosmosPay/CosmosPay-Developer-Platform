@@ -216,7 +216,7 @@ const en = {
     },
     wallets: {
       q: "Which wallets can my customers use?",
-      a: "On Stellar, any wallet that opens SEP-7 links, such as Freighter, xBull, Rabet, LOBSTR, Albedo or Cosmos Wallet. On Solana, any wallet that reads Solana Pay links, such as Phantom or Solflare; on Monad, any EVM wallet that reads EIP-681 links.",
+      a: "On Stellar, any wallet that opens SEP-7 links, such as Freighter, xBull, Rabet, LOBSTR, Albedo or Cosmos Pay Wallet. On Solana, any wallet that reads Solana Pay links, such as Phantom or Solflare; on Monad, any EVM wallet that reads EIP-681 links.",
     },
     custody: {
       q: "Does Cosmos Pay hold my money?",
@@ -347,11 +347,11 @@ const en = {
       sandbox: "Stellar Testnet with a test key (dv_); the public network with a live key (prod_).",
       address: "Issuer",
       assetsLede: "The dashboard offers these by name. Any other Stellar asset goes by its code and issuer.",
-      walletsLede: "Any wallet that opens SEP-7 links. The hosted checkout can also open the payment in the Cosmos Wallet extension or its web wallet.",
+      walletsLede: "Any wallet that opens SEP-7 links. The hosted checkout can also open the payment in the Cosmos Pay Wallet extension or its web wallet.",
       feesLede: "Each payment pays your plan’s rate. The payer’s wallet pays the Stellar network fee.",
       codeNote: "A test key (dv_) creates the link on Testnet: use the Testnet USDC issuer from the table above, or leave out assetCode and assetIssuer to charge in XLM.",
       faq: {
-        wallets: { q: "Which wallets can pay a Stellar payment link?", a: "Any wallet that opens SEP-7 links, such as Freighter, xBull, Rabet, LOBSTR, Albedo or Cosmos Wallet. On a computer, the customer can also scan the QR code with a phone wallet." },
+        wallets: { q: "Which wallets can pay a Stellar payment link?", a: "Any wallet that opens SEP-7 links, such as Freighter, xBull, Rabet, LOBSTR, Albedo or Cosmos Pay Wallet. On a computer, the customer can also scan the QR code with a phone wallet." },
         memo: { q: "Why does a Stellar payment carry a memo?", a: "The memo is how Cosmos Pay matches a payment to its link. A wallet that opens the link adds it; a payment sent by hand without it cannot be matched." },
         assets: { q: "Can I charge in USDC or EURC on Stellar?", a: "Yes. Circle’s USDC and EURC are presets on the public network, next to XLM and Tether’s USDT0. Any other Stellar asset goes by its code and issuer, and your customer pays in that same asset." },
         testing: { q: "How do I test Stellar payments without real money?", a: "Create a test key (dv_) in the dashboard. Its links run on Stellar Testnet, and their checkout says that no real funds move. Friendbot, the Testnet faucet, funds a test account with XLM." },
@@ -655,7 +655,7 @@ const es: LandingMessages = {
     },
     wallets: {
       q: "¿Qué wallets pueden usar mis clientes?",
-      a: "En Stellar, cualquier wallet que abra enlaces SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo o Cosmos Wallet. En Solana, cualquier wallet que lea enlaces de Solana Pay, como Phantom o Solflare; en Monad, cualquier wallet EVM que lea enlaces EIP-681.",
+      a: "En Stellar, cualquier wallet que abra enlaces SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo o Cosmos Pay Wallet. En Solana, cualquier wallet que lea enlaces de Solana Pay, como Phantom o Solflare; en Monad, cualquier wallet EVM que lea enlaces EIP-681.",
     },
     custody: {
       q: "¿Cosmos Pay retiene mi dinero?",
@@ -783,11 +783,11 @@ const es: LandingMessages = {
       sandbox: "Stellar Testnet con una clave de prueba (dv_); la red pública con una clave de producción (prod_).",
       address: "Emisor",
       assetsLede: "El dashboard los ofrece por nombre. Cualquier otro activo de Stellar se indica por su código y su emisor.",
-      walletsLede: "Cualquier wallet que abra enlaces SEP-7. El checkout alojado también puede abrir el pago en la extensión de Cosmos Wallet o en su wallet web.",
+      walletsLede: "Cualquier wallet que abra enlaces SEP-7. El checkout alojado también puede abrir el pago en la extensión de Cosmos Pay Wallet o en su wallet web.",
       feesLede: "Cada pago paga la tarifa de tu plan. La wallet de quien paga cubre la comisión de red de Stellar.",
       codeNote: "Una clave de prueba (dv_) crea el enlace en Testnet: usa el emisor de USDC de Testnet de la tabla de arriba, u omite assetCode y assetIssuer para cobrar en XLM.",
       faq: {
-        wallets: { q: "¿Qué wallets pueden pagar un enlace de pago en Stellar?", a: "Cualquier wallet que abra enlaces SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo o Cosmos Wallet. En una computadora, el cliente también puede escanear el código QR con una wallet del teléfono." },
+        wallets: { q: "¿Qué wallets pueden pagar un enlace de pago en Stellar?", a: "Cualquier wallet que abra enlaces SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo o Cosmos Pay Wallet. En una computadora, el cliente también puede escanear el código QR con una wallet del teléfono." },
         memo: { q: "¿Por qué un pago en Stellar lleva un memo?", a: "El memo es lo que permite a Cosmos Pay asociar un pago con su enlace. La wallet que abre el enlace lo agrega; un pago enviado a mano sin memo no se puede asociar." },
         assets: { q: "¿Puedo cobrar en USDC o EURC en Stellar?", a: "Sí. USDC y EURC de Circle están predefinidos en la red pública, junto con XLM y USDT0 de Tether. Cualquier otro activo de Stellar se indica por su código y su emisor, y tu cliente paga en ese mismo activo." },
         testing: { q: "¿Cómo pruebo pagos en Stellar sin dinero real?", a: "Crea una clave de prueba (dv_) en el dashboard. Sus enlaces funcionan en Stellar Testnet y su checkout indica que no se mueven fondos reales. Friendbot, el faucet de Testnet, carga XLM en una cuenta de prueba." },
@@ -1090,7 +1090,7 @@ const pt: LandingMessages = {
     },
     wallets: {
       q: "Quais carteiras meus clientes podem usar?",
-      a: "Na Stellar, qualquer carteira que abra links SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Wallet. Na Solana, qualquer carteira que leia links do Solana Pay, como Phantom ou Solflare; na Monad, qualquer carteira EVM que leia links EIP-681.",
+      a: "Na Stellar, qualquer carteira que abra links SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Pay Wallet. Na Solana, qualquer carteira que leia links do Solana Pay, como Phantom ou Solflare; na Monad, qualquer carteira EVM que leia links EIP-681.",
     },
     custody: {
       q: "O Cosmos Pay fica com o meu dinheiro?",
@@ -1218,11 +1218,11 @@ const pt: LandingMessages = {
       sandbox: "Stellar Testnet com uma chave de teste (dv_); a rede pública com uma chave de produção (prod_).",
       address: "Emissor",
       assetsLede: "O dashboard oferece estes pelo nome. Qualquer outro ativo da Stellar é indicado pelo código e pelo emissor.",
-      walletsLede: "Qualquer carteira que abra links SEP-7. O checkout hospedado também pode abrir o pagamento na extensão da Cosmos Wallet ou na carteira web dela.",
+      walletsLede: "Qualquer carteira que abra links SEP-7. O checkout hospedado também pode abrir o pagamento na extensão da Cosmos Pay Wallet ou na carteira web dela.",
       feesLede: "Cada pagamento paga a tarifa do seu plano. A carteira de quem paga cobre a taxa de rede da Stellar.",
       codeNote: "Uma chave de teste (dv_) cria o link na Testnet: use o emissor de USDC da Testnet da tabela acima, ou omita assetCode e assetIssuer para cobrar em XLM.",
       faq: {
-        wallets: { q: "Quais carteiras podem pagar um link de pagamento na Stellar?", a: "Qualquer carteira que abra links SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Wallet. No computador, o cliente também pode escanear o QR code com uma carteira no celular." },
+        wallets: { q: "Quais carteiras podem pagar um link de pagamento na Stellar?", a: "Qualquer carteira que abra links SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Pay Wallet. No computador, o cliente também pode escanear o QR code com uma carteira no celular." },
         memo: { q: "Por que um pagamento na Stellar leva um memo?", a: "O memo é como a Cosmos Pay associa um pagamento ao seu link. A carteira que abre o link o adiciona; um pagamento enviado manualmente sem ele não pode ser associado." },
         assets: { q: "Posso cobrar em USDC ou EURC na Stellar?", a: "Sim. USDC e EURC da Circle são predefinidos na rede pública, junto com XLM e o USDT0 da Tether. Qualquer outro ativo da Stellar é indicado pelo código e pelo emissor, e seu cliente paga nesse mesmo ativo." },
         testing: { q: "Como testo pagamentos na Stellar sem dinheiro real?", a: "Crie uma chave de teste (dv_) no dashboard. Os links dela funcionam na Stellar Testnet, e o checkout avisa que nenhum fundo real é movimentado. O Friendbot, o faucet da Testnet, envia XLM para uma conta de teste." },
@@ -1525,7 +1525,7 @@ const fr: LandingMessages = {
     },
     wallets: {
       q: "Quels wallets mes clients peuvent-ils utiliser ?",
-      a: "Sur Stellar, tout wallet qui ouvre les liens SEP-7, comme Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Wallet. Sur Solana, tout wallet qui lit les liens Solana Pay, comme Phantom ou Solflare ; sur Monad, tout wallet EVM qui lit les liens EIP-681.",
+      a: "Sur Stellar, tout wallet qui ouvre les liens SEP-7, comme Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Pay Wallet. Sur Solana, tout wallet qui lit les liens Solana Pay, comme Phantom ou Solflare ; sur Monad, tout wallet EVM qui lit les liens EIP-681.",
     },
     custody: {
       q: "Cosmos Pay garde-t-il mon argent ?",
@@ -1653,11 +1653,11 @@ const fr: LandingMessages = {
       sandbox: "Stellar Testnet avec une clé de test (dv_) ; le réseau public avec une clé de production (prod_).",
       address: "Émetteur",
       assetsLede: "Le tableau de bord les propose par leur nom. Tout autre actif Stellar s’indique par son code et son émetteur.",
-      walletsLede: "Tout wallet qui ouvre les liens SEP-7. Le checkout hébergé peut aussi ouvrir le paiement dans l’extension Cosmos Wallet ou dans son wallet web.",
+      walletsLede: "Tout wallet qui ouvre les liens SEP-7. Le checkout hébergé peut aussi ouvrir le paiement dans l’extension Cosmos Pay Wallet ou dans son wallet web.",
       feesLede: "Chaque paiement paie le tarif de votre offre. Le wallet du payeur règle les frais de réseau Stellar.",
       codeNote: "Une clé de test (dv_) crée le lien sur Testnet : utilisez l’émetteur USDC de Testnet du tableau ci-dessus, ou omettez assetCode et assetIssuer pour encaisser en XLM.",
       faq: {
-        wallets: { q: "Quels wallets peuvent payer un lien de paiement Stellar ?", a: "Tout wallet qui ouvre les liens SEP-7, comme Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Wallet. Sur un ordinateur, le client peut aussi scanner le QR code avec un wallet sur son téléphone." },
+        wallets: { q: "Quels wallets peuvent payer un lien de paiement Stellar ?", a: "Tout wallet qui ouvre les liens SEP-7, comme Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Pay Wallet. Sur un ordinateur, le client peut aussi scanner le QR code avec un wallet sur son téléphone." },
         memo: { q: "Pourquoi un paiement Stellar porte-t-il un mémo ?", a: "Le mémo permet à Cosmos Pay de rattacher un paiement à son lien. Le wallet qui ouvre le lien l’ajoute ; un paiement envoyé à la main sans mémo ne peut pas être rattaché." },
         assets: { q: "Puis-je encaisser en USDC ou en EURC sur Stellar ?", a: "Oui. L’USDC et l’EURC de Circle sont préconfigurés sur le réseau public, avec le XLM et l’USDT0 de Tether. Tout autre actif Stellar s’indique par son code et son émetteur, et votre client paie dans ce même actif." },
         testing: { q: "Comment tester des paiements Stellar sans argent réel ?", a: "Créez une clé de test (dv_) dans le tableau de bord. Ses liens fonctionnent sur Stellar Testnet, et leur checkout indique qu’aucun fonds réel ne circule. Friendbot, le faucet de Testnet, approvisionne un compte de test en XLM." },
@@ -1960,7 +1960,7 @@ const de: LandingMessages = {
     },
     wallets: {
       q: "Welche Wallets können meine Kunden nutzen?",
-      a: "Auf Stellar jede Wallet, die SEP-7-Links öffnet, etwa Freighter, xBull, Rabet, LOBSTR, Albedo oder Cosmos Wallet. Auf Solana jede Wallet, die Solana-Pay-Links liest, etwa Phantom oder Solflare; auf Monad jede EVM-Wallet, die EIP-681-Links liest.",
+      a: "Auf Stellar jede Wallet, die SEP-7-Links öffnet, etwa Freighter, xBull, Rabet, LOBSTR, Albedo oder Cosmos Pay Wallet. Auf Solana jede Wallet, die Solana-Pay-Links liest, etwa Phantom oder Solflare; auf Monad jede EVM-Wallet, die EIP-681-Links liest.",
     },
     custody: {
       q: "Verwahrt Cosmos Pay mein Geld?",
@@ -2092,7 +2092,7 @@ const de: LandingMessages = {
       feesLede: "Jede Zahlung kostet den Satz deines Tarifs. Die Wallet des Zahlers trägt die Netzwerkgebühr von Stellar.",
       codeNote: "Ein Testschlüssel (dv_) erstellt den Link im Testnet: Nutze den USDC-Herausgeber des Testnets aus der Tabelle oben, oder lass assetCode und assetIssuer weg, um in XLM zu kassieren.",
       faq: {
-        wallets: { q: "Welche Wallets können einen Stellar-Zahlungslink bezahlen?", a: "Jede Wallet, die SEP-7-Links öffnet, etwa Freighter, xBull, Rabet, LOBSTR, Albedo oder Cosmos Wallet. Am Computer kann der Kunde den QR-Code auch mit einer Wallet auf dem Handy scannen." },
+        wallets: { q: "Welche Wallets können einen Stellar-Zahlungslink bezahlen?", a: "Jede Wallet, die SEP-7-Links öffnet, etwa Freighter, xBull, Rabet, LOBSTR, Albedo oder Cosmos Pay Wallet. Am Computer kann der Kunde den QR-Code auch mit einer Wallet auf dem Handy scannen." },
         memo: { q: "Warum trägt eine Stellar-Zahlung ein Memo?", a: "Über das Memo ordnet Cosmos Pay eine Zahlung ihrem Link zu. Die Wallet, die den Link öffnet, fügt es hinzu; eine von Hand gesendete Zahlung ohne Memo lässt sich nicht zuordnen." },
         assets: { q: "Kann ich auf Stellar in USDC oder EURC kassieren?", a: "Ja. USDC und EURC von Circle sind im öffentlichen Netzwerk voreingestellt, neben XLM und Tethers USDT0. Jedes andere Stellar-Asset gibst du über Code und Herausgeber an, und dein Kunde zahlt in genau diesem Asset." },
         testing: { q: "Wie teste ich Stellar-Zahlungen ohne echtes Geld?", a: "Erstelle im Dashboard einen Testschlüssel (dv_). Seine Links laufen im Stellar Testnet, und ihr Checkout sagt, dass kein echtes Geld bewegt wird. Friendbot, der Faucet des Testnets, lädt ein Testkonto mit XLM auf." },
@@ -2395,7 +2395,7 @@ const hi: LandingMessages = {
     },
     wallets: {
       q: "मेरे ग्राहक कौन-से वॉलेट इस्तेमाल कर सकते हैं?",
-      a: "Stellar पर, कोई भी वॉलेट जो SEP-7 लिंक खोलता है, जैसे Freighter, xBull, Rabet, LOBSTR, Albedo या Cosmos Wallet। Solana पर, कोई भी वॉलेट जो Solana Pay लिंक पढ़ता है, जैसे Phantom या Solflare; Monad पर, कोई भी EVM वॉलेट जो EIP-681 लिंक पढ़ता है।",
+      a: "Stellar पर, कोई भी वॉलेट जो SEP-7 लिंक खोलता है, जैसे Freighter, xBull, Rabet, LOBSTR, Albedo या Cosmos Pay Wallet। Solana पर, कोई भी वॉलेट जो Solana Pay लिंक पढ़ता है, जैसे Phantom या Solflare; Monad पर, कोई भी EVM वॉलेट जो EIP-681 लिंक पढ़ता है।",
     },
     custody: {
       q: "क्या Cosmos Pay मेरा पैसा अपने पास रखता है?",
@@ -2523,11 +2523,11 @@ const hi: LandingMessages = {
       sandbox: "टेस्ट की (dv_) के साथ Stellar Testnet; लाइव की (prod_) के साथ पब्लिक नेटवर्क।",
       address: "इश्यूअर",
       assetsLede: "डैशबोर्ड इन्हें नाम से दिखाता है। Stellar का कोई भी दूसरा एसेट उसके कोड और इश्यूअर से बताया जाता है।",
-      walletsLede: "कोई भी वॉलेट जो SEP-7 लिंक खोलता है। होस्टेड चेकआउट भुगतान को Cosmos Wallet एक्सटेंशन या उसके वेब वॉलेट में भी खोल सकता है।",
+      walletsLede: "कोई भी वॉलेट जो SEP-7 लिंक खोलता है। होस्टेड चेकआउट भुगतान को Cosmos Pay Wallet एक्सटेंशन या उसके वेब वॉलेट में भी खोल सकता है।",
       feesLede: "हर भुगतान पर आपके प्लान की दर लगती है। Stellar नेटवर्क शुल्क भुगतान करने वाले का वॉलेट देता है।",
       codeNote: "टेस्ट की (dv_) लिंक को Testnet पर बनाती है: ऊपर की तालिका से Testnet का USDC इश्यूअर लें, या XLM में भुगतान लेने के लिए assetCode और assetIssuer छोड़ दें।",
       faq: {
-        wallets: { q: "कौन-से वॉलेट Stellar पेमेंट लिंक का भुगतान कर सकते हैं?", a: "कोई भी वॉलेट जो SEP-7 लिंक खोलता है, जैसे Freighter, xBull, Rabet, LOBSTR, Albedo या Cosmos Wallet। कंप्यूटर पर ग्राहक फ़ोन वाले वॉलेट से QR कोड भी स्कैन कर सकता है।" },
+        wallets: { q: "कौन-से वॉलेट Stellar पेमेंट लिंक का भुगतान कर सकते हैं?", a: "कोई भी वॉलेट जो SEP-7 लिंक खोलता है, जैसे Freighter, xBull, Rabet, LOBSTR, Albedo या Cosmos Pay Wallet। कंप्यूटर पर ग्राहक फ़ोन वाले वॉलेट से QR कोड भी स्कैन कर सकता है।" },
         memo: { q: "Stellar भुगतान में मेमो क्यों होता है?", a: "मेमो से ही Cosmos Pay किसी भुगतान को उसके लिंक से मिलाता है। लिंक खोलने वाला वॉलेट इसे जोड़ देता है; बिना मेमो के हाथ से भेजा गया भुगतान मिलाया नहीं जा सकता।" },
         assets: { q: "क्या मैं Stellar पर USDC या EURC में भुगतान ले सकता हूँ?", a: "हाँ। Circle के USDC और EURC पब्लिक नेटवर्क पर पहले से सेट हैं, XLM और Tether के USDT0 के साथ। Stellar का कोई भी दूसरा एसेट उसके कोड और इश्यूअर से बताया जाता है, और आपका ग्राहक उसी एसेट में भुगतान करता है।" },
         testing: { q: "बिना असली पैसे के Stellar भुगतान कैसे टेस्ट करूँ?", a: "डैशबोर्ड में एक टेस्ट की (dv_) बनाएँ। उसके लिंक Stellar Testnet पर चलते हैं, और उनका चेकआउट बताता है कि कोई असली फ़ंड ट्रांसफ़र नहीं होता। Testnet का फ़ॉसेट Friendbot टेस्ट अकाउंट में XLM डाल देता है।" },
@@ -2830,7 +2830,7 @@ const zh: LandingMessages = {
     },
     wallets: {
       q: "我的客户可以使用哪些钱包？",
-      a: "在 Stellar 上，可使用任何能打开 SEP-7 链接的钱包，例如 Freighter、xBull、Rabet、LOBSTR、Albedo 或 Cosmos Wallet。在 Solana 上，可使用任何能读取 Solana Pay 链接的钱包，例如 Phantom 或 Solflare；在 Monad 上，可使用任何能读取 EIP-681 链接的 EVM 钱包。",
+      a: "在 Stellar 上，可使用任何能打开 SEP-7 链接的钱包，例如 Freighter、xBull、Rabet、LOBSTR、Albedo 或 Cosmos Pay Wallet。在 Solana 上，可使用任何能读取 Solana Pay 链接的钱包，例如 Phantom 或 Solflare；在 Monad 上，可使用任何能读取 EIP-681 链接的 EVM 钱包。",
     },
     custody: {
       q: "Cosmos Pay 会持有我的资金吗？",
@@ -2958,11 +2958,11 @@ const zh: LandingMessages = {
       sandbox: "使用测试密钥（dv_）时为 Stellar Testnet；使用正式密钥（prod_）时为公共网络。",
       address: "发行方",
       assetsLede: "控制台按名称提供以下资产。其他 Stellar 资产按资产代码和发行方指定。",
-      walletsLede: "任何能打开 SEP-7 链接的钱包。托管收银台还可以在 Cosmos Wallet 扩展程序或其网页钱包中打开付款。",
+      walletsLede: "任何能打开 SEP-7 链接的钱包。托管收银台还可以在 Cosmos Pay Wallet 扩展程序或其网页钱包中打开付款。",
       feesLede: "每笔支付按您套餐的费率计费。Stellar 网络手续费由付款方钱包支付。",
       codeNote: "测试密钥（dv_）会在 Testnet 上创建链接：请使用上表中 Testnet 的 USDC 发行方，或省略 assetCode 和 assetIssuer 以 XLM 收款。",
       faq: {
-        wallets: { q: "哪些钱包可以支付 Stellar 支付链接？", a: "任何能打开 SEP-7 链接的钱包，例如 Freighter、xBull、Rabet、LOBSTR、Albedo 或 Cosmos Wallet。在电脑上，客户也可以用手机钱包扫描二维码。" },
+        wallets: { q: "哪些钱包可以支付 Stellar 支付链接？", a: "任何能打开 SEP-7 链接的钱包，例如 Freighter、xBull、Rabet、LOBSTR、Albedo 或 Cosmos Pay Wallet。在电脑上，客户也可以用手机钱包扫描二维码。" },
         memo: { q: "为什么 Stellar 付款要带 memo？", a: "Cosmos Pay 依靠 memo 将付款与其链接匹配。打开链接的钱包会自动添加；手动发送且不带 memo 的付款无法匹配。" },
         assets: { q: "可以在 Stellar 上用 USDC 或 EURC 收款吗？", a: "可以。Circle 的 USDC 和 EURC 在公共网络上为预设资产，另有 XLM 和 Tether 的 USDT0。其他 Stellar 资产按资产代码和发行方指定，客户以同一资产付款。" },
         testing: { q: "如何在不使用真实资金的情况下测试 Stellar 付款？", a: "在控制台创建测试密钥（dv_）。其链接在 Stellar Testnet 上运行，收银台会注明不涉及真实资金。Testnet 的水龙头 Friendbot 可为测试账户充入 XLM。" },

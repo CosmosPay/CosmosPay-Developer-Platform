@@ -50,7 +50,7 @@ const SWAP_ROW: readonly MarqueeItem[] = [
 ];
 /* The wallets row; the network pages show the logos of the wallets they name from it. */
 const WALLET_ROW: readonly MarqueeItem[] = [
-  { name: "Cosmos Wallet", mark: "cosmos" },
+  { name: "Cosmos Pay Wallet", mark: "cosmos" },
   { name: "Freighter", file: "freighter.webp" },
   { name: "LOBSTR", file: "lobstr.webp" },
   { name: "xBull", file: "xbull.webp" },
