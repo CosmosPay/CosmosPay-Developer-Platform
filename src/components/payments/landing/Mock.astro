@@ -14,8 +14,7 @@ type Name =
   | "link" | "checkout" | "code"
   | "step-create" | "step-share" | "step-pay" | "step-confirm"
   | "use-stores" | "use-services" | "use-digital" | "use-donations"
-  | "explorer"
-  | "browser-hosted" | "site-button" | "site-embedded";
+  | "explorer";
 interface Props {
   name: Name;
   ui: LandingMessages["ui"];
@@ -27,7 +26,7 @@ const SDK_CALL = `const intent = await client
     destination: "G…YOUR_ACCOUNT",
     amount: "25",
   });
-intent.uri; // the checkout link`;
+intent.uri; // what the QR code carries`;
 ---
 
 <div class:list={["pl-mk", `pl-mk--${name}`]} aria-hidden="true">
@@ -140,59 +139,6 @@ intent.uri; // the checkout link`;
       </div>
       <div class="pl-mk-row"><span>{ui.status}</span>{name === "use-stores" ? <span class="pl-mk-wait">{ui.held}</span> : <span class="pl-mk-good">{ui.paid}</span>}</div>
       <div class="pl-mk-row"><span>{name === "use-digital" ? ui.delivered : ui.webhookSent}</span><span class="pl-mk-strong">✓</span></div>
-    </div>
-  )}
-
-  {name === "browser-hosted" && (
-    <div class="pl-mk-browser">
-      <div class="pl-mk-chrome"><span class="pl-mk-dots"><i /><i /><i /></span><span class="pl-mk-url">payments.cosmospay.lat/cmh9a1</span></div>
-      <div class="pl-mk-page pl-mk-page-center">
-        <div class="pl-mk-card pl-mk-center">
-          <div class="pl-mk-row pl-mk-head"><span class="pl-mk-ico"><Mark name="cosmos" /></span><b>Cosmos Pay</b></div>
-          <div class="pl-mk-big" data-odo>25.00 USDC</div>
-          <img class="pl-mk-qr" src="/media/sample-qr.png" alt="" width="84" height="84" loading="lazy" decoding="async" />
-          <span class="pl-mk-btn">{ui.openWallet}</span>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {name === "site-button" && (
-    <div class="pl-mk-browser">
-      <div class="pl-mk-chrome"><span class="pl-mk-dots"><i /><i /><i /></span><span class="pl-mk-url">your-store.com/checkout</span></div>
-      <div class="pl-mk-page">
-        <div class="pl-mk-product">
-          <span class="pl-mk-thumb" />
-          <div><b>{ui.product}</b><span class="pl-mk-muted" data-odo>25.00 USDC</span></div>
-        </div>
-        <span class="pl-mk-btn pl-mk-btn-wide pl-mk-pulse"><span class="pl-mk-ico pl-mk-ico-xs"><Mark name="cosmos" /></span>{ui.payWith}</span>
-        <div class="pl-mk-popup">
-          <div class="pl-mk-chrome pl-mk-chrome-sm"><span class="pl-mk-dots"><i /><i /><i /></span><span class="pl-mk-url">payments.cosmospay.lat</span></div>
-          <div class="pl-mk-popup-body">
-            <div class="pl-mk-big" data-odo>25.00 USDC</div>
-            <img class="pl-mk-qr" src="/media/sample-qr.png" alt="" width="64" height="64" loading="lazy" decoding="async" />
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {name === "site-embedded" && (
-    <div class="pl-mk-browser">
-      <div class="pl-mk-chrome"><span class="pl-mk-dots"><i /><i /><i /></span><span class="pl-mk-url">your-store.com/checkout</span></div>
-      <div class="pl-mk-page pl-mk-page-split">
-        <div class="pl-mk-product pl-mk-product-col">
-          <span class="pl-mk-thumb pl-mk-thumb-lg" />
-          <b>{ui.product}</b>
-          <span class="pl-mk-line" /><span class="pl-mk-line pl-mk-line-short" />
-        </div>
-        <div class="pl-mk-card pl-mk-center pl-mk-embed">
-          <div class="pl-mk-big" data-odo>25.00 USDC</div>
-          <img class="pl-mk-qr" src="/media/sample-qr.png" alt="" width="72" height="72" loading="lazy" decoding="async" />
-          <span class="pl-mk-btn">{ui.openWallet}</span>
-          <span class="pl-mk-good">{ui.confirmed}</span>
-        </div>
-      </div>
     </div>
   )}
 
