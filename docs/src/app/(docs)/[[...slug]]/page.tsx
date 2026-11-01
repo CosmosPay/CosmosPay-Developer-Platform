@@ -14,6 +14,7 @@ import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { gitConfig } from '@/lib/shared';
 import { openapi } from '@/lib/openapi';
+import { pruneOpenAPIDocument, type PrunedOperation, type PrunedWebhook } from '@/lib/openapi-prune';
 import { OpenAPIPage } from '@/components/api-page';
 import { baseOptions } from '@/lib/layout.shared';
 import { MobileSidebarTrigger } from '@/components/mobile-sidebar-trigger';
@@ -52,7 +53,7 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
   // API reference pages carry an `_openapi` frontmatter block; load their schema(s)
   // server-side so the client <OpenAPIPage> renders without fetching at runtime.
   const isOpenAPI = Boolean((page.data as { _openapi?: unknown })._openapi);
-  const preloaded = isOpenAPI ? await openapi.preloadOpenAPIPage(page) : null;
+  const preloaded = isOpenAPI ? (await openapi.preloadOpenAPIPage(page)).preloaded : null;
 
   // The sidebar/page tree is per-locale, so build it for the active language. The global
   // Cosmos navbar is rendered in the root layout, so Fumadocs' own top nav stays disabled.
@@ -85,14 +86,36 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
             components={getMDXComponents({
               // this allows you to link to other pages with relative file paths
               a: createRelativeLink(source, page),
+              // The page's own operations, with their descriptions (fumadocs' generated pages
+              // leave `showDescription` off, so the prose of every operation was missing).
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              OpenAPIPage: (mdxProps: any) => <OpenAPIPage {...mdxProps} {...(preloaded ?? {})} />,
+              OpenAPIPage: (mdxProps: any) => (
+                <OpenAPIPage
+                  {...mdxProps}
+                  showDescription
+                  {...(preloaded ? { preloaded: pagePreload(preloaded, mdxProps) } : {})}
+                />
+              ),
             })}
           />
         </DocsBody>
       </DocsPage>
     </DocsLayout>
   );
+}
+
+/**
+ * The preloaded documents reduced to what the page renders: its document, with only its
+ * operations and the components they reference (lib/openapi-prune.ts). Client props are
+ * serialized into the HTML, and the whole API was most of every reference page.
+ */
+function pagePreload(
+  preloaded: Awaited<ReturnType<typeof openapi.preloadOpenAPIPage>>['preloaded'],
+  props: { document: string; operations?: PrunedOperation[]; webhooks?: PrunedWebhook[] },
+) {
+  const doc = preloaded.docs[props.document];
+  if (!doc) return preloaded;
+  return { ...preloaded, docs: { [props.document]: pruneOpenAPIDocument(doc, props) } };
 }
 
 export async function generateStaticParams() {

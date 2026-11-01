@@ -1718,7 +1718,12 @@ consumer headers.
   `/docs/llms.txt`. `Accept: text/markdown` is **not** negotiated on the docs: the Node server hands
   out the static export before the middleware runs, so a page always answers HTML there (that would
   take an nginx rule). More docs SEO details (headings, datePublished from git) are in
-  `docs/README.md`.
+  `docs/README.md`. **Every exported docs page stays under 500 KB of HTML** (`build-docs.mjs`
+  fails above it; the API reference pages were 0.8 to 1.9 MB): an API page gets only its own
+  operations of the spec (`docs/src/lib/openapi-prune.ts`), and `docs/src/components/api/`
+  replaces the parts of fumadocs-openapi's UI that wrote the most (a fork of its schema UI to
+  re-check on upgrades, responses opened on demand, controls rendered after hydration). What stays
+  in the server HTML and what to do over budget: `docs/README.md`, "API reference page size".
 - **Two OpenAPI documents, not one.** `docs/openapi.json` is the community server's Payments API
   spec, committed and checked by `npm run check:api-spec`. `/api/openapi.json` is THIS app's own
   API, generated from `src/schemas/**/openapi.ts` and checked by `npm run check:openapi`. The
