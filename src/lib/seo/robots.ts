@@ -42,7 +42,8 @@ const AI_TRAIN: "yes" | "no" = "yes";
 export const CONTENT_SIGNAL = `Content-Signal: search=yes, ai-input=yes, ai-train=${AI_TRAIN}`;
 
 /* What every payments page loads to render, and the files crawlers fetch on their own (share
-   images, icons, the manifest, the sitemap, llms.txt, security.txt). The domain blocks everything else (payment
+   images, icons, the manifest, the sitemap, llms.txt, auth.md, the /.well-known files: security.txt,
+   the API catalog, the agent skills index). The domain blocks everything else (payment
    links are personal and short-lived), so without these Google renders the indexable pages without
    their styles and scripts and link previews lose their image. */
 const PAYMENTS_RESOURCES = [
@@ -59,6 +60,7 @@ const PAYMENTS_RESOURCES = [
   "/sitemap.xml",
   "/llms.txt",
   "/llms-full.txt",
+  "/auth.md",
   "/.well-known/",
 ];
 

@@ -137,8 +137,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
-- **`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/security.txt`,
-  `/.well-known/api-catalog` and the IndexNow key file are per-domain endpoints** (`SHARED_PATHS`
+- **`robots.txt`, `sitemap.xml`, `llms.txt`, `auth.md`, `/.well-known/security.txt`,
+  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json` and the IndexNow key file are
+  per-domain endpoints** (`SHARED_PATHS`
   in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
   `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
   the product owner's decision
@@ -159,6 +160,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `learn/<lang>.ts`) counts by the blocks a page reads (`landing-i18n.ts#es.faq`), dated by
   `git blame` (`scripts/page-dates.mjs`), never as a whole file; shared chrome never dates a page.
   /faq, /compare and the network pages show the date under their lede (`pages.updated`).
+- **Agent discovery** (`src/lib/seo/link-headers.ts`, `auth-md.ts`, `agent-skills.ts`): indexable
+  pages answer an RFC 8288 `Link` header (llms.txt, API catalog, OpenAPI, docs, sitemap, Markdown
+  version); `/auth.md` says how an agent authenticates (an API key a person creates, never their
+  password; the shared public key; no OAuth flow for agents), checked against the code; the skills
+  index pins the public skill's SKILL.md by commit and SHA-256. Never publish an MCP server card, A2A
+  agent card, OAuth metadata or WebMCP tools until the product has them.
 - **IndexNow** (Bing, which also feeds ChatGPT search and Copilot, Yandex and the rest) learns
   about new and changed pages from `npm run indexnow` (`scripts/indexnow.mjs`, helpers in
   `src/lib/seo/indexnow.ts`, tested): it reads each domain's live sitemap (following the

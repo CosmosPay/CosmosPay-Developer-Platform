@@ -69,6 +69,8 @@ test('payments: its pages and everything they load are crawlable', () => {
     ...PAYMENTS_PAGE_PATHS.map((p) => `${p}.md?lang=es`),
     '/.well-known/security.txt',
     '/.well-known/api-catalog',
+    '/.well-known/agent-skills/index.json',
+    '/auth.md',
   ]) {
     assert.ok(allowed(robots, url), url);
   }
