@@ -39,6 +39,12 @@ npm run export:wallet-data # dumps the retired wallet tables to JSON for the com
 - **Every catalog mirrors English key for key** with the same `{placeholders}` and no empty string:
   `tests/unit/dashboardI18n.test.ts` (the platform), `paymentsI18n.test.ts` and `embedI18n.test.ts`
   enforce it. URLs are not copy: links live in the components (`NAV_LINKS`), not the catalogs.
+- **The browser downloads one catalog, the page's language** (`src/lib/i18n/index.tsx`): each
+  language is its own chunk, the one `<html lang>` names loaded before the islands hydrate (keep
+  it equal to the islands' `lang`, or they wait for theirs), another one when it is picked
+  (`setLang` waits for it). The server holds all seven. Never import
+  `@/lib/i18n/messages/index` from client code: it bundles all seven (about 150 KB compressed)
+  into every page.
 
 ## Writing rule: no em dashes
 
@@ -827,7 +833,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   anchored right. It multiplies onto the light page; in dark mode it is inverted with its hue
   turned back and lightens onto the page, so the hero follows the theme. It **plays on its own for
   everyone** (the product owner's call, the one exception to reduced motion), pauses only off
-  screen, and always has its pause button (WCAG 2.2.2). Its container must not get a z-index: a
+  screen, and always has its pause button (WCAG 2.2.2). It has no `autoplay` and preloads nothing:
+  `landing.ts` starts it once the page has loaded and the browser is idle, so the poster is the
+  first screen and the video never competes with it. Its container must not get a z-index: a
   stacking context would cut the video off from the background it blends with. Its fade-in
   makes it one anyway, so it carries the page colour (`--bg`) for the video to blend with;
   without it a lighter band shows behind the white frame.

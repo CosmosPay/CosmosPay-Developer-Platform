@@ -50,8 +50,10 @@ export function Hero({ user }) {
           </div>
         </div>
       </div>
+      {/* Below the wallet section, so below the first screen: it loads when the page nears it
+          instead of competing with the wallet figure, the first screen's largest image. */}
       <img className="hero-cinta" src="/brand/cinta.webp" alt="" aria-hidden="true"
-           width="1672" height="941" fetchPriority="high" decoding="async" />
+           width="1672" height="941" loading="lazy" decoding="async" />
     </section>
   );
 }

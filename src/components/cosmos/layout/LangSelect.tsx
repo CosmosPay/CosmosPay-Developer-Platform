@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from "react";
-import { useLang, useT, setLang, LOCALES } from "@/lib/i18n/index";
+import { useLang, useT, setLang, loadCatalog, LOCALES } from "@/lib/i18n/index";
 import { useOutside } from "@/components/cosmos/hooks/useOutside";
 import { usePresence } from "@/components/cosmos/hooks/usePresence";
 import { Flag } from "@/components/cosmos/ui/Flag";
@@ -7,7 +7,10 @@ import { IcChev, IcCheck } from "@/components/cosmos/icons";
 
 /* Language selector: flips the active locale live across all islands. A disclosure: the button
    says it opens a list (aria-expanded), the list is plain buttons, each in its own language
-   (lang), the current one marked (aria-current); Escape closes it and returns focus. */
+   (lang), the current one marked (aria-current); Escape closes it and returns focus. Each
+   language's catalog is downloaded when its option is pointed at or focused, so it is usually
+   here by the time the option is chosen (setLang waits for it otherwise). */
+const warm = (code: string) => { loadCatalog(code).catch(() => {}); };
 export function LangSelect() {
   const [open, setOpen] = useState(false);
   const lang = useLang();
@@ -27,7 +30,7 @@ export function LangSelect() {
       <ul className="lang-menu" id={id} role="list" hidden={!mounted} data-state={state}>
         {LOCALES.map((l: any) => (
           <li key={l.code}>
-            <button type="button" lang={l.code} className={`lang-opt${l.code === cur.code ? " active" : ""}`} aria-current={l.code === cur.code ? "true" : undefined} onClick={() => { setLang(l.code); close(); }}>
+            <button type="button" lang={l.code} className={`lang-opt${l.code === cur.code ? " active" : ""}`} aria-current={l.code === cur.code ? "true" : undefined} onPointerEnter={() => warm(l.code)} onFocus={() => warm(l.code)} onClick={() => { setLang(l.code); close(); }}>
               <span className="flag" aria-hidden="true"><Flag code={l.flag} /></span><span>{l.name}</span><span className="check" aria-hidden="true"><IcCheck /></span>
             </button>
           </li>
