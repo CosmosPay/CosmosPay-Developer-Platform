@@ -12,15 +12,19 @@ interface Props {
   page: PaymentsPage | "home";
   title: string;
   description: string;
+  /** The questions the page shows, when it is not /faq (a network page's). */
+  faq?: readonly { q: string; a: string }[];
+  /** Load the merchant embed (only pages with a live demo need it). */
+  embed?: boolean;
 }
 
-const { d, page, title, description } = Astro.props;
+const { d, page, title, description, faq, embed = true } = Astro.props;
 ---
 
-<StructuredData d={d} page={page} title={title} description={description} />
+<StructuredData d={d} page={page} title={title} description={description} faq={faq} />
 {page === "home" && <link rel="preload" as="image" href="/media/coin-ramp-poster.webp" fetchpriority="high" />}
-<!-- The merchant embed, for the live demos of the integration options. -->
-<script is:inline src="/embed/cosmos-pay.js" defer></script>
+{/* The merchant embed, for the live demos of the integration options. */}
+{embed && <script is:inline src="/embed/cosmos-pay.js" defer></script>}
 <!-- Scroll reveals start hidden only when this runs; if the page script never arrives,
      the class comes off after 2.5 s and everything shows. -->
 <script is:inline>

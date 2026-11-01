@@ -1,11 +1,10 @@
 ---
 // Faq section of the payments landing (see src/pages/payments/index.astro for the page
-// it belongs to). Its data comes from landingData (../data.ts).
-import Icon from "@/components/payments/landing/Icon.astro";
-import Mark from "@/components/payments/landing/Mark.astro";
-import Mock from "@/components/payments/landing/Mock.astro";
-import Code from "@/components/payments/landing/Code.astro";
+// it belongs to). Its data comes from landingData (../data.ts). A network page passes its own
+// questions (`items`, with their `heading`) and names its network (`current`); under the
+// heading, every version links the network pages (the other two on a network page).
 import type { LandingData } from "@/components/payments/landing/data";
+import { NETWORK_PAGES, type NetworkPage } from "@/lib/payments/site-pages";
 
 interface Props {
   d: LandingData;
@@ -13,18 +12,30 @@ interface Props {
   limit?: number;
   /** On the FAQ page, whose header already names it: the heading is kept for assistive tech only. */
   bare?: boolean;
+  /** A page's own questions, in place of the gateway's. */
+  items?: readonly { q: string; a: string }[];
+  /** The heading over `items`. */
+  heading?: string;
+  /** The network the page is about: the links name the other networks. */
+  current?: NetworkPage;
 }
-const { limit, bare = false } = Astro.props;
+const { limit, bare = false, items, heading, current } = Astro.props;
 
-const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
-const shown = limit ? faq.slice(0, limit) : faq;
+const { links, pageLinks, t, faq } = Astro.props.d;
+const list = items ?? faq;
+const shown = limit ? list.slice(0, limit) : list;
+const nets = NETWORK_PAGES.filter((n) => n !== current);
 ---
 
 <section class="pl-section pl-faq-section" aria-labelledby="pl-faq">
   <div class="wrap pl-split">
     <div class="pl-head pl-head-sticky" data-reveal>
-      <h2 id="pl-faq" class:list={[{ "pl-sr": bare }]}>{t.faq.title} {t.faq.titleBold}</h2>
+      <h2 id="pl-faq" class:list={[{ "pl-sr": bare }]}>{heading ?? `${t.faq.title} ${t.faq.titleBold}`}</h2>
       {limit && <a class="pl-textlink pl-more" href={links.faq}>{t.pages.more.faq}</a>}
+      <p class="pl-faq-nets">
+        <span>{current ? t.network.others : t.pages.byNetwork}</span>
+        {nets.map((n) => <a class="pl-textlink" href={pageLinks[n]}>{t.pages[n].link}</a>)}
+      </p>
       {/* On the FAQ page (bare) the section opens the page and its astronaut is the first
           screen's largest image on phones: it loads at once and first. Elsewhere it is far down. */}
       <img class="pl-art pl-faq-art" src="/brand/astronauta-pensando.svg" alt="" width="200" height="237" loading={bare ? "eager" : "lazy"} fetchpriority={bare ? "high" : undefined} decoding="async" />

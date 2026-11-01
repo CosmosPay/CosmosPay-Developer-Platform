@@ -21,7 +21,7 @@ test('ownerOf assigns every public path to one domain', () => {
   assert.equal(ownerOf(LINK), 'payments');
   assert.equal(ownerOf('/preview/ticket'), 'payments');
   for (const p of ['/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/zk/bb/0.87.0/index.js']) assert.equal(ownerOf(p), 'payments', p);
-  for (const p of ['/integrations', '/use-cases', '/security', '/fees', '/faq']) assert.equal(ownerOf(p), 'payments', p);
+  for (const p of ['/integrations', '/use-cases', '/security', '/fees', '/faq', '/compare', '/stellar', '/solana', '/monad']) assert.equal(ownerOf(p), 'payments', p);
   for (const p of ['/login', '/dashboard', '/onboarding', '/invite/abc', '/kyc/return/o/e/r', '/swagger', '/docs', '/docs/api', '/api/auth/get-session']) {
     assert.equal(ownerOf(p), 'dev', p);
   }
@@ -74,6 +74,12 @@ test('payments.cosmospay.lat renders its landing and the checkout pages', () => 
   });
   assert.deepEqual(route('payments.cosmospay.lat', '/pricing'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing', status: 301 });
   assert.deepEqual(route('payments.cosmospay.lat', '/not-a-link'), { kind: 'not-found', area: 'payments' });
+  // The network pages and the comparison are gateway pages: one address, on the gateway.
+  for (const p of ['/stellar', '/solana', '/monad', '/compare']) {
+    assert.deepEqual(route('payments.cosmospay.lat', p, '?lang=es'), { kind: 'rewrite', area: 'payments', path: `/payments${p}` }, p);
+    assert.deepEqual(route('cosmospay.lat', p), { kind: 'redirect', location: `https://payments.cosmospay.lat${p}`, status: 301 }, p);
+    assert.deepEqual(route('payments.cosmospay.lat', `${p}/`), { kind: 'redirect', location: `https://payments.cosmospay.lat${p}`, status: 301 }, p);
+  }
 });
 
 test("the prover's files answer on the platform as well, where the dashboard proves", () => {

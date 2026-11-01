@@ -1,0 +1,52 @@
+---
+// A network page's presets: the assets the dashboard offers by name on that network, mainnet
+// and test network, each issuer, mint or contract linked to the network's explorer. Read from
+// the presets themselves (src/lib/payments/network-pages.ts over src/lib/stellar-assets.ts and
+// src/lib/chains.ts), so the page lists only addresses that were verified.
+import type { LandingData } from "@/components/payments/landing/data";
+import { TEST_NETWORKS, type Chain } from "@/lib/chains";
+import { networkPresets } from "@/lib/payments/network-pages";
+
+interface Props {
+  d: LandingData;
+  chain: Chain;
+}
+
+const { d, chain } = Astro.props;
+const { t } = d;
+const n = t.networks[chain];
+const rows = networkPresets(chain);
+const tierName = (tier: "public" | "testnet") => (tier === "public" ? t.network.mainnet : TEST_NETWORKS[chain]);
+---
+
+<section class="pl-section pl-section-alt" aria-labelledby="pl-net-assets">
+  <div class="wrap">
+    <div class="pl-head" data-reveal>
+      <h2 id="pl-net-assets">{t.network.assetsTitle}</h2>
+      <p class="pl-section-lede">{n.assetsLede}</p>
+    </div>
+    <div class="pl-compare-card" data-reveal>
+      <table class="pl-compare pl-net-assets">
+        <caption class="pl-sr">{t.network.assetsTitle}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t.network.asset}</th>
+            <th scope="col">{n.address}</th>
+            <th scope="col">{t.network.tier}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr>
+              <th scope="row">{r.code}{r.issuer && <small>{r.issuer}</small>}</th>
+              <td data-label={n.address}>
+                {r.address && r.explorer ? <a class="pl-net-addr" href={r.explorer} rel="noopener" translate="no">{r.address}</a> : t.network.native}
+              </td>
+              <td data-label={t.network.tier}>{tierName(r.tier)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

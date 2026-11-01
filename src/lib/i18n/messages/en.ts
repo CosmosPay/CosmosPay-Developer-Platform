@@ -377,7 +377,8 @@ export default {
     tagline: "Stablecoin payments, swaps and a non-custodial wallet on Stellar, Solana and Monad.",
     copyright: "© 2026 Cosmos Pay",
     groups: {
-      products: { title: "Products", links: ["Payments", "Stablecoins", "Payouts", "Anchors", "Wallets", "Checkout", "Payment Links", "Pricing"] },
+      products: { title: "Products", links: ["Payments", "Stablecoins", "Payouts", "Anchors", "Wallets", "Checkout", "Payment Links", "Pricing", "Fee comparison"] },
+      networks: { title: "Networks", links: ["Stellar payments", "Solana payments", "Monad payments"] },
       solutions: { title: "Solutions", links: ["SaaS & subscriptions", "Marketplaces", "E-commerce", "Platforms", "Embedded finance", "AI & agents", "Enterprise"] },
       developers: { title: "Developers", links: ["Documentation", "API reference", "SDKs & libraries", "Webhooks", "API status", "Changelog", "Dashboard"] },
       resources: { title: "Resources", links: ["Guides", "Blog", "Customer stories", "Support", "Partners", "Sessions 2026"] },

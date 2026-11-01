@@ -616,7 +616,11 @@ export default {
     groups: {
       products: {
         title: "Produits",
-        links: ["Paiements", "Stablecoins", "Versements", "Anchors", "Portefeuilles", "Checkout", "Liens de paiement", "Tarifs"]
+        links: ["Paiements", "Stablecoins", "Versements", "Anchors", "Portefeuilles", "Checkout", "Liens de paiement", "Tarifs", "Comparatif des frais"]
+      },
+      networks: {
+        title: "Réseaux",
+        links: ["Paiements sur Stellar", "Paiements sur Solana", "Paiements sur Monad"]
       },
       solutions: {
         title: "Solutions",

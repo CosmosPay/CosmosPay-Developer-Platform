@@ -3,9 +3,10 @@
 // same node the company site publishes, src/lib/seo/org.ts) and the site on every page, the page
 // itself, the breadcrumb trail a content page shows over its title (PageHeader.astro), and what
 // the page is about: the gateway as a service on the home, the swaps on /swaps, the plans with a
-// fixed price on /fees (from src/lib/plans.ts) and, on /faq, the questions and answers the page
-// shows. Only what the page says: no ratings, reviews or claims beyond its copy. URLs come from
-// src/lib/seo/lang-urls.ts, so they match the canonical and hreflang links.
+// fixed price on /fees (from src/lib/plans.ts) and, on /faq and the network pages, the questions
+// and answers the page shows (`faq`). Only what the page says: no ratings, reviews or claims
+// beyond its copy. URLs come from src/lib/seo/lang-urls.ts, so they match the canonical and
+// hreflang links.
 import type { LandingData } from "@/components/payments/landing/data";
 import type { PaymentsPage } from "@/lib/payments/site-pages";
 import { LOCALES } from "@/lib/payments/i18n";
@@ -20,14 +21,28 @@ interface Props {
   page: PaymentsPage | "home";
   title: string;
   description: string;
+  /** The questions and answers the page shows, as it shows them; the page is then an FAQPage. */
+  faq?: readonly { q: string; a: string }[];
 }
 
-const { d, page, title, description } = Astro.props;
-const { t, lang, faq } = d;
+const { d, page, title, description, faq } = Astro.props;
+const { t, lang } = d;
 const codes = LOCALES.map((l) => l.code);
 const explicit = explicitLang(Astro.url.searchParams.get("lang"), codes);
 const url = pageUrl(PAYMENTS, Astro.locals.publicPath ?? "/", explicit);
-const KEY = { integrations: "integrations", swaps: "swaps", "use-cases": "useCases", security: "security", fees: "fees", faq: "faq" } as const;
+const KEY = {
+  integrations: "integrations",
+  swaps: "swaps",
+  "use-cases": "useCases",
+  security: "security",
+  fees: "fees",
+  compare: "compare",
+  faq: "faq",
+  stellar: "stellar",
+  solana: "solana",
+  monad: "monad",
+} as const satisfies Record<PaymentsPage, keyof typeof t.pages>;
+const questions = faq ?? (page === "faq" ? d.faq : undefined);
 
 // What the page is about, by page. Entity @ids do not carry ?lang=: one service, one set of plans.
 const about: JsonLdNode | null =
@@ -54,7 +69,7 @@ const graph: JsonLdNode[] = [
     description,
     lang,
     origin: PAYMENTS,
-    types: page === "faq" ? ["WebPage", "FAQPage"] : undefined,
+    types: questions ? ["WebPage", "FAQPage"] : undefined,
     breadcrumb:
       page === "home"
         ? undefined
@@ -62,10 +77,9 @@ const graph: JsonLdNode[] = [
             { name: t.pages.home, url: pageUrl(PAYMENTS, "/", explicit) },
             { name: (t.pages[KEY[page]] as { nav: string }).nav, url },
           ],
-    mainEntity:
-      page === "faq"
-        ? faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } }))
-        : (about?.["@id"] as string | undefined),
+    mainEntity: questions
+      ? questions.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } }))
+      : (about?.["@id"] as string | undefined),
   }),
   ...(about ? [about] : []),
 ];

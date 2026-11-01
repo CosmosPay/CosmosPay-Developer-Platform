@@ -1,0 +1,47 @@
+---
+// A network page's code: the one REST call that creates a payment link on that network
+// (src/lib/payments/network-pages.ts builds it from the Payments API's spec and the verified
+// presets), with links to the API reference, the getting-started guide and every integration.
+// The code is not translated; the note under it is.
+import Code from "@/components/payments/landing/Code.astro";
+import type { LandingData } from "@/components/payments/landing/data";
+import { CHAIN_NAMES, type Chain } from "@/lib/chains";
+import { payLinkCurl } from "@/lib/payments/network-pages";
+
+interface Props {
+  d: LandingData;
+  chain: Chain;
+}
+
+const { d, chain } = Astro.props;
+const { t, DOCS, links } = d;
+const n = t.networks[chain];
+const id = `pl-net-code-${chain}`;
+---
+
+<section class="pl-section pl-section-alt" aria-labelledby="pl-net-code">
+  <div class="wrap pl-dev">
+    <div class="pl-dev-copy" data-reveal>
+      <div class="pl-head">
+        <h2 id="pl-net-code">{t.network.codeTitle.replace("{network}", CHAIN_NAMES[chain])}</h2>
+        <p class="pl-section-lede">{t.network.codeLede}</p>
+      </div>
+      <div class="pl-cta">
+        <a class="btn btn-dark" href={`${DOCS}/api/payment-intents/`}>{t.network.docs}</a>
+        <a class="btn btn-outline-w" href={`${DOCS}/getting-started/`}>{t.network.guide}</a>
+      </div>
+      <a class="pl-textlink" href={links.integrations}>{t.network.integrations}</a>
+    </div>
+    <div class="pl-net-code" data-reveal style="--i: 2">
+      <div class="pl-code">
+        <div class="pl-code-bar">
+          <span class="pl-code-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="pl-code-label">REST</span>
+          <button type="button" class="pl-copy" data-copy={id} data-copied={t.code.copied}><span data-copy-label>{t.code.copy}</span></button>
+        </div>
+        <Code id={id} code={payLinkCurl(chain)} lang="bash" numbered />
+      </div>
+      <p class="pl-footnote">{n.codeNote}</p>
+    </div>
+  </div>
+</section>

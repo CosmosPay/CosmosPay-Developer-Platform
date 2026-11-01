@@ -1,0 +1,35 @@
+---
+/* /compare on payments.cosmospay.lat: Cosmos Pay's rates beside the published rates they are set
+ * against, each with its provider's pricing page and the date it was read
+ * (src/lib/payments/compare.ts). */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import { landingData } from "@/components/payments/landing/data";
+import CompareRates from "@/components/payments/landing/sections/CompareRates.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+---
+
+<PaymentsLayout title={d.t.pages.compare.meta} description={d.t.pages.compare.lede} indexable>
+  <LandingHead slot="head" d={d} page="compare" title={d.t.pages.compare.meta} description={d.t.pages.compare.lede} embed={false} />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="compare" />
+    <PageHeader d={d} page="compare" art="3d-calc" />
+    <CompareRates d={d} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

@@ -1,0 +1,97 @@
+---
+// /compare: Cosmos Pay's rate for each service beside the published rate it is set against
+// (src/lib/payments/compare.ts: the provider, its pricing page and the day it was read; Cosmos
+// Pay's rates from src/lib/plans.ts). Neutral wording: what each provider's page states, its
+// conditions, a link to it and the date, nothing else about them.
+import type { LandingData } from "@/components/payments/landing/data";
+import { COMPARE_CHECKED, ESCROW_COM, compareRows, formatRate } from "@/lib/payments/compare";
+import { PLAN_IDS, planSwapFeeBps, swapFeePct, type PlanId } from "@/lib/plans";
+
+interface Props {
+  d: LandingData;
+}
+
+const { d } = Astro.props;
+const { t, lang, links, PRICING } = d;
+const c = t.comparePage;
+const usd = new Intl.NumberFormat(lang, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const checked = new Intl.DateTimeFormat(lang, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${COMPARE_CHECKED}T00:00:00Z`));
+const fill = (text: string, vars: Record<string, string>) => text.replace(/\{(\w+)\}/g, (m, k: string) => vars[k] ?? m);
+const planName = (id: PlanId) => id.charAt(0).toUpperCase() + id.slice(1);
+// The swap ladder's ends: the plan with the highest commission and the one with the lowest.
+const bySwap = [...PLAN_IDS].sort((a, b) => planSwapFeeBps(b) - planSwapFeeBps(a));
+const [topSwapPlan, lowSwapPlan] = [bySwap[0], bySwap[bySwap.length - 1]];
+
+const rows = compareRows().map((r) => {
+  let oursNote = "";
+  let theirsNote = "";
+  if (r.service === "payments" && r.plan && r.band) {
+    oursNote = r.monthly !== undefined ? fill(c.monthly, { plan: planName(r.plan), price: `$${r.monthly}` }) : fill(c.noMonthly, { plan: planName(r.plan) });
+    theirsNote =
+      r.band.below === null
+        ? fill(c.bandFrom, { from: usd.format(r.band.from) })
+        : r.band.from === 0
+          ? fill(c.bandUnder, { below: usd.format(r.band.below) })
+          : fill(c.bandBetween, { from: usd.format(r.band.from), to: usd.format(r.band.below - 1) });
+  } else if (r.service === "swaps") {
+    oursNote = fill(c.swaps, { plan: planName(topSwapPlan), min: swapFeePct(lowSwapPlan), minPlan: planName(lowSwapPlan) });
+    theirsNote = c.metamask;
+  } else if (r.service === "private") {
+    oursNote = c.private;
+    theirsNote = c.railgun;
+  } else if (r.service === "escrow") {
+    oursNote = c.escrow;
+    theirsNote = fill(c.escrowCom, { upTo: usd.format(ESCROW_COM.upTo), min: usd.format(ESCROW_COM.minFee) });
+  }
+  return { ...r, oursText: formatRate(r.ours), theirsText: formatRate(r.theirs), oursNote, theirsNote, host: new URL(r.source).host.replace(/^www\./, "") };
+});
+// The payment rows share one service cell.
+const span = (i: number) => {
+  const same = rows.filter((r) => r.service === rows[i].service).length;
+  return i > 0 && rows[i - 1].service === rows[i].service ? 0 : same;
+};
+---
+
+<section class="pl-section pl-section-alt" aria-labelledby="pl-compare-rates">
+  <div class="wrap">
+    <div class="pl-head" data-reveal>
+      <h2 id="pl-compare-rates">{c.title} {c.titleBold}</h2>
+      <p class="pl-section-lede">{c.lede}</p>
+    </div>
+    <div class="pl-compare-card" data-reveal>
+      <table class="pl-compare pl-rates">
+        <caption class="pl-sr">{c.caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{c.service}</th>
+            <th scope="col" class="pl-compare-us">{c.ours}</th>
+            <th scope="col">{c.theirs}</th>
+            <th scope="col">{c.source}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr>
+              {span(i) > 0 && <th scope="row" rowspan={span(i) > 1 ? span(i) : undefined}>{c.services[r.service]}</th>}
+              <td class="pl-compare-us" data-label={c.ours}>
+                <strong class="pl-rate">{r.oursText}</strong>
+                <small>{r.oursNote}</small>
+              </td>
+              <td data-label={c.theirs}>
+                <strong class="pl-rate">{r.provider}: {r.theirsText}</strong>
+                <small>{r.theirsNote}</small>
+              </td>
+              <td data-label={c.source}><a class="pl-rates-src" href={r.source} rel="noopener" translate="no">{r.host}</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="pl-footnote" data-reveal>{c.asOf.replace("{date}", checked)}</p>
+    {c.notes.map((note) => <p class="pl-footnote" data-reveal>{note}</p>)}
+    <div class="pl-plans-actions">
+      <a class="btn btn-dark pl-plans-more" href={links.fees}>{t.pages.more.fees}</a>
+      <a class="btn btn-outline-w pl-plans-more" href={PRICING}>{t.pricing.compare}</a>
+    </div>
+  </div>
+</section>

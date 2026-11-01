@@ -1,9 +1,11 @@
 ---
-// The gateway's section navigation (multi-page layout): its pages in one sticky row under the
-// general nav, the current one marked, and the main call to action at its end so it is one
-// click away on every screen. The general nav stays above it, as on every page.
+// The gateway's section navigation (multi-page layout): its topic pages in one sticky row under
+// the general nav, the current one marked, and the main call to action at its end so it is one
+// click away on every screen. The general nav stays above it, as on every page. The network
+// pages are not in this row (the footer, the home's marquee and the FAQ link them): on one, no
+// item is current.
 import type { LandingData } from "@/components/payments/landing/data";
-import { PAYMENTS_PAGES, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
+import { SECTION_PAGES, pagePath, type PaymentsPage, type SectionPage } from "@/lib/payments/site-pages";
 
 interface Props {
   d: LandingData;
@@ -12,17 +14,18 @@ interface Props {
 
 const { d, current } = Astro.props;
 const { t, CREATE_LINK } = d;
-const KEY: Record<PaymentsPage, keyof typeof t.pages> = {
+const KEY: Record<SectionPage, keyof typeof t.pages> = {
   integrations: "integrations",
   swaps: "swaps",
   "use-cases": "useCases",
   security: "security",
   fees: "fees",
+  compare: "compare",
   faq: "faq",
 };
 const items = [
   { href: "/", label: t.pages.home, here: current === "home" },
-  ...PAYMENTS_PAGES.map((page) => ({ href: pagePath(page), label: (t.pages[KEY[page]] as { nav: string }).nav, here: current === page })),
+  ...SECTION_PAGES.map((page) => ({ href: pagePath(page), label: (t.pages[KEY[page]] as { nav: string }).nav, here: current === page })),
 ];
 ---
 

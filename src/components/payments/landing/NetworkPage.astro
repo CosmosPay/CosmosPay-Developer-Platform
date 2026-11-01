@@ -1,0 +1,58 @@
+---
+// One page per network a payment settles on (src/pages/payments/{stellar,solana,monad}.astro,
+// registered in src/lib/payments/site-pages.ts): answer first (the header's lede), then how a
+// payment works there, the assets with a preset, what it costs (the plans' rates, from
+// src/lib/plans.ts), the request that creates a link, and the questions specific to it, which
+// the page's JSON-LD repeats as an FAQPage. Copy: `pages.<chain>`, `network` and
+// `networks.<chain>` in src/lib/payments/landing-i18n.ts.
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import { landingData } from "@/components/payments/landing/data";
+import NetworkFacts from "@/components/payments/landing/sections/NetworkFacts.astro";
+import NetworkAssets from "@/components/payments/landing/sections/NetworkAssets.astro";
+import NetworkCode from "@/components/payments/landing/sections/NetworkCode.astro";
+import Pricing from "@/components/payments/landing/sections/Pricing.astro";
+import Faq from "@/components/payments/landing/sections/Faq.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+import { CHAIN_NAMES, type Chain } from "@/lib/chains";
+import { PRIVATE_PAYMENT_FEE_PCT } from "@/lib/plans";
+
+interface Props {
+  chain: Chain;
+}
+
+const { chain } = Astro.props;
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+const page = d.t.pages[chain];
+const name = CHAIN_NAMES[chain];
+// The questions as the page shows them, rates filled in from plans.ts.
+const questions = Object.values(d.t.networks[chain].faq).map((f) => ({ q: f.q, a: f.a.replace("{rate}", `${PRIVATE_PAYMENT_FEE_PCT}%`) }));
+const ART: Record<Chain, string> = { stellar: "3d-instant", solana: "3d-final", monad: "3d-yours" };
+---
+
+<PaymentsLayout title={page.meta} description={page.lede} indexable>
+  <LandingHead slot="head" d={d} page={chain} title={page.meta} description={page.lede} faq={questions} embed={false} />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current={chain} />
+    <PageHeader d={d} page={chain} art={ART[chain]} />
+    <NetworkFacts d={d} chain={chain} />
+    <NetworkAssets d={d} chain={chain} />
+    <Pricing d={d} compact heading={d.t.network.feesTitle} lede={d.t.networks[chain].feesLede} />
+    <NetworkCode d={d} chain={chain} />
+    <Faq d={d} items={questions} heading={`${d.t.network.faqTitle.replace("{network}", name)} ${d.t.network.faqTitleBold}`} current={chain} />
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>
