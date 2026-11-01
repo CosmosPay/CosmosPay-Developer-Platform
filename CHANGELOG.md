@@ -2,6 +2,14 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.11.0] - 2026-11-01
+
+### Features
+- Escrow labelled coming soon, and a company About page (ea92559)
+
+### Documentation
+- Spanish voice per surface (f1c3975)
+
 ## [0.10.1] - 2026-11-01
 
 ### Miscellaneous
