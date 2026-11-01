@@ -16,7 +16,7 @@ const { d, guides, level = 3 } = Astro.props;
 const Heading = level === 2 ? "h2" : "h3";
 const items = guides.map((guide) => {
   const copy = guideCopy(d.learn, guide);
-  return { href: pagePath(`learn/${guide}`), title: copy.title, summary: copy.summary };
+  return { href: d.href(pagePath(`learn/${guide}`)), title: copy.title, summary: copy.summary };
 });
 ---
 

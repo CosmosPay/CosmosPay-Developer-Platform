@@ -185,14 +185,14 @@ export const zh: LearnMessages = {
           title: "Cosmos Pay 属于哪一类",
           body: [
             "Cosmos Pay 是运行在 Stellar、Solana 和 Monad 上的非托管式稳定币支付网关。您通过支付链接、托管收银台或支付 API 收款，并自行选择收款的钱包地址。Cosmos Pay 不保存任何人的密钥。",
-            "在 Stellar 和 Solana 上，客户直接向您的地址付款。在 Monad 上，每笔支付进入各自的充值地址，再由它转发到您的地址。每笔支付都可以在网络上核查，每个已支付的收银台都会附上该交易在公共区块浏览器中的链接。",
+            "在 Stellar 和 Solana 上，客户直接向您的地址付款。在 Monad 上，每笔支付进入为其创建的充值地址，该地址只能将款项转发到您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。每笔支付都可以在网络上核查，每个已支付的收银台都会附上该交易在公共区块浏览器中的链接。",
           ],
           links: { security: "支付如何受到保护", acceptGuide: "如何在线接受 USDC 支付", integrations: "集成选项" },
         },
       },
       faq: {
         final: { q: "稳定币支付会被拒付吗？", a: "不会。网络一经确认，支付即为最终结果。退款是企业从自己的钱包退回的一笔支付。" },
-        custody: { q: "Cosmos Pay 会持有我的资金吗？", a: "不会。在 Stellar 和 Solana 上，付款方直接向您的地址付款。在 Monad 上，每笔支付进入各自的充值地址，扣除网络费后再转发到您的地址。" },
+        custody: { q: "Cosmos Pay 会持有我的资金吗？", a: "不会。在 Stellar 和 Solana 上，付款方直接向您的地址付款。在 Monad 上，每笔支付进入为其创建的充值地址，该地址只能将款项转发到您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。" },
         wallet: { q: "我需要自己的钱包吗？", a: "需要。在您接受的每个网络上，支付都会进入您掌控的地址，因此从第一笔支付起，资金就归您所有。" },
         customers: { q: "我的客户需要账户吗？", a: "不需要 Cosmos Pay 账户。他们只需要一个位于该支付所在网络、且持有该稳定币的钱包。" },
       },
@@ -211,7 +211,7 @@ export const zh: LearnMessages = {
         rows: {
           link: { k: "支付链接", stellar: "SEP-7（web+stellar:pay）及其二维码", solana: "Solana Pay 转账请求（solana:）及其二维码", monad: "EIP-681（ethereum:）及其二维码，指向专为该笔支付生成的充值地址" },
           match: { k: "付款如何匹配", stellar: "链接上的数字 memo", solana: "链接上的 Solana Pay reference 密钥", monad: "专属充值地址" },
-          settle: { k: "款项去向", stellar: "直接进入您的地址", solana: "直接进入您的地址", monad: "由充值地址转发到您的地址" },
+          settle: { k: "款项去向", stellar: "直接进入您的地址", solana: "直接进入您的地址", monad: "充值地址，只能转发到您的地址" },
           fee: { k: "网络费", stellar: "由付款方钱包支付", solana: "由付款方钱包支付", monad: "付款方钱包支付其转账的网络费；转发所需的中继费用从付款中扣除" },
           presets: { k: "预设资产" },
           test: { k: "测试网络" },

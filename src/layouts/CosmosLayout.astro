@@ -10,7 +10,9 @@ import SiteNav from "@/components/cosmos/layout/SiteNav";
 import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 import StructuredData from "@/components/site/StructuredData.astro";
 import { SITE_LANGS, SITE_PAGE_PATHS, crumbName, type SitePage } from "@/lib/seo/site-meta";
-import { canonicalUrl, explicitLang, hreflangAlternates, ogLocale } from "@/lib/seo/lang-urls";
+import { DEFAULT_LANG, canonicalUrl, explicitLang, hreflangAlternates, ogLocale } from "@/lib/seo/lang-urls";
+import { crossHostCanonical } from "@/lib/seo/cross-host";
+import { modifiedAt } from "@/lib/seo/page-dates-build";
 import type { JsonLdNode } from "@/lib/seo/schema";
 
 interface Props {
@@ -71,8 +73,8 @@ const {
   schema = [],
 } = Astro.props;
 
-// The language: the page's own, else the middleware's (?lang= → cookie → Accept-Language on the
-// company site), else the cookie the in-app language switcher sets, so SSR and the first client
+// The language: the page's own, else the middleware's (on the company site, ?lang=; its bare path
+// is English), else the cookie the in-app language switcher sets, so SSR and the first client
 // render agree. Defaults to English.
 const locale = lang ?? Astro.locals.lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 const skipLabel = ((messages as Record<string, typeof messages.en>)[locale] ?? messages.en).ui.skipToContent;
@@ -82,20 +84,27 @@ const skipLabel = ((messages as Record<string, typeof messages.en>)[locale] ?? m
 const areaOrigin = { site: SITE, dev: DEV, payments: PAYMENTS }[Astro.locals.area ?? "dev"];
 const siteBase = new URL(areaOrigin || Astro.site || "https://dev.cosmospay.lat");
 const path = Astro.locals.publicPath ?? Astro.url.pathname;
-// The company site exists once per language at ?lang=<code>, its bare path following the visitor
-// (x-default), like the gateway (src/lib/seo/lang-urls.ts): each version names itself canonical
-// and lists the others, so search engines index every language instead of only English.
+// The company site has one address per language, like the gateway (src/lib/seo/lang-urls.ts):
+// English at the bare path (also x-default), the others at ?lang=<code>. Each version names
+// itself canonical and lists the others, so search engines index every language. A page whose
+// canonical version is the gateway's (/swaps: src/lib/seo/cross-host.ts) names that one instead
+// and lists no versions of its own.
 const multilingual = Astro.locals.area === "site" && !noindex;
 const asked = explicitLang(Astro.url.searchParams.get("lang"), SITE_LANGS);
-const canonical = multilingual ? canonicalUrl(SITE, path, asked, langs, SITE_LANGS) : new URL(path, siteBase).href;
-const alternates = multilingual && langs.length > 1 ? hreflangAlternates(SITE, path, langs) : [];
+const self = multilingual ? canonicalUrl(SITE, path, asked, langs, SITE_LANGS) : new URL(path, siteBase).href;
+const elsewhere = multilingual ? crossHostCanonical(path, asked, langs, SITE_LANGS, PAYMENTS) : null;
+const canonical = elsewhere ?? self;
+const alternates = multilingual && !elsewhere && langs.length > 1 ? hreflangAlternates(SITE, path, langs) : [];
 // The language the page's text is in: a /tos version in a language it is not written in shows English.
 const contentLang = langs.includes(locale) ? locale : (langs[0] ?? "en");
-// The trail in the version's language, each step at its address in that language.
+// The trail in the version's language, each step at its address in that language (the page's own
+// address last, whichever host is canonical).
 const crumbs = (breadcrumb ?? []).map((page, i, all) => ({
   name: crumbName(page, contentLang),
-  url: i === all.length - 1 ? canonical : canonicalUrl(SITE, SITE_PAGE_PATHS[page], asked, SITE_LANGS),
+  url: i === all.length - 1 ? self : canonicalUrl(SITE, SITE_PAGE_PATHS[page], asked, SITE_LANGS),
 }));
+// When the page last changed: the date it states, else its sources' last commit (page-dates.ts).
+const dateModified = multilingual ? modifiedAt("site", path, contentLang) : null;
 const ogImage = new URL(image, siteBase).href;
 const robots = noindex ? "noindex, nofollow" : "index, follow";
 const gaId = PUBLIC_GA_ID;
@@ -105,8 +114,8 @@ const xHandle = `@${new URL(SOCIAL.x).pathname.split("/").filter(Boolean)[0]}`;
 // The theme is applied before paint (default light); then the LCP image of that theme is
 // requested at once, at high priority, instead of when the parser reaches its <img>. On the
 // company site, a language picked in the nav (setLang changes <html lang> without a reload) also
-// becomes the address's ?lang=, when the address names one: it would win over the new choice on
-// the next load.
+// becomes the address: ?lang=<code>, or the bare path for English, so a reload or a shared link
+// keeps it (SiteNav does the same with langSearch for the pages that reload).
 const lcp = preloadImage ? JSON.stringify(preloadImage).replace(/</g, "\\u003c") : "";
 const themeScript =
   `(function(){var d=document.documentElement,t;try{t=localStorage.getItem("cosmospay-theme")||"light"}catch(e){t="light"}` +
@@ -116,8 +125,8 @@ const themeScript =
       `l.href=(t==="dark"&&s.dark)||s.light;l.setAttribute("fetchpriority","high");document.head.appendChild(l);`
     : "") +
   (multilingual
-    ? `if(window.MutationObserver&&window.URL)new MutationObserver(function(){var u=new URL(location.href),q=u.searchParams.get("lang");` +
-      `if(q&&d.lang&&q!==d.lang){u.searchParams.set("lang",d.lang);history.replaceState(history.state,"",u.href)}}).observe(d,{attributes:true,attributeFilter:["lang"]});`
+    ? `if(window.MutationObserver&&window.URL)new MutationObserver(function(){var u=new URL(location.href),q=u.searchParams.get("lang"),l=d.lang,e=l===${JSON.stringify(DEFAULT_LANG)};` +
+      `if(l&&(e?q!==null:q!==l)){if(e)u.searchParams.delete("lang");else u.searchParams.set("lang",l);history.replaceState(history.state,"",u.href)}}).observe(d,{attributes:true,attributeFilter:["lang"]});`
     : "") +
   `})();`;
 ---
@@ -172,7 +181,7 @@ const themeScript =
     <!-- The page's JSON-LD graph (company site; the platform's pages are not indexed). -->
     {multilingual && (
       <StructuredData
-        url={canonical}
+        url={self}
         title={title}
         description={description}
         lang={contentLang}
@@ -181,6 +190,7 @@ const themeScript =
         mainEntity={mainEntity}
         pageType={pageType}
         schema={schema}
+        dateModified={dateModified}
       />
     )}
 

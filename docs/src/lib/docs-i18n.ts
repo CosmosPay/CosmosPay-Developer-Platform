@@ -46,6 +46,8 @@ const es: T = {
   'Returns(type table)': 'Devuelve',
   'Copy Text(code block)(aria-label)': 'Copiar',
   'Copied Text(code block)(aria-label)': 'Copiado',
+  'Copy Anchor Link(heading anchor)(aria-label)': 'Copiar enlace a la sección',
+  'Copied Anchor Link(heading anchor)(aria-label)': 'Enlace copiado',
 };
 
 const fr: T = {
@@ -87,6 +89,8 @@ const fr: T = {
   'Returns(type table)': 'Retourne',
   'Copy Text(code block)(aria-label)': 'Copier',
   'Copied Text(code block)(aria-label)': 'Copié',
+  'Copy Anchor Link(heading anchor)(aria-label)': 'Copier le lien de la section',
+  'Copied Anchor Link(heading anchor)(aria-label)': 'Lien copié',
 };
 
 const de: T = {
@@ -128,6 +132,8 @@ const de: T = {
   'Returns(type table)': 'Gibt zurück',
   'Copy Text(code block)(aria-label)': 'Kopieren',
   'Copied Text(code block)(aria-label)': 'Kopiert',
+  'Copy Anchor Link(heading anchor)(aria-label)': 'Link zum Abschnitt kopieren',
+  'Copied Anchor Link(heading anchor)(aria-label)': 'Link kopiert',
 };
 
 const pt: T = {
@@ -169,6 +175,8 @@ const pt: T = {
   'Returns(type table)': 'Retorna',
   'Copy Text(code block)(aria-label)': 'Copiar',
   'Copied Text(code block)(aria-label)': 'Copiado',
+  'Copy Anchor Link(heading anchor)(aria-label)': 'Copiar link da seção',
+  'Copied Anchor Link(heading anchor)(aria-label)': 'Link copiado',
 };
 
 export const DOCS_TRANSLATIONS: Record<string, T | undefined> = { en: undefined, es, fr, de, pt };

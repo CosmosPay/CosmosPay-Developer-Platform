@@ -130,7 +130,6 @@
 .plan-tag { position: absolute; top: -12px; left: 24px; background: var(--accent); color: var(--accent-fg); font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; letter-spacing: .02em; white-space: nowrap; }
 .plan .pname { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
 .price-block { margin-bottom: 4px; }
-.price .from { font-size: 14px; font-weight: 600; color: var(--ink-3); align-self: flex-end; margin: 0 1px 9px 0; }
 .ptxt { font-family: var(--ff-soft); font-size: 12.5px; color: var(--ink-2); margin-top: 8px; line-height: 1.4; }
 
 /* enterprise banner: a full row under the three plans, the offer on the left and the

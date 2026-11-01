@@ -5,12 +5,13 @@ import { SITE } from "@/components/cosmos/lib/constants";
 import { siteMeta } from "@/lib/seo/site-meta";
 import { plansProductNode } from "@/lib/seo/schema";
 
-// The language the middleware resolved: ?lang= (each language has its own address), then the
-// cookie, then Accept-Language.
+// The language the middleware resolved from the address: ?lang=<code>, English at the bare path
+// (src/lib/seo/lang-urls.ts; a visitor who prefers another language is redirected there).
 const lang = Astro.locals.lang ?? "en";
 const meta = siteMeta("pricing", lang);
-// The plans with a fixed price, as offers, read from src/lib/plans.ts like the page itself.
-const product = plansProductNode({ url: `${SITE}/pricing`, site: SITE, description: meta.description, image: `${SITE}/og-image.png` });
+// The plans as offers, read from src/lib/plans.ts like the page itself: the same node the
+// gateway's /fees names (one @id for the plans wherever they are shown).
+const product = plansProductNode(SITE);
 const user = Astro.locals.user
   ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image }
   : null;

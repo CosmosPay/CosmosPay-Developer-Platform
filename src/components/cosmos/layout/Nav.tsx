@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, type FocusEvent, type ReactNode } from "react";
-import { useT } from "@/lib/i18n/index";
+import { useLang, useT } from "@/lib/i18n/index";
 import type { Theme, SetTheme, User } from "@/components/cosmos/lib/types";
 import { DASH, DOCS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
 import { startLogin, startLogout } from "@/components/cosmos/lib/auth";
@@ -62,29 +62,30 @@ const FEATURED_HREFS: Record<string, string> = {
 };
 
 /* An item's columns reduced to the links above, hrefs attached (kept on the gateway when the
-   bar is drawn there), empty columns dropped. */
-function withLinks(key: string, item: any, area?: Area): any {
+   bar is drawn there, and in the language the page is in), empty columns dropped. */
+function withLinks(key: string, item: any, area?: Area, lang?: string): any {
   const links = NAV_LINKS[key] || [];
   const cols = item.cols
     .map((col: any, ci: number) => ({
       ...col,
-      links: links.filter(([c]) => c === ci).map(([, li, href]) => ({ ...col.links[li], href: localHref(href, area) })),
+      links: links.filter(([c]) => c === ci).map(([, li, href]) => ({ ...col.links[li], href: localHref(href, area, lang) })),
     }))
     .filter((col: any) => col.links.length > 0);
-  const featured = FEATURED_HREFS[key] && item.featured ? { ...item.featured, href: localHref(FEATURED_HREFS[key], area) } : undefined;
+  const featured = FEATURED_HREFS[key] && item.featured ? { ...item.featured, href: localHref(FEATURED_HREFS[key], area, lang) } : undefined;
   return { key, label: item.label, cols, featured };
 }
 
 /* Build the nav item list from the active catalog. */
 function useNavItems(area?: Area): any[] {
   const t = useT();
+  const lang = useLang();
   const n = t.nav.items;
   return [
-    withLinks("products", n.products, area),
-    // withLinks("solutions", n.solutions, area), // see NAV_LINKS
-    withLinks("developers", n.developers, area),
-    withLinks("resources", n.resources, area),
-    { key: "pricing", label: n.pricing.label, href: pricingFor(area) },
+    withLinks("products", n.products, area, lang),
+    // withLinks("solutions", n.solutions, area, lang), // see NAV_LINKS
+    withLinks("developers", n.developers, area, lang),
+    withLinks("resources", n.resources, area, lang),
+    { key: "pricing", label: n.pricing.label, href: pricingFor(area, lang) },
   ];
 }
 
@@ -95,6 +96,7 @@ function useNavItems(area?: Area): any[] {
    "Dashboard" button, which would lead to the page it is on. */
 export function Nav({ theme, setTheme, user = null, sessionReady = true, overPanel, area, inDash = false, search, onAccount }: { theme: Theme; setTheme: SetTheme; user?: User | null; sessionReady?: boolean; overPanel?: "black" | "white"; area?: Area; inDash?: boolean; search?: ReactNode; onAccount?: () => void }) {
   const t = useT();
+  const lang = useLang();
   const NAV_ITEMS = useNavItems(area);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -210,7 +212,7 @@ export function Nav({ theme, setTheme, user = null, sessionReady = true, overPan
   return (
     <header className={`nav${inDash ? " nav-dash" : ""}${scrolled ? " scrolled" : ""}${mob ? " menu-open" : ""}${inkNow ? " over-ink" : ""}${paperNow ? " over-paper" : ""}`}>
       <div className="wrap nav-inner">
-        <a className="brand" href={homeFor(area)}><CosmosLockup height={32} label="Cosmos Pay" /></a>
+        <a className="brand" href={homeFor(area, lang)}><CosmosLockup height={32} label="Cosmos Pay" /></a>
         {/* Every panel is in the page from the first render, hidden until its trigger opens it,
             so its links are crawlable and the trigger has a panel to point at (aria-controls);
             each sits right after its trigger, so Tab goes from the trigger into its links. */}

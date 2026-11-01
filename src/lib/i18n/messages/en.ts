@@ -264,7 +264,7 @@ export default {
     supportLevels: { standard: "Standard", priority: "Priority" },
     plans: {
       starter: { desc: "Take real payments on Stellar, Solana & Monad", sub: "+ 18¢ / txn", pnote: "1.5% + 18¢ per transaction", team: "Up to 2", feats: ["Partial API access", "Live & test keys", "USDC settlement", "Up to 2 members"] },
-      growth: { desc: "Lower rates for scaling teams", sub: "/mo · from", pnote: "from · 0.75% + 18¢ per txn", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Radar fraud tooling", "Volume discounts", "Priority support"] },
+      growth: { desc: "Lower rates for scaling teams", sub: "/mo", pnote: "0.75% + 18¢ per transaction", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Priority support"] },
     },
   },
 
@@ -516,7 +516,7 @@ export default {
         swap: {
           t: "Swaps across networks",
           d: "Swap tokens across {n} networks, with or without an account.",
-          long: "Swap on the Stellar DEX, on Jupiter (Solana) and Kuru (Monad), or between {n} networks through NEAR Intents, and send USDT0 out of Stellar through LayerZero. Each swap is a transaction the person signs or a deposit address they pay, so nobody holds the funds. The public swap page and its API need no account.",
+          long: "Swap on the Stellar DEX, on Jupiter (Solana) and Kuru (Monad), or between {n} networks through NEAR Intents, and send USDT0 out of Stellar through LayerZero. A swap on one network is one transaction the person signs; a swap between networks waits at a NEAR Intents deposit address until NEAR Intents settles or refunds it. Cosmos Pay never holds the funds. The public swap page and its API need no account.",
           points: [
             "Stellar DEX, Jupiter and Kuru",
             "{n} networks through NEAR Intents",
@@ -619,7 +619,6 @@ export default {
     annual: "Annual",
     save: "−17%",
     popular: "Most popular",
-    from: "from",
     perMo: "/mo",
     billedYearly: "billed yearly",
     plans: [
@@ -724,6 +723,7 @@ export default {
   about: {
     title: "About Cosmos Pay",
     lede: "Cosmos Pay builds stablecoin payments for businesses: a payments API, a hosted checkout and payment links, swaps, private payments and the non-custodial Cosmos Wallet, on Stellar, Solana and Monad.",
+    disambiguation: "Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM).",
     facts: {
       networks: "Networks",
       networksValue: "Stellar, Solana and Monad",
@@ -739,7 +739,7 @@ export default {
       items: {
         api: { t: "Payments API and SDK", d: "A REST API documented with OpenAPI and a TypeScript SDK to create payment intents and payment links, with signed webhooks when a payment is confirmed.", a: "Read the docs" },
         checkout: { t: "Hosted checkout and payment links", d: "A payment link with its QR code and a checkout page we host, in four designs and seven languages. A pay button or an embedded checkout takes one script tag.", a: "See the integration options" },
-        swaps: { t: "Swaps", d: "Swap tokens across 35+ networks and send USDT0 from Stellar, with no account.", a: "Open swaps" },
+        swaps: { t: "Swaps", d: "Swap tokens across {n} networks and send USDT0 from Stellar, with no account.", a: "Open swaps" },
         private: { t: "Private payments", d: "Payments on Stellar whose amount stays hidden on-chain behind a zero-knowledge proof. On testnet for now.", a: "Read how they work" },
         wallet: { t: "Cosmos Wallet", d: "A non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.", a: "Get the wallet" },
       },
@@ -779,12 +779,12 @@ export default {
   /* ---------------- dashboard ---------------- */
   swapsPage: {
     metaTitle: "Swap tokens across networks, no account | Cosmos Pay",
-    metaDescription: "Swap tokens across 35+ networks and send USDT0 from Stellar to 21 networks, with no account: your wallet signs and nobody holds your funds. Public swap API included.",
+    metaDescription: "Swap tokens across {n} networks and send USDT0 from Stellar to 21 networks, with no account, here or through the public API. Cosmos Pay never holds your funds.",
     title: "Swap across networks, no account",
-    lede: "Pick what you pay with and what you get. Your wallet signs, and the funds never pass through Cosmos Pay.",
+    lede: "Pick what you pay with and what you get. Your wallet signs, and Cosmos Pay never holds your funds.",
     facts: [
       { t: "No account", s: "Open the page and swap. The public API works the same way." },
-      { t: "35+ networks", s: "Stellar, Solana and Monad markets, and every network NEAR Intents reaches." },
+      { t: "{n} networks", s: "Stellar, Solana and Monad markets, and every network NEAR Intents reaches." },
       { t: "Non-custodial", s: "Each swap is a transaction your wallet signs or a deposit address you pay." },
     ],
     fee: "Commission: {pct} per swap without an account, from {max} to {min} with a plan, plus the networks' fees.",
@@ -801,7 +801,7 @@ export default {
     faqTitle: "Questions",
     faq: [
       { q: "Do I need an account?", a: "No. The page and the public API use a shared public key. An account adds a history in the dashboard and, with a plan, a lower commission: from {max} to {min}." },
-      { q: "Who holds my funds?", a: "Nobody. A swap on one network is a transaction your wallet signs, a swap between networks is a deposit address NEAR Intents settles, and USDT0 travels through LayerZero." },
+      { q: "Who holds my funds?", a: "Not Cosmos Pay. A swap on one network is one transaction your wallet signs. A swap between networks waits at a NEAR Intents deposit address until NEAR Intents settles or refunds it, and USDT0 travels through LayerZero." },
       { q: "What does it cost?", a: "{pct} per swap without an account, from {max} to {min} with a plan, plus the networks' fees. USDT0 out of Stellar also pays LayerZero's fee, in XLM. Every quote shows the fees before you sign." },
       { q: "Why does USDT0 leave a tiny remainder?", a: "USDT0 crosses with six decimals and Stellar has seven: the seventh stays in your account." },
       { q: "Can I offer swaps to my customers?", a: "Yes, as a service: we run the swaps, and you only set the wallet addresses that receive the money and sign with your wallet. Each swap pays your plan's commission, and you can add your own fee to it, paid to the wallet you choose." },
@@ -1394,7 +1394,7 @@ export default {
       groups: { open: "In progress", succeeded: "Succeeded", refunded: "Refunded", failed: "Failed", expired: "Expired" },
       typeLabel: "Type",
       types: { all: "All types", same: "On one chain", cross: "Between chains", usdt0: "USDT0 bridge" },
-      form: { desc: "Pick what you send and what you receive. On one chain its market trades it; between chains NEAR Intents settles it. Nothing passes through Cosmos Pay.", from: "You send", to: "You receive", chain: "Chain", asset: "Asset", amountHint: "How much of the asset you send.", flip: "Switch what you send and what you receive", routeLine: "Route: {route}", route: "Route", venueCross: "NEAR Intents" },
+      form: { desc: "Pick what you send and what you receive. On one chain its market trades it; between chains NEAR Intents settles it. Cosmos Pay never holds the funds.", from: "You send", to: "You receive", chain: "Chain", asset: "Asset", amountHint: "How much of the asset you send.", flip: "Switch what you send and what you receive", routeLine: "Route: {route}", route: "Route", venueCross: "NEAR Intents" },
       searchPlaceholder: "Search by ID, address or asset…",
       filters: { all: "All", PENDING: "Pending", SUBMITTED: "Submitted", SUCCEEDED: "Succeeded", FAILED: "Failed", EXPIRED: "Expired" },
       status: { PENDING: "Pending", SUBMITTED: "Submitted", SUCCEEDED: "Succeeded", FAILED: "Failed", EXPIRED: "Expired", DELIVERED: "Delivered" },
@@ -1484,7 +1484,7 @@ export default {
       quoteError: "Couldn't price the swap.",
       modal: {
         eyebrow: "Cross-chain swap", title: "New cross-chain swap",
-        desc: "Send an asset on one chain and receive another on a different chain. NEAR Intents settles it; nothing passes through Cosmos Pay.",
+        desc: "Send an asset on one chain and receive another on a different chain. NEAR Intents settles it; Cosmos Pay never holds the funds.",
         from: "From", to: "To", chain: "Chain", asset: "Asset", assetsLoading: "Loading assets…",
         amount: "Amount to send", recipient: "Recipient",
         refundTo: "Refund address",

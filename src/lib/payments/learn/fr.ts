@@ -185,14 +185,14 @@ export const fr: LearnMessages = {
           title: "Où se place Cosmos Pay",
           body: [
             "Cosmos Pay est une passerelle de paiement en stablecoins non dépositaire sur Stellar, Solana et Monad. Vous encaissez avec un lien de paiement, le checkout hébergé ou l’API de paiement, et vous choisissez les adresses de wallet qui reçoivent l’argent. Cosmos Pay ne stocke les clés de personne.",
-            "Sur Stellar et Solana, votre client paie directement votre adresse. Sur Monad, chaque paiement va à sa propre adresse de dépôt, qui le transfère à la vôtre. Chaque paiement peut être vérifié sur le réseau, et chaque checkout payé renvoie à sa transaction dans un explorateur public.",
+            "Sur Stellar et Solana, votre client paie directement votre adresse. Sur Monad, chaque paiement va à une adresse de dépôt créée pour lui, qui ne peut que le transférer à votre adresse (moins les frais du relais) : Cosmos Pay n’en détient aucune clé. Chaque paiement peut être vérifié sur le réseau, et chaque checkout payé renvoie à sa transaction dans un explorateur public.",
           ],
           links: { security: "Comment les paiements sont protégés", acceptGuide: "Comment accepter des paiements en USDC en ligne", integrations: "Options d’intégration" },
         },
       },
       faq: {
         final: { q: "Un paiement en stablecoins peut-il faire l’objet d’une rétrofacturation ?", a: "Non. Une fois confirmé par le réseau, il est définitif. Un remboursement est un paiement que l’entreprise renvoie depuis son wallet." },
-        custody: { q: "Cosmos Pay garde-t-il mon argent ?", a: "Non. Sur Stellar et Solana, le payeur paie directement votre adresse. Sur Monad, chaque paiement va à sa propre adresse de dépôt, qui le transfère à la vôtre moins les frais de réseau." },
+        custody: { q: "Cosmos Pay garde-t-il mon argent ?", a: "Non. Sur Stellar et Solana, le payeur paie directement votre adresse. Sur Monad, chaque paiement va à une adresse de dépôt créée pour lui, qui ne peut que le transférer à votre adresse (moins les frais du relais) : Cosmos Pay n’en détient aucune clé." },
         wallet: { q: "Ai-je besoin de mon propre wallet ?", a: "Oui. Les paiements vont à une adresse que vous contrôlez sur chaque réseau que vous acceptez : les fonds sont à vous dès le premier paiement." },
         customers: { q: "Mes clients ont-ils besoin d’un compte ?", a: "Pas de compte chez Cosmos Pay. Il leur faut un wallet sur le réseau du paiement qui détient le stablecoin." },
       },
@@ -211,7 +211,7 @@ export const fr: LearnMessages = {
         rows: {
           link: { k: "Lien de paiement", stellar: "SEP-7 (web+stellar:pay) et son QR code", solana: "Demande de transfert Solana Pay (solana:) et son QR code", monad: "EIP-681 (ethereum:) et son QR code, vers une adresse de dépôt créée pour ce paiement" },
           match: { k: "Comment un paiement est rattaché", stellar: "Un mémo numérique sur le lien", solana: "Une clé de référence Solana Pay sur le lien", monad: "Sa propre adresse de dépôt" },
-          settle: { k: "Où va l’argent", stellar: "Directement à votre adresse", solana: "Directement à votre adresse", monad: "L’adresse de dépôt le transfère à votre adresse" },
+          settle: { k: "Où va l’argent", stellar: "Directement à votre adresse", solana: "Directement à votre adresse", monad: "Une adresse de dépôt qui ne peut que le transférer à votre adresse" },
           fee: { k: "Frais de réseau", stellar: "Réglés par le wallet du payeur", solana: "Réglés par le wallet du payeur", monad: "Le wallet du payeur paie son transfert ; les frais du relais pour l’acheminement sont déduits du paiement" },
           presets: { k: "Actifs préconfigurés" },
           test: { k: "Réseau de test" },

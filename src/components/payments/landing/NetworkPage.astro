@@ -13,6 +13,7 @@ import LandingHead from "@/components/payments/landing/LandingHead.astro";
 import Subnav from "@/components/payments/landing/Subnav.astro";
 import PageHeader from "@/components/payments/landing/PageHeader.astro";
 import { landingData } from "@/components/payments/landing/data";
+import { pageMeta } from "@/lib/payments/landing-i18n";
 import NetworkFacts from "@/components/payments/landing/sections/NetworkFacts.astro";
 import NetworkAssets from "@/components/payments/landing/sections/NetworkAssets.astro";
 import NetworkCode from "@/components/payments/landing/sections/NetworkCode.astro";
@@ -30,15 +31,15 @@ interface Props {
 const { chain } = Astro.props;
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
-const page = d.t.pages[chain];
+const meta = pageMeta(d.t, chain);
 const name = CHAIN_NAMES[chain];
 // The questions as the page shows them, rates filled in from plans.ts.
 const questions = Object.values(d.t.networks[chain].faq).map((f) => ({ q: f.q, a: f.a.replace("{rate}", `${PRIVATE_PAYMENT_FEE_PCT}%`) }));
 const ART: Record<Chain, string> = { stellar: "3d-instant", solana: "3d-final", monad: "3d-yours" };
 ---
 
-<PaymentsLayout title={page.meta} description={page.lede} indexable>
-  <LandingHead slot="head" d={d} page={chain} title={page.meta} description={page.lede} faq={questions} embed={false} />
+<PaymentsLayout title={meta.title} description={meta.description} indexable>
+  <LandingHead slot="head" d={d} page={chain} title={meta.title} description={meta.description} faq={questions} embed={false} />
 
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current={chain} />

@@ -193,14 +193,14 @@ export const en = {
           title: "How Cosmos Pay fits",
           body: [
             "Cosmos Pay is a non-custodial stablecoin payment gateway on Stellar, Solana and Monad. You charge with a payment link, the hosted checkout or the Payments API, and you choose the wallet addresses that receive the money. Cosmos Pay stores no one’s keys.",
-            "On Stellar and Solana your customer pays your address directly. On Monad each payment goes to its own deposit address, which forwards it to yours. Every payment can be checked on the network, and every paid checkout links its transaction on a public explorer.",
+            "On Stellar and Solana your customer pays your address directly. On Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay’s fee): Cosmos Pay holds no key to it. Every payment can be checked on the network, and every paid checkout links its transaction on a public explorer.",
           ],
           links: { security: "How payments are protected", acceptGuide: "How to accept USDC payments online", integrations: "Integration options" },
         },
       },
       faq: {
         final: { q: "Can a stablecoin payment be charged back?", a: "No. Once the network confirms it, it is final. A refund is a payment the business sends back from its wallet." },
-        custody: { q: "Does Cosmos Pay hold my money?", a: "No. On Stellar and Solana the payer pays your address directly. On Monad each payment goes to its own deposit address, which forwards it to yours less the network fee." },
+        custody: { q: "Does Cosmos Pay hold my money?", a: "No. On Stellar and Solana the payer pays your address directly. On Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay’s fee): Cosmos Pay holds no key to it." },
         wallet: { q: "Do I need my own wallet?", a: "Yes. Payments go to an address you control on each network you accept, so the funds are yours from the first payment." },
         customers: { q: "Do my customers need an account?", a: "No account with Cosmos Pay. They need a wallet on the payment’s network that holds the stablecoin." },
       },
@@ -219,7 +219,7 @@ export const en = {
         rows: {
           link: { k: "Payment link", stellar: "SEP-7 (web+stellar:pay) and its QR code", solana: "Solana Pay transfer request (solana:) and its QR code", monad: "EIP-681 (ethereum:) and its QR code, to a deposit address made for that payment" },
           match: { k: "How a payment is matched", stellar: "A numeric memo on the link", solana: "A Solana Pay reference key on the link", monad: "Its own deposit address" },
-          settle: { k: "Where the money goes", stellar: "Straight to your address", solana: "Straight to your address", monad: "The deposit address forwards it to your address" },
+          settle: { k: "Where the money goes", stellar: "Straight to your address", solana: "Straight to your address", monad: "A deposit address that can only forward it to your address" },
           fee: { k: "Network fee", stellar: "Paid by the payer’s wallet", solana: "Paid by the payer’s wallet", monad: "The payer’s wallet pays its transfer; the relay’s fee for forwarding is deducted from the payment" },
           presets: { k: "Assets with a preset" },
           test: { k: "Test network" },

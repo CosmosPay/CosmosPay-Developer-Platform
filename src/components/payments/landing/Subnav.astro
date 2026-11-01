@@ -25,9 +25,10 @@ const KEY: Record<SectionPage, keyof typeof t.pages> = {
   faq: "faq",
 };
 const mark = (here: boolean) => (here ? "page" : undefined);
+// Each in the page's language (d.href: ?lang=<code> on a page in another language than English).
 const items = [
-  { href: "/", label: t.pages.home, here: mark(current === "home") },
-  ...SECTION_PAGES.map((page) => ({ href: pagePath(page), label: (t.pages[KEY[page]] as { nav: string }).nav, here: mark(current === page) })),
+  { href: d.href("/"), label: t.pages.home, here: mark(current === "home") },
+  ...SECTION_PAGES.map((page) => ({ href: d.href(pagePath(page)), label: (t.pages[KEY[page]] as { nav: string }).nav, here: mark(current === page) })),
   { href: pageLinks.learn, label: learn.hub.nav, here: current === "learn" ? "page" : isLearnPage(current) ? "true" : undefined },
 ];
 ---

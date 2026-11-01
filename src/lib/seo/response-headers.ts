@@ -7,8 +7,10 @@
    - Referrer-Policy strict-origin-when-cross-origin, as the payments domain already sent.
    - The charset on HTML: Astro answers `text/html` alone, and a client that does not read the
      <meta charset> mangles the Hindi and Chinese pages.
-   - Vary: Accept-Language, Cookie on a page whose language follows the visitor (a bare path
-     on the company site or the gateway), so no cache hands one visitor's language to another.
+   - Vary: Accept-Language, Cookie where those headers decide the answer: a bare indexable page
+     asked with GET (English, or a 302 to the visitor's language: src/lib/seo/lang-urls.ts) and
+     the noindex pages that pick their language in place (payment links, /pay). An address that
+     names its language (?lang=es) does not vary, and neither does a bare page asked without GET.
 
    A header the response already carries is left as it is. Pure, so tests/unit/seoResponseHeaders.test.ts covers it. */
 
@@ -18,7 +20,7 @@ export const REFERRER_POLICY = "strict-origin-when-cross-origin";
 export interface ResponseHeaderOptions {
   /** The domain's public origin is https. */
   https: boolean;
-  /** The page's language came from the cookie or Accept-Language, not from its address. */
+  /** The answer depends on the cookie or Accept-Language, not only on the address. */
   negotiatedLang: boolean;
 }
 
