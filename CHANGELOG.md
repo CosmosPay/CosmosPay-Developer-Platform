@@ -2,6 +2,41 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.10.0] - 2026-11-01
+
+### Features
+- Descriptive page titles and h1s, and an answer-first FAQ (3f0db21)
+- Company home and pricing with checkable claims only (337b311)
+- Language URLs, structured data and AI discovery on the public domains (5835129)
+- Pages for Stellar, Solana and Monad, and a fee comparison (db61f23)
+- IndexNow key file on every domain and a sitemap submit script (fbebb1f)
+- SEO, hreflang, JSON-LD, sitemap and LLM outputs for /docs (a53a4f3)
+
+### Bug Fixes
+- Name the network a private account's signature is for (ce5d23e)
+- Check a merchant fee instead of throwing on it (90ce71c)
+- Trust the three public domains' Host header (a37f1d1)
+- Link an Authentik sign-in by email only when it is verified (c338d56)
+- Cut SDK reference descriptions at a sentence or word, resolve {@link} (1d6dde5)
+
+### Miscellaneous
+- A demo for every integration option on /integrations (8043ab0)
+- The integration demos in Hindi and Chinese (ee1ff03)
+
+### Performance
+- Download only the active language's catalog in the browser (48ce926)
+- Make the wallet figure a fast LCP on the company home (e066f32)
+- Prioritize the FAQ art and start the hero video after load (ef6d8e8)
+- Load Google Analytics once the page is idle (ad5126b)
+
+### Documentation
+- Note per-language catalogs and the deferred hero video (4e41a4d)
+- The company home's rules in CLAUDE.md and AGENTS.md (c07dae4)
+- Document the per-language URLs, SEO endpoints and structured data (746aabf)
+- The network pages and the fee comparison in CLAUDE.md and AGENTS.md (d613075)
+- Sync the Payments API reference with the community server (b59436a)
+- Point agents at the docs host and the OpenAPI spec (d217dc6)
+
 ## [0.9.0] - 2026-10-28
 
 ### Features
