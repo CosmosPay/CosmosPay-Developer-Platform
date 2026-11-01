@@ -49,6 +49,7 @@ export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", pay
 
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
 import { isKeyFilePath } from "@/lib/seo/indexnow";
+import { pageLanguages } from "@/lib/seo/lang-urls";
 
 const SITE_PATHS = new Set(["/pricing", "/tos", "/about"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
@@ -124,12 +125,17 @@ function underPrefix(path: string, prefix: string): boolean {
  * a redirect; payment links, /pay, /preview, /zk and /contact resolve it in place (noindex).
  */
 export function isLanguagePage(area: Area, pathname: string): boolean {
+  return languagesOf(area, pathname) !== undefined;
+}
+
+/** The languages the indexable page at `pathname` on `area` is written in (null: every language;
+ *  undefined: not an indexable page). The list lives in src/lib/seo/lang-urls.ts (pageLanguages),
+ *  which the links of every page read too. */
+export function languagesOf(area: Area, pathname: string): readonly string[] | null | undefined {
+  if (area === "dev") return undefined;
   const canonical = canonicalPath(pathname);
-  if (canonical === null) return false;
-  const path = canonical.toLowerCase();
-  if (area === "site") return path === "/" || SITE_PATHS.has(path) || DUAL_PATHS.has(path);
-  if (area === "payments") return path === "/" || PAYMENTS_PATHS.has(path);
-  return false;
+  if (canonical === null) return undefined;
+  return pageLanguages(area, canonical.toLowerCase());
 }
 
 /** Which domain a public path belongs to; "home" for `/` (every domain has its own). */

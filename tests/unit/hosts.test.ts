@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areasOf, canonicalPath, isLanguagePage, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
+import { areasOf, canonicalPath, isLanguagePage, languagesOf, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
 
 const PROD: Origins = {
   site: 'https://cosmospay.lat',
@@ -41,6 +41,10 @@ test('only the indexable pages have a version per language (and follow the visit
   for (const p of ['/faq', '/robots.txt', '/sitemap.xml', '/llms.txt']) assert.ok(!isLanguagePage('site', p), `site ${p}`);
   assert.ok(!isLanguagePage('dev', '/'));
   assert.ok(!isLanguagePage('dev', '/docs'));
+  // The languages each is written in: the terms exist in English and Spanish only.
+  assert.deepEqual(languagesOf('site', '/TOS/'), ['en', 'es']);
+  assert.equal(languagesOf('site', '/pricing'), null);
+  assert.equal(languagesOf('payments', '/pay'), undefined);
 });
 
 test('cosmospay.lat renders only the company site', () => {

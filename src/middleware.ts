@@ -4,11 +4,11 @@ import { trackActivity } from "@/lib/activity";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
-import { MOUNTS, isLanguagePage, routeRequest } from "@/lib/hosts";
+import { MOUNTS, languagesOf, routeRequest } from "@/lib/hosts";
 import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 import { DEFAULT_LOCALE, LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
-import { DEFAULT_LANG, explicitLang, langRedirect, normalizeLangQuery } from "@/lib/seo/lang-urls";
+import { DEFAULT_LANG, explicitLang, isCrawler, langRedirect, normalizeLangQuery } from "@/lib/seo/lang-urls";
 import { responseHeaders } from "@/lib/seo/response-headers";
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
@@ -53,6 +53,9 @@ function applyCors(headers: Headers, origin: string, request: Request): void {
    domain, which is fine for assets; the docs export under /docs is kept to the platform domain by
    nginx (see README). */
 const ORIGINS = { site: SITE, dev: DEV, payments: PAYMENTS };
+
+/* One year: the lifetime the language cookie has everywhere (the nav's switcher writes the same). */
+const LANG_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /* The languages the company site and the gateway are written in (the same seven). Each of their
    pages exists once per language at ?lang= (src/lib/seo/lang-urls.ts). */
@@ -161,7 +164,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const multilingual = decision.area === "payments" || decision.area === "site";
   const method = context.request.method.toUpperCase();
   const areaOrigin = ORIGINS[decision.area].replace(/\/+$/, "");
-  const languagePage = multilingual && decision.kind === "rewrite" && isLanguagePage(decision.area, context.url.pathname);
+  const pageLangs = multilingual && decision.kind === "rewrite" ? languagesOf(decision.area, context.url.pathname) : undefined;
+  const languagePage = pageLangs !== undefined;
   if (multilingual && decision.kind === "rewrite" && (method === "GET" || method === "HEAD")) {
     // A `lang` the pages do not take as written (?lang=ES, ?lang=xx, twice) would be one more
     // indexable copy of the page, and so would ?lang=en on an indexable page (English is its bare
@@ -173,16 +177,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const askedLang = multilingual ? explicitLang(context.url.searchParams.get("lang"), LANG_CODES) : null;
   const cookieLang = context.cookies.get(LANG_COOKIE)?.value;
   const acceptLanguage = context.request.headers.get("accept-language");
+  const userAgent = context.request.headers.get("user-agent");
   // A bare indexable page whose language is chosen by the visitor, not by its address: it answers
   // English, or a redirect to the visitor's language, so caches must key it on both headers.
   const negotiatedLang = multilingual && decision.kind === "rewrite" && askedLang === null && (!languagePage || method === "GET");
   if (languagePage && askedLang === null) {
-    // The bare path is the English page. A person whose switcher choice (cookie) or browser
-    // (Accept-Language) asks for another language goes to that language's address: a 302, only
-    // for GET, never for a crawler, never from an address that names a language (no loop).
+    // The bare path is the English page. A person whose language cookie or browser
+    // (Accept-Language) asks for another language the page is written in goes to that language's
+    // address: a 302, only for GET, never for a crawler, never from an address that names a
+    // language (no loop). The terms exist in English and Spanish: a French browser stays here.
     const target = langRedirect(
-      { method, pathname: context.url.pathname, search: context.url.search, cookie: cookieLang, acceptLanguage, userAgent: context.request.headers.get("user-agent") },
-      LANG_CODES,
+      { method, pathname: context.url.pathname, search: context.url.search, cookie: cookieLang, acceptLanguage, userAgent },
+      pageLangs ?? LANG_CODES,
     );
     if (target) {
       const redirect = new Response(null, {
@@ -194,6 +200,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.lang = DEFAULT_LOCALE;
   } else if (multilingual) {
     context.locals.lang = resolveLocale({ query: askedLang, cookie: cookieLang, acceptLanguage });
+    // Landing on an indexable page's own address in a language (a search result, a shared link)
+    // keeps the visitor in it: the cookie makes the bare addresses they open next redirect to the
+    // same language. Each address still has one language (the bare path is English, and is only
+    // ever redirected, never rendered in another), so this changes no page's content. Not for a
+    // crawler, and only when it changes something.
+    if (languagePage && askedLang && askedLang !== cookieLang && method === "GET" && !isCrawler(userAgent)) {
+      context.cookies.set(LANG_COOKIE, askedLang, { path: "/", maxAge: LANG_COOKIE_MAX_AGE, sameSite: "lax" });
+    }
   }
 
   // Belt-and-suspenders: ensure the route was synced (no-op after the first call).

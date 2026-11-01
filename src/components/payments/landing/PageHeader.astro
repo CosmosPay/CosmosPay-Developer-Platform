@@ -32,7 +32,7 @@ const copy = Astro.props.copy ?? (d.t.pages[page ?? "faq"] as { nav: string; tit
     <div class="pl-page-head-copy">
       <nav class="pl-crumbs" aria-label={d.t.pages.crumbs}>
         <ol role="list">
-          <li><a href="/">{d.t.pages.home}</a></li>
+          <li><a href={d.href("/")}>{d.t.pages.home}</a></li>
           {parent && <li><a href={parent.href}>{parent.name}</a></li>}
           <li><span aria-current="page">{copy.nav}</span></li>
         </ol>

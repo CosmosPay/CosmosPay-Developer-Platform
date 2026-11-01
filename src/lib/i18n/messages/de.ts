@@ -359,7 +359,7 @@ export default {
         sub: "/Monat",
         pnote: "0,75% + 18¢ pro Transaktion",
         team: "Unbegrenzt",
-        feats: ["Alles aus Starter", "Niedrigere Transaktionsgebühr", "Unbegrenzte Mitglieder", "Radar-Betrugstools", "Mengenrabatte", "Prioritäts-Support"]
+        feats: ["Alles aus Starter", "Niedrigere Transaktionsgebühr", "Unbegrenzte Mitglieder", "Prioritäts-Support"]
       }
     }
   },

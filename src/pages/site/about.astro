@@ -25,7 +25,7 @@ import { siteMeta } from "@/lib/seo/site-meta";
 import { ORGANIZATION_ID } from "@/lib/seo/org";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE } from "@/lib/seo/schema";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
-import { DASH, DOCS, PAYMENTS, PRICING, SITE } from "@/components/cosmos/lib/constants";
+import { DASH, DOCS, PAYMENTS, PRICING, SITE, langHref } from "@/components/cosmos/lib/constants";
 import { NETWORK_IDS } from "@/lib/chains";
 
 // The language the middleware resolved from the address: ?lang=<code>, English at the bare path
@@ -35,7 +35,7 @@ const catalog = (messages as Record<string, typeof messages.en>)[lang] ?? messag
 const t = catalog.about;
 const meta = siteMeta("about", lang);
 
-// What Cosmos Pay makes, each with the page that shows it.
+// What Cosmos Pay makes, each with the page that shows it (each link in the page's language: langHref).
 const PRODUCTS = [
   { key: "api", href: DOCS },
   { key: "checkout", href: `${PAYMENTS}/integrations` },
@@ -109,7 +109,7 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
           <p>{t.products.lede}</p>
           <ul class="about-nets" role="list">
             {NETWORKS.map((n) => (
-              <li><a class="card-link" href={n.href}>{n.label}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a></li>
+              <li><a class="card-link" href={langHref(n.href, lang, "site")}>{n.label}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a></li>
             ))}
           </ul>
         </div>
@@ -120,7 +120,7 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
               <li class="about-item">
                 <h3>{item.t}</h3>
                 <p>{fill(item.d)}</p>
-                <a class="card-link" href={p.href}>{item.a}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
+                <a class="card-link" href={langHref(p.href, lang, "site")}>{item.a}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
               </li>
             );
           })}
@@ -166,7 +166,7 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
                 <p>{item.d}</p>
                 <div class="about-links">
                   {c.links.map((l) => (
-                    <a class="card-link" href={l.href}>{l.label}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
+                    <a class="card-link" href={langHref(l.href, lang, "site")}>{l.label}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
                   ))}
                 </div>
               </li>

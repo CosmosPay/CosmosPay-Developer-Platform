@@ -264,7 +264,7 @@ export default {
     supportLevels: { standard: "Standard", priority: "Priority" },
     plans: {
       starter: { desc: "Take real payments on Stellar, Solana & Monad", sub: "+ 18¢ / txn", pnote: "1.5% + 18¢ per transaction", team: "Up to 2", feats: ["Partial API access", "Live & test keys", "USDC settlement", "Up to 2 members"] },
-      growth: { desc: "Lower rates for scaling teams", sub: "/mo", pnote: "0.75% + 18¢ per transaction", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Radar fraud tooling", "Volume discounts", "Priority support"] },
+      growth: { desc: "Lower rates for scaling teams", sub: "/mo", pnote: "0.75% + 18¢ per transaction", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Priority support"] },
     },
   },
 

@@ -9,6 +9,7 @@
    tests/unit/seoSiteMeta.test.ts checks every language is complete. Titles separate with " | " and nothing here uses an em dash. */
 import { LOCALES } from "@/lib/i18n/locales";
 import { messages } from "@/lib/i18n/messages/index";
+import { TOS_LANGS } from "@/lib/seo/lang-urls";
 
 /** The company site's languages, in the language picker's order. */
 export const SITE_LANGS: readonly string[] = LOCALES.map((l) => l.code);
@@ -29,7 +30,7 @@ export const PAGE_LANGS: Record<SitePage, readonly string[]> = {
   home: SITE_LANGS,
   pricing: SITE_LANGS,
   swaps: SITE_LANGS,
-  tos: ["en", "es"],
+  tos: TOS_LANGS,
   about: SITE_LANGS,
 };
 

@@ -262,7 +262,7 @@ export default {
     supportLevels: { standard: "标准", priority: "优先" },
     plans: {
       starter: { desc: "在 Stellar、Solana 和 Monad 上接受真实支付", sub: "+ 18¢ / 笔", pnote: "每笔交易 1.5% + 18¢", team: "最多 2 人", feats: ["部分 API 访问权限", "生产与测试密钥", "USDC 结算", "最多 2 名成员"] },
-      growth: { desc: "为成长中的团队提供更低费率", sub: "/月", pnote: "每笔交易 0.75% + 18¢", team: "不限", feats: ["包含 Starter 全部功能", "更低的交易费率", "不限成员数量", "Radar 反欺诈工具", "交易量折扣", "优先支持"] },
+      growth: { desc: "为成长中的团队提供更低费率", sub: "/月", pnote: "每笔交易 0.75% + 18¢", team: "不限", feats: ["包含 Starter 全部功能", "更低的交易费率", "不限成员数量", "优先支持"] },
     },
   },
 

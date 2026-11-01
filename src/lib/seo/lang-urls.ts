@@ -4,15 +4,50 @@
    Every indexable page has ONE address per language: the bare path is English (and x-default),
    every other language is `?lang=<code>`. `?lang=en` is not an address of its own: the middleware
    answers it with a 301 to the bare path. A visitor who asks for the bare path while preferring
-   another language (the nav's language switcher, which sets the `cosmospay-lang` cookie, or else
-   the browser's Accept-Language) is sent there with a 302 (`langRedirect`); crawlers, which send
-   neither, always get the English page they asked for. The layouts (canonical, hreflang,
-   og:locale), sitemap.xml, robots.txt, llms.txt and the JSON-LD all build their URLs here, so
-   they always agree. Pure and free of catalogs (the nav imports it in the browser), so
+   another language (the `cosmospay-lang` cookie, which the nav's language switcher and a visit to
+   a page's `?lang=` address set, or else the browser's Accept-Language) is sent there with a 302
+   (`langRedirect`), only to a language the page is written in; crawlers always get the English
+   page they asked for. On a page in another language every link to an indexable page carries
+   that language (`localizeHref`). The layouts (canonical, hreflang, og:locale), sitemap.xml,
+   robots.txt, llms.txt, the JSON-LD and the links all build their URLs here, so they always
+   agree. Pure and free of catalogs (the nav imports it in the browser), so
    tests/unit/seoLangUrls.test.ts covers it. */
+
+import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
 
 /** The language whose version of a page is its bare path. */
 export const DEFAULT_LANG = "en";
+
+/** The two hosts whose pages exist once per language. */
+export type LangArea = "site" | "payments";
+
+/** Their public origins (src/components/cosmos/lib/constants.ts SITE and PAYMENTS). */
+export interface LangHosts {
+  site: string;
+  payments: string;
+}
+
+/** The languages the terms are written in (src/pages/site/tos.astro): any other shows English. */
+export const TOS_LANGS: readonly string[] = ["en", "es"];
+
+/* The company site's indexable pages and the languages each is written in (null: all of them). */
+const SITE_PAGE_LANGS: Readonly<Record<string, readonly string[] | null>> = {
+  "/": null,
+  "/pricing": null,
+  "/swaps": null,
+  "/about": null,
+  "/tos": TOS_LANGS,
+};
+
+/**
+ * The languages the indexable page at `path` on `area` is written in: null when it is written in
+ * every language, undefined when `path` is not an indexable page there (a payment link, /pay, a
+ * preview: those resolve their language in place and keep their own links).
+ */
+export function pageLanguages(area: LangArea, path: string): readonly string[] | null | undefined {
+  if (area === "site") return Object.hasOwn(SITE_PAGE_LANGS, path) ? SITE_PAGE_LANGS[path] : undefined;
+  return path === "/" || PAYMENTS_PAGE_PATHS.includes(path) ? null : undefined;
+}
 
 /** The address of `path` on `origin` in `lang`: the bare path for English (or no language),
  *  `?lang=<code>` for any other: `https://payments…/faq?lang=es`. */
@@ -181,4 +216,47 @@ export function langRedirect(req: LangRedirectRequest, langs: readonly string[],
   const lang = visitorLang(req.cookie, req.acceptLanguage, langs);
   if (!lang || lang === defaultLang) return null;
   return `${req.pathname}${langSearch(req.search, lang, defaultLang)}`;
+}
+
+/* `origin` with no trailing slash, and whether `href` is on it (the origin itself, or a path,
+   query or fragment under it). */
+const trimOrigin = (origin: string): string => origin.replace(/\/+$/, "");
+const onOrigin = (href: string, origin: string): boolean =>
+  href === origin || href.startsWith(`${origin}/`) || href.startsWith(`${origin}?`) || href.startsWith(`${origin}#`);
+
+/**
+ * A link as a page in `lang` writes it: a link to an indexable page of the company site or the
+ * gateway (absolute, or a path on `here`, the host the page is on) carries `?lang=<lang>`, so a
+ * visitor and a crawler stay in the language they are reading. English links stay bare (English
+ * is the bare path), and so does a link to a page not written in `lang` (the terms in French:
+ * their English version is the canonical one). Links to anything else (a payment link, /pay, the
+ * docs, another site, a fragment of the same page) are returned as given. The fragment and every
+ * other query parameter are kept byte for byte. Every link the nav, the footer and the pages of
+ * both hosts draw goes through here (constants.ts `langHref`, `landingData().href`).
+ */
+export function localizeHref(href: string, lang: string | null | undefined, hosts: LangHosts, here?: LangArea): string {
+  if (!lang || lang === DEFAULT_LANG) return href;
+  const site = trimOrigin(hosts.site);
+  const payments = trimOrigin(hosts.payments);
+  let prefix = "";
+  let areas: LangArea[];
+  if (onOrigin(href, site) || onOrigin(href, payments)) {
+    prefix = onOrigin(href, site) ? site : payments;
+    // One host may serve both areas (a local single-host setup): then the path decides.
+    areas = [...(onOrigin(href, site) ? (["site"] as const) : []), ...(onOrigin(href, payments) ? (["payments"] as const) : [])];
+  } else if (here && href.startsWith("/") && !href.startsWith("//")) {
+    areas = [here];
+  } else {
+    return href;
+  }
+  const rest = href.slice(prefix.length);
+  const cut = rest.search(/[?#]/);
+  const path = (cut < 0 ? rest : rest.slice(0, cut)) || "/";
+  const tail = cut < 0 ? "" : rest.slice(cut);
+  const hashAt = tail.indexOf("#");
+  const query = hashAt < 0 ? tail : tail.slice(0, hashAt);
+  const hash = hashAt < 0 ? "" : tail.slice(hashAt);
+  const written = areas.map((area) => pageLanguages(area, path)).find((langs) => langs !== undefined);
+  if (written === undefined || (written !== null && !written.includes(lang))) return href;
+  return `${prefix}${path}${langSearch(query, lang)}${hash}`;
 }

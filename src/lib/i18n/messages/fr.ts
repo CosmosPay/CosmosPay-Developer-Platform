@@ -359,7 +359,7 @@ export default {
         sub: "/mois",
         pnote: "0,75% + 18¢ par transaction",
         team: "Illimité",
-        feats: ["Tout de Starter", "Taux par transaction réduit", "Membres illimités", "Outils anti-fraude Radar", "Remises sur volume", "Assistance prioritaire"]
+        feats: ["Tout de Starter", "Taux par transaction réduit", "Membres illimités", "Assistance prioritaire"]
       }
     }
   },

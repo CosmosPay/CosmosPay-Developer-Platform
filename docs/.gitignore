@@ -47,4 +47,6 @@ next-env.d.ts
 /src/lib/urls.ts
 /src/lib/safe-next.ts
 /src/lib/seo/lang-urls.ts
+/src/lib/payments/site-pages.ts
+/src/lib/chains.ts
 /src/styles/cosmos.css

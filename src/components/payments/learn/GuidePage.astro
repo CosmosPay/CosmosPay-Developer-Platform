@@ -48,7 +48,7 @@ const HREF = learnHrefs(DOCS);
 const vars = { starterRate: PLAN_SPECS.starter.perTx };
 const text = (s: string) => fill(s, vars);
 const linksOf = (links: Partial<Record<LearnLink, string>> | undefined) =>
-  Object.entries(links ?? {}).map(([key, label]) => ({ href: HREF[key as LearnLink], label: label as string }));
+  Object.entries(links ?? {}).map(([key, label]) => ({ href: d.href(HREF[key as LearnLink]), label: label as string }));
 
 // The questions as the page shows them, rates filled in.
 const questions = g.faq ? Object.values(g.faq).map((f) => ({ q: text(f.q), a: text(f.a) })) : undefined;

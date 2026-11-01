@@ -161,14 +161,25 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `pt-BR`, `xx`, twice) is a 301 to the language it names, or to the bare path
   (`normalizeLangQuery`, other parameters kept byte for byte). **English is the bare path**: on an
   indexable page (`isLanguagePage` in `hosts.ts`) `?lang=en` is a 301 to the bare path too, and
-  the bare path always renders English. A visitor whose language cookie (`cosmospay-lang`, set
-  ONLY by the nav's language switcher, never by visiting a `?lang=` page) or, without one,
-  Accept-Language names another language gets a 302 from the bare path to `?lang=<code>`
-  (`langRedirect` in `src/lib/seo/lang-urls.ts`): only for GET, never for a crawler (none sends
-  Accept-Language, and a crawler user agent is excluded too), never from an address that already
-  names a language (so never a loop), never on the noindex pages (payment links, `/pay`,
-  `/preview`, `/zk`, `/contact`), which still resolve ?lang → cookie → Accept-Language → en in
-  place and keep `?lang=en`. A cookie saying `en` keeps a visitor on English. The middleware adds
+  the bare path always renders English. A visitor whose language cookie (`cosmospay-lang`) or,
+  without one, Accept-Language names another language **the page is written in**
+  (`pageLanguages` in `src/lib/seo/lang-urls.ts`: `/tos` is English and Spanish, so a French
+  browser stays on it) gets a 302 from the bare path to `?lang=<code>` (`langRedirect`): only for
+  GET, never for a crawler (none sends Accept-Language, and a crawler user agent is excluded
+  too), never from an address that already names a language (so never a loop), never on the
+  noindex pages (payment links, `/pay`, `/preview`, `/zk`, `/contact`), which still resolve
+  ?lang → cookie → Accept-Language → en in place and keep `?lang=en`. The cookie is set by the
+  nav's language switcher and by a GET of an indexable page's `?lang=<code>` address (not for a
+  crawler, only when it changes), so a visitor who lands on a language from a search result stays
+  in it; every address still has one language, since a bare path is only ever redirected, never
+  rendered in another. A cookie saying `en` keeps a visitor on English. **Every link keeps the
+  page's language**: on a page in another language than English, a link to an indexable page of
+  either host carries `?lang=<code>` (`localizeHref`; anchors and other parameters kept, English
+  and pages not written in that language left bare, the docs, noindex pages and other sites
+  untouched). The nav and the footer go through `langHref` / `localHref` / `homeFor` /
+  `pricingFor` (`constants.ts`, with `useLang()`), the gateway's pages through `landingData().href`
+  (its `links`, `pageLinks` and `PRICING` come localized), the About page through `langHref`; a
+  new link to one of those pages goes through one of them too. The middleware adds
   HSTS (https origins, no includeSubDomains), `Referrer-Policy`, `charset=utf-8` on HTML and
   `Vary: Accept-Language, Cookie` only where those headers decide the answer: a bare indexable
   page asked with GET (its 200 and its 302, which is also `Cache-Control: private, no-cache`) and
@@ -1372,6 +1383,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
 - Starter is 1.5% + 18¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
+- **A plan card lists only what the product does**: the pricing cards and the onboarding plan
+  cards name rates, limits and features `plans.ts` and the dashboard back (no fraud tooling, no
+  volume discounts, no "from" before a flat monthly price), in every language.
 - **Every rate is 75% of the competition's, rounded down** (product owner, 2026-10-27), so each
   is at least 25% cheaper: payments from BitPay's tiers (2% / 1.5% / 1% + 25¢ → 1.5% / 1.12% /
   0.75% + 18¢; the monthly fees have no counterpart and stay), swaps from MetaMask's 0.875%

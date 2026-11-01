@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalUrl, explicitLang, hreflangAlternates, isCrawler, langRedirect, langSearch, normalizeLangQuery, ogLocale, pageUrl, visitorLang } from '@/lib/seo/lang-urls';
+import { canonicalUrl, explicitLang, hreflangAlternates, isCrawler, langRedirect, langSearch, localizeHref, normalizeLangQuery, ogLocale, pageLanguages, pageUrl, visitorLang } from '@/lib/seo/lang-urls';
 import { crossHostCanonical } from '@/lib/seo/cross-host';
 import { LOCALES as SITE_LOCALES } from '@/lib/i18n/locales';
 import { LOCALES as PAYMENTS_LOCALES } from '@/lib/payments/i18n';
@@ -150,4 +150,74 @@ test('langRedirect never redirects English, crawlers, non-GET requests or an add
   for (const method of ['HEAD', 'POST', 'PUT', 'OPTIONS']) assert.equal(ask({ method, acceptLanguage: 'es' }), null, method);
   assert.equal(ask({ search: '?lang=fr', acceptLanguage: 'es' }), null, 'the address names a language: no loop');
   assert.equal(ask({ search: '?a=1&lang=de', cookie: 'es' }), null);
+});
+
+const HOSTS = { site: 'https://cosmospay.lat', payments: 'https://payments.cosmospay.lat' };
+
+test('pageLanguages: the indexable pages of each host and the languages each is written in', () => {
+  assert.equal(pageLanguages('site', '/'), null);
+  assert.equal(pageLanguages('site', '/pricing'), null);
+  assert.deepEqual(pageLanguages('site', '/tos'), ['en', 'es']);
+  assert.equal(pageLanguages('site', '/faq'), undefined);
+  assert.equal(pageLanguages('payments', '/faq'), null);
+  assert.equal(pageLanguages('payments', '/learn/accept-usdc-payments'), null);
+  for (const path of ['/pay', '/contact', '/preview/classic', '/cmh4x2k9a0001l70g8v5q3z2w', '/zk/x']) assert.equal(pageLanguages('payments', path), undefined, path);
+});
+
+test('localizeHref: a link to an indexable page carries the language of the page that draws it', () => {
+  // Same host, as a path.
+  assert.equal(localizeHref('/faq', 'es', HOSTS, 'payments'), '/faq?lang=es');
+  assert.equal(localizeHref('/', 'zh', HOSTS, 'payments'), '/?lang=zh');
+  assert.equal(localizeHref('/integrations#integration-links', 'fr', HOSTS, 'payments'), '/integrations?lang=fr#integration-links');
+  assert.equal(localizeHref('/#pricing', 'de', HOSTS, 'payments'), '/?lang=de#pricing');
+  // Absolute, on either host.
+  assert.equal(localizeHref('https://cosmospay.lat/pricing', 'pt', HOSTS), 'https://cosmospay.lat/pricing?lang=pt');
+  assert.equal(localizeHref('https://cosmospay.lat', 'hi', HOSTS), 'https://cosmospay.lat/?lang=hi');
+  assert.equal(localizeHref('https://cosmospay.lat/#wallet', 'es', HOSTS), 'https://cosmospay.lat/?lang=es#wallet');
+  assert.equal(localizeHref('https://payments.cosmospay.lat/compare', 'es', HOSTS, 'site'), 'https://payments.cosmospay.lat/compare?lang=es');
+  // Other parameters stay byte for byte; a language already there is replaced.
+  assert.equal(localizeHref('/faq?utm_source=x&b=a+b%2F#q', 'es', HOSTS, 'payments'), '/faq?utm_source=x&b=a+b%2F&lang=es#q');
+  assert.equal(localizeHref('/faq?lang=fr', 'es', HOSTS, 'payments'), '/faq?lang=es');
+});
+
+test('localizeHref leaves English, other pages, other hosts and fragments as they are', () => {
+  for (const lang of [null, undefined, '', 'en']) assert.equal(localizeHref('https://cosmospay.lat/pricing', lang, HOSTS), 'https://cosmospay.lat/pricing', String(lang));
+  // A page not written in the language: its English version is the canonical one.
+  assert.equal(localizeHref('https://cosmospay.lat/tos', 'fr', HOSTS), 'https://cosmospay.lat/tos');
+  assert.equal(localizeHref('https://cosmospay.lat/tos', 'es', HOSTS), 'https://cosmospay.lat/tos?lang=es');
+  for (const href of [
+    '/pay?uri=web%2Bstellar%3Apay',
+    '/preview/classic?lang=es',
+    '/cmh4x2k9a0001l70g8v5q3z2w',
+    '/contact',
+    'https://dev.cosmospay.lat/docs/',
+    'https://dev.cosmospay.lat/login?next=%2Fdashboard%3Fview%3Dpayments',
+    'https://github.com/CosmosPay',
+    'mailto:organization@cosmospay.lat',
+    '#contact',
+    '//cosmospay.lat/pricing',
+    'https://cosmospay.lat.evil.example/pricing',
+    'https://cosmospay.lat/wallet/',
+  ]) {
+    assert.equal(localizeHref(href, 'es', HOSTS, 'payments'), href, href);
+  }
+  // A path without a host to resolve it on is left alone.
+  assert.equal(localizeHref('/faq', 'es', HOSTS), '/faq');
+  // A path is read on the host the page is on: /pricing is a page on the company site only.
+  assert.equal(localizeHref('/pricing', 'es', HOSTS, 'site'), '/pricing?lang=es');
+  assert.equal(localizeHref('/pricing', 'es', HOSTS, 'payments'), '/pricing');
+});
+
+test('one host serving both areas (a local setup): the path decides', () => {
+  const local = { site: 'http://localhost:4321', payments: 'http://localhost:4321' };
+  assert.equal(localizeHref('http://localhost:4321/faq', 'es', local), 'http://localhost:4321/faq?lang=es');
+  assert.equal(localizeHref('http://localhost:4321/pricing', 'es', local), 'http://localhost:4321/pricing?lang=es');
+});
+
+test('langRedirect only sends a visitor to a language the page is written in', () => {
+  const tos = (over: Partial<Parameters<typeof langRedirect>[0]>) => langRedirect({ method: 'GET', pathname: '/tos', search: '', userAgent: CHROME, ...over }, ['en', 'es']);
+  assert.equal(tos({ acceptLanguage: 'fr-FR,fr;q=0.9' }), null, 'a French browser stays on the English terms');
+  assert.equal(tos({ cookie: 'fr' }), null);
+  assert.equal(tos({ acceptLanguage: 'fr-FR,fr;q=0.9,es;q=0.8' }), '/tos?lang=es', 'its next language the terms are written in');
+  assert.equal(tos({ acceptLanguage: 'es-AR' }), '/tos?lang=es');
 });
