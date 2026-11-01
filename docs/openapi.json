@@ -7410,7 +7410,7 @@
     },
     "/v1/wallet/auth/oauth/claim": {
       "post": {
-        "description": "A NEW email ends here, with a session token. An email that ALREADY has an account gets `verify_email` instead and a code in its inbox: a provider proves who consented, not who opened the sign-in, and an existing account is where the backup worth stealing is. An Authentik email the provider has not confirmed also gets `verify_email`, account or not, under the same per-address cooldown as `email/start`.",
+        "description": "A NEW email ends here, with a session token. An email that ALREADY has an account gets `verify_email` instead and a code in its inbox: a provider proves who consented, not who opened the sign-in, and an existing account is where the backup worth stealing is. An Authentik email the provider has not confirmed also gets `verify_email`, account or not, under the same per-address cooldown as `email/start`. The exception is a sign-in through Authentik’s emailed link (the `email` source), whose ID token carries `cosmos_inbox_proven: true`: that login already proved the inbox, so an existing account ends here too, with its backups and the `idToken`.",
         "operationId": "WalletAuthController_claimOauth_v1",
         "parameters": [],
         "requestBody": {
@@ -14231,6 +14231,509 @@
           "Soroban RPC"
         ]
       }
+    },
+    "/v1/wallet/easy-recovery/sessions": {
+      "post": {
+        "description": "Send a fresh X25519 public key; keep its private half on the device. Show a QR with the returned `id` and that key — nothing else, no secret and no server URL. The session lives five minutes.",
+        "operationId": "EasyRecoveryController_createSession_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEasyRecoverySessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EasyRecoverySessionCreatedEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Open a session on the new device",
+        "tags": [
+          "wallet-easy-recovery"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "easy-recovery-create",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/easy-recovery/sessions/{id}": {
+      "get": {
+        "description": "Both devices poll it: the new one waits for `offered` to ask for the code, the old one for `claimed` to stop showing it. Answers the status and the expiry only, never the key, the sealed wallet or the code. An unknown, expired or burned session is a 404.",
+        "operationId": "EasyRecoveryController_status_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The session id from `POST /v1/wallet/easy-recovery/sessions`, as the QR carries it: 22 base64url characters.",
+            "schema": {
+              "example": "q2Z7rT0aV1bX9cD4eF6gHw",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EasyRecoverySessionStatusEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "`easy_recovery_not_found`: No such session, or it expired, was claimed or was burned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "easy_recovery_not_found": {
+                    "summary": "easy_recovery_not_found: No such session, or it expired, was claimed or was burned",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "easy_recovery_not_found",
+                      "error": "Not Found",
+                      "message": "This recovery session does not exist or has expired. Start again on the new device.",
+                      "path": "/v1/wallet/easy-recovery/sessions/q2Z7rT0aV1bX9cD4eF6gHw",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Poll a session",
+        "tags": [
+          "wallet-easy-recovery"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "easy-recovery-poll",
+            "limit": 600,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/easy-recovery/sessions/{id}/offer": {
+      "post": {
+        "description": "After the person confirmed and unlocked on the old device: seal the wallet to the `receiverKey` read from the QR (ECIES, on the device), generate a random five-digit code, send both here and show the code. Accepted once per session, while it is `open`: the first offer wins and any later one is a 409. Only a hash of the code is stored.",
+        "operationId": "EasyRecoveryController_offer_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The session id from `POST /v1/wallet/easy-recovery/sessions`, as the QR carries it: 22 base64url characters.",
+            "schema": {
+              "example": "q2Z7rT0aV1bX9cD4eF6gHw",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferEasyRecoveryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EasyRecoveryOfferedEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "`easy_recovery_not_found`: No such session, or it expired, was claimed or was burned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "easy_recovery_not_found": {
+                    "summary": "easy_recovery_not_found: No such session, or it expired, was claimed or was burned",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "easy_recovery_not_found",
+                      "error": "Not Found",
+                      "message": "This recovery session does not exist or has expired. Start again on the new device.",
+                      "path": "/v1/wallet/easy-recovery/sessions/q2Z7rT0aV1bX9cD4eF6gHw/offer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`easy_recovery_already_offered`: The session already holds an offer; the first one wins",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "easy_recovery_already_offered": {
+                    "summary": "easy_recovery_already_offered: The session already holds an offer; the first one wins",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "easy_recovery_already_offered",
+                      "error": "Conflict",
+                      "message": "This recovery session already holds an offer. Start again on the new device.",
+                      "path": "/v1/wallet/easy-recovery/sessions/q2Z7rT0aV1bX9cD4eF6gHw/offer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Offer the sealed wallet from the old device",
+        "tags": [
+          "wallet-easy-recovery"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "easy-recovery-offer",
+            "limit": 20,
+            "windowMs": 600000
+          }
+        ]
+      }
+    },
+    "/v1/wallet/easy-recovery/sessions/{id}/claim": {
+      "post": {
+        "description": "The right code answers the sealed wallet, once: the session reads `claimed` from then on and no longer holds it. A wrong code is a 422 with `details.attemptsLeft`; the fifth wrong code deletes the session and answers 410. Before the old device offered, the answer is 409 — poll for `offered` first. A malformed code is a 400 and costs no attempt.",
+        "operationId": "EasyRecoveryController_claim_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The session id from `POST /v1/wallet/easy-recovery/sessions`, as the QR carries it: 22 base64url characters.",
+            "schema": {
+              "example": "q2Z7rT0aV1bX9cD4eF6gHw",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimEasyRecoveryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EasyRecoveryClaimedEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "`easy_recovery_not_found`: No such session, or it expired, was claimed or was burned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "easy_recovery_not_found": {
+                    "summary": "easy_recovery_not_found: No such session, or it expired, was claimed or was burned",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "easy_recovery_not_found",
+                      "error": "Not Found",
+                      "message": "This recovery session does not exist or has expired. Start again on the new device.",
+                      "path": "/v1/wallet/easy-recovery/sessions/q2Z7rT0aV1bX9cD4eF6gHw/claim",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`easy_recovery_not_offered`: Nothing has been offered on the session yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "easy_recovery_not_offered": {
+                    "summary": "easy_recovery_not_offered: Nothing has been offered on the session yet",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "easy_recovery_not_offered",
+                      "error": "Conflict",
+                      "message": "Nothing has been offered on this session yet. Confirm on the other device first.",
+                      "path": "/v1/wallet/easy-recovery/sessions/q2Z7rT0aV1bX9cD4eF6gHw/claim",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`easy_recovery_burned`: That was the last wrong code allowed: the session was deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "easy_recovery_burned": {
+                    "summary": "easy_recovery_burned: That was the last wrong code allowed: the session was deleted",
+                    "value": {
+                      "statusCode": 410,
+                      "code": "easy_recovery_burned",
+                      "error": "Gone",
+                      "message": "Too many wrong codes: this recovery session was deleted. Start again on the new device.",
+                      "path": "/v1/wallet/easy-recovery/sessions/q2Z7rT0aV1bX9cD4eF6gHw/claim",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`easy_recovery_code_invalid`: Wrong code; `details.attemptsLeft` says how many more the session survives",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "easy_recovery_code_invalid": {
+                    "summary": "easy_recovery_code_invalid: Wrong code; `details.attemptsLeft` says how many more the session survives",
+                    "value": {
+                      "statusCode": 422,
+                      "code": "easy_recovery_code_invalid",
+                      "error": "Unprocessable Entity",
+                      "message": "That code is not the one shown on the other device.",
+                      "details": {
+                        "attemptsLeft": 4
+                      },
+                      "path": "/v1/wallet/easy-recovery/sessions/q2Z7rT0aV1bX9cD4eF6gHw/claim",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Claim the sealed wallet with the code on the old device",
+        "tags": [
+          "wallet-easy-recovery"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "easy-recovery-claim",
+            "limit": 30,
+            "windowMs": 600000
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -14311,6 +14814,10 @@
     {
       "name": "recovery",
       "description": "Served by the two recovery deployments only. Standard SEP-10 web authentication and SEP-30 account recovery: each server holds half of what a recovery signature needs, and proves the person’s inbox on its own."
+    },
+    {
+      "name": "wallet-easy-recovery",
+      "description": "Move a wallet between two devices through a five-minute mailbox this service cannot open."
     },
     {
       "name": "webhooks",
@@ -22809,6 +23316,25 @@
           "keys"
         ]
       },
+      "WalletAuthSourceEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "google",
+            "description": "Send as `source` on /oauth/authorize."
+          },
+          "name": {
+            "type": "string",
+            "example": "Google",
+            "description": "The button’s label: the provider’s own name."
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "WalletAuthProvidersEntity": {
         "type": "object",
         "properties": {
@@ -22824,6 +23350,13 @@
               "type": "string"
             }
           },
+          "sources": {
+            "description": "Authentik’s own sources (Google, GitHub…), each to show as a button of its own that starts the Authentik sign-in at that source — with these, a wallet need not show a generic Authentik button. Empty without Authentik, or when the operator listed none (WALLET_AUTH_OIDC_SOURCES).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WalletAuthSourceEntity"
+            }
+          },
           "email": {
             "type": "boolean",
             "description": "Whether the email-code door works here. False when no console is configured to deliver the mail."
@@ -22837,6 +23370,7 @@
         },
         "required": [
           "providers",
+          "sources",
           "email",
           "mfaSettingsUrl"
         ]
@@ -22869,6 +23403,11 @@
             "type": "string",
             "description": "A native wallet’s own URL: a custom scheme, a universal/app link, or `http://127.0.0.1:<port>/…` from a desktop app. When set, the callback answers `302` to it with `?state=…` (plus `&error=<reason>` on failure) instead of rendering a page, which is what closes the platform’s auth session. Must be listed in the deployment’s `WALLET_AUTH_RETURN_URLS` (a loopback entry matches any port). Only the `state` travels: the handshake is still redeemed with the verifier.",
             "example": "cosmoswallet://auth/done"
+          },
+          "source": {
+            "type": "string",
+            "description": "Start at one of Authentik’s sources (Google, GitHub…) instead of its login page: an `id` from `sources` on GET /v1/wallet/auth/providers, with `provider: authentik`. The browser goes straight to that provider and comes back through Authentik, so the handshake and its ID token are the same as any Authentik sign-in. Send it only to a deployment that listed it: an older one refuses the unknown field.",
+            "example": "google"
           }
         },
         "required": [
@@ -22922,6 +23461,10 @@
               "failed"
             ],
             "description": "Present only on `failed`. A token to map to a sentence, never prose, which cannot be translated on the device."
+          },
+          "bound": {
+            "type": "boolean",
+            "description": "Present (true) only on `authorized`, after an Authentik emailed sign-in whose callback sent the wallet’s return URL a device binding: claim with it (`binding`), or the claim sends the inbox a code. The value itself is never in this response."
           }
         },
         "required": [
@@ -22946,7 +23489,11 @@
               "recovery"
             ],
             "default": "sign-in",
-            "description": "`recovery` when the proven identity is going to be presented to the SEP-30 recovery servers. It always routes through an emailed code, even for an email with no account, and only then does the answer carry the provider's `idToken`: a provider proves who consented, not who opened the sign-in, and a recovery identity is worth a wallet."
+            "description": "`recovery` when the proven identity is going to be presented to the SEP-30 recovery servers. It always routes through an emailed code, even for an email with no account, and only then does the answer carry the provider's `idToken`: a provider proves who consented, not who opened the sign-in, and a recovery identity is worth a wallet. The one exception is an existing account signed in through Authentik’s emailed link (`cosmos_inbox_proven: true` in its ID token), which already proved the inbox."
+          },
+          "binding": {
+            "type": "string",
+            "description": "The device binding: the one-time value the callback put in the fragment of its redirect to the wallet’s return URL, after an Authentik emailed sign-in (the poll says `bound`). Only with it does that sign-in skip the code for an existing account. Send it only when the poll said `bound`: an older server refuses the unknown field."
           }
         },
         "required": [
@@ -27240,6 +27787,125 @@
           "transfer"
         ]
       },
+      "CreateEasyRecoverySessionDto": {
+        "type": "object",
+        "properties": {
+          "receiverKey": {
+            "type": "string",
+            "description": "The new device’s X25519 public key: 32 bytes, base64url without padding (43 characters). Generate a fresh key pair for every session and keep the private half on the device. The old device seals the wallet to this key, so it reads it from the QR, never from this service.",
+            "example": "E75P6uryBMf9M1j8nAByGIHRdCeBKCJ-xnTzf3_pe20",
+            "minLength": 43,
+            "maxLength": 43
+          }
+        },
+        "required": [
+          "receiverKey"
+        ]
+      },
+      "EasyRecoverySessionCreatedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The session id: 16 random bytes, base64url (22 characters). Put it in the QR next to `receiverKey`, and nothing else from here.",
+            "example": "q2Z7rT0aV1bX9cD4eF6gHw"
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When the session stops answering, ISO 8601. Five minutes.",
+            "example": "2026-10-28T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "expiresAt"
+        ]
+      },
+      "EasyRecoverySessionStatusEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "offered",
+              "claimed"
+            ],
+            "description": "`open`: waiting for the old device. `offered`: the old device has sent the sealed wallet and shows the code — the new device asks for it. `claimed`: the new device collected it; the old device can stop.",
+            "example": "offered"
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When the session stops answering, ISO 8601.",
+            "example": "2026-10-28T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "status",
+          "expiresAt"
+        ]
+      },
+      "OfferEasyRecoveryDto": {
+        "type": "object",
+        "properties": {
+          "ciphertext": {
+            "type": "string",
+            "description": "The wallet’s secret sealed on the old device to the session’s `receiverKey` (ECIES), base64url. This service stores it as given, cannot open it, and hands it out once, to the right code.",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "code": {
+            "type": "string",
+            "description": "The five-digit code the old device generated at random and shows on its own screen. Only its hash is stored.",
+            "example": "48213",
+            "pattern": "^[0-9]{5}$"
+          }
+        },
+        "required": [
+          "ciphertext",
+          "code"
+        ]
+      },
+      "EasyRecoveryOfferedEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "offered"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ClaimEasyRecoveryDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The five-digit code the person read off the old device. A malformed one is a 400 and costs no attempt; a wrong one costs one of five.",
+            "example": "48213",
+            "pattern": "^[0-9]{5}$"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "EasyRecoveryClaimedEntity": {
+        "type": "object",
+        "properties": {
+          "ciphertext": {
+            "type": "string",
+            "description": "The sealed wallet exactly as the old device sent it, base64url. Open it with the private key of `receiverKey`. Handed out once: the session reads `claimed` from now on and no longer holds it."
+          }
+        },
+        "required": [
+          "ciphertext"
+        ]
+      },
       "ApiErrorBodyEntity": {
         "type": "object",
         "properties": {
@@ -27308,6 +27974,11 @@
               "wallet_provider_unavailable",
               "wallet_return_url_not_allowed",
               "wallet_recovery_setup_refused",
+              "easy_recovery_not_found",
+              "easy_recovery_already_offered",
+              "easy_recovery_not_offered",
+              "easy_recovery_code_invalid",
+              "easy_recovery_burned",
               "plugin_not_installed",
               "plugin_consent_mismatch",
               "plugin_rejected",
@@ -27339,6 +28010,23 @@
             "example": [
               "amount must be a positive decimal string"
             ]
+          },
+          "details": {
+            "type": "object",
+            "description": "Machine-readable facts about this failure, present only on the codes whose example shows it — `easy_recovery_code_invalid` carries `{ \"attemptsLeft\": 4 }`. Absent everywhere else.",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
           },
           "path": {
             "type": "string",

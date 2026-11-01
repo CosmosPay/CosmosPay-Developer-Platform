@@ -21,6 +21,7 @@
     "defindex",
     "wallet-auth",
     "recovery",
+    "wallet-easy-recovery",
     "webhooks",
     "products",
     "customers",

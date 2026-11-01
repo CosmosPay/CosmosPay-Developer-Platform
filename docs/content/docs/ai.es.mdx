@@ -41,6 +41,17 @@ integración. Por ejemplo: *"Usando esto, crea un checkout de Cosmos Pay que cob
 el pago con un webhook."*
 </Callout>
 
+## La API REST de pagos en OpenAPI
+
+La [referencia de la API](/api) se genera a partir de un documento OpenAPI 3.0, que se publica
+junto con esta documentación. Pásaselo a un agente de programación, a un cliente de API o a un
+generador de código para tener el contrato completo: cada endpoint con sus parámetros, su cuerpo
+de solicitud y sus respuestas.
+
+```bash
+curl https://dev.cosmospay.lat/docs/openapi.json
+```
+
 ## El SDK incluye su propia documentación para LLMs
 
 El paquete `@cosmosapp/pay_sdk` incluye una carpeta `llms/` legible por IA, así que una vez que lo instales

@@ -2,6 +2,8 @@
    (src/components/payments/landing/sections): the hero video, scroll reveals, the digit
    counters, the fee calculator, the pinned sections, the tabs, the live demos, the copy
    buttons and the contact form. Each part looks for its own elements and does nothing on a page without them. */
+import { startIntegrationDemos } from "@/scripts/payments/integration-demos";
+
 export function startLanding(): void {
   /* The hero video plays on its own, always: the product owner wants it moving for every
      visitor (reduced-motion included), so it is the one exception to that preference on this
@@ -257,21 +259,8 @@ export function startLanding(): void {
   }
   setPinMode();
 
-  /* The live demos (the embed's demo mode) follow the page's theme, and the embedded one's
-     events are written out under it, as a merchant's page would receive them. */
-  const demoTheme = () => {
-    const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-    for (const el of document.querySelectorAll("[data-demo-theme]")) el.setAttribute("theme", theme);
-  };
-  demoTheme();
-  new MutationObserver(demoTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  for (const demo of document.querySelectorAll<HTMLElement>("[data-demo-events]")) {
-    const log = demo.parentElement?.querySelector<HTMLElement>("[data-demo-log]");
-    demo.addEventListener("cosmospay:status", (event) => {
-      const { status } = (event as CustomEvent<{ status: string }>).detail;
-      if (log) log.textContent = status === "SUCCEEDED" ? "cosmospay:paid · SUCCEEDED" : `cosmospay:status · ${status}`;
-    });
-  }
+  /* The integration options' demos (src/scripts/payments/integration-demos.ts). */
+  startIntegrationDemos();
 
   /* Copy buttons: data-copy names the code block to copy; data-copy-panel copies the block in
      the selected panel of its tabs. The label says it worked for two seconds; a live region
