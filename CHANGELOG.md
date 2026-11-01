@@ -2,6 +2,12 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.10.1] - 2026-11-01
+
+### Miscellaneous
+- Bump the minor-and-patch group across 1 directory with 3 updates (d7810a4)
+- Bump the minor-and-patch group across 1 directory with 10 updates (7f776c3)
+
 ## [0.10.0] - 2026-11-01
 
 ### Features
