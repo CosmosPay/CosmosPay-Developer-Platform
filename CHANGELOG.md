@@ -2,6 +2,19 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.16.0] - 2026-11-01
+
+### Features
+- Agent discovery: Link headers, auth.md and an agent skills index (95afd74)
+- List each response's fields in the API reference Markdown (f80d77b)
+
+### Performance
+- Hand each API reference page only its part of the OpenAPI spec (0d906cd)
+- Write less of the API reference's UI into the exported HTML (07ae242)
+
+### Build System
+- Fail the docs build on a page over 500 KB of HTML (289fea7)
+
 ## [0.15.0] - 2026-11-01
 
 ### Features
