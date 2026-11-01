@@ -16,10 +16,15 @@ _openapi:
       - content: Known Stellar assets per network, with issuer identity
         id: known-stellar-assets-per-network-with-issuer-identity
     contents:
-      - content: The wallet ships a bundled copy of this list and prefers whichever of
+      - content: >-
+          The wallet ships a bundled copy of this list and prefers whichever of
           the two carries the higher `version`, so a client that cannot reach
           this endpoint still resolves assets correctly. It just misses the
           newest additions.
+
+
+          Requires an API key, with no particular scope. The shared public key
+          may call it.
         heading: known-stellar-assets-per-network-with-issuer-identity
 ---
 

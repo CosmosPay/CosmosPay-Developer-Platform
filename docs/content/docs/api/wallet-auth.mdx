@@ -62,13 +62,22 @@ _openapi:
       - content: Sponsor the reserve of an account's two recovery signers
         id: sponsor-the-reserve-of-an-accounts-two-recovery-signers
     contents:
-      - content: Render buttons from this rather than from a compiled-in list. A
+      - content: >-
+          Render buttons from this rather than from a compiled-in list. A
           deployment with no Google credentials should not show a Google button
           that dies at the consent screen.
+
+
+          Requires the `payments:read` scope. The shared public key may call it.
         heading: which-sign-in-doors-this-deployment-has
-      - content: 'Returns the URL to open in a browser. Keep the PKCE verifier on the
+      - content: >-
+          Returns the URL to open in a browser. Keep the PKCE verifier on the
           device: the `state` travels through the browser and buys only polling,
-          while the verifier is what redeems the handshake.'
+          while the verifier is what redeems the handshake.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: open-a-provider-sign-in
       - content: 'Not called by your code: the person’s browser lands here. Public by
           necessity: a navigation carries no API key and no gateway consumer. It
@@ -78,10 +87,15 @@ _openapi:
           `{WALLET_AUTH_PUBLIC_BASE_URL}/v1/wallet/auth/oauth/callback/{provider}`
           with each provider.'
         heading: where-the-provider-returns-the-browser-after-consent
-      - content: Answers on the `state` alone, and never returns the identity at any
+      - content: >-
+          Answers on the `state` alone, and never returns the identity at any
           status. Poll until it leaves `pending`, then redeem with the verifier.
+
+
+          Requires the `payments:read` scope. The shared public key may call it.
         heading: poll-a-sign-in
-      - content: 'A NEW email ends here, with a session token. An email that ALREADY has
+      - content: >-
+          A NEW email ends here, with a session token. An email that ALREADY has
           an account gets `verify_email` instead and a code in its inbox: a
           provider proves who consented, not who opened the sign-in, and an
           existing account is where the backup worth stealing is. An Authentik
@@ -90,10 +104,31 @@ _openapi:
           exception is a sign-in through Authentik’s emailed link (the `email`
           source), whose ID token carries `cosmos_inbox_proven: true`: that
           login already proved the inbox, so an existing account ends here too,
-          with its backups and the `idToken`.'
+          with its backups and the `idToken`.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: redeem-a-handshake-with-the-pkce-verifier
-      - content: Wrong codes are counted on the row, not by the client. Five burns it,
+      - content: >-
+          Emails a six-digit code to `email`, valid 15 minutes
+          (`expiresInSeconds`), and answers a `claimToken` naming that code;
+          send both to `POST /v1/wallet/auth/email/verify`. One mailbox gets at
+          most one code a minute and 10 in 24 hours, whoever asks: more is `400
+          wallet_login_code_cooldown`. Only SHA-256 hashes of the code and the
+          claim token are stored.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
+        heading: send-a-sign-in-code-to-a-mailbox
+      - content: >-
+          Wrong codes are counted on the row, not by the client. Five burns it,
           and a burned code is replaced by asking for another.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: answer-a-sign-in-code
       - content: >-
           Send the session token as `X-Wallet-Session: {sessionToken}`. The
@@ -121,6 +156,10 @@ _openapi:
           On Solana and Monad (`chain`), a `chain: {chain}` line follows the
           first one. Solana signs the bytes with ed25519 (`signMessage`; base64
           or base58); Monad with EIP-191 `personal_sign` (0x-hex).
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: attach-the-proven-identity-to-the-account-this-device-signs-for
       - content: >-
           What `changePassword` on the device sends. No session: the signature
@@ -144,6 +183,10 @@ _openapi:
 
           On Solana and Monad a `chain: {chain}` line follows the first one, and
           the bytes are signed as for sign-in.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: replace-the-sealed-box-stored-for-an-account
       - content: >-
           Send the session token as `X-Wallet-Session: {sessionToken}`. The
@@ -165,6 +208,10 @@ _openapi:
 
           The envelope comes back signed by the sponsor only. Once per account:
           refused when the account already has a signer besides its master key.
+
+
+          Requires the `payments:write` scope. The shared public key may call
+          it.
         heading: sponsor-the-reserve-of-an-accounts-two-recovery-signers
 ---
 

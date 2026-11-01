@@ -97,7 +97,12 @@ _openapi:
           [[RECOVERY_SERVERS]] entry with the SEP-30 ENDPOINT, the ROLE and the
           identity methods. 404 on a deployment that is not a recovery server.
         heading: sep-1-discovery-for-this-recovery-server
-      - content: 'Sequence 0: unsubmittable by construction.'
+      - content: 'Public: no API key. Answers a SEP-10 challenge transaction for
+          `account` (a `G...` address) with the `network_passphrase` to sign it
+          for; sign it with the account and exchange it at `POST
+          /v1/sep10/auth`. Sequence 0: unsubmittable by construction. Errors
+          have the SEP body `{ "error": "..." }`; a deployment that is not a
+          recovery server answers 404.'
         heading: a-challenge-for-an-account
       - content: Weighed against the account's CURRENT signers and medium threshold, so
           a recovered account authenticates with the key that replaced its
@@ -110,8 +115,51 @@ _openapi:
       - content: The same answer whether or not the address recovers anything here; a
           code is only sent to one that does.
         heading: email-a-code-that-proves-an-inbox-to-this-server
-      - content: Five wrong answers burn it.
+      - content: "Public: no API key. Send the `claim_token` from `POST
+          /v1/sep30/identity/email/start` with the emailed `code`: the right
+          answer is `status: ready` with this server's identity token for that
+          inbox, once; a wrong one is `invalid` with `attempts_left`, and an
+          unknown, used or lapsed claim is `expired`. Five wrong answers burn it
+          (`locked`)."
         heading: answer-an-emailed-code
+      - content: 'A SEP-10 token lists its own account when it is registered here; this
+          server''s identity token for an email lists every account naming that
+          email. It reads one ledger (the one the path names, e.g.
+          `/v1/sep30/testnet/accounts`, or the default) and answers up to 100
+          accounts per page in address order as `{ accounts }`; pass the last
+          address as `after` for the next page. Errors have the SEP body `{
+          "error": "..." }`: 401 without a valid token from this server, 404 on
+          a deployment that is not a recovery server.'
+        heading: accounts-this-caller-may-recover-paged-by-after
+      - content: 'The account''s identity roles, flagging the one the token
+          authenticates as, and this server''s signer key for it. Takes the
+          account''s SEP-10 token, or this server''s identity token for an email
+          registered on it; an account that is absent and one the token may not
+          act on are the same 404. Errors have the SEP body `{ "error": "..."
+          }`: 401 without a valid token from this server, 404 on a deployment
+          that is not a recovery server.'
+        heading: describe-an-account
+      - content: 'Stores who may recover `address` (1 to 3 identities, roles `owner`,
+          `sender` or `receiver`, each with 1 to 3 `email` auth methods) and
+          answers the account with `signers`: this server''s key for it. Only a
+          SEP-10 token of that same account may call it (403 otherwise), and an
+          account already registered here is a 409: change it with `PUT`. Errors
+          have the SEP body `{ "error": "..." }`: 401 without a valid token from
+          this server, 404 on a deployment that is not a recovery server.'
+        heading: register-an-account-sep-10-token-of-that-account
+      - content: 'Deletes the registration and its identities and answers the account as
+          it was. Only a SEP-10 token of that same account may call it (403
+          otherwise); an account not registered here is a 404. Errors have the
+          SEP body `{ "error": "..." }`: 401 without a valid token from this
+          server, 404 on a deployment that is not a recovery server.'
+        heading: forget-an-account-sep-10-token-of-that-account
+      - content: 'Replaces the identities of `address`, never merging them with the old
+          ones, and registers the account if it is not here yet. Only a SEP-10
+          token of that same account may call it (403 otherwise); it answers the
+          account as `POST` does. Errors have the SEP body `{ "error": "..." }`:
+          401 without a valid token from this server, 404 on a deployment that
+          is not a recovery server.'
+        heading: replace-who-may-recover-an-account-sep-10-token-of-that-account
       - content: Returns the SIGNATURE, not an envelope. Only an account-control change
           on the registered account, sourced by it, with no memo, valid for at
           most 15 minutes.
@@ -122,6 +170,13 @@ _openapi:
       - content: The account's SEP-10 token, or this server's identity token for the
           email the half was filed under. Absent and not-yours are the same 404.
         heading: take-this-servers-half-back-the-accounts-key-or-its-proven-inbox
+      - content: 'Deletes this server''s half of the backup recovery key filed for
+          `address` and answers `{ address }`. Only a SEP-10 token of that same
+          account may call it (403 otherwise); no half filed here is a 404.
+          Errors have the SEP body `{ "error": "..." }`: 401 without a valid
+          token from this server, 404 on a deployment that is not a recovery
+          server.'
+        heading: forget-this-servers-half-sep-10-token-of-that-account
       - content: 'Replaces any half filed before: a re-sealed backup has a new key. The
           email is who may take the half back.'
         heading: file-this-servers-half-of-a-backups-recovery-key-sep-10-token-of-that-account

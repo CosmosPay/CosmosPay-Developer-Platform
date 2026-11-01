@@ -3,6 +3,7 @@
   "paths": {
     "/v1/health/liveness": {
       "get": {
+        "description": "Answers `{ \"status\": \"ok\" }` while the process is up, without checking any dependency, the database included. Public: no API key, for the orchestrator to probe directly.",
         "operationId": "HealthController_liveness_v1",
         "parameters": [],
         "responses": {
@@ -36,6 +37,7 @@
     },
     "/v1/health/readiness": {
       "get": {
+        "description": "Pings Postgres: 200 with the indicator report when it answers, `503 provider_unavailable` when it does not, with a body that names no host or cause (those are only logged). Public: no API key, for the orchestrator to probe directly.",
         "operationId": "HealthController_readiness_v1",
         "parameters": [],
         "responses": {
@@ -112,6 +114,7 @@
     },
     "/v1/payment-intents/tx": {
       "post": {
+        "description": "Stellar only: builds the unsigned envelope paying `destination` from `source` on the key's network (a `prod` key builds for mainnet, a `dev` key for testnet), plus a second payment to `merchantFee.wallet` when a merchant fee is set, and answers its XDR, `web+stellar:tx` URI and QR. `memo` (a numeric MEMO_ID, generated when omitted) is the idempotency key: a retry with the same memo and terms returns the stored intent, other terms are `409 idempotency_conflict`. The intent starts `PENDING`, emits `PAYMENT_INTENT_CREATED`, and the on-chain observer settles it when the payment lands.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "PaymentIntentsController_createTx_v1",
         "parameters": [],
         "requestBody": {
@@ -290,6 +293,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -297,6 +303,7 @@
     },
     "/v1/payment-intents/pay": {
       "post": {
+        "description": "Answers a link any wallet can pay and its QR: SEP-7 `web+stellar:pay` on Stellar (the default `chain`), Solana Pay on Solana, EIP-681 on Monad, on the key's network (a `prod` key gets mainnet, a `dev` key the test networks). Omit `amount` for an open amount, except on Monad when this deployment has no deposit addresses; with a `merchantFee`, `uri` is the hosted checkout on Stellar and a Solana Pay transaction request on Solana. `memo` (numeric, generated when omitted) is the idempotency key: the same memo and terms return the stored intent, other terms are `409 idempotency_conflict`. Emits `PAYMENT_INTENT_CREATED`; the on-chain observer settles the intent when it finds the payment (a native MON payment without a deposit address needs `validate`).\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "PaymentIntentsController_createPay_v1",
         "parameters": [],
         "requestBody": {
@@ -447,7 +454,7 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Create a `pay` intent: a payment link + QR (SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad)",
+        "summary": "Create a `pay` intent: a payment link and QR on Stellar, Solana or Monad",
         "tags": [
           "payment-intents"
         ],
@@ -459,6 +466,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-upstream": [
           "Solana",
           "Monad"
@@ -467,6 +477,7 @@
     },
     "/v1/payment-intents": {
       "get": {
+        "description": "Newest first, as `{ data, total, take, skip }` with `take` up to 100 (default 20). Only intents on the key's network (a `prod` key lists mainnet intents, a `dev` key test-network ones), narrowed by `status`, `chain` and `createdFrom` when given.\n\nRequires the `payments:read` scope.",
         "operationId": "PaymentIntentsController_findAll_v1",
         "parameters": [
           {
@@ -557,11 +568,15 @@
         "summary": "List the consumer's payment intents",
         "tags": [
           "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/payment-intents/{id}/transitions": {
       "get": {
+        "description": "The intent's audit trail as an array, oldest first: every status change with `fromStatus`, `toStatus`, the `txHash` it carried, its `reason` and the `actor` that made it (`api`, `validate`, `observer` or `system`).\n\nRequires the `payments:read` scope.",
         "operationId": "PaymentIntentsController_listTransitions_v1",
         "parameters": [
           {
@@ -606,11 +621,15 @@
         "summary": "List the status-transition history for a payment intent",
         "tags": [
           "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/payment-intents/{id}": {
       "get": {
+        "description": "One of the consumer’s intents, on any chain, with its QR rebuilt from `uri`. `status` moves as the on-chain observer settles or expires the intent, which the `PAYMENT_INTENT_*` webhooks also report, so polling this route is optional.\n\nRequires the `payments:read` scope.",
         "operationId": "PaymentIntentsController_findOne_v1",
         "parameters": [
           {
@@ -652,9 +671,13 @@
         "summary": "Get a payment intent by id",
         "tags": [
           "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       },
       "patch": {
+        "description": "Send only what changes; `reference` and `checkoutTheme` are accepted in any status. `status: SUCCEEDED` needs a `txHash` and goes through the same on-chain check as `validate` (`400 transaction_rejected` when the chain does not confirm it); other status changes follow the transition graph (`SUCCEEDED`, `FAILED` and `CANCELLED` are final, `EXPIRED` only settles on a verified payment), else `400 invalid_state_transition`. A new `txHash` alone is accepted only while `PENDING` or `SUBMITTED`. Emits `PAYMENT_INTENT_CANCELLED`, `PAYMENT_INTENT_SUCCEEDED` or `PAYMENT_INTENT_FAILED` for those statuses and `PAYMENT_INTENT_UPDATED` otherwise.\n\nRequires the `payments:write` scope.",
         "operationId": "PaymentIntentsController_update_v1",
         "parameters": [
           {
@@ -806,6 +829,9 @@
         "tags": [
           "payment-intents"
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon",
           "Solana",
@@ -813,6 +839,7 @@
         ]
       },
       "delete": {
+        "description": "Deletes an intent in any status but `SUCCEEDED` and emits `PAYMENT_INTENT_DELETED`. A paid intent is a settled payment and cannot be deleted (`400 invalid_state_transition`); an intent whose status changes during the delete (it may have just been paid) is `409 operation_in_flight`.\n\nRequires the `payments:write` scope.",
         "operationId": "PaymentIntentsController_remove_v1",
         "parameters": [
           {
@@ -911,11 +938,15 @@
         "summary": "Delete a payment intent",
         "tags": [
           "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/payment-intents/{id}/validate": {
       "post": {
+        "description": "Looks `txHash` up on the intent's chain and checks it pays this intent (success, destination, asset, amount, memo or reference, age); a match settles it `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`. This intent's own payment that failed on-chain marks it `FAILED` (`PAYMENT_INTENT_FAILED`); any other mismatch answers `valid: false` with a `reason` and leaves the status unchanged. An `EXPIRED` intent still settles on a verified payment, a `SUCCEEDED` one answers as it is without asking the chain, and one transaction settles at most one intent of any consumer (the oldest it pays).\n\nRequires the `payments:write` scope.",
         "operationId": "PaymentIntentsController_validate_v1",
         "parameters": [
           {
@@ -1063,9 +1094,12 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Validate a submitted tx against the intent (tx success + destination + amount + memo/reference); finalizes status and fires the event",
+        "summary": "Validate a transaction against the intent and settle it",
         "tags": [
           "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ],
         "x-cosmos-upstream": [
           "Horizon",
@@ -1736,6 +1770,7 @@
     },
     "/v1/customers": {
       "post": {
+        "description": "A customer holds up to 20 `wallets` on Stellar, Solana or Monad (the deprecated `account` counts as one of them), and a wallet named twice counts once. Payments settled from any of them count toward the customer. A wallet another of your customers already holds is `409 customer_wallet_taken`.\n\nRequires the `customers:write` scope.",
         "operationId": "CustomersController_create_v1",
         "parameters": [],
         "requestBody": {
@@ -1798,9 +1833,13 @@
         "summary": "Create a customer",
         "tags": [
           "customers"
+        ],
+        "x-cosmos-scopes": [
+          "customers:write"
         ]
       },
       "get": {
+        "description": "Newest first, as `{ data, total, take, skip }` with `take` up to 100 (default 100). Each customer carries `payments`, `succeeded` and the gross settled `total` (amounts added as numbers, whatever the asset) of the payment intents paid from its wallets, on the key's network only. The payer of a settled payment whose wallet no customer holds is added automatically (`reference: auto`).\n\nRequires the `customers:read` scope.",
         "operationId": "CustomersController_findAll_v1",
         "parameters": [
           {
@@ -1850,11 +1889,15 @@
         "summary": "List the consumer's customers (with payment stats)",
         "tags": [
           "customers"
+        ],
+        "x-cosmos-scopes": [
+          "customers:read"
         ]
       }
     },
     "/v1/customers/{id}": {
       "get": {
+        "description": "The customer with its wallets, oldest first, and `account`, the deprecated first wallet's address. Payment stats are on the list only.\n\nRequires the `customers:read` scope.",
         "operationId": "CustomersController_findOne_v1",
         "parameters": [
           {
@@ -1896,9 +1939,13 @@
         "summary": "Get a customer by id",
         "tags": [
           "customers"
+        ],
+        "x-cosmos-scopes": [
+          "customers:read"
         ]
       },
       "patch": {
+        "description": "Changes only the fields sent (`name`, `alias`, `note`, `email`, `reference`). The deprecated `account` edits the first wallet only: an address replaces or adds it, `null` removes it; other wallets change through `/v1/customers/{id}/wallets`. An address another of your customers holds is `409 customer_wallet_taken`.\n\nRequires the `customers:write` scope.",
         "operationId": "CustomersController_update_v1",
         "parameters": [
           {
@@ -1973,9 +2020,13 @@
         "summary": "Update a customer",
         "tags": [
           "customers"
+        ],
+        "x-cosmos-scopes": [
+          "customers:write"
         ]
       },
       "delete": {
+        "description": "Deletes the customer and its wallets. Payment intents are kept; a later settled payment from one of those wallets adds its payer back as an automatic customer.\n\nRequires the `customers:write` scope.",
         "operationId": "CustomersController_remove_v1",
         "parameters": [
           {
@@ -2017,12 +2068,15 @@
         "summary": "Delete a customer",
         "tags": [
           "customers"
+        ],
+        "x-cosmos-scopes": [
+          "customers:write"
         ]
       }
     },
     "/v1/customers/{id}/wallets": {
       "post": {
-        "description": "A customer holds any number of wallets (up to 20), on Stellar, Solana or Monad; payments paid from any of them count toward it. A wallet the customer already holds answers as it is.",
+        "description": "A customer holds any number of wallets (up to 20), on Stellar, Solana or Monad; payments paid from any of them count toward it. A wallet the customer already holds answers as it is.\n\nRequires the `customers:write` scope.",
         "operationId": "CustomersController_addWallet_v1",
         "parameters": [
           {
@@ -2097,11 +2151,15 @@
         "summary": "Add a wallet to a customer",
         "tags": [
           "customers"
+        ],
+        "x-cosmos-scopes": [
+          "customers:write"
         ]
       }
     },
     "/v1/customers/{id}/wallets/{walletId}": {
       "delete": {
+        "description": "Payments from that address stop counting toward this customer, and a later settled payment from it adds it as a new automatic customer. A `walletId` that is not one of this customer's wallets is 404.\n\nRequires the `customers:write` scope.",
         "operationId": "CustomersController_removeWallet_v1",
         "parameters": [
           {
@@ -2151,11 +2209,15 @@
         "summary": "Remove a wallet from a customer",
         "tags": [
           "customers"
+        ],
+        "x-cosmos-scopes": [
+          "customers:write"
         ]
       }
     },
     "/v1/swaps/quote": {
       "post": {
+        "description": "Prices `amount` of the source asset on the chain's own venue: the Stellar DEX (a Horizon strict-send path search on the key's network) when `chain` is omitted or `stellar`, Jupiter for `solana` and Kuru Flow for `monad`, both mainnet only. The answer carries the plan commission (`fee`: taken from the source amount on Stellar, from the output on Solana and Monad), any `merchantFee`, the estimated output and the minimum after slippage. `slippageBps` defaults to 50 and a value above the cap (500) is `slippage_exceeded`, unless the deployment configures other values.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "SwapsController_quote_v1",
         "parameters": [],
         "requestBody": {
@@ -2358,7 +2420,7 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Quote a swap on one chain (Stellar DEX, Jupiter on Solana, Kuru Flow on Monad) + fee/slippage; persists nothing",
+        "summary": "Quote a swap on one chain; persists nothing",
         "tags": [
           "swaps"
         ],
@@ -2369,6 +2431,9 @@
             "limit": 60,
             "windowMs": 60000
           }
+        ],
+        "x-cosmos-scopes": [
+          "swaps:read"
         ],
         "x-cosmos-upstream": [
           "Horizon",
@@ -2381,6 +2446,7 @@
     },
     "/v1/swaps": {
       "post": {
+        "description": "Prices the swap as the quote does, builds the transaction `source` signs, stores it as `PENDING` and emits `SWAP_CREATED`. Stellar: the XDR with a SEP-7 `uri` and QR, valid for the network timeout (300 s by default); when the swap pays `source` itself (no `destination`, or the same account) and it does not trust the bought asset yet, the transaction adds that trustline first. Solana and Monad (mainnet only): the aggregator’s transaction, valid for one minute on Solana and two on Monad, where an ERC-20 sale may also carry an `approval` to send first. Send the signed transaction to `POST /v1/swaps/{id}/submit`; an `Idempotency-Key` (header or body) makes a retry return the same swap.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
         "operationId": "SwapsController_create_v1",
         "parameters": [
           {
@@ -2657,7 +2723,7 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Create a swap → the unsigned transaction to sign (Stellar XDR + SEP-7 + QR; Solana / Monad transaction)",
+        "summary": "Create a swap: the unsigned transaction to sign",
         "tags": [
           "swaps"
         ],
@@ -2669,6 +2735,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon",
           "Jupiter",
@@ -2678,6 +2747,7 @@
         ]
       },
       "get": {
+        "description": "Stellar swaps when `chain` is omitted, otherwise those of the chain named, newest first and optionally filtered by `status`. Paginated with `take` (default 20, max 100) and `skip`; the answer is `{ data, total, take, skip }`. Only swaps on the key's network are listed (a `prod` key sees mainnet, a `dev` key testnet), and Solana and Monad swaps are mainnet only, so a `dev` key lists none of them.\n\nRequires the `swaps:read` scope.",
         "operationId": "SwapsController_findAll_v1",
         "parameters": [
           {
@@ -2764,12 +2834,15 @@
         "summary": "List the consumer's swaps on one chain",
         "tags": [
           "swaps"
+        ],
+        "x-cosmos-scopes": [
+          "swaps:read"
         ]
       }
     },
     "/v1/swaps/{id}": {
       "get": {
-        "description": "The shared public key may call it, so a swap made without an account can follow its own status, but only with the swap’s `publicToken` in `X-Record-Token`: without it, or with another swap’s, the answer is 404. Every other key reads its own swaps as before. Listing swaps stays closed to the public key.",
+        "description": "The shared public key may call it, so a swap made without an account can follow its own status, but only with the swap’s `publicToken` in `X-Record-Token`: without it, or with another swap’s, the answer is 404. Every other key reads its own swaps as before. Listing swaps stays closed to the public key.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "SwapsController_findOne_v1",
         "parameters": [
           {
@@ -2829,11 +2902,15 @@
         "tags": [
           "swaps"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "swaps:read"
+        ]
       }
     },
     "/v1/swaps/{id}/submit": {
       "post": {
+        "description": "`signedXdr` (Stellar) or `signedTransaction` (Solana, Monad) must be the transaction built for this swap and carry its source's signature, checked before anything about the swap is answered. Stellar: broadcast through Horizon, the answer is `SUCCEEDED` or `submitted: false` with the result codes (a `FAILED` swap can be resubmitted up to 3 times while its envelope is valid). Solana and Monad: broadcast through this service's RPC, the swap is `SUBMITTED` until the observer sees it settle. Emits `SWAP_SUBMITTED`, then `SWAP_SUCCEEDED` or `SWAP_FAILED`; with the shared public key, send the swap's `publicToken` in `X-Record-Token`.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
         "operationId": "SwapsController_submit_v1",
         "parameters": [
           {
@@ -3041,6 +3118,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon",
           "Solana",
@@ -3050,7 +3130,7 @@
     },
     "/v1/cross-chain-swaps/assets": {
       "get": {
-        "description": "Only what NEAR Intents still trades. A token it tags deprecated is left out, and so is one it lists with no price, because it answers no quote for such a token.",
+        "description": "Only what NEAR Intents still trades. A token it tags deprecated is left out, and so is one it lists with no price, because it answers no quote for such a token.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "CrossChainSwapsController_assets_v1",
         "parameters": [],
         "responses": {
@@ -3083,11 +3163,14 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "List the assets NEAR Intents can swap on every network this service reaches, with an indicative USD price",
+        "summary": "List the assets NEAR Intents can swap, with an indicative USD price",
         "tags": [
           "cross-chain-swaps"
         ],
         "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "swaps:read"
+        ],
         "x-cosmos-upstream": [
           "NEAR Intents"
         ]
@@ -3095,6 +3178,7 @@
     },
     "/v1/cross-chain-swaps/quote": {
       "post": {
+        "description": "A dry NEAR Intents quote for `amount` of `originAsset` on `originChain` into `destinationAsset` on `destinationChain`: the expected and minimum output, the plan commission (`fee`, in the origin asset), any `merchantFee` (its wallet a NEAR account) and a time estimate. Prices are mainnet's for every key, a `dev` key included. A pair on one chain among Stellar, Solana and Monad is `validation_failed`: those go through `POST /v1/swaps`. `slippageBps` defaults to 100 and is capped at 500, unless the deployment configures other values.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "CrossChainSwapsController_quote_v1",
         "parameters": [],
         "requestBody": {
@@ -3276,6 +3360,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:read"
+        ],
         "x-cosmos-upstream": [
           "NEAR Intents"
         ]
@@ -3283,6 +3370,7 @@
     },
     "/v1/cross-chain-swaps": {
       "post": {
+        "description": "Asks NEAR Intents for a live quote with a deposit address for this swap alone, stores it as `AWAITING_DEPOSIT` and emits `CROSS_CHAIN_SWAP_CREATED`. The payer sends `amountIn` to `depositAddress` (with `depositMemo` when set) before `expiresAt`; `depositUri` is a wallet link in the origin chain's standard (SEP-7, Solana Pay, EIP-681, BIP-21, TON, CIP-13) with a QR, or null where the chain has none. NEAR Intents pays `recipient` or refunds `refundTo`, and a Stellar `recipient` must already trust the asset. Mainnet only; an `Idempotency-Key` (header or body) makes a retry return the same swap and address.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
         "operationId": "CrossChainSwapsController_create_v1",
         "parameters": [
           {
@@ -3508,7 +3596,7 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Create a cross-chain swap → NEAR Intents deposit address + wallet link where the origin chain has a standard (SEP-7 / Solana Pay / EIP-681 / BIP-21 / TON / CIP-13) + QR",
+        "summary": "Create a cross-chain swap: a NEAR Intents deposit address to pay",
         "tags": [
           "cross-chain-swaps"
         ],
@@ -3520,12 +3608,16 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "NEAR Intents",
           "Horizon"
         ]
       },
       "get": {
+        "description": "Answered from this service's own table, which the observer keeps current from NEAR Intents: newest first, optionally filtered by `status`. Paginated with `take` (default 20, max 100) and `skip`; the answer is `{ data, total, take, skip }`. Cross-chain swaps run on mainnet only, so a `dev` key lists none.\n\nRequires the `swaps:read` scope.",
         "operationId": "CrossChainSwapsController_findAll_v1",
         "parameters": [
           {
@@ -3593,12 +3685,15 @@
         "summary": "List the consumer's cross-chain swaps",
         "tags": [
           "cross-chain-swaps"
+        ],
+        "x-cosmos-scopes": [
+          "swaps:read"
         ]
       }
     },
     "/v1/cross-chain-swaps/{id}": {
       "get": {
-        "description": "The shared public key may call it, so a swap made without an account can follow its own status, but only with the swap’s `publicToken` in `X-Record-Token`: without it, or with another swap’s, the answer is 404. Every other key reads its own swaps as before. Listing swaps stays closed to the public key.",
+        "description": "The shared public key may call it, so a swap made without an account can follow its own status, but only with the swap’s `publicToken` in `X-Record-Token`: without it, or with another swap’s, the answer is 404. Every other key reads its own swaps as before. Listing swaps stays closed to the public key.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "CrossChainSwapsController_findOne_v1",
         "parameters": [
           {
@@ -3651,11 +3746,15 @@
         "tags": [
           "cross-chain-swaps"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "swaps:read"
+        ]
       }
     },
     "/v1/cross-chain-swaps/{id}/deposit": {
       "post": {
+        "description": "`txHash` must have the shape of a transaction id on the origin chain; NEAR Intents then reads that chain itself and credits only what really arrived at `depositAddress`. The swap records `depositTxHash`, moves to the status NEAR Intents reports and emits the matching `CROSS_CHAIN_SWAP_*` event when that status changes. Reporting is optional, since the observer follows the swap either way; with the shared public key, send the swap's `publicToken` in `X-Record-Token`.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
         "operationId": "CrossChainSwapsController_submitDeposit_v1",
         "parameters": [
           {
@@ -3806,6 +3905,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "NEAR Intents"
         ]
@@ -3813,6 +3915,7 @@
     },
     "/v1/liquidity-pools/deposit": {
       "post": {
+        "description": "Builds a `liquidityPoolDeposit` on the key's network for `source` to sign (preceded by the pool-share trustline when the account has none), stores it as `PENDING` and emits `LIQUIDITY_CREATED`. Leave `maxAmountB` out to match the pool’s current ratio (an empty pool needs both amounts, which set its price); the price bounds bracket the pool price by `slippageBps` (default 50, cap 500 unless configured). Deposits pay no plan commission; a `merchantFee` is paid from each asset, and `source` must trust both assets and afford the amounts plus its reserve (`trustline_missing`, `insufficient_balance`). An `Idempotency-Key` (header or body) makes a retry return the same operation.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
         "operationId": "LiquidityPoolsController_deposit_v1",
         "parameters": [
           {
@@ -3980,6 +4083,10 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes-any": [
+          "liquidity:write",
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -3987,6 +4094,7 @@
     },
     "/v1/liquidity-pools/withdraw": {
       "post": {
+        "description": "Builds a `liquidityPoolWithdraw` of `shares` from `poolId` on the key's network for `source` to sign, with minimum amounts of each reserve set from the current reserves less `slippageBps`, stores it as `PENDING` and emits `LIQUIDITY_CREATED`. The plan commission is charged only on the gain over the cost basis of shares deposited through this service, out of the withdrawn reserves; a `merchantFee` is a share of the minimum amounts. A withdrawal from the same pool that may already be on-chain blocks another one for that account (`operation_in_flight`); an `Idempotency-Key` (header or body) makes a retry return the same operation.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
         "operationId": "LiquidityPoolsController_withdraw_v1",
         "parameters": [
           {
@@ -4165,6 +4273,10 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes-any": [
+          "liquidity:write",
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -4172,6 +4284,7 @@
     },
     "/v1/liquidity-pools/positions": {
       "get": {
+        "description": "Reads `account`'s pool-share trustlines from Horizon on the key's network and, per pool, its shares, its share of the pool in basis points, the reserves and what those shares redeem now. Ledger data, not this consumer's rows: any account can be read, and nothing is stored.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
         "operationId": "LiquidityPoolsController_positions_v1",
         "parameters": [
           {
@@ -4217,6 +4330,10 @@
           "liquidity-pools"
         ],
         "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -4224,6 +4341,7 @@
     },
     "/v1/liquidity-pools/operations": {
       "get": {
+        "description": "The deposits and withdrawals built through this service, newest first, optionally filtered by `kind` and `status`. Paginated with `take` (default 20, max 100) and `skip`; the answer is `{ data, total, take, skip }`. Only operations on the key's network are listed (a `prod` key sees mainnet, a `dev` key testnet).\n\nRequires the `liquidity:read` or `swaps:read` scope.",
         "operationId": "LiquidityPoolsController_findAllOperations_v1",
         "parameters": [
           {
@@ -4300,11 +4418,16 @@
         "summary": "List the consumer's liquidity pool operations",
         "tags": [
           "liquidity-pools"
+        ],
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
         ]
       }
     },
     "/v1/liquidity-pools/operations/{id}": {
       "get": {
+        "description": "One deposit or withdrawal this consumer built: its unsigned XDR, SEP-7 `uri` and QR, its status, and the commission and merchant fee it carries. Answered from this service's own table, which submit and the settlement observer keep current.\n\nRequires the `liquidity:read` or `swaps:read` scope.",
         "operationId": "LiquidityPoolsController_findOneOperation_v1",
         "parameters": [
           {
@@ -4346,11 +4469,16 @@
         "summary": "Get a liquidity pool operation by id",
         "tags": [
           "liquidity-pools"
+        ],
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
         ]
       }
     },
     "/v1/liquidity-pools/operations/{id}/submit": {
       "post": {
+        "description": "`signedXdr` must hash to the operation's stored transaction and carry a signature, checked before anything about the operation is answered. It is broadcast through Horizon and the answer is `SUCCEEDED` or `submitted: false` with the result codes (a `FAILED` operation can be resubmitted up to 3 times while its envelope is valid); an unreachable Horizon is a 503 that leaves it resubmittable. Emits `LIQUIDITY_SUBMITTED`, then `LIQUIDITY_SUCCEEDED` or `LIQUIDITY_FAILED`, and a settled deposit records the cost basis the withdrawal commission is charged against.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
         "operationId": "LiquidityPoolsController_submit_v1",
         "parameters": [
           {
@@ -4524,6 +4652,10 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes-any": [
+          "liquidity:write",
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -4531,6 +4663,7 @@
     },
     "/v1/liquidity-pools": {
       "get": {
+        "description": "Horizon's pool list on the key's network, in descending order, optionally narrowed to pools holding one or two assets (`assetACode`/`assetAIssuer`, `assetBCode`/`assetBIssuer`) or to those an `account` holds shares in. Paged by Horizon cursor, not `take`/`skip`: `limit` per page (default 20, max 100), and the answer's `cursor` fetches the next page (null when the page is not full). Nothing is stored.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
         "operationId": "LiquidityPoolsController_listPools_v1",
         "parameters": [
           {
@@ -4632,6 +4765,10 @@
           "liquidity-pools"
         ],
         "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -4639,6 +4776,7 @@
     },
     "/v1/liquidity-pools/{poolId}": {
       "get": {
+        "description": "One pool read from Horizon on the key's network: its fee, trustline count, total shares and reserves. `poolId` is the 64-character lowercase hex pool id; any other shape is `validation_failed`, and a pool that does not exist on that network is a 404.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
         "operationId": "LiquidityPoolsController_getPool_v1",
         "parameters": [
           {
@@ -4685,6 +4823,10 @@
           "liquidity-pools"
         ],
         "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -4692,7 +4834,7 @@
     },
     "/v1/assets": {
       "get": {
-        "description": "The wallet ships a bundled copy of this list and prefers whichever of the two carries the higher `version`, so a client that cannot reach this endpoint still resolves assets correctly. It just misses the newest additions.",
+        "description": "The wallet ships a bundled copy of this list and prefers whichever of the two carries the higher `version`, so a client that cannot reach this endpoint still resolves assets correctly. It just misses the newest additions.\n\nRequires an API key, with no particular scope. The shared public key may call it.",
         "operationId": "AssetsController_list_v1",
         "parameters": [
           {
@@ -4752,6 +4894,7 @@
     },
     "/v1/public-key": {
       "get": {
+        "description": "Public: no API key, since a wallet without an account holds none yet. `env=dev` (the default) returns the testnet key and `env=prod` the mainnet one; that key reaches only the routes marked `x-cosmos-public-key`. Cached for 5 minutes (`Cache-Control: public, max-age=300`) so a rotation reaches wallets quickly; `503 misconfigured` when this deployment publishes no key for that environment.",
         "operationId": "PublicKeyController_get_v1",
         "parameters": [
           {
@@ -4820,6 +4963,7 @@
     },
     "/v1/webhooks": {
       "post": {
+        "description": "`url` must be `https`, carry no credentials and resolve to a public address (loopback, private, link-local and cloud metadata hosts are `400 validation_failed`). `secret` (`whsec_...`) is returned only here and on rotation: every delivery is signed with it in the signature header (`x-cosmos-signature` by default) as `t=<unix seconds>,v1=<hex HMAC-SHA256 of \"<t>.<body>\">`. An empty or omitted `eventTypes` receives every event type.\n\nRequires the `webhooks:write` scope.",
         "operationId": "WebhooksController_create_v1",
         "parameters": [],
         "requestBody": {
@@ -4859,9 +5003,13 @@
         "summary": "Register a webhook endpoint (returns the signing secret, shown once)",
         "tags": [
           "webhooks"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:write"
         ]
       },
       "get": {
+        "description": "Newest first, as `{ data, total, take, skip }` with `take` up to 100 (default 100), without signing secrets. `destinationBlocked` marks an endpoint this service disabled because its host stopped resolving to a public address.\n\nRequires the `webhooks:read` scope.",
         "operationId": "WebhooksController_findAll_v1",
         "parameters": [
           {
@@ -4911,11 +5059,15 @@
         "summary": "List the consumer's webhook endpoints",
         "tags": [
           "webhooks"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:read"
         ]
       }
     },
     "/v1/webhooks/{id}": {
       "get": {
+        "description": "The endpoint without its signing secret, which only the create and rotate-secret routes return.\n\nRequires the `webhooks:read` scope.",
         "operationId": "WebhooksController_findOne_v1",
         "parameters": [
           {
@@ -4957,9 +5109,13 @@
         "summary": "Get a webhook endpoint",
         "tags": [
           "webhooks"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:read"
         ]
       },
       "patch": {
+        "description": "Changes only the fields sent. A new `url` is checked as on create, `enabled: true` checks the stored one again, and either clears `destinationBlocked`. `eventTypes` replaces the filter (an empty list receives every event type).\n\nRequires the `webhooks:write` scope.",
         "operationId": "WebhooksController_update_v1",
         "parameters": [
           {
@@ -5011,9 +5167,13 @@
         "summary": "Update a webhook endpoint (url/description/enabled/eventTypes)",
         "tags": [
           "webhooks"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:write"
         ]
       },
       "delete": {
+        "description": "Deletes the endpoint together with its delivery history; nothing more is sent to it.\n\nRequires the `webhooks:write` scope.",
         "operationId": "WebhooksController_remove_v1",
         "parameters": [
           {
@@ -5055,11 +5215,15 @@
         "summary": "Delete a webhook endpoint",
         "tags": [
           "webhooks"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:write"
         ]
       }
     },
     "/v1/webhooks/{id}/rotate-secret": {
       "post": {
+        "description": "Replaces `secret` at once and returns the new one, shown only here. Every delivery sent from now on is signed with the new secret only: the old one has no grace period.\n\nRequires the `webhooks:write` scope.",
         "operationId": "WebhooksController_rotateSecret_v1",
         "parameters": [
           {
@@ -5101,11 +5265,15 @@
         "summary": "Rotate the signing secret (returns the new secret)",
         "tags": [
           "webhooks"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:write"
         ]
       }
     },
     "/v1/webhooks/{id}/ping": {
       "post": {
+        "description": "POSTs one signed `ping` event (not stored as a delivery) to the endpoint, enabled or not, and answers whether it replied 2xx (`ok`, `responseStatus`, `error`). A URL that no longer resolves to a public address disables the endpoint and marks it `destinationBlocked`.\n\nRequires the `webhooks:write` scope.",
         "operationId": "WebhooksController_ping_v1",
         "parameters": [
           {
@@ -5180,11 +5348,15 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:write"
         ]
       }
     },
     "/v1/webhooks/{id}/deliveries": {
       "get": {
+        "description": "Newest first, as `{ data, total, take, skip }` with `take` up to 100 (default 20), narrowed by `status` when given. Each delivery reports its `eventType`, `eventId`, `attempts`, last `responseStatus` and `error`; the event body that was sent is never returned.\n\nRequires the `webhooks:read` scope.",
         "operationId": "WebhooksController_listDeliveries_v1",
         "parameters": [
           {
@@ -5259,11 +5431,15 @@
         "summary": "List delivery attempts for an endpoint (audit trail)",
         "tags": [
           "webhooks"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:read"
         ]
       }
     },
     "/v1/webhooks/{id}/deliveries/{deliveryId}/redeliver": {
       "post": {
+        "description": "Re-sends the stored body with the same event id, signed again with the endpoint's current secret, retrying with backoff inside this request until a 2xx or the attempts run out, and answers the updated delivery (without its body). A delivery past its payload retention window is `409 payload_expired`.\n\nRequires the `webhooks:write` scope.",
         "operationId": "WebhooksController_redeliver_v1",
         "parameters": [
           {
@@ -5369,12 +5545,15 @@
             "limit": 30,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:write"
         ]
       }
     },
     "/v1/summary": {
       "get": {
-        "description": "The settled volume per asset, and every asset valued in USD at NEAR Intents' current reference price (`volumeUsd`, indicative). Without those prices the USD fields are null and the rest answers as usual.",
+        "description": "The settled volume per asset, and every asset valued in USD at NEAR Intents' current reference price (`volumeUsd`, indicative). Without those prices the USD fields are null and the rest answers as usual.\n\nRequires the `payments:read` scope.",
         "operationId": "AnalyticsController_summary_v1",
         "parameters": [],
         "responses": {
@@ -5401,12 +5580,15 @@
         "summary": "Overview metrics: totals, settled volume, webhook health, 30-day series",
         "tags": [
           "analytics"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/summary/series": {
       "get": {
-        "description": "Payments carry their settled volume in USD too (`volumeUsd`), each asset valued at NEAR Intents' current reference price (indicative). Without those prices the USD fields are null and the rest answers as usual.",
+        "description": "Payments, swaps, liquidity operations, webhook deliveries and private payments, each grouped into the buckets of `period` (UTC, weeks from Monday, a quiet bucket a zero), with the totals of the window and of the window before, for growth. Payments carry their settled volume in USD too (`volumeUsd`), each asset valued at NEAR Intents' current reference price (indicative). Without those prices the USD fields are null and the rest answers as usual.\n\nRequires the `payments:read` scope.",
         "operationId": "AnalyticsController_series_v1",
         "parameters": [
           {
@@ -5450,14 +5632,18 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "summary": "Payments, swaps, liquidity and webhooks grouped by day, week, month or year, with the window before for growth",
+        "summary": "Activity per day, week, month or year, with the window before",
         "tags": [
           "analytics"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/balances": {
       "get": {
+        "description": "Per chain and asset, what this consumer's payment intents settled (`amount`, with their `count`) and what is still `PENDING` or `SUBMITTED` (`pending`), on the API key’s network only (mainnet for a production key, testnet for a test key). Largest settled amount first, as `{ data, total }` with no paging. Reused per consumer and network for a few seconds (10 by default), so a new payment can take that long to show.\n\nRequires the `payments:read` scope.",
         "operationId": "AnalyticsController_balances_v1",
         "parameters": [],
         "responses": {
@@ -5484,11 +5670,15 @@
         "summary": "Settled (and pending) amount per asset",
         "tags": [
           "analytics"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/logs": {
       "get": {
+        "description": "This consumer's requests, newest first, with method, path, status code, duration, client IP and user agent; the dashboard’s own console calls are left out. `status` is `ok` below 400, `pending` for a 4xx and `fail` for a 5xx. Paged with `take` (default and maximum 100) and `skip`; answers `{ data, total, take, skip }`, never cached.\n\nRequires the `payments:read` scope.",
         "operationId": "AnalyticsController_apiLogs_v1",
         "parameters": [
           {
@@ -5540,11 +5730,15 @@
         "summary": "Recent API requests reaching the service (with details)",
         "tags": [
           "analytics"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/logs/webhooks": {
       "get": {
+        "description": "Deliveries to every webhook endpoint of this consumer, newest first: the endpoint and its `url`, `eventType`, `eventId`, `attempts`, the last `responseStatus` and `error`, and `status` (`ok` when delivered, `fail` when failed, `pending` otherwise). The payload is never included. Paged with `take` (default and maximum 100) and `skip`; answers `{ data, total, take, skip }`, never cached.\n\nRequires the `webhooks:read` scope.",
         "operationId": "AnalyticsController_webhookLogs_v1",
         "parameters": [
           {
@@ -5596,12 +5790,15 @@
         "summary": "Recent webhook deliveries across all endpoints (with details)",
         "tags": [
           "analytics"
+        ],
+        "x-cosmos-scopes": [
+          "webhooks:read"
         ]
       }
     },
     "/v1/activity/events": {
       "post": {
-        "description": "Accepted, not created: the batch is written under the consumer the gateway authenticated, and nothing in the body can change that attribution. Over-long messages are truncated and an over-sized `props` is replaced with a marker rather than failing the call: losing a whole batch to one malformed field is worst exactly when the client is in a state it did not anticipate.",
+        "description": "Accepted, not created: the batch is written under the consumer the gateway authenticated, and nothing in the body can change that attribution. Over-long messages are truncated and an over-sized `props` is replaced with a marker rather than failing the call: losing a whole batch to one malformed field is worst exactly when the client is in a state it did not anticipate.\n\nRequires the `activity:write` scope. The shared public key may call it.",
         "operationId": "ActivityController_ingest_v1",
         "parameters": [],
         "requestBody": {
@@ -5675,10 +5872,13 @@
             "limit": 120,
             "windowMs": 60000
           }
+        ],
+        "x-cosmos-scopes": [
+          "activity:write"
         ]
       },
       "get": {
-        "description": "`level` is a floor, not an exact match: `level=warn` returns warnings and errors.",
+        "description": "`level` is a floor, not an exact match: `level=warn` returns warnings and errors.\n\nRequires the `activity:read` scope.",
         "operationId": "ActivityController_list_v1",
         "parameters": [
           {
@@ -5807,11 +6007,15 @@
         "summary": "Recent client events for this consumer, newest first",
         "tags": [
           "activity"
+        ],
+        "x-cosmos-scopes": [
+          "activity:read"
         ]
       }
     },
     "/v1/activity/summary": {
       "get": {
+        "description": "Rolls up the client events this consumer reported over the last `days` days (default 7, at most 90), optionally for one `source`: the total, distinct sessions and devices, counts per level, source and category, and the 10 most frequent event types and error messages. `series` has one entry per UTC day, zero on a quiet one.\n\nRequires the `activity:read` scope.",
         "operationId": "ActivityController_summary_v1",
         "parameters": [
           {
@@ -5867,11 +6071,15 @@
         "summary": "Counts, top event types, top errors and a daily series",
         "tags": [
           "activity"
+        ],
+        "x-cosmos-scopes": [
+          "activity:read"
         ]
       }
     },
     "/v1/products": {
       "post": {
+        "description": "A catalog record: `name`, an optional decimal `amount` (up to 7 decimals; omit for a customer-set price), `assetCode` (omitted, `XLM` or `native` store `native`), `kind` (`one_time` by default, `recurring` or `link`, informational) and `active` (default `true`). Creating one builds no payment link or intent.\n\nRequires the `products:write` scope.",
         "operationId": "ProductsController_create_v1",
         "parameters": [],
         "requestBody": {
@@ -5911,9 +6119,13 @@
         "summary": "Create a product",
         "tags": [
           "products"
+        ],
+        "x-cosmos-scopes": [
+          "products:write"
         ]
       },
       "get": {
+        "description": "Newest first, as `{ data, total, take, skip }` with `take` up to 100 (default 100). Inactive products (`active: false`) are included.\n\nRequires the `products:read` scope.",
         "operationId": "ProductsController_findAll_v1",
         "parameters": [
           {
@@ -5963,11 +6175,15 @@
         "summary": "List the consumer's products",
         "tags": [
           "products"
+        ],
+        "x-cosmos-scopes": [
+          "products:read"
         ]
       }
     },
     "/v1/products/{id}": {
       "get": {
+        "description": "One of the consumer’s products, active or not.\n\nRequires the `products:read` scope.",
         "operationId": "ProductsController_findOne_v1",
         "parameters": [
           {
@@ -6009,9 +6225,13 @@
         "summary": "Get a product by id",
         "tags": [
           "products"
+        ],
+        "x-cosmos-scopes": [
+          "products:read"
         ]
       },
       "patch": {
+        "description": "Changes only the fields sent; `assetCode` is normalized as on create. Set `active: false` to retire a product and keep its record.\n\nRequires the `products:write` scope.",
         "operationId": "ProductsController_update_v1",
         "parameters": [
           {
@@ -6063,9 +6283,13 @@
         "summary": "Update a product",
         "tags": [
           "products"
+        ],
+        "x-cosmos-scopes": [
+          "products:write"
         ]
       },
       "delete": {
+        "description": "Deletes the product for good. To keep its record, set `active: false` with `PATCH` instead.\n\nRequires the `products:write` scope.",
         "operationId": "ProductsController_remove_v1",
         "parameters": [
           {
@@ -6107,11 +6331,15 @@
         "summary": "Delete a product",
         "tags": [
           "products"
+        ],
+        "x-cosmos-scopes": [
+          "products:write"
         ]
       }
     },
     "/v1/aliases/resolve/{name}": {
       "get": {
+        "description": "Answers the addresses of the alias on one chain (Stellar unless `chain` names another), optionally narrowed to one `network`, primary first, with `primaryAddress` as the default to pay (null when it has none there). The name is matched trimmed and lowercased. An unknown or suspended alias is a 404, and nothing about its owner is returned.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "AliasesController_resolve_v1",
         "parameters": [
           {
@@ -6177,11 +6405,15 @@
         "tags": [
           "aliases"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
       }
     },
     "/v1/aliases/availability/{name}": {
       "get": {
+        "description": "Checks the trimmed, lowercased handle and answers `available`, with a `reason` when it is not: `too_short` or `too_long` (3 to 32 characters), `bad_characters` (a-z, 0-9 and underscores, starting and ending with a letter or digit), `reserved`, `address_like` (it would read as a Stellar address) or `taken`. It reserves nothing: a claim can still lose the name with `409 alias_taken`.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "AliasesController_availability_v1",
         "parameters": [
           {
@@ -6224,11 +6456,15 @@
         "tags": [
           "aliases"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
       }
     },
     "/v1/aliases/by-address/{address}": {
       "get": {
+        "description": "The active aliases holding this address, oldest first, each with its `chain`, `network` and whether the address is its primary there, as `{ data }` (not paged). Without `chain` the chain is read off the address's own shape, and a Monad address matches whatever its letter case. An address no chain accepts answers an empty `data`, not an error.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "AliasesController_byAddress_v1",
         "parameters": [
           {
@@ -6293,12 +6529,15 @@
         "tags": [
           "aliases"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
       }
     },
     "/v1/aliases/challenges": {
       "post": {
-        "description": "Returns the EXACT message to digest and sign. Single-use and short-lived; the purpose is inside the signed bytes, so a signature collected to add an address cannot be replayed to complete a recovery.",
+        "description": "Returns the EXACT message to digest and sign. Single-use and short-lived; the purpose is inside the signed bytes, so a signature collected to add an address cannot be replayed to complete a recovery.\n\nRequires the `payments:write` scope.",
         "operationId": "AliasesController_challenge_v1",
         "parameters": [],
         "requestBody": {
@@ -6405,11 +6644,15 @@
             "limit": 30,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/aliases": {
       "post": {
+        "description": "Takes the `nonce` of a `CLAIM` challenge from `POST /v1/aliases/challenges` and the signature over its message: the address, chain and network registered are the challenge's, never the body's, and that address becomes the alias's primary. A challenge is single-use and lives 5 minutes (`alias_challenge_invalid`); a signature that does not verify is `alias_signature_invalid`. `email` is the mailbox recovery goes to, a consumer holds at most 25 aliases (`400 alias_address_conflict`) and the first claim of a name wins (`409 alias_taken`).\n\nRequires the `payments:write` scope.",
         "operationId": "AliasesController_claim_v1",
         "parameters": [],
         "requestBody": {
@@ -6539,9 +6782,13 @@
         "summary": "Claim an alias with a signature",
         "tags": [
           "aliases"
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       },
       "get": {
+        "description": "The aliases this consumer holds, newest first, each with its recovery `email`, `status` and every address on every chain and network (primary first). Paged with `take` (default and maximum 50) and `skip`; answers `{ data, total, take, skip }`.\n\nRequires the `payments:read` scope.",
         "operationId": "AliasesController_list_v1",
         "parameters": [
           {
@@ -6590,12 +6837,15 @@
         "summary": "List the caller's aliases",
         "tags": [
           "aliases"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/aliases/{name}/addresses": {
       "post": {
-        "description": "Needs two proofs: the caller owns the alias, and the NEW address signs for itself. One alias may hold many addresses across many networks.",
+        "description": "Needs two proofs: the caller owns the alias, and the NEW address signs for itself. One alias may hold many addresses across many networks.\n\nRequires the `payments:write` scope.",
         "operationId": "AliasesController_addAddress_v1",
         "parameters": [
           {
@@ -6703,11 +6953,15 @@
         "summary": "Point the alias at another address",
         "tags": [
           "aliases"
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/aliases/{name}/addresses/{addressId}": {
       "delete": {
+        "description": "Deletes one address of an alias this consumer holds. When it was the primary on its chain and network, the oldest remaining address there becomes primary. The last address of the alias cannot be removed: release the alias instead.\n\nRequires the `payments:write` scope.",
         "operationId": "AliasesController_removeAddress_v1",
         "parameters": [
           {
@@ -6777,11 +7031,15 @@
         "summary": "Remove one address from the alias",
         "tags": [
           "aliases"
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/aliases/{name}": {
       "delete": {
+        "description": "Deletes an alias this consumer holds, with all its addresses, so anyone can claim the name again. An alias held by another consumer is a 404.\n\nRequires the `payments:write` scope.",
         "operationId": "AliasesController_release_v1",
         "parameters": [
           {
@@ -6823,12 +7081,15 @@
         "summary": "Release the alias back to the namespace",
         "tags": [
           "aliases"
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/aliases/{name}/recovery": {
       "post": {
-        "description": "Always `{ accepted: true }`, whether or not the alias exists and the mailbox matched: a handle is public and the mailbox behind it is not. When both match, the token is emailed to the mailbox on record (at most once a minute per alias); it never appears in the response.",
+        "description": "Always `{ accepted: true }`, whether or not the alias exists and the mailbox matched: a handle is public and the mailbox behind it is not. When both match, the token is emailed to the mailbox on record (at most once a minute per alias); it never appears in the response.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "AliasesController_startRecovery_v1",
         "parameters": [
           {
@@ -6935,12 +7196,15 @@
             "windowMs": 600000
           }
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-uniform-answer": true
       }
     },
     "/v1/aliases/{name}/recovery/complete": {
       "post": {
-        "description": "Needs the emailed token AND a signature from the new key. Every previous address is dropped: recovery exists because the old keys are gone, and leaving them resolvable would keep whoever holds them receiving payments.",
+        "description": "Needs the emailed token AND a signature from the new key. Every previous address is dropped: recovery exists because the old keys are gone, and leaving them resolvable would keep whoever holds them receiving payments.\n\nRequires the `payments:write` scope.",
         "operationId": "AliasesController_completeRecovery_v1",
         "parameters": [
           {
@@ -7081,12 +7345,15 @@
             "limit": 10,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/wallet/auth/providers": {
       "get": {
-        "description": "Render buttons from this rather than from a compiled-in list. A deployment with no Google credentials should not show a Google button that dies at the consent screen.",
+        "description": "Render buttons from this rather than from a compiled-in list. A deployment with no Google credentials should not show a Google button that dies at the consent screen.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_providers_v1",
         "parameters": [],
         "responses": {
@@ -7114,12 +7381,15 @@
         "tags": [
           "wallet-auth"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
       }
     },
     "/v1/wallet/auth/oauth/authorize": {
       "post": {
-        "description": "Returns the URL to open in a browser. Keep the PKCE verifier on the device: the `state` travels through the browser and buys only polling, while the verifier is what redeems the handshake.",
+        "description": "Returns the URL to open in a browser. Keep the PKCE verifier on the device: the `state` travels through the browser and buys only polling, while the verifier is what redeems the handshake.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_startOauth_v1",
         "parameters": [],
         "requestBody": {
@@ -7247,6 +7517,9 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
@@ -7329,7 +7602,7 @@
     },
     "/v1/wallet/auth/oauth/session/{state}": {
       "get": {
-        "description": "Answers on the `state` alone, and never returns the identity at any status. Poll until it leaves `pending`, then redeem with the verifier.",
+        "description": "Answers on the `state` alone, and never returns the identity at any status. Poll until it leaves `pending`, then redeem with the verifier.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_pollStatus_v1",
         "parameters": [
           {
@@ -7405,12 +7678,15 @@
             "limit": 600,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/wallet/auth/oauth/claim": {
       "post": {
-        "description": "A NEW email ends here, with a session token. An email that ALREADY has an account gets `verify_email` instead and a code in its inbox: a provider proves who consented, not who opened the sign-in, and an existing account is where the backup worth stealing is. An Authentik email the provider has not confirmed also gets `verify_email`, account or not, under the same per-address cooldown as `email/start`. The exception is a sign-in through Authentik’s emailed link (the `email` source), whose ID token carries `cosmos_inbox_proven: true`: that login already proved the inbox, so an existing account ends here too, with its backups and the `idToken`.",
+        "description": "A NEW email ends here, with a session token. An email that ALREADY has an account gets `verify_email` instead and a code in its inbox: a provider proves who consented, not who opened the sign-in, and an existing account is where the backup worth stealing is. An Authentik email the provider has not confirmed also gets `verify_email`, account or not, under the same per-address cooldown as `email/start`. The exception is a sign-in through Authentik’s emailed link (the `email` source), whose ID token carries `cosmos_inbox_proven: true`: that login already proved the inbox, so an existing account ends here too, with its backups and the `idToken`.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_claimOauth_v1",
         "parameters": [],
         "requestBody": {
@@ -7522,11 +7798,15 @@
             "limit": 30,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/wallet/auth/email/start": {
       "post": {
+        "description": "Emails a six-digit code to `email`, valid 15 minutes (`expiresInSeconds`), and answers a `claimToken` naming that code; send both to `POST /v1/wallet/auth/email/verify`. One mailbox gets at most one code a minute and 10 in 24 hours, whoever asks: more is `400 wallet_login_code_cooldown`. Only SHA-256 hashes of the code and the claim token are stored.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_startEmail_v1",
         "parameters": [],
         "requestBody": {
@@ -7620,12 +7900,15 @@
             "limit": 5,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/wallet/auth/email/verify": {
       "post": {
-        "description": "Wrong codes are counted on the row, not by the client. Five burns it, and a burned code is replaced by asking for another.",
+        "description": "Wrong codes are counted on the row, not by the client. Five burns it, and a burned code is replaced by asking for another.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_verifyEmail_v1",
         "parameters": [],
         "requestBody": {
@@ -7706,12 +7989,15 @@
             "limit": 30,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/wallet/auth/finish": {
       "post": {
-        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {address}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.\n\nOn Solana and Monad (`chain`), a `chain: {chain}` line follows the first one. Solana signs the bytes with ed25519 (`signMessage`; base64 or base58); Monad with EIP-191 `personal_sign` (0x-hex).",
+        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {address}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.\n\nOn Solana and Monad (`chain`), a `chain: {chain}` line follows the first one. Solana signs the bytes with ed25519 (`signMessage`; base64 or base58); Monad with EIP-191 `personal_sign` (0x-hex).\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_finish_v1",
         "parameters": [
           {
@@ -7861,6 +8147,9 @@
             "windowMs": 600000
           }
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -7868,7 +8157,7 @@
     },
     "/v1/wallet/backup": {
       "put": {
-        "description": "What `changePassword` on the device sends. No session: the signature is the credential, and it covers the SHA-256 of the box, so one signature stores exactly one box and cannot be replayed to store another. The bytes are:\n\n```\nCosmos Pay Wallet backup\naccount: {address}\nbox: {sha256 hex of box}\nat: {signedAt}\n```\n\nOn Solana and Monad a `chain: {chain}` line follows the first one, and the bytes are signed as for sign-in.",
+        "description": "What `changePassword` on the device sends. No session: the signature is the credential, and it covers the SHA-256 of the box, so one signature stores exactly one box and cannot be replayed to store another. The bytes are:\n\n```\nCosmos Pay Wallet backup\naccount: {address}\nbox: {sha256 hex of box}\nat: {signedAt}\n```\n\nOn Solana and Monad a `chain: {chain}` line follows the first one, and the bytes are signed as for sign-in.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletBackupController_replaceBackup_v1",
         "parameters": [],
         "requestBody": {
@@ -8000,6 +8289,9 @@
             "windowMs": 600000
           }
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -8007,7 +8299,7 @@
     },
     "/v1/wallet/recovery/setup": {
       "post": {
-        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet recovery setup\naccount: {stellarAddress}\nsigners: {signerA},{signerB}\nat: {signedAt}\n```\n\nThe envelope comes back signed by the sponsor only. Once per account: refused when the account already has a signer besides its master key.",
+        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet recovery setup\naccount: {stellarAddress}\nsigners: {signerA},{signerB}\nat: {signedAt}\n```\n\nThe envelope comes back signed by the sponsor only. Once per account: refused when the account already has a signer besides its master key.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletBackupController_sponsorRecoverySetup_v1",
         "parameters": [
           {
@@ -8164,6 +8456,9 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon"
         ]
@@ -8211,7 +8506,7 @@
     },
     "/v1/sep10/auth": {
       "get": {
-        "description": "Sequence 0: unsubmittable by construction.",
+        "description": "Public: no API key. Answers a SEP-10 challenge transaction for `account` (a `G...` address) with the `network_passphrase` to sign it for; sign it with the account and exchange it at `POST /v1/sep10/auth`. Sequence 0: unsubmittable by construction. Errors have the SEP body `{ \"error\": \"...\" }`; a deployment that is not a recovery server answers 404.",
         "operationId": "Sep10Controller_challenge_v1",
         "parameters": [
           {
@@ -8483,7 +8778,7 @@
     },
     "/v1/sep30/identity/email/verify": {
       "post": {
-        "description": "Five wrong answers burn it.",
+        "description": "Public: no API key. Send the `claim_token` from `POST /v1/sep30/identity/email/start` with the emailed `code`: the right answer is `status: ready` with this server's identity token for that inbox, once; a wrong one is `invalid` with `attempts_left`, and an unknown, used or lapsed claim is `expired`. Five wrong answers burn it (`locked`).",
         "operationId": "Sep30Controller_verifyEmail_v1",
         "parameters": [],
         "requestBody": {
@@ -8550,6 +8845,7 @@
     },
     "/v1/sep30/accounts": {
       "get": {
+        "description": "A SEP-10 token lists its own account when it is registered here; this server's identity token for an email lists every account naming that email. It reads one ledger (the one the path names, e.g. `/v1/sep30/testnet/accounts`, or the default) and answers up to 100 accounts per page in address order as `{ accounts }`; pass the last address as `after` for the next page. Errors have the SEP body `{ \"error\": \"...\" }`: 401 without a valid token from this server, 404 on a deployment that is not a recovery server.",
         "operationId": "Sep30Controller_list_v1",
         "parameters": [
           {
@@ -8620,6 +8916,7 @@
     },
     "/v1/sep30/accounts/{address}": {
       "post": {
+        "description": "Stores who may recover `address` (1 to 3 identities, roles `owner`, `sender` or `receiver`, each with 1 to 3 `email` auth methods) and answers the account with `signers`: this server's key for it. Only a SEP-10 token of that same account may call it (403 otherwise), and an account already registered here is a 409: change it with `PUT`. Errors have the SEP body `{ \"error\": \"...\" }`: 401 without a valid token from this server, 404 on a deployment that is not a recovery server.",
         "operationId": "Sep30Controller_register_v1",
         "parameters": [],
         "requestBody": {
@@ -8691,6 +8988,7 @@
         ]
       },
       "put": {
+        "description": "Replaces the identities of `address`, never merging them with the old ones, and registers the account if it is not here yet. Only a SEP-10 token of that same account may call it (403 otherwise); it answers the account as `POST` does. Errors have the SEP body `{ \"error\": \"...\" }`: 401 without a valid token from this server, 404 on a deployment that is not a recovery server.",
         "operationId": "Sep30Controller_update_v1",
         "parameters": [],
         "requestBody": {
@@ -8762,6 +9060,7 @@
         ]
       },
       "get": {
+        "description": "The account's identity roles, flagging the one the token authenticates as, and this server's signer key for it. Takes the account's SEP-10 token, or this server's identity token for an email registered on it; an account that is absent and one the token may not act on are the same 404. Errors have the SEP body `{ \"error\": \"...\" }`: 401 without a valid token from this server, 404 on a deployment that is not a recovery server.",
         "operationId": "Sep30Controller_get_v1",
         "parameters": [],
         "responses": {
@@ -8820,6 +9119,7 @@
         ]
       },
       "delete": {
+        "description": "Deletes the registration and its identities and answers the account as it was. Only a SEP-10 token of that same account may call it (403 otherwise); an account not registered here is a 404. Errors have the SEP body `{ \"error\": \"...\" }`: 401 without a valid token from this server, 404 on a deployment that is not a recovery server.",
         "operationId": "Sep30Controller_remove_v1",
         "parameters": [],
         "responses": {
@@ -9156,6 +9456,7 @@
         ]
       },
       "delete": {
+        "description": "Deletes this server's half of the backup recovery key filed for `address` and answers `{ address }`. Only a SEP-10 token of that same account may call it (403 otherwise); no half filed here is a 404. Errors have the SEP body `{ \"error\": \"...\" }`: 401 without a valid token from this server, 404 on a deployment that is not a recovery server.",
         "operationId": "RecoverySharesController_remove_v1",
         "parameters": [],
         "responses": {
@@ -9216,6 +9517,7 @@
     },
     "/v1/plugins": {
       "get": {
+        "description": "Each plugin with its manifest (`capabilities`, `egress`, `config` settings, `queries`, `commands`, `events`) and `installation`: this consumer's installation of it, or null. An installation lists `pendingCapabilities` when the plugin was updated to ask for more than was granted, and its actions are refused until it is installed again. Answers `{ data }`, not paged.\n\nRequires the `plugins:read` scope.",
         "operationId": "PluginsController_list_v1",
         "parameters": [],
         "responses": {
@@ -9242,11 +9544,15 @@
         "summary": "List the plugins this deployment serves, with this key’s installations",
         "tags": [
           "plugins"
+        ],
+        "x-cosmos-scopes": [
+          "plugins:read"
         ]
       }
     },
     "/v1/plugins/{slug}": {
       "get": {
+        "description": "One plugin's manifest and this consumer's `installation` of it (null when not installed). Read it before installing: `PUT /v1/plugins/{slug}/installation` must grant exactly the `capabilities` listed here. Secret settings are never returned; `installation.secretsSet` names the ones that hold a value.\n\nRequires the `plugins:read` scope.",
         "operationId": "PluginsController_describe_v1",
         "parameters": [
           {
@@ -9290,11 +9596,15 @@
         "summary": "Describe a plugin: capabilities, egress, settings, actions",
         "tags": [
           "plugins"
+        ],
+        "x-cosmos-scopes": [
+          "plugins:read"
         ]
       }
     },
     "/v1/plugins/{slug}/installation": {
       "put": {
+        "description": "Installing is consent: `grantCapabilities` must list exactly the capabilities the plugin declares, no more and no fewer (`400 plugin_consent_mismatch`). `config` is checked against the plugin's settings; secret settings are stored sealed and kept when not sent again. Call it again after an update leaves `pendingCapabilities`; it answers the plugin with its new `installation`.\n\nRequires the `plugins:write` scope.",
         "operationId": "PluginsController_install_v1",
         "parameters": [
           {
@@ -9381,9 +9691,13 @@
         "summary": "Install a plugin (or re-consent / reconfigure it), granting its capabilities",
         "tags": [
           "plugins"
+        ],
+        "x-cosmos-scopes": [
+          "plugins:write"
         ]
       },
       "delete": {
+        "description": "Deletes this consumer's installation and, with it, everything the plugin stored for the consumer. It works even when the deployment no longer serves the plugin; a plugin that is not installed is a 404. Answers `{ slug, uninstalled: true }`.\n\nRequires the `plugins:write` scope.",
         "operationId": "PluginsController_uninstall_v1",
         "parameters": [
           {
@@ -9427,11 +9741,15 @@
         "summary": "Uninstall a plugin and delete every record it kept for this key",
         "tags": [
           "plugins"
+        ],
+        "x-cosmos-scopes": [
+          "plugins:write"
         ]
       }
     },
     "/v1/plugins/{slug}/queries/{action}": {
       "post": {
+        "description": "Runs one of the plugin's `queries` with `input` (JSON, at most 64 KiB) and answers its `output`; a query cannot write the plugin storage, customers or products. The plugin must be installed with every capability it now asks for (`409 plugin_not_installed`). A refusal by the plugin is `400 plugin_rejected`, a failure `502 plugin_failed`, and a run over 10 seconds `504 plugin_failed`.\n\nRequires the `plugins:read` scope.",
         "operationId": "PluginsController_query_v1",
         "parameters": [
           {
@@ -9629,11 +9947,15 @@
             "windowMs": 60000,
             "per": "consumer"
           }
+        ],
+        "x-cosmos-scopes": [
+          "plugins:read"
         ]
       }
     },
     "/v1/plugins/{slug}/commands/{action}": {
       "post": {
+        "description": "Runs one of the plugin's `commands` with `input` (JSON, at most 64 KiB) and answers its `output`; a command may write its own storage and, as far as the granted capabilities allow, this consumer's customers and products. It needs an installation with every capability the plugin now asks for (`409 plugin_not_installed`), and storage is capped per installation (`409 plugin_quota_exceeded`). A refusal by the plugin is `400 plugin_rejected`, a failure `502 plugin_failed`, and a run over 10 seconds `504 plugin_failed`.\n\nRequires the `plugins:write` scope.",
         "operationId": "PluginsController_command_v1",
         "parameters": [
           {
@@ -9842,11 +10164,15 @@
             "windowMs": 60000,
             "per": "consumer"
           }
+        ],
+        "x-cosmos-scopes": [
+          "plugins:write"
         ]
       }
     },
     "/v1/kyc/receivers": {
       "post": {
+        "description": "Stores the receiver here and sends nothing to BlindPay yet: it is created there only by `POST /v1/kyc/receivers/{id}/enable`, after the review and the customer's acceptance of the terms. A body with KYC data (tax id, date of birth, documents, legal name, formation date or owners) starts in `pending_review`, a bare registration in `inactive`. The receiver belongs to the BlindPay instance of the key's network (production for a mainnet key, development otherwise), and the stored dossier is never returned.\n\nRequires the `kyc:write` scope.",
         "operationId": "ReceiversController_create_v1",
         "parameters": [],
         "requestBody": {
@@ -9896,11 +10222,15 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "get": {
+        "description": "Reads the local mirror only, newest first, on the BlindPay instance of the key's network. Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`, where `total` counts every matching receiver. The stored KYC dossier (tax id, documents, owners) is never returned.\n\nRequires the `kyc:read` scope.",
         "operationId": "ReceiversController_findAll_v1",
         "parameters": [
           {
@@ -9952,11 +10282,15 @@
         "summary": "List the consumer's receivers",
         "tags": [
           "kyc"
+        ],
+        "x-cosmos-scopes": [
+          "kyc:read"
         ]
       }
     },
     "/v1/kyc/receivers/{id}": {
       "get": {
+        "description": "For a receiver that already exists at BlindPay, reads it there and updates the local mirror first, so `kycStatus` is BlindPay's current one; when BlindPay cannot be reached, the stored row is answered instead of an error. A receiver not yet at BlindPay (`inactive`, `pending_review`, `pending_user`) is answered from the local row.\n\nRequires the `kyc:read` scope.",
         "operationId": "ReceiversController_findOne_v1",
         "parameters": [
           {
@@ -10008,11 +10342,15 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:read"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "patch": {
+        "description": "Before the receiver exists at BlindPay, the patch is merged into the stored registration, any change bumps `dossierVersion`, and editing a `pending_user` receiver (or adding KYC data to an `inactive` one) moves it to `pending_review`. After that the patch is sent to BlindPay, and a key without the admin role may change only `external_id` and `image_url`. `tos_id` is always ignored: the accepted terms cannot be changed.\n\nRequires the `kyc:write` scope.",
         "operationId": "ReceiversController_update_v1",
         "parameters": [
           {
@@ -10094,11 +10432,15 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "delete": {
+        "description": "Deletes the receiver at BlindPay when it was ever created there, then the local row, and records the deletion in the audit log. A receiver that never reached BlindPay is deleted locally only.\n\nRequires the `kyc:write` scope.",
         "operationId": "ReceiversController_remove_v1",
         "parameters": [
           {
@@ -10150,6 +10492,9 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -10157,6 +10502,7 @@
     },
     "/v1/kyc/receivers/{id}/approve": {
       "post": {
+        "description": "The review gate before anything reaches BlindPay: only a key with the admin role may approve (any other key gets 403 `kyc_review_required`), and only a `pending_review` receiver. It requests BlindPay's hosted terms-of-service link for `redirect_url` (https, on this consumer's allow-list), moves the receiver to `pending_user` and returns the link with the receiver's email; nothing is emailed, the caller delivers it. Send `expected_version` (the `dossierVersion` you reviewed) so an edit made since is a 409 `kyc_state_invalid` instead of an approval of unreviewed data.\n\nRequires the `kyc:write` scope.",
         "operationId": "ReceiversController_approve_v1",
         "parameters": [
           {
@@ -10268,9 +10614,12 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Approve a pending-review receiver (admin-only review gate); sends the customer the terms link and returns it",
+        "summary": "Approve a receiver's KYC review and get its terms-of-service link",
         "tags": [
           "kyc"
+        ],
+        "x-cosmos-scopes": [
+          "kyc:write"
         ],
         "x-cosmos-upstream": [
           "BlindPay"
@@ -10279,6 +10628,7 @@
     },
     "/v1/kyc/receivers/{id}/tos": {
       "post": {
+        "description": "Only for a `pending_user` receiver (approved, terms not yet accepted); any other status is 400 `kyc_state_invalid`. Requests a fresh hosted link from BlindPay for `redirect_url` (https, on this consumer's allow-list) and returns it with the receiver's email. `channel: email` sends nothing itself: it records the send, allowed once per 24 hours per receiver (400 `validation_failed` inside that window, 409 `kyc_state_invalid` when two race), and the caller emails the returned link; `channel: code` (the default) has no such limit.\n\nRequires the `kyc:write` scope.",
         "operationId": "ReceiversController_requestTos_v1",
         "parameters": [
           {
@@ -10336,9 +10686,12 @@
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Request a terms-of-service link for a receiver ('code' returns the URL; 'email' sends it, max once/day)",
+        "summary": "Request a terms-of-service link for an approved receiver",
         "tags": [
           "kyc"
+        ],
+        "x-cosmos-scopes": [
+          "kyc:write"
         ],
         "x-cosmos-upstream": [
           "BlindPay"
@@ -10347,6 +10700,7 @@
     },
     "/v1/kyc/receivers/{id}/enable": {
       "post": {
+        "description": "Creates the receiver at BlindPay: replays the stored registration with the `tos_id` the customer got by accepting the terms, then replaces the local placeholder id with BlindPay's and mirrors BlindPay's KYC status. Only a `pending_user` receiver whose current `dossierVersion` is the approved one; otherwise, or when another enable is running, 409 `kyc_state_invalid`. A receiver already at BlindPay is not created again: it is refreshed from BlindPay and returned.\n\nRequires the `kyc:write` scope.",
         "operationId": "ReceiversController_enable_v1",
         "parameters": [
           {
@@ -10431,6 +10785,9 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -10438,6 +10795,7 @@
     },
     "/v1/kyc/receivers/{id}/access": {
       "patch": {
+        "description": "Sets `disabled` on the receiver. While disabled, onramp, offramp and adding wallets, bank accounts or virtual accounts for it are refused with 403 `account_disabled`, whatever its KYC status. Only a key with the admin role may call it (any other key gets 403 `insufficient_scope`), so a tenant cannot lift a switch an operator set. Local only: nothing is sent to BlindPay.\n\nRequires the `kyc:write` scope.",
         "operationId": "ReceiversController_setAccess_v1",
         "parameters": [
           {
@@ -10509,11 +10867,15 @@
         "summary": "Enable or disable a fiat account (admin-only kill-switch for onramp/offramp)",
         "tags": [
           "kyc"
+        ],
+        "x-cosmos-scopes": [
+          "kyc:write"
         ]
       }
     },
     "/v1/kyc/receivers/{receiverId}/wallets/sign-message": {
       "get": {
+        "description": "Fetches from BlindPay the message the customer signs in their own wallet to prove an EOA wallet is theirs. Sign it, then register the wallet with `POST /v1/kyc/receivers/{receiverId}/wallets` and its `signature_tx_hash` instead of an `address`. Nothing is stored.\n\nRequires the `kyc:read` scope.",
         "operationId": "WalletsController_signMessage_v1",
         "parameters": [
           {
@@ -10558,6 +10920,9 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:read"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -10565,6 +10930,7 @@
     },
     "/v1/kyc/receivers/{receiverId}/wallets": {
       "post": {
+        "description": "Registers the wallet at BlindPay under the receiver and mirrors it locally. Send `address` (account abstraction or the non-secure flow), or the `signature_tx_hash` of the message from `GET /v1/kyc/receivers/{receiverId}/wallets/sign-message` (secure EOA flow). `network` is one of BlindPay's: Stellar, Solana, Tron, Ethereum, Base, Arbitrum, Polygon or one of their test networks. A disabled receiver is refused with 403 `account_disabled`.\n\nRequires the `kyc:write` scope.",
         "operationId": "WalletsController_create_v1",
         "parameters": [
           {
@@ -10626,11 +10992,15 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "get": {
+        "description": "Reads the local mirror, newest first; BlindPay is not called. Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`.\n\nRequires the `kyc:read` scope.",
         "operationId": "WalletsController_findAll_v1",
         "parameters": [
           {
@@ -10693,11 +11063,15 @@
         "summary": "List a receiver's wallets",
         "tags": [
           "kyc"
+        ],
+        "x-cosmos-scopes": [
+          "kyc:read"
         ]
       }
     },
     "/v1/kyc/receivers/{receiverId}/wallets/{id}": {
       "delete": {
+        "description": "Deletes the wallet at BlindPay, then its local row. A wallet id this receiver does not have answers `deleted: true` without calling BlindPay, so repeating a delete succeeds.\n\nRequires the `kyc:write` scope.",
         "operationId": "WalletsController_remove_v1",
         "parameters": [
           {
@@ -10757,6 +11131,9 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -10764,6 +11141,7 @@
     },
     "/v1/kyc/receivers/{receiverId}/bank-accounts": {
       "post": {
+        "description": "Creates the account at BlindPay under the receiver and mirrors it; offramp payouts settle to it. `type` names the rail, and only that rail's fields are needed (`GET /v1/kyc/bank-details?rail=` lists them). The response carries identifiers only (`rail`, `name`, `country`), never the account numbers. A disabled receiver is refused with 403 `account_disabled`.\n\nRequires the `kyc:write` scope.",
         "operationId": "BankAccountsController_create_v1",
         "parameters": [
           {
@@ -10825,11 +11203,15 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "get": {
+        "description": "Reads the local mirror, newest first; BlindPay is not called, and account numbers are never returned. Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`.\n\nRequires the `kyc:read` scope.",
         "operationId": "BankAccountsController_findAll_v1",
         "parameters": [
           {
@@ -10892,11 +11274,15 @@
         "summary": "List a receiver's bank accounts",
         "tags": [
           "kyc"
+        ],
+        "x-cosmos-scopes": [
+          "kyc:read"
         ]
       }
     },
     "/v1/kyc/receivers/{receiverId}/bank-accounts/{id}": {
       "delete": {
+        "description": "Deletes the account at BlindPay, then its local row. An id this receiver does not have answers `deleted: true` without calling BlindPay, so repeating a delete succeeds.\n\nRequires the `kyc:write` scope.",
         "operationId": "BankAccountsController_remove_v1",
         "parameters": [
           {
@@ -10956,6 +11342,9 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -10963,6 +11352,7 @@
     },
     "/v1/kyc/upload": {
       "post": {
+        "description": "Multipart: one `file` part (JPEG, PNG, WebP, HEIC/HEIF or PDF, up to 10 MB, its bytes checked against the declared type) and an optional `bucket` (`onboarding` by default, `avatar` or `limit_increase`). BlindPay stores the file on the instance of the key's network and nothing is kept here; pass the returned `file_url` in the receiver's `*_file` fields. BlindPay keeps a stored file even when a later step fails, which is why the route is budgeted per address and per consumer.\n\nRequires the `kyc:write` scope.",
         "operationId": "KycMetaController_upload_v1",
         "parameters": [],
         "requestBody": {
@@ -11114,6 +11504,9 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11121,6 +11514,7 @@
     },
     "/v1/kyc/terms-of-service": {
       "post": {
+        "description": "Asks BlindPay for a hosted terms-of-service page and returns its URL; after acceptance BlindPay redirects to `redirect_url` (https, on this consumer's allow-list) with a `tos_id` query parameter. With `receiver_id` (the BlindPay id of a receiver this consumer owns, otherwise 404) the terms are for that existing receiver. `idempotency_key` is forwarded to BlindPay and generated when omitted; every call creates a record there, hence the budgets.\n\nRequires the `kyc:write` scope.",
         "operationId": "KycMetaController_initiateTos_v1",
         "parameters": [],
         "requestBody": {
@@ -11209,6 +11603,9 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "kyc:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11216,6 +11613,7 @@
     },
     "/v1/kyc/rails": {
       "get": {
+        "description": "Relays BlindPay's catalog of bank rails on the instance of the key's network (production for a mainnet key, development otherwise). Nothing is stored; the body is BlindPay's answer as returned.\n\nRequires the `kyc:read` scope.",
         "operationId": "KycMetaController_rails_v1",
         "parameters": [],
         "responses": {
@@ -11245,6 +11643,9 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:read"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11252,6 +11653,7 @@
     },
     "/v1/kyc/bank-details": {
       "get": {
+        "description": "Relays BlindPay's field schema for the `rail` query parameter (required: 400 `validation_failed` without it), the fields `POST /v1/kyc/receivers/{receiverId}/bank-accounts` needs for that rail. Answered as BlindPay returns it, from the instance of the key's network.\n\nRequires the `kyc:read` scope.",
         "operationId": "KycMetaController_bankDetails_v1",
         "parameters": [
           {
@@ -11293,6 +11695,9 @@
         "tags": [
           "kyc"
         ],
+        "x-cosmos-scopes": [
+          "kyc:read"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11300,6 +11705,7 @@
     },
     "/v1/onramp/quotes": {
       "post": {
+        "description": "Prices a payin through BlindPay for one of your wallets (`blockchain_wallet_id`, a Cosmos Pay wallet id) and records the quote as yours, on the BlindPay instance your key selects (a `dev` key uses the development instance, a `prod` key production). The quote is BlindPay's answer as is: create the payin from it before its `expires_at`. Amounts are integers in minor units, and `transfers` (AR) and `pse` (CO) need their `payer_rules`. A wallet you do not own is a 404, and one whose receiver's fiat access is disabled is `403 account_disabled`.\n\nRequires the `onramp:write` scope.",
         "operationId": "OnrampController_createQuote_v1",
         "parameters": [],
         "requestBody": {
@@ -11388,6 +11794,9 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11395,6 +11804,7 @@
     },
     "/v1/onramp/payins": {
       "post": {
+        "description": "Executes a quote from `POST /v1/onramp/quotes` at BlindPay and returns the payin with the instructions the payer follows to fund it off-platform; the destination chain is the one of the quote's wallet. Idempotent per quote: a retry of the same quote reuses its row and its BlindPay `Idempotency-Key`, so it cannot create a second payin. A quote that is not yours, is a payout quote or was minted on the other instance is `404 quote_not_found`; a lapsed one is `400 quote_expired`. Status changes arrive later as `PAYIN_UPDATED` and `PAYIN_COMPLETED` webhook events.\n\nRequires the `onramp:write` scope.",
         "operationId": "OnrampController_createPayin_v1",
         "parameters": [],
         "requestBody": {
@@ -11517,11 +11927,15 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "get": {
+        "description": "Reads this service's mirror only (no BlindPay call), newest first, limited to your key's BlindPay instance; payins still waiting for BlindPay's id are left out. Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`, where `total` counts every matching payin.\n\nRequires the `onramp:read` scope.",
         "operationId": "OnrampController_findAll_v1",
         "parameters": [
           {
@@ -11573,11 +11987,15 @@
         "summary": "List the consumer's payins",
         "tags": [
           "onramp"
+        ],
+        "x-cosmos-scopes": [
+          "onramp:read"
         ]
       }
     },
     "/v1/onramp/payins/{id}": {
       "get": {
+        "description": "Answers from the mirror while it was updated in the last 60 seconds; an older row is refreshed from BlindPay first, and when BlindPay cannot answer the stored row is returned instead of an error. Only payins of your key's BlindPay instance that BlindPay already acknowledged; anything else is 404.\n\nRequires the `onramp:read` scope.",
         "operationId": "OnrampController_findOne_v1",
         "parameters": [
           {
@@ -11629,6 +12047,9 @@
         "tags": [
           "onramp"
         ],
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11636,6 +12057,7 @@
     },
     "/v1/onramp/trustline": {
       "post": {
+        "description": "Asks BlindPay to build the unsigned Stellar transaction that adds the trustline `address` needs to hold the onramp's stablecoin, and returns BlindPay's answer as is. The customer signs it: this service never signs. Built on your key's BlindPay instance; nothing is stored.\n\nRequires the `onramp:write` scope.",
         "operationId": "OnrampController_createTrustline_v1",
         "parameters": [],
         "requestBody": {
@@ -11711,6 +12133,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11718,6 +12143,7 @@
     },
     "/v1/onramp/receivers/{receiverId}/virtual-accounts": {
       "post": {
+        "description": "Opens a virtual account at BlindPay: a bank account in the receiver's name at `banking_partner` whose deposits are converted to `token` and sent to `blockchain_wallet_id`, a Cosmos Pay wallet id. The account is mirrored here and the mirrored row is the answer. A receiver or wallet that is not yours on your key's BlindPay instance is a 404, and the answer is `403 account_disabled` when the receiver, or the receiver that owns the wallet, has its fiat access disabled.\n\nRequires the `onramp:write` scope.",
         "operationId": "VirtualAccountsController_create_v1",
         "parameters": [
           {
@@ -11772,11 +12198,15 @@
         "tags": [
           "onramp"
         ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "get": {
+        "description": "Reads this service's mirror only (no BlindPay call), newest first. The receiver must be yours on your key's BlindPay instance, or the answer is 404. Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`.\n\nRequires the `onramp:read` scope.",
         "operationId": "VirtualAccountsController_findAll_v1",
         "parameters": [
           {
@@ -11832,11 +12262,15 @@
         "summary": "List a receiver's virtual accounts",
         "tags": [
           "onramp"
+        ],
+        "x-cosmos-scopes": [
+          "onramp:read"
         ]
       }
     },
     "/v1/offramp/quotes": {
       "post": {
+        "description": "Prices a payout through BlindPay of `token` on `network` to one of your bank accounts (`bank_account_id`, a Cosmos Pay id) and records the quote as yours, on the BlindPay instance your key selects (a `dev` key uses the development instance and moves no real money). An EVM quote carries the `contract` whose `approve` the customer signs before the payout, and `receiver_local_amount` is filled from `receiver_amount` when BlindPay sends 0. Amounts are integers in minor units. A bank account you do not own is a 404, and one whose receiver's fiat access is disabled is `403 account_disabled`.\n\nRequires the `offramp:write` scope.",
         "operationId": "OfframpController_createQuote_v1",
         "parameters": [],
         "requestBody": {
@@ -11925,6 +12359,9 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "offramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -11932,6 +12369,7 @@
     },
     "/v1/offramp/payouts/authorize": {
       "post": {
+        "description": "Step one of a `stellar` or `solana` payout (EVM payouts skip it): BlindPay builds the transaction `sender_wallet_address` signs for `quote_id`, returned as `unsigned_transaction` (Stellar XDR or Solana transaction) beside BlindPay's own fields. Pass the signed result as `signed_transaction` to `POST /v1/offramp/payouts`; nothing is stored. A quote that is not yours, is a payin quote or was minted on the other instance is `404 quote_not_found`; a lapsed one is `400 quote_expired`.\n\nRequires the `offramp:write` scope.",
         "operationId": "OfframpController_authorize_v1",
         "parameters": [],
         "requestBody": {
@@ -12054,6 +12492,9 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "offramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -12061,6 +12502,7 @@
     },
     "/v1/offramp/payouts": {
       "post": {
+        "description": "Executes a payout quote at BlindPay: for `evm` the customer has already sent the quote's `approve`, for `stellar` and `solana` `signed_transaction` (from the authorize step) is required. Idempotent per quote: a retry of the same quote reuses its row and its BlindPay `Idempotency-Key`, so a quote is never paid out twice. A quote that is not yours, is a payin quote or was minted on the other instance is `404 quote_not_found`; a lapsed one is `400 quote_expired`. Status changes arrive later as `PAYOUT_UPDATED` and `PAYOUT_COMPLETED` webhook events.\n\nRequires the `offramp:write` scope.",
         "operationId": "OfframpController_createPayout_v1",
         "parameters": [],
         "requestBody": {
@@ -12183,11 +12625,15 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "offramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
       },
       "get": {
+        "description": "Reads this service's mirror only (no BlindPay call), newest first, limited to your key's BlindPay instance; payouts still waiting for BlindPay's id are left out. Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`, where `total` counts every matching payout.\n\nRequires the `offramp:read` scope.",
         "operationId": "OfframpController_findAll_v1",
         "parameters": [
           {
@@ -12239,11 +12685,15 @@
         "summary": "List the consumer's payouts",
         "tags": [
           "offramp"
+        ],
+        "x-cosmos-scopes": [
+          "offramp:read"
         ]
       }
     },
     "/v1/offramp/payouts/{id}": {
       "get": {
+        "description": "Answers from the mirror while it was updated in the last 60 seconds; an older row is refreshed from BlindPay first, and when BlindPay cannot answer the stored row is returned instead of an error. Only payouts of your key's BlindPay instance that BlindPay already acknowledged; anything else is 404.\n\nRequires the `offramp:read` scope.",
         "operationId": "OfframpController_findOne_v1",
         "parameters": [
           {
@@ -12295,6 +12745,9 @@
         "tags": [
           "offramp"
         ],
+        "x-cosmos-scopes": [
+          "offramp:read"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -12302,6 +12755,7 @@
     },
     "/v1/offramp/payouts/{id}/documents": {
       "post": {
+        "description": "Forwards a document backing the payout (an invoice, for example) to BlindPay and returns BlindPay's answer as is. Upload the file first with `POST /v1/kyc/upload` and pass its `file_url` as `transaction_document_file`. Only a payout of yours on your key's BlindPay instance that BlindPay already acknowledged; anything else is 404.\n\nRequires the `offramp:write` scope.",
         "operationId": "OfframpController_addDocument_v1",
         "parameters": [
           {
@@ -12395,6 +12849,9 @@
             "per": "consumer"
           }
         ],
+        "x-cosmos-scopes": [
+          "offramp:write"
+        ],
         "x-cosmos-upstream": [
           "BlindPay"
         ]
@@ -12402,6 +12859,7 @@
     },
     "/v1/defindex/vaults": {
       "get": {
+        "description": "The DeFindex vaults on the key's network (a `prod` key reads mainnet, a `dev` key testnet), with DeFindex's answer passed through as is. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
         "operationId": "DefindexController_vaults_v1",
         "parameters": [],
         "responses": {
@@ -12422,11 +12880,16 @@
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
+        ]
       }
     },
     "/v1/defindex/vaults/{vault}": {
       "get": {
+        "description": "One vault's details from DeFindex on the key's network, passed through as is; `vault` is its contract address (`C...`). DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
         "operationId": "DefindexController_info_v1",
         "parameters": [
           {
@@ -12462,11 +12925,16 @@
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
+        ]
       }
     },
     "/v1/defindex/vaults/{vault}/balance": {
       "get": {
+        "description": "`account`'s shares and their underlying value in the vault, read from DeFindex on the key's network and passed through as is. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
         "operationId": "DefindexController_balance_v1",
         "parameters": [
           {
@@ -12510,11 +12978,16 @@
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:read",
+          "swaps:read"
+        ]
       }
     },
     "/v1/defindex/vaults/{vault}/deposit": {
       "post": {
+        "description": "DeFindex builds the deposit of `amounts` (integer strings) into the vault for `caller` to sign, on the key's network; `invest` defaults to true and `slippageBps` to 100. Nothing is stored here: sign the returned XDR and send it to `POST /v1/defindex/submit`. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
         "operationId": "DefindexController_deposit_v1",
         "parameters": [
           {
@@ -12560,11 +13033,16 @@
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:write",
+          "swaps:write"
+        ]
       }
     },
     "/v1/defindex/vaults/{vault}/withdraw": {
       "post": {
+        "description": "DeFindex builds the burn of `shares` (an integer string) for the vault's underlying assets, for `caller` to sign on the key's network; `slippageBps` defaults to 100. Nothing is stored here: sign the returned XDR and send it to `POST /v1/defindex/submit`. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
         "operationId": "DefindexController_withdraw_v1",
         "parameters": [
           {
@@ -12610,11 +13088,16 @@
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:write",
+          "swaps:write"
+        ]
       }
     },
     "/v1/defindex/submit": {
       "post": {
+        "description": "Sends the signed `xdr` to the key's network through DeFindex and passes its answer through (hash, success, ledger). The XDR is not checked against one built here, and nothing is stored. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
         "operationId": "DefindexController_submit_v1",
         "parameters": [],
         "requestBody": {
@@ -12648,12 +13131,16 @@
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes-any": [
+          "liquidity:write",
+          "swaps:write"
+        ]
       }
     },
     "/v1/zk-payments/config": {
       "get": {
-        "description": "What a dashboard needs to set a merchant up on the confidential token (register, read the balance, withdraw). `enabled` is false on a network where private payments do not run yet (mainnet today). The same shape as the keyless `GET /v1/zk-checkout/config?network=`.",
+        "description": "What a dashboard needs to set a merchant up on the confidential token (register, read the balance, withdraw). `enabled` is false on a network where private payments do not run yet (mainnet today). The same shape as the keyless `GET /v1/zk-checkout/config?network=`.\n\nRequires the `payments:read` scope.",
         "operationId": "ZkPaymentsController_getConfig_v1",
         "parameters": [],
         "responses": {
@@ -12677,15 +13164,18 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "summary": "The private payments setup of the API key's network: token, registries, auditor id, commission, fee account",
+        "summary": "The private payments setup of the API key's network",
         "tags": [
           "zk-payments"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/zk-payments": {
       "post": {
-        "description": "A private payment hides its amount on-chain: it is paid with confidential transfers on Cosmos Pay's confidential token, proven with zero-knowledge proofs (hence `zk` in the paths). Prices the payment (`amount` = `netAmount` + `feeAmount`, the fee rounded up and at least one stroop) and checks on-chain that the recipient holds a confidential account on the token under auditor 0. The payer then makes two confidential transfers (net to the merchant, fee to the fee account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`. With a `merchantFee`, a third transfer pays it to its wallet, which must hold a confidential account on the token too.",
+        "description": "A private payment hides its amount on-chain: it is paid with confidential transfers on Cosmos Pay's confidential token, proven with zero-knowledge proofs (hence `zk` in the paths). Prices the payment (`amount` = `netAmount` + `feeAmount`, the fee rounded up and at least one stroop) and checks on-chain that the recipient holds a confidential account on the token under auditor 0. The payer then makes two confidential transfers (net to the merchant, fee to the fee account) and confirms them at `POST /v1/zk-checkout/{id}/confirm`. With a `merchantFee`, a third transfer pays it to its wallet, which must hold a confidential account on the token too.\n\nRequires the `payments:write` scope.",
         "operationId": "ZkPaymentsController_create_v1",
         "parameters": [
           {
@@ -12852,7 +13342,7 @@
             "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
-        "summary": "Create a private payment: a confidential payment to a merchant registered on the token, minus the 0.18% commission",
+        "summary": "Create a private payment (0.18% commission)",
         "tags": [
           "zk-payments"
         ],
@@ -12863,11 +13353,15 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
         "x-cosmos-upstream": [
           "Soroban RPC"
         ]
       },
       "get": {
+        "description": "Newest first, optionally filtered by `status` as it reads now (a `PENDING` payment past `expiresAt` reads, and filters, as `EXPIRED`). Paginated with `take` (default 20, max 100) and `skip`; the answer is `{ data, total, take, skip }`. Only payments on the key's network are listed (a `prod` key sees mainnet, a `dev` key testnet).\n\nRequires the `payments:read` scope.",
         "operationId": "ZkPaymentsController_findAll_v1",
         "parameters": [
           {
@@ -12933,11 +13427,15 @@
         "summary": "List the consumer's private payments",
         "tags": [
           "zk-payments"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/zk-payments/{id}": {
       "get": {
+        "description": "One of your private payments: its amounts (`amount`, `netAmount`, `feeAmount`), recipient, payer and the hashes of the transfers that settled it. `status` reads as it is now: a `PENDING` payment past `expiresAt` reads `EXPIRED`, and can still settle with transfers that closed in time. The payer's view of it is the keyless `GET /v1/zk-checkout/{id}`.\n\nRequires the `payments:read` scope.",
         "operationId": "ZkPaymentsController_findOne_v1",
         "parameters": [
           {
@@ -12979,6 +13477,9 @@
         "summary": "Get a private payment by id",
         "tags": [
           "zk-payments"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
@@ -13454,7 +13955,7 @@
     },
     "/v1/usdt0/routes": {
       "get": {
-        "description": "USDT0 is Tether’s omnichain USDT. From Stellar it travels through LayerZero’s OFT: Ethereum receives native USDT (Tether’s OFT adapter unlocks it), every other network receives USDT0. All routes take an EVM recipient. USDT0 exists on Stellar mainnet only: a dev (testnet) key gets `available: false` and no routes.",
+        "description": "USDT0 is Tether’s omnichain USDT. From Stellar it travels through LayerZero’s OFT: Ethereum receives native USDT (Tether’s OFT adapter unlocks it), every other network receives USDT0. All routes take an EVM recipient. USDT0 exists on Stellar mainnet only: a dev (testnet) key gets `available: false` and no routes.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "Usdt0Controller_routes_v1",
         "parameters": [],
         "responses": {
@@ -13482,12 +13983,15 @@
         "tags": [
           "usdt0"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "swaps:read"
+        ]
       }
     },
     "/v1/usdt0/quote": {
       "post": {
-        "description": "Simulates the OFT’s `quote_oft` and `quote_send` on Stellar mainnet. The OFT carries 6 decimals and the asset has 7, so the 7th is `dust` that stays in the account. `nativeFee` is LayerZero’s fee, paid in XLM on top of the USDT0; `nativeFeeLimit` is what a transfer built now would offer (20% more, the excess refunded in the same transaction). Mainnet only.",
+        "description": "Simulates the OFT’s `quote_oft` and `quote_send` on Stellar mainnet. The OFT carries 6 decimals and the asset has 7, so the 7th is `dust` that stays in the account. `nativeFee` is LayerZero’s fee, paid in XLM on top of the USDT0; `nativeFeeLimit` is what a transfer built now would offer (20% more, the excess refunded in the same transaction). Mainnet only.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "Usdt0Controller_quote_v1",
         "parameters": [],
         "requestBody": {
@@ -13649,7 +14153,7 @@
             }
           }
         },
-        "summary": "Quote a USDT0 transfer from Stellar: what arrives, the dust, and LayerZero’s fee in XLM; persists nothing",
+        "summary": "Quote a USDT0 transfer from Stellar; persists nothing",
         "tags": [
           "usdt0"
         ],
@@ -13661,6 +14165,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:read"
+        ],
         "x-cosmos-upstream": [
           "Soroban RPC"
         ]
@@ -13668,7 +14175,7 @@
     },
     "/v1/usdt0/transfers": {
       "post": {
-        "description": "Builds `send` on USDT0’s LayerZero OFT: it burns the USDT0 on Stellar and LayerZero delivers it to `recipient`, as native USDT on Ethereum and as USDT0 elsewhere. The source signs one transaction (Freighter, or the SEP-7 `uri`) and pays two fees in XLM: LayerZero’s (`nativeFeeLimit` is offered, the unused part refunded in the same transaction) and the network’s (`networkFee`). A 7th decimal of `amount` is `dust` and stays in the account. No Cosmos Pay commission is charged. Mainnet only. Submit the signed XDR to `POST /v1/usdt0/transfers/{id}/submit`, then follow `GET /v1/usdt0/transfers/{id}`.",
+        "description": "Builds `send` on USDT0’s LayerZero OFT: it burns the USDT0 on Stellar and LayerZero delivers it to `recipient`, as native USDT on Ethereum and as USDT0 elsewhere. The source signs one transaction (Freighter, or the SEP-7 `uri`) and pays two fees in XLM: LayerZero’s (`nativeFeeLimit` is offered, the unused part refunded in the same transaction) and the network’s (`networkFee`). A 7th decimal of `amount` is `dust` and stays in the account. No Cosmos Pay commission is charged. Mainnet only. Submit the signed XDR to `POST /v1/usdt0/transfers/{id}/submit`, then follow `GET /v1/usdt0/transfers/{id}`.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
         "operationId": "Usdt0Controller_create_v1",
         "parameters": [
           {
@@ -13920,13 +14427,16 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "Horizon",
           "Soroban RPC"
         ]
       },
       "get": {
-        "description": "Answers from this service’s own table, as last refreshed; read one transfer to refresh it. Refused to the shared public key, which is every anonymous caller at once.",
+        "description": "Answers from this service’s own table, as last refreshed; read one transfer to refresh it. Refused to the shared public key, which is every anonymous caller at once.\n\nRequires the `swaps:read` scope.",
         "operationId": "Usdt0Controller_findAll_v1",
         "parameters": [
           {
@@ -13991,12 +14501,15 @@
         "summary": "List the consumer's USDT0 transfers (not on the shared public key)",
         "tags": [
           "usdt0"
+        ],
+        "x-cosmos-scopes": [
+          "swaps:read"
         ]
       }
     },
     "/v1/usdt0/transfers/{id}": {
       "get": {
-        "description": "While PENDING or SUBMITTED, a read asks the Stellar ledger (a wallet may have broadcast the transaction itself) and LayerZero Scan, at most once every 15 seconds per transfer, and moves it to SUBMITTED, DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery takes about 27 minutes on every route: LayerZero’s verifiers wait for Stellar confirmations. The shared public key may call it, but only with the transfer’s `publicToken` in `X-Record-Token`: without it, or with another transfer’s, the answer is 404. Every other key reads its own transfers as before.",
+        "description": "While PENDING or SUBMITTED, a read asks the Stellar ledger (a wallet may have broadcast the transaction itself) and LayerZero Scan, at most once every 15 seconds per transfer, and moves it to SUBMITTED, DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery takes about 27 minutes on every route: LayerZero’s verifiers wait for Stellar confirmations. The shared public key may call it, but only with the transfer’s `publicToken` in `X-Record-Token`: without it, or with another transfer’s, the answer is 404. Every other key reads its own transfers as before.\n\nRequires the `swaps:read` scope. The shared public key may call it.",
         "operationId": "Usdt0Controller_findOne_v1",
         "parameters": [
           {
@@ -14049,12 +14562,15 @@
         "tags": [
           "usdt0"
         ],
-        "x-cosmos-public-key": true
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "swaps:read"
+        ]
       }
     },
     "/v1/usdt0/transfers/{id}/submit": {
       "post": {
-        "description": "The signed XDR must hash to the transfer’s transaction and carry a signature. Accepted and applied: SUBMITTED, with LayerZero’s `guid`. Applied and failed: FAILED. Refused by the network: the transfer stays PENDING (`submitted: false`, `reason`) and can be submitted again until it expires. Waits up to 30 seconds for the ledger.",
+        "description": "The signed XDR must hash to the transfer’s transaction and carry a signature. Accepted and applied: SUBMITTED, with LayerZero’s `guid`. Applied and failed: FAILED. Refused by the network: the transfer stays PENDING (`submitted: false`, `reason`) and can be submitted again until it expires. Waits up to 30 seconds for the ledger.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
         "operationId": "Usdt0Controller_submit_v1",
         "parameters": [
           {
@@ -14215,7 +14731,7 @@
             }
           }
         },
-        "summary": "Relay the signed USDT0 transaction to Stellar mainnet (checked against the one built) and wait for the ledger",
+        "summary": "Relay the signed USDT0 transaction to Stellar mainnet",
         "tags": [
           "usdt0"
         ],
@@ -14227,6 +14743,9 @@
             "windowMs": 60000
           }
         ],
+        "x-cosmos-scopes": [
+          "swaps:write"
+        ],
         "x-cosmos-upstream": [
           "Soroban RPC"
         ]
@@ -14234,7 +14753,7 @@
     },
     "/v1/wallet/easy-recovery/sessions": {
       "post": {
-        "description": "Send a fresh X25519 public key; keep its private half on the device. Show a QR with the returned `id` and that key — nothing else, no secret and no server URL. The session lives five minutes.",
+        "description": "Send a fresh X25519 public key; keep its private half on the device. Show a QR with the returned `id` and that key: nothing else, no secret and no server URL. The session lives five minutes.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "EasyRecoveryController_createSession_v1",
         "parameters": [],
         "requestBody": {
@@ -14308,12 +14827,15 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/wallet/easy-recovery/sessions/{id}": {
       "get": {
-        "description": "Both devices poll it: the new one waits for `offered` to ask for the code, the old one for `claimed` to stop showing it. Answers the status and the expiry only, never the key, the sealed wallet or the code. An unknown, expired or burned session is a 404.",
+        "description": "Both devices poll it: the new one waits for `offered` to ask for the code, the old one for `claimed` to stop showing it. Answers the status and the expiry only, never the key, the sealed wallet or the code. An unknown, expired or burned session is a 404.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "EasyRecoveryController_status_v1",
         "parameters": [
           {
@@ -14411,12 +14933,15 @@
             "limit": 600,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
         ]
       }
     },
     "/v1/wallet/easy-recovery/sessions/{id}/offer": {
       "post": {
-        "description": "After the person confirmed and unlocked on the old device: seal the wallet to the `receiverKey` read from the QR (ECIES, on the device), generate a random five-digit code, send both here and show the code. Accepted once per session, while it is `open`: the first offer wins and any later one is a 409. Only a hash of the code is stored.",
+        "description": "After the person confirmed and unlocked on the old device: seal the wallet to the `receiverKey` read from the QR (ECIES, on the device), generate a random five-digit code, send both here and show the code. Accepted once per session, while it is `open`: the first offer wins and any later one is a 409. Only a hash of the code is stored.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "EasyRecoveryController_offer_v1",
         "parameters": [
           {
@@ -14547,12 +15072,15 @@
             "limit": 20,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     },
     "/v1/wallet/easy-recovery/sessions/{id}/claim": {
       "post": {
-        "description": "The right code answers the sealed wallet, once: the session reads `claimed` from then on and no longer holds it. A wrong code is a 422 with `details.attemptsLeft`; the fifth wrong code deletes the session and answers 410. Before the old device offered, the answer is 409 — poll for `offered` first. A malformed code is a 400 and costs no attempt.",
+        "description": "The right code answers the sealed wallet, once: the session reads `claimed` from then on and no longer holds it. A wrong code is a 422 with `details.attemptsLeft`; the fifth wrong code deletes the session and answers 410. Before the old device offered, the answer is 409: poll for `offered` first. A malformed code is a 400 and costs no attempt.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "EasyRecoveryController_claim_v1",
         "parameters": [
           {
@@ -14732,15 +15260,22 @@
             "limit": 30,
             "windowMs": 600000
           }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
         ]
       }
     }
   },
   "info": {
     "title": "Cosmos Pay Payments API",
-    "description": "Payments microservice (Stellar payment intents, swaps, liquidity pools, fiat on/offramp). Paths already include the version (`/v1/...`). Pick the matching server and security scheme below. **Every failure returns the same envelope** (`ApiErrorBodyEntity`), and `code` is the part to branch on: `message` is prose and may be reworded. Each operation documents only the statuses it can really return: `429` appears where a budget is declared (the budget itself is published as `x-cosmos-rate-limit`), `502`/`503`/`504` where the route calls a provider (`x-cosmos-upstream`), and neither `401` nor `403` on the probes that need no credentials (`x-cosmos-public`). Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.",
+    "description": "Payments microservice (Stellar payment intents, swaps, liquidity pools, fiat on/offramp). Paths already include the version (`/v1/...`). Pick the matching server and security scheme below. **Every failure returns the same envelope** (`ApiErrorBodyEntity`), and `code` is the part to branch on: `message` is prose and may be reworded. Each operation documents only the statuses it can really return: `429` appears where a budget is declared (the budget itself is published as `x-cosmos-rate-limit`), `502`/`503`/`504` where the route calls a provider (`x-cosmos-upstream`), and neither `401` nor `403` on the probes that need no credentials (`x-cosmos-public`). **Every operation says who may call it.** On a route that takes an API key, the description ends with the scope the key must hold, also published as `x-cosmos-scopes` (all of) and `x-cosmos-scopes-any` (one of); a key with the `admin` role passes every scope check, and `x-cosmos-public-key` marks the routes the shared public key may call. A route that takes no API key (`x-cosmos-public`) says in its description how it is called. Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.",
     "version": "1.0",
-    "contact": {}
+    "contact": {
+      "name": "Cosmos Pay",
+      "url": "https://dev.cosmospay.lat/docs",
+      "email": "organization@cosmospay.lat"
+    }
   },
   "tags": [
     {
@@ -14761,7 +15296,7 @@
     },
     {
       "name": "zk-payments",
-      "description": "Payments on Stellar whose amount stays hidden on-chain. Create a private payment, list and read them; the merchant receives the amount minus the 0.01% commission."
+      "description": "Payments on Stellar whose amount stays hidden on-chain. Create a private payment, list and read them; the merchant receives the amount minus the private-payment commission (see https://cosmospay.lat/pricing)."
     },
     {
       "name": "zk-checkout",
@@ -23351,7 +23886,7 @@
             }
           },
           "sources": {
-            "description": "Authentik’s own sources (Google, GitHub…), each to show as a button of its own that starts the Authentik sign-in at that source — with these, a wallet need not show a generic Authentik button. Empty without Authentik, or when the operator listed none (WALLET_AUTH_OIDC_SOURCES).",
+            "description": "Authentik’s own sources (Google, GitHub…), each to show as a button of its own that starts the Authentik sign-in at that source. With these, a wallet need not show a generic Authentik button. Empty without Authentik, or when the operator listed none (WALLET_AUTH_OIDC_SOURCES).",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WalletAuthSourceEntity"
@@ -27831,7 +28366,7 @@
               "offered",
               "claimed"
             ],
-            "description": "`open`: waiting for the old device. `offered`: the old device has sent the sealed wallet and shows the code — the new device asks for it. `claimed`: the new device collected it; the old device can stop.",
+            "description": "`open`: waiting for the old device. `offered`: the old device has sent the sealed wallet and shows the code, which the new device asks for it. `claimed`: the new device collected it; the old device can stop.",
             "example": "offered"
           },
           "expiresAt": {
@@ -28013,7 +28548,7 @@
           },
           "details": {
             "type": "object",
-            "description": "Machine-readable facts about this failure, present only on the codes whose example shows it — `easy_recovery_code_invalid` carries `{ \"attemptsLeft\": 4 }`. Absent everywhere else.",
+            "description": "Machine-readable facts about this failure, present only on the codes whose example shows it: `easy_recovery_code_invalid` carries `{ \"attemptsLeft\": 4 }`. Absent everywhere else.",
             "additionalProperties": {
               "oneOf": [
                 {
@@ -28324,6 +28859,10 @@
         }
       }
     }
+  },
+  "externalDocs": {
+    "description": "Cosmos Pay developer documentation",
+    "url": "https://dev.cosmospay.lat/docs"
   },
   "security": [
     {
