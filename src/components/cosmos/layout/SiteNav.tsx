@@ -4,6 +4,7 @@
    render <Nav> themselves with the same props. */
 import { useEffect, useRef } from "react";
 import { initLang, useLang } from "@/lib/i18n/index";
+import { langSearch } from "@/lib/seo/lang-urls";
 import { useTheme } from "@/components/cosmos/hooks/useTheme";
 import { useDevSession } from "@/components/cosmos/lib/auth";
 import { Nav } from "@/components/cosmos/layout/Nav";
@@ -31,10 +32,11 @@ export default function SiteNav({ lang, user = null, session = true, reloadOnLan
   const initial = useRef(current);
   useEffect(() => {
     if (!reloadOnLang || current === initial.current) return;
-    // The cookie is already set (setLang); a ?lang in the address would still win over it.
-    const url = new URL(window.location.href);
-    if (url.searchParams.has("lang")) url.searchParams.set("lang", current);
-    window.location.replace(url.href);
+    // The cookie is already set (setLang). The address names the language too: an indexable
+    // page's English version is its bare path and every other one ?lang=<code>
+    // (src/lib/seo/lang-urls.ts); the rest of the query is kept byte for byte (/pay?uri=…).
+    const { pathname, search, hash } = window.location;
+    window.location.replace(`${pathname}${langSearch(search, current)}${hash}`);
   }, [current, reloadOnLang]);
   return <Nav theme={theme} setTheme={setTheme} user={dev.user} sessionReady={dev.ready} overPanel={overPanel} area={area} />;
 }

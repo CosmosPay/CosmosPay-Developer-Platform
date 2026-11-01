@@ -116,6 +116,22 @@ function underPrefix(path: string, prefix: string): boolean {
   return path === prefix || path.startsWith(`${prefix}/`);
 }
 
+/**
+ * Whether a public path is one of the indexable pages of `area`: the company site's pages (the
+ * home, /pricing, /tos, /about, /swaps) or the gateway's (its home and every page in
+ * src/lib/payments/site-pages.ts). Each exists once per language: English at the bare path, the
+ * others at `?lang=` (src/lib/seo/lang-urls.ts), so only these follow the visitor's language with
+ * a redirect; payment links, /pay, /preview, /zk and /contact resolve it in place (noindex).
+ */
+export function isLanguagePage(area: Area, pathname: string): boolean {
+  const canonical = canonicalPath(pathname);
+  if (canonical === null) return false;
+  const path = canonical.toLowerCase();
+  if (area === "site") return path === "/" || SITE_PATHS.has(path) || DUAL_PATHS.has(path);
+  if (area === "payments") return path === "/" || PAYMENTS_PATHS.has(path);
+  return false;
+}
+
 /** Which domain a public path belongs to; "home" for `/` (every domain has its own). */
 export function ownerOf(path: string): Area | "home" | null {
   if (path === "/") return "home";

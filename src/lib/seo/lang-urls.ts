@@ -1,16 +1,24 @@
 /* lang-urls.ts: the indexable addresses of a page in every language, shared by the company site
    (cosmospay.lat) and the payments gateway (payments.cosmospay.lat).
 
-   Every indexable page exists once per language at `?lang=<code>` (the language resolution reads
-   it first: src/middleware.ts, resolveLocale in src/lib/payments/i18n.ts); the bare path follows
-   the visitor (cookie, then Accept-Language) and stands as x-default. The layouts (canonical,
-   hreflang, og:locale), sitemap.xml, robots.txt and the JSON-LD all build their URLs here, so
-   they always agree. Pure, so tests/unit/seoLangUrls.test.ts covers it. */
+   Every indexable page has ONE address per language: the bare path is English (and x-default),
+   every other language is `?lang=<code>`. `?lang=en` is not an address of its own: the middleware
+   answers it with a 301 to the bare path. A visitor who asks for the bare path while preferring
+   another language (the nav's language switcher, which sets the `cosmospay-lang` cookie, or else
+   the browser's Accept-Language) is sent there with a 302 (`langRedirect`); crawlers, which send
+   neither, always get the English page they asked for. The layouts (canonical, hreflang,
+   og:locale), sitemap.xml, robots.txt, llms.txt and the JSON-LD all build their URLs here, so
+   they always agree. Pure and free of catalogs (the nav imports it in the browser), so
+   tests/unit/seoLangUrls.test.ts covers it. */
 
-/** The address of `path` on `origin`, in `lang` when given: `https://payments…/faq?lang=es`. */
+/** The language whose version of a page is its bare path. */
+export const DEFAULT_LANG = "en";
+
+/** The address of `path` on `origin` in `lang`: the bare path for English (or no language),
+ *  `?lang=<code>` for any other: `https://payments…/faq?lang=es`. */
 export function pageUrl(origin: string, path: string, lang?: string | null): string {
   const url = new URL(path, origin);
-  if (lang) url.searchParams.set("lang", lang);
+  if (lang && lang !== DEFAULT_LANG) url.searchParams.set("lang", lang);
   return url.href;
 }
 
@@ -32,16 +40,17 @@ export interface Alternate {
   href: string;
 }
 
-/** Every version of `path`: one per language at `?lang=`, then the bare path as x-default. */
+/** Every version of `path`: one per language (English at the bare path, the others at `?lang=`),
+ *  then the bare path again as x-default. */
 export function hreflangAlternates(origin: string, path: string, langs: readonly string[]): Alternate[] {
   return [...langs.map((l) => ({ hreflang: l, href: pageUrl(origin, path, l) })), { hreflang: "x-default", href: pageUrl(origin, path) }];
 }
 
 /**
- * The canonical URL of the version being shown. A language the page exists in names itself;
- * the bare path names itself (x-default). A language the page is not written in (a valid
- * `?lang=` for the interface, while the page's own text exists in fewer languages, as /tos)
- * points at the first language of `langs`, the one it falls back to.
+ * The canonical URL of the version being shown. A language the page exists in names itself
+ * (English is the bare path); the bare path names itself. A language the page is not written in
+ * (a valid `?lang=` for the interface, while the page's own text exists in fewer languages, as
+ * /tos) points at the first language of `langs`, the one it falls back to.
  */
 export function canonicalUrl(origin: string, path: string, asked: string | null | undefined, langs: readonly string[], allLangs: readonly string[] = langs): string {
   if (!asked) return pageUrl(origin, path);
@@ -63,28 +72,32 @@ function decodeQueryPart(part: string): string | null {
   }
 }
 
+const isLangPart = (part: string): boolean => decodeQueryPart(part.split("=")[0]) === "lang";
+
 /**
  * The query string a page should have been asked with, when its `lang` parameter is not one the
  * pages take as written: a case or region variant becomes the language (`?lang=ES`, `?lang=pt-BR`
  * → `?lang=es`, `?lang=pt`), a value no page exists in is dropped (`?lang=xx`, `?lang=`), and a
- * repeated `lang` keeps its first usable value. Null when the query is fine as it is, so only a
- * wrong one is redirected. Every other parameter is kept byte for byte (a SEP-7 URI in `/pay?uri=`
- * must reach the page exactly as it was sent). Returns "" when nothing is left.
+ * repeated `lang` keeps its first usable value. With `defaultLang` (an indexable page, whose bare
+ * path IS that language), naming it is dropped too: `?lang=en` → the bare path. Null when the
+ * query is fine as it is, so only a wrong one is redirected. Every other parameter is kept byte
+ * for byte (a SEP-7 URI in `/pay?uri=` must reach the page exactly as it was sent). Returns ""
+ * when nothing is left.
  */
-export function normalizeLangQuery(search: string, langs: readonly string[]): string | null {
+export function normalizeLangQuery(search: string, langs: readonly string[], defaultLang?: string): string | null {
   const raw = search.startsWith("?") ? search.slice(1) : search;
   if (!raw) return null;
   const parts = raw.split("&");
-  const isLang = (part: string) => decodeQueryPart(part.split("=")[0]) === "lang";
-  const langParts = parts.filter(isLang);
+  const langParts = parts.filter(isLangPart);
   if (langParts.length === 0) return null;
   const values = langParts.map((part) => decodeQueryPart(part.slice(part.indexOf("=") + 1 || part.length)) ?? "");
-  if (langParts.length === 1 && langs.includes(values[0]) && langParts[0] === `lang=${values[0]}`) return null;
-  const chosen = values.map(baseOf).find((v) => langs.includes(v)) ?? null;
+  const found = values.map(baseOf).find((v) => langs.includes(v)) ?? null;
+  const chosen = found === defaultLang ? null : found;
+  if (langParts.length === 1 && chosen !== null && langParts[0] === `lang=${chosen}`) return null;
   const out: string[] = [];
   let placed = false;
   for (const part of parts) {
-    if (!isLang(part)) {
+    if (!isLangPart(part)) {
       if (part) out.push(part);
       continue;
     }
@@ -92,4 +105,80 @@ export function normalizeLangQuery(search: string, langs: readonly string[]): st
     placed = true;
   }
   return out.length ? `?${out.join("&")}` : "";
+}
+
+/**
+ * The query string of the same page in `lang`: `lang=<code>` set (in place, or at the end),
+ * or removed for the default language, whose version is the bare path. Every other parameter is
+ * kept byte for byte. The nav's language switcher builds the address it reloads with this.
+ */
+export function langSearch(search: string, lang: string, defaultLang: string = DEFAULT_LANG): string {
+  const raw = search.startsWith("?") ? search.slice(1) : search;
+  const parts = raw ? raw.split("&").filter(Boolean) : [];
+  const out: string[] = [];
+  let placed = false;
+  for (const part of parts) {
+    if (!isLangPart(part)) {
+      out.push(part);
+      continue;
+    }
+    if (!placed && lang !== defaultLang) out.push(`lang=${encodeURIComponent(lang)}`);
+    placed = true;
+  }
+  if (!placed && lang !== defaultLang) out.push(`lang=${encodeURIComponent(lang)}`);
+  return out.length ? `?${out.join("&")}` : "";
+}
+
+/** The language a visitor asks for among `langs`: the language switcher's cookie, else the
+ *  Accept-Language entry with the highest weight the pages exist in; null when neither names one.
+ *  A cookie naming the default language is a choice too: it keeps the visitor on English. */
+export function visitorLang(cookie: string | null | undefined, acceptLanguage: string | null | undefined, langs: readonly string[]): string | null {
+  if (cookie && langs.includes(cookie)) return cookie;
+  const wanted = (acceptLanguage ?? "")
+    .split(",")
+    .map((part, index) => {
+      const [tag, ...params] = part.trim().split(";");
+      const q = params.map((p) => p.trim()).find((p) => p.startsWith("q="));
+      return { base: baseOf(tag ?? ""), q: q ? Number(q.slice(2)) || 0 : 1, index };
+    })
+    .filter((x) => x.base && x.q > 0)
+    .sort((a, b) => b.q - a.q || a.index - b.index);
+  return wanted.find((w) => langs.includes(w.base))?.base ?? null;
+}
+
+/* Crawlers and link previews: they are never redirected by language (they normally send no
+   Accept-Language either, so this is a second guard, not the rule). */
+const CRAWLER = /bot\b|crawl|spider|slurp|facebookexternalhit|embedly|linkpreview|lighthouse|headlesschrome|inspectiontool|mediapartners|chatgpt-user|perplexity|claude-user/i;
+
+export function isCrawler(userAgent: string | null | undefined): boolean {
+  return !!userAgent && CRAWLER.test(userAgent);
+}
+
+export interface LangRedirectRequest {
+  method: string;
+  /** The public path as asked (kept as it came). */
+  pathname: string;
+  /** The query as asked, with its leading "?" (or ""). */
+  search: string;
+  cookie?: string | null;
+  acceptLanguage?: string | null;
+  userAgent?: string | null;
+}
+
+/**
+ * Where a visitor who asked for an indexable page's bare (English) address should go instead:
+ * the same path and query with `lang=<code>` appended, for the language the switcher's cookie
+ * names, else the one Accept-Language prefers. Null (serve the English page) for anything but a
+ * GET, a query that already names a language, a crawler, no preference, or English. The target
+ * names its language, so it is never redirected again: no loop. The caller only asks this for
+ * indexable pages; payment links and the other noindex pages resolve their language in place.
+ */
+export function langRedirect(req: LangRedirectRequest, langs: readonly string[], defaultLang: string = DEFAULT_LANG): string | null {
+  if (req.method.toUpperCase() !== "GET") return null;
+  const raw = req.search.startsWith("?") ? req.search.slice(1) : req.search;
+  if (raw.split("&").some(isLangPart)) return null;
+  if (isCrawler(req.userAgent)) return null;
+  const lang = visitorLang(req.cookie, req.acceptLanguage, langs);
+  if (!lang || lang === defaultLang) return null;
+  return `${req.pathname}${langSearch(req.search, lang, defaultLang)}`;
 }

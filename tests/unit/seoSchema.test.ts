@@ -11,7 +11,10 @@ import {
   monthlyPrice,
   orgId,
   organizationNode,
+  PAYMENTS_AREA_SERVED,
+  perPaymentOnly,
   planOffers,
+  plansProductId,
   plansProductNode,
   productNodes,
   sameAsProfiles,
@@ -70,9 +73,13 @@ test('a page links to its site and, below the home, to its breadcrumb trail', ()
   // A FAQ page is a WebPage and a FAQPage.
   assert.deepEqual(webPageNodes({ url: `${SITE}/faq`, name: 'FAQ', lang: 'en', origin: SITE, types: ['WebPage', 'FAQPage'] })[0]['@type'], ['WebPage', 'FAQPage']);
   // The about page is an AboutPage whose main entity is the organisation itself.
-  const [about] = webPageNodes({ url: `${SITE}/about?lang=en`, name: 'About Cosmos Pay', lang: 'en', origin: SITE, types: ['AboutPage'], mainEntity: `${SITE}/#organization` });
+  const [about] = webPageNodes({ url: `${SITE}/about`, name: 'About Cosmos Pay', lang: 'en', origin: SITE, types: ['AboutPage'], mainEntity: `${SITE}/#organization` });
   assert.equal(about['@type'], 'AboutPage');
   assert.deepEqual(about.mainEntity, { '@id': 'https://cosmospay.lat/#organization' });
+  assert.ok(!('dateModified' in about), 'no date unless one is given');
+  // When the page last changed, when it is known.
+  const [dated] = webPageNodes({ url: `${SITE}/about`, name: 'About', lang: 'en', origin: SITE, dateModified: '2026-10-31T09:00:00-03:00' });
+  assert.equal(dated.dateModified, '2026-10-31T09:00:00-03:00');
 });
 
 test('the website names its languages and its publisher', () => {
@@ -82,24 +89,39 @@ test('the website names its languages and its publisher', () => {
   assert.deepEqual(site.publisher, { '@id': 'https://cosmospay.lat/#organization' });
 });
 
-test('only plans with a fixed monthly price become offers, at the price plans.ts states', () => {
+test('every offered plan that states a price is an offer, at the price plans.ts states', () => {
   assert.equal(monthlyPrice('$33/mo'), 33);
   assert.equal(monthlyPrice('1.5% + 18¢'), null);
   assert.equal(monthlyPrice('Custom'), null);
+  assert.ok(perPaymentOnly(PLAN_SPECS.starter));
+  assert.ok(!perPaymentOnly(PLAN_SPECS.growth) && !perPaymentOnly(PLAN_SPECS.enterprise));
   const offers = planOffers(`${SITE}/pricing`, SITE);
-  const priced = PLAN_IDS.filter((id) => monthlyPrice(PLAN_SPECS[id].price) !== null);
-  assert.ok(priced.length > 0);
+  const priced = PLAN_IDS.filter((id) => monthlyPrice(PLAN_SPECS[id].price) !== null || perPaymentOnly(PLAN_SPECS[id]));
+  assert.ok(priced.includes('starter') && priced.includes('essentials') && priced.includes('growth'));
   assert.equal(offers.length, priced.length);
   for (const [i, id] of priced.entries()) {
     const offer = offers[i] as Record<string, unknown>;
-    assert.equal(offer.price, String(monthlyPrice(PLAN_SPECS[id].price)));
+    const monthly = monthlyPrice(PLAN_SPECS[id].price) ?? 0;
+    assert.equal(offer.price, String(monthly), id);
     assert.equal(offer.priceCurrency, 'USD');
-    assert.ok(String(offer.description).startsWith(PLAN_SPECS[id].perTx), id);
+    assert.ok(String(offer.description).startsWith(`${PLAN_SPECS[id].perTx} per payment`), id);
+    assert.equal((offer.priceSpecification as Record<string, unknown>).price, monthly, id);
   }
-  assert.ok(!offers.some((o) => /community|starter|enterprise/i.test(String(o.name))), 'no free, rate-only or custom plan as an offer');
-  const product = plansProductNode({ url: `${SITE}/pricing`, site: SITE, description: 'Plans', image: `${SITE}/og-image.png` });
+  // Starter: no monthly fee, so 0 a month, and its rate per payment said in words, never a made-up price.
+  const starter = offers.find((o) => o.name === 'Starter') as Record<string, unknown>;
+  assert.equal(starter.price, '0');
+  assert.equal(starter.description, `${PLAN_SPECS.starter.perTx} per payment, with no monthly fee.`);
+  assert.ok(!offers.some((o) => /community|enterprise/i.test(String(o.name))), 'no legacy or custom plan as an offer');
+});
+
+test('the plans are one Product node, the same wherever it is published', () => {
+  const product = plansProductNode(SITE);
   assert.equal(product['@id'], 'https://cosmospay.lat/pricing#product');
+  assert.equal(product['@id'], plansProductId(SITE));
+  assert.equal(product.url, 'https://cosmospay.lat/pricing');
+  assert.deepEqual(plansProductNode(SITE), product, 'identical on /pricing and on /fees');
   assert.ok(!('aggregateRating' in product) && !('review' in product));
+  for (const offer of product.offers as Record<string, unknown>[]) assert.equal(offer.url, 'https://cosmospay.lat/pricing');
 });
 
 test('the home names the API, the SDK and the wallet, with no offer and no rating', () => {
@@ -107,11 +129,11 @@ test('the home names the API, the SDK and the wallet, with no offer and no ratin
     site: SITE,
     docs: 'https://dev.cosmospay.lat/docs/',
     apiBase: 'https://api.cosmospay.lat/cosmos-api',
-    wallet: { version: '1.8.0', webApp: 'https://cosmospay.lat/wallet/', chromeStore: 'https://chromewebstore.google.com/detail/x/abc' },
+    wallet: { webApp: 'https://cosmospay.lat/wallet/', chromeStore: 'https://chromewebstore.google.com/detail/x/abc' },
   });
   assert.deepEqual(nodes.map((n) => n['@type']), ['WebAPI', 'SoftwareSourceCode', 'SoftwareApplication']);
   const wallet = nodes[2];
-  assert.equal(wallet.softwareVersion, '1.8.0');
+  assert.ok(!('softwareVersion' in wallet), 'no version written by hand: it would go stale with the next release');
   for (const node of nodes) {
     assert.ok(!('offers' in node) && !('aggregateRating' in node), String(node['@type']));
     assert.deepEqual(Object.values(node).filter((v) => typeof v === 'object' && v && '@id' in v && (v as { '@id': string })['@id'].endsWith('#organization')).length > 0, true);
@@ -121,9 +143,15 @@ test('the home names the API, the SDK and the wallet, with no offer and no ratin
   assert.equal(api.url, 'https://dev.cosmospay.lat/docs/api/');
 });
 
-test('a service is provided by the organization', () => {
+test('a service is provided by the organization, where its copy says it is offered', () => {
   const s = serviceNode({ id: 'https://payments.cosmospay.lat/#service', name: 'Cosmos Pay Payments', serviceType: 'Payment gateway', description: 'd', url: 'https://payments.cosmospay.lat/', site: SITE });
   assert.deepEqual(s.provider, { '@id': 'https://cosmospay.lat/#organization' });
+  assert.ok(!('areaServed' in s));
+  const served = serviceNode({ id: 'x', name: 'n', serviceType: 't', description: 'd', url: 'u', site: SITE, areaServed: PAYMENTS_AREA_SERVED });
+  assert.deepEqual(served.areaServed, [
+    { '@type': 'Place', name: 'Latin America' },
+    { '@type': 'Place', name: 'Worldwide' },
+  ]);
 });
 
 test('the script text cannot close its element', () => {

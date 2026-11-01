@@ -8,7 +8,8 @@ declare namespace App {
     area: import("@/lib/hosts").Area;
     /** The public path, before any internal rewrite to /site or /payments. */
     publicPath: string;
-    /** Company site and payments pages: ?lang= → cookie → Accept-Language → en (src/middleware.ts). */
+    /** Company site and payments pages: an indexable page's ?lang= (its bare path is English); any
+     *  other page ?lang= → cookie → Accept-Language → en (src/middleware.ts). */
     lang?: import("@/lib/payments/i18n").Locale;
   }
 }
@@ -16,4 +17,11 @@ declare namespace App {
 /** Injected by the Cosmos Wallet browser extension's content script. */
 interface Window {
   cosmosWallet?: { requestPayment(uri: string): Promise<unknown> };
+}
+
+/** When each source file under src/ last changed, from git, read at build by astro.config.mjs
+ *  (empty without git history), and when the build ran: src/lib/seo/page-dates.ts. */
+declare module "virtual:page-dates" {
+  export const GIT_DATES: Readonly<Record<string, string>>;
+  export const BUILT_AT: string;
 }

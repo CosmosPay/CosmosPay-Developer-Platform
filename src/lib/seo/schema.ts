@@ -85,7 +85,7 @@ export interface Crumb {
 }
 
 export interface WebPageInput {
-  /** The canonical URL of the version shown (with its ?lang= when it has one). */
+  /** The canonical URL of the version shown (the bare path in English, ?lang= otherwise). */
   url: string;
   name: string;
   description?: string;
@@ -101,6 +101,9 @@ export interface WebPageInput {
   mainEntity?: string | JsonLdNode | JsonLdNode[];
   /** The page's share image (absolute). */
   image?: { url: string; width: number; height: number };
+  /** When the page last changed (ISO): the date it states, else its sources' last commit
+   *  (src/lib/seo/page-dates.ts). */
+  dateModified?: string | null;
 }
 
 /** The page itself and, when it has one, its breadcrumb trail. */
@@ -119,6 +122,7 @@ export function webPageNodes(p: WebPageInput): JsonLdNode[] {
     ...(p.breadcrumb && p.breadcrumb.length > 1 && { breadcrumb: { "@id": `${p.url}#breadcrumb` } }),
     ...(p.mainEntity && { mainEntity: typeof p.mainEntity === "string" ? { "@id": p.mainEntity } : p.mainEntity }),
     ...(p.image && { primaryImageOfPage: { "@type": "ImageObject", url: p.image.url, width: p.image.width, height: p.image.height } }),
+    ...(p.dateModified && { dateModified: p.dateModified }),
   };
   const nodes = [page];
   if (p.breadcrumb && p.breadcrumb.length > 1) {
@@ -132,35 +136,48 @@ export function webPageNodes(p: WebPageInput): JsonLdNode[] {
 }
 
 /** A plan's fixed monthly price in US dollars ("$33/mo" → 33); null for a plan billed only per
- *  transaction (Starter) or priced per customer (Enterprise), which have no price to state. */
+ *  transaction (Starter) or priced per customer (Enterprise), which state no monthly price. */
 export function monthlyPrice(price: string): number | null {
   const match = /^\$(\d+(?:\.\d+)?)\/mo$/.exec(price.trim());
   return match ? Number(match[1]) : null;
 }
 
+/** A plan billed only per payment, with no monthly fee (Starter: its price tag IS its rate). */
+export function perPaymentOnly(spec: { price: string; perTx: string }): boolean {
+  return spec.price === spec.perTx && /%/.test(spec.perTx);
+}
+
 const planName = (id: PlanId): string => id.charAt(0).toUpperCase() + id.slice(1);
 
-/** The offered plans that have a fixed monthly price, as Offers, from src/lib/plans.ts so the
- *  markup can never quote another price than the page. */
+/* A monthly price as schema.org states one: so much per one month. */
+const perMonth = (price: number, description: string): JsonLdNode => ({
+  "@type": "UnitPriceSpecification",
+  price,
+  priceCurrency: "USD",
+  referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+  description,
+});
+
+/** The offered plans that state a price, as Offers, from src/lib/plans.ts so the markup can never
+ *  quote another price than the page: a plan with a monthly fee at that fee, and a plan billed only
+ *  per payment (Starter) at 0 a month, its rate per payment in the description (a percentage plus
+ *  a fixed part has no price of its own to state). Enterprise is priced per customer: no offer. */
 export function planOffers(url: string, site: string): JsonLdNode[] {
   return PLAN_IDS.flatMap((id) => {
     const spec = PLAN_SPECS[id];
     const monthly = monthlyPrice(spec.price);
-    if (monthly === null) return [];
+    const perPayment = perPaymentOnly(spec);
+    if (monthly === null && !perPayment) return [];
+    const description = monthly === null ? `${spec.perTx} per payment, with no monthly fee.` : `${spec.perTx} per payment, plus $${monthly} per month.`;
     return [
       {
         "@type": "Offer",
         name: planName(id),
         url,
-        description: `${spec.perTx} per payment, plus $${monthly} per month.`,
-        price: String(monthly),
+        description,
+        price: String(monthly ?? 0),
         priceCurrency: "USD",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: monthly,
-          priceCurrency: "USD",
-          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
-        },
+        priceSpecification: perMonth(monthly ?? 0, description),
         availability: "https://schema.org/InStock",
         seller: { "@id": orgId(site) },
       },
@@ -168,23 +185,21 @@ export function planOffers(url: string, site: string): JsonLdNode[] {
   });
 }
 
-export interface PlansProductInput {
-  /** The page that shows the plans (its canonical URL). */
-  url: string;
-  site: string;
-  description: string;
-  image: string;
-}
+/** The one node the plans are published as, whichever page shows them (the company site's
+ *  /pricing, the gateway's /fees): both name this @id. */
+export const plansProductId = (site: string): string => `${site}/pricing#product`;
 
-/** The plans as one Product with an Offer per plan that has a fixed price. */
-export function plansProductNode({ url, site, description, image }: PlansProductInput): JsonLdNode {
+/** The plans as one Product, the same on every page that shows them: an Offer per plan that
+ *  states a price, all pointing at the company site's /pricing (the English, bare address). */
+export function plansProductNode(site: string): JsonLdNode {
+  const url = `${site}/pricing`;
   return {
     "@type": "Product",
-    "@id": `${url}#product`,
+    "@id": plansProductId(site),
     name: "Cosmos Pay",
-    description,
+    description: "Cosmos Pay's plans for payments, swaps and private payments as a service on Stellar, Solana and Monad: the rate per payment and per swap on each plan.",
     brand: { "@id": orgId(site) },
-    image,
+    image: `${site}/og-image.png`,
     url,
     offers: planOffers(url, site),
   };
@@ -197,9 +212,11 @@ export interface ServiceInput {
   description: string;
   url: string;
   site: string;
+  /** Where the service is offered, as its copy says it (place names). */
+  areaServed?: readonly string[];
 }
 
-export function serviceNode({ id, name, serviceType, description, url, site }: ServiceInput): JsonLdNode {
+export function serviceNode({ id, name, serviceType, description, url, site, areaServed }: ServiceInput): JsonLdNode {
   return {
     "@type": "Service",
     "@id": id,
@@ -209,8 +226,13 @@ export function serviceNode({ id, name, serviceType, description, url, site }: S
     url,
     provider: { "@id": orgId(site) },
     termsOfService: `${site}/tos`,
+    ...(areaServed && areaServed.length > 0 && { areaServed: areaServed.map((name) => ({ "@type": "Place", name })) }),
   };
 }
+
+/** Where the gateway is offered: "for businesses in Latin America and beyond" (its llms.txt and
+ *  copy), so Latin America first, then the rest of the world. */
+export const PAYMENTS_AREA_SERVED = ["Latin America", "Worldwide"] as const;
 
 export interface ProductNodesInput {
   site: string;
@@ -218,7 +240,9 @@ export interface ProductNodesInput {
   docs: string;
   /** The Payments API's base URL (the gateway's entry prefix). */
   apiBase: string;
-  wallet: { version: string; webApp: string; chromeStore: string };
+  /** The wallet's web app and its Chrome Web Store listing. No version: a number written here
+   *  goes stale with the next release, and the stores and the releases page state it. */
+  wallet: { webApp: string; chromeStore: string };
 }
 
 /** What the company makes, for its home: the Payments API, the SDK and the wallet. */
@@ -257,7 +281,6 @@ export function productNodes({ site, docs, apiBase, wallet }: ProductNodesInput)
       alternateName: "Cosmos Wallet",
       applicationCategory: "FinanceApplication",
       operatingSystem: "Web, Android, Windows, macOS, Linux; extension for Chrome and Firefox",
-      softwareVersion: wallet.version,
       description:
         "Non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.",
       url: wallet.webApp,
@@ -268,7 +291,7 @@ export function productNodes({ site, docs, apiBase, wallet }: ProductNodesInput)
 }
 
 export interface ArticleInput {
-  /** The canonical URL of the version shown (with its ?lang= when it has one). */
+  /** The canonical URL of the version shown (the bare path in English, ?lang= otherwise). */
   url: string;
   type: "Article" | "TechArticle";
   /** The page's h1. */

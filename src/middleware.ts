@@ -4,11 +4,11 @@ import { trackActivity } from "@/lib/activity";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
-import { MOUNTS, routeRequest } from "@/lib/hosts";
+import { MOUNTS, isLanguagePage, routeRequest } from "@/lib/hosts";
 import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
-import { LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
-import { explicitLang, normalizeLangQuery } from "@/lib/seo/lang-urls";
+import { DEFAULT_LOCALE, LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
+import { DEFAULT_LANG, explicitLang, langRedirect, normalizeLangQuery } from "@/lib/seo/lang-urls";
 import { responseHeaders } from "@/lib/seo/response-headers";
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
@@ -53,9 +53,6 @@ function applyCors(headers: Headers, origin: string, request: Request): void {
    domain, which is fine for assets; the docs export under /docs is kept to the platform domain by
    nginx (see README). */
 const ORIGINS = { site: SITE, dev: DEV, payments: PAYMENTS };
-
-/* One year: the lifetime the language cookie has everywhere. */
-const LANG_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /* The languages the company site and the gateway are written in (the same seven). Each of their
    pages exists once per language at ?lang= (src/lib/seo/lang-urls.ts). */
@@ -157,31 +154,46 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.area = decision.area;
   context.locals.publicPath = context.url.pathname;
 
-  // The company site and the gateway speak the visitor's language: ?lang= first (each language
-  // of a page has its own address there, for search engines), then the cookie, then
-  // Accept-Language, then English.
+  // The company site and the gateway speak several languages. An indexable page has one address
+  // per language (src/lib/seo/lang-urls.ts): English at the bare path, the others at ?lang=.
+  // The other pages (payment links, /pay, previews: noindex) resolve the language in place:
+  // ?lang=, then the cookie the nav's language switcher sets, then Accept-Language, then English.
   const multilingual = decision.area === "payments" || decision.area === "site";
   const method = context.request.method.toUpperCase();
+  const areaOrigin = ORIGINS[decision.area].replace(/\/+$/, "");
+  const languagePage = multilingual && decision.kind === "rewrite" && isLanguagePage(decision.area, context.url.pathname);
   if (multilingual && decision.kind === "rewrite" && (method === "GET" || method === "HEAD")) {
     // A `lang` the pages do not take as written (?lang=ES, ?lang=xx, twice) would be one more
-    // indexable copy of the page: send it to the address that names the language, or to the bare
-    // path when it names none (other parameters kept as they came).
-    const fixed = normalizeLangQuery(context.url.search, LANG_CODES);
-    if (fixed !== null) {
-      const location = `${ORIGINS[decision.area].replace(/\/+$/, "")}${context.url.pathname}${fixed}`;
-      return new Response(null, { status: 301, headers: { Location: location } });
-    }
+    // indexable copy of the page, and so would ?lang=en on an indexable page (English is its bare
+    // path): send it to the address that names the language, or to the bare path (other
+    // parameters kept as they came).
+    const fixed = normalizeLangQuery(context.url.search, LANG_CODES, languagePage ? DEFAULT_LANG : undefined);
+    if (fixed !== null) return new Response(null, { status: 301, headers: { Location: `${areaOrigin}${context.url.pathname}${fixed}` } });
   }
   const askedLang = multilingual ? explicitLang(context.url.searchParams.get("lang"), LANG_CODES) : null;
-  if (multilingual) {
-    const lang = resolveLocale({
-      query: askedLang,
-      cookie: context.cookies.get(LANG_COOKIE)?.value,
-      acceptLanguage: context.request.headers.get("accept-language"),
-    });
-    context.locals.lang = lang;
-    // An explicit choice (the footer picker submits ?lang=) sticks for the next visit.
-    if (askedLang === lang) context.cookies.set(LANG_COOKIE, lang, { path: "/", maxAge: LANG_COOKIE_MAX_AGE, sameSite: "lax" });
+  const cookieLang = context.cookies.get(LANG_COOKIE)?.value;
+  const acceptLanguage = context.request.headers.get("accept-language");
+  // A bare indexable page whose language is chosen by the visitor, not by its address: it answers
+  // English, or a redirect to the visitor's language, so caches must key it on both headers.
+  const negotiatedLang = multilingual && decision.kind === "rewrite" && askedLang === null && (!languagePage || method === "GET");
+  if (languagePage && askedLang === null) {
+    // The bare path is the English page. A person whose switcher choice (cookie) or browser
+    // (Accept-Language) asks for another language goes to that language's address: a 302, only
+    // for GET, never for a crawler, never from an address that names a language (no loop).
+    const target = langRedirect(
+      { method, pathname: context.url.pathname, search: context.url.search, cookie: cookieLang, acceptLanguage, userAgent: context.request.headers.get("user-agent") },
+      LANG_CODES,
+    );
+    if (target) {
+      const redirect = new Response(null, {
+        status: 302,
+        headers: { Location: `${areaOrigin}${target}`, Vary: "Accept-Language, Cookie", "Cache-Control": "private, no-cache" },
+      });
+      return responseHeaders(redirect, { https: areaOrigin.startsWith("https://"), negotiatedLang: false });
+    }
+    context.locals.lang = DEFAULT_LOCALE;
+  } else if (multilingual) {
+    context.locals.lang = resolveLocale({ query: askedLang, cookie: cookieLang, acceptLanguage });
   }
 
   // Belt-and-suspenders: ensure the route was synced (no-op after the first call).
@@ -223,10 +235,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
   // HSTS, Referrer-Policy, the HTML charset, and Vary on the pages whose language follows the
   // visitor (src/lib/seo/response-headers.ts).
-  const served = responseHeaders(response, {
-    https: ORIGINS[decision.area].startsWith("https://"),
-    negotiatedLang: multilingual && decision.kind === "rewrite" && askedLang === null,
-  });
+  const served = responseHeaders(response, { https: areaOrigin.startsWith("https://"), negotiatedLang });
   if (corsOk) applyCors(served.headers, origin, context.request);
   trackApiRequest(context, served.status, startedAt);
   return served;

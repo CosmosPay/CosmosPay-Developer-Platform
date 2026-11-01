@@ -24,9 +24,10 @@ interface Props {
 const { title, description = "", indexable = false, overPanel } = Astro.props;
 const lang = Astro.locals.lang ?? "en";
 const t = MESSAGES[lang];
-// An indexable page exists once per language at ?lang=<code>, and the bare path follows the
-// visitor (x-default): each version names itself canonical and lists the others (hreflang), so
-// search engines index every language instead of folding them into the English one.
+// An indexable page has one address per language: English at the bare path (also x-default),
+// the others at ?lang=<code> (src/lib/seo/lang-urls.ts). Each version names itself canonical and
+// lists the others (hreflang), so search engines index every language instead of folding them
+// into the English one.
 const path = Astro.locals.publicPath ?? "/";
 const codes = LOCALES.map((l) => l.code);
 const explicit = explicitLang(Astro.url.searchParams.get("lang"), codes);

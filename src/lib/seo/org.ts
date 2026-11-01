@@ -5,7 +5,7 @@
    astro:env (through the route constants). */
 import { DOCS, SITE, SOCIAL } from "@/components/cosmos/lib/constants";
 import { API_BASE } from "@/lib/payments/urls";
-import { WALLET_LINKS, WALLET_VERSION } from "@/components/cosmos/marketing/data";
+import { WALLET_LINKS } from "@/components/cosmos/marketing/data";
 import { chromeStoreListing, organizationNode, orgId, productNodes, sameAsProfiles, type JsonLdNode } from "@/lib/seo/schema";
 
 export const ORGANIZATION_ID = orgId(SITE);
@@ -17,6 +17,6 @@ export function companyProductNodes(): JsonLdNode[] {
     site: SITE,
     docs: `${DOCS}/`,
     apiBase: API_BASE,
-    wallet: { version: WALLET_VERSION, webApp: WALLET_LINKS.webapp, chromeStore: chromeStoreListing(WALLET_LINKS.chrome) },
+    wallet: { webApp: WALLET_LINKS.webapp, chromeStore: chromeStoreListing(WALLET_LINKS.chrome) },
   });
 }

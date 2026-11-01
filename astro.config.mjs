@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -79,6 +80,47 @@ function cosmosDocsDevStatic() {
           fs.createReadStream(resolved).pipe(res);
         });
       });
+    },
+  };
+}
+
+// `virtual:page-dates`: when each source file last changed, from git, read once per build (or
+// dev server start). src/lib/seo/page-dates.ts turns it into each indexable page's dateModified
+// (JSON-LD) and sitemap lastmod. Without git history (no repository, or a shallow clone such as
+// CI's, where every file would date to the one commit) the map is empty and every page dates to
+// the build (BUILT_AT).
+function cosmosPageDates() {
+  const id = 'virtual:page-dates';
+  const resolved = `\0${id}`;
+  let code;
+  const read = () => {
+    const cwd = fileURLToPath(new URL('.', import.meta.url));
+    const git = (args) => execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
+    const dates = {};
+    try {
+      if (git(['rev-parse', '--is-shallow-repository']).trim() === 'false') {
+        // Newest commit first, so the first date seen for a file is its last change. %x00 marks
+        // each commit's date line; the file names follow it (repository-relative, as given).
+        let current;
+        for (const line of git(['log', '--format=%x00%cI', '--name-only', '--', 'src']).split('\n')) {
+          if (line.startsWith('\0')) current = line.slice(1).trim();
+          else if (line.trim() && current && !(line.trim() in dates)) dates[line.trim()] = current;
+        }
+      }
+    } catch {
+      // No git: every page dates to the build.
+    }
+    return `export const GIT_DATES = ${JSON.stringify(dates)};\nexport const BUILT_AT = ${JSON.stringify(new Date().toISOString())};\n`;
+  };
+  return {
+    name: 'cosmos-page-dates',
+    resolveId(source) {
+      return source === id ? resolved : undefined;
+    },
+    load(source) {
+      if (source !== resolved) return undefined;
+      code ??= read();
+      return code;
     },
   };
 }
@@ -231,7 +273,7 @@ export default defineConfig({
 
   vite: {
     // Serve the statically-exported docs at /docs during `astro dev` (see comment above).
-    plugins: [cosmosDocsDevStatic()],
+    plugins: [cosmosDocsDevStatic(), cosmosPageDates()],
     server: {
       // Hosts allowed to reach the dev server. Without this, Vite rejects
       // requests whose Host header isn't localhost (e.g. when the dev server is

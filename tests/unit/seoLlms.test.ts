@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { paymentsLlmsTxt, siteLlmsTxt, type LlmsInput } from '@/lib/seo/llms';
 import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
 import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
+import { NETWORK_IDS } from '@/lib/chains';
 
 const INPUT: LlmsInput = {
   site: 'https://cosmospay.lat',
@@ -41,9 +42,21 @@ test('the rates are the ones src/lib/plans.ts charges', () => {
   }
 });
 
-test('the gateway file links every content page, in English, and its other languages', () => {
-  for (const path of PAYMENTS_PAGE_PATHS) assert.ok(files.payments.includes(`https://payments.cosmospay.lat${path}?lang=en`), path);
+test('the gateway file links every content page at its English (bare) address, and its other languages', () => {
+  for (const path of PAYMENTS_PAGE_PATHS) assert.ok(files.payments.includes(`(https://payments.cosmospay.lat${path})`), path);
   for (const lang of ['es', 'pt', 'fr', 'de', 'hi', 'zh']) assert.ok(files.payments.includes(`https://payments.cosmospay.lat/?lang=${lang}`), lang);
+  for (const [name, text] of Object.entries(files)) assert.ok(!text.includes('lang=en'), `${name}: English has no ?lang=`);
+});
+
+test('the custody facts hold for every service, and the networks count is the computed one', () => {
+  for (const text of Object.values(files)) {
+    assert.match(text, /on Monad each payment goes to a deposit address made for it, which can only forward it/);
+    assert.match(text, /Cosmos Pay holds no key to it/);
+    assert.doesNotMatch(text, /nobody holds|never pass through/i);
+  }
+  assert.match(files.site, /a swap between networks waits at a NEAR Intents deposit address/);
+  assert.ok(files.site.includes(`across ${NETWORK_IDS.length} networks`));
+  assert.doesNotMatch(files.site, /\d+\+ networks/);
 });
 
 test('the company file points developers at the docs, the OpenAPI document and the SDK', () => {
@@ -53,11 +66,11 @@ test('the company file points developers at the docs, the OpenAPI document and t
     'https://dev.cosmospay.lat/docs/api/',
     'https://www.npmjs.com/package/@cosmosapp/pay_sdk',
     'https://cosmospay.lat/.well-known/api-catalog',
-    'https://cosmospay.lat/about?lang=en',
+    'https://cosmospay.lat/about',
   ]) {
     assert.ok(files.site.includes(url), url);
   }
-  assert.ok(files.payments.includes('https://cosmospay.lat/about?lang=en'));
+  assert.ok(files.payments.includes('https://cosmospay.lat/about)'));
 });
 
 test('escrow is offered at its price but every line that names it says it is coming soon', () => {

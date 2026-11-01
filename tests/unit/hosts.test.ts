@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areasOf, canonicalPath, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
+import { areasOf, canonicalPath, isLanguagePage, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
 
 const PROD: Origins = {
   site: 'https://cosmospay.lat',
@@ -32,6 +32,15 @@ test('ownerOf assigns every public path to one domain', () => {
   }
   assert.equal(ownerOf('/dashboards'), null, 'a prefix match needs a path boundary');
   assert.equal(ownerOf('/nope'), null);
+});
+
+test('only the indexable pages have a version per language (and follow the visitor with a redirect)', () => {
+  for (const p of ['/', '/pricing', '/tos', '/about', '/swaps', '/Pricing', '/about/']) assert.ok(isLanguagePage('site', p), `site ${p}`);
+  for (const p of ['/', '/faq', '/fees', '/compare', '/swaps', '/stellar', '/learn', '/learn/accept-usdc-payments']) assert.ok(isLanguagePage('payments', p), `payments ${p}`);
+  for (const p of ['/pay', '/contact', LINK, '/preview/classic', '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/nope', '/%zz']) assert.ok(!isLanguagePage('payments', p), `payments ${p}`);
+  for (const p of ['/faq', '/robots.txt', '/sitemap.xml', '/llms.txt']) assert.ok(!isLanguagePage('site', p), `site ${p}`);
+  assert.ok(!isLanguagePage('dev', '/'));
+  assert.ok(!isLanguagePage('dev', '/docs'));
 });
 
 test('cosmospay.lat renders only the company site', () => {
