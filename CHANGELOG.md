@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.17.0] - 2026-11-01
+
+### Features
+- Guides cite the payment-request standards they name (fc8b86a)
+
 ## [0.16.0] - 2026-11-01
 
 ### Features
