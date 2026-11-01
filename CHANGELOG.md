@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.18.0] - 2026-11-01
+
+### Features
+- Serve Bing's ownership file on every domain (9ee9653)
+
 ## [0.17.0] - 2026-11-01
 
 ### Features
