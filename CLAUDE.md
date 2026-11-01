@@ -137,8 +137,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
-- **`robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, `/.well-known/security.txt`,
-  `/.well-known/api-catalog` and the IndexNow key file are per-domain endpoints** (`SHARED_PATHS`
+- **`robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, `auth.md`, `/.well-known/security.txt`,
+  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json` and the IndexNow key file are
+  per-domain endpoints** (`SHARED_PATHS`
   in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
   `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
   the product owner's decision
@@ -182,6 +183,25 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   these pages goes into its builder too: `tests/unit/seoMarkdown.test.ts` and `seoLlmsFull.test.ts`
   check every registered page in every language (its title and address, its sections, links in the
   page's language, the rates of `plans.ts`, escrow's label, no em dash).
+- **Agent discovery** (Cloudflare's Agent Readiness check, 2026-11-01). Every indexable page of the
+  company site and the gateway answers an RFC 8288 `Link` header (`src/lib/seo/link-headers.ts`,
+  added by the middleware through `responseHeaders`): the host's `/llms.txt` (`describedby`), the
+  API catalog (`api-catalog`; the catalog's own route keeps its Link to itself), the docs' OpenAPI
+  document (`service-desc`) and root (`service-doc`), the host's sitemap (`sitemap`) and the
+  Markdown version its `<link rel="alternate" type="text/markdown">` names (`npm run test:smoke`
+  compares the two on every sitemap page). `/auth.md` (`src/lib/seo/auth-md.ts`, every domain,
+  `text/markdown`, linked from both llms.txt files and allowed in the payments robots.txt) tells an
+  agent how to authenticate: an API key a person creates in the dashboard (`Authorization:
+  Bearer`, `dv_` / `prod_`, scopes), never the person's password; or the shared public key, with
+  `X-Record-Token` for its own records; webhooks signed with HMAC-SHA256; and, plainly, that there
+  is no OAuth flow for agents. Each statement was checked against this repository and the
+  community server: change the file with the code it describes.
+  `/.well-known/agent-skills/index.json` (`src/lib/seo/agent-skills.ts`, Agent Skills Discovery
+  draft v0.2.0) lists the public skill, `CosmosPay/CosmosPay-Skill`, at a pinned commit: its
+  SKILL.md's address there, the SHA-256 of those bytes and the frontmatter's name and description;
+  move the four together when the skill changes. **Never publish an MCP server card, an A2A agent
+  card, OAuth authorization-server or protected-resource metadata, or WebMCP tools** until the
+  product has them: the readiness check lists them, and each would be a false claim today.
 - **IndexNow** (Bing, which also feeds ChatGPT search and Copilot, Yandex and the rest) learns
   about new and changed pages from `npm run indexnow` (`scripts/indexnow.mjs`, helpers in
   `src/lib/seo/indexnow.ts`, tested): it reads each domain's live sitemap (following the
@@ -1718,7 +1738,12 @@ consumer headers.
   `/docs/llms.txt`. `Accept: text/markdown` is **not** negotiated on the docs: the Node server hands
   out the static export before the middleware runs, so a page always answers HTML there (that would
   take an nginx rule). More docs SEO details (headings, datePublished from git) are in
-  `docs/README.md`.
+  `docs/README.md`. **Every exported docs page stays under 500 KB of HTML** (`build-docs.mjs`
+  fails above it; the API reference pages were 0.8 to 1.9 MB): an API page gets only its own
+  operations of the spec (`docs/src/lib/openapi-prune.ts`), and `docs/src/components/api/`
+  replaces the parts of fumadocs-openapi's UI that wrote the most (a fork of its schema UI to
+  re-check on upgrades, responses opened on demand, controls rendered after hydration). What stays
+  in the server HTML and what to do over budget: `docs/README.md`, "API reference page size".
 - **Two OpenAPI documents, not one.** `docs/openapi.json` is the community server's Payments API
   spec, committed and checked by `npm run check:api-spec`. `/api/openapi.json` is THIS app's own
   API, generated from `src/schemas/**/openapi.ts` and checked by `npm run check:openapi`. The

@@ -223,6 +223,26 @@ for (const host of keyHosts) {
 if (fullOn === 0) fail(`no trusted host (${keyHosts.join(', ')}) served /llms-full.txt`);
 detail += `; llms-full.txt and /index.md served on ${fullOn} hosts`;
 
+// AGENT DISCOVERY FILES. Every domain answers /auth.md (how an agent authenticates: Markdown whose
+// H1 names auth.md, src/lib/seo/auth-md.ts) and the Agent Skills Discovery index
+// (src/lib/seo/agent-skills.ts), each as that domain (src/lib/hosts.ts SHARED_PATHS). A route
+// shadowed by src/pages/[...page].md.ts, or a builder that throws on the bundle, fails here.
+for (const host of keyHosts) {
+  const auth = await getWithHost('/auth.md', host).catch((e) => fail(`GET https://${host}/auth.md never completed: ${e.message}`));
+  if (auth.status !== 200 || !/^text\/markdown/.test(auth.type ?? '') || !/^# [^\n]*auth\.md\n/.test(auth.body)) {
+    fail(`GET https://${host}/auth.md returned ${auth.status} (${auth.type}); expected Markdown opening with an H1 that names auth.md`);
+  }
+  const skills = await getWithHost('/.well-known/agent-skills/index.json', host).catch((e) => fail(`GET https://${host}/.well-known/agent-skills/index.json never completed: ${e.message}`));
+  let index = null;
+  try {
+    index = JSON.parse(skills.body);
+  } catch {}
+  if (skills.status !== 200 || !/^application\/json/.test(skills.type ?? '') || index?.$schema !== 'https://schemas.agentskills.io/discovery/0.2.0/schema.json' || !index.skills?.length) {
+    fail(`GET https://${host}/.well-known/agent-skills/index.json returned ${skills.status} (${skills.type}); expected the v0.2.0 skills index`);
+  }
+}
+detail += `; auth.md and the agent skills index served on ${keyHosts.length} hosts`;
+
 // SHARE CARDS. Every address in the company site's and the gateway's sitemaps (each page in each
 // language) names its own card as og:image and twitter:image, 1200x630 PNG with its alt
 // (src/lib/seo/og-image-urls.ts). The cards are drawn by `npm run og:build` BEFORE astro build and
@@ -264,6 +284,19 @@ for (const host of keyHosts) {
     cards.set(url.href, { page: url.href, image: image.href, host: url.host });
     if (url.pathname === '/stellar') paymentsHost = url.host;
     cardPages++;
+    // Its Link header (src/lib/seo/link-headers.ts) names the discovery files and the same Markdown
+    // version as its <link rel="alternate" type="text/markdown">.
+    const alternate = [...page.body.matchAll(/<link\b[^>]*>/g)]
+      .map(([tag]) => tag)
+      .find((tag) => /rel="alternate"/.test(tag) && /type="text\/markdown"/.test(tag))
+      ?.match(/href="([^"]+)"/)?.[1]
+      ?.replace(/&amp;/g, '&');
+    for (const rel of ['rel="describedby"', 'rel="api-catalog"', 'rel="service-desc"', 'rel="service-doc"', 'rel="sitemap"']) {
+      if (!page.link?.includes(rel)) fail(`${url.href} answers Link ${page.link}; expected ${rel}`);
+    }
+    if (!alternate || !page.link.includes(`<${alternate}>; rel="alternate"; type="text/markdown"`)) {
+      fail(`${url.href} answers Link ${page.link}; expected its Markdown version ${alternate}`);
+    }
     const slashless = slashlessDocsLinks(page.body, url.href);
     if (slashless.length) fail(`${url.href} links ${slashless.length} docs page(s) without the trailing slash (a 301 each): ${slashless.slice(0, 5).join(', ')}`);
     const graph = jsonLdNodes(page.body);
@@ -292,7 +325,7 @@ if (paymentsHost) {
     fail(`https://${servedOn}/swaps names og:image ${swapsImage}; expected the gateway's /swaps card`);
   }
 }
-detail += `; share cards: ${cardPages} pages, each its own 1200x630 PNG; no slashless docs link, no HowTo, one Organization`;
+detail += `; share cards: ${cardPages} pages, each its own 1200x630 PNG and discovery Link header; no slashless docs link, no HowTo, one Organization`;
 
 // THE DOCS (the static export under /docs on the platform): each page carries the company's
 // Organization, the same node as every company and gateway page; the API reference and the docs
@@ -433,7 +466,7 @@ function getBinaryWithHost(pathname, host) {
 
 /**
  * A GET with the Host header nginx would send (fetch may not set Host), without following
- * redirects. Resolves the status, the Location and Content-Type headers and the body.
+ * redirects. Resolves the status, the Location, Content-Type and Link headers and the body.
  */
 function getWithHost(pathname, host) {
   return new Promise((resolve, reject) => {
@@ -443,7 +476,9 @@ function getWithHost(pathname, host) {
         let body = '';
         res.setEncoding('utf8');
         res.on('data', (chunk) => (body += chunk));
-        res.on('end', () => resolve({ status: res.statusCode, location: res.headers.location ?? null, type: res.headers['content-type'] ?? null, body }));
+        res.on('end', () =>
+          resolve({ status: res.statusCode, location: res.headers.location ?? null, type: res.headers['content-type'] ?? null, link: res.headers.link ?? null, body }),
+        );
       },
     );
     req.on('timeout', () => req.destroy(new Error('timed out')));

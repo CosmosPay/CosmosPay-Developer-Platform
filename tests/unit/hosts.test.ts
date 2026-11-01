@@ -172,14 +172,26 @@ test('www goes to the apex, path and query kept', () => {
   assert.deepEqual(route('www.cosmospay.lat', '/pricing', '?lang=es'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing?lang=es', status: 301 });
 });
 
-test('robots.txt, sitemap.xml, llms.txt, llms-full.txt and the /.well-known files answer on every domain, as that domain', () => {
-  for (const path of ['/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt', '/.well-known/security.txt', '/.well-known/api-catalog']) {
+test('robots.txt, sitemap.xml, llms.txt, llms-full.txt, auth.md and the /.well-known files answer on every domain, as that domain', () => {
+  for (const path of [
+    '/robots.txt',
+    '/sitemap.xml',
+    '/llms.txt',
+    '/llms-full.txt',
+    '/auth.md',
+    '/.well-known/security.txt',
+    '/.well-known/api-catalog',
+    '/.well-known/agent-skills/index.json',
+  ]) {
     assert.deepEqual(route('cosmospay.lat', path), { kind: 'pass', area: 'site' }, path);
     assert.deepEqual(route('payments.cosmospay.lat', path), { kind: 'pass', area: 'payments' }, path);
     assert.deepEqual(route('dev.cosmospay.lat', path), { kind: 'pass', area: 'dev' }, path);
   }
   // Any other /.well-known path is nobody's: a 404 on the site and the gateway.
   assert.deepEqual(route('cosmospay.lat', '/.well-known/nope'), { kind: 'not-found', area: 'site' });
+  assert.deepEqual(route('payments.cosmospay.lat', '/.well-known/agent-skills/other.json'), { kind: 'not-found', area: 'payments' });
+  // /auth.md is no page's Markdown version: it is not sent to another host as one would be.
+  assert.deepEqual(route('payments.cosmospay.lat', '/auth.md', '', 'HEAD'), { kind: 'pass', area: 'payments' });
 });
 
 test('the IndexNow key file answers on every domain, as that domain, whatever the key', () => {

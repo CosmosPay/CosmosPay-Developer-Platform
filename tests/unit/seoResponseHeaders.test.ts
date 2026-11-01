@@ -51,6 +51,22 @@ test('headers already set are left alone, and a non-HTML response gets no charse
   assert.equal(charset.headers.get('Content-Type'), 'text/html; charset=iso-8859-1');
 });
 
+test('an HTML page takes the Link values it does not carry yet; any other answer keeps its own', () => {
+  const links = ['</llms.txt>; rel="describedby"; type="text/plain"', '</.well-known/api-catalog>; rel="api-catalog"'];
+  const page = responseHeaders(html(), { https: true, negotiatedLang: false, links });
+  assert.equal(page.headers.get('Link'), links.join(', '));
+  const again = responseHeaders(page, { https: true, negotiatedLang: false, links });
+  assert.equal(again.headers.get('Link'), links.join(', '));
+  const preload = responseHeaders(html({ Link: '</x.css>; rel="preload"; as="style"' }), { https: true, negotiatedLang: false, links });
+  assert.equal(preload.headers.get('Link'), ['</x.css>; rel="preload"; as="style"', ...links].join(', '));
+  // The API catalog's own Link to itself (src/pages/.well-known/api-catalog.ts) stays as it is.
+  const catalog = new Response('{}', {
+    headers: { 'Content-Type': 'application/linkset+json', Link: '<https://cosmospay.lat/.well-known/api-catalog>; rel="api-catalog"' },
+  });
+  assert.equal(responseHeaders(catalog, { https: true, negotiatedLang: false, links }).headers.get('Link'), '<https://cosmospay.lat/.well-known/api-catalog>; rel="api-catalog"');
+  assert.equal(responseHeaders(html(), { https: true, negotiatedLang: false }).headers.get('Link'), null);
+});
+
 test('a response with immutable headers is copied, status and body kept', async () => {
   const original = Response.redirect('https://cosmospay.lat/', 301);
   assert.throws(() => original.headers.set('X-Test', '1'));
