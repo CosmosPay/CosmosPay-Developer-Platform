@@ -48,8 +48,7 @@ _openapi:
           DeFindex API key answers `503 misconfigured`.
 
 
-          Requires the `liquidity:read` or `swaps:read` scope. The shared public
-          key may call it.
+          Requires the `liquidity:read` or `swaps:read` scope.
         heading: discover-defindex-vaults
       - content: >-
           One vault's details from DeFindex on the key's network, passed through
@@ -58,8 +57,7 @@ _openapi:
           answers `503 misconfigured`.
 
 
-          Requires the `liquidity:read` or `swaps:read` scope. The shared public
-          key may call it.
+          Requires the `liquidity:read` or `swaps:read` scope.
         heading: read-a-defindex-vault
       - content: >-
           `account`'s shares and their underlying value in the vault, read from
@@ -68,43 +66,41 @@ _openapi:
           API key answers `503 misconfigured`.
 
 
-          Requires the `liquidity:read` or `swaps:read` scope. The shared public
-          key may call it.
+          Requires the `liquidity:read` or `swaps:read` scope.
         heading: read-an-account-balance-in-a-defindex-vault
       - content: >-
-          DeFindex builds the deposit of `amounts` (integer strings) into the
-          vault for `caller` to sign, on the key's network; `invest` defaults to
-          true and `slippageBps` to 100. Nothing is stored here: sign the
-          returned XDR and send it to `POST /v1/defindex/submit`. DeFindex
-          failures are `502 provider_error`, and a deployment without a DeFindex
-          API key answers `503 misconfigured`.
+          DeFindex builds the deposit of `amounts` (integer strings in minor
+          units, at most 9007199254740991 each) into the vault for `caller` on
+          the key's network; `invest` defaults to true and `slippageBps` to 100.
+          The returned XDR is checked to be exactly that call and recorded for
+          this key for up to 15 minutes (less if its time bounds close sooner):
+          sign it unchanged and send it to `POST /v1/defindex/submit`.
 
 
-          Requires the `liquidity:write` or `swaps:write` scope. The shared
-          public key may call it.
+          Requires the `liquidity:write` or `swaps:write` scope.
         heading: build-an-unsigned-defindex-deposit
       - content: >-
-          DeFindex builds the burn of `shares` (an integer string) for the
-          vault's underlying assets, for `caller` to sign on the key's network;
-          `slippageBps` defaults to 100. Nothing is stored here: sign the
-          returned XDR and send it to `POST /v1/defindex/submit`. DeFindex
-          failures are `502 provider_error`, and a deployment without a DeFindex
-          API key answers `503 misconfigured`.
+          DeFindex builds the burn of `shares` (an integer string, at most
+          9007199254740991) for the vault's underlying assets, for `caller` on
+          the key's network; `slippageBps` defaults to 100. The returned XDR is
+          checked to be exactly that call and recorded for this key for up to 15
+          minutes (less if its time bounds close sooner): sign it unchanged and
+          send it to `POST /v1/defindex/submit`.
 
 
-          Requires the `liquidity:write` or `swaps:write` scope. The shared
-          public key may call it.
+          Requires the `liquidity:write` or `swaps:write` scope.
         heading: build-an-unsigned-defindex-share-withdrawal
       - content: >-
-          Sends the signed `xdr` to the key's network through DeFindex and
-          passes its answer through (hash, success, ledger). The XDR is not
-          checked against one built here, and nothing is stored. DeFindex
-          failures are `502 provider_error`, and a deployment without a DeFindex
-          API key answers `503 misconfigured`.
+          Relays `xdr` through DeFindex only when it is a signed copy of a
+          transaction that `POST /v1/defindex/vaults/{vault}/deposit` or
+          `/withdraw` built for this same API key on its network, before it
+          expires; anything else is refused before DeFindex is called. Relayed
+          once: DeFindex's answer is stored, and submitting the same transaction
+          again answers it without calling DeFindex. When DeFindex gives no
+          answer (502, 503) the same transaction may be submitted again.
 
 
-          Requires the `liquidity:write` or `swaps:write` scope. The shared
-          public key may call it.
+          Requires the `liquidity:write` or `swaps:write` scope.
         heading: submit-a-signed-defindex-transaction
 ---
 
