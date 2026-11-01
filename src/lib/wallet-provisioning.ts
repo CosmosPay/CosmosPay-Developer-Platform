@@ -40,7 +40,7 @@ export const WALLET_KEY_SCOPES = [
 ];
 
 /**
- * Whether a user was provisioned via Cosmos Wallet (vs Authentik OAuth). Their
+ * Whether a user was provisioned via Cosmos Pay Wallet (vs Authentik OAuth). Their
  * dev + prod API keys are auto-minted at registration, so such accounts cannot
  * create *additional* keys; the API-key endpoint rotates their existing keys
  * instead. Authoritative signal: a confirmed/claimed WalletRegistration row, written only

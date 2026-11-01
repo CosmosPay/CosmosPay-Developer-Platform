@@ -334,7 +334,7 @@ export function nextPollDelay(phase: Phase): number | null {
   return POLL_MS[phase] ?? null;
 }
 
-/** Only a Stellar `pay` link can go to the Cosmos Wallet extension's requestPayment. */
+/** Only a Stellar `pay` link can go to the Cosmos Pay Wallet extension's requestPayment. */
 export function canPayWithExtension(link: Pick<PaymentLink, "chain" | "kind" | "uri">): boolean {
   return link.chain === "stellar" && link.kind === "PAY" && /^web\+stellar:pay\?/i.test(link.uri);
 }

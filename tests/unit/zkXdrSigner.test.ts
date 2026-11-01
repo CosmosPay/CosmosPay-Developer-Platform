@@ -58,7 +58,7 @@ test('a signed XDR counts only as this transaction, signed by the account', () =
 });
 
 test('a signature for the same transaction on another network is told apart from a missing one', () => {
-  // a wallet signs for the network it is set to: Cosmos Wallet on Mainnet signing this Testnet one
+  // a wallet signs for the network it is set to: Cosmos Pay Wallet on Mainnet signing this Testnet one
   const kp = Keypair.random();
   const xdr = keyTransactionXdr(TOKEN, kp.publicKey(), NET);
   const onMainnet = TransactionBuilder.fromXDR(xdr, Networks.PUBLIC);

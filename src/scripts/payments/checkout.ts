@@ -422,7 +422,7 @@ export function startCheckout(): void {
     }, WALLET_BACK_GRACE_MS);
   }
 
-  /* ---- Cosmos Wallet extension (Stellar `pay` links only) ---- */
+  /* ---- Cosmos Pay Wallet extension (Stellar `pay` links only) ---- */
   let extensionChecked = false;
   function offerExtension(l: PaymentLink, phase: Phase) {
     const buttons = all<HTMLButtonElement>('[data-action="pay-extension"]');

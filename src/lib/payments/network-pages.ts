@@ -54,7 +54,7 @@ export function networkPresets(chain: Chain): PresetRow[] {
    use?"); their logos come from the home's wallet marquee. Monad's page names none: any EVM wallet
    that reads EIP-681 links pays there. */
 export const NETWORK_WALLETS: Record<Chain, readonly string[]> = {
-  stellar: ["Cosmos Wallet", "Freighter", "LOBSTR", "xBull", "Albedo", "Rabet"],
+  stellar: ["Cosmos Pay Wallet", "Freighter", "LOBSTR", "xBull", "Albedo", "Rabet"],
   solana: ["Phantom", "Solflare"],
   monad: [],
 };

@@ -154,7 +154,7 @@ export default {
       invalid: "That isn't a signed transaction XDR.",
       otherTransaction: "That is another transaction. Sign the XDR above without changing it.",
       notSigned: "That transaction isn't signed by {account}.",
-      otherNetwork: "That signature is for another network. This transaction is on {network}: choose {network} in the wallet (in Cosmos Wallet, under “Transaction network”) and sign it again.",
+      otherNetwork: "That signature is for another network. This transaction is on {network}: choose {network} in the wallet (in Cosmos Pay Wallet, under “Transaction network”) and sign it again.",
       network: "Network",
       txAccount: "Transaction account",
       signer: "Signs with",
@@ -722,7 +722,7 @@ export default {
      src/pages/site/about.astro, not here. */
   about: {
     title: "About Cosmos Pay",
-    lede: "Cosmos Pay builds stablecoin payments for businesses: a payments API, a hosted checkout and payment links, swaps, private payments and the non-custodial Cosmos Wallet, on Stellar, Solana and Monad.",
+    lede: "Cosmos Pay builds stablecoin payments for businesses: a payments API, a hosted checkout and payment links, swaps, private payments and the non-custodial Cosmos Pay Wallet, on Stellar, Solana and Monad.",
     disambiguation: "Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM).",
     facts: {
       networks: "Networks",
@@ -741,7 +741,7 @@ export default {
         checkout: { t: "Hosted checkout and payment links", d: "A payment link with its QR code and a checkout page we host, in four designs and seven languages. A pay button or an embedded checkout takes one script tag.", a: "See the integration options" },
         swaps: { t: "Swaps", d: "Swap tokens across {n} networks and send USDT0 from Stellar, with no account.", a: "Open swaps" },
         private: { t: "Private payments", d: "Payments on Stellar whose amount stays hidden on-chain behind a zero-knowledge proof. On testnet for now.", a: "Read how they work" },
-        wallet: { t: "Cosmos Wallet", d: "A non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.", a: "Get the wallet" },
+        wallet: { t: "Cosmos Pay Wallet", d: "A non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.", a: "Get the wallet" },
       },
     },
     code: {
@@ -755,7 +755,7 @@ export default {
         server: "The Payments API server: payment intents and links, webhooks, swaps and private payments.",
         platform: "This site, the payments site, the dashboard and the documentation.",
         sdk: "The JavaScript and TypeScript SDK, published on npm as @cosmosapp/pay_sdk.",
-        wallet: "The Cosmos Wallet: the web app, the browser extension and the desktop and Android apps.",
+        wallet: "The Cosmos Pay Wallet: the web app, the browser extension and the desktop and Android apps.",
         skill: "A skill that teaches AI coding assistants to integrate Cosmos Pay.",
       },
     },
