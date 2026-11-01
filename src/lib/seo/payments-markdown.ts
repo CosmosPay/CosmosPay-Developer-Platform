@@ -438,7 +438,7 @@ function guidePage(ctx: Ctx, guide: Guide): Block[] {
         return fill((row as Record<Chain, string>)[chain], { ...vars, wallets: wallets.format(NETWORK_WALLETS[chain]) });
       }),
     ]);
-    return [h(2, tbl.title), table([tbl.topic, ...CHAINS.map((chain) => link(CHAIN_NAMES[chain], page(`/${chain}`)))], rows), p(tbl.note)];
+    return [h(2, tbl.title), table([tbl.topic, ...CHAINS.map((chain) => link(CHAIN_NAMES[chain], page(`/${chain}`)))], rows), p(tbl.note), ...linksOf(tbl.links)];
   };
   const blocks = cfg.order.flatMap((key): Block[] => {
     if (key === "table") return networkTable();

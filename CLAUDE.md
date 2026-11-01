@@ -922,7 +922,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   from `chains.ts`, `network-pages.ts` and `plans.ts`), its questions, related guides and the final
   call. Copy in `src/lib/payments/learn/<lang>.ts`, one file per language mirroring `en.ts`; links
   are keys of `learn/links.ts` (the gateway's pages, docs pages that exist, and the primary source
-  of any claim about another company). No legal, regulatory or tax content, no figure that is not a
+  of any claim about another company or a standard it publishes: Circle's pages, SEP-7, the Solana
+  Pay spec and EIP-681, listed in `SOURCE_LINKS`). No legal, regulatory or tax content, no figure that is not a
   product fact (product owner). Each guide shows its last update, and that date is its JSON-LD
   `dateModified` and its sitemap `lastmod`: change `GUIDE_DATES` with the text. JSON-LD: the page,
   its BreadcrumbList (Overview > Guides > the guide), an Article or TechArticle by the shared

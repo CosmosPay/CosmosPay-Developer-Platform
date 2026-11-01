@@ -159,6 +159,7 @@ export const zh: LearnMessages = {
             "监控网络，并通过 memo、reference 密钥或专为该笔支付生成的地址，将每笔付款与其请求匹配。",
             "网络确认支付后通知企业：显示在控制台中，并通过签名 Webhook 发送到企业的服务器。",
           ],
+          links: { sep7: "SEP-7 标准（Stellar）", solanaPay: "Solana Pay 规范", eip681: "EIP-681 标准（Ethereum）" },
         },
         settle: {
           title: "资金在哪里结算",
@@ -223,6 +224,7 @@ export const zh: LearnMessages = {
           rate: { k: "Cosmos Pay 费率", value: "您套餐的费率（Starter 为 {starterRate}）" },
         },
         note: "预设资产是控制台按名称提供的资产，各网络页面列出了它们的地址。其他任何代币按发行方、铸币地址（mint）或合约指定。",
+        links: { sep7: "SEP-7 标准（Stellar）", solanaPay: "Solana Pay 规范", eip681: "EIP-681 标准（Ethereum）" },
       },
       sections: {
         choose: {
