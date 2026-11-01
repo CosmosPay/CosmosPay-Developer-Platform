@@ -54,6 +54,9 @@ export function organizationNode(site: string, sameAs: string[]): JsonLdNode {
     description: ORG_DESCRIPTION,
     disambiguatingDescription: "The payments company at cosmospay.lat, working on Stellar, Solana and Monad; not the Cosmos Network (ATOM) blockchain.",
     email: CONTACT_ADDRESS,
+    // The country only, as /about states it (its public source: the GitHub organization's
+    // location). Product owner, 2026-11-01. No street, city or legal name until they provide them.
+    address: { "@type": "PostalAddress", addressCountry: "AR" },
     contactPoint: [{ "@type": "ContactPoint", contactType: "customer support", email: CONTACT_ADDRESS, availableLanguage: ["en", "es"] }],
     sameAs,
   };
@@ -276,6 +279,8 @@ export function sdkNode(site: string): JsonLdNode {
     runtimePlatform: "Node.js 18 or later",
     codeRepository: SDK_REPO,
     url: SDK_NPM,
+    // Apache-2.0, as the SDK's LICENSE file and npm metadata state.
+    license: "https://www.apache.org/licenses/LICENSE-2.0",
     author: org,
     publisher: org,
   };

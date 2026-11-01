@@ -45,7 +45,8 @@ test('the organization is one entity with a stable @id, a logo and its contact',
   assert.equal(org.url, 'https://cosmospay.lat/');
   assert.equal((org.logo as { url: string }).url, 'https://cosmospay.lat/android-chrome-512x512.png');
   assert.equal(org.email, 'organization@cosmospay.lat');
-  assert.ok(!('address' in org), 'no address: the source states none');
+  // The country only, as /about states it: no street, city or legal name (none is public).
+  assert.deepEqual(org.address, { '@type': 'PostalAddress', addressCountry: 'AR' });
   assert.ok(!('aggregateRating' in org));
 });
 

@@ -397,8 +397,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   npm (Apache-2.0), the contact address and the footer's profiles (`SOCIAL`), and what the code
   proves (no private keys stored, the rates of `plans.ts` on /pricing and compared on the
   gateway's /compare, the public docs and OpenAPI document). No legal name, tax id, street
-  address, founders, team size, dates, customers or funding until the owner provides them. The
-  page's header comment names each fact's source; a new fact brings its source with it. Under the
+  address, founders, team size, dates, customers or funding until the owner provides them; the
+  Organization's JSON-LD `address` is the country only (`addressCountry: AR`, product owner,
+  2026-11-01). The page's header comment names each fact's source; a new fact brings its source with it. Under the
   lede one visible line (`about.disambiguation`) says Cosmos Pay is a different project from the
   Cosmos Network (ATOM), in the words of the Organization's `disambiguatingDescription` and
   llms.txt.
