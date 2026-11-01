@@ -9,6 +9,8 @@
  *   - the code: the public repositories of github.com/CosmosPay (GITHUB_ORG) and the SDK on npm
  *     (SDK_NPM, Apache-2.0);
  *   - how to reach the team: CONTACT_ADDRESS and the footer's profiles (SOCIAL);
+ *   - that Cosmos Pay is not the Cosmos Network (ATOM): what the Organization's
+ *     disambiguatingDescription (src/lib/seo/schema.ts) and llms.txt state, in llms.txt's words;
  *   - what the code proves: no private keys stored (CLAUDE.md, "non-custodial"), the rates in
  *     src/lib/plans.ts shown on /pricing and compared on the gateway's /compare, the public docs
  *     and their OpenAPI document.
@@ -24,9 +26,10 @@ import { ORGANIZATION_ID } from "@/lib/seo/org";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE } from "@/lib/seo/schema";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
 import { DASH, DOCS, PAYMENTS, PRICING, SITE } from "@/components/cosmos/lib/constants";
+import { NETWORK_IDS } from "@/lib/chains";
 
-// The language the middleware resolved: ?lang= (each language has its own address), then the
-// cookie, then Accept-Language.
+// The language the middleware resolved from the address: ?lang=<code>, English at the bare path
+// (src/lib/seo/lang-urls.ts; a visitor who prefers another language is redirected there).
 const lang = Astro.locals.lang ?? "en";
 const catalog = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
 const t = catalog.about;
@@ -67,6 +70,8 @@ const CHECKS = [
     ],
   },
 ] as const;
+// `{n}` in a product's line is how many networks cross-chain swaps reach (NETWORK_IDS).
+const fill = (text: string) => text.replace(/\{n\}/g, String(NETWORK_IDS.length));
 const MAILTO = `mailto:${CONTACT_ADDRESS}`;
 const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
 ---
@@ -86,6 +91,7 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
       <div class="wrap">
         <h1 id="about-title" data-num="/01">{t.title}</h1>
         <p class="about-lede">{t.lede}</p>
+        <p class="about-lede">{t.disambiguation}</p>
         <dl class="about-facts">
           <div><dt>{t.facts.networks}</dt><dd>{t.facts.networksValue}</dd></div>
           <div><dt>{t.facts.based}</dt><dd>{t.facts.basedValue}</dd></div>
@@ -113,7 +119,7 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
             return (
               <li class="about-item">
                 <h3>{item.t}</h3>
-                <p>{item.d}</p>
+                <p>{fill(item.d)}</p>
                 <a class="card-link" href={p.href}>{item.a}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
               </li>
             );
@@ -196,6 +202,8 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
     letter-spacing: -0.02em; margin: 0; text-wrap: balance; max-width: 15ch;
   }
   .about-lede { font-size: 1.125rem; line-height: 1.55; color: var(--ink-2); margin: 32px 0 0; max-width: 52ch; }
+  /* The line that tells Cosmos Pay apart from the Cosmos Network sits right under the lede. */
+  .about-lede + .about-lede { margin-top: 12px; }
   /* The facts in one line of label-over-value pairs, split by hairlines. */
   .about-facts {
     display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;

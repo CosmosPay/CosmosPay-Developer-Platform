@@ -6,7 +6,7 @@ export function Price({ plan, meta, billing, t }) {
   }
   return (
     <div className="price-block">
-      <div className="price">{meta.from && <span className="from">{t.pricing.from}</span>}<span className="amt">{amt}</span>{per && <span className="per">{per}</span>}</div>
+      <div className="price"><span className="amt">{amt}</span>{per && <span className="per">{per}</span>}</div>
       {txt && <div className="ptxt">{txt}</div>}
     </div>
   );

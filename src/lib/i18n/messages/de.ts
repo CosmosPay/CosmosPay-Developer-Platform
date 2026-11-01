@@ -356,8 +356,8 @@ export default {
       },
       growth: {
         desc: "Niedrigere Tarife für wachsende Teams",
-        sub: "/Monat · ab",
-        pnote: "ab · 0,75% + 18¢ pro Txn",
+        sub: "/Monat",
+        pnote: "0,75% + 18¢ pro Transaktion",
         team: "Unbegrenzt",
         feats: ["Alles aus Starter", "Niedrigere Transaktionsgebühr", "Unbegrenzte Mitglieder", "Radar-Betrugstools", "Mengenrabatte", "Prioritäts-Support"]
       }
@@ -777,7 +777,7 @@ export default {
         swap: {
           t: "Swaps zwischen Netzwerken",
           d: "Tausche Token über {n} Netzwerke, mit oder ohne Konto.",
-          long: "Tausche auf der Stellar-DEX, auf Jupiter (Solana) und Kuru (Monad) oder zwischen {n} Netzwerken über NEAR Intents, und sende USDT0 über LayerZero aus Stellar heraus. Jeder Swap ist eine Transaktion, die die Person signiert, oder eine Einzahlungsadresse, die sie bezahlt, also verwahrt niemand die Mittel. Die öffentliche Swap-Seite und ihre API brauchen kein Konto.",
+          long: "Tausche auf der Stellar-DEX, auf Jupiter (Solana) und Kuru (Monad) oder zwischen {n} Netzwerken über NEAR Intents, und sende USDT0 über LayerZero aus Stellar heraus. Ein Swap in einem Netzwerk ist eine einzige Transaktion, die die Person signiert; ein Swap zwischen Netzwerken wartet an einer Einzahlungsadresse von NEAR Intents, bis NEAR Intents ihn abwickelt oder den Betrag erstattet. Cosmos Pay verwahrt die Mittel nie. Die öffentliche Swap-Seite und ihre API brauchen kein Konto.",
           points: [
             "Stellar-DEX, Jupiter und Kuru",
             "{n} Netzwerke über NEAR Intents",
@@ -878,7 +878,6 @@ export default {
     annual: "Jährlich",
     save: "−17%",
     popular: "Am beliebtesten",
-    from: "ab",
     perMo: "/Mon.",
     billedYearly: "jährliche Abrechnung",
     plans: [
@@ -993,6 +992,7 @@ export default {
   about: {
     title: "Über Cosmos Pay",
     lede: "Cosmos Pay baut Stablecoin-Zahlungen für Unternehmen: eine Zahlungs-API, einen gehosteten Checkout und Zahlungslinks, Swaps, private Zahlungen und die nicht verwahrte Cosmos Wallet, auf Stellar, Solana und Monad.",
+    disambiguation: "Cosmos Pay (cosmospay.lat) ist ein anderes Projekt als das Cosmos Network (ATOM).",
     facts: {
       networks: "Netzwerke",
       networksValue: "Stellar, Solana und Monad",
@@ -1008,7 +1008,7 @@ export default {
       items: {
         api: { t: "Zahlungs-API und SDK", d: "Eine mit OpenAPI dokumentierte REST-API und ein TypeScript-SDK, um Zahlungsabsichten und Zahlungslinks zu erstellen, mit signierten Webhooks, sobald eine Zahlung bestätigt ist.", a: "Zur Dokumentation" },
         checkout: { t: "Gehosteter Checkout und Zahlungslinks", d: "Ein Zahlungslink mit QR-Code und eine Checkout-Seite, die wir hosten, in vier Designs und sieben Sprachen. Ein Bezahlbutton oder ein eingebetteter Checkout braucht nur ein Script-Tag.", a: "Integrationsoptionen ansehen" },
-        swaps: { t: "Swaps", d: "Tauschen Sie Token über mehr als 35 Netzwerke und senden Sie USDT0 von Stellar aus, ohne Konto.", a: "Swaps öffnen" },
+        swaps: { t: "Swaps", d: "Tauschen Sie Token zwischen {n} Netzwerken und senden Sie USDT0 von Stellar aus, ohne Konto.", a: "Swaps öffnen" },
         private: { t: "Private Zahlungen", d: "Zahlungen auf Stellar, deren Betrag hinter einem Zero-Knowledge-Beweis auf der Blockchain verborgen bleibt. Vorerst im Testnet.", a: "So funktionieren sie" },
         wallet: { t: "Cosmos Wallet", d: "Eine nicht verwahrte Wallet für Stellar, Solana und Monad: eine Web-App, eine Browser-Erweiterung und Apps für Android, Windows, macOS und Linux. Die Schlüssel werden auf dem Gerät erzeugt und verschlüsselt.", a: "Zur Wallet" },
       },
@@ -1046,12 +1046,12 @@ export default {
   },
   swapsPage: {
     metaTitle: "Token zwischen Netzwerken tauschen, ohne Konto | Cosmos Pay",
-    metaDescription: "Tauschen Sie Token über mehr als 35 Netzwerke und senden Sie USDT0 von Stellar in 21 Netzwerke, ohne Konto: Ihre Wallet signiert und niemand verwahrt Ihr Geld. Mit öffentlicher Swap-API.",
+    metaDescription: "Token zwischen {n} Netzwerken tauschen und USDT0 von Stellar in 21 Netzwerke senden, ohne Konto, hier oder per API. Cosmos Pay verwahrt Ihr Geld nie.",
     title: "Zwischen Netzwerken tauschen, ohne Konto",
-    lede: "Wählen Sie, womit Sie zahlen und was Sie erhalten. Ihre Wallet signiert, und das Geld läuft nie über Cosmos Pay.",
+    lede: "Wählen Sie, womit Sie zahlen und was Sie erhalten. Ihre Wallet signiert, und Cosmos Pay verwahrt Ihr Geld nie.",
     facts: [
       { t: "Ohne Konto", s: "Seite öffnen und tauschen. Die öffentliche API funktioniert genauso." },
-      { t: "Über 35 Netzwerke", s: "Die Märkte von Stellar, Solana und Monad und jedes Netzwerk, das NEAR Intents erreicht." },
+      { t: "{n} Netzwerke", s: "Die Märkte von Stellar, Solana und Monad und jedes Netzwerk, das NEAR Intents erreicht." },
       { t: "Ohne Verwahrung", s: "Jeder Swap ist eine Transaktion, die Ihre Wallet signiert, oder eine Einzahlungsadresse, die Sie bezahlen." },
     ],
     fee: "Provision: {pct} pro Swap ohne Konto, {max} bis {min} mit einem Tarif, zuzüglich der Netzwerkgebühren.",
@@ -1068,7 +1068,7 @@ export default {
     faqTitle: "Fragen",
     faq: [
       { q: "Brauche ich ein Konto?", a: "Nein. Die Seite und die öffentliche API nutzen einen gemeinsamen öffentlichen Schlüssel. Ein Konto bringt einen Verlauf im Dashboard und mit einem Tarif eine niedrigere Provision: {max} bis {min}." },
-      { q: "Wer verwahrt mein Geld?", a: "Niemand. Ein Swap in einem Netzwerk ist eine Transaktion, die Ihre Wallet signiert, ein Swap zwischen Netzwerken eine Einzahlungsadresse, die NEAR Intents abwickelt, und USDT0 reist über LayerZero." },
+      { q: "Wer verwahrt mein Geld?", a: "Nicht Cosmos Pay. Ein Swap in einem Netzwerk ist eine einzige Transaktion, die Ihre Wallet signiert. Ein Swap zwischen Netzwerken wartet an einer Einzahlungsadresse von NEAR Intents, bis NEAR Intents ihn abwickelt oder den Betrag erstattet, und USDT0 reist über LayerZero." },
       { q: "Was kostet es?", a: "{pct} pro Swap ohne Konto, {max} bis {min} mit einem Tarif, zuzüglich der Netzwerkgebühren. USDT0 aus Stellar zahlt außerdem die LayerZero-Gebühr, in XLM. Jedes Angebot zeigt die Gebühren, bevor Sie signieren." },
       { q: "Warum bleibt bei USDT0 ein winziger Rest?", a: "USDT0 wird mit sechs Dezimalstellen übertragen und Stellar hat sieben: Die siebte bleibt in Ihrem Konto." },
       { q: "Kann ich meinen Kunden Swaps anbieten?", a: "Ja, als Service: Wir betreiben die Swaps, und Sie geben nur die Wallet-Adressen an, die das Geld erhalten, und signieren mit Ihrer Wallet. Jeder Swap zahlt die Provision Ihres Tarifs, und Sie können Ihre eigene Gebühr hinzufügen, die an die Wallet Ihrer Wahl geht." },
@@ -1940,7 +1940,7 @@ export default {
       groups: { open: "In Bearbeitung", succeeded: "Erfolgreich", refunded: "Erstattet", failed: "Fehlgeschlagen", expired: "Abgelaufen" },
       typeLabel: "Typ",
       types: { all: "Alle Typen", same: "Auf einer Chain", cross: "Zwischen Chains", usdt0: "USDT0-Brücke" },
-      form: { desc: "Wählen Sie, was Sie senden und was Sie erhalten. Auf einer Chain handelt es ihr Markt; zwischen Chains wickelt NEAR Intents es ab. Nichts läuft über Cosmos Pay.", from: "Sie senden", to: "Sie erhalten", chain: "Chain", asset: "Asset", amountHint: "Wie viel des Assets Sie senden.", flip: "Gesendetes und Empfangenes tauschen", routeLine: "Route: {route}", route: "Route", venueCross: "NEAR Intents" },
+      form: { desc: "Wählen Sie, was Sie senden und was Sie erhalten. Auf einer Chain handelt es ihr Markt; zwischen Chains wickelt NEAR Intents es ab. Cosmos Pay verwahrt die Mittel nie.", from: "Sie senden", to: "Sie erhalten", chain: "Chain", asset: "Asset", amountHint: "Wie viel des Assets Sie senden.", flip: "Gesendetes und Empfangenes tauschen", routeLine: "Route: {route}", route: "Route", venueCross: "NEAR Intents" },
       searchPlaceholder: "Nach ID, Adresse oder Asset suchen…",
       filters: { all: "Alle", PENDING: "Ausstehend", SUBMITTED: "Übermittelt", SUCCEEDED: "Erfolgreich", FAILED: "Fehlgeschlagen", EXPIRED: "Abgelaufen" },
       status: { PENDING: "Ausstehend", SUBMITTED: "Übermittelt", SUCCEEDED: "Erfolgreich", FAILED: "Fehlgeschlagen", EXPIRED: "Abgelaufen", DELIVERED: "Zugestellt" },
@@ -2030,7 +2030,7 @@ export default {
       quoteError: "Der Swap konnte nicht bepreist werden.",
       modal: {
         eyebrow: "Cross-Chain-Swap", title: "Neuer Cross-Chain-Swap",
-        desc: "Sende ein Asset auf einer Chain und empfange ein anderes auf einer anderen Chain. NEAR Intents wickelt ab; nichts läuft über Cosmos Pay.",
+        desc: "Sende ein Asset auf einer Chain und empfange ein anderes auf einer anderen Chain. NEAR Intents wickelt ab; Cosmos Pay verwahrt die Mittel nie.",
         from: "Von", to: "Nach", chain: "Chain", asset: "Asset", assetsLoading: "Assets werden geladen…",
         amount: "Zu sendender Betrag", recipient: "Empfänger",
         refundTo: "Erstattungsadresse",

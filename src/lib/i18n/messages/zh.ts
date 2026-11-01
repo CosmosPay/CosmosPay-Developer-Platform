@@ -262,7 +262,7 @@ export default {
     supportLevels: { standard: "标准", priority: "优先" },
     plans: {
       starter: { desc: "在 Stellar、Solana 和 Monad 上接受真实支付", sub: "+ 18¢ / 笔", pnote: "每笔交易 1.5% + 18¢", team: "最多 2 人", feats: ["部分 API 访问权限", "生产与测试密钥", "USDC 结算", "最多 2 名成员"] },
-      growth: { desc: "为成长中的团队提供更低费率", sub: "/月 · 起", pnote: "起 · 每笔交易 0.75% + 18¢", team: "不限", feats: ["包含 Starter 全部功能", "更低的交易费率", "不限成员数量", "Radar 反欺诈工具", "交易量折扣", "优先支持"] },
+      growth: { desc: "为成长中的团队提供更低费率", sub: "/月", pnote: "每笔交易 0.75% + 18¢", team: "不限", feats: ["包含 Starter 全部功能", "更低的交易费率", "不限成员数量", "Radar 反欺诈工具", "交易量折扣", "优先支持"] },
     },
   },
 
@@ -479,7 +479,7 @@ export default {
         swap: {
           t: "跨网络兑换",
           d: "无论有没有账户，都能在 {n} 个网络之间兑换代币。",
-          long: "在 Stellar DEX、Jupiter（Solana）和 Kuru（Monad）上兑换，或通过 NEAR Intents 在 {n} 个网络之间兑换，并通过 LayerZero 从 Stellar 发送 USDT0。每次兑换要么是由本人签名的交易，要么是由本人付款的充值地址，因此没有人代管资金。公开兑换页面及其 API 无需账户。",
+          long: "在 Stellar DEX、Jupiter（Solana）和 Kuru（Monad）上兑换，或通过 NEAR Intents 在 {n} 个网络之间兑换，并通过 LayerZero 从 Stellar 发送 USDT0。单一网络内的兑换是本人签名的一笔交易；跨网络兑换会停留在 NEAR Intents 的充值地址，直到 NEAR Intents 完成结算或退款。Cosmos Pay 从不代管资金。公开兑换页面及其 API 无需账户。",
           points: ["Stellar DEX、Jupiter 和 Kuru", "通过 NEAR Intents 连接 {n} 个网络", "通过 LayerZero 从 Stellar 发送 USDT0", "无需账户的公开兑换 API"],
         },
         wallet: {
@@ -559,7 +559,6 @@ export default {
     annual: "按年",
     save: "−17%",
     popular: "最受欢迎",
-    from: "起价",
     perMo: "/月",
     billedYearly: "按年计费",
     plans: [
@@ -636,6 +635,7 @@ export default {
   about: {
     title: "关于 Cosmos Pay",
     lede: "Cosmos Pay 为企业打造稳定币支付：支付 API、托管收银台和支付链接、兑换、隐私支付，以及非托管的 Cosmos Wallet，支持 Stellar、Solana 和 Monad。",
+    disambiguation: "Cosmos Pay（cosmospay.lat）与 Cosmos Network（ATOM）是不同的项目。",
     facts: {
       networks: "网络",
       networksValue: "Stellar、Solana 和 Monad",
@@ -651,7 +651,7 @@ export default {
       items: {
         api: { t: "支付 API 和 SDK", d: "以 OpenAPI 编写文档的 REST API 和 TypeScript SDK，用于创建支付意图和支付链接，并在支付确认时发送签名 Webhook。", a: "阅读文档" },
         checkout: { t: "托管收银台和支付链接", d: "带二维码的支付链接和由我们托管的收银台页面，提供四种设计和七种语言。支付按钮或嵌入式收银台只需一个 script 标签。", a: "查看集成方式" },
-        swaps: { t: "兑换", d: "无需账户，在 35 个以上网络之间兑换代币，并从 Stellar 发送 USDT0。", a: "打开兑换" },
+        swaps: { t: "兑换", d: "无需账户，在 {n} 个网络之间兑换代币，并从 Stellar 发送 USDT0。", a: "打开兑换" },
         private: { t: "隐私支付", d: "Stellar 上的支付，其金额借助零知识证明在链上保持隐藏。目前仅在测试网上提供。", a: "了解其工作方式" },
         wallet: { t: "Cosmos Wallet", d: "适用于 Stellar、Solana 和 Monad 的非托管钱包：网页应用、浏览器扩展，以及 Android、Windows、macOS 和 Linux 应用。密钥在设备上生成并加密。", a: "获取钱包" },
       },
@@ -691,12 +691,12 @@ export default {
   /* ---------------- dashboard ---------------- */
   swapsPage: {
     metaTitle: "无需账户，跨网络兑换代币 | Cosmos Pay",
-    metaDescription: "无需账户，在 35 个以上网络之间兑换代币，并从 Stellar 向 21 个网络发送 USDT0：由您的钱包签名，没有人托管您的资金。附公开兑换 API。",
+    metaDescription: "无需账户，在 {n} 个网络之间兑换代币，并从 Stellar 向 21 个网络发送 USDT0，可在本页或通过公开 API 完成。Cosmos Pay 从不托管您的资金。",
     title: "跨网络兑换，无需账户",
-    lede: "选择您用什么支付、收到什么。由您的钱包签名，资金从不经过 Cosmos Pay。",
+    lede: "选择您用什么支付、收到什么。由您的钱包签名，Cosmos Pay 从不托管您的资金。",
     facts: [
       { t: "无需账户", s: "打开页面即可兑换。公开 API 也是一样。" },
-      { t: "35 个以上网络", s: "Stellar、Solana 和 Monad 的市场，以及 NEAR Intents 覆盖的所有网络。" },
+      { t: "{n} 个网络", s: "Stellar、Solana 和 Monad 的市场，以及 NEAR Intents 覆盖的所有网络。" },
       { t: "非托管", s: "每次兑换都是由您的钱包签名的交易，或由您支付的存款地址。" },
     ],
     fee: "佣金：无账户时每次兑换 {pct}，使用套餐时为 {max} 至 {min}，另加网络费用。",
@@ -713,7 +713,7 @@ export default {
     faqTitle: "常见问题",
     faq: [
       { q: "需要账户吗？", a: "不需要。本页和公开 API 使用共享公钥。有了账户，可以在控制台查看历史记录，选择套餐还能享受更低佣金：{max} 至 {min}。" },
-      { q: "谁托管我的资金？", a: "没有人。单一网络内的兑换是由您的钱包签名的交易，跨网络兑换是由 NEAR Intents 结算的存款地址，USDT0 则通过 LayerZero 传输。" },
+      { q: "谁托管我的资金？", a: "不是 Cosmos Pay。单一网络内的兑换是由您的钱包签名的一笔交易。跨网络兑换会停留在 NEAR Intents 的存款地址，直到 NEAR Intents 完成结算或退款；USDT0 则通过 LayerZero 传输。" },
       { q: "费用是多少？", a: "无账户时每次兑换 {pct}，使用套餐时为 {max} 至 {min}，另加网络费用。从 Stellar 发送 USDT0 还需支付 LayerZero 的费用，以 XLM 支付。每份报价都会在您签名前显示所有费用。" },
       { q: "为什么 USDT0 会留下一点余额？", a: "USDT0 以六位小数跨链，而 Stellar 有七位：第七位会留在您的账户中。" },
       { q: "我可以向我的客户提供兑换吗？", a: "可以，以服务的形式：兑换由我们运行，您只需填写收款的钱包地址，并用您的钱包签名。每次兑换按您套餐的佣金计费，您还可以加上自己的费用，支付到您选择的钱包。" },
@@ -1306,7 +1306,7 @@ export default {
       groups: { open: "进行中", succeeded: "成功", refunded: "已退款", failed: "失败", expired: "已过期" },
       typeLabel: "类型",
       types: { all: "所有类型", same: "单链", cross: "跨链", usdt0: "USDT0 跨链" },
-      form: { desc: "选择您要发送和收到的资产。单链兑换由该链的市场撮合；跨链兑换由 NEAR Intents 结算。资金不经过 Cosmos Pay。", from: "您发送", to: "您收到", chain: "链", asset: "资产", amountHint: "您要发送的资产数量。", flip: "互换发送和收到的资产", routeLine: "路由：{route}", route: "路由", venueCross: "NEAR Intents" },
+      form: { desc: "选择您要发送和收到的资产。单链兑换由该链的市场撮合；跨链兑换由 NEAR Intents 结算。Cosmos Pay 从不代管资金。", from: "您发送", to: "您收到", chain: "链", asset: "资产", amountHint: "您要发送的资产数量。", flip: "互换发送和收到的资产", routeLine: "路由：{route}", route: "路由", venueCross: "NEAR Intents" },
       searchPlaceholder: "按 ID、地址或资产搜索…",
       filters: { all: "全部", PENDING: "待处理", SUBMITTED: "已提交", SUCCEEDED: "成功", FAILED: "失败", EXPIRED: "已过期" },
       status: { PENDING: "待处理", SUBMITTED: "已提交", SUCCEEDED: "成功", FAILED: "失败", EXPIRED: "已过期", DELIVERED: "已送达" },
@@ -1396,7 +1396,7 @@ export default {
       quoteError: "无法为此兑换报价。",
       modal: {
         eyebrow: "跨链兑换", title: "新建跨链兑换",
-        desc: "在一条链上发送资产，在另一条链上收到另一种资产。由 NEAR Intents 结算，资金不经过 Cosmos Pay。",
+        desc: "在一条链上发送资产，在另一条链上收到另一种资产。由 NEAR Intents 结算，Cosmos Pay 从不代管资金。",
         from: "从", to: "至", chain: "链", asset: "资产", assetsLoading: "正在加载资产…",
         amount: "发送数量", recipient: "收款方",
         refundTo: "退款地址",

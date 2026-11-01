@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import { PLAN_META } from '@/components/cosmos/pricing/data';
 import { PLAN_DATA, PLAN_IDS as ONBOARDING_PLAN_IDS, SUPPORT_FOR, VOL_REC } from '@/components/cosmos/onboarding/data';
 import { messages } from '@/lib/i18n/messages/index';
-import { PLAN_IDS, isOfferedPlan } from '@/lib/plans';
+import { PLAN_IDS, PLAN_SPECS, isOfferedPlan } from '@/lib/plans';
 
 const LOCALES = Object.keys(messages) as (keyof typeof messages)[];
 
@@ -58,4 +58,22 @@ test('the onboarding wizard only offers plans that are still offered, each with 
   }
   assert.deepEqual(Object.keys(PLAN_DATA).sort(), [...ONBOARDING_PLAN_IDS].sort());
   for (const rec of Object.values(VOL_REC)) assert.ok(ONBOARDING_PLAN_IDS.includes(rec), `recommends ${rec}`);
+});
+
+/* plans.ts gives Essentials and Growth a flat monthly fee ("$99/mo"), so no card, wizard card or
+   catalog line may present it as a starting price ("from $99"). */
+test("the monthly prices are plans.ts's flat fees, never a 'from' price", () => {
+  const offered = PLAN_IDS.filter((id) => id !== 'enterprise');
+  PLAN_META.forEach((meta, i) => {
+    if ('mo' in meta) assert.equal(`$${meta.mo}/mo`, PLAN_SPECS[offered[i]].price, `${offered[i]} card`);
+    assert.ok(!('from' in meta), `${offered[i]} card has no "from" flag`);
+  });
+  assert.equal(`${PLAN_DATA.growth.price}${PLAN_DATA.growth.per}`, PLAN_SPECS.growth.price, 'onboarding growth');
+  // "from" in each language the catalogs used for it.
+  const FROM = /(^|[\s·])(from|desde|a partir de|à partir de|ab)([\s·]|$)|शुरू|起/;
+  for (const code of LOCALES) {
+    assert.ok(!('from' in messages[code].pricing), `${code}.pricing.from went with the "from" price`);
+    const { sub, pnote } = messages[code].onboarding.plans.growth;
+    assert.doesNotMatch(`${sub} ${pnote}`, FROM, `${code}.onboarding.plans.growth`);
+  }
 });

@@ -9,16 +9,19 @@ import Subnav from "@/components/payments/landing/Subnav.astro";
 import PageHeader from "@/components/payments/landing/PageHeader.astro";
 import InlineCta from "@/components/payments/landing/InlineCta.astro";
 import { landingData } from "@/components/payments/landing/data";
+import { pageMeta } from "@/lib/payments/landing-i18n";
 import Faq from "@/components/payments/landing/sections/Faq.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
 import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
+// Its search title and description, with any `{n}` filled (the same words its JSON-LD states).
+const meta = pageMeta(d.t, "faq");
 ---
 
-<PaymentsLayout title={d.t.pages.faq.meta} description={d.t.pages.faq.lede} indexable>
-  <LandingHead slot="head" d={d} page="faq" title={d.t.pages.faq.meta} description={d.t.pages.faq.lede} />
+<PaymentsLayout title={meta.title} description={meta.description} indexable>
+  <LandingHead slot="head" d={d} page="faq" title={meta.title} description={meta.description} />
 
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current="faq" />

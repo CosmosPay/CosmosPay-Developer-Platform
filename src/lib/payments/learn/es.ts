@@ -185,14 +185,14 @@ export const es: LearnMessages = {
           title: "Dónde encaja Cosmos Pay",
           body: [
             "Cosmos Pay es una pasarela de pagos con stablecoins sin custodia en Stellar, Solana y Monad. Cobras con un enlace de pago, el checkout alojado o la API de pagos, y eliges las direcciones de wallet que reciben el dinero. Cosmos Pay no guarda las claves de nadie.",
-            "En Stellar y Solana tu cliente paga directo a tu dirección. En Monad cada pago va a su propia dirección de depósito, que lo reenvía a la tuya. Cada pago se puede verificar en la red, y cada checkout pagado enlaza su transacción en un explorador público.",
+            "En Stellar y Solana tu cliente paga directo a tu dirección. En Monad cada pago va a una dirección de depósito creada para él, que solo puede reenviarlo a tu dirección (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella. Cada pago se puede verificar en la red, y cada checkout pagado enlaza su transacción en un explorador público.",
           ],
           links: { security: "Cómo se protegen los pagos", acceptGuide: "Cómo aceptar pagos en USDC online", integrations: "Opciones de integración" },
         },
       },
       faq: {
         final: { q: "¿Se puede hacer un contracargo de un pago en stablecoins?", a: "No. Una vez que la red lo confirma, es definitivo. Un reembolso es un pago que el negocio envía de vuelta desde su wallet." },
-        custody: { q: "¿Cosmos Pay retiene mi dinero?", a: "No. En Stellar y Solana quien paga envía directo a tu dirección. En Monad cada pago va a su propia dirección de depósito, que lo reenvía a la tuya menos la comisión de red." },
+        custody: { q: "¿Cosmos Pay retiene mi dinero?", a: "No. En Stellar y Solana quien paga envía directo a tu dirección. En Monad cada pago va a una dirección de depósito creada para él, que solo puede reenviarlo a tu dirección (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella." },
         wallet: { q: "¿Necesito mi propia wallet?", a: "Sí. Los pagos llegan a una dirección que controlas en cada red que aceptes, así que los fondos son tuyos desde el primer pago." },
         customers: { q: "¿Mis clientes necesitan una cuenta?", a: "No necesitan una cuenta en Cosmos Pay. Necesitan una wallet en la red del pago que tenga la stablecoin." },
       },
@@ -211,7 +211,7 @@ export const es: LearnMessages = {
         rows: {
           link: { k: "Enlace de pago", stellar: "SEP-7 (web+stellar:pay) y su código QR", solana: "Solicitud de transferencia de Solana Pay (solana:) y su código QR", monad: "EIP-681 (ethereum:) y su código QR, hacia una dirección de depósito creada para ese pago" },
           match: { k: "Cómo se identifica un pago", stellar: "Un memo numérico en el enlace", solana: "Una clave de referencia de Solana Pay en el enlace", monad: "Su propia dirección de depósito" },
-          settle: { k: "Adónde va el dinero", stellar: "Directo a tu dirección", solana: "Directo a tu dirección", monad: "La dirección de depósito lo reenvía a tu dirección" },
+          settle: { k: "Adónde va el dinero", stellar: "Directo a tu dirección", solana: "Directo a tu dirección", monad: "Una dirección de depósito que solo puede reenviarlo a tu dirección" },
           fee: { k: "Comisión de red", stellar: "La cubre la wallet de quien paga", solana: "La cubre la wallet de quien paga", monad: "La wallet de quien paga cubre su transferencia; la comisión del reenvío se descuenta del pago" },
           presets: { k: "Activos predefinidos" },
           test: { k: "Red de pruebas" },

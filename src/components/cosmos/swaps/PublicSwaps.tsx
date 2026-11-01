@@ -15,6 +15,7 @@ import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { publicSwapApi, type SwapRecordKind } from "@/lib/swap-api";
 import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
 import { swapFeePct, swapFeeRange } from "@/lib/plans";
+import { NETWORK_IDS } from "@/lib/chains";
 
 export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false }: { lang: string; apiBase: string; docsUrl: string; showHeader?: boolean }) {
   initLang(lang);
@@ -26,6 +27,8 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
   const [pick, setPick] = useState<SwapPick | null>(null);
   // The public consumer's commission, and the range a plan brings it down to.
   const rates = { pct: swapFeePct("community"), ...swapFeeRange() };
+  // `{n}` in the facts: how many networks cross-chain swaps reach, never a written count.
+  const nets = { n: NETWORK_IDS.length };
   const base = apiBase.replace(/\/+$/, "");
 
   useEffect(() => {
@@ -69,7 +72,7 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
         </div>
         <div className="pswap-copy">
           <ul className="pswap-facts" role="list">
-            {p.facts.map((f) => <li key={f.t}><b>{f.t}</b><span>{f.s}</span></li>)}
+            {p.facts.map((f) => <li key={f.t}><b>{fmt(f.t, nets)}</b><span>{fmt(f.s, nets)}</span></li>)}
           </ul>
           <p className="pswap-fee">{fmt(p.fee, rates)}</p>
         </div>

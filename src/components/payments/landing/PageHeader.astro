@@ -5,7 +5,9 @@
 // render on the right (3dicons, CC0). The general nav and the section navigation sit above it.
 // A guide passes its own words (`copy`), the hub between home and itself (`parent`: /learn) and
 // the line under its lede (`byline`: when it was last updated, and by whom).
+// A `{n}` in the lede is the number of networks cross-chain swaps reach, as in the page's description.
 import type { LandingData } from "@/components/payments/landing/data";
+import { fillPageCopy } from "@/lib/payments/landing-i18n";
 
 type PageKey = "integrations" | "swaps" | "useCases" | "security" | "fees" | "faq" | "compare" | "stellar" | "solana" | "monad";
 interface Props {
@@ -36,7 +38,7 @@ const copy = Astro.props.copy ?? (d.t.pages[page ?? "faq"] as { nav: string; tit
         </ol>
       </nav>
       <h1 class="pl-page-title">{copy.title}</h1>
-      <p class="pl-lede">{copy.lede}</p>
+      <p class="pl-lede">{fillPageCopy(copy.lede)}</p>
       {byline && (
         <p class="pl-byline">
           {byline.datetime ? <time datetime={byline.datetime}>{byline.text}</time> : <span>{byline.text}</span>}
