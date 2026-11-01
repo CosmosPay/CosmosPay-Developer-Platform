@@ -43,7 +43,8 @@ export const CONTENT_SIGNAL = `Content-Signal: search=yes, ai-input=yes, ai-trai
 
 /* What every payments page loads to render, and the files crawlers fetch on their own (share
    images, icons, the manifest, the sitemap, llms.txt, auth.md, the /.well-known files: security.txt,
-   the API catalog, the agent skills index). The domain blocks everything else (payment
+   the API catalog, the agent skills index; Bing's ownership file, src/lib/seo/bing-site-auth.ts).
+   The domain blocks everything else (payment
    links are personal and short-lived), so without these Google renders the indexable pages without
    their styles and scripts and link previews lose their image. */
 const PAYMENTS_RESOURCES = [
@@ -62,6 +63,7 @@ const PAYMENTS_RESOURCES = [
   "/llms-full.txt",
   "/auth.md",
   "/.well-known/",
+  "/BingSiteAuth.xml$",
 ];
 
 /** robots.txt for one domain. */

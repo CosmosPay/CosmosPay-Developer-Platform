@@ -266,6 +266,11 @@ export default defineConfig({
       // `access: 'secret'` only makes it a runtime read (a restart that reloads .env, no rebuild).
       // Unset: /<key>.txt answers 404 and the script refuses to run.
       INDEXNOW_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      // Bing Webmaster Tools' user code (32 hex characters, from "Add & verify site" > "XML File"):
+      // every domain serves it in /BingSiteAuth.xml (src/pages/BingSiteAuth.xml.ts), which is how
+      // Bing verifies each of the three sites. Public by design, a runtime read like INDEXNOW_KEY;
+      // keep it set, or the sites stop being verified. Unset: the file answers 404.
+      BING_SITE_AUTH: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
 
