@@ -31,6 +31,7 @@ import { SITE } from "@/components/cosmos/lib/constants";
 import { PLAN_SPECS } from "@/lib/plans";
 import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
 import { articleNode, howToNode, type JsonLdNode } from "@/lib/seo/schema";
+import { pageShareImage } from "@/lib/seo/og-image-urls";
 
 interface Props {
   guide: Guide;
@@ -78,7 +79,8 @@ const nodes: JsonLdNode[] = [
     site: SITE,
     published: dates.published,
     modified: dates.modified,
-    image: `${PAYMENTS}/media/coin-ramp-poster.jpg`,
+    // The guide's share card in the page's language (og:image), else the hero's poster.
+    image: pageShareImage("payments", pagePath(page), lang, PAYMENTS)?.url ?? `${PAYMENTS}/media/coin-ramp-poster.jpg`,
   }),
   ...(cfg.howTo && g.steps ? [howToNode({ url, name: text(g.steps.title), description: g.lede, lang, steps: steps.map((s) => ({ name: s.title, text: s.body })) })] : []),
 ];

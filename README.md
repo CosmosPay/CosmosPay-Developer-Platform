@@ -217,8 +217,9 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | Command | Action |
 | :--- | :--- |
 | `npm run dev` | Dev server with HMR at `localhost:4321` (`--host`) |
-| `npm run build` | `prisma generate` + docs + embed bundle + production build → `dist/` |
+| `npm run build` | `prisma generate` + docs + embed bundle + share cards + production build → `dist/` |
 | `npm run embed:build` | Bundle `src/embed/` into `public/embed/cosmos-pay.js` with the env's origins inlined (`build` and `predev` run it; `-- --mode development` reads `.env.development`) |
+| `npm run og:build` | Draw the share card (1200x630 PNG) of every indexable page of the company site and the gateway in each of its languages into `src/assets/og/` (`build`, `build:app` and `predev` run it; only changed cards are redrawn) |
 | `npm run start` | Run the built server (`node ./dist/server/entry.mjs`) |
 | `npm run preview` | Preview the build locally |
 | `npm run db:generate` | Regenerate the Prisma client |

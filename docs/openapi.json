@@ -12859,7 +12859,7 @@
     },
     "/v1/defindex/vaults": {
       "get": {
-        "description": "The DeFindex vaults on the key's network (a `prod` key reads mainnet, a `dev` key testnet), with DeFindex's answer passed through as is. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
+        "description": "The DeFindex vaults on the key's network (a `prod` key reads mainnet, a `dev` key testnet), with DeFindex's answer passed through as is. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope.",
         "operationId": "DefindexController_vaults_v1",
         "parameters": [],
         "responses": {
@@ -12874,22 +12874,30 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Discover DeFindex vaults",
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true,
         "x-cosmos-scopes-any": [
           "liquidity:read",
           "swaps:read"
+        ],
+        "x-cosmos-upstream": [
+          "DeFindex"
         ]
       }
     },
     "/v1/defindex/vaults/{vault}": {
       "get": {
-        "description": "One vault's details from DeFindex on the key's network, passed through as is; `vault` is its contract address (`C...`). DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
+        "description": "One vault's details from DeFindex on the key's network, passed through as is; `vault` is its contract address (`C...`). DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope.",
         "operationId": "DefindexController_info_v1",
         "parameters": [
           {
@@ -12919,22 +12927,30 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Read a DeFindex vault",
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true,
         "x-cosmos-scopes-any": [
           "liquidity:read",
           "swaps:read"
+        ],
+        "x-cosmos-upstream": [
+          "DeFindex"
         ]
       }
     },
     "/v1/defindex/vaults/{vault}/balance": {
       "get": {
-        "description": "`account`'s shares and their underlying value in the vault, read from DeFindex on the key's network and passed through as is. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope. The shared public key may call it.",
+        "description": "`account`'s shares and their underlying value in the vault, read from DeFindex on the key's network and passed through as is. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:read` or `swaps:read` scope.",
         "operationId": "DefindexController_balance_v1",
         "parameters": [
           {
@@ -12972,22 +12988,30 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Read an account balance in a DeFindex vault",
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true,
         "x-cosmos-scopes-any": [
           "liquidity:read",
           "swaps:read"
+        ],
+        "x-cosmos-upstream": [
+          "DeFindex"
         ]
       }
     },
     "/v1/defindex/vaults/{vault}/deposit": {
       "post": {
-        "description": "DeFindex builds the deposit of `amounts` (integer strings) into the vault for `caller` to sign, on the key's network; `invest` defaults to true and `slippageBps` to 100. Nothing is stored here: sign the returned XDR and send it to `POST /v1/defindex/submit`. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
+        "description": "DeFindex builds the deposit of `amounts` (integer strings in minor units, at most 9007199254740991 each) into the vault for `caller` on the key's network; `invest` defaults to true and `slippageBps` to 100. The returned XDR is checked to be exactly that call and recorded for this key for up to 15 minutes (less if its time bounds close sooner): sign it unchanged and send it to `POST /v1/defindex/submit`.\n\nRequires the `liquidity:write` or `swaps:write` scope.",
         "operationId": "DefindexController_deposit_v1",
         "parameters": [
           {
@@ -13011,7 +13035,37 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefindexBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/ValidationFailed"
@@ -13025,24 +13079,42 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Build an unsigned DeFindex deposit",
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "defindex:build",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
         "x-cosmos-scopes-any": [
           "liquidity:write",
           "swaps:write"
+        ],
+        "x-cosmos-upstream": [
+          "DeFindex"
         ]
       }
     },
     "/v1/defindex/vaults/{vault}/withdraw": {
       "post": {
-        "description": "DeFindex builds the burn of `shares` (an integer string) for the vault's underlying assets, for `caller` to sign on the key's network; `slippageBps` defaults to 100. Nothing is stored here: sign the returned XDR and send it to `POST /v1/defindex/submit`. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
+        "description": "DeFindex builds the burn of `shares` (an integer string, at most 9007199254740991) for the vault's underlying assets, for `caller` on the key's network; `slippageBps` defaults to 100. The returned XDR is checked to be exactly that call and recorded for this key for up to 15 minutes (less if its time bounds close sooner): sign it unchanged and send it to `POST /v1/defindex/submit`.\n\nRequires the `liquidity:write` or `swaps:write` scope.",
         "operationId": "DefindexController_withdraw_v1",
         "parameters": [
           {
@@ -13066,7 +13138,37 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefindexBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/ValidationFailed"
@@ -13080,24 +13182,42 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Build an unsigned DeFindex share withdrawal",
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "defindex:build",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
         "x-cosmos-scopes-any": [
           "liquidity:write",
           "swaps:write"
+        ],
+        "x-cosmos-upstream": [
+          "DeFindex"
         ]
       }
     },
     "/v1/defindex/submit": {
       "post": {
-        "description": "Sends the signed `xdr` to the key's network through DeFindex and passes its answer through (hash, success, ledger). The XDR is not checked against one built here, and nothing is stored. DeFindex failures are `502 provider_error`, and a deployment without a DeFindex API key answers `503 misconfigured`.\n\nRequires the `liquidity:write` or `swaps:write` scope. The shared public key may call it.",
+        "description": "Relays `xdr` through DeFindex only when it is a signed copy of a transaction that `POST /v1/defindex/vaults/{vault}/deposit` or `/withdraw` built for this same API key on its network, before it expires; anything else is refused before DeFindex is called. Relayed once: DeFindex's answer is stored, and submitting the same transaction again answers it without calling DeFindex. When DeFindex gives no answer (502, 503) the same transaction may be submitted again.\n\nRequires the `liquidity:write` or `swaps:write` scope.",
         "operationId": "DefindexController_submit_v1",
         "parameters": [],
         "requestBody": {
@@ -13112,10 +13232,71 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefindexSubmitResultEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/ValidationFailed"
+            "description": "`validation_failed`: the body fails validation, or `xdr` is not a transaction envelope, is a fee bump, or carries no signature. `invalid_state_transition`: the transaction expired before it was submitted; build a new one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "xdr carries no signatures; sign the transaction before submitting it",
+                      "path": "/v1/defindex/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "This DeFindex transaction expired before it was submitted and can no longer be relayed. Build a new one.",
+                      "path": "/v1/defindex/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -13123,18 +13304,82 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "404": {
+            "description": "No transaction built here for this API key on its network hashes to the signed one: it was changed after the build (anything but the signatures), built for another key or network, or never built here. The same answer for all of them.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "This transaction was not built by POST /v1/defindex/vaults/{vault}/deposit or /withdraw for this API key on this network. Build it here, sign it unchanged, and submit it before it expires.",
+                      "path": "/v1/defindex/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another submit of the same transaction is waiting for DeFindex. Submit again once it finishes to read its stored answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "This DeFindex transaction is already being submitted. Wait for that submit to finish, then submit it again to read its result.",
+                      "path": "/v1/defindex/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
           }
         },
         "summary": "Submit a signed DeFindex transaction",
         "tags": [
           "DeFindex"
         ],
-        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "defindex:submit",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
         "x-cosmos-scopes-any": [
           "liquidity:write",
           "swaps:write"
+        ],
+        "x-cosmos-upstream": [
+          "DeFindex"
         ]
       }
     },
@@ -26622,6 +26867,7 @@
             "example": [
               "10000000"
             ],
+            "description": "One per vault asset, in the asset's minor units: non-negative integer strings no larger than 9007199254740991.",
             "type": "array",
             "items": {
               "type": "string"
@@ -26646,12 +26892,44 @@
           "caller"
         ]
       },
+      "DefindexBuildEntity": {
+        "type": "object",
+        "properties": {
+          "xdr": {
+            "type": "string",
+            "example": "AAAAAgAAAAB…",
+            "description": "The unsigned transaction (base64 envelope XDR), checked here to be the requested call for `caller` and recorded for the submit. Sign it unchanged: any other change makes it a transaction the submit refuses."
+          },
+          "functionName": {
+            "type": "string",
+            "example": "deposit",
+            "description": "The vault function called."
+          },
+          "params": {
+            "type": "array",
+            "items": {},
+            "description": "The call's arguments, as DeFindex decoded them."
+          },
+          "simulationResponse": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "DeFindex's simulation of the transaction, verbatim."
+          }
+        },
+        "required": [
+          "xdr",
+          "functionName",
+          "params",
+          "simulationResponse"
+        ]
+      },
       "DefindexWithdrawDto": {
         "type": "object",
         "properties": {
           "shares": {
             "type": "string",
-            "example": "1000000"
+            "example": "1000000",
+            "description": "Vault shares to burn: a non-negative integer string no larger than 9007199254740991."
           },
           "caller": {
             "type": "string"
@@ -26672,11 +26950,67 @@
         "type": "object",
         "properties": {
           "xdr": {
-            "type": "string"
+            "type": "string",
+            "description": "The transaction a DeFindex build on this service returned, signed by `caller` (base64 envelope XDR)."
           }
         },
         "required": [
           "xdr"
+        ]
+      },
+      "DefindexSubmitResultEntity": {
+        "type": "object",
+        "properties": {
+          "txHash": {
+            "type": "string",
+            "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the transaction succeeded on-chain."
+          },
+          "result": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": {
+              "type": "vault_deposit",
+              "sharesMinted": "9950000"
+            },
+            "description": "DeFindex's reading of the result: `vault_deposit` with `sharesMinted`, `vault_withdraw` with `amountsOut`, or `unknown` with `value`."
+          },
+          "ledger": {
+            "type": "number",
+            "example": 61234567,
+            "description": "The ledger it closed in."
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-01T12:00:00Z"
+          },
+          "latestLedger": {
+            "type": "number",
+            "example": 61234570
+          },
+          "latestLedgerCloseTime": {
+            "type": "string",
+            "example": "2026-11-01T12:00:15Z"
+          },
+          "feeBump": {
+            "type": "boolean",
+            "example": false
+          },
+          "feeCharged": {
+            "type": "string",
+            "example": "104210",
+            "description": "In stroops."
+          }
+        },
+        "required": [
+          "txHash",
+          "success",
+          "result",
+          "ledger"
         ]
       },
       "ZkTokenEntity": {

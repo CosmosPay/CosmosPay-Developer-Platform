@@ -19,6 +19,7 @@ import { PAYMENTS } from "@/lib/payments/urls";
 import { SITE } from "@/components/cosmos/lib/constants";
 import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
 import { articleNode, itemListNode } from "@/lib/seo/schema";
+import { pageShareImage } from "@/lib/seo/og-image-urls";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
@@ -44,7 +45,8 @@ const nodes = [
       site: SITE,
       published: GUIDE_DATES[g.guide].published,
       modified: GUIDE_DATES[g.guide].modified,
-      image: `${PAYMENTS}/media/coin-ramp-poster.jpg`,
+      // Each guide's share card in the hub's language, as its own page states it.
+      image: pageShareImage("payments", pagePath(`learn/${g.guide}`), lang, PAYMENTS)?.url ?? `${PAYMENTS}/media/coin-ramp-poster.jpg`,
     }),
   ),
 ];
