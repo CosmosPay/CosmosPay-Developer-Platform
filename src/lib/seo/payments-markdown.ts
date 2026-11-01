@@ -24,6 +24,7 @@ import { publicSwapCalls, USDT0_OTHER_NETWORKS_BEFORE_ROUTES } from "@/lib/publi
 import { messages } from "@/lib/i18n/messages/index";
 import { docsLink, docsRoot, loginUrl } from "@/lib/urls";
 import { localizeHref, pageUrl } from "@/lib/seo/lang-urls";
+import { longDate } from "@/lib/seo/page-dates";
 import { code, h, link, ol, p, table, term, ul, type Block, type MarkdownInput, type PageDoc } from "@/lib/seo/markdown";
 
 /** The gateway's languages: every page is written in all of them. */
@@ -66,6 +67,13 @@ const soon = (d: LandingContent, text: string, isSoon: boolean): string => (isSo
 /** PageHeader.astro: a content page's h1 and its line. */
 function pageHeader(copy: { title: string; lede: string }): Block[] {
   return [h(1, copy.title), p(fillPageCopy(copy.lede))];
+}
+
+/** The line under the lede of /faq, /compare and the network pages: the day the page last changed
+ *  (PageHeader.astro's byline), when the input knows it. */
+function updatedLine({ d, lang, input }: Ctx, path: string): Block[] {
+  const modified = input.modified?.("payments", path, lang);
+  return modified ? [p(d.t.pages.updated.replace("{date}", longDate(modified, lang)))] : [];
 }
 
 /** Hero.astro (the home's h1). */
@@ -354,6 +362,7 @@ function networkPage(ctx: Ctx, chain: Chain): Block[] {
   const questions = Object.values(t.networks[chain].faq).map((f) => ({ q: f.q, a: f.a.replace("{rate}", `${PRIVATE_PAYMENT_FEE_PCT}%`) }));
   return [
     ...pageHeader(t.pages[chain]),
+    ...updatedLine(ctx, `/${chain}`),
     ...networkFacts(ctx, chain),
     ...networkAssets(ctx, chain),
     ...pricing(ctx, { compact: true, heading: t.network.feesTitle, lede: t.networks[chain].feesLede }),
@@ -486,10 +495,11 @@ function contentPage(ctx: Ctx, page: PaymentsPage): Block[] {
     case "fees":
       return [...header("fees"), ...pricing(ctx, { compact: false }), ...finalCta(ctx)];
     case "compare":
-      return [...header("compare"), ...compareRates(ctx), ...finalCta(ctx)];
+      return [...header("compare"), ...updatedLine(ctx, "/compare"), ...compareRates(ctx), ...finalCta(ctx)];
     case "faq":
       return [
         ...header("faq"),
+        ...updatedLine(ctx, "/faq"),
         ...faq(ctx),
         ...guideLinks(ctx, ["stablecoin-payment-gateway", "accept-usdc-payments", "whatsapp-payment-links", "stellar-vs-solana-vs-monad"]),
         ...finalCta(ctx),

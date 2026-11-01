@@ -1,7 +1,8 @@
 ---
 /* /compare on payments.cosmospay.lat: Cosmos Pay's rates beside the published rates they are set
  * against, each with its provider's pricing page and the date it was read
- * (src/lib/payments/compare.ts). */
+ * (src/lib/payments/compare.ts), and the day the page last changed under its lede
+ * (src/lib/seo/page-dates.ts). */
 import "@/styles/payments-landing.css";
 import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
 import SiteFooter from "@/components/cosmos/layout/SiteFooter";
@@ -12,11 +13,13 @@ import { landingData } from "@/components/payments/landing/data";
 import { pageMeta } from "@/lib/payments/landing-i18n";
 import CompareRates from "@/components/payments/landing/sections/CompareRates.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+import { updatedByline } from "@/lib/seo/page-dates-build";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
 // Its search title and description, with any `{n}` filled (the same words its JSON-LD states).
 const meta = pageMeta(d.t, "compare");
+const byline = updatedByline("payments", "/compare", lang, d.t.pages.updated);
 ---
 
 <PaymentsLayout title={meta.title} description={meta.description} indexable>
@@ -24,7 +27,7 @@ const meta = pageMeta(d.t, "compare");
 
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current="compare" />
-    <PageHeader d={d} page="compare" art="3d-calc" />
+    <PageHeader d={d} page="compare" art="3d-calc" byline={byline} />
     <CompareRates d={d} />
     <FinalCta d={d} />
   </main>

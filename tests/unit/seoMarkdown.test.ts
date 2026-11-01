@@ -11,6 +11,7 @@ import { LEARN, guideCopy } from '@/lib/payments/learn/index';
 import { GUIDES, PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 import { messages } from '@/lib/i18n/messages/index';
 import { NETWORK_IDS } from '@/lib/chains';
+import { isSlashlessDocsLink } from '@/lib/urls';
 
 const INPUT: MarkdownInput = {
   site: 'https://cosmospay.lat',
@@ -122,6 +123,39 @@ test('links are absolute, and a page in another language links the pages in that
   assert.ok(md('site', '/about', 'de').includes('(https://payments.cosmospay.lat/stellar?lang=de)'));
   // An English page links the bare addresses.
   assert.ok(md('payments', '/', 'en').includes('(https://payments.cosmospay.lat/faq)'));
+});
+
+test('/faq, /compare and the network pages say when they last changed, as the page does under its lede', () => {
+  const dated: MarkdownInput = { ...INPUT, modified: (area, path) => (area === 'payments' && path !== '/fees' ? '2026-10-31T21:08:08-03:00' : null) };
+  for (const path of ['/faq', '/compare', '/stellar', '/solana', '/monad']) {
+    const en = pageMarkdown('payments', path, 'en', dated) ?? '';
+    assert.match(en, /\n\nUpdated October 31, 2026\n\n/, path);
+    // Right under the lede: the page's h1 (a level down in the document), its lede, then the date.
+    const blocks = en.split('\n\n');
+    assert.equal(blocks.findIndex((b) => b.startsWith('Updated ')), blocks.findIndex((b) => b.startsWith('## ')) + 2, path);
+    for (const lang of ['es', 'pt', 'fr', 'de', 'hi', 'zh']) {
+      const text = pageMarkdown('payments', path, lang, dated) ?? '';
+      assert.ok(text.includes(LANDING[lang as keyof typeof LANDING].pages.updated.replace('{date}', new Intl.DateTimeFormat(lang, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date('2026-10-31T00:00:00Z')))), `${path} ${lang}`);
+    }
+  }
+  // Other pages show no date, and without the dates nothing is said.
+  assert.doesNotMatch(pageMarkdown('payments', '/security', 'en', dated) ?? '', /Updated /);
+  assert.doesNotMatch(md('payments', '/faq'), /Updated /);
+});
+
+test('every link to the docs names its page with the trailing slash (a slashless one is a 301)', () => {
+  let docsLinks = 0;
+  for (const { area, path, lang, md: text } of ALL) {
+    for (const [, href] of text.matchAll(/\]\(([^)]+)\)/g)) {
+      if (!href.startsWith(`${INPUT.dev}/docs`)) continue;
+      docsLinks++;
+      assert.ok(!isSlashlessDocsLink(href, `${INPUT.dev}/docs/`), `${area} ${path} ${lang}: ${href}`);
+    }
+  }
+  assert.ok(docsLinks > 50, `only ${docsLinks} docs links checked`);
+  assert.ok(md('site', '/about').includes('(https://dev.cosmospay.lat/docs/)'));
+  assert.ok(md('payments', '/stellar').includes('(https://dev.cosmospay.lat/docs/api/payment-intents/)'));
+  assert.ok(md('payments', '/integrations').includes('(https://dev.cosmospay.lat/docs/embed/)'));
 });
 
 test('the plans and every service rate come from src/lib/plans.ts', () => {

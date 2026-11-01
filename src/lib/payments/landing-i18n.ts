@@ -313,6 +313,9 @@ const en = {
     more: { integrations: "See every integration option", fees: "Work out your fees", security: "See how payments are protected", faq: "See every question", useCases: "See every use case", compare: "Compare with other providers" },
     notes: ["No monthly fee on Starter", "Try it on testnet with no real money"],
     byNetwork: "Payments by network:",
+    /* The day the page last changed (src/lib/seo/page-dates.ts), under the lede of /faq, /compare
+       and the network pages. */
+    updated: "Updated {date}",
   },
   network: {
     factsTitle: "How a payment works on {network}",
@@ -748,6 +751,7 @@ const es: LandingMessages = {
     more: { integrations: "Ver todas las opciones de integración", fees: "Calcular mis comisiones", security: "Ver cómo protegemos los pagos", faq: "Ver todas las preguntas", useCases: "Ver todos los casos de uso", compare: "Comparar con otros proveedores" },
     notes: ["Sin cuota mensual en Starter", "Prueba en testnet sin dinero real"],
     byNetwork: "Pagos por red:",
+    updated: "Actualizado el {date}",
   },
   network: {
     factsTitle: "Cómo funciona un pago en {network}",
@@ -1182,6 +1186,7 @@ const pt: LandingMessages = {
     more: { integrations: "Ver todas as opções de integração", fees: "Calcular minhas tarifas", security: "Ver como protegemos os pagamentos", faq: "Ver todas as perguntas", useCases: "Ver todos os casos de uso", compare: "Comparar com outros provedores" },
     notes: ["Sem mensalidade no Starter", "Teste na testnet sem dinheiro real"],
     byNetwork: "Pagamentos por rede:",
+    updated: "Atualizado em {date}",
   },
   network: {
     factsTitle: "Como funciona um pagamento na {network}",
@@ -1616,6 +1621,7 @@ const fr: LandingMessages = {
     more: { integrations: "Voir toutes les options d’intégration", fees: "Calculer mes frais", security: "Voir comment les paiements sont protégés", faq: "Voir toutes les questions", useCases: "Voir tous les cas d’usage", compare: "Comparer avec d’autres prestataires" },
     notes: ["Sans abonnement mensuel avec Starter", "Testez sur le testnet sans argent réel"],
     byNetwork: "Paiements par réseau :",
+    updated: "Mis à jour le {date}",
   },
   network: {
     factsTitle: "Comment fonctionne un paiement sur {network}",
@@ -2050,6 +2056,7 @@ const de: LandingMessages = {
     more: { integrations: "Alle Integrationsoptionen ansehen", fees: "Meine Gebühren berechnen", security: "So schützen wir Zahlungen", faq: "Alle Fragen ansehen", useCases: "Alle Anwendungsfälle ansehen", compare: "Mit anderen Anbietern vergleichen" },
     notes: ["Keine Monatsgebühr bei Starter", "Im Testnet ohne echtes Geld testen"],
     byNetwork: "Zahlungen nach Netzwerk:",
+    updated: "Aktualisiert am {date}",
   },
   network: {
     factsTitle: "So funktioniert eine Zahlung auf {network}",
@@ -2484,6 +2491,7 @@ const hi: LandingMessages = {
     more: { integrations: "इंटीग्रेशन के सभी विकल्प देखें", fees: "अपने शुल्क का हिसाब लगाएँ", security: "देखें कि भुगतान कैसे सुरक्षित रहते हैं", faq: "सभी सवाल देखें", useCases: "उपयोग के सभी उदाहरण देखें", compare: "दूसरे प्रदाताओं से तुलना करें" },
     notes: ["Starter पर कोई मासिक शुल्क नहीं", "टेस्टनेट पर बिना असली पैसे के आज़माएँ"],
     byNetwork: "नेटवर्क के हिसाब से भुगतान:",
+    updated: "{date} को अपडेट किया गया",
   },
   network: {
     factsTitle: "{network} पर भुगतान कैसे काम करता है",
@@ -2918,6 +2926,7 @@ const zh: LandingMessages = {
     more: { integrations: "查看全部集成选项", fees: "计算您的费用", security: "了解支付如何受到保护", faq: "查看全部问题", useCases: "查看全部使用场景", compare: "与其他服务商对比" },
     notes: ["Starter 无月费", "在测试网上试用，不涉及真实资金"],
     byNetwork: "按网络查看支付：",
+    updated: "更新于 {date}",
   },
   network: {
     factsTitle: "{network} 上的支付如何运作",
