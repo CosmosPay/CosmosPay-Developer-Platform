@@ -31,7 +31,7 @@ npm run indexnow          # dry run: the live sitemaps' URLs IndexNow would get;
 - **The product speaks English, Spanish, Portuguese, French, German, Hindi and Simplified Chinese**
   (`en es pt fr de hi zh`) on every surface: the platform's catalog (`src/lib/i18n/messages/*.ts`,
   the languages and their flags in `src/lib/i18n/locales.ts`), the payments catalogs
-  (`src/lib/payments/i18n.ts`, `landing-i18n.ts`), the embed (`src/embed/i18n.ts`), Open Graph
+  (`src/lib/payments/i18n.ts`, `landing-i18n.ts`, the guides' `src/lib/payments/learn/<lang>.ts`), the embed (`src/embed/i18n.ts`), Open Graph
   locales (`src/lib/seo/lang-urls.ts`), the company site's search titles (`src/lib/seo/site-meta.ts`),
   `BackToTop.astro` and `src/lib/geo.ts`. A new language goes into all of them. The docs (Fumadocs) stay in five.
 - **Nothing on screen is hardcoded English**: every label, placeholder, aria-label and example value
@@ -39,8 +39,8 @@ npm run indexnow          # dry run: the live sitemaps' URLs IndexNow would get;
   for sample data in placeholders). **Never build a plural with a suffix** (`{s}`): give the
   singular and the plural their own strings (`atLimitOne` / `atLimit`).
 - **Every catalog mirrors English key for key** with the same `{placeholders}` and no empty string:
-  `tests/unit/dashboardI18n.test.ts` (the platform), `paymentsI18n.test.ts` and `embedI18n.test.ts`
-  enforce it. URLs are not copy: links live in the components (`NAV_LINKS`), not the catalogs.
+  `tests/unit/dashboardI18n.test.ts` (the platform), `paymentsI18n.test.ts` (the gateway and its
+  guides) and `embedI18n.test.ts` enforce it. URLs are not copy: links live in the components (`NAV_LINKS`), not the catalogs.
 - **The browser downloads one catalog, the page's language** (`src/lib/i18n/index.tsx`): each
   language is its own chunk, the one `<html lang>` names loaded before the islands hydrate (keep
   it equal to the islands' `lang`, or they wait for theirs), another one when it is picked
@@ -109,7 +109,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -156,12 +156,35 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   one file. `INDEXNOW_KEY` is public by design; `access: 'secret'` only makes it a runtime read.
   The script refuses to run without it, and `--submit` skips a domain whose key file does not
   answer with the key (IndexNow would answer 403) or whose origin is not public https.
-- **A site or gateway page has one address**: asked with a trailing slash, a GET is a 301 to it
-  without (`routeRequest`), and a `?lang=` the pages do not take as written (`ES`, `pt-BR`, `xx`,
-  twice) is a 301 to the language it names, or to the bare path (`normalizeLangQuery`, other
-  parameters kept byte for byte). The middleware adds HSTS (https origins, no includeSubDomains),
-  `Referrer-Policy`, `charset=utf-8` on HTML and `Vary: Accept-Language, Cookie` on a bare path
-  whose language follows the visitor (`src/lib/seo/response-headers.ts`).
+- **A site or gateway page has one address per language**: asked with a trailing slash, a GET is
+  a 301 to it without (`routeRequest`), and a `?lang=` the pages do not take as written (`ES`,
+  `pt-BR`, `xx`, twice) is a 301 to the language it names, or to the bare path
+  (`normalizeLangQuery`, other parameters kept byte for byte). **English is the bare path**: on an
+  indexable page (`isLanguagePage` in `hosts.ts`) `?lang=en` is a 301 to the bare path too, and
+  the bare path always renders English. A visitor whose language cookie (`cosmospay-lang`) or,
+  without one, Accept-Language names another language **the page is written in**
+  (`pageLanguages` in `src/lib/seo/lang-urls.ts`: `/tos` is English and Spanish, so a French
+  browser stays on it) gets a 302 from the bare path to `?lang=<code>` (`langRedirect`): only for
+  GET, never for a crawler (none sends Accept-Language, and a crawler user agent is excluded
+  too), never from an address that already names a language (so never a loop), never on the
+  noindex pages (payment links, `/pay`, `/preview`, `/zk`, `/contact`), which still resolve
+  ?lang → cookie → Accept-Language → en in place and keep `?lang=en`. The cookie is set by the
+  nav's language switcher and by a GET of an indexable page's `?lang=<code>` address (not for a
+  crawler, only when it changes), so a visitor who lands on a language from a search result stays
+  in it; every address still has one language, since a bare path is only ever redirected, never
+  rendered in another. A cookie saying `en` keeps a visitor on English. **Every link keeps the
+  page's language**: on a page in another language than English, a link to an indexable page of
+  either host carries `?lang=<code>` (`localizeHref`; anchors and other parameters kept, English
+  and pages not written in that language left bare, the docs, noindex pages and other sites
+  untouched). The nav and the footer go through `langHref` / `localHref` / `homeFor` /
+  `pricingFor` (`constants.ts`, with `useLang()`), the gateway's pages through `landingData().href`
+  (its `links`, `pageLinks` and `PRICING` come localized), the About page through `langHref`; a
+  new link to one of those pages goes through one of them too. The middleware adds
+  HSTS (https origins, no includeSubDomains), `Referrer-Policy`, `charset=utf-8` on HTML and
+  `Vary: Accept-Language, Cookie` only where those headers decide the answer: a bare indexable
+  page asked with GET (its 200 and its 302, which is also `Cache-Control: private, no-cache`) and
+  the noindex pages; an address that names its language and a bare page asked without GET do not
+  vary (`src/lib/seo/response-headers.ts`).
 
 ### One auth for all three domains
 
@@ -218,8 +241,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
   to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` (the
   home and the content pages are the indexed ones), and the domain has its own seven-language
-  catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`)
-  and resolves the language as ?lang → cookie → Accept-Language → en.
+  catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`).
+  An indexable page's language is its address (English bare, `?lang=` otherwise); a payment
+  page resolves it as ?lang → cookie → Accept-Language → en (see "one address per language").
 
 ### One nav on every view
 
@@ -306,7 +330,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   proves (no private keys stored, the rates of `plans.ts` on /pricing and compared on the
   gateway's /compare, the public docs and OpenAPI document). No legal name, tax id, street
   address, founders, team size, dates, customers or funding until the owner provides them. The
-  page's header comment names each fact's source; a new fact brings its source with it.
+  page's header comment names each fact's source; a new fact brings its source with it. Under the
+  lede one visible line (`about.disambiguation`) says Cosmos Pay is a different project from the
+  Cosmos Network (ATOM), in the words of the Organization's `disambiguatingDescription` and
+  llms.txt.
 
 ### The institutional skin (payments site and dashboard)
 
@@ -819,6 +846,23 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   questions, which its JSON-LD repeats as an FAQPage. They are not in the section bar: the footer's
   "Networks" group (every domain), the home's networks marquee and the FAQ's network line link them.
   Settlement time is said only where the copy already states it (about 5 seconds on Stellar).
+  **The guides** (product owner, 2026-11-01): `/learn` lists them (`LEARN_PAGES`, `GUIDES` and
+  `GUIDE_DATES` in `site-pages.ts`) and each is `/learn/<slug>` (`src/pages/payments/learn/`,
+  `src/components/payments/learn/GuidePage.astro`), answer first: the header's lede answers the
+  question the title asks in two or three sentences, then the blocks `GUIDE_CONFIG`
+  (`src/lib/payments/learn/index.ts`) orders (sections, numbered steps, the network comparison built
+  from `chains.ts`, `network-pages.ts` and `plans.ts`), its questions, related guides and the final
+  call. Copy in `src/lib/payments/learn/<lang>.ts`, one file per language mirroring `en.ts`; links
+  are keys of `learn/links.ts` (the gateway's pages, docs pages that exist, and the primary source
+  of any claim about another company). No legal, regulatory or tax content, no figure that is not a
+  product fact (product owner). Each guide shows its last update, and that date is its JSON-LD
+  `dateModified` and its sitemap `lastmod`: change `GUIDE_DATES` with the text. JSON-LD: the page,
+  its BreadcrumbList (Overview > Guides > the guide), an Article or TechArticle by the shared
+  Organization, a HowTo only where the page numbers the steps, an FAQPage only for questions it
+  shows; the hub is a CollectionPage with the guides' ItemList. `tests/unit/paymentsLearn.test.ts`
+  keeps every title within 60 characters and every description within 155 in all seven languages.
+  The section bar ends with the hub, the footer's Resources > Guides leads to it, and /faq, the
+  network pages and /integrations link guides (`GuideLinks.astro`).
   **`/compare`** sets each rate beside the published one it is 75% of (see "Plans").
   It is the first thing under the nav on every page, the home included (product owner: no
   waiting for it), so there the hero starts under it instead of running up under the nav. Its
@@ -835,22 +879,40 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   extras `LandingHead.astro`. Pinned stages stick under the nav and the section bar
   (`--subnav-h`); the script reads where each stage sticks. On a phone the section bar scrolls
   sideways and the script centres the current page in it.
-- **Search engines get every language.** An indexable gateway page exists once per language at
-  `?lang=<code>` (the language resolution reads it first) and its bare path is the x-default.
+- **Search engines get every language, at one URL each.** An indexable gateway page is English
+  at its bare path (also its x-default and its `hreflang="en"`) and every other language at
+  `?lang=<code>`; `?lang=en` is a 301 to the bare path, and a bare path never changes language
+  in place (a visitor who prefers another one is redirected: see "one address per language").
   `src/lib/seo/lang-urls.ts` (re-exported by `src/lib/payments/seo.ts`) builds those URLs for
-  everything that names them: the canonical (each version names itself), the hreflang links and
-  `og:locale` (+ alternates) in `PaymentsLayout`, `robots.txt` (`Allow: <path>?lang=`) and the
-  sitemap (every version with its alternates). The company site works the same way (below).
+  everything that names them (`pageUrl` drops `en`): the canonical (each version names itself),
+  the hreflang links and `og:locale` (+ alternates) in `PaymentsLayout`, `robots.txt` (`Allow:
+  <path>$` and `<path>?lang=`), the sitemap (one entry per language, each with its alternates),
+  llms.txt and the JSON-LD. The company site works the same way (below). **When a page last
+  changed** is `src/lib/seo/page-dates.ts` (tested): the date it states (the terms, each guide),
+  else the newest git commit among its source files (the page, its sections, its copy in the
+  language shown, the data it renders; never the SEO plumbing), else the build. The commit
+  dates are read once per build by the `virtual:page-dates` Vite plugin in `astro.config.mjs`
+  (one `git log` over `src`; empty in a shallow clone such as CI's, so every page then dates to
+  the build). It is each page's WebPage `dateModified` and its sitemap `lastmod` on both hosts.
   `StructuredData.astro` (rendered by `LandingHead`) emits one JSON-LD graph per page: the shared
   Organization (`src/lib/seo/org.ts`), WebSite, the page (`["WebPage", "FAQPage"]` on `/faq`, with
-  the questions the page shows), a BreadcrumbList matching the breadcrumb `PageHeader.astro` draws
-  over a content page's title, a Service on `/` and `/swaps`, and on `/fees` a Product whose
-  Offers are the plans with a fixed monthly price in `src/lib/plans.ts`. Only what the page and
-  `plans.ts` say: no ratings, reviews or claims beyond them. The indexed pages share the hero's
+  the questions the page shows, and its `dateModified`), a BreadcrumbList matching the breadcrumb
+  `PageHeader.astro` draws over a content page's title, a Service on `/` (with `areaServed`: Latin
+  America and worldwide, as the copy says) and on `/swaps`, and on `/fees` the plans' Product.
+  **The plans are one Product node** (`plansProductNode`, `@id` `https://cosmospay.lat/pricing#product`,
+  its offers pointing at the company site's `/pricing`), identical on `/pricing` and `/fees`: an
+  Offer per plan that states a price in `src/lib/plans.ts`, Starter at 0 a month with its rate per
+  payment in words (a percentage plus a fixed part is no price of its own), Essentials and Growth
+  at their monthly fee, Enterprise (custom) none. Only what the page and `plans.ts` say: no
+  ratings, reviews or claims beyond them. The wallet's SoftwareApplication carries no
+  `softwareVersion` (a number written by hand goes stale with the next release). The indexed pages share the hero's
   poster (`/media/coin-ramp-poster.jpg`) as their image; payment links keep the brand card.
 - **The company site (cosmospay.lat) speaks every language at its own address too**: the
-  middleware resolves `locals.lang` for the `site` area as for payments (?lang → cookie →
-  Accept-Language → en) and the site pages read it, never the cookie. `CosmosLayout` emits, for a
+  middleware sets `locals.lang` for the `site` area as for payments (an indexable page's language
+  is its address, English at the bare path) and the site pages read it, never the cookie.
+  `/swaps` is canonical on the gateway (`src/lib/seo/cross-host.ts`): the product owner keeps
+  both pages, so the company one names `payments.cosmospay.lat/swaps` (same language) canonical,
+  lists no hreflang and is not in the company sitemap. `CosmosLayout` emits, for a
   site page, the canonical per language, the hreflang links (+ x-default), `og:locale` with its
   alternates, and the page's titles and descriptions come from `src/lib/seo/site-meta.ts`
   (seven languages; `/swaps` uses its catalog's `swapsPage.metaTitle`). A page whose text exists
@@ -858,8 +920,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   other versions name the English one canonical. Its JSON-LD (`src/components/site/StructuredData.astro`)
   is the shared Organization, WebSite, WebPage and BreadcrumbList (`breadcrumb`), plus the
   page's own nodes (`schema`): the Payments API, the SDK and the wallet on `/`, the plans'
-  Product on `/pricing`; `/about`'s page node is an AboutPage (`pageType`) about the Organization. A language picked in the nav rewrites the address's `?lang=` (a script
-  in the layout's head), so a reload keeps it. `preloadImage` names the page's LCP image per
+  Product on `/pricing`; `/about`'s page node is an AboutPage (`pageType`) about the Organization. A language picked in the nav sets the cookie and rewrites the address
+  (`?lang=<code>`, or the bare path for English: a script in the layout's head, and `langSearch`
+  in `SiteNav` for the pages that reload), so a reload keeps it. `preloadImage` names the page's LCP image per
   theme; the home's is the wallet section's figure, not the hero's ribbon.
 
 - `/` on payments is `src/pages/payments/index.astro`: server-rendered, copy in
@@ -980,6 +1043,21 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   figures until they are real. Every product claim in the copy is checked against the dashboard
   and the community server (e.g. the dashboard sets amount, memo and message, not an expiry).
   The card column of the comparison states the usual case and carries a footnote saying so.
+- **Custody claims hold for every service** (SEO re-audit, 2026-11-01): never "nobody holds your
+  funds" or "nothing passes through Cosmos Pay". Payments settle to the merchant's own address on
+  Stellar and Solana; on Monad each goes to a deposit address made for it, which can only
+  forward it to the merchant (less the relay's fee), and Cosmos Pay holds no key to it (the
+  community server's `PaymentForwarder` / `PaymentSplitForwarder`); a swap on one network is one
+  transaction the wallet signs, one between networks waits at a NEAR Intents deposit address
+  until NEAR Intents settles or refunds it. So the claim is "Cosmos Pay never holds the funds",
+  with the Monad and NEAR Intents addresses named where they apply (catalogs and llms.txt alike).
+- **Counts are computed**: the networks cross-chain swaps reach is `{n}` in the copy, filled from
+  `NETWORK_IDS.length` (`fillPageCopy` in `landing-i18n.ts`, `SWAP_NETWORKS`), never "35+".
+- **Search descriptions stay within 160 characters** in every language on both hosts:
+  `pageMeta(t, page)` (`landing-i18n.ts`) is a gateway page's title and description (its `meta`
+  and lede, `{n}` filled) for both `PaymentsLayout` and `LandingHead`, and
+  `tests/unit/metaDescriptions.test.ts` reads every indexable page's description from the source
+  the page uses and fails over 160 code points, on a leftover placeholder, a dash or a duplicate.
 - **Networks, assets and wallets run as three marquees, and only the marquees show** (the
   product owner removed the visible title, row labels, the SEP-7 note and the pause button): what a
   payment settles on (Stellar, Solana, Monad and their assets), the networks and tokens NEAR Intents
@@ -1305,6 +1383,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
 - Starter is 1.5% + 18¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
+- **A plan card lists only what the product does**: the pricing cards and the onboarding plan
+  cards name rates, limits and features `plans.ts` and the dashboard back (no fraud tooling, no
+  volume discounts, no "from" before a flat monthly price), in every language.
 - **Every rate is 75% of the competition's, rounded down** (product owner, 2026-10-27), so each
   is at least 25% cheaper: payments from BitPay's tiers (2% / 1.5% / 1% + 25¢ → 1.5% / 1.12% /
   0.75% + 18¢; the monthly fees have no counterpart and stay), swaps from MetaMask's 0.875%
@@ -1529,7 +1610,12 @@ consumer headers.
 - **`docs/` is a separate Next.js + Fumadocs app** with its own `package.json` and lockfile. It
   is exported statically into `public/docs`, served at `/docs`. `scripts/ensure-docs.mjs`
   (predev, prestart, and `start-prod.mjs`) rebuilds it only when `public/docs` is missing or a
-  docs source is newer than the last build.
+  docs source is newer than the last build. `scripts/build-docs.mjs` fails the build when the
+  docs sitemap or any page's hreflang lists a URL that is not exported, is `noindex` (the English
+  fallback copies under `/docs/{es,fr,de,pt}/`) or is not its own canonical
+  (`node scripts/build-docs.mjs --check` runs only that against `docs/out`). Docs SEO details
+  (headings, JSON-LD by the shared Organization's @id, datePublished from git) are in
+  `docs/README.md`.
 - **Two OpenAPI documents, not one.** `docs/openapi.json` is the community server's Payments API
   spec, committed and checked by `npm run check:api-spec`. `/api/openapi.json` is THIS app's own
   API, generated from `src/schemas/**/openapi.ts` and checked by `npm run check:openapi`. The

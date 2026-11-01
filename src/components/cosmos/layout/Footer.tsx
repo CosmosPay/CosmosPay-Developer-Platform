@@ -1,4 +1,4 @@
-import { useT } from "@/lib/i18n/index";
+import { useLang, useT } from "@/lib/i18n/index";
 import { ABOUT, PRICING, DASH, DOCS, TERMS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
 import { CosmosLockup } from "@/components/cosmos/icons";
 import { SocialLinks } from "@/components/cosmos/layout/Social";
@@ -49,7 +49,9 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
   {
     key: "resources",
     links: [
-      { i: 0, href: `${DOCS}/getting-started` }, // Guides
+      // The gateway's guides hub (src/lib/payments/site-pages.ts); the docs keep their own
+      // getting-started guide under Developers > Documentation and the nav's Tutorials.
+      { i: 0, href: `${PAYMENTS}/learn` }, // Guides
       // { i: 1, href: "#" }, // Blog (no page yet)
       // { i: 2, href: "#" }, // Customer stories (no page yet)
       { i: 3, href: `${DASH}?view=support` }, // Support
@@ -70,15 +72,17 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
   },
 ];
 
-/* `area` as in Nav: on the payments gateway its own links stay on it. */
+/* `area` as in Nav: on the payments gateway its own links stay on it. Every link to a page of the
+   company site or the gateway is in the page's language (constants.ts langHref). */
 export function Footer({ area }: { area?: Area } = {}) {
   const t = useT();
+  const lang = useLang();
   return (
     <footer className="footer" data-panel="white">
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <a className="brand" href={homeFor(area)}><CosmosLockup height={36} /></a>
+            <a className="brand" href={homeFor(area, lang)}><CosmosLockup height={36} /></a>
             <p>{t.footer.tagline}</p>
             <SocialLinks />
             {/* el personaje cierra la pagina, como pide BRAND.md (seccion 5). Pose
@@ -93,7 +97,7 @@ export function Footer({ area }: { area?: Area } = {}) {
                 {/* h2: the footer's groups come after the page's own content, whose sections are h2 */}
                 <h2 className="foot-h" id={`foot-${g.key}`}>{grp.title}</h2>
                 <ul role="list" aria-labelledby={`foot-${g.key}`}>
-                  {g.links.map(({ i, href }) => <li key={i}><a href={href === PRICING ? pricingFor(area) : localHref(href, area)}>{grp.links[i]}</a></li>)}
+                  {g.links.map(({ i, href }) => <li key={i}><a href={href === PRICING ? pricingFor(area, lang) : localHref(href, area, lang)}>{grp.links[i]}</a></li>)}
                 </ul>
               </div>
             );

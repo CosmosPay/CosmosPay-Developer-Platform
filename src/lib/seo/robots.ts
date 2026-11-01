@@ -54,7 +54,7 @@ export function robotsTxt(area: RobotsArea, origins: RobotsOrigins, indexNowKey?
   const keyFile = isIndexNowKey(indexNowKey) ? [`${keyFilePath(indexNowKey)}$`] : [];
   switch (area) {
     case "site":
-      return `# Cosmos Pay company site. Every page exists once per language (?lang=, src/lib/seo/lang-urls.ts).
+      return `# Cosmos Pay company site. Every page exists once per language: English at its bare path, the others at ?lang=.
 User-agent: *
 ${CONTENT_SIGNAL}
 Allow: /
@@ -83,8 +83,8 @@ Sitemap: ${dev}/docs/sitemap.xml
 `;
     case "payments":
       return `# Cosmos Pay payments: the landing and its content pages are content, in every language
-# (?lang=, src/lib/seo/lang-urls.ts), with the files they load. Payment links are personal and
-# short-lived, and the design previews are samples: everything else stays out.
+# (English at the bare path, the others at ?lang=), with the files they load. Payment links are
+# personal and short-lived, and the design previews are samples: everything else stays out.
 User-agent: *
 ${CONTENT_SIGNAL}
 Allow: /$

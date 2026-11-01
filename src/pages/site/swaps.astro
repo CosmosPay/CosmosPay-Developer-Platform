@@ -9,14 +9,17 @@ import PublicSwaps from "@/components/cosmos/swaps/PublicSwaps";
 import { messages } from "@/lib/i18n/messages/index";
 import { API_BASE } from "@/lib/payments/urls";
 import { DOCS } from "@/components/cosmos/lib/constants";
+import { NETWORK_IDS } from "@/lib/chains";
 
-// The language the middleware resolved: ?lang= (each language has its own address), then the
-// cookie, then Accept-Language.
+// The language the middleware resolved from the address: ?lang=<code>, English at the bare path
+// (src/lib/seo/lang-urls.ts; a visitor who prefers another language is redirected there).
 const lang = Astro.locals.lang ?? "en";
 const copy = ((messages as Record<string, typeof messages.en>)[lang] ?? messages.en).swapsPage;
+// `{n}` is how many networks cross-chain swaps reach (NETWORK_IDS), as PublicSwaps fills it on the page.
+const description = copy.metaDescription.replace(/\{n\}/g, String(NETWORK_IDS.length));
 ---
 
-<CosmosLayout title={copy.metaTitle} description={copy.metaDescription} lang={lang} bodyClass="inst" breadcrumb={["home", "swaps"]}>
+<CosmosLayout title={copy.metaTitle} description={description} lang={lang} bodyClass="inst" breadcrumb={["home", "swaps"]}>
   <main id="main" class="pswap-page">
     <PublicSwaps client:load lang={lang} apiBase={API_BASE} docsUrl={DOCS} showHeader />
   </main>

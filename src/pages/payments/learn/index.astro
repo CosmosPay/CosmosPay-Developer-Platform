@@ -1,0 +1,88 @@
+---
+/* /learn on payments.cosmospay.lat: the hub of the gateway's guides (src/lib/payments/site-pages.ts
+ * GUIDES), each with its title and one line on what it answers. The section bar and the footer's
+ * Resources group link it. Its JSON-LD is a CollectionPage whose main entity is the list of guides,
+ * each guide's article as its own page states it, and the BreadcrumbList (Overview > Guides). */
+import "@/styles/payments-landing.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import LandingHead from "@/components/payments/landing/LandingHead.astro";
+import Subnav from "@/components/payments/landing/Subnav.astro";
+import PageHeader from "@/components/payments/landing/PageHeader.astro";
+import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+import GuideList from "@/components/payments/learn/GuideList.astro";
+import { landingData } from "@/components/payments/landing/data";
+import { GUIDE_CONFIG, guideCopy } from "@/lib/payments/learn/index";
+import { GUIDES, GUIDE_DATES, pagePath } from "@/lib/payments/site-pages";
+import { LOCALES } from "@/lib/payments/i18n";
+import { PAYMENTS } from "@/lib/payments/urls";
+import { SITE } from "@/components/cosmos/lib/constants";
+import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
+import { articleNode, itemListNode } from "@/lib/seo/schema";
+
+const lang = Astro.locals.lang ?? "en";
+const d = landingData(lang, "multi");
+const { t, learn } = d;
+const hub = learn.hub;
+
+const explicit = explicitLang(Astro.url.searchParams.get("lang"), LOCALES.map((l) => l.code));
+const url = pageUrl(PAYMENTS, Astro.locals.publicPath ?? pagePath("learn"), explicit);
+const guides = GUIDES.map((guide) => {
+  const copy = guideCopy(learn, guide);
+  return { guide, copy, url: pageUrl(PAYMENTS, pagePath(`learn/${guide}`), explicit) };
+});
+const nodes = [
+  itemListNode(`${url}#guides`, guides.map((g) => ({ name: g.copy.title, url: g.url }))),
+  ...guides.map((g) =>
+    articleNode({
+      url: g.url,
+      type: GUIDE_CONFIG[g.guide].type,
+      headline: g.copy.title,
+      description: g.copy.description,
+      lang,
+      origin: PAYMENTS,
+      site: SITE,
+      published: GUIDE_DATES[g.guide].published,
+      modified: GUIDE_DATES[g.guide].modified,
+      image: `${PAYMENTS}/media/coin-ramp-poster.jpg`,
+    }),
+  ),
+];
+const trail = [
+  { name: t.pages.home, url: pageUrl(PAYMENTS, "/", explicit) },
+  { name: hub.nav, url },
+];
+---
+
+<PaymentsLayout title={hub.meta} description={hub.description} indexable>
+  <LandingHead
+    slot="head"
+    d={d}
+    page="learn"
+    title={hub.meta}
+    description={hub.description}
+    embed={false}
+    trail={trail}
+    pageTypes={["CollectionPage"]}
+    mainEntity={`${url}#guides`}
+    nodes={nodes}
+  />
+
+  <main id="main" class="pl pl-multi">
+    <Subnav d={d} current="learn" />
+    <PageHeader d={d} copy={{ nav: hub.nav, title: hub.title, lede: hub.lede }} art="3d-instant" />
+    <section class="pl-section pl-learn" aria-label={hub.title}>
+      <div class="wrap">
+        <GuideList d={d} guides={GUIDES} level={2} />
+      </div>
+    </section>
+    <FinalCta d={d} />
+  </main>
+
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>
+
+<script>
+  import { startLanding } from "@/scripts/payments/landing";
+  startLanding();
+</script>

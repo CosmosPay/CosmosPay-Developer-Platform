@@ -1,10 +1,12 @@
 /* Cta.tsx: el cierre, la pagina 33 del deck. Panel negro, todo alineado a la
    izquierda, los dos atajos como filas y "Gracias por confiar." al final. */
 import { IcArrow, ctaProps, PRICING } from "@/components/cosmos/shared";
-import { useT } from "@/lib/i18n/index";
+import { useLang, useT } from "@/lib/i18n/index";
+import { langHref } from "@/components/cosmos/lib/constants";
 
 export function Cta({ user }) {
   const t = useT();
+  const lang = useLang();
   const c = t.landing.cta;
   return (
     <section className="lp-panel cta" data-panel="black">
@@ -21,7 +23,7 @@ export function Cta({ user }) {
             </div>
           </div>
           <div className="cta-helpers reveal">
-            <a className="cta-help" href={PRICING}>
+            <a className="cta-help" href={langHref(PRICING, lang, "site")}>
               <span className="chi"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12l-8 8-9-9V3h8z" /><circle cx="7.5" cy="7.5" r="1.4" /></svg></span>
               <span><b>{c.helpers[0].b}</b><span>{c.helpers[0].s}</span></span>
               <span className="chg"><IcArrow /></span>

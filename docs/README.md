@@ -46,6 +46,18 @@ hreflang between the page and its real translations (+ `x-default`), Open Graph 
 the portal's `/og-image.png`, a `text/markdown` alternate pointing at its `content.md`, and a
 JSON-LD graph (TechArticle + BreadcrumbList; the docs home is a WebPage with the API and SDK).
 
+- **JSON-LD.** The company's Organization is referenced by `@id` only
+  (`https://cosmospay.lat/#organization`, published by cosmospay.lat), never restated here. The
+  WebSite is `https://dev.cosmospay.lat/docs/#website`. `datePublished` is the commit that added
+  the page's source files (the later one, when there are two) and `dateModified` their last
+  change (`src/lib/last-modified.ts`, one `git log` pass; a translation dates from its
+  `content-i18n/<lang>/` file, an API page also from `openapi.json`). Without git history (shallow
+  clone, untracked file) `datePublished` falls back to `dateModified`, and when that is not a git
+  date either both are left out.
+- **Headings.** `src/components/heading.tsx` replaces Fumadocs' heading in the MDX pages and the
+  API reference: the copy-link button is icon-only with a localized `aria-label` (Fumadocs' keys
+  in `src/lib/docs-i18n.ts`), so a heading's text is its title alone, without "Copy Anchor Link".
+
 - **Translations.** A locale only has the pages in `content-i18n/<lang>/`. Every other page is
   still exported under the locale prefix (so the localized sidebar is complete), as an English
   copy that is `noindex`, canonical to the English URL and left out of hreflang, the sitemap and
@@ -59,6 +71,11 @@ JSON-LD graph (TechArticle + BreadcrumbList; the docs home is a WebPage with the
   from `openapi.json` by `src/lib/openapi-markdown.ts`), `llms.mdx/[<lang>/]<slug>/content.md`
   and `openapi.json` (this folder's spec, as the API reference renders it).
   `scripts/build-docs.mjs` fails the portal build if one of them is missing.
+- **Export check.** `scripts/build-docs.mjs` then reads `out/sitemap.xml` (every `<loc>` and
+  `xhtml:link`) and every exported page's `<link rel="alternate" hreflang>`, and fails the build,
+  naming the URLs, if one of them has no exported page, is `noindex` or is canonical to another
+  URL (a fallback copy listed by mistake). `node scripts/build-docs.mjs --check` runs only the
+  checks against an existing `docs/out`.
 
 ## Develop
 

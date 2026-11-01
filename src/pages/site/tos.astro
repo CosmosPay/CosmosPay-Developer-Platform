@@ -11,8 +11,8 @@
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import { PAGE_LANGS, TOS_LAST_UPDATED, siteMeta } from "@/lib/seo/site-meta";
 
-// The language the middleware resolved: ?lang= (each language has its own address), then the
-// cookie, then Accept-Language.
+// The language the middleware resolved from the address: ?lang=<code>, English at the bare path
+// (src/lib/seo/lang-urls.ts; a visitor who prefers another language is redirected there).
 const lang = Astro.locals.lang ?? "en";
 const es = lang === "es";
 const meta = siteMeta("tos", lang);

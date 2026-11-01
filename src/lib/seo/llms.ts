@@ -7,9 +7,11 @@
    src/lib/plans.ts at request time, so the file can never quote another price than the pages; the
    rest mirrors the gateway's copy (src/lib/payments/landing-i18n.ts), the docs and
    src/pages/site/tos.astro. Escrow is offered and priced but not built yet: every line that names it
-   says it is coming soon. No em dashes. Pure, so tests/unit/seoLlms.test.ts covers it. */
+   says it is coming soon. Every link to a page in English is its bare address (English has no
+   ?lang=: src/lib/seo/lang-urls.ts). No em dashes. Pure, so tests/unit/seoLlms.test.ts covers it. */
 import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from "@/lib/plans";
-import { PAYMENTS_PAGES, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
+import { LEARN_PAGES, PAYMENTS_PAGES, isLearnPage, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
+import { NETWORK_IDS } from "@/lib/chains";
 import { pageUrl } from "@/lib/seo/lang-urls";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, WALLET_RELEASES } from "@/lib/seo/schema";
 
@@ -43,7 +45,7 @@ function swapRates(): string {
 
 const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   integrations: ["Integration options", "payment links and QR codes with no code, the hosted and the embedded checkout, the API and the SDK"],
-  swaps: ["Swaps", "swap tokens across 35+ networks and send USDT0 from Stellar, with no account"],
+  swaps: ["Swaps", `swap tokens across ${NETWORK_IDS.length} networks and send USDT0 from Stellar, with no account`],
   "use-cases": ["Use cases", "how stores, services, digital products and creators take stablecoins, compared with cards and bank transfers"],
   security: ["Security", "on-chain verification, keys that stay with their owner, checkout pages no other site can frame"],
   fees: ["Pricing and fees", "the rate per payment on each plan and a fee estimator"],
@@ -52,13 +54,19 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   stellar: ["Stellar payments", "SEP-7 payment links, the Stellar assets with a preset, the wallets that pay, the API request and questions"],
   solana: ["Solana payments", "Solana Pay links, USDC and SOL presets, the wallets that pay, the API request and questions"],
   monad: ["Monad payments", "EIP-681 links to a deposit address per payment, USDC and MON presets, the API request and questions"],
+  learn: ["Guides", "the gateway's guides to accepting stablecoin payments"],
+  "learn/accept-usdc-payments": ["How to accept USDC payments online", "a payment link, the hosted checkout or the API; what the merchant and the payer need; testing on a test network first"],
+  "learn/whatsapp-payment-links": ["Payment links on WhatsApp", "create a payment link in the dashboard, send it in a chat or as a printed QR code, and see when it is paid"],
+  "learn/stablecoin-payment-gateway": ["What is a stablecoin payment gateway?", "stablecoins, settlement to the merchant's own address, network fees, custodial and non-custodial gateways"],
+  "learn/stellar-vs-solana-vs-monad": ["Stellar vs Solana vs Monad for accepting payments", "the three networks compared as Cosmos Pay supports them: link standard, matching, assets with a preset, test networks, fees"],
 };
 
 /** /llms.txt of the company site (cosmospay.lat). */
 export function siteLlmsTxt({ site, dev, payments, wallet, profiles }: LlmsInput): string {
   const docs = `${dev}/docs`;
-  const pay = (path: string) => pageUrl(payments, path, "en");
-  const gateway = PAYMENTS_PAGES.map((p) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`);
+  const pay = (path: string) => pageUrl(payments, path);
+  const line = (p: PaymentsPage) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`;
+  const gateway = PAYMENTS_PAGES.filter((p) => !isLearnPage(p)).map(line);
   return `# Cosmos Pay
 
 > Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM).
@@ -66,7 +74,8 @@ export function siteLlmsTxt({ site, dev, payments, wallet, profiles }: LlmsInput
 Key facts:
 
 - Chains: Stellar (SEP-7 payment links), Solana (Solana Pay links) and Monad (EIP-681 links).
-- Non-custodial: Cosmos Pay stores no one's keys. With instant settlement, on Stellar and Solana the payer pays the merchant's address directly; on Monad each payment goes to its own deposit address, which forwards it to the merchant's less the network fee.
+- Non-custodial: Cosmos Pay stores no one's keys and never holds a payment. With instant settlement, on Stellar and Solana the payer pays the merchant's address directly; on Monad each payment goes to a deposit address made for it, which can only forward it to the merchant's address (less the relay's fee): Cosmos Pay holds no key to it.
+- Swaps: Cosmos Pay never holds the funds. A swap on one network is one transaction the person's wallet signs; a swap between networks waits at a NEAR Intents deposit address until NEAR Intents settles or refunds it; USDT0 travels through LayerZero.
 - Settlement: instant (about 5 seconds on Stellar). Escrow is coming soon: the payment will wait in an on-chain contract until the merchant releases it on dispatch, and go back to the buyer if it is not released before the merchant's deadline.
 - No chargebacks: a confirmed payment is final. A refund is a payment the merchant sends back from their wallet.
 - Testing: API keys starting with dv_ run on testnet and prod_ keys on mainnet. The key decides the network, not the code.
@@ -78,11 +87,15 @@ Key facts:
 
 - [Cosmos Pay Payments](${pay("/")}): payment links, a hosted checkout and a payments API to accept stablecoins on Stellar, Solana and Monad
 ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
-- [Plans](${pageUrl(site, "/pricing", "en")}): every plan's rates, limits and features
+- [Plans](${pageUrl(site, "/pricing")}): every plan's rates, limits and features
 
 ## Swaps
 
 - [Swaps](${pay("/swaps")}): ${PAGE_LABELS.swaps[1]}
+
+## Guides
+
+${LEARN_PAGES.map(line).join("\n")}
 
 ## Developers
 
@@ -108,7 +121,7 @@ ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
 
 ## Company
 
-- [About Cosmos Pay](${pageUrl(site, "/about", "en")}): what Cosmos Pay makes and on which networks, its public code on GitHub, the SDK on npm and how to reach the team
+- [About Cosmos Pay](${pageUrl(site, "/about")}): what Cosmos Pay makes and on which networks, its public code on GitHub, the SDK on npm and how to reach the team
 - Contact: organization@cosmospay.lat
 
 ## Optional
@@ -125,8 +138,9 @@ ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
 /** /llms.txt of the payments gateway (payments.cosmospay.lat). */
 export function paymentsLlmsTxt({ site, dev, payments }: LlmsInput): string {
   const docs = `${dev}/docs`;
-  const pay = (path: string, lang = "en") => pageUrl(payments, path, lang);
-  const pages = PAYMENTS_PAGES.map((p) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`);
+  const pay = (path: string, lang?: string) => pageUrl(payments, path, lang);
+  const line = (p: PaymentsPage) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`;
+  const pages = PAYMENTS_PAGES.filter((p) => !isLearnPage(p)).map(line);
   return `# Cosmos Pay Payments
 
 > Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond.
@@ -141,7 +155,7 @@ How a payment works:
 Facts:
 
 - Settlement: instant (about 5 seconds on Stellar). Escrow is coming soon (+${ESCROW_FEE_PCT}% per payment): the payment will be held in an on-chain contract until you release it on dispatch, and returned to the buyer if you do not before your deadline.
-- Cosmos Pay does not hold the money: on Stellar and Solana the payer pays your address directly; on Monad each payment goes to its own deposit address, which forwards it to yours less the network fee.
+- Cosmos Pay does not hold the money: on Stellar and Solana the payer pays your address directly; on Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay's fee): Cosmos Pay holds no key to it.
 - No chargebacks. Refunds are payments you send from your wallet.
 - Rates per payment: ${paymentRates()}. The payer's wallet pays the network fee; on Monad the deposit relay's fee is deducted and shown on the checkout. Private payments (amount hidden on-chain, testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction.
 - Checkout: four designs per link (Classic, Split, Receipt, Card), in English, Spanish, Portuguese, French, German, Hindi and Chinese; no other site can frame the checkout pages.
@@ -153,9 +167,13 @@ Facts:
 - [Overview](${pay("/")}): the gateway in one page
 ${pages.join("\n")}
 
+## Guides
+
+${LEARN_PAGES.map(line).join("\n")}
+
 ## Other languages
 
-Every page takes ?lang=: ${[
+Each page above is in English; every other language is the same address with ?lang=: ${[
     ["Español", "es"],
     ["Português", "pt"],
     ["Français", "fr"],
@@ -176,7 +194,7 @@ Every page takes ?lang=: ${[
 
 ## Optional
 
-- [Cosmos Pay company site](${site}/), its [plans](${pageUrl(site, "/pricing", "en")}) and [about page](${pageUrl(site, "/about", "en")})
+- [Cosmos Pay company site](${site}/), its [plans](${pageUrl(site, "/pricing")}) and [about page](${pageUrl(site, "/about")})
 - [Terms and conditions](${site}/tos)
 `;
 }

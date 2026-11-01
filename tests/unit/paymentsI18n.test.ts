@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LOCALES, MESSAGES, resolveLocale } from '@/lib/payments/i18n';
 import { LANDING } from '@/lib/payments/landing-i18n';
+import { LEARN } from '@/lib/payments/learn/index';
 
 /* Every key path of a catalog, so locales can be compared for shape. */
 function paths(obj: unknown, at = ''): string[] {
@@ -43,4 +44,18 @@ test('the landing copy has exactly the English keys in every locale, none empty'
 
 test('every locale keeps the {rate} placeholder the page fills in', () => {
   for (const { code } of LOCALES) assert.match(LANDING[code].compare.rows.fees.us, /\{rate\}/, code);
+});
+
+test('the guides have exactly the English keys in every locale, none empty, with the same placeholders', () => {
+  const expected = paths(LEARN.en).sort();
+  const at = (catalog: unknown, p: string) => p.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], catalog);
+  const placeholders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join();
+  for (const { code } of LOCALES) {
+    assert.deepEqual(paths(LEARN[code]).sort(), expected, code);
+    for (const p of expected) {
+      const value = at(LEARN[code], p);
+      assert.ok(typeof value === 'string' && value.trim(), `${code}.${p} is empty`);
+      assert.equal(placeholders(value as string), placeholders(at(LEARN.en, p) as string), `${code}.${p} placeholders`);
+    }
+  }
 });

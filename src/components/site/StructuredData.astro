@@ -3,8 +3,10 @@
 // (src/lib/seo/org.ts, the same node the gateway's pages publish), the site, the page with its
 // breadcrumb trail, and what the page adds (the products on the home, the plans on /pricing; /about
 // is an AboutPage whose mainEntity is the organisation itself).
-// CosmosLayout renders it with the page's canonical URL (src/lib/seo/lang-urls.ts), so the
-// graph names the same address as the canonical and hreflang links. Only what the pages and
+// CosmosLayout renders it with the page's own address in the language shown (the bare path in
+// English, ?lang= otherwise: src/lib/seo/lang-urls.ts), the address its canonical and hreflang
+// links name (/swaps, canonical on the gateway, still describes its own address), and when the
+// page last changed (dateModified, src/lib/seo/page-dates.ts). Only what the pages and
 // src/lib/plans.ts state: no ratings, reviews or claims beyond them.
 import { SITE } from "@/components/cosmos/lib/constants";
 import { ORGANIZATION_ID, ORGANIZATION_NODE } from "@/lib/seo/org";
@@ -24,9 +26,11 @@ interface Props {
   /** The page's schema.org type when it is more specific than WebPage ("AboutPage"). */
   pageType?: string;
   schema?: JsonLdNode[];
+  /** When the page last changed (src/lib/seo/page-dates.ts). */
+  dateModified?: string | null;
 }
 
-const { url, title, description, lang, image, breadcrumb, mainEntity, pageType, schema = [] } = Astro.props;
+const { url, title, description, lang, image, breadcrumb, mainEntity, pageType, schema = [], dateModified } = Astro.props;
 const home = new URL(url).pathname === "/";
 
 const graph: JsonLdNode[] = [
@@ -43,6 +47,7 @@ const graph: JsonLdNode[] = [
     mainEntity,
     ...(home && { about: ORGANIZATION_ID }),
     image: { url: image, width: 1200, height: 630 },
+    dateModified,
   }),
   ...schema,
 ];

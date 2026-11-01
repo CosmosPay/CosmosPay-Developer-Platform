@@ -11,16 +11,19 @@ import LandingHead from "@/components/payments/landing/LandingHead.astro";
 import Subnav from "@/components/payments/landing/Subnav.astro";
 import PageHeader from "@/components/payments/landing/PageHeader.astro";
 import { landingData } from "@/components/payments/landing/data";
+import { pageMeta } from "@/lib/payments/landing-i18n";
 import PublicSwaps from "@/components/cosmos/swaps/PublicSwaps";
 import { API_BASE } from "@/lib/payments/urls";
 import { DOCS } from "@/components/cosmos/lib/constants";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
+// Its search title and description, with any `{n}` filled (the same words its JSON-LD states).
+const meta = pageMeta(d.t, "swaps");
 ---
 
-<PaymentsLayout title={d.t.pages.swaps.meta} description={d.t.pages.swaps.lede} indexable>
-  <LandingHead slot="head" d={d} page="swaps" title={d.t.pages.swaps.meta} description={d.t.pages.swaps.lede} />
+<PaymentsLayout title={meta.title} description={meta.description} indexable>
+  <LandingHead slot="head" d={d} page="swaps" title={meta.title} description={meta.description} />
 
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current="swaps" />

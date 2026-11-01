@@ -9,17 +9,21 @@ import Subnav from "@/components/payments/landing/Subnav.astro";
 import PageHeader from "@/components/payments/landing/PageHeader.astro";
 import InlineCta from "@/components/payments/landing/InlineCta.astro";
 import { landingData } from "@/components/payments/landing/data";
+import { pageMeta } from "@/lib/payments/landing-i18n";
 import Paths from "@/components/payments/landing/sections/Paths.astro";
 import Integrations from "@/components/payments/landing/sections/Integrations.astro";
 import Developers from "@/components/payments/landing/sections/Developers.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
+import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
+// Its search title and description, with any `{n}` filled (the same words its JSON-LD states).
+const meta = pageMeta(d.t, "integrations");
 ---
 
-<PaymentsLayout title={d.t.pages.integrations.meta} description={d.t.pages.integrations.lede} indexable>
-  <LandingHead slot="head" d={d} page="integrations" title={d.t.pages.integrations.meta} description={d.t.pages.integrations.lede} />
+<PaymentsLayout title={meta.title} description={meta.description} indexable>
+  <LandingHead slot="head" d={d} page="integrations" title={meta.title} description={meta.description} />
 
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current="integrations" />
@@ -27,6 +31,7 @@ const d = landingData(lang, "multi");
     <Integrations d={d} />
     <Developers d={d} />
     <Paths d={d} />
+    <GuideLinks d={d} guides={["accept-usdc-payments", "whatsapp-payment-links"]} />
     <FinalCta d={d} />
   </main>
 
