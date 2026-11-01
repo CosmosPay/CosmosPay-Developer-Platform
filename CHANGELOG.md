@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.19.1] - 2026-11-01
+
+### Bug Fixes
+- One wallet name, Cosmos Pay Wallet (35d9adb)
+
 ## [0.19.0] - 2026-11-01
 
 ### Features
