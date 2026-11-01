@@ -24,7 +24,7 @@ Every payment moves through the same three steps (shown here with the SDK, on St
 2. **The payer completes it** in their Stellar wallet (Freighter, xBull, Rabet, LOBSTR or Albedo). In the browser this is one call: `new WebClient().pay(intent)`, which returns an on-chain `txHash`.
 3. **Your server validates** that hash with `intent.validate(txHash)`, which updates the payment's status and fires a webhook to your endpoints.
 
-On Solana and Monad, create the intent through the [REST API](/api/payment-intents) with `chain`:
+On Solana and Monad, pass `chain`, with the SDK (`createPay({ chain: 'solana', ... })`, from version 2.2) or the [REST API](/api/payment-intents):
 you get a Solana Pay or EIP-681 link instead of a SEP-7 one, the payer pays it from any wallet on
 that chain, and the Payments API detects the payment on-chain and fires the same webhooks.
 
