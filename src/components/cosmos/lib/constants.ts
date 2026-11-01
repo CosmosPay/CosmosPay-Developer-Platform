@@ -29,6 +29,10 @@ export const SOCIAL = {
   linkedin: "https://www.linkedin.com/company/cosmospay/",
 } as const;
 
+/** Each profile's name, as the About page writes it beside its glyph (and its Markdown version
+ *  lists it). */
+export const SOCIAL_NAMES: Record<keyof typeof SOCIAL, string> = { x: "X", instagram: "Instagram", discord: "Discord", whatsapp: "WhatsApp", linkedin: "LinkedIn" };
+
 /** The domain a nav or footer is drawn on (src/lib/hosts.ts names the same three areas). */
 export type Area = "site" | "dev" | "payments";
 

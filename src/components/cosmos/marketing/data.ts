@@ -1,4 +1,5 @@
-/* data.js: non-component constants for the marketing landing.
+/* data.ts: non-component constants for the marketing landing. Pure (no astro:env), so the
+   Markdown version of the home reads the same figures and lists.
    Brand names + code snippets are not translated. */
 
 /* Company names for the hero "Trusted by engineering teams at" strip.
@@ -7,7 +8,6 @@
    names ever appear. Add your own as plain strings, e.g.:
      export const CLIENTS = ["Acme", "Globex", "Initech"];
    To show logos instead of names, swap the <Marquee> render in Hero.tsx. */
-import { DOCS } from "@/components/cosmos/lib/constants";
 import { CHAINS, NETWORK_IDS } from "@/lib/chains";
 import { PLAN_SPECS } from "@/lib/plans";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
@@ -71,6 +71,26 @@ export const PATH_NUMS = ["01", "02", "03"];
 export const STORY_KEYS = ["stores", "services", "digital"];
 
 export const API_CARD_KEYS = ["payments", "stablecoin", "swaps"];
+/* Where each part of the home leads in the docs (paths under the docs root, DOCS): each API card
+   to its reference page (named in the catalog, `cards.*.link`), each SDK button to its guide, each
+   resource to its page (by position: the catalogs carry the labels, in the same order in every
+   language). */
+export const API_CARD_DOCS: Record<string, string> = { payments: "/api/payment-intents", stablecoin: "/api/assets", swaps: "/api/swaps" };
+export const SDK_DOCS: Record<string, string> = { web: "/sdk/web/web-client", node: "/sdk/server/overview" };
+export const RESOURCE_DOCS = [
+  "/getting-started", // Getting started
+  "/embed", // Embed a pay button or checkout
+  "/sdk/server/webhooks", // Webhooks in the SDK
+  "/api-keys", // Get your API key
+];
+/* The three integration paths' targets, by position: No-code opens the dashboard, Prebuilt UI the
+   embed guide (pay button and embedded checkout), Build-your-own (the REST/SDK "API" path) the
+   docs. */
+export const PATH_TARGETS: readonly ({ to: "dashboard" } | { to: "docs"; path: string })[] = [
+  { to: "dashboard" },
+  { to: "docs", path: "/embed" },
+  { to: "docs", path: "" },
+];
 // The SDK is JavaScript/TypeScript only, shipped as two entry points:
 // `@cosmosapp/pay_sdk` (server) and `@cosmosapp/pay_sdk/web` (browser wallets).
 export const SDK_KEYS = ["node", "web"];
@@ -114,7 +134,8 @@ export const WALLET_MORE = [
   },
 ];
 
-/* El comando del SDK y el indice en texto plano para los asistentes de codigo. */
+/* The SDK's install command (DevKit links the docs' plain-text index beside it). Nothing here
+   reads astro:env, so the Markdown version of the home (src/lib/seo/site-markdown.ts) reads these
+   same values under plain node. */
 export const SDK_INSTALL = "npm i @cosmosapp/pay_sdk";
-export const LLMS_TXT = `${DOCS}/llms.txt`;
 export const MARKETPLACE_URL = "https://cosmosapp.lat";

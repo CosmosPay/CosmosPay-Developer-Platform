@@ -16,6 +16,7 @@ import { publicSwapApi, type SwapRecordKind } from "@/lib/swap-api";
 import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
 import { swapFeePct, swapFeeRange } from "@/lib/plans";
 import { NETWORK_IDS } from "@/lib/chains";
+import { publicSwapCalls, usdt0OtherNetworks } from "@/lib/public-swaps";
 
 export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false }: { lang: string; apiBase: string; docsUrl: string; showHeader?: boolean }) {
   initLang(lang);
@@ -43,19 +44,11 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
     document.getElementById("pswap-widget")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const steps = [
-    { label: p.apiStep1, code: `curl "${base}/v1/public-key?env=prod"` },
-    {
-      label: p.apiStep2,
-      code: `curl -X POST "${base}/v1/cross-chain-swaps/quote" \\\n  -H "Authorization: Bearer $PUBLIC_KEY" -H "Content-Type: application/json" \\\n  -d '{"originChain":"stellar","originAsset":"XLM","destinationChain":"solana","destinationAsset":"SOL","amount":"100","recipient":"<solana address>","refundTo":"<stellar account>"}'`,
-    },
-    {
-      label: p.apiStep3,
-      code: `curl -X POST "${base}/v1/usdt0/quote" \\\n  -H "Authorization: Bearer $PUBLIC_KEY" -H "Content-Type: application/json" \\\n  -d '{"to":"eth","amount":"100"}'`,
-    },
-  ];
+  // The public API in three calls (src/lib/public-swaps.ts), each under its label.
+  const labels = { key: p.apiStep1, cross: p.apiStep2, usdt0: p.apiStep3 };
+  const steps = publicSwapCalls(base).map((call) => ({ label: labels[call.key], code: call.code }));
   const copy = (text: string) => navigator.clipboard?.writeText(text).then(() => showToast(t.toasts.copied)).catch(() => {});
-  const more = routes ? Math.max(routes.length - 1, 0) : 20;
+  const more = usdt0OtherNetworks(routes);
 
   return (
     <div className="pswap">

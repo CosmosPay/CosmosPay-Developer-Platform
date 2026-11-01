@@ -2,13 +2,11 @@
    titulo y los tres caminos de integracion como fichas navy. */
 import { IcChevSm, DASH, DOCS } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { SCALE_VALUES, PATH_NUMS } from "@/components/cosmos/marketing/data";
+import { SCALE_VALUES, PATH_NUMS, PATH_TARGETS } from "@/components/cosmos/marketing/data";
 
-// Targets for the three integration-path CTAs (by position, because the catalogs only carry the
-// translated label, and the order is the same in every language): No-code → dashboard,
-// Prebuilt UI → the embed guide (pay button and embedded checkout), Build-your-own (the REST/SDK
-// "API" path) → the docs.
-const PATH_HREFS = [DASH, `${DOCS}/embed`, DOCS];
+// Targets for the three integration-path CTAs, by position (marketing/data.ts PATH_TARGETS):
+// the dashboard, the embed guide, the docs.
+const PATH_HREFS = PATH_TARGETS.map((target) => (target.to === "dashboard" ? DASH : `${DOCS}${target.path}`));
 
 function pathMock(n, ig) {
   if (n === "01") return null; // filled by caller with translated link text
