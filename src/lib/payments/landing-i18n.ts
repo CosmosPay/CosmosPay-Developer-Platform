@@ -424,6 +424,22 @@ const en = {
       "BitPay’s page says higher fees apply in high-risk industries, and it lists no monthly fee; Essentials and Growth have one.",
       "With Cosmos Pay the payer’s wallet pays the network fee; on Monad the relay’s fee for forwarding a payment is deducted from it.",
     ],
+    /* Beyond the rate, beside Stripe's stablecoin payments (src/lib/payments/compare.ts
+       STRIPE_STABLECOINS): only facts its documentation states (product owner, 2026-11-01). */
+    beyond: {
+      title: "Beyond the rate: Cosmos Pay and Stripe’s stablecoin payments",
+      lede: "What changes for a business that takes stablecoins, as Stripe’s documentation states its terms.",
+      caption: "Cosmos Pay next to Stripe’s stablecoin payments, beyond the rate",
+      feature: "What",
+      ours: "Cosmos Pay",
+      theirs: "Stripe stablecoin payments",
+      rows: {
+        who: { k: "Businesses that can accept it", ours: "Businesses in Latin America and worldwide", theirs: "Businesses in the US; in private preview in the EU, Hong Kong, Mexico and Switzerland" },
+        settle: { k: "Where a payment settles", ours: "Your own wallet, in the stablecoin your customer paid (on Monad, through a deposit address that can only forward it to yours)", theirs: "Your Stripe balance, in your local currency" },
+        networks: { k: "Stellar and Monad", ours: "Yes, besides Solana: USDC, EURC and USDT0 on Stellar, USDC on Monad", theirs: "No: USDC on Tempo, Ethereum, Solana, Polygon and Base" },
+      },
+      asOf: "Stripe’s terms as its documentation stated them on {date}.",
+    },
   },
   cta: {
     title: "Start accepting",
@@ -862,6 +878,20 @@ const es: LandingMessages = {
       "La página de BitPay indica que se aplican comisiones más altas en industrias de alto riesgo y no menciona cuota mensual; Essentials y Growth tienen una.",
       "Con Cosmos Pay, la wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío de un pago se descuenta de él.",
     ],
+    beyond: {
+      title: "Más allá de la tarifa: Cosmos Pay y los pagos con stablecoins de Stripe",
+      lede: "Qué cambia para un negocio que cobra en stablecoins, según las condiciones que publica la documentación de Stripe.",
+      caption: "Cosmos Pay junto a los pagos con stablecoins de Stripe, más allá de la tarifa",
+      feature: "Qué",
+      ours: "Cosmos Pay",
+      theirs: "Pagos con stablecoins de Stripe",
+      rows: {
+        who: { k: "Negocios que pueden cobrar", ours: "Negocios en Latinoamérica y en todo el mundo", theirs: "Negocios en EE. UU.; en preview privado en la UE, Hong Kong, México y Suiza" },
+        settle: { k: "Dónde se acredita un pago", ours: "Tu propia wallet, en la stablecoin que pagó tu cliente (en Monad, a través de una dirección de depósito que solo puede reenviarlo a la tuya)", theirs: "Tu saldo de Stripe, en tu moneda local" },
+        networks: { k: "Stellar y Monad", ours: "Sí, además de Solana: USDC, EURC y USDT0 en Stellar, USDC en Monad", theirs: "No: USDC en Tempo, Ethereum, Solana, Polygon y Base" },
+      },
+      asOf: "Condiciones de Stripe según su documentación al {date}.",
+    },
   },
   cta: {
     title: "Empieza a aceptar",
@@ -1299,6 +1329,20 @@ const pt: LandingMessages = {
       "A página da BitPay diz que taxas mais altas se aplicam a setores de alto risco e não cita mensalidade; Essentials e Growth têm uma.",
       "Na Cosmos Pay, a carteira de quem paga cobre a taxa de rede; na Monad, a taxa do repasse de um pagamento é descontada dele.",
     ],
+    beyond: {
+      title: "Além da tarifa: Cosmos Pay e os pagamentos com stablecoins da Stripe",
+      lede: "O que muda para uma empresa que recebe em stablecoins, segundo as condições publicadas na documentação da Stripe.",
+      caption: "Cosmos Pay ao lado dos pagamentos com stablecoins da Stripe, além da tarifa",
+      feature: "O quê",
+      ours: "Cosmos Pay",
+      theirs: "Pagamentos com stablecoins da Stripe",
+      rows: {
+        who: { k: "Empresas que podem receber", ours: "Empresas na América Latina e no mundo todo", theirs: "Empresas nos EUA; em preview privado na UE, Hong Kong, México e Suíça" },
+        settle: { k: "Onde o pagamento é liquidado", ours: "Na sua própria carteira, na stablecoin que o cliente pagou (na Monad, por um endereço de depósito que só pode repassá-lo ao seu)", theirs: "No seu saldo da Stripe, na sua moeda local" },
+        networks: { k: "Stellar e Monad", ours: "Sim, além da Solana: USDC, EURC e USDT0 na Stellar, USDC na Monad", theirs: "Não: USDC na Tempo, Ethereum, Solana, Polygon e Base" },
+      },
+      asOf: "Condições da Stripe conforme a documentação dela em {date}.",
+    },
   },
   cta: {
     title: "Comece a aceitar",
@@ -1736,6 +1780,20 @@ const fr: LandingMessages = {
       "La page de BitPay indique des frais plus élevés pour les secteurs à haut risque et ne mentionne aucun abonnement mensuel ; Essentials et Growth en ont un.",
       "Avec Cosmos Pay, le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais pour transférer un paiement en sont déduits.",
     ],
+    beyond: {
+      title: "Au-delà du tarif : Cosmos Pay et les paiements en stablecoins de Stripe",
+      lede: "Ce qui change pour une entreprise qui encaisse en stablecoins, selon les conditions publiées dans la documentation de Stripe.",
+      caption: "Cosmos Pay à côté des paiements en stablecoins de Stripe, au-delà du tarif",
+      feature: "Critère",
+      ours: "Cosmos Pay",
+      theirs: "Paiements en stablecoins de Stripe",
+      rows: {
+        who: { k: "Entreprises qui peuvent encaisser", ours: "Entreprises en Amérique latine et dans le monde entier", theirs: "Entreprises aux États-Unis ; en accès anticipé privé dans l’UE, à Hong Kong, au Mexique et en Suisse" },
+        settle: { k: "Où un paiement est réglé", ours: "Votre propre wallet, dans le stablecoin payé par votre client (sur Monad, via une adresse de dépôt qui ne peut le transférer qu’à la vôtre)", theirs: "Votre solde Stripe, dans votre devise locale" },
+        networks: { k: "Stellar et Monad", ours: "Oui, en plus de Solana : USDC, EURC et USDT0 sur Stellar, USDC sur Monad", theirs: "Non : USDC sur Tempo, Ethereum, Solana, Polygon et Base" },
+      },
+      asOf: "Conditions de Stripe telles que sa documentation les indiquait le {date}.",
+    },
   },
   cta: {
     title: "Commencez à accepter",
@@ -2173,6 +2231,20 @@ const de: LandingMessages = {
       "Laut der Seite von BitPay gelten in Hochrisikobranchen höhere Gebühren, und eine Monatsgebühr nennt sie nicht; Essentials und Growth haben eine.",
       "Bei Cosmos Pay trägt die Wallet des Zahlers die Netzwerkgebühr; auf Monad wird die Relay-Gebühr für die Weiterleitung einer Zahlung von ihr abgezogen.",
     ],
+    beyond: {
+      title: "Mehr als die Gebühr: Cosmos Pay und Stripes Stablecoin-Zahlungen",
+      lede: "Was sich für ein Unternehmen ändert, das Stablecoins annimmt, nach den Bedingungen in Stripes Dokumentation.",
+      caption: "Cosmos Pay neben Stripes Stablecoin-Zahlungen, über die Gebühr hinaus",
+      feature: "Merkmal",
+      ours: "Cosmos Pay",
+      theirs: "Stripe Stablecoin-Zahlungen",
+      rows: {
+        who: { k: "Unternehmen, die annehmen können", ours: "Unternehmen in Lateinamerika und weltweit", theirs: "Unternehmen in den USA; als private Vorschau in der EU, Hongkong, Mexiko und der Schweiz" },
+        settle: { k: "Wohin eine Zahlung geht", ours: "In deine eigene Wallet, im Stablecoin, den dein Kunde gezahlt hat (auf Monad über eine Einzahlungsadresse, die nur an deine weiterleiten kann)", theirs: "Auf dein Stripe-Guthaben, in deiner Landeswährung" },
+        networks: { k: "Stellar und Monad", ours: "Ja, neben Solana: USDC, EURC und USDT0 auf Stellar, USDC auf Monad", theirs: "Nein: USDC auf Tempo, Ethereum, Solana, Polygon und Base" },
+      },
+      asOf: "Stripes Bedingungen, wie seine Dokumentation sie am {date} angab.",
+    },
   },
   cta: {
     title: "Akzeptiere ab heute",
@@ -2610,6 +2682,20 @@ const hi: LandingMessages = {
       "BitPay के पेज के अनुसार ज़्यादा जोखिम वाले उद्योगों पर ज़्यादा शुल्क लगता है, और उसमें कोई मासिक शुल्क नहीं बताया गया; Essentials और Growth में एक है।",
       "Cosmos Pay में नेटवर्क शुल्क भुगतान करने वाले का वॉलेट देता है; Monad पर किसी भुगतान को आगे भेजने का रिले शुल्क उसी से घटाया जाता है।",
     ],
+    beyond: {
+      title: "रेट से आगे: Cosmos Pay और Stripe के स्टेबलकॉइन भुगतान",
+      lede: "स्टेबलकॉइन में भुगतान लेने वाले व्यवसाय के लिए क्या बदलता है, Stripe के दस्तावेज़ों में बताई गई शर्तों के अनुसार।",
+      caption: "रेट से आगे, Stripe के स्टेबलकॉइन भुगतान के साथ Cosmos Pay",
+      feature: "क्या",
+      ours: "Cosmos Pay",
+      theirs: "Stripe स्टेबलकॉइन भुगतान",
+      rows: {
+        who: { k: "कौन-से व्यवसाय भुगतान ले सकते हैं", ours: "लैटिन अमेरिका और दुनिया भर के व्यवसाय", theirs: "अमेरिका के व्यवसाय; EU, हांगकांग, मेक्सिको और स्विट्ज़रलैंड में प्राइवेट प्रीव्यू में" },
+        settle: { k: "भुगतान कहाँ सेटल होता है", ours: "आपके अपने वॉलेट में, उसी स्टेबलकॉइन में जिसमें ग्राहक ने भुगतान किया (Monad पर एक डिपॉज़िट पते के ज़रिए, जो उसे केवल आपके पते पर भेज सकता है)", theirs: "आपके Stripe बैलेंस में, आपकी स्थानीय मुद्रा में" },
+        networks: { k: "Stellar और Monad", ours: "हाँ, Solana के अलावा: Stellar पर USDC, EURC और USDT0, Monad पर USDC", theirs: "नहीं: Tempo, Ethereum, Solana, Polygon और Base पर USDC" },
+      },
+      asOf: "Stripe की शर्तें, जैसी उसके दस्तावेज़ों में {date} को बताई गई थीं।",
+    },
   },
   cta: {
     title: "आज से भुगतान लें",
@@ -3047,6 +3133,20 @@ const zh: LandingMessages = {
       "BitPay 页面注明高风险行业适用更高费率，且未列出月费；Essentials 和 Growth 有月费。",
       "使用 Cosmos Pay 时，网络手续费由付款方钱包支付；在 Monad 上，转发付款的中继费用从该笔付款中扣除。",
     ],
+    beyond: {
+      title: "费率之外：Cosmos Pay 与 Stripe 稳定币支付",
+      lede: "对于收取稳定币的企业有哪些不同，依据 Stripe 文档公布的条件。",
+      caption: "费率之外，Cosmos Pay 与 Stripe 稳定币支付的对比",
+      feature: "项目",
+      ours: "Cosmos Pay",
+      theirs: "Stripe 稳定币支付",
+      rows: {
+        who: { k: "可以收款的企业", ours: "拉丁美洲及全球的企业", theirs: "美国企业；欧盟、香港、墨西哥和瑞士为私人预览" },
+        settle: { k: "款项结算到哪里", ours: "您自己的钱包，以客户支付的稳定币结算（在 Monad 上经由一个只能转发到您地址的充值地址）", theirs: "您的 Stripe 余额，以您的本地货币结算" },
+        networks: { k: "Stellar 和 Monad", ours: "支持，此外还有 Solana：Stellar 上的 USDC、EURC 和 USDT0，Monad 上的 USDC", theirs: "不支持：Tempo、Ethereum、Solana、Polygon 和 Base 上的 USDC" },
+      },
+      asOf: "Stripe 的条件以其文档在 {date} 的说明为准。",
+    },
   },
   cta: {
     title: "立即开始接受",
