@@ -52,7 +52,7 @@ if (!fs.existsSync(outDir)) {
 // from the pages, llms.txt and the AI page (index.md is the home's Markdown, written after the
 // build by docs/scripts/write-markdown-pages.mjs). A route that silently stopped exporting would
 // only show up as a 404 in production.
-const PUBLISHED = ['sitemap.xml', 'llms.txt', 'llms-full.txt', 'openapi.json', 'index.md'];
+const PUBLISHED = ['sitemap.xml', 'llms.txt', 'llms-full.txt', 'llms-sdk.txt', 'llms-api.txt', 'openapi.json', 'index.md'];
 const missing = PUBLISHED.filter((file) => !fs.existsSync(path.join(outDir, file)));
 if (missing.length) {
   console.error(`[build-docs] the export is missing ${missing.join(', ')} (docs/src/app routes)`);
