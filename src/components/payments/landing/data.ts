@@ -144,7 +144,9 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
     return { id, name: id[0].toUpperCase() + id.slice(1), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, monthly };
   });
   const ESCROW_PCT = ESCROW_FEE_PCT;
-  const faq = (["wallet", "account", "wallets", "custody", "service", "escrow", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
+  // "What is Cosmos Pay?" opens the list, so the home (its first four) and /faq both start with an
+  // answer a reader or an AI answer can quote on its own.
+  const faq = (["what", "wallet", "account", "wallets", "assets", "custody", "service", "escrow", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
 
   // Code samples are written indented like the code around them; this takes that indent off
   // every line after the first, so the page shows them flush left.

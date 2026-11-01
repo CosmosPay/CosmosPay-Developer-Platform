@@ -7,7 +7,6 @@ export { ApiSection } from "@/components/cosmos/marketing/ApiSection";
 export { IntegrationPaths } from "@/components/cosmos/marketing/IntegrationPaths";
 export { Solutions } from "@/components/cosmos/marketing/Solutions";
 export { Stats } from "@/components/cosmos/marketing/Stats";
-export { CustomerStories } from "@/components/cosmos/marketing/CustomerStories";
-export { Testimonials } from "@/components/cosmos/marketing/Testimonials";
+export { Stories } from "@/components/cosmos/marketing/Stories";
 export { Resources } from "@/components/cosmos/marketing/Resources";
 export { Cta } from "@/components/cosmos/marketing/Cta";

@@ -6,7 +6,7 @@ import type { User } from "@/components/cosmos/lib/types";
 import { initLang } from "@/lib/i18n/index";
 import {
   Hero, WalletSection, DevKit, ApiSection, IntegrationPaths, Solutions, Stats,
-  CustomerStories, Testimonials, Resources, Marketplace, Cta,
+  Stories, Resources, Marketplace, Cta,
 } from "@/components/cosmos/marketing";
 
 /* ---------------- root ---------------- */
@@ -33,8 +33,8 @@ export default function Landing({ user: serverUser = null, lang }: { user?: User
         <IntegrationPaths />
         <Solutions user={user} />
         <Stats />
-        <CustomerStories />
-        <Testimonials />
+        {/* Testimonials come back only with real customers to quote. */}
+        <Stories />
         <Resources />
         <Marketplace />
         <Cta user={user} />

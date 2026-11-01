@@ -3,11 +3,12 @@
 
    Search engines index every language of a page at its own address (?lang=, see
    src/lib/seo/lang-urls.ts), so each version needs its own <title> and description. These are
-   search copy, not interface copy: the interface catalogs stay in src/lib/i18n/messages. /swaps
-   takes its title and description from that catalog (swapsPage.metaTitle), since the page
-   already ships them in every language. Pure, so tests/unit/seoSiteMeta.test.ts checks every
-   language is complete. Titles separate with " | " and nothing here uses an em dash. */
+   search copy, not interface copy: the interface catalogs stay in src/lib/i18n/messages. The home
+   and /swaps take their title and description from that catalog (landing.meta,
+   swapsPage.metaTitle), since those pages already ship them in every language. Pure, so
+   tests/unit/seoSiteMeta.test.ts checks every language is complete. Titles separate with " | " and nothing here uses an em dash. */
 import { LOCALES } from "@/lib/i18n/locales";
+import { messages } from "@/lib/i18n/messages/index";
 
 /** The company site's languages, in the language picker's order. */
 export const SITE_LANGS: readonly string[] = LOCALES.map((l) => l.code);
@@ -39,13 +40,8 @@ type Crumbs = Record<SitePage, string>;
 
 const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumbs }> = {
   en: {
-    home: {
-      title: "Cosmos Pay | Stablecoin payments on Stellar, Solana and Monad",
-      description:
-        "Non-custodial payments on Stellar, Solana and Monad: a REST API and TypeScript SDK, payment links, a hosted checkout, swaps, private payments and the Cosmos Pay Wallet.",
-    },
     pricing: {
-      title: "Pricing | Cosmos Pay",
+      title: "Plans and pricing | Cosmos Pay",
       description:
         "Plans for Cosmos Pay's payments, swaps and private payments as a service on Stellar, Solana and Monad: the rate per payment and per swap on each plan, its limits and what it includes.",
     },
@@ -56,11 +52,6 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     crumbs: { home: "Home", pricing: "Pricing", swaps: "Swaps", tos: "Terms" },
   },
   es: {
-    home: {
-      title: "Cosmos Pay | Pagos con stablecoins en Stellar, Solana y Monad",
-      description:
-        "Pagos no custodiales en Stellar, Solana y Monad: API REST y SDK para TypeScript, enlaces de pago, checkout alojado, swaps, pagos privados y la wallet Cosmos Pay.",
-    },
     pricing: {
       title: "Precios | Cosmos Pay",
       description:
@@ -73,11 +64,6 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     crumbs: { home: "Inicio", pricing: "Precios", swaps: "Swaps", tos: "Términos" },
   },
   pt: {
-    home: {
-      title: "Cosmos Pay | Pagamentos com stablecoins na Stellar, Solana e Monad",
-      description:
-        "Pagamentos não custodiais na Stellar, Solana e Monad: API REST e SDK para TypeScript, links de pagamento, checkout hospedado, swaps, pagamentos privados e a carteira Cosmos Pay.",
-    },
     pricing: {
       title: "Preços | Cosmos Pay",
       description:
@@ -86,11 +72,6 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     crumbs: { home: "Início", pricing: "Preços", swaps: "Swaps", tos: "Termos" },
   },
   fr: {
-    home: {
-      title: "Cosmos Pay | Paiements en stablecoins sur Stellar, Solana et Monad",
-      description:
-        "Paiements non custodiaux sur Stellar, Solana et Monad : API REST et SDK TypeScript, liens de paiement, checkout hébergé, swaps, paiements privés et le wallet Cosmos Pay.",
-    },
     pricing: {
       title: "Tarifs | Cosmos Pay",
       description:
@@ -99,11 +80,6 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     crumbs: { home: "Accueil", pricing: "Tarifs", swaps: "Swaps", tos: "Conditions" },
   },
   de: {
-    home: {
-      title: "Cosmos Pay | Stablecoin-Zahlungen auf Stellar, Solana und Monad",
-      description:
-        "Zahlungen ohne Verwahrung auf Stellar, Solana und Monad: REST-API und TypeScript-SDK, Zahlungslinks, gehosteter Checkout, Swaps, private Zahlungen und die Cosmos Pay Wallet.",
-    },
     pricing: {
       title: "Preise | Cosmos Pay",
       description:
@@ -112,11 +88,6 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     crumbs: { home: "Startseite", pricing: "Preise", swaps: "Swaps", tos: "Bedingungen" },
   },
   hi: {
-    home: {
-      title: "Cosmos Pay | Stellar, Solana और Monad पर स्टेबलकॉइन भुगतान",
-      description:
-        "Stellar, Solana और Monad पर नॉन-कस्टोडियल भुगतान: REST API और TypeScript SDK, पेमेंट लिंक, होस्टेड चेकआउट, स्वैप, निजी भुगतान और Cosmos Pay वॉलेट।",
-    },
     pricing: {
       title: "प्राइसिंग | Cosmos Pay",
       description:
@@ -125,11 +96,6 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     crumbs: { home: "होम", pricing: "प्राइसिंग", swaps: "स्वैप", tos: "शर्तें" },
   },
   zh: {
-    home: {
-      title: "Cosmos Pay | 在 Stellar、Solana 和 Monad 上使用稳定币支付",
-      description:
-        "Stellar、Solana 和 Monad 上的非托管支付：REST API 和 TypeScript SDK、支付链接、托管收银台、兑换、隐私支付以及 Cosmos Pay 钱包。",
-    },
     pricing: {
       title: "定价 | Cosmos Pay",
       description:
@@ -147,7 +113,11 @@ export function siteLang(lang: string | null | undefined): string {
 /** The search title and description of a page in a language. A page whose text is not written
  *  in that language (the terms) keeps its English ones. Not for /swaps (its catalog has them). */
 export function siteMeta(page: MetaPage, lang: string | null | undefined): PageMeta {
-  return META[siteLang(lang)][page] ?? (META.en[page] as PageMeta);
+  const code = siteLang(lang);
+  // The home's search copy is the landing's own (landing.meta in each catalog), written with the
+  // page it describes.
+  if (page === "home") return (messages[code as keyof typeof messages] ?? messages.en).landing.meta;
+  return META[code][page] ?? (META.en[page] as PageMeta);
 }
 
 /** The name a page goes by in its breadcrumb trail (the JSON-LD BreadcrumbList). */

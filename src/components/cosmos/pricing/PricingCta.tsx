@@ -10,7 +10,7 @@ export function PricingCta({ user }) {
     <section className="lp-panel cta" data-panel="navy">
       <div className="wrap">
         <div className="cta-panel reveal">
-          <h2>{p.ctaTitle}<span className="num" aria-hidden="true">/04</span></h2>
+          <h2 data-num="/04">{p.ctaTitle}</h2>
           <p>{p.ctaDesc}</p>
           <div className="row">
             {/* Contact sales: no contact page yet. */}

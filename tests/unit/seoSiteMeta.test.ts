@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { PAGE_LANGS, SITE_LANGS, SITE_PAGE_PATHS, TOS_LAST_UPDATED, crumbName, siteLang, siteMeta } from '@/lib/seo/site-meta';
 
 const EM_DASH = /—/;
+/** Display width as a result snippet measures it: a CJK character takes two Latin ones' room. */
+const width = (text: string) => [...text].reduce((n, ch) => n + (/[⺀-鿿豈-﫿＀-￯]/.test(ch) ? 2 : 1), 0);
 
 test('the home and /pricing have their own title and description in every site language', () => {
   for (const page of ['home', 'pricing'] as const) {
@@ -10,8 +12,8 @@ test('the home and /pricing have their own title and description in every site l
     for (const lang of SITE_LANGS) {
       const { title, description } = siteMeta(page, lang);
       assert.ok(title.includes('Cosmos Pay'), `${page}/${lang} title names the brand`);
-      assert.ok(title.length <= 70, `${page}/${lang} title fits a result (${title.length})`);
-      assert.ok(description.length >= 80 && description.length <= 230, `${page}/${lang} description length ${description.length}`);
+      assert.ok(width(title) <= 70, `${page}/${lang} title fits a result (${width(title)})`);
+      assert.ok(width(description) >= 80 && width(description) <= 230, `${page}/${lang} description width ${width(description)}`);
       assert.doesNotMatch(title + description, EM_DASH, `${page}/${lang} has no em dash`);
       titles.add(title);
     }

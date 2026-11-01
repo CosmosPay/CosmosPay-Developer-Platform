@@ -17,7 +17,7 @@ export function Marketplace() {
                 la numeracion /0n en lugar de un rotulo de palabra. El nombre de
                 marca no se tipea nunca (BRAND.md, seccion 10). */}
             <div className="section-head">
-              <h2>{m.title}<span className="num" aria-hidden="true">/09</span></h2>
+              <h2 data-num="/08">{m.title}</h2>
               <p>{m.lede}</p>
             </div>
             <a className="btn btn-white" href={MARKETPLACE_URL} target="_blank" rel="noopener noreferrer">
