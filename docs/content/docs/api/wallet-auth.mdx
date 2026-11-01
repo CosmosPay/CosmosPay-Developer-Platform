@@ -86,7 +86,11 @@ _openapi:
           provider proves who consented, not who opened the sign-in, and an
           existing account is where the backup worth stealing is. An Authentik
           email the provider has not confirmed also gets `verify_email`, account
-          or not, under the same per-address cooldown as `email/start`.'
+          or not, under the same per-address cooldown as `email/start`. The
+          exception is a sign-in through Authentik’s emailed link (the `email`
+          source), whose ID token carries `cosmos_inbox_proven: true`: that
+          login already proved the inbox, so an existing account ends here too,
+          with its backups and the `idToken`.'
         heading: redeem-a-handshake-with-the-pkce-verifier
       - content: Wrong codes are counted on the row, not by the client. Five burns it,
           and a burned code is replaced by asking for another.

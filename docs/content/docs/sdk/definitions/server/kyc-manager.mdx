@@ -1,6 +1,6 @@
 ---
 title: "KycManager"
-description: "KYC / KYB — `client.kyc`. A receiver is the verified identity both ramps hang off: an on-ramp pays INTO one of its wallets, an off-ramp pays OUT to one of its bank accounts, a"
+description: "KYC / KYB — client.kyc. A receiver is the verified identity both ramps hang off: an on-ramp pays INTO one of its wallets, an off-ramp pays OUT to one…"
 ---
 
 KYC / KYB — `client.kyc`. A receiver is the verified identity both ramps hang off: an on-ramp pays INTO one of its wallets, an off-ramp pays OUT to one of its bank accounts, and neither works until verification passes. The order is not obvious and the API will not guess it for you: 1. `termsOfService()` — the acceptance the provider requires up front, which returns a `tos_id`. 2. `upload()` each document, keeping the `file_url` it returns. 3. `createReceiver()` with those URLs and the `tos_id`. 4. `addWallet()` / `addBankAccount()` for where money should land. 5. verification runs; `fetchReceiver()` refreshes `kycStatus` from upstream.

@@ -37,6 +37,29 @@ source of truth; the copy script rewrites the one `astro:env/client` import to a
 Override source locations with `SDK_LLMS_DIR`, `OPENAPI_SRC`, `PORTAL_SRC`,
 `COSMOS_API_BASE`, `NEXT_PUBLIC_BETTER_AUTH_URL`.
 
+## Search engines and AI agents
+
+Each page's metadata comes from `src/lib/seo.ts` (through `generateMetadata` in
+`src/app/(docs)/[[...slug]]/page.tsx`): a title unique within its language ("Webhooks | SDK",
+then the " | Cosmos Pay Docs" template), the description, an absolute trailing-slash canonical,
+hreflang between the page and its real translations (+ `x-default`), Open Graph / Twitter with
+the portal's `/og-image.png`, a `text/markdown` alternate pointing at its `content.md`, and a
+JSON-LD graph (TechArticle + BreadcrumbList; the docs home is a WebPage with the API and SDK).
+
+- **Translations.** A locale only has the pages in `content-i18n/<lang>/`. Every other page is
+  still exported under the locale prefix (so the localized sidebar is complete), as an English
+  copy that is `noindex`, canonical to the English URL and left out of hreflang, the sitemap and
+  the llms files (`isTranslation` in `src/lib/source.ts`). The root layout renders `lang="en"`;
+  `scripts/set-html-lang.mjs` (`postbuild`) sets each locale's pages to their language and the
+  Provider keeps it in step on client navigation. The sidebar footer links the page's other
+  languages as plain `<a>`s, so crawlers find them.
+- **Files next to the pages** (`src/app/*`, exported to `/docs/<file>`): `sitemap.xml` (every real
+  page in every language, with alternates and `lastmod` from git, or the file's modification
+  time in a shallow clone), `llms.txt`, `llms-full.txt` (English only, the API reference rendered
+  from `openapi.json` by `src/lib/openapi-markdown.ts`), `llms.mdx/[<lang>/]<slug>/content.md`
+  and `openapi.json` (this folder's spec, as the API reference renders it).
+  `scripts/build-docs.mjs` fails the portal build if one of them is missing.
+
 ## Develop
 
 ```bash
