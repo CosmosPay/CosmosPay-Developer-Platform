@@ -24,6 +24,13 @@ const COPIES = [
   ['lib/seo/lang-urls.ts', 'lib/seo/lang-urls.ts'],
   ['lib/payments/site-pages.ts', 'lib/payments/site-pages.ts'],
   ['lib/chains.ts', 'lib/chains.ts'],
+  // The company's JSON-LD nodes (Organization, Payments API, SDK), so the docs publish the very
+  // nodes cosmospay.lat does (src/lib/seo.ts): the pure builders, the plans and contact address
+  // they read, and the gateway's API base.
+  ['lib/seo/schema.ts', 'lib/seo/schema.ts'],
+  ['lib/plans.ts', 'lib/plans.ts'],
+  ['lib/payments/contact.ts', 'lib/payments/contact.ts'],
+  ['lib/payments/urls.ts', 'lib/payments/urls.ts'],
   ['styles/cosmos.css', 'styles/cosmos.css'],
 ];
 

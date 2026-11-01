@@ -245,49 +245,62 @@ export interface ProductNodesInput {
   wallet: { webApp: string; chromeStore: string };
 }
 
-/** What the company makes, for its home: the Payments API, the SDK and the wallet. */
-export function productNodes({ site, docs, apiBase, wallet }: ProductNodesInput): JsonLdNode[] {
+/** The Payments API as an entity (`<site>/#api`). The company home and the docs root publish this
+ *  same node (the docs build it with this builder too, docs/src/lib/seo.ts), so the two never
+ *  disagree about it. */
+export function apiNode({ site, docs, apiBase }: Pick<ProductNodesInput, "site" | "docs" | "apiBase">): JsonLdNode {
+  return {
+    "@type": "WebAPI",
+    "@id": `${site}/#api`,
+    name: "Cosmos Pay Payments API",
+    description:
+      "REST API to create payment intents and payment links, receive signed webhooks, and manage products, customers and swaps on Stellar, Solana and Monad. API keys starting with dv_ run on testnet and prod_ keys on mainnet.",
+    url: `${docs}api/`,
+    documentation: docs,
+    termsOfService: `${site}/tos`,
+    provider: { "@id": orgId(site) },
+    availableChannel: { "@type": "ServiceChannel", serviceUrl: apiBase },
+  };
+}
+
+/** The SDK as an entity (`<site>/#sdk`), the same on the company home and the docs root. */
+export function sdkNode(site: string): JsonLdNode {
   const org = { "@id": orgId(site) };
-  return [
-    {
-      "@type": "WebAPI",
-      "@id": `${site}/#api`,
-      name: "Cosmos Pay Payments API",
-      description:
-        "REST API to create payment intents and payment links, receive signed webhooks, and manage products, customers and swaps on Stellar, Solana and Monad. API keys starting with dv_ run on testnet and prod_ keys on mainnet.",
-      url: `${docs}api/`,
-      documentation: docs,
-      termsOfService: `${site}/tos`,
-      provider: org,
-      availableChannel: { "@type": "ServiceChannel", serviceUrl: apiBase },
-    },
-    {
-      "@type": "SoftwareSourceCode",
-      "@id": `${site}/#sdk`,
-      name: SDK_PACKAGE,
-      description:
-        "JavaScript and TypeScript SDK for the Cosmos Pay Payments API: a server entry point for Node.js 18 or later and a browser entry point (@cosmosapp/pay_sdk/web) that completes a payment in the user's wallet.",
-      programmingLanguage: ["TypeScript", "JavaScript"],
-      runtimePlatform: "Node.js 18 or later",
-      codeRepository: SDK_REPO,
-      url: SDK_NPM,
-      author: org,
-      publisher: org,
-    },
-    {
-      "@type": "SoftwareApplication",
-      "@id": `${site}/#wallet`,
-      name: "Cosmos Pay Wallet",
-      alternateName: "Cosmos Wallet",
-      applicationCategory: "FinanceApplication",
-      operatingSystem: "Web, Android, Windows, macOS, Linux; extension for Chrome and Firefox",
-      description:
-        "Non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.",
-      url: wallet.webApp,
-      downloadUrl: [wallet.chromeStore, WALLET_RELEASES],
-      publisher: org,
-    },
-  ];
+  return {
+    "@type": "SoftwareSourceCode",
+    "@id": `${site}/#sdk`,
+    name: SDK_PACKAGE,
+    description:
+      "JavaScript and TypeScript SDK for the Cosmos Pay Payments API: a server entry point for Node.js 18 or later and a browser entry point (@cosmosapp/pay_sdk/web) that completes a payment in the user's wallet.",
+    programmingLanguage: ["TypeScript", "JavaScript"],
+    runtimePlatform: "Node.js 18 or later",
+    codeRepository: SDK_REPO,
+    url: SDK_NPM,
+    author: org,
+    publisher: org,
+  };
+}
+
+/** The wallet as an entity (`<site>/#wallet`). */
+export function walletNode(site: string, wallet: ProductNodesInput["wallet"]): JsonLdNode {
+  return {
+    "@type": "SoftwareApplication",
+    "@id": `${site}/#wallet`,
+    name: "Cosmos Pay Wallet",
+    alternateName: "Cosmos Wallet",
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Web, Android, Windows, macOS, Linux; extension for Chrome and Firefox",
+    description:
+      "Non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.",
+    url: wallet.webApp,
+    downloadUrl: [wallet.chromeStore, WALLET_RELEASES],
+    publisher: { "@id": orgId(site) },
+  };
+}
+
+/** What the company makes, for its home: the Payments API, the SDK and the wallet. */
+export function productNodes(input: ProductNodesInput): JsonLdNode[] {
+  return [apiNode(input), sdkNode(input.site), walletNode(input.site, input.wallet)];
 }
 
 export interface ArticleInput {

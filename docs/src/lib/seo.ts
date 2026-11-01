@@ -1,17 +1,22 @@
 import type { Metadata } from 'next';
-import { appName, docsOrigin, ogImage, siteOrigin } from '@/lib/shared';
+import { appName, docsOrigin, ogImage } from '@/lib/shared';
 import { DEFAULT_DOCS_LANGUAGE, type DocsLanguage } from '@/lib/i18n-config';
 import {
   canonicalUrl,
   contentLanguage,
   docsUrl,
   type DocsPage,
-  getPageMarkdownUrl,
   isTranslation,
+  markdownPageUrl,
   pageLanguages,
   source,
 } from '@/lib/source';
 import { pageJsonLdDates } from '@/lib/last-modified';
+// The company's entities as the portal builds them (copied from ../src by scripts/sync-portal-ui.mjs):
+// the same builders and the same data, so each node is identical wherever it is published.
+import { apiNode, organizationNode, orgId, sameAsProfiles, sdkNode } from '@/lib/seo/schema';
+import { SITE, SOCIAL } from '@/components/cosmos/lib/constants';
+import { API_BASE } from '@/lib/payments/urls';
 
 // Search and social metadata for every docs page: the title, the canonical URL, hreflang
 // between a page and its real translations, the Markdown alternate, Open Graph / Twitter and
@@ -31,13 +36,19 @@ const OG_LOCALES: Record<DocsLanguage, string> = {
  *  content/docs/meta.json ("SDK", "REST API"), e.g. "Webhooks | SDK" and "Webhooks | REST API". */
 const SECTION_LABELS: Record<string, string> = { sdk: 'SDK', api: 'REST API' };
 
-// The company site (cosmospay.lat) publishes the Organization node; the docs only refer to it by
-// @id and never restate it, so the two cannot disagree.
-const ORGANIZATION = { '@id': 'https://cosmospay.lat/#organization' };
+// The company's Organization (https://cosmospay.lat/#organization), defined on every docs page that
+// carries a graph, as cosmospay.lat and payments.cosmospay.lat define it: built by the portal's
+// organizationNode from the same profiles (SOCIAL), so a parser reading one page resolves it and
+// merging the hosts' graphs finds one set of values. The Payments API and the SDK are the
+// portal's nodes too (apiNode, sdkNode), never a docs variant of them.
+const ORGANIZATION_NODE = organizationNode(SITE, sameAsProfiles(SOCIAL));
+const ORGANIZATION = { '@id': orgId(SITE) };
 const WEBSITE_URL = `${docsOrigin}/`;
 const WEBSITE_ID = `${WEBSITE_URL}#website`;
-const API_ID = 'https://cosmospay.lat/#api';
-const SDK_ID = 'https://cosmospay.lat/#sdk';
+const API_NODE = apiNode({ site: SITE, docs: WEBSITE_URL, apiBase: API_BASE });
+const SDK_NODE = sdkNode(SITE);
+const API_ID = API_NODE['@id'] as string;
+const SDK_ID = SDK_NODE['@id'] as string;
 
 let titleCounts: Map<string, Map<string, number>> | undefined;
 
@@ -85,7 +96,7 @@ export function pageMetadata(page: DocsPage): Metadata {
     alternates: {
       canonical: url,
       languages,
-      types: { 'text/markdown': `${siteOrigin}${getPageMarkdownUrl(page).url}` },
+      types: { 'text/markdown': markdownPageUrl(page) },
     },
     robots: translated ? undefined : { index: false, follow: true },
     openGraph: {
@@ -120,39 +131,9 @@ const website: JsonLd = {
   publisher: ORGANIZATION,
 };
 
-/** The Payments API and the SDK as entities, with the ids the company site refers to them by.
- *  Every value comes from the docs themselves (openapi.json, the SDK pages, getting-started). */
-function productNodes(lang: DocsLanguage): JsonLd[] {
-  const api = source.getPage(['api'], DEFAULT_DOCS_LANGUAGE);
-  const sdk = source.getPage(['sdk', 'server', 'overview'], DEFAULT_DOCS_LANGUAGE);
-  return [
-    {
-      '@type': 'WebAPI',
-      '@id': API_ID,
-      name: 'Cosmos Pay Payments API',
-      description: api?.data.description,
-      url: docsUrl(['api'], lang),
-      documentation: docsUrl([], lang),
-      provider: ORGANIZATION,
-      termsOfService: 'https://cosmospay.lat/tos',
-    },
-    {
-      '@type': 'SoftwareSourceCode',
-      '@id': SDK_ID,
-      name: '@cosmosapp/pay_sdk',
-      description: 'JavaScript / TypeScript SDK for Cosmos Pay.',
-      programmingLanguage: ['JavaScript', 'TypeScript'],
-      runtimePlatform: 'Node.js >= 18',
-      codeRepository: 'https://github.com/CosmosPay/CosmosJS_SDK',
-      url: sdk ? docsUrl(sdk.slugs, lang) : undefined,
-      targetProduct: { '@id': API_ID },
-      author: ORGANIZATION,
-    },
-  ];
-}
-
 /** Docs > every ancestor that is a page of its own (a folder with an index, e.g. the API
- *  reference) > the page. Folders without a page have no URL to point at, so they are left out. */
+ *  reference) > the page. Folders without a page have no URL to point at, so they are left out.
+ *  The docs home is the trail's root alone, the crumb every other page starts from. */
 function breadcrumb(page: DocsPage, url: string): JsonLd {
   const lang = contentLanguage(page);
   const items: { name: string; item?: string }[] = [{ name: appName, item: docsUrl([], lang) }];
@@ -160,7 +141,7 @@ function breadcrumb(page: DocsPage, url: string): JsonLd {
     const ancestor = source.getPage(page.slugs.slice(0, i), lang);
     if (ancestor) items.push({ name: ancestor.data.title, item: canonicalUrl(ancestor) });
   }
-  items.push({ name: page.data.title });
+  if (page.slugs.length) items.push({ name: page.data.title });
   return {
     '@type': 'BreadcrumbList',
     '@id': `${url}#breadcrumb`,
@@ -169,11 +150,12 @@ function breadcrumb(page: DocsPage, url: string): JsonLd {
 }
 
 /**
- * The page's JSON-LD graph: the docs WebSite, then a TechArticle with its BreadcrumbList (the docs
- * home is a WebPage with the API and SDK entities instead). The Organization is referenced by @id
- * only. datePublished and dateModified come from git (lib/last-modified.ts) or are left out.
- * Undefined for an English fallback copy: its content is the English page's, which carries the
- * graph.
+ * The page's JSON-LD graph: the company's Organization and the docs WebSite, then a TechArticle with
+ * its BreadcrumbList (and the Payments API on an API reference page); the docs home is a WebPage
+ * about the API and the SDK, with its one-crumb BreadcrumbList and both entities. Every company
+ * node is the portal's own (identical on all three hosts). datePublished and dateModified come
+ * from git (lib/last-modified.ts) or are left out. Undefined for an English fallback copy: its
+ * content is the English page's, which carries the graph.
  */
 export function pageJsonLd(page: DocsPage): JsonLd | undefined {
   if (!isTranslation(page)) return undefined;
@@ -186,6 +168,7 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
     return {
       '@context': 'https://schema.org',
       '@graph': [
+        ORGANIZATION_NODE,
         website,
         {
           '@type': 'WebPage',
@@ -196,11 +179,15 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
           inLanguage: lang,
           isPartOf: { '@id': WEBSITE_ID },
           about: [{ '@id': API_ID }, { '@id': SDK_ID }],
+          breadcrumb: { '@id': `${url}#breadcrumb` },
+          primaryImageOfPage: { '@type': 'ImageObject', url: ogImage.url, width: ogImage.width, height: ogImage.height },
           publisher: ORGANIZATION,
           datePublished,
           dateModified,
         },
-        ...productNodes(lang),
+        breadcrumb(page, url),
+        API_NODE,
+        SDK_NODE,
       ],
     };
   }
@@ -208,6 +195,7 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
   return {
     '@context': 'https://schema.org',
     '@graph': [
+      ORGANIZATION_NODE,
       website,
       {
         '@type': 'TechArticle',
@@ -227,7 +215,7 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
         dateModified,
       },
       breadcrumb(page, url),
-      ...(isOpenAPI ? productNodes(lang).slice(0, 1) : []),
+      ...(isOpenAPI ? [API_NODE] : []),
     ],
   };
 }

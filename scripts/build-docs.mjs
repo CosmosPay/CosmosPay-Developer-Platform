@@ -49,9 +49,10 @@ if (!fs.existsSync(outDir)) {
 }
 
 // The files search engines and agents read besides the pages: served at /docs/<file>, linked
-// from the pages, llms.txt and the AI page. A route that silently stopped exporting would only
-// show up as a 404 in production.
-const PUBLISHED = ['sitemap.xml', 'llms.txt', 'llms-full.txt', 'openapi.json'];
+// from the pages, llms.txt and the AI page (index.md is the home's Markdown, written after the
+// build by docs/scripts/write-markdown-pages.mjs). A route that silently stopped exporting would
+// only show up as a 404 in production.
+const PUBLISHED = ['sitemap.xml', 'llms.txt', 'llms-full.txt', 'openapi.json', 'index.md'];
 const missing = PUBLISHED.filter((file) => !fs.existsSync(path.join(outDir, file)));
 if (missing.length) {
   console.error(`[build-docs] the export is missing ${missing.join(', ')} (docs/src/app routes)`);
@@ -59,6 +60,7 @@ if (missing.length) {
 }
 
 checkIndexableUrls(outDir);
+checkLinksAndMarkdown(outDir);
 
 if (checkOnly) process.exit(0);
 
@@ -66,6 +68,62 @@ fs.rmSync(destDir, { recursive: true, force: true });
 fs.mkdirSync(path.dirname(destDir), { recursive: true });
 fs.cpSync(outDir, destDir, { recursive: true });
 console.log(`[build-docs] copied ${outDir} -> ${destDir}`);
+
+/**
+ * Every exported page links the docs at their canonical, trailing-slash addresses (nginx answers a
+ * slashless docs path with a 301, a hop per link), and the Markdown its
+ * <link rel="alternate" type="text/markdown"> names is a file of the export (/docs/<page>.md).
+ * Exits 1 naming each offending page.
+ */
+function checkLinksAndMarkdown(out) {
+  const files = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      if (entry.isDirectory()) return entry.name === '_next' ? [] : files(path.join(dir, entry.name));
+      return entry.name === 'index.html' ? [path.join(dir, entry.name)] : [];
+    });
+  const home = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+  const root = /<link rel="canonical" href="([^"]+)"/.exec(home)?.[1];
+  if (!root) {
+    console.error('[build-docs] out/index.html has no canonical URL to resolve the docs links against');
+    process.exit(1);
+  }
+  const rootUrl = new URL(root);
+  const problems = [];
+  let links = 0;
+  let alternates = 0;
+  for (const file of files(out)) {
+    const where = path.relative(out, file).split(path.sep).join('/');
+    const html = fs.readFileSync(file, 'utf8');
+    const slashless = new Set();
+    for (const [, raw] of html.matchAll(/\shref="([^"]+)"/g)) {
+      let url;
+      try {
+        url = new URL(raw.replace(/&amp;/g, '&'), rootUrl);
+      } catch {
+        continue;
+      }
+      if (url.host !== rootUrl.host || (url.pathname !== rootUrl.pathname.replace(/\/$/, '') && !url.pathname.startsWith(rootUrl.pathname))) continue;
+      links++;
+      const last = url.pathname.split('/').pop();
+      if (!url.pathname.endsWith('/') && !last.includes('.')) slashless.add(raw);
+    }
+    if (slashless.size) problems.push(`  ${where}: links ${[...slashless].slice(0, 5).join(', ')} without the trailing slash`);
+    const head = html.slice(0, Math.max(0, html.indexOf('</head>')) || html.length);
+    const markdown = [...head.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) => /type="text\/markdown"/.test(tag))?.match(/href="([^"]+)"/)?.[1];
+    if (!markdown) continue;
+    alternates++;
+    const target = new URL(markdown);
+    const rest = target.pathname.startsWith(rootUrl.pathname) ? target.pathname.slice(rootUrl.pathname.length) : null;
+    if (target.host !== rootUrl.host || !rest || !rest.endsWith('.md') || !fs.existsSync(path.join(out, ...rest.split('/').map(decodeURIComponent)))) {
+      problems.push(`  ${where}: its Markdown alternate ${markdown} is not a .md file of the export`);
+    }
+  }
+  if (problems.length) {
+    console.error(`[build-docs] ${problems.length} page(s) with a slashless docs link or a missing Markdown file:\n${problems.join('\n')}`);
+    process.exit(1);
+  }
+  console.log(`[build-docs] links check: ${links} docs links, all at their trailing-slash address; ${alternates} Markdown alternates, all exported`);
+}
 
 /**
  * Every URL the sitemap names (as a <loc> or an xhtml:link alternate) and every page's
