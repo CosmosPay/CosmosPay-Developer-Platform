@@ -2,6 +2,25 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.15.0] - 2026-11-01
+
+### Features
+- The company's own JSON-LD nodes and a .md address per page (8185093)
+- Date each page by its own sources, and show it on /faq, /compare and the networks (288b261)
+
+### Bug Fixes
+- Open payments pages with any query string and their slash form (2aaba5c)
+- Link every docs page at its trailing-slash address (59b0e6c)
+- Drop the HowTo JSON-LD from the guides (ad4ce06)
+- Load Google Analytics on the company site's public pages only (9512a8c)
+
+### Documentation
+- Sync the API description with the server (2e0fba7)
+- Robots, docs links, page dates, docs JSON-LD and analytics rules (60e022d)
+
+### Testing
+- Check every page's docs links and JSON-LD, and the docs' shared nodes (a4944a8)
+
 ## [0.14.0] - 2026-11-01
 
 ### Features
