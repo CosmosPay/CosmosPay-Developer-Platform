@@ -2,6 +2,15 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.19.0] - 2026-11-01
+
+### Features
+- The Organization states its country (AR), as /about does (99daadc)
+
+### Bug Fixes
+- Drop dangling article nodes from /learn; SDK node states its license (8ee0ff1)
+- Plain Markdown for agents; Solana and Monad through the SDK (bec3dbf)
+
 ## [0.18.1] - 2026-11-01
 
 ### Documentation
