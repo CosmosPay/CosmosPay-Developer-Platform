@@ -6,10 +6,10 @@ import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 
 const ORIGINS = { site: 'https://cosmospay.lat', dev: 'https://dev.cosmospay.lat', payments: 'https://payments.cosmospay.lat' };
 
-test('the company site lists every page in every language it is written in, /swaps included', () => {
+test('the company site lists every page in every language it is written in, /swaps and /about included', () => {
   const entries = siteEntries(ORIGINS.site);
   const locs = entries.map((e) => e.loc);
-  for (const path of ['/', '/pricing', '/swaps']) {
+  for (const path of ['/', '/pricing', '/swaps', '/about']) {
     const url = new URL(path, ORIGINS.site).href;
     assert.ok(locs.includes(url), `${path} x-default`);
     for (const lang of ['en', 'es', 'pt', 'fr', 'de', 'hi', 'zh']) assert.ok(locs.includes(`${url}?lang=${lang}`), `${path} ${lang}`);
@@ -17,7 +17,7 @@ test('the company site lists every page in every language it is written in, /swa
   // The terms exist in English and Spanish only.
   assert.deepEqual(locs.filter((l) => l.includes('/tos')), ['https://cosmospay.lat/tos?lang=en', 'https://cosmospay.lat/tos?lang=es', 'https://cosmospay.lat/tos']);
   assert.equal(new Set(locs).size, locs.length, 'no URL twice');
-  assert.equal(entries.length, 3 * 8 + 3);
+  assert.equal(entries.length, 4 * 8 + 3);
 });
 
 test('each entry names all the versions of its page, itself included', () => {
@@ -41,6 +41,8 @@ test('the XML is a urlset with hreflang links, and the platform an index of the 
   const site = sitemapXml('site', ORIGINS);
   assert.match(site, /^<\?xml version="1.0" encoding="UTF-8"\?>\n<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9" xmlns:xhtml="http:\/\/www.w3.org\/1999\/xhtml">/);
   assert.ok(site.includes('<xhtml:link rel="alternate" hreflang="x-default" href="https://cosmospay.lat/swaps"/>'));
+  assert.ok(site.includes('<loc>https://cosmospay.lat/about?lang=zh</loc>'));
+  assert.ok(site.includes('<xhtml:link rel="alternate" hreflang="es" href="https://cosmospay.lat/about?lang=es"/>'));
   assert.ok(site.includes(`<lastmod>${TOS_LAST_UPDATED}</lastmod>`));
   assert.ok(!site.includes('<changefreq>') && !site.includes('<priority>'));
   const dev = sitemapXml('dev', ORIGINS);

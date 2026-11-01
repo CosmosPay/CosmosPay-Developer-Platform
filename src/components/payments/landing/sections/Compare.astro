@@ -36,7 +36,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
               <th scope="row">{row.k}</th>
               <td data-label={t.compare.cards}>{row.cards}</td>
               <td class="pl-compare-us" data-label={t.compare.us}>
-                <div class="pl-compare-val"><span class="pl-check"><Icon name="check" /></span><span>{row.us}</span></div>
+                <div class="pl-compare-val"><span class="pl-check"><Icon name={row.soon ? "clock" : "check"} /></span><span>{row.us}</span></div>
               </td>
             </tr>
           ))}

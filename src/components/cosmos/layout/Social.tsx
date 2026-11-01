@@ -13,13 +13,16 @@ const GLYPHS: Record<keyof typeof SOCIAL, string> = {
 
 const NAMES: Record<keyof typeof SOCIAL, string> = { x: "X", instagram: "Instagram", discord: "Discord", whatsapp: "WhatsApp", linkedin: "LinkedIn" };
 
-export function SocialLinks() {
+/* `labelled` writes each network's name beside its glyph (the About page's contact panel); the
+   footer draws the glyphs alone, named by aria-label. */
+export function SocialLinks({ labelled = false, className = "foot-social" }: { labelled?: boolean; className?: string } = {}) {
   return (
-    <ul className="foot-social" role="list">
+    <ul className={className} role="list">
       {(Object.keys(SOCIAL) as (keyof typeof SOCIAL)[]).map((key) => (
         <li key={key}>
-          <a href={SOCIAL[key]} target="_blank" rel="noopener noreferrer" aria-label={NAMES[key]} title={NAMES[key]}>
+          <a href={SOCIAL[key]} target="_blank" rel="noopener noreferrer" {...(labelled ? {} : { "aria-label": NAMES[key], title: NAMES[key] })}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d={GLYPHS[key]} /></svg>
+            {labelled && <span>{NAMES[key]}</span>}
           </a>
         </li>
       ))}

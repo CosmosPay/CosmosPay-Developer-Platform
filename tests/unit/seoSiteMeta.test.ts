@@ -6,8 +6,8 @@ const EM_DASH = /—/;
 /** Display width as a result snippet measures it: a CJK character takes two Latin ones' room. */
 const width = (text: string) => [...text].reduce((n, ch) => n + (/[⺀-鿿豈-﫿＀-￯]/.test(ch) ? 2 : 1), 0);
 
-test('the home and /pricing have their own title and description in every site language', () => {
-  for (const page of ['home', 'pricing'] as const) {
+test('the home, /pricing and /about have their own title and description in every site language', () => {
+  for (const page of ['home', 'pricing', 'about'] as const) {
     const titles = new Set<string>();
     for (const lang of SITE_LANGS) {
       const { title, description } = siteMeta(page, lang);
@@ -22,7 +22,7 @@ test('the home and /pricing have their own title and description in every site l
 });
 
 test('titles separate with " | "', () => {
-  for (const lang of SITE_LANGS) for (const page of ['home', 'pricing', 'tos'] as const) assert.match(siteMeta(page, lang).title, / \| /);
+  for (const lang of SITE_LANGS) for (const page of ['home', 'pricing', 'tos', 'about'] as const) assert.match(siteMeta(page, lang).title, / \| /);
 });
 
 test('the terms exist in English and Spanish; other languages keep the English meta', () => {
@@ -34,11 +34,18 @@ test('the terms exist in English and Spanish; other languages keep the English m
 
 test('every page has a breadcrumb name in every language, and a public path', () => {
   for (const lang of SITE_LANGS) {
-    for (const page of ['home', 'pricing', 'swaps', 'tos'] as const) {
+    for (const page of ['home', 'pricing', 'swaps', 'tos', 'about'] as const) {
       assert.ok(crumbName(page, lang).length > 0, `${page}/${lang}`);
       assert.match(SITE_PAGE_PATHS[page], /^\/[a-z]*$/);
     }
   }
+});
+
+test('/about is written in every site language, at its own path', () => {
+  assert.deepEqual(PAGE_LANGS.about, SITE_LANGS);
+  assert.equal(SITE_PAGE_PATHS.about, '/about');
+  assert.equal(crumbName('about', 'en'), 'About');
+  assert.notEqual(siteMeta('about', 'es').title, siteMeta('about', 'en').title);
 });
 
 test('an unknown language falls back to English', () => {

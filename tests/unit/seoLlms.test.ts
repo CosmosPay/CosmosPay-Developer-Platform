@@ -53,7 +53,18 @@ test('the company file points developers at the docs, the OpenAPI document and t
     'https://dev.cosmospay.lat/docs/api/',
     'https://www.npmjs.com/package/@cosmosapp/pay_sdk',
     'https://cosmospay.lat/.well-known/api-catalog',
+    'https://cosmospay.lat/about?lang=en',
   ]) {
     assert.ok(files.site.includes(url), url);
+  }
+  assert.ok(files.payments.includes('https://cosmospay.lat/about?lang=en'));
+});
+
+test('escrow is offered at its price but every line that names it says it is coming soon', () => {
+  for (const [name, text] of Object.entries(files)) {
+    // Escrow.com is the provider escrow's rate is compared against, not our escrow.
+    const lines = text.split('\n').filter((line) => /escrow/i.test(line.replace(/Escrow\.com/g, '')));
+    assert.ok(lines.length > 0, name);
+    for (const line of lines) assert.match(line, /coming soon/, `${name}: ${line}`);
   }
 });

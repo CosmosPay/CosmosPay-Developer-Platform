@@ -559,7 +559,7 @@ export default {
           t: "Online stores",
           label: "Stablecoins next to your other payment methods, with one payment intent per order.",
           tags: ["Payments API", "Webhooks", "Hosted checkout"],
-          story: "The store’s server creates a payment intent for each order and sends the customer to the hosted checkout, or opens it from a pay button. The customer pays from their own wallet, and a signed webhook marks the order paid. With escrow, the payment waits in an on-chain contract until the order ships.",
+          story: "The store’s server creates a payment intent for each order and sends the customer to the hosted checkout, or opens it from a pay button. The customer pays from their own wallet, and a signed webhook marks the order paid. With escrow (coming soon), the payment waits in an on-chain contract until the order ships.",
         },
         services: {
           t: "Services across borders",
@@ -663,6 +663,8 @@ export default {
       cta: "Contact sales",
     },
     footnote: "* The payer’s wallet pays the network fee; on Monad, the deposit relay’s fee is deducted and shown at checkout. Essentials and Growth add full API access, lower rates and higher limits on organizations, members and API keys.",
+    /* Beside a service that is offered and priced but not built yet (escrow). */
+    soon: "Coming soon",
     compareTitle: "Compare plans",
     orgsRow: "Organizations",
     seatsRow: "Members per organization",
@@ -713,6 +715,65 @@ export default {
     ctaDesc: "Write to us from Support in the dashboard about volume pricing, Enterprise rates or moving from another provider.",
     contactSales: "Contact sales",
     openDashboard: "Open dashboard",
+  },
+
+  /* ---------------- about (cosmospay.lat/about) ----------------
+     Only facts the code and the public sources show: no legal name, address, founders, team
+     size, dates, customers or funding. URLs, repository names and identifiers live in
+     src/pages/site/about.astro, not here. */
+  about: {
+    title: "About Cosmos Pay",
+    lede: "Cosmos Pay builds stablecoin payments for businesses: a payments API, a hosted checkout and payment links, swaps, private payments and the non-custodial Cosmos Wallet, on Stellar, Solana and Monad.",
+    facts: {
+      networks: "Networks",
+      networksValue: "Stellar, Solana and Monad",
+      based: "Based in",
+      basedValue: "Argentina",
+      code: "Source code",
+      sdk: "SDK",
+      email: "Email",
+    },
+    products: {
+      title: "What we make",
+      lede: "Payments settle on Stellar, Solana and Monad, and each network has its own page.",
+      items: {
+        api: { t: "Payments API and SDK", d: "A REST API documented with OpenAPI and a TypeScript SDK to create payment intents and payment links, with signed webhooks when a payment is confirmed.", a: "Read the docs" },
+        checkout: { t: "Hosted checkout and payment links", d: "A payment link with its QR code and a checkout page we host, in four designs and seven languages. A pay button or an embedded checkout takes one script tag.", a: "See the integration options" },
+        swaps: { t: "Swaps", d: "Swap tokens across 35+ networks and send USDT0 from Stellar, with no account.", a: "Open swaps" },
+        private: { t: "Private payments", d: "Payments on Stellar whose amount stays hidden on-chain behind a zero-knowledge proof. On testnet for now.", a: "Read how they work" },
+        wallet: { t: "Cosmos Wallet", d: "A non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.", a: "Get the wallet" },
+      },
+    },
+    code: {
+      title: "Our code is public",
+      lede: "The source of what you use is on GitHub, in the CosmosPay organization. The SDK is published on npm under the Apache 2.0 licence.",
+      tag: "Repository",
+      view: "View on GitHub",
+      org: "See every repository",
+      npm: "See the SDK on npm",
+      repos: {
+        server: "The Payments API server: payment intents and links, webhooks, swaps and private payments.",
+        platform: "This site, the payments site, the dashboard and the documentation.",
+        sdk: "The JavaScript and TypeScript SDK, published on npm as @cosmosapp/pay_sdk.",
+        wallet: "The Cosmos Wallet: the web app, the browser extension and the desktop and Android apps.",
+        skill: "A skill that teaches AI coding assistants to integrate Cosmos Pay.",
+      },
+    },
+    checks: {
+      title: "What you can check",
+      lede: "Three things our code and our public pages show.",
+      items: {
+        keys: { t: "We hold no private keys", d: "Cosmos Pay never asks for or stores anyone’s private keys. Payers sign in their own wallet, and the money goes to addresses the business controls.", a: "How payments are protected" },
+        rates: { t: "Our rates are published", d: "Every plan’s rates are on the pricing page, and the comparison page sets each one beside the published rate it is measured against, with its source and the date we read it.", a: "See the plans", b: "Compare our rates" },
+        docs: { t: "Our documentation is open", d: "The guides, the API reference and its OpenAPI document are public and need no account.", a: "Read the docs", b: "Read the OpenAPI document" },
+      },
+    },
+    contact: {
+      title: "Talk to us",
+      lede: "Write to us by email or on any of our profiles. For a question about your account, open a ticket from Support in the dashboard.",
+      support: "Open Support",
+      profiles: "Our profiles",
+    },
   },
 
   /* ---------------- dashboard ---------------- */

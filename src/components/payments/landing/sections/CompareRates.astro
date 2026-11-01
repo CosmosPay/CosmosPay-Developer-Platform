@@ -72,7 +72,7 @@ const span = (i: number) => {
         <tbody>
           {rows.map((r, i) => (
             <tr>
-              {span(i) > 0 && <th scope="row" rowspan={span(i) > 1 ? span(i) : undefined}>{c.services[r.service]}</th>}
+              {span(i) > 0 && <th scope="row" rowspan={span(i) > 1 ? span(i) : undefined}>{c.services[r.service]}{r.service === "escrow" && <span class="pl-soon">{t.soon}</span>}</th>}
               <td class="pl-compare-us" data-label={c.ours}>
                 <strong class="pl-rate">{r.oursText}</strong>
                 <small>{r.oursNote}</small>

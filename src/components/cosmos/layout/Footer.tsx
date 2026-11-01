@@ -1,5 +1,5 @@
 import { useT } from "@/lib/i18n/index";
-import { PRICING, DASH, DOCS, TERMS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
+import { ABOUT, PRICING, DASH, DOCS, TERMS, PAYMENTS, homeFor, localHref, pricingFor, type Area } from "@/components/cosmos/lib/constants";
 import { CosmosLockup } from "@/components/cosmos/icons";
 import { SocialLinks } from "@/components/cosmos/layout/Social";
 
@@ -60,7 +60,7 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
   {
     key: "company",
     links: [
-      // { i: 0, href: "#" }, // About (no page yet)
+      { i: 0, href: ABOUT }, // About
       // { i: 1, href: "#" }, // Careers (no page yet)
       // { i: 2, href: "#" }, // Newsroom (no page yet)
       // { i: 3, href: "#" }, // Security (no page yet)

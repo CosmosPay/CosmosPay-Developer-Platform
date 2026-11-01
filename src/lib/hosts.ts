@@ -2,7 +2,7 @@
  *
  * One deployment answers three domains (nginx sends all three to the same process):
  *
- *   cosmospay.lat           "site"      /, /pricing, /tos          (pages under src/pages/site/)
+ *   cosmospay.lat           "site"      /, /pricing, /tos, /about  (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
  *   payments.cosmospay.lat  "payments"  /, its content pages (/integrations, /use-cases, /security,
  *                                       /fees, /compare, /faq, /stellar, /solana, /monad: every
@@ -50,7 +50,7 @@ export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", pay
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
 import { isKeyFilePath } from "@/lib/seo/indexnow";
 
-const SITE_PATHS = new Set(["/pricing", "/tos"]);
+const SITE_PATHS = new Set(["/pricing", "/tos", "/about"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
    because /pricing is the company site's. */
 const PAYMENTS_PATHS = new Set(PAYMENTS_PAGE_PATHS);
