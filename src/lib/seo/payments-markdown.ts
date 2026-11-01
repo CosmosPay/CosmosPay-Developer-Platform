@@ -14,7 +14,7 @@ import { GUIDE_CONFIG, fill, guideCopy } from "@/lib/payments/learn/index";
 import { learnHrefs, type LearnLink } from "@/lib/payments/learn/links";
 import { GUIDES, GUIDE_DATES, PAYMENTS_PAGES, guideOf, pagePath, type Guide, type NetworkPage, type PaymentsPage } from "@/lib/payments/site-pages";
 import { LOCALES, MESSAGES, type Locale } from "@/lib/payments/i18n";
-import { COMPARE_CHECKED, ESCROW_COM, compareRows, formatRate } from "@/lib/payments/compare";
+import { BEYOND_ROWS, COMPARE_CHECKED, ESCROW_COM, STRIPE_STABLECOINS, compareRows, formatRate } from "@/lib/payments/compare";
 import { NETWORK_WALLETS, networkPresets, payLinkCurl } from "@/lib/payments/network-pages";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
@@ -154,7 +154,7 @@ function security({ d, page }: Ctx, compact: boolean): Block[] {
   const facts = compact ? d.security.slice(0, 4) : d.security;
   return [
     h(2, head(t.security.title, t.security.titleBold)),
-    ...facts.flatMap((fact) => [h(3, fact.title), p(fact.body)]),
+    ...facts.flatMap((fact) => [h(3, fact.title), p(fact.body), ...(fact.link ? [p(link(fact.link.label, page(fact.link.href)))] : [])]),
     ...(compact ? [p(link(t.pages.more.security, page("/security")))] : []),
   ];
 }
@@ -291,6 +291,15 @@ function compareRates({ d, lang, page, at, input }: Ctx): Block[] {
     table([c.service, c.ours, c.theirs, c.source], rows),
     p(c.asOf.replace("{date}", checked)),
     ...c.notes.map(p),
+    h(3, c.beyond.title),
+    p(c.beyond.lede),
+    table(
+      [c.beyond.feature, c.beyond.ours, c.beyond.theirs],
+      BEYOND_ROWS.map((key) => [c.beyond.rows[key].k, c.beyond.rows[key].ours, c.beyond.rows[key].theirs]),
+    ),
+    p(
+      `${c.beyond.asOf.replace("{date}", new Intl.DateTimeFormat(lang, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${STRIPE_STABLECOINS.checked}T00:00:00Z`)))} ${link(new URL(STRIPE_STABLECOINS.source).host, STRIPE_STABLECOINS.source)}`,
+    ),
     ul([link(t.pages.more.fees, page("/fees")), link(t.pricing.compare, at(`${input.site}/pricing`))]),
   ];
 }

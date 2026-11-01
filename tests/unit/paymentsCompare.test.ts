@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BITPAY, COMPARE_CHECKED, ESCROW_COM, METAMASK, RAILGUN, compareRows, compareSources, formatRate, parseRate } from '@/lib/payments/compare';
+import { BEYOND_ROWS, BITPAY, COMPARE_CHECKED, ESCROW_COM, METAMASK, RAILGUN, STRIPE_STABLECOINS, compareRows, compareSources, formatRate, parseRate } from '@/lib/payments/compare';
 import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, planSwapFeeBps } from '@/lib/plans';
 import { LANDING } from '@/lib/payments/landing-i18n';
 import { LOCALES } from '@/lib/payments/i18n';
@@ -69,3 +69,22 @@ test('the comparison copy keeps its placeholders in every language and uses no e
     assert.ok(!JSON.stringify(LANDING[code]).includes(EM_DASH), `${code} has an em dash`);
   }
 });
+
+test('beyond the rate: Stripe is shown by documented facts only, never by a rate', () => {
+  // Product owner, 2026-11-01: only the differences in Cosmos Pay's favour that Stripe's own
+  // documentation states; its fee is not compared (it is not one of the rates ours are set against).
+  assert.match(STRIPE_STABLECOINS.source, /^https:\/\/docs\.stripe\.com\//);
+  assert.match(STRIPE_STABLECOINS.checked, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(!compareSources().some((s) => s.provider === STRIPE_STABLECOINS.name), 'Stripe stays out of the rates table');
+  for (const { code } of LOCALES) {
+    const beyond = LANDING[code].comparePage.beyond;
+    assert.deepEqual(Object.keys(beyond.rows), [...BEYOND_ROWS], code);
+    for (const key of BEYOND_ROWS) {
+      for (const text of [beyond.rows[key].ours, beyond.rows[key].theirs]) {
+        assert.doesNotMatch(text, /%|¢|\$\d/, `${code} ${key}: a rate or a price`);
+      }
+    }
+    assert.ok(beyond.asOf.includes('{date}'), code);
+  }
+});
+

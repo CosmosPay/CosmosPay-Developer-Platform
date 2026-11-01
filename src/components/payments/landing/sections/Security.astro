@@ -33,6 +33,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
           <span class="pl-fact-icon"><Icon name={s.icon} /></span>
           <h3>{s.title}</h3>
           <p>{s.body}</p>
+          {s.link && <p><a class="pl-textlink" href={s.link.href}>{s.link.label}</a></p>}
         </li>
       ))}
     </ul>

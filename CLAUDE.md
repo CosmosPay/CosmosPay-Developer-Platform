@@ -934,7 +934,13 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   keeps every title within 60 characters and every description within 155 in all seven languages.
   The section bar ends with the hub, the footer's Resources > Guides leads to it, and /faq, the
   network pages and /integrations link guides (`GuideLinks.astro`).
-  **`/compare`** sets each rate beside the published one it is 75% of (see "Plans").
+  **`/compare`** sets each rate beside the published one it is 75% of (see "Plans"). Under it,
+  "beyond the rate" sets Cosmos Pay beside Stripe's stablecoin payments on documented facts only:
+  who can accept them, where a payment settles, Stellar and Monad (`STRIPE_STABLECOINS`,
+  `BEYOND_ROWS`). Per the product owner (2026-11-01), the page shows only differences in Cosmos
+  Pay's favour and never a provider whose rate beats ours. Stripe's 1.5% and NOWPayments' 1% are
+  left out for that reason, and Coinbase Business and Binance Pay because they publish no
+  merchant rate. `paymentsCompare.test.ts` fails on a rate or price in that block.
   It is the first thing under the nav on every page, the home included (product owner: no
   waiting for it), so there the hero starts under it instead of running up under the nav. Its
   links hover as the general nav's do (an underline sweeps in), and the repeated call to action

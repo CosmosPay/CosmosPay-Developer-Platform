@@ -4,7 +4,7 @@
 // Pay's rates from src/lib/plans.ts). Neutral wording: what each provider's page states, its
 // conditions, a link to it and the date, nothing else about them.
 import type { LandingData } from "@/components/payments/landing/data";
-import { COMPARE_CHECKED, ESCROW_COM, compareRows, formatRate } from "@/lib/payments/compare";
+import { BEYOND_ROWS, COMPARE_CHECKED, ESCROW_COM, STRIPE_STABLECOINS, compareRows, formatRate } from "@/lib/payments/compare";
 import { PLAN_IDS, planSwapFeeBps, swapFeePct, type PlanId } from "@/lib/plans";
 
 interface Props {
@@ -15,7 +15,11 @@ const { d } = Astro.props;
 const { t, lang, links, PRICING } = d;
 const c = t.comparePage;
 const usd = new Intl.NumberFormat(lang, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-const checked = new Intl.DateTimeFormat(lang, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${COMPARE_CHECKED}T00:00:00Z`));
+const dateOf = (day: string) => new Intl.DateTimeFormat(lang, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${day}T00:00:00Z`));
+const checked = dateOf(COMPARE_CHECKED);
+// Beyond the rate: Cosmos Pay beside Stripe's stablecoin payments, from its documentation.
+const b = c.beyond;
+const stripeHost = new URL(STRIPE_STABLECOINS.source).host;
 const fill = (text: string, vars: Record<string, string>) => text.replace(/\{(\w+)\}/g, (m, k: string) => vars[k] ?? m);
 const planName = (id: PlanId) => id.charAt(0).toUpperCase() + id.slice(1);
 // The swap ladder's ends: the plan with the highest commission and the one with the lowest.
@@ -89,6 +93,35 @@ const span = (i: number) => {
     </div>
     <p class="pl-footnote" data-reveal>{c.asOf.replace("{date}", checked)}</p>
     {c.notes.map((note) => <p class="pl-footnote" data-reveal>{note}</p>)}
+    <div class="pl-head" data-reveal>
+      <h3 id="pl-compare-beyond">{b.title}</h3>
+      <p class="pl-section-lede">{b.lede}</p>
+    </div>
+    <div class="pl-compare-card" data-reveal>
+      <table class="pl-compare pl-rates" aria-labelledby="pl-compare-beyond">
+        <caption class="pl-sr">{b.caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{b.feature}</th>
+            <th scope="col" class="pl-compare-us">{b.ours}</th>
+            <th scope="col">{b.theirs}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {BEYOND_ROWS.map((key) => (
+            <tr>
+              <th scope="row">{b.rows[key].k}</th>
+              <td class="pl-compare-us" data-label={b.ours}>{b.rows[key].ours}</td>
+              <td data-label={b.theirs}>{b.rows[key].theirs}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="pl-footnote" data-reveal>
+      {b.asOf.replace("{date}", dateOf(STRIPE_STABLECOINS.checked))}{" "}
+      <a class="pl-rates-src" href={STRIPE_STABLECOINS.source} rel="noopener" translate="no">{stripeHost}</a>
+    </p>
     <div class="pl-plans-actions">
       <a class="btn btn-dark pl-plans-more" href={links.fees}>{t.pages.more.fees}</a>
       <a class="btn btn-outline-w pl-plans-more" href={PRICING}>{t.pricing.compare}</a>
