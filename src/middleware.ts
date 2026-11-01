@@ -4,12 +4,16 @@ import { trackActivity } from "@/lib/activity";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
-import { MOUNTS, languagesOf, routeRequest } from "@/lib/hosts";
+import { MOUNTS, canonicalPath, languagesOf, routeRequest } from "@/lib/hosts";
 import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 import { DEFAULT_LOCALE, LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
 import { DEFAULT_LANG, explicitLang, isCrawler, langRedirect, normalizeLangQuery } from "@/lib/seo/lang-urls";
 import { responseHeaders } from "@/lib/seo/response-headers";
+import { markdownAlternate, markdownLanguages, prefersMarkdown } from "@/lib/seo/markdown-urls";
+import { markdownHeaders, pageDoc, versionLang } from "@/lib/seo/page-markdown";
+import { renderPage } from "@/lib/seo/markdown";
+import { MARKDOWN_INPUT } from "@/lib/seo/markdown-config";
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
 // COSMOS_API_URL. Runs once per process (idempotent), non-blocking.
@@ -175,6 +179,30 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (fixed !== null) return new Response(null, { status: 301, headers: { Location: `${areaOrigin}${context.url.pathname}${fixed}` } });
   }
   const askedLang = multilingual ? explicitLang(context.url.searchParams.get("lang"), LANG_CODES) : null;
+  // A page with a Markdown version (src/lib/seo/markdown-urls.ts) answers it in place to a GET whose
+  // Accept prefers text/markdown to text/html (an agent's; a browser never names it): the version
+  // its address names (English at the bare path, never redirected by the visitor's language), the
+  // same document as its .md address. Private, so no shared cache that ignores Vary can hand it to
+  // a browser; the page's HTML varies on Accept for the same reason.
+  const markdownPage = languagePage ? (canonicalPath(context.url.pathname)?.toLowerCase() ?? null) : null;
+  const negotiatedType =
+    multilingual && markdownPage !== null && (method === "GET" || method === "HEAD") && markdownLanguages(decision.area as "site" | "payments", markdownPage) !== undefined;
+  if (negotiatedType && markdownPage !== null && prefersMarkdown(context.request.headers.get("accept"))) {
+    const area = decision.area as "site" | "payments";
+    const doc = pageDoc(area, markdownPage, versionLang(area, markdownPage, context.url.search), MARKDOWN_INPUT);
+    if (doc) {
+      const markdown = new Response(method === "HEAD" ? null : renderPage(doc, 1), {
+        headers: {
+          ...markdownHeaders(doc),
+          "Content-Location": markdownAlternate(doc.url),
+          Vary: askedLang === null ? "Accept, Accept-Language, Cookie" : "Accept",
+          "Cache-Control": "private, no-cache",
+          ...(area === "payments" ? PAYMENTS_SECURITY_HEADERS : {}),
+        },
+      });
+      return responseHeaders(markdown, { https: areaOrigin.startsWith("https://"), negotiatedLang: false });
+    }
+  }
   const cookieLang = context.cookies.get(LANG_COOKIE)?.value;
   const acceptLanguage = context.request.headers.get("accept-language");
   const userAgent = context.request.headers.get("user-agent");
@@ -193,7 +221,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (target) {
       const redirect = new Response(null, {
         status: 302,
-        headers: { Location: `${areaOrigin}${target}`, Vary: "Accept-Language, Cookie", "Cache-Control": "private, no-cache" },
+        headers: {
+          Location: `${areaOrigin}${target}`,
+          Vary: negotiatedType ? "Accept, Accept-Language, Cookie" : "Accept-Language, Cookie",
+          "Cache-Control": "private, no-cache",
+        },
       });
       return responseHeaders(redirect, { https: areaOrigin.startsWith("https://"), negotiatedLang: false });
     }
@@ -249,7 +281,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
   // HSTS, Referrer-Policy, the HTML charset, and Vary on the pages whose language follows the
   // visitor (src/lib/seo/response-headers.ts).
-  const served = responseHeaders(response, { https: areaOrigin.startsWith("https://"), negotiatedLang });
+  const served = responseHeaders(response, { https: areaOrigin.startsWith("https://"), negotiatedLang, negotiatedType });
   if (corsOk) applyCors(served.headers, origin, context.request);
   trackApiRequest(context, served.status, startedAt);
   return served;

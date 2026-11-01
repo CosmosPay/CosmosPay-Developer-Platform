@@ -24,6 +24,20 @@ test('a page whose language follows the visitor varies on Accept-Language and Co
   assert.equal(again.headers.get('Vary'), 'Origin, Accept-Language, Cookie');
 });
 
+test('a page with a Markdown version varies on Accept too, and only its HTML does', () => {
+  const page = responseHeaders(html(), { https: true, negotiatedLang: true, negotiatedType: true });
+  assert.equal(page.headers.get('Vary'), 'Accept-Language, Cookie, Accept');
+  const named = responseHeaders(html(), { https: true, negotiatedLang: false, negotiatedType: true });
+  assert.equal(named.headers.get('Vary'), 'Accept');
+  const markdown = responseHeaders(new Response('# x', { headers: { 'Content-Type': 'text/markdown; charset=utf-8' } }), {
+    https: true,
+    negotiatedLang: false,
+    negotiatedType: true,
+  });
+  assert.equal(markdown.headers.get('Vary'), null);
+  assert.equal(markdown.headers.get('Content-Type'), 'text/markdown; charset=utf-8');
+});
+
 test('headers already set are left alone, and a non-HTML response gets no charset or Vary', () => {
   const res = responseHeaders(
     new Response('{}', { headers: { 'Content-Type': 'application/json', 'Referrer-Policy': 'no-referrer', 'Strict-Transport-Security': 'max-age=60' } }),

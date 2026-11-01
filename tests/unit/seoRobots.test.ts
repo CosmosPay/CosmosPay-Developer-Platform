@@ -59,6 +59,11 @@ test('payments: its pages and everything they load are crawlable', () => {
     '/site.webmanifest',
     '/sitemap.xml',
     '/llms.txt',
+    '/llms-full.txt',
+    '/index.md',
+    '/index.md?lang=hi',
+    ...PAYMENTS_PAGE_PATHS.map((p) => `${p}.md`),
+    ...PAYMENTS_PAGE_PATHS.map((p) => `${p}.md?lang=es`),
     '/.well-known/security.txt',
     '/.well-known/api-catalog',
   ]) {
@@ -68,14 +73,30 @@ test('payments: its pages and everything they load are crawlable', () => {
 
 test('payments: payment links, the SEP-7 handler, previews and private checkouts stay out', () => {
   const robots = robotsTxt('payments', ORIGINS);
-  for (const url of ['/cmh4x2k9a0001l70g8v5q3z2w', '/cmh4x2k9a0001l70g8v5q3z2w?lang=es', '/pay?uri=web%2Bstellar%3Apay', '/preview/split', '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/contact', '/faq/extra', '/faqs']) {
+  for (const url of [
+    '/cmh4x2k9a0001l70g8v5q3z2w',
+    '/cmh4x2k9a0001l70g8v5q3z2w?lang=es',
+    '/cmh4x2k9a0001l70g8v5q3z2w.md',
+    '/pay?uri=web%2Bstellar%3Apay',
+    '/pay.md',
+    '/preview/split',
+    '/preview/split.md',
+    '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2',
+    '/contact',
+    '/faq/extra',
+    '/faqs',
+    '/faq.mdx',
+    '/learn/index.md',
+  ]) {
     assert.ok(!allowed(robots, url), url);
   }
 });
 
 test('the company site is open but for the web wallet; the platform only opens its docs', () => {
   const site = robotsTxt('site', ORIGINS);
-  for (const url of ['/', '/pricing?lang=es', '/swaps', '/tos', '/llms.txt']) assert.ok(allowed(site, url), url);
+  for (const url of ['/', '/pricing?lang=es', '/swaps', '/tos', '/llms.txt', '/llms-full.txt', '/index.md', '/pricing.md?lang=es', '/tos.md']) {
+    assert.ok(allowed(site, url), url);
+  }
   assert.ok(!allowed(site, '/wallet/'));
   const dev = robotsTxt('dev', ORIGINS);
   for (const url of ['/docs/', '/docs/getting-started/', '/docs/llms.txt']) assert.ok(allowed(dev, url), url);

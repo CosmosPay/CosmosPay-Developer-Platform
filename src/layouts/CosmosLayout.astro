@@ -10,8 +10,9 @@ import SiteNav from "@/components/cosmos/layout/SiteNav";
 import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 import StructuredData from "@/components/site/StructuredData.astro";
 import { SITE_LANGS, SITE_PAGE_PATHS, crumbName, type SitePage } from "@/lib/seo/site-meta";
-import { DEFAULT_LANG, canonicalUrl, explicitLang, hreflangAlternates, ogLocale } from "@/lib/seo/lang-urls";
+import { DEFAULT_LANG, canonicalUrl, explicitLang, hreflangAlternates, ogLocale, pageLanguages } from "@/lib/seo/lang-urls";
 import { crossHostCanonical } from "@/lib/seo/cross-host";
+import { markdownAlternate } from "@/lib/seo/markdown-urls";
 import { modifiedAt } from "@/lib/seo/page-dates-build";
 import type { JsonLdNode } from "@/lib/seo/schema";
 
@@ -95,6 +96,9 @@ const self = multilingual ? canonicalUrl(SITE, path, asked, langs, SITE_LANGS) :
 const elsewhere = multilingual ? crossHostCanonical(path, asked, langs, SITE_LANGS, PAYMENTS) : null;
 const canonical = elsewhere ?? self;
 const alternates = multilingual && !elsewhere && langs.length > 1 ? hreflangAlternates(SITE, path, langs) : [];
+// The Markdown version of the version shown (src/lib/seo/markdown-urls.ts): its canonical address
+// with .md, so /tos?lang=fr names the English terms' and /swaps the gateway's, where its canonical is.
+const markdown = multilingual && pageLanguages("site", path.toLowerCase()) !== undefined ? markdownAlternate(canonical) : null;
 // The language the page's text is in: a /tos version in a language it is not written in shows English.
 const contentLang = langs.includes(locale) ? locale : (langs[0] ?? "en");
 // The trail in the version's language, each step at its address in that language (the page's own
@@ -144,6 +148,7 @@ const themeScript =
     )}
     <link rel="canonical" href={canonical} />
     {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+    {markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
     <meta name="generator" content={Astro.generator} />
 
     <!-- Icons / PWA -->

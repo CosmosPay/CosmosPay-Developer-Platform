@@ -11,6 +11,7 @@ import { PAYMENTS, TERMS } from "@/lib/payments/urls";
 import { SOCIAL } from "@/components/cosmos/lib/constants";
 import { OG_LOCALES, pageUrl } from "@/lib/payments/seo";
 import { explicitLang, hreflangAlternates } from "@/lib/seo/lang-urls";
+import { markdownAlternate } from "@/lib/seo/markdown-urls";
 
 interface Props {
   title: string;
@@ -33,6 +34,8 @@ const codes = LOCALES.map((l) => l.code);
 const explicit = explicitLang(Astro.url.searchParams.get("lang"), codes);
 const canonical = pageUrl(PAYMENTS, path, explicit);
 const alternates = hreflangAlternates(PAYMENTS, path, codes);
+// The same version as Markdown (src/lib/seo/markdown-urls.ts): /faq?lang=es → /faq.md?lang=es.
+const markdown = indexable ? markdownAlternate(canonical) : null;
 // The share image: the gateway's own (the hero's coin ramp) on the indexed pages; payment links
 // and previews keep the brand card, since a payer's chat app shows it next to a request for money.
 const share = indexable
@@ -58,6 +61,7 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
         <link rel="canonical" href={canonical} />
         <meta property="og:url" content={canonical} />
         {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+        {markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
       </Fragment>
     ) : (
       <meta name="robots" content="noindex, nofollow" />
