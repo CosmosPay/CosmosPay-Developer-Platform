@@ -107,7 +107,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/faq`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -774,8 +774,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   listed once in `src/lib/payments/site-pages.ts` (routing in `hosts.ts`, `robots.txt`,
   `sitemap.xml`): `/integrations` (options with the live demos, the developers' code, the
   three paths), `/use-cases` (businesses, the comparison with cards), `/security`, `/fees`
-  (plans and calculator; `/pricing` is the company site's) and `/faq`. A sticky section bar
-  (`Subnav.astro`) under the general nav links them and ends with the main call to action.
+  (plans and calculator; `/pricing` is the company site's), `/compare` and `/faq`. A sticky section bar
+  (`Subnav.astro`) under the general nav links them (`SECTION_PAGES`) and ends with the main call to action.
+  **One page per network a payment settles on** (`NETWORK_PAGES`: `/stellar`, `/solana`, `/monad`,
+  `NetworkPage.astro`), answer first: the link standard, the wallets, how a payment is matched,
+  where the money goes, the test network, the presets (read from `stellar-assets.ts` and
+  `chains.ts` through `src/lib/payments/network-pages.ts`, never written), the plans' rates, the
+  create-pay request (built from `docs/openapi.json`'s shape and tested against it) and its own
+  questions, which its JSON-LD repeats as an FAQPage. They are not in the section bar: the footer's
+  "Networks" group (every domain), the home's networks marquee and the FAQ's network line link them.
+  Settlement time is said only where the copy already states it (about 5 seconds on Stellar).
+  **`/compare`** sets each rate beside the published one it is 75% of (see "Plans").
   It is the first thing under the nav on every page, the home included (product owner: no
   waiting for it), so there the hero starts under it instead of running up under the nav. Its
   links hover as the general nav's do (an underline sweeps in), and the repeated call to action
@@ -930,7 +939,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   payment settles on (Stellar, Solana, Monad and their assets), the networks and tokens NEAR Intents
   swaps between (`NETWORK_IDS` with a logo, plus a few stablecoins and wrapped BTC), and the
   wallets, Pollar among them (its brand kit's blue mark on light pages, the white one on dark, and
-  only ever beside its name, as the kit asks).
+  only ever beside its name, as the kit asks). Stellar, Solana and Monad in the first row link to
+  their pages, for the pointer only (`tabindex=-1`: the moving copy is `aria-hidden`).
   **Every row runs at the same speed** (product owner): `landing.ts` sets each row's duration
   from the width of one set (48 px/s), so a longer row loops more slowly instead of moving
   faster. Two identical sets slide by half the track; the moving copy is `aria-hidden`, and a visually
@@ -1255,6 +1265,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (Starter and the public key 65 bps, then 26 / 13 / 7 on the same ladder as before), private
   payments from Railgun's 0.25% (18 bps, the server's `ZK_PAYMENT_FEE_BPS`), escrow from
   Escrow.com's 2.6% (1.95%). A new rate keeps that rule and changes every surface together.
+  Those published rates, the page each was read on and the date are `src/lib/payments/compare.ts`
+  (the gateway's `/compare`; `tests/unit/paymentsCompare.test.ts` checks the 75% rule against
+  `plans.ts`). Read them again on the providers' pages before changing that date; a rate that
+  cannot be read on its provider's own page leaves the table.
 - **Every service's rate is on the pricing surfaces** (product owner, 2026-10-27: the swap
   commission was on no pricing page). `/pricing` compares, per plan, the payment fee, the swap
   commission (`swapFeePct`), escrow (`ESCROW_FEE_PCT`), private payments

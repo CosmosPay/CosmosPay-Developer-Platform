@@ -375,7 +375,8 @@ export default {
     tagline: "Stellar、Solana 和 Monad 上的稳定币支付、兑换和非托管钱包。",
     copyright: "© 2026 Cosmos Pay",
     groups: {
-      products: { title: "产品", links: ["支付", "稳定币", "代付", "锚点", "钱包", "收银台", "支付链接", "定价"] },
+      products: { title: "产品", links: ["支付", "稳定币", "代付", "锚点", "钱包", "收银台", "支付链接", "定价", "费用对比"] },
+      networks: { title: "网络", links: ["Stellar 支付", "Solana 支付", "Monad 支付"] },
       solutions: { title: "解决方案", links: ["SaaS 与订阅", "交易市场", "电子商务", "平台", "嵌入式金融", "AI 与智能体", "Enterprise"] },
       developers: { title: "开发者", links: ["文档", "API 参考", "SDK 与库", "Webhook", "API 状态", "更新日志", "控制台"] },
       resources: { title: "资源", links: ["指南", "博客", "客户案例", "支持", "合作伙伴", "Sessions 2026"] },

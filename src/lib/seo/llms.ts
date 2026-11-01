@@ -47,6 +47,10 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   security: ["Security", "on-chain verification, keys that stay with their owner, checkout pages no other site can frame"],
   fees: ["Pricing and fees", "the rate per payment on each plan and a fee estimator"],
   faq: ["FAQ", "wallets, escrow, refunds, testing and fees"],
+  compare: ["Fees compared", "each Cosmos Pay rate next to the published rate it is set against (BitPay, MetaMask, RAILGUN, Escrow.com), with sources and the date they were read"],
+  stellar: ["Stellar payments", "SEP-7 payment links, the Stellar assets with a preset, the wallets that pay, the API request and questions"],
+  solana: ["Solana payments", "Solana Pay links, USDC and SOL presets, the wallets that pay, the API request and questions"],
+  monad: ["Monad payments", "EIP-681 links to a deposit address per payment, USDC and MON presets, the API request and questions"],
 };
 
 /** /llms.txt of the company site (cosmospay.lat). */
