@@ -56,6 +56,9 @@ test('payments: its pages and everything they load are crawlable', () => {
     '/apple-touch-icon.png',
     '/android-chrome-512x512.png',
     '/og-image.png',
+    // Each page's share card (src/lib/seo/og-image-urls.ts: fingerprinted by Vite under /_astro/).
+    '/_astro/home.en.CDxk2uXQ.png',
+    '/_astro/learn-accept-usdc-payments.hi.B7a_9fQe.png',
     '/site.webmanifest',
     '/sitemap.xml',
     '/llms.txt',

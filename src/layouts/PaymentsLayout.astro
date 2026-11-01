@@ -12,6 +12,7 @@ import { SOCIAL } from "@/components/cosmos/lib/constants";
 import { OG_LOCALES, pageUrl } from "@/lib/payments/seo";
 import { explicitLang, hreflangAlternates } from "@/lib/seo/lang-urls";
 import { markdownAlternate } from "@/lib/seo/markdown-urls";
+import { pageShareImage, type ShareImage } from "@/lib/seo/og-image-urls";
 
 interface Props {
   title: string;
@@ -36,11 +37,13 @@ const canonical = pageUrl(PAYMENTS, path, explicit);
 const alternates = hreflangAlternates(PAYMENTS, path, codes);
 // The same version as Markdown (src/lib/seo/markdown-urls.ts): /faq?lang=es → /faq.md?lang=es.
 const markdown = indexable ? markdownAlternate(canonical) : null;
-// The share image: the gateway's own (the hero's coin ramp) on the indexed pages; payment links
-// and previews keep the brand card, since a payer's chat app shows it next to a request for money.
-const share = indexable
-  ? { url: `${PAYMENTS}/media/coin-ramp-poster.jpg`, type: "image/jpeg", width: 1600, height: 900 }
-  : { url: `${PAYMENTS}/og-image.png`, type: "image/png", width: 1200, height: 630 };
+// The share image: on an indexed page its own card in the page's language (its title and the
+// gateway's brand: src/lib/seo/og-images.ts), or the hero's poster where the cards were not drawn;
+// payment links and previews keep the brand card, since a payer's chat app shows it next to a
+// request for money.
+const brandCard: ShareImage = { url: `${PAYMENTS}/og-image.png`, type: "image/png", width: 1200, height: 630, alt: "Cosmos Pay" };
+const poster: ShareImage = { url: `${PAYMENTS}/media/coin-ramp-poster.jpg`, type: "image/jpeg", width: 1600, height: 900, alt: "Cosmos Pay" };
+const share = indexable ? (pageShareImage("payments", path, lang, PAYMENTS) ?? poster) : brandCard;
 const xHandle = `@${new URL(SOCIAL.x).pathname.split("/").filter(Boolean)[0]}`;
 
 // The language picker is a plain GET form, so it must carry the page's own query along
@@ -87,7 +90,7 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
     <meta property="og:image:type" content={share.type} />
     <meta property="og:image:width" content={String(share.width)} />
     <meta property="og:image:height" content={String(share.height)} />
-    <meta property="og:image:alt" content="Cosmos Pay" />
+    <meta property="og:image:alt" content={share.alt} />
     <meta property="og:locale" content={OG_LOCALES[lang]} />
     {LOCALES.filter((l) => l.code !== lang).map((l) => <meta property="og:locale:alternate" content={OG_LOCALES[l.code]} />)}
     <meta name="twitter:card" content="summary_large_image" />
@@ -95,7 +98,7 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}
     <meta name="twitter:image" content={share.url} />
-    <meta name="twitter:image:alt" content="Cosmos Pay" />
+    <meta name="twitter:image:alt" content={share.alt} />
 
     <link rel="preload" href="/fonts/OpenSauceOne-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />

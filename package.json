@@ -6,12 +6,13 @@
     "node": ">=22.23.4"
   },
   "scripts": {
-    "predev": "prisma migrate deploy && node scripts/ensure-docs.mjs && npm run embed:build -- --mode development",
+    "predev": "prisma migrate deploy && node scripts/ensure-docs.mjs && npm run embed:build -- --mode development && npm run og:build -- --mode development",
     "dev": "astro dev --host",
-    "build": "prisma generate && npm run docs:build && npm run embed:build && astro build",
-    "build:app": "prisma generate && npm run embed:build && astro build",
+    "build": "prisma generate && npm run docs:build && npm run embed:build && npm run og:build && astro build",
+    "build:app": "prisma generate && npm run embed:build && npm run og:build && astro build",
     "docs:build": "node scripts/build-docs.mjs",
     "embed:build": "node scripts/build-embed.mjs",
+    "og:build": "node --disable-warning=ExperimentalWarning --disable-warning=DEP0205 --experimental-strip-types --import ./tests/setup.mjs scripts/build-og-images.mjs",
     "docs:api": "npm run generate:api --prefix docs && npm run apply:i18n --prefix docs",
     "check:api-spec": "node scripts/check-api-spec.mjs",
     "prestart": "node scripts/ensure-docs.mjs",
@@ -57,8 +58,13 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@fontsource-variable/noto-sans-devanagari": "5.3.0",
+    "@fontsource-variable/noto-sans-sc": "5.3.1",
+    "@resvg/resvg-js": "2.6.2",
     "esbuild": "^0.28.2",
-    "prisma": "^7.10.1"
+    "harfbuzzjs": "1.6.3",
+    "prisma": "^7.10.1",
+    "wawoff2": "2.0.1"
   },
   "overrides": {
     "mysql2": "^3.24.4",

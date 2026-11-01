@@ -223,6 +223,58 @@ for (const host of keyHosts) {
 if (fullOn === 0) fail(`no trusted host (${keyHosts.join(', ')}) served /llms-full.txt`);
 detail += `; llms-full.txt and /index.md served on ${fullOn} hosts`;
 
+// SHARE CARDS. Every address in the company site's and the gateway's sitemaps (each page in each
+// language) names its own card as og:image and twitter:image, 1200x630 PNG with its alt
+// (src/lib/seo/og-image-urls.ts). The cards are drawn by `npm run og:build` BEFORE astro build and
+// fingerprinted by Vite under /_astro/; a page naming its fallback (the brand card, the hero's
+// poster) means that step did not run. Each card answers 200 image/png, 1200x630, with the
+// immutable Cache-Control /_astro/ gets. Payment links keep the brand card, and the company's
+// /swaps names the gateway's card (its canonical page).
+const cards = new Map();
+let cardPages = 0;
+let paymentsHost = null;
+for (const host of keyHosts) {
+  const map = await getWithHost('/sitemap.xml', host).catch((e) => fail(`GET https://${host}/sitemap.xml never completed: ${e.message}`));
+  if (map.status !== 200) fail(`GET https://${host}/sitemap.xml returned ${map.status}`);
+  if (!map.body.includes('<urlset')) continue; // the platform's is an index of the docs' own
+  for (const [, loc] of map.body.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+    const url = new URL(loc.replace(/&amp;/g, '&'));
+    if (!trusted.includes(url.host)) fail(`${host}/sitemap.xml lists ${url.href}, on a host the build does not trust`);
+    const page = await getWithHost(`${url.pathname}${url.search}`, url.host).catch((e) => fail(`GET ${url.href} never completed: ${e.message}`));
+    if (page.status !== 200) fail(`GET ${url.href} returned ${page.status}; expected the page`);
+    const share = shareTags(page.body);
+    const image = share.image ? new URL(share.image) : null;
+    if (!image || image.host !== url.host || !/^\/_astro\/[^/]+\.png$/.test(image.pathname)) {
+      fail(`${url.href} names og:image ${share.image}; expected its own card under /_astro/ on ${url.host} (did npm run og:build run before astro build?)`);
+    }
+    if (share.twitter !== share.image || share.width !== '1200' || share.height !== '630' || share.type !== 'image/png' || !share.alt?.startsWith('Cosmos Pay') || share.twitterAlt !== share.alt) {
+      fail(`${url.href}: share tags ${JSON.stringify(share)}; expected twitter:image = og:image, 1200x630 image/png, an alt`);
+    }
+    if ([...cards.values()].some((c) => c.page !== url.href && c.image === image.href)) fail(`${url.href} shares its card ${image.href} with another page`);
+    cards.set(url.href, { page: url.href, image: image.href, host: url.host });
+    if (url.pathname === '/stellar') paymentsHost = url.host;
+    cardPages++;
+  }
+}
+if (cardPages === 0) fail('no sitemap listed a page to check the share cards of');
+for (const { image, host } of cards.values()) {
+  const res = await getBinaryWithHost(new URL(image).pathname, host).catch((e) => fail(`GET ${image} never completed: ${e.message}`));
+  const size = pngSize(res.body);
+  if (res.status !== 200 || res.type !== 'image/png' || !/immutable/.test(res.cache ?? '') || size?.width !== 1200 || size?.height !== 630) {
+    fail(`GET ${image} returned ${res.status} (${res.type}, ${res.cache}, ${JSON.stringify(size)}); expected a 1200x630 PNG cached as immutable`);
+  }
+}
+if (paymentsHost) {
+  const link = await getWithHost('/cmh4x2k9a0001l70g8v5q3z2w', paymentsHost).catch((e) => fail(`GET a payment link never completed: ${e.message}`));
+  if (!/\/og-image\.png$/.test(shareTags(link.body).image ?? '')) fail(`a payment link names og:image ${shareTags(link.body).image}; expected the brand card`);
+  const swaps = await getWithHost('/swaps', servedOn).catch((e) => fail(`GET https://${servedOn}/swaps never completed: ${e.message}`));
+  const swapsImage = shareTags(swaps.body).image ?? '';
+  if (swaps.status === 200 && cards.get(`https://${paymentsHost}/swaps`)?.image !== swapsImage) {
+    fail(`https://${servedOn}/swaps names og:image ${swapsImage}; expected the gateway's /swaps card`);
+  }
+}
+detail += `; share cards: ${cardPages} pages, each its own 1200x630 PNG`;
+
 settled = true;
 server.removeAllListeners('exit');
 server.kill();
@@ -244,6 +296,43 @@ function serverModules(dir) {
   const files = entries.filter((e) => e.isFile() && e.name.endsWith('.mjs')).map((e) => path.join(dir, e.name));
   const dirs = entries.filter((e) => e.isDirectory()).map((e) => path.join(dir, e.name));
   return [...files, ...dirs.flatMap(serverModules)];
+}
+
+/** The share tags of an HTML page (og:image and its size, type and alt; twitter:image and its alt). */
+function shareTags(html) {
+  const meta = (attr, name) => new RegExp(`<meta ${attr}="${name}" content="([^"]*)"`).exec(html)?.[1]?.replace(/&amp;/g, '&');
+  return {
+    image: meta('property', 'og:image'),
+    width: meta('property', 'og:image:width'),
+    height: meta('property', 'og:image:height'),
+    type: meta('property', 'og:image:type'),
+    alt: meta('property', 'og:image:alt'),
+    twitter: meta('name', 'twitter:image'),
+    twitterAlt: meta('name', 'twitter:image:alt'),
+  };
+}
+
+/** A PNG's width and height from its IHDR chunk, or null when the bytes are not a PNG. */
+function pngSize(bytes) {
+  if (bytes.length < 24 || bytes.readUInt32BE(0) !== 0x89504e47 || bytes.subarray(12, 16).toString('latin1') !== 'IHDR') return null;
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
+
+/** getWithHost for a binary body: resolves the status, Content-Type, Cache-Control and the bytes. */
+function getBinaryWithHost(pathname, host) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(
+      { host: HOST, port: PORT, path: pathname, method: 'GET', headers: { host, 'x-forwarded-proto': 'https' }, timeout: 15_000 },
+      (res) => {
+        const chunks = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'] ?? null, cache: res.headers['cache-control'] ?? null, body: Buffer.concat(chunks) }));
+      },
+    );
+    req.on('timeout', () => req.destroy(new Error('timed out')));
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 /**
