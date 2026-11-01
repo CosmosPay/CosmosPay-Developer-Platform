@@ -74,6 +74,52 @@ test('payments: its pages and everything they load are crawlable', () => {
   }
 });
 
+test('payments: an indexable page stays open with any query string and at its trailing-slash form', () => {
+  const robots = robotsTxt('payments', ORIGINS);
+  for (const url of [
+    // The links assistants and newsletters share carry tracking parameters.
+    '/faq?utm_source=chatgpt.com',
+    '/?utm_source=perplexity',
+    '/?utm_source=perplexity&lang=es',
+    '/stellar?lang=es&utm_medium=referral',
+    '/learn/accept-usdc-payments?utm_source=chatgpt.com',
+    '/compare?ref=newsletter',
+    '/faq.md?utm_source=chatgpt.com',
+    '/index.md?utm_source=claude.ai',
+    // The trailing-slash forms answer a 301 to the page, which a crawler must fetch to follow.
+    '/faq/',
+    '/learn/',
+    '/learn/?lang=pt',
+    '/faq/?utm_source=chatgpt.com',
+    '/learn/stellar-vs-solana-vs-monad/',
+    '/fees.md/',
+    ...PAYMENTS_PAGE_PATHS.map((p) => `${p}/`),
+    ...PAYMENTS_PAGE_PATHS.map((p) => `${p}?utm_source=chatgpt.com`),
+    ...PAYMENTS_PAGE_PATHS.map((p) => `${p}.md?utm_source=chatgpt.com`),
+  ]) {
+    assert.ok(allowed(robots, url), url);
+  }
+  // The same parameters never open anything else.
+  for (const url of [
+    '/cmh4x2k9a0001l70g8v5q3z2w?utm_source=chatgpt.com',
+    '/cmh4x2k9a0001l70g8v5q3z2w/',
+    '/pay?utm_source=chatgpt.com',
+    '/pay/',
+    '/preview/split?utm_source=chatgpt.com',
+    '/preview/',
+    '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2?utm_source=chatgpt.com',
+    '/contact?utm_source=chatgpt.com',
+    '/contact/',
+    '/faq/extra?utm_source=chatgpt.com',
+    '/faq//',
+    '/faqs?utm_source=chatgpt.com',
+    '/learn/index.md?utm_source=chatgpt.com',
+    '/learnx',
+  ]) {
+    assert.ok(!allowed(robots, url), url);
+  }
+});
+
 test('payments: payment links, the SEP-7 handler, previews and private checkouts stay out', () => {
   const robots = robotsTxt('payments', ORIGINS);
   for (const url of [

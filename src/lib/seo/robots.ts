@@ -8,7 +8,18 @@ import { markdownPath } from "@/lib/seo/markdown-urls";
 
 /* The payments domain's indexable pages: the home and its content pages. Each is allowed at its
    address and at its Markdown version's (src/lib/seo/markdown-urls.ts), in every language. */
-const PAYMENTS_ALLOWED_PAGES = ["/", ...PAYMENTS_PAGE_PATHS].flatMap((path) => (path === "/" ? [markdownPath(path)] : [path, markdownPath(path)]));
+const PAYMENTS_ALLOWED_PAGES = ["/", ...PAYMENTS_PAGE_PATHS].flatMap((path) => [path, markdownPath(path)]);
+
+/** The rules that open one indexable address of the payments domain. `$` anchors the end, so
+ *  `/faq` never opens `/faqs` or `/faq/extra`; a `?` after the address opens it with any query
+ *  string (every language's `?lang=`, and the `utm_source` an assistant or a newsletter adds to
+ *  the link it shares); and its trailing-slash form, with or without a query, is open too, since
+ *  it is a 301 to the address that a crawler must be allowed to fetch to follow. The home is `/`
+ *  itself. The longest matching rule wins (RFC 9309), so each outranks the final `Disallow: /`. */
+export function pageAllowRules(path: string): string[] {
+  if (path === "/") return ["/$", "/?"];
+  return [`${path}$`, `${path}?`, `${path}/$`, `${path}/?`];
+}
 
 export type RobotsArea = "site" | "dev" | "payments";
 
@@ -90,13 +101,13 @@ Sitemap: ${dev}/docs/sitemap.xml
     case "payments":
       return `# Cosmos Pay payments: the landing and its content pages are content, in every language
 # (English at the bare path, the others at ?lang=), each also as Markdown at its address with .md
-# (the home's is /index.md), with the files they load. Payment links are personal and
-# short-lived, and the design previews are samples: everything else stays out.
+# (the home's is /index.md), with the files they load. Each is open with any query string (its
+# languages, and the tracking parameters a shared link carries) and at its trailing-slash form,
+# which redirects to it. Payment links are personal and short-lived, and the design previews are
+# samples: everything else stays out.
 User-agent: *
 ${CONTENT_SIGNAL}
-Allow: /$
-Allow: /?lang=
-${PAYMENTS_ALLOWED_PAGES.map((p) => `Allow: ${p}$\nAllow: ${p}?lang=`).join("\n")}
+${PAYMENTS_ALLOWED_PAGES.flatMap(pageAllowRules).map((rule) => `Allow: ${rule}`).join("\n")}
 ${[...PAYMENTS_RESOURCES, ...keyFile].map((p) => `Allow: ${p}`).join("\n")}
 Disallow: /
 
