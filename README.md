@@ -37,7 +37,9 @@ domains. `src/middleware.ts` routes every request by host with the table in
   (same site, allowed by the CORS layer) and signs out the same way. Signing in always happens
   on `dev.cosmospay.lat/login` (the Authentik callback lives there).
 - **`robots.txt` and `sitemap.xml` answer per domain** (`src/pages/robots.txt.ts`,
-  `sitemap.xml.ts`).
+  `sitemap.xml.ts`), and so does the IndexNow key file `/<INDEXNOW_KEY>.txt`
+  (`src/pages/[key].txt.ts`), which `npm run indexnow` relies on to tell Bing, Yandex and the
+  other IndexNow engines about new and changed pages (see the deploy steps).
 
 > Looking for the JS/TS client that calls the public API? See the **[CosmosJS SDK](https://github.com/CosmosPay/CosmosJS_SDK)**.
 > Hitting deploy/runtime issues? See **[COMMON_ISSUES.md](./COMMON_ISSUES.md)**.
@@ -194,6 +196,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `RESEND_API_KEY` | Resend HTTP email (preferred). Falls back to `SMTP_*` if unset |
 | `SMTP_HOST/PORT/USER/PASS/SECURE` / `SMTP_FROM` | SMTP transport + verified sender |
 | `ONBOARDING_ENABLED` / `PLANS_ENABLED` / `ALLOW_USER_PLAN_CHANGES` / `ENABLED_PLANS` | Feature flags |
+| `INDEXNOW_KEY` | Optional: the IndexNow key every domain serves at `/<key>.txt` (public by design, read at runtime). Unset: that file is a 404 and `npm run indexnow` refuses to run |
 
 > ⚠️ `PUBLIC_BETTER_AUTH_URL` is **inlined at build time**: change it before `npm run build`,
 > not just before restarting. See [COMMON_ISSUES.md](./COMMON_ISSUES.md) for the why.
@@ -222,6 +225,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `npm run db:push` | Push the Prisma schema to the database |
 | `npm run sync:route` | Manually re-point the APISIX routes' upstreams |
 | `npm run export:wallet-data` | Export the retired wallet backup / recovery tables to JSON for the community server |
+| `npm run indexnow` | Dry run: read each domain's live sitemap and print the URLs IndexNow would get (`--since <date>`, `--only site,payments,dev`, `--list`); `-- --submit` sends them |
 
 ---
 
@@ -271,6 +275,24 @@ pm2 save
 
 # (dev variant with astro dev; do NOT run it alongside devplat, they share port 4321)
 pm2 start ecosystem.config.cjs --only devplat-dev
+```
+
+**IndexNow** tells Bing (which also feeds ChatGPT search and Copilot), Yandex and the other
+IndexNow engines about new and changed pages right away, instead of on their next crawl:
+
+```bash
+# Once: generate a key, put it in the production .env and restart so the process reloads it.
+# INDEXNOW_KEY is read at runtime, so no rebuild is needed (ecosystem.config.cjs reads .env
+# when the app is started, hence delete + start rather than restart).
+node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
+#   then set INDEXNOW_KEY=<that key> in .env
+pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat; pm2 save
+curl https://payments.cosmospay.lat/<that key>.txt     # answers the key on every domain
+
+# After every deploy that changes indexable pages (the company site, the gateway's pages, the docs):
+npm run indexnow                      # dry run: the URLs per domain and whether each serves the key
+npm run indexnow -- --submit          # send them (200 or 202 per batch; 403 means the key file is missing)
+npm run indexnow -- --submit --since 2026-10-31   # only pages whose sitemap lastmod is that recent
 ```
 
 nginx terminates TLS and proxies the domain to `127.0.0.1:4321`. For the full production

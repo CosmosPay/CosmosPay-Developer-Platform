@@ -22,6 +22,8 @@ npm run embed:build       # bundles src/embed into public/embed/cosmos-pay.js (r
 npm run db:migrate        # prisma migrate dev (db:deploy = migrate deploy, db:generate, db:push)
 npm run sync:route        # re-points every APISIX route's upstream at COSMOS_API_URL, no restart
 npm run export:wallet-data # dumps the retired wallet tables to JSON for the community server
+npm run indexnow          # dry run: the live sitemaps' URLs IndexNow would get; `-- --submit` sends
+                          #   them (`--since <date>`, `--only site,payments,dev`, `--list`)
 ```
 
 ## Languages: seven, everywhere
@@ -133,14 +135,27 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
-- **`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/security.txt` and
-  `/.well-known/api-catalog` are per-domain endpoints** (`SHARED_PATHS` in `hosts.ts`, their
-  content in `src/lib/seo/`, all pure and tested); never add them to `public/`. robots.txt carries
-  a `Content-Signal` line on every domain; its `ai-train` value is the product owner's decision
+- **`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/security.txt`,
+  `/.well-known/api-catalog` and the IndexNow key file are per-domain endpoints** (`SHARED_PATHS`
+  in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
+  `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
+  the product owner's decision
   (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The payments robots.txt
   blocks everything but its pages, so every file those pages load (`/_astro/`, `/fonts/`,
   `/media/`, `/brand/`, `/embed/`, icons, share images) needs its `Allow` there, or Google renders
   them unstyled. The platform's sitemap is an index of the docs' own `/docs/sitemap.xml`.
+- **IndexNow** (Bing, which also feeds ChatGPT search and Copilot, Yandex and the rest) learns
+  about new and changed pages from `npm run indexnow` (`scripts/indexnow.mjs`, helpers in
+  `src/lib/seo/indexnow.ts`, tested): it reads each domain's live sitemap (following the
+  platform's index into the docs), keeps the URLs on that host (`--since` keeps those whose
+  lastmod is on or after a date) and, with `--submit`, posts them to `api.indexnow.org` in
+  batches of at most 10,000. Dry run without it. Each domain proves the submission with its key
+  file, `/<INDEXNOW_KEY>.txt` (`src/pages/[key].txt.ts`): `hosts.ts` lets any path of a key's
+  shape through on every domain (`isKeyFilePath`, since the key is only known at runtime) and the
+  route answers 404 for any other name or without a key; the payments robots.txt `Allow`s that
+  one file. `INDEXNOW_KEY` is public by design; `access: 'secret'` only makes it a runtime read.
+  The script refuses to run without it, and `--submit` skips a domain whose key file does not
+  answer with the key (IndexNow would answer 403) or whose origin is not public https.
 - **A site or gateway page has one address**: asked with a trailing slash, a GET is a 301 to it
   without (`routeRequest`), and a `?lang=` the pages do not take as written (`ES`, `pt-BR`, `xx`,
   twice) is a 301 to the language it names, or to the bare path (`normalizeLangQuery`, other
@@ -1468,6 +1483,12 @@ consumer headers.
   and the public server flags (`API_DOCS_ENABLED`, `ONBOARDING_ENABLED`, `PLANS_ENABLED`, …):
   changing them in `.env` takes a rebuild, not a restart. `PUBLIC_BETTER_AUTH_URL` must equal
   `BETTER_AUTH_URL` and be in `.env` with its production value BEFORE `npm run build`.
+- **IndexNow after a deploy.** Once: generate a key
+  (`node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"`), set
+  `INDEXNOW_KEY` in the production `.env` and restart so the process reloads it (it is read at
+  runtime, no rebuild: `pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat`;
+  check `https://<each domain>/<key>.txt` answers the key). Then, after every deploy that
+  changes indexable pages, run `npm run indexnow` (dry run) and `npm run indexnow -- --submit`.
 - **Deploy with `npm ci && npm run build`, never `npm install`.** Dependencies are external to
   `dist/`, so a caret that resolves a new minor against an old build only fails when the server
   boots (`does not provide an export named …`, PM2 restart-looping). `npm run test:smoke` is

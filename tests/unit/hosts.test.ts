@@ -159,6 +159,22 @@ test('robots.txt, sitemap.xml, llms.txt and the /.well-known files answer on eve
   assert.deepEqual(route('cosmospay.lat', '/.well-known/nope'), { kind: 'not-found', area: 'site' });
 });
 
+test('the IndexNow key file answers on every domain, as that domain, whatever the key', () => {
+  for (const path of ['/0f1e2d3c4b5a69788796a5b4c3d2e1f0.txt', '/ABCDEFGH-1234.txt', `/${'a'.repeat(128)}.txt`]) {
+    assert.deepEqual(route('cosmospay.lat', path), { kind: 'pass', area: 'site' }, path);
+    assert.deepEqual(route('payments.cosmospay.lat', path), { kind: 'pass', area: 'payments' }, path);
+    assert.deepEqual(route('dev.cosmospay.lat', path), { kind: 'pass', area: 'dev' }, path);
+    assert.deepEqual(route('payments.cosmospay.lat', path, '', 'HEAD'), { kind: 'pass', area: 'payments' }, path);
+  }
+  // Not the shape of a key file: still nobody's on the site and the gateway.
+  for (const path of ['/short.txt', '/0f1e2d3c_4b5a.txt', '/docs-x/0f1e2d3c4b5a6978.txt', `/${'a'.repeat(129)}.txt`, '/0f1e2d3c4b5a6978.txt.bak']) {
+    assert.deepEqual(route('cosmospay.lat', path), { kind: 'not-found', area: 'site' }, path);
+    assert.deepEqual(route('payments.cosmospay.lat', path), { kind: 'not-found', area: 'payments' }, path);
+  }
+  // Through a mount it is still the mount's redirect, never a way into it.
+  assert.deepEqual(route('payments.cosmospay.lat', '/site/0f1e2d3c4b5a6978.txt'), { kind: 'redirect', location: 'https://cosmospay.lat/0f1e2d3c4b5a6978.txt', status: 301 });
+});
+
 test('a page of the site or the gateway asked with a trailing slash is a 301 to its one address', () => {
   assert.deepEqual(route('cosmospay.lat', '/pricing/'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing', status: 301 });
   assert.deepEqual(route('cosmospay.lat', '/tos/', '?lang=es'), { kind: 'redirect', location: 'https://cosmospay.lat/tos?lang=es', status: 301 });
