@@ -137,7 +137,7 @@ intent.uri; // what the QR code carries`;
         <b>{name === "use-stores" ? ui.orderPaid : name === "use-services" ? ui.invoice : name === "use-digital" ? ui.course : ui.support}</b>
         <span class="pl-mk-amt" data-odo>{name === "use-stores" ? "120.00 USDC" : name === "use-services" ? "1,500.00 USDC" : name === "use-digital" ? "49.00 USDC" : "25.00 USDC"}</span>
       </div>
-      <div class="pl-mk-row"><span>{ui.status}</span>{name === "use-stores" ? <span class="pl-mk-wait">{ui.held}</span> : <span class="pl-mk-good">{ui.paid}</span>}</div>
+      <div class="pl-mk-row"><span>{ui.status}</span><span class="pl-mk-good">{ui.paid}</span></div>
       <div class="pl-mk-row"><span>{name === "use-digital" ? ui.delivered : ui.webhookSent}</span><span class="pl-mk-strong">✓</span></div>
     </div>
   )}

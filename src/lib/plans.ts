@@ -114,7 +114,9 @@ export function swapFeeRange(): { max: string; min: string } {
 }
 
 /* Rates that are the same on every plan, in percent: escrow's surcharge per payment and the
-   private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 18). */
+   private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 18). Escrow is offered at this
+   price but not built yet (product owner, 2026-11-01): every surface that shows it says it is
+   coming soon. */
 export const ESCROW_FEE_PCT = 1.95;
 export const PRIVATE_PAYMENT_FEE_PCT = 0.18;
 

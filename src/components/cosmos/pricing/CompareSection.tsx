@@ -13,11 +13,12 @@ export function CompareSection() {
   const seatsRow = { l: p.seatsRow, v: PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxSeats)) };
   const keysRow = { l: p.keysRow, v: PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxApiKeys)) };
   // Each service's rate sits under the payment fee (the second row of p.compare), also from the
-  // specs; the merchant's own fee on each operation is on every plan.
+  // specs; the merchant's own fee on each operation is on every plan. Escrow is offered and
+  // priced but not built yet, so its row says "coming soon" under its name.
   const rates = p.ratesRows;
   const rateRows = [
     { l: rates.swaps, v: PLAN_IDS.map((id) => swapFeePct(id)) },
-    { l: rates.escrow, v: PLAN_IDS.map(() => `+${ESCROW_FEE_PCT}%`) },
+    { l: rates.escrow, soon: true, v: PLAN_IDS.map(() => `+${ESCROW_FEE_PCT}%`) },
     { l: rates.privatePayments, v: PLAN_IDS.map(() => `${PRIVATE_PAYMENT_FEE_PCT}%`) },
     { l: rates.ownFee, v: PLAN_IDS.map(() => 1) },
   ];
@@ -33,7 +34,7 @@ export function CompareSection() {
         <tbody>
           {rows.map((row) => (
             <tr key={row.l}>
-              <th>{row.l}</th>
+              <th>{row.l}{"soon" in row && row.soon && <span className="cmp-soon">{p.soon}</span>}</th>
               {row.v.map((c, j) => (
                 <td key={j} className={c === 1 ? "yes" : ""}>{c === 1 ? <IcCheck /> : c === 0 ? "-" : c}</td>
               ))}

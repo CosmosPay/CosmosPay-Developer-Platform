@@ -107,7 +107,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 
 | Domain | Area | Pages |
 | :--- | :--- | :--- |
-| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos` |
+| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
 | `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
@@ -287,6 +287,26 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   by `[data-num]::after` in cosmos.css, never a span inside it; a title on two lines is one text
   node with a newline (`white-space: pre-line`), never a bare `<br>`, so extracted text keeps its
   spaces.
+
+### The company About page (cosmospay.lat/about)
+
+- `src/pages/site/about.astro`, server-rendered from the platform catalogs' `about` block (seven
+  languages) on the company skin (`lp-panel` panels alternating black and white, `/0n` headings,
+  the navy closing panel), registered like /pricing: `site-meta.ts` (titles, descriptions,
+  `PAGE_LANGS`, crumbs), the sitemap with hreflang, `SITE_PATHS` in `hosts.ts`, the footer's
+  Company group (`ABOUT` in constants.ts, so on all three domains) and both llms.txt files. The
+  company nav has no About or Company slot, so it carries no link. Its JSON-LD is an `AboutPage`
+  (`CosmosLayout pageType`) whose `mainEntity` is the shared Organization (`#organization`),
+  plus the BreadcrumbList. The nav starts transparent over its black hero (`navOverPanel`) and a
+  language picked there reloads the page (`reloadOnLang`), since its text is not an island.
+- **Only facts with a public source** (product owner, 2026-11-01): what Cosmos Pay makes and on
+  which networks (the products' own pages), Argentina (the GitHub organization's location and its
+  profile, "Built in Argentina"), the public repositories of github.com/CosmosPay and the SDK on
+  npm (Apache-2.0), the contact address and the footer's profiles (`SOCIAL`), and what the code
+  proves (no private keys stored, the rates of `plans.ts` on /pricing and compared on the
+  gateway's /compare, the public docs and OpenAPI document). No legal name, tax id, street
+  address, founders, team size, dates, customers or funding until the owner provides them. The
+  page's header comment names each fact's source; a new fact brings its source with it.
 
 ### The institutional skin (payments site and dashboard)
 
@@ -838,7 +858,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   other versions name the English one canonical. Its JSON-LD (`src/components/site/StructuredData.astro`)
   is the shared Organization, WebSite, WebPage and BreadcrumbList (`breadcrumb`), plus the
   page's own nodes (`schema`): the Payments API, the SDK and the wallet on `/`, the plans'
-  Product on `/pricing`. A language picked in the nav rewrites the address's `?lang=` (a script
+  Product on `/pricing`; `/about`'s page node is an AboutPage (`pageType`) about the Organization. A language picked in the nav rewrites the address's `?lang=` (a script
   in the layout's head), so a reload keeps it. `preloadImage` names the page's LCP image per
   theme; the home's is the wallet section's figure, not the hero's ribbon.
 
@@ -920,7 +940,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   say is in the section's text too, and their figures are examples, never claims. Benefits are a
   bento (wide and narrow cells swapping per row); the developers' code has REST / TypeScript SDK /
   Webhook tabs (the same `[data-tabs]` script as the use cases); pricing has a fee calculator
-  (rates parsed from `plans.ts`, escrow's surcharge as a checkbox, a logarithmic slider); the final
+  (rates parsed from `plans.ts`, escrow's surcharge as a switch labelled coming soon, a logarithmic slider); the final
   call carries the brand's astronaut (`public/brand/astronauta-telefono.svg`, inverted in dark
   mode). **Images too, not only drawn UI** (the product owner asked for images after the
   mock-ups): the brand's astronauts on the comparison table (none by the benefits heading: the product
@@ -945,6 +965,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   of the plan's rate. No escrow code exists in this repo, the community server, the SDK or the
   wallet yet. "What changes" carries both modes (benefits + the "two ways to settle" cards), and
   so do the comparison, the hero lede, pricing and the FAQ.
+- **Escrow stays visible and priced, labelled "coming soon" until the contract ships** (product
+  owner, 2026-11-01). Every string that names it carries the catalog's own word for it: inside a
+  sentence "(coming soon)" or its translation; a card's title (the benefit, the settle card), the
+  calculator's switch (it still adds the surcharge to the estimate), /compare's escrow row and
+  /pricing's escrow row get a "Coming soon" line from their component (`t.soon` on the gateway,
+  `pricing.soon` on the company site, coloured text, never a chip). The escrow FAQ is in the future
+  tense and its answer opens with the label; the comparison's "protection on orders" row shows a
+  clock instead of a check; no mock-up shows an order held in escrow; llms.txt says "coming soon"
+  on every line that names it; no JSON-LD lists it as an Offer. `tests/unit/escrowComingSoon.test.ts`
+  (both catalogs) and `seoLlms.test.ts` fail on a mention without the label. When the contract
+  ships, drop the labels and those tests together, and say so here.
 - **Only checkable claims**: no customer logos, volumes, certifications, licences or uptime
   figures until they are real. Every product claim in the copy is checked against the dashboard
   and the community server (e.g. the dashboard sets amount, memo and message, not an expiry).
@@ -1286,7 +1317,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   cannot be read on its provider's own page leaves the table.
 - **Every service's rate is on the pricing surfaces** (product owner, 2026-10-27: the swap
   commission was on no pricing page). `/pricing` compares, per plan, the payment fee, the swap
-  commission (`swapFeePct`), escrow (`ESCROW_FEE_PCT`), private payments
+  commission (`swapFeePct`), escrow (`ESCROW_FEE_PCT`, its row labelled coming soon), private payments
   (`PRIVATE_PAYMENT_FEE_PCT`) and the merchant's own fee; each plan card, the payments site's
   `/fees` cards, the dashboard's plan comparison and the onboarding spec panel show the swap
   commission too, and the pricing FAQ quotes every plan's and the public key's. Copy carries

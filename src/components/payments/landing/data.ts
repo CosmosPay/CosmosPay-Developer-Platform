@@ -98,12 +98,15 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
     ["instant", "race"],
     ["escrow", "escrow"],
     ["yours", "balance"],
-  ] as const).map(([key, mock]) => ({ key, mock, ...t.benefits[key] }));
+  ] as const).map(([key, mock]) => ({ key, mock, soon: key === "escrow", ...t.benefits[key] }));
   // The two ways a payment settles: straight to the merchant, or held in escrow until released.
-  const settleModes = (["instant", "escrow"] as const).map((key) => ({ key, ...t.settle[key] }));
+  // Escrow is offered and priced but not built yet (no contract exists): it carries "coming soon"
+  // (t.soon) wherever it shows, and its copy says so in every language.
+  const settleModes = (["instant", "escrow"] as const).map((key) => ({ key, soon: key === "escrow", ...t.settle[key] }));
+  // Protection on orders is escrow alone, so its row shows a clock instead of a check.
   const compareRows = (["chargebacks", "protection", "settlement", "hours", "borders", "custody", "fees"] as const).map((key) => {
     const row = t.compare.rows[key];
-    return { ...row, us: row.us.replace("{rate}", lowestRate) };
+    return { ...row, soon: key === "protection", us: row.us.replace("{rate}", lowestRate) };
   });
   const paths = [
     { key: "nocode", href: CREATE_LINK, mock: "link" },

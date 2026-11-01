@@ -6,7 +6,8 @@
    Every fact here is stated by the product's own copy or code: the rates come from
    src/lib/plans.ts at request time, so the file can never quote another price than the pages; the
    rest mirrors the gateway's copy (src/lib/payments/landing-i18n.ts), the docs and
-   src/pages/site/tos.astro. No em dashes. Pure, so tests/unit/seoLlms.test.ts covers it. */
+   src/pages/site/tos.astro. Escrow is offered and priced but not built yet: every line that names it
+   says it is coming soon. No em dashes. Pure, so tests/unit/seoLlms.test.ts covers it. */
 import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from "@/lib/plans";
 import { PAYMENTS_PAGES, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
 import { pageUrl } from "@/lib/seo/lang-urls";
@@ -46,7 +47,7 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   "use-cases": ["Use cases", "how stores, services, digital products and creators take stablecoins, compared with cards and bank transfers"],
   security: ["Security", "on-chain verification, keys that stay with their owner, checkout pages no other site can frame"],
   fees: ["Pricing and fees", "the rate per payment on each plan and a fee estimator"],
-  faq: ["FAQ", "wallets, escrow, refunds, testing and fees"],
+  faq: ["FAQ", "wallets, escrow (coming soon), refunds, testing and fees"],
   compare: ["Fees compared", "each Cosmos Pay rate next to the published rate it is set against (BitPay, MetaMask, RAILGUN, Escrow.com), with sources and the date they were read"],
   stellar: ["Stellar payments", "SEP-7 payment links, the Stellar assets with a preset, the wallets that pay, the API request and questions"],
   solana: ["Solana payments", "Solana Pay links, USDC and SOL presets, the wallets that pay, the API request and questions"],
@@ -66,10 +67,10 @@ Key facts:
 
 - Chains: Stellar (SEP-7 payment links), Solana (Solana Pay links) and Monad (EIP-681 links).
 - Non-custodial: Cosmos Pay stores no one's keys. With instant settlement, on Stellar and Solana the payer pays the merchant's address directly; on Monad each payment goes to its own deposit address, which forwards it to the merchant's less the network fee.
-- Settlement: instant (about 5 seconds on Stellar) or escrow, where the payment waits in an on-chain contract until the merchant releases it on dispatch and goes back to the buyer if it is not released before the merchant's deadline.
+- Settlement: instant (about 5 seconds on Stellar). Escrow is coming soon: the payment will wait in an on-chain contract until the merchant releases it on dispatch, and go back to the buyer if it is not released before the merchant's deadline.
 - No chargebacks: a confirmed payment is final. A refund is a payment the merchant sends back from their wallet.
 - Testing: API keys starting with dv_ run on testnet and prod_ keys on mainnet. The key decides the network, not the code.
-- Rates per payment: ${paymentRates()}. Escrow adds ${ESCROW_FEE_PCT}% per payment. Private payments (the amount hidden on-chain behind a zero-knowledge proof, on testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction. The payer's wallet pays the network fee.
+- Rates per payment: ${paymentRates()}. Escrow (coming soon) will add ${ESCROW_FEE_PCT}% per payment. Private payments (the amount hidden on-chain behind a zero-knowledge proof, on testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction. The payer's wallet pays the network fee.
 - Swap commission: ${swapRates()}; ${swapFeePct("community")} without an account.
 - Payer wallets: on Stellar any wallet that opens SEP-7 links (Freighter, xBull, Rabet, LOBSTR, Albedo, Cosmos Wallet); on Solana any wallet that reads Solana Pay links (Phantom, Solflare); on Monad any EVM wallet that reads EIP-681 links.
 
@@ -105,6 +106,11 @@ ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
 - [Chrome extension](${wallet.chromeStore})
 - [Android, Windows, macOS, Linux and Firefox builds](${WALLET_RELEASES})
 
+## Company
+
+- [About Cosmos Pay](${pageUrl(site, "/about", "en")}): what Cosmos Pay makes and on which networks, its public code on GitHub, the SDK on npm and how to reach the team
+- Contact: organization@cosmospay.lat
+
 ## Optional
 
 - [Terms and conditions](${site}/tos)
@@ -123,7 +129,7 @@ export function paymentsLlmsTxt({ site, dev, payments }: LlmsInput): string {
   const pages = PAYMENTS_PAGES.map((p) => `- [${PAGE_LABELS[p][0]}](${pay(pagePath(p))}): ${PAGE_LABELS[p][1]}`);
   return `# Cosmos Pay Payments
 
-> Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow. Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond.
+> Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond.
 
 How a payment works:
 
@@ -134,7 +140,7 @@ How a payment works:
 
 Facts:
 
-- Settlement: instant (about 5 seconds on Stellar) or escrow (+${ESCROW_FEE_PCT}% per payment), held in an on-chain contract until you release it on dispatch and returned to the buyer if you do not before your deadline.
+- Settlement: instant (about 5 seconds on Stellar). Escrow is coming soon (+${ESCROW_FEE_PCT}% per payment): the payment will be held in an on-chain contract until you release it on dispatch, and returned to the buyer if you do not before your deadline.
 - Cosmos Pay does not hold the money: on Stellar and Solana the payer pays your address directly; on Monad each payment goes to its own deposit address, which forwards it to yours less the network fee.
 - No chargebacks. Refunds are payments you send from your wallet.
 - Rates per payment: ${paymentRates()}. The payer's wallet pays the network fee; on Monad the deposit relay's fee is deducted and shown on the checkout. Private payments (amount hidden on-chain, testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction.
@@ -170,7 +176,7 @@ Every page takes ?lang=: ${[
 
 ## Optional
 
-- [Cosmos Pay company site](${site}/) and its [plans](${pageUrl(site, "/pricing", "en")})
+- [Cosmos Pay company site](${site}/), its [plans](${pageUrl(site, "/pricing", "en")}) and [about page](${pageUrl(site, "/about", "en")})
 - [Terms and conditions](${site}/tos)
 `;
 }

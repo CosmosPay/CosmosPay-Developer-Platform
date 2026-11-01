@@ -507,7 +507,7 @@ export default {
           t: "网店",
           label: "在其他支付方式旁加入稳定币，每个订单对应一个支付意图。",
           tags: ["支付 API", "Webhook", "托管收银台"],
-          story: "网店的服务器为每个订单创建一个支付意图，将客户引导至托管收银台，或通过支付按钮打开它。客户用自己的钱包付款，签名 Webhook 将订单标记为已付款。使用担保交易时，款项会在链上合约中等待，直到订单发货。",
+          story: "网店的服务器为每个订单创建一个支付意图，将客户引导至托管收银台，或通过支付按钮打开它。客户用自己的钱包付款，签名 Webhook 将订单标记为已付款。使用担保交易（即将推出）时，款项会在链上合约中等待，直到订单发货。",
         },
         services: {
           t: "跨境服务",
@@ -595,6 +595,7 @@ export default {
       cta: "联系销售",
     },
     footnote: "* 网络手续费由付款方的钱包支付；在 Monad 上，充值中继的费用会被扣除并在收银台显示。Essentials 和 Growth 提供完整 API 访问权限、更低费率，以及更高的组织、成员和 API 密钥上限。",
+    soon: "即将推出",
     compareTitle: "比较套餐",
     orgsRow: "组织",
     seatsRow: "每个组织的成员数",
@@ -630,6 +631,61 @@ export default {
     ctaDesc: "如需了解批量定价、Enterprise 费率或从其他服务商迁移，请在控制台的支持中心联系我们。",
     contactSales: "联系销售",
     openDashboard: "打开控制台",
+  },
+
+  about: {
+    title: "关于 Cosmos Pay",
+    lede: "Cosmos Pay 为企业打造稳定币支付：支付 API、托管收银台和支付链接、兑换、隐私支付，以及非托管的 Cosmos Wallet，支持 Stellar、Solana 和 Monad。",
+    facts: {
+      networks: "网络",
+      networksValue: "Stellar、Solana 和 Monad",
+      based: "所在地",
+      basedValue: "阿根廷",
+      code: "源代码",
+      sdk: "SDK",
+      email: "电子邮件",
+    },
+    products: {
+      title: "我们的产品",
+      lede: "支付在 Stellar、Solana 和 Monad 上结算，每个网络都有自己的页面。",
+      items: {
+        api: { t: "支付 API 和 SDK", d: "以 OpenAPI 编写文档的 REST API 和 TypeScript SDK，用于创建支付意图和支付链接，并在支付确认时发送签名 Webhook。", a: "阅读文档" },
+        checkout: { t: "托管收银台和支付链接", d: "带二维码的支付链接和由我们托管的收银台页面，提供四种设计和七种语言。支付按钮或嵌入式收银台只需一个 script 标签。", a: "查看集成方式" },
+        swaps: { t: "兑换", d: "无需账户，在 35 个以上网络之间兑换代币，并从 Stellar 发送 USDT0。", a: "打开兑换" },
+        private: { t: "隐私支付", d: "Stellar 上的支付，其金额借助零知识证明在链上保持隐藏。目前仅在测试网上提供。", a: "了解其工作方式" },
+        wallet: { t: "Cosmos Wallet", d: "适用于 Stellar、Solana 和 Monad 的非托管钱包：网页应用、浏览器扩展，以及 Android、Windows、macOS 和 Linux 应用。密钥在设备上生成并加密。", a: "获取钱包" },
+      },
+    },
+    code: {
+      title: "我们的代码是公开的",
+      lede: "您所用产品的源代码位于 GitHub 上的 CosmosPay 组织中。SDK 以 Apache 2.0 许可证发布在 npm 上。",
+      tag: "代码仓库",
+      view: "在 GitHub 上查看",
+      org: "查看所有代码仓库",
+      npm: "在 npm 上查看 SDK",
+      repos: {
+        server: "支付 API 服务器：支付意图和支付链接、Webhook、兑换和隐私支付。",
+        platform: "本网站、支付网站、控制台和文档。",
+        sdk: "JavaScript 和 TypeScript SDK，以 @cosmosapp/pay_sdk 之名发布在 npm 上。",
+        wallet: "Cosmos Wallet：网页应用、浏览器扩展，以及桌面和 Android 应用。",
+        skill: "一个教 AI 编程助手集成 Cosmos Pay 的技能。",
+      },
+    },
+    checks: {
+      title: "您可以核实的内容",
+      lede: "我们的代码和公开页面展示的三件事。",
+      items: {
+        keys: { t: "我们不持有私钥", d: "Cosmos Pay 从不索取或存储任何人的私钥。付款人在自己的钱包中签名，款项进入企业掌控的地址。", a: "了解支付如何受到保护" },
+        rates: { t: "我们的费率是公开的", d: "每个套餐的费率都在定价页面上，比较页面将每项费率与其对照的公开费率并列，并注明来源和我们读取的日期。", a: "查看套餐", b: "比较费率" },
+        docs: { t: "我们的文档是开放的", d: "指南、API 参考及其 OpenAPI 文档均已公开，无需账户。", a: "阅读文档", b: "查看 OpenAPI 文档" },
+      },
+    },
+    contact: {
+      title: "联系我们",
+      lede: "通过电子邮件或我们的任一社交账号给我们写信。如有关于您账户的问题，请在控制台的支持中提交工单。",
+      support: "打开支持",
+      profiles: "我们的社交账号",
+    },
   },
 
   /* ---------------- dashboard ---------------- */

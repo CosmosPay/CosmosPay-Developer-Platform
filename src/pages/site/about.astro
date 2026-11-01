@@ -1,0 +1,246 @@
+---
+/* /about on cosmospay.lat: what Cosmos Pay is, in facts a visitor can check. Product owner
+ * (2026-11-01): only verifiable facts, and no legal data until the owner provides it, so no legal
+ * name, tax id, street address, founders, team size, dates, customers or funding. Each fact has
+ * its source:
+ *   - what Cosmos Pay makes and on which networks: the products themselves (the gateway, the docs,
+ *     the wallet; the same words as the home and the gateway pages);
+ *   - Argentina: the GitHub organization's location and its profile ("Built in Argentina");
+ *   - the code: the public repositories of github.com/CosmosPay (GITHUB_ORG) and the SDK on npm
+ *     (SDK_NPM, Apache-2.0);
+ *   - how to reach the team: CONTACT_ADDRESS and the footer's profiles (SOCIAL);
+ *   - what the code proves: no private keys stored (CLAUDE.md, "non-custodial"), the rates in
+ *     src/lib/plans.ts shown on /pricing and compared on the gateway's /compare, the public docs
+ *     and their OpenAPI document.
+ * Server-rendered in the visitor's language (the `about` block of the platform catalogs); a
+ * language picked in the nav reloads it. Its JSON-LD is an AboutPage whose mainEntity is the
+ * shared Organization (src/lib/seo/org.ts), with its breadcrumb. */
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import { SocialLinks } from "@/components/cosmos/layout/Social";
+import { messages } from "@/lib/i18n/messages/index";
+import { siteMeta } from "@/lib/seo/site-meta";
+import { ORGANIZATION_ID } from "@/lib/seo/org";
+import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE } from "@/lib/seo/schema";
+import { CONTACT_ADDRESS } from "@/lib/payments/contact";
+import { DASH, DOCS, PAYMENTS, PRICING, SITE } from "@/components/cosmos/lib/constants";
+
+// The language the middleware resolved: ?lang= (each language has its own address), then the
+// cookie, then Accept-Language.
+const lang = Astro.locals.lang ?? "en";
+const catalog = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
+const t = catalog.about;
+const meta = siteMeta("about", lang);
+
+// What Cosmos Pay makes, each with the page that shows it.
+const PRODUCTS = [
+  { key: "api", href: DOCS },
+  { key: "checkout", href: `${PAYMENTS}/integrations` },
+  { key: "swaps", href: `${SITE}/swaps` },
+  { key: "private", href: `${PAYMENTS}/faq` },
+  { key: "wallet", href: `${SITE}/#wallet` },
+] as const;
+// The gateway's page for each network a payment settles on, named as the footer names them.
+const NETWORKS = ["stellar", "solana", "monad"].map((id, i) => ({ href: `${PAYMENTS}/${id}`, label: catalog.footer.groups.networks.links[i] }));
+// The public repositories of the GitHub organization (its profile lists the same ones).
+const REPOS = [
+  { key: "server", name: "CosmosPay-Community-Server" },
+  { key: "platform", name: "CosmosPay-Developer-Platform" },
+  { key: "sdk", name: "CosmosJS_SDK" },
+  { key: "wallet", name: "CosmosPay-Wallet" },
+  { key: "skill", name: "CosmosPay-Skill" },
+] as const;
+const CHECKS = [
+  { key: "keys", links: [{ label: t.checks.items.keys.a, href: `${PAYMENTS}/security` }] },
+  {
+    key: "rates",
+    links: [
+      { label: t.checks.items.rates.a, href: PRICING },
+      { label: t.checks.items.rates.b, href: `${PAYMENTS}/compare` },
+    ],
+  },
+  {
+    key: "docs",
+    links: [
+      { label: t.checks.items.docs.a, href: `${DOCS}/` },
+      { label: t.checks.items.docs.b, href: `${DOCS}/openapi.json` },
+    ],
+  },
+] as const;
+const MAILTO = `mailto:${CONTACT_ADDRESS}`;
+const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
+---
+
+<CosmosLayout
+  title={meta.title}
+  description={meta.description}
+  lang={lang}
+  breadcrumb={["home", "about"]}
+  pageType="AboutPage"
+  mainEntity={ORGANIZATION_ID}
+  navOverPanel="black"
+  reloadOnLang
+>
+  <main id="main">
+    <section class="lp-panel about-hero" data-panel="black" aria-labelledby="about-title">
+      <div class="wrap">
+        <h1 id="about-title" data-num="/01">{t.title}</h1>
+        <p class="about-lede">{t.lede}</p>
+        <dl class="about-facts">
+          <div><dt>{t.facts.networks}</dt><dd>{t.facts.networksValue}</dd></div>
+          <div><dt>{t.facts.based}</dt><dd>{t.facts.basedValue}</dd></div>
+          <div><dt>{t.facts.code}</dt><dd><a href={GITHUB_ORG} rel="noopener" translate="no">{GITHUB_HOST}</a></dd></div>
+          <div><dt>{t.facts.sdk}</dt><dd><a href={SDK_NPM} rel="noopener" translate="no">{SDK_PACKAGE}</a></dd></div>
+          <div><dt>{t.facts.email}</dt><dd><a href={MAILTO} translate="no">{CONTACT_ADDRESS}</a></dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="lp-panel about-panel" data-panel="white" aria-labelledby="about-products">
+      <div class="wrap">
+        <div class="section-head about-head">
+          <h2 id="about-products" data-num="/02">{t.products.title}</h2>
+          <p>{t.products.lede}</p>
+          <ul class="about-nets" role="list">
+            {NETWORKS.map((n) => (
+              <li><a class="card-link" href={n.href}>{n.label}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a></li>
+            ))}
+          </ul>
+        </div>
+        <ul class="about-grid" role="list">
+          {PRODUCTS.map((p) => {
+            const item = t.products.items[p.key];
+            return (
+              <li class="about-item">
+                <h3>{item.t}</h3>
+                <p>{item.d}</p>
+                <a class="card-link" href={p.href}>{item.a}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+
+    <section class="lp-panel about-panel" data-panel="black" aria-labelledby="about-code">
+      <div class="wrap">
+        <div class="section-head about-head">
+          <h2 id="about-code" data-num="/03">{t.code.title}</h2>
+          <p>{t.code.lede}</p>
+        </div>
+        <ul class="about-grid" role="list">
+          {REPOS.map((r) => (
+            <li class="about-item">
+              <span class="about-tag">{t.code.tag}</span>
+              <h3 translate="no">{r.name}</h3>
+              <p>{t.code.repos[r.key]}</p>
+              <a class="card-link" href={`${GITHUB_ORG}/${r.name}`} rel="noopener">{t.code.view}<span class="about-sr"> ({r.name})</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
+            </li>
+          ))}
+        </ul>
+        <div class="about-row">
+          <a class="btn btn-white" href={GITHUB_ORG} rel="noopener">{t.code.org}</a>
+          <a class="btn btn-outline-w" href={SDK_NPM} rel="noopener">{t.code.npm}</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-panel about-panel" data-panel="white" aria-labelledby="about-checks">
+      <div class="wrap">
+        <div class="section-head about-head">
+          <h2 id="about-checks" data-num="/04">{t.checks.title}</h2>
+          <p>{t.checks.lede}</p>
+        </div>
+        <ul class="about-grid" role="list">
+          {CHECKS.map((c) => {
+            const item = t.checks.items[c.key];
+            return (
+              <li class="about-item">
+                <h3>{item.t}</h3>
+                <p>{item.d}</p>
+                <div class="about-links">
+                  {c.links.map((l) => (
+                    <a class="card-link" href={l.href}>{l.label}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>
+                  ))}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+
+    <section class="lp-panel cta" data-panel="navy" aria-labelledby="about-contact">
+      <div class="wrap">
+        <div class="cta-panel">
+          <h2 id="about-contact" data-num="/05">{t.contact.title}</h2>
+          <p>{t.contact.lede}</p>
+          <div class="row">
+            <a class="btn btn-white" href={MAILTO} translate="no">{CONTACT_ADDRESS}</a>
+            <a class="btn btn-outline-w" href={`${DASH}?view=support`}>{t.contact.support}</a>
+          </div>
+          <h3 class="about-profiles" id="about-profiles">{t.contact.profiles}</h3>
+          <SocialLinks labelled className="foot-social about-social" />
+        </div>
+      </div>
+    </section>
+  </main>
+  <SiteFooter lang={lang} area="site" />
+</CosmosLayout>
+
+<style>
+  /* The hero runs up under the nav, as /pricing's does (.pricing-hero in views.css). */
+  .about-hero { margin-top: -72px; padding: 152px 0 96px; }
+  .about-hero h1 {
+    font-weight: 300; font-size: clamp(2.75rem, 6vw, 5rem); line-height: 1.0;
+    letter-spacing: -0.02em; margin: 0; text-wrap: balance; max-width: 15ch;
+  }
+  .about-lede { font-size: 1.125rem; line-height: 1.55; color: var(--ink-2); margin: 32px 0 0; max-width: 52ch; }
+  /* The facts in one line of label-over-value pairs, split by hairlines. */
+  .about-facts {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
+    margin: 64px 0 0; padding: 0; border-top: 1px solid var(--line);
+  }
+  .about-facts > div { padding: 20px 20px 0 0; min-width: 0; }
+  .about-facts dt { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 6px; }
+  .about-facts dd { margin: 0; font-size: 1rem; color: var(--ink); overflow-wrap: break-word; }
+  .about-facts a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; transition: text-decoration-color .25s; }
+  .about-facts a:hover { text-decoration-color: currentColor; }
+
+  .about-panel { padding: 112px 0; }
+  .about-head { margin-bottom: 64px; }
+  .about-head p { max-width: 52ch; }
+  .about-nets { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px 28px; }
+
+  /* Three columns, as the brand's grids of two or three (BRAND.md, section 7): no cards, a
+     hairline over each item, as the home's resources list. */
+  .about-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 48px; }
+  .about-item { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 32px 0; border-top: 1px solid var(--line); }
+  .about-item h3 { margin: 0; font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; line-height: 1.25; color: var(--ink); overflow-wrap: anywhere; }
+  .about-item p { margin: 0; flex: 1; font-size: .9375rem; line-height: 1.55; color: var(--ink-2); }
+  .about-tag { font-weight: 500; font-size: .75rem; color: var(--ink-3); }
+  .about-links { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  .about-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 40px; }
+  .about-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  .about-profiles { margin: 48px 0 0; font-size: .75rem; font-weight: 500; letter-spacing: 0; color: var(--ink-3); }
+  /* The profiles with their names: pills, painted like the footer's round icons on hover. */
+  :global(.foot-social.about-social) { flex-wrap: wrap; margin-top: 14px; }
+  :global(.foot-social.about-social a) { width: auto; height: 40px; padding: 0 16px 0 12px; gap: 8px; display: inline-flex; align-items: center; border-radius: 999px; color: var(--ink); font-size: .875rem; font-weight: 500; }
+
+  @media (max-width: 1040px) {
+    .about-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .about-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 720px) {
+    .about-hero { padding: 128px 0 72px; }
+    .about-hero h1 { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
+    .about-lede { font-size: 1rem; }
+    .about-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
+    /* The code, the SDK and the address get the whole width, so they are not cut mid-word. */
+    .about-facts > div:nth-child(n + 3) { grid-column: 1 / -1; }
+    .about-panel { padding: 80px 0; }
+    .about-head { margin-bottom: 40px; }
+    .about-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

@@ -32,13 +32,22 @@ interface Props {
   langs?: readonly string[];
   /** Company site: the pages of the breadcrumb trail, ending at this one (JSON-LD BreadcrumbList). */
   breadcrumb?: SitePage[];
-  /** Company site: what the page is mainly about (the @id of a node in `schema`). */
+  /** Company site: what the page is mainly about (the @id of a node in `schema`, or the shared
+   *  Organization's). */
   mainEntity?: string;
+  /** Company site: the page's schema.org type when it is more specific than WebPage ("AboutPage"). */
+  pageType?: string;
   /** Company site: nodes this page adds to its JSON-LD graph (src/lib/seo/schema.ts). */
   schema?: JsonLdNode[];
   /** The general nav bar, on every view. Off only where the page's own React tree renders
    *  <Nav> (Landing, Pricing, Dashboard), so it is never drawn twice. */
   nav?: boolean;
+  /** The nav starts transparent with light ink over the page's first panel when it is dark
+   *  (`<main>`'s first `section[data-panel]`), as on /pricing. */
+  navOverPanel?: "black" | "white";
+  /** The page's copy is rendered on the server: a language picked in the nav reloads the page in
+   *  it (an island re-renders by itself; server-rendered text does not). */
+  reloadOnLang?: boolean;
   /** A skin class for <body>; "inst" puts the page on the institutional skin (the dashboard). */
   bodyClass?: string;
 }
@@ -52,10 +61,13 @@ const {
   type = "website",
   preloadImage,
   nav = true,
+  navOverPanel,
+  reloadOnLang = false,
   bodyClass,
   langs = SITE_LANGS,
   breadcrumb,
   mainEntity,
+  pageType,
   schema = [],
 } = Astro.props;
 
@@ -167,6 +179,7 @@ const themeScript =
         image={ogImage}
         breadcrumb={crumbs}
         mainEntity={mainEntity}
+        pageType={pageType}
         schema={schema}
       />
     )}
@@ -215,6 +228,8 @@ const themeScript =
         user={Astro.locals.user ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image } : null}
         session={Astro.locals.area !== "payments"}
         area={Astro.locals.area === "site" ? "site" : undefined}
+        overPanel={navOverPanel}
+        reloadOnLang={reloadOnLang}
       />
     )}
     <slot />

@@ -172,6 +172,8 @@
 .cmp-table td { text-align: center; color: var(--ink-2); }
 .cmp-table td.yes { color: var(--accent); }
 .cmp-table td svg { width: 18px; height: 18px; }
+/* "Coming soon" under a service that is offered but not built yet (escrow): coloured text, no chip. */
+.cmp-soon { display: block; margin-top: 2px; font-size: .8125rem; font-weight: 600; color: var(--accent); }
 .cmp-table tr:hover td, .cmp-table tr:hover th { background: var(--surface-2); }
 /* la tabla no entra en un telefono (mide unos 660px de ancho minimo). Va dentro
    de un .t-scroll para que scrollee ella sola: si no, arrastra al documento y

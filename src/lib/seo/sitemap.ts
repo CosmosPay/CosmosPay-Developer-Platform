@@ -31,7 +31,7 @@ export function inEveryLanguage(origin: string, path: string, langs: readonly st
 }
 
 /* The company site's pages, the date a page states as its last change (only the terms state one). */
-const SITE_PAGES: SitePage[] = ["home", "pricing", "swaps", "tos"];
+const SITE_PAGES: SitePage[] = ["home", "pricing", "swaps", "tos", "about"];
 const SITE_LASTMOD: Partial<Record<SitePage, string>> = { tos: TOS_LAST_UPDATED };
 
 export function siteEntries(origin: string): SitemapEntry[] {

@@ -14,6 +14,7 @@ export const PAYMENTS = normalizeOrigin(PUBLIC_PAYMENTS_URL);
 export const HOME = SITE;
 export const PRICING = `${SITE}/pricing`;
 export const TERMS = `${SITE}/tos`;
+export const ABOUT = `${SITE}/about`;
 export const DASH = `${DEV}/dashboard`;
 export const DOCS = `${DEV}/docs`;
 export const LOGIN = loginUrl(DEV);
