@@ -201,8 +201,43 @@ export function llmsIndex(): string {
 
   out.push('', '## Optional', '');
   out.push(listItem(`[Full text](${docsOrigin}/llms-full.txt)`, 'every English page in one file, the API reference included', 0));
+  for (const section of Object.values(LLMS_SECTIONS)) {
+    out.push(listItem(`[${section.title}](${docsOrigin}/${section.path})`, section.description, 0));
+  }
   out.push(listItem(`[OpenAPI document](${docsOrigin}/openapi.json)`, 'the Payments REST API (OpenAPI 3.0)', 0));
   return `${out.join('\n')}\n`;
+}
+
+/** Whether a page is part of the API reference (/docs/api/...). */
+function isApiPage(page: DocsPage): boolean {
+  return page.slugs[0] === 'api';
+}
+
+/**
+ * The full text split in two, so an assistant can load the part it needs: llms-full.txt was over
+ * 500 KB, more than many context windows take (SEO re-audit, 2026-11-01). Each file has the same
+ * header as llms-full.txt, which stays as the complete one.
+ */
+export const LLMS_SECTIONS = {
+  sdk: {
+    path: 'llms-sdk.txt',
+    title: 'Guides and SDK',
+    description: 'every English guide and the @cosmosapp/pay_sdk reference in one file, without the REST API reference',
+    include: (page: DocsPage) => !isApiPage(page),
+  },
+  api: {
+    path: 'llms-api.txt',
+    title: 'REST API reference',
+    description: 'every Payments REST API operation, rendered from openapi.json, in one file',
+    include: (page: DocsPage) => isApiPage(page),
+  },
+} as const;
+
+/** /docs/llms-sdk.txt and /docs/llms-api.txt: one part of llms-full.txt, in the same order. */
+export async function llmsSection(key: keyof typeof LLMS_SECTIONS): Promise<string> {
+  const section = LLMS_SECTIONS[key];
+  const pages = await Promise.all(englishPagesInOrder().filter(section.include).map(getLLMText));
+  return `${[`# ${appName}: ${section.title}`, '', `> ${LLMS_SUMMARY}`].join('\n')}\n\n${pages.join('\n')}`;
 }
 
 /** /docs/llms-full.txt: every English page, in sidebar order. */

@@ -127,7 +127,7 @@ ${markdownSection(site, "/pricing")}
 
 - [Documentation](${docs}/): SDK guides and the Payments REST API reference
 - [Docs index for LLMs](${docs}/llms.txt): every docs page with its description
-- [Full docs as one file](${docs}/llms-full.txt)
+- [Full docs as one file](${docs}/llms-full.txt), or in two parts: [guides and SDK](${docs}/llms-sdk.txt) and [REST API reference](${docs}/llms-api.txt)
 - [Getting started](${docs}/getting-started/): how a payment works and the two ways to integrate
 - [Get an API key](${docs}/api-keys/): its environment picks testnet or mainnet, its scopes what it may call
 ${authLine(site)}
