@@ -1,0 +1,94 @@
+---
+title: MCP server
+description: Let an AI agent create Cosmos Pay payment links and check payments on Stellar, Solana and Monad through the Model Context Protocol, with your own API key.
+---
+
+The Cosmos Pay MCP server (`@cosmosapp/pay_mcp`) connects an AI agent to the Payments API through the
+[Model Context Protocol](https://modelcontextprotocol.io). It works with Claude Code, Claude Desktop, Cursor, VS Code,
+Windsurf and any other MCP client. You can ask for things like *"create a payment link for 25 USDC on Stellar to my
+store's address"* or *"which payments from this week are still pending?"* and the agent calls the API for you.
+
+The server runs on your machine (stdio) with your API key. Nothing in it signs or moves funds: a payment link is a
+request your customer pays from their own wallet, and the money settles on-chain straight to your address.
+
+## Tools
+
+| Tool | What it does |
+| --- | --- |
+| `create_payment_link` | Creates a payment request: a link (SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad), its QR code and a hosted checkout page |
+| `get_payment` | Reads one payment: status, amount, asset, chain, link, checkout URL and, once paid, the transaction hash |
+| `get_payment_history` | Lists a payment's status changes |
+| `list_payments` | Lists payments, newest first, by status, chain or date |
+| `validate_payment` | Checks a transaction hash against a payment and settles it if it pays it |
+| `delete_payment` | Deletes an unpaid payment so its link can no longer be paid |
+| `get_summary` | Shows totals, settled volume, webhook health and a 30-day series |
+| `get_balances` | Shows settled and pending amounts per asset |
+| `list_stellar_assets` | Lists Stellar asset codes and issuers to charge in |
+
+Every tool declares whether it only reads or can change something, so your client can ask before anything that
+writes. `delete_payment` is marked destructive.
+
+## Set it up
+
+Create a secret key in the dashboard ([API keys](/api-keys)), then add the server to your client with the key in its
+environment.
+
+<Callout title="Start on a test network">
+A `dv_` key works on Stellar Testnet, Solana Devnet and Monad Testnet, with no real money. Switch to a `prod_` key
+only when the agent does what you expect.
+</Callout>
+
+**Claude Code**
+
+```bash
+claude mcp add cosmos-pay --env COSMOS_PAY_API_KEY=dv_your_key -- npx -y @cosmosapp/pay_mcp
+```
+
+**Claude Desktop, Cursor and Windsurf**
+
+```json
+{
+  "mcpServers": {
+    "cosmos-pay": {
+      "command": "npx",
+      "args": ["-y", "@cosmosapp/pay_mcp"],
+      "env": { "COSMOS_PAY_API_KEY": "dv_your_key" }
+    }
+  }
+}
+```
+
+**VS Code** (`.vscode/mcp.json`, the key is asked once and stored by VS Code)
+
+```json
+{
+  "inputs": [{ "type": "promptString", "id": "cosmos-pay-key", "description": "Cosmos Pay API key", "password": true }],
+  "servers": {
+    "cosmos-pay": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@cosmosapp/pay_mcp"],
+      "env": { "COSMOS_PAY_API_KEY": "${input:cosmos-pay-key}" }
+    }
+  }
+}
+```
+
+## Configuration
+
+| Variable | Meaning |
+| --- | --- |
+| `COSMOS_PAY_API_KEY` | Required. Your secret key: `dv_` for test networks, `prod_` for mainnet. |
+| `COSMOS_PAY_READ_ONLY` | `1` offers only the tools that read: nothing is created, validated or deleted. |
+
+## Security
+
+- The key is read from the environment only. It is never a tool argument, never logged and never part of a result.
+- The key decides the network, and the server tells the agent which one it is on.
+- The key's scopes limit what the agent can do. Create a key with only the permissions it needs, or run read-only.
+- A payment settles to the address in the request: check the `destination` an agent proposes before you share a link.
+
+<Cards>
+  <Card title="Source on GitHub" href="https://github.com/CosmosPay/CosmosPay-MCP" description="The server's code, tests and changelog (Apache-2.0)." />
+  <Card title="Payments API" href="/api" description="The endpoints the tools call, with every field." />
+</Cards>

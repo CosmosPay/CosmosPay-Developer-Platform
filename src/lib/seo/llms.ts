@@ -137,6 +137,7 @@ ${authLine(site)}
 - [Webhooks](${docs}/sdk/server/webhooks/): events signed with HMAC-SHA256
 - [Embed a payment](${docs}/embed/): a pay button or an embedded checkout from one script tag
 - [Using the docs with AI](${docs}/ai/)
+- [MCP server](${docs}/mcp/): `npx -y @cosmosapp/pay_mcp` lets an AI agent create payment links and check payments with your API key (stdio; nothing signs or moves funds)
 - [Cosmos Pay agent skill](${COSMOS_PAY_SKILL_REPO}): a SKILL.md for coding agents that integrate Cosmos Pay, listed in the [agent skills index](${site}${AGENT_SKILLS_INDEX_PATH})
 - [SDK on npm: ${SDK_PACKAGE}](${SDK_NPM}): \`npm i ${SDK_PACKAGE}\` (Node.js 18 or later); browser entry point \`${SDK_PACKAGE}/web\`
 - [Source code on GitHub](${GITHUB_ORG})
