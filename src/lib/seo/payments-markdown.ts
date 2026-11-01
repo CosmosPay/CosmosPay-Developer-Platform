@@ -154,7 +154,7 @@ function security({ d, page }: Ctx, compact: boolean): Block[] {
   const facts = compact ? d.security.slice(0, 4) : d.security;
   return [
     h(2, head(t.security.title, t.security.titleBold)),
-    ...facts.flatMap((fact) => [h(3, fact.title), p(fact.body)]),
+    ...facts.flatMap((fact) => [h(3, fact.title), p(fact.body), ...(fact.link ? [p(link(fact.link.label, page(fact.link.href)))] : [])]),
     ...(compact ? [p(link(t.pages.more.security, page("/security")))] : []),
   ];
 }
