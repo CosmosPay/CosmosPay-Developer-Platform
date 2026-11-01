@@ -30,8 +30,8 @@ npm run export:wallet-data # dumps the retired wallet tables to JSON for the com
   (`en es pt fr de hi zh`) on every surface: the platform's catalog (`src/lib/i18n/messages/*.ts`,
   the languages and their flags in `src/lib/i18n/locales.ts`), the payments catalogs
   (`src/lib/payments/i18n.ts`, `landing-i18n.ts`), the embed (`src/embed/i18n.ts`), Open Graph
-  locales (`src/lib/payments/seo.ts`), `BackToTop.astro` and `src/lib/geo.ts`. A new language goes
-  into all of them. The docs (Fumadocs) stay in five.
+  locales (`src/lib/seo/lang-urls.ts`), the company site's search titles (`src/lib/seo/site-meta.ts`),
+  `BackToTop.astro` and `src/lib/geo.ts`. A new language goes into all of them. The docs (Fumadocs) stay in five.
 - **Nothing on screen is hardcoded English**: every label, placeholder, aria-label and example value
   comes from the catalog (`ui.*` for shared bits such as close, search and select; `dash.examples.*`
   for sample data in placeholders). **Never build a plural with a suffix** (`{s}`): give the
@@ -99,7 +99,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 
 | Domain | Area | Pages |
 | :--- | :--- | :--- |
-| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/tos` |
+| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
 | `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/faq`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
@@ -127,7 +127,20 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Static files skip the middleware** (the Node adapter serves `dist/client` first), so they
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
-- **`robots.txt` and `sitemap.xml` are per-domain endpoints**; never add them to `public/`.
+- **`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/security.txt` and
+  `/.well-known/api-catalog` are per-domain endpoints** (`SHARED_PATHS` in `hosts.ts`, their
+  content in `src/lib/seo/`, all pure and tested); never add them to `public/`. robots.txt carries
+  a `Content-Signal` line on every domain; its `ai-train` value is the product owner's decision
+  (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The payments robots.txt
+  blocks everything but its pages, so every file those pages load (`/_astro/`, `/fonts/`,
+  `/media/`, `/brand/`, `/embed/`, icons, share images) needs its `Allow` there, or Google renders
+  them unstyled. The platform's sitemap is an index of the docs' own `/docs/sitemap.xml`.
+- **A site or gateway page has one address**: asked with a trailing slash, a GET is a 301 to it
+  without (`routeRequest`), and a `?lang=` the pages do not take as written (`ES`, `pt-BR`, `xx`,
+  twice) is a 301 to the language it names, or to the bare path (`normalizeLangQuery`, other
+  parameters kept byte for byte). The middleware adds HSTS (https origins, no includeSubDomains),
+  `Referrer-Policy`, `charset=utf-8` on HTML and `Vary: Accept-Language, Cookie` on a bare path
+  whose language follows the visitor (`src/lib/seo/response-headers.ts`).
 
 ### One auth for all three domains
 
@@ -754,13 +767,30 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   sideways and the script centres the current page in it.
 - **Search engines get every language.** An indexable gateway page exists once per language at
   `?lang=<code>` (the language resolution reads it first) and its bare path is the x-default.
-  `src/lib/payments/seo.ts` builds those URLs for everything that names them: the canonical (each
-  version names itself), the hreflang links and `og:locale` (+ alternates) in `PaymentsLayout`,
-  `robots.txt` (`Allow: <path>?lang=`) and the sitemap (every version with its alternates).
-  `StructuredData.astro` (rendered by `LandingHead`) emits one JSON-LD graph per page:
-  Organization, WebSite, the page (a FAQPage on `/faq`, with the questions the page shows) and a
-  BreadcrumbList matching the breadcrumb `PageHeader.astro` draws over a content page's title.
-  Only what the page says: no ratings, prices or claims beyond its copy.
+  `src/lib/seo/lang-urls.ts` (re-exported by `src/lib/payments/seo.ts`) builds those URLs for
+  everything that names them: the canonical (each version names itself), the hreflang links and
+  `og:locale` (+ alternates) in `PaymentsLayout`, `robots.txt` (`Allow: <path>?lang=`) and the
+  sitemap (every version with its alternates). The company site works the same way (below).
+  `StructuredData.astro` (rendered by `LandingHead`) emits one JSON-LD graph per page: the shared
+  Organization (`src/lib/seo/org.ts`), WebSite, the page (`["WebPage", "FAQPage"]` on `/faq`, with
+  the questions the page shows), a BreadcrumbList matching the breadcrumb `PageHeader.astro` draws
+  over a content page's title, a Service on `/` and `/swaps`, and on `/fees` a Product whose
+  Offers are the plans with a fixed monthly price in `src/lib/plans.ts`. Only what the page and
+  `plans.ts` say: no ratings, reviews or claims beyond them. The indexed pages share the hero's
+  poster (`/media/coin-ramp-poster.jpg`) as their image; payment links keep the brand card.
+- **The company site (cosmospay.lat) speaks every language at its own address too**: the
+  middleware resolves `locals.lang` for the `site` area as for payments (?lang → cookie →
+  Accept-Language → en) and the site pages read it, never the cookie. `CosmosLayout` emits, for a
+  site page, the canonical per language, the hreflang links (+ x-default), `og:locale` with its
+  alternates, and the page's titles and descriptions come from `src/lib/seo/site-meta.ts`
+  (seven languages; `/swaps` uses its catalog's `swapsPage.metaTitle`). A page whose text exists
+  in fewer languages declares them (`langs`, `PAGE_LANGS`: `/tos` is English and Spanish); its
+  other versions name the English one canonical. Its JSON-LD (`src/components/site/StructuredData.astro`)
+  is the shared Organization, WebSite, WebPage and BreadcrumbList (`breadcrumb`), plus the
+  page's own nodes (`schema`): the Payments API, the SDK and the wallet on `/`, the plans'
+  Product on `/pricing`. A language picked in the nav rewrites the address's `?lang=` (a script
+  in the layout's head), so a reload keeps it. `preloadImage` names the page's LCP image per
+  theme; the home's is the wallet section's figure, not the hero's ribbon.
 
 - `/` on payments is `src/pages/payments/index.astro`: server-rendered, copy in
   `src/lib/payments/landing-i18n.ts` (seven languages, parity-tested), rates read from

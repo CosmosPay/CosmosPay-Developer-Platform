@@ -7,7 +7,9 @@ import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
 import { MOUNTS, routeRequest } from "@/lib/hosts";
 import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
 import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
-import { LANG_COOKIE, resolveLocale } from "@/lib/payments/i18n";
+import { LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
+import { explicitLang, normalizeLangQuery } from "@/lib/seo/lang-urls";
+import { responseHeaders } from "@/lib/seo/response-headers";
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
 // COSMOS_API_URL. Runs once per process (idempotent), non-blocking.
@@ -54,6 +56,10 @@ const ORIGINS = { site: SITE, dev: DEV, payments: PAYMENTS };
 
 /* One year: the lifetime the language cookie has everywhere. */
 const LANG_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/* The languages the company site and the gateway are written in (the same seven). Each of their
+   pages exists once per language at ?lang= (src/lib/seo/lang-urls.ts). */
+const LANG_CODES = LOCALES.map((l) => l.code);
 
 /* The payments domain shows people where to send money, so it must never render inside
    someone else's frame (a framed checkout with an overlaid address is the attack). */
@@ -151,16 +157,31 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.area = decision.area;
   context.locals.publicPath = context.url.pathname;
 
-  if (decision.area === "payments") {
-    const query = context.url.searchParams.get("lang");
+  // The company site and the gateway speak the visitor's language: ?lang= first (each language
+  // of a page has its own address there, for search engines), then the cookie, then
+  // Accept-Language, then English.
+  const multilingual = decision.area === "payments" || decision.area === "site";
+  const method = context.request.method.toUpperCase();
+  if (multilingual && decision.kind === "rewrite" && (method === "GET" || method === "HEAD")) {
+    // A `lang` the pages do not take as written (?lang=ES, ?lang=xx, twice) would be one more
+    // indexable copy of the page: send it to the address that names the language, or to the bare
+    // path when it names none (other parameters kept as they came).
+    const fixed = normalizeLangQuery(context.url.search, LANG_CODES);
+    if (fixed !== null) {
+      const location = `${ORIGINS[decision.area].replace(/\/+$/, "")}${context.url.pathname}${fixed}`;
+      return new Response(null, { status: 301, headers: { Location: location } });
+    }
+  }
+  const askedLang = multilingual ? explicitLang(context.url.searchParams.get("lang"), LANG_CODES) : null;
+  if (multilingual) {
     const lang = resolveLocale({
-      query,
+      query: askedLang,
       cookie: context.cookies.get(LANG_COOKIE)?.value,
       acceptLanguage: context.request.headers.get("accept-language"),
     });
     context.locals.lang = lang;
     // An explicit choice (the footer picker submits ?lang=) sticks for the next visit.
-    if (query === lang) context.cookies.set(LANG_COOKIE, lang, { path: "/", maxAge: LANG_COOKIE_MAX_AGE, sameSite: "lax" });
+    if (askedLang === lang) context.cookies.set(LANG_COOKIE, lang, { path: "/", maxAge: LANG_COOKIE_MAX_AGE, sameSite: "lax" });
   }
 
   // Belt-and-suspenders: ensure the route was synced (no-op after the first call).
@@ -200,7 +221,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
       for (const [name, value] of Object.entries(ZK_ISOLATION_HEADERS)) response.headers.set(name, value);
     }
   }
-  if (corsOk) applyCors(response.headers, origin, context.request);
-  trackApiRequest(context, response.status, startedAt);
-  return response;
+  // HSTS, Referrer-Policy, the HTML charset, and Vary on the pages whose language follows the
+  // visitor (src/lib/seo/response-headers.ts).
+  const served = responseHeaders(response, {
+    https: ORIGINS[decision.area].startsWith("https://"),
+    negotiatedLang: multilingual && decision.kind === "rewrite" && askedLang === null,
+  });
+  if (corsOk) applyCors(served.headers, origin, context.request);
+  trackApiRequest(context, served.status, startedAt);
+  return served;
 });
