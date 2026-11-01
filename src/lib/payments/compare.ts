@@ -39,6 +39,20 @@ export const RAILGUN = { name: "RAILGUN", source: "https://docs.railgun.org/wiki
  *  $50 minimum; larger amounts pay less. */
 export const ESCROW_COM = { name: "Escrow.com", source: "https://www.escrow.com/fee-calculator", upTo: 5_000, minFee: 50, rate: { pct: 2.6 } } as const;
 
+/** Stripe's stablecoin payments as its documentation stated them on `checked`: businesses in the
+ *  US (private preview in the EU, Hong Kong, Mexico and Switzerland), settlement to the Stripe
+ *  balance in local currency, USDC on Tempo, Ethereum, Solana, Polygon and Base. The page sets
+ *  it beside Cosmos Pay on what changes beyond the rate, and only where the difference is a fact
+ *  its documentation states (product owner, 2026-11-01); its rate is not compared. */
+export const STRIPE_STABLECOINS = {
+  name: "Stripe",
+  source: "https://docs.stripe.com/crypto/stablecoin-payments",
+  checked: "2026-11-01",
+} as const;
+
+/** The rows of that comparison, in page order (their words: `comparePage.beyond.rows`). */
+export const BEYOND_ROWS = ["who", "settle", "networks"] as const;
+
 /** "1.5% + 18¢" → { pct: 1.5, cents: 18 }; null for a rate with no figure ("Custom"). */
 export function parseRate(text: string): Rate | null {
   const m = /^\s*(\d+(?:\.\d+)?)%(?:\s*\+\s*(\d+(?:\.\d+)?)¢)?\s*$/.exec(text);
