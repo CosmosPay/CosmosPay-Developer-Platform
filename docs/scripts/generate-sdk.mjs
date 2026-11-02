@@ -43,6 +43,7 @@ const CURATED_DOC = {
   RabetAdapter: 'Wallet adapter for the Rabet wallet.',
   LobstrAdapter: 'Wallet adapter for the LOBSTR wallet.',
   AlbedoAdapter: 'Wallet adapter for Albedo (web-based signing).',
+  CosmosWalletAdapter: 'Wallet adapter for the Cosmos Pay Wallet, as its browser extension or its hosted web build.',
 };
 
 const META = {
@@ -51,7 +52,7 @@ const META = {
   authentication: { description: 'Authenticate with a single API key; the network (testnet vs mainnet) is chosen automatically by the key prefix.', intro: 'Authentication is deliberately minimal: one secret API key, kept on your server. The key prefix also selects testnet or mainnet for you, so there is nothing else to configure. New here? See [how to get your API key](/api-keys).' },
   quickstart: { description: 'The smallest end-to-end flow: create a payment intent, complete it in the wallet, and validate the transaction.', intro: 'If you just want to see a payment work end to end, start here. The first example is the shortest possible integration; the second shows the realistic server-creates / browser-completes split.' },
   client: { description: 'The Client object: the managers it exposes, its constructor options, and the self-acting structures it returns.', intro: 'Almost everything you do goes through a single `Client` instance. It groups the API into one manager per resource and returns objects that can act on themselves.' },
-  'payment-intents': { description: 'Create, fetch, list, edit, cancel, delete and validate Stellar SEP-7 payment intents.', intro: 'A payment intent represents one payment you want a user to make. It is the core resource of the API and the manager you will reach for most often.' },
+  'payment-intents': { description: 'Create, fetch, list, edit, cancel, delete and validate payment intents on Stellar (SEP-7), Solana (Solana Pay) and Monad (EIP-681).', intro: 'A payment intent represents one payment you want a user to make. It is the core resource of the API and the manager you will reach for most often.' },
   'web-client': { description: "The browser WebClient: detect the user's Stellar wallet, then build, sign and submit the transaction.", intro: "The web client runs in the browser and is the only part that touches the user's wallet. It is provider-agnostic and never needs your secret key." },
   webhooks: { description: 'Register webhook endpoints, receive events over HTTP / Express, and verify their signatures.', intro: "Webhooks tell your server when a payment's status changes, so you don't have to poll. This page covers registering endpoints and verifying that incoming events are genuine." },
   'products-customers': { description: 'Manage your product catalog and customers, including their payment statistics.', intro: 'Products and customers are optional catalogs you can attach to payments to organise and report on them.' },
@@ -354,9 +355,18 @@ function relatedClasses(c) {
   return [...names];
 }
 
+// A one-line JSDoc ("Wallet adapter for the xBull wallet.") makes a meta description too thin to
+// tell a search result what the page is, so a short one also names the page and the entry point.
+const MIN_CLASS_DESCRIPTION = 70;
+function classDescription(c, summary) {
+  const text = summarize(summary);
+  if (text.length >= MIN_CLASS_DESCRIPTION) return text;
+  return summarize(`${text} Reference for the ${c.name} class of ${c.entry}: its members and their signatures.`);
+}
+
 function renderClassPage(c) {
   const summary = c.doc || `The ${c.name} class.`;
-  const parts = [`---\ntitle: ${yaml(c.name)}\ndescription: ${yaml(summarize(summary))}\n---\n`];
+  const parts = [`---\ntitle: ${yaml(c.name)}\ndescription: ${yaml(classDescription(c, summary))}\n---\n`];
   // Lead with the class explanation only; the entry-point ("Exported from @cosmosapp/pay_sdk")
   // and "Declared as class …" boilerplate is redundant with the sidebar grouping + signatures.
   if (c.doc) parts.push(`${escapeMdxText(c.doc)}\n`);

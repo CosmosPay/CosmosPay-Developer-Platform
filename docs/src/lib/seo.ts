@@ -81,12 +81,18 @@ function alternateLanguages(slugs: string[]): Record<string, string> | undefined
   };
 }
 
+/** What search results, link previews and JSON-LD say about a page: its `metaDescription` when it
+ *  has one (source.config.ts), else the intro under its title. */
+export function pageDescription(page: DocsPage): string | undefined {
+  return page.data.metaDescription ?? page.data.description;
+}
+
 export function pageMetadata(page: DocsPage): Metadata {
   const translated = isTranslation(page);
   const lang = contentLanguage(page);
   const title = pageTitle(page);
   const fullTitle = `${title} | ${appName}`;
-  const description = page.data.description;
+  const description = pageDescription(page);
   const url = canonicalUrl(page);
   const languages = translated ? alternateLanguages(page.slugs) : undefined;
 
@@ -175,7 +181,7 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
           '@id': `${url}#webpage`,
           url,
           name: `${page.data.title} | ${appName}`,
-          description: page.data.description,
+          description: pageDescription(page),
           inLanguage: lang,
           isPartOf: { '@id': WEBSITE_ID },
           about: [{ '@id': API_ID }, { '@id': SDK_ID }],
@@ -201,7 +207,7 @@ export function pageJsonLd(page: DocsPage): JsonLd | undefined {
         '@type': 'TechArticle',
         '@id': `${url}#article`,
         headline: page.data.title,
-        description: page.data.description,
+        description: pageDescription(page),
         url,
         mainEntityOfPage: url,
         inLanguage: lang,
