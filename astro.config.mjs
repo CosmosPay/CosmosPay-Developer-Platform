@@ -310,6 +310,15 @@ export default defineConfig({
   }),
   output: 'server',
 
+  // Every page's CSS goes inside its HTML. Lighthouse found the stylesheets of the public pages
+  // (about 22 KB compressed on payments and the company site) blocking the first paint by 0.2 to
+  // 1.1 s on a mobile connection: one more round trip after the HTML, which is not edge-cached
+  // (src/lib/hosts.ts). Inlined, the first paint needs only the document. The cost is those bytes
+  // again on each page load, since an inline stylesheet is not cached apart from its page.
+  build: {
+    inlineStylesheets: 'always',
+  },
+
   security: {
     checkOrigin: false,
     // Astro takes Request.url's host from the Host header only for these domains; for any other
