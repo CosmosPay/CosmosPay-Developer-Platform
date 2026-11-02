@@ -83,6 +83,9 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   "learn/whatsapp-payment-links": ["Payment links on WhatsApp", "create a payment link in the dashboard, send it in a chat or as a printed QR code, and see when it is paid"],
   "learn/stablecoin-payment-gateway": ["What is a stablecoin payment gateway?", "stablecoins, settlement to the merchant's own address, network fees, custodial and non-custodial gateways"],
   "learn/stellar-vs-solana-vs-monad": ["Stellar vs Solana vs Monad for accepting payments", "the three networks compared as Cosmos Pay supports them: link standard, matching, assets with a preset, test networks, fees"],
+  "learn/accept-usdc-with-solana-pay": ["How to accept USDC with Solana Pay links", "Solana Pay transfer requests matched by a reference key per link, testing on Devnet, the API request and confirming each payment"],
+  "learn/confirm-stablecoin-payments": ["How to confirm a stablecoin payment on your server", "signed webhooks (X-Cosmos-Signature, HMAC-SHA256), retries and redelivery, handling each event once, and checking a payment yourself"],
+  "learn/usdt0-from-stellar": ["How to send USDT0 from Stellar to EVM networks", "21 routes through LayerZero, fees in XLM, about 27 minutes to deliver, and each step from quote to delivery"],
 };
 
 /** /llms.txt of the company site (cosmospay.lat). */

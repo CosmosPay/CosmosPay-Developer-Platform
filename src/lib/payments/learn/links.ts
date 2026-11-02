@@ -29,6 +29,9 @@ export function learnHrefs(docs: string) {
     whatsappGuide: guide("whatsapp-payment-links"),
     gatewayGuide: guide("stablecoin-payment-gateway"),
     networksGuide: guide("stellar-vs-solana-vs-monad"),
+    solanaPayGuide: guide("accept-usdc-with-solana-pay"),
+    webhooksGuide: guide("confirm-stablecoin-payments"),
+    usdt0Guide: guide("usdt0-from-stellar"),
     // The docs (each path is a page of docs/content/docs).
     gettingStarted: docsLink(docs, "/getting-started"),
     apiKeys: docsLink(docs, "/api-keys"),
@@ -36,6 +39,10 @@ export function learnHrefs(docs: string) {
     paymentIntents: docsLink(docs, "/api/payment-intents"),
     paymentLinks: docsLink(docs, "/api/payment-links"),
     webhooks: docsLink(docs, "/sdk/server/webhooks"),
+    webhooksApi: docsLink(docs, "/api/webhooks"),
+    sdkPaymentIntents: docsLink(docs, "/sdk/server/payment-intents"),
+    usdt0Docs: docsLink(docs, "/sdk/server/usdt0"),
+    usdt0Api: docsLink(docs, "/api/usdt0"),
     // Primary sources for what the guides say about Circle's stablecoins (read 2026-11-01).
     circleUsdc: "https://www.circle.com/usdc",
     circleEurc: "https://www.circle.com/eurc",
@@ -44,11 +51,24 @@ export function learnHrefs(docs: string) {
     sep7: "https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0007.md",
     solanaPay: "https://solana.com/docs/tools/solana-pay/specification/version1-1",
     eip681: "https://eips.ethereum.org/EIPS/eip-681",
+    // What USDT0 is and how it moves between networks, at its issuer and at LayerZero (read 2026-11-02).
+    usdt0Site: "https://usdt0.to/",
+    usdt0Network: "https://docs.usdt0.to/",
+    layerzeroOft: "https://docs.layerzero.network/v2/home/token-standards/oft-standard",
   } as const;
 }
 
 /** The targets that leave Cosmos Pay: each is the primary source of a claim the guides make. */
-export const SOURCE_LINKS = ["circleUsdc", "circleEurc", "sep7", "solanaPay", "eip681"] as const;
+export const SOURCE_LINKS = [
+  "circleUsdc",
+  "circleEurc",
+  "sep7",
+  "solanaPay",
+  "eip681",
+  "usdt0Site",
+  "usdt0Network",
+  "layerzeroOft",
+] as const;
 
 export type LearnLink = keyof ReturnType<typeof learnHrefs>;
 

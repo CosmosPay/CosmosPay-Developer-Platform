@@ -22,6 +22,7 @@ import Pricing from "@/components/payments/landing/sections/Pricing.astro";
 import Faq from "@/components/payments/landing/sections/Faq.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
 import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
+import { NETWORK_GUIDES } from "@/lib/payments/site-pages";
 import { CHAIN_NAMES, type Chain } from "@/lib/chains";
 import { PRIVATE_PAYMENT_FEE_PCT } from "@/lib/plans";
 import { updatedByline } from "@/lib/seo/page-dates-build";
@@ -52,7 +53,7 @@ const byline = updatedByline("payments", `/${chain}`, lang, d.t.pages.updated);
     <Pricing d={d} compact heading={d.t.network.feesTitle} lede={d.t.networks[chain].feesLede} />
     <NetworkCode d={d} chain={chain} />
     <Faq d={d} items={questions} heading={`${d.t.network.faqTitle.replace("{network}", name)} ${d.t.network.faqTitleBold}`} current={chain} />
-    <GuideLinks d={d} guides={["stellar-vs-solana-vs-monad", "accept-usdc-payments"]} />
+    <GuideLinks d={d} guides={NETWORK_GUIDES[chain]} />
     <FinalCta d={d} />
   </main>
 
