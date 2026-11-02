@@ -14,7 +14,15 @@ export const NETWORK_PAGES: readonly Chain[] = CHAINS;
 
 /* The guides (/learn/<slug>), in the order the hub (/learn) lists them. The slugs are the words
    people search for, in English in every language (URLs are not copy). */
-export const GUIDES = ["accept-usdc-payments", "whatsapp-payment-links", "stablecoin-payment-gateway", "stellar-vs-solana-vs-monad"] as const;
+export const GUIDES = [
+  "accept-usdc-payments",
+  "whatsapp-payment-links",
+  "stablecoin-payment-gateway",
+  "stellar-vs-solana-vs-monad",
+  "accept-usdc-with-solana-pay",
+  "confirm-stablecoin-payments",
+  "usdt0-from-stellar",
+] as const;
 export type Guide = (typeof GUIDES)[number];
 export type GuidePage = `learn/${Guide}`;
 /* The hub that lists them, then the guides: the section bar's last item and the footer's
@@ -29,6 +37,17 @@ export const GUIDE_DATES: Record<Guide, { published: string; modified: string }>
   "whatsapp-payment-links": { published: "2026-11-01", modified: "2026-11-01" },
   "stablecoin-payment-gateway": { published: "2026-11-01", modified: "2026-11-01" },
   "stellar-vs-solana-vs-monad": { published: "2026-11-01", modified: "2026-11-01" },
+  "accept-usdc-with-solana-pay": { published: "2026-11-02", modified: "2026-11-02" },
+  "confirm-stablecoin-payments": { published: "2026-11-02", modified: "2026-11-02" },
+  "usdt0-from-stellar": { published: "2026-11-02", modified: "2026-11-02" },
+};
+
+/* The guides each network page links at its end: the comparison and the general USDC guide, plus
+   the guide that is about that network. NetworkPage.astro and its Markdown twin read the same list. */
+export const NETWORK_GUIDES: Record<Chain, readonly Guide[]> = {
+  stellar: ["stellar-vs-solana-vs-monad", "accept-usdc-payments", "usdt0-from-stellar"],
+  solana: ["accept-usdc-with-solana-pay", "stellar-vs-solana-vs-monad", "accept-usdc-payments"],
+  monad: ["stellar-vs-solana-vs-monad", "accept-usdc-payments"],
 };
 
 export type SectionPage = (typeof SECTION_PAGES)[number];

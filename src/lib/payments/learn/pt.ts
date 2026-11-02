@@ -5,9 +5,9 @@ export const pt: LearnMessages = {
   hub: {
     nav: "Guias",
     title: "Guias de pagamentos em stablecoins",
-    lede: "Guias para empresas que cobram em stablecoins com a Cosmos Pay: como aceitar USDC online, como enviar um link de pagamento no WhatsApp, o que faz um gateway de pagamento em stablecoins e como Stellar, Solana e Monad se comparam.",
+    lede: "Guias para empresas que cobram em stablecoins com a Cosmos Pay: como aceitar USDC online ou com o Solana Pay, como enviar um link de pagamento no WhatsApp, como confirmar pagamentos no seu servidor, o que faz um gateway de pagamento em stablecoins, como Stellar, Solana e Monad se comparam e como enviar USDT0 da Stellar para redes EVM.",
     meta: "Guias de pagamentos em stablecoins | Cosmos Pay",
-    description: "Guias para empresas: aceitar USDC online, links de pagamento no WhatsApp, o que faz um gateway de pagamento em stablecoins e Stellar vs Solana vs Monad.",
+    description: "Guias: aceitar USDC online ou com Solana Pay, links de pagamento no WhatsApp, confirmação por webhooks, Stellar vs Solana vs Monad e USDT0 da Stellar.",
   },
   ui: {
     updated: "Atualizado em {date}",
@@ -250,6 +250,190 @@ export const pt: LearnMessages = {
         all: { q: "Posso aceitar pagamentos nas três redes?", a: "Sim. Cada link de pagamento é liquidado numa rede, que você escolhe ao criá-lo. A mesma conta, as mesmas chaves de API e os mesmos webhooks funcionam nas três." },
         test: { q: "Posso testar nas três?", a: "Sim. O Sandbox e as chaves de teste (dv_) criam links na Stellar Testnet, na Solana Devnet e na Monad Testnet. A Monad Testnet não tem USDC predefinido: cobre em MON ali, ou indique um token pelo contrato." },
         fees: { q: "A Cosmos Pay é mais barata em alguma rede?", a: "Não. A tarifa do seu plano é a mesma nas três. A carteira de quem paga cobre a taxa de rede, e na Monad a taxa do repasse de um pagamento é descontada dele." },
+      },
+    },
+    solanaPay: {
+      nav: "USDC com Solana Pay",
+      title: "Como aceitar USDC com links do Solana Pay",
+      meta: "Links de pagamento Solana Pay, passo a passo | Cosmos Pay",
+      description: "Cobre em USDC na Solana com um link e um QR code do Solana Pay: o que o link contém, como testar na Devnet e como cada pagamento é confirmado.",
+      summary: "Crie um link do Solana Pay para USDC, teste na Devnet e veja cada pagamento confirmado no seu servidor.",
+      lede: "Com a Cosmos Pay, um link de pagamento na Solana é uma solicitação de transferência do Solana Pay: seu cliente escaneia o QR code ou abre o link numa carteira como Phantom ou Solflare e aprova ali o pagamento em USDC. O USDC vai direto para a sua carteira, e a Cosmos Pay marca o link como pago assim que a Solana confirma a transação. Teste na Devnet antes de cobrar dinheiro real.",
+      sections: {
+        what: {
+          title: "O que um link do Solana Pay contém",
+          body: [
+            "O Solana Pay é um padrão de solicitações de pagamento que as carteiras da Solana leem: um link solana:, ou o QR code dele, com o endereço a pagar, o valor, o token e uma mensagem.",
+            "A Cosmos Pay adiciona uma chave de referência criada para cada link. A carteira inclui essa chave na transação, e a Cosmos Pay procura por ela na Solana para associar o pagamento ao seu link. O pagamento só é aceito quando a transação foi bem-sucedida e o valor exato chegou ao seu endereço.",
+          ],
+          links: { solanaPay: "A especificação do Solana Pay", solana: "Pagamentos na Solana" },
+        },
+        need: {
+          title: "O que você e seu cliente precisam",
+          points: [
+            "Você: um endereço da Solana que recebe o dinheiro, adicionado à sua organização no dashboard e comprovado como seu com uma assinatura.",
+            "Seu cliente: uma carteira da Solana que leia links do Solana Pay, como Phantom ou Solflare, com o USDC e um pouco de SOL para a taxa de rede. Sem conta na Cosmos Pay.",
+            "Para testes: o Sandbox, onde os links funcionam na Solana Devnet. O USDC também é predefinido ali, então você pode testar com USDC da Devnet.",
+          ],
+        },
+        api: {
+          title: "Crie o link no seu servidor",
+          body: [
+            "Com a API de pagamentos, chame POST /v1/payment-intents/pay com chain definido como solana, seu endereço como destino e, para USDC, o código de ativo USDC com o mint dele como emissor. Com o SDK em TypeScript (versão 2.2 ou posterior), passe chain: 'solana' para client.paymentIntents.createPay.",
+            "A resposta traz o link (o uri dele começa com solana:) e o QR code. Mostre o QR code, abra o link na carteira do seu cliente ou envie-o para o checkout hospedado: payments.cosmospay.lat seguido do id do link.",
+          ],
+          links: { paymentIntents: "API de intenções de pagamento", sdkPaymentIntents: "Intenções de pagamento no SDK" },
+        },
+        know: {
+          title: "Bom saber",
+          points: [
+            "Você pode deixar o valor vazio para que seu cliente o escolha, como em doações. Um link que adiciona a sua própria taxa precisa de um valor.",
+            "Uma mensagem de até 300 caracteres, como um número de pedido, aparece na carteira do seu cliente.",
+            "Com a sua própria taxa no pagamento, o link vira uma solicitação de transação do Solana Pay que paga a sua carteira e a sua carteira de taxas numa única transação.",
+            "Um link fica aberto por um tempo limitado, que o checkout mostra como contagem regressiva. Um pagamento que ainda chegue e seja confirmado marca o link como pago.",
+            "A carteira do seu cliente paga a taxa de rede da Solana, em SOL. Cada pagamento paga a tarifa do seu plano, a mesma de todas as redes.",
+          ],
+          links: { fees: "Preços e calculadora de tarifas", networksGuide: "Stellar vs Solana vs Monad" },
+        },
+      },
+      steps: {
+        title: "Aceite seu primeiro pagamento com Solana Pay",
+        items: {
+          sandbox: { title: "Mude para Sandbox", body: "Entre no dashboard e escolha Sandbox no topo. Os links que você cria ali funcionam na Solana Devnet e não movimentam dinheiro real." },
+          wallet: { title: "Adicione sua carteira da Solana", body: "Nas configurações da sua organização, adicione o endereço da Solana que vai receber o dinheiro e assine o que o dashboard pedir: essa assinatura comprova que a carteira é sua." },
+          create: { title: "Crie o link", body: "Em Pagamentos, escolha Criar link de pagamento, selecione Solana e mude o ativo para USDC (o seletor começa em SOL). Informe o valor, ou deixe-o vazio para seu cliente escolher, depois escolha sua carteira e, se quiser, uma mensagem." },
+          pay: { title: "Pague com uma carteira", body: "Abra a página de pagamento e escaneie o QR code com uma carteira da Solana, ou abra o link no mesmo dispositivo. Aprove o pagamento na carteira, e o checkout passa para Pago assim que a Solana o confirma." },
+          confirm: { title: "Confirme no seu servidor", body: "Adicione um endpoint de webhook no dashboard. Quando o pagamento é confirmado, a Cosmos Pay envia PAYMENT_INTENT_SUCCEEDED, assinado com HMAC-SHA256. Entregue o pedido quando ele chegar." },
+          live: { title: "Mude para Produção", body: "Escolha Produção e crie uma chave de API de produção (começa com prod_). Os links passam a funcionar na rede principal da Solana, onde o USDC tem a sua própria predefinição." },
+        },
+        links: { webhooksGuide: "Como confirmar um pagamento no seu servidor", apiKeys: "Chaves de API" },
+      },
+      faq: {
+        wallets: { q: "Quais carteiras podem pagar um link do Solana Pay?", a: "Qualquer carteira da Solana que leia links do Solana Pay, como Phantom ou Solflare. Seu cliente escaneia o QR code ou abre o link e aprova o pagamento na carteira." },
+        sol: { q: "Meu cliente precisa de SOL?", a: "Sim, um pouco. A carteira dele paga a taxa de rede da Solana em SOL, além do USDC que ele envia." },
+        direct: { q: "O USDC passa pela Cosmos Pay?", a: "Não. Na Solana, a carteira do seu cliente envia o USDC direto para o seu endereço. A Cosmos Pay encontra o pagamento na rede pela chave de referência do link." },
+        devnet: { q: "Posso testar sem dinheiro real?", a: "Sim. No Sandbox e com chaves de teste (dv_), os links funcionam na Solana Devnet, onde o USDC é predefinido, e o checkout avisa que nenhum fundo real é movimentado." },
+      },
+    },
+    webhooks: {
+      nav: "Confirmar pagamentos no seu servidor",
+      title: "Como confirmar um pagamento em stablecoins no seu servidor",
+      meta: "Confirme pagamentos em stablecoins com webhooks | Cosmos Pay",
+      description: "Confirme pagamentos em stablecoins no servidor com webhooks assinados: verifique a assinatura, responda rápido, trate reenvios e duplicados e teste antes.",
+      summary: "Entregue os pedidos a partir de um webhook assinado, não da página do seu cliente: verifique-o, responda rápido e ignore duplicados.",
+      lede: "Para confirmar um pagamento em stablecoins, deixe seu servidor agir com base no webhook assinado da Cosmos Pay, não na página que seu cliente vê. Quando a rede confirma um pagamento, a Cosmos Pay envia PAYMENT_INTENT_SUCCEEDED para o seu endpoint, assinado com o segredo desse endpoint. Verifique a assinatura, responda com um status 2xx e entregue o pedido uma vez por evento.",
+      sections: {
+        why: {
+          title: "Por que o seu servidor, e não o navegador",
+          body: [
+            "Um checkout que diz Pago é só o que o navegador do seu cliente mostra. A aba pode ser fechada antes de voltar ao seu site, e qualquer pessoa pode abrir sua página de sucesso manualmente. O que torna um pagamento definitivo é a confirmação da rede.",
+            "A Cosmos Pay monitora a rede por você e avisa o seu servidor quando um pagamento é confirmado. É no seu servidor que o pedido deve ser marcado como pago e entregue.",
+          ],
+        },
+        how: {
+          title: "O que a Cosmos Pay envia",
+          points: [
+            "Um POST HTTPS para o endpoint que você registra, com um evento JSON: id (começa com evt_), type, createdAt e data. Para um pagamento, data é o pagamento com status, valor, ativo, rede e transação.",
+            "O cabeçalho X-Cosmos-Signature: t=<hora unix>,v1=<assinatura>. A assinatura é o HMAC-SHA256 de t, um ponto e o corpo bruto, com o segredo do endpoint como chave, em hexadecimal.",
+            "Os tipos de evento que você escolher, como PAYMENT_INTENT_SUCCEEDED, PAYMENT_INTENT_FAILED ou ZK_PAYMENT_SUCCEEDED. Compare-os exatamente como estão escritos, em maiúsculas e com underscores.",
+            "Os cabeçalhos X-Cosmos-Event, X-Cosmos-Event-Id e X-Cosmos-Delivery, que identificam o evento e a entrega.",
+          ],
+          links: { webhooks: "Webhooks no SDK", webhooksApi: "API de webhooks" },
+        },
+        retries: {
+          title: "Quando o seu servidor não responde",
+          body: [
+            "Só uma resposta 2xx conta como entregue, e redirecionamentos não são seguidos. A Cosmos Pay tenta de novo uma entrega que falhou até três vezes, com uma pausa cada vez maior, e depois em rodadas posteriores, e o evento mantém o mesmo id em todas as tentativas.",
+            "No dashboard, cada endpoint lista as suas entregas, com um filtro para as que falharam, e você pode enviar qualquer uma delas de novo. A Cosmos Pay guarda o corpo de uma entrega por 30 dias, então reenvie dentro desse prazo.",
+          ],
+        },
+        validate: {
+          title: "Ou verifique um pagamento você mesmo",
+          body: [
+            "Você também pode consultar um pagamento específico: busque-o pelo id para ler o status, ou envie o hash da transação dele (na Solana, a assinatura da transação) para POST /v1/payment-intents/:id/validate. Use isso como alternativa, por exemplo quando seu cliente volta antes de o webhook chegar; o webhook continua sendo o sinal principal.",
+          ],
+          links: { paymentIntents: "API de intenções de pagamento" },
+        },
+      },
+      steps: {
+        title: "Configure um webhook, passo a passo",
+        items: {
+          endpoint: { title: "Adicione um endpoint", body: "No dashboard, abra Webhooks e adicione o endereço HTTPS de uma rota do seu servidor. Escolha os eventos que vai receber; PAYMENT_INTENT_SUCCEEDED já vem selecionado. O endereço precisa ser público: endereços privados e locais são recusados." },
+          secret: { title: "Guarde o segredo", body: "O dashboard mostra o segredo do endpoint (começa com whsec_) uma única vez. Guarde-o no ambiente do seu servidor, nunca numa página web." },
+          verify: { title: "Verifique cada requisição", body: "Leia o corpo bruto antes de qualquer parser JSON e confira o X-Cosmos-Signature com ele. Com o SDK em TypeScript, Webhooks.constructEvent verifica a assinatura, recusa por padrão uma com mais de cinco minutos e retorna o evento." },
+          answer: { title: "Responda rápido e depois trabalhe", body: "Responda com um status 2xx assim que a assinatura for validada e faça o trabalho demorado, como e-mails ou atualizações de estoque, depois disso." },
+          dedupe: { title: "Trate cada evento uma vez", body: "Guarde o id de cada evento que você trata e ignore um que já tenha visto: uma nova tentativa ou um reenvio manda o mesmo evento de novo." },
+          test: { title: "Envie um teste", body: "Use Enviar teste no endpoint para receber um evento ping, depois faça um pagamento de teste no Sandbox e acompanhe a entrega na lista do endpoint." },
+        },
+        links: { webhooks: "Webhooks no SDK", gettingStarted: "Primeiros passos" },
+      },
+      faq: {
+        name: { q: "O dashboard mostra payment_intent.succeeded. Qual nome o evento traz?", a: "O tipo do evento é PAYMENT_INTENT_SUCCEEDED, em maiúsculas e com underscores. O dashboard só o exibe de forma mais curta." },
+        rotate: { q: "O que acontece quando eu rodo o segredo?", a: "O novo segredo funciona na hora e o antigo para de funcionar na hora, então atualize seu servidor logo depois de rodá-lo." },
+        down: { q: "E se o meu servidor estava fora do ar?", a: "A Cosmos Pay tenta de novo as entregas que falharam, e você pode enviar qualquer entrega de novo pelo dashboard durante 30 dias." },
+        several: { q: "Posso ter vários endpoints?", a: "Sim. Cada endpoint tem o seu próprio endereço, os seus próprios eventos e o seu próprio segredo, e cada evento vai para todos os endpoints inscritos nele." },
+      },
+    },
+    usdt0: {
+      nav: "USDT0 da Stellar",
+      title: "Como enviar USDT0 da Stellar para redes EVM",
+      meta: "Envie USDT0 da Stellar para redes EVM | Cosmos Pay",
+      description: "Envie USDT0 de uma conta na Stellar para Ethereum, Arbitrum e outras redes EVM com a Cosmos Pay: rotas, taxas em XLM, prazos e cada passo.",
+      summary: "Mova USDT0 da Stellar para uma rede EVM pela LayerZero: escolha uma rota, veja as taxas, assine uma vez e acompanhe a entrega.",
+      lede: "Com a Cosmos Pay, você pode enviar USDT0 de uma conta na Stellar para um endereço no Ethereum, no Arbitrum ou em outra das 21 redes EVM. Você recebe uma cotação com todas as taxas em XLM, assina uma transação da Stellar na sua carteira e a transferência chega em cerca de 27 minutos. O Ethereum recebe USDT nativo; todas as outras redes recebem USDT0.",
+      sections: {
+        what: {
+          title: "O que é o USDT0",
+          body: [
+            "O USDT0 é a forma omnichain do USDT da Tether. O emissor descreve um modelo de bloqueio e emissão: o USDT é bloqueado no Ethereum e a mesma quantidade de USDT0 é emitida nas outras redes, que o movimentam entre si com o padrão Omnichain Fungible Token (OFT) da LayerZero.",
+            "Na Stellar, o USDT0 é um ativo como qualquer outro, então a conta que o envia precisa de uma trustline para ele e de saldo em USDT0.",
+          ],
+          links: { usdt0Site: "USDT0, no site do emissor", usdt0Network: "Como funciona a rede USDT0", layerzeroOft: "O padrão OFT da LayerZero" },
+        },
+        routes: {
+          title: "Para onde ele pode ir",
+          body: [
+            "A Cosmos Pay oferece 21 rotas, todas para redes EVM, cada uma para um endereço formado por 0x e 40 caracteres hexadecimais. O Ethereum recebe USDT nativo; o Arbitrum e as demais recebem USDT0. A chamada routes da API lista as rotas com seus nomes.",
+            "As transferências funcionam só nas redes principais: com uma chave de teste (dv_), a API responde que não há rota disponível.",
+          ],
+          links: { usdt0Docs: "USDT0 no SDK", usdt0Api: "API do USDT0" },
+        },
+        cost: {
+          title: "Quanto custa",
+          points: [
+            "A taxa de mensageria da LayerZero, em XLM. A transação permite até 20% a mais, e o que ela não usar volta na mesma transação.",
+            "A taxa de rede da Stellar, em XLM.",
+            "Qualquer comissão da Cosmos Pay, que a cotação mostra antes de você assinar.",
+            "A conta que envia paga todas elas em XLM, então mantenha algum XLM nela além do USDT0.",
+          ],
+        },
+        know: {
+          title: "Bom saber",
+          points: [
+            "A transação tem um prazo curto, informado como expiresAt: assine e envie antes disso, ou crie uma nova transferência.",
+            "Os valores na Stellar têm 7 casas decimais e o OFT carrega 6, então uma 7ª casa decimal fica na sua conta como resíduo.",
+            "A Cosmos Pay nunca guarda uma chave: a API monta a transação, sua carteira a assina e a API a retransmite.",
+            "Você também pode enviar USDT0 pelo painel de swaps do dashboard, onde ele aparece como Ponte USDT0.",
+          ],
+        },
+      },
+      steps: {
+        title: "Envie USDT0, passo a passo",
+        items: {
+          hold: { title: "Tenha USDT0 na Stellar", body: "A conta que envia precisa de uma trustline para o USDT0, de saldo em USDT0 e de algum XLM para as taxas." },
+          quote: { title: "Peça uma cotação", body: "Chame quote com a rota e o valor. A chamada retorna o que é enviado, o que chega, o resíduo que fica, cada taxa e os limites, e não salva nada." },
+          create: { title: "Crie a transferência", body: "Chame create com a conta da Stellar que envia, a rota, o endereço EVM que recebe e o valor. A API monta uma transação da Stellar para ela." },
+          sign: { title: "Assine na sua carteira", body: "Assine a transação (o XDR dela) com a carteira que tem o USDT0, ou abra o link SEP-7 dela nessa carteira." },
+          submit: { title: "Envie", body: "Envie a transação assinada para submit. Se a rede a recusar, a transferência continua pendente: corrija a causa e envie de novo antes que ela expire." },
+          follow: { title: "Acompanhe até a entrega", body: "A transferência passa de PENDING para SUBMITTED e depois para DELIVERED, em cerca de 27 minutos em todas as rotas, enquanto os verificadores da LayerZero esperam as confirmações da Stellar. Depois de entregue, ela traz a transação da rede de destino e um link do LayerZero Scan." },
+        },
+        links: { usdt0Docs: "USDT0 no SDK", usdt0Api: "API do USDT0" },
+      },
+      faq: {
+        arrive: { q: "O que o endereço de destino recebe?", a: "No Ethereum, USDT nativo. Em todas as outras rotas, USDT0." },
+        time: { q: "Quanto tempo leva uma transferência?", a: "Cerca de 27 minutos em todas as rotas, conforme medido no LayerZero Scan: os verificadores da LayerZero esperam as confirmações da Stellar antes de a transferência ser entregue." },
+        test: { q: "Posso testar numa rede de testes?", a: "Não. As transferências de USDT0 funcionam só nas redes principais; com uma chave de teste, nenhuma rota está disponível." },
+        custody: { q: "A Cosmos Pay fica com o meu USDT0?", a: "Não. Sua carteira assina a transação que o envia; a Cosmos Pay só a monta e a retransmite." },
       },
     },
   },

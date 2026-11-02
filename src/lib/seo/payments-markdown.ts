@@ -12,7 +12,7 @@ import { landingContent, type LandingContent } from "@/lib/payments/landing-cont
 import { fillPageCopy, pageMeta, type CopyPage } from "@/lib/payments/landing-i18n";
 import { GUIDE_CONFIG, fill, guideCopy } from "@/lib/payments/learn/index";
 import { learnHrefs, type LearnLink } from "@/lib/payments/learn/links";
-import { GUIDES, GUIDE_DATES, PAYMENTS_PAGES, guideOf, pagePath, type Guide, type NetworkPage, type PaymentsPage } from "@/lib/payments/site-pages";
+import { GUIDES, GUIDE_DATES, NETWORK_GUIDES, PAYMENTS_PAGES, guideOf, pagePath, type Guide, type NetworkPage, type PaymentsPage } from "@/lib/payments/site-pages";
 import { LOCALES, MESSAGES, type Locale } from "@/lib/payments/i18n";
 import { BEYOND_ROWS, COMPARE_CHECKED, ESCROW_COM, STRIPE_STABLECOINS, compareRows, formatRate } from "@/lib/payments/compare";
 import { NETWORK_WALLETS, networkPresets, payLinkCurl } from "@/lib/payments/network-pages";
@@ -377,7 +377,7 @@ function networkPage(ctx: Ctx, chain: Chain): Block[] {
     ...pricing(ctx, { compact: true, heading: t.network.feesTitle, lede: t.networks[chain].feesLede }),
     ...networkCode(ctx, chain),
     ...faq(ctx, { items: questions, heading: `${t.network.faqTitle.replace("{network}", name)} ${t.network.faqTitleBold}`, current: chain }),
-    ...guideLinks(ctx, ["stellar-vs-solana-vs-monad", "accept-usdc-payments"]),
+    ...guideLinks(ctx, NETWORK_GUIDES[chain]),
     ...finalCta(ctx),
   ];
 }
@@ -510,7 +510,7 @@ function contentPage(ctx: Ctx, page: PaymentsPage): Block[] {
         ...header("faq"),
         ...updatedLine(ctx, "/faq"),
         ...faq(ctx),
-        ...guideLinks(ctx, ["stablecoin-payment-gateway", "accept-usdc-payments", "whatsapp-payment-links", "stellar-vs-solana-vs-monad"]),
+        ...guideLinks(ctx, ["stablecoin-payment-gateway", "accept-usdc-payments", "confirm-stablecoin-payments", "whatsapp-payment-links", "stellar-vs-solana-vs-monad"]),
         ...finalCta(ctx),
       ];
     case "swaps":

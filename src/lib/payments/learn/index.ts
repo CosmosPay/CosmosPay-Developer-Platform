@@ -26,6 +26,9 @@ export const GUIDE_KEYS: Record<Guide, GuideKey> = {
   "whatsapp-payment-links": "whatsapp",
   "stablecoin-payment-gateway": "gateway",
   "stellar-vs-solana-vs-monad": "networks",
+  "accept-usdc-with-solana-pay": "solanaPay",
+  "confirm-stablecoin-payments": "webhooks",
+  "usdt0-from-stellar": "usdt0",
 };
 
 /* The shapes every guide's copy shares; the four differ only in which parts they have. */
@@ -101,6 +104,27 @@ export const GUIDE_CONFIG: Record<Guide, GuideConfig> = {
     art: "3d-final",
     mocks: {},
     related: ["accept-usdc-payments", "stablecoin-payment-gateway", "whatsapp-payment-links"],
+  },
+  "accept-usdc-with-solana-pay": {
+    type: "TechArticle",
+    order: ["what", "need", "steps", "api", "know"],
+    art: "3d-instant",
+    mocks: { what: "link", steps: "checkout" },
+    related: ["accept-usdc-payments", "confirm-stablecoin-payments", "stellar-vs-solana-vs-monad"],
+  },
+  "confirm-stablecoin-payments": {
+    type: "TechArticle",
+    order: ["why", "how", "steps", "retries", "validate"],
+    art: "3d-security",
+    mocks: { how: "step-confirm" },
+    related: ["accept-usdc-payments", "accept-usdc-with-solana-pay", "stablecoin-payment-gateway"],
+  },
+  "usdt0-from-stellar": {
+    type: "TechArticle",
+    order: ["what", "routes", "cost", "steps", "know"],
+    art: "3d-calc",
+    mocks: {},
+    related: ["stellar-vs-solana-vs-monad", "stablecoin-payment-gateway", "confirm-stablecoin-payments"],
   },
 };
 
