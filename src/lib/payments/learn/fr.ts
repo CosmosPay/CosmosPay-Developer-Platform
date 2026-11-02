@@ -5,9 +5,9 @@ export const fr: LearnMessages = {
   hub: {
     nav: "Guides",
     title: "Guides des paiements en stablecoins",
-    lede: "Des guides pour les entreprises qui encaissent en stablecoins avec Cosmos Pay : comment accepter l’USDC en ligne ou avec Solana Pay, comment envoyer un lien de paiement sur WhatsApp, comment confirmer les paiements sur votre serveur, ce que fait une passerelle de paiement en stablecoins, comment se comparent Stellar, Solana et Monad, et comment envoyer de l’USDT0 depuis Stellar vers des réseaux EVM.",
+    lede: "Des guides pour les entreprises qui encaissent en stablecoins avec Cosmos Pay : comment accepter l’USDC en ligne et sur chaque réseau (Stellar avec SEP-7, Solana avec Solana Pay, Monad avec EIP-681), comment envoyer un lien de paiement sur WhatsApp, comment confirmer les paiements sur votre serveur, ce que fait une passerelle de paiement en stablecoins, comment se comparent les trois réseaux, et comment envoyer de l’USDT0 depuis Stellar vers des réseaux EVM.",
     meta: "Guides des paiements en stablecoins | Cosmos Pay",
-    description: "Guides : accepter l’USDC en ligne ou avec Solana Pay, liens de paiement WhatsApp, confirmer par webhook, Stellar vs Solana vs Monad, USDT0 depuis Stellar.",
+    description: "Guides : accepter l’USDC en ligne ou sur Stellar, Solana et Monad, liens de paiement WhatsApp, webhooks, les trois réseaux comparés, USDT0 depuis Stellar.",
   },
   ui: {
     updated: "Mis à jour le {date}",
@@ -434,6 +434,141 @@ export const fr: LearnMessages = {
         time: { q: "Combien de temps prend un transfert ?", a: "Environ 27 minutes sur chaque route, d’après les mesures sur LayerZero Scan : les vérificateurs de LayerZero attendent les confirmations de Stellar avant que le transfert soit livré." },
         test: { q: "Puis-je l’essayer sur un réseau de test ?", a: "Non. Les transferts d’USDT0 fonctionnent uniquement sur les réseaux principaux ; avec une clé de test, aucune route n’est disponible." },
         custody: { q: "Cosmos Pay détient-il mon USDT0 ?", a: "Non. Votre wallet signe la transaction qui l’envoie ; Cosmos Pay se contente de la construire et de la relayer." },
+      },
+    },
+    stellarHowTo: {
+      nav: "USDC sur Stellar",
+      title: "Comment accepter l’USDC sur Stellar avec des liens SEP-7",
+      meta: "Liens de paiement Stellar SEP-7, pas à pas | Cosmos Pay",
+      description: "Acceptez l’USDC sur Stellar avec un lien et un QR code SEP-7 : la trustline que votre compte exige, les tests sur Testnet et le rattachement des paiements.",
+      summary: "Encaissez en USDC sur Stellar avec un lien SEP-7 : préparez votre compte, testez sur Testnet et voyez chaque paiement confirmé.",
+      lede: "Avec Cosmos Pay, un lien de paiement sur Stellar est une demande SEP-7 : votre client scanne son QR code ou l’ouvre dans un wallet comme Freighter, LOBSTR ou xBull, puis y approuve le paiement en USDC. L’USDC va directement sur votre compte Stellar, et Cosmos Pay marque le lien comme payé dès qu’il trouve le paiement grâce au mémo du lien. Pour recevoir l’USDC, votre compte doit déjà avoir une trustline vers cet actif.",
+      sections: {
+        what: {
+          title: "Ce que contient un lien SEP-7",
+          body: [
+            "SEP-7 est la norme de Stellar pour les demandes de paiement : un lien web+stellar:pay, ou son QR code, avec votre adresse, le montant, l’actif et son émetteur, et un mémo numérique.",
+            "Cosmos Pay crée un mémo pour chaque lien et le recherche parmi les paiements reçus par votre compte. Il accepte un paiement qui porte ce mémo, vers votre adresse, dans l’actif du lien et, quand le lien fixe un montant, pour exactement ce montant, effectué après la création du lien.",
+          ],
+          links: { sep7: "La norme SEP-7 (Stellar)", stellar: "Paiements sur Stellar" },
+        },
+        prepare: {
+          title: "Préparez votre compte",
+          points: [
+            "Votre compte Stellar doit exister sur le réseau et avoir une trustline vers l’USDC avant de pouvoir en recevoir. Cosmos Pay ne le vérifie pas quand vous ajoutez le compte, et un paiement vers un compte sans la trustline échoue après la signature de votre client.",
+            "Ajoutez le compte à votre organisation dans le tableau de bord, puis signez ce qu’il demande pour prouver que ce compte est à vous.",
+            "Pour les tests, faites de même sur Testnet. Friendbot, le faucet de Testnet, envoie des XLM de test à un compte, et les liens peuvent y encaisser en XLM.",
+          ],
+        },
+        payer: {
+          title: "Ce qu’il faut à votre client",
+          points: [
+            "Un wallet Stellar qui ouvre les liens SEP-7, comme Cosmos Pay Wallet, Freighter, LOBSTR, xBull, Albedo ou Rabet, avec l’USDC et un peu de XLM pour les frais de réseau. Aucun compte chez Cosmos Pay.",
+            "Un paiement direct en USDC. Un wallet qui convertit un autre actif en USDC en chemin (un path payment) ne règle pas le lien.",
+            "Sur Testnet, un wallet configuré sur Testnet avant de payer : le lien n’indique pas le réseau, et un wallet qui suit SEP-7 suppose alors le réseau principal.",
+          ],
+        },
+        api: {
+          title: "Créer le lien depuis votre serveur",
+          body: [
+            "Appelez POST /v1/payment-intents/pay avec votre compte comme destination, le montant et, pour l’USDC, le code d’actif avec son émetteur, ou utilisez client.paymentIntents.createPay dans le SDK TypeScript : Stellar est la valeur par défaut de chain. La réponse contient le lien (son uri commence par web+stellar:pay) et son QR code.",
+            "Quand vous connaissez le compte de votre client, une intention de transaction (POST /v1/payment-intents/tx, ou createTx dans le SDK) renvoie à la place une transaction non signée qu’il doit signer. Elle doit être signée dans les cinq minutes.",
+            "Si vous définissez votre propre mémo, utilisez-le pour un seul paiement : le même mémo avec d’autres conditions est refusé.",
+          ],
+          links: { paymentIntents: "API des intentions de paiement", sdkPaymentIntents: "Les intentions de paiement dans le SDK" },
+        },
+        know: {
+          title: "Bon à savoir",
+          points: [
+            "Vous pouvez laisser le montant vide pour que votre client le choisisse. Un message de 300 caractères maximum s’affiche dans le wallet de votre client.",
+            "Avec vos propres frais sur le paiement, le checkout demande le compte de votre client et construit une seule transaction qui vous paie, vous et votre wallet de frais.",
+            "Dans le tableau de bord, un lien Stellar en attente dispose d’une vérification qui le règle à partir d’un hash de transaction.",
+            "Un paiement qui arrive après l’expiration du lien est réglé en envoyant le hash de sa transaction à POST /v1/payment-intents/:id/validate.",
+            "Le wallet de votre client règle les frais de réseau Stellar, en XLM. Les paiements privés, qui masquent le montant on-chain, fonctionnent sur Stellar en XLM, pour l’instant sur Testnet.",
+          ],
+          links: { fees: "Tarifs et calculateur de frais", networksGuide: "Stellar vs Solana vs Monad" },
+        },
+      },
+      steps: {
+        title: "Acceptez votre premier paiement en USDC sur Stellar",
+        items: {
+          sandbox: { title: "Passez en Sandbox", body: "Connectez-vous au tableau de bord et choisissez Sandbox en haut. Les liens que vous y créez fonctionnent sur Stellar Testnet et ne déplacent aucun argent réel." },
+          wallet: { title: "Ajoutez votre compte Stellar", body: "Vérifiez que le compte existe et qu’il a une trustline vers l’USDC, puis ajoutez-le dans les paramètres de votre organisation et signez ce que le tableau de bord demande." },
+          create: { title: "Créez le lien", body: "Dans Paiements, cliquez sur Créer un lien de paiement, choisissez Stellar, le montant (ou aucun) et l’USDC, puis votre compte et, si vous le souhaitez, un message." },
+          pay: { title: "Payez-le depuis un wallet", body: "Ouvrez la page de paiement et scannez son QR code avec un wallet Stellar configuré sur le même réseau, ou ouvrez le lien sur le même appareil. Approuvez le paiement : le checkout passe à Payé dès que Cosmos Pay le trouve." },
+          confirm: { title: "Confirmez-le sur votre serveur", body: "Ajoutez un endpoint webhook dans le tableau de bord. Quand le paiement est confirmé, Cosmos Pay envoie PAYMENT_INTENT_SUCCEEDED, signé en HMAC-SHA256. Livrez la commande quand cet événement arrive." },
+          live: { title: "Passez en Production", body: "Choisissez Production et créez une clé d’API de production (elle commence par prod_). Les liens fonctionnent alors sur le réseau principal de Stellar, où l’USDC de Circle est préconfiguré." },
+        },
+        links: { webhooksGuide: "Comment confirmer un paiement sur votre serveur", apiKeys: "Clés d’API" },
+      },
+      faq: {
+        trustline: { q: "Pourquoi un paiement vers mon compte a-t-il échoué ?", a: "La raison la plus fréquente est l’absence de trustline USDC sur le compte qui reçoit. Ajoutez la trustline, puis créez un nouveau lien et envoyez-le de nouveau." },
+        wallets: { q: "Quels wallets peuvent payer un lien SEP-7 ?", a: "Tout wallet Stellar qui ouvre les liens SEP-7, comme Cosmos Pay Wallet, Freighter, LOBSTR, xBull, Albedo ou Rabet." },
+        convert: { q: "Mon client peut-il payer un lien en USDC avec des XLM ?", a: "Non. Seul un paiement direct en USDC le règle : un paiement qui convertit des XLM en USDC en chemin ne le règle pas." },
+        test: { q: "Puis-je tester sans argent réel ?", a: "Oui. En Sandbox et avec des clés de test (dv_), les liens fonctionnent sur Stellar Testnet, où l’USDC est préconfiguré et où Friendbot envoie des XLM de test." },
+      },
+    },
+    monadHowTo: {
+      nav: "USDC sur Monad",
+      title: "Comment accepter l’USDC sur Monad avec des liens EIP-681",
+      meta: "Liens de paiement Monad EIP-681, pas à pas | Cosmos Pay",
+      description: "Acceptez l’USDC sur Monad avec un lien et un QR code EIP-681 : l’adresse de dépôt propre à chaque paiement, le montant exigé, les tests et la confirmation.",
+      summary: "Encaissez en USDC sur Monad avec un lien EIP-681 vers une adresse de dépôt créée pour le paiement, et voyez-le confirmé.",
+      lede: "Avec Cosmos Pay, un lien de paiement sur Monad est une demande EIP-681 vers une adresse de dépôt créée pour ce paiement : votre client scanne son QR code avec un wallet EVM et approuve le transfert d’USDC. L’adresse de dépôt ne peut que transférer l’argent à votre adresse, et Cosmos Pay marque le lien comme payé dès que c’est fait. Chaque lien Monad exige un montant.",
+      sections: {
+        what: {
+          title: "Ce que contient un lien EIP-681",
+          body: [
+            "EIP-681 est la norme Ethereum pour les demandes de paiement que lisent les wallets EVM : un lien ethereum:, ou son QR code, avec le jeton, le réseau et le montant. Le réseau principal de Monad a le chain id 143, et son Testnet le 10143.",
+            "Le lien paie une adresse de dépôt créée pour ce paiement, et non directement votre adresse. Son code ne peut envoyer ce qu’elle reçoit qu’à votre adresse : Cosmos Pay ne détient donc aucune clé qui permettrait de déplacer l’argent ailleurs.",
+          ],
+          links: { eip681: "La norme EIP-681 (Ethereum)", monad: "Paiements sur Monad" },
+        },
+        deposit: {
+          title: "Comment l’adresse de dépôt vous paie",
+          points: [
+            "Cosmos Pay surveille l’adresse de dépôt. Dès qu’elle détient au moins le montant, un relais transfère l’argent à votre adresse, et ce transfert règle le lien.",
+            "Le relais peut prélever des frais sur le paiement pour ce transfert. Le checkout les affiche, et l’API les indique sur le paiement dans networkFee.",
+            "Un montant supérieur vous est transféré en entier. Un montant inférieur ne règle pas le lien.",
+            "Le wallet de votre client règle les frais de réseau Monad de son propre transfert, en MON.",
+          ],
+        },
+        api: {
+          title: "Créer le lien depuis votre serveur",
+          body: [
+            "Appelez POST /v1/payment-intents/pay avec chain défini sur monad, votre adresse comme destination, le montant et, pour l’USDC, le code d’actif avec son contrat comme émetteur, ou passez chain: 'monad' à client.paymentIntents.createPay dans le SDK TypeScript (version 2.2 ou ultérieure). La réponse contient le lien (son uri commence par ethereum:) et son QR code.",
+            "Les liens Monad ne prennent pas de message. Pour confirmer un paiement avant l’arrivée du transfert, envoyez le hash de la transaction de votre client (0x et 64 caractères hexadécimaux) à POST /v1/payment-intents/:id/validate.",
+          ],
+          links: { paymentIntents: "API des intentions de paiement", sdkPaymentIntents: "Les intentions de paiement dans le SDK" },
+        },
+        know: {
+          title: "Bon à savoir",
+          points: [
+            "Un lien reste ouvert pendant une durée limitée. Un paiement complet qui arrive quand même ensuite vous est transféré et marque le lien comme payé.",
+            "Un autre paiement vers la même adresse de dépôt est aussi transféré à votre adresse.",
+            "Avec vos propres frais sur le paiement, l’adresse de dépôt le répartit : vos frais vers votre wallet de frais et le reste vers vous.",
+            "Chaque paiement paie le tarif de votre offre, le même que sur chaque réseau.",
+          ],
+          links: { fees: "Tarifs et calculateur de frais", networksGuide: "Stellar vs Solana vs Monad" },
+        },
+      },
+      steps: {
+        title: "Acceptez votre premier paiement en USDC sur Monad",
+        items: {
+          sandbox: { title: "Passez en Sandbox", body: "Connectez-vous au tableau de bord et choisissez Sandbox en haut. Les liens que vous y créez fonctionnent sur Monad Testnet, qui n’a pas d’USDC préconfiguré : encaissez en MON, ou indiquez un jeton par son contrat." },
+          wallet: { title: "Ajoutez votre adresse Monad", body: "Dans les paramètres de votre organisation, ajoutez l’adresse EVM qui recevra l’argent sur Monad, puis signez ce que le tableau de bord demande pour prouver qu’elle est à vous." },
+          create: { title: "Créez le lien", body: "Dans Paiements, cliquez sur Créer un lien de paiement, choisissez Monad, saisissez le montant (il est obligatoire) et l’actif, puis votre adresse." },
+          pay: { title: "Payez-le depuis un wallet", body: "Ouvrez la page de paiement et scannez son QR code avec un wallet EVM qui lit les liens EIP-681, sur le même réseau. Approuvez le transfert : le checkout passe à Payé dès que le paiement vous est transféré." },
+          confirm: { title: "Confirmez-le sur votre serveur", body: "Ajoutez un endpoint webhook dans le tableau de bord. Quand le paiement est confirmé, Cosmos Pay envoie PAYMENT_INTENT_SUCCEEDED, signé en HMAC-SHA256. Livrez la commande quand cet événement arrive." },
+          live: { title: "Passez en Production", body: "Choisissez Production et créez une clé d’API de production (elle commence par prod_). Les liens fonctionnent alors sur le réseau principal de Monad, où l’USDC a sa propre préconfiguration." },
+        },
+        links: { webhooksGuide: "Comment confirmer un paiement sur votre serveur", apiKeys: "Clés d’API" },
+      },
+      faq: {
+        why: { q: "Pourquoi le lien paie-t-il une adresse de dépôt et non mon adresse ?", a: "Chaque paiement reçoit sa propre adresse : Cosmos Pay peut ainsi distinguer les paiements sans mémo. L’adresse ne peut transférer ce qu’elle reçoit qu’à votre adresse." },
+        fees: { q: "Qui paie les frais sur Monad ?", a: "Le wallet de votre client règle les frais de réseau de son transfert. Les frais du relais pour l’acheminement, quand il y en a, sont prélevés sur le paiement et affichés sur le checkout." },
+        amount: { q: "Mon client peut-il choisir le montant ?", a: "Non. Un lien Monad exige un montant. Pour un montant libre, utilisez un lien Stellar ou Solana." },
+        test: { q: "Puis-je tester sur Monad ?", a: "Oui. En Sandbox et avec des clés de test (dv_), les liens fonctionnent sur Monad Testnet. Il n’y a pas d’USDC préconfiguré : encaissez donc en MON ou indiquez un jeton par son contrat." },
       },
     },
   },
