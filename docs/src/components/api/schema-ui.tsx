@@ -495,7 +495,7 @@ function ObjectProperty({
           >
             {name}
           </span>
-          {required ? <span className="text-red-400">*</span> : <span className="text-fd-muted-foreground">?</span>}
+          {required ? <span className="text-red-700 dark:text-red-400">*</span> : <span className="text-fd-muted-foreground">?</span>}
         </code>
         {schema.type === 'primitive' ? (
           <span className={typeClassName}>{schema.aliasName}</span>
@@ -504,7 +504,7 @@ function ObjectProperty({
             {schema.aliasName}
           </TypeInfo>
         )}
-        {schema.deprecated && <span className="font-mono text-xs text-yellow-600 dark:text-yellow-400">{t('Deprecated')}</span>}
+        {schema.deprecated && <span className="font-mono text-xs text-yellow-800 dark:text-yellow-400">{t('Deprecated')}</span>}
         {hydrated ? (
           <button
             type="button"
