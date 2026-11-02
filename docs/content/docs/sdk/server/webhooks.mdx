@@ -109,9 +109,25 @@ interface WebhookEvent {
 }
 ```
 
-Event types: `PAYMENT_INTENT_CREATED`, `PAYMENT_INTENT_UPDATED`,
-`PAYMENT_INTENT_SUCCEEDED`, `PAYMENT_INTENT_FAILED`, `PAYMENT_INTENT_CANCELLED`,
-`PAYMENT_INTENT_DELETED`.
+Event types (`WebhookEventType`, the same list the API accepts in `eventTypes`):
+
+- Payment intents: `PAYMENT_INTENT_CREATED`, `PAYMENT_INTENT_UPDATED`,
+  `PAYMENT_INTENT_SUCCEEDED`, `PAYMENT_INTENT_FAILED`, `PAYMENT_INTENT_CANCELLED`,
+  `PAYMENT_INTENT_DELETED`.
+- Private payments: `ZK_PAYMENT_SUCCEEDED` (its `data` is a private payment).
+- Same-chain swaps (Stellar, Solana, Monad): `SWAP_CREATED`, `SWAP_SUBMITTED`,
+  `SWAP_SUCCEEDED`, `SWAP_FAILED`, `SWAP_EXPIRED`.
+- Cross-chain swaps: `CROSS_CHAIN_SWAP_CREATED`, `CROSS_CHAIN_SWAP_UPDATED`,
+  `CROSS_CHAIN_SWAP_SUCCEEDED`, `CROSS_CHAIN_SWAP_REFUNDED`, `CROSS_CHAIN_SWAP_FAILED`,
+  `CROSS_CHAIN_SWAP_EXPIRED`.
+- Liquidity: `LIQUIDITY_CREATED`, `LIQUIDITY_SUBMITTED`, `LIQUIDITY_SUCCEEDED`,
+  `LIQUIDITY_FAILED`, `LIQUIDITY_EXPIRED`.
+- Fiat ramps: `RECEIVER_UPDATED`, `PAYIN_CREATED`, `PAYIN_UPDATED`, `PAYIN_COMPLETED`,
+  `PAYOUT_CREATED`, `PAYOUT_UPDATED`, `PAYOUT_COMPLETED`.
+
+A same-chain swap (`SWAP_EXPIRED`) or a liquidity operation (`LIQUIDITY_EXPIRED`) can
+still settle if its transaction lands late: the API then sends `SWAP_SUCCEEDED` or
+`LIQUIDITY_SUCCEEDED`, so treat those two as "not settled yet" rather than final.
 
 ## References
 
