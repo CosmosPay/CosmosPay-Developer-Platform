@@ -2,6 +2,14 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.24.0] - 2026-11-02
+
+### Features
+- Guides to the pay button, cross-chain swaps and donations (09e20ca)
+
+### Performance
+- Inline every page's CSS into its HTML (e96aafd)
+
 ## [0.23.0] - 2026-11-02
 
 ### Features
