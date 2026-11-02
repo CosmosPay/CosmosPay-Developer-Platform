@@ -143,7 +143,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
   `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
   the product owner's decision
-  (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The payments robots.txt
+  (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The company site's
+  robots.txt closes `/wallet/` (the web wallet, an app) to `*`, and gives the crawlers that draw
+  link previews (`LINK_PREVIEW_AGENTS`: Twitterbot, LinkedInBot, Facebook's, Slack's, Discord's,
+  Telegram's, WhatsApp's) a group of their own that opens it, so a shared wallet link keeps its
+  card; the payments domain names none of them, keeping payment links out. The payments robots.txt
   blocks everything but its pages, so every file those pages load (`/_astro/`, `/fonts/`,
   `/media/`, `/brand/`, `/embed/`, icons, share images) needs its `Allow` there, or Google renders
   them unstyled. Each indexable page (and its `.md`) is open at its address, with **any query

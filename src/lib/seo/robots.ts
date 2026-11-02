@@ -66,6 +66,23 @@ const PAYMENTS_RESOURCES = [
   "/BingSiteAuth.xml$",
 ];
 
+/* The crawlers that fetch a shared link to draw its preview card, not to index it. Twitterbot and
+   LinkedInBot (and Facebook's crawler, which also serves Instagram and Messenger) honour
+   robots.txt, so a path closed to `*` loses its card wherever it is shared. The company site
+   closes the web wallet to search engines; these agents get their own group, which under
+   RFC 9309 replaces the `*` group for them entirely, so a wallet link shared on X or LinkedIn
+   shows the wallet's share tags. Only the company site lists them: the payments domain keeps its
+   payment links out of every crawler. */
+export const LINK_PREVIEW_AGENTS = [
+  "Twitterbot",
+  "LinkedInBot",
+  "facebookexternalhit",
+  "Slackbot-LinkExpanding",
+  "Discordbot",
+  "TelegramBot",
+  "WhatsApp",
+] as const;
+
 /** robots.txt for one domain. */
 export function robotsTxt(area: RobotsArea, origins: RobotsOrigins, indexNowKey?: string): string {
   const { site, dev, payments } = origins;
@@ -82,6 +99,12 @@ Allow: /
 
 # The web wallet (served by nginx next to this site) is an app, not content.
 Disallow: /wallet/
+
+# Link previews: these agents fetch a shared link to draw its card and index nothing, so the
+# wallet's share tags reach them too.
+${LINK_PREVIEW_AGENTS.map((agent) => `User-agent: ${agent}`).join("\n")}
+${CONTENT_SIGNAL}
+Allow: /
 
 Sitemap: ${site}/sitemap.xml
 `;
