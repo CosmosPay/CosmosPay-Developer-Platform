@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CONTENT_SIGNAL, robotsTxt } from '@/lib/seo/robots';
+import { CONTENT_SIGNAL, LINK_PREVIEW_AGENTS, robotsTxt } from '@/lib/seo/robots';
 import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 
 const ORIGINS = { site: 'https://cosmospay.lat', dev: 'https://dev.cosmospay.lat', payments: 'https://payments.cosmospay.lat' };
@@ -24,6 +24,29 @@ function allowed(robots: string, url: string): boolean {
     if (!best || rule.path.length > best.path.length || (rule.path.length === best.path.length && rule.allow)) best = rule;
   }
   return best ? best.allow : true;
+}
+
+/* The group a crawler obeys (RFC 9309): the one naming its product token, matched without regard
+   to case, else the `*` group. A run of User-agent lines opens one group; the first one after a
+   rule opens the next. Returns that group's rules, for `allowed`. */
+function groupFor(robots: string, agent: string): string {
+  const groups: { agents: string[]; rules: string[] }[] = [];
+  let open = false;
+  for (const raw of robots.split('\n')) {
+    const line = raw.trim();
+    if (line === '' || line.startsWith('#')) continue;
+    const ua = /^User-agent:\s*(\S+)/i.exec(line);
+    if (ua) {
+      if (!open) groups.push({ agents: [], rules: [] });
+      groups[groups.length - 1].agents.push(ua[1].toLowerCase());
+      open = true;
+      continue;
+    }
+    open = false;
+    if (/^(Allow|Disallow):/i.test(line)) groups[groups.length - 1]?.rules.push(line);
+  }
+  const group = groups.find((g) => g.agents.includes(agent.toLowerCase())) ?? groups.find((g) => g.agents.includes('*'));
+  return group ? group.rules.join('\n') : '';
 }
 
 test('every domain states its content signals and its sitemaps', () => {
@@ -152,10 +175,28 @@ test('the company site is open but for the web wallet; the platform only opens i
   for (const url of ['/', '/pricing?lang=es', '/swaps', '/tos', '/llms.txt', '/llms-full.txt', '/index.md', '/pricing.md?lang=es', '/tos.md']) {
     assert.ok(allowed(site, url), url);
   }
-  assert.ok(!allowed(site, '/wallet/'));
+  for (const agent of ['Googlebot', 'Bingbot', 'GPTBot', 'ClaudeBot']) assert.ok(!allowed(groupFor(site, agent), '/wallet/'), agent);
   const dev = robotsTxt('dev', ORIGINS);
   for (const url of ['/docs/', '/docs/getting-started/', '/docs/llms.txt']) assert.ok(allowed(dev, url), url);
   for (const url of ['/login', '/dashboard', '/api/openapi.json', '/swagger', '/invite/abc']) assert.ok(!allowed(dev, url), url);
+});
+
+test('link-preview agents may fetch the web wallet on the company site, and only there', () => {
+  const site = robotsTxt('site', ORIGINS);
+  for (const agent of LINK_PREVIEW_AGENTS) {
+    const group = groupFor(site, agent);
+    for (const url of ['/wallet/', '/wallet/en/', '/wallet/?lang=es', '/wallet/og-image.png', '/', '/pricing?lang=es']) {
+      assert.ok(allowed(group, url), `${agent} ${url}`);
+    }
+    // Their group is matched without regard to case, as crawlers match it.
+    assert.equal(groupFor(site, agent.toUpperCase()), group, agent);
+  }
+  // The payments domain keeps payment links out of every crawler, and the platform names no one.
+  for (const area of ['dev', 'payments'] as const) {
+    const robots = robotsTxt(area, ORIGINS);
+    for (const agent of LINK_PREVIEW_AGENTS) assert.ok(!robots.includes(`User-agent: ${agent}`), `${area} ${agent}`);
+  }
+  assert.ok(!allowed(groupFor(robotsTxt('payments', ORIGINS), 'Twitterbot'), '/cmh4x2k9a0001l70g8v5q3z2w'));
 });
 
 test('the IndexNow key file is crawlable on every domain, and the payments domain names it', () => {
