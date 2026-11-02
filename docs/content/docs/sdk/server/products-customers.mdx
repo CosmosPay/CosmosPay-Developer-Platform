@@ -37,7 +37,10 @@ const customer = await client.customers.create({
   name: 'Acme Inc.',
   email: 'billing@acme.com',  // optional
   alias: 'acme',              // optional
-  account: 'G...',            // optional Stellar account to associate
+  wallets: [                  // optional, up to 20, on Stellar, Solana or Monad
+    { chain: 'stellar', address: 'G...' },
+    { chain: 'solana', address: '7EcD...', label: 'Phantom' },
+  ],
   reference: 'crm_4821',      // optional
 });
 
@@ -52,9 +55,33 @@ for (const c of customers) {
 }
 ```
 
-`Customer` accessors: `id`, `name`, `alias`, `note`, `email`,
-`account`, `reference`, `createdAt`, `updatedAt`, plus list-only stats
-`payments`, `succeeded`, `total` (null outside `list()`).
+`Customer` accessors: `id`, `name`, `alias`, `note`, `email`, `wallets`,
+`account` (deprecated: the first wallet's address), `reference`, `createdAt`,
+`updatedAt`, plus list-only stats `payments`, `succeeded`, `total` (null outside
+`list()`).
+
+### Customer wallets
+
+A customer holds any number of wallets (up to 20) on Stellar, Solana or Monad;
+payment intents paid from any of them count toward the customer. A wallet belongs
+to one customer: one that another of your customers holds answers
+`409 customer_wallet_taken`. `account` on create still works but is deprecated:
+use `wallets`.
+
+```ts
+// On the instance: the wallet is added to (or removed from) customer.wallets too.
+const wallet = await customer.addWallet({ chain: 'monad', address: '0x5aAe...', label: 'Treasury' });
+await customer.removeWallet(wallet);        // or customer.removeWallet(wallet.id)
+
+// On the manager, by id:
+await client.customers.addWallet(customer.id, { chain: 'stellar', address: 'G...' });
+await client.customers.removeWallet(customer.id, 'cw4f0c2a9d...'); // { id, deleted: true }
+```
+
+`addWallet` returns the wallet (`{ id, chain, address, label, createdAt }`); a
+wallet the customer already holds answers as it is. Removing one stops its
+payments counting toward the customer; a later settled payment from it adds it as
+a new automatic customer.
 
 ## References
 

@@ -24,7 +24,7 @@ constructor(options: ClientOptions)
 Library version.
 
 ```ts
-static readonly version = "2.2.1"
+static readonly version = "2.3.0"
 ```
 
 ### shared
@@ -111,6 +111,26 @@ readonly crossChainSwaps: CrossChainSwapManager
 
 **Type** [`CrossChainSwapManager`](/sdk/definitions/server/cross-chain-swap-manager)
 
+### usdt0
+
+USDT0 from Stellar to EVM networks through LayerZero (mainnet only).
+
+```ts
+readonly usdt0: Usdt0Manager
+```
+
+**Type** [`Usdt0Manager`](/sdk/definitions/server/usdt0-manager)
+
+### privatePayments
+
+Private payments: amounts hidden on-chain (Stellar testnet only for now).
+
+```ts
+readonly privatePayments: PrivatePaymentManager
+```
+
+**Type** [`PrivatePaymentManager`](/sdk/definitions/server/private-payment-manager)
+
 ### liquidity
 
 Liquidity pools: browse, positions, deposit / withdraw.
@@ -163,7 +183,7 @@ readonly kyc: KycManager
 
 ### customers
 
-Customers.
+Customers and their wallets.
 
 ```ts
 readonly customers: CustomerManager
@@ -173,7 +193,7 @@ readonly customers: CustomerManager
 
 ### analytics
 
-Read-only analytics (summary, balances, logs).
+Read-only analytics (summary, series, balances, logs).
 
 ```ts
 readonly analytics: AnalyticsManager
@@ -279,6 +299,8 @@ setWebhookSecret(secret: string): this
 - [ProductManager](/sdk/definitions/server/product-manager)
 - [SwapManager](/sdk/definitions/server/swap-manager)
 - [CrossChainSwapManager](/sdk/definitions/server/cross-chain-swap-manager)
+- [Usdt0Manager](/sdk/definitions/server/usdt0-manager)
+- [PrivatePaymentManager](/sdk/definitions/server/private-payment-manager)
 - [LiquidityManager](/sdk/definitions/server/liquidity-manager)
 - [OnrampManager](/sdk/definitions/server/onramp-manager)
 - [OfframpManager](/sdk/definitions/server/offramp-manager)

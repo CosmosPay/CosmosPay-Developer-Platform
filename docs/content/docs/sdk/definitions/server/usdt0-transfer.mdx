@@ -1,0 +1,316 @@
+---
+title: "Usdt0Transfer"
+description: "A USDT0 transfer from Stellar to an EVM network through LayerZero, from client.usdt0."
+---
+
+A USDT0 transfer from Stellar to an EVM network through LayerZero, from `client.usdt0`. Non-custodial like a &#123;@link Swap&#125;: the API builds one Soroban transaction (&#123;@link xdr&#125;, or the SEP-7 &#123;@link uri&#125;), the account that holds the USDT0 (&#123;@link source&#125;) signs it, and `await transfer.submit({ signedXdr })` relays it. LayerZero then delivers it (about 27 minutes on every route); follow it with `await transfer.fetch()` until &#123;@link isFinal&#125;.
+
+## Constructor
+
+### Usdt0Transfer
+
+```ts
+constructor(client: Client, data: Usdt0TransferData)
+```
+
+**Parameters**
+
+- `client`: [`Client`](/sdk/definitions/server/client)
+- `data`: `Usdt0TransferData`
+
+## Properties
+
+### status
+
+```ts
+status: Usdt0TransferStatus
+```
+
+### network
+
+Always mainnet (`public`).
+
+```ts
+network: string
+```
+
+### source
+
+The Stellar account that holds the USDT0, signs and pays the fees in XLM.
+
+```ts
+source: string
+```
+
+### to
+
+```ts
+to: Usdt0Destination
+```
+
+### eid
+
+The destination network's LayerZero endpoint id.
+
+```ts
+eid: number
+```
+
+### receives
+
+```ts
+receives: Usdt0Receives
+```
+
+### recipient
+
+The EVM address credited.
+
+```ts
+recipient: string
+```
+
+### amount
+
+```ts
+amount: string
+```
+
+### amountSent
+
+```ts
+amountSent: string
+```
+
+### amountReceived
+
+```ts
+amountReceived: string
+```
+
+### dust
+
+```ts
+dust: string
+```
+
+### nativeFee
+
+LayerZero's quoted messaging fee, in XLM.
+
+```ts
+nativeFee: string
+```
+
+### nativeFeeLimit
+
+What the transaction offers LayerZero, in XLM; the unused part is refunded.
+
+```ts
+nativeFeeLimit: string
+```
+
+### networkFee
+
+The Stellar network fee, in XLM.
+
+```ts
+networkFee: string
+```
+
+### feeBps
+
+```ts
+feeBps: number
+```
+
+### feeAmount
+
+```ts
+feeAmount: string
+```
+
+### feeWallet
+
+```ts
+feeWallet: string | null
+```
+
+### xdr
+
+The unsigned transaction (base64 XDR) to sign.
+
+```ts
+xdr: string
+```
+
+### uri
+
+SEP-7 `tx` link carrying &#123;@link xdr&#125;.
+
+```ts
+uri: string
+```
+
+### qr
+
+QR of &#123;@link uri&#125;; usually null (a Soroban transaction is too large for one), and absent from list rows.
+
+```ts
+qr: string | null
+```
+
+### txHash
+
+```ts
+txHash: string | null
+```
+
+### guid
+
+LayerZero's message id, once the transaction landed.
+
+```ts
+guid: string | null
+```
+
+### destinationTxHash
+
+```ts
+destinationTxHash: string | null
+```
+
+### scanStatus
+
+LayerZero Scan's own status word, verbatim.
+
+```ts
+scanStatus: string | null
+```
+
+### scanUrl
+
+```ts
+scanUrl: string | null
+```
+
+### failureReason
+
+```ts
+failureReason: string | null
+```
+
+### merchantFee
+
+```ts
+merchantFee: MerchantFeeData | null
+```
+
+### idempotencyKey
+
+```ts
+idempotencyKey: string | null
+```
+
+### expiresAt
+
+Submit refuses the transaction after this.
+
+```ts
+expiresAt: Date
+```
+
+### submittedAt
+
+```ts
+submittedAt: Date | null
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### publicToken
+
+The record's read token, returned by the create only when the client uses the shared public key. Kept across &#123;@link fetch&#125; and &#123;@link submit&#125;, which send it as `X-Record-Token`.
+
+```ts
+publicToken: string | null
+```
+
+### protected
+
+```ts
+protected _patch(data: Usdt0TransferData): this
+```
+
+### get
+
+Whether the transfer is still waiting for its signature.
+
+```ts
+get isPending(): boolean
+```
+
+### get
+
+Whether it was credited on the destination network.
+
+```ts
+get isDelivered(): boolean
+```
+
+### get
+
+Whether it reached an outcome that will not change (DELIVERED, FAILED or EXPIRED).
+
+```ts
+get isFinal(): boolean
+```
+
+### submit
+
+Relay the signed transaction. Mutates this instance from the transfer in the outcome and returns the outcome.
+
+```ts
+submit(options: { signedXdr: string
+```
+
+### member
+
+```ts
+}): Promise<Usdt0SubmitOutcome>
+```
+
+## Methods
+
+### fetch()
+
+Re-read it (the API refreshes it from the ledger and LayerZero Scan), updating this instance in place.
+
+```ts
+fetch(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### toJSON()
+
+```ts
+toJSON(): Usdt0TransferData
+```
+
+**Returns** `Usdt0TransferData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

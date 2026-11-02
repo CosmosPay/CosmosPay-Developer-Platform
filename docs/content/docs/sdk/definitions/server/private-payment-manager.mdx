@@ -1,0 +1,65 @@
+---
+title: "PrivatePaymentManager"
+description: "Private payments: client.privatePayments. A private payment hides its amount on-chain."
+---
+
+Private payments: `client.privatePayments`. A private payment hides its amount on-chain. It is priced in XLM and paid with confidential transfers on Cosmos Pay's confidential token; the merchant receives `amount` minus a 0.18% commission. They run on Stellar testnet only for now: on mainnet, &#123;@link config&#125; answers `enabled: false`. The SDK creates and reads them with your API key. The payer completes one in the private checkout, which proves the transfers in their own browser.
+
+## Methods
+
+### create()
+
+Create a private payment. The server prices it (`amount` = `netAmount` + `feeAmount`) and checks on-chain that the recipient holds a confidential account on the token, refusing it with `recipient_not_registered` otherwise.
+
+```ts
+create(options: CreatePrivatePaymentOptions): Promise<PrivatePayment>
+```
+
+**Parameters**
+
+- `options`: `CreatePrivatePaymentOptions`
+
+**Returns** [`Promise<PrivatePayment>`](/sdk/definitions/server/private-payment)
+
+### list()
+
+List the private payments on the key's network, newest first.
+
+```ts
+list(options?: ListPrivatePaymentsOptions): Promise<PrivatePaymentPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_: `ListPrivatePaymentsOptions`
+
+**Returns** `Promise<PrivatePaymentPage>`
+
+### fetch()
+
+Get one of your private payments, with the transfers that settled it.
+
+```ts
+fetch(id: string): Promise<PrivatePayment>
+```
+
+**Parameters**
+
+- `id`: `string`
+
+**Returns** [`Promise<PrivatePayment>`](/sdk/definitions/server/private-payment)
+
+### config()
+
+The private payments setup of the key's network: the token, registries, auditor id, commission and fee account a wallet registers and pays against. `enabled` is false where private payments do not run yet.
+
+```ts
+config(): Promise<PrivatePaymentsConfigData>
+```
+
+**Returns** `Promise<PrivatePaymentsConfigData>`
+
+## Related
+
+- [PrivatePayment](/sdk/definitions/server/private-payment)
+- [BaseManager](/sdk/definitions/server/base-manager)
