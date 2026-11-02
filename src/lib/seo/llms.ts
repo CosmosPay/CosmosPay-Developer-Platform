@@ -29,11 +29,11 @@ export interface LlmsInput {
 
 /** The company's one-paragraph summary: the quote under the H1 of its llms.txt and llms-full.txt. */
 export const SITE_SUMMARY =
-  "Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM).";
+  "Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.";
 
 /** The gateway's one-paragraph summary, under the H1 of its llms.txt and llms-full.txt. */
 export function paymentsSummary(site: string): string {
-  return `Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond.`;
+  return `Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or through on-chain escrow (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond. Cosmos Pay is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.`;
 }
 
 /** The Markdown versions of a host's pages, for its llms.txt: every page in one file, and each at

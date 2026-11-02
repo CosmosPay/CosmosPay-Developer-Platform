@@ -715,7 +715,7 @@ export default {
   about: {
     title: "Cosmos Pay के बारे में",
     lede: "Cosmos Pay कारोबारों के लिए स्टेबलकॉइन भुगतान बनाता है: पेमेंट्स API, होस्टेड चेकआउट और पेमेंट लिंक, स्वैप, निजी भुगतान और नॉन-कस्टोडियल Cosmos Pay Wallet, Stellar, Solana और Monad पर।",
-    disambiguation: "Cosmos Pay (cosmospay.lat) और Cosmos Network (ATOM) अलग-अलग प्रोजेक्ट हैं।",
+    disambiguation: "Cosmos Pay (cosmospay.lat), Cosmos Network (ATOM) और BitCanna के CosmosPay पेमेंट प्लगइन अलग-अलग प्रोजेक्ट हैं।",
     facts: {
       networks: "नेटवर्क",
       networksValue: "Stellar, Solana और Monad",

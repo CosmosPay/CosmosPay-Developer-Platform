@@ -992,7 +992,7 @@ export default {
   about: {
     title: "Über Cosmos Pay",
     lede: "Cosmos Pay baut Stablecoin-Zahlungen für Unternehmen: eine Zahlungs-API, einen gehosteten Checkout und Zahlungslinks, Swaps, private Zahlungen und die nicht verwahrte Cosmos Pay Wallet, auf Stellar, Solana und Monad.",
-    disambiguation: "Cosmos Pay (cosmospay.lat) ist ein anderes Projekt als das Cosmos Network (ATOM).",
+    disambiguation: "Cosmos Pay (cosmospay.lat) ist ein anderes Projekt als das Cosmos Network (ATOM) und die CosmosPay-Zahlungsplugins von BitCanna.",
     facts: {
       networks: "Netzwerke",
       networksValue: "Stellar, Solana und Monad",
