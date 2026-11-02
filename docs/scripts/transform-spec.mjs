@@ -142,7 +142,7 @@ export const TAGS = [
     name: 'wallet-auth',
     title: 'Wallet Sign-in',
     description:
-      'The Cosmos Wallet’s own sign-in: Authentik (OpenID Connect), Google, GitHub or an ' +
+      'The Cosmos Pay Wallet’s own sign-in: Authentik (OpenID Connect), Google, GitHub or an ' +
       'emailed code. It proves who a person is and never touches a key; the seed backup it ' +
       'stores is sealed on the device under a password this service never sees.',
   },
