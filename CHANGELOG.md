@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.22.0] - 2026-11-02
+
+### Features
+- Guides to Solana Pay links, confirming payments and USDT0 (39a0668)
+
 ## [0.21.7] - 2026-11-02
 
 ### Bug Fixes
