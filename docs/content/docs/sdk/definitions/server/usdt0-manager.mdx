@@ -1,0 +1,95 @@
+---
+title: "Usdt0Manager"
+description: "USDT0 from Stellar to EVM networks: client.usdt0. USDT0 is Tether's omnichain USDT."
+---
+
+USDT0 from Stellar to EVM networks: `client.usdt0`. USDT0 is Tether's omnichain USDT. From Stellar it travels through LayerZero's OFT: Ethereum receives native USDT, every other network receives USDT0, and every route takes an EVM recipient. Signing works like a swap: the API builds the transaction, the holder signs it, and &#123;@link submit&#125; relays the signed XDR. The holder pays LayerZero's fee and the network fee in XLM. Mainnet only: a `dev` key gets `available: false` from &#123;@link routes&#125;, and `400 network_unsupported` from &#123;@link quote&#125; and &#123;@link create&#125;.
+
+## Methods
+
+### routes()
+
+The networks USDT0 can be sent to from Stellar, with the token and OFT a transfer uses.
+
+```ts
+routes(): Promise<Usdt0RoutesData>
+```
+
+**Returns** `Promise<Usdt0RoutesData>`
+
+### quote()
+
+Price a transfer: what is sent and arrives, the dust, LayerZero's fee and the OFT's limits. Persists nothing.
+
+```ts
+quote(options: QuoteUsdt0Options): Promise<Usdt0QuoteData>
+```
+
+**Parameters**
+
+- `options`: `QuoteUsdt0Options`
+
+**Returns** `Promise<Usdt0QuoteData>`
+
+### create()
+
+Build a transfer: the one unsigned Soroban transaction the holder signs (XDR and SEP-7 link).
+
+```ts
+create(options: CreateUsdt0TransferOptions): Promise<Usdt0Transfer>
+```
+
+**Parameters**
+
+- `options`: `CreateUsdt0TransferOptions`
+
+**Returns** [`Promise<Usdt0Transfer>`](/sdk/definitions/server/usdt0-transfer)
+
+### list()
+
+List your transfers, newest first, as last refreshed (fetch one to refresh it).
+
+```ts
+list(options?: ListUsdt0TransfersOptions): Promise<Usdt0TransferPage>
+```
+
+**Parameters**
+
+- `options` _(optional)_: `ListUsdt0TransfersOptions`
+
+**Returns** `Promise<Usdt0TransferPage>`
+
+### fetch()
+
+Get one transfer. While PENDING or SUBMITTED the API refreshes it from the Stellar ledger and LayerZero Scan (at most every 15 seconds).
+
+```ts
+fetch(id: string, options?: Usdt0RecordTokenOptions): Promise<Usdt0Transfer>
+```
+
+**Parameters**
+
+- `id`: `string`
+- `options` _(optional)_: `Usdt0RecordTokenOptions`
+
+**Returns** [`Promise<Usdt0Transfer>`](/sdk/definitions/server/usdt0-transfer)
+
+### submit()
+
+Relay the signed transaction to Stellar mainnet. It must be the transaction the API built for this transfer, signed. A refusal by the network leaves it PENDING (`submitted: false`, `reason`) to submit again until it expires.
+
+```ts
+submit(id: string, options: SubmitUsdt0TransferOptions & Usdt0RecordTokenOptions): Promise<Usdt0SubmitOutcome>
+```
+
+**Parameters**
+
+- `id`: `string`
+- `options`: `SubmitUsdt0TransferOptions & Usdt0RecordTokenOptions`
+
+**Returns** `Promise<Usdt0SubmitOutcome>`
+
+## Related
+
+- [Usdt0Transfer](/sdk/definitions/server/usdt0-transfer)
+- [BaseManager](/sdk/definitions/server/base-manager)

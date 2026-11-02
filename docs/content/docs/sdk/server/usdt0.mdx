@@ -1,0 +1,90 @@
+---
+title: "USDT0 (Stellar to EVM networks)"
+description: "client.usdt0 sends USDT0, Tether's omnichain USDT, from Stellar to an EVM network through LayerZero's OFT."
+---
+
+`client.usdt0` sends **USDT0**, Tether's omnichain USDT, from Stellar to an EVM
+network through LayerZero's OFT. Ethereum (`eth`) receives native USDT; every
+other network receives USDT0. Every route takes an EVM recipient (0x + 40 hex).
+
+- **Mainnet only.** A `dev` (testnet) key gets `available: false` and no routes
+  from `routes()`, and `400 network_unsupported` from `quote()` and `create()`.
+- **Fees, in XLM, paid by the holder:** LayerZero's messaging fee (`nativeFee`;
+  the transaction offers `nativeFeeLimit`, 20% more, and the unused part is
+  refunded in the same transaction) and the Stellar network fee (`networkFee`).
+  Any plan commission shows in `feeBps` / `feeAmount` (0 when the deployment has
+  no fee wrapper).
+- **Dust:** the OFT carries 6 decimals and the asset has 7, so a 7th decimal of
+  `amount` is `dust` that stays in the account.
+
+Signing works like a swap: the API builds the one Soroban transaction, the
+account that holds the USDT0 signs it, and `submit` relays the signed XDR. The
+API never holds a key.
+
+```ts
+import { Usdt0TransferStatus } from '@cosmosapp/pay_sdk';
+
+const { available, routes } = await client.usdt0.routes();
+// routes: [{ chain: 'eth', name: 'Ethereum', eid: 30101, receives: 'USDT' }, ...]
+
+const quote = await client.usdt0.quote({ to: 'arb', amount: '12.5' }); // persists nothing
+// { amountSent, amountReceived, dust, nativeFee, nativeFeeLimit, minAmount, maxAmount, ... }
+
+const transfer = await client.usdt0.create({
+  source: 'G...',            // holds the USDT0, signs, pays the XLM fees
+  to: 'arb',                 // a route's `chain`
+  recipient: '0x5aAe...',    // EVM address credited
+  amount: '12.5',
+  idempotencyKey: 'payout-77', // optional, sent as the Idempotency-Key header too
+  // merchantFee: { bps: 50, wallet: 'G...' }, // optional, in USDT0; needs the fee wrapper
+});
+
+// Sign transfer.xdr with the holder's wallet (e.g. Freighter), or open the SEP-7
+// link transfer.uri. transfer.qr is usually null: a Soroban transaction is too
+// large for a QR.
+const outcome = await transfer.submit({ signedXdr });
+// { submitted, status, txHash, reason, transfer }; the instance is updated in place
+
+await transfer.fetch(); // the API refreshes it from the ledger and LayerZero Scan
+transfer.status;        // PENDING -> SUBMITTED -> DELIVERED (or FAILED / EXPIRED)
+transfer.isFinal;       // DELIVERED, FAILED or EXPIRED
+```
+
+Delivery takes about 27 minutes on every route (LayerZero's verifiers wait for
+Stellar confirmations). Once `DELIVERED`, `destinationTxHash` is the destination
+network's transaction; `guid`, `scanStatus` and `scanUrl` follow it on LayerZero
+Scan.
+
+A submit the network refuses leaves the transfer `PENDING` (`submitted: false`,
+`reason`): fix the cause and submit again until `expiresAt`. A transaction that
+fails on the ledger moves it to `FAILED` (`failureReason`).
+
+```ts
+const page = await client.usdt0.list({ status: Usdt0TransferStatus.Delivered, take: 20 });
+// { items: Usdt0Transfer[], total, take, skip }, newest first, as last refreshed
+const one = await client.usdt0.fetch('cm2u0t0transfer0000000001'); // refreshes it
+const raw = await client.usdt0.submit(one.id, { signedXdr });       // manager form
+```
+
+## With the shared public key
+
+A client built with the shared public key (an open-source wallet) gets a
+`publicToken` from `create`. The `Usdt0Transfer` keeps it and sends it as
+`X-Record-Token` on its own `fetch()` and `submit()`; with the manager, pass
+`{ recordToken }` to `fetch(id, { recordToken })` and `submit(id, { signedXdr,
+recordToken })`. Without it the API answers 404. `list()` is refused to the
+shared public key. Any other key ignores the token.
+
+## `Usdt0Transfer` accessors
+
+`id`, `status`, `network`, `source`, `to`, `eid`, `receives`, `recipient`,
+`amount`, `amountSent`, `amountReceived`, `dust`, `nativeFee`, `nativeFeeLimit`,
+`networkFee`, `feeBps`, `feeAmount`, `feeWallet`, `xdr`, `uri`, `qr`, `txHash`,
+`guid`, `destinationTxHash`, `scanStatus`, `scanUrl`, `failureReason`,
+`merchantFee`, `idempotencyKey`, `expiresAt`, `submittedAt`, `createdAt`,
+`updatedAt`, `publicToken`, plus `isPending`, `isDelivered`, `isFinal`.
+
+## References
+
+- [Usdt0Transfer](/sdk/definitions/server/usdt0-transfer): A USDT0 transfer from Stellar to an EVM network through LayerZero, from `client.usdt0`
+
