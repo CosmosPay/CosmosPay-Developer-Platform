@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.21.6] - 2026-11-02
+
+### Documentation
+- SDK 2.3.2 reference and the Cosmos Pay Wallet name (9b11b31)
+
 ## [0.21.5] - 2026-11-02
 
 ### Bug Fixes
