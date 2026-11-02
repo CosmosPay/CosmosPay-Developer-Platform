@@ -15,7 +15,7 @@ import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { gitConfig } from '@/lib/shared';
 import { openapi } from '@/lib/openapi';
 import { pruneOpenAPIDocument, type PrunedOperation, type PrunedWebhook } from '@/lib/openapi-prune';
-import { OpenAPIPage } from '@/components/api-page';
+import { LazyOpenAPIPage } from '@/components/api-page-lazy';
 import { baseOptions } from '@/lib/layout.shared';
 import { MobileSidebarTrigger } from '@/components/mobile-sidebar-trigger';
 import { LanguageLinks } from '@/components/language-links';
@@ -90,7 +90,7 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
               // leave `showDescription` off, so the prose of every operation was missing).
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               OpenAPIPage: (mdxProps: any) => (
-                <OpenAPIPage
+                <LazyOpenAPIPage
                   {...mdxProps}
                   showDescription
                   {...(preloaded ? { preloaded: pagePreload(preloaded, mdxProps) } : {})}
