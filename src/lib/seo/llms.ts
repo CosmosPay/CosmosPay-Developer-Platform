@@ -88,6 +88,9 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   "learn/usdt0-from-stellar": ["How to send USDT0 from Stellar to EVM networks", "21 routes through LayerZero, fees in XLM, about 27 minutes to deliver, and each step from quote to delivery"],
   "learn/accept-usdc-on-stellar": ["How to accept USDC on Stellar with SEP-7 links", "SEP-7 links matched by a memo per link, the USDC trustline the receiving account needs, testing on Testnet and the API request"],
   "learn/accept-usdc-on-monad": ["How to accept USDC on Monad with EIP-681 links", "EIP-681 links to a deposit address per payment that can only forward to the merchant, the relay fee, required amounts and testing"],
+  "learn/crypto-payment-button": ["How to add a crypto pay button or checkout to your website", "the embed script, the cosmos-pay-button and cosmos-pay-checkout elements and their attributes, events, CSP and confirming by webhook"],
+  "learn/cross-chain-swaps": ["How to swap tokens between Stellar, Solana and Monad", "cross-chain swaps through NEAR Intents across 35 networks: quote, deposit address, deadline, refunds, plan commission and where to swap"],
+  "learn/crypto-donations": ["How to accept crypto donations with an open amount", "open-amount links on Stellar and Solana, one donation per link, reading the donated amount on-chain, and a Donate button on your site"],
 };
 
 /** /llms.txt of the company site (cosmospay.lat). */

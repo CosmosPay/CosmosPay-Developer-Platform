@@ -12,7 +12,7 @@ import { landingContent, type LandingContent } from "@/lib/payments/landing-cont
 import { fillPageCopy, pageMeta, type CopyPage } from "@/lib/payments/landing-i18n";
 import { GUIDE_CONFIG, fill, guideCopy } from "@/lib/payments/learn/index";
 import { learnHrefs, type LearnLink } from "@/lib/payments/learn/links";
-import { GUIDES, GUIDE_DATES, NETWORK_GUIDES, PAYMENTS_PAGES, guideOf, pagePath, type Guide, type NetworkPage, type PaymentsPage } from "@/lib/payments/site-pages";
+import { GUIDES, GUIDE_DATES, INTEGRATIONS_GUIDES, NETWORK_GUIDES, PAYMENTS_PAGES, SWAPS_GUIDES, guideOf, pagePath, type Guide, type NetworkPage, type PaymentsPage } from "@/lib/payments/site-pages";
 import { LOCALES, MESSAGES, type Locale } from "@/lib/payments/i18n";
 import { BEYOND_ROWS, COMPARE_CHECKED, ESCROW_COM, STRIPE_STABLECOINS, compareRows, formatRate } from "@/lib/payments/compare";
 import { NETWORK_WALLETS, networkPresets, payLinkCurl } from "@/lib/payments/network-pages";
@@ -402,6 +402,7 @@ function swapsPage(ctx: Ctx): Block[] {
     p(link(sp.apiDocs, docsLink(docs, "/api"))),
     h(2, sp.faqTitle),
     ...sp.faq.flatMap((x) => [h(3, x.q), p(fill(x.a, rates))]),
+    ...guideLinks(ctx, SWAPS_GUIDES),
   ];
 }
 
@@ -496,7 +497,7 @@ function contentPage(ctx: Ctx, page: PaymentsPage): Block[] {
   const header = (key: CopyPage) => pageHeader(t.pages[key]);
   switch (page) {
     case "integrations":
-      return [...header("integrations"), ...integrations(ctx), ...developers(ctx), ...paths(ctx), ...guideLinks(ctx, ["accept-usdc-payments", "whatsapp-payment-links"]), ...finalCta(ctx)];
+      return [...header("integrations"), ...integrations(ctx), ...developers(ctx), ...paths(ctx), ...guideLinks(ctx, INTEGRATIONS_GUIDES), ...finalCta(ctx)];
     case "use-cases":
       return [...header("useCases"), ...uses(ctx), ...compareCards(ctx), ...finalCta(ctx)];
     case "security":

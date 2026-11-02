@@ -23,6 +23,7 @@ export function learnHrefs(docs: string) {
     stellar: "/stellar",
     solana: "/solana",
     monad: "/monad",
+    swaps: "/swaps",
     // The guides.
     learn: "/learn",
     acceptGuide: guide("accept-usdc-payments"),
@@ -34,6 +35,9 @@ export function learnHrefs(docs: string) {
     usdt0Guide: guide("usdt0-from-stellar"),
     stellarGuide: guide("accept-usdc-on-stellar"),
     monadGuide: guide("accept-usdc-on-monad"),
+    embedGuide: guide("crypto-payment-button"),
+    swapsGuide: guide("cross-chain-swaps"),
+    donationsGuide: guide("crypto-donations"),
     // The docs (each path is a page of docs/content/docs).
     gettingStarted: docsLink(docs, "/getting-started"),
     apiKeys: docsLink(docs, "/api-keys"),
@@ -45,6 +49,7 @@ export function learnHrefs(docs: string) {
     sdkPaymentIntents: docsLink(docs, "/sdk/server/payment-intents"),
     usdt0Docs: docsLink(docs, "/sdk/server/usdt0"),
     usdt0Api: docsLink(docs, "/api/usdt0"),
+    crossChainApi: docsLink(docs, "/api/cross-chain-swaps"),
     // Primary sources for what the guides say about Circle's stablecoins (read 2026-11-01).
     circleUsdc: "https://www.circle.com/usdc",
     circleEurc: "https://www.circle.com/eurc",

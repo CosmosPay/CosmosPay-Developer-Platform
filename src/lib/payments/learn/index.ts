@@ -31,6 +31,9 @@ export const GUIDE_KEYS: Record<Guide, GuideKey> = {
   "usdt0-from-stellar": "usdt0",
   "accept-usdc-on-stellar": "stellarHowTo",
   "accept-usdc-on-monad": "monadHowTo",
+  "crypto-payment-button": "embed",
+  "cross-chain-swaps": "crossChain",
+  "crypto-donations": "donations",
 };
 
 /* The shapes every guide's copy shares; the four differ only in which parts they have. */
@@ -141,6 +144,27 @@ export const GUIDE_CONFIG: Record<Guide, GuideConfig> = {
     art: "3d-lock",
     mocks: { what: "link", steps: "checkout" },
     related: ["accept-usdc-on-stellar", "accept-usdc-with-solana-pay", "confirm-stablecoin-payments"],
+  },
+  "crypto-payment-button": {
+    type: "TechArticle",
+    order: ["what", "link", "options", "steps", "confirm"],
+    art: "3d-link",
+    mocks: { what: "checkout" },
+    related: ["accept-usdc-payments", "confirm-stablecoin-payments", "crypto-donations"],
+  },
+  "cross-chain-swaps": {
+    type: "TechArticle",
+    order: ["how", "steps", "refunds", "fees", "where"],
+    art: "3d-final",
+    mocks: {},
+    related: ["usdt0-from-stellar", "stellar-vs-solana-vs-monad", "stablecoin-payment-gateway"],
+  },
+  "crypto-donations": {
+    type: "TechArticle",
+    order: ["how", "limits", "steps", "amount", "site"],
+    art: "3d-yours",
+    mocks: { steps: "checkout" },
+    related: ["crypto-payment-button", "accept-usdc-with-solana-pay", "accept-usdc-on-stellar"],
   },
 };
 

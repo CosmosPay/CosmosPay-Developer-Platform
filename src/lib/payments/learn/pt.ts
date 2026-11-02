@@ -5,9 +5,9 @@ export const pt: LearnMessages = {
   hub: {
     nav: "Guias",
     title: "Guias de pagamentos em stablecoins",
-    lede: "Guias para empresas que cobram em stablecoins com a Cosmos Pay: como aceitar USDC online e em cada rede (Stellar com SEP-7, Solana com Solana Pay, Monad com EIP-681), como enviar um link de pagamento no WhatsApp, como confirmar pagamentos no seu servidor, o que faz um gateway de pagamento em stablecoins, como as três redes se comparam e como enviar USDT0 da Stellar para redes EVM.",
+    lede: "Guias para empresas que cobram em stablecoins com a Cosmos Pay: como aceitar USDC online e em cada rede (Stellar com SEP-7, Solana com Solana Pay, Monad com EIP-681), como adicionar um botão de pagamento ao seu site, como receber doações com valor aberto, como enviar um link de pagamento no WhatsApp, como confirmar pagamentos no seu servidor, o que faz um gateway de pagamento em stablecoins, como as três redes se comparam, como fazer swaps entre redes e como enviar USDT0 da Stellar para redes EVM.",
     meta: "Guias de pagamentos em stablecoins | Cosmos Pay",
-    description: "Guias: aceitar USDC online ou na Stellar, Solana e Monad, links de pagamento no WhatsApp, webhooks, as três redes comparadas e USDT0 da Stellar.",
+    description: "Guias: aceitar USDC online e em cada rede, botões de pagamento, doações, webhooks, links no WhatsApp, swaps entre redes e USDT0 da Stellar.",
   },
   ui: {
     updated: "Atualizado em {date}",
@@ -569,6 +569,188 @@ export const pt: LearnMessages = {
         fees: { q: "Quem paga as taxas na Monad?", a: "A carteira do seu cliente paga a taxa de rede da transferência dele. A taxa do repasse, quando existe, é descontada do pagamento e aparece no checkout." },
         amount: { q: "Meu cliente pode escolher o valor?", a: "Não. Um link na Monad precisa de um valor. Para valores abertos, use um link da Stellar ou da Solana." },
         test: { q: "Posso testar na Monad?", a: "Sim. No Sandbox e com chaves de teste (dv_), os links funcionam na Monad Testnet. Ela não tem USDC predefinido, então cobre em MON ou indique um token pelo contrato." },
+      },
+    },
+    embed: {
+      nav: "Botão de pagamento no seu site",
+      title: "Como adicionar um botão de pagamento cripto ou um checkout ao seu site",
+      meta: "Botão de pagamento cripto para o seu site | Cosmos Pay",
+      description: "Adicione um botão de pagamento ou um checkout incorporado a qualquer site com uma tag script, sem chave de API na página: atributos, eventos, CSP e testes.",
+      summary: "Carregue um script, adicione um botão de pagamento ou um checkout incorporado para um link de pagamento e confirme o pagamento no seu servidor.",
+      lede: "Para receber um pagamento em stablecoins no seu próprio site, carregue uma vez o script de incorporação da Cosmos Pay e adicione um elemento cosmos-pay-button ou cosmos-pay-checkout com o id de um link de pagamento. O botão abre o checkout hospedado numa janela pop-up, e o checkout incorporado desenha o pagamento dentro da sua página. A página não precisa de chave de API, e o seu servidor confirma o pagamento por um webhook assinado.",
+      sections: {
+        what: {
+          title: "Botão ou checkout incorporado",
+          points: [
+            "O botão de pagamento (cosmos-pay-button) abre o checkout hospedado numa janela pop-up centralizada sobre a sua página. Se o navegador bloquear o pop-up, a mesma aba vai para o checkout.",
+            "O checkout incorporado (cosmos-pay-checkout) desenha o pagamento dentro da sua página, com até 420 pixels de largura: o valor, o QR code, um botão que abre a carteira de quem paga e o status ao vivo.",
+            "Os dois funcionam com links de pagamento na Stellar, Solana e Monad, em inglês, espanhol, português, francês, alemão, hindi e chinês.",
+          ],
+        },
+        link: {
+          title: "De onde vem o link",
+          body: [
+            "Cada elemento mostra um link de pagamento, indicado pelo id no atributo link. Crie o link no dashboard, ou no seu servidor com a API de pagamentos ou o SDK em TypeScript quando seu cliente finaliza a compra, e coloque o id dele na página. A página lê o link sem chave de API, então a sua chave secreta fica no seu servidor.",
+            "Mostre um checkout incorporado por pagamento: um link é pago uma vez.",
+          ],
+          links: { paymentLinks: "API de links de pagamento", acceptGuide: "Como aceitar pagamentos em USDC online" },
+        },
+        options: {
+          title: "Atributos e estilo",
+          points: [
+            "link: o id do link de pagamento. Obrigatório.",
+            "lang: o idioma, como es ou es-AR. Por padrão, o idioma do navegador de quem paga; se não houver, inglês.",
+            "theme: light (o padrão), dark ou auto, que segue a configuração do sistema de quem paga.",
+            "demo: mostra um exemplo que não pode ser pago e não envia nenhuma requisição, para demonstrações.",
+            "O texto dentro do botão substitui o rótulo dele, e ::part(button) e ::part(card) permitem que o seu CSS mude o estilo dos elementos.",
+          ],
+        },
+        confirm: {
+          title: "Eventos e confirmação do pagamento",
+          body: [
+            "Os dois elementos disparam os eventos cosmospay:status e cosmospay:paid na sua página, com o id e o status do link. Use-os para atualizar o que quem paga vê, não para entregar o pedido: um evento na página pode ser falsificado.",
+            "Entregue o pedido quando o seu servidor receber PAYMENT_INTENT_SUCCEEDED, o webhook assinado que a Cosmos Pay envia assim que a rede confirma o pagamento. Se a sua página envia uma Cross-Origin-Opener-Policy com valor same-origin, ou se o pop-up for bloqueado, o botão não envia eventos.",
+          ],
+          links: { webhooksGuide: "Como confirmar um pagamento no seu servidor" },
+        },
+      },
+      steps: {
+        title: "Adicione um botão de pagamento, passo a passo",
+        items: {
+          script: { title: "Carregue o script", body: "Adicione uma tag script à sua página, uma única vez: https://payments.cosmospay.lat/embed/cosmos-pay.js, com o atributo defer." },
+          link: { title: "Obtenha um link de pagamento", body: "Crie um link no dashboard, ou no seu servidor quando seu cliente finaliza a compra, e guarde o id dele." },
+          element: { title: "Adicione o elemento", body: "Escreva um elemento cosmos-pay-button ou cosmos-pay-checkout com link definido como esse id e, se quiser, lang ou theme." },
+          csp: { title: "Permita-o na sua CSP", body: "Se o seu site envia uma Content Security Policy, permita script-src https://payments.cosmospay.lat, connect-src https://api.cosmospay.lat e img-src data:." },
+          test: { title: "Teste", body: "Use um link criado no Sandbox: o checkout incorporado avisa que funciona numa rede de testes. O atributo demo mostra um exemplo sem nenhum link." },
+          confirm: { title: "Confirme no seu servidor", body: "Adicione um endpoint de webhook e entregue o pedido quando PAYMENT_INTENT_SUCCEEDED chegar." },
+        },
+        links: { embed: "Incorporar um pagamento (documentação)", webhooks: "Webhooks" },
+      },
+      faq: {
+        key: { q: "A página precisa da minha chave de API?", a: "Não. Os elementos leem o link de pagamento sem chave. Crie os links no seu servidor, onde a chave fica." },
+        iframe: { q: "O checkout incorporado é um iframe?", a: "Não. Ele é desenhado dentro da sua página, no próprio shadow DOM, então nenhuma regra frame-src é necessária. O próprio checkout hospedado não pode ser exibido dentro de um frame." },
+        reuse: { q: "Um botão pode receber vários pagamentos?", a: "Não. Um link é pago uma vez, então dê a cada pagamento o próprio link, por exemplo criando-o no seu servidor quando o cliente finaliza a compra." },
+        sites: { q: "Funciona em qualquer site?", a: "Sim, em qualquer página que possa carregar um script, desde que a Content Security Policy dela permita o script, a API e imagens data:." },
+      },
+    },
+    crossChain: {
+      nav: "Swaps entre redes",
+      title: "Como fazer swap de tokens entre Stellar, Solana e Monad",
+      meta: "Swap de tokens entre Stellar, Solana e Monad | Cosmos Pay",
+      description: "Faça swap de tokens entre Stellar, Solana, Monad e mais 32 redes com a Cosmos Pay e a NEAR Intents: cotação, depósito, taxas, reembolsos e prazos.",
+      summary: "Cote um swap, envie o depósito e acompanhe até a entrega: swaps entre redes pela NEAR Intents, reembolsados na rede de origem se falharem.",
+      lede: "A Cosmos Pay faz swap de tokens entre Stellar, Solana, Monad e as outras redes que a NEAR Intents alcança, 35 no total. Você recebe uma cotação, envia o valor de entrada para um endereço de depósito antes de a cotação expirar, e o valor de saída chega ao seu endereço na outra rede. Se o swap não puder ser concluído, o valor de entrada é reembolsado para o seu endereço na rede de onde você enviou.",
+      sections: {
+        how: {
+          title: "Como funciona um swap entre redes",
+          points: [
+            "Cotação: a API pede um preço à NEAR Intents e retorna o que você envia, o que você recebe depois de todas as taxas e a comissão do seu plano. Uma cotação não salva nada.",
+            "Criação: a cotação firme traz um endereço de depósito (na Stellar, com um memo), um link de pagamento com o QR code e um prazo, de 30 minutos por padrão.",
+            "Depósito: envie o valor de entrada para esse endereço antes do prazo. Você também pode informar o depósito à API.",
+            "Entrega: o swap passa por depósito detectado e processando até concluído, quando o valor de saída chega ao seu endereço.",
+          ],
+        },
+        refunds: {
+          title: "Quando ele não é concluído",
+          points: [
+            "Um swap que não pode ser concluído é reembolsado para o endereço de reembolso que você informou, na rede de onde você enviou.",
+            "Uma cotação expirada não é o fim da história: um depósito que ainda chegue é reembolsado. A Cosmos Pay continua monitorando um swap expirado por 24 horas.",
+            "Os estados finais são concluído, reembolsado e com falha.",
+          ],
+        },
+        fees: {
+          title: "Quanto custa",
+          body: [
+            "A cotação mostra a comissão da Cosmos Pay no ativo que você envia: a tarifa de swap do seu plano, 0,65% no Starter e na página pública de swaps, chegando a 0,07% no Enterprise. O valor que você recebe na cotação já desconta todas as taxas, incluindo os custos da rede e do provedor.",
+            "O slippage é de 1% por padrão e de no máximo 5%.",
+          ],
+          links: { fees: "Preços e calculadora de tarifas" },
+        },
+        where: {
+          title: "Onde você pode fazer swaps",
+          points: [
+            "Na página pública de swaps, sem conta: ela usa uma chave pública compartilhada e cobra a tarifa de 0,65%.",
+            "No painel de swaps do dashboard, em Produção.",
+            "Com a API (/v1/cross-chain-swaps), ou com client.crossChainSwaps no SDK em TypeScript, que cobre Stellar, Solana e Monad.",
+            "Só nas redes principais: uma chave de teste (dv_) pode listar ativos e obter cotações, mas não criar um swap.",
+          ],
+          links: { swaps: "A página de swaps", crossChainApi: "API de swaps entre redes" },
+        },
+      },
+      steps: {
+        title: "Faça seu primeiro swap entre redes",
+        items: {
+          route: { title: "Escolha a rota", body: "Escolha o ativo que você envia e o que você quer, cada um na sua rede, e o endereço que recebe o valor de saída." },
+          quote: { title: "Peça uma cotação", body: "Peça uma cotação com o valor e um endereço de reembolso na rede de onde você envia. Confira o que chega e a comissão." },
+          create: { title: "Crie o swap", body: "Crie-o a partir da cotação. Você recebe o endereço de depósito (com um memo na Stellar), o valor a enviar e o prazo." },
+          send: { title: "Envie o depósito", body: "Envie o valor de entrada da sua carteira para o endereço de depósito antes do prazo." },
+          follow: { title: "Acompanhe", body: "Consulte o swap, ou acompanhe-o no dashboard, até ele ser concluído. Os webhooks informam cada evento de swap entre redes ao seu servidor." },
+        },
+        links: { crossChainApi: "API de swaps entre redes", webhooksGuide: "Como confirmar um pagamento no seu servidor" },
+      },
+      faq: {
+        networks: { q: "Entre quais redes posso fazer swap?", a: "Stellar, Solana, Monad e as outras redes que a NEAR Intents alcança, 35 no total. Um par dentro de uma mesma rede é, em vez disso, um swap em uma rede." },
+        test: { q: "Posso testar um swap entre redes?", a: "Não numa rede de testes: esses swaps funcionam só nas redes principais. Uma chave de teste pode listar ativos e obter cotações." },
+        refund: { q: "O que acontece com o meu dinheiro se o swap falhar?", a: "Ele é reembolsado para o endereço de reembolso que você informou, na rede de onde você enviou." },
+        account: { q: "Preciso de uma conta?", a: "Não na página pública de swaps. Com a sua própria conta, o dashboard e a API aplicam a tarifa do seu plano." },
+      },
+    },
+    donations: {
+      nav: "Doações em cripto",
+      title: "Como aceitar doações em cripto com valor aberto",
+      meta: "Aceite doações em cripto com valor aberto | Cosmos Pay",
+      description: "Aceite doações em stablecoins na Stellar ou na Solana com um link de valor aberto: quem doa escolhe o valor na carteira. Como funciona e seus limites.",
+      summary: "Deixe cada doador escolher o valor: links de valor aberto na Stellar e na Solana, criados para cada doador e confirmados por webhook.",
+      lede: "Para aceitar uma doação em stablecoins, crie um link de pagamento sem valor na Stellar ou na Solana: quem doa abre o link, escolhe o valor na carteira e paga direto para o seu endereço. Cada link recebe um único pagamento e fica aberto por um tempo limitado, então crie um por doador, por exemplo quando alguém clica em Doar no seu site. A Cosmos Pay marca o link como pago assim que a rede confirma a doação.",
+      sections: {
+        how: {
+          title: "Como funciona um link de valor aberto",
+          points: [
+            "Deixe o valor vazio ao criar o link, no dashboard ou com a API. O checkout mostra Valor livre e pede a quem doa que escolha o valor na carteira.",
+            "A carteira de quem doa define o valor: qualquer valor positivo do ativo do link o liquida, na Stellar com o memo do link.",
+            "Uma mensagem de até 300 caracteres, como um agradecimento, aparece na carteira de quem doa.",
+          ],
+        },
+        limits: {
+          title: "Limites a considerar",
+          points: [
+            "Só Stellar e Solana: um link na Monad precisa de um valor.",
+            "Um link recebe uma doação. Depois de pago, ele não pode ser pago de novo, então um único link impresso num cartaz só atende o primeiro doador.",
+            "Um link fica aberto por um tempo limitado, que o checkout mostra como contagem regressiva.",
+            "A sua própria taxa num pagamento precisa de um valor fixo, então ela não se aplica a links de valor aberto.",
+          ],
+        },
+        amount: {
+          title: "Como saber o valor doado",
+          body: [
+            "Um link de valor aberto não guarda nenhum valor: quando ele é pago, a Cosmos Pay registra o hash da transação e o endereço de quem doou, e o webhook os traz. Leia o valor doado nessa transação na rede, por exemplo para agradecer ao doador ou emitir um recibo.",
+          ],
+          links: { webhooksGuide: "Como confirmar um pagamento no seu servidor" },
+        },
+        site: {
+          title: "Um botão Doar no seu site",
+          body: [
+            "Quando um visitante clicar em Doar, faça o seu servidor criar um link de valor aberto e mostre-o com o checkout incorporado, ou envie o visitante para a página de pagamento dele. Assim cada visitante recebe um link novo. No navegador, uma carteira da Stellar também pode pagá-lo pelo WebClient do SDK com o valor que o doador escolheu: webClient.pay(intent, { amount }).",
+          ],
+          links: { embedGuide: "Adicione um botão de pagamento ou checkout ao seu site", paymentIntents: "API de intenções de pagamento" },
+        },
+      },
+      steps: {
+        title: "Receba sua primeira doação",
+        items: {
+          sandbox: { title: "Mude para Sandbox", body: "Escolha Sandbox no dashboard: os links funcionam na Stellar Testnet ou na Solana Devnet e não movimentam dinheiro real." },
+          create: { title: "Crie um link de valor aberto", body: "Em Pagamentos, escolha Criar link de pagamento, selecione Stellar ou Solana e o ativo, deixe o valor vazio e, se quiser, adicione uma mensagem de agradecimento." },
+          share: { title: "Compartilhe", body: "Envie a página de pagamento, mostre o QR code ou incorpore-o na sua página." },
+          give: { title: "Doe com uma carteira", body: "Abra o link numa carteira na mesma rede, informe um valor e aprove. O checkout passa para Pago assim que a rede confirma." },
+          confirm: { title: "Confirme no seu servidor", body: "Quando PAYMENT_INTENT_SUCCEEDED chegar, leia a transação para saber o valor e agradeça ao doador." },
+        },
+        links: { webhooks: "Webhooks", embed: "Incorporar um pagamento (documentação)" },
+      },
+      faq: {
+        once: { q: "Um link pode receber várias doações?", a: "Não. Um link é pago uma vez. Crie um novo link para cada doador, por exemplo no seu servidor quando alguém clica em Doar." },
+        monad: { q: "Posso receber doações de valor aberto na Monad?", a: "Não. Um link na Monad precisa de um valor. Use Stellar ou Solana para valores abertos." },
+        amount: { q: "Como sei quanto foi doado?", a: "Leia a transação do pagamento na rede: o próprio link não guarda nenhum valor num pagamento de valor aberto." },
+        assets: { q: "Quais ativos podem ser doados?", a: "O ativo definido no link, como USDC ou a moeda da rede (XLM ou SOL). Quem doa escolhe só o valor." },
       },
     },
   },

@@ -13,6 +13,8 @@ import PageHeader from "@/components/payments/landing/PageHeader.astro";
 import { landingData } from "@/components/payments/landing/data";
 import { pageMeta } from "@/lib/payments/landing-i18n";
 import PublicSwaps from "@/components/cosmos/swaps/PublicSwaps";
+import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
+import { SWAPS_GUIDES } from "@/lib/payments/site-pages";
 import { API_BASE } from "@/lib/payments/urls";
 import { DOCS } from "@/components/cosmos/lib/constants";
 
@@ -29,6 +31,7 @@ const meta = pageMeta(d.t, "swaps");
     <Subnav d={d} current="swaps" />
     <PageHeader d={d} page="swaps" art="3d-instant" />
     <PublicSwaps client:load lang={lang} apiBase={API_BASE} docsUrl={DOCS} />
+    <GuideLinks d={d} guides={SWAPS_GUIDES} />
   </main>
 
   <SiteFooter slot="footer" lang={lang} area="payments" />
