@@ -64,11 +64,12 @@ export function ExampleLayout({ slots }: { slots: { selector: ReactNode; usageTa
   );
 }
 
+// Light shades that pass WCAG AA (4.5:1) on the bar's card grey; the -600 ones were 2.6 to 4.7.
 const METHOD_COLORS: Record<string, string> = {
-  PUT: 'text-yellow-600 dark:text-yellow-400',
-  PATCH: 'text-orange-600 dark:text-orange-400',
-  POST: 'text-blue-600 dark:text-blue-400',
-  DELETE: 'text-red-600 dark:text-red-400',
+  PUT: 'text-yellow-800 dark:text-yellow-400',
+  PATCH: 'text-orange-700 dark:text-orange-400',
+  POST: 'text-blue-700 dark:text-blue-400',
+  DELETE: 'text-red-700 dark:text-red-400',
 };
 
 /** upstream's EndpointBar: what the playground bar shows, without its "send" button */
@@ -76,7 +77,7 @@ function EndpointBar({ method, route, deprecated }: { method: string; route: str
   const label = method.toUpperCase();
   return (
     <div className="not-prose flex min-h-11 items-center gap-3 rounded-xl border bg-fd-card p-1.5 ps-3.5 text-sm text-fd-card-foreground">
-      <span className={cn('font-mono font-medium text-xs', METHOD_COLORS[label] ?? 'text-green-600 dark:text-green-400')}>{label}</span>
+      <span className={cn('font-mono font-medium text-xs', METHOD_COLORS[label] ?? 'text-green-800 dark:text-green-400')}>{label}</span>
       <div
         className={cn(
           'flex min-w-0 items-center overflow-x-auto font-mono text-[0.8125rem] text-nowrap [scrollbar-width:none] flex-1',

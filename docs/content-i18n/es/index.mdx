@@ -24,6 +24,6 @@ Un pago tiene tres pasos (aquí con el SDK, en Stellar):
 
 La red se elige según el tipo de clave de API: las claves `dv_` apuntan a **testnet**, las claves `prod_` apuntan a **mainnet**.
 
-En Solana y Monad, crea la intención con la [API REST](/api/payment-intents) indicando `chain`:
-devuelve un enlace Solana Pay o EIP-681, el pagador lo paga desde cualquier billetera de esa red, y
+En Solana y Monad, indica `chain`, con el SDK (`createPay({ chain: 'solana', ... })`, desde la versión 2.2) o con la [API REST](/api/payment-intents):
+recibes un enlace Solana Pay o EIP-681, el pagador lo paga desde cualquier billetera de esa red, y
 la API de pagos detecta el pago en cadena y dispara los mismos webhooks.

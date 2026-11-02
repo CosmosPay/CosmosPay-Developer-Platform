@@ -2,6 +2,7 @@ import type { ComponentPropsWithoutRef } from 'react';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { MDXComponents } from 'mdx/types';
 import { Heading } from '@/components/heading';
+import { Card, Cards } from '@/components/card';
 
 type HeadingElementProps = ComponentPropsWithoutRef<'h1'>;
 
@@ -16,6 +17,9 @@ export function getMDXComponents(components?: MDXComponents) {
     h4: (props: HeadingElementProps) => <Heading as="h4" {...props} />,
     h5: (props: HeadingElementProps) => <Heading as="h5" {...props} />,
     h6: (props: HeadingElementProps) => <Heading as="h6" {...props} />,
+    // Card titles are text, not <h3> (components/card.tsx).
+    Card,
+    Cards,
     ...components,
   } satisfies MDXComponents;
 }

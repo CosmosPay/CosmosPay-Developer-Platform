@@ -7,7 +7,25 @@
    sidebar/TOC below it (Fumadocs' own nav is disabled; see (docs)/layout.tsx). */
 :root {
   --fd-nav-height: 78px;
+  --docs-link: var(--blue, #5b7cff);
 }
+
+/* WCAG AA (4.5:1) in the light theme. Fumadocs' muted text, hsl(0 0% 45.1%), reached only 4.05
+   to 4.42 on its card, secondary and background greys (Lighthouse color-contrast, docs home and
+   API pages); 40% is at least 4.9 on all of them. The accent blue of prose links was 3.6 on
+   white; #3f5fe8 is 5.2 and still reads as the Cosmos blue. The dark theme already passes. */
+:root:not(.dark) {
+  --color-fd-muted-foreground: hsl(0, 0%, 40%);
+  --docs-link: #3f5fe8;
+}
+/* fumadocs-openapi's own method badges (shared-api badge.js, rendered by the playground after
+   hydration) use the -600 shades, 2.6 to 4.7:1 on the card grey: the same AA shades as our
+   EndpointBar (components/api/operation-layout.tsx). */
+:root:not(.dark) span.font-mono.text-green-600 { color: var(--color-green-800); }
+:root:not(.dark) span.font-mono.text-yellow-600 { color: var(--color-yellow-800); }
+:root:not(.dark) span.font-mono.text-orange-600 { color: var(--color-orange-700); }
+:root:not(.dark) span.font-mono.text-blue-600 { color: var(--color-blue-700); }
+:root:not(.dark) span.font-mono.text-red-600 { color: var(--color-red-700); }
 
 html {
   scrollbar-gutter: stable;
@@ -21,9 +39,10 @@ html > body[data-scroll-locked] {
 /* Make in-content links clearly visible. Fumadocs renders prose links in the body text
    colour, so they blend into the page; tint them with the Cosmos accent blue (which adapts
    per theme via cosmos.css) and underline them. Scope to text containers so heading anchor
-   links (which wrap the heading text) keep the heading colour. */
+   links (which wrap the heading text) keep the heading colour. --docs-link is that blue, darker
+   in the light theme for contrast (above). */
 .prose :is(p, li, td, th, blockquote, figcaption) a {
-  color: var(--blue, #5b7cff);
+  color: var(--docs-link);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
@@ -78,17 +97,18 @@ html > body[data-scroll-locked] {
   button.api-resp-code[aria-expanded='true']::after {
     @apply translate-y-[-3px] rotate-135;
   }
+  /* Status colours: the -600 shades were 2.6 to 4.2:1 on the card grey; these pass AA (4.5). */
   .api-s2 {
-    @apply text-green-600 dark:text-green-400;
+    @apply text-green-800 dark:text-green-400;
   }
   .api-s3 {
-    @apply text-blue-600 dark:text-blue-400;
+    @apply text-blue-700 dark:text-blue-400;
   }
   .api-s4 {
-    @apply text-yellow-600 dark:text-yellow-400;
+    @apply text-yellow-800 dark:text-yellow-400;
   }
   .api-s5 {
-    @apply text-red-600 dark:text-red-400;
+    @apply text-red-700 dark:text-red-400;
   }
   .api-resp-desc {
     @apply text-fd-muted-foreground;
