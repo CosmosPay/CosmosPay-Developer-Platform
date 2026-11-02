@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.26.0] - 2026-11-02
+
+### Features
+- Tell Cosmos Pay apart from BitCanna's CosmosPay plugins (b16a31a)
+
 ## [0.25.0] - 2026-11-02
 
 ### Features
