@@ -29,6 +29,8 @@ export const GUIDE_KEYS: Record<Guide, GuideKey> = {
   "accept-usdc-with-solana-pay": "solanaPay",
   "confirm-stablecoin-payments": "webhooks",
   "usdt0-from-stellar": "usdt0",
+  "accept-usdc-on-stellar": "stellarHowTo",
+  "accept-usdc-on-monad": "monadHowTo",
 };
 
 /* The shapes every guide's copy shares; the four differ only in which parts they have. */
@@ -125,6 +127,20 @@ export const GUIDE_CONFIG: Record<Guide, GuideConfig> = {
     art: "3d-calc",
     mocks: {},
     related: ["stellar-vs-solana-vs-monad", "stablecoin-payment-gateway", "confirm-stablecoin-payments"],
+  },
+  "accept-usdc-on-stellar": {
+    type: "TechArticle",
+    order: ["what", "prepare", "payer", "steps", "api", "know"],
+    art: "3d-yours",
+    mocks: { what: "link", steps: "checkout" },
+    related: ["accept-usdc-with-solana-pay", "accept-usdc-on-monad", "confirm-stablecoin-payments"],
+  },
+  "accept-usdc-on-monad": {
+    type: "TechArticle",
+    order: ["what", "deposit", "steps", "api", "know"],
+    art: "3d-lock",
+    mocks: { what: "link", steps: "checkout" },
+    related: ["accept-usdc-on-stellar", "accept-usdc-with-solana-pay", "confirm-stablecoin-payments"],
   },
 };
 
