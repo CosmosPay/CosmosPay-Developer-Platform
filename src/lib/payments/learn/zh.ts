@@ -5,9 +5,9 @@ export const zh: LearnMessages = {
   hub: {
     nav: "指南",
     title: "稳定币支付指南",
-    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线以及在各个网络上接受 USDC 支付（Stellar 使用 SEP-7，Solana 使用 Solana Pay，Monad 使用 EIP-681），如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，三个网络的对比，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
+    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线以及在各个网络上接受 USDC 支付（Stellar 使用 SEP-7，Solana 使用 Solana Pay，Monad 使用 EIP-681），如何在网站上添加支付按钮，如何以任意金额接受捐赠，如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，三个网络的对比，如何跨链兑换，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
     meta: "稳定币支付指南 | Cosmos Pay",
-    description: "指南：在线或在 Stellar、Solana 和 Monad 上接受 USDC、WhatsApp 支付链接、Webhook、三个网络的对比，以及从 Stellar 发送 USDT0。",
+    description: "指南：在线及在各个网络上接受 USDC、支付按钮、捐赠、Webhook、WhatsApp 支付链接、跨链兑换，以及从 Stellar 发送 USDT0。",
   },
   ui: {
     updated: "更新于 {date}",
@@ -569,6 +569,188 @@ export const zh: LearnMessages = {
         fees: { q: "在 Monad 上由谁支付费用？", a: "客户的钱包支付其转账的网络费。中继的转发费用（如有）从付款中扣除，并显示在收银台上。" },
         amount: { q: "客户可以自行决定金额吗？", a: "不可以。Monad 链接必须填写金额。如需由客户决定金额，请使用 Stellar 或 Solana 链接。" },
         test: { q: "可以在 Monad 上测试吗？", a: "可以。在沙箱中并使用测试密钥（dv_）时，链接运行在 Monad Testnet 上。那里没有预设的 USDC，因此请以 MON 收款，或按合约指定代币。" },
+      },
+    },
+    embed: {
+      nav: "网站上的支付按钮",
+      title: "如何在网站上添加加密货币支付按钮或收银台",
+      meta: "在网站上添加加密货币支付按钮 | Cosmos Pay",
+      description: "只需一个 script 标签，页面中无需 API 密钥，即可在任何网站上添加支付按钮或嵌入式收银台：属性、事件、CSP 和测试。",
+      summary: "加载一个脚本，为支付链接添加支付按钮或嵌入式收银台，并在服务器上确认支付。",
+      lede: "要在您自己的网站上收取稳定币支付，只需加载一次 Cosmos Pay 嵌入脚本，并添加一个带有支付链接 ID 的 cosmos-pay-button 或 cosmos-pay-checkout 元素。按钮会在弹出窗口中打开托管收银台，嵌入式收银台则直接在您的页面中显示支付。页面无需 API 密钥，您的服务器通过签名 Webhook 确认支付。",
+      sections: {
+        what: {
+          title: "按钮还是嵌入式收银台",
+          points: [
+            "支付按钮（cosmos-pay-button）会在页面中央的弹出窗口中打开托管收银台。如果浏览器拦截了弹出窗口，则改为在当前标签页中跳转到收银台。",
+            "嵌入式收银台（cosmos-pay-checkout）直接在您的页面中显示支付，宽度最多 420 像素：金额、二维码、一个用于打开付款方钱包的按钮，以及实时状态。",
+            "两者都适用于 Stellar、Solana 和 Monad 上的支付链接，支持英语、西班牙语、葡萄牙语、法语、德语、印地语和中文。",
+          ],
+        },
+        link: {
+          title: "链接从哪里来",
+          body: [
+            "每个元素显示一个支付链接，通过 link 属性中的 ID 指定。您可以在控制台中创建链接，也可以在客户结账时从您的服务器使用支付 API 或 TypeScript SDK 创建，然后将其 ID 放入页面。页面无需 API 密钥即可读取链接，因此您的密钥始终留在服务器上。",
+            "每笔支付显示一个嵌入式收银台：一个链接只能支付一次。",
+          ],
+          links: { paymentLinks: "支付链接 API", acceptGuide: "如何在线接受 USDC 支付" },
+        },
+        options: {
+          title: "属性与样式",
+          points: [
+            "link：支付链接的 ID。必填。",
+            "lang：语言，例如 es 或 es-AR。默认使用付款方的浏览器语言，否则为英语。",
+            "theme：light（默认）、dark，或跟随付款方系统设置的 auto。",
+            "demo：显示一个无法支付、也不发送任何请求的示例，用于演示。",
+            "按钮内的文字会替换其标签，您的 CSS 可以通过 ::part(button) 和 ::part(card) 重新设置元素的样式。",
+          ],
+        },
+        confirm: {
+          title: "事件与确认支付",
+          body: [
+            "两个元素都会在您的页面上触发 cosmospay:status 和 cosmospay:paid 事件，附带链接的 ID 和状态。请用它们更新付款方看到的内容，而不要据此交付订单：页面中的事件可能被伪造。",
+            "请在服务器收到 PAYMENT_INTENT_SUCCEEDED 时交付订单，这是网络确认支付后 Cosmos Pay 发送的签名 Webhook。如果您的页面发送值为 same-origin 的 Cross-Origin-Opener-Policy，或弹出窗口被拦截，按钮将不会发送任何事件。",
+          ],
+          links: { webhooksGuide: "如何在服务器上确认支付" },
+        },
+      },
+      steps: {
+        title: "一步步添加支付按钮",
+        items: {
+          script: { title: "加载脚本", body: "在页面中添加一次 script 标签：https://payments.cosmospay.lat/embed/cosmos-pay.js，并带上 defer 属性。" },
+          link: { title: "获取支付链接", body: "在控制台中创建链接，或在客户结账时从您的服务器创建，并保存其 ID。" },
+          element: { title: "添加元素", body: "编写一个 cosmos-pay-button 或 cosmos-pay-checkout 元素，将 link 设为该 ID，如有需要再设置 lang 或 theme。" },
+          csp: { title: "在 CSP 中放行", body: "如果您的网站发送内容安全策略（Content Security Policy），请允许 script-src https://payments.cosmospay.lat、connect-src https://api.cosmospay.lat 和 img-src data:。" },
+          test: { title: "测试", body: "使用在沙箱中创建的链接：嵌入式收银台会注明它运行在测试网上。demo 属性无需任何链接即可显示示例。" },
+          confirm: { title: "在服务器上确认", body: "添加 Webhook 端点，并在收到 PAYMENT_INTENT_SUCCEEDED 时交付订单。" },
+        },
+        links: { embed: "嵌入支付（文档）", webhooks: "Webhook" },
+      },
+      faq: {
+        key: { q: "页面需要我的 API 密钥吗？", a: "不需要。这些元素无需密钥即可读取支付链接。请在服务器上创建链接，密钥也留在那里。" },
+        iframe: { q: "嵌入式收银台是 iframe 吗？", a: "不是。它在您的页面中以自己的 shadow DOM 绘制，因此无需 frame-src 规则。托管收银台本身不能被嵌入框架。" },
+        reuse: { q: "一个按钮可以收取多笔支付吗？", a: "不可以。一个链接只能支付一次，因此请为每笔支付使用单独的链接，例如在客户结账时在服务器上创建。" },
+        sites: { q: "它适用于任何网站吗？", a: "是的，适用于任何能加载脚本的页面，只要其内容安全策略允许该脚本、API 和 data: 图片。" },
+      },
+    },
+    crossChain: {
+      nav: "跨链兑换",
+      title: "如何在 Stellar、Solana 和 Monad 之间兑换代币",
+      meta: "在 Stellar、Solana 和 Monad 之间兑换代币 | Cosmos Pay",
+      description: "通过 Cosmos Pay 和 NEAR Intents，在 Stellar、Solana、Monad 及另外 32 个网络之间兑换代币：报价、充值、费用、退款和所需时间。",
+      summary: "获取兑换报价、发送充值并跟踪直至送达：通过 NEAR Intents 进行的跨链兑换，失败时会在来源链上退款。",
+      lede: "Cosmos Pay 可以在 Stellar、Solana、Monad 以及 NEAR Intents 覆盖的其他网络之间兑换代币，共 35 个网络。您先获取报价，在报价过期前将输入金额发送到充值地址，输出金额随即到达您在另一个网络上的地址。如果兑换无法完成，输入金额会退回到您在发送网络上的地址。",
+      sections: {
+        how: {
+          title: "跨链兑换如何运作",
+          points: [
+            "报价：API 向 NEAR Intents 询价，并返回您发送的金额、扣除所有费用后您收到的金额，以及您套餐的佣金。报价不会保存任何内容。",
+            "创建：实时报价会给出一个充值地址（在 Stellar 上附带 memo）、一个带二维码的支付链接，以及一个截止时间，默认 30 分钟。",
+            "充值：在截止时间前将输入金额发送到该地址。您也可以向 API 报告这笔充值。",
+            "送达：兑换依次经历“已检测到充值”和“处理中”，直至“成功”，即输出金额到达您的地址。",
+          ],
+        },
+        refunds: {
+          title: "未能完成时",
+          points: [
+            "无法完成的兑换会退款到您提供的退款地址，即您发送时所在的网络上。",
+            "报价过期并不意味着结束：之后仍到达的充值会被退回。Cosmos Pay 会在 24 小时内继续监控已过期的兑换。",
+            "最终状态为“成功”、“已退款”和“失败”。",
+          ],
+        },
+        fees: {
+          title: "费用是多少",
+          body: [
+            "报价会以您发送的资产显示 Cosmos Pay 的佣金：即您套餐的兑换费率，Starter 和公开兑换页面为 0.65%，Enterprise 低至 0.07%。报价中您收到的金额已扣除所有费用，包括网络和服务商成本。",
+            "滑点默认为 1%，最高 5%。",
+          ],
+          links: { fees: "价格与费用计算器" },
+        },
+        where: {
+          title: "在哪里兑换",
+          points: [
+            "在公开兑换页面上，无需账户：它使用共享的公开密钥，按 0.65% 的费率收费。",
+            "在控制台的兑换面板中，生产环境下。",
+            "通过 API（/v1/cross-chain-swaps），或使用 TypeScript SDK 中的 client.crossChainSwaps，它支持 Stellar、Solana 和 Monad。",
+            "仅限主网：测试密钥（dv_）可以列出资产和获取报价，但不能创建兑换。",
+          ],
+          links: { swaps: "兑换页面", crossChainApi: "跨链兑换 API" },
+        },
+      },
+      steps: {
+        title: "完成您的第一笔跨链兑换",
+        items: {
+          route: { title: "选择路线", body: "选择您发送的资产和想要的资产（各自位于其网络上），以及接收输出金额的地址。" },
+          quote: { title: "获取报价", body: "用金额和发送网络上的退款地址请求报价。核对到账金额和佣金。" },
+          create: { title: "创建兑换", body: "根据报价创建兑换。您会得到充值地址（在 Stellar 上附带 memo）、需发送的金额和截止时间。" },
+          send: { title: "发送充值", body: "在截止时间前，从您的钱包将输入金额发送到充值地址。" },
+          follow: { title: "跟踪进度", body: "获取该兑换，或在控制台中查看，直到其成功。Webhook 会将每个跨链兑换事件通知您的服务器。" },
+        },
+        links: { crossChainApi: "跨链兑换 API", webhooksGuide: "如何在服务器上确认支付" },
+      },
+      faq: {
+        networks: { q: "我可以在哪些网络之间兑换？", a: "Stellar、Solana、Monad 以及 NEAR Intents 覆盖的其他网络，共 35 个。同一网络内的交易对则属于同链兑换。" },
+        test: { q: "可以测试跨链兑换吗？", a: "不能在测试网上测试：这类兑换仅在主网上运行。测试密钥可以列出资产和获取报价。" },
+        refund: { q: "如果兑换失败，我的资金会怎样？", a: "资金会退回到您提供的退款地址，即您发送时所在的网络上。" },
+        account: { q: "我需要账户吗？", a: "在公开兑换页面上不需要。使用您自己的账户时，控制台和 API 会按您套餐的费率计费。" },
+      },
+    },
+    donations: {
+      nav: "加密货币捐赠",
+      title: "如何以任意金额接受加密货币捐赠",
+      meta: "以任意金额接受加密货币捐赠 | Cosmos Pay",
+      description: "通过 Stellar 或 Solana 上的任意金额链接接受稳定币捐赠：捐赠者在钱包中自行选择金额。了解其运作方式与限制。",
+      summary: "让每位捐赠者自行选择金额：Stellar 和 Solana 上的任意金额链接，为每位捐赠者单独创建，并通过 Webhook 确认。",
+      lede: "要接受稳定币捐赠，请在 Stellar 或 Solana 上创建一个不填金额的支付链接：捐赠者打开链接，在钱包中选择金额，并直接付款到您的地址。每个链接只接受一笔支付，且有效时间有限，因此请为每位捐赠者创建一个链接，例如在有人点击您网站上的“捐赠”时创建。网络确认捐赠后，Cosmos Pay 即将该链接标记为已支付。",
+      sections: {
+        how: {
+          title: "任意金额链接如何运作",
+          points: [
+            "在控制台中或通过 API 创建链接时，将金额留空。收银台会显示“任意金额”，并提示捐赠者在钱包中选择金额。",
+            "金额由捐赠者的钱包决定：链接所设资产的任何正数金额都能完成该链接的支付，在 Stellar 上需附带链接的 memo。",
+            "一条最多 300 个字符的消息（例如感谢语）会显示在捐赠者的钱包中。",
+          ],
+        },
+        limits: {
+          title: "需要预先考虑的限制",
+          points: [
+            "仅限 Stellar 和 Solana：Monad 链接必须填写金额。",
+            "一个链接只接受一笔捐赠。支付后无法再次支付，因此印在海报上的单个链接只能服务第一位捐赠者。",
+            "链接的有效时间有限，收银台会以倒计时显示。",
+            "在支付上加收您自己的费用需要固定金额，因此不适用于任意金额链接。",
+          ],
+        },
+        amount: {
+          title: "查看捐赠金额",
+          body: [
+            "任意金额链接不记录金额：链接被支付时，Cosmos Pay 会记录交易哈希和捐赠者的地址，Webhook 也会携带这些信息。请从网络上的该笔交易读取捐赠金额，例如用于感谢捐赠者或开具收据。",
+          ],
+          links: { webhooksGuide: "如何在服务器上确认支付" },
+        },
+        site: {
+          title: "网站上的“捐赠”按钮",
+          body: [
+            "当访客点击“捐赠”时，让您的服务器创建一个任意金额链接，并用嵌入式收银台显示它，或将访客引导至其收银台页面。这样每位访客都会得到一个新链接。在浏览器中，Stellar 钱包也可以通过 SDK 的 WebClient，按捐赠者选择的金额支付该链接：webClient.pay(intent, { amount })。",
+          ],
+          links: { embedGuide: "在网站上添加支付按钮或收银台", paymentIntents: "支付意图 API" },
+        },
+      },
+      steps: {
+        title: "接受您的第一笔捐赠",
+        items: {
+          sandbox: { title: "切换到沙箱", body: "在控制台中选择“沙箱”：链接运行在 Stellar Testnet 或 Solana Devnet 上，不涉及真实资金。" },
+          create: { title: "创建任意金额链接", body: "在“支付”中选择“创建支付链接”，选择 Stellar 或 Solana 以及资产，将金额留空，如有需要再添加一条感谢消息。" },
+          share: { title: "分享链接", body: "发送收银台页面、展示其二维码，或将其嵌入您的页面。" },
+          give: { title: "用钱包捐赠", body: "在同一网络的钱包中打开链接，输入金额并确认。网络确认后，收银台即变为“已支付”。" },
+          confirm: { title: "在服务器上确认", body: "收到 PAYMENT_INTENT_SUCCEEDED 后，读取交易以获知金额，并感谢捐赠者。" },
+        },
+        links: { webhooks: "Webhook", embed: "嵌入支付（文档）" },
+      },
+      faq: {
+        once: { q: "一个链接可以收取多笔捐赠吗？", a: "不可以。一个链接只能支付一次。请为每位捐赠者创建新链接，例如在有人点击“捐赠”时从您的服务器创建。" },
+        monad: { q: "可以在 Monad 上接受任意金额的捐赠吗？", a: "不可以。Monad 链接必须填写金额。如需任意金额，请使用 Stellar 或 Solana。" },
+        amount: { q: "如何知道捐赠了多少？", a: "在网络上读取该笔支付的交易：对于任意金额支付，链接本身不记录金额。" },
+        assets: { q: "捐赠者可以捐赠哪些资产？", a: "链接上设定的资产，例如 USDC 或该网络的原生币（XLM 或 SOL）。捐赠者只选择金额。" },
       },
     },
   },

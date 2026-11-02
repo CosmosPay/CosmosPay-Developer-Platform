@@ -15,6 +15,7 @@ import Integrations from "@/components/payments/landing/sections/Integrations.as
 import Developers from "@/components/payments/landing/sections/Developers.astro";
 import FinalCta from "@/components/payments/landing/sections/FinalCta.astro";
 import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
+import { INTEGRATIONS_GUIDES } from "@/lib/payments/site-pages";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
@@ -31,7 +32,7 @@ const meta = pageMeta(d.t, "integrations");
     <Integrations d={d} />
     <Developers d={d} />
     <Paths d={d} />
-    <GuideLinks d={d} guides={["accept-usdc-payments", "whatsapp-payment-links"]} />
+    <GuideLinks d={d} guides={INTEGRATIONS_GUIDES} />
     <FinalCta d={d} />
   </main>
 

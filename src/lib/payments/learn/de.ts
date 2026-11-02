@@ -5,9 +5,9 @@ export const de: LearnMessages = {
   hub: {
     nav: "Anleitungen",
     title: "Anleitungen für Stablecoin-Zahlungen",
-    lede: "Anleitungen für Unternehmen, die mit Cosmos Pay in Stablecoins kassieren: wie du USDC online und in jedem Netzwerk annimmst (Stellar mit SEP-7, Solana mit Solana Pay, Monad mit EIP-681), wie du einen Zahlungslink per WhatsApp sendest, wie du Zahlungen auf deinem Server bestätigst, was ein Stablecoin-Zahlungsgateway macht, wie sich die drei Netzwerke unterscheiden und wie du USDT0 von Stellar an EVM-Netzwerke sendest.",
+    lede: "Anleitungen für Unternehmen, die mit Cosmos Pay in Stablecoins kassieren: wie du USDC online und in jedem Netzwerk annimmst (Stellar mit SEP-7, Solana mit Solana Pay, Monad mit EIP-681), wie du deiner Website einen Bezahlbutton hinzufügst, wie du Spenden mit offenem Betrag annimmst, wie du einen Zahlungslink per WhatsApp sendest, wie du Zahlungen auf deinem Server bestätigst, was ein Stablecoin-Zahlungsgateway macht, wie sich die drei Netzwerke unterscheiden, wie du Token zwischen Netzwerken tauschst und wie du USDT0 von Stellar an EVM-Netzwerke sendest.",
     meta: "Anleitungen für Stablecoin-Zahlungen | Cosmos Pay",
-    description: "USDC online oder auf Stellar, Solana und Monad annehmen, Zahlungslinks per WhatsApp, Webhooks, die drei Netzwerke im Vergleich und USDT0 von Stellar.",
+    description: "Anleitungen: USDC online und in jedem Netzwerk annehmen, Bezahlbuttons, Spenden, Webhooks, WhatsApp-Links, Cross-Chain-Swaps und USDT0 von Stellar.",
   },
   ui: {
     updated: "Aktualisiert am {date}",
@@ -569,6 +569,188 @@ export const de: LearnMessages = {
         fees: { q: "Wer zahlt die Gebühren auf Monad?", a: "Die Wallet deines Kunden zahlt die Netzwerkgebühr für ihre Überweisung. Die Gebühr des Relays für die Weiterleitung, falls es eine gibt, wird von der Zahlung abgezogen und im Checkout angezeigt." },
         amount: { q: "Kann mein Kunde den Betrag wählen?", a: "Nein. Ein Monad-Link braucht einen Betrag. Für offene Beträge nutze einen Stellar- oder Solana-Link." },
         test: { q: "Kann ich auf Monad testen?", a: "Ja. In der Sandbox und mit Testschlüsseln (dv_) laufen Links im Monad Testnet. Dort ist kein USDC voreingestellt, kassiere also in MON oder gib einen Token über seinen Contract an." },
+      },
+    },
+    embed: {
+      nav: "Bezahlbutton auf deiner Website",
+      title: "So fügst du deiner Website einen Krypto-Bezahlbutton oder Checkout hinzu",
+      meta: "Krypto-Bezahlbutton auf der Website einbauen | Cosmos Pay",
+      description: "Bezahlbutton oder eingebetteter Checkout auf jeder Website, mit einem Script-Tag und ohne API-Schlüssel in der Seite: Attribute, Ereignisse, CSP und Tests.",
+      summary: "Lade ein Skript, füge einen Bezahlbutton oder einen eingebetteten Checkout für einen Zahlungslink hinzu und bestätige die Zahlung auf deinem Server.",
+      lede: "Um auf deiner eigenen Website eine Stablecoin-Zahlung anzunehmen, lädst du das Embed-Skript von Cosmos Pay einmal und fügst ein Element cosmos-pay-button oder cosmos-pay-checkout mit der ID eines Zahlungslinks hinzu. Der Button öffnet den gehosteten Checkout in einem Pop-up, und der eingebettete Checkout zeigt die Zahlung direkt in deiner Seite an. Die Seite braucht keinen API-Schlüssel, und dein Server bestätigt die Zahlung über einen signierten Webhook.",
+      sections: {
+        what: {
+          title: "Button oder eingebetteter Checkout",
+          points: [
+            "Der Bezahlbutton (cosmos-pay-button) öffnet den gehosteten Checkout in einem Pop-up, zentriert über deiner Seite. Blockiert der Browser das Pop-up, wechselt stattdessen derselbe Tab zum Checkout.",
+            "Der eingebettete Checkout (cosmos-pay-checkout) zeigt die Zahlung direkt in deiner Seite an, bis zu 420 Pixel breit: den Betrag, den QR-Code, einen Button, der die Wallet des Zahlers öffnet, und den Live-Status.",
+            "Beide funktionieren für Zahlungslinks auf Stellar, Solana und Monad, auf Englisch, Spanisch, Portugiesisch, Französisch, Deutsch, Hindi und Chinesisch.",
+          ],
+        },
+        link: {
+          title: "Woher der Link kommt",
+          body: [
+            "Jedes Element zeigt einen Zahlungslink, den du über seine ID im Attribut link angibst. Erstelle den Link im Dashboard oder, wenn dein Kunde zur Kasse geht, von deinem Server aus mit der Zahlungs-API oder dem TypeScript-SDK, und setze seine ID in die Seite. Die Seite liest den Link ohne API-Schlüssel, dein geheimer Schlüssel bleibt also auf deinem Server.",
+            "Zeige pro Zahlung einen eingebetteten Checkout: Ein Link wird einmal bezahlt.",
+          ],
+          links: { paymentLinks: "API für Zahlungslinks", acceptGuide: "So nimmst du USDC-Zahlungen online an" },
+        },
+        options: {
+          title: "Attribute und Gestaltung",
+          points: [
+            "link: die ID des Zahlungslinks. Erforderlich.",
+            "lang: die Sprache, etwa es oder es-AR. Standardmäßig die Browsersprache des Zahlers, sonst Englisch.",
+            "theme: light (der Standard), dark oder auto, das der Systemeinstellung des Zahlers folgt.",
+            "demo: zeigt ein Beispiel, das sich nicht bezahlen lässt und keine Anfrage sendet, für Vorführungen.",
+            "Text im Button ersetzt seine Beschriftung, und mit ::part(button) und ::part(card) gestaltet dein CSS die Elemente um.",
+          ],
+        },
+        confirm: {
+          title: "Ereignisse und Bestätigung der Zahlung",
+          body: [
+            "Beide Elemente lösen auf deiner Seite die Ereignisse cosmospay:status und cosmospay:paid aus, mit der ID und dem Status des Links. Nutze sie, um zu aktualisieren, was der Zahler sieht, nicht um die Bestellung auszuliefern: Ein Ereignis in der Seite lässt sich fälschen.",
+            "Liefere die Bestellung aus, wenn dein Server PAYMENT_INTENT_SUCCEEDED erhält, den signierten Webhook, den Cosmos Pay sendet, sobald das Netzwerk die Zahlung bestätigt. Sendet deine Seite eine Cross-Origin-Opener-Policy mit dem Wert same-origin oder wird das Pop-up blockiert, sendet der Button keine Ereignisse.",
+          ],
+          links: { webhooksGuide: "So bestätigst du eine Zahlung auf deinem Server" },
+        },
+      },
+      steps: {
+        title: "Einen Bezahlbutton einbauen, Schritt für Schritt",
+        items: {
+          script: { title: "Lade das Skript", body: "Füge deiner Seite einmal ein Script-Tag hinzu: https://payments.cosmospay.lat/embed/cosmos-pay.js, mit dem Attribut defer." },
+          link: { title: "Hol dir einen Zahlungslink", body: "Erstelle einen Link im Dashboard oder, wenn dein Kunde zur Kasse geht, von deinem Server aus, und merke dir seine ID." },
+          element: { title: "Füge das Element hinzu", body: "Schreibe ein Element cosmos-pay-button oder cosmos-pay-checkout, setze link auf diese ID und, wenn du möchtest, lang oder theme." },
+          csp: { title: "Erlaube es in deiner CSP", body: "Wenn deine Website eine Content Security Policy sendet, erlaube script-src https://payments.cosmospay.lat, connect-src https://api.cosmospay.lat und img-src data:." },
+          test: { title: "Teste es", body: "Nutze einen Link, der in der Sandbox erstellt wurde: Der eingebettete Checkout zeigt an, dass er in einem Testnetz läuft. Das Attribut demo zeigt ein Beispiel ganz ohne Link." },
+          confirm: { title: "Bestätige die Zahlung auf deinem Server", body: "Füge einen Webhook-Endpunkt hinzu und liefere die Bestellung aus, wenn PAYMENT_INTENT_SUCCEEDED ankommt." },
+        },
+        links: { embed: "Eine Zahlung einbetten (Dokumentation)", webhooks: "Webhooks" },
+      },
+      faq: {
+        key: { q: "Braucht die Seite meinen API-Schlüssel?", a: "Nein. Die Elemente lesen den Zahlungslink ohne Schlüssel. Erstelle Links auf deinem Server, wo der Schlüssel bleibt." },
+        iframe: { q: "Ist der eingebettete Checkout ein iframe?", a: "Nein. Er wird in deiner Seite in seinem eigenen Shadow DOM gezeichnet, also ist keine Regel für frame-src nötig. Der gehostete Checkout selbst lässt sich nicht in einen Frame einbetten." },
+        reuse: { q: "Kann ein Button viele Zahlungen annehmen?", a: "Nein. Ein Link wird einmal bezahlt. Gib also jeder Zahlung ihren eigenen Link, etwa indem du ihn auf deinem Server erstellst, wenn der Kunde zur Kasse geht." },
+        sites: { q: "Funktioniert es auf jeder Website?", a: "Ja, auf jeder Seite, die ein Skript laden kann, solange ihre Content Security Policy das Skript, die API und data:-Bilder erlaubt." },
+      },
+    },
+    crossChain: {
+      nav: "Cross-Chain-Swaps",
+      title: "So tauschst du Token zwischen Stellar, Solana und Monad",
+      meta: "Swaps zwischen Stellar, Solana und Monad | Cosmos Pay",
+      description: "Tausche Token zwischen Stellar, Solana, Monad und 32 weiteren Netzwerken mit Cosmos Pay und NEAR Intents: Angebot, Einzahlung, Gebühren, Erstattung, Dauer.",
+      summary: "Hol dir ein Angebot, sende die Einzahlung und verfolge den Swap bis zur Zustellung: Cross-Chain-Swaps über NEAR Intents, die bei einem Fehlschlag im Ausgangsnetzwerk erstattet werden.",
+      lede: "Cosmos Pay tauscht Token zwischen Stellar, Solana, Monad und den anderen Netzwerken, die NEAR Intents erreicht, insgesamt 35. Du erhältst ein Angebot, sendest den Eingangsbetrag vor Ablauf des Angebots an eine Einzahlungsadresse, und der Ausgangsbetrag kommt an deiner Adresse im anderen Netzwerk an. Kann der Swap nicht abgeschlossen werden, wird der Eingangsbetrag an deine Adresse in dem Netzwerk erstattet, von dem aus du gesendet hast.",
+      sections: {
+        how: {
+          title: "So funktioniert ein Cross-Chain-Swap",
+          points: [
+            "Angebot: Die API fragt NEAR Intents nach einem Preis und gibt zurück, was du sendest, was du nach allen Gebühren erhältst und die Provision deines Tarifs. Ein Angebot speichert nichts.",
+            "Erstellen: Das Live-Angebot liefert eine Einzahlungsadresse (auf Stellar mit einem Memo), einen Zahlungslink mit seinem QR-Code und eine Frist, standardmäßig 30 Minuten.",
+            "Einzahlung: Sende den Eingangsbetrag vor Ablauf der Frist an diese Adresse. Du kannst die Einzahlung auch der API melden.",
+            "Zustellung: Der Swap durchläuft „Einzahlung erkannt“ und „In Bearbeitung“ bis „Erfolgreich“, wenn der Ausgangsbetrag deine Adresse erreicht.",
+          ],
+        },
+        refunds: {
+          title: "Wenn er nicht abgeschlossen wird",
+          points: [
+            "Ein Swap, der nicht abgeschlossen werden kann, wird an die von dir angegebene Erstattungsadresse erstattet, in dem Netzwerk, von dem aus du gesendet hast.",
+            "Ein abgelaufenes Angebot ist nicht das Ende: Eine Einzahlung, die danach noch ankommt, wird erstattet. Cosmos Pay beobachtet einen abgelaufenen Swap noch 24 Stunden lang.",
+            "Die Endzustände sind „Erfolgreich“, „Erstattet“ und „Fehlgeschlagen“.",
+          ],
+        },
+        fees: {
+          title: "Was es kostet",
+          body: [
+            "Das Angebot zeigt die Provision von Cosmos Pay in dem Asset, das du sendest: den Swap-Satz deines Tarifs, 0.65% bei Starter und auf der öffentlichen Swap-Seite, bis hinunter zu 0.07% bei Enterprise. Der Betrag, den du laut Angebot erhältst, ist bereits abzüglich aller Gebühren, einschließlich der Netzwerk- und Anbieterkosten.",
+            "Die Slippage beträgt standardmäßig 1% und höchstens 5%.",
+          ],
+          links: { fees: "Preise und Gebührenrechner" },
+        },
+        where: {
+          title: "Wo du tauschen kannst",
+          points: [
+            "Auf der öffentlichen Swap-Seite, ohne Konto: Sie nutzt einen gemeinsamen öffentlichen Schlüssel und berechnet den Satz von 0.65%.",
+            "Im Swap-Bereich des Dashboards, in der Produktion.",
+            "Mit der API (/v1/cross-chain-swaps) oder mit client.crossChainSwaps im TypeScript-SDK, das Stellar, Solana und Monad abdeckt.",
+            "Nur in den Mainnets: Ein Testschlüssel (dv_) kann Assets auflisten und Angebote abrufen, aber keinen Swap erstellen.",
+          ],
+          links: { swaps: "Die Swap-Seite", crossChainApi: "API für Cross-Chain-Swaps" },
+        },
+      },
+      steps: {
+        title: "Deinen ersten Cross-Chain-Swap ausführen",
+        items: {
+          route: { title: "Wähle die Route", body: "Wähle das Asset, das du sendest, und das, das du haben willst, jeweils in seinem Netzwerk, sowie die Adresse, die den Ausgangsbetrag empfängt." },
+          quote: { title: "Hol dir ein Angebot", body: "Fordere ein Angebot mit dem Betrag und einer Erstattungsadresse in dem Netzwerk an, von dem aus du sendest. Prüfe, was ankommt, und die Provision." },
+          create: { title: "Erstelle den Swap", body: "Erstelle ihn aus dem Angebot. Du erhältst die Einzahlungsadresse (auf Stellar mit einem Memo), den zu sendenden Betrag und die Frist." },
+          send: { title: "Sende die Einzahlung", body: "Sende den Eingangsbetrag vor Ablauf der Frist aus deiner Wallet an die Einzahlungsadresse." },
+          follow: { title: "Verfolge ihn", body: "Rufe den Swap ab oder beobachte ihn im Dashboard, bis er erfolgreich ist. Webhooks melden deinem Server jedes Ereignis eines Cross-Chain-Swaps." },
+        },
+        links: { crossChainApi: "API für Cross-Chain-Swaps", webhooksGuide: "So bestätigst du eine Zahlung auf deinem Server" },
+      },
+      faq: {
+        networks: { q: "Zwischen welchen Netzwerken kann ich tauschen?", a: "Stellar, Solana, Monad und die anderen Netzwerke, die NEAR Intents erreicht, insgesamt 35. Ein Paar innerhalb eines Netzwerks ist stattdessen ein Swap auf derselben Chain." },
+        test: { q: "Kann ich einen Cross-Chain-Swap testen?", a: "Nicht in einem Testnetz: Diese Swaps laufen nur in den Mainnets. Ein Testschlüssel kann Assets auflisten und Angebote abrufen." },
+        refund: { q: "Was passiert mit meinem Geld, wenn der Swap fehlschlägt?", a: "Es wird an die von dir angegebene Erstattungsadresse erstattet, in dem Netzwerk, von dem aus du gesendet hast." },
+        account: { q: "Brauche ich ein Konto?", a: "Nicht auf der öffentlichen Swap-Seite. Mit deinem eigenen Konto wenden das Dashboard und die API den Satz deines Tarifs an." },
+      },
+    },
+    donations: {
+      nav: "Krypto-Spenden",
+      title: "So nimmst du Krypto-Spenden mit offenem Betrag an",
+      meta: "Krypto-Spenden mit offenem Betrag annehmen | Cosmos Pay",
+      description: "Stablecoin-Spenden auf Stellar oder Solana per Link mit offenem Betrag annehmen: Spender wählen den Betrag in ihrer Wallet. Funktionsweise und Grenzen.",
+      summary: "Lass jeden Spender den Betrag wählen: Links mit offenem Betrag auf Stellar und Solana, pro Spender erstellt und per Webhook bestätigt.",
+      lede: "Um eine Spende in Stablecoins anzunehmen, erstellst du auf Stellar oder Solana einen Zahlungslink ohne Betrag: Der Spender öffnet ihn, wählt den Betrag in seiner Wallet und zahlt direkt an deine Adresse. Jeder Link nimmt eine Zahlung an und ist nur eine begrenzte Zeit offen, erstelle also einen pro Spender, etwa wenn jemand auf deiner Website auf „Spenden“ klickt. Cosmos Pay markiert den Link als bezahlt, sobald das Netzwerk die Spende bestätigt.",
+      sections: {
+        how: {
+          title: "So funktioniert ein Link mit offenem Betrag",
+          points: [
+            "Lass den Betrag leer, wenn du den Link erstellst, im Dashboard oder mit der API. Der Checkout zeigt „Freier Betrag“ an und sagt dem Spender, dass er ihn in seiner Wallet wählt.",
+            "Die Wallet des Spenders legt den Betrag fest: Jeder positive Betrag im Asset des Links begleicht ihn, auf Stellar mit dem Memo des Links.",
+            "Eine Nachricht mit bis zu 300 Zeichen, etwa ein Dankeschön, erscheint in der Wallet des Spenders.",
+          ],
+        },
+        limits: {
+          title: "Grenzen, die du einplanen solltest",
+          points: [
+            "Nur Stellar und Solana: Ein Monad-Link braucht einen Betrag.",
+            "Ein Link nimmt eine Spende an. Ist er bezahlt, kann er nicht noch einmal bezahlt werden, ein einzelner Link auf einem gedruckten Plakat dient also nur dem ersten Spender.",
+            "Ein Link ist nur eine begrenzte Zeit offen, die der Checkout als Countdown zeigt.",
+            "Deine eigene Gebühr auf eine Zahlung braucht einen festen Betrag, sie gilt also nicht für Links mit offenem Betrag.",
+          ],
+        },
+        amount: {
+          title: "Den gespendeten Betrag ablesen",
+          body: [
+            "Ein Link mit offenem Betrag speichert keinen Betrag: Wenn er bezahlt wird, erfasst Cosmos Pay den Transaktions-Hash und die Adresse des Spenders, und der Webhook enthält beides. Lies den gespendeten Betrag aus dieser Transaktion im Netzwerk ab, etwa um dem Spender zu danken oder eine Quittung auszustellen.",
+          ],
+          links: { webhooksGuide: "So bestätigst du eine Zahlung auf deinem Server" },
+        },
+        site: {
+          title: "Ein Spenden-Button auf deiner Website",
+          body: [
+            "Wenn ein Besucher auf „Spenden“ klickt, lass deinen Server einen Link mit offenem Betrag erstellen und zeige ihn mit dem eingebetteten Checkout an, oder schicke den Besucher auf seine Bezahlseite. So bekommt jeder Besucher einen neuen Link. Im Browser kann eine Stellar-Wallet ihn auch über den WebClient des SDK mit dem vom Spender gewählten Betrag bezahlen: webClient.pay(intent, { amount }).",
+          ],
+          links: { embedGuide: "Einen Bezahlbutton oder Checkout auf deiner Website einbauen", paymentIntents: "API für Zahlungsabsichten" },
+        },
+      },
+      steps: {
+        title: "Deine erste Spende annehmen",
+        items: {
+          sandbox: { title: "Wechsle in die Sandbox", body: "Wähle im Dashboard „Sandbox“: Links laufen im Stellar Testnet oder im Solana Devnet und bewegen kein echtes Geld." },
+          create: { title: "Erstelle einen Link mit offenem Betrag", body: "Wähle unter „Zahlungen“ „Zahlungslink erstellen“, dann Stellar oder Solana und das Asset, lass den Betrag leer und füge, wenn du möchtest, eine Dankesnachricht hinzu." },
+          share: { title: "Teile ihn", body: "Sende die Bezahlseite, zeige ihren QR-Code oder bette sie in deine Seite ein." },
+          give: { title: "Spende aus einer Wallet", body: "Öffne den Link in einer Wallet im selben Netzwerk, gib einen Betrag ein und bestätige. Der Checkout springt auf „Bezahlt“, sobald das Netzwerk die Spende bestätigt." },
+          confirm: { title: "Bestätige sie auf deinem Server", body: "Wenn PAYMENT_INTENT_SUCCEEDED ankommt, lies die Transaktion, um den Betrag zu erfahren, und danke dem Spender." },
+        },
+        links: { webhooks: "Webhooks", embed: "Eine Zahlung einbetten (Dokumentation)" },
+      },
+      faq: {
+        once: { q: "Kann ein Link viele Spenden sammeln?", a: "Nein. Ein Link wird einmal bezahlt. Erstelle für jeden Spender einen neuen Link, etwa von deinem Server aus, wenn jemand auf „Spenden“ klickt." },
+        monad: { q: "Kann ich auf Monad Spenden mit offenem Betrag annehmen?", a: "Nein. Ein Monad-Link braucht einen Betrag. Nutze für offene Beträge Stellar oder Solana." },
+        amount: { q: "Wie erfahre ich, wie viel gespendet wurde?", a: "Lies die Transaktion der Zahlung im Netzwerk: Der Link selbst speichert bei einer Zahlung mit offenem Betrag keinen Betrag." },
+        assets: { q: "Welche Assets können Spender geben?", a: "Das auf dem Link festgelegte Asset, etwa USDC oder der Coin des Netzwerks (XLM oder SOL). Der Spender wählt nur den Betrag." },
       },
     },
   },
