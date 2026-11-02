@@ -39,5 +39,5 @@ test('the Cosmos Pay skill is the public repository SKILL.md at a pinned commit,
   // The frontmatter of SKILL.md at that commit, word for word.
   assert.equal(COSMOS_PAY_SKILL.name, 'cosmospay');
   assert.ok(COSMOS_PAY_SKILL.description.startsWith('Integrate Cosmos Pay, a stablecoin payments API with hosted checkout'));
-  assert.ok(COSMOS_PAY_SKILL.description.endsWith('Covers the @cosmosapp/pay_sdk SDK and the Payments REST API.'));
+  assert.ok(COSMOS_PAY_SKILL.description.endsWith('Covers the @cosmosapp/pay_sdk SDK (2.3) and the Payments REST API.'));
 });

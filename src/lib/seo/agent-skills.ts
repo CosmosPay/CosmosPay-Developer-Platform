@@ -41,8 +41,8 @@ export interface AgentSkillsIndex {
 /** The skill's public repository. */
 export const COSMOS_PAY_SKILL_REPO = "https://github.com/CosmosPay/CosmosPay-Skill";
 
-/** The commit of CosmosPay/CosmosPay-Skill the index points at (main on 2026-11-01). */
-export const COSMOS_PAY_SKILL_COMMIT = "1f7914a9750bce24d9c7e69f32c1a2f5e3e0147d";
+/** The commit of CosmosPay/CosmosPay-Skill the index points at (main on 2026-11-02, matching pay_sdk 2.3). */
+export const COSMOS_PAY_SKILL_COMMIT = "e9fe2cf80b9e0f8d27287f8afefa6501d49ac2f8";
 
 /** The public Cosmos Pay skill: its SKILL.md frontmatter's name and description, that file's
  *  address at the pinned commit and the SHA-256 of its bytes there. */
@@ -50,9 +50,9 @@ export const COSMOS_PAY_SKILL: AgentSkillEntry = {
   name: "cosmospay",
   type: "skill-md",
   description:
-    "Integrate Cosmos Pay, a stablecoin payments API with hosted checkout, payment links, webhooks, swaps and a non-custodial wallet, on Stellar, Solana and Monad. Use when a JavaScript/TypeScript or REST integration must accept crypto or stablecoin (USDC) payments, create payment intents or payment links, embed a pay button or checkout, verify signed webhooks, swap assets on one chain or across chains, or run fiat on/off-ramps. Covers the @cosmosapp/pay_sdk SDK and the Payments REST API.",
+    "Integrate Cosmos Pay, a stablecoin payments API with hosted checkout, payment links, webhooks, swaps and a non-custodial wallet, on Stellar, Solana and Monad. Use when a JavaScript/TypeScript or REST integration must accept crypto or stablecoin (USDC) payments, create payment intents or payment links, embed a pay button or checkout, verify signed webhooks, swap assets on one chain or across chains, send USDT0 from Stellar to EVM networks, create private (amount-hidden) payments, or run fiat on/off-ramps. Covers the @cosmosapp/pay_sdk SDK (2.3) and the Payments REST API.",
   url: `https://raw.githubusercontent.com/CosmosPay/CosmosPay-Skill/${COSMOS_PAY_SKILL_COMMIT}/SKILL.md`,
-  digest: "sha256:c80156812f9f391d8c4fdea60ccbb25ed437e58a395c363841e8f8ac448aab40",
+  digest: "sha256:44fb790526c4a55bcac7d9a66fb27a0147db54d0e8713840c8eecb86ff4debbf",
 };
 
 /** The index every domain serves. */
