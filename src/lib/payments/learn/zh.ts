@@ -5,9 +5,9 @@ export const zh: LearnMessages = {
   hub: {
     nav: "指南",
     title: "稳定币支付指南",
-    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线接受 USDC 支付，如何在 WhatsApp 上发送支付链接，稳定币支付网关有什么作用，以及 Stellar、Solana 与 Monad 的对比。",
+    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线或通过 Solana Pay 接受 USDC 支付，如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，Stellar、Solana 与 Monad 的对比，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
     meta: "稳定币支付指南 | Cosmos Pay",
-    description: "面向企业的指南：在线接受 USDC 支付、在 WhatsApp 上发送支付链接、稳定币支付网关如何运作，以及 Stellar、Solana 与 Monad 的对比。",
+    description: "指南：在线或通过 Solana Pay 接受 USDC、WhatsApp 支付链接、用 Webhook 确认支付、Stellar、Solana 与 Monad 的对比，以及从 Stellar 发送 USDT0。",
   },
   ui: {
     updated: "更新于 {date}",
@@ -250,6 +250,190 @@ export const zh: LearnMessages = {
         all: { q: "我可以在三个网络上都收款吗？", a: "可以。每个支付链接在一个网络上结算，由您在创建时选择。同一个账户、同一套 API 密钥和 Webhook 适用于全部三个网络。" },
         test: { q: "三个网络都能测试吗？", a: "可以。沙箱和测试密钥（dv_）会在 Stellar Testnet、Solana Devnet 和 Monad Testnet 上创建链接。Monad Testnet 没有预设的 USDC：请在那里以 MON 收款，或按合约指定代币。" },
         fees: { q: "Cosmos Pay 在某个网络上更便宜吗？", a: "不会。您套餐的费率在三个网络上都相同。网络费由付款方的钱包支付；在 Monad 上，转发付款的中继费用从该笔付款中扣除。" },
+      },
+    },
+    solanaPay: {
+      nav: "通过 Solana Pay 收取 USDC",
+      title: "如何通过 Solana Pay 链接接受 USDC",
+      meta: "Solana Pay 支付链接：分步指南 | Cosmos Pay",
+      description: "通过 Solana Pay 链接和二维码在 Solana 上收取 USDC：链接包含什么、如何在 Devnet 上测试，以及每笔支付如何获得确认。",
+      summary: "为 USDC 创建 Solana Pay 链接，在 Devnet 上测试，并在您的服务器上看到每笔支付获得确认。",
+      lede: "使用 Cosmos Pay 时，Solana 上的支付链接就是一个 Solana Pay 转账请求：客户扫描其二维码，或在 Phantom、Solflare 等钱包中打开它，并在钱包中确认这笔 USDC 支付。USDC 直接进入您的钱包，Solana 确认交易后，Cosmos Pay 即将该链接标记为已支付。收取真实资金之前，先在 Devnet 上试一试。",
+      sections: {
+        what: {
+          title: "Solana Pay 链接包含什么",
+          body: [
+            "Solana Pay 是 Solana 钱包能读取的支付请求标准：一个 solana: 链接或其二维码，包含收款地址、金额、代币和一条消息。",
+            "Cosmos Pay 会为每个链接生成一个 reference 密钥。钱包会把它写入交易，Cosmos Pay 则在 Solana 上查找该密钥，将付款与其链接匹配。只有当交易成功且准确的金额到达您的地址时，Cosmos Pay 才会接受这笔付款。",
+          ],
+          links: { solanaPay: "Solana Pay 规范", solana: "Solana 支付" },
+        },
+        need: {
+          title: "您和客户各需要什么",
+          points: [
+            "您：一个用于收款的 Solana 地址，已在控制台中添加到您的组织，并通过签名证明属于您。",
+            "客户：一个能读取 Solana Pay 链接的 Solana 钱包（例如 Phantom 或 Solflare），其中持有 USDC 以及少量用于支付网络费的 SOL。无需 Cosmos Pay 账户。",
+            "测试时：使用沙箱，那里的链接运行在 Solana Devnet 上。USDC 在那里同样有预设，因此您可以用 Devnet USDC 进行测试。",
+          ],
+        },
+        api: {
+          title: "从服务器创建链接",
+          body: [
+            "使用支付 API 调用 POST /v1/payment-intents/pay，将 chain 设为 solana，以您的地址作为目标地址；收取 USDC 时，资产代码填 USDC，并以其铸币地址（mint）作为发行方。使用 TypeScript SDK（2.2 或更高版本）时，向 client.paymentIntents.createPay 传入 chain: 'solana'。",
+            "响应中包含链接（其 uri 以 solana: 开头）及其二维码。您可以展示二维码、在客户的钱包中打开链接，或将客户引导至托管收银台：payments.cosmospay.lat 后接链接的 ID。",
+          ],
+          links: { paymentIntents: "支付意图 API", sdkPaymentIntents: "SDK 中的支付意图" },
+        },
+        know: {
+          title: "须知",
+          points: [
+            "您可以不填金额，由客户自行决定，例如用于捐赠。加收您自己费用的链接必须填写金额。",
+            "一条最多 300 个字符的消息（例如订单号）会显示在客户的钱包中。",
+            "如果在支付上加收您自己的费用，链接会变为 Solana Pay 交易请求，在一笔交易中同时向您的钱包和您的收费钱包付款。",
+            "链接的有效时间有限，收银台会以倒计时显示。如果之后仍有支付到达并获确认，该链接会被标记为已支付。",
+            "Solana 网络费由客户的钱包以 SOL 支付。每笔支付按您套餐的费率计费，与其他所有网络相同。",
+          ],
+          links: { fees: "价格与费用计算器", networksGuide: "Stellar、Solana 与 Monad 对比" },
+        },
+      },
+      steps: {
+        title: "接受您的第一笔 Solana Pay 支付",
+        items: {
+          sandbox: { title: "切换到沙箱", body: "登录控制台，在顶部选择“沙箱”。在那里创建的链接运行在 Solana Devnet 上，不涉及真实资金。" },
+          wallet: { title: "添加您的 Solana 钱包", body: "在组织设置中，添加用于收款的 Solana 地址，并签署控制台请求签署的内容，以证明该钱包属于您。" },
+          create: { title: "创建链接", body: "在“支付”中选择“创建支付链接”，选择 Solana，并将资产改为 USDC（选择器默认为 SOL）。输入金额，或留空由客户自行决定，然后选择您的钱包，如有需要再添加一条消息。" },
+          pay: { title: "用钱包付款", body: "打开收银台页面，用 Solana 钱包扫描其二维码，或在同一设备上打开链接。在钱包中确认支付，Solana 确认后，收银台即变为“已支付”。" },
+          confirm: { title: "在服务器上确认", body: "在控制台中添加 Webhook 端点。支付获得确认后，Cosmos Pay 会发送使用 HMAC-SHA256 签名的 PAYMENT_INTENT_SUCCEEDED。请在收到该事件时交付订单。" },
+          live: { title: "切换到生产环境", body: "选择“生产环境”，并创建生产 API 密钥（以 prod_ 开头）。链接现在运行在 Solana 主网上，USDC 在那里有自己的预设。" },
+        },
+        links: { webhooksGuide: "如何在服务器上确认支付", apiKeys: "API 密钥" },
+      },
+      faq: {
+        wallets: { q: "哪些钱包可以支付 Solana Pay 链接？", a: "任何能读取 Solana Pay 链接的 Solana 钱包，例如 Phantom 或 Solflare。客户扫描二维码或打开链接，然后在钱包中确认支付。" },
+        sol: { q: "我的客户需要 SOL 吗？", a: "需要，少量即可。除了发送的 USDC 之外，客户的钱包还要以 SOL 支付 Solana 网络费。" },
+        direct: { q: "USDC 会经过 Cosmos Pay 吗？", a: "不会。在 Solana 上，客户的钱包将 USDC 直接发送到您的地址。Cosmos Pay 通过链接的 reference 密钥在网络上找到这笔付款。" },
+        devnet: { q: "可以不用真实资金测试吗？", a: "可以。在沙箱中并使用测试密钥（dv_）时，链接运行在 Solana Devnet 上，USDC 在那里有预设，收银台也会注明不涉及真实资金。" },
+      },
+    },
+    webhooks: {
+      nav: "在服务器上确认支付",
+      title: "如何在服务器上确认稳定币支付",
+      meta: "用 Webhook 确认稳定币支付 | Cosmos Pay",
+      description: "通过签名 Webhook 在服务器上确认稳定币支付：验证签名、快速响应、处理重试与重复事件，并先行测试。",
+      summary: "依据签名 Webhook 交付订单，而不是依据客户看到的页面：验证它、快速响应并跳过重复事件。",
+      lede: "要确认稳定币支付，请让您的服务器依据 Cosmos Pay 的签名 Webhook 采取行动，而不是依据客户看到的页面。网络确认支付后，Cosmos Pay 会向您的端点发送 PAYMENT_INTENT_SUCCEEDED，并以该端点的签名密钥签名。请验证签名，以 2xx 状态码响应，并且每个事件只交付一次订单。",
+      sections: {
+        why: {
+          title: "为什么要靠服务器，而不是浏览器",
+          body: [
+            "显示“已支付”的收银台，只是客户浏览器上显示的内容。标签页可能在返回您的网站之前就被关闭，任何人也都可以手动打开您的成功页面。让支付成为最终结果的，是网络的确认。",
+            "Cosmos Pay 替您监控网络，并在支付获得确认时通知您的服务器。将订单标记为已支付并交付订单，应当在您的服务器上完成。",
+          ],
+        },
+        how: {
+          title: "Cosmos Pay 发送什么",
+          points: [
+            "向您注册的端点发送一个 HTTPS POST 请求，附带一个 JSON 事件：id（以 evt_ 开头）、type、createdAt 和 data。对于支付，data 就是该笔支付，包括其状态、金额、资产、网络和交易。",
+            "X-Cosmos-Signature 请求头：t=<Unix 时间>,v1=<签名>。签名是以端点的签名密钥为密钥，对 t、一个句点和原始请求体计算的 HMAC-SHA256，以十六进制表示。",
+            "您选择的事件类型，例如 PAYMENT_INTENT_SUCCEEDED、PAYMENT_INTENT_FAILED 或 ZK_PAYMENT_SUCCEEDED。请按原样匹配：大写字母加下划线。",
+            "X-Cosmos-Event、X-Cosmos-Event-Id 和 X-Cosmos-Delivery 请求头，用于标明事件和投递。",
+          ],
+          links: { webhooks: "SDK 中的 Webhook", webhooksApi: "Webhook API" },
+        },
+        retries: {
+          title: "当您的服务器没有响应时",
+          body: [
+            "只有 2xx 响应才算投递成功，且不会跟随重定向。投递失败时，Cosmos Pay 会以逐渐拉长的间隔最多重试三次，之后在后续轮次中再次重试，每次尝试中事件的 id 都保持不变。",
+            "在控制台中，每个端点都会列出其投递记录，并可筛选失败的投递，您可以重新发送其中任意一条。Cosmos Pay 会将投递的请求体保留 30 天，请在此期间内重新投递。",
+          ],
+        },
+        validate: {
+          title: "或者自行核查支付",
+          body: [
+            "您也可以查询单笔支付：按 ID 获取它以读取其状态，或将其交易哈希（在 Solana 上为交易签名）发送到 POST /v1/payment-intents/:id/validate。请将其作为备用手段，例如客户在 Webhook 到达之前就已返回时；Webhook 仍是主要信号。",
+          ],
+          links: { paymentIntents: "支付意图 API" },
+        },
+      },
+      steps: {
+        title: "一步步设置 Webhook",
+        items: {
+          endpoint: { title: "添加端点", body: "在控制台中打开“Webhook”，添加您服务器上某个路由的 HTTPS 地址。选择要接收的事件；PAYMENT_INTENT_SUCCEEDED 默认已选中。该地址必须是公开地址：私有地址和本地地址会被拒绝。" },
+          secret: { title: "保存签名密钥", body: "控制台只会显示一次端点的签名密钥（以 whsec_ 开头）。请将其保存在服务器的环境变量中，切勿放在网页里。" },
+          verify: { title: "验证每个请求", body: "在任何 JSON 解析器处理之前读取原始请求体，并据此校验 X-Cosmos-Signature。使用 TypeScript SDK 时，Webhooks.constructEvent 会校验签名，默认拒绝超过五分钟的签名，并返回事件。" },
+          answer: { title: "先快速响应，再处理", body: "签名校验通过后立即以 2xx 状态码响应，发送邮件、更新库存等耗时工作放到之后再做。" },
+          dedupe: { title: "每个事件只处理一次", body: "保存您处理过的每个事件的 id，遇到已处理过的事件就跳过：重试或重新投递会再次发送同一个事件。" },
+          test: { title: "发送测试", body: "在端点上使用“发送测试”接收一个 ping 事件，然后在沙箱中完成一笔测试支付，并在端点的列表中查看其投递情况。" },
+        },
+        links: { webhooks: "SDK 中的 Webhook", gettingStarted: "快速入门" },
+      },
+      faq: {
+        name: { q: "控制台显示的是 payment_intent.succeeded。事件实际使用哪个名称？", a: "事件的 type 是 PAYMENT_INTENT_SUCCEEDED，大写字母加下划线。控制台只是以更短的形式显示它。" },
+        rotate: { q: "轮换签名密钥后会怎样？", a: "新密钥立即生效，旧密钥立即失效，因此轮换后请马上更新您的服务器。" },
+        down: { q: "如果我的服务器宕机了怎么办？", a: "Cosmos Pay 会重试失败的投递，您也可以在 30 天内从控制台重新发送任何一次投递。" },
+        several: { q: "可以有多个端点吗？", a: "可以。每个端点都有自己的地址、事件和签名密钥，每个事件都会发送到订阅了它的每个端点。" },
+      },
+    },
+    usdt0: {
+      nav: "从 Stellar 发送 USDT0",
+      title: "如何从 Stellar 向 EVM 网络发送 USDT0",
+      meta: "从 Stellar 向 EVM 网络发送 USDT0 | Cosmos Pay",
+      description: "使用 Cosmos Pay 从 Stellar 账户向 Ethereum、Arbitrum 及其他 EVM 网络发送 USDT0：路线、以 XLM 计的费用、所需时间和每个步骤。",
+      summary: "通过 LayerZero 将 USDT0 从 Stellar 转到 EVM 网络：选择路线、查看费用、签名一次并跟踪送达。",
+      lede: "使用 Cosmos Pay，您可以把 USDT0 从 Stellar 账户发送到 Ethereum、Arbitrum 或其他 EVM 网络（共 21 个）上的地址。您会得到一份以 XLM 列出全部费用的报价，在钱包中签署一笔 Stellar 交易，转账约 27 分钟后到账。Ethereum 收到的是原生 USDT；其他所有网络收到的是 USDT0。",
+      sections: {
+        what: {
+          title: "什么是 USDT0",
+          body: [
+            "USDT0 是 Tether 的 USDT 的全链形式。其发行方描述了一种锁定并铸造（lock-and-mint）的设计：USDT 锁定在 Ethereum 上，在其他网络上铸造等量的 USDT0，这些网络之间通过 LayerZero 的全链同质化代币（OFT）标准转移它。",
+            "在 Stellar 上，USDT0 与其他资产无异，因此发送它的账户需要该资产的信任线以及 USDT0 余额。",
+          ],
+          links: { usdt0Site: "发行方官网上的 USDT0", usdt0Network: "USDT0 网络如何运作", layerzeroOft: "LayerZero 的 OFT 标准" },
+        },
+        routes: {
+          title: "可以发送到哪里",
+          body: [
+            "Cosmos Pay 提供 21 条路线，全部通往 EVM 网络，每条都发送到由 0x 加 40 个十六进制字符组成的地址。Ethereum 收到的是原生 USDT；Arbitrum 及其他网络收到的是 USDT0。API 的 routes 调用会列出这些路线及其名称。",
+            "转账仅在主网上运行：使用测试密钥（dv_）时，API 会返回没有可用路线。",
+          ],
+          links: { usdt0Docs: "SDK 中的 USDT0", usdt0Api: "USDT0 API" },
+        },
+        cost: {
+          title: "费用是多少",
+          points: [
+            "LayerZero 的消息费，以 XLM 支付。交易最多允许多出 20%，未用完的部分会在同一笔交易中退回。",
+            "Stellar 网络费，以 XLM 支付。",
+            "Cosmos Pay 的佣金（如有），报价会在您签名前显示。",
+            "发送账户以 XLM 支付以上全部费用，因此除了 USDT0 之外，还请在该账户中保留一些 XLM。",
+          ],
+        },
+        know: {
+          title: "须知",
+          points: [
+            "交易的有效期很短，由 expiresAt 给出：请在此之前签名并提交，否则需要创建新的转账。",
+            "Stellar 金额有 7 位小数，而 OFT 只携带 6 位，因此第 7 位小数会作为零头（dust）留在您的账户中。",
+            "Cosmos Pay 从不持有任何密钥：API 构建交易，您的钱包签名，再由 API 转发。",
+            "您也可以在控制台的兑换面板中发送 USDT0，它在那里显示为“USDT0 跨链”。",
+          ],
+        },
+      },
+      steps: {
+        title: "一步步发送 USDT0",
+        items: {
+          hold: { title: "在 Stellar 上持有 USDT0", body: "发送账户需要 USDT0 的信任线、USDT0 余额，以及一些用于支付费用的 XLM。" },
+          quote: { title: "获取报价", body: "用路线和金额调用 quote。它会返回发送的金额、到账的金额、留下的零头、每项费用和限额，且不保存任何内容。" },
+          create: { title: "创建转账", body: "用发送方 Stellar 账户、路线、接收方 EVM 地址和金额调用 create。API 会为此构建一笔 Stellar 交易。" },
+          sign: { title: "在钱包中签名", body: "用持有 USDT0 的钱包签署该交易（其 XDR），或在该钱包中打开其 SEP-7 链接。" },
+          submit: { title: "提交交易", body: "将签名后的交易发送到 submit。如果网络拒绝该交易，转账会保持待处理状态：请排除原因，并在过期前重新提交。" },
+          follow: { title: "跟踪直至送达", body: "转账会依次经历 PENDING、SUBMITTED 和 DELIVERED，每条路线约需 27 分钟，期间 LayerZero 的验证者会等待 Stellar 的确认。送达后，转账会附带目标网络上的交易和一个 LayerZero Scan 链接。" },
+        },
+        links: { usdt0Docs: "SDK 中的 USDT0", usdt0Api: "USDT0 API" },
+      },
+      faq: {
+        arrive: { q: "接收地址会收到什么？", a: "在 Ethereum 上是原生 USDT。在其他所有路线上是 USDT0。" },
+        time: { q: "一笔转账需要多长时间？", a: "每条路线约 27 分钟，以 LayerZero Scan 上的测量为准：LayerZero 的验证者会等待 Stellar 的确认，之后转账才会送达。" },
+        test: { q: "可以在测试网上试用吗？", a: "不可以。USDT0 转账仅在主网上运行；使用测试密钥时没有可用路线。" },
+        custody: { q: "Cosmos Pay 会持有我的 USDT0 吗？", a: "不会。发送它的交易由您的钱包签名；Cosmos Pay 只负责构建和转发。" },
       },
     },
   },
