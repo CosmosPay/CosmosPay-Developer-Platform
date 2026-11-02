@@ -49,6 +49,7 @@ await generateFiles({
 // A tag the server spells in capitals (`DeFindex`) would otherwise lose its title and place.
 const order = TAGS.map((t) => t.name.toLowerCase());
 const titleOf = Object.fromEntries(TAGS.map((t) => [t.name.toLowerCase(), t.title]));
+const metaOf = Object.fromEntries(TAGS.filter((t) => t.meta).map((t) => [t.name.toLowerCase(), t.meta]));
 const generated = fs
   .readdirSync(OUT)
   .filter((f) => f.endsWith('.mdx'))
@@ -63,7 +64,12 @@ for (const s of generated) {
   const page = fs.readFileSync(file, 'utf8');
   const titled = page.replace(/^(---\r?\n[\s\S]*?)^title: .*$/m, `$1title: ${JSON.stringify(titleOf[s])}`);
   if (titled === page) throw new Error(`[generate-api] ${s}.mdx has no frontmatter title to replace`);
-  fs.writeFileSync(file, titled, 'utf8');
+  // The tag's meta description, when TAGS gives one, goes beside the title: the docs use it for
+  // <meta name="description">, Open Graph and JSON-LD, and keep `description` as the page intro.
+  const withMeta = metaOf[s]
+    ? titled.replace(/^(title: .*)$/m, `$1\nmetaDescription: ${JSON.stringify(metaOf[s])}`)
+    : titled;
+  fs.writeFileSync(file, withMeta, 'utf8');
 }
 
 fs.writeFileSync(

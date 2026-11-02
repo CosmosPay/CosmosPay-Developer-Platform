@@ -22,7 +22,9 @@
 export const GATEWAY_DEFAULT = 'https://api.cosmospay.lat/cosmos-api';
 
 // Tag order + human titles/descriptions. The source spec only references these names in
-// operations; we supply the definitions so each tag page has a proper heading.
+// operations; we supply the definitions so each tag page has a proper heading. `meta`, when set,
+// is the page's meta description (110 to 155 characters, see generate-api.mjs); `description` is
+// the intro under the title and may run longer or shorter than a search result shows.
 export const TAGS = [
   {
     name: 'payment-intents',
@@ -46,6 +48,7 @@ export const TAGS = [
   {
     name: 'usdt0',
     title: 'USDT0 Transfers',
+    meta: 'Send USDT0 from Stellar to 21 EVM networks through LayerZero with the Cosmos Pay API: quote, sign, submit and track each transfer. Mainnet only.',
     description:
       'USDT0 out of Stellar through LayerZero: quote, build the Soroban transaction the holder signs, ' +
       'submit it and follow the message to its destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only.',
@@ -53,6 +56,7 @@ export const TAGS = [
   {
     name: 'zk-payments',
     title: 'Private Payments',
+    meta: 'Create and read private payments on Stellar, whose amount stays hidden on-chain, with the Cosmos Pay API. They run on Stellar Testnet for now.',
     description:
       'Payments on Stellar whose amount stays hidden on-chain. Create a private payment, ' +
       'list and read them; the merchant receives the amount minus the private-payment commission ' +
@@ -61,6 +65,7 @@ export const TAGS = [
   {
     name: 'zk-checkout',
     title: 'Private Checkout',
+    meta: 'The endpoints a payer’s browser calls without a key to pay a Cosmos Pay private payment with two confidential transfers on Stellar.',
     description:
       'What the payer\'s browser reads and calls without a key: one private payment, the network\'s ' +
       'confidential-token setup, and the confirmation of the two confidential transfers that pay it.',
@@ -80,6 +85,7 @@ export const TAGS = [
   {
     name: 'payment-links',
     title: 'Payment Links',
+    meta: 'Read one payment link as the payer sees it, without an API key: the amount, the address to pay and the live status behind the hosted checkout.',
     description:
       'The payer’s view of one payment link, served without a key to the hosted checkout ' +
       'on payments.cosmospay.lat. The link id is the capability: anyone holding it can read ' +
@@ -88,6 +94,7 @@ export const TAGS = [
   {
     name: 'public-key',
     title: 'Public Key',
+    meta: 'The shared public API key that wallets without an account use. It is not a secret: it can only call routes that return no per-account data.',
     description:
       'The shared public API key, served without a key to wallets that have no account yet. ' +
       'Not a secret: what it may call is confined server-side to routes that return no ' +
@@ -141,6 +148,7 @@ export const TAGS = [
   {
     name: 'wallet-auth',
     title: 'Wallet Sign-in',
+    meta: 'Sign in to the Cosmos Pay Wallet with Authentik, Google, GitHub or an emailed code. It proves who a person is and never touches a key.',
     description:
       'The Cosmos Pay Wallet’s own sign-in: Authentik (OpenID Connect), Google, GitHub or an ' +
       'emailed code. It proves who a person is and never touches a key; the seed backup it ' +
@@ -149,6 +157,7 @@ export const TAGS = [
   {
     name: 'recovery',
     title: 'Account Recovery (SEP-10 / SEP-30)',
+    meta: 'SEP-10 web authentication and SEP-30 account recovery for the Cosmos Pay Wallet, split across two recovery servers that each hold half.',
     description:
       'Served by the two recovery deployments only. Standard SEP-10 web authentication and ' +
       'SEP-30 account recovery: each server holds half of what a recovery signature needs, ' +
@@ -164,23 +173,40 @@ export const TAGS = [
     title: 'Webhooks',
     description: 'Register endpoints, manage them, and inspect delivery attempts for payment events.',
   },
-  { name: 'products', title: 'Products', description: 'CRUD for your product catalog.' },
-  { name: 'customers', title: 'Customers', description: 'CRUD for customers and their payment stats.' },
+  {
+    name: 'products',
+    title: 'Products',
+    meta: 'Create, list, update and delete the products in your Cosmos Pay catalog with the Payments API, and attach them to the payments you take.',
+    description: 'CRUD for your product catalog.',
+  },
+  {
+    name: 'customers',
+    title: 'Customers',
+    meta: 'Create, list, update and delete customers with the Cosmos Pay API, keep their wallets on any chain and read their payment statistics.',
+    description: 'CRUD for customers and their payment stats.',
+  },
   {
     name: 'analytics',
     title: 'Analytics',
+    meta: 'Read your Cosmos Pay account summary, balances per asset, activity series, API logs and webhook delivery logs with the Payments API.',
     description: 'Account summary, balances and operational logs.',
   },
   {
     name: 'activity',
     title: 'Client Activity',
+    meta: 'Report what your own client did, such as crashes, cancelled signatures and timings, and read it back: the events the Cosmos Pay API never sees.',
     description:
       'Report what your own client did (errors, timings, transactions) and read it back. ' +
       'Unlike the API logs, which only ever see requests that reached this service, these are ' +
       'the events that happen entirely on a device: a crash, a cancelled signature, a screen ' +
       'that failed before any request left it.',
   },
-  { name: 'health', title: 'Health', description: 'Liveness and readiness probes.' },
+  {
+    name: 'health',
+    title: 'Health',
+    meta: 'Liveness and readiness probes for the Cosmos Pay Payments API: check that the service is up and ready before your integration sends requests.',
+    description: 'Liveness and readiness probes.',
+  },
 ];
 
 const INTERNAL_SCHEMES = new Set(['gateway-secret', 'consumer']);
