@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.21.3] - 2026-11-02
+
+### Documentation
+- Regenerate the SDK reference for @cosmosapp/pay_sdk 2.3.0 (33307ca)
+
 ## [0.21.2] - 2026-11-02
 
 ### Documentation
