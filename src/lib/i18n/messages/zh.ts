@@ -635,7 +635,7 @@ export default {
   about: {
     title: "关于 Cosmos Pay",
     lede: "Cosmos Pay 为企业打造稳定币支付：支付 API、托管收银台和支付链接、兑换、隐私支付，以及非托管的 Cosmos Pay Wallet，支持 Stellar、Solana 和 Monad。",
-    disambiguation: "Cosmos Pay（cosmospay.lat）与 Cosmos Network（ATOM）是不同的项目。",
+    disambiguation: "Cosmos Pay（cosmospay.lat）与 Cosmos Network（ATOM）以及 BitCanna 的 CosmosPay 支付插件是不同的项目。",
     facts: {
       networks: "网络",
       networksValue: "Stellar、Solana 和 Monad",
