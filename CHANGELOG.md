@@ -2,6 +2,14 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.21.5] - 2026-11-02
+
+### Bug Fixes
+- Pin the agent skill that matches pay_sdk 2.3 (a748346)
+
+### Performance
+- Load the API reference UI only on API pages (5b044b1)
+
 ## [0.21.4] - 2026-11-02
 
 ### Documentation
