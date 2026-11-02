@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.21.7] - 2026-11-02
+
+### Bug Fixes
+- WCAG AA contrast, card heading order, Solana/Monad via the SDK (88f22f0)
+
 ## [0.21.6] - 2026-11-02
 
 ### Documentation
