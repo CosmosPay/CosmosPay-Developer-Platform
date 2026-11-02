@@ -36,6 +36,9 @@ WebhookEventType    = { PaymentIntentCreated:'PAYMENT_INTENT_CREATED',
                         PaymentIntentDeleted:'PAYMENT_INTENT_DELETED' }
 WebhookDeliveryStatus = { Pending:'PENDING', Succeeded:'SUCCEEDED', Failed:'FAILED' }
 ProductKind         = { Recurring:'recurring', OneTime:'one_time', Link:'link' }
+PrivatePaymentStatus = { Pending:'PENDING', Succeeded:'SUCCEEDED', Expired:'EXPIRED' }
+Usdt0TransferStatus  = { Pending:'PENDING', Submitted:'SUBMITTED', Delivered:'DELIVERED',
+                         Failed:'FAILED', Expired:'EXPIRED' }
 ```
 
 ## Option types (inputs)
@@ -60,8 +63,23 @@ interface ListWebhookDeliveriesOptions { status?: WebhookDeliveryStatus; take?: 
 interface CreateProductOptions { name: string; description?: string; amount?: string; assetCode?: string; kind?: ProductKind; active?: boolean; reference?: string; }
 type      UpdateProductOptions = Partial<CreateProductOptions>;
 
-interface CreateCustomerOptions { name: string; alias?: string; note?: string; email?: string; account?: string; reference?: string; }
-type      UpdateCustomerOptions = Partial<CreateCustomerOptions>;
+interface AddCustomerWalletOptions { chain: 'stellar' | 'solana' | 'monad'; address: string; label?: string; }
+interface CreateCustomerOptions { name: string; alias?: string; note?: string; email?: string;
+                                  wallets?: AddCustomerWalletOptions[]; account?: string /* deprecated */; reference?: string; }
+type      UpdateCustomerOptions = Partial<Omit<CreateCustomerOptions, 'wallets'>>;
+
+interface AnalyticsSeriesOptions { period?: 'day' | 'week' | 'month' | 'year'; }
+
+interface MerchantFeeOptions { bps?: number; fixed?: string; wallet: string; paidBy?: 'recipient' | 'payer'; }
+interface CreatePrivatePaymentOptions { amount: string; recipient: string; description?: string;
+                                        expiresInMinutes?: number; idempotencyKey?: string; merchantFee?: MerchantFeeOptions; }
+interface ListPrivatePaymentsOptions  { status?: PrivatePaymentStatus; take?: number; skip?: number; }
+
+interface QuoteUsdt0Options          { to: Usdt0Destination; amount: string; source?: string; }
+interface CreateUsdt0TransferOptions { source: string; to: Usdt0Destination; recipient: string; amount: string;
+                                       idempotencyKey?: string; merchantFee?: MerchantFeeOptions; }
+interface ListUsdt0TransfersOptions  { status?: Usdt0TransferStatus; take?: number; skip?: number; }
+interface SubmitUsdt0TransferOptions { signedXdr: string; }
 ```
 
 ## Entity payloads (outputs)
@@ -74,8 +92,13 @@ type      UpdateCustomerOptions = Partial<CreateCustomerOptions>;
 - `WebhookEvent<T = PaymentIntentData>` — `{ id, type, createdAt, data }`.
 - `ProductData` — `id, name, description, amount, asset, kind, active, reference,
   createdAt, updatedAt`.
-- `CustomerData` — `id, name, alias, note, email, account, reference,
+- `CustomerData`: `id, name, alias, note, email, wallets, account, reference,
   createdAt, updatedAt` (+ list-only `payments, succeeded, total`).
+- `CustomerWalletData`: `id, chain, address, label, createdAt`.
+- `AnalyticsSeriesData`: `period, buckets, totals, previous, swaps, liquidity,
+  webhooks, zkPayments` (see Analytics & health).
+- `PrivatePaymentData`, `PrivatePaymentsConfigData`: see Private payments.
+- `Usdt0QuoteData`, `Usdt0TransferData`, `Usdt0RoutesData`: see USDT0.
 - `AnalyticsBalancesData` — `{ data: { asset, amount, pending, count }[], total }`.
 - `ValidationOutcomeData` — `{ valid, status, reason?, paymentIntent? }`.
 

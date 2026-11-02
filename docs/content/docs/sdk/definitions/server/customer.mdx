@@ -44,9 +44,15 @@ note: string | null
 email: string | null
 ```
 
-### account
+### wallets
 
-Optional Stellar account associated with the customer.
+The customer's wallets, oldest first, on Stellar, Solana or Monad. Payments paid from any of them count toward the customer.
+
+```ts
+wallets: CustomerWalletData[]
+```
+
+### account
 
 ```ts
 account: string | null
@@ -72,7 +78,7 @@ updatedAt: Date
 
 ### payments
 
-Number of payment intents from this customer's account (list view only).
+Number of payment intents from this customer's wallets (list view only).
 
 ```ts
 payments: number | null
@@ -147,6 +153,34 @@ delete(): Promise<{ id: string
 ```
 
 **Returns** `Promise<{ id: string`
+
+### addWallet()
+
+Add a wallet to this customer and to &#123;@link Customer.wallets&#125;. A wallet the customer already holds answers as it is.
+
+```ts
+addWallet(options: AddCustomerWalletOptions): Promise<CustomerWalletData>
+```
+
+**Parameters**
+
+- `options`: `AddCustomerWalletOptions`
+
+**Returns** `Promise<CustomerWalletData>`
+
+### removeWallet()
+
+Remove one of this customer's wallets, by id or as read from &#123;@link Customer.wallets&#125;.
+
+```ts
+removeWallet(wallet: string | CustomerWalletData): Promise<CustomerWalletDeletedData>
+```
+
+**Parameters**
+
+- `wallet`: `string | CustomerWalletData`
+
+**Returns** `Promise<CustomerWalletDeletedData>`
 
 ### toJSON()
 

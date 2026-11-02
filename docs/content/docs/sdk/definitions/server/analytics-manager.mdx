@@ -39,6 +39,20 @@ summary(): Promise<AnalyticsSummaryData>
 
 **Returns** `Promise<AnalyticsSummaryData>`
 
+### series()
+
+Activity per day, week, month or year, with the window before for growth: payments (with their settled volume in USD), swaps of every kind, liquidity operations, webhook deliveries and private payments, each in the UTC buckets of `period` (`day` when omitted).
+
+```ts
+series(options?: AnalyticsSeriesOptions): Promise<AnalyticsSeriesData>
+```
+
+**Parameters**
+
+- `options` _(optional)_: `AnalyticsSeriesOptions`
+
+**Returns** `Promise<AnalyticsSeriesData>`
+
 ### balances()
 
 Settled (and pending) amount per asset.

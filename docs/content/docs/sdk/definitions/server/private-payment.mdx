@@ -1,0 +1,216 @@
+---
+title: "PrivatePayment"
+description: "A private payment, from client.privatePayments: an amount in XLM whose value is hidden on-chain."
+---
+
+A private payment, from `client.privatePayments`: an amount in XLM whose value is hidden on-chain. The payer pays it with confidential transfers on Cosmos Pay's confidential token (net to &#123;@link recipient&#125;, the commission to &#123;@link feeAccount&#125;, and a third one when there is a &#123;@link merchantFee&#125;) and confirms them through the private checkout. Poll with `await payment.fetch()`.
+
+## Constructor
+
+### PrivatePayment
+
+```ts
+constructor(client: Client, data: PrivatePaymentData)
+```
+
+**Parameters**
+
+- `client`: [`Client`](/sdk/definitions/server/client)
+- `data`: `PrivatePaymentData`
+
+## Properties
+
+### status
+
+As it reads now: a PENDING payment past &#123;@link expiresAt&#125; reads EXPIRED.
+
+```ts
+status: PrivatePaymentStatus
+```
+
+### network
+
+```ts
+network: PrivatePaymentNetwork
+```
+
+### tokenContract
+
+The confidential token every transfer must be made on.
+
+```ts
+tokenContract: string
+```
+
+### amount
+
+What the payer pays in total, in XLM.
+
+```ts
+amount: string
+```
+
+### netAmount
+
+What the merchant receives, in XLM.
+
+```ts
+netAmount: string
+```
+
+### feeAmount
+
+The commission, in XLM.
+
+```ts
+feeAmount: string
+```
+
+### feeBps
+
+The commission rate the payment was priced at, in basis points.
+
+```ts
+feeBps: number
+```
+
+### recipient
+
+The merchant (G...).
+
+```ts
+recipient: string
+```
+
+### feeAccount
+
+Cosmos Pay's account the commission is paid to.
+
+```ts
+feeAccount: string
+```
+
+### payer
+
+The account the transfers came from, once settled.
+
+```ts
+payer: string | null
+```
+
+### paymentTxHash
+
+```ts
+paymentTxHash: string | null
+```
+
+### feeTxHash
+
+```ts
+feeTxHash: string | null
+```
+
+### merchantFee
+
+```ts
+merchantFee: MerchantFeeData | null
+```
+
+### merchantFeeTxHash
+
+```ts
+merchantFeeTxHash: string | null
+```
+
+### description
+
+```ts
+description: string | null
+```
+
+### idempotencyKey
+
+```ts
+idempotencyKey: string
+```
+
+### expiresAt
+
+Every transfer must close before this.
+
+```ts
+expiresAt: Date
+```
+
+### settledAt
+
+```ts
+settledAt: Date | null
+```
+
+### createdAt
+
+```ts
+createdAt: Date
+```
+
+### updatedAt
+
+```ts
+updatedAt: Date
+```
+
+### protected
+
+```ts
+protected _patch(data: PrivatePaymentData): this
+```
+
+### get
+
+Whether the payment is still waiting for its transfers.
+
+```ts
+get isPending(): boolean
+```
+
+### get
+
+Whether every transfer has been confirmed.
+
+```ts
+get isSucceeded(): boolean
+```
+
+### get
+
+Whether it passed &#123;@link expiresAt&#125; without settling (it can still settle with transfers that closed in time).
+
+```ts
+get isExpired(): boolean
+```
+
+## Methods
+
+### fetch()
+
+Re-fetch from the API, updating this instance in place.
+
+```ts
+fetch(): Promise<this>
+```
+
+**Returns** `Promise<this>`
+
+### toJSON()
+
+```ts
+toJSON(): PrivatePaymentData
+```
+
+**Returns** `PrivatePaymentData`
+
+## Related
+
+- [Client](/sdk/definitions/server/client)
+- [Base](/sdk/definitions/server/base)

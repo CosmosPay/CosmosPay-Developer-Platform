@@ -74,6 +74,36 @@ delete(id: string): Promise<CustomerDeletedData>
 
 **Returns** `Promise<CustomerDeletedData>`
 
+### addWallet()
+
+Add a wallet to a customer, on Stellar, Solana or Monad (up to 20 per customer); payments paid from it count toward the customer. A wallet the customer already holds answers as it is; one another of your customers holds is `409 customer_wallet_taken`.
+
+```ts
+addWallet(customerId: string, options: AddCustomerWalletOptions): Promise<CustomerWalletData>
+```
+
+**Parameters**
+
+- `customerId`: `string`
+- `options`: `AddCustomerWalletOptions`
+
+**Returns** `Promise<CustomerWalletData>`
+
+### removeWallet()
+
+Remove a wallet from a customer. Payments from that address stop counting toward it, and a later settled payment from it adds it as a new automatic customer. A `walletId` that is not one of this customer's wallets is 404.
+
+```ts
+removeWallet(customerId: string, walletId: string): Promise<CustomerWalletDeletedData>
+```
+
+**Parameters**
+
+- `customerId`: `string`
+- `walletId`: `string`
+
+**Returns** `Promise<CustomerWalletDeletedData>`
+
 ## Related
 
 - [Customer](/sdk/definitions/server/customer)

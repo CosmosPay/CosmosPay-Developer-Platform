@@ -20,6 +20,37 @@ expired, successRate }, volume: [...], webhooks: { endpoints, deliveries, ... } 
 `balances()` → `{ data: [{ asset, amount, pending, count }], total }`
 where `amount`/`pending` are decimal strings and `count` is the number of payments.
 
+### Activity series: `series({ period })`
+
+```ts
+const series = await client.analytics.series({ period: 'week' }); // 'day' | 'week' | 'month' | 'year'
+```
+
+Payments, swaps, liquidity operations, webhook deliveries and private payments,
+each grouped into UTC buckets of `period` (weeks start on Monday), with the totals
+of the window and of the window of the same length before it, for growth.
+`day` (the default when omitted) is 30 days, `week` 12 weeks, `month` 12 months,
+`year` 5 years. Every `buckets` array is oldest first and pre-seeded, so a quiet
+bucket is a zero.
+
+```ts
+// {
+//   period,
+//   buckets:  [{ start, count, succeeded, failed, volume, volumeUsd }],   // payment intents
+//   totals:   { count, succeeded, failed, volume, volumeUsd, unpriced, payers },
+//   previous: { count, succeeded, failed, volume, volumeUsd, unpriced },
+//   swaps:      { buckets, totals: { ..., inProgress, byKind: { dex, chain, crossChain, usdt0 } }, previous },
+//   liquidity:  { buckets, totals, previous },
+//   webhooks:   { buckets: [{ start, deliveries, failed }], totals, previous },
+//   zkPayments: { buckets, totals: { ..., fees, feesUsd }, previous }, // private payments, in XLM
+// }
+```
+
+The `volumeUsd` fields value each asset at NEAR Intents' current reference price:
+an indicative figure at today's price, null when those prices could not be read.
+Private payments run on Stellar Testnet only for now, so a production key counts
+none; their field is named `zkPayments` after the API's `/v1/zk-payments` route.
+
 ## Health (public probes) — `client.health`
 
 ```ts

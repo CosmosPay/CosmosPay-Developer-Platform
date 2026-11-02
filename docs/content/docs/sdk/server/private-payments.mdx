@@ -1,0 +1,85 @@
+---
+title: "Private payments"
+description: "client.privatePayments creates and reads private payments: payments whose amount is hidden on-chain."
+---
+
+`client.privatePayments` creates and reads **private payments**: payments whose
+amount is hidden on-chain. A private payment is priced in XLM and paid with
+confidential transfers on Cosmos Pay's confidential token (which wraps native XLM).
+
+- **Network:** they run on **Stellar Testnet only for now**. On mainnet,
+  `config()` answers `enabled: false`, and the series in
+  `client.analytics.series()` counts none for a production key.
+- **Cost:** a **0.18% commission per payment**, taken from `amount`:
+  `amount` = `netAmount` (what the merchant receives) + `feeAmount` (the
+  commission, rounded up, at least one stroop), paid to Cosmos Pay's fee account.
+- **Recipient:** the merchant's Stellar account must already hold a confidential
+  account on the token, registered under auditor id 0; otherwise `create` answers
+  `400 recipient_not_registered`.
+
+The server SDK creates and reads them with your API key. The **payer** completes
+one in the private checkout, which runs in their browser with no API key and
+proves the confidential transfers itself (net to the merchant, the commission to
+the fee account, and a third transfer when there is a merchant fee).
+
+```ts
+import { PrivatePaymentStatus } from '@cosmosapp/pay_sdk';
+
+const payment = await client.privatePayments.create({
+  amount: '25.5',               // XLM the payer pays in total (up to 7 decimals)
+  recipient: 'G...',            // the merchant, registered on the confidential token
+  description: 'Order #24',     // optional, shown by the checkout (not secret, not on-chain)
+  expiresInMinutes: 60,         // optional, 1 to 10080 (server default 60)
+  idempotencyKey: 'order-24',   // optional, sent as the Idempotency-Key header too
+  // merchantFee: { bps: 150, wallet: 'G...', paidBy: 'recipient' }, // optional, in XLM
+});
+
+payment.amount;      // '25.5'
+payment.netAmount;   // what the merchant receives
+payment.feeAmount;   // the 0.18% commission
+payment.expiresAt;   // Date: every transfer must close before it
+
+// ...the payer pays it in the private checkout...
+await payment.fetch();          // refreshes in place
+payment.status;                 // PENDING, then SUCCEEDED (or EXPIRED)
+payment.isSucceeded;            // payer, paymentTxHash, feeTxHash, settledAt are set
+
+const page = await client.privatePayments.list({
+  status: PrivatePaymentStatus.Succeeded, take: 20, skip: 0,
+}); // { items: PrivatePayment[], total, take, skip }, newest first
+
+const one = await client.privatePayments.fetch('cmh4x2k9a0001l70g8v5q3z2w');
+```
+
+`status` reads as it is now: a `PENDING` payment past `expiresAt` reads (and
+filters) as `EXPIRED`, and can still settle with transfers that closed in time.
+Only payments on the key's network are listed (`dv_` key: testnet, `prod_`: mainnet).
+
+## The network's setup: `config()`
+
+```ts
+const config = await client.privatePayments.config();
+// {
+//   enabled, network, rpcUrl, networkPassphrase,
+//   token: { contractId, symbol, decimals, underlying, deployedAtLedger } | null,
+//   verifier, auditorRegistry, auditorId, feeBps /* 18 = 0.18% */, feeAccount,
+// }
+```
+
+What a dashboard needs to set a merchant up on the confidential token (register,
+read the balance, withdraw). Everything in it is public on-chain data or a public
+URL. When `enabled` is false, every field but `network`, `networkPassphrase`,
+`auditorId` and `feeBps` is null.
+
+## `PrivatePayment` accessors
+
+`id`, `status`, `network`, `tokenContract`, `amount`, `netAmount`, `feeAmount`,
+`feeBps`, `recipient`, `feeAccount`, `payer`, `paymentTxHash`, `feeTxHash`,
+`merchantFee`, `merchantFeeTxHash`, `description`, `idempotencyKey`, `expiresAt`,
+`settledAt`, `createdAt`, `updatedAt`, plus `isPending`, `isSucceeded`,
+`isExpired`. The API serves them under `/v1/zk-payments`.
+
+## References
+
+- [PrivatePayment](/sdk/definitions/server/private-payment): A private payment, from `client.privatePayments`: an amount in XLM whose value is hidden on-chain
+
