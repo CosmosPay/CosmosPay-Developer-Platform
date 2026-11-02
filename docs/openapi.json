@@ -6513,6 +6513,7 @@
             "name": "network",
             "required": false,
             "in": "query",
+            "description": "Limit to addresses registered on this network (public | testnet | a custom id). Omit for every network.",
             "schema": {
               "type": "string"
             }
@@ -7581,18 +7582,21 @@
             "name": "error",
             "required": false,
             "in": "query",
+            "description": "Sent by the provider when the person declined or the authorization failed. Any value ends a pending handshake `denied`, and no code is exchanged.",
             "schema": {}
           },
           {
             "name": "state",
             "required": false,
             "in": "query",
+            "description": "The handshake's `state`, as `POST /v1/wallet/auth/oauth/authorize` answered it. Missing, unknown, for another provider, no longer pending or past its expiry: the callback reports `expired` and changes nothing.",
             "schema": {}
           },
           {
             "name": "code",
             "required": false,
             "in": "query",
+            "description": "The authorization code the provider issued, which this service exchanges with the provider for the person's identity. Missing, a pending handshake ends `denied`.",
             "schema": {}
           }
         ],
@@ -8507,9 +8511,11 @@
         "parameters": [
           {
             "name": "network",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "The ledger the file describes, `public` or `testnet`: its SEP-10 and SEP-30 endpoints then carry that ledger as a path segment. Omit for the deployment default. Any other value, or a ledger not in RECOVERY_NETWORKS, is a 404.",
             "schema": {
+              "example": "testnet",
               "type": "string"
             }
           }
@@ -11702,7 +11708,9 @@
             "name": "rail",
             "required": true,
             "in": "query",
+            "description": "The rail whose fields to list, as a bank account's `type` names it (`GET /v1/kyc/rails` lists the rails). Forwarded to BlindPay as given.",
             "schema": {
+              "example": "ach",
               "type": "string"
             }
           }
@@ -17518,13 +17526,13 @@
           "code": {
             "type": "string",
             "example": "yXLM",
-            "description": "Asset code, or \"native\"."
+            "description": "The intermediate asset. Stellar: its code, or `native` for XLM. Solana: the SPL mint address of a token on Jupiter's route (SOL appears as the wrapped SOL mint, never `native`). Monad routes report no hops."
           },
           "issuer": {
             "type": "object",
             "nullable": true,
             "example": "GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55",
-            "description": "Issuer for a non-native hop (null for native)."
+            "description": "Issuer of a non-native Stellar hop; null for native XLM, and always null on Solana."
           }
         },
         "description": "One intermediate asset on a swap's route: a Stellar asset (code and issuer), or an SPL mint on Solana with a null issuer.",
@@ -18730,7 +18738,7 @@
           "asset": {
             "type": "string",
             "example": "native",
-            "description": "Asset code, or \"native\"."
+            "description": "The asset. Stellar: its code, or `native` for XLM. Solana: `native` for SOL, or the SPL mint address. Monad: `native` for MON, or the ERC-20 contract address (EIP-55 checksummed)."
           },
           "issuer": {
             "type": "object",
@@ -18879,7 +18887,7 @@
             ]
           },
           "swap": {
-            "description": "Net amount routed (input − fee).",
+            "description": "The amount routed, in the source asset. Stellar: `source.amount` less the plan commission (`fee.amount`) and less a merchant fee with `paidBy: recipient`. Solana and Monad: `source.amount` less a merchant fee with `paidBy: recipient`; the commission comes out of the output.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/SwapAssetAmount"
@@ -20910,13 +20918,13 @@
             "type": "object",
             "nullable": true,
             "example": "9.95",
-            "description": "DEPOSIT only."
+            "description": "A DEPOSIT's lower price bound (its `liquidityPoolDeposit` minPrice), in asset A per unit of asset B, as a decimal string of up to 7 places: the pool price when the operation was built (reserve A / reserve B, or `amountA` / `amountB` for a pool with no reserves yet) less `slippageBps`, rounded down. The deposit fails on-chain at a price below it. Null on a WITHDRAW."
           },
           "maxPrice": {
             "type": "object",
             "nullable": true,
             "example": "10.05",
-            "description": "DEPOSIT only."
+            "description": "A DEPOSIT's upper price bound (its `liquidityPoolDeposit` maxPrice), in the same units as `minPrice`: the same pool price plus `slippageBps`, rounded up. The deposit fails on-chain at a price above it. Null on a WITHDRAW."
           },
           "slippageBps": {
             "type": "number",
@@ -21282,13 +21290,13 @@
             "type": "object",
             "nullable": true,
             "example": "9.95",
-            "description": "DEPOSIT only."
+            "description": "A DEPOSIT's lower price bound (its `liquidityPoolDeposit` minPrice), in asset A per unit of asset B, as a decimal string of up to 7 places: the pool price when the operation was built (reserve A / reserve B, or `amountA` / `amountB` for a pool with no reserves yet) less `slippageBps`, rounded down. The deposit fails on-chain at a price below it. Null on a WITHDRAW."
           },
           "maxPrice": {
             "type": "object",
             "nullable": true,
             "example": "10.05",
-            "description": "DEPOSIT only."
+            "description": "A DEPOSIT's upper price bound (its `liquidityPoolDeposit` maxPrice), in the same units as `minPrice`: the same pool price plus `slippageBps`, rounded up. The deposit fails on-chain at a price above it. Null on a WITHDRAW."
           },
           "slippageBps": {
             "type": "number",
@@ -27530,7 +27538,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "example": "pi_000000000000",
+            "example": "pq_000000000000",
             "description": "BlindPay quote id; pass it as `payin_quote_id` to `POST /v1/onramp/payins`."
           },
           "expires_at": {
@@ -27565,7 +27573,7 @@
         "properties": {
           "payin_quote_id": {
             "type": "string",
-            "example": "qu_000000000000",
+            "example": "pq_000000000000",
             "description": "The id returned by POST /v1/onramp/quotes."
           }
         },
@@ -28444,7 +28452,7 @@
           "feeAmount": {
             "type": "string",
             "example": "0.00255",
-            "description": "The commission: `ceil(amount * feeBps / 10000)` in stroops, at least one."
+            "description": "Cosmos Pay's commission, in XLM (decimal string): `feeBps` of the amount the request named (`amount` less a merchant fee with `paidBy: payer`), rounded up to the stroop (0.0000001 XLM) and at least one stroop."
           },
           "feeBps": {
             "type": "number",
