@@ -92,3 +92,15 @@ test('escrow is offered at its price but every line that names it says it is com
     for (const line of lines) assert.match(line, /coming soon/, `${name}: ${line}`);
   }
 });
+
+/* The name is shared: search results for "cosmospay" are BitCanna's CosmosPay payment plugins (a
+   Cosmos SDK project, the same category of product), and the Cosmos Network is ATOM. Both summaries
+   and the Organization node say Cosmos Pay is neither, so an assistant does not merge the three. */
+test('both summaries and the Organization node tell Cosmos Pay apart from ATOM and BitCanna', async () => {
+  const { organizationNode } = await import('@/lib/seo/schema');
+  const org = organizationNode('https://cosmospay.lat', []) as { disambiguatingDescription?: string };
+  for (const [name, text] of [...Object.entries(files), ['organization', org.disambiguatingDescription ?? '']] as const) {
+    assert.match(text, /Cosmos Network \(ATOM\)/, name);
+    assert.match(text, /BitCanna's CosmosPay/, name);
+  }
+});

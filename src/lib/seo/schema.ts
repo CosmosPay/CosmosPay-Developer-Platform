@@ -52,7 +52,7 @@ export function organizationNode(site: string, sameAs: string[]): JsonLdNode {
     logo: { "@type": "ImageObject", "@id": `${site}/#logo`, url: logo, contentUrl: logo, width: 512, height: 512, caption: "Cosmos Pay" },
     image: { "@id": `${site}/#logo` },
     description: ORG_DESCRIPTION,
-    disambiguatingDescription: "The payments company at cosmospay.lat, working on Stellar, Solana and Monad; not the Cosmos Network (ATOM) blockchain.",
+    disambiguatingDescription: "The payments company at cosmospay.lat, working on Stellar, Solana and Monad; not the Cosmos Network (ATOM) blockchain, nor BitCanna's CosmosPay payment plugins.",
     email: CONTACT_ADDRESS,
     // The country only, as /about states it (its public source: the GitHub organization's
     // location). Product owner, 2026-11-01. No street, city or legal name until they provide them.
