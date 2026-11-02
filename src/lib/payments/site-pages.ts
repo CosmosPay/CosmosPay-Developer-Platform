@@ -24,6 +24,9 @@ export const GUIDES = [
   "usdt0-from-stellar",
   "accept-usdc-on-stellar",
   "accept-usdc-on-monad",
+  "crypto-payment-button",
+  "cross-chain-swaps",
+  "crypto-donations",
 ] as const;
 export type Guide = (typeof GUIDES)[number];
 export type GuidePage = `learn/${Guide}`;
@@ -44,6 +47,9 @@ export const GUIDE_DATES: Record<Guide, { published: string; modified: string }>
   "usdt0-from-stellar": { published: "2026-11-02", modified: "2026-11-02" },
   "accept-usdc-on-stellar": { published: "2026-11-02", modified: "2026-11-02" },
   "accept-usdc-on-monad": { published: "2026-11-02", modified: "2026-11-02" },
+  "crypto-payment-button": { published: "2026-11-02", modified: "2026-11-02" },
+  "cross-chain-swaps": { published: "2026-11-02", modified: "2026-11-02" },
+  "crypto-donations": { published: "2026-11-02", modified: "2026-11-02" },
 };
 
 /* The guides each network page links at its end: the comparison and the general USDC guide, plus
@@ -53,6 +59,10 @@ export const NETWORK_GUIDES: Record<Chain, readonly Guide[]> = {
   solana: ["accept-usdc-with-solana-pay", "stellar-vs-solana-vs-monad", "accept-usdc-payments"],
   monad: ["accept-usdc-on-monad", "stellar-vs-solana-vs-monad", "accept-usdc-payments"],
 };
+
+/* The guides /integrations and /swaps link at their end (the page and its Markdown twin). */
+export const INTEGRATIONS_GUIDES: readonly Guide[] = ["crypto-payment-button", "accept-usdc-payments", "whatsapp-payment-links"];
+export const SWAPS_GUIDES: readonly Guide[] = ["cross-chain-swaps", "usdt0-from-stellar"];
 
 export type SectionPage = (typeof SECTION_PAGES)[number];
 export type NetworkPage = Chain;
