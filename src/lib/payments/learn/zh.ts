@@ -5,9 +5,9 @@ export const zh: LearnMessages = {
   hub: {
     nav: "指南",
     title: "稳定币支付指南",
-    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线或通过 Solana Pay 接受 USDC 支付，如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，Stellar、Solana 与 Monad 的对比，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
+    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线以及在各个网络上接受 USDC 支付（Stellar 使用 SEP-7，Solana 使用 Solana Pay，Monad 使用 EIP-681），如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，三个网络的对比，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
     meta: "稳定币支付指南 | Cosmos Pay",
-    description: "指南：在线或通过 Solana Pay 接受 USDC、WhatsApp 支付链接、用 Webhook 确认支付、Stellar、Solana 与 Monad 的对比，以及从 Stellar 发送 USDT0。",
+    description: "指南：在线或在 Stellar、Solana 和 Monad 上接受 USDC、WhatsApp 支付链接、Webhook、三个网络的对比，以及从 Stellar 发送 USDT0。",
   },
   ui: {
     updated: "更新于 {date}",
@@ -434,6 +434,141 @@ export const zh: LearnMessages = {
         time: { q: "一笔转账需要多长时间？", a: "每条路线约 27 分钟，以 LayerZero Scan 上的测量为准：LayerZero 的验证者会等待 Stellar 的确认，之后转账才会送达。" },
         test: { q: "可以在测试网上试用吗？", a: "不可以。USDT0 转账仅在主网上运行；使用测试密钥时没有可用路线。" },
         custody: { q: "Cosmos Pay 会持有我的 USDT0 吗？", a: "不会。发送它的交易由您的钱包签名；Cosmos Pay 只负责构建和转发。" },
+      },
+    },
+    stellarHowTo: {
+      nav: "在 Stellar 上收取 USDC",
+      title: "如何通过 SEP-7 链接在 Stellar 上接受 USDC",
+      meta: "Stellar SEP-7 支付链接：分步指南 | Cosmos Pay",
+      description: "通过 SEP-7 链接和二维码在 Stellar 上收取 USDC：您的账户需要的信任线、如何在 Testnet 上测试，以及每笔付款如何匹配。",
+      summary: "通过 SEP-7 链接在 Stellar 上收取 USDC：准备好您的账户，在 Testnet 上测试，并看到每笔支付获得确认。",
+      lede: "使用 Cosmos Pay 时，Stellar 上的支付链接就是一个 SEP-7 请求：客户扫描其二维码，或在 Freighter、LOBSTR、xBull 等钱包中打开它，并在钱包中确认这笔 USDC 支付。USDC 直接进入您的 Stellar 账户，Cosmos Pay 通过链接的 memo 找到这笔付款后，即将该链接标记为已支付。您的账户必须已建立 USDC 信任线，才能接收 USDC。",
+      sections: {
+        what: {
+          title: "SEP-7 链接包含什么",
+          body: [
+            "SEP-7 是 Stellar 的支付请求标准：一个 web+stellar:pay 链接或其二维码，包含您的地址、金额、资产及其发行方，以及一个数字 memo。",
+            "Cosmos Pay 会为每个链接生成一个 memo，并在您账户收到的付款中查找它。只有同时满足以下条件的付款才会被接受：带有该 memo、付到您的地址、使用链接指定的资产、在链接创建之后发出，且在链接设定了金额时与该金额完全一致。",
+          ],
+          links: { sep7: "SEP-7 标准（Stellar）", stellar: "Stellar 支付" },
+        },
+        prepare: {
+          title: "准备您的账户",
+          points: [
+            "您的 Stellar 账户必须已在网络上存在，并已建立 USDC 信任线，才能接收 USDC。添加账户时 Cosmos Pay 不会检查这一点；向没有该信任线的账户付款，会在客户签名后失败。",
+            "在控制台中将该账户添加到您的组织，并签署控制台请求签署的内容，以证明该账户属于您。",
+            "测试时，在 Testnet 上执行同样的操作。Testnet 的水龙头 Friendbot 可以向账户发送测试 XLM，链接在那里也可以用 XLM 收款。",
+          ],
+        },
+        payer: {
+          title: "您的客户需要什么",
+          points: [
+            "一个能打开 SEP-7 链接的 Stellar 钱包（例如 Cosmos Pay Wallet、Freighter、LOBSTR、xBull、Albedo 或 Rabet），其中持有 USDC 以及少量用于支付网络费的 XLM。无需 Cosmos Pay 账户。",
+            "一笔直接的 USDC 付款。如果钱包在途中将其他资产兑换成 USDC（即路径支付，path payment），这笔付款无法完成该链接的支付。",
+            "在 Testnet 上，付款前须先将钱包切换到 Testnet：链接不注明网络，遵循 SEP-7 的钱包因此会默认使用主网。",
+          ],
+        },
+        api: {
+          title: "从服务器创建链接",
+          body: [
+            "调用 POST /v1/payment-intents/pay，以您的账户作为目标地址并填写金额；收取 USDC 时，填写资产代码及其发行方。也可以使用 TypeScript SDK 中的 client.paymentIntents.createPay：chain 默认为 Stellar。响应中包含链接（其 uri 以 web+stellar:pay 开头）及其二维码。",
+            "如果您知道客户的账户，交易意图（POST /v1/payment-intents/tx，或 SDK 中的 createTx）会改为返回一笔未签名的交易，供客户签署。该交易必须在五分钟内签署。",
+            "如果您自行设置 memo，请只将它用于一笔支付：同一 memo 搭配不同条件会被拒绝。",
+          ],
+          links: { paymentIntents: "支付意图 API", sdkPaymentIntents: "SDK 中的支付意图" },
+        },
+        know: {
+          title: "须知",
+          points: [
+            "您可以不填金额，由客户自行决定。一条最多 300 个字符的消息会显示在客户的钱包中。",
+            "如果在支付上加收您自己的费用，收银台会请客户提供其账户，并构建一笔同时向您和您的收费钱包付款的交易。",
+            "在控制台中，待处理的 Stellar 链接提供一项核查，可凭交易哈希完成该链接的支付。",
+            "链接过期后才到达的付款，可将其交易哈希发送到 POST /v1/payment-intents/:id/validate 来完成该链接的支付。",
+            "Stellar 网络费由客户的钱包以 XLM 支付。隐私支付会在链上隐藏金额，它在 Stellar 上以 XLM 运行，目前仅限 Testnet。",
+          ],
+          links: { fees: "价格与费用计算器", networksGuide: "Stellar、Solana 与 Monad 对比" },
+        },
+      },
+      steps: {
+        title: "在 Stellar 上接受您的第一笔 USDC 支付",
+        items: {
+          sandbox: { title: "切换到沙箱", body: "登录控制台，在顶部选择“沙箱”。在那里创建的链接运行在 Stellar Testnet 上，不涉及真实资金。" },
+          wallet: { title: "添加您的 Stellar 账户", body: "确认该账户已存在并已建立 USDC 信任线，然后在组织设置中添加它，并签署控制台请求签署的内容。" },
+          create: { title: "创建链接", body: "在“支付”中选择“创建支付链接”，选择 Stellar、金额（也可不填）和 USDC，然后选择您的账户，如有需要再添加一条消息。" },
+          pay: { title: "用钱包付款", body: "打开收银台页面，用已切换到同一网络的 Stellar 钱包扫描其二维码，或在同一设备上打开链接。确认支付后，Cosmos Pay 找到这笔付款，收银台即变为“已支付”。" },
+          confirm: { title: "在服务器上确认", body: "在控制台中添加 Webhook 端点。支付获得确认后，Cosmos Pay 会发送使用 HMAC-SHA256 签名的 PAYMENT_INTENT_SUCCEEDED。请在收到该事件时交付订单。" },
+          live: { title: "切换到生产环境", body: "选择“生产环境”，并创建生产 API 密钥（以 prod_ 开头）。链接现在运行在 Stellar 主网上，那里预设的是 Circle 发行的 USDC。" },
+        },
+        links: { webhooksGuide: "如何在服务器上确认支付", apiKeys: "API 密钥" },
+      },
+      faq: {
+        trustline: { q: "为什么向我的账户付款失败了？", a: "最常见的原因是收款账户缺少 USDC 信任线。请添加信任线，然后创建新的链接并重新发送。" },
+        wallets: { q: "哪些钱包可以支付 SEP-7 链接？", a: "任何能打开 SEP-7 链接的 Stellar 钱包，例如 Cosmos Pay Wallet、Freighter、LOBSTR、xBull、Albedo 或 Rabet。" },
+        convert: { q: "客户可以用 XLM 支付 USDC 链接吗？", a: "不可以。只有直接的 USDC 付款才能完成该链接的支付：在途中将 XLM 兑换成 USDC 的付款不行。" },
+        test: { q: "可以不用真实资金测试吗？", a: "可以。在沙箱中并使用测试密钥（dv_）时，链接运行在 Stellar Testnet 上，USDC 在那里有预设，Friendbot 也会发送测试 XLM。" },
+      },
+    },
+    monadHowTo: {
+      nav: "在 Monad 上收取 USDC",
+      title: "如何通过 EIP-681 链接在 Monad 上接受 USDC",
+      meta: "Monad EIP-681 支付链接：分步指南 | Cosmos Pay",
+      description: "通过 EIP-681 链接和二维码在 Monad 上收取 USDC：为每笔支付生成的充值地址、所需的金额、测试和确认。",
+      summary: "在 Monad 上通过 EIP-681 链接收取 USDC，付款进入专为该笔支付生成的充值地址，您可以看到它获得确认。",
+      lede: "使用 Cosmos Pay 时，Monad 上的支付链接就是一个指向专为该笔支付生成的充值地址的 EIP-681 请求：客户用 EVM 钱包扫描其二维码，并确认这笔 USDC 转账。充值地址只能将款项转发到您的地址，转发完成后，Cosmos Pay 即将该链接标记为已支付。每个 Monad 链接都必须填写金额。",
+      sections: {
+        what: {
+          title: "EIP-681 链接包含什么",
+          body: [
+            "EIP-681 是 EVM 钱包能读取的 Ethereum 支付请求标准：一个 ethereum: 链接或其二维码，包含代币、网络和金额。Monad 主网的 chain ID 为 143，其 Testnet 为 10143。",
+            "该链接付款到专为这笔支付生成的充值地址，而不是直接付到您的地址。该地址的代码只能将收到的款项发送到您的地址，因此 Cosmos Pay 不持有任何能把资金转到别处的密钥。",
+          ],
+          links: { eip681: "EIP-681 标准（Ethereum）", monad: "Monad 支付" },
+        },
+        deposit: {
+          title: "充值地址如何向您付款",
+          points: [
+            "Cosmos Pay 会监控充值地址。一旦其中至少持有该金额，中继就会将款项转发到您的地址，这次转发即完成该链接的支付。",
+            "中继可能会从付款中扣除一笔转发费用。收银台会显示这笔费用，API 也会在该笔支付的 networkFee 中列明。",
+            "超出金额的付款会全额转发给您。低于金额的付款无法完成该链接的支付。",
+            "客户的钱包以 MON 支付其自身转账的 Monad 网络费。",
+          ],
+        },
+        api: {
+          title: "从服务器创建链接",
+          body: [
+            "调用 POST /v1/payment-intents/pay，将 chain 设为 monad，以您的地址作为目标地址并填写金额；收取 USDC 时，填写资产代码，并以其合约作为发行方。也可以向 TypeScript SDK（2.2 或更高版本）中的 client.paymentIntents.createPay 传入 chain: 'monad'。响应中包含链接（其 uri 以 ethereum: 开头）及其二维码。",
+            "Monad 链接不支持消息。若要在转发到账之前确认一笔支付，请将客户的交易哈希（0x 加 64 个十六进制字符）发送到 POST /v1/payment-intents/:id/validate。",
+          ],
+          links: { paymentIntents: "支付意图 API", sdkPaymentIntents: "SDK 中的支付意图" },
+        },
+        know: {
+          title: "须知",
+          points: [
+            "链接的有效时间有限。之后仍到达的足额付款会被转发给您，并将该链接标记为已支付。",
+            "向同一充值地址的其他付款也会被转发到您的地址。",
+            "如果在支付上加收您自己的费用，充值地址会拆分付款：您的费用进入您的收费钱包，其余款项转给您。",
+            "每笔支付按您套餐的费率计费，与其他所有网络相同。",
+          ],
+          links: { fees: "价格与费用计算器", networksGuide: "Stellar、Solana 与 Monad 对比" },
+        },
+      },
+      steps: {
+        title: "在 Monad 上接受您的第一笔 USDC 支付",
+        items: {
+          sandbox: { title: "切换到沙箱", body: "登录控制台，在顶部选择“沙箱”。在那里创建的链接运行在 Monad Testnet 上，该网络没有预设的 USDC：请以 MON 收款，或按合约指定代币。" },
+          wallet: { title: "添加您的 Monad 地址", body: "在组织设置中，添加将在 Monad 上收款的 EVM 地址，并签署控制台请求签署的内容，以证明该地址属于您。" },
+          create: { title: "创建链接", body: "在“支付”中选择“创建支付链接”，选择 Monad，输入金额（必填）并选择资产，然后选择您的地址。" },
+          pay: { title: "用钱包付款", body: "打开收银台页面，在同一网络上用能读取 EIP-681 链接的 EVM 钱包扫描其二维码。确认转账后，款项一转发给您，收银台即变为“已支付”。" },
+          confirm: { title: "在服务器上确认", body: "在控制台中添加 Webhook 端点。支付获得确认后，Cosmos Pay 会发送使用 HMAC-SHA256 签名的 PAYMENT_INTENT_SUCCEEDED。请在收到该事件时交付订单。" },
+          live: { title: "切换到生产环境", body: "选择“生产环境”，并创建生产 API 密钥（以 prod_ 开头）。链接现在运行在 Monad 主网上，USDC 在那里有自己的预设。" },
+        },
+        links: { webhooksGuide: "如何在服务器上确认支付", apiKeys: "API 密钥" },
+      },
+      faq: {
+        why: { q: "为什么链接付款到充值地址，而不是我的地址？", a: "每笔支付都有自己的地址，因此 Cosmos Pay 无需 memo 即可区分各笔付款。该地址只能将收到的款项转发到您的地址。" },
+        fees: { q: "在 Monad 上由谁支付费用？", a: "客户的钱包支付其转账的网络费。中继的转发费用（如有）从付款中扣除，并显示在收银台上。" },
+        amount: { q: "客户可以自行决定金额吗？", a: "不可以。Monad 链接必须填写金额。如需由客户决定金额，请使用 Stellar 或 Solana 链接。" },
+        test: { q: "可以在 Monad 上测试吗？", a: "可以。在沙箱中并使用测试密钥（dv_）时，链接运行在 Monad Testnet 上。那里没有预设的 USDC，因此请以 MON 收款，或按合约指定代币。" },
       },
     },
   },

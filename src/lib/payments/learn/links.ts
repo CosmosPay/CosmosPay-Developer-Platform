@@ -32,6 +32,8 @@ export function learnHrefs(docs: string) {
     solanaPayGuide: guide("accept-usdc-with-solana-pay"),
     webhooksGuide: guide("confirm-stablecoin-payments"),
     usdt0Guide: guide("usdt0-from-stellar"),
+    stellarGuide: guide("accept-usdc-on-stellar"),
+    monadGuide: guide("accept-usdc-on-monad"),
     // The docs (each path is a page of docs/content/docs).
     gettingStarted: docsLink(docs, "/getting-started"),
     apiKeys: docsLink(docs, "/api-keys"),

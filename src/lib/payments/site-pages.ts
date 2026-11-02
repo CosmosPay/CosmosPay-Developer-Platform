@@ -22,6 +22,8 @@ export const GUIDES = [
   "accept-usdc-with-solana-pay",
   "confirm-stablecoin-payments",
   "usdt0-from-stellar",
+  "accept-usdc-on-stellar",
+  "accept-usdc-on-monad",
 ] as const;
 export type Guide = (typeof GUIDES)[number];
 export type GuidePage = `learn/${Guide}`;
@@ -40,14 +42,16 @@ export const GUIDE_DATES: Record<Guide, { published: string; modified: string }>
   "accept-usdc-with-solana-pay": { published: "2026-11-02", modified: "2026-11-02" },
   "confirm-stablecoin-payments": { published: "2026-11-02", modified: "2026-11-02" },
   "usdt0-from-stellar": { published: "2026-11-02", modified: "2026-11-02" },
+  "accept-usdc-on-stellar": { published: "2026-11-02", modified: "2026-11-02" },
+  "accept-usdc-on-monad": { published: "2026-11-02", modified: "2026-11-02" },
 };
 
 /* The guides each network page links at its end: the comparison and the general USDC guide, plus
    the guide that is about that network. NetworkPage.astro and its Markdown twin read the same list. */
 export const NETWORK_GUIDES: Record<Chain, readonly Guide[]> = {
-  stellar: ["stellar-vs-solana-vs-monad", "accept-usdc-payments", "usdt0-from-stellar"],
+  stellar: ["accept-usdc-on-stellar", "stellar-vs-solana-vs-monad", "usdt0-from-stellar"],
   solana: ["accept-usdc-with-solana-pay", "stellar-vs-solana-vs-monad", "accept-usdc-payments"],
-  monad: ["stellar-vs-solana-vs-monad", "accept-usdc-payments"],
+  monad: ["accept-usdc-on-monad", "stellar-vs-solana-vs-monad", "accept-usdc-payments"],
 };
 
 export type SectionPage = (typeof SECTION_PAGES)[number];

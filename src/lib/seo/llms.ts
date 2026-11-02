@@ -86,6 +86,8 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   "learn/accept-usdc-with-solana-pay": ["How to accept USDC with Solana Pay links", "Solana Pay transfer requests matched by a reference key per link, testing on Devnet, the API request and confirming each payment"],
   "learn/confirm-stablecoin-payments": ["How to confirm a stablecoin payment on your server", "signed webhooks (X-Cosmos-Signature, HMAC-SHA256), retries and redelivery, handling each event once, and checking a payment yourself"],
   "learn/usdt0-from-stellar": ["How to send USDT0 from Stellar to EVM networks", "21 routes through LayerZero, fees in XLM, about 27 minutes to deliver, and each step from quote to delivery"],
+  "learn/accept-usdc-on-stellar": ["How to accept USDC on Stellar with SEP-7 links", "SEP-7 links matched by a memo per link, the USDC trustline the receiving account needs, testing on Testnet and the API request"],
+  "learn/accept-usdc-on-monad": ["How to accept USDC on Monad with EIP-681 links", "EIP-681 links to a deposit address per payment that can only forward to the merchant, the relay fee, required amounts and testing"],
 };
 
 /** /llms.txt of the company site (cosmospay.lat). */
