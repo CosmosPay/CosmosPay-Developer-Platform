@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.25.0] - 2026-11-02
+
+### Features
+- Let link-preview crawlers fetch the web wallet (67ed493)
+
 ## [0.24.0] - 2026-11-02
 
 ### Features
