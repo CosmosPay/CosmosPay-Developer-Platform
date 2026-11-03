@@ -559,7 +559,7 @@ export default {
           t: "Online stores",
           label: "Stablecoins next to your other payment methods, with one payment intent per order.",
           tags: ["Payments API", "Webhooks", "Hosted checkout"],
-          story: "The store’s server creates a payment intent for each order and sends the customer to the hosted checkout, or opens it from a pay button. The customer pays from their own wallet, and a signed webhook marks the order paid. With protected payments (coming soon), the money waits in an on-chain contract until the order ships.",
+          story: "The store’s server creates a payment intent for each order and sends the customer to the hosted checkout, or opens it from a pay button. The customer pays from their own wallet, and a signed webhook marks the order paid. With protected payments, the funds wait in a smart contract until the order is delivered.",
         },
         services: {
           t: "Services across borders",
@@ -662,8 +662,6 @@ export default {
       cta: "Contact sales",
     },
     footnote: "* The payer’s wallet pays the network fee; on Monad, the deposit relay’s fee is deducted and shown at checkout. Essentials and Growth add full API access, lower rates and higher limits on organizations, members and API keys.",
-    /* Beside a service that is offered and priced but not built yet (protected payments). */
-    soon: "Coming soon",
     compareTitle: "Compare plans",
     orgsRow: "Organizations",
     seatsRow: "Members per organization",

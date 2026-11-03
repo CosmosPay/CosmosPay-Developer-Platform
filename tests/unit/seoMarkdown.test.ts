@@ -184,23 +184,26 @@ test('the plans and every service rate come from src/lib/plans.ts', () => {
   assert.ok(stats.includes(`- ${NETWORK_IDS.length} networks to swap between`));
 });
 
-test('protected payments are named only beside their "coming soon", and escrow never, in every language', () => {
+test('protected payments are never labelled "coming soon", and escrow is never said, in every language', () => {
   const PROTECTED = /protected payments?|pagos? protegidos?|pagamentos? protegidos?|paiements? protégés?|geschützte[nr]? Zahlung(en)?|सुरक्षित भुगतान|受保护付款/i;
   const ESCROW = /escrow|एस्क्रो|担保/i;
+  // Each language's word for "coming soon" (the gateway's plugins tag still uses it).
+  const SOON: Record<string, RegExp> = { en: /coming soon/i, es: /próximamente/i, pt: /em breve/i, fr: /bientôt/i, de: /demnächst/i, hi: /जल्द आ/, zh: /即将/ };
+  let named = 0;
   for (const { area, path, lang, md: text } of ALL) {
-    const labels = [LANDING[lang as keyof typeof LANDING].soon, messages[lang as keyof typeof messages].pricing.soon].map((l) => l.toLowerCase());
-    const lines = text.split('\n');
-    lines.forEach((line, i) => {
+    const soon = SOON[lang];
+    assert.ok(soon, lang);
+    for (const line of text.split('\n')) {
       // Escrow.com is the provider protected payments are priced against (its name and its domain,
       // in the source link); the old name is gone.
       assert.ok(!ESCROW.test(line.replace(/Escrow\.com/gi, '')), `${area} ${path} ${lang} says escrow: ${line}`);
-      if (!PROTECTED.test(line)) return;
-      // A question whose answer opens with the label (the protected payment FAQ) counts as labelled.
-      const next = lines.slice(i + 1).find((l) => l.trim() !== '') ?? '';
-      const labelled = (l: string) => labels.some((label) => l.toLowerCase().includes(label));
-      assert.ok(labelled(line) || (/^#+ /.test(line) && labelled(next)), `${area} ${path} ${lang}: ${line}`);
-    });
+      if (!PROTECTED.test(line)) continue;
+      named++;
+      assert.ok(!soon.test(line), `${area} ${path} ${lang}: ${line}`);
+    }
   }
+  // The pages still name them, so the check above reads something.
+  assert.ok(named > 0);
 });
 
 test('each page carries what its page shows: every question, fact and guide, in order', () => {

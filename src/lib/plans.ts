@@ -115,8 +115,7 @@ export function swapFeeRange(): { max: string; min: string } {
 
 /* Rates that are the same on every plan, in percent: the protected payment's surcharge per
    payment and the private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 18). Protected
-   payments are offered at this price but not built yet (product owner, 2026-11-01): every surface
-   that shows them says they are coming soon. */
+   payments are available at this price (product owner, 2026-11-03), with no "coming soon" label. */
 export const PROTECTED_PAYMENT_FEE_PCT = 1.95;
 export const PRIVATE_PAYMENT_FEE_PCT = 0.18;
 

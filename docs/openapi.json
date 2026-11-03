@@ -13444,6 +13444,2021 @@
         ]
       }
     },
+    "/v1/protected-payments": {
+      "post": {
+        "description": "Creates a protected payment in USDC on the key’s network, with the release model and the deadline policy of your choice, and answers `checkoutUrl`, the page to send the buyer. Nothing happens on-chain yet: the contract is deployed when the buyer first funds it. Emits `PROTECTED_PAYMENT_CREATED`; the same `Idempotency-Key` with the same request returns the stored payment.\n\nRequires the `payments:write` scope.",
+        "operationId": "ProtectedPaymentsController_create_v1",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional idempotency key. A retry with the same key and the same request returns the stored payment unchanged; the same key with a different request is 409 idempotency_conflict. Takes precedence over body.idempotencyKey.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "order-1042"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProtectedPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: the body fails validation, the buyer is the merchant, or a party is one of the platform accounts. `invalid_amount`: outside 1 to 1000000 USDC.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_amount": {
+                    "summary": "invalid_amount: Not a Stellar amount, or not greater than zero",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "amount must be from 1 to 1000000 USDC",
+                      "path": "/v1/protected-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "`idempotency_conflict`: This Idempotency-Key was already used for a different request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "idempotency_conflict": {
+                    "summary": "idempotency_conflict: This Idempotency-Key was already used for a different request",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "idempotency_conflict",
+                      "error": "Conflict",
+                      "message": "This Idempotency-Key was already used for a different protected payment. Use a new key for a new request.",
+                      "path": "/v1/protected-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "Protected payments are not configured on the key’s network, or the deadline policy needs a resolver this deployment does not have.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "misconfigured": {
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "REFUND_BUYER is not available on testnet: it needs the automatic resolver key, TRUSTLESS_WORK_RESOLVER_SECRET_TESTNET.",
+                      "path": "/v1/protected-payments",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a protected payment (the buyer pays into a contract until delivery)",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payments:create",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ]
+      },
+      "get": {
+        "description": "Newest first, as `{ data, total, take, skip }` with `take` up to 100 (default 20). Only payments on the key’s network, narrowed by `status` when given, as this service last read them from their contracts.\n\nRequires the `payments:read` scope.",
+        "operationId": "ProtectedPaymentsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Only protected payments in this status.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CREATED",
+                "AWAITING_FUNDING",
+                "FUNDED",
+                "SHIPPED",
+                "APPROVED",
+                "RELEASED",
+                "DISPUTED",
+                "RESOLVED",
+                "EXPIRED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "How many to return per page (1 to 100).",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "How many to skip before the page starts (newest first).",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List your protected payments",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
+      }
+    },
+    "/v1/protected-payments/{id}": {
+      "get": {
+        "description": "The payment as this service last read it from its contract (the sync job reads open contracts every 30 seconds), with its fees and `checkoutUrl`.\n\nRequires the `payments:read` scope.",
+        "operationId": "ProtectedPaymentsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Get one of your protected payments",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
+      }
+    },
+    "/v1/protected-payments/{id}/ship": {
+      "post": {
+        "description": "For a FUNDED payment: Trustless Work builds the milestone change to `shipped` with `evidence`, which this service checks is exactly that call and records for 15 minutes. Sign it with `merchantAddress` and send it to `POST /v1/protected-payments/submit`.\n\nRequires the `payments:write` scope.",
+        "operationId": "ProtectedPaymentsController_ship_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShipProtectedPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: the payment is not in a state this action can be built from, or the release model gives it to the other party. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot ship a protected payment that is AWAITING_FUNDING.",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/ship",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "Trustless Work refused the request: amount must be a number",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/ship",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Build the merchant’s \"shipped\" mark, with tracking evidence",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payments:build",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ]
+      }
+    },
+    "/v1/protected-payments/{id}/approve": {
+      "post": {
+        "description": "Only where the merchant is the approver (`MERCHANT_RELEASES`), for a FUNDED or SHIPPED payment. Answers the checked envelope for `merchantAddress` to sign and submit.\n\nRequires the `payments:write` scope.",
+        "operationId": "ProtectedPaymentsController_approve_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: the payment is not in a state this action can be built from, or the release model gives it to the other party. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot approve a protected payment that is AWAITING_FUNDING.",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/approve",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "Trustless Work refused the request: amount must be a number",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/approve",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Build the merchant’s approval of delivery (MERCHANT_RELEASES)",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payments:build",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ]
+      }
+    },
+    "/v1/protected-payments/{id}/release": {
+      "post": {
+        "description": "Where the merchant releases (`MERCHANT_RELEASES`, `BUYER_APPROVES_MERCHANT_RELEASES`), for an APPROVED payment. The contract pays the amount less 1.95% to `merchantAddress`. Answers the checked envelope to sign and submit.\n\nRequires the `payments:write` scope.",
+        "operationId": "ProtectedPaymentsController_release_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: the payment is not in a state this action can be built from, or the release model gives it to the other party. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot release a protected payment that is AWAITING_FUNDING.",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/release",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "Trustless Work refused the request: amount must be a number",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/release",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Build the release of the funds to the merchant",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payments:build",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ]
+      }
+    },
+    "/v1/protected-payments/{id}/dispute": {
+      "post": {
+        "description": "For a FUNDED, SHIPPED or APPROVED payment: answers the dispute for `merchantAddress` to sign and submit. `reason` is kept by this service only; Cosmos Pay ops (or the automatic resolver, under an auto deadline policy) then splits the balance between the buyer and the merchant.\n\nRequires the `payments:write` scope.",
+        "operationId": "ProtectedPaymentsController_dispute_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeProtectedPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: the payment is not in a state this action can be built from, or the release model gives it to the other party. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot dispute a protected payment that is AWAITING_FUNDING.",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/dispute",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "Trustless Work refused the request: amount must be a number",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/dispute",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Build the merchant’s dispute",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payments:build",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ]
+      }
+    },
+    "/v1/protected-payments/{id}/cancel": {
+      "post": {
+        "description": "Only CREATED, or AWAITING_FUNDING with an empty contract. Refused while a deposit the buyer was handed can still land (it lapses within 15 minutes). Emits `PROTECTED_PAYMENT_CANCELLED`.\n\nRequires the `payments:write` scope.",
+        "operationId": "ProtectedPaymentsController_cancel_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: The resource cannot move to that state from the one it is in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot cancel a protected payment that is FUNDED: only one nobody funded can be cancelled.",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/cancel",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`operation_in_flight`: A conflicting operation is still settling",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "The buyer holds a deposit for this protected payment that can still land. Retry once it expires (15 minutes at most).",
+                      "path": "/v1/protected-payments/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/cancel",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Cancel a protected payment nobody funded",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ]
+      }
+    },
+    "/v1/protected-payments/submit": {
+      "post": {
+        "description": "Relays `xdr` through Trustless Work only when it is a signed copy of a transaction built for that payment, for `merchantAddress`, on the key’s network, before it expires. Relayed once: the answer is stored and a replay returns it; on `SUCCESS` the payment moves and its webhook is emitted.\n\nRequires the `payments:write` scope.",
+        "operationId": "ProtectedPaymentsController_submit_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitProtectedPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentSubmitEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: `xdr` is not an envelope, is a fee bump or carries no signature. `invalid_state_transition`: it expired before it was submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "xdr carries no signatures; sign the transaction before submitting it",
+                      "path": "/v1/protected-payments/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "This protected payment transaction expired before it was submitted and can no longer be relayed. Build a new one.",
+                      "path": "/v1/protected-payments/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "`operation_in_flight`: A conflicting operation is still settling",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "This protected payment transaction is already being submitted. Wait for that submit to finish, then submit it again to read its result.",
+                      "path": "/v1/protected-payments/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Submit a merchant-signed protected payment transaction",
+        "tags": [
+          "Protected payments"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payments:submit",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:write"
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ]
+      }
+    },
+    "/v1/protected-payment-links/{id}": {
+      "get": {
+        "description": "For the hosted checkout: the amount, the merchant, the release model, the deadlines, the status and `buyerActions`, what the buyer may do now. **The id is the capability**: nothing about the merchant’s account or `reference` is returned. Answered with `Cache-Control: no-store` and budgeted per client address.",
+        "operationId": "ProtectedPaymentLinksController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The protected payment id (a uuid), as in the link `https://payments.cosmospay.lat/protected/<id>`.",
+            "schema": {
+              "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentLinkEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "description": "No protected payment has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Protected payment 3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10 not found",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a protected payment as its buyer sees it (no API key)",
+        "tags": [
+          "Protected payment links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payment-links:read",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/protected-payment-links/{id}/fund": {
+      "post": {
+        "description": "The first call deploys the payment’s contract (Cosmos Pay pays for it) and binds `buyer`, once Horizon shows it holds the amount in USDC; a different buyer afterwards, or one the merchant did not name, is 409. Answers the checked deposit for `buyer` to sign and send to the link’s submit, before the funding window closes.",
+        "operationId": "ProtectedPaymentLinksController_fund_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The protected payment id (a uuid), as in the link `https://payments.cosmospay.lat/protected/<id>`.",
+            "schema": {
+              "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FundProtectedPaymentLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentLinkBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: `buyer` is the merchant, a platform account or an account that does not exist. `invalid_state_transition`: the payment is no longer open for funding. `trustline_missing`: the buyer does not trust USDC, or the merchant cannot receive it. `insufficient_balance`: the buyer holds less than the amount. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot fund a protected payment that is FUNDED.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/fund",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "trustline_missing": {
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "trustline_missing",
+                      "error": "Bad Request",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5, so it cannot receive the swap. Only that account can add the trustline, by signing a transaction of its own: ask its owner to add it, then try again.",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "insufficient_balance": {
+                    "summary": "insufficient_balance: The source account cannot cover the amount, or the XLM reserve the transaction needs",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "insufficient_balance",
+                      "error": "Bad Request",
+                      "message": "Account GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76 holds 20 USDC; this protected payment takes 125.5.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/fund",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The payment provider rejected the request.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No protected payment has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Protected payment 3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10 not found",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/fund",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`protected_payment_buyer_mismatch`: another buyer is bound. `operation_in_flight`: the contract is being deployed by another request; retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "protected_payment_buyer_mismatch": {
+                    "summary": "protected_payment_buyer_mismatch: The protected payment is bound to another buyer",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "protected_payment_buyer_mismatch",
+                      "error": "Conflict",
+                      "message": "This protected payment is bound to another buyer: only GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76 may fund it.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/fund",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "This protected payment is being deployed by another request. Retry in a few seconds.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/fund",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Build the buyer’s deposit into the protected payment (no API key)",
+        "tags": [
+          "Protected payment links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payment-links:build",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Horizon",
+          "Trustless Work"
+        ],
+        "security": []
+      }
+    },
+    "/v1/protected-payment-links/{id}/approve": {
+      "post": {
+        "description": "Where the buyer approves (`BUYER_RELEASES`, `BUYER_APPROVES_MERCHANT_RELEASES`), for a FUNDED or SHIPPED payment. Answers the checked envelope for the bound buyer to sign and send to the link’s submit.",
+        "operationId": "ProtectedPaymentLinksController_approve_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The protected payment id (a uuid), as in the link `https://payments.cosmospay.lat/protected/<id>`.",
+            "schema": {
+              "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentLinkBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: the payment is not in a state this action can be built from, or the release model gives it to the merchant. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot approve a protected payment that is RELEASED.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/approve",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "Trustless Work refused the request: amount must be a number",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/approve",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No protected payment has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Protected payment 3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10 not found",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/approve",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Build the buyer’s confirmation of delivery (no API key)",
+        "tags": [
+          "Protected payment links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payment-links:build",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ],
+        "security": []
+      }
+    },
+    "/v1/protected-payment-links/{id}/release": {
+      "post": {
+        "description": "Only under `BUYER_RELEASES`, for an APPROVED payment: the contract pays the merchant the amount less 1.95%. Answers the checked envelope for the bound buyer to sign and send to the link’s submit.",
+        "operationId": "ProtectedPaymentLinksController_release_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The protected payment id (a uuid), as in the link `https://payments.cosmospay.lat/protected/<id>`.",
+            "schema": {
+              "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentLinkBuildEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: the payment is not in a state this action can be built from, or the release model gives it to the merchant. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot release a protected payment that is RELEASED.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/release",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "Trustless Work refused the request: amount must be a number",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/release",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No protected payment has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Protected payment 3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10 not found",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/release",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Build the buyer’s release of the funds (no API key)",
+        "tags": [
+          "Protected payment links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payment-links:build",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ],
+        "security": []
+      }
+    },
+    "/v1/protected-payment-links/{id}/dispute": {
+      "post": {
+        "description": "Where the buyer holds a role in the contract, answers `built`, the dispute for the buyer to sign and submit. Under `MERCHANT_RELEASES` the buyer holds none, so Cosmos Pay’s platform key opens it (`submitted`) once `signature` proves the buyer signed the link’s `disputeChallenge` before `expiresAt`.",
+        "operationId": "ProtectedPaymentLinksController_dispute_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The protected payment id (a uuid), as in the link `https://payments.cosmospay.lat/protected/<id>`.",
+            "schema": {
+              "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeProtectedPaymentLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentLinkDisputeEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_state_transition`: the payment is not funded, or already settled. `protected_payment_signature_invalid`: the signed message is missing, does not verify against the buyer, or expired. `provider_error`: Trustless Work refused the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Cannot dispute a protected payment that is RELEASED.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/dispute",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "protected_payment_signature_invalid": {
+                    "summary": "protected_payment_signature_invalid: The buyer's signed message does not verify, or it expired",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "protected_payment_signature_invalid",
+                      "error": "Bad Request",
+                      "message": "The signature does not verify against the payment's buyer address.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/dispute",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The upstream provider refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The payment provider rejected the request.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No protected payment has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Protected payment 3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10 not found",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/dispute",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Open the buyer’s dispute (no API key)",
+        "tags": [
+          "Protected payment links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payment-links:build",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ],
+        "security": []
+      }
+    },
+    "/v1/protected-payment-links/{id}/submit": {
+      "post": {
+        "description": "Relays `xdr` through Trustless Work only when it is a signed copy of a transaction this link built for the bound buyer, before it expires. Relayed once: the answer is stored and a replay returns it; on `SUCCESS` the payment moves.",
+        "operationId": "ProtectedPaymentLinksController_submit_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The protected payment id (a uuid), as in the link `https://payments.cosmospay.lat/protected/<id>`.",
+            "schema": {
+              "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitProtectedPaymentLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedPaymentLinkSubmitEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: `xdr` is not an envelope, is a fee bump or carries no signature. `invalid_state_transition`: it expired before it was submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "xdr carries no signatures; sign the transaction before submitting it",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The resource cannot move to that state from the one it is in",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "This protected payment transaction expired before it was submitted and can no longer be relayed. Build a new one.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No protected payment has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Protected payment 3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10 not found",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`operation_in_flight`: A conflicting operation is still settling",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight: A conflicting operation is still settling",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "This protected payment transaction is already being submitted. Wait for that submit to finish, then submit it again to read its result.",
+                      "path": "/v1/protected-payment-links/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10/submit",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Submit a buyer-signed protected payment transaction (no API key)",
+        "tags": [
+          "Protected payment links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "protected-payment-links:submit",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Trustless Work"
+        ],
+        "security": []
+      }
+    },
     "/v1/zk-payments/config": {
       "get": {
         "description": "What a dashboard needs to set a merchant up on the confidential token (register, read the balance, withdraw). `enabled` is false on a network where private payments do not run yet (mainnet today). The same shape as the keyless `GET /v1/zk-checkout/config?network=`.\n\nRequires the `payments:read` scope.",
@@ -15592,6 +17607,14 @@
     {
       "name": "payment-intents",
       "description": "Create, fetch, update, cancel and validate payment intents on Stellar (SEP-7), Solana (Solana Pay) and Monad (EIP-681)."
+    },
+    {
+      "name": "Protected payments",
+      "description": "Payments held until delivery. Create a protected payment, choose who confirms delivery and what happens at the deadline, then ship, approve, release or dispute it. The buyer pays USDC into a smart contract on Stellar, and the funds are released to your wallet on the terms you chose."
+    },
+    {
+      "name": "Protected payment links",
+      "description": "The buyer side of a protected payment, called from the hosted checkout without an API key: read the payment, fund it from a Stellar wallet, confirm delivery, release it or open a dispute."
     },
     {
       "name": "swaps",
@@ -21772,7 +23795,17 @@
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
                 "CROSS_CHAIN_SWAP_EXPIRED",
-                "ZK_PAYMENT_SUCCEEDED"
+                "ZK_PAYMENT_SUCCEEDED",
+                "PROTECTED_PAYMENT_CREATED",
+                "PROTECTED_PAYMENT_FUNDED",
+                "PROTECTED_PAYMENT_SHIPPED",
+                "PROTECTED_PAYMENT_APPROVED",
+                "PROTECTED_PAYMENT_RELEASED",
+                "PROTECTED_PAYMENT_DISPUTED",
+                "PROTECTED_PAYMENT_RESOLVED",
+                "PROTECTED_PAYMENT_DEADLINE_PASSED",
+                "PROTECTED_PAYMENT_EXPIRED",
+                "PROTECTED_PAYMENT_CANCELLED"
               ]
             }
           }
@@ -21849,7 +23882,17 @@
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
                 "CROSS_CHAIN_SWAP_EXPIRED",
-                "ZK_PAYMENT_SUCCEEDED"
+                "ZK_PAYMENT_SUCCEEDED",
+                "PROTECTED_PAYMENT_CREATED",
+                "PROTECTED_PAYMENT_FUNDED",
+                "PROTECTED_PAYMENT_SHIPPED",
+                "PROTECTED_PAYMENT_APPROVED",
+                "PROTECTED_PAYMENT_RELEASED",
+                "PROTECTED_PAYMENT_DISPUTED",
+                "PROTECTED_PAYMENT_RESOLVED",
+                "PROTECTED_PAYMENT_DEADLINE_PASSED",
+                "PROTECTED_PAYMENT_EXPIRED",
+                "PROTECTED_PAYMENT_CANCELLED"
               ]
             }
           },
@@ -21951,7 +23994,17 @@
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
                 "CROSS_CHAIN_SWAP_EXPIRED",
-                "ZK_PAYMENT_SUCCEEDED"
+                "ZK_PAYMENT_SUCCEEDED",
+                "PROTECTED_PAYMENT_CREATED",
+                "PROTECTED_PAYMENT_FUNDED",
+                "PROTECTED_PAYMENT_SHIPPED",
+                "PROTECTED_PAYMENT_APPROVED",
+                "PROTECTED_PAYMENT_RELEASED",
+                "PROTECTED_PAYMENT_DISPUTED",
+                "PROTECTED_PAYMENT_RESOLVED",
+                "PROTECTED_PAYMENT_DEADLINE_PASSED",
+                "PROTECTED_PAYMENT_EXPIRED",
+                "PROTECTED_PAYMENT_CANCELLED"
               ]
             }
           },
@@ -22065,7 +24118,17 @@
                 "CROSS_CHAIN_SWAP_REFUNDED",
                 "CROSS_CHAIN_SWAP_FAILED",
                 "CROSS_CHAIN_SWAP_EXPIRED",
-                "ZK_PAYMENT_SUCCEEDED"
+                "ZK_PAYMENT_SUCCEEDED",
+                "PROTECTED_PAYMENT_CREATED",
+                "PROTECTED_PAYMENT_FUNDED",
+                "PROTECTED_PAYMENT_SHIPPED",
+                "PROTECTED_PAYMENT_APPROVED",
+                "PROTECTED_PAYMENT_RELEASED",
+                "PROTECTED_PAYMENT_DISPUTED",
+                "PROTECTED_PAYMENT_RESOLVED",
+                "PROTECTED_PAYMENT_DEADLINE_PASSED",
+                "PROTECTED_PAYMENT_EXPIRED",
+                "PROTECTED_PAYMENT_CANCELLED"
               ]
             }
           }
@@ -22165,7 +24228,17 @@
               "CROSS_CHAIN_SWAP_REFUNDED",
               "CROSS_CHAIN_SWAP_FAILED",
               "CROSS_CHAIN_SWAP_EXPIRED",
-              "ZK_PAYMENT_SUCCEEDED"
+              "ZK_PAYMENT_SUCCEEDED",
+              "PROTECTED_PAYMENT_CREATED",
+              "PROTECTED_PAYMENT_FUNDED",
+              "PROTECTED_PAYMENT_SHIPPED",
+              "PROTECTED_PAYMENT_APPROVED",
+              "PROTECTED_PAYMENT_RELEASED",
+              "PROTECTED_PAYMENT_DISPUTED",
+              "PROTECTED_PAYMENT_RESOLVED",
+              "PROTECTED_PAYMENT_DEADLINE_PASSED",
+              "PROTECTED_PAYMENT_EXPIRED",
+              "PROTECTED_PAYMENT_CANCELLED"
             ],
             "example": "PAYMENT_INTENT_SUCCEEDED",
             "description": "Type of the event delivered."
@@ -28241,6 +30314,910 @@
           "ledger"
         ]
       },
+      "CreateProtectedPaymentDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "example": "125.50",
+            "description": "The amount in USDC, a decimal with up to 7 places, from 1 to 1000000. The fees (1.95% by default) come out of what the merchant receives."
+          },
+          "releaseModel": {
+            "type": "string",
+            "enum": [
+              "BUYER_RELEASES",
+              "MERCHANT_RELEASES",
+              "BUYER_APPROVES_MERCHANT_RELEASES"
+            ],
+            "description": "Who approves delivery and who releases the money: BUYER_RELEASES (the buyer approves and releases), MERCHANT_RELEASES (the merchant does both), BUYER_APPROVES_MERCHANT_RELEASES (the buyer approves, the merchant collects)."
+          },
+          "deadlinePolicy": {
+            "type": "string",
+            "enum": [
+              "MANUAL_REVIEW",
+              "REFUND_BUYER",
+              "RELEASE_MERCHANT"
+            ],
+            "description": "What happens when the delivery deadline passes on a funded payment that was not released: MANUAL_REVIEW (Cosmos Pay ops decides), REFUND_BUYER or RELEASE_MERCHANT (decided automatically)."
+          },
+          "deliveryWindowHours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 2160,
+            "example": 168,
+            "description": "Hours from funding until the delivery deadline (1 to 2160, 90 days)."
+          },
+          "fundingWindowHours": {
+            "type": "number",
+            "default": 72,
+            "minimum": 1,
+            "maximum": 720,
+            "description": "Hours the buyer has to fund it (1 to 720); unfunded after that, it expires."
+          },
+          "merchantAddress": {
+            "type": "string",
+            "example": "GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76",
+            "description": "The Stellar account (G...) that receives the money. It must trust USDC."
+          },
+          "buyerAddress": {
+            "type": "string",
+            "description": "The buyer’s Stellar account (G...), when the merchant knows it. Set, only this account may fund the payment; unset, the first account that funds it is bound as the buyer."
+          },
+          "title": {
+            "type": "string",
+            "example": "Order #1042",
+            "description": "Shown to the buyer and written into the contract."
+          },
+          "description": {
+            "type": "string",
+            "description": "Shown to the buyer and written into the contract."
+          },
+          "reference": {
+            "type": "string",
+            "description": "The merchant’s own reference. Never shown to the buyer, never on-chain."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "Optional idempotency key. Prefer the `Idempotency-Key` header; the same key with the same request returns the stored payment, with another request it is 409 `idempotency_conflict`."
+          }
+        },
+        "description": "A protected payment to create: the buyer pays USDC into a Trustless Work contract and it is released to the merchant on the release model chosen here.",
+        "required": [
+          "amount",
+          "releaseModel",
+          "deadlinePolicy",
+          "deliveryWindowHours",
+          "merchantAddress",
+          "title"
+        ]
+      },
+      "ProtectedPaymentFeesEntity": {
+        "type": "object",
+        "properties": {
+          "trustlessWorkBps": {
+            "type": "number",
+            "example": 30,
+            "description": "Trustless Work’s fee, in basis points."
+          },
+          "platformBps": {
+            "type": "number",
+            "example": 165,
+            "description": "Cosmos Pay’s fee, in basis points."
+          },
+          "totalBps": {
+            "type": "number",
+            "example": 195,
+            "description": "Both fees, in basis points."
+          },
+          "merchantReceives": {
+            "type": "string",
+            "example": "123.05275",
+            "description": "What the merchant receives on a release, in USDC, after both fees."
+          }
+        },
+        "description": "What the fees take: Trustless Work’s fixed 0.30% and Cosmos Pay’s share, deducted on-chain from a release and from each part of a dispute resolution.",
+        "required": [
+          "trustlessWorkBps",
+          "platformBps",
+          "totalBps",
+          "merchantReceives"
+        ]
+      },
+      "ProtectedPaymentEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+            "format": "uuid"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "testnet"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "AWAITING_FUNDING",
+              "FUNDED",
+              "SHIPPED",
+              "APPROVED",
+              "RELEASED",
+              "DISPUTED",
+              "RESOLVED",
+              "EXPIRED",
+              "CANCELLED"
+            ]
+          },
+          "releaseModel": {
+            "type": "string",
+            "enum": [
+              "BUYER_RELEASES",
+              "MERCHANT_RELEASES",
+              "BUYER_APPROVES_MERCHANT_RELEASES"
+            ]
+          },
+          "deadlinePolicy": {
+            "type": "string",
+            "enum": [
+              "MANUAL_REVIEW",
+              "REFUND_BUYER",
+              "RELEASE_MERCHANT"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "example": "Order #1042"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string",
+            "example": "125.5",
+            "description": "In USDC, up to 7 decimals."
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "assetIssuer": {
+            "type": "string",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+          },
+          "merchantAddress": {
+            "type": "string",
+            "example": "GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76",
+            "description": "Receives the money."
+          },
+          "buyerAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Named by the merchant, or bound by the first fund."
+          },
+          "platformFeeBps": {
+            "type": "number",
+            "example": 165,
+            "description": "Cosmos Pay’s fee, in basis points."
+          },
+          "contractId": {
+            "type": "string",
+            "nullable": true,
+            "example": "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+            "description": "The Trustless Work contract (C...), once deployed by the first fund."
+          },
+          "fundingExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveryWindowHours": {
+            "type": "number",
+            "example": 168
+          },
+          "deliveryDeadlineAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Funding time plus `deliveryWindowHours`."
+          },
+          "deadlinePassedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "evidence": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the merchant shipped with (tracking number or URL)."
+          },
+          "fundedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "shippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "approvedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "releasedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "disputedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "resolution": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": {
+              "buyer": "100",
+              "merchant": "25.5",
+              "decidedBy": "ops@cosmospay.lat"
+            },
+            "description": "How a dispute split the balance, in USDC before fees."
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fees": {
+            "$ref": "#/components/schemas/ProtectedPaymentFeesEntity"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "platformAddress": {
+            "type": "string",
+            "example": "GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76",
+            "description": "Cosmos Pay’s platform account."
+          },
+          "disputeResolverAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "The dispute resolver the contract names (ops or the automatic resolver)."
+          },
+          "disputedBy": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "BUYER",
+              "MERCHANT",
+              "DEADLINE"
+            ]
+          },
+          "disputeReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checkoutUrl": {
+            "type": "string",
+            "example": "https://payments.cosmospay.lat/protected/3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+            "description": "The buyer’s page for this payment: send this link to the buyer."
+          }
+        },
+        "description": "A protected payment as its merchant reads it: the row this service keeps, mirrored from the Trustless Work contract by the sync job.",
+        "required": [
+          "id",
+          "network",
+          "status",
+          "releaseModel",
+          "deadlinePolicy",
+          "title",
+          "description",
+          "amount",
+          "asset",
+          "assetIssuer",
+          "merchantAddress",
+          "buyerAddress",
+          "platformFeeBps",
+          "contractId",
+          "fundingExpiresAt",
+          "deliveryWindowHours",
+          "deliveryDeadlineAt",
+          "deadlinePassedAt",
+          "evidence",
+          "fundedAt",
+          "shippedAt",
+          "approvedAt",
+          "releasedAt",
+          "disputedAt",
+          "resolvedAt",
+          "resolution",
+          "cancelledAt",
+          "createdAt",
+          "fees",
+          "reference",
+          "platformAddress",
+          "disputeResolverAddress",
+          "disputedBy",
+          "disputeReason",
+          "lastSyncedAt",
+          "updatedAt",
+          "checkoutUrl"
+        ]
+      },
+      "ProtectedPaymentListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProtectedPaymentEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 20
+          },
+          "skip": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "ShipProtectedPaymentDto": {
+        "type": "object",
+        "properties": {
+          "evidence": {
+            "type": "string",
+            "example": "DHL 1234567890",
+            "description": "What the payment shipped with: a tracking number or URL, written into the contract as the milestone’s evidence."
+          }
+        },
+        "required": [
+          "evidence"
+        ]
+      },
+      "ProtectedPaymentBuildEntity": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "DEPLOY",
+              "FUND",
+              "SHIP",
+              "APPROVE",
+              "RELEASE",
+              "DISPUTE",
+              "RESOLVE"
+            ]
+          },
+          "xdr": {
+            "type": "string",
+            "example": "AAAAAgAAAAB…",
+            "description": "The unsigned transaction (base64 envelope XDR), checked to be exactly the requested call. Sign it unchanged and send it to the submit route."
+          },
+          "txHash": {
+            "type": "string",
+            "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Submit it before this (15 minutes at most)."
+          },
+          "protectedPayment": {
+            "$ref": "#/components/schemas/ProtectedPaymentEntity"
+          }
+        },
+        "required": [
+          "action",
+          "xdr",
+          "txHash",
+          "expiresAt",
+          "protectedPayment"
+        ]
+      },
+      "DisputeProtectedPaymentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Why, kept by Cosmos Pay for the review: Trustless Work V1 takes no reason."
+          }
+        }
+      },
+      "SubmitProtectedPaymentDto": {
+        "type": "object",
+        "properties": {
+          "protectedPaymentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The protected payment the transaction was built for."
+          },
+          "xdr": {
+            "type": "string",
+            "description": "The transaction a build on this service returned, signed unchanged (base64 envelope XDR)."
+          }
+        },
+        "required": [
+          "protectedPaymentId",
+          "xdr"
+        ]
+      },
+      "ProtectedPaymentSubmitEntity": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "DEPLOY",
+              "FUND",
+              "SHIP",
+              "APPROVE",
+              "RELEASE",
+              "DISPUTE",
+              "RESOLVE"
+            ]
+          },
+          "txHash": {
+            "type": "string",
+            "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          },
+          "status": {
+            "type": "string",
+            "example": "SUCCESS",
+            "description": "Trustless Work’s answer: `SUCCESS` (the payment moved), or `FAILED`."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "example": "The transaction has been successfully sent to the Stellar network."
+          },
+          "protectedPayment": {
+            "$ref": "#/components/schemas/ProtectedPaymentEntity"
+          }
+        },
+        "required": [
+          "action",
+          "txHash",
+          "status",
+          "message",
+          "protectedPayment"
+        ]
+      },
+      "ProtectedPaymentDisputeChallengeEntity": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Cosmos Pay protected payment dispute\npayment: 3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10\naccount: GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76\nnetwork: testnet\nexpires: 2026-11-02T18:10:00.000Z"
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-02T18:10:00.000Z"
+          }
+        },
+        "description": "The message a buyer without an on-chain role signs to have the platform open a dispute.",
+        "required": [
+          "message",
+          "expiresAt"
+        ]
+      },
+      "ProtectedPaymentLinkEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
+            "format": "uuid"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "testnet"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "AWAITING_FUNDING",
+              "FUNDED",
+              "SHIPPED",
+              "APPROVED",
+              "RELEASED",
+              "DISPUTED",
+              "RESOLVED",
+              "EXPIRED",
+              "CANCELLED"
+            ]
+          },
+          "releaseModel": {
+            "type": "string",
+            "enum": [
+              "BUYER_RELEASES",
+              "MERCHANT_RELEASES",
+              "BUYER_APPROVES_MERCHANT_RELEASES"
+            ]
+          },
+          "deadlinePolicy": {
+            "type": "string",
+            "enum": [
+              "MANUAL_REVIEW",
+              "REFUND_BUYER",
+              "RELEASE_MERCHANT"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "example": "Order #1042"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string",
+            "example": "125.5",
+            "description": "In USDC, up to 7 decimals."
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "assetIssuer": {
+            "type": "string",
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+          },
+          "merchantAddress": {
+            "type": "string",
+            "example": "GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76",
+            "description": "Receives the money."
+          },
+          "buyerAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Named by the merchant, or bound by the first fund."
+          },
+          "platformFeeBps": {
+            "type": "number",
+            "example": 165,
+            "description": "Cosmos Pay’s fee, in basis points."
+          },
+          "contractId": {
+            "type": "string",
+            "nullable": true,
+            "example": "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+            "description": "The Trustless Work contract (C...), once deployed by the first fund."
+          },
+          "fundingExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveryWindowHours": {
+            "type": "number",
+            "example": 168
+          },
+          "deliveryDeadlineAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Funding time plus `deliveryWindowHours`."
+          },
+          "deadlinePassedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "evidence": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the merchant shipped with (tracking number or URL)."
+          },
+          "fundedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "shippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "approvedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "releasedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "disputedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "resolution": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": {
+              "buyer": "100",
+              "merchant": "25.5",
+              "decidedBy": "ops@cosmospay.lat"
+            },
+            "description": "How a dispute split the balance, in USDC before fees."
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fees": {
+            "$ref": "#/components/schemas/ProtectedPaymentFeesEntity"
+          },
+          "buyerActions": {
+            "type": "array",
+            "example": [
+              "fund"
+            ],
+            "description": "What the buyer can do now, by the status and the release model.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "fund",
+                "approve",
+                "release",
+                "dispute"
+              ]
+            }
+          },
+          "disputeChallenge": {
+            "nullable": true,
+            "description": "Only when the buyer may dispute and holds no role in the contract (`MERCHANT_RELEASES`): sign `message` with the buyer’s key and send it to dispute.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProtectedPaymentDisputeChallengeEntity"
+              }
+            ]
+          }
+        },
+        "description": "A protected payment as its buyer sees it on the payment link, read without an API key.",
+        "required": [
+          "id",
+          "network",
+          "status",
+          "releaseModel",
+          "deadlinePolicy",
+          "title",
+          "description",
+          "amount",
+          "asset",
+          "assetIssuer",
+          "merchantAddress",
+          "buyerAddress",
+          "platformFeeBps",
+          "contractId",
+          "fundingExpiresAt",
+          "deliveryWindowHours",
+          "deliveryDeadlineAt",
+          "deadlinePassedAt",
+          "evidence",
+          "fundedAt",
+          "shippedAt",
+          "approvedAt",
+          "releasedAt",
+          "disputedAt",
+          "resolvedAt",
+          "resolution",
+          "cancelledAt",
+          "createdAt",
+          "fees",
+          "buyerActions",
+          "disputeChallenge"
+        ]
+      },
+      "FundProtectedPaymentLinkDto": {
+        "type": "object",
+        "properties": {
+          "buyer": {
+            "type": "string",
+            "example": "GARMB7W3FCR3GKIM3FLWVJASC2PUZ4VHUJZTNJVWWKNTCJNKO6TBCT76",
+            "description": "The buyer’s Stellar account (G...): it signs the deposit and must hold the amount in USDC. The first fund binds it as the buyer."
+          }
+        },
+        "required": [
+          "buyer"
+        ]
+      },
+      "ProtectedPaymentLinkBuildEntity": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "DEPLOY",
+              "FUND",
+              "SHIP",
+              "APPROVE",
+              "RELEASE",
+              "DISPUTE",
+              "RESOLVE"
+            ]
+          },
+          "xdr": {
+            "type": "string",
+            "example": "AAAAAgAAAAB…",
+            "description": "The unsigned transaction (base64 envelope XDR), checked to be exactly the requested call. Sign it unchanged and send it to the submit route."
+          },
+          "txHash": {
+            "type": "string",
+            "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Submit it before this (15 minutes at most)."
+          },
+          "protectedPayment": {
+            "$ref": "#/components/schemas/ProtectedPaymentLinkEntity"
+          }
+        },
+        "required": [
+          "action",
+          "xdr",
+          "txHash",
+          "expiresAt",
+          "protectedPayment"
+        ]
+      },
+      "DisputeProtectedPaymentLinkDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Why, kept by Cosmos Pay for the review: Trustless Work V1 takes no reason."
+          },
+          "signature": {
+            "type": "string",
+            "description": "Only when the buyer holds no role in the contract (`MERCHANT_RELEASES`): the buyer’s signature (base64) over `disputeChallenge.message` from the link’s read."
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-02T18:10:00.000Z",
+            "description": "With `signature`: `disputeChallenge.expiresAt`, exactly as it is in the signed message."
+          }
+        }
+      },
+      "ProtectedPaymentLinkSubmitEntity": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "DEPLOY",
+              "FUND",
+              "SHIP",
+              "APPROVE",
+              "RELEASE",
+              "DISPUTE",
+              "RESOLVE"
+            ]
+          },
+          "txHash": {
+            "type": "string",
+            "example": "5f0e8a1d3c7b9e2f4a6c8d0b1e3f5a7c9d2b4e6f8a0c1d3e5f7a9b2c4d6e8f0a"
+          },
+          "status": {
+            "type": "string",
+            "example": "SUCCESS",
+            "description": "Trustless Work’s answer: `SUCCESS` (the payment moved), or `FAILED`."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "example": "The transaction has been successfully sent to the Stellar network."
+          },
+          "protectedPayment": {
+            "$ref": "#/components/schemas/ProtectedPaymentLinkEntity"
+          }
+        },
+        "required": [
+          "action",
+          "txHash",
+          "status",
+          "message",
+          "protectedPayment"
+        ]
+      },
+      "ProtectedPaymentLinkDisputeEntity": {
+        "type": "object",
+        "properties": {
+          "built": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProtectedPaymentLinkBuildEntity"
+              }
+            ]
+          },
+          "submitted": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProtectedPaymentLinkSubmitEntity"
+              }
+            ]
+          }
+        },
+        "description": "A buyer’s dispute: an envelope to sign (`built`) when the buyer holds a role in the contract, or the dispute the platform opened (`submitted`) when it does not."
+      },
+      "SubmitProtectedPaymentLinkDto": {
+        "type": "object",
+        "properties": {
+          "xdr": {
+            "type": "string",
+            "description": "The transaction a build of this payment link returned, signed unchanged by the buyer (base64 envelope XDR)."
+          }
+        },
+        "required": [
+          "xdr"
+        ]
+      },
       "ZkTokenEntity": {
         "type": "object",
         "properties": {
@@ -30185,6 +33162,8 @@
               "plugin_rejected",
               "plugin_quota_exceeded",
               "plugin_failed",
+              "protected_payment_buyer_mismatch",
+              "protected_payment_signature_invalid",
               "misconfigured",
               "internal_error"
             ],

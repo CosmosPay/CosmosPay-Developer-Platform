@@ -1,0 +1,155 @@
+---
+title: Protected payments
+description: Payments held until delivery. Create a protected payment, choose
+  who confirms delivery and what happens at the deadline, then ship, approve,
+  release or dispute it. The buyer pays USDC into a smart contract on Stellar,
+  and the funds are released to your wallet on the terms you chose.
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: List your protected payments
+      url: '#list-your-protected-payments'
+    - depth: 2
+      title: Create a protected payment (the buyer pays into a contract until
+        delivery)
+      url: '#create-a-protected-payment-the-buyer-pays-into-a-contract-until-delivery'
+    - depth: 2
+      title: Get one of your protected payments
+      url: '#get-one-of-your-protected-payments'
+    - depth: 2
+      title: Build the merchant’s "shipped" mark, with tracking evidence
+      url: '#build-the-merchants-shipped-mark-with-tracking-evidence'
+    - depth: 2
+      title: Build the merchant’s approval of delivery (MERCHANT_RELEASES)
+      url: '#build-the-merchants-approval-of-delivery-merchant_releases'
+    - depth: 2
+      title: Build the release of the funds to the merchant
+      url: '#build-the-release-of-the-funds-to-the-merchant'
+    - depth: 2
+      title: Build the merchant’s dispute
+      url: '#build-the-merchants-dispute'
+    - depth: 2
+      title: Cancel a protected payment nobody funded
+      url: '#cancel-a-protected-payment-nobody-funded'
+    - depth: 2
+      title: Submit a merchant-signed protected payment transaction
+      url: '#submit-a-merchant-signed-protected-payment-transaction'
+  structuredData:
+    headings:
+      - content: List your protected payments
+        id: list-your-protected-payments
+      - content: Create a protected payment (the buyer pays into a contract until
+          delivery)
+        id: create-a-protected-payment-the-buyer-pays-into-a-contract-until-delivery
+      - content: Get one of your protected payments
+        id: get-one-of-your-protected-payments
+      - content: Build the merchant’s "shipped" mark, with tracking evidence
+        id: build-the-merchants-shipped-mark-with-tracking-evidence
+      - content: Build the merchant’s approval of delivery (MERCHANT_RELEASES)
+        id: build-the-merchants-approval-of-delivery-merchant_releases
+      - content: Build the release of the funds to the merchant
+        id: build-the-release-of-the-funds-to-the-merchant
+      - content: Build the merchant’s dispute
+        id: build-the-merchants-dispute
+      - content: Cancel a protected payment nobody funded
+        id: cancel-a-protected-payment-nobody-funded
+      - content: Submit a merchant-signed protected payment transaction
+        id: submit-a-merchant-signed-protected-payment-transaction
+    contents:
+      - content: >-
+          Newest first, as `{ data, total, take, skip }` with `take` up to 100
+          (default 20). Only payments on the key’s network, narrowed by `status`
+          when given, as this service last read them from their contracts.
+
+
+          Requires the `payments:read` scope.
+        heading: list-your-protected-payments
+      - content: >-
+          Creates a protected payment in USDC on the key’s network, with the
+          release model and the deadline policy of your choice, and answers
+          `checkoutUrl`, the page to send the buyer. Nothing happens on-chain
+          yet: the contract is deployed when the buyer first funds it. Emits
+          `PROTECTED_PAYMENT_CREATED`; the same `Idempotency-Key` with the same
+          request returns the stored payment.
+
+
+          Requires the `payments:write` scope.
+        heading: create-a-protected-payment-the-buyer-pays-into-a-contract-until-delivery
+      - content: >-
+          The payment as this service last read it from its contract (the sync
+          job reads open contracts every 30 seconds), with its fees and
+          `checkoutUrl`.
+
+
+          Requires the `payments:read` scope.
+        heading: get-one-of-your-protected-payments
+      - content: >-
+          For a FUNDED payment: Trustless Work builds the milestone change to
+          `shipped` with `evidence`, which this service checks is exactly that
+          call and records for 15 minutes. Sign it with `merchantAddress` and
+          send it to `POST /v1/protected-payments/submit`.
+
+
+          Requires the `payments:write` scope.
+        heading: build-the-merchants-shipped-mark-with-tracking-evidence
+      - content: >-
+          Only where the merchant is the approver (`MERCHANT_RELEASES`), for a
+          FUNDED or SHIPPED payment. Answers the checked envelope for
+          `merchantAddress` to sign and submit.
+
+
+          Requires the `payments:write` scope.
+        heading: build-the-merchants-approval-of-delivery-merchant_releases
+      - content: >-
+          Where the merchant releases (`MERCHANT_RELEASES`,
+          `BUYER_APPROVES_MERCHANT_RELEASES`), for an APPROVED payment. The
+          contract pays the amount less 1.95% to `merchantAddress`. Answers the
+          checked envelope to sign and submit.
+
+
+          Requires the `payments:write` scope.
+        heading: build-the-release-of-the-funds-to-the-merchant
+      - content: >-
+          For a FUNDED, SHIPPED or APPROVED payment: answers the dispute for
+          `merchantAddress` to sign and submit. `reason` is kept by this service
+          only; Cosmos Pay ops (or the automatic resolver, under an auto
+          deadline policy) then splits the balance between the buyer and the
+          merchant.
+
+
+          Requires the `payments:write` scope.
+        heading: build-the-merchants-dispute
+      - content: >-
+          Only CREATED, or AWAITING_FUNDING with an empty contract. Refused
+          while a deposit the buyer was handed can still land (it lapses within
+          15 minutes). Emits `PROTECTED_PAYMENT_CANCELLED`.
+
+
+          Requires the `payments:write` scope.
+        heading: cancel-a-protected-payment-nobody-funded
+      - content: >-
+          Relays `xdr` through Trustless Work only when it is a signed copy of a
+          transaction built for that payment, for `merchantAddress`, on the
+          key’s network, before it expires. Relayed once: the answer is stored
+          and a replay returns it; on `SUCCESS` the payment moves and its
+          webhook is emitted.
+
+
+          Requires the `payments:write` scope.
+        heading: submit-a-merchant-signed-protected-payment-transaction
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/protected-payments","method":"get"},{"path":"/v1/protected-payments","method":"post"},{"path":"/v1/protected-payments/{id}","method":"get"},{"path":"/v1/protected-payments/{id}/ship","method":"post"},{"path":"/v1/protected-payments/{id}/approve","method":"post"},{"path":"/v1/protected-payments/{id}/release","method":"post"},{"path":"/v1/protected-payments/{id}/dispute","method":"post"},{"path":"/v1/protected-payments/{id}/cancel","method":"post"},{"path":"/v1/protected-payments/submit","method":"post"}]} showTitle />
+    </>
+  );
+}

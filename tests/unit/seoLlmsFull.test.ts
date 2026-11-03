@@ -73,16 +73,12 @@ test('the rates are the ones src/lib/plans.ts charges', () => {
   }
 });
 
-test('protected payments are offered at their price, and every mention says they are coming soon', () => {
+test('protected payments are offered at their price, and no mention says they are coming soon', () => {
   for (const [name, text] of Object.entries(files)) {
     const lines = text.split('\n');
-    const named = lines.map((line, i) => ({ line, i })).filter(({ line }) => /protected payments?/i.test(line));
+    const named = lines.filter((line) => /protected payments?/i.test(line));
     assert.ok(named.length > 0, name);
-    for (const { line, i } of named) {
-      const next = lines.slice(i + 1).find((l) => l.trim() !== '') ?? '';
-      // The protected payment question's answer opens with the label.
-      assert.ok(/coming soon/i.test(line) || (/^#+ /.test(line) && /coming soon/i.test(next)), `${name}: ${line}`);
-    }
+    for (const line of named) assert.doesNotMatch(line, /coming soon/i, `${name}: ${line}`);
     // The old name never comes back (Escrow.com, the provider, and its domain aside).
     assert.deepEqual(lines.filter((line) => /escrow/i.test(line.replace(/Escrow\.com/gi, ''))), [], name);
   }

@@ -186,7 +186,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `src/lib/public-swaps.ts`; every rate from `plans.ts`). A new section, page or list on one of
   these pages goes into its builder too: `tests/unit/seoMarkdown.test.ts` and `seoLlmsFull.test.ts`
   check every registered page in every language (its title and address, its sections, links in the
-  page's language, the rates of `plans.ts`, the protected payment's label, no em dash).
+  page's language, the rates of `plans.ts`, no "coming soon" beside protected payments, no em dash).
 - **Agent discovery** (Cloudflare's Agent Readiness check, 2026-11-01). Every indexable page of the
   company site and the gateway answers an RFC 8288 `Link` header (`src/lib/seo/link-headers.ts`,
   added by the middleware through `responseHeaders`): the host's `/llms.txt` (`describedby`), the
@@ -1127,7 +1127,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   say is in the section's text too, and their figures are examples, never claims. Benefits are a
   bento (wide and narrow cells swapping per row); the developers' code has REST / TypeScript SDK /
   Webhook tabs (the same `[data-tabs]` script as the use cases); pricing has a fee calculator
-  (rates parsed from `plans.ts`, the protected payment's surcharge as a switch labelled coming soon, a logarithmic slider); the final
+  (rates parsed from `plans.ts`, the protected payment's surcharge as a switch, a logarithmic slider); the final
   call carries the brand's astronaut (`public/brand/astronauta-telefono.svg`, inverted in dark
   mode). **Images too, not only drawn UI** (the product owner asked for images after the
   mock-ups): the brand's astronauts on the comparison table (none by the benefits heading: the product
@@ -1145,14 +1145,15 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   protected payment's states stack when narrow). Their wrapper class is `pl-mk--<name>`, a modifier, so it
   never clashes with a part's `pl-mk-*` class.
 - **Two settlement modes, as the product owner offers them: instant** (straight to the merchant's
-  address) **and protected payments** (the payment is held until it is released, e.g. when the
-  order ships). As the product owner specified it: the payment waits in an on-chain contract (not
-  with Cosmos Pay), the merchant releases it when the order ships, it goes back to the buyer if not
-  released within the deadline the merchant sets for the link, and a protected payment costs 1.95%
-  per payment on top of the plan's rate (`PROTECTED_PAYMENT_FEE_PCT`). No code for it exists in
-  this repo, the community server, the SDK or the wallet yet. "What changes" carries both modes
-  (benefits + the "two ways to settle" cards), and so do the comparison, the hero lede, pricing
-  and the FAQ.
+  address) **and protected payments** (the payment is held in a smart contract until the order is
+  delivered, then released to the merchant's wallet; never with Cosmos Pay). A protected payment
+  costs 1.95% per payment on top of the plan's rate (`PROTECTED_PAYMENT_FEE_PCT`), and a refund is
+  returned less the same fee. The mechanics shipped as the Community Server's `trustless-work`
+  plugin, with three release models chosen per payment (the buyer confirms and releases; the
+  merchant releases; the buyer approves and the merchant releases) and three policies for when the
+  delivery deadline passes (manual review, automatic refund, automatic release). "What changes"
+  carries both modes (benefits + the "two ways to settle" cards), and so do the comparison,
+  pricing and the FAQ; the hero lede names neither (no internal mechanics in the hero).
 - **Naming rule (product owner, 2026-11-02): never "escrow" in copy; Trustless Work's own API terms
   only in code that calls it.** Merchants and buyers do not know the word, so every surface says
   protected payment (pago protegido, pagamento protegido, paiement protégé, geschützte Zahlung,
@@ -1162,20 +1163,22 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `comparePage.protected`, `pricing.ratesRows.protected`, `pl-mk--protected`). The word stays only
   in the provider's name, Escrow.com (`ESCROW_COM`, `comparePage.escrowCom`), and in the benefit's
   render `public/media/landing/3d-escrow.webp`, whose published address was kept.
-- **Protected payments stay visible and priced, labelled "coming soon" until the contract ships**
-  (product owner, 2026-11-01). Every string that names them carries the catalog's own word for it:
-  inside a sentence "(coming soon)" or its translation; a card's title (the benefit, the settle
-  card), the calculator's switch (it still adds the surcharge to the estimate), /compare's
-  protected payments row and /pricing's get a "Coming soon" line from their component (`t.soon` on
-  the gateway, `pricing.soon` on the company site, coloured text, never a chip). Their FAQ is in
-  the future tense and its answer opens with the label; the comparison's "protection on orders"
-  row shows a clock instead of a check; no mock-up shows an order held as a protected payment;
-  llms.txt says "coming soon" on every line that names them; no JSON-LD lists them as an Offer.
-  `tests/unit/protectedPaymentComingSoon.test.ts` (both catalogs and the guides, matching the name
-  in all seven languages) and `seoLlms.test.ts` fail on a mention without the label, and they,
-  `seoLlmsFull.test.ts` and `seoMarkdown.test.ts` fail on any "escrow" (or एस्क्रो, 担保) outside
-  Escrow.com. When the contract ships, drop the labels and those tests' label checks together,
-  and say so here.
+- **Protected payments are presented as available, with no "coming soon" label anywhere**
+  (product owner, 2026-11-03; it replaces the 2026-11-01 rule that labelled them coming soon). The
+  register is corporate, like Stripe's: short declarative sentences, benefit first, no
+  parentheticals, no hedging, no internal mechanics in the hero. Where the payment waits is a smart
+  contract in every language (contrato inteligente, contrat intelligent, Smart Contract, स्मार्ट
+  कॉन्ट्रैक्ट, 智能合约), never "on-chain contract". No component adds a label beside them (the
+  benefit and settle cards, the calculator's switch, /compare's and /pricing's rows; the `soon`
+  catalog keys are gone), the comparison's "protection on orders" row shows a check like every
+  other row Cosmos Pay offers, their FAQ is in the present tense and llms.txt names them like any
+  other service. "Coming soon" stays only where it marks something not built yet (the e-commerce
+  plugins' tag). Kept from before: no JSON-LD lists protected payments as an Offer.
+  `tests/unit/noEscrowWord.test.ts` fails on any catalog string (gateway, guides, checkout, embed,
+  platform; all seven languages) that says "escrow" (or एस्क्रो, 担保) outside Escrow.com, or that
+  names protected payments beside the language's "coming soon"; `seoLlms.test.ts`,
+  `seoLlmsFull.test.ts` and `seoMarkdown.test.ts` check the same in both llms.txt, both
+  llms-full.txt and every page's Markdown.
 - **Only checkable claims**: no customer logos, volumes, certifications, licences or uptime
   figures until they are real. Every product claim in the copy is checked against the dashboard
   and the community server (e.g. the dashboard sets amount, memo and message, not an expiry).
@@ -1535,7 +1538,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   cannot be read on its provider's own page leaves the table.
 - **Every service's rate is on the pricing surfaces** (product owner, 2026-10-27: the swap
   commission was on no pricing page). `/pricing` compares, per plan, the payment fee, the swap
-  commission (`swapFeePct`), protected payments (`PROTECTED_PAYMENT_FEE_PCT`, its row labelled coming soon), private payments
+  commission (`swapFeePct`), protected payments (`PROTECTED_PAYMENT_FEE_PCT`), private payments
   (`PRIVATE_PAYMENT_FEE_PCT`) and the merchant's own fee; each plan card, the payments site's
   `/fees` cards, the dashboard's plan comparison and the onboarding spec panel show the swap
   commission too, and the pricing FAQ quotes every plan's and the public key's. Copy carries

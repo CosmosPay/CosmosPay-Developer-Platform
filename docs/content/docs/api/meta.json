@@ -28,6 +28,8 @@
     "customers",
     "analytics",
     "activity",
-    "health"
+    "health",
+    "protected-payment-links",
+    "protected-payments"
   ]
 }
