@@ -113,11 +113,11 @@ export function swapFeeRange(): { max: string; min: string } {
   return { max: `${Math.max(...bps) / 100}%`, min: `${Math.min(...bps) / 100}%` };
 }
 
-/* Rates that are the same on every plan, in percent: escrow's surcharge per payment and the
-   private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 18). Escrow is offered at this
-   price but not built yet (product owner, 2026-11-01): every surface that shows it says it is
-   coming soon. */
-export const ESCROW_FEE_PCT = 1.95;
+/* Rates that are the same on every plan, in percent: the protected payment's surcharge per
+   payment and the private payments' commission (the server's ZK_PAYMENT_FEE_BPS = 18). Protected
+   payments are offered at this price but not built yet (product owner, 2026-11-01): every surface
+   that shows them says they are coming soon. */
+export const PROTECTED_PAYMENT_FEE_PCT = 1.95;
 export const PRIVATE_PAYMENT_FEE_PCT = 0.18;
 
 /* true when adding one more would exceed the plan's limit (null = unlimited). */

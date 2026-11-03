@@ -23,7 +23,7 @@ const en = {
     titleMark: "stablecoins.",
     titleB: "Get paid in seconds.",
     lede:
-      "Payment links, a hosted checkout and an API for businesses in Latin America and beyond. Your customers pay from their own wallet on Stellar, Solana or Monad, and you choose how it settles: instantly at your address, or in escrow until you release it on dispatch (coming soon).",
+      "Payment links, a hosted checkout and an API for businesses in Latin America and beyond. Your customers pay from their own wallet on Stellar, Solana or Monad, and you choose how it settles: instantly at your address, or as a protected payment, held until you release it on dispatch (coming soon).",
     primary: "Create a payment link",
     secondary: "Read the docs",
     designs: "See the ways to integrate",
@@ -41,20 +41,20 @@ const en = {
     titleBold: "when you accept stablecoins.",
     final: { title: "Final payments", body: "Once the network confirms a payment, it cannot be charged back. Refunds are your decision, sent from your wallet." },
     instant: { title: "Instant settlement", body: "With instant settlement the money reaches your address as soon as the network confirms it: about 5 seconds on Stellar." },
-    escrow: { title: "Escrow when you need it", body: "Hold the payment in an on-chain contract and release it when you dispatch the order. If you don’t within the deadline you set, it goes back to the buyer." },
-    yours: { title: "Funds at your address", body: "Payments land at an address you control, instantly or, with escrow (coming soon), when you release it, not in a balance you have to ask for." },
+    protected: { title: "Protected payments when you need them", body: "Hold the payment in an on-chain contract and release it when you dispatch the order. If you don’t within the deadline you set, it goes back to the buyer." },
+    yours: { title: "Funds at your address", body: "Payments land at an address you control, instantly or, with a protected payment (coming soon), when you release it, not in a balance you have to ask for." },
   },
   settle: {
     title: "Two ways",
     titleBold: "to settle a payment.",
-    lede: "Pick the one that fits each sale: to your address at once, or in escrow until you release it (coming soon).",
+    lede: "Pick the one that fits each sale: to your address at once, or as a protected payment, held until you release it (coming soon).",
     instant: {
       title: "Instant",
       body: "For sales that are done once they’re paid: digital goods, services, donations.",
       steps: ["Your customer pays from their wallet", "The network confirms the payment", "The money is at your address in seconds"],
     },
-    escrow: {
-      title: "Escrow",
+    protected: {
+      title: "Protected payment",
       body: "For orders you still have to deliver: the payment waits in an on-chain contract until you release it on dispatch, and goes back to the buyer if you don’t within the deadline you set.",
       steps: ["Your customer pays from their wallet", "The payment is held in an on-chain contract", "You dispatch the order and release it to your address"],
     },
@@ -68,11 +68,11 @@ const en = {
     us: "Cosmos Pay",
     rows: {
       chargebacks: { k: "Chargebacks", cards: "A card payment can be disputed for months after the sale.", us: "None. A confirmed payment is final." },
-      protection: { k: "Protection on orders", cards: "Disputes and chargebacks through the card network.", us: "Optional escrow (coming soon): held in an on-chain contract until you dispatch, refunded after your deadline if you don’t." },
-      settlement: { k: "Money in your account", cards: "Usually one to three business days.", us: "Seconds after the network confirms, or when you release the escrow (coming soon)." },
+      protection: { k: "Protection on orders", cards: "Disputes and chargebacks through the card network.", us: "Optional protected payments (coming soon): held in an on-chain contract until you dispatch, refunded after your deadline if you don’t." },
+      settlement: { k: "Money in your account", cards: "Usually one to three business days.", us: "Seconds after the network confirms, or when you release a protected payment (coming soon)." },
       hours: { k: "Availability", cards: "Payouts wait for banking days.", us: "Every day, around the clock." },
       borders: { k: "Customers abroad", cards: "International card, wire and currency-conversion fees.", us: "The same link and the same rate in every country." },
-      custody: { k: "Where the money waits", cards: "With the processor until the next payout.", us: "At your own address. On Monad a deposit address made for the payment can only forward it there. With escrow (coming soon), in an on-chain contract until you release it." },
+      custody: { k: "Where the money waits", cards: "With the processor until the next payout.", us: "At your own address. On Monad a deposit address made for the payment can only forward it there. With a protected payment (coming soon), in an on-chain contract until you release it." },
       fees: { k: "Fees", cards: "A percentage plus a fixed fee, higher for international cards.", us: "One rate per payment, from {rate}." },
     },
     note: "Card and bank terms vary by provider and country; the table shows the usual case, not a quote.",
@@ -148,7 +148,7 @@ const en = {
     stores: {
       title: "Online stores",
       body: "Offer stablecoins next to your other payment methods. Your server creates a payment intent for each order, and a webhook marks it paid.",
-      points: ["One payment intent per order, through the API or the SDK", "The order is confirmed by a signed webhook", "Instant settlement, or escrow until the order ships (coming soon)"],
+      points: ["One payment intent per order, through the API or the SDK", "The order is confirmed by a signed webhook", "Instant settlement, or a protected payment held until the order ships (coming soon)"],
       uses: "the Payments API, webhooks and the hosted checkout.",
     },
     services: {
@@ -198,7 +198,7 @@ const en = {
   pricing: {
     title: "Pay",
     titleBold: "per payment.",
-    lede: "Each plan has its own rate per payment; escrow (coming soon) adds 1.95% per payment. The payer’s wallet pays the network fee; on Monad, the deposit relay’s fee is deducted and shown on the checkout. Private payments, with the amount hidden on-chain, cost 0.18% per transaction.",
+    lede: "Each plan has its own rate per payment; protected payments (coming soon) add 1.95% per payment. The payer’s wallet pays the network fee; on Monad, the deposit relay’s fee is deducted and shown on the checkout. Private payments, with the amount hidden on-chain, cost 0.18% per transaction.",
     perPayment: "per payment",
     perSwap: "{rate} per swap",
     perMonth: "per month",
@@ -209,7 +209,7 @@ const en = {
   faq: {
     title: "Questions",
     titleBold: "and answers.",
-    what: { q: "What is Cosmos Pay?", a: "Cosmos Pay is a stablecoin payment gateway for businesses in Latin America. You create a payment link, a hosted checkout or a payment intent through the API; your customer pays from their own wallet on Stellar, Solana or Monad; and the money goes to an address you control, instantly or through escrow (coming soon)." },
+    what: { q: "What is Cosmos Pay?", a: "Cosmos Pay is a stablecoin payment gateway for businesses in Latin America. You create a payment link, a hosted checkout or a payment intent through the API; your customer pays from their own wallet on Stellar, Solana or Monad; and the money goes to an address you control, instantly or as a protected payment (coming soon)." },
     assets: { q: "Which currencies can I charge in?", a: "USDC, EURC, the network’s own coin (XLM, SOL or MON) or any other token on Stellar, Solana or Monad, such as USDT on Solana: you name it by its issuer, mint or contract when you create the link. Your customer pays in that asset, and you receive that same asset." },
     wallet: { q: "Do I need my own crypto wallet?", a: "Yes. With Cosmos Pay, payments settle to an address you control on each network you accept: Stellar, Solana or Monad (on Monad, through a deposit address made for each payment, which can only forward it to yours). You add each wallet to your organization in the dashboard and prove it is yours with a signature, and payment links created there pay only into those wallets. Cosmos Pay never asks for a secret key and stores no one’s keys, so the funds are yours from the first payment and looking after the keys is up to you." },
     account: {
@@ -222,12 +222,12 @@ const en = {
     },
     custody: {
       q: "Does Cosmos Pay hold my money?",
-      a: "No. On Stellar and Solana the payer pays your address directly. On Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay’s fee): Cosmos Pay holds no key to it. With escrow (coming soon), the payment will wait in an on-chain contract, not with Cosmos Pay, until you release it.",
+      a: "No. On Stellar and Solana the payer pays your address directly. On Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay’s fee): Cosmos Pay holds no key to it. With a protected payment (coming soon), the payment will wait in an on-chain contract, not with Cosmos Pay, until you release it.",
     },
     service: { q: "Can I offer this to my own customers?", a: "Yes. Cosmos Pay is the payment gateway, payments, swaps and private payments as a service: we run the whole service, and you only set the wallet addresses that receive the money and sign with your wallet. Each operation pays your plan's rate, and you can add your own fee to it, paid to the wallet you choose." },
-    escrow: {
-      q: "How will escrow work?",
-      a: "Escrow is coming soon. Once it ships, your customer pays as usual, but the payment waits in an on-chain contract instead of reaching you at once. You release it to your address when you dispatch the order; if you don’t within the deadline you set for the link, it goes back to the buyer. Escrow will cost 1.95% per payment on top of your plan’s rate.",
+    protected: {
+      q: "How will protected payments work?",
+      a: "Protected payments are coming soon. Once they ship, your customer pays as usual, but the payment waits in an on-chain contract instead of reaching you at once. You release it to your address when you dispatch the order; if you don’t within the deadline you set for the link, it goes back to the buyer. Protected payments will cost 1.95% per payment on top of your plan’s rate.",
     },
     zk: {
       q: "What are private payments?",
@@ -249,7 +249,7 @@ const en = {
     cards: "Cards",
     cardsTime: "2–3 business days",
     paid: "Paid",
-    held: "In escrow",
+    held: "Held",
     shipped: "Shipped",
     released: "Released",
     yourAddress: "Your address",
@@ -281,7 +281,7 @@ const en = {
   calc: {
     title: "Estimate your fees",
     amount: "Payment amount",
-    escrow: "With escrow (+1.95%)",
+    protected: "Protected payment (+1.95%)",
     plan: "Plan",
     fee: "Fee",
     youGet: "You receive",
@@ -296,7 +296,7 @@ const en = {
     webhook: "Webhook",
   },
   code: { copy: "Copy", copied: "Copied" },
-  /* The label beside escrow wherever it shows: it is offered and priced, not built yet. */
+  /* The label beside protected payments wherever they show: offered and priced, not built yet. */
   soon: "Coming soon",
   pages: {
     nav: "Cosmos Pay Payments sections",
@@ -306,7 +306,7 @@ const en = {
     useCases: { nav: "Use cases", title: "How businesses get paid in stablecoins", lede: "How stores, services, digital products and creators take stablecoins, and what changes next to cards and bank transfers.", meta: "Stablecoin payment use cases for businesses | Cosmos Pay" },
     security: { nav: "Security", title: "Payments you can check on-chain", lede: "Every payment can be checked on the network, your keys stay yours and no other site can frame the payment pages.", meta: "Non-custodial payments, verified on-chain | Cosmos Pay" },
     fees: { nav: "Pricing", title: "Stablecoin payment fees", lede: "A rate per payment by plan, with no monthly fee on Starter. Work out what you keep before you start.", meta: "Stablecoin payment fees and calculator | Cosmos Pay" },
-    faq: { nav: "FAQ", title: "Stablecoin payments FAQ", lede: "Wallets, escrow (coming soon), refunds, testing and fees: what merchants ask before they start.", meta: "Stablecoin payments FAQ: wallets, fees, refunds | Cosmos Pay" },
+    faq: { nav: "FAQ", title: "Stablecoin payments FAQ", lede: "Wallets, protected payments (coming soon), refunds, testing and fees: what merchants ask before they start.", meta: "Stablecoin payments FAQ: wallets, fees, refunds | Cosmos Pay" },
     swaps: { nav: "Swaps", title: "Swap tokens across networks, no account", lede: "Swap tokens across {n} networks and send USDT0 from Stellar, with no account.", meta: "Cross-chain swaps and USDT0 from Stellar | Cosmos Pay" },
     compare: { nav: "Compare", title: "How our fees compare", lede: "Cosmos Pay’s rate for each service next to a known provider’s published rate, with a link to their pricing page and the date we read it.", meta: "Stablecoin payment gateway fees compared | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Accept payments on Stellar", lede: "Cosmos Pay turns each payment into a SEP-7 link and QR code. Your customer pays from their own Stellar wallet, and the money goes straight to your address.", meta: "Stellar payments API: accept USDC and XLM | Cosmos Pay", link: "Stellar payments" },
@@ -401,18 +401,18 @@ const en = {
   comparePage: {
     title: "Our rates next to",
     titleBold: "published ones.",
-    lede: "Each Cosmos Pay rate is at most 75% of the rate it sits next to here: BitPay’s for payments, MetaMask’s for swaps, RAILGUN’s for private payments and Escrow.com’s for escrow, which is coming soon.",
+    lede: "Each Cosmos Pay rate is at most 75% of the rate it sits next to here: BitPay’s for payments, MetaMask’s for swaps, RAILGUN’s for private payments and Escrow.com’s for protected payments, which are coming soon.",
     caption: "Cosmos Pay’s rates next to other providers’ published rates",
     service: "Service",
     ours: "Cosmos Pay",
     theirs: "Published rate",
     source: "Source",
-    services: { payments: "Payments", swaps: "Swaps", private: "Private payments", escrow: "Escrow" },
+    services: { payments: "Payments", swaps: "Swaps", private: "Private payments", protected: "Protected payments" },
     noMonthly: "{plan}, no monthly fee",
     monthly: "{plan}, plus {price} a month",
     swaps: "On {plan}, down to {min} on {minPlan}",
     private: "Per transaction, on testnet for now",
-    escrow: "Per payment, on top of the plan’s rate",
+    protected: "Per payment, on top of the plan’s rate",
     bandUnder: "Monthly volume under {below}",
     bandBetween: "Monthly volume from {from} to {to}",
     bandFrom: "Monthly volume of {from} or more",
@@ -449,7 +449,7 @@ const en = {
   },
   contact: {
     title: "Write to us",
-    lede: "Questions about plans, integration or escrow (coming soon): tell us and we will reply by email.",
+    lede: "Questions about plans, integration or protected payments (coming soon): tell us and we will reply by email.",
     name: "Name",
     email: "Work email",
     company: "Company",
@@ -480,7 +480,7 @@ const es: LandingMessages = {
     titleMark: "stablecoins.",
     titleB: "Cobra en segundos.",
     lede:
-      "Enlaces de pago, un checkout alojado y una API para empresas de Latinoamérica y del mundo. Tus clientes pagan desde su propia wallet en Stellar, Solana o Monad, y tú eliges cómo se liquida: al instante en tu dirección, o en escrow hasta que lo liberes al despachar (próximamente).",
+      "Enlaces de pago, un checkout alojado y una API para empresas de Latinoamérica y del mundo. Tus clientes pagan desde su propia wallet en Stellar, Solana o Monad, y tú eliges cómo se liquida: al instante en tu dirección, o como pago protegido, retenido hasta que lo liberes al despachar (próximamente).",
     primary: "Crear un enlace de pago",
     secondary: "Leer la documentación",
     designs: "Ver las formas de integrar",
@@ -498,20 +498,20 @@ const es: LandingMessages = {
     titleBold: "cuando aceptas stablecoins.",
     final: { title: "Pagos definitivos", body: "Una vez que la red confirma un pago, no hay contracargo posible. Los reembolsos los decides tú y salen de tu wallet." },
     instant: { title: "Liquidación instantánea", body: "Con liquidación instantánea el dinero llega a tu dirección en cuanto la red lo confirma: unos 5 segundos en Stellar." },
-    escrow: { title: "Escrow cuando lo necesitas", body: "Retén el pago en un contrato on-chain y libéralo cuando despaches el pedido. Si no lo haces dentro del plazo que fijas, vuelve al comprador." },
-    yours: { title: "Fondos en tu dirección", body: "Los pagos llegan a una dirección que controlas, al instante o, con escrow (próximamente), cuando lo liberas, no a un saldo que tengas que pedir." },
+    protected: { title: "Pagos protegidos cuando los necesitas", body: "Retén el pago en un contrato on-chain y libéralo cuando despaches el pedido. Si no lo haces dentro del plazo que fijas, vuelve al comprador." },
+    yours: { title: "Fondos en tu dirección", body: "Los pagos llegan a una dirección que controlas, al instante o, con un pago protegido (próximamente), cuando lo liberas, no a un saldo que tengas que pedir." },
   },
   settle: {
     title: "Dos formas",
     titleBold: "de liquidar un pago.",
-    lede: "Elige la que encaje con cada venta: a tu dirección al instante, o en escrow hasta que lo liberes (próximamente).",
+    lede: "Elige la que encaje con cada venta: a tu dirección al instante, o como pago protegido, retenido hasta que lo liberes (próximamente).",
     instant: {
       title: "Instantánea",
       body: "Para ventas que terminan al pagarse: productos digitales, servicios, donaciones.",
       steps: ["Tu cliente paga desde su wallet", "La red confirma el pago", "El dinero está en tu dirección en segundos"],
     },
-    escrow: {
-      title: "Escrow",
+    protected: {
+      title: "Pago protegido",
       body: "Para pedidos que todavía tienes que entregar: el pago espera en un contrato on-chain hasta que lo liberas al despachar, y vuelve al comprador si no lo haces dentro del plazo que fijas.",
       steps: ["Tu cliente paga desde su wallet", "El pago queda retenido en un contrato on-chain", "Despachas el pedido y lo liberas a tu dirección"],
     },
@@ -525,11 +525,11 @@ const es: LandingMessages = {
     us: "Cosmos Pay",
     rows: {
       chargebacks: { k: "Contracargos", cards: "Un pago con tarjeta puede disputarse meses después de la venta.", us: "No hay. Un pago confirmado es definitivo." },
-      protection: { k: "Protección en pedidos", cards: "Disputas y contracargos a través de la red de tarjetas.", us: "Escrow opcional (próximamente): retenido en un contrato on-chain hasta que despachas, y reembolsado al vencer tu plazo si no lo haces." },
-      settlement: { k: "Dinero en tu cuenta", cards: "Por lo general, de uno a tres días hábiles.", us: "Segundos después de que la red confirma, o cuando liberas el escrow (próximamente)." },
+      protection: { k: "Protección en pedidos", cards: "Disputas y contracargos a través de la red de tarjetas.", us: "Pago protegido opcional (próximamente): retenido en un contrato on-chain hasta que despachas, y reembolsado al vencer tu plazo si no lo haces." },
+      settlement: { k: "Dinero en tu cuenta", cards: "Por lo general, de uno a tres días hábiles.", us: "Segundos después de que la red confirma, o cuando liberas un pago protegido (próximamente)." },
       hours: { k: "Disponibilidad", cards: "Las liquidaciones esperan a los días hábiles.", us: "Todos los días, a toda hora." },
       borders: { k: "Clientes en el exterior", cards: "Comisiones por tarjeta internacional, transferencia y conversión de moneda.", us: "El mismo enlace y la misma tarifa en cada país." },
-      custody: { k: "Dónde espera el dinero", cards: "En el procesador, hasta la próxima liquidación.", us: "En tu propia dirección. En Monad, una dirección de depósito creada para el pago solo puede reenviarlo allí. Con escrow (próximamente), en un contrato on-chain hasta que lo liberas." },
+      custody: { k: "Dónde espera el dinero", cards: "En el procesador, hasta la próxima liquidación.", us: "En tu propia dirección. En Monad, una dirección de depósito creada para el pago solo puede reenviarlo allí. Con un pago protegido (próximamente), en un contrato on-chain hasta que lo liberas." },
       fees: { k: "Comisiones", cards: "Un porcentaje más un cargo fijo, mayor para tarjetas internacionales.", us: "Una tarifa por pago, desde {rate}." },
     },
     note: "Las condiciones de tarjetas y bancos varían según el proveedor y el país; la tabla muestra el caso habitual, no una cotización.",
@@ -605,7 +605,7 @@ const es: LandingMessages = {
     stores: {
       title: "Tiendas online",
       body: "Ofrece stablecoins junto a tus otros medios de pago. Tu servidor crea un intent de pago por pedido y un webhook lo marca como pagado.",
-      points: ["Un intent de pago por pedido, por la API o el SDK", "El pedido se confirma con un webhook firmado", "Liquidación instantánea, o escrow hasta despachar el pedido (próximamente)"],
+      points: ["Un intent de pago por pedido, por la API o el SDK", "El pedido se confirma con un webhook firmado", "Liquidación instantánea, o pago protegido retenido hasta despachar el pedido (próximamente)"],
       uses: "la API de pagos, webhooks y el checkout alojado.",
     },
     services: {
@@ -655,7 +655,7 @@ const es: LandingMessages = {
   pricing: {
     title: "Paga",
     titleBold: "por pago.",
-    lede: "Cada plan tiene su propia tarifa por pago; el escrow (próximamente) suma un 1,95 % por pago. La wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío del depósito se descuenta y se muestra en el checkout. Los pagos privados, con el monto oculto en la cadena, cuestan 0,18 % por transacción.",
+    lede: "Cada plan tiene su propia tarifa por pago; los pagos protegidos (próximamente) suman un 1,95 % por pago. La wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío del depósito se descuenta y se muestra en el checkout. Los pagos privados, con el monto oculto en la cadena, cuestan 0,18 % por transacción.",
     perPayment: "por pago",
     perSwap: "{rate} por swap",
     perMonth: "al mes",
@@ -666,7 +666,7 @@ const es: LandingMessages = {
   faq: {
     title: "Preguntas",
     titleBold: "y respuestas.",
-    what: { q: "¿Qué es Cosmos Pay?", a: "Cosmos Pay es una pasarela de pagos en stablecoins para negocios de Latinoamérica. El negocio crea un enlace de pago, un checkout alojado o un intento de pago con la API; el cliente paga desde su propia wallet en Stellar, Solana o Monad, y el dinero llega a una dirección que el negocio controla, al instante o con escrow (próximamente)." },
+    what: { q: "¿Qué es Cosmos Pay?", a: "Cosmos Pay es una pasarela de pagos en stablecoins para negocios de Latinoamérica. El negocio crea un enlace de pago, un checkout alojado o un intento de pago con la API; el cliente paga desde su propia wallet en Stellar, Solana o Monad, y el dinero llega a una dirección que el negocio controla, al instante o como pago protegido (próximamente)." },
     assets: { q: "¿En qué monedas se puede cobrar?", a: "En USDC, EURC, la moneda propia de cada red (XLM, SOL o MON) o cualquier otro token en Stellar, Solana o Monad, como USDT en Solana: se indica por su emisor, mint o contrato al crear el enlace. El cliente paga en ese activo y el negocio recibe ese mismo activo." },
     wallet: { q: "¿Necesito mi propia wallet cripto?", a: "Sí. Con Cosmos Pay, los pagos se liquidan en una dirección que controlas en cada red que aceptes: Stellar, Solana o Monad (en Monad, a través de una dirección de depósito creada para cada pago, que solo puede reenviarlo a la tuya). Agregas cada wallet a tu organización en el dashboard y demuestras que es tuya con una firma, y los enlaces de pago creados ahí solo pagan a esas wallets. Cosmos Pay nunca pide una clave secreta ni guarda las claves de nadie, así que los fondos son tuyos desde el primer pago y cuidar las claves depende de ti." },
     account: {
@@ -679,12 +679,12 @@ const es: LandingMessages = {
     },
     custody: {
       q: "¿Cosmos Pay retiene mi dinero?",
-      a: "No. En Stellar y Solana quien paga envía directo a tu dirección. En Monad cada pago va a una dirección de depósito creada para él, que solo puede reenviarlo a tu dirección (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella. Con escrow (próximamente), el pago esperará en un contrato on-chain, no en Cosmos Pay, hasta que lo liberes.",
+      a: "No. En Stellar y Solana quien paga envía directo a tu dirección. En Monad cada pago va a una dirección de depósito creada para él, que solo puede reenviarlo a tu dirección (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella. Con un pago protegido (próximamente), el pago esperará en un contrato on-chain, no en Cosmos Pay, hasta que lo liberes.",
     },
     service: { q: "¿Puedo ofrecerlo a mis propios clientes?", a: "Sí. Cosmos Pay es pasarela de pagos, pagos, swaps y pagos privados como servicio: nosotros operamos todo el servicio, y tú solo indicas las direcciones de wallet que reciben el dinero y firmas con tu wallet. Cada operación paga la tarifa de tu plan, y puedes sumarle tu propia comisión, que se paga a la wallet que elijas." },
-    escrow: {
-      q: "¿Cómo funcionará el escrow?",
-      a: "El escrow llega próximamente. Cuando esté disponible, tu cliente paga como siempre, pero el pago espera en un contrato on-chain en lugar de llegarte al momento. Lo liberas a tu dirección cuando despachas el pedido; si no lo haces dentro del plazo que fijas para el enlace, vuelve al comprador. El escrow costará un 1,95 % por pago, además de la tarifa de tu plan.",
+    protected: {
+      q: "¿Cómo funcionarán los pagos protegidos?",
+      a: "Los pagos protegidos llegan próximamente. Cuando estén disponibles, tu cliente paga como siempre, pero el pago espera en un contrato on-chain en lugar de llegarte al momento. Lo liberas a tu dirección cuando despachas el pedido; si no lo haces dentro del plazo que fijas para el enlace, vuelve al comprador. Los pagos protegidos costarán un 1,95 % por pago, además de la tarifa de tu plan.",
     },
     zk: {
       q: "¿Qué son los pagos privados?",
@@ -706,7 +706,7 @@ const es: LandingMessages = {
     cards: "Tarjetas",
     cardsTime: "2–3 días hábiles",
     paid: "Pagado",
-    held: "En escrow",
+    held: "Retenido",
     shipped: "Despachado",
     released: "Liberado",
     yourAddress: "Tu dirección",
@@ -738,7 +738,7 @@ const es: LandingMessages = {
   calc: {
     title: "Calcula tus comisiones",
     amount: "Importe del pago",
-    escrow: "Con escrow (+1,95 %)",
+    protected: "Pago protegido (+1,95 %)",
     plan: "Plan",
     fee: "Comisión",
     youGet: "Recibes",
@@ -762,7 +762,7 @@ const es: LandingMessages = {
     useCases: { nav: "Casos de uso", title: "Cómo cobran los negocios en stablecoins", lede: "Cómo cobran con stablecoins las tiendas, los servicios, los productos digitales y los creadores, y qué cambia frente a tarjetas y transferencias.", meta: "Cobrar en USDC: casos de uso para negocios | Cosmos Pay" },
     security: { nav: "Seguridad", title: "Pagos que se verifican on-chain", lede: "Cada pago se puede verificar en la red, tus claves siguen siendo tuyas y ningún otro sitio puede incrustar las páginas de pago.", meta: "Pagos cripto sin custodia, verificados on-chain | Cosmos Pay" },
     fees: { nav: "Precios", title: "Comisiones por cobrar en stablecoins", lede: "Una tarifa por pago según tu plan, sin cuota mensual en Starter. Calcula cuánto recibes antes de empezar.", meta: "Comisiones de la pasarela de pagos cripto | Cosmos Pay" },
-    faq: { nav: "Preguntas", title: "Preguntas frecuentes sobre cobrar en cripto", lede: "Wallets, escrow (próximamente), reembolsos, pruebas y comisiones: lo que preguntan los comercios antes de empezar.", meta: "Preguntas frecuentes sobre pagos cripto | Cosmos Pay" },
+    faq: { nav: "Preguntas", title: "Preguntas frecuentes sobre cobrar en cripto", lede: "Wallets, pagos protegidos (próximamente), reembolsos, pruebas y comisiones: lo que preguntan los comercios antes de empezar.", meta: "Preguntas frecuentes sobre pagos cripto | Cosmos Pay" },
     swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sin cuenta", lede: "Cambia tokens entre {n} redes y envía USDT0 desde Stellar, sin crear una cuenta.", meta: "Swaps cripto entre redes y USDT0 desde Stellar | Cosmos Pay" },
     compare: { nav: "Comparar", title: "Cómo se comparan nuestras comisiones", lede: "La tarifa de Cosmos Pay en cada servicio junto a la tarifa publicada de un proveedor conocido, con enlace a su página de precios y la fecha de consulta.", meta: "Comisiones de pasarelas cripto comparadas | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Acepta pagos en Stellar", lede: "Cosmos Pay convierte cada pago en un enlace SEP-7 con código QR. Tu cliente paga desde su wallet de Stellar y el dinero llega directo a tu dirección.", meta: "API de pagos en Stellar: cobra en USDC y XLM | Cosmos Pay", link: "Pagos en Stellar" },
@@ -855,18 +855,18 @@ const es: LandingMessages = {
   comparePage: {
     title: "Nuestras tarifas junto a",
     titleBold: "las publicadas.",
-    lede: "Cada tarifa de Cosmos Pay es como máximo el 75 % de la tarifa que tiene al lado: la de BitPay para pagos, la de MetaMask para swaps, la de RAILGUN para pagos privados y la de Escrow.com para escrow, que llega próximamente.",
+    lede: "Cada tarifa de Cosmos Pay es como máximo el 75 % de la tarifa que tiene al lado: la de BitPay para pagos, la de MetaMask para swaps, la de RAILGUN para pagos privados y la de Escrow.com para pagos protegidos, que llegan próximamente.",
     caption: "Tarifas de Cosmos Pay junto a las tarifas publicadas de otros proveedores",
     service: "Servicio",
     ours: "Cosmos Pay",
     theirs: "Tarifa publicada",
     source: "Fuente",
-    services: { payments: "Pagos", swaps: "Swaps", private: "Pagos privados", escrow: "Escrow" },
+    services: { payments: "Pagos", swaps: "Swaps", private: "Pagos privados", protected: "Pagos protegidos" },
     noMonthly: "{plan}, sin cuota mensual",
     monthly: "{plan}, más {price} al mes",
     swaps: "En {plan}, hasta {min} en {minPlan}",
     private: "Por transacción, por ahora en testnet",
-    escrow: "Por pago, además de la tarifa del plan",
+    protected: "Por pago, además de la tarifa del plan",
     bandUnder: "Volumen mensual menor a {below}",
     bandBetween: "Volumen mensual de {from} a {to}",
     bandFrom: "Volumen mensual de {from} o más",
@@ -901,7 +901,7 @@ const es: LandingMessages = {
   },
   contact: {
     title: "Escríbenos",
-    lede: "Dudas sobre planes, integración o escrow (próximamente): cuéntanos y te respondemos por email.",
+    lede: "Dudas sobre planes, integración o pagos protegidos (próximamente): cuéntanos y te respondemos por email.",
     name: "Nombre",
     email: "Email de trabajo",
     company: "Empresa",
@@ -931,7 +931,7 @@ const pt: LandingMessages = {
     titleMark: "stablecoins.",
     titleB: "Receba em segundos.",
     lede:
-      "Links de pagamento, um checkout hospedado e uma API para empresas da América Latina e do mundo. Seus clientes pagam com a própria carteira na Stellar, Solana ou Monad, e você escolhe como liquidar: na hora no seu endereço, ou em escrow até você liberar no despacho (em breve).",
+      "Links de pagamento, um checkout hospedado e uma API para empresas da América Latina e do mundo. Seus clientes pagam com a própria carteira na Stellar, Solana ou Monad, e você escolhe como liquidar: na hora no seu endereço, ou como pagamento protegido, retido até você liberar no despacho (em breve).",
     primary: "Criar um link de pagamento",
     secondary: "Ler a documentação",
     designs: "Ver as formas de integrar",
@@ -949,20 +949,20 @@ const pt: LandingMessages = {
     titleBold: "quando você aceita stablecoins.",
     final: { title: "Pagamentos definitivos", body: "Depois que a rede confirma um pagamento, não há estorno possível. Reembolsos são decisão sua, enviados da sua carteira." },
     instant: { title: "Liquidação instantânea", body: "Com liquidação instantânea o dinheiro chega ao seu endereço assim que a rede confirma: cerca de 5 segundos na Stellar." },
-    escrow: { title: "Escrow quando você precisar", body: "Retenha o pagamento num contrato on-chain e libere quando despachar o pedido. Se não fizer isso dentro do prazo que você define, ele volta para o comprador." },
-    yours: { title: "Fundos no seu endereço", body: "Os pagamentos chegam a um endereço que você controla, na hora ou, com escrow (em breve), quando você libera, não a um saldo que você precisa solicitar." },
+    protected: { title: "Pagamentos protegidos quando você precisar", body: "Retenha o pagamento num contrato on-chain e libere quando despachar o pedido. Se não fizer isso dentro do prazo que você define, ele volta para o comprador." },
+    yours: { title: "Fundos no seu endereço", body: "Os pagamentos chegam a um endereço que você controla, na hora ou, com um pagamento protegido (em breve), quando você libera, não a um saldo que você precisa solicitar." },
   },
   settle: {
     title: "Duas formas",
     titleBold: "de liquidar um pagamento.",
-    lede: "Escolha a que combina com cada venda: no seu endereço na hora, ou em escrow até você liberar (em breve).",
+    lede: "Escolha a que combina com cada venda: no seu endereço na hora, ou como pagamento protegido, retido até você liberar (em breve).",
     instant: {
       title: "Instantânea",
       body: "Para vendas que terminam ao serem pagas: produtos digitais, serviços, doações.",
       steps: ["Seu cliente paga com a carteira", "A rede confirma o pagamento", "O dinheiro está no seu endereço em segundos"],
     },
-    escrow: {
-      title: "Escrow",
+    protected: {
+      title: "Pagamento protegido",
       body: "Para pedidos que você ainda precisa entregar: o pagamento espera num contrato on-chain até você liberar no despacho, e volta para o comprador se você não fizer isso dentro do prazo que define.",
       steps: ["Seu cliente paga com a carteira", "O pagamento fica retido num contrato on-chain", "Você despacha o pedido e libera para o seu endereço"],
     },
@@ -976,11 +976,11 @@ const pt: LandingMessages = {
     us: "Cosmos Pay",
     rows: {
       chargebacks: { k: "Estornos", cards: "Um pagamento com cartão pode ser contestado meses depois da venda.", us: "Não há. Um pagamento confirmado é definitivo." },
-      protection: { k: "Proteção nos pedidos", cards: "Disputas e estornos pela rede do cartão.", us: "Escrow opcional (em breve): retido num contrato on-chain até você despachar, e reembolsado ao fim do seu prazo se não despachar." },
-      settlement: { k: "Dinheiro na sua conta", cards: "Em geral, de um a três dias úteis.", us: "Segundos depois que a rede confirma, ou quando você libera o escrow (em breve)." },
+      protection: { k: "Proteção nos pedidos", cards: "Disputas e estornos pela rede do cartão.", us: "Pagamento protegido opcional (em breve): retido num contrato on-chain até você despachar, e reembolsado ao fim do seu prazo se não despachar." },
+      settlement: { k: "Dinheiro na sua conta", cards: "Em geral, de um a três dias úteis.", us: "Segundos depois que a rede confirma, ou quando você libera um pagamento protegido (em breve)." },
       hours: { k: "Disponibilidade", cards: "Os repasses esperam os dias úteis.", us: "Todos os dias, a qualquer hora." },
       borders: { k: "Clientes no exterior", cards: "Tarifas de cartão internacional, transferência e conversão de moeda.", us: "O mesmo link e a mesma tarifa em todos os países." },
-      custody: { k: "Onde o dinheiro fica", cards: "Com o processador até o próximo repasse.", us: "No seu próprio endereço. Na Monad, um endereço de depósito criado para o pagamento só pode repassá-lo para lá. Com escrow (em breve), num contrato on-chain até você liberar." },
+      custody: { k: "Onde o dinheiro fica", cards: "Com o processador até o próximo repasse.", us: "No seu próprio endereço. Na Monad, um endereço de depósito criado para o pagamento só pode repassá-lo para lá. Com um pagamento protegido (em breve), num contrato on-chain até você liberar." },
       fees: { k: "Tarifas", cards: "Uma porcentagem mais uma tarifa fixa, maior para cartões internacionais.", us: "Uma tarifa por pagamento, a partir de {rate}." },
     },
     note: "As condições de cartões e bancos variam por provedor e país; a tabela mostra o caso usual, não uma cotação.",
@@ -1056,7 +1056,7 @@ const pt: LandingMessages = {
     stores: {
       title: "Lojas online",
       body: "Ofereça stablecoins ao lado dos seus outros meios de pagamento. Seu servidor cria um intent de pagamento por pedido e um webhook o marca como pago.",
-      points: ["Um intent de pagamento por pedido, pela API ou pelo SDK", "O pedido é confirmado por um webhook assinado", "Liquidação instantânea, ou escrow até despachar o pedido (em breve)"],
+      points: ["Um intent de pagamento por pedido, pela API ou pelo SDK", "O pedido é confirmado por um webhook assinado", "Liquidação instantânea, ou pagamento protegido retido até despachar o pedido (em breve)"],
       uses: "a API de pagamentos, webhooks e o checkout hospedado.",
     },
     services: {
@@ -1106,7 +1106,7 @@ const pt: LandingMessages = {
   pricing: {
     title: "Pague",
     titleBold: "por pagamento.",
-    lede: "Cada plano tem a própria tarifa por pagamento; o escrow (em breve) soma 1,95% por pagamento. A carteira de quem paga cobre a taxa de rede; na Monad, a taxa do repasse do depósito é descontada e mostrada no checkout. Os pagamentos privados, com o valor oculto na blockchain, custam 0,18% por transação.",
+    lede: "Cada plano tem a própria tarifa por pagamento; os pagamentos protegidos (em breve) somam 1,95% por pagamento. A carteira de quem paga cobre a taxa de rede; na Monad, a taxa do repasse do depósito é descontada e mostrada no checkout. Os pagamentos privados, com o valor oculto na blockchain, custam 0,18% por transação.",
     perPayment: "por pagamento",
     perSwap: "{rate} por swap",
     perMonth: "por mês",
@@ -1117,7 +1117,7 @@ const pt: LandingMessages = {
   faq: {
     title: "Perguntas",
     titleBold: "e respostas.",
-    what: { q: "O que é o Cosmos Pay?", a: "O Cosmos Pay é um gateway de pagamento em stablecoins para empresas da América Latina. Você cria um link de pagamento, um checkout hospedado ou uma intenção de pagamento pela API; seu cliente paga com a própria carteira na Stellar, Solana ou Monad; e o dinheiro vai para um endereço que você controla, na hora ou com escrow (em breve)." },
+    what: { q: "O que é o Cosmos Pay?", a: "O Cosmos Pay é um gateway de pagamento em stablecoins para empresas da América Latina. Você cria um link de pagamento, um checkout hospedado ou uma intenção de pagamento pela API; seu cliente paga com a própria carteira na Stellar, Solana ou Monad; e o dinheiro vai para um endereço que você controla, na hora ou como pagamento protegido (em breve)." },
     assets: { q: "Em quais moedas posso cobrar?", a: "Em USDC, EURC, a moeda da própria rede (XLM, SOL ou MON) ou qualquer outro token na Stellar, Solana ou Monad, como USDT na Solana: você indica o emissor, o mint ou o contrato ao criar o link. Seu cliente paga nesse ativo, e você recebe o mesmo ativo." },
     wallet: { q: "Preciso da minha própria carteira cripto?", a: "Sim. Com o Cosmos Pay, os pagamentos são liquidados num endereço que você controla em cada rede que aceitar: Stellar, Solana ou Monad (na Monad, por meio de um endereço de depósito criado para cada pagamento, que só pode repassá-lo ao seu). Você adiciona cada carteira à sua organização no dashboard e comprova que ela é sua com uma assinatura, e os links de pagamento criados ali só pagam nessas carteiras. O Cosmos Pay nunca pede uma chave secreta nem guarda as chaves de ninguém, então os fundos são seus desde o primeiro pagamento, e cuidar das chaves fica por sua conta." },
     account: {
@@ -1130,12 +1130,12 @@ const pt: LandingMessages = {
     },
     custody: {
       q: "O Cosmos Pay fica com o meu dinheiro?",
-      a: "Não. Na Stellar e na Solana, quem paga envia direto para o seu endereço. Na Monad, cada pagamento vai para um endereço de depósito criado para ele, que só pode repassá-lo ao seu endereço (menos a taxa do repasse): o Cosmos Pay não tem nenhuma chave dele. Com escrow (em breve), o pagamento vai esperar num contrato on-chain, não no Cosmos Pay, até você liberar.",
+      a: "Não. Na Stellar e na Solana, quem paga envia direto para o seu endereço. Na Monad, cada pagamento vai para um endereço de depósito criado para ele, que só pode repassá-lo ao seu endereço (menos a taxa do repasse): o Cosmos Pay não tem nenhuma chave dele. Com um pagamento protegido (em breve), o pagamento vai esperar num contrato on-chain, não no Cosmos Pay, até você liberar.",
     },
     service: { q: "Posso oferecer isso aos meus próprios clientes?", a: "Sim. A Cosmos Pay é gateway de pagamento, pagamentos, swaps e pagamentos privados como serviço: nós operamos todo o serviço, e você só informa os endereços de carteira que recebem o dinheiro e assina com a sua carteira. Cada operação paga a tarifa do seu plano, e você pode somar sua própria taxa, paga à carteira que escolher." },
-    escrow: {
-      q: "Como vai funcionar o escrow?",
-      a: "O escrow chega em breve. Quando estiver disponível, seu cliente paga normalmente, mas o pagamento espera num contrato on-chain em vez de chegar na hora. Você libera para o seu endereço quando despacha o pedido; se não fizer isso dentro do prazo que define para o link, ele volta para o comprador. O escrow vai custar 1,95% por pagamento, além da tarifa do seu plano.",
+    protected: {
+      q: "Como vão funcionar os pagamentos protegidos?",
+      a: "Os pagamentos protegidos chegam em breve. Quando estiverem disponíveis, seu cliente paga normalmente, mas o pagamento espera num contrato on-chain em vez de chegar na hora. Você libera para o seu endereço quando despacha o pedido; se não fizer isso dentro do prazo que define para o link, ele volta para o comprador. Os pagamentos protegidos vão custar 1,95% por pagamento, além da tarifa do seu plano.",
     },
     zk: {
       q: "O que são pagamentos privados?",
@@ -1157,7 +1157,7 @@ const pt: LandingMessages = {
     cards: "Cartões",
     cardsTime: "2–3 dias úteis",
     paid: "Pago",
-    held: "Em escrow",
+    held: "Retido",
     shipped: "Despachado",
     released: "Liberado",
     yourAddress: "Seu endereço",
@@ -1189,7 +1189,7 @@ const pt: LandingMessages = {
   calc: {
     title: "Calcule suas tarifas",
     amount: "Valor do pagamento",
-    escrow: "Com escrow (+1,95%)",
+    protected: "Pagamento protegido (+1,95%)",
     plan: "Plano",
     fee: "Tarifa",
     youGet: "Você recebe",
@@ -1213,7 +1213,7 @@ const pt: LandingMessages = {
     useCases: { nav: "Casos de uso", title: "Como as empresas recebem em stablecoins", lede: "Como lojas, serviços, produtos digitais e criadores recebem em stablecoins, e o que muda em relação a cartões e transferências.", meta: "Receber em USDC: casos de uso para empresas | Cosmos Pay" },
     security: { nav: "Segurança", title: "Pagamentos verificáveis on-chain", lede: "Cada pagamento pode ser verificado na rede, suas chaves continuam suas e nenhum outro site pode incorporar as páginas de pagamento.", meta: "Pagamentos sem custódia, verificados on-chain | Cosmos Pay" },
     fees: { nav: "Preços", title: "Taxas para receber em stablecoins", lede: "Uma tarifa por pagamento conforme o plano, sem mensalidade no Starter. Calcule quanto você recebe antes de começar.", meta: "Taxas do gateway de pagamento cripto | Cosmos Pay" },
-    faq: { nav: "Perguntas", title: "Perguntas frequentes sobre receber em cripto", lede: "Carteiras, escrow (em breve), reembolsos, testes e tarifas: o que os comerciantes perguntam antes de começar.", meta: "Perguntas frequentes sobre pagamentos cripto | Cosmos Pay" },
+    faq: { nav: "Perguntas", title: "Perguntas frequentes sobre receber em cripto", lede: "Carteiras, pagamentos protegidos (em breve), reembolsos, testes e tarifas: o que os comerciantes perguntam antes de começar.", meta: "Perguntas frequentes sobre pagamentos cripto | Cosmos Pay" },
     swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sem conta", lede: "Troque tokens entre {n} redes e envie USDT0 da Stellar, sem criar conta.", meta: "Swaps cripto entre redes e USDT0 da Stellar | Cosmos Pay" },
     compare: { nav: "Comparar", title: "Como nossas tarifas se comparam", lede: "A tarifa da Cosmos Pay em cada serviço ao lado da tarifa publicada de um provedor conhecido, com link para a página de preços dele e a data da consulta.", meta: "Tarifas de gateways cripto comparadas | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Aceite pagamentos na Stellar", lede: "A Cosmos Pay transforma cada pagamento em um link SEP-7 com QR code. Seu cliente paga com a carteira Stellar e o dinheiro vai direto ao seu endereço.", meta: "API de pagamentos Stellar: receba USDC e XLM | Cosmos Pay", link: "Pagamentos na Stellar" },
@@ -1306,18 +1306,18 @@ const pt: LandingMessages = {
   comparePage: {
     title: "Nossas tarifas ao lado",
     titleBold: "das publicadas.",
-    lede: "Cada tarifa da Cosmos Pay é no máximo 75% da tarifa ao lado: a da BitPay para pagamentos, a da MetaMask para swaps, a da RAILGUN para pagamentos privados e a da Escrow.com para escrow, que chega em breve.",
+    lede: "Cada tarifa da Cosmos Pay é no máximo 75% da tarifa ao lado: a da BitPay para pagamentos, a da MetaMask para swaps, a da RAILGUN para pagamentos privados e a da Escrow.com para pagamentos protegidos, que chegam em breve.",
     caption: "Tarifas da Cosmos Pay ao lado das tarifas publicadas por outros provedores",
     service: "Serviço",
     ours: "Cosmos Pay",
     theirs: "Tarifa publicada",
     source: "Fonte",
-    services: { payments: "Pagamentos", swaps: "Swaps", private: "Pagamentos privados", escrow: "Escrow" },
+    services: { payments: "Pagamentos", swaps: "Swaps", private: "Pagamentos privados", protected: "Pagamentos protegidos" },
     noMonthly: "{plan}, sem mensalidade",
     monthly: "{plan}, mais {price} por mês",
     swaps: "No {plan}, até {min} no {minPlan}",
     private: "Por transação, por enquanto na testnet",
-    escrow: "Por pagamento, além da tarifa do plano",
+    protected: "Por pagamento, além da tarifa do plano",
     bandUnder: "Volume mensal abaixo de {below}",
     bandBetween: "Volume mensal de {from} a {to}",
     bandFrom: "Volume mensal de {from} ou mais",
@@ -1352,7 +1352,7 @@ const pt: LandingMessages = {
   },
   contact: {
     title: "Fale com a gente",
-    lede: "Dúvidas sobre planos, integração ou escrow (em breve): conte para nós e respondemos por e-mail.",
+    lede: "Dúvidas sobre planos, integração ou pagamentos protegidos (em breve): conte para nós e respondemos por e-mail.",
     name: "Nome",
     email: "E-mail de trabalho",
     company: "Empresa",
@@ -1382,7 +1382,7 @@ const fr: LandingMessages = {
     titleMark: "stablecoins.",
     titleB: "Soyez payé en secondes.",
     lede:
-      "Des liens de paiement, un checkout hébergé et une API pour les entreprises d’Amérique latine et d’ailleurs. Vos clients paient depuis leur propre wallet sur Stellar, Solana ou Monad, et vous choisissez le règlement : instantané à votre adresse, ou en escrow jusqu’à ce que vous le libériez à l’expédition (bientôt).",
+      "Des liens de paiement, un checkout hébergé et une API pour les entreprises d’Amérique latine et d’ailleurs. Vos clients paient depuis leur propre wallet sur Stellar, Solana ou Monad, et vous choisissez le règlement : instantané à votre adresse, ou en paiement protégé, retenu jusqu’à ce que vous le libériez à l’expédition (bientôt).",
     primary: "Créer un lien de paiement",
     secondary: "Lire la documentation",
     designs: "Voir les façons d’intégrer",
@@ -1400,20 +1400,20 @@ const fr: LandingMessages = {
     titleBold: "quand vous acceptez les stablecoins.",
     final: { title: "Des paiements définitifs", body: "Une fois le paiement confirmé par le réseau, aucune rétrofacturation n’est possible. Les remboursements, c’est vous qui les décidez, depuis votre wallet." },
     instant: { title: "Règlement instantané", body: "Avec le règlement instantané, l’argent arrive à votre adresse dès que le réseau le confirme : environ 5 secondes sur Stellar." },
-    escrow: { title: "Un escrow quand il le faut", body: "Retenez le paiement dans un contrat on-chain et libérez-le à l’expédition de la commande. Si vous ne le faites pas dans le délai que vous fixez, il retourne à l’acheteur." },
-    yours: { title: "Des fonds à votre adresse", body: "Les paiements arrivent sur une adresse que vous contrôlez, instantanément ou, avec un escrow (bientôt), quand vous le libérez, pas sur un solde dont il faut demander le versement." },
+    protected: { title: "Des paiements protégés quand il le faut", body: "Retenez le paiement dans un contrat on-chain et libérez-le à l’expédition de la commande. Si vous ne le faites pas dans le délai que vous fixez, il retourne à l’acheteur." },
+    yours: { title: "Des fonds à votre adresse", body: "Les paiements arrivent sur une adresse que vous contrôlez, instantanément ou, avec un paiement protégé (bientôt), quand vous le libérez, pas sur un solde dont il faut demander le versement." },
   },
   settle: {
     title: "Deux façons",
     titleBold: "de régler un paiement.",
-    lede: "Choisissez celle qui convient à chaque vente : à votre adresse sans attendre, ou en escrow jusqu’à ce que vous le libériez (bientôt).",
+    lede: "Choisissez celle qui convient à chaque vente : à votre adresse sans attendre, ou en paiement protégé, retenu jusqu’à ce que vous le libériez (bientôt).",
     instant: {
       title: "Instantané",
       body: "Pour les ventes terminées dès le paiement : produits numériques, services, dons.",
       steps: ["Votre client paie depuis son wallet", "Le réseau confirme le paiement", "L’argent est à votre adresse en quelques secondes"],
     },
-    escrow: {
-      title: "Escrow",
+    protected: {
+      title: "Paiement protégé",
       body: "Pour les commandes encore à livrer : le paiement attend dans un contrat on-chain jusqu’à ce que vous le libériez à l’expédition, et retourne à l’acheteur si vous ne le faites pas dans le délai que vous fixez.",
       steps: ["Votre client paie depuis son wallet", "Le paiement est retenu dans un contrat on-chain", "Vous expédiez la commande et le libérez vers votre adresse"],
     },
@@ -1427,11 +1427,11 @@ const fr: LandingMessages = {
     us: "Cosmos Pay",
     rows: {
       chargebacks: { k: "Rétrofacturations", cards: "Un paiement par carte peut être contesté des mois après la vente.", us: "Aucune. Un paiement confirmé est définitif." },
-      protection: { k: "Protection des commandes", cards: "Litiges et rétrofacturations via le réseau de cartes.", us: "Escrow optionnel (bientôt) : retenu dans un contrat on-chain jusqu’à l’expédition, remboursé à la fin de votre délai sinon." },
-      settlement: { k: "Argent sur votre compte", cards: "En général, un à trois jours ouvrés.", us: "Quelques secondes après la confirmation du réseau, ou quand vous libérez l’escrow (bientôt)." },
+      protection: { k: "Protection des commandes", cards: "Litiges et rétrofacturations via le réseau de cartes.", us: "Paiement protégé optionnel (bientôt) : retenu dans un contrat on-chain jusqu’à l’expédition, remboursé à la fin de votre délai sinon." },
+      settlement: { k: "Argent sur votre compte", cards: "En général, un à trois jours ouvrés.", us: "Quelques secondes après la confirmation du réseau, ou quand vous libérez un paiement protégé (bientôt)." },
       hours: { k: "Disponibilité", cards: "Les versements attendent les jours ouvrés.", us: "Tous les jours, à toute heure." },
       borders: { k: "Clients à l’étranger", cards: "Frais de carte internationale, de virement et de conversion de devises.", us: "Le même lien et le même tarif dans chaque pays." },
-      custody: { k: "Où l’argent attend", cards: "Chez le prestataire, jusqu’au prochain versement.", us: "Sur votre propre adresse. Sur Monad, une adresse de dépôt créée pour le paiement ne peut que l’y transférer. Avec un escrow (bientôt), dans un contrat on-chain jusqu’à ce que vous le libériez." },
+      custody: { k: "Où l’argent attend", cards: "Chez le prestataire, jusqu’au prochain versement.", us: "Sur votre propre adresse. Sur Monad, une adresse de dépôt créée pour le paiement ne peut que l’y transférer. Avec un paiement protégé (bientôt), dans un contrat on-chain jusqu’à ce que vous le libériez." },
       fees: { k: "Frais", cards: "Un pourcentage plus des frais fixes, plus élevés pour les cartes internationales.", us: "Un tarif par paiement, à partir de {rate}." },
     },
     note: "Les conditions des cartes et des banques varient selon le prestataire et le pays ; le tableau montre le cas habituel, pas un devis.",
@@ -1507,7 +1507,7 @@ const fr: LandingMessages = {
     stores: {
       title: "Boutiques en ligne",
       body: "Proposez les stablecoins à côté de vos autres moyens de paiement. Votre serveur crée un intent de paiement par commande, et un webhook le marque comme payé.",
-      points: ["Un intent de paiement par commande, via l’API ou le SDK", "La commande est confirmée par un webhook signé", "Règlement instantané, ou escrow jusqu’à l’expédition (bientôt)"],
+      points: ["Un intent de paiement par commande, via l’API ou le SDK", "La commande est confirmée par un webhook signé", "Règlement instantané, ou paiement protégé retenu jusqu’à l’expédition (bientôt)"],
       uses: "l’API de paiement, les webhooks et le checkout hébergé.",
     },
     services: {
@@ -1557,7 +1557,7 @@ const fr: LandingMessages = {
   pricing: {
     title: "Payez",
     titleBold: "au paiement.",
-    lede: "Chaque offre a son propre tarif par paiement ; l’escrow (bientôt) ajoute 1,95 % par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais de dépôt sont déduits et affichés sur le checkout. Les paiements privés, au montant caché sur la blockchain, coûtent 0,18 % par transaction.",
+    lede: "Chaque offre a son propre tarif par paiement ; les paiements protégés (bientôt) ajoutent 1,95 % par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais de dépôt sont déduits et affichés sur le checkout. Les paiements privés, au montant caché sur la blockchain, coûtent 0,18 % par transaction.",
     perPayment: "par paiement",
     perSwap: "{rate} par swap",
     perMonth: "par mois",
@@ -1568,7 +1568,7 @@ const fr: LandingMessages = {
   faq: {
     title: "Questions",
     titleBold: "et réponses.",
-    what: { q: "Qu’est-ce que Cosmos Pay ?", a: "Cosmos Pay est une passerelle de paiement en stablecoins pour les entreprises d’Amérique latine. Vous créez un lien de paiement, un checkout hébergé ou une intention de paiement via l’API ; votre client paie depuis son propre wallet sur Stellar, Solana ou Monad ; et l’argent arrive à une adresse que vous contrôlez, instantanément ou via un escrow (bientôt)." },
+    what: { q: "Qu’est-ce que Cosmos Pay ?", a: "Cosmos Pay est une passerelle de paiement en stablecoins pour les entreprises d’Amérique latine. Vous créez un lien de paiement, un checkout hébergé ou une intention de paiement via l’API ; votre client paie depuis son propre wallet sur Stellar, Solana ou Monad ; et l’argent arrive à une adresse que vous contrôlez, instantanément ou en paiement protégé (bientôt)." },
     assets: { q: "Dans quelles devises puis-je encaisser ?", a: "En USDC, en EURC, dans la monnaie du réseau (XLM, SOL ou MON) ou dans tout autre jeton sur Stellar, Solana ou Monad, comme l’USDT sur Solana : vous l’indiquez par son émetteur, son mint ou son contrat en créant le lien. Votre client paie dans cet actif, et vous recevez ce même actif." },
     wallet: { q: "Ai-je besoin de mon propre wallet crypto ?", a: "Oui. Avec Cosmos Pay, les paiements sont réglés sur une adresse que vous contrôlez pour chaque réseau accepté : Stellar, Solana ou Monad (sur Monad, via une adresse de dépôt créée pour chaque paiement, qui ne peut que le transférer à la vôtre). Vous ajoutez chaque wallet à votre organisation dans le tableau de bord et prouvez qu’il est à vous par une signature, et les liens de paiement créés là ne paient que vers ces wallets. Cosmos Pay ne demande jamais de clé secrète et ne conserve les clés de personne : les fonds sont à vous dès le premier paiement, et veiller sur vos clés vous revient." },
     account: {
@@ -1581,12 +1581,12 @@ const fr: LandingMessages = {
     },
     custody: {
       q: "Cosmos Pay garde-t-il mon argent ?",
-      a: "Non. Sur Stellar et Solana, le payeur paie directement votre adresse. Sur Monad, chaque paiement va à une adresse de dépôt créée pour lui, qui ne peut que le transférer à votre adresse (moins les frais du relais) : Cosmos Pay n’en détient aucune clé. Avec un escrow (bientôt), le paiement attendra dans un contrat on-chain, pas chez Cosmos Pay, jusqu’à ce que vous le libériez.",
+      a: "Non. Sur Stellar et Solana, le payeur paie directement votre adresse. Sur Monad, chaque paiement va à une adresse de dépôt créée pour lui, qui ne peut que le transférer à votre adresse (moins les frais du relais) : Cosmos Pay n’en détient aucune clé. Avec un paiement protégé (bientôt), le paiement attendra dans un contrat on-chain, pas chez Cosmos Pay, jusqu’à ce que vous le libériez.",
     },
     service: { q: "Puis-je le proposer à mes propres clients ?", a: "Oui. Cosmos Pay, c’est la passerelle de paiement, les paiements, les swaps et les paiements privés en tant que service : nous opérons tout le service, et vous indiquez seulement les adresses de wallet qui reçoivent l’argent et signez avec votre wallet. Chaque opération paie le tarif de votre offre, et vous pouvez y ajouter vos propres frais, versés au wallet de votre choix." },
-    escrow: {
-      q: "Comment fonctionnera l’escrow ?",
-      a: "L’escrow arrive bientôt. Une fois disponible, votre client paie comme d’habitude, mais le paiement attend dans un contrat on-chain au lieu de vous parvenir aussitôt. Vous le libérez vers votre adresse à l’expédition de la commande ; sinon, passé le délai que vous fixez pour le lien, il retourne à l’acheteur. L’escrow coûtera 1,95 % par paiement en plus du tarif de votre offre.",
+    protected: {
+      q: "Comment fonctionneront les paiements protégés ?",
+      a: "Les paiements protégés arrivent bientôt. Une fois disponibles, votre client paie comme d’habitude, mais le paiement attend dans un contrat on-chain au lieu de vous parvenir aussitôt. Vous le libérez vers votre adresse à l’expédition de la commande ; sinon, passé le délai que vous fixez pour le lien, il retourne à l’acheteur. Les paiements protégés coûteront 1,95 % par paiement en plus du tarif de votre offre.",
     },
     zk: {
       q: "Que sont les paiements privés ?",
@@ -1608,7 +1608,7 @@ const fr: LandingMessages = {
     cards: "Cartes",
     cardsTime: "2–3 jours ouvrés",
     paid: "Payé",
-    held: "En escrow",
+    held: "Retenu",
     shipped: "Expédié",
     released: "Libéré",
     yourAddress: "Votre adresse",
@@ -1640,7 +1640,7 @@ const fr: LandingMessages = {
   calc: {
     title: "Estimez vos frais",
     amount: "Montant du paiement",
-    escrow: "Avec escrow (+1,95 %)",
+    protected: "Paiement protégé (+1,95 %)",
     plan: "Offre",
     fee: "Frais",
     youGet: "Vous recevez",
@@ -1664,7 +1664,7 @@ const fr: LandingMessages = {
     useCases: { nav: "Cas d’usage", title: "Comment les entreprises encaissent en stablecoins", lede: "Comment boutiques, services, produits numériques et créateurs encaissent en stablecoins, et ce qui change par rapport aux cartes et aux virements.", meta: "Cas d’usage des paiements en USDC | Cosmos Pay" },
     security: { nav: "Sécurité", title: "Des paiements vérifiables on-chain", lede: "Chaque paiement se vérifie sur le réseau, vos clés restent les vôtres et aucun autre site ne peut intégrer les pages de paiement.", meta: "Paiements non dépositaires vérifiés on-chain | Cosmos Pay" },
     fees: { nav: "Tarifs", title: "Frais des paiements en stablecoins", lede: "Un tarif par paiement selon votre offre, sans abonnement mensuel avec Starter. Calculez ce que vous recevez avant de commencer.", meta: "Frais de paiement en stablecoins et calculateur | Cosmos Pay" },
-    faq: { nav: "Questions", title: "FAQ des paiements en stablecoins", lede: "Wallets, escrow (bientôt), remboursements, tests et frais : ce que les marchands demandent avant de commencer.", meta: "FAQ paiements crypto : wallets, frais | Cosmos Pay" },
+    faq: { nav: "Questions", title: "FAQ des paiements en stablecoins", lede: "Wallets, paiements protégés (bientôt), remboursements, tests et frais : ce que les marchands demandent avant de commencer.", meta: "FAQ paiements crypto : wallets, frais | Cosmos Pay" },
     swaps: { nav: "Swaps", title: "Échangez des jetons entre réseaux, sans compte", lede: "Échangez des jetons entre {n} réseaux et envoyez de l’USDT0 depuis Stellar, sans compte.", meta: "Swaps entre réseaux et USDT0 depuis Stellar | Cosmos Pay" },
     compare: { nav: "Comparer", title: "Nos frais comparés", lede: "Le tarif de Cosmos Pay pour chaque service à côté du tarif publié d’un prestataire connu, avec un lien vers sa page de tarifs et la date de lecture.", meta: "Frais des passerelles crypto comparés | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Acceptez des paiements sur Stellar", lede: "Cosmos Pay transforme chaque paiement en lien SEP-7 avec QR code. Votre client paie depuis son wallet Stellar et l’argent arrive droit à votre adresse.", meta: "API de paiement Stellar : acceptez USDC et XLM | Cosmos Pay", link: "Paiements sur Stellar" },
@@ -1757,18 +1757,18 @@ const fr: LandingMessages = {
   comparePage: {
     title: "Nos tarifs à côté",
     titleBold: "des tarifs publiés.",
-    lede: "Chaque tarif de Cosmos Pay vaut au plus 75 % du tarif placé à côté : celui de BitPay pour les paiements, de MetaMask pour les swaps, de RAILGUN pour les paiements privés et d’Escrow.com pour l’escrow, qui arrive bientôt.",
+    lede: "Chaque tarif de Cosmos Pay vaut au plus 75 % du tarif placé à côté : celui de BitPay pour les paiements, de MetaMask pour les swaps, de RAILGUN pour les paiements privés et d’Escrow.com pour les paiements protégés, qui arrivent bientôt.",
     caption: "Les tarifs de Cosmos Pay à côté des tarifs publiés par d’autres prestataires",
     service: "Service",
     ours: "Cosmos Pay",
     theirs: "Tarif publié",
     source: "Source",
-    services: { payments: "Paiements", swaps: "Swaps", private: "Paiements privés", escrow: "Escrow" },
+    services: { payments: "Paiements", swaps: "Swaps", private: "Paiements privés", protected: "Paiements protégés" },
     noMonthly: "{plan}, sans abonnement mensuel",
     monthly: "{plan}, plus {price} par mois",
     swaps: "Avec {plan}, jusqu’à {min} avec {minPlan}",
     private: "Par transaction, sur testnet pour l’instant",
-    escrow: "Par paiement, en plus du tarif de l’offre",
+    protected: "Par paiement, en plus du tarif de l’offre",
     bandUnder: "Volume mensuel inférieur à {below}",
     bandBetween: "Volume mensuel de {from} à {to}",
     bandFrom: "Volume mensuel de {from} ou plus",
@@ -1803,7 +1803,7 @@ const fr: LandingMessages = {
   },
   contact: {
     title: "Écrivez-nous",
-    lede: "Une question sur les offres, l’intégration ou l’escrow (bientôt) : dites-le-nous, nous répondons par e-mail.",
+    lede: "Une question sur les offres, l’intégration ou les paiements protégés (bientôt) : dites-le-nous, nous répondons par e-mail.",
     name: "Nom",
     email: "E-mail professionnel",
     company: "Entreprise",
@@ -1833,7 +1833,7 @@ const de: LandingMessages = {
     titleMark: "Stablecoins.",
     titleB: "Werde in Sekunden bezahlt.",
     lede:
-      "Zahlungslinks, ein gehosteter Checkout und eine API für Unternehmen in Lateinamerika und weltweit. Deine Kunden zahlen aus ihrer eigenen Wallet auf Stellar, Solana oder Monad, und du wählst die Abwicklung: sofort an deine Adresse oder im Escrow, bis du die Zahlung beim Versand freigibst (demnächst).",
+      "Zahlungslinks, ein gehosteter Checkout und eine API für Unternehmen in Lateinamerika und weltweit. Deine Kunden zahlen aus ihrer eigenen Wallet auf Stellar, Solana oder Monad, und du wählst die Abwicklung: sofort an deine Adresse oder als geschützte Zahlung, die gehalten wird, bis du sie beim Versand freigibst (demnächst).",
     primary: "Zahlungslink erstellen",
     secondary: "Dokumentation lesen",
     designs: "Integrationswege ansehen",
@@ -1851,20 +1851,20 @@ const de: LandingMessages = {
     titleBold: "wenn du Stablecoins akzeptierst.",
     final: { title: "Endgültige Zahlungen", body: "Hat das Netzwerk eine Zahlung bestätigt, ist keine Rückbuchung mehr möglich. Erstattungen entscheidest du und sendest sie aus deiner Wallet." },
     instant: { title: "Sofortige Abwicklung", body: "Bei sofortiger Abwicklung erreicht das Geld deine Adresse, sobald das Netzwerk bestätigt: etwa 5 Sekunden auf Stellar." },
-    escrow: { title: "Escrow, wenn du es brauchst", body: "Halte die Zahlung in einem On-Chain-Vertrag zurück und gib sie frei, wenn du die Bestellung versendest. Tust du das nicht innerhalb deiner Frist, geht sie an den Käufer zurück." },
-    yours: { title: "Geld an deiner Adresse", body: "Zahlungen landen an einer Adresse, die du kontrollierst, sofort oder, mit Escrow (demnächst), wenn du es freigibst, nicht in einem Guthaben, das du erst anfordern musst." },
+    protected: { title: "Geschützte Zahlungen, wenn du sie brauchst", body: "Halte die Zahlung in einem On-Chain-Vertrag zurück und gib sie frei, wenn du die Bestellung versendest. Tust du das nicht innerhalb deiner Frist, geht sie an den Käufer zurück." },
+    yours: { title: "Geld an deiner Adresse", body: "Zahlungen landen an einer Adresse, die du kontrollierst, sofort oder, mit einer geschützten Zahlung (demnächst), wenn du sie freigibst, nicht in einem Guthaben, das du erst anfordern musst." },
   },
   settle: {
     title: "Zwei Wege,",
     titleBold: "eine Zahlung abzuwickeln.",
-    lede: "Wähle, was zum jeweiligen Verkauf passt: sofort an deine Adresse oder im Escrow, bis du die Zahlung freigibst (demnächst).",
+    lede: "Wähle, was zum jeweiligen Verkauf passt: sofort an deine Adresse oder als geschützte Zahlung, die gehalten wird, bis du sie freigibst (demnächst).",
     instant: {
       title: "Sofort",
       body: "Für Verkäufe, die mit der Zahlung abgeschlossen sind: digitale Produkte, Dienstleistungen, Spenden.",
       steps: ["Dein Kunde zahlt aus seiner Wallet", "Das Netzwerk bestätigt die Zahlung", "Das Geld ist in Sekunden an deiner Adresse"],
     },
-    escrow: {
-      title: "Escrow",
+    protected: {
+      title: "Geschützte Zahlung",
       body: "Für Bestellungen, die du noch liefern musst: Die Zahlung wartet in einem On-Chain-Vertrag, bis du sie beim Versand freigibst, und geht an den Käufer zurück, wenn du das nicht innerhalb deiner Frist tust.",
       steps: ["Dein Kunde zahlt aus seiner Wallet", "Die Zahlung wird in einem On-Chain-Vertrag gehalten", "Du versendest die Bestellung und gibst sie an deine Adresse frei"],
     },
@@ -1878,11 +1878,11 @@ const de: LandingMessages = {
     us: "Cosmos Pay",
     rows: {
       chargebacks: { k: "Rückbuchungen", cards: "Eine Kartenzahlung kann noch Monate nach dem Verkauf angefochten werden.", us: "Keine. Eine bestätigte Zahlung ist endgültig." },
-      protection: { k: "Schutz bei Bestellungen", cards: "Streitfälle und Rückbuchungen über das Kartennetzwerk.", us: "Optionales Escrow (demnächst): in einem On-Chain-Vertrag bis zum Versand gehalten, nach deiner Frist sonst erstattet." },
-      settlement: { k: "Geld auf deinem Konto", cards: "Meist nach ein bis drei Werktagen.", us: "Sekunden nach der Bestätigung durch das Netzwerk oder wenn du das Escrow freigibst (demnächst)." },
+      protection: { k: "Schutz bei Bestellungen", cards: "Streitfälle und Rückbuchungen über das Kartennetzwerk.", us: "Optionale geschützte Zahlung (demnächst): in einem On-Chain-Vertrag bis zum Versand gehalten, nach deiner Frist sonst erstattet." },
+      settlement: { k: "Geld auf deinem Konto", cards: "Meist nach ein bis drei Werktagen.", us: "Sekunden nach der Bestätigung durch das Netzwerk oder wenn du eine geschützte Zahlung freigibst (demnächst)." },
       hours: { k: "Verfügbarkeit", cards: "Auszahlungen warten auf Bankarbeitstage.", us: "Jeden Tag, rund um die Uhr." },
       borders: { k: "Kunden im Ausland", cards: "Gebühren für Auslandskarten, Überweisungen und Währungsumrechnung.", us: "Derselbe Link und derselbe Satz in jedem Land." },
-      custody: { k: "Wo das Geld wartet", cards: "Beim Zahlungsdienstleister bis zur nächsten Auszahlung.", us: "An deiner eigenen Adresse. Auf Monad kann eine eigens für die Zahlung erstellte Einzahlungsadresse sie nur dorthin weiterleiten. Mit Escrow (demnächst) in einem On-Chain-Vertrag, bis du sie freigibst." },
+      custody: { k: "Wo das Geld wartet", cards: "Beim Zahlungsdienstleister bis zur nächsten Auszahlung.", us: "An deiner eigenen Adresse. Auf Monad kann eine eigens für die Zahlung erstellte Einzahlungsadresse sie nur dorthin weiterleiten. Mit einer geschützten Zahlung (demnächst) in einem On-Chain-Vertrag, bis du sie freigibst." },
       fees: { k: "Gebühren", cards: "Ein Prozentsatz plus eine feste Gebühr, höher für Auslandskarten.", us: "Ein Satz pro Zahlung, ab {rate}." },
     },
     note: "Die Bedingungen von Karten und Banken hängen von Anbieter und Land ab; die Tabelle zeigt den üblichen Fall, kein Angebot.",
@@ -1958,7 +1958,7 @@ const de: LandingMessages = {
     stores: {
       title: "Onlineshops",
       body: "Biete Stablecoins neben deinen anderen Zahlungsarten an. Dein Server erstellt pro Bestellung einen Zahlungs-Intent, und ein Webhook markiert ihn als bezahlt.",
-      points: ["Ein Zahlungs-Intent pro Bestellung, über die API oder das SDK", "Die Bestellung wird per signiertem Webhook bestätigt", "Sofortige Abwicklung oder Escrow bis zum Versand (demnächst)"],
+      points: ["Ein Zahlungs-Intent pro Bestellung, über die API oder das SDK", "Die Bestellung wird per signiertem Webhook bestätigt", "Sofortige Abwicklung oder geschützte Zahlung bis zum Versand (demnächst)"],
       uses: "der Zahlungs-API, Webhooks und dem gehosteten Checkout.",
     },
     services: {
@@ -2008,7 +2008,7 @@ const de: LandingMessages = {
   pricing: {
     title: "Zahle",
     titleBold: "pro Zahlung.",
-    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung; Escrow (demnächst) kostet zusätzlich 1,95 % pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt. Private Zahlungen, deren Betrag auf der Blockchain verborgen bleibt, kosten 0,18 % pro Transaktion.",
+    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung; geschützte Zahlungen (demnächst) kosten zusätzlich 1,95 % pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt. Private Zahlungen, deren Betrag auf der Blockchain verborgen bleibt, kosten 0,18 % pro Transaktion.",
     perPayment: "pro Zahlung",
     perSwap: "{rate} pro Swap",
     perMonth: "pro Monat",
@@ -2019,7 +2019,7 @@ const de: LandingMessages = {
   faq: {
     title: "Fragen",
     titleBold: "und Antworten.",
-    what: { q: "Was ist Cosmos Pay?", a: "Cosmos Pay ist ein Zahlungsgateway für Stablecoins für Unternehmen in Lateinamerika. Du erstellst einen Zahlungslink, einen gehosteten Checkout oder per API eine Zahlungsabsicht; dein Kunde zahlt aus seiner eigenen Wallet auf Stellar, Solana oder Monad; und das Geld geht an eine Adresse, die du kontrollierst, sofort oder per Escrow (demnächst)." },
+    what: { q: "Was ist Cosmos Pay?", a: "Cosmos Pay ist ein Zahlungsgateway für Stablecoins für Unternehmen in Lateinamerika. Du erstellst einen Zahlungslink, einen gehosteten Checkout oder per API eine Zahlungsabsicht; dein Kunde zahlt aus seiner eigenen Wallet auf Stellar, Solana oder Monad; und das Geld geht an eine Adresse, die du kontrollierst, sofort oder als geschützte Zahlung (demnächst)." },
     assets: { q: "In welchen Währungen kann ich kassieren?", a: "In USDC, EURC, der eigenen Coin des Netzwerks (XLM, SOL oder MON) oder jedem anderen Token auf Stellar, Solana oder Monad, etwa USDT auf Solana: Du gibst ihn beim Erstellen des Links über seinen Herausgeber, Mint oder Contract an. Dein Kunde zahlt in diesem Asset, und du erhältst dasselbe Asset." },
     wallet: { q: "Brauche ich eine eigene Krypto-Wallet?", a: "Ja. Mit Cosmos Pay werden Zahlungen an eine Adresse abgewickelt, die du in jedem akzeptierten Netzwerk kontrollierst: Stellar, Solana oder Monad (auf Monad über eine für jede Zahlung erstellte Einzahlungsadresse, die sie nur an deine weiterleiten kann). Du fügst jede Wallet im Dashboard deiner Organisation hinzu und beweist mit einer Signatur, dass sie dir gehört, und dort erstellte Zahlungslinks zahlen nur an diese Wallets. Cosmos Pay fragt nie nach einem geheimen Schlüssel und speichert niemandes Schlüssel, also gehört das Geld ab der ersten Zahlung dir, und auf die Schlüssel aufzupassen ist deine Sache." },
     account: {
@@ -2032,12 +2032,12 @@ const de: LandingMessages = {
     },
     custody: {
       q: "Verwahrt Cosmos Pay mein Geld?",
-      a: "Nein. Auf Stellar und Solana zahlt der Zahler direkt an deine Adresse. Auf Monad geht jede Zahlung an eine eigens dafür erstellte Einzahlungsadresse, die sie nur an deine Adresse weiterleiten kann (abzüglich der Relay-Gebühr): Cosmos Pay hat keinen Schlüssel dazu. Mit Escrow (demnächst) wartet die Zahlung in einem On-Chain-Vertrag, nicht bei Cosmos Pay, bis du sie freigibst.",
+      a: "Nein. Auf Stellar und Solana zahlt der Zahler direkt an deine Adresse. Auf Monad geht jede Zahlung an eine eigens dafür erstellte Einzahlungsadresse, die sie nur an deine Adresse weiterleiten kann (abzüglich der Relay-Gebühr): Cosmos Pay hat keinen Schlüssel dazu. Bei einer geschützten Zahlung (demnächst) wartet sie in einem On-Chain-Vertrag, nicht bei Cosmos Pay, bis du sie freigibst.",
     },
     service: { q: "Kann ich das meinen eigenen Kunden anbieten?", a: "Ja. Cosmos Pay bietet das Zahlungs-Gateway, Zahlungen, Swaps und private Zahlungen als Service: Wir betreiben den gesamten Service, und Sie geben nur die Wallet-Adressen an, die das Geld erhalten, und signieren mit Ihrer Wallet. Jeder Vorgang zahlt den Satz Ihres Tarifs, und Sie können Ihre eigene Gebühr hinzufügen, die an die Wallet Ihrer Wahl geht." },
-    escrow: {
-      q: "Wie wird Escrow funktionieren?",
-      a: "Escrow kommt demnächst. Sobald es verfügbar ist, zahlt dein Kunde wie gewohnt, aber die Zahlung wartet in einem On-Chain-Vertrag, statt sofort bei dir anzukommen. Du gibst sie an deine Adresse frei, wenn du die Bestellung versendest; tust du das nicht innerhalb der Frist, die du für den Link festlegst, geht sie an den Käufer zurück. Escrow wird 1,95 % pro Zahlung zusätzlich zum Satz deines Tarifs kosten.",
+    protected: {
+      q: "Wie werden geschützte Zahlungen funktionieren?",
+      a: "Geschützte Zahlungen kommen demnächst. Sobald sie verfügbar sind, zahlt dein Kunde wie gewohnt, aber die Zahlung wartet in einem On-Chain-Vertrag, statt sofort bei dir anzukommen. Du gibst sie an deine Adresse frei, wenn du die Bestellung versendest; tust du das nicht innerhalb der Frist, die du für den Link festlegst, geht sie an den Käufer zurück. Geschützte Zahlungen werden 1,95 % pro Zahlung zusätzlich zum Satz deines Tarifs kosten.",
     },
     zk: {
       q: "Was sind private Zahlungen?",
@@ -2059,7 +2059,7 @@ const de: LandingMessages = {
     cards: "Karten",
     cardsTime: "2–3 Werktage",
     paid: "Bezahlt",
-    held: "Im Escrow",
+    held: "Gehalten",
     shipped: "Versendet",
     released: "Freigegeben",
     yourAddress: "Deine Adresse",
@@ -2091,7 +2091,7 @@ const de: LandingMessages = {
   calc: {
     title: "Berechne deine Gebühren",
     amount: "Zahlungsbetrag",
-    escrow: "Mit Escrow (+1,95 %)",
+    protected: "Geschützte Zahlung (+1,95 %)",
     plan: "Tarif",
     fee: "Gebühr",
     youGet: "Du erhältst",
@@ -2115,7 +2115,7 @@ const de: LandingMessages = {
     useCases: { nav: "Anwendungsfälle", title: "Wie Unternehmen Stablecoins annehmen", lede: "Wie Shops, Dienstleister, digitale Produkte und Creator Stablecoins annehmen, und was sich gegenüber Karten und Überweisungen ändert.", meta: "USDC annehmen: Anwendungsfälle für Unternehmen | Cosmos Pay" },
     security: { nav: "Sicherheit", title: "Zahlungen, die du on-chain prüfen kannst", lede: "Jede Zahlung lässt sich im Netzwerk prüfen, deine Schlüssel bleiben deine und keine andere Website kann die Zahlungsseiten einbetten.", meta: "Nicht verwahrte Zahlungen, on-chain geprüft | Cosmos Pay" },
     fees: { nav: "Preise", title: "Gebühren für Stablecoin-Zahlungen", lede: "Ein Satz pro Zahlung je nach Tarif, ohne Monatsgebühr bei Starter. Rechne aus, was dir bleibt, bevor du startest.", meta: "Gebühren für Stablecoin-Zahlungen und Rechner | Cosmos Pay" },
-    faq: { nav: "Fragen", title: "Häufige Fragen zu Stablecoin-Zahlungen", lede: "Wallets, Escrow (demnächst), Erstattungen, Tests und Gebühren: was Händler vor dem Start fragen.", meta: "FAQ zu Krypto-Zahlungen: Wallets, Gebühren | Cosmos Pay" },
+    faq: { nav: "Fragen", title: "Häufige Fragen zu Stablecoin-Zahlungen", lede: "Wallets, geschützte Zahlungen (demnächst), Erstattungen, Tests und Gebühren: was Händler vor dem Start fragen.", meta: "FAQ zu Krypto-Zahlungen: Wallets, Gebühren | Cosmos Pay" },
     swaps: { nav: "Swaps", title: "Token zwischen Netzwerken tauschen, ohne Konto", lede: "Tauschen Sie Token zwischen {n} Netzwerken und senden Sie USDT0 von Stellar, ohne Konto.", meta: "Cross-Chain-Swaps und USDT0 von Stellar | Cosmos Pay" },
     compare: { nav: "Vergleich", title: "Unsere Gebühren im Vergleich", lede: "Der Satz von Cosmos Pay je Dienst neben dem veröffentlichten Satz eines bekannten Anbieters, mit Link zu dessen Preisseite und dem Datum der Abfrage.", meta: "Krypto-Gateway-Gebühren im Vergleich | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Zahlungen auf Stellar annehmen", lede: "Cosmos Pay macht jede Zahlung zu einem SEP-7-Link mit QR-Code. Dein Kunde zahlt aus seiner Stellar-Wallet, und das Geld geht direkt an deine Adresse.", meta: "Stellar-Zahlungs-API: USDC und XLM annehmen | Cosmos Pay", link: "Zahlungen auf Stellar" },
@@ -2208,18 +2208,18 @@ const de: LandingMessages = {
   comparePage: {
     title: "Unsere Sätze neben",
     titleBold: "veröffentlichten Sätzen.",
-    lede: "Jeder Satz von Cosmos Pay beträgt höchstens 75 % des Satzes daneben: der von BitPay für Zahlungen, von MetaMask für Swaps, von RAILGUN für private Zahlungen und von Escrow.com für Escrow, das demnächst kommt.",
+    lede: "Jeder Satz von Cosmos Pay beträgt höchstens 75 % des Satzes daneben: der von BitPay für Zahlungen, von MetaMask für Swaps, von RAILGUN für private Zahlungen und von Escrow.com für geschützte Zahlungen, die demnächst kommen.",
     caption: "Die Sätze von Cosmos Pay neben den veröffentlichten Sätzen anderer Anbieter",
     service: "Dienst",
     ours: "Cosmos Pay",
     theirs: "Veröffentlichter Satz",
     source: "Quelle",
-    services: { payments: "Zahlungen", swaps: "Swaps", private: "Private Zahlungen", escrow: "Escrow" },
+    services: { payments: "Zahlungen", swaps: "Swaps", private: "Private Zahlungen", protected: "Geschützte Zahlungen" },
     noMonthly: "{plan}, ohne Monatsgebühr",
     monthly: "{plan}, plus {price} im Monat",
     swaps: "Bei {plan}, bis {min} bei {minPlan}",
     private: "Pro Transaktion, vorerst im Testnet",
-    escrow: "Pro Zahlung, zusätzlich zum Satz des Tarifs",
+    protected: "Pro Zahlung, zusätzlich zum Satz des Tarifs",
     bandUnder: "Monatsvolumen unter {below}",
     bandBetween: "Monatsvolumen von {from} bis {to}",
     bandFrom: "Monatsvolumen ab {from}",
@@ -2254,7 +2254,7 @@ const de: LandingMessages = {
   },
   contact: {
     title: "Schreib uns",
-    lede: "Fragen zu Tarifen, Integration oder Escrow (demnächst): Schreib uns, wir antworten per E-Mail.",
+    lede: "Fragen zu Tarifen, Integration oder geschützten Zahlungen (demnächst): Schreib uns, wir antworten per E-Mail.",
     name: "Name",
     email: "Geschäftliche E-Mail",
     company: "Unternehmen",
@@ -2284,7 +2284,7 @@ const hi: LandingMessages = {
     titleMark: "स्टेबलकॉइन में।",
     titleB: "पैसा पाएँ सेकंडों में।",
     lede:
-      "लैटिन अमेरिका और दुनिया भर के कारोबारों के लिए पेमेंट लिंक, होस्टेड चेकआउट और API। आपके ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करते हैं, और सेटलमेंट का तरीका आप चुनते हैं: तुरंत आपके पते पर, या एस्क्रो में, जब तक आप ऑर्डर डिस्पैच करके उसे रिलीज़ न कर दें (जल्द आ रहा है)।",
+      "लैटिन अमेरिका और दुनिया भर के कारोबारों के लिए पेमेंट लिंक, होस्टेड चेकआउट और API। आपके ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करते हैं, और सेटलमेंट का तरीका आप चुनते हैं: तुरंत आपके पते पर, या सुरक्षित भुगतान के रूप में, जो तब तक रुका रहता है जब तक आप ऑर्डर डिस्पैच करके उसे रिलीज़ न कर दें (जल्द आ रहा है)।",
     primary: "पेमेंट लिंक बनाएँ",
     secondary: "डॉक्स पढ़ें",
     designs: "इंटीग्रेशन के तरीके देखें",
@@ -2302,20 +2302,20 @@ const hi: LandingMessages = {
     titleBold: "क्या बदलता है।",
     final: { title: "पक्के भुगतान", body: "नेटवर्क की पुष्टि के बाद भुगतान पर चार्जबैक नहीं हो सकता। रिफ़ंड देना आपका फ़ैसला है, और वह आपके वॉलेट से भेजा जाता है।" },
     instant: { title: "तुरंत सेटलमेंट", body: "तुरंत सेटलमेंट में नेटवर्क की पुष्टि होते ही पैसा आपके पते पर पहुँच जाता है: Stellar पर लगभग 5 सेकंड में।" },
-    escrow: { title: "ज़रूरत हो तो एस्क्रो", body: "भुगतान को ऑन-चेन कॉन्ट्रैक्ट में रोककर रखें और ऑर्डर डिस्पैच करने पर रिलीज़ करें। अगर आप अपनी तय समय-सीमा में ऐसा नहीं करते, तो पैसा खरीदार को लौट जाता है।" },
-    yours: { title: "फ़ंड आपके पते पर", body: "भुगतान आपके नियंत्रण वाले पते पर आते हैं, तुरंत या, एस्क्रो (जल्द आ रहा है) में, उसे रिलीज़ करने पर, न कि किसी ऐसे बैलेंस में जिसके लिए आपको अनुरोध करना पड़े।" },
+    protected: { title: "ज़रूरत हो तो सुरक्षित भुगतान", body: "भुगतान को ऑन-चेन कॉन्ट्रैक्ट में रोककर रखें और ऑर्डर डिस्पैच करने पर रिलीज़ करें। अगर आप अपनी तय समय-सीमा में ऐसा नहीं करते, तो पैसा खरीदार को लौट जाता है।" },
+    yours: { title: "फ़ंड आपके पते पर", body: "भुगतान आपके नियंत्रण वाले पते पर आते हैं, तुरंत या, सुरक्षित भुगतान (जल्द आ रहा है) के साथ, उसे रिलीज़ करने पर, न कि किसी ऐसे बैलेंस में जिसके लिए आपको अनुरोध करना पड़े।" },
   },
   settle: {
     title: "भुगतान सेटल करने के",
     titleBold: "दो तरीके।",
-    lede: "हर बिक्री के लिए सही तरीका चुनें: तुरंत आपके पते पर, या एस्क्रो में, जब तक आप उसे रिलीज़ न करें (जल्द आ रहा है)।",
+    lede: "हर बिक्री के लिए सही तरीका चुनें: तुरंत आपके पते पर, या सुरक्षित भुगतान के रूप में, जो तब तक रुका रहता है जब तक आप उसे रिलीज़ न करें (जल्द आ रहा है)।",
     instant: {
       title: "तुरंत",
       body: "उन बिक्रियों के लिए जो भुगतान होते ही पूरी हो जाती हैं: डिजिटल प्रोडक्ट, सेवाएँ, दान।",
       steps: ["आपका ग्राहक अपने वॉलेट से भुगतान करता है", "नेटवर्क भुगतान की पुष्टि करता है", "पैसा सेकंडों में आपके पते पर पहुँच जाता है"],
     },
-    escrow: {
-      title: "एस्क्रो",
+    protected: {
+      title: "सुरक्षित भुगतान",
       body: "उन ऑर्डर के लिए जिनकी डिलीवरी अभी बाकी है: भुगतान ऑन-चेन कॉन्ट्रैक्ट में तब तक रुका रहता है जब तक आप डिस्पैच पर उसे रिलीज़ न करें, और अगर आप अपनी तय समय-सीमा में ऐसा नहीं करते तो वह खरीदार को लौट जाता है।",
       steps: ["आपका ग्राहक अपने वॉलेट से भुगतान करता है", "भुगतान ऑन-चेन कॉन्ट्रैक्ट में रुका रहता है", "आप ऑर्डर डिस्पैच करते हैं और भुगतान अपने पते पर रिलीज़ करते हैं"],
     },
@@ -2329,11 +2329,11 @@ const hi: LandingMessages = {
     us: "Cosmos Pay",
     rows: {
       chargebacks: { k: "चार्जबैक", cards: "कार्ड भुगतान पर बिक्री के महीनों बाद तक विवाद उठाया जा सकता है।", us: "कोई नहीं। पुष्टि हो चुका भुगतान पक्का होता है।" },
-      protection: { k: "ऑर्डर पर सुरक्षा", cards: "कार्ड नेटवर्क के ज़रिए विवाद और चार्जबैक।", us: "वैकल्पिक एस्क्रो (जल्द आ रहा है): डिस्पैच तक ऑन-चेन कॉन्ट्रैक्ट में रुका रहता है, और डिस्पैच न होने पर आपकी समय-सीमा के बाद रिफ़ंड हो जाता है।" },
-      settlement: { k: "खाते में पैसा", cards: "आमतौर पर एक से तीन कार्यदिवस।", us: "नेटवर्क की पुष्टि के कुछ सेकंड बाद, या जब आप एस्क्रो रिलीज़ करें (जल्द आ रहा है)।" },
+      protection: { k: "ऑर्डर पर सुरक्षा", cards: "कार्ड नेटवर्क के ज़रिए विवाद और चार्जबैक।", us: "वैकल्पिक सुरक्षित भुगतान (जल्द आ रहा है): डिस्पैच तक ऑन-चेन कॉन्ट्रैक्ट में रुका रहता है, और डिस्पैच न होने पर आपकी समय-सीमा के बाद रिफ़ंड हो जाता है।" },
+      settlement: { k: "खाते में पैसा", cards: "आमतौर पर एक से तीन कार्यदिवस।", us: "नेटवर्क की पुष्टि के कुछ सेकंड बाद, या जब आप सुरक्षित भुगतान रिलीज़ करें (जल्द आ रहा है)।" },
       hours: { k: "उपलब्धता", cards: "पेआउट बैंकिंग दिनों का इंतज़ार करते हैं।", us: "हर दिन, चौबीसों घंटे।" },
       borders: { k: "विदेशी ग्राहक", cards: "इंटरनेशनल कार्ड, वायर ट्रांसफ़र और करेंसी कन्वर्ज़न शुल्क।", us: "हर देश में वही लिंक और वही दर।" },
-      custody: { k: "पैसा कहाँ रुकता है", cards: "अगले पेआउट तक प्रोसेसर के पास।", us: "आपके अपने पते पर। Monad पर, भुगतान के लिए बना डिपॉज़िट पता उसे सिर्फ़ वहीं भेज सकता है। एस्क्रो (जल्द आ रहा है) में, रिलीज़ करने तक ऑन-चेन कॉन्ट्रैक्ट में।" },
+      custody: { k: "पैसा कहाँ रुकता है", cards: "अगले पेआउट तक प्रोसेसर के पास।", us: "आपके अपने पते पर। Monad पर, भुगतान के लिए बना डिपॉज़िट पता उसे सिर्फ़ वहीं भेज सकता है। सुरक्षित भुगतान (जल्द आ रहा है) के साथ, रिलीज़ करने तक ऑन-चेन कॉन्ट्रैक्ट में।" },
       fees: { k: "शुल्क", cards: "एक प्रतिशत और साथ में एक तय शुल्क, इंटरनेशनल कार्ड पर ज़्यादा।", us: "हर भुगतान पर एक दर, {rate} से शुरू।" },
     },
     note: "कार्ड और बैंक की शर्तें प्रोवाइडर और देश के हिसाब से बदलती हैं; तालिका आम स्थिति दिखाती है, कोई कोटेशन नहीं।",
@@ -2409,7 +2409,7 @@ const hi: LandingMessages = {
     stores: {
       title: "ऑनलाइन स्टोर",
       body: "अपने दूसरे पेमेंट विकल्पों के साथ स्टेबलकॉइन भी ऑफ़र करें। आपका सर्वर हर ऑर्डर के लिए एक पेमेंट इंटेंट बनाता है, और एक वेबहुक उसे भुगतान हुआ मार्क कर देता है।",
-      points: ["हर ऑर्डर के लिए एक पेमेंट इंटेंट, API या SDK से", "ऑर्डर की पुष्टि साइन किए गए वेबहुक से", "तुरंत सेटलमेंट, या ऑर्डर शिप होने तक एस्क्रो (जल्द आ रहा है)"],
+      points: ["हर ऑर्डर के लिए एक पेमेंट इंटेंट, API या SDK से", "ऑर्डर की पुष्टि साइन किए गए वेबहुक से", "तुरंत सेटलमेंट, या सुरक्षित भुगतान, जो ऑर्डर शिप होने तक रुका रहता है (जल्द आ रहा है)"],
       uses: "पेमेंट्स API, वेबहुक और होस्टेड चेकआउट।",
     },
     services: {
@@ -2459,7 +2459,7 @@ const hi: LandingMessages = {
   pricing: {
     title: "प्रति भुगतान",
     titleBold: "शुल्क।",
-    lede: "हर प्लान की प्रति भुगतान अपनी दर है; एस्क्रो (जल्द आ रहा है) पर हर भुगतान में 1.95% अतिरिक्त लगता है। नेटवर्क शुल्क भुगतान करने वाले का वॉलेट चुकाता है; Monad पर डिपॉज़िट रिले का शुल्क काटा जाता है और चेकआउट पर दिखाया जाता है। निजी भुगतान, जिनमें राशि ऑन-चेन छिपी रहती है, प्रति लेन-देन 0.18% लेते हैं।",
+    lede: "हर प्लान की प्रति भुगतान अपनी दर है; सुरक्षित भुगतान (जल्द आ रहा है) पर हर भुगतान में 1.95% अतिरिक्त लगता है। नेटवर्क शुल्क भुगतान करने वाले का वॉलेट चुकाता है; Monad पर डिपॉज़िट रिले का शुल्क काटा जाता है और चेकआउट पर दिखाया जाता है। निजी भुगतान, जिनमें राशि ऑन-चेन छिपी रहती है, प्रति लेन-देन 0.18% लेते हैं।",
     perPayment: "प्रति भुगतान",
     perSwap: "प्रति स्वैप {rate}",
     perMonth: "प्रति माह",
@@ -2470,7 +2470,7 @@ const hi: LandingMessages = {
   faq: {
     title: "सवाल",
     titleBold: "और जवाब।",
-    what: { q: "Cosmos Pay क्या है?", a: "Cosmos Pay लैटिन अमेरिका के कारोबारों के लिए एक स्टेबलकॉइन पेमेंट गेटवे है। आप पेमेंट लिंक, होस्टेड चेकआउट या API से पेमेंट इंटेंट बनाते हैं; आपका ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करता है; और पैसा तुरंत या एस्क्रो (जल्द आ रहा है) के ज़रिए आपके नियंत्रण वाले पते पर पहुँचता है।" },
+    what: { q: "Cosmos Pay क्या है?", a: "Cosmos Pay लैटिन अमेरिका के कारोबारों के लिए एक स्टेबलकॉइन पेमेंट गेटवे है। आप पेमेंट लिंक, होस्टेड चेकआउट या API से पेमेंट इंटेंट बनाते हैं; आपका ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करता है; और पैसा तुरंत या सुरक्षित भुगतान (जल्द आ रहा है) के ज़रिए आपके नियंत्रण वाले पते पर पहुँचता है।" },
     assets: { q: "मैं किन मुद्राओं में भुगतान ले सकता हूँ?", a: "USDC, EURC, नेटवर्क का अपना कॉइन (XLM, SOL या MON) या Stellar, Solana या Monad पर कोई भी दूसरा टोकन, जैसे Solana पर USDT: लिंक बनाते समय आप उसे उसके इश्यूअर, मिंट या कॉन्ट्रैक्ट से बताते हैं। आपका ग्राहक उसी एसेट में भुगतान करता है, और आपको वही एसेट मिलता है।" },
     wallet: { q: "क्या मुझे अपना क्रिप्टो वॉलेट चाहिए?", a: "हाँ। Cosmos Pay के साथ, आप जो भी नेटवर्क स्वीकार करते हैं, हर एक पर भुगतान आपके नियंत्रण वाले पते पर सेटल होते हैं: Stellar, Solana या Monad (Monad पर, हर भुगतान के लिए बने डिपॉज़िट पते के ज़रिए, जो उसे सिर्फ़ आपके पते पर ही भेज सकता है)। आप डैशबोर्ड में हर वॉलेट को अपने संगठन में जोड़ते हैं और एक सिग्नेचर से साबित करते हैं कि वह आपका है, और वहाँ बने पेमेंट लिंक सिर्फ़ उन्हीं वॉलेट में भुगतान करते हैं। Cosmos Pay कभी सीक्रेट की नहीं माँगता और किसी की कीज़ नहीं रखता, इसलिए पहले भुगतान से ही फ़ंड आपके होते हैं, और कीज़ को सुरक्षित रखना आपकी ज़िम्मेदारी है।" },
     account: {
@@ -2483,12 +2483,12 @@ const hi: LandingMessages = {
     },
     custody: {
       q: "क्या Cosmos Pay मेरा पैसा अपने पास रखता है?",
-      a: "नहीं। Stellar और Solana पर भुगतान करने वाला सीधे आपके पते पर भुगतान करता है। Monad पर हर भुगतान उसी के लिए बने डिपॉज़िट पते पर जाता है, जो उसे (रिले शुल्क घटाकर) सिर्फ़ आपके पते पर ही भेज सकता है: Cosmos Pay के पास उसकी कोई कुंजी नहीं है। एस्क्रो (जल्द आ रहा है) में, भुगतान रिलीज़ होने तक ऑन-चेन कॉन्ट्रैक्ट में रहता है, Cosmos Pay के पास नहीं।",
+      a: "नहीं। Stellar और Solana पर भुगतान करने वाला सीधे आपके पते पर भुगतान करता है। Monad पर हर भुगतान उसी के लिए बने डिपॉज़िट पते पर जाता है, जो उसे (रिले शुल्क घटाकर) सिर्फ़ आपके पते पर ही भेज सकता है: Cosmos Pay के पास उसकी कोई कुंजी नहीं है। सुरक्षित भुगतान (जल्द आ रहा है) के साथ, भुगतान रिलीज़ होने तक ऑन-चेन कॉन्ट्रैक्ट में रहता है, Cosmos Pay के पास नहीं।",
     },
     service: { q: "क्या मैं इसे अपने ग्राहकों को दे सकता हूँ?", a: "हाँ। Cosmos Pay पेमेंट गेटवे, भुगतान, स्वैप और निजी भुगतान एक सेवा के रूप में है: पूरी सेवा हम चलाते हैं, और आप सिर्फ़ वे वॉलेट पते देते हैं जिन पर पैसा आता है और अपने वॉलेट से साइन करते हैं। हर ऑपरेशन आपके प्लान की दर चुकाता है, और आप उस पर अपना शुल्क जोड़ सकते हैं, जो आपके चुने हुए वॉलेट में जाता है।" },
-    escrow: {
-      q: "एस्क्रो कैसे काम करेगा?",
-      a: "एस्क्रो जल्द आ रहा है। उपलब्ध होने पर, आपका ग्राहक हमेशा की तरह भुगतान करता है, लेकिन भुगतान तुरंत आप तक पहुँचने के बजाय ऑन-चेन कॉन्ट्रैक्ट में रुका रहता है। ऑर्डर डिस्पैच करने पर आप उसे अपने पते पर रिलीज़ करते हैं; अगर आप लिंक के लिए तय की गई समय-सीमा में ऐसा नहीं करते, तो वह खरीदार को लौट जाता है। एस्क्रो की लागत आपके प्लान की दर के ऊपर हर भुगतान पर 1.95% होगी।",
+    protected: {
+      q: "सुरक्षित भुगतान कैसे काम करेगा?",
+      a: "सुरक्षित भुगतान जल्द आ रहा है। उपलब्ध होने पर, आपका ग्राहक हमेशा की तरह भुगतान करता है, लेकिन भुगतान तुरंत आप तक पहुँचने के बजाय ऑन-चेन कॉन्ट्रैक्ट में रुका रहता है। ऑर्डर डिस्पैच करने पर आप उसे अपने पते पर रिलीज़ करते हैं; अगर आप लिंक के लिए तय की गई समय-सीमा में ऐसा नहीं करते, तो वह खरीदार को लौट जाता है। सुरक्षित भुगतान की लागत आपके प्लान की दर के ऊपर हर भुगतान पर 1.95% होगी।",
     },
     zk: {
       q: "निजी भुगतान क्या हैं?",
@@ -2510,7 +2510,7 @@ const hi: LandingMessages = {
     cards: "कार्ड",
     cardsTime: "2–3 कार्यदिवस",
     paid: "भुगतान हो गया",
-    held: "एस्क्रो में",
+    held: "रुका हुआ",
     shipped: "शिप हो गया",
     released: "रिलीज़ हो गया",
     yourAddress: "आपका पता",
@@ -2542,7 +2542,7 @@ const hi: LandingMessages = {
   calc: {
     title: "अपने शुल्क का अनुमान लगाएँ",
     amount: "भुगतान राशि",
-    escrow: "एस्क्रो के साथ (+1.95%)",
+    protected: "सुरक्षित भुगतान (+1.95%)",
     plan: "प्लान",
     fee: "शुल्क",
     youGet: "आपको मिलेगा",
@@ -2566,7 +2566,7 @@ const hi: LandingMessages = {
     useCases: { nav: "उपयोग के उदाहरण", title: "कारोबार स्टेबलकॉइन में भुगतान कैसे लेते हैं", lede: "स्टोर, सेवाएँ, डिजिटल प्रोडक्ट और क्रिएटर स्टेबलकॉइन में भुगतान कैसे लेते हैं, और कार्ड व बैंक ट्रांसफ़र की तुलना में क्या बदलता है।", meta: "स्टेबलकॉइन भुगतान: कारोबारों के लिए उपयोग | Cosmos Pay" },
     security: { nav: "सुरक्षा", title: "भुगतान जिन्हें आप ऑन-चेन जाँच सकते हैं", lede: "हर भुगतान को नेटवर्क पर जाँचा जा सकता है, आपकी कीज़ आपकी ही रहती हैं और कोई दूसरी साइट पेमेंट पेजों को फ़्रेम नहीं कर सकती।", meta: "नॉन-कस्टोडियल भुगतान, ऑन-चेन सत्यापित | Cosmos Pay" },
     fees: { nav: "प्राइसिंग", title: "स्टेबलकॉइन भुगतान का शुल्क", lede: "प्लान के हिसाब से प्रति भुगतान एक दर, Starter पर कोई मासिक शुल्क नहीं। शुरू करने से पहले जानें कि आपके हाथ में कितना आएगा।", meta: "स्टेबलकॉइन भुगतान शुल्क और कैलकुलेटर | Cosmos Pay" },
-    faq: { nav: "FAQ", title: "स्टेबलकॉइन भुगतान: अक्सर पूछे जाने वाले सवाल", lede: "वॉलेट, एस्क्रो (जल्द आ रहा है), रिफ़ंड, टेस्टिंग और शुल्क: शुरू करने से पहले व्यापारी क्या पूछते हैं।", meta: "स्टेबलकॉइन भुगतान FAQ: वॉलेट, शुल्क, रिफ़ंड | Cosmos Pay" },
+    faq: { nav: "FAQ", title: "स्टेबलकॉइन भुगतान: अक्सर पूछे जाने वाले सवाल", lede: "वॉलेट, सुरक्षित भुगतान (जल्द आ रहा है), रिफ़ंड, टेस्टिंग और शुल्क: शुरू करने से पहले व्यापारी क्या पूछते हैं।", meta: "स्टेबलकॉइन भुगतान FAQ: वॉलेट, शुल्क, रिफ़ंड | Cosmos Pay" },
     swaps: { nav: "स्वैप", title: "बिना खाते के नेटवर्कों के बीच टोकन स्वैप करें", lede: "बिना खाते के {n} नेटवर्क पर टोकन स्वैप करें और Stellar से USDT0 भेजें।", meta: "क्रॉस-चेन स्वैप और Stellar से USDT0 | Cosmos Pay" },
     compare: { nav: "तुलना", title: "हमारे शुल्क की तुलना", lede: "हर सेवा के लिए Cosmos Pay की दर, किसी जाने-माने प्रदाता की प्रकाशित दर के साथ, उसके प्राइसिंग पेज के लिंक और जाँच की तारीख के साथ।", meta: "क्रिप्टो पेमेंट गेटवे शुल्क की तुलना | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Stellar पर भुगतान लें", lede: "Cosmos Pay हर भुगतान को QR कोड वाले SEP-7 लिंक में बदल देता है। आपका ग्राहक अपने Stellar वॉलेट से भुगतान करता है और पैसा सीधे आपके पते पर पहुँचता है।", meta: "Stellar पेमेंट API: USDC और XLM में भुगतान लें | Cosmos Pay", link: "Stellar पर भुगतान" },
@@ -2659,18 +2659,18 @@ const hi: LandingMessages = {
   comparePage: {
     title: "हमारी दरें,",
     titleBold: "प्रकाशित दरों के साथ।",
-    lede: "Cosmos Pay की हर दर, उसके बगल वाली दर की अधिकतम 75% है: भुगतान के लिए BitPay की, स्वैप के लिए MetaMask की, निजी भुगतान के लिए RAILGUN की और एस्क्रो (जल्द आ रहा है) के लिए Escrow.com की।",
+    lede: "Cosmos Pay की हर दर, उसके बगल वाली दर की अधिकतम 75% है: भुगतान के लिए BitPay की, स्वैप के लिए MetaMask की, निजी भुगतान के लिए RAILGUN की और सुरक्षित भुगतान (जल्द आ रहा है) के लिए Escrow.com की।",
     caption: "दूसरे प्रदाताओं की प्रकाशित दरों के साथ Cosmos Pay की दरें",
     service: "सेवा",
     ours: "Cosmos Pay",
     theirs: "प्रकाशित दर",
     source: "स्रोत",
-    services: { payments: "भुगतान", swaps: "स्वैप", private: "निजी भुगतान", escrow: "एस्क्रो" },
+    services: { payments: "भुगतान", swaps: "स्वैप", private: "निजी भुगतान", protected: "सुरक्षित भुगतान" },
     noMonthly: "{plan}, कोई मासिक शुल्क नहीं",
     monthly: "{plan}, साथ में {price} प्रति माह",
     swaps: "{plan} पर; {minPlan} पर {min} तक",
     private: "प्रति ट्रांज़ैक्शन, अभी टेस्टनेट पर",
-    escrow: "प्रति भुगतान, प्लान की दर के ऊपर",
+    protected: "प्रति भुगतान, प्लान की दर के ऊपर",
     bandUnder: "{below} से कम मासिक वॉल्यूम",
     bandBetween: "{from} से {to} तक मासिक वॉल्यूम",
     bandFrom: "{from} या उससे ज़्यादा मासिक वॉल्यूम",
@@ -2705,7 +2705,7 @@ const hi: LandingMessages = {
   },
   contact: {
     title: "हमें लिखें",
-    lede: "प्लान, इंटीग्रेशन या एस्क्रो (जल्द आ रहा है) के बारे में सवाल हैं? हमें बताएँ, हम ईमेल से जवाब देंगे।",
+    lede: "प्लान, इंटीग्रेशन या सुरक्षित भुगतान (जल्द आ रहा है) के बारे में सवाल हैं? हमें बताएँ, हम ईमेल से जवाब देंगे।",
     name: "नाम",
     email: "वर्क ईमेल",
     company: "कंपनी",
@@ -2735,7 +2735,7 @@ const zh: LandingMessages = {
     titleMark: "稳定币支付。",
     titleB: "数秒即可到账。",
     lede:
-      "面向拉丁美洲及全球企业的支付链接、托管收银台和 API。您的客户在 Stellar、Solana 或 Monad 上使用自己的钱包付款，结算方式由您决定：即时进入您的地址，或以担保方式暂存，直到您发货时释放（即将推出）。",
+      "面向拉丁美洲及全球企业的支付链接、托管收银台和 API。您的客户在 Stellar、Solana 或 Monad 上使用自己的钱包付款，结算方式由您决定：即时进入您的地址，或以受保护付款的方式暂存，直到您发货时释放（即将推出）。",
     primary: "创建支付链接",
     secondary: "阅读文档",
     designs: "查看集成方式",
@@ -2753,20 +2753,20 @@ const zh: LandingMessages = {
     titleBold: "有何不同。",
     final: { title: "支付不可撤销", body: "网络确认后，支付即无法拒付。是否退款由您决定，并从您的钱包发出。" },
     instant: { title: "即时结算", body: "选择即时结算时，网络一经确认，资金即到达您的地址：在 Stellar 上约 5 秒。" },
-    escrow: { title: "按需使用担保交易", body: "将款项暂存在链上合约中，在您发货时释放。如果您未在设定的期限内释放，款项将退还给买家。" },
-    yours: { title: "资金直达您的地址", body: "款项进入您掌控的地址，可即时到账，也可在您释放担保款项（即将推出）时到账，而不是存放在需要您申请提取的余额中。" },
+    protected: { title: "按需使用受保护付款", body: "将款项暂存在链上合约中，在您发货时释放。如果您未在设定的期限内释放，款项将退还给买家。" },
+    yours: { title: "资金直达您的地址", body: "款项进入您掌控的地址，可即时到账，也可在您释放受保护付款（即将推出）时到账，而不是存放在需要您申请提取的余额中。" },
   },
   settle: {
     title: "两种方式",
     titleBold: "结算支付。",
-    lede: "根据每笔销售选择合适的方式：即时进入您的地址，或以担保方式暂存，直到您释放（即将推出）。",
+    lede: "根据每笔销售选择合适的方式：即时进入您的地址，或以受保护付款的方式暂存，直到您释放（即将推出）。",
     instant: {
       title: "即时",
       body: "适用于付款即完成的销售：数字商品、服务、捐赠。",
       steps: ["客户使用自己的钱包付款", "网络确认这笔支付", "数秒内款项进入您的地址"],
     },
-    escrow: {
-      title: "担保",
+    protected: {
+      title: "受保护付款",
       body: "适用于仍需交付的订单：款项暂存在链上合约中，直到您发货时释放；如果您未在设定的期限内释放，款项将退还给买家。",
       steps: ["客户使用自己的钱包付款", "款项暂存在链上合约中", "您发货后，将款项释放到您的地址"],
     },
@@ -2780,11 +2780,11 @@ const zh: LandingMessages = {
     us: "Cosmos Pay",
     rows: {
       chargebacks: { k: "拒付", cards: "银行卡支付在交易后数月内仍可能被发起争议。", us: "无。已确认的支付即为最终结果。" },
-      protection: { k: "订单保障", cards: "通过卡组织处理争议和拒付。", us: "可选担保交易（即将推出）：款项暂存在链上合约中直到您发货；若您未发货，期限届满后退款。" },
-      settlement: { k: "资金到账", cards: "通常需要一到三个工作日。", us: "网络确认后数秒内，或在您释放担保款项时（即将推出）。" },
+      protection: { k: "订单保障", cards: "通过卡组织处理争议和拒付。", us: "可选受保护付款（即将推出）：款项暂存在链上合约中直到您发货；若您未发货，期限届满后退款。" },
+      settlement: { k: "资金到账", cards: "通常需要一到三个工作日。", us: "网络确认后数秒内，或在您释放受保护付款时（即将推出）。" },
       hours: { k: "可用时间", cards: "结算需等待银行工作日。", us: "全年无休，全天候可用。" },
       borders: { k: "海外客户", cards: "国际卡费、电汇费和货币兑换费。", us: "每个国家都使用同一个链接、同一个费率。" },
-      custody: { k: "资金存放在哪里", cards: "在下次结算前由支付处理商持有。", us: "在您自己的地址。在 Monad 上，为该笔支付创建的充值地址只能将其转至您的地址。使用担保交易（即将推出）时，暂存在链上合约中，直到您释放。" },
+      custody: { k: "资金存放在哪里", cards: "在下次结算前由支付处理商持有。", us: "在您自己的地址。在 Monad 上，为该笔支付创建的充值地址只能将其转至您的地址。使用受保护付款（即将推出）时，暂存在链上合约中，直到您释放。" },
       fees: { k: "费用", cards: "按百分比加固定费用收取，国际卡更高。", us: "每笔支付一个费率，{rate} 起。" },
     },
     note: "银行卡和银行的条款因服务商和国家而异；本表展示的是常见情况，并非报价。",
@@ -2860,7 +2860,7 @@ const zh: LandingMessages = {
     stores: {
       title: "网店",
       body: "在其他支付方式之外提供稳定币支付。您的服务器为每个订单创建一个支付意图，Webhook 会将其标记为已支付。",
-      points: ["每个订单一个支付意图，通过 API 或 SDK 创建", "订单由签名 Webhook 确认", "即时结算，或担保至订单发货（即将推出）"],
+      points: ["每个订单一个支付意图，通过 API 或 SDK 创建", "订单由签名 Webhook 确认", "即时结算，或以受保护付款暂存至订单发货（即将推出）"],
       uses: "支付 API、Webhook 和托管收银台。",
     },
     services: {
@@ -2910,7 +2910,7 @@ const zh: LandingMessages = {
   pricing: {
     title: "费用",
     titleBold: "按笔计算。",
-    lede: "每个套餐都有各自的单笔费率；担保交易（即将推出）每笔额外收取 1.95%。网络费由付款人的钱包支付；在 Monad 上，存款中继的费用会被扣除，并显示在收银台上。隐私支付在链上隐藏金额，每笔交易收取 0.18%。",
+    lede: "每个套餐都有各自的单笔费率；受保护付款（即将推出）每笔额外收取 1.95%。网络费由付款人的钱包支付；在 Monad 上，存款中继的费用会被扣除，并显示在收银台上。隐私支付在链上隐藏金额，每笔交易收取 0.18%。",
     perPayment: "每笔",
     perSwap: "每次兑换 {rate}",
     perMonth: "每月",
@@ -2921,7 +2921,7 @@ const zh: LandingMessages = {
   faq: {
     title: "常见问题",
     titleBold: "与解答。",
-    what: { q: "Cosmos Pay 是什么？", a: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付网关。您可以创建支付链接、托管收银台，或通过 API 创建支付意图；客户在 Stellar、Solana 或 Monad 上用自己的钱包付款；款项即时或通过担保交易（即将推出）进入您掌控的地址。" },
+    what: { q: "Cosmos Pay 是什么？", a: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付网关。您可以创建支付链接、托管收银台，或通过 API 创建支付意图；客户在 Stellar、Solana 或 Monad 上用自己的钱包付款；款项即时或通过受保护付款（即将推出）进入您掌控的地址。" },
     assets: { q: "可以用哪些币种收款？", a: "USDC、EURC、各网络的原生币（XLM、SOL 或 MON），或 Stellar、Solana、Monad 上的任何其他代币，例如 Solana 上的 USDT：创建链接时按发行方、铸币地址（mint）或合约指定即可。客户以该资产付款，您收到的也是同一资产。" },
     wallet: { q: "我需要自己的加密钱包吗？", a: "需要。使用 Cosmos Pay 时，在您接受的每个网络（Stellar、Solana 或 Monad）上，支付都会结算到您掌控的地址（在 Monad 上，经由为每笔支付创建的充值地址，该地址只能将款项转至您的地址）。您在控制台中将每个钱包添加到组织，并通过签名证明钱包属于您；在控制台创建的支付链接只会付款到这些钱包。Cosmos Pay 从不索要私钥，也不保存任何人的密钥，因此从第一笔支付起资金就归您所有，妥善保管密钥也是您自己的责任。" },
     account: {
@@ -2934,12 +2934,12 @@ const zh: LandingMessages = {
     },
     custody: {
       q: "Cosmos Pay 会持有我的资金吗？",
-      a: "不会。在 Stellar 和 Solana 上，付款人直接向您的地址付款。在 Monad 上，每笔支付会进入为其创建的充值地址，该地址只能将款项转至您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。使用担保交易（即将推出）时，款项将暂存在链上合约中（而非 Cosmos Pay），直到您释放。",
+      a: "不会。在 Stellar 和 Solana 上，付款人直接向您的地址付款。在 Monad 上，每笔支付会进入为其创建的充值地址，该地址只能将款项转至您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。使用受保护付款（即将推出）时，款项将暂存在链上合约中（而非 Cosmos Pay），直到您释放。",
     },
     service: { q: "我可以向自己的客户提供这些服务吗？", a: "可以。Cosmos Pay 提供支付网关、支付、兑换和隐私支付即服务：整个服务由我们运行，您只需填写收款的钱包地址，并用您的钱包签名。每笔操作按您套餐的费率计费，您还可以加上自己的费用，支付到您选择的钱包。" },
-    escrow: {
-      q: "担保交易将如何运作？",
-      a: "担保交易即将推出。上线后，客户照常付款，但款项不会立即到达您手中，而是暂存在链上合约中。您在发货时将其释放到您的地址；如果您未在为该链接设定的期限内释放，款项将退还给买家。担保交易将每笔收取 1.95%，在您的套餐费率之外另计。",
+    protected: {
+      q: "受保护付款将如何运作？",
+      a: "受保护付款即将推出。上线后，客户照常付款，但款项不会立即到达您手中，而是暂存在链上合约中。您在发货时将其释放到您的地址；如果您未在为该链接设定的期限内释放，款项将退还给买家。受保护付款将每笔收取 1.95%，在您的套餐费率之外另计。",
     },
     zk: {
       q: "什么是隐私支付？",
@@ -2961,7 +2961,7 @@ const zh: LandingMessages = {
     cards: "银行卡",
     cardsTime: "2–3 个工作日",
     paid: "已支付",
-    held: "担保中",
+    held: "暂存中",
     shipped: "已发货",
     released: "已释放",
     yourAddress: "您的地址",
@@ -2993,7 +2993,7 @@ const zh: LandingMessages = {
   calc: {
     title: "估算您的费用",
     amount: "支付金额",
-    escrow: "使用担保交易（+1.95%）",
+    protected: "使用受保护付款（+1.95%）",
     plan: "套餐",
     fee: "费用",
     youGet: "您将收到",
@@ -3017,7 +3017,7 @@ const zh: LandingMessages = {
     useCases: { nav: "使用场景", title: "企业如何收取稳定币付款", lede: "网店、服务商、数字商品和创作者如何接受稳定币支付，以及与银行卡和银行转账相比有何不同。", meta: "稳定币收款：企业使用场景 | Cosmos Pay" },
     security: { nav: "安全", title: "可在链上核查的支付", lede: "每笔支付都可在网络上核查，密钥始终归您所有，其他网站也无法嵌入支付页面。", meta: "非托管支付，链上核验 | Cosmos Pay" },
     fees: { nav: "价格", title: "稳定币支付费用", lede: "按套餐收取单笔费率，Starter 无月费。开始之前，先算算您能收到多少。", meta: "稳定币支付费用与计算器 | Cosmos Pay" },
-    faq: { nav: "常见问题", title: "稳定币支付常见问题", lede: "钱包、担保交易（即将推出）、退款、测试和费用：商家在开始前会问的问题。", meta: "稳定币支付常见问题：钱包、费用、退款 | Cosmos Pay" },
+    faq: { nav: "常见问题", title: "稳定币支付常见问题", lede: "钱包、受保护付款（即将推出）、退款、测试和费用：商家在开始前会问的问题。", meta: "稳定币支付常见问题：钱包、费用、退款 | Cosmos Pay" },
     swaps: { nav: "兑换", title: "无需账户，跨网络兑换代币", lede: "无需账户，在 {n} 个网络之间兑换代币，并从 Stellar 发送 USDT0。", meta: "跨链兑换与从 Stellar 发送 USDT0 | Cosmos Pay" },
     compare: { nav: "费用对比", title: "我们的费用对比", lede: "Cosmos Pay 各项服务的费率与知名服务商的公开费率并列展示，并附上对方定价页面的链接和查阅日期。", meta: "稳定币支付网关费用对比 | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "在 Stellar 上收款", lede: "Cosmos Pay 为每笔支付生成带二维码的 SEP-7 链接。客户用自己的 Stellar 钱包付款，款项直接进入您的地址。", meta: "Stellar 支付 API：收取 USDC 和 XLM | Cosmos Pay", link: "Stellar 支付" },
@@ -3110,18 +3110,18 @@ const zh: LandingMessages = {
   comparePage: {
     title: "我们的费率",
     titleBold: "与公开费率对比。",
-    lede: "Cosmos Pay 的每项费率最多为其对照费率的 75%：支付对照 BitPay，兑换对照 MetaMask，隐私支付对照 RAILGUN，担保交易（即将推出）对照 Escrow.com。",
+    lede: "Cosmos Pay 的每项费率最多为其对照费率的 75%：支付对照 BitPay，兑换对照 MetaMask，隐私支付对照 RAILGUN，受保护付款（即将推出）对照 Escrow.com。",
     caption: "Cosmos Pay 费率与其他服务商公开费率对比",
     service: "服务",
     ours: "Cosmos Pay",
     theirs: "公开费率",
     source: "来源",
-    services: { payments: "支付", swaps: "兑换", private: "隐私支付", escrow: "担保交易" },
+    services: { payments: "支付", swaps: "兑换", private: "隐私支付", protected: "受保护付款" },
     noMonthly: "{plan}，无月费",
     monthly: "{plan}，另加每月 {price}",
     swaps: "{plan} 套餐；{minPlan} 低至 {min}",
     private: "按笔收费，目前仅限测试网",
-    escrow: "按笔收费，在套餐费率之外另计",
+    protected: "按笔收费，在套餐费率之外另计",
     bandUnder: "月交易额低于 {below}",
     bandBetween: "月交易额 {from} 至 {to}",
     bandFrom: "月交易额 {from} 及以上",
@@ -3156,7 +3156,7 @@ const zh: LandingMessages = {
   },
   contact: {
     title: "联系我们",
-    lede: "关于套餐、集成或担保交易（即将推出）的问题：告诉我们，我们会通过邮件回复。",
+    lede: "关于套餐、集成或受保护付款（即将推出）的问题：告诉我们，我们会通过邮件回复。",
     name: "姓名",
     email: "工作邮箱",
     company: "公司",

@@ -507,7 +507,7 @@ export default {
           t: "网店",
           label: "在其他支付方式旁加入稳定币，每个订单对应一个支付意图。",
           tags: ["支付 API", "Webhook", "托管收银台"],
-          story: "网店的服务器为每个订单创建一个支付意图，将客户引导至托管收银台，或通过支付按钮打开它。客户用自己的钱包付款，签名 Webhook 将订单标记为已付款。使用担保交易（即将推出）时，款项会在链上合约中等待，直到订单发货。",
+          story: "网店的服务器为每个订单创建一个支付意图，将客户引导至托管收银台，或通过支付按钮打开它。客户用自己的钱包付款，签名 Webhook 将订单标记为已付款。使用受保护付款（即将推出）时，款项会在链上合约中等待，直到订单发货。",
         },
         services: {
           t: "跨境服务",
@@ -599,7 +599,7 @@ export default {
     orgsRow: "组织",
     seatsRow: "每个组织的成员数",
     keysRow: "API 密钥",
-    ratesRows: { swaps: "兑换佣金", escrow: "担保交易（每笔支付）", privatePayments: "隐私支付", ownFee: "您在每笔操作上的自有费用" },
+    ratesRows: { swaps: "兑换佣金", protected: "受保护付款（每笔支付）", privatePayments: "隐私支付", ownFee: "您在每笔操作上的自有费用" },
     compareHead: ["功能", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       { l: "月费", v: ["无", "$33 / 月", "$99 / 月", "定制"] },

@@ -8,7 +8,7 @@
    (localizeHref). /swaps is left out: its canonical page is the gateway's. Pure, so
    tests/unit/seoMarkdown.test.ts covers it. */
 import { messages } from "@/lib/i18n/messages/index";
-import { PLAN_IDS, PLAN_SPECS, ESCROW_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT, swapFeePct, type PlanId } from "@/lib/plans";
+import { PLAN_IDS, PLAN_SPECS, PROTECTED_PAYMENT_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT, swapFeePct, type PlanId } from "@/lib/plans";
 import { NETWORK_IDS } from "@/lib/chains";
 import { docsLink, docsRoot, loginUrl } from "@/lib/urls";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
@@ -221,7 +221,7 @@ function pricing({ c, login }: Ctx): Block[] {
     [monthlyRow.l, ...PLAN_IDS.map((id) => monthlyFee(id, c))],
     [perTxRow.l, ...PLAN_IDS.map((id) => perTx(id, c))],
     [rates.swaps, ...PLAN_IDS.map((id) => swapFeePct(id))],
-    [`${rates.escrow} (${pr.soon})`, ...PLAN_IDS.map(() => `+${ESCROW_FEE_PCT}%`)],
+    [`${rates.protected} (${pr.soon})`, ...PLAN_IDS.map(() => `+${PROTECTED_PAYMENT_FEE_PCT}%`)],
     [rates.privatePayments, ...PLAN_IDS.map(() => `${PRIVATE_PAYMENT_FEE_PCT}%`)],
     [rates.ownFee, ...PLAN_IDS.map(() => "✓")],
     ...otherRows.map((row) => [row.l, ...row.v.map(cellOf)]),

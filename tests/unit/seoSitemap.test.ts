@@ -54,7 +54,7 @@ test('with the build dates every entry has a lastmod: the stated one, its own so
     blocks: {
       'src/lib/i18n/messages/es.ts': { 'default.about': '2026-10-31T09:00:00-03:00' },
       'src/lib/i18n/messages/en.ts': { 'default.pricing': '2026-10-20T09:00:00-03:00', 'default.dash': '2026-11-01T09:00:00-03:00' },
-      'src/lib/payments/landing-i18n.ts': { 'en.faq.escrow': '2026-10-28T09:00:00-03:00', 'en.pages.fees': '2026-11-01T09:00:00-03:00' },
+      'src/lib/payments/landing-i18n.ts': { 'en.faq.protected': '2026-10-28T09:00:00-03:00', 'en.pages.fees': '2026-11-01T09:00:00-03:00' },
     },
   };
   const site = siteEntries(ORIGINS.site, dates);

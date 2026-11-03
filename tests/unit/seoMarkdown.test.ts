@@ -5,7 +5,7 @@ import { AREA_LANGS, markdownHeaders, markdownRequest, pageDoc, pageMarkdown, ve
 import { renderBlocks, type MarkdownInput } from '@/lib/seo/markdown';
 import { indexablePages } from '@/lib/seo/indexable';
 import { pageUrl } from '@/lib/seo/lang-urls';
-import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
+import { PROTECTED_PAYMENT_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
 import { LANDING } from '@/lib/payments/landing-i18n';
 import { LEARN, guideCopy } from '@/lib/payments/learn/index';
 import { GUIDES, PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
@@ -169,7 +169,7 @@ test('the plans and every service rate come from src/lib/plans.ts', () => {
   }
   assert.ok(pricing.includes(`| Per-transaction fee | ${PLAN_IDS.map((id) => (PLAN_SPECS[id].perTx === 'Custom' ? 'Custom' : PLAN_SPECS[id].perTx)).join(' | ')} |`));
   assert.ok(pricing.includes(`| Swap commission | ${PLAN_IDS.map((id) => swapFeePct(id)).join(' | ')} |`));
-  assert.ok(pricing.includes(`+${ESCROW_FEE_PCT}%`) && pricing.includes(`${PRIVATE_PAYMENT_FEE_PCT}%`));
+  assert.ok(pricing.includes(`+${PROTECTED_PAYMENT_FEE_PCT}%`) && pricing.includes(`${PRIVATE_PAYMENT_FEE_PCT}%`));
   assert.ok(pricing.includes(`and its API charge ${swapFeePct('community')}`), 'the FAQ quotes the public rate');
   for (const lang of AREA_LANGS.payments) {
     const fees = md('payments', '/fees', lang);
@@ -184,14 +184,18 @@ test('the plans and every service rate come from src/lib/plans.ts', () => {
   assert.ok(stats.includes(`- ${NETWORK_IDS.length} networks to swap between`));
 });
 
-test('escrow is named only beside its "coming soon", in every language', () => {
+test('protected payments are named only beside their "coming soon", and escrow never, in every language', () => {
+  const PROTECTED = /protected payments?|pagos? protegidos?|pagamentos? protegidos?|paiements? protégés?|geschützte[nr]? Zahlung(en)?|सुरक्षित भुगतान|受保护付款/i;
   const ESCROW = /escrow|एस्क्रो|担保/i;
   for (const { area, path, lang, md: text } of ALL) {
     const labels = [LANDING[lang as keyof typeof LANDING].soon, messages[lang as keyof typeof messages].pricing.soon].map((l) => l.toLowerCase());
     const lines = text.split('\n');
     lines.forEach((line, i) => {
-      if (!ESCROW.test(line.replace(/Escrow\.com/g, ''))) return;
-      // A question whose answer opens with the label (the escrow FAQ) counts as labelled.
+      // Escrow.com is the provider protected payments are priced against (its name and its domain,
+      // in the source link); the old name is gone.
+      assert.ok(!ESCROW.test(line.replace(/Escrow\.com/gi, '')), `${area} ${path} ${lang} says escrow: ${line}`);
+      if (!PROTECTED.test(line)) return;
+      // A question whose answer opens with the label (the protected payment FAQ) counts as labelled.
       const next = lines.slice(i + 1).find((l) => l.trim() !== '') ?? '';
       const labelled = (l: string) => labels.some((label) => l.toLowerCase().includes(label));
       assert.ok(labelled(line) || (/^#+ /.test(line) && labelled(next)), `${area} ${path} ${lang}: ${line}`);
@@ -204,7 +208,7 @@ test('each page carries what its page shows: every question, fact and guide, in 
     const t = LANDING[lang as keyof typeof LANDING];
     const faq = md('payments', '/faq', lang);
     let at = 0;
-    for (const key of ['what', 'wallet', 'account', 'wallets', 'assets', 'custody', 'service', 'escrow', 'zk', 'expiry', 'refunds', 'testing', 'designs'] as const) {
+    for (const key of ['what', 'wallet', 'account', 'wallets', 'assets', 'custody', 'service', 'protected', 'zk', 'expiry', 'refunds', 'testing', 'designs'] as const) {
       const found = faq.indexOf(`### ${t.faq[key].q}\n\n${t.faq[key].a}`, at);
       assert.ok(found > at, `${lang} faq ${key}`);
       at = found;
