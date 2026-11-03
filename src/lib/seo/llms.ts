@@ -6,8 +6,8 @@
    Every fact here is stated by the product's own copy or code: the rates come from
    src/lib/plans.ts at request time, so the file can never quote another price than the pages; the
    rest mirrors the gateway's copy (src/lib/payments/landing-i18n.ts), the docs and
-   src/pages/site/tos.astro. Protected payments are offered and priced but not built yet: every line
-   that names them says they are coming soon. Every link to a page in English is its bare address (English has no
+   src/pages/site/tos.astro. Protected payments are available (product owner, 2026-11-03): no line
+   labels them "coming soon". Every link to a page in English is its bare address (English has no
    ?lang=: src/lib/seo/lang-urls.ts). No em dashes. Pure, so tests/unit/seoLlms.test.ts covers it. */
 import { PROTECTED_PAYMENT_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from "@/lib/plans";
 import { LEARN_PAGES, PAYMENTS_PAGES, isLearnPage, pagePath, type PaymentsPage } from "@/lib/payments/site-pages";
@@ -33,7 +33,7 @@ export const SITE_SUMMARY =
 
 /** The gateway's one-paragraph summary, under the H1 of its llms.txt and llms-full.txt. */
 export function paymentsSummary(site: string): string {
-  return `Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the business is paid at an address it controls, instantly or as a protected payment held in an on-chain contract (coming soon). Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond. Cosmos Pay is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.`;
+  return `Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the funds settle to an address the business controls, instantly or as a protected payment held in a smart contract until the order is delivered. Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond. Cosmos Pay is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.`;
 }
 
 /** The Markdown versions of a host's pages, for its llms.txt: every page in one file, and each at
@@ -73,7 +73,7 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   "use-cases": ["Use cases", "how stores, services, digital products and creators take stablecoins, compared with cards and bank transfers"],
   security: ["Security", "on-chain verification, keys that stay with their owner, checkout pages no other site can frame"],
   fees: ["Pricing and fees", "the rate per payment on each plan and a fee estimator"],
-  faq: ["FAQ", "wallets, protected payments (coming soon), refunds, testing and fees"],
+  faq: ["FAQ", "wallets, protected payments, refunds, testing and fees"],
   compare: ["Fees compared", "each Cosmos Pay rate next to the published rate it is set against (BitPay, MetaMask, RAILGUN, Escrow.com), with sources and the date they were read"],
   stellar: ["Stellar payments", "SEP-7 payment links, the Stellar assets with a preset, the wallets that pay, the API request and questions"],
   solana: ["Solana payments", "Solana Pay links, USDC and SOL presets, the wallets that pay, the API request and questions"],
@@ -108,10 +108,10 @@ Key facts:
 - Chains: Stellar (SEP-7 payment links), Solana (Solana Pay links) and Monad (EIP-681 links).
 - Non-custodial: Cosmos Pay stores no one's keys and never holds a payment. With instant settlement, on Stellar and Solana the payer pays the merchant's address directly; on Monad each payment goes to a deposit address made for it, which can only forward it to the merchant's address (less the relay's fee): Cosmos Pay holds no key to it.
 - Swaps: Cosmos Pay never holds the funds. A swap on one network is one transaction the person's wallet signs; a swap between networks waits at a NEAR Intents deposit address until NEAR Intents settles or refunds it; USDT0 travels through LayerZero.
-- Settlement: instant (about 5 seconds on Stellar). Protected payments are coming soon: the payment will wait in an on-chain contract until the merchant releases it on dispatch, and go back to the buyer if it is not released before the merchant's deadline.
+- Settlement: instant (about 5 seconds on Stellar), or a protected payment: the funds are held in a smart contract until delivery is confirmed, then released to the merchant's wallet. The merchant sets a delivery deadline; when it passes, the payment goes to review or is refunded or released automatically, as the merchant chooses. A protected payment waits in the smart contract, never with Cosmos Pay.
 - No chargebacks: a confirmed payment is final. A refund is a payment the merchant sends back from their wallet.
 - Testing: API keys starting with dv_ run on testnet and prod_ keys on mainnet. The key decides the network, not the code.
-- Rates per payment: ${paymentRates()}. Protected payments (coming soon) will add ${PROTECTED_PAYMENT_FEE_PCT}% per payment. Private payments (the amount hidden on-chain behind a zero-knowledge proof, on testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction. The payer's wallet pays the network fee.
+- Rates per payment: ${paymentRates()}. Protected payments add ${PROTECTED_PAYMENT_FEE_PCT}% per payment. Private payments (the amount hidden on-chain behind a zero-knowledge proof, on testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction. The payer's wallet pays the network fee.
 - Swap commission: ${swapRates()}; ${swapFeePct("community")} without an account.
 - Payer wallets: on Stellar any wallet that opens SEP-7 links (Freighter, xBull, Rabet, LOBSTR, Albedo, Cosmos Pay Wallet); on Solana any wallet that reads Solana Pay links (Phantom, Solflare); on Monad any EVM wallet that reads EIP-681 links.
 
@@ -190,7 +190,7 @@ How a payment works:
 
 Facts:
 
-- Settlement: instant (about 5 seconds on Stellar). Protected payments are coming soon (+${PROTECTED_PAYMENT_FEE_PCT}% per payment): the payment will be held in an on-chain contract until you release it on dispatch, and returned to the buyer if you do not before your deadline.
+- Settlement: instant (about 5 seconds on Stellar), or a protected payment (+${PROTECTED_PAYMENT_FEE_PCT}% per payment): the funds are held in a smart contract until delivery is confirmed, then released to your wallet.
 - Cosmos Pay does not hold the money: on Stellar and Solana the payer pays your address directly; on Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay's fee): Cosmos Pay holds no key to it.
 - No chargebacks. Refunds are payments you send from your wallet.
 - Rates per payment: ${paymentRates()}. The payer's wallet pays the network fee; on Monad the deposit relay's fee is deducted and shown on the checkout. Private payments (amount hidden on-chain, testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction.

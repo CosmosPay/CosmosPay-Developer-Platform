@@ -101,15 +101,13 @@ export function landingContent(lang: Locale) {
     ["instant", "race", "instant"],
     ["protected", "protected", "escrow"],
     ["yours", "balance", "yours"],
-  ] as const).map(([key, mock, art]) => ({ key, mock, art, soon: key === "protected", ...t.benefits[key] }));
-  // The two ways a payment settles: straight to the merchant, or held as a protected payment until
-  // released. Protected payments are offered and priced but not built yet (no contract exists):
-  // they carry "coming soon" (t.soon) wherever they show, and their copy says so in every language.
-  const settleModes = (["instant", "protected"] as const).map((key) => ({ key, soon: key === "protected", ...t.settle[key] }));
-  // Protection on orders is the protected payment alone, so its row shows a clock instead of a check.
+  ] as const).map(([key, mock, art]) => ({ key, mock, art, ...t.benefits[key] }));
+  // The two ways a payment settles: straight to the merchant, or held as a protected payment in a
+  // smart contract until delivery is confirmed (the Community Server's trustless-work plugin).
+  const settleModes = (["instant", "protected"] as const).map((key) => ({ key, ...t.settle[key] }));
   const compareRows = (["chargebacks", "protection", "settlement", "hours", "borders", "custody", "fees"] as const).map((key) => {
     const row = t.compare.rows[key];
-    return { ...row, soon: key === "protection", us: row.us.replace("{rate}", lowestRate) };
+    return { ...row, us: row.us.replace("{rate}", lowestRate) };
   });
   // The three ways to start, each with what it links to (data.ts turns `target` into the link).
   const pathKeys = [

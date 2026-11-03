@@ -32,6 +32,23 @@ export const TAGS = [
     description: 'Create, fetch, update, cancel and validate payment intents on Stellar (SEP-7), Solana (Solana Pay) and Monad (EIP-681).',
   },
   {
+    name: 'Protected payments',
+    title: 'Protected Payments',
+    meta: 'Create and manage protected payments with the Cosmos Pay API: funds are held in a smart contract on Stellar until the order is delivered.',
+    description:
+      'Payments held until delivery. Create a protected payment, choose who confirms delivery and what ' +
+      'happens at the deadline, then ship, approve, release or dispute it. The buyer pays USDC into a ' +
+      'smart contract on Stellar, and the funds are released to your wallet on the terms you chose.',
+  },
+  {
+    name: 'Protected payment links',
+    title: 'Protected Payment Links',
+    meta: 'The buyer side of a Cosmos Pay protected payment, without an API key: read it, fund it, confirm delivery, release or dispute it.',
+    description:
+      'The buyer side of a protected payment, called from the hosted checkout without an API key: read ' +
+      'the payment, fund it from a Stellar wallet, confirm delivery, release it or open a dispute.',
+  },
+  {
     name: 'swaps',
     title: 'Swaps',
     description:

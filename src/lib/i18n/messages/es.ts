@@ -812,7 +812,7 @@ export default {
           t: "Tiendas online",
           label: "Stablecoins junto a tus otros medios de pago, con un intento de pago por pedido.",
           tags: ["API de pagos", "Webhooks", "Checkout alojado"],
-          story: "El servidor de la tienda crea un intento de pago por cada pedido y manda al cliente al checkout alojado, o lo abre desde un botón de pago. El cliente paga desde su propia wallet y un webhook firmado marca el pedido como pagado. Con pagos protegidos (próximamente), el dinero espera en un contrato on-chain hasta que el pedido sale.",
+          story: "El servidor de la tienda crea un intento de pago por cada pedido y manda al cliente al checkout alojado, o lo abre desde un botón de pago. El cliente paga desde su propia wallet y un webhook firmado marca el pedido como pagado. Con pagos protegidos, los fondos esperan en un contrato inteligente hasta que el pedido se entrega.",
         },
         services: {
           t: "Servicios al exterior",
@@ -924,7 +924,6 @@ export default {
       cta: "Contactar con ventas",
     },
     footnote: "* La comisión de red la paga la wallet de quien paga; en Monad, la comisión del relay de depósito se descuenta y se muestra en el checkout. Essentials y Growth suman acceso total a la API, tarifas más bajas y límites más altos de organizaciones, miembros y claves de API.",
-    soon: "Próximamente",
     compareTitle: "Comparar planes",
     orgsRow: "Organizaciones",
     seatsRow: "Miembros por organización",
