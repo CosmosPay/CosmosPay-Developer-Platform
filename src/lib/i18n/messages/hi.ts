@@ -972,7 +972,7 @@ export default {
         roles: { user: "यूज़र", admin: "एडमिन" },
         permsLabel: "अनुमतियाँ",
         permResource: "रिसोर्स",
-        scopeResources: { payments: "भुगतान", swaps: "स्वैप", liquidity: "लिक्विडिटी", webhooks: "वेबहुक", products: "प्रोडक्ट", customers: "ग्राहक", kyc: "KYC", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", activity: "गतिविधि" },
+        scopeResources: { payments: "भुगतान", swaps: "स्वैप", liquidity: "लिक्विडिटी", webhooks: "वेबहुक", products: "प्रोडक्ट", customers: "ग्राहक", kyc: "KYC", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", activity: "गतिविधि", plugins: "प्लगइन" },
         adminHint: "एडमिन कुंजियों के पास हर रिसोर्स का पूरा एक्सेस होता है।",
         perms: { read: "पढ़ना", write: "लिखना" },
         create: "कुंजी बनाएँ", save: "बदलाव सहेजें",
