@@ -2,6 +2,15 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.28.0] - 2026-11-03
+
+### Features
+- Present protected payments as available (f02eb98)
+
+### Documentation
+- Record that protected payments are presented as available (1ff750a)
+- Document protected payments from the community server spec (360e566)
+
 ## [0.27.0] - 2026-11-03
 
 ### Features
