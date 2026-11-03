@@ -84,11 +84,11 @@ test('each file links the auth.md of its host, and the company file the agent sk
   assert.ok(files.site.includes('(https://cosmospay.lat/.well-known/agent-skills/index.json)'));
 });
 
-test('protected payments are offered at their price but every line that names them says they are coming soon', () => {
+test('protected payments are offered at their price, and no line that names them says they are coming soon', () => {
   for (const [name, text] of Object.entries(files)) {
     const lines = text.split('\n').filter((line) => /protected payments?/i.test(line));
     assert.ok(lines.length > 0, name);
-    for (const line of lines) assert.match(line, /coming soon/, `${name}: ${line}`);
+    for (const line of lines) assert.doesNotMatch(line, /coming soon/i, `${name}: ${line}`);
   }
 });
 

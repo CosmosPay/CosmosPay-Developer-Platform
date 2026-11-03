@@ -820,7 +820,7 @@ export default {
           t: "Onlineshops",
           label: "Stablecoins neben deinen anderen Zahlungsarten, mit einer Zahlungsabsicht pro Bestellung.",
           tags: ["Zahlungs-API", "Webhooks", "Gehosteter Checkout"],
-          story: "Der Server des Shops erstellt für jede Bestellung eine Zahlungsabsicht und schickt den Kunden zum gehosteten Checkout oder öffnet ihn über einen Bezahlbutton. Der Kunde zahlt aus seiner eigenen Wallet, und ein signierter Webhook markiert die Bestellung als bezahlt. Mit geschützten Zahlungen (demnächst) wartet das Geld in einem On-Chain-Contract, bis die Bestellung versendet ist.",
+          story: "Der Server des Shops erstellt für jede Bestellung eine Zahlungsabsicht und schickt den Kunden zum gehosteten Checkout oder öffnet ihn über einen Bezahlbutton. Der Kunde zahlt aus seiner eigenen Wallet, und ein signierter Webhook markiert die Bestellung als bezahlt. Mit geschützten Zahlungen wartet das Geld in einem Smart Contract, bis die Bestellung geliefert ist.",
         },
         services: {
           t: "Dienstleistungen ins Ausland",
@@ -932,7 +932,6 @@ export default {
       cta: "Vertrieb kontaktieren",
     },
     footnote: "* Die Netzwerkgebühr zahlt die Wallet des Zahlenden; auf Monad wird die Gebühr des Einzahlungs-Relays abgezogen und im Checkout angezeigt. Essentials und Growth bringen vollen API-Zugriff, niedrigere Sätze und höhere Limits für Organisationen, Mitglieder und API-Schlüssel.",
-    soon: "Demnächst",
     compareTitle: "Pläne vergleichen",
     orgsRow: "Organisationen",
     seatsRow: "Mitglieder pro Organisation",

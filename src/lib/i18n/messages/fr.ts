@@ -825,7 +825,7 @@ export default {
           t: "Boutiques en ligne",
           label: "Les stablecoins à côté de vos autres moyens de paiement, avec une intention de paiement par commande.",
           tags: ["API de paiement", "Webhooks", "Checkout hébergé"],
-          story: "Le serveur de la boutique crée une intention de paiement pour chaque commande et envoie le client vers le checkout hébergé, ou l’ouvre depuis un bouton de paiement. Le client paie depuis son propre wallet, et un webhook signé marque la commande comme payée. Avec les paiements protégés (bientôt), l’argent attend dans un contrat on-chain jusqu’à l’expédition de la commande.",
+          story: "Le serveur de la boutique crée une intention de paiement pour chaque commande et envoie le client vers le checkout hébergé, ou l’ouvre depuis un bouton de paiement. Le client paie depuis son propre wallet, et un webhook signé marque la commande comme payée. Avec les paiements protégés, les fonds attendent dans un contrat intelligent jusqu’à la livraison de la commande.",
         },
         services: {
           t: "Services à l’international",
@@ -945,7 +945,6 @@ export default {
       cta: "Contacter le service commercial",
     },
     footnote: "* Les frais de réseau sont payés par le portefeuille du payeur ; sur Monad, les frais du relais de dépôt sont déduits et affichés au checkout. Essentials et Growth ajoutent l’accès complet à l’API, des tarifs plus bas et des limites plus élevées d’organisations, de membres et de clés d’API.",
-    soon: "Bientôt",
     compareTitle: "Comparer les plans",
     orgsRow: "Organisations",
     seatsRow: "Membres par organisation",

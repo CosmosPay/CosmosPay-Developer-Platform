@@ -221,7 +221,7 @@ function pricing({ c, login }: Ctx): Block[] {
     [monthlyRow.l, ...PLAN_IDS.map((id) => monthlyFee(id, c))],
     [perTxRow.l, ...PLAN_IDS.map((id) => perTx(id, c))],
     [rates.swaps, ...PLAN_IDS.map((id) => swapFeePct(id))],
-    [`${rates.protected} (${pr.soon})`, ...PLAN_IDS.map(() => `+${PROTECTED_PAYMENT_FEE_PCT}%`)],
+    [rates.protected, ...PLAN_IDS.map(() => `+${PROTECTED_PAYMENT_FEE_PCT}%`)],
     [rates.privatePayments, ...PLAN_IDS.map(() => `${PRIVATE_PAYMENT_FEE_PCT}%`)],
     [rates.ownFee, ...PLAN_IDS.map(() => "✓")],
     ...otherRows.map((row) => [row.l, ...row.v.map(cellOf)]),
