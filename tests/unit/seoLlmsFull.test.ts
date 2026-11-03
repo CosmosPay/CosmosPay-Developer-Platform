@@ -4,7 +4,7 @@ import { llmsFullDocs, llmsFullTxt } from '@/lib/seo/llms-full';
 import { paymentsLlmsTxt, siteLlmsTxt, type LlmsInput } from '@/lib/seo/llms';
 import { indexablePages } from '@/lib/seo/indexable';
 import { pageUrl } from '@/lib/seo/lang-urls';
-import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
+import { PROTECTED_PAYMENT_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
 import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 import type { MarkdownInput } from '@/lib/seo/markdown';
 
@@ -68,21 +68,23 @@ test('the rates are the ones src/lib/plans.ts charges', () => {
   assert.ok(files.site.includes(`- **Per-transaction fee**: ${PLAN_SPECS.starter.perTx} *`));
   assert.ok(files.payments.includes(`- **Starter**: ${PLAN_SPECS.starter.perTx} per payment, ${swapFeePct('starter')} per swap`));
   for (const text of Object.values(files)) {
-    assert.ok(text.includes(`${ESCROW_FEE_PCT}%`));
+    assert.ok(text.includes(`${PROTECTED_PAYMENT_FEE_PCT}%`));
     assert.ok(text.includes(`${PRIVATE_PAYMENT_FEE_PCT}%`));
   }
 });
 
-test('escrow is offered at its price, and every mention says it is coming soon', () => {
+test('protected payments are offered at their price, and every mention says they are coming soon', () => {
   for (const [name, text] of Object.entries(files)) {
     const lines = text.split('\n');
-    const named = lines.map((line, i) => ({ line, i })).filter(({ line }) => /escrow/i.test(line.replace(/Escrow\.com/g, '')));
+    const named = lines.map((line, i) => ({ line, i })).filter(({ line }) => /protected payments?/i.test(line));
     assert.ok(named.length > 0, name);
     for (const { line, i } of named) {
       const next = lines.slice(i + 1).find((l) => l.trim() !== '') ?? '';
-      // The escrow question's answer opens with the label.
+      // The protected payment question's answer opens with the label.
       assert.ok(/coming soon/i.test(line) || (/^#+ /.test(line) && /coming soon/i.test(next)), `${name}: ${line}`);
     }
+    // The old name never comes back (Escrow.com, the provider, and its domain aside).
+    assert.deepEqual(lines.filter((line) => /escrow/i.test(line.replace(/Escrow\.com/gi, ''))), [], name);
   }
 });
 

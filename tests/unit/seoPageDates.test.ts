@@ -42,7 +42,7 @@ test('newestDate reads a catalog by its blocks: the block named and the ones und
   const blocks = {
     [LANDING]: {
       'en.faq': '2026-10-02T10:00:00Z',
-      'en.faq.escrow': '2026-10-20T10:00:00Z',
+      'en.faq.protected': '2026-10-20T10:00:00Z',
       'en.faqs': '2026-10-29T10:00:00Z',
       'en.pages.faq': '2026-10-10T10:00:00Z',
       'en.pages.fees': '2026-10-30T10:00:00Z',
@@ -71,7 +71,7 @@ test('catalogLinePaths files each line under its keys, two levels deep, and skip
     '  },',
     '  // A note on the next key.',
     '  code: { copy: "Copy", copied: "Copied" },',
-    '  /* The label beside escrow',
+    '  /* The label beside protected payments',
     '     wherever it shows. */',
     '  soon: "Coming soon",',
     '  pages: {',
@@ -250,7 +250,7 @@ test('pageModified: stated date, else the newest commit among its own sources, e
     },
     blocks: {
       'src/lib/i18n/messages/fr.ts': { 'default.about': '2026-10-31T10:00:00Z', 'default.dash': '2026-11-01T08:00:00Z' },
-      [LANDING]: { 'en.faq.escrow': '2026-10-20T10:00:00Z', 'en.pages.fees': '2026-11-01T08:00:00Z', 'es.pages.faq': '2026-10-25T10:00:00Z' },
+      [LANDING]: { 'en.faq.protected': '2026-10-20T10:00:00Z', 'en.pages.fees': '2026-11-01T08:00:00Z', 'es.pages.faq': '2026-10-25T10:00:00Z' },
     },
   };
   assert.equal(pageModified('site', '/about', 'en', input), '2026-10-30T10:00:00Z');

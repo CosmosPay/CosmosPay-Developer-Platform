@@ -1,12 +1,13 @@
 /* compare.ts: the gateway's comparison page (/compare). Every Cosmos Pay rate is set at 75% of a
    named provider's published rate, rounded down (CLAUDE.md, "Plans"): payments against BitPay's
-   tiers, swaps against MetaMask's fee, private payments against RAILGUN's and escrow against
-   Escrow.com's. This file holds those published rates as each provider's own public page stated
-   them on COMPARE_CHECKED, with the page's address, and pairs them with Cosmos Pay's rates from
+   tiers, swaps against MetaMask's fee, private payments against RAILGUN's and protected
+   payments against Escrow.com's. This file holds those published rates as each provider's own
+   public page stated them on COMPARE_CHECKED, with the page's address, and pairs them with Cosmos
+   Pay's rates from
    src/lib/plans.ts (never written here). A rate that cannot be read on the provider's own page
    does not belong in this list. Pure, so tests/unit/paymentsCompare.test.ts checks that every
    Cosmos Pay rate stays at or under 75% of the rate it is shown next to. */
-import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, planSwapFeeBps, type PlanId } from "@/lib/plans";
+import { PROTECTED_PAYMENT_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, planSwapFeeBps, type PlanId } from "@/lib/plans";
 
 /** The day each published rate below was read on its provider's page (YYYY-MM-DD, UTC). */
 export const COMPARE_CHECKED = "2026-10-31";
@@ -65,7 +66,7 @@ export function formatRate(rate: Rate): string {
   return rate.cents === undefined ? `${rate.pct}%` : `${rate.pct}% + ${rate.cents}¢`;
 }
 
-export type CompareService = "payments" | "swaps" | "private" | "escrow";
+export type CompareService = "payments" | "swaps" | "private" | "protected";
 
 export interface CompareRow {
   service: CompareService;
@@ -119,7 +120,7 @@ export function compareRows(): CompareRow[] {
     ...paymentRows(),
     { service: "swaps", ours: { pct: topSwap }, provider: METAMASK.name, source: METAMASK.source, theirs: METAMASK.rate },
     { service: "private", ours: { pct: PRIVATE_PAYMENT_FEE_PCT }, provider: RAILGUN.name, source: RAILGUN.source, theirs: RAILGUN.rate },
-    { service: "escrow", ours: { pct: ESCROW_FEE_PCT }, provider: ESCROW_COM.name, source: ESCROW_COM.source, theirs: ESCROW_COM.rate },
+    { service: "protected", ours: { pct: PROTECTED_PAYMENT_FEE_PCT }, provider: ESCROW_COM.name, source: ESCROW_COM.source, theirs: ESCROW_COM.rate },
   ];
 }
 

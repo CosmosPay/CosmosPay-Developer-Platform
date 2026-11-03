@@ -817,7 +817,7 @@ export default {
           t: "Lojas online",
           label: "Stablecoins ao lado dos seus outros meios de pagamento, com uma intenção de pagamento por pedido.",
           tags: ["API de pagamentos", "Webhooks", "Checkout hospedado"],
-          story: "O servidor da loja cria uma intenção de pagamento para cada pedido e envia o cliente para o checkout hospedado, ou o abre a partir de um botão de pagamento. O cliente paga com a própria carteira, e um webhook assinado marca o pedido como pago. Com escrow (em breve), o pagamento espera em um contrato on-chain até o pedido ser enviado.",
+          story: "O servidor da loja cria uma intenção de pagamento para cada pedido e envia o cliente para o checkout hospedado, ou o abre a partir de um botão de pagamento. O cliente paga com a própria carteira, e um webhook assinado marca o pedido como pago. Com pagamentos protegidos (em breve), o dinheiro espera em um contrato on-chain até o pedido ser enviado.",
         },
         services: {
           t: "Serviços para o exterior",
@@ -931,7 +931,7 @@ export default {
     keysRow: "Chaves de API",
     ratesRows: {
       swaps: "Comissão por swap",
-      escrow: "Escrow, por pagamento",
+      protected: "Pagamentos protegidos, por pagamento",
       privatePayments: "Pagamentos privados",
       ownFee: "Sua própria taxa em cada operação",
     },

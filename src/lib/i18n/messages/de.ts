@@ -820,7 +820,7 @@ export default {
           t: "Onlineshops",
           label: "Stablecoins neben deinen anderen Zahlungsarten, mit einer Zahlungsabsicht pro Bestellung.",
           tags: ["Zahlungs-API", "Webhooks", "Gehosteter Checkout"],
-          story: "Der Server des Shops erstellt für jede Bestellung eine Zahlungsabsicht und schickt den Kunden zum gehosteten Checkout oder öffnet ihn über einen Bezahlbutton. Der Kunde zahlt aus seiner eigenen Wallet, und ein signierter Webhook markiert die Bestellung als bezahlt. Mit Escrow (demnächst) wartet die Zahlung in einem On-Chain-Contract, bis die Bestellung versendet ist.",
+          story: "Der Server des Shops erstellt für jede Bestellung eine Zahlungsabsicht und schickt den Kunden zum gehosteten Checkout oder öffnet ihn über einen Bezahlbutton. Der Kunde zahlt aus seiner eigenen Wallet, und ein signierter Webhook markiert die Bestellung als bezahlt. Mit geschützten Zahlungen (demnächst) wartet das Geld in einem On-Chain-Contract, bis die Bestellung versendet ist.",
         },
         services: {
           t: "Dienstleistungen ins Ausland",
@@ -939,7 +939,7 @@ export default {
     keysRow: "API-Schlüssel",
     ratesRows: {
       swaps: "Provision pro Swap",
-      escrow: "Escrow, pro Zahlung",
+      protected: "Geschützte Zahlungen, pro Zahlung",
       privatePayments: "Private Zahlungen",
       ownFee: "Ihre eigene Gebühr auf jeden Vorgang",
     },

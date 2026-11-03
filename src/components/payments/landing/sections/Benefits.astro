@@ -11,7 +11,7 @@ interface Props {
   d: LandingData;
 }
 
-const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, PROTECTED_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
 ---
 
 <section class="pl-section" aria-labelledby="pl-benefits">
@@ -23,7 +23,7 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
       {benefits.map((b, i) => (
         <li class="pl-bento-card" data-reveal style={`--i: ${i}`}>
           <div class="pl-bento-visual">
-            <img class="pl-3d pl-bento-3d" src={`/media/landing/3d-${b.key}.webp`} alt="" width="400" height="400" loading="lazy" decoding="async" />
+            <img class="pl-3d pl-bento-3d" src={`/media/landing/3d-${b.art}.webp`} alt="" width="400" height="400" loading="lazy" decoding="async" />
             <Mock name={b.mock} ui={t.ui} />
           </div>
           <h3>{b.title}</h3>
@@ -40,8 +40,8 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
       </div>
       <div class="pl-settle-grid">
         {settleModes.map((mode, i) => (
-          <article class:list={["pl-settle-card", { "is-escrow": mode.key === "escrow" }]} data-reveal style={`--i: ${i}`}>
-            <Mock name={mode.key === "escrow" ? "flow-escrow" : "flow-instant"} ui={t.ui} />
+          <article class:list={["pl-settle-card", { "is-protected": mode.key === "protected" }]} data-reveal style={`--i: ${i}`}>
+            <Mock name={mode.key === "protected" ? "flow-protected" : "flow-instant"} ui={t.ui} />
             <h4>{mode.title}</h4>
             {mode.soon && <p class="pl-soon">{t.soon}</p>}
             <p>{mode.body}</p>
