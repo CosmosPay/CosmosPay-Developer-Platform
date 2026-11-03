@@ -2,6 +2,14 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.27.0] - 2026-11-03
+
+### Features
+- Call escrow "protected payments" in all copy (87d7815)
+
+### Documentation
+- Record the protected payment naming rule (2055f81)
+
 ## [0.26.0] - 2026-11-02
 
 ### Features
