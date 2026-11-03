@@ -134,7 +134,7 @@ function pricing(ctx: Ctx, opts: { compact: boolean; heading?: string; lede?: st
   const { d, page, at, input } = ctx;
   const t = d.t;
   // The calculator works out each plan's fee in the browser; what it says without a script.
-  const calc: Block[] = opts.compact ? [] : [h(3, t.calc.title), p(`${t.calc.escrow} (${t.soon})`), p(t.calc.note)];
+  const calc: Block[] = opts.compact ? [] : [h(3, t.calc.title), p(`${t.calc.protected} (${t.soon})`), p(t.calc.note)];
   return [
     h(2, opts.heading ?? head(t.pricing.title, t.pricing.titleBold)),
     p(opts.lede ?? t.pricing.lede),
@@ -278,11 +278,11 @@ function compareRates({ d, lang, page, at, input }: Ctx): Block[] {
     } else if (r.service === "private") {
       oursNote = c.private;
       theirsNote = c.railgun;
-    } else if (r.service === "escrow") {
-      oursNote = c.escrow;
+    } else if (r.service === "protected") {
+      oursNote = c.protected;
       theirsNote = fill(c.escrowCom, { upTo: usd.format(ESCROW_COM.upTo), min: usd.format(ESCROW_COM.minFee) });
     }
-    const service = r.service === "escrow" ? `${c.services.escrow} (${t.soon})` : c.services[r.service];
+    const service = r.service === "protected" ? `${c.services.protected} (${t.soon})` : c.services[r.service];
     return [service, `${formatRate(r.ours)}: ${oursNote}`, `${r.provider} ${formatRate(r.theirs)}: ${theirsNote}`, link(new URL(r.source).host.replace(/^www\./, ""), r.source)];
   });
   return [

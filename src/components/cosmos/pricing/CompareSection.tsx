@@ -1,6 +1,6 @@
 import { IcCheck } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { PLAN_IDS, PLAN_SPECS, swapFeePct, ESCROW_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT } from "@/lib/plans.ts";
+import { PLAN_IDS, PLAN_SPECS, swapFeePct, PROTECTED_PAYMENT_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT } from "@/lib/plans.ts";
 
 export function CompareSection() {
   const t = useT();
@@ -13,12 +13,12 @@ export function CompareSection() {
   const seatsRow = { l: p.seatsRow, v: PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxSeats)) };
   const keysRow = { l: p.keysRow, v: PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxApiKeys)) };
   // Each service's rate sits under the payment fee (the second row of p.compare), also from the
-  // specs; the merchant's own fee on each operation is on every plan. Escrow is offered and
-  // priced but not built yet, so its row says "coming soon" under its name.
+  // specs; the merchant's own fee on each operation is on every plan. Protected payments are
+  // offered and priced but not built yet, so their row says "coming soon" under its name.
   const rates = p.ratesRows;
   const rateRows = [
     { l: rates.swaps, v: PLAN_IDS.map((id) => swapFeePct(id)) },
-    { l: rates.escrow, soon: true, v: PLAN_IDS.map(() => `+${ESCROW_FEE_PCT}%`) },
+    { l: rates.protected, soon: true, v: PLAN_IDS.map(() => `+${PROTECTED_PAYMENT_FEE_PCT}%`) },
     { l: rates.privatePayments, v: PLAN_IDS.map(() => `${PRIVATE_PAYMENT_FEE_PCT}%`) },
     { l: rates.ownFee, v: PLAN_IDS.map(() => 1) },
   ];

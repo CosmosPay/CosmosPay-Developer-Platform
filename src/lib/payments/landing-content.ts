@@ -6,7 +6,7 @@
    same order. Nothing in it is translated here: the words come from the catalogs. */
 import { LANDING } from "@/lib/payments/landing-i18n";
 import { LEARN } from "@/lib/payments/learn/index";
-import { PLAN_SPECS, swapFeePct, ESCROW_FEE_PCT } from "@/lib/plans";
+import { PLAN_SPECS, swapFeePct, PROTECTED_PAYMENT_FEE_PCT } from "@/lib/plans";
 import { NETWORK_IDS, networkName } from "@/lib/chains";
 import { networkLogo, tokenLogo } from "@/lib/token-logos";
 import type { Locale } from "@/lib/payments/i18n";
@@ -94,17 +94,19 @@ export function landingContent(lang: Locale) {
   // Where each use-case photo keeps its subject when cropped.
   const USE_PHOTO_FOCUS = { stores: "30% 50%", services: "50% 35%", digital: "78% 50%", donations: "35% 40%" } as const;
   // Each benefit with its 3D render and the mock-up that shows it (Mock.astro).
+  // `art` names its 3D render in public/media/landing: the protected payment's keeps its published
+  // file name (3d-escrow.webp), since that address may already be indexed.
   const benefits = ([
-    ["final", "final"],
-    ["instant", "race"],
-    ["escrow", "escrow"],
-    ["yours", "balance"],
-  ] as const).map(([key, mock]) => ({ key, mock, soon: key === "escrow", ...t.benefits[key] }));
-  // The two ways a payment settles: straight to the merchant, or held in escrow until released.
-  // Escrow is offered and priced but not built yet (no contract exists): it carries "coming soon"
-  // (t.soon) wherever it shows, and its copy says so in every language.
-  const settleModes = (["instant", "escrow"] as const).map((key) => ({ key, soon: key === "escrow", ...t.settle[key] }));
-  // Protection on orders is escrow alone, so its row shows a clock instead of a check.
+    ["final", "final", "final"],
+    ["instant", "race", "instant"],
+    ["protected", "protected", "escrow"],
+    ["yours", "balance", "yours"],
+  ] as const).map(([key, mock, art]) => ({ key, mock, art, soon: key === "protected", ...t.benefits[key] }));
+  // The two ways a payment settles: straight to the merchant, or held as a protected payment until
+  // released. Protected payments are offered and priced but not built yet (no contract exists):
+  // they carry "coming soon" (t.soon) wherever they show, and their copy says so in every language.
+  const settleModes = (["instant", "protected"] as const).map((key) => ({ key, soon: key === "protected", ...t.settle[key] }));
+  // Protection on orders is the protected payment alone, so its row shows a clock instead of a check.
   const compareRows = (["chargebacks", "protection", "settlement", "hours", "borders", "custody", "fees"] as const).map((key) => {
     const row = t.compare.rows[key];
     return { ...row, soon: key === "protection", us: row.us.replace("{rate}", lowestRate) };
@@ -157,10 +159,10 @@ export function landingContent(lang: Locale) {
     const monthly = spec.price.endsWith("/mo") ? t.calc.perMonth.replace("{price}", spec.price.replace("/mo", "")) : "";
     return { id, name: planName(id), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, monthly };
   });
-  const ESCROW_PCT = ESCROW_FEE_PCT;
+  const PROTECTED_PCT = PROTECTED_PAYMENT_FEE_PCT;
   // "What is Cosmos Pay?" opens the list, so the home (its first four) and /faq both start with an
   // answer a reader or an AI answer can quote on its own.
-  const faq = (["what", "wallet", "account", "wallets", "assets", "custody", "service", "escrow", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
+  const faq = (["what", "wallet", "account", "wallets", "assets", "custody", "service", "protected", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
 
   // Code samples are written indented like the code around them; this takes that indent off
   // every line after the first, so the page shows them flush left.
@@ -247,7 +249,7 @@ export function landingContent(lang: Locale) {
     { key: "api", lang: "ts", code: SDK_CODE },
     { key: "plugins", lang: null, code: "" },
   ] as const;
-  return { lang, t, learn, lowestRate, marked, heroMark, ctaMark, marqueeRows, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, pathKeys, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, SAMPLE_LINK_ID };
+  return { lang, t, learn, lowestRate, marked, heroMark, ctaMark, marqueeRows, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, pathKeys, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, PROTECTED_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, SAMPLE_LINK_ID };
 }
 
 export type LandingContent = ReturnType<typeof landingContent>;

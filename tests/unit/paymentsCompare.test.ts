@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BEYOND_ROWS, BITPAY, COMPARE_CHECKED, ESCROW_COM, METAMASK, RAILGUN, STRIPE_STABLECOINS, compareRows, compareSources, formatRate, parseRate } from '@/lib/payments/compare';
-import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, planSwapFeeBps } from '@/lib/plans';
+import { PROTECTED_PAYMENT_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, planSwapFeeBps } from '@/lib/plans';
 import { LANDING } from '@/lib/payments/landing-i18n';
 import { LOCALES } from '@/lib/payments/i18n';
 
@@ -23,7 +23,7 @@ test('rates read and print the way the providers and plans.ts write them', () =>
 
 test('each Cosmos Pay rate is at most 75% of the published rate it sits next to', () => {
   const rows = compareRows();
-  assert.deepEqual([...new Set(rows.map((r) => r.service))], ['payments', 'swaps', 'private', 'escrow']);
+  assert.deepEqual([...new Set(rows.map((r) => r.service))], ['payments', 'swaps', 'private', 'protected']);
   for (const row of rows) {
     assert.ok(atMost(row.ours.pct, row.theirs.pct), `${row.service} ${row.plan ?? ''}: ${row.ours.pct}% vs ${row.theirs.pct}%`);
     if (row.theirs.cents !== undefined) assert.ok(row.ours.cents !== undefined && atMost(row.ours.cents, row.theirs.cents), `${row.plan} cents`);
@@ -42,7 +42,7 @@ test('the rows read Cosmos Pay’s rates from plans.ts', () => {
   assert.equal(`$${payments[1].monthly}/mo`, PLAN_SPECS.essentials.price);
   assert.equal(rows.find((r) => r.service === 'swaps')?.ours.pct, Math.max(...PLAN_IDS.map((id) => planSwapFeeBps(id) / 100)));
   assert.equal(rows.find((r) => r.service === 'private')?.ours.pct, PRIVATE_PAYMENT_FEE_PCT);
-  assert.equal(rows.find((r) => r.service === 'escrow')?.ours.pct, ESCROW_FEE_PCT);
+  assert.equal(rows.find((r) => r.service === 'protected')?.ours.pct, PROTECTED_PAYMENT_FEE_PCT);
 });
 
 test('every published rate names its provider’s own pricing page and the day it was read', () => {

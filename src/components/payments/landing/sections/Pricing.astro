@@ -19,7 +19,7 @@ interface Props {
 }
 const { compact = false, heading, lede, tone } = Astro.props;
 
-const { layout, links, pageLinks, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, ESCROW_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
+const { layout, links, pageLinks, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marked, heroMark, ctaMark, brand, marquees, USE_PHOTO_FOCUS, benefits, settleModes, compareRows, paths, stepMocks, steps, PAY_ORIGIN, EMBED_TAG, useCases, security, plans, calcPlans, PROTECTED_PCT, faq, SDK_CODE, WEBHOOK_CODE, CODE, codeTabs, integrations, PLUGINS, lang } = Astro.props.d;
 ---
 
 <section class:list={["pl-section", { "pl-section-alt": tone === "alt" }]} id="pricing" aria-labelledby="pl-pricing">
@@ -40,7 +40,7 @@ const { layout, links, pageLinks, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowest
       ))}
     </ul>
     {!compact && (
-    <div class="pl-calc" data-calc data-reveal data-escrow-pct={ESCROW_PCT}>
+    <div class="pl-calc" data-calc data-reveal data-protected-pct={PROTECTED_PCT}>
       <div class="pl-calc-controls">
         <div class="pl-calc-head">
           <h3>{t.calc.title}</h3>
@@ -52,10 +52,10 @@ const { layout, links, pageLinks, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowest
           <span class="pl-calc-fill" aria-hidden="true"></span>
           <input class="pl-calc-range" type="range" min="0" max="100" step="0.5" value="60" aria-label={t.calc.amount} aria-valuetext="250 USDC" data-calc-range />
         </div>
-        <label class="pl-calc-escrow">
-          <input class="pl-calc-switch-input" type="checkbox" role="switch" data-calc-escrow />
+        <label class="pl-calc-protected">
+          <input class="pl-calc-switch-input" type="checkbox" role="switch" data-calc-protected />
           <span class="pl-calc-switch" aria-hidden="true"></span>
-          <span>{t.calc.escrow} <span class="pl-soon pl-soon-inline">{t.soon}</span></span>
+          <span>{t.calc.protected} <span class="pl-soon pl-soon-inline">{t.soon}</span></span>
         </label>
         <p class="pl-footnote">{t.calc.note}</p>
       </div>

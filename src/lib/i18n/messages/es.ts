@@ -812,7 +812,7 @@ export default {
           t: "Tiendas online",
           label: "Stablecoins junto a tus otros medios de pago, con un intento de pago por pedido.",
           tags: ["API de pagos", "Webhooks", "Checkout alojado"],
-          story: "El servidor de la tienda crea un intento de pago por cada pedido y manda al cliente al checkout alojado, o lo abre desde un botón de pago. El cliente paga desde su propia wallet y un webhook firmado marca el pedido como pagado. Con escrow (próximamente), el pago espera en un contrato on-chain hasta que el pedido sale.",
+          story: "El servidor de la tienda crea un intento de pago por cada pedido y manda al cliente al checkout alojado, o lo abre desde un botón de pago. El cliente paga desde su propia wallet y un webhook firmado marca el pedido como pagado. Con pagos protegidos (próximamente), el dinero espera en un contrato on-chain hasta que el pedido sale.",
         },
         services: {
           t: "Servicios al exterior",
@@ -929,7 +929,7 @@ export default {
     orgsRow: "Organizaciones",
     seatsRow: "Miembros por organización",
     keysRow: "Claves de API",
-    ratesRows: { swaps: "Comisión por swap", escrow: "Escrow, por pago", privatePayments: "Pagos privados", ownFee: "Tu propia comisión en cada operación" },
+    ratesRows: { swaps: "Comisión por swap", protected: "Pagos protegidos, por pago", privatePayments: "Pagos privados", ownFee: "Tu propia comisión en cada operación" },
     compareHead: ["Característica", "Starter", "Essentials", "Growth", "Enterprise"],
     compare: [
       { l: "Cuota mensual", v: ["Sin cuota", "$33 / mo", "$99 / mo", "Personalizado"] },

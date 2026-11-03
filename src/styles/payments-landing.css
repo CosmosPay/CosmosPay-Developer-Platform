@@ -171,7 +171,7 @@
 .pl-bento-card h3 { margin: 0 22px 10px; font-weight: 600; letter-spacing: -.02em; font-size: 1.375rem; line-height: 1.2; color: var(--ink); text-wrap: balance; }
 .pl-bento-card p { margin: 0 22px; max-width: 54ch; font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
 
-/* settlement: instant or escrow, side by side, each with its three steps */
+/* settlement: instant or protected, side by side, each with its three steps */
 .pl-settle { margin-top: clamp(64px, 8vw, 104px); }
 .pl-settle-head { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: end; margin-bottom: 32px; }
 .pl-settle-title { margin: 0; font-weight: 600; font-size: clamp(1.5rem, 2.4vw, 1.875rem); line-height: 1.2; letter-spacing: -.02em; color: var(--ink); text-wrap: balance; }
@@ -195,8 +195,8 @@
   background: var(--btn-bg); color: var(--btn-fg); font-size: .8125rem; font-weight: 600; font-variant-numeric: tabular-nums;
   transition: scale .5s cubic-bezier(.3, 1.5, .5, 1) calc(var(--j, 0) * 160ms + .25s);
 }
-/* escrow's middle step is the hold: an open ring instead of a filled dot */
-.pl-settle-card.is-escrow li:nth-child(2) .pl-settle-num { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+/* the protected payment's middle step is the hold: an open ring instead of a filled dot */
+.pl-settle-card.is-protected li:nth-child(2) .pl-settle-num { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .pl-anim .pl-settle-card:not(.is-in) .pl-settle-num { scale: .3; }
 .pl-anim .pl-settle-card:not(.is-in) .pl-settle-steps li::after { scale: 1 0; }
 
@@ -264,7 +264,7 @@
 .pl-dm-copy h3 { margin: 0; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.25; color: var(--ink); }
 .pl-dm-tag { margin: 6px 0 12px; font-size: .875rem; font-weight: 600; color: var(--ink-3); }
 .pl-dm-tag.is-soon { color: var(--tertiary); }
-/* "Coming soon" beside what is offered but not built yet (escrow): coloured text, as the
+/* "Coming soon" beside what is offered but not built yet (protected payments): coloured text, as the
    plugins' tag, never a chip. Under a card's heading, inline after a label, or under a row's name. */
 .pl-soon { margin: 6px 0 10px; font-size: .875rem; font-weight: 600; color: var(--tertiary); }
 .pl-soon-inline { margin: 0 0 0 .5em; }
@@ -606,8 +606,8 @@
 .pl-calc .pl-calc-range:focus-visible { outline: none; }
 .pl-calc-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
 .pl-calc-range:focus-visible::-moz-range-thumb { outline: 2px solid var(--tertiary); outline-offset: 3px; }
-/* escrow: a switch, outlined when off, filled in ink when on, the knob sliding across */
-.pl-calc-escrow { position: relative; display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 22px; font-weight: 500; color: var(--ink); cursor: pointer; }
+/* protected payment: a switch, outlined when off, filled in ink when on, the knob sliding across */
+.pl-calc-protected { position: relative; display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 22px; font-weight: 500; color: var(--ink); cursor: pointer; }
 .pl-calc-switch-input { position: absolute; left: 0; top: 50%; width: 40px; height: 24px; margin: -12px 0 0; opacity: 0; cursor: pointer; }
 .pl-calc-switch {
   position: relative; flex: 0 0 auto; width: 40px; height: 24px; border-radius: 99px;
@@ -772,7 +772,7 @@
   .pl-mk-race { grid-template-columns: 76px minmax(28px, 1fr) auto; gap: 8px; }
   .pl-mk-race b { max-width: 88px; white-space: normal; text-align: right; }
 }
-/* escrow: paid, held, shipped, released */
+/* protected payment: paid, held, shipped, released */
 .pl-mk-states { list-style: none; margin: 0; padding: 16px 0 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .pl-mk-states li { position: relative; display: grid; justify-items: center; align-content: start; gap: 10px; text-align: center; font-size: .8125rem; font-weight: 600; color: var(--ink); }
 .pl-mk-states li:not(:last-child)::after {
@@ -781,7 +781,7 @@
 }
 .pl-mk-dot { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--btn-bg); color: var(--btn-fg); }
 .pl-mk-dot:empty::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--btn-fg); }
-.pl-mk--escrow .pl-mk-card { max-width: 380px; }
+.pl-mk--protected .pl-mk-card { max-width: 380px; }
 /* too narrow for four columns: the states stack, the line running down between them */
 @container (max-width: 359px) {
   .pl-mk-states { grid-template-columns: 1fr; }
@@ -887,7 +887,7 @@
 .is-in .pl-mk-fast { animation: pl-mk-grow .9s cubic-bezier(.2, .7, .2, 1) calc(var(--i, 0) * 80ms + .6s) both; }
 .is-in .pl-mk-slow { animation: pl-mk-grow 5s linear calc(var(--i, 0) * 80ms + .8s) both; }
 .is-in .pl-mk-race:first-child b { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + 1.4s) both; }
-/* escrow: each state lights up in turn, the line to the next one drawing behind it */
+/* protected payment: each state lights up in turn, the line to the next one drawing behind it */
 .is-in .pl-mk-states .pl-mk-dot { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) both; }
 .is-in .pl-mk-states li::after { animation: pl-mk-grow .45s cubic-bezier(.2, .7, .2, 1) both; }
 .is-in .pl-mk-states li:nth-child(1) .pl-mk-dot { animation-delay: calc(var(--i, 0) * 80ms + .5s); }
@@ -901,14 +901,14 @@
 .is-in .pl-mk-node .pl-mk-ico { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) both; animation-delay: calc(var(--i, 0) * 80ms + .4s); }
 .is-in .pl-mk-node:nth-child(3) .pl-mk-ico { animation-delay: calc(var(--i, 0) * 80ms + .6s); }
 .is-in .pl-mk-node:nth-child(5) .pl-mk-ico { animation-delay: calc(var(--i, 0) * 80ms + .8s); }
-/* a payment travels the wire, over and over; on escrow it waits at the contract first */
+/* a payment travels the wire, over and over; on a protected payment it waits at the contract first */
 @keyframes pl-mk-travel { 0% { translate: -100% 0; opacity: 0; } 10% { opacity: 1; } 70% { translate: 0 0; opacity: 1; } 80%, 100% { translate: 0 0; opacity: 0; } }
 @keyframes pl-mk-travel-in { 0% { translate: -100% 0; opacity: 0; } 5% { opacity: 1; } 35% { translate: 0 0; opacity: 1; } 40%, 100% { translate: 0 0; opacity: 0; } }
 @keyframes pl-mk-travel-out { 0%, 60% { translate: -100% 0; opacity: 0; } 65% { opacity: 1; } 95% { translate: 0 0; opacity: 1; } 100% { translate: 0 0; opacity: 0; } }
 @keyframes pl-mk-hold { 0%, 36% { scale: 1; } 42% { scale: 1.12; } 48%, 100% { scale: 1; } }
 .pl-mk--flow-instant .pl-mk-wire i { animation: pl-mk-travel 2.6s cubic-bezier(.5, 0, .3, 1) infinite; }
-.pl-mk--flow-escrow .pl-mk-wire i { animation: pl-mk-travel-in 5s cubic-bezier(.5, 0, .3, 1) infinite; }
-.pl-mk--flow-escrow .pl-mk-wire-late i { animation-name: pl-mk-travel-out; }
+.pl-mk--flow-protected .pl-mk-wire i { animation: pl-mk-travel-in 5s cubic-bezier(.5, 0, .3, 1) infinite; }
+.pl-mk--flow-protected .pl-mk-wire-late i { animation-name: pl-mk-travel-out; }
 .pl-mk-node-hold .pl-mk-ico { animation: pl-mk-hold 5s ease-in-out infinite; }
 .is-in .pl-mk-node-hold .pl-mk-ico { animation: pl-mk-pop .45s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 80ms + .6s) both, pl-mk-hold 5s ease-in-out infinite; }
 /* the approve button keeps calling for the tap */

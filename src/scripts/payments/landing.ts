@@ -127,20 +127,20 @@ export function startLanding(): void {
   }, { threshold: 0.6 });
 
   /* Fee calculator: the amount (typed or slid) times each plan's rate, plus its fixed cents,
-     plus escrow's surcharge when ticked; what the merchant keeps is the rest. Rates come from the
+     plus the protected payment's surcharge when ticked; what the merchant keeps is the rest. Rates come from the
      rows' data attributes (plans.ts); a custom plan keeps its label. The slider is logarithmic
      (1 to 10,000 over 0–100), so small and large payments both get room on it. */
   for (const calc of document.querySelectorAll<HTMLElement>("[data-calc]")) {
     const amount = calc.querySelector<HTMLInputElement>("[data-calc-amount]")!;
     const range = calc.querySelector<HTMLInputElement>("[data-calc-range]")!;
-    const escrow = calc.querySelector<HTMLInputElement>("[data-calc-escrow]")!;
-    const escrowPct = Number(calc.dataset.escrowPct) || 0;
+    const protectedPayment = calc.querySelector<HTMLInputElement>("[data-calc-protected]")!;
+    const protectedPct = Number(calc.dataset.protectedPct) || 0;
     const money = new Intl.NumberFormat(document.documentElement.lang || "en", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const render = () => {
       const value = Math.max(0, Number(amount.value) || 0);
       for (const row of calc.querySelectorAll<HTMLElement>("[data-calc-plan]")) {
         if (row.dataset.pct === "") continue;
-        const pct = Number(row.dataset.pct) + (escrow.checked ? escrowPct : 0);
+        const pct = Number(row.dataset.pct) + (protectedPayment.checked ? protectedPct : 0);
         const fee = value * pct / 100 + Number(row.dataset.cents) / 100;
         row.querySelector("[data-calc-fee]")!.textContent = money.format(fee) + " USDC";
         row.querySelector("[data-calc-net]")!.textContent = money.format(Math.max(0, value - fee)) + " USDC";
@@ -158,7 +158,7 @@ export function startLanding(): void {
     };
     amount.addEventListener("input", () => { range.value = toRange(Number(amount.value) || 0); sync(); render(); });
     range.addEventListener("input", () => { amount.value = String(fromRange(Number(range.value))); sync(); render(); });
-    escrow.addEventListener("change", render);
+    protectedPayment.addEventListener("change", render);
     render();
   }
   for (const el of document.querySelectorAll("[data-odo]")) counted.observe(el);

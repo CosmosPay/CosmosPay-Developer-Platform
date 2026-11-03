@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { paymentsLlmsTxt, siteLlmsTxt, type LlmsInput } from '@/lib/seo/llms';
-import { ESCROW_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
+import { PROTECTED_PAYMENT_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
 import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 import { NETWORK_IDS } from '@/lib/chains';
 import { isSlashlessDocsLink } from '@/lib/urls';
@@ -40,7 +40,7 @@ test('the rates are the ones src/lib/plans.ts charges', () => {
   assert.ok(files.site.includes('Starter 1.5% + 18¢ with no monthly fee'));
   assert.ok(files.site.includes('Essentials 1.12% + 18¢ and $33 per month'));
   for (const text of Object.values(files)) {
-    assert.ok(text.includes(`${ESCROW_FEE_PCT}%`));
+    assert.ok(text.includes(`${PROTECTED_PAYMENT_FEE_PCT}%`));
     assert.ok(text.includes(`${PRIVATE_PAYMENT_FEE_PCT}%`));
   }
 });
@@ -84,12 +84,18 @@ test('each file links the auth.md of its host, and the company file the agent sk
   assert.ok(files.site.includes('(https://cosmospay.lat/.well-known/agent-skills/index.json)'));
 });
 
-test('escrow is offered at its price but every line that names it says it is coming soon', () => {
+test('protected payments are offered at their price but every line that names them says they are coming soon', () => {
   for (const [name, text] of Object.entries(files)) {
-    // Escrow.com is the provider escrow's rate is compared against, not our escrow.
-    const lines = text.split('\n').filter((line) => /escrow/i.test(line.replace(/Escrow\.com/g, '')));
+    const lines = text.split('\n').filter((line) => /protected payments?/i.test(line));
     assert.ok(lines.length > 0, name);
     for (const line of lines) assert.match(line, /coming soon/, `${name}: ${line}`);
+  }
+});
+
+test('no line says escrow: Escrow.com is the provider protected payments are priced against, nothing of ours', () => {
+  for (const [name, text] of Object.entries(files)) {
+    const lines = text.split('\n').filter((line) => /escrow/i.test(line.replace(/Escrow\.com/gi, '')));
+    assert.deepEqual(lines, [], name);
   }
 });
 
