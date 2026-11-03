@@ -10,7 +10,7 @@ import { COSMOS_ACTIONS, COSMOS_RESOURCES, COSMOS_SCOPES, cosmosScopeKey } from 
 test('every resource the gateway enforces is grantable', () => {
   for (const resource of [
     'payments', 'swaps', 'liquidity', 'webhooks', 'products',
-    'customers', 'kyc', 'onramp', 'offramp', 'activity',
+    'customers', 'kyc', 'onramp', 'offramp', 'activity', 'plugins',
   ]) {
     assert.ok((COSMOS_RESOURCES as readonly string[]).includes(resource), `${resource} is not grantable`);
   }
