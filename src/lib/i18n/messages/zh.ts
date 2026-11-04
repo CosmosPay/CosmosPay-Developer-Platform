@@ -892,7 +892,7 @@ export default {
         roles: { user: "用户", admin: "管理员" },
         permsLabel: "权限",
         permResource: "资源",
-        scopeResources: { payments: "支付", swaps: "兑换", liquidity: "流动性", webhooks: "Webhook", products: "产品", customers: "客户", kyc: "KYC", onramp: "入金", offramp: "出金", activity: "活动" },
+        scopeResources: { payments: "支付", swaps: "兑换", liquidity: "流动性", webhooks: "Webhook", products: "产品", customers: "客户", kyc: "KYC", onramp: "入金", offramp: "出金", activity: "活动", plugins: "插件" },
         adminHint: "管理员密钥拥有所有资源的完全访问权限。",
         perms: { read: "读取", write: "写入" },
         create: "创建密钥", save: "保存更改",

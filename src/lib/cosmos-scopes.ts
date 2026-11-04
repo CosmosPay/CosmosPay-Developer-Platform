@@ -9,7 +9,9 @@
    from this dashboard (and every wallet-provisioned key, see
    wallet-provisioning.ts) is refused with `insufficient_scope` on whatever it
    leaves out. Keep this in step with the server's @RequirePermissions
-   decorators; `pollar` left with the server's Pollar bridge. */
+   decorators; `pollar` left with the server's Pollar bridge. `plugins` is
+   /v1/plugins: `plugins:read` lists plugins and runs their queries,
+   `plugins:write` installs them and runs their commands. */
 export const COSMOS_RESOURCES = [
   "payments",
   "swaps",
@@ -21,6 +23,7 @@ export const COSMOS_RESOURCES = [
   "onramp",
   "offramp",
   "activity",
+  "plugins",
 ] as const;
 export const COSMOS_ACTIONS = ["read", "write"] as const;
 
