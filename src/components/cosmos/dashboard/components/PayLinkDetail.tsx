@@ -1,5 +1,8 @@
+import type { ReactNode } from "react";
 import { IcCopy, IcCheck, checkoutUrl } from "@/components/cosmos/shared";
 import { useCopy } from "@/components/cosmos/hooks/useCopy";
+import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
+import type { CodeLang } from "@/lib/highlight";
 import { useT, fmt } from "@/lib/i18n/index";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
@@ -88,8 +91,10 @@ export function CopyField({ label, value }) {
   );
 }
 
-/* A labelled, copyable long-text block (the SEP-7 URI or the unsigned XDR). */
-export function CopyBlock({ label, value, children }) {
+/* A labelled, copyable long-text block (the SEP-7 URI or the unsigned XDR). With `lang` the
+   value is code (pretty-printed JSON) and is highlighted like every code window; the copy is
+   still the value as given. */
+export function CopyBlock({ label, value, lang, children }: { label: string; value: string; lang?: CodeLang; children?: ReactNode }) {
   const t = useT();
   const [done, copy] = useCopy();
   return (
@@ -100,7 +105,9 @@ export function CopyBlock({ label, value, children }) {
           {done ? <IcCheck /> : <IcCopy />}
         </button>
       </div>
-      <div className="paylink-code" onClick={() => copy(value, t.toasts.copied)} title={t.toasts.copy || label}>{value}</div>
+      {lang
+        ? <pre className="paylink-code is-code" translate="no" onClick={() => copy(value, t.toasts.copied)} title={t.toasts.copy || label}><CodeTokens code={value} lang={lang} /></pre>
+        : <div className="paylink-code" onClick={() => copy(value, t.toasts.copied)} title={t.toasts.copy || label}>{value}</div>}
       {children}
     </div>
   );

@@ -5,6 +5,7 @@ import "@/styles/cosmos.css";
 import "@/styles/institutional.css";
 import "@/styles/payments.css";
 import SiteNav from "@/components/cosmos/layout/SiteNav";
+import { NAV_SCROLL_SCRIPT } from "@/lib/nav-scroll";
 import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 import { LOCALES, MESSAGES } from "@/lib/payments/i18n";
 import { PAYMENTS, TERMS } from "@/lib/payments/urls";
@@ -116,12 +117,15 @@ const keep = [...Astro.url.searchParams].filter(([name]) => name !== "lang");
         if (mq && mq.addEventListener) mq.addEventListener("change", apply);
       })();
     </script>
+    {/* The nav's surface follows the scroll from the first paint, hydrated or not (src/lib/nav-scroll.ts). */}
+    <script is:inline set:html={NAV_SCROLL_SCRIPT} />
   </head>
   <body class="inst" data-area="payments">
     <a class="skip-link" href="#main">{t.skip}</a>
-    <!-- The general nav, as on every view. It never reads the platform session here: the
-         payments domain is not an allowed origin for it (src/lib/allowed-origins.ts). -->
-    <SiteNav client:load lang={lang} session={false} reloadOnLang overPanel={overPanel} area="payments" />
+    <!-- The general nav, as on every view. It asks the platform who is signed in
+         (/api/nav-session, src/lib/nav-session.ts): the one answer this domain may read with the
+         visitor's cookie, as it is not an allowed origin for the session (src/lib/allowed-origins.ts). -->
+    <SiteNav client:load lang={lang} reloadOnLang overPanel={overPanel} area="payments" />
 
     <slot />
 

@@ -46,7 +46,9 @@ const NAV_LINKS: Record<string, NavLink[]> = {
   ],
   resources: [
     [0, 0, DOCS], // Documentation
-    [0, 1, docsHref("/getting-started")], // Tutorials
+    // Guides: the gateway's step-by-step guides (/learn), reachable from the menu as well as from
+    // the section bar's end and the footer (Developers > Sandbox already leads to the quickstart).
+    [0, 1, `${PAYMENTS}/learn`],
     // [0, 2, "#"], // Blog (no page yet)
     // [0, 3, "#"], // Customer stories (no page yet)
     // [1, 0, "#"], // Help center (no page yet)

@@ -93,12 +93,12 @@ const span = (i: number) => {
     </div>
     <p class="pl-footnote" data-reveal>{c.asOf.replace("{date}", checked)}</p>
     {c.notes.map((note) => <p class="pl-footnote" data-reveal>{note}</p>)}
-    <div class="pl-head" data-reveal>
+    <div class="pl-head pl-beyond-head" data-reveal>
       <h3 id="pl-compare-beyond">{b.title}</h3>
       <p class="pl-section-lede">{b.lede}</p>
     </div>
     <div class="pl-compare-card" data-reveal>
-      <table class="pl-compare pl-rates" aria-labelledby="pl-compare-beyond">
+      <table class="pl-compare pl-rates pl-beyond" aria-labelledby="pl-compare-beyond">
         <caption class="pl-sr">{b.caption}</caption>
         <thead>
           <tr>

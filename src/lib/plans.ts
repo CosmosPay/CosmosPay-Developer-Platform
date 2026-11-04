@@ -107,6 +107,23 @@ export function swapFeePct(plan: unknown): string {
   return `${planSwapFeeBps(plan) / 100}%`;
 }
 
+/* A commission in basis points as a percent in the reader's language (13 → "0.13%", "0,13 %"):
+   how the swap form and the swap and liquidity details show the rate a record was charged. */
+export function bpsPercent(bps: number, lang: string): string {
+  return new Intl.NumberFormat(lang, { style: "percent", maximumFractionDigits: 2 }).format(bps / 10_000);
+}
+
+/* The values the company site's pricing copy names by placeholder, so no rate is written by hand:
+   `{starterRate}`, what a payment costs on the plan with no monthly fee ("1.5% + 18¢"), and each
+   plan's swap commission by plan id, `{public}` being the public swap's. */
+export function pricingCopyVars(): Record<string, string> {
+  return {
+    ...Object.fromEntries(PLAN_IDS.map((id) => [id, swapFeePct(id)])),
+    public: swapFeePct("community"),
+    starterRate: PLAN_SPECS.starter.perTx,
+  };
+}
+
 /* The highest and lowest swap commission across the offered plans ("from 0.65% to 0.07%"). */
 export function swapFeeRange(): { max: string; min: string } {
   const bps = PLAN_IDS.map((id) => PLAN_SPECS[id].swapFeeBps);

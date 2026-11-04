@@ -19,6 +19,13 @@
 .pswap-facts b { font-size: 16px; font-weight: 600; }
 .pswap-facts span { font-size: 15px; line-height: 1.5; color: var(--ink-2); }
 .pswap-fee { margin: 24px 0 0; font-size: 14px; color: var(--ink-3); }
+/* Signed in: the organization the swaps go through, at its plan's commission, and where they land. */
+.pswap-fee.is-org { max-width: 46ch; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); }
+.pswap-fee.is-org p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.pswap-org { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 16px; margin-top: 12px; }
+.pswap-org label { display: grid; gap: 6px; flex: 1 1 200px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.pswap-org select { width: 100%; padding: 9px 12px; font-size: 14px; }
+.pswap-org a { font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .pswap-widget { scroll-margin-top: 140px; }
 .pswap-widget .swapper { margin: 0; }
 
@@ -51,6 +58,16 @@
 .pswap-faq summary::after { content: "+"; color: var(--ink-3); font-weight: 400; transition: transform .2s ease; }
 .pswap-faq details[open] summary::after { transform: rotate(45deg); }
 .pswap-faq details p { margin: 0; padding: 0 18px 18px; font-size: 15px; line-height: 1.6; color: var(--ink-2); animation: arrive .28s cubic-bezier(.2, .7, .2, 1) both; }
+
+/* The rule between sections spans the content, not the page's gutters (each section is a .wrap:
+   a border would run under its padding, past the text and the cards). */
+.pswap-band, .pswap-api, .pswap-faq { position: relative; border-top: 0; }
+.pswap-band::before, .pswap-api::before, .pswap-faq::before {
+  content: ""; position: absolute; top: 0; left: 40px; right: 40px; height: 1px; background: var(--line);
+}
+@media (max-width: 720px) {
+  .pswap-band::before, .pswap-api::before, .pswap-faq::before { left: 16px; right: 16px; }
+}
 
 @media (max-width: 980px) {
   .pswap-hero, .pswap-band { grid-template-columns: minmax(0, 1fr); }

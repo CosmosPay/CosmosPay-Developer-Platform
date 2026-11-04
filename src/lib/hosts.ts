@@ -68,7 +68,7 @@ const PAYMENTS_PREFIXES = ["/preview", "/zk"];
 const PROVER_FILE = /^\/zk\/bb\/[0-9a-z.-]+\/[0-9a-z.-]+$/;
 /* The platform's top-level routes. A new one belongs here too, or on the other domains it is
    a 404 instead of a redirect (it still never renders there). */
-const DEV_PREFIXES = ["/login", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
+const DEV_PREFIXES = ["/login", "/logout", "/dashboard", "/onboarding", "/invite", "/kyc", "/swagger", "/docs", "/api"];
 /* Answered on every domain, each with its own content (src/pages/robots.txt.ts, sitemap.xml.ts,
    llms.txt.ts, llms-full.txt.ts, auth.md.ts, src/pages/.well-known/*). The IndexNow key file is one
    too (src/pages/[key].txt.ts): its name is the key, read at runtime, so it is matched by its shape

@@ -158,7 +158,7 @@ function security({ d, page }: Ctx, compact: boolean): Block[] {
   ];
 }
 
-/** Faq.astro: the gateway's questions (or a page's own), with the network pages linked. */
+/** Faq.astro: the gateway's questions (or a page's own); a network page links the other ones. */
 function faq(ctx: Ctx, opts: { limit?: number; items?: readonly { q: string; a: string }[]; heading?: string; current?: NetworkPage } = {}): Block[] {
   const { d, page } = ctx;
   const t = d.t;
@@ -168,7 +168,7 @@ function faq(ctx: Ctx, opts: { limit?: number; items?: readonly { q: string; a: 
   return [
     h(2, opts.heading ?? head(t.faq.title, t.faq.titleBold)),
     ...(opts.limit ? [p(link(t.pages.more.faq, page("/faq")))] : []),
-    p(`${opts.current ? t.network.others : t.pages.byNetwork} ${nets.map((n) => link(t.pages[n].link, page(`/${n}`))).join(", ")}`),
+    ...(opts.current ? [p(`${t.network.others} ${nets.map((n) => link(t.pages[n].link, page(`/${n}`))).join(", ")}`)] : []),
     ...shown.flatMap((f) => [h(3, f.q), p(f.a)]),
   ];
 }
@@ -510,7 +510,7 @@ function contentPage(ctx: Ctx, page: PaymentsPage): Block[] {
         ...header("faq"),
         ...updatedLine(ctx, "/faq"),
         ...faq(ctx),
-        ...guideLinks(ctx, ["stablecoin-payment-gateway", "accept-usdc-payments", "confirm-stablecoin-payments", "whatsapp-payment-links", "stellar-vs-solana-vs-monad"]),
+        ...guideLinks(ctx, ["stablecoin-payment-gateway", "accept-usdc-payments", "confirm-stablecoin-payments", "whatsapp-payment-links", "cross-chain-swaps"]),
         ...finalCta(ctx),
       ];
     case "swaps":

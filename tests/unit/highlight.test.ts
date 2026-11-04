@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { highlightLines, type CodeLang, type Token } from '@/lib/payments/highlight';
+import { highlightLines, type CodeLang, type Token } from '@/lib/highlight';
 
 const join = (lines: Token[][]) => lines.map((line) => line.map((t) => t.text).join('')).join('\n');
 const kinds = (lines: Token[][], kind: Token['kind']) => lines.flat().filter((t) => t.kind === kind).map((t) => t.text.trim());

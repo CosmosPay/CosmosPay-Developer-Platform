@@ -796,7 +796,7 @@ function NewPayinModal({ bp, orgId, env, onClose, onDone }) {
               <CopyField label={m.payinId} value={payin.id} />
               {payin.status && <CopyField label={m.status} value={fiatStatusLabel(payin.status, bp.txStatuses) || payin.status} />}
             </div>
-            {payin.instructions && <CopyBlock label={m.instructions} value={typeof payin.instructions === "string" ? payin.instructions : JSON.stringify(payin.instructions, null, 2)} />}
+            {payin.instructions && <CopyBlock label={m.instructions} value={typeof payin.instructions === "string" ? payin.instructions : JSON.stringify(payin.instructions, null, 2)} lang={typeof payin.instructions === "string" ? undefined : "json"} />}
             <div className="modal-actions"><button className="btn btn-violet" onClick={onDone}>{m.done}</button></div>
           </>
         )}

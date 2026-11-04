@@ -15,8 +15,6 @@ interface Props {
   lang?: string;
   /** The signed-in developer when the server knows it (pages on the platform's own host). */
   user?: User | null;
-  /** Read the platform session. Off on the payments domain, which may not read it. */
-  session?: boolean;
   /** The page's copy is rendered on the server: a new language reloads it in that language. */
   reloadOnLang?: boolean;
   overPanel?: "black" | "white";
@@ -24,10 +22,10 @@ interface Props {
   area?: Area;
 }
 
-export default function SiteNav({ lang, user = null, session = true, reloadOnLang = false, overPanel, area }: Props) {
+export default function SiteNav({ lang, user = null, reloadOnLang = false, overPanel, area }: Props) {
   initLang(lang);
   const [theme, setTheme] = useTheme();
-  const dev = useDevSession(user, session);
+  const dev = useDevSession(user);
   const current = useLang();
   const initial = useRef(current);
   useEffect(() => {

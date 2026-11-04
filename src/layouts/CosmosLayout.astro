@@ -7,6 +7,7 @@ import "@/styles/institutional.css";
 import { PUBLIC_GA_ID, PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
 import { DEV, PAYMENTS, SITE, SOCIAL } from "@/components/cosmos/lib/constants";
 import SiteNav from "@/components/cosmos/layout/SiteNav";
+import { NAV_SCROLL_SCRIPT } from "@/lib/nav-scroll";
 import BackToTop from "@/components/cosmos/layout/BackToTop.astro";
 import StructuredData from "@/components/site/StructuredData.astro";
 import { SITE_LANGS, SITE_PAGE_PATHS, crumbName, type SitePage } from "@/lib/seo/site-meta";
@@ -62,7 +63,7 @@ interface Props {
 const {
   title = "Cosmos Pay Developer Platform",
   lang,
-  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API (multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers and analytics).",
+  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API (payment intents on Stellar, Solana and Monad, swaps across every network they reach, webhooks, products, customers and analytics).",
   image,
   noindex = false,
   type = "website",
@@ -220,6 +221,8 @@ const themeScript =
     <link rel="preload" href="/fonts/OpenSauceOne-Light.woff2" as="font" type="font/woff2" crossorigin />
     <!-- The persisted theme before paint (no flash), then the page's LCP image for that theme. -->
     <script is:inline set:html={themeScript} />
+    {/* The nav's surface follows the scroll from the first paint, hydrated or not (src/lib/nav-scroll.ts). */}
+    <script is:inline set:html={NAV_SCROLL_SCRIPT} />
 
     {/* Google Analytics, on the company site's indexable pages only (src/lib/analytics.ts): the
         queue starts now (the page view keeps its time) with the address stripped of every query
@@ -251,7 +254,6 @@ const themeScript =
         client:load
         lang={locale}
         user={Astro.locals.user ? { name: Astro.locals.user.name, email: Astro.locals.user.email, image: Astro.locals.user.image } : null}
-        session={Astro.locals.area !== "payments"}
         area={Astro.locals.area === "site" ? "site" : undefined}
         overPanel={navOverPanel}
         reloadOnLang={reloadOnLang}

@@ -1,10 +1,12 @@
 /* Auth helpers. There is one auth system (Better Auth on the platform's domain) for all
    three domains this app answers. Its session cookie stays host-only there (src/lib/auth.ts),
-   so pages on another domain read the session with a credentialed call (useDevSession).
+   so pages on another domain ask the platform who is signed in (useDevSession).
    Signing in is the Authentik OAuth2 flow; there is no username/password screen. */
 import { useEffect, useState } from "react";
-import { getSession, signIn, signOut } from "@/lib/auth-client";
-import { DASH, HOME, LOGIN, loginTo } from "@/components/cosmos/lib/constants";
+import { signIn, signOut } from "@/lib/auth-client";
+import { DASH, DEV, HOME, LOGIN, SITE, loginTo } from "@/components/cosmos/lib/constants";
+import { NAV_SESSION_PATH, type NavSessionUser } from "@/lib/nav-session";
+import { logoutUrl } from "@/lib/urls";
 import type { User } from "@/components/cosmos/lib/types";
 
 /* "Log in" / "Get API keys" from any page, on any of the domains: go to the platform's
@@ -31,32 +33,37 @@ export function ctaProps(user: User | null | undefined, next: string = "/dashboa
   return { href: user ? DASH : loginTo(next) };
 }
 
-/* The platform session, for pages rendered on the company site's domain, where the
+/* Who is signed in, for pages rendered on the company site's or the gateway's domain, where the
    host-only session cookie never reaches the server. Starts from what the server knew
-   (`initial`, set when the page was served from the platform's own host) and otherwise reads
-   /api/auth/get-session cross-origin after hydration. `ready` stays false until the answer
-   arrives, so the nav can hold its skeleton instead of flashing "Log in" at a signed-in
-   visitor. A failed read counts as signed out; the page never waits on it.
-   `enabled: false` skips the read and reports signed out at once: the payments domain is
-   not an allowed origin for the session (src/lib/allowed-origins.ts), by design. */
-export function useDevSession(initial: User | null = null, enabled = true): { user: User | null; ready: boolean } {
-  const [state, setState] = useState<{ user: User | null; ready: boolean }>({ user: initial, ready: !!initial || !enabled });
+   (`initial`, set when the page was served from the platform's own host) and otherwise asks the
+   platform's /api/nav-session with the visitor's cookie after hydration: the account's name,
+   email and picture, never the session itself (src/lib/nav-session.ts). `ready` stays false until
+   the answer arrives, so the nav can hold its skeleton instead of flashing "Log in" at a
+   signed-in visitor. A failed read counts as signed out; the page never waits on it. */
+export function useDevSession(initial: User | null = null): { user: User | null; ready: boolean } {
+  const [state, setState] = useState<{ user: User | null; ready: boolean }>({ user: initial, ready: !!initial });
   useEffect(() => {
-    if (initial || !enabled) return;
+    if (initial) return;
     let alive = true;
-    Promise.resolve(getSession())
-      .then((res) => {
-        const u = res?.data?.user;
-        if (alive) setState({ ready: true, user: u ? { name: u.name, email: u.email, image: u.image } : null });
-      })
+    fetch(`${DEV}${NAV_SESSION_PATH}`, { credentials: "include", cache: "no-store" })
+      .then((res) => (res.ok ? (res.json() as Promise<{ user?: NavSessionUser | null }>) : null))
+      .then((body) => { if (alive) setState({ ready: true, user: body?.user ?? null }); })
       .catch(() => { if (alive) setState({ user: null, ready: true }); });
     return () => { alive = false; };
   }, []);
   return state;
 }
 
-/* Sign out, then send the user to the company site. */
+/* Sign out, then send the user to the company site. Better Auth signs out cross-origin only
+   from the origins it trusts with the session (the company site); any other page (the
+   gateway's domain) goes through the platform's /logout, which signs out on the server and
+   brings the visitor back to the page they were on. */
 export function startLogout(redirectTo: string = HOME) {
+  const here = window.location.origin;
+  if (here !== new URL(DEV).origin && here !== new URL(SITE).origin) {
+    window.location.href = logoutUrl(DEV, window.location.href);
+    return Promise.resolve();
+  }
   return Promise.resolve(signOut())
     .catch(() => {})
     .then(() => { window.location.href = redirectTo; });

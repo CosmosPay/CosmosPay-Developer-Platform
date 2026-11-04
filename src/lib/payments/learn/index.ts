@@ -7,6 +7,7 @@
 import type { Locale } from "@/lib/payments/i18n";
 import type { Guide } from "@/lib/payments/site-pages";
 import type { LearnLink } from "@/lib/payments/learn/links";
+import { NETWORK_IDS } from "@/lib/chains";
 import { en, type LearnMessages } from "@/lib/payments/learn/en";
 import { es } from "@/lib/payments/learn/es";
 import { pt } from "@/lib/payments/learn/pt";
@@ -62,7 +63,19 @@ export interface GuideCopy {
 
 /** A guide's copy in a language, read through the shared shape. */
 export function guideCopy(t: LearnMessages, guide: Guide): GuideCopy {
-  return t.guides[GUIDE_KEYS[guide]] as GuideCopy;
+  return withNetworkCount(t.guides[GUIDE_KEYS[guide]]) as GuideCopy;
+}
+
+/* Every string of a guide with `{n}` filled: the networks Cosmos Pay works with, counted from
+   NETWORK_IDS (never written), in its title, lede, steps and questions alike. Other placeholders
+   ({starterRate}) stay for the page to fill. */
+function withNetworkCount<T>(value: T): T {
+  if (typeof value === "string") return value.replace(/\{n\}/g, String(NETWORK_IDS.length)) as T;
+  if (Array.isArray(value)) return value.map(withNetworkCount) as T;
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withNetworkCount(v)])) as T;
+  }
+  return value;
 }
 
 /* The mock-ups a guide may show (a subset of Mock.astro's names). */

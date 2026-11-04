@@ -19,6 +19,8 @@ const COPIES = [
   // The route constants build absolute links with these (pure, no Astro imports).
   ['lib/urls.ts', 'lib/urls.ts'],
   ['lib/safe-next.ts', 'lib/safe-next.ts'],
+  // Who is signed in, for the nav's account menu (components/cosmos/lib/auth.ts useDevSession).
+  ['lib/nav-session.ts', 'lib/nav-session.ts'],
   // The language of every link the nav and the footer draw (constants.ts langHref) and of the
   // address SiteNav reloads with: lang-urls.ts, and the gateway's page list it reads (pure).
   ['lib/seo/lang-urls.ts', 'lib/seo/lang-urls.ts'],

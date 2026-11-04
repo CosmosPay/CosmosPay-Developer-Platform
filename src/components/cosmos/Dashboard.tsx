@@ -10,7 +10,7 @@ import { Nav } from "@/components/cosmos/layout/Nav";
 import { SegThumb } from "@/components/cosmos/dashboard/components/SegThumb";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi } from "@/lib/api-client";
-import { planLimits, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
+import { planLimits, planSwapFeeBps, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS, RECORD_VIEWS } from "@/components/cosmos/dashboard/data";
@@ -29,7 +29,7 @@ import { parseUsage, quickLinks, recordUse } from "@/lib/dashboard-usage";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
-export default function Dashboard({ user: initialUser, lang, features, env = "dev", orgs: initialOrgs = null, orgId: initialOrgId = null, view: initialView = null, id: initialRecordId = null }) {
+export default function Dashboard({ user: initialUser, lang, features, env = "dev", orgs: initialOrgs = null, orgId: initialOrgId = null, view: initialView = null, id: initialRecordId = null, publicSwaps = false }) {
   initLang(lang);
   const t = useT();
   // Plan/onboarding feature flags resolved server-side (per account role). Defaults
@@ -413,11 +413,13 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "balances": return <BalancesView canManage={can("payments:create")} env={live ? "prod" : "dev"} onGo={go} />;
       case "customers": return <CustomersView canManage={can("customers:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
       case "products": return <ProductsView canManage={can("products:create")} canSell={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
-      case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      // publicSwaps (mock mode): every swap is the real gateway's under the public key, at its rate,
+      // so the form waits for the quote to name it rather than showing the plan's.
+      case "swaps": return <SwapsView key="all" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} feeBps={publicSwaps ? null : planSwapFeeBps(org.plan)} />;
       case "zkPayments": return <ZkPaymentsView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "zkAccounts": return <ZkAccountsView canAdd={can("customers:create")} canRemove={can("customers:edit")} orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
       // Swaps between chains live in the swaps list; the old deep link opens it filtered to them.
-      case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "crossChainSwaps": return <SwapsView key="cross" defaultType="cross" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} feeBps={publicSwaps ? null : planSwapFeeBps(org.plan)} />;
       case "liquidity": return <LiquidityView canManage={can("payments:create")} canConnectWallets={can("wallets:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;

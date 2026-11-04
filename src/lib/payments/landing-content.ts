@@ -4,7 +4,7 @@
    src/components/payments/landing/data.ts, which adds the links and the logo files) and the
    Markdown versions of the pages (src/lib/seo/payments-markdown.ts) read the same lists in the
    same order. Nothing in it is translated here: the words come from the catalogs. */
-import { LANDING } from "@/lib/payments/landing-i18n";
+import { LANDING, fillPageCopy } from "@/lib/payments/landing-i18n";
 import { LEARN } from "@/lib/payments/learn/index";
 import { PLAN_SPECS, swapFeePct, PROTECTED_PAYMENT_FEE_PCT } from "@/lib/plans";
 import { NETWORK_IDS, networkName } from "@/lib/chains";
@@ -66,8 +66,21 @@ const WALLET_ROW: readonly MarqueeItem[] = [
 /** The plan names: product names, never translated. */
 export const planName = (id: string): string => id[0].toUpperCase() + id.slice(1);
 
+/* `{n}` anywhere in the gateway's copy is how many networks Cosmos Pay works with (NETWORK_IDS),
+   so any sentence can name the whole collection by its count (product owner, 2026-11-03: never
+   Stellar, Solana and Monad as if they were the only networks). A step counter's `{n}` is its
+   step instead, filled by the page as the visitor scrolls, so `counter` keys keep theirs. */
+function withNetworkCount<T>(value: T, key = ""): T {
+  if (typeof value === "string") return (key === "counter" ? value : fillPageCopy(value)) as T;
+  if (Array.isArray(value)) return value.map((v) => withNetworkCount(v)) as T;
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withNetworkCount(v, k)])) as T;
+  }
+  return value;
+}
+
 export function landingContent(lang: Locale) {
-  const t = LANDING[lang];
+  const t = withNetworkCount(LANDING[lang]);
   // The guides' words (src/lib/payments/learn/): the section bar names their hub, and the guide
   // pages and the guide links on other pages read the rest.
   const learn = LEARN[lang];
@@ -151,16 +164,26 @@ export function landingContent(lang: Locale) {
     };
   });
   // The fee calculator's plans: each rate parsed from plans.ts ("0.75% + 18¢"); Enterprise is custom.
+  // `rate` is what the row shows under its fee, written as the plan cards above write it, so a
+  // merchant sees the percentage the amount comes from (the script adds the protected payment's).
   const calcPlans = (["starter", "essentials", "growth", "enterprise"] as const).map((id) => {
     const spec = PLAN_SPECS[id];
     const m = spec.perTx.match(/([\d.]+)%\s*\+\s*([\d.]+)¢/);
     const monthly = spec.price.endsWith("/mo") ? t.calc.perMonth.replace("{price}", spec.price.replace("/mo", "")) : "";
-    return { id, name: planName(id), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, monthly };
+    return { id, name: planName(id), pct: m ? Number(m[1]) : null, cents: m ? Number(m[2]) : null, rate: m ? spec.perTx : "", monthly };
   });
   const PROTECTED_PCT = PROTECTED_PAYMENT_FEE_PCT;
   // "What is Cosmos Pay?" opens the list, so the home (its first four) and /faq both start with an
   // answer a reader or an AI answer can quote on its own.
-  const faq = (["what", "wallet", "account", "wallets", "assets", "custody", "service", "protected", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => t.faq[key]);
+  // The answers name every network Cosmos Pay works with, the swap platform's whole collection
+  // (product owner, 2026-11-03): their count ({n}) and their names ({networks}) come from
+  // NETWORK_IDS, never written, so a network added there reaches every language's FAQ.
+  const networkList = new Intl.ListFormat(lang, { type: "conjunction" }).format(NETWORK_IDS.map((id) => networkName(id)));
+  const fillNetworks = (text: string) => fillPageCopy(text).replace(/\{networks\}/g, networkList);
+  const faq = (["what", "networks", "wallet", "account", "wallets", "assets", "custody", "service", "protected", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => ({
+    q: fillNetworks(t.faq[key].q),
+    a: fillNetworks(t.faq[key].a),
+  }));
 
   // Code samples are written indented like the code around them; this takes that indent off
   // every line after the first, so the page shows them flush left.

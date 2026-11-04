@@ -2,8 +2,8 @@
 
 The developer dashboard for **Cosmos Pay**: a self-service console where developers sign in,
 manage their organization, mint API keys, and operate against the Cosmos Pay Payments API
-(multi-chain payment intents on Stellar, Solana and Monad, swaps, webhooks, products, customers
-and analytics).
+(payment intents on Stellar, Solana and Monad, swaps across every network they reach, webhooks,
+products, customers and analytics).
 
 It is an **Astro** SSR app (Node adapter) that authenticates users through **Authentik**
 (OAuth2 via Better Auth), provisions per-user credentials in the **APISIX** gateway, and
@@ -174,6 +174,23 @@ npm run db:push
 npm run dev          # http://localhost:4321
 ```
 
+**Working on the views without a backend:** `npm run dev:mock` runs the portal on sample data,
+with no database, no Authentik and no Payments API (no `.env` needed). You are signed in as a
+sample owner account and every `/api/*` call is answered from memory. The three domains run
+locally: the dashboard at `http://dev.cosmospay.localhost:4321/dashboard`, the payments site (and
+the hosted checkout of the sample payment links) at `http://payments.cosmospay.localhost:4321/` and
+the company site at `http://cosmospay.localhost:4321/` (the next free port when 4321 is taken).
+Options go after `--`:
+
+```bash
+npm run dev:mock                         # owner account on Growth
+npm run dev:mock -- --role user          # a regular account (no admin or support views)
+npm run dev:mock -- --plan starter       # the plan of the account and its organizations
+npm run dev:mock -- --fresh              # a new account with no organization (onboarding)
+npm run dev:mock -- --latency 800        # slow every API answer, to look at the skeletons
+npm run dev:mock -- --auto               # the real backend when it answers, mock otherwise
+```
+
 ### Environment variables
 
 All variables are validated via Astro's typed env (`astro.config.mjs`). See
@@ -217,6 +234,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | Command | Action |
 | :--- | :--- |
 | `npm run dev` | Dev server with HMR at `localhost:4321` (`--host`) |
+| `npm run dev:mock` | Dev server on sample data: no database, Authentik or Payments API (`src/lib/mock`; options after `--`, see Getting started) |
 | `npm run build` | `prisma generate` + docs + embed bundle + share cards + production build → `dist/` |
 | `npm run embed:build` | Bundle `src/embed/` into `public/embed/cosmos-pay.js` with the env's origins inlined (`build` and `predev` run it; `-- --mode development` reads `.env.development`) |
 | `npm run og:build` | Draw the share card (1200x630 PNG) of every indexable page of the company site and the gateway in each of its languages into `src/assets/og/` (`build`, `build:app` and `predev` run it; only changed cards are redrawn) |
@@ -328,7 +346,7 @@ served at **`/api/openapi.json`** (schemas live in `src/schemas/`). Highlights:
 Part of the Cosmos Pay ecosystem:
 
 - **[CosmosPay Community Server](https://github.com/CosmosPay/CosmosPay-Community-Server)**:
-  the NestJS Payments API (payment intents and swaps on Stellar, Solana and Monad, webhooks,
+  the NestJS Payments API (payment intents on Stellar, Solana and Monad, swaps across every network they reach, webhooks,
   products, customers, analytics).
   This is the **upstream** that the dashboard proxies through APISIX.
 - **[CosmosJS SDK](https://github.com/CosmosPay/CosmosJS_SDK)**: the object-oriented JS/TS

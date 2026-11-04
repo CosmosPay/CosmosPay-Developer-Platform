@@ -1,8 +1,12 @@
 ---
 /* /swaps on payments.cosmospay.lat: public swaps without an account, and USDT0 out of Stellar
  * (src/components/cosmos/swaps/PublicSwaps.tsx; the company site serves its own /swaps). The
- * widget is the dashboard's, so its styles come along (dashboard.css is scoped to its classes). */
+ * widget is the dashboard's, so its styles come along: views.css (its modals, the token picker,
+ * the small selects, the QR blocks of a swap's detail and the copy buttons) and dashboard.css, in
+ * the order CosmosLayout loads them on the company site's /swaps. Without views.css the token
+ * picker rendered unstyled under the footer. */
 import "@/styles/payments-landing.css";
+import "@/styles/views.css";
 import "@/styles/dashboard.css";
 import "@/styles/public-swaps.css";
 import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
@@ -17,6 +21,7 @@ import GuideLinks from "@/components/payments/learn/GuideLinks.astro";
 import { SWAPS_GUIDES } from "@/lib/payments/site-pages";
 import { API_BASE } from "@/lib/payments/urls";
 import { DOCS } from "@/components/cosmos/lib/constants";
+import { isMockMode } from "@/lib/mock/mode";
 
 const lang = Astro.locals.lang ?? "en";
 const d = landingData(lang, "multi");
@@ -30,7 +35,7 @@ const meta = pageMeta(d.t, "swaps");
   <main id="main" class="pl pl-multi">
     <Subnav d={d} current="swaps" />
     <PageHeader d={d} page="swaps" art="3d-instant" />
-    <PublicSwaps client:load lang={lang} apiBase={API_BASE} docsUrl={DOCS} />
+    <PublicSwaps client:load lang={lang} apiBase={API_BASE} docsUrl={DOCS} accountSwaps={!isMockMode()} />
     <GuideLinks d={d} guides={SWAPS_GUIDES} />
   </main>
 

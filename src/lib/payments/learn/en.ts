@@ -13,7 +13,7 @@ export const en = {
   hub: {
     nav: "Guides",
     title: "Stablecoin payment guides",
-    lede: "Guides for businesses that charge in stablecoins with Cosmos Pay: how to accept USDC online and on each network (Stellar with SEP-7, Solana with Solana Pay, Monad with EIP-681), how to add a pay button to your site, how to take donations with an open amount, how to send a payment link on WhatsApp, how to confirm payments on your server, what a stablecoin payment gateway does, how the three networks compare, how to swap across chains and how to send USDT0 from Stellar to EVM networks.",
+    lede: "Guides for businesses that charge in stablecoins with Cosmos Pay: how to accept USDC online and with each network’s payment link standard (SEP-7, Solana Pay, EIP-681), how to add a pay button to your site, how to take donations with an open amount, how to send a payment link on WhatsApp, how to confirm payments on your server, what a stablecoin payment gateway does, how the networks compare, how to swap across {n} networks and how to send USDT0 from Stellar to EVM networks.",
     meta: "Stablecoin payment guides | Cosmos Pay",
     description: "Guides: accept USDC online and on each network, pay buttons, donations, webhooks, WhatsApp links, cross-chain swaps and USDT0 from Stellar.",
   },
@@ -29,15 +29,15 @@ export const en = {
       nav: "Accept USDC payments",
       title: "How to accept USDC payments online",
       meta: "How to accept USDC payments online | Cosmos Pay",
-      description: "Accept USDC with a payment link, a hosted checkout or an API on Stellar, Solana or Monad: what you and your customer need, and how to test first.",
+      description: "Accept USDC with a payment link, a hosted checkout or an API, on any of {n} networks: what you and your customer need, and how to test first.",
       summary: "Charge in USDC with a payment link, the hosted checkout or the API, and try it on a test network first.",
-      lede: "To accept USDC online with Cosmos Pay, add the wallet that will receive the money, then charge with a payment link, the hosted checkout or the Payments API. Your customer pays from their own wallet on Stellar, Solana or Monad, and the USDC goes to your address. Run it on a test network before you charge real money.",
+      lede: "To accept USDC online with Cosmos Pay, add the wallet that will receive the money, then charge with a payment link, the hosted checkout or the Payments API. Your customer pays from their own wallet, on any of the {n} networks Cosmos Pay works with, and the USDC goes to your address. Run it on a test network before you charge real money.",
       sections: {
         need: {
           title: "What you need",
           body: [
             "A Cosmos Pay account. Creating one is free, and the Starter plan has no monthly fee: each payment pays {starterRate}.",
-            "A wallet address that will receive the USDC, on the network you charge on: Stellar, Solana or Monad. You add it to your organization in the dashboard and prove it is yours with a signature. Payment links created in the dashboard pay only into the wallets added there.",
+            "A wallet address that will receive the USDC, on the network you charge on. You add it to your organization in the dashboard and prove it is yours with a signature. Payment links created in the dashboard pay only into the wallets added there.",
           ],
           links: { fees: "See every plan’s rate" },
         },
@@ -98,7 +98,7 @@ export const en = {
       meta: "Payment links on WhatsApp: create and share | Cosmos Pay",
       description: "Create a stablecoin payment link in the Cosmos Pay dashboard, send it on WhatsApp or as a printed QR code, and see the moment it is paid.",
       summary: "Create a link in the dashboard, send it in a chat or print its QR code, and see when it is paid.",
-      lede: "Create a payment link in the Cosmos Pay dashboard, copy its checkout page address and paste it into the WhatsApp chat. Your customer opens it and pays from their own wallet on Stellar, Solana or Monad, and the link turns to Succeeded in your dashboard once the network confirms the payment.",
+      lede: "Create a payment link in the Cosmos Pay dashboard, copy its checkout page address and paste it into the WhatsApp chat. Your customer opens it and pays from their own wallet, and the link turns to Succeeded in your dashboard once the network confirms the payment.",
       sections: {
         before: {
           title: "Before you start",
@@ -193,15 +193,15 @@ export const en = {
         fit: {
           title: "How Cosmos Pay fits",
           body: [
-            "Cosmos Pay is a non-custodial stablecoin payment gateway on Stellar, Solana and Monad. You charge with a payment link, the hosted checkout or the Payments API, and you choose the wallet addresses that receive the money. Cosmos Pay stores no one’s keys.",
-            "On Stellar and Solana your customer pays your address directly. On Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay’s fee): Cosmos Pay holds no key to it. Every payment can be checked on the network, and every paid checkout links its transaction on a public explorer.",
+            "Cosmos Pay is a non-custodial stablecoin payment gateway that works with {n} networks: your customers pay from any of them, and swaps move what you receive to any of them. You charge with a payment link, the hosted checkout or the Payments API, and you choose the wallet addresses that receive the money. Cosmos Pay stores no one’s keys.",
+            "Each payment goes straight to your address or, on networks that need one, to a deposit address made for that payment, which can only forward it to yours (less the relay’s fee): Cosmos Pay holds no key to it. Every payment can be checked on the network, and every paid checkout links its transaction on a public explorer.",
           ],
           links: { security: "How payments are protected", acceptGuide: "How to accept USDC payments online", integrations: "Integration options" },
         },
       },
       faq: {
         final: { q: "Can a stablecoin payment be charged back?", a: "No. Once the network confirms it, it is final. A refund is a payment the business sends back from its wallet." },
-        custody: { q: "Does Cosmos Pay hold my money?", a: "No. On Stellar and Solana the payer pays your address directly. On Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay’s fee): Cosmos Pay holds no key to it." },
+        custody: { q: "Does Cosmos Pay hold my money?", a: "No. Each payment goes straight to your address or, on networks that need one, to a deposit address made for that payment, which can only forward it to yours (less the relay’s fee): Cosmos Pay holds no key to it." },
         wallet: { q: "Do I need my own wallet?", a: "Yes. Payments go to an address you control on each network you accept, so the funds are yours from the first payment." },
         customers: { q: "Do my customers need an account?", a: "No account with Cosmos Pay. They need a wallet on the payment’s network that holds the stablecoin." },
       },
@@ -211,10 +211,10 @@ export const en = {
       title: "Stellar vs Solana vs Monad for accepting payments",
       meta: "Stellar vs Solana vs Monad for payments | Cosmos Pay",
       description: "How Stellar, Solana and Monad compare for accepting stablecoin payments with Cosmos Pay: link standard, assets, test networks, fees and rates.",
-      summary: "The three networks side by side, as Cosmos Pay supports them: link format, assets, test networks and fees.",
-      lede: "With Cosmos Pay, a payment on Stellar, Solana or Monad reaches your address and pays the same plan rate. What changes is the link the wallet reads (SEP-7 on Stellar, Solana Pay on Solana, EIP-681 to a deposit address on Monad), how a payment is matched to its link and which assets have a preset. The table compares them as Cosmos Pay supports them.",
+      summary: "The three networks payments settle on, side by side: link format, assets, test networks and fees.",
+      lede: "With Cosmos Pay, a payment on Stellar, Solana or Monad reaches your address and pays the same plan rate. What changes is the link the wallet reads (SEP-7 on Stellar, Solana Pay on Solana, EIP-681 to a deposit address on Monad), how a payment is matched to its link and which assets have a preset. The table compares them as Cosmos Pay supports them; swaps connect all three with the rest of the {n} networks Cosmos Pay works with.",
       table: {
-        title: "The three networks, side by side",
+        title: "The three settlement networks, side by side",
         caption: "Stellar, Solana and Monad compared for accepting payments with Cosmos Pay",
         topic: "Topic",
         rows: {
@@ -387,16 +387,16 @@ export const en = {
       title: "How to send USDT0 from Stellar to EVM networks",
       meta: "Send USDT0 from Stellar to EVM networks | Cosmos Pay",
       description: "Send USDT0 from a Stellar account to Ethereum, Arbitrum and other EVM networks with Cosmos Pay: routes, fees in XLM, timing and every step.",
-      summary: "Move USDT0 from Stellar to an EVM network through LayerZero: pick a route, see the fees, sign once and follow delivery.",
+      summary: "Move USDT0 from Stellar to an EVM network: pick a route, see the fees, sign once and follow delivery.",
       lede: "With Cosmos Pay you can send USDT0 from a Stellar account to an address on Ethereum, Arbitrum or another of 21 EVM networks. You get a quote with every fee in XLM, sign one Stellar transaction in your wallet, and the transfer arrives in about 27 minutes. Ethereum receives native USDT; every other network receives USDT0.",
       sections: {
         what: {
           title: "What USDT0 is",
           body: [
-            "USDT0 is the omnichain form of Tether’s USDT. Its issuer describes a lock-and-mint design: USDT is locked on Ethereum and the same amount of USDT0 is minted on the other networks, which move it between them with LayerZero’s Omnichain Fungible Token (OFT) standard.",
+            "USDT0 is the omnichain form of Tether’s USDT. Its issuer describes a lock-and-mint design: USDT is locked on Ethereum and the same amount of USDT0 is minted on the other networks, which move it between them with an omnichain token standard (OFT).",
             "On Stellar, USDT0 is an asset like any other, so the account that sends it needs a trustline to it and a USDT0 balance.",
           ],
-          links: { usdt0Site: "USDT0, on its issuer’s site", usdt0Network: "How the USDT0 network works", layerzeroOft: "LayerZero’s OFT standard" },
+          links: { usdt0Site: "USDT0, on its issuer’s site", usdt0Network: "How the USDT0 network works" },
         },
         routes: {
           title: "Where it can go",
@@ -409,7 +409,7 @@ export const en = {
         cost: {
           title: "What it costs",
           points: [
-            "LayerZero’s messaging fee, in XLM. The transaction allows up to 20% more, and what it does not use comes back in the same transaction.",
+            "The bridge’s messaging fee, in XLM. The transaction allows up to 20% more, and what it does not use comes back in the same transaction.",
             "The Stellar network fee, in XLM.",
             "Any Cosmos Pay commission, which the quote shows before you sign.",
             "The sending account pays them all in XLM, so keep some XLM there besides the USDT0.",
@@ -433,13 +433,13 @@ export const en = {
           create: { title: "Create the transfer", body: "Call create with the Stellar account that sends, the route, the EVM address that receives and the amount. The API builds one Stellar transaction for it." },
           sign: { title: "Sign it in your wallet", body: "Sign the transaction (its XDR) with the wallet that holds the USDT0, or open its SEP-7 link in that wallet." },
           submit: { title: "Submit it", body: "Send the signed transaction to submit. If the network refuses it, the transfer stays pending: fix the cause and submit again before it expires." },
-          follow: { title: "Follow it to delivery", body: "The transfer moves from PENDING to SUBMITTED to DELIVERED, in about 27 minutes on every route, while LayerZero’s verifiers wait for Stellar’s confirmations. Once delivered, it carries the destination network’s transaction and a LayerZero Scan link." },
+          follow: { title: "Follow it to delivery", body: "The transfer moves from PENDING to SUBMITTED to DELIVERED, in about 27 minutes on every route, while the bridge waits for Stellar’s confirmations. Once delivered, it carries the destination network’s transaction and a link to follow the transfer." },
         },
         links: { usdt0Docs: "USDT0 in the SDK", usdt0Api: "USDT0 API" },
       },
       faq: {
         arrive: { q: "What does the receiving address get?", a: "On Ethereum, native USDT. On every other route, USDT0." },
-        time: { q: "How long does a transfer take?", a: "About 27 minutes on every route, as measured on LayerZero Scan: LayerZero’s verifiers wait for Stellar’s confirmations before the transfer is delivered." },
+        time: { q: "How long does a transfer take?", a: "About 27 minutes on every route: the bridge waits for Stellar’s confirmations before the transfer is delivered." },
         test: { q: "Can I try it on a test network?", a: "No. USDT0 transfers run on the main networks only; with a test key, no route is available." },
         custody: { q: "Does Cosmos Pay hold my USDT0?", a: "No. Your wallet signs the transaction that sends it; Cosmos Pay only builds and relays it." },
       },
@@ -592,7 +592,7 @@ export const en = {
           points: [
             "The pay button (cosmos-pay-button) opens the hosted checkout in a popup centred on your page. If the browser blocks the popup, the same tab goes to the checkout instead.",
             "The embedded checkout (cosmos-pay-checkout) draws the payment inside your page, up to 420 pixels wide: the amount, the QR code, a button that opens the payer’s wallet and the live status.",
-            "Both work for payment links on Stellar, Solana and Monad, in English, Spanish, Portuguese, French, German, Hindi and Chinese.",
+            "Both work for every payment link, in English, Spanish, Portuguese, French, German, Hindi and Chinese.",
           ],
         },
         link: {
@@ -643,16 +643,16 @@ export const en = {
     },
     crossChain: {
       nav: "Cross-chain swaps",
-      title: "How to swap tokens between Stellar, Solana and Monad",
-      meta: "Swap tokens between Stellar, Solana and Monad | Cosmos Pay",
-      description: "Swap tokens across Stellar, Solana, Monad and 32 more networks with Cosmos Pay and NEAR Intents: the quote, the deposit, fees, refunds and timing.",
-      summary: "Quote a swap, send the deposit and follow it to delivery: cross-chain swaps through NEAR Intents, refunded on the origin chain if they fail.",
-      lede: "Cosmos Pay swaps tokens between Stellar, Solana, Monad and the other networks NEAR Intents reaches, 35 in all. You get a quote, send the input amount to a deposit address before the quote expires, and the output arrives at your address on the other network. If the swap cannot complete, the input is refunded to your address on the network you sent from.",
+      title: "How to swap tokens across {n} networks",
+      meta: "Swap tokens across {n} networks | Cosmos Pay",
+      description: "Swap tokens across {n} networks with Cosmos Pay: the quote, the deposit, fees, refunds and timing.",
+      summary: "Quote a swap, send the deposit and follow it to delivery: cross-chain swaps, refunded on the origin chain if they fail.",
+      lede: "Cosmos Pay swaps tokens between {n} networks. You get a quote, send the input amount to a deposit address before the quote expires, and the output arrives at your address on the other network. If the swap cannot complete, the input is refunded to your address on the network you sent from.",
       sections: {
         how: {
           title: "How a cross-chain swap works",
           points: [
-            "Quote: the API asks NEAR Intents for a price and returns what you send, what you receive after every fee, and your plan’s commission. A quote saves nothing.",
+            "Quote: the API gets a price for the pair and returns what you send, what you receive after every fee, and your plan’s commission. A quote saves nothing.",
             "Create: the live quote gives a deposit address (on Stellar, with a memo), a payment link with its QR code, and a deadline, 30 minutes by default.",
             "Deposit: send the input amount to that address before the deadline. You can also report the deposit to the API.",
             "Delivery: the swap moves through deposit detected and processing to succeeded, when the output reaches your address.",
@@ -679,7 +679,7 @@ export const en = {
           points: [
             "On the public swaps page, with no account: it uses a shared public key and charges the 0.65% rate.",
             "In the dashboard’s swap panel, in Production.",
-            "With the API (/v1/cross-chain-swaps), or with client.crossChainSwaps in the TypeScript SDK, which covers Stellar, Solana and Monad.",
+            "With the API (/v1/cross-chain-swaps), or with client.crossChainSwaps in the TypeScript SDK.",
             "On the main networks only: a test key (dv_) can list assets and get quotes, but not create a swap.",
           ],
           links: { swaps: "The swaps page", crossChainApi: "Cross-chain swaps API" },
@@ -697,7 +697,7 @@ export const en = {
         links: { crossChainApi: "Cross-chain swaps API", webhooksGuide: "How to confirm a payment on your server" },
       },
       faq: {
-        networks: { q: "Which networks can I swap between?", a: "Stellar, Solana, Monad and the other networks NEAR Intents reaches, 35 in all. A pair on one network is a same-chain swap instead." },
+        networks: { q: "Which networks can I swap between?", a: "{n} networks in all, the whole collection of Cosmos Pay’s swap platform. A pair on one network is a same-chain swap instead." },
         test: { q: "Can I test a cross-chain swap?", a: "Not on a test network: these swaps run on the main networks only. A test key can list assets and get quotes." },
         refund: { q: "What happens to my money if the swap fails?", a: "It is refunded to the refund address you gave, on the network you sent from." },
         account: { q: "Do I need an account?", a: "Not on the public swaps page. With your own account, the dashboard and the API apply your plan’s rate." },

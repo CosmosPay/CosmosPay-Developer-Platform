@@ -7,6 +7,8 @@ Astro SSR portal + its own REST API under `src/pages/api/`).
 
 ```bash
 npm run dev               # astro dev --host; predev runs `prisma migrate deploy` + scripts/ensure-docs.mjs
+npm run dev:mock          # the portal on sample data: no Postgres, Authentik or Payments API (src/lib/mock;
+                          #   `-- --role user|support|admin|owner --plan starter --fresh --latency 800 --port N --auto`)
 npm run build             # prisma generate -> docs:build (Fumadocs export into public/docs) -> astro build
 npm run build:app         # prisma generate -> embed:build -> og:build -> astro build: no docs build (563 pages on 8
                           #   workers), docs/ untouched; enough to check a change outside the docs
@@ -27,6 +29,60 @@ npm run export:wallet-data # dumps the retired wallet tables to JSON for the com
 npm run indexnow          # dry run: the live sitemaps' URLs IndexNow would get; `-- --submit` sends
                           #   them (`--since <date>`, `--only site,payments,dev`, `--list`)
 ```
+
+## Mock mode (views without a backend)
+
+`npm run dev:mock` (`scripts/dev-mock.mjs`) starts `astro dev` with `COSMOS_MOCK=1`: the middleware
+signs every visitor in as a sample account and answers every `/api/*` request from an in-memory
+store (`src/lib/mock`), so the views can be worked on with no database, no Authentik and no
+Payments API. The pages that read the database on the server (`dashboard.astro`,
+`onboarding.astro`, `invite/[token].astro`) read the same state through `mockBoot()` /
+`mockInvite()` in `src/lib/mock/handlers/platform.ts`.
+
+- **Dev server only**: `isMockMode()` also requires `import.meta.env.DEV`, so a production build
+  ignores `COSMOS_MOCK` and can never hand out the sample owner session.
+- **Options** (`npm run dev:mock -- ...`): `--role` (default `owner`, which shows every staff and
+  admin view), `--plan` (default `growth`), `--fresh` (no organization yet: the onboarding),
+  `--latency <ms>` (to look at the skeletons), `--port`, and `--auto` (the real `npm run dev` when
+  the database and the Payments API both answer, mock mode otherwise).
+- **Data**: seeded deterministically (the same rows on every start), testnet rows for the sandbox
+  and mainnet rows for production, and kept on `globalThis`, so what is created or deleted survives
+  a hot reload and is gone after a restart. Sign-out works (a `cosmos-mock-signed-out` cookie) and
+  `/login` signs back in. `/invite/<token>` takes `expired`, `accepted`, `mismatch`, `seat_limit` or
+  `invalid` as the token to show those states.
+- **One handler module per area** (`src/lib/mock/handlers/`: `platform`, `payments`, `swaps`,
+  `fiat-admin`), each exporting `routes` built with `route()` from `src/lib/mock/http.ts`, typed
+  against the interfaces in `src/lib/cosmos.ts`. Shared identities (organizations, their wallets,
+  customers) are in `src/lib/mock/shared.ts`. A request with no mock answers 404 naming the path
+  and logs `[mock] no mock for ...`: **a new API route or a changed response shape gets its mock
+  in the same change**, or the view breaks in mock mode.
+- **All three domains run locally**, on their own `*.localhost` names on one port (the script sets
+  `PUBLIC_BETTER_AUTH_URL`, `PUBLIC_SITE_URL` and `PUBLIC_PAYMENTS_URL` to
+  `http://{dev.,,payments.}cosmospay.localhost:<port>`; `localhost:<port>` still serves the
+  platform), so the payments site, the company site and the dashboard link to each other here.
+  `PUBLIC_GA_ID` is emptied and the embed is rebuilt with those origins on every start.
+- **The gateway the payments pages call from the browser is mocked too**
+  (`src/lib/mock/gateway.ts`, at `<payments origin>/mock-gateway`, the mock's
+  `PUBLIC_PAYMENTS_API_URL`): the hosted checkout's public read, events and payer transaction for
+  the dashboard's sample payment links (so a link opens on the local checkout, and what the payer
+  does there shows on the payment's view), and the public swap pages' calls, forwarded to the swap
+  routes below. The middleware answers `/mock-gateway/*` before routing, on any host. The private
+  checkout (`/zk/{id}`, `/v1/zk-checkout/*`) is not mocked.
+- **Swaps are never mocked, not even here** (product owner, 2026-11-04: "no uses mock en ningún
+  momento para los swaps, esos deben ser reales"). `src/lib/mock/real-swaps.ts`: every swap call
+  (same-chain, cross-chain and USDT0: token list, routes, quote, open, read, submit, deposit) from
+  the dashboard and from the public pages goes to the real gateway (`COSMOS_MOCK_SWAP_GATEWAY`,
+  production's by default) with the shared public key of the call's environment, server to server
+  (the gateway sends no CORS for localhost). Quotes are real prices, a swap is a real unsigned
+  transaction a wallet can decode and sign, or a real deposit address. The swap lists, the swaps'
+  activity series and the admin's swap lists hold only the swaps opened here (kept in the mock
+  store with their read token, which never reaches the browser); nothing sampled. With no real
+  organization behind the sample account the gateway charges the public consumer's rate, so in
+  mock mode `/swaps` does not swap as the visitor's organization (`accountSwaps`) and the
+  dashboard's form waits for the quote to name the rate (`publicSwaps`).
+- Wallet proofs are not checked in mock mode, and nothing else reaches a chain: QR codes are PNG
+  drawings that encode nothing, and the other transactions and XDRs (payment links, liquidity,
+  private payments) are sample strings.
 
 ## Languages: seven, everywhere
 
@@ -98,6 +154,22 @@ These were said more than once; breaking one is a bug, whatever the task was.
   **long forms go in steps** (`FormSteps`), **every create opens a modal** copied from an
   existing one, and **every delete asks first** (`ConfirmModal`). The details are under "The
   institutional skin" below.
+- **Never name a provider** (product owner, 2026-11-03: "no deben saber quiénes son nuestros
+  proveedores"): no copy a customer reads names the services Cosmos Pay is built on: NEAR Intents
+  (and 1Click), LayerZero (and LayerZero Scan), Jupiter, Kuru Flow, OpenZeppelin, BlindPay,
+  Trustless Work. The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
+  and the docs home say what happens instead: a cross-chain swap, the USDT0 bridge and its fee,
+  Solana's or Monad's market (the dashboard's route labels: "Solana DEX", "Monad DEX",
+  "Cross-chain", "USDT0 bridge"), a confidential token on Stellar, a deposit address made for the
+  swap. The only exceptions are the terms of service and the privacy text, where the law requires
+  the third parties to be named (`src/lib/site/terms.ts`). Code, comments, identifiers and the
+  platform admin's views (staff only) keep the real names. The SDK and API reference under
+  `docs/content/docs/{sdk,api}` still name them because they are generated from the SDK and the
+  community server's spec: fix them there. A guide cites no provider's page as its source.
+  Data reaches the pages too: an asset preset whose issuer is a provider (USDB, BlindPay's test
+  stablecoin) has `issuerName: null` in `src/lib/stellar-assets.ts`, so the network pages and the
+  pickers show its code and issuer account only. `tests/unit/noProviderNames.test.ts` checks every
+  catalog in every language, the presets and every page's Markdown (all but `/tos`).
 - **A table with a delete selects several rows** (2026-10-27): `components/BulkSelect.tsx`, a
   checkbox first in each row (disabled, with the reason, where the row cannot go: a settled
   payment) and one in the head for the page; while rows are selected the filter row shows how many,
@@ -196,8 +268,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Do not scope it to the parent domain (`crossSubDomainCookies`): it would travel to every
   `*.cosmospay.lat` host (the gateway, Authentik, the wallet landing). Pages on the company
   site get `Astro.locals.user` only when served from the platform's own host (local single-host
-  setups); otherwise `useDevSession` reads `/api/auth/get-session` cross-origin and the nav
-  holds its skeleton (`sessionReady`) until it answers.
+  setups); otherwise `useDevSession` asks the platform's `/api/nav-session` with the visitor's
+  cookie and the nav holds its skeleton (`sessionReady`) until it answers. That answer is the
+  account's name, email and picture only, never the session or its token
+  (`src/lib/nav-session.ts`), which is why the payments domain may read it too. The payments
+  origin stays out of `src/lib/allowed-origins.ts` (an origin there is trusted with the whole
+  session); the middleware gives it a credentialed CORS allowance (and preflight, Content-Type
+  only) for a fixed list of calls in `src/lib/payments-session.ts` (tested): that GET, and the
+  signed-in public swap page's organization list and swap quote / create / read-by-id / submit /
+  deposit calls. Never a list of records, keys, settings, members or auth: add a route there only
+  when a payments page needs it. Do not point the nav back at `/api/auth/get-session`. Mock mode mirrors this: only the platform's host knows the sample
+  account on the server, so a mock sign-out shows on all three domains.
 - **Sign-in happens on the platform domain only, and there is no sign-in view:** `startLogin()`
   navigates to `/login` there, which starts the Authentik flow on the server
   (`auth.api.signInSocial`) and answers 302 straight to Authentik, forwarding the state cookie.
@@ -210,6 +291,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   "Redirect URI Error".
 - Sign-out from the company site is a credentialed cross-origin call
   to `/api/auth/sign-out`: keep `https://cosmospay.lat` in `src/lib/allowed-origins.ts`.
+  The payments domain may not make that call, so `startLogout()` there navigates to the
+  platform's `/logout?next=<page>` (`src/pages/logout.astro`), which signs out on the server
+  (`auth.api.signOut`, forwarding its cookies) and answers 302 back to the page, an absolute URL
+  on one of the three origins (`safeReturnUrl`). A cross-site navigation (`Sec-Fetch-Site:
+  cross-site`) is sent on without signing out, so another website cannot log a visitor out.
 - **An Authentik sign-in links to an existing user by email only when Authentik says the address
   is verified** (`email_verified`). Never list `ak` in `accountLinking.trustedProviders`
   (`src/lib/auth.ts`): Better Auth links a trusted provider's sign-in by email whatever that flag
@@ -253,12 +339,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **The general nav (`src/components/cosmos/layout/Nav.tsx`) is on every page of the three
   domains.** `CosmosLayout` renders it through the `SiteNav` island unless the page's own React
   tree does (`nav={false}`: Landing, Pricing, Dashboard). `PaymentsLayout` always renders it,
-  never reading the session (`session={false}`: the payments domain is not an allowed origin) and
+  reading who is signed in from `/api/nav-session` like the company site does, and
   reloading on a language change, because payments copy is server-rendered.
 - Its styles, burger and mobile menu included, live in `cosmos.css`, so any page that loads it
   draws the bar the same way. **At the very top of a page the bar has no surface** (no fill,
   border or blur: `.nav:not(.scrolled):not(.menu-open)`); it takes one back once the page moves
-  or the mobile menu opens.
+  or the mobile menu opens. **That never waits for React** (product owner, 2026-11-03: the bar
+  "stops covering and blurring the background"): an inline head script in both layouts
+  (`src/lib/nav-scroll.ts`, tested in `tests/unit/navScroll.test.ts`) keeps `data-scrolled` and
+  `data-past-panel` on `<html>` from the first paint, and the nav's styles read them beside React's
+  `scrolled`, `over-ink` and `over-paper` (through `:where()`, so no selector gained weight).
+  Before that, an island slow to hydrate, or one that never did, left the bar transparent while
+  the page scrolled under it, and past a black hero white ink over white sections.
 - **It works by keyboard, screen reader and touch.** Each mega trigger is a disclosure
   (`aria-expanded` / `aria-controls`); every panel and the mobile menu are in the page from the
   first render, hidden until opened, so their links are crawlable and Tab goes from a trigger
@@ -417,7 +509,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     scales on one plot. The outcome palette (`--viz-done/-wait/-fail`, its own steps in dark mode)
     was validated with the dataviz skill's script; the amber sits under 3:1 on white, so every part
     is also labelled in the legend, the tooltip and the hidden table. Bars are square (product
-    owner), a 2px surface gap between stacked parts, solid hairline grid. Each figure carries an
+    owner), a 2px surface gap between stacked parts, solid hairline grid. **The chart's form is
+    the viewer's choice** (product owner, 2026-11-04, "con un iconito"): three icon buttons beside
+    the period pick stacked bars, lines (one 2px line per part on the same axis, an end-dot on the
+    latest bucket) or stacked areas (a light wash per band under its line), one choice for every
+    activity chart kept in the browser (`useChartKind` in `ActivityPanel.tsx`, `cosmospay-chart`).
+    Every form keeps the same axis rules, tooltip and hidden table; lines and areas answer the
+    pointer with a crosshair and a dot per part, drawn in HTML over the stretched SVG so they stay
+    round. On a phone the tooltip sits centred over the plot. Each figure carries an
     insight line, not a bare number (the completed or delivered share, the average ticket, what
     swaps settled, the fees), and its growth against the window before (tertiary blue up, red down) and its chart a link into its view, filtered to the
     window where the view has a date filter. Then "Transactions" with Today / Week / Month / Year,
@@ -618,6 +717,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     - Measuring: `astro dev` is far slower than the build (Vite compiles modules while the page
       hydrates, and API routes queue behind it); time the dashboard on `npm run build` +
       `node --env-file=.env dist/server/entry.mjs`.
+    - **The dev server does not watch generated folders** (`vite.server.watch.ignored` in
+      `astro.config.mjs`: every `docs/` folder, so `public/docs` and the whole docs project, whose
+      `src/` and `content/` `npm run build` rewrites; `docs-static`, `dist` and the Prisma client
+      in `generated/`). In this OneDrive folder a
+      watched folder that a build rewrites keeps firing change events (the watcher's reads make
+      OneDrive touch the files again): on 2026-11-03 that held `astro dev` at two cores for hours
+      and every page took 7 to 26 s. A new generated folder goes into that list; a dev server that
+      idles above zero CPU is profiled before anything else.
+    - **The dev server lets CORS preflights through to the middleware** (`vite.server.cors`
+      `preflightContinue`, Vite's own localhost origins): Vite answered them itself without
+      `Access-Control-Allow-Credentials`, so in `astro dev` the company site could not sign out on
+      the platform while production could.
   - **Every table is paged and keeps its height** (product owner, 2026-10-26): `usePaged` (`hooks.ts`)
     pages at the viewer's rows per page (`PAGE_SIZES` 10 / 20 / 50, never more than 50; one choice
     for every table, kept in the browser as `cosmospay-rows`), `Pagination` under the table always
@@ -844,7 +955,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `chains.ts` through `src/lib/payments/network-pages.ts`, never written), the plans' rates, the
   create-pay request (built from `docs/openapi.json`'s shape and tested against it) and its own
   questions, which its JSON-LD repeats as an FAQPage. They are not in the section bar: the footer's
-  "Networks" group (every domain), the home's networks marquee and the FAQ's network line link them.
+  "Networks" group (every domain), the home's networks marquee and the other network pages link them.
   Settlement time is said only where the copy already states it (about 5 seconds on Stellar).
   **The guides** (product owner, 2026-11-01): `/learn` lists them (`LEARN_PAGES`, `GUIDES` and
   `GUIDE_DATES` in `site-pages.ts`) and each is `/learn/<slug>` (`src/pages/payments/learn/`,
@@ -994,12 +1105,20 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   While pinned, a "Step 2 of 4" counter and a segmented bar sit beside the heading, and each
   screen rises in zooming while the previous one leaves upwards. Smaller screens get
   the plain grid / tabs.
-- **Code is highlighted** in the page's palette by `src/lib/payments/highlight.ts` (a small
-  tokenizer for bash, TypeScript, JSON and HTML; tested) through `Code.astro`, which keeps the
-  raw code in `data-raw` for the copy buttons, or as spans built from the same tokens in the
-  browser (the API demo's console). No highlighting library and no HTML strings. The samples in
-  `data.ts` are template literals indented like the code around them: wrap each in `dedent()`,
-  or every line after the first shows two stray spaces.
+- **Every code window on the three domains is highlighted** (product owner, 2026-11-03: no plain
+  monochrome code) by `src/lib/highlight.ts`, a small tokenizer for bash, TypeScript, JSON and
+  HTML (`tests/unit/highlight.test.ts`), drawn three ways: `Code.astro` on the payments pages
+  (the raw code stays in `data-raw` for the copy buttons); `components/cosmos/ui/CodeTokens.tsx`
+  in the React views (the company terminal, the integration mock, the Solutions modal, the public
+  swap calls, the dashboard's JSON blocks: `CopyBlock lang="json"`, the activity log's props),
+  imported by path, not through the ui index, so the docs nav never pulls it in; and spans built
+  from the same tokens in the browser (the API demo's console). No highlighting library and no
+  HTML strings. The colours are `cosmos.css`'s `.tk-*` rules over `--tk-*` tokens that follow the
+  theme; a window whose surface keeps one tone in both themes adds `.code-on-dark` (BRAND.md's
+  editor colours) or `.code-on-light`. A new code window uses one of these, never plain text;
+  opaque values (a payment URI, an XDR) stay plain. The samples in `data.ts` are template
+  literals indented like the code around them: wrap each in `dedent()`, or every line after the
+  first shows two stray spaces.
 - **The FAQ and the final call are separate sections** in the multi-page layout (the product
   owner asked to see them apart); `.pl-closing` (one canvas for both) remains for the single page.
 - **The landing's dark mode has more colour** (product owner): inside `.pl` the dark tokens take a
@@ -1071,6 +1190,37 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   figures until they are real. Every product claim in the copy is checked against the dashboard
   and the community server (e.g. the dashboard sets amount, memo and message, not an expiry).
   The card column of the comparison states the usual case and carries a footnote saying so.
+- **Cosmos Pay works with every network of its swap platform, never "three networks"** (product
+  owner, 2026-11-03): copy, the FAQ first, presents the whole collection (`NETWORK_IDS`), not
+  Stellar, Solana and Monad as if they were the only networks Cosmos Pay serves. The FAQ counts it
+  with `{n}` and names it with `{networks}` (both filled in `landingContent`, the names joined with
+  `Intl.ListFormat` in the page's language), and its second question, "Which networks does Cosmos
+  Pay work with?", lists them all. **No settlement exception in presenting copy** (product owner,
+  the same day, when the hero and the FAQ still said "Stellar, Solana, Monad and every network our
+  swaps reach" and "settles on Stellar, Solana or Monad": "por qué no haces lo que te pido?"): the
+  hero, every FAQ answer, search descriptions, the company site's ledes, footer and nav, pricing and
+  About say "{n} networks" or "every network we work with", and the customer "pays from any of
+  them"; they never list the three first. The gateway's FAQ links no network pages beside its title
+  (`Faq.astro` lists the other ones only on a network page) and /faq's related guides end with the
+  cross-chain swaps guide. The company home's figures are the network count and zero chargebacks
+  (`STAT_VALUES`), never "3 networks". Stellar, Solana and Monad are still named where the text is
+  about them: the network pages, the guide comparing them, a guide's step that only one network
+  allows (an open amount, Monad's required amount, the wallet standard per network), private
+  payments (Stellar only), the dashboard's forms and the wallet. `tests/unit/networksCopy.test.ts`
+  fails on a hero, FAQ answer or company-site lede that names two of the three, in any language, and
+  `seoMarkdown.test.ts` checks the networks answer names every network and leaves no placeholder.
+  **The rule covers every surface** (product owner, 2026-11-03: "en todo"): the payments landing,
+  the company site, the dashboard, the guides, the search titles and descriptions, llms.txt, the
+  JSON-LD (`schema.ts`), the terms and the docs home. **Every string of the gateway's catalog can
+  carry `{n}`**: `landingContent` fills it across the whole catalog (`withNetworkCount`), except the
+  step counters (`counter` keys, whose `{n}` is the step). On the company site `{n}` is filled only
+  where the component passes it (Solutions, the API cards, `/swaps`' facts, About's
+  `facts.networksValue` and `products.items[].d`; every guide string through `guideCopy`; llms.ts
+  and schema.ts in code); anywhere else the copy says "every network we work with" in the
+  language's own words, never a number. Unchanged on purpose: what the Cosmos Pay Wallet holds (a
+  wallet for Stellar, Solana and Monad), the agent skill's description (`agent-skills.ts` repeats a
+  pinned SKILL.md byte for byte), the comparison of the three networks a payment settles on, and the
+  SDK and API reference under `docs/content/docs/{sdk,api}` (generated: fix them at their source).
 - **Networks, assets and wallets run as three marquees, and only the marquees show** (the
   product owner removed the visible title, row labels, the SEP-7 note and the pause button): what a
   payment settles on (Stellar, Solana, Monad and their assets), the networks and tokens NEAR Intents
@@ -1413,6 +1563,29 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   `/fees` cards, the dashboard's plan comparison and the onboarding spec panel show the swap
   commission too, and the pricing FAQ quotes every plan's and the public key's. Copy carries
   `{placeholders}` filled from `plans.ts`, never a written rate.
+- **A sentence that mentions a fee says how much it is** (product owner, 2026-11-03: "me dice la
+  comisión, pero no sé cuánto es %"). The `/pricing` lede and its monthly-fee answer name
+  Starter's rate (`{starterRate}`, filled by `pricingCopyVars()` in `plans.ts`, which also fills
+  the swap rates; `tests/unit/pricingCopy.test.ts`), and each row of the `/fees` calculator shows
+  the rate its fee comes from under it, the protected payment's surcharge included when ticked.
+- **The swap form shows its commission in sight, in percent** (product owner, 2026-11-04: "en el
+  swap no me aparece la comisión"). `SwapWidget` puts a "Commission" line under the rate, never
+  only in the folded quote details: before the quote the rate the caller's plan charges
+  (`feeBps`: the organization owner's plan from the dashboard, the community plan's on the public
+  swap pages), then the quote's rate and amount; a cross-chain estimate takes the commission off.
+  Every commission a person reads (the form, the swap, cross-chain, USDT0 and liquidity details)
+  is a percent from `bpsPercent()` in `plans.ts` (`tests/unit/swapFeePercent.test.ts`), never
+  "bps". The rate shown is the quote's, from the real gateway, also in mock mode (above).
+- **A signed-in visitor's public swap pays their plan's commission** (product owner, 2026-11-04:
+  "con mi plan debería reducirme la comisión"). On `/swaps` (gateway and company site),
+  `PublicSwaps` asks `/api/organizations` once the nav's session says someone is signed in, keeps
+  the organizations where they may open payments (`payments:create`), and swaps as one of them
+  (`orgSwapApi(org, "prod", DEV)`: the platform's proxies with the session cookie), so the quote
+  and the record carry that organization's plan's rate and the swap lands in its dashboard; with
+  several organizations a select picks one. Signed out, or with none, it is the public key.
+- **The landing always quotes on production** (product owner, 2026-11-04: "en landing siempre es
+  cotización de producción, no de test"). The public swap page, signed in or not, uses mainnet
+  (`"prod"`, the widget's `public` tier); never a test network there.
 - **Cosmos Pay is sold as a service** (product owner, 2026-10-27): payments, swaps, a payment
   gateway and private payments. Cosmos Pay runs everything; an organization only names the wallet
   addresses that receive the money (and its own fee) and signs with its wallet. Copy never says

@@ -3,7 +3,8 @@
    link) and lets the merchant report the deposit; then its legs' transactions. */
 import { useState, useEffect } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
-import { useT, fmt } from "@/lib/i18n/index";
+import { useLang, useT, fmt } from "@/lib/i18n/index";
+import { bpsPercent } from "@/lib/plans";
 import type { SwapApi } from "@/lib/swap-api";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
@@ -18,6 +19,7 @@ export const crossRoute = (s) =>
 
 export function CrossChainSwapDetailModal({ swap, api, canManage, onClose }: { swap; api: SwapApi; canManage: boolean; onClose: () => void }) {
   const t = useT();
+  const lang = useLang();
   const cc = t.dash.crossChain;
   const d = cc.detail;
   const [data, setData] = useState(swap);
@@ -58,7 +60,7 @@ export function CrossChainSwapDetailModal({ swap, api, canManage, onClose }: { s
     [F.amountIn, `${data.amountIn} ${data.originAsset}`],
     [F.estimated, `${data.amountOutEstimated} ${data.destinationAsset}`],
     [F.minimum, `${data.amountOutMin} ${data.destinationAsset}`],
-    [F.fee, `${data.feeAmount} ${data.originAsset} (${data.feeBps} bps)`],
+    [F.fee, `${data.feeAmount} ${data.originAsset} (${bpsPercent(data.feeBps, lang)})`],
     [F.recipient, data.recipient],
     [F.refundTo, data.refundTo],
     [F.amountOut, data.amountOut ? `${data.amountOut} ${data.destinationAsset}` : null],

@@ -6,6 +6,8 @@ import { getProfile, getRole } from "@/lib/profile";
 import { listForUser, ensureDefaultOrg } from "@/lib/organizations";
 import { planFeatures, ONBOARDING_ENABLED } from "@/lib/features";
 import { DEFAULT_PLAN_ID } from "@/lib/plans";
+import { isMockMode } from "@/lib/mock/mode";
+import { mockBoot, mockEnsureDefaultOrg } from "@/lib/mock/handlers/platform";
 
 // Auth guard: the dashboard is only for logged-in developers.
 // Astro.locals.user is populated by src/middleware.ts from the Authentik session.
@@ -16,14 +18,18 @@ if (!user) {
   return Astro.redirect("/login");
 }
 
+// Mock mode (npm run dev:mock) reads the sample account's state instead of the database.
+const mock = isMockMode() ? mockBoot() : null;
+
 // What the first render needs, read together rather than one after another: the organizations
 // (the onboarding gate and the shell's list), the profile and the account role.
 // A failed read is not "no organizations": it leaves `orgs` null, the gate is skipped and the
 // shell reads them itself, rather than sending someone with organizations to create a first one.
 let [orgs, profile, role] = await Promise.all([
-  listForUser(user.id).catch(() => null),
-  getProfile(user.id).catch(() => null),
-  getRole(user.id).catch(() => "user"),
+  mock ? mock.orgs : listForUser(user.id).catch(() => null),
+  // The mock profile carries only the fields this page reads.
+  mock ? (mock.profile as unknown as Awaited<ReturnType<typeof getProfile>>) : getProfile(user.id).catch(() => null),
+  mock ? mock.role : getRole(user.id).catch(() => "user"),
 ]);
 
 // Onboarding gate: a user with no organization must create their first one first.
@@ -33,7 +39,7 @@ if (orgs && orgs.length === 0) {
   if (ONBOARDING_ENABLED) {
     return Astro.redirect("/onboarding");
   }
-  orgs = await ensureDefaultOrg(user.id, user.name).catch(() => []);
+  orgs = mock ? mockEnsureDefaultOrg(user.name) : await ensureDefaultOrg(user.id, user.name).catch(() => []);
   if (orgs.length === 0) {
     return Astro.redirect("/onboarding");
   }
@@ -76,5 +82,5 @@ const initialOrgs = orgs ? orgs.map((o) => ({ ...o, createdAt: new Date(o.create
 ---
 
 <CosmosLayout title="Dashboard | Cosmos Pay" lang={lang} noindex nav={false} bodyClass="inst">
-  <Dashboard client:load user={dashUser} lang={lang} features={features} env={env} orgs={initialOrgs} orgId={orgId} view={view} id={id} />
+  <Dashboard client:load user={dashUser} lang={lang} features={features} env={env} orgs={initialOrgs} orgId={orgId} view={view} id={id} publicSwaps={!!mock} />
 </CosmosLayout>

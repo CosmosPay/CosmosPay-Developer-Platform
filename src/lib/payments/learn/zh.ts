@@ -5,7 +5,7 @@ export const zh: LearnMessages = {
   hub: {
     nav: "指南",
     title: "稳定币支付指南",
-    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线以及在各个网络上接受 USDC 支付（Stellar 使用 SEP-7，Solana 使用 Solana Pay，Monad 使用 EIP-681），如何在网站上添加支付按钮，如何以任意金额接受捐赠，如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，三个网络的对比，如何跨链兑换，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
+    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线接受 USDC，以及如何使用各网络的支付链接标准（SEP-7、Solana Pay、EIP-681）收款，如何在网站上添加支付按钮，如何以任意金额接受捐赠，如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，各网络的对比，如何在 {n} 个网络之间兑换，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
     meta: "稳定币支付指南 | Cosmos Pay",
     description: "指南：在线及在各个网络上接受 USDC、支付按钮、捐赠、Webhook、WhatsApp 支付链接、跨链兑换，以及从 Stellar 发送 USDT0。",
   },
@@ -21,15 +21,15 @@ export const zh: LearnMessages = {
       nav: "接受 USDC 支付",
       title: "如何在线接受 USDC 支付",
       meta: "如何在线接受 USDC 支付 | Cosmos Pay",
-      description: "在 Stellar、Solana 或 Monad 上，通过支付链接、托管收银台或 API 接受 USDC：您和客户各需要什么，以及如何先行测试。",
+      description: "在 {n} 个网络中的任意一个上，通过支付链接、托管收银台或 API 接受 USDC：您和客户各需要什么，以及如何先行测试。",
       summary: "通过支付链接、托管收银台或 API 收取 USDC，并先在测试网上试用。",
-      lede: "要使用 Cosmos Pay 在线接受 USDC，请先添加用于收款的钱包，然后通过支付链接、托管收银台或支付 API 收款。客户在 Stellar、Solana 或 Monad 上用自己的钱包付款，USDC 进入您的地址。收取真实资金之前，先在测试网上跑一遍。",
+      lede: "要使用 Cosmos Pay 在线接受 USDC，请先添加用于收款的钱包，然后通过支付链接、托管收银台或支付 API 收款。客户在 Cosmos Pay 支持的 {n} 个网络中的任意一个上用自己的钱包付款，USDC 进入您的地址。收取真实资金之前，先在测试网上跑一遍。",
       sections: {
         need: {
           title: "您需要准备什么",
           body: [
             "一个 Cosmos Pay 账户。注册免费，Starter 套餐无月费：每笔支付按 {starterRate} 计费。",
-            "一个用于接收 USDC 的钱包地址，须位于您收款所用的网络上：Stellar、Solana 或 Monad。您在控制台中将它添加到您的组织，并通过签名证明它属于您。在控制台中创建的支付链接只会付款到在那里添加的钱包。",
+            "一个用于接收 USDC 的钱包地址，须位于您收款所用的网络上。您在控制台中将它添加到您的组织，并通过签名证明它属于您。在控制台中创建的支付链接只会付款到在那里添加的钱包。",
           ],
           links: { fees: "查看各套餐的费率" },
         },
@@ -90,7 +90,7 @@ export const zh: LearnMessages = {
       meta: "WhatsApp 支付链接：创建与分享 | Cosmos Pay",
       description: "在 Cosmos Pay 控制台中创建稳定币支付链接，通过 WhatsApp 或打印的二维码发送，并在付款完成的那一刻看到结果。",
       summary: "在控制台中创建链接，通过聊天发送或打印其二维码，付款完成时即可看到。",
-      lede: "在 Cosmos Pay 控制台中创建支付链接，复制其收银台页面地址，粘贴到 WhatsApp 聊天中。客户打开后，在 Stellar、Solana 或 Monad 上用自己的钱包付款；网络确认支付后，控制台中的链接会变为“成功”。",
+      lede: "在 Cosmos Pay 控制台中创建支付链接，复制其收银台页面地址，粘贴到 WhatsApp 聊天中。客户打开后，用自己的钱包付款；网络确认支付后，控制台中的链接会变为“成功”。",
       sections: {
         before: {
           title: "开始之前",
@@ -185,15 +185,15 @@ export const zh: LearnMessages = {
         fit: {
           title: "Cosmos Pay 属于哪一类",
           body: [
-            "Cosmos Pay 是运行在 Stellar、Solana 和 Monad 上的非托管式稳定币支付网关。您通过支付链接、托管收银台或支付 API 收款，并自行选择收款的钱包地址。Cosmos Pay 不保存任何人的密钥。",
-            "在 Stellar 和 Solana 上，客户直接向您的地址付款。在 Monad 上，每笔支付进入为其创建的充值地址，该地址只能将款项转发到您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。每笔支付都可以在网络上核查，每个已支付的收银台都会附上该交易在公共区块浏览器中的链接。",
+            "Cosmos Pay 是支持 {n} 个网络的非托管式稳定币支付网关：您的客户可以从其中任何一个网络付款，兑换则可将您收到的款项转到其中任何一个网络。您通过支付链接、托管收银台或支付 API 收款，并自行选择收款的钱包地址。Cosmos Pay 不保存任何人的密钥。",
+            "每笔支付都直接进入您的地址；在需要充值地址的网络上，则进入为该笔支付创建的充值地址，该地址只能将款项转发到您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。每笔支付都可以在网络上核查，每个已支付的收银台都会附上该交易在公共区块浏览器中的链接。",
           ],
           links: { security: "支付如何受到保护", acceptGuide: "如何在线接受 USDC 支付", integrations: "集成选项" },
         },
       },
       faq: {
         final: { q: "稳定币支付会被拒付吗？", a: "不会。网络一经确认，支付即为最终结果。退款是企业从自己的钱包退回的一笔支付。" },
-        custody: { q: "Cosmos Pay 会持有我的资金吗？", a: "不会。在 Stellar 和 Solana 上，付款方直接向您的地址付款。在 Monad 上，每笔支付进入为其创建的充值地址，该地址只能将款项转发到您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。" },
+        custody: { q: "Cosmos Pay 会持有我的资金吗？", a: "不会。每笔支付都直接进入您的地址；在需要充值地址的网络上，则进入为该笔支付创建的充值地址，该地址只能将款项转发到您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。" },
         wallet: { q: "我需要自己的钱包吗？", a: "需要。在您接受的每个网络上，支付都会进入您掌控的地址，因此从第一笔支付起，资金就归您所有。" },
         customers: { q: "我的客户需要账户吗？", a: "不需要 Cosmos Pay 账户。他们只需要一个位于该支付所在网络、且持有该稳定币的钱包。" },
       },
@@ -203,10 +203,10 @@ export const zh: LearnMessages = {
       title: "Stellar、Solana 与 Monad 收款对比",
       meta: "Stellar、Solana 与 Monad 支付对比 | Cosmos Pay",
       description: "使用 Cosmos Pay 接受稳定币支付时，Stellar、Solana 与 Monad 的对比：链接标准、资产、测试网、网络费和费率。",
-      summary: "按 Cosmos Pay 的支持情况并列比较三个网络：链接格式、资产、测试网和费用。",
-      lede: "使用 Cosmos Pay 时，无论在 Stellar、Solana 还是 Monad 上，支付都会到达您的地址，并按同样的套餐费率计费。不同之处在于钱包读取的链接（Stellar 上为 SEP-7，Solana 上为 Solana Pay，Monad 上为指向充值地址的 EIP-681）、付款与链接的匹配方式，以及哪些资产有预设。下表按 Cosmos Pay 的支持情况对三者进行比较。",
+      summary: "并列比较支付结算所在的三个网络：链接格式、资产、测试网和费用。",
+      lede: "使用 Cosmos Pay 时，无论在 Stellar、Solana 还是 Monad 上，支付都会到达您的地址，并按同样的套餐费率计费。不同之处在于钱包读取的链接（Stellar 上为 SEP-7，Solana 上为 Solana Pay，Monad 上为指向充值地址的 EIP-681）、付款与链接的匹配方式，以及哪些资产有预设。下表按 Cosmos Pay 的支持情况对三者进行比较；兑换将这三个网络与 Cosmos Pay 支持的 {n} 个网络中的其他网络连接起来。",
       table: {
-        title: "三个网络并列对比",
+        title: "三个结算网络并列对比",
         caption: "使用 Cosmos Pay 收款时 Stellar、Solana 与 Monad 的对比",
         topic: "项目",
         rows: {
@@ -379,16 +379,16 @@ export const zh: LearnMessages = {
       title: "如何从 Stellar 向 EVM 网络发送 USDT0",
       meta: "从 Stellar 向 EVM 网络发送 USDT0 | Cosmos Pay",
       description: "使用 Cosmos Pay 从 Stellar 账户向 Ethereum、Arbitrum 及其他 EVM 网络发送 USDT0：路线、以 XLM 计的费用、所需时间和每个步骤。",
-      summary: "通过 LayerZero 将 USDT0 从 Stellar 转到 EVM 网络：选择路线、查看费用、签名一次并跟踪送达。",
+      summary: "将 USDT0 从 Stellar 转到 EVM 网络：选择路线、查看费用、签名一次并跟踪送达。",
       lede: "使用 Cosmos Pay，您可以把 USDT0 从 Stellar 账户发送到 Ethereum、Arbitrum 或其他 EVM 网络（共 21 个）上的地址。您会得到一份以 XLM 列出全部费用的报价，在钱包中签署一笔 Stellar 交易，转账约 27 分钟后到账。Ethereum 收到的是原生 USDT；其他所有网络收到的是 USDT0。",
       sections: {
         what: {
           title: "什么是 USDT0",
           body: [
-            "USDT0 是 Tether 的 USDT 的全链形式。其发行方描述了一种锁定并铸造（lock-and-mint）的设计：USDT 锁定在 Ethereum 上，在其他网络上铸造等量的 USDT0，这些网络之间通过 LayerZero 的全链同质化代币（OFT）标准转移它。",
+            "USDT0 是 Tether 的 USDT 的全链形式。其发行方描述了一种锁定并铸造（lock-and-mint）的设计：USDT 锁定在 Ethereum 上，在其他网络上铸造等量的 USDT0，这些网络之间通过一种全链代币标准（OFT）转移它。",
             "在 Stellar 上，USDT0 与其他资产无异，因此发送它的账户需要该资产的信任线以及 USDT0 余额。",
           ],
-          links: { usdt0Site: "发行方官网上的 USDT0", usdt0Network: "USDT0 网络如何运作", layerzeroOft: "LayerZero 的 OFT 标准" },
+          links: { usdt0Site: "发行方官网上的 USDT0", usdt0Network: "USDT0 网络如何运作" },
         },
         routes: {
           title: "可以发送到哪里",
@@ -401,7 +401,7 @@ export const zh: LearnMessages = {
         cost: {
           title: "费用是多少",
           points: [
-            "LayerZero 的消息费，以 XLM 支付。交易最多允许多出 20%，未用完的部分会在同一笔交易中退回。",
+            "跨链桥的消息费，以 XLM 支付。交易最多允许多出 20%，未用完的部分会在同一笔交易中退回。",
             "Stellar 网络费，以 XLM 支付。",
             "Cosmos Pay 的佣金（如有），报价会在您签名前显示。",
             "发送账户以 XLM 支付以上全部费用，因此除了 USDT0 之外，还请在该账户中保留一些 XLM。",
@@ -425,13 +425,13 @@ export const zh: LearnMessages = {
           create: { title: "创建转账", body: "用发送方 Stellar 账户、路线、接收方 EVM 地址和金额调用 create。API 会为此构建一笔 Stellar 交易。" },
           sign: { title: "在钱包中签名", body: "用持有 USDT0 的钱包签署该交易（其 XDR），或在该钱包中打开其 SEP-7 链接。" },
           submit: { title: "提交交易", body: "将签名后的交易发送到 submit。如果网络拒绝该交易，转账会保持待处理状态：请排除原因，并在过期前重新提交。" },
-          follow: { title: "跟踪直至送达", body: "转账会依次经历 PENDING、SUBMITTED 和 DELIVERED，每条路线约需 27 分钟，期间 LayerZero 的验证者会等待 Stellar 的确认。送达后，转账会附带目标网络上的交易和一个 LayerZero Scan 链接。" },
+          follow: { title: "跟踪直至送达", body: "转账会依次经历 PENDING、SUBMITTED 和 DELIVERED，每条路线约需 27 分钟，期间跨链桥会等待 Stellar 的确认。送达后，转账会附带目标网络上的交易和一个用于跟踪转账的链接。" },
         },
         links: { usdt0Docs: "SDK 中的 USDT0", usdt0Api: "USDT0 API" },
       },
       faq: {
         arrive: { q: "接收地址会收到什么？", a: "在 Ethereum 上是原生 USDT。在其他所有路线上是 USDT0。" },
-        time: { q: "一笔转账需要多长时间？", a: "每条路线约 27 分钟，以 LayerZero Scan 上的测量为准：LayerZero 的验证者会等待 Stellar 的确认，之后转账才会送达。" },
+        time: { q: "一笔转账需要多长时间？", a: "每条路线约 27 分钟：跨链桥会等待 Stellar 的确认，之后转账才会送达。" },
         test: { q: "可以在测试网上试用吗？", a: "不可以。USDT0 转账仅在主网上运行；使用测试密钥时没有可用路线。" },
         custody: { q: "Cosmos Pay 会持有我的 USDT0 吗？", a: "不会。发送它的交易由您的钱包签名；Cosmos Pay 只负责构建和转发。" },
       },
@@ -584,7 +584,7 @@ export const zh: LearnMessages = {
           points: [
             "支付按钮（cosmos-pay-button）会在页面中央的弹出窗口中打开托管收银台。如果浏览器拦截了弹出窗口，则改为在当前标签页中跳转到收银台。",
             "嵌入式收银台（cosmos-pay-checkout）直接在您的页面中显示支付，宽度最多 420 像素：金额、二维码、一个用于打开付款方钱包的按钮，以及实时状态。",
-            "两者都适用于 Stellar、Solana 和 Monad 上的支付链接，支持英语、西班牙语、葡萄牙语、法语、德语、印地语和中文。",
+            "两者都适用于所有支付链接，支持英语、西班牙语、葡萄牙语、法语、德语、印地语和中文。",
           ],
         },
         link: {
@@ -635,16 +635,16 @@ export const zh: LearnMessages = {
     },
     crossChain: {
       nav: "跨链兑换",
-      title: "如何在 Stellar、Solana 和 Monad 之间兑换代币",
-      meta: "在 Stellar、Solana 和 Monad 之间兑换代币 | Cosmos Pay",
-      description: "通过 Cosmos Pay 和 NEAR Intents，在 Stellar、Solana、Monad 及另外 32 个网络之间兑换代币：报价、充值、费用、退款和所需时间。",
-      summary: "获取兑换报价、发送充值并跟踪直至送达：通过 NEAR Intents 进行的跨链兑换，失败时会在来源链上退款。",
-      lede: "Cosmos Pay 可以在 Stellar、Solana、Monad 以及 NEAR Intents 覆盖的其他网络之间兑换代币，共 35 个网络。您先获取报价，在报价过期前将输入金额发送到充值地址，输出金额随即到达您在另一个网络上的地址。如果兑换无法完成，输入金额会退回到您在发送网络上的地址。",
+      title: "如何在 {n} 个网络之间兑换代币",
+      meta: "在 {n} 个网络之间兑换代币 | Cosmos Pay",
+      description: "通过 Cosmos Pay 在 {n} 个网络之间兑换代币：报价、充值、费用、退款和所需时间。",
+      summary: "获取兑换报价、发送充值并跟踪直至送达：跨链兑换，失败时会在来源链上退款。",
+      lede: "Cosmos Pay 可以在 {n} 个网络之间兑换代币。您先获取报价，在报价过期前将输入金额发送到充值地址，输出金额随即到达您在另一个网络上的地址。如果兑换无法完成，输入金额会退回到您在发送网络上的地址。",
       sections: {
         how: {
           title: "跨链兑换如何运作",
           points: [
-            "报价：API 向 NEAR Intents 询价，并返回您发送的金额、扣除所有费用后您收到的金额，以及您套餐的佣金。报价不会保存任何内容。",
+            "报价：API 获取该交易对的价格，并返回您发送的金额、扣除所有费用后您收到的金额，以及您套餐的佣金。报价不会保存任何内容。",
             "创建：实时报价会给出一个充值地址（在 Stellar 上附带 memo）、一个带二维码的支付链接，以及一个截止时间，默认 30 分钟。",
             "充值：在截止时间前将输入金额发送到该地址。您也可以向 API 报告这笔充值。",
             "送达：兑换依次经历“已检测到充值”和“处理中”，直至“成功”，即输出金额到达您的地址。",
@@ -671,7 +671,7 @@ export const zh: LearnMessages = {
           points: [
             "在公开兑换页面上，无需账户：它使用共享的公开密钥，按 0.65% 的费率收费。",
             "在控制台的兑换面板中，生产环境下。",
-            "通过 API（/v1/cross-chain-swaps），或使用 TypeScript SDK 中的 client.crossChainSwaps，它支持 Stellar、Solana 和 Monad。",
+            "通过 API（/v1/cross-chain-swaps），或使用 TypeScript SDK 中的 client.crossChainSwaps。",
             "仅限主网：测试密钥（dv_）可以列出资产和获取报价，但不能创建兑换。",
           ],
           links: { swaps: "兑换页面", crossChainApi: "跨链兑换 API" },
@@ -689,7 +689,7 @@ export const zh: LearnMessages = {
         links: { crossChainApi: "跨链兑换 API", webhooksGuide: "如何在服务器上确认支付" },
       },
       faq: {
-        networks: { q: "我可以在哪些网络之间兑换？", a: "Stellar、Solana、Monad 以及 NEAR Intents 覆盖的其他网络，共 35 个。同一网络内的交易对则属于同链兑换。" },
+        networks: { q: "我可以在哪些网络之间兑换？", a: "共 {n} 个网络，即 Cosmos Pay 兑换平台的全部网络。同一网络内的交易对则属于同链兑换。" },
         test: { q: "可以测试跨链兑换吗？", a: "不能在测试网上测试：这类兑换仅在主网上运行。测试密钥可以列出资产和获取报价。" },
         refund: { q: "如果兑换失败，我的资金会怎样？", a: "资金会退回到您提供的退款地址，即您发送时所在的网络上。" },
         account: { q: "我需要账户吗？", a: "在公开兑换页面上不需要。使用您自己的账户时，控制台和 API 会按您套餐的费率计费。" },

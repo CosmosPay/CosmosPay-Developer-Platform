@@ -128,8 +128,10 @@ export function startLanding(): void {
 
   /* Fee calculator: the amount (typed or slid) times each plan's rate, plus its fixed cents,
      plus the protected payment's surcharge when ticked; what the merchant keeps is the rest. Rates come from the
-     rows' data attributes (plans.ts); a custom plan keeps its label. The slider is logarithmic
-     (1 to 10,000 over 0–100), so small and large payments both get room on it. */
+     rows' data attributes (plans.ts); a custom plan keeps its label. Under each fee, the rate it
+     comes from, written as the plan cards write it ("1.5% + 18¢"), the surcharge included when
+     ticked. The slider is logarithmic (1 to 10,000 over 0–100), so small and large payments both
+     get room on it. */
   for (const calc of document.querySelectorAll<HTMLElement>("[data-calc]")) {
     const amount = calc.querySelector<HTMLInputElement>("[data-calc-amount]")!;
     const range = calc.querySelector<HTMLInputElement>("[data-calc-range]")!;
@@ -144,6 +146,8 @@ export function startLanding(): void {
         const fee = value * pct / 100 + Number(row.dataset.cents) / 100;
         row.querySelector("[data-calc-fee]")!.textContent = money.format(fee) + " USDC";
         row.querySelector("[data-calc-net]")!.textContent = money.format(Math.max(0, value - fee)) + " USDC";
+        const rate = row.querySelector("[data-calc-rate]");
+        if (rate) rate.textContent = `${Number(pct.toFixed(2))}% + ${Number(row.dataset.cents)}¢`;
       }
     };
     const toRange = (value: number) => String(Math.min(100, Math.max(0, 25 * Math.log10(Math.max(1, value)))));

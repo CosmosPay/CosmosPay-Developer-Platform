@@ -255,7 +255,10 @@
 
 /* ---- narrow screens: every design becomes one column ---- */
 @media (max-width: 880px) {
-  .ck-split, .ck-ticket, .ck-cardlayout { grid-template-columns: 1fr; padding: 10px; }
+  /* minmax(0, 1fr): a bare 1fr kept the column as wide as its widest content (the split design's
+     payment-method tabs in a row), and the page scrolled sideways on a phone; the tabs scroll instead. */
+  .ck-split, .ck-ticket, .ck-cardlayout { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+  .ck-rail, .ck-body { min-width: 0; }
   .ck-body { padding: 22px 16px; }
   .ck-rail { gap: 18px; padding: 20px 16px; }
   .ck-rail .ck-brand, .ck-rail .ck-timer { padding-right: 0; }

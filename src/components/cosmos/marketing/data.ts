@@ -8,7 +8,7 @@
    names ever appear. Add your own as plain strings, e.g.:
      export const CLIENTS = ["Acme", "Globex", "Initech"];
    To show logos instead of names, swap the <Marquee> render in Hero.tsx. */
-import { CHAINS, NETWORK_IDS } from "@/lib/chains";
+import { NETWORK_IDS } from "@/lib/chains";
 import { PLAN_SPECS } from "@/lib/plans";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
 import { LOCALES } from "@/lib/i18n/locales";
@@ -49,14 +49,15 @@ export const SOL_META = [
   { i: "wallet" },
 ];
 /* Every figure on the home is a product fact the code backs, never a volume, an uptime or a
-   customer count: the networks a payment settles on (CHAINS), the networks cross-chain swaps
-   reach (NETWORK_IDS), Starter's rate (plans.ts) and the settlement time on Stellar. The
-   labels come from the catalog; `{fixed}` in them is Starter's fixed part. */
+   customer count: the networks Cosmos Pay works with (NETWORK_IDS: customers pay from any of them,
+   with swaps between them; product owner, 2026-11-03: never "three networks"), the chargebacks a
+   confirmed payment can get (none: it is final), Starter's rate (plans.ts) and the settlement
+   time on Stellar. The labels come from the catalog; `{fixed}` in them is Starter's fixed part. */
 const [STARTER_PCT, STARTER_FIXED] = PLAN_SPECS.starter.perTx.split(" + ");
 export const SWAP_NETWORKS = NETWORK_IDS.length;
 export const STAT_VALUES = [
-  { n: String(CHAINS.length), u: "" },
   { n: String(SWAP_NETWORKS), u: "" },
+  { n: "0", u: "" },
   { n: STARTER_PCT, u: "" },
   { n: "~5", u: "s" },
 ];

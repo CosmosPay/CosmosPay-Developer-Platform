@@ -5,7 +5,7 @@ export const es: LearnMessages = {
   hub: {
     nav: "Guías",
     title: "Guías de pagos con stablecoins",
-    lede: "Guías para negocios que cobran en stablecoins con Cosmos Pay: cómo aceptar USDC online y en cada red (Stellar con SEP-7, Solana con Solana Pay, Monad con EIP-681), cómo agregar un botón de pago a tu sitio, cómo recibir donaciones con monto abierto, cómo enviar un enlace de pago por WhatsApp, cómo confirmar pagos en tu servidor, qué hace una pasarela de pagos con stablecoins, cómo se comparan las tres redes, cómo hacer swaps entre redes y cómo enviar USDT0 desde Stellar a redes EVM.",
+    lede: "Guías para negocios que cobran en stablecoins con Cosmos Pay: cómo aceptar USDC online y con el estándar de enlaces de pago de cada red (SEP-7, Solana Pay, EIP-681), cómo agregar un botón de pago a tu sitio, cómo recibir donaciones con monto abierto, cómo enviar un enlace de pago por WhatsApp, cómo confirmar pagos en tu servidor, qué hace una pasarela de pagos con stablecoins, cómo se comparan las redes, cómo hacer swaps entre {n} redes y cómo enviar USDT0 desde Stellar a redes EVM.",
     meta: "Guías de pagos con stablecoins | Cosmos Pay",
     description: "Guías: acepta USDC online y en cada red, botones de pago, donaciones, webhooks, enlaces por WhatsApp, swaps entre redes y USDT0 desde Stellar.",
   },
@@ -21,15 +21,15 @@ export const es: LearnMessages = {
       nav: "Aceptar pagos en USDC",
       title: "Cómo aceptar pagos en USDC online",
       meta: "Cómo aceptar pagos en USDC online | Cosmos Pay",
-      description: "Acepta USDC con un enlace de pago, un checkout alojado o una API en Stellar, Solana o Monad: qué necesitan tú y tu cliente, y cómo probar antes.",
+      description: "Acepta USDC con un enlace de pago, un checkout alojado o una API, en cualquiera de las {n} redes: qué necesitan tú y tu cliente, y cómo probar antes.",
       summary: "Cobra en USDC con un enlace de pago, el checkout alojado o la API, y pruébalo antes en una red de pruebas.",
-      lede: "Para aceptar USDC online con Cosmos Pay, agrega la wallet que va a recibir el dinero y cobra con un enlace de pago, el checkout alojado o la API de pagos. Tu cliente paga desde su propia wallet en Stellar, Solana o Monad, y los USDC llegan a tu dirección. Pruébalo en una red de pruebas antes de cobrar dinero real.",
+      lede: "Para aceptar USDC online con Cosmos Pay, agrega la wallet que va a recibir el dinero y cobra con un enlace de pago, el checkout alojado o la API de pagos. Tu cliente paga desde su propia wallet, en cualquiera de las {n} redes con las que trabaja Cosmos Pay, y los USDC llegan a tu dirección. Pruébalo en una red de pruebas antes de cobrar dinero real.",
       sections: {
         need: {
           title: "Qué necesitas",
           body: [
             "Una cuenta de Cosmos Pay. Crearla es gratis, y el plan Starter no tiene cuota mensual: cada pago paga {starterRate}.",
-            "Una dirección de wallet que reciba los USDC, en la red en la que cobras: Stellar, Solana o Monad. La agregas a tu organización en el dashboard y demuestras con una firma que es tuya. Los enlaces de pago creados en el dashboard pagan solo a las wallets agregadas ahí.",
+            "Una dirección de wallet que reciba los USDC, en la red en la que cobras. La agregas a tu organización en el dashboard y demuestras con una firma que es tuya. Los enlaces de pago creados en el dashboard pagan solo a las wallets agregadas ahí.",
           ],
           links: { fees: "Ver la tarifa de cada plan" },
         },
@@ -90,7 +90,7 @@ export const es: LearnMessages = {
       meta: "Enlaces de pago por WhatsApp: crear y compartir | Cosmos Pay",
       description: "Crea un enlace de pago en stablecoins en el dashboard de Cosmos Pay, envíalo por WhatsApp o imprime su código QR, y mira el momento en que se paga.",
       summary: "Crea un enlace en el dashboard, envíalo por chat o imprime su código QR, y mira cuándo se paga.",
-      lede: "Crea un enlace de pago en el dashboard de Cosmos Pay, copia el enlace de su página de pago y pégalo en el chat de WhatsApp. Tu cliente lo abre y paga desde su propia wallet en Stellar, Solana o Monad, y el enlace pasa a Completado en tu dashboard cuando la red confirma el pago.",
+      lede: "Crea un enlace de pago en el dashboard de Cosmos Pay, copia el enlace de su página de pago y pégalo en el chat de WhatsApp. Tu cliente lo abre y paga desde su propia wallet, y el enlace pasa a Completado en tu dashboard cuando la red confirma el pago.",
       sections: {
         before: {
           title: "Antes de empezar",
@@ -185,15 +185,15 @@ export const es: LearnMessages = {
         fit: {
           title: "Dónde encaja Cosmos Pay",
           body: [
-            "Cosmos Pay es una pasarela de pagos con stablecoins sin custodia en Stellar, Solana y Monad. Cobras con un enlace de pago, el checkout alojado o la API de pagos, y eliges las direcciones de wallet que reciben el dinero. Cosmos Pay no guarda las claves de nadie.",
-            "En Stellar y Solana tu cliente paga directo a tu dirección. En Monad cada pago va a una dirección de depósito creada para él, que solo puede reenviarlo a tu dirección (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella. Cada pago se puede verificar en la red, y cada checkout pagado enlaza su transacción en un explorador público.",
+            "Cosmos Pay es una pasarela de pagos con stablecoins sin custodia que trabaja con {n} redes: tus clientes pagan desde cualquiera de ellas, y los swaps mueven lo que recibes a cualquiera de ellas. Cobras con un enlace de pago, el checkout alojado o la API de pagos, y eliges las direcciones de wallet que reciben el dinero. Cosmos Pay no guarda las claves de nadie.",
+            "Cada pago va directo a tu dirección o, en las redes que lo requieren, a una dirección de depósito creada para ese pago, que solo puede reenviarlo a la tuya (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella. Cada pago se puede verificar en la red, y cada checkout pagado enlaza su transacción en un explorador público.",
           ],
           links: { security: "Cómo se protegen los pagos", acceptGuide: "Cómo aceptar pagos en USDC online", integrations: "Opciones de integración" },
         },
       },
       faq: {
         final: { q: "¿Se puede hacer un contracargo de un pago en stablecoins?", a: "No. Una vez que la red lo confirma, es definitivo. Un reembolso es un pago que el negocio envía de vuelta desde su wallet." },
-        custody: { q: "¿Cosmos Pay retiene mi dinero?", a: "No. En Stellar y Solana quien paga envía directo a tu dirección. En Monad cada pago va a una dirección de depósito creada para él, que solo puede reenviarlo a tu dirección (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella." },
+        custody: { q: "¿Cosmos Pay retiene mi dinero?", a: "No. Cada pago va directo a tu dirección o, en las redes que lo requieren, a una dirección de depósito creada para ese pago, que solo puede reenviarlo a la tuya (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella." },
         wallet: { q: "¿Necesito mi propia wallet?", a: "Sí. Los pagos llegan a una dirección que controlas en cada red que aceptes, así que los fondos son tuyos desde el primer pago." },
         customers: { q: "¿Mis clientes necesitan una cuenta?", a: "No necesitan una cuenta en Cosmos Pay. Necesitan una wallet en la red del pago que tenga la stablecoin." },
       },
@@ -203,10 +203,10 @@ export const es: LearnMessages = {
       title: "Stellar vs Solana vs Monad para aceptar pagos",
       meta: "Stellar vs Solana vs Monad para aceptar pagos | Cosmos Pay",
       description: "Stellar, Solana y Monad comparadas para aceptar pagos en stablecoins con Cosmos Pay: formato del enlace, activos, redes de prueba, comisiones y tarifas.",
-      summary: "Las tres redes lado a lado, tal como las admite Cosmos Pay: formato del enlace, activos, redes de prueba y comisiones.",
-      lede: "Con Cosmos Pay, un pago en Stellar, Solana o Monad llega a tu dirección y paga la misma tarifa del plan. Lo que cambia es el enlace que lee la wallet (SEP-7 en Stellar, Solana Pay en Solana, EIP-681 hacia una dirección de depósito en Monad), cómo se asocia un pago con su enlace y qué activos están predefinidos. La tabla las compara tal como las admite Cosmos Pay.",
+      summary: "Las tres redes en las que se liquidan los pagos, lado a lado: formato del enlace, activos, redes de prueba y comisiones.",
+      lede: "Con Cosmos Pay, un pago en Stellar, Solana o Monad llega a tu dirección y paga la misma tarifa del plan. Lo que cambia es el enlace que lee la wallet (SEP-7 en Stellar, Solana Pay en Solana, EIP-681 hacia una dirección de depósito en Monad), cómo se asocia un pago con su enlace y qué activos están predefinidos. La tabla las compara tal como las admite Cosmos Pay; los swaps conectan las tres con el resto de las {n} redes con las que trabaja Cosmos Pay.",
       table: {
-        title: "Las tres redes, lado a lado",
+        title: "Las tres redes de liquidación, lado a lado",
         caption: "Stellar, Solana y Monad comparadas para aceptar pagos con Cosmos Pay",
         topic: "Tema",
         rows: {
@@ -379,16 +379,16 @@ export const es: LearnMessages = {
       title: "Cómo enviar USDT0 desde Stellar a redes EVM",
       meta: "Envía USDT0 desde Stellar a redes EVM | Cosmos Pay",
       description: "Envía USDT0 desde una cuenta de Stellar a Ethereum, Arbitrum y otras redes EVM con Cosmos Pay: rutas, comisiones en XLM, tiempos y cada paso.",
-      summary: "Mueve USDT0 de Stellar a una red EVM a través de LayerZero: elige una ruta, mira las comisiones, firma una vez y sigue la entrega.",
+      summary: "Mueve USDT0 de Stellar a una red EVM: elige una ruta, mira las comisiones, firma una vez y sigue la entrega.",
       lede: "Con Cosmos Pay puedes enviar USDT0 desde una cuenta de Stellar a una dirección en Ethereum, Arbitrum u otra de las 21 redes EVM. Recibes una cotización con todas las comisiones en XLM, firmas una transacción de Stellar en tu wallet y la transferencia llega en unos 27 minutos. Ethereum recibe USDT nativo; todas las demás redes reciben USDT0.",
       sections: {
         what: {
           title: "Qué es USDT0",
           body: [
-            "USDT0 es la versión omnichain del USDT de Tether. Su emisor describe un diseño de bloqueo y emisión: el USDT se bloquea en Ethereum y se emite la misma cantidad de USDT0 en las otras redes, que lo mueven entre ellas con el estándar Omnichain Fungible Token (OFT) de LayerZero.",
+            "USDT0 es la versión omnichain del USDT de Tether. Su emisor describe un diseño de bloqueo y emisión: el USDT se bloquea en Ethereum y se emite la misma cantidad de USDT0 en las otras redes, que lo mueven entre ellas con un estándar de token omnichain (OFT).",
             "En Stellar, USDT0 es un activo como cualquier otro, así que la cuenta que lo envía necesita una trustline hacia él y un saldo de USDT0.",
           ],
-          links: { usdt0Site: "USDT0, en el sitio de su emisor", usdt0Network: "Cómo funciona la red de USDT0", layerzeroOft: "El estándar OFT de LayerZero" },
+          links: { usdt0Site: "USDT0, en el sitio de su emisor", usdt0Network: "Cómo funciona la red de USDT0" },
         },
         routes: {
           title: "Adónde puede ir",
@@ -401,7 +401,7 @@ export const es: LearnMessages = {
         cost: {
           title: "Cuánto cuesta",
           points: [
-            "La comisión de mensajería de LayerZero, en XLM. La transacción permite hasta un 20 % más, y lo que no usa se devuelve en la misma transacción.",
+            "La comisión de mensajería del puente, en XLM. La transacción permite hasta un 20\u00a0% más, y lo que no usa se devuelve en la misma transacción.",
             "La comisión de red de Stellar, en XLM.",
             "Cualquier comisión de Cosmos Pay, que la cotización muestra antes de que firmes.",
             "La cuenta que envía las paga todas en XLM, así que mantén algo de XLM en ella además del USDT0.",
@@ -425,13 +425,13 @@ export const es: LearnMessages = {
           create: { title: "Crea la transferencia", body: "Llama a create con la cuenta de Stellar que envía, la ruta, la dirección EVM que recibe y el monto. La API construye una transacción de Stellar para ella." },
           sign: { title: "Fírmala en tu wallet", body: "Firma la transacción (su XDR) con la wallet que tiene el USDT0, o abre su enlace SEP-7 en esa wallet." },
           submit: { title: "Envíala", body: "Envía la transacción firmada a submit. Si la red la rechaza, la transferencia queda pendiente: corrige la causa y vuelve a enviarla antes de que venza." },
-          follow: { title: "Síguela hasta la entrega", body: "La transferencia pasa de PENDING a SUBMITTED y a DELIVERED, en unos 27 minutos en todas las rutas, mientras los verificadores de LayerZero esperan las confirmaciones de Stellar. Una vez entregada, incluye la transacción de la red de destino y un enlace a LayerZero Scan." },
+          follow: { title: "Síguela hasta la entrega", body: "La transferencia pasa de PENDING a SUBMITTED y a DELIVERED, en unos 27 minutos en todas las rutas, mientras el puente espera las confirmaciones de Stellar. Una vez entregada, incluye la transacción de la red de destino y un enlace para seguir la transferencia." },
         },
         links: { usdt0Docs: "USDT0 en el SDK", usdt0Api: "API de USDT0" },
       },
       faq: {
         arrive: { q: "¿Qué recibe la dirección de destino?", a: "En Ethereum, USDT nativo. En todas las demás rutas, USDT0." },
-        time: { q: "¿Cuánto tarda una transferencia?", a: "Unos 27 minutos en todas las rutas, según lo medido en LayerZero Scan: los verificadores de LayerZero esperan las confirmaciones de Stellar antes de que se entregue la transferencia." },
+        time: { q: "¿Cuánto tarda una transferencia?", a: "Unos 27 minutos en todas las rutas: el puente espera las confirmaciones de Stellar antes de que se entregue la transferencia." },
         test: { q: "¿Puedo probarlo en una red de pruebas?", a: "No. Las transferencias de USDT0 funcionan solo en las redes principales; con una clave de prueba, no hay ninguna ruta disponible." },
         custody: { q: "¿Cosmos Pay retiene mi USDT0?", a: "No. Tu wallet firma la transacción que lo envía; Cosmos Pay solo la construye y la retransmite." },
       },
@@ -584,7 +584,7 @@ export const es: LearnMessages = {
           points: [
             "El botón de pago (cosmos-pay-button) abre el checkout alojado en una ventana emergente centrada sobre tu página. Si el navegador bloquea la ventana emergente, la misma pestaña va al checkout.",
             "El checkout embebido (cosmos-pay-checkout) dibuja el pago dentro de tu página, con un ancho de hasta 420 píxeles: el monto, el código QR, un botón que abre la wallet de quien paga y el estado en vivo.",
-            "Ambos funcionan con enlaces de pago en Stellar, Solana y Monad, en inglés, español, portugués, francés, alemán, hindi y chino.",
+            "Ambos funcionan con todos los enlaces de pago, en inglés, español, portugués, francés, alemán, hindi y chino.",
           ],
         },
         link: {
@@ -635,16 +635,16 @@ export const es: LearnMessages = {
     },
     crossChain: {
       nav: "Swaps entre redes",
-      title: "Cómo hacer swaps de tokens entre Stellar, Solana y Monad",
-      meta: "Swaps de tokens entre Stellar, Solana y Monad | Cosmos Pay",
-      description: "Haz swaps de tokens entre Stellar, Solana, Monad y 32 redes más con Cosmos Pay y NEAR Intents: cotización, depósito, comisiones, reembolsos y tiempos.",
-      summary: "Cotiza un swap, envía el depósito y síguelo hasta la entrega: swaps entre redes a través de NEAR Intents, que se reembolsan en la red de origen si fallan.",
-      lede: "Cosmos Pay hace swaps de tokens entre Stellar, Solana, Monad y las demás redes a las que llega NEAR Intents, 35 en total. Recibes una cotización, envías el monto de entrada a una dirección de depósito antes de que venza la cotización, y el monto de salida llega a tu dirección en la otra red. Si el swap no se puede completar, el monto de entrada se reembolsa a tu dirección en la red desde la que enviaste.",
+      title: "Cómo hacer swaps de tokens entre {n} redes",
+      meta: "Swaps de tokens entre {n} redes | Cosmos Pay",
+      description: "Haz swaps de tokens entre {n} redes con Cosmos Pay: cotización, depósito, tarifas, reembolsos y tiempos.",
+      summary: "Cotiza un swap, envía el depósito y síguelo hasta la entrega: swaps entre redes que se reembolsan en la red de origen si fallan.",
+      lede: "Cosmos Pay hace swaps de tokens entre {n} redes. Recibes una cotización, envías el monto de entrada a una dirección de depósito antes de que venza la cotización, y el monto de salida llega a tu dirección en la otra red. Si el swap no se puede completar, el monto de entrada se reembolsa a tu dirección en la red desde la que enviaste.",
       sections: {
         how: {
           title: "Cómo funciona un swap entre redes",
           points: [
-            "Cotización: la API le pide un precio a NEAR Intents y devuelve lo que envías, lo que recibes después de todas las comisiones y la comisión de tu plan. Una cotización no guarda nada.",
+            "Cotización: la API obtiene un precio para el par y devuelve lo que envías, lo que recibes después de todas las comisiones y la comisión de tu plan. Una cotización no guarda nada.",
             "Creación: la cotización en firme da una dirección de depósito (en Stellar, con un memo), un enlace de pago con su código QR y un plazo, de 30 minutos por defecto.",
             "Depósito: envía el monto de entrada a esa dirección antes del plazo. También puedes informar el depósito a la API.",
             "Entrega: el swap pasa por depósito detectado y procesando hasta completado, cuando el monto de salida llega a tu dirección.",
@@ -661,17 +661,17 @@ export const es: LearnMessages = {
         fees: {
           title: "Cuánto cuesta",
           body: [
-            "La cotización muestra la comisión de Cosmos Pay en el activo que envías: la tarifa de swap de tu plan, 0,65 % en Starter y en la página pública de swaps, hasta 0,07 % en Enterprise. El monto que recibes en la cotización ya descuenta todas las comisiones, incluidos los costos de la red y del proveedor.",
-            "El slippage es del 1 % por defecto y como máximo del 5 %.",
+            "La cotización muestra la comisión de Cosmos Pay en el activo que envías: la tarifa de swap de tu plan, 0,65\u00a0% en Starter y en la página pública de swaps, hasta 0,07\u00a0% en Enterprise. El monto que recibes en la cotización ya descuenta todas las comisiones, incluidos los costos de la red y del proveedor.",
+            "El slippage es del 1\u00a0% por defecto y como máximo del 5\u00a0%.",
           ],
           links: { fees: "Precios y calculadora de comisiones" },
         },
         where: {
           title: "Dónde puedes hacer swaps",
           points: [
-            "En la página pública de swaps, sin cuenta: usa una clave pública compartida y cobra la tarifa de 0,65 %.",
+            "En la página pública de swaps, sin cuenta: usa una clave pública compartida y cobra la tarifa de 0,65\u00a0%.",
             "En el panel de swaps del dashboard, en Producción.",
-            "Con la API (/v1/cross-chain-swaps), o con client.crossChainSwaps en el SDK de TypeScript, que cubre Stellar, Solana y Monad.",
+            "Con la API (/v1/cross-chain-swaps), o con client.crossChainSwaps en el SDK de TypeScript.",
             "Solo en las redes principales: una clave de prueba (dv_) puede listar activos y obtener cotizaciones, pero no crear un swap.",
           ],
           links: { swaps: "La página de swaps", crossChainApi: "API de swaps entre redes" },
@@ -689,7 +689,7 @@ export const es: LearnMessages = {
         links: { crossChainApi: "API de swaps entre redes", webhooksGuide: "Cómo confirmar un pago en tu servidor" },
       },
       faq: {
-        networks: { q: "¿Entre qué redes puedo hacer swaps?", a: "Stellar, Solana, Monad y las demás redes a las que llega NEAR Intents, 35 en total. Un par dentro de una misma red es, en cambio, un swap en una red." },
+        networks: { q: "¿Entre qué redes puedo hacer swaps?", a: "{n} redes en total, toda la colección de la plataforma de swaps de Cosmos Pay. Un par dentro de una misma red es, en cambio, un swap en una red." },
         test: { q: "¿Puedo probar un swap entre redes?", a: "No en una red de pruebas: estos swaps funcionan solo en las redes principales. Una clave de prueba puede listar activos y obtener cotizaciones." },
         refund: { q: "¿Qué pasa con mi dinero si el swap falla?", a: "Se reembolsa a la dirección de reembolso que indicaste, en la red desde la que enviaste." },
         account: { q: "¿Necesito una cuenta?", a: "No en la página pública de swaps. Con tu propia cuenta, el dashboard y la API aplican la tarifa de tu plan." },

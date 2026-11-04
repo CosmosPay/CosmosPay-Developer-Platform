@@ -16,7 +16,7 @@ import {
   parseDemoAmount,
   type DemoInput,
 } from "@/lib/payments/integration-demo";
-import { highlightLines, type CodeLang } from "@/lib/payments/highlight";
+import { highlightLines, type CodeLang } from "@/lib/highlight";
 
 export function startIntegrationDemos(): void {
   followTheme();
