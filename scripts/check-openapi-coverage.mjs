@@ -36,6 +36,10 @@ const EXCLUDED = new Map([
     '/api/auth/{all}',
     "Better Auth's own handler (sign-in, callback, session). Its surface is the library's, documented upstream, and it is not part of this platform's API.",
   ],
+  [
+    '/api/nav-session',
+    "The general nav's read of who is signed in (name, email and picture only) on the company site and the gateway (src/lib/nav-session.ts). A browser call with the session cookie, outside the API's envelope, and not part of this platform's API.",
+  ],
 ]);
 
 const METHOD_RE = /export\s+const\s+(GET|POST|PUT|PATCH|DELETE|ALL|OPTIONS|HEAD)\b/g;

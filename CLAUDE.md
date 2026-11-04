@@ -1794,8 +1794,8 @@ registerRoutes([
   undeclared tag still renders, but ungrouped and undescribed at the bottom of the page.
 - **Give realistic `example` values.** The examples are what people copy into their first call.
 - **Intentionally undocumented routes are named, with their reason, in the `EXCLUDED` map of
-  `scripts/check-openapi-coverage.mjs`** (today one entry: `/api/auth/{all}`, Better Auth's own
-  handler). Silence reads as an oversight; a one-line reason reads as a decision.
+  `scripts/check-openapi-coverage.mjs`** (today two entries: `/api/auth/{all}`, Better Auth's own
+  handler, and `/api/nav-session`, the nav's read of who is signed in). Silence reads as an oversight; a one-line reason reads as a decision.
 
 ### Verify before you call it done
 
@@ -1811,9 +1811,10 @@ reference on staging, build with the flag set.
 
 **Every route operation is documented**, plus the external `/cosmos-api/{path}` gateway route.
 Don't quote a count from here; quote the line `npm run check:openapi` prints
-(`OpenAPI coverage: N/N route operations documented (1 explicitly excluded), M paths in the
-document.`); a number frozen in this file was wrong within weeks. The one exclusion is
-`/api/auth/{all}`, Better Auth's own handler, named with its reason in the `EXCLUDED` map of
+(`OpenAPI coverage: N/N route operations documented (2 explicitly excluded), M paths in the
+document.`); a number frozen in this file was wrong within weeks. The two exclusions are
+`/api/auth/{all}`, Better Auth's own handler, and `/api/nav-session`, the nav's read of who is
+signed in (outside the API's envelope), each named with its reason in the `EXCLUDED` map of
 `scripts/check-openapi-coverage.mjs`. Keep it that way: an endpoint is either documented or
 listed in that map with a reason, never just missing.
 
