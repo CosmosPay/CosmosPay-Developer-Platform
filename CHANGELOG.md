@@ -2,6 +2,14 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.30.0] - 2026-11-05
+
+### Features
+- Fix the landing views, add mock mode and make swaps real everywhere (439e352)
+
+### Miscellaneous
+- Name /api/nav-session in the coverage check's exclusions (4467239)
+
 ## [0.29.0] - 2026-11-04
 
 ### Features
