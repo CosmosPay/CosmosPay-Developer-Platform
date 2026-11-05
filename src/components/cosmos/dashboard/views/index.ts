@@ -9,6 +9,7 @@ export { ProductsView } from "@/components/cosmos/dashboard/views/ProductsView";
 export { SwapsView } from "@/components/cosmos/dashboard/views/SwapsView";
 export { LiquidityView } from "@/components/cosmos/dashboard/views/LiquidityView";
 export { BlindPayView } from "@/components/cosmos/dashboard/views/BlindPayView";
+export { P2pOnrampView } from "@/components/cosmos/dashboard/views/P2pOnrampView";
 export { ApiKeysView } from "@/components/cosmos/dashboard/views/ApiKeysView";
 export { WebhooksView } from "@/components/cosmos/dashboard/views/WebhooksView";
 export { LogsView } from "@/components/cosmos/dashboard/views/LogsView";

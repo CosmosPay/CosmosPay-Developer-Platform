@@ -334,6 +334,17 @@ button.bal-card:not(.total):hover { border-color: var(--line-2); }
 
 /* settings */
 .set-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+/* The P2P on-ramp view (P2pOnrampView.tsx): its form fields in the settings grid, the estimate
+   line, the firm quote's rows and the two actions. */
+.p2p-form .set-body > .fld { margin-top: 16px; }
+.p2p-msg { margin: 0; color: var(--ink-2); font-size: 14px; }
+.p2p-estimate { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
+.p2p-estimate b { color: var(--ink); font-size: 16px; }
+.p2p-quote { padding: 4px 0 0; }
+.p2p-quote .set-row { font-size: 14px; color: var(--ink-2); }
+.p2p-quote .set-row b { color: var(--ink); }
+.p2p-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+@media (max-width: 640px) { .p2p-form .set-grid { grid-template-columns: 1fr; } .p2p-actions { justify-content: stretch; } .p2p-actions .btn { flex: 1 1 auto; } }
 .set-body { padding: 18px 20px; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line); }
 .set-row:last-child { border-bottom: 0; }

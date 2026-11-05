@@ -16,6 +16,7 @@
     "plugins",
     "aliases",
     "onramp",
+    "p2p-onramp",
     "offramp",
     "kyc",
     "kyc-accounts",
