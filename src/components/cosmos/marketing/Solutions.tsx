@@ -5,6 +5,7 @@ import { Modal, IcArrow, IcCheck, ctaProps } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
 import { SOL_EX, SOL_META, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
 import { IcExpand, SOL_ICONS } from "@/components/cosmos/marketing/icons";
+import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
 
 /* `{n}` in an item's copy is the number of networks cross-chain swaps reach (NETWORK_IDS). */
 const VARS = { n: SWAP_NETWORKS };
@@ -28,9 +29,9 @@ function SolModal({ itemKey, onClose, user }) {
   return (
     <Modal onClose={onClose}>
       <div className="modal-hero">
-        <div className="ex-card">
+        <div className="ex-card code-on-light">
           <div className="ex-ic">{SOL_ICONS[itemKey]}</div>
-          <pre>{SOL_EX[itemKey].join("\n")}</pre>
+          <pre translate="no"><CodeTokens code={SOL_EX[itemKey].join("\n")} lang="ts" /></pre>
         </div>
       </div>
       <div className="modal-body">

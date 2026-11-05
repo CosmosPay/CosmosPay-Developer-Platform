@@ -29,11 +29,11 @@ export interface LlmsInput {
 
 /** The company's one-paragraph summary: the quote under the H1 of its llms.txt and llms-full.txt. */
 export const SITE_SUMMARY =
-  "Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.";
+  `Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on ${NETWORK_IDS.length} networks. Developers and businesses use one REST API and a JavaScript and TypeScript SDK to accept stablecoin payments through payment links, a hosted checkout and signed webhooks. Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.`;
 
 /** The gateway's one-paragraph summary, under the H1 of its llms.txt and llms-full.txt. */
 export function paymentsSummary(site: string): string {
-  return `Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on Stellar, Solana and Monad through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the funds settle to an address the business controls, instantly or as a protected payment held in a smart contract until the order is delivered. Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond. Cosmos Pay is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.`;
+  return `Cosmos Pay Payments lets businesses accept stablecoins such as USDC and EURC on ${NETWORK_IDS.length} networks, through payment links, a hosted checkout and a payments API. Customers pay from their own wallet, and the funds settle to an address the business controls, instantly or as a protected payment held in a smart contract until the order is delivered. Made by Cosmos Pay (${site}/) for businesses in Latin America and beyond. Cosmos Pay is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.`;
 }
 
 /** The Markdown versions of a host's pages, for its llms.txt: every page in one file, and each at
@@ -82,14 +82,14 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   "learn/accept-usdc-payments": ["How to accept USDC payments online", "a payment link, the hosted checkout or the API; what the merchant and the payer need; testing on a test network first"],
   "learn/whatsapp-payment-links": ["Payment links on WhatsApp", "create a payment link in the dashboard, send it in a chat or as a printed QR code, and see when it is paid"],
   "learn/stablecoin-payment-gateway": ["What is a stablecoin payment gateway?", "stablecoins, settlement to the merchant's own address, network fees, custodial and non-custodial gateways"],
-  "learn/stellar-vs-solana-vs-monad": ["Stellar vs Solana vs Monad for accepting payments", "the three networks compared as Cosmos Pay supports them: link standard, matching, assets with a preset, test networks, fees"],
+  "learn/stellar-vs-solana-vs-monad": ["Stellar vs Solana vs Monad for accepting payments", "the three networks payments settle on, compared as Cosmos Pay supports them: link standard, matching, assets with a preset, test networks, fees"],
   "learn/accept-usdc-with-solana-pay": ["How to accept USDC with Solana Pay links", "Solana Pay transfer requests matched by a reference key per link, testing on Devnet, the API request and confirming each payment"],
   "learn/confirm-stablecoin-payments": ["How to confirm a stablecoin payment on your server", "signed webhooks (X-Cosmos-Signature, HMAC-SHA256), retries and redelivery, handling each event once, and checking a payment yourself"],
-  "learn/usdt0-from-stellar": ["How to send USDT0 from Stellar to EVM networks", "21 routes through LayerZero, fees in XLM, about 27 minutes to deliver, and each step from quote to delivery"],
+  "learn/usdt0-from-stellar": ["How to send USDT0 from Stellar to EVM networks", "21 routes, fees in XLM, about 27 minutes to deliver, and each step from quote to delivery"],
   "learn/accept-usdc-on-stellar": ["How to accept USDC on Stellar with SEP-7 links", "SEP-7 links matched by a memo per link, the USDC trustline the receiving account needs, testing on Testnet and the API request"],
   "learn/accept-usdc-on-monad": ["How to accept USDC on Monad with EIP-681 links", "EIP-681 links to a deposit address per payment that can only forward to the merchant, the relay fee, required amounts and testing"],
   "learn/crypto-payment-button": ["How to add a crypto pay button or checkout to your website", "the embed script, the cosmos-pay-button and cosmos-pay-checkout elements and their attributes, events, CSP and confirming by webhook"],
-  "learn/cross-chain-swaps": ["How to swap tokens between Stellar, Solana and Monad", "cross-chain swaps through NEAR Intents across 35 networks: quote, deposit address, deadline, refunds, plan commission and where to swap"],
+  "learn/cross-chain-swaps": [`How to swap tokens across ${NETWORK_IDS.length} networks`, `cross-chain swaps across ${NETWORK_IDS.length} networks: quote, deposit address, deadline, refunds, plan commission and where to swap`],
   "learn/crypto-donations": ["How to accept crypto donations with an open amount", "open-amount links on Stellar and Solana, one donation per link, reading the donated amount on-chain, and a Donate button on your site"],
 };
 
@@ -107,17 +107,17 @@ Key facts:
 
 - Chains: Stellar (SEP-7 payment links), Solana (Solana Pay links) and Monad (EIP-681 links).
 - Non-custodial: Cosmos Pay stores no one's keys and never holds a payment. With instant settlement, on Stellar and Solana the payer pays the merchant's address directly; on Monad each payment goes to a deposit address made for it, which can only forward it to the merchant's address (less the relay's fee): Cosmos Pay holds no key to it.
-- Swaps: Cosmos Pay never holds the funds. A swap on one network is one transaction the person's wallet signs; a swap between networks waits at a NEAR Intents deposit address until NEAR Intents settles or refunds it; USDT0 travels through LayerZero.
+- Swaps: Cosmos Pay never holds the funds. A swap on one network is one transaction the person's wallet signs; a swap between networks waits at a deposit address made for it until it settles or is refunded; USDT0 travels through its own bridge.
 - Settlement: instant (about 5 seconds on Stellar), or a protected payment: the funds are held in a smart contract until delivery is confirmed, then released to the merchant's wallet. The merchant sets a delivery deadline; when it passes, the payment goes to review or is refunded or released automatically, as the merchant chooses. A protected payment waits in the smart contract, never with Cosmos Pay.
 - No chargebacks: a confirmed payment is final. A refund is a payment the merchant sends back from their wallet.
 - Testing: API keys starting with dv_ run on testnet and prod_ keys on mainnet. The key decides the network, not the code.
 - Rates per payment: ${paymentRates()}. Protected payments add ${PROTECTED_PAYMENT_FEE_PCT}% per payment. Private payments (the amount hidden on-chain behind a zero-knowledge proof, on testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction. The payer's wallet pays the network fee.
 - Swap commission: ${swapRates()}; ${swapFeePct("community")} without an account.
-- Payer wallets: on Stellar any wallet that opens SEP-7 links (Freighter, xBull, Rabet, LOBSTR, Albedo, Cosmos Pay Wallet); on Solana any wallet that reads Solana Pay links (Phantom, Solflare); on Monad any EVM wallet that reads EIP-681 links.
+- Payer wallets: any wallet that opens standard payment links (SEP-7, Solana Pay, EIP-681), such as Freighter, xBull, Rabet, LOBSTR, Albedo, Cosmos Pay Wallet, Phantom, Solflare or any EVM wallet; a payer whose funds are on any of the ${NETWORK_IDS.length} networks swaps them in first.
 
 ## Accept payments
 
-- [Cosmos Pay Payments](${pay("/")}): payment links, a hosted checkout and a payments API to accept stablecoins on Stellar, Solana and Monad
+- [Cosmos Pay Payments](${pay("/")}): payment links, a hosted checkout and a payments API to accept stablecoins on ${NETWORK_IDS.length} networks
 ${gateway.filter((l) => !l.startsWith("- [Swaps]")).join("\n")}
 - [Plans](${pageUrl(site, "/pricing")}): every plan's rates, limits and features
 
@@ -185,7 +185,7 @@ How a payment works:
 
 1. Create a payment link in the dashboard, or a payment intent from your server.
 2. Send the link or show its QR code. The checkout shows the amount, the network and a countdown.
-3. The customer pays from their own wallet on Stellar, Solana or Monad.
+3. The customer pays from their own wallet, on any of the ${NETWORK_IDS.length} networks.
 4. The payment is verified on-chain, the checkout turns to Paid and a signed webhook fires.
 
 Facts:

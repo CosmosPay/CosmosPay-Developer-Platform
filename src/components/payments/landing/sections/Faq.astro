@@ -1,8 +1,10 @@
 ---
 // Faq section of the payments landing (see src/pages/payments/index.astro for the page
 // it belongs to). Its data comes from landingData (../data.ts). A network page passes its own
-// questions (`items`, with their `heading`) and names its network (`current`); under the
-// heading, every version links the network pages (the other two on a network page).
+// questions (`items`, with their `heading`) and names its network (`current`); under its
+// heading a network page links the other network pages. The gateway's own FAQ (the home, /faq,
+// the guides) links none: beside its title a list of three networks read as if they were the only
+// ones, and Cosmos Pay works with every network of its swap platform (product owner, 2026-11-03).
 import type { LandingData } from "@/components/payments/landing/data";
 import { NETWORK_PAGES, type NetworkPage } from "@/lib/payments/site-pages";
 
@@ -32,10 +34,14 @@ const nets = NETWORK_PAGES.filter((n) => n !== current);
     <div class="pl-head pl-head-sticky" data-reveal>
       <h2 id="pl-faq" class:list={[{ "pl-sr": bare }]}>{heading ?? `${t.faq.title} ${t.faq.titleBold}`}</h2>
       {limit && <a class="pl-textlink pl-more" href={links.faq}>{t.pages.more.faq}</a>}
-      <p class="pl-faq-nets">
-        <span>{current ? t.network.others : t.pages.byNetwork}</span>
-        {nets.map((n) => <a class="pl-textlink" href={pageLinks[n]}>{t.pages[n].link}</a>)}
-      </p>
+      {current && (
+        <div class="pl-faq-nets">
+          <p id="pl-faq-nets">{t.network.others}</p>
+          <ul role="list" aria-labelledby="pl-faq-nets">
+            {nets.map((n) => <li><a class="pl-textlink" href={pageLinks[n]}>{t.pages[n].link}</a></li>)}
+          </ul>
+        </div>
+      )}
       {/* On the FAQ page (bare) the section opens the page and its astronaut is the first
           screen's largest image on phones: it loads at once and first. Elsewhere it is far down. */}
       <img class="pl-art pl-faq-art" src="/brand/astronauta-pensando.svg" alt="" width="200" height="237" loading={bare ? "eager" : "lazy"} fetchpriority={bare ? "high" : undefined} decoding="async" />

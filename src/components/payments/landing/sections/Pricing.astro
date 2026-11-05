@@ -66,7 +66,10 @@ const { layout, links, pageLinks, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowest
             {calcPlans.map((p) => (
               <tr class:list={[{ "is-best": p.id === "growth" }]} data-calc-plan data-pct={p.pct ?? ""} data-cents={p.cents ?? ""}>
                 <th scope="row">{p.name}{p.monthly && <small>{p.monthly}</small>}</th>
-                <td data-calc-fee data-odo>{p.pct === null ? t.calc.custom : "-"}</td>
+                <td>
+                  <span data-calc-fee data-odo>{p.pct === null ? t.calc.custom : "-"}</span>
+                  {p.rate && <small data-calc-rate>{p.rate}</small>}
+                </td>
                 <td data-calc-net data-odo>{p.pct === null ? t.calc.custom : "-"}</td>
               </tr>
             ))}

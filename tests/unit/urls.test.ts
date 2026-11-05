@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { docsLink, docsRoot, isSlashlessDocsLink, loginUrl, normalizeOrigin } from '@/lib/urls';
+import { docsLink, docsRoot, isSlashlessDocsLink, loginUrl, logoutUrl, normalizeOrigin } from '@/lib/urls';
 import { isSafeNextPath } from '@/lib/safe-next';
 
 test('normalizeOrigin drops trailing slashes and whitespace', () => {
@@ -75,4 +75,12 @@ test('isSlashlessDocsLink finds a docs page linked without its slash, and nothin
   for (const path of ['', '/api', 'sdk/server/webhooks', '/embed#button', '/llms.txt']) {
     assert.equal(isSlashlessDocsLink(docsLink(root, path), root), false, path);
   }
+});
+
+test('logoutUrl names the page to come back to, encoded', () => {
+  assert.equal(logoutUrl('https://dev.cosmospay.lat/'), 'https://dev.cosmospay.lat/logout');
+  assert.equal(
+    logoutUrl('https://dev.cosmospay.lat', 'https://payments.cosmospay.lat/faq?lang=es#wallet'),
+    'https://dev.cosmospay.lat/logout?next=https%3A%2F%2Fpayments.cosmospay.lat%2Ffaq%3Flang%3Des%23wallet',
+  );
 });

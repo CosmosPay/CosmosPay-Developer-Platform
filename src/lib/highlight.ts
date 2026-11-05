@@ -1,8 +1,10 @@
-/* highlight.ts: a small syntax highlighter for the payments landing's code samples.
-   The samples are fixed strings written in this repo (curl, TypeScript, JSON, HTML), so a
-   tokenizer of a few rules is enough and keeps the colours in the page's palette instead of an
-   editor theme's. It never produces HTML: the result is tokens, rendered by Code.astro as text
-   in spans. Lines are returned separately so the block can number them. */
+/* highlight.ts: the syntax highlighter behind every code window on the three domains.
+   The samples are fixed strings written in this repo (curl, TypeScript, JSON, HTML) or JSON the
+   dashboard pretty-prints, so a tokenizer of a few rules is enough and keeps the colours in the
+   palette (the .tk-* rules and --tk-* tokens in cosmos.css) instead of an editor theme's. It
+   never produces HTML: the result is tokens, rendered as text in spans by Code.astro (the
+   payments pages), CodeTokens.tsx (the React views) and integration-demos.ts (the API demo's
+   console). Lines are returned separately so a block can number them. */
 
 export type CodeLang = "bash" | "ts" | "json" | "html";
 export type TokenKind = "kw" | "str" | "num" | "com" | "key" | "fn" | "flag" | "tag" | "attr" | "punc" | "plain";

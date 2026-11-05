@@ -10,7 +10,8 @@
    Each reads its record again until it settles. */
 import { useEffect, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
-import { fmt, useT } from "@/lib/i18n/index";
+import { fmt, useLang, useT } from "@/lib/i18n/index";
+import { bpsPercent } from "@/lib/plans";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
@@ -58,6 +59,7 @@ export function SwapRecordDetail({ api, kind, record, canManage = true, onClose 
 /* ---------------- a swap on Stellar (QR + uri + xdr + submit signed tx) ---------------- */
 function SwapDetailModal({ api, swap, canManage, onClose }) {
   const t = useT();
+  const lang = useLang();
   const sw = t.dash.swaps;
   const d = sw.detail;
   // Seed with the row, then fetch the full record for the QR/uri/xdr.
@@ -91,7 +93,7 @@ function SwapDetailModal({ api, swap, canManage, onClose }) {
     [F.sent, data.sendAmount ? `${data.sendAmount} ${assetLabel(data.sendAsset)}` : null],
     [F.received, data.destEstimated ? `${data.destEstimated} ${data.destAsset}` : null],
     [F.minimum, data.destMin ? `${data.destMin} ${data.destAsset}` : null],
-    [F.fee, data.feeAmount ? `${data.feeAmount} ${assetLabel(data.sendAsset)} (${data.feeBps} ${sw.modal.bps})` : null],
+    [F.fee, data.feeAmount ? `${data.feeAmount} ${assetLabel(data.sendAsset)} (${bpsPercent(data.feeBps, lang)})` : null],
     [F.memo, data.memo],
     [F.commissionMemo, data.commissionMemo],
     [F.txHash, data.txHash],
@@ -173,6 +175,7 @@ function SwapDetailModal({ api, swap, canManage, onClose }) {
 /* ---------------- a swap on Solana / Monad (transaction + approval + submit) ---------------- */
 function ChainSwapDetailModal({ api, swap, canManage, onClose }) {
   const t = useT();
+  const lang = useLang();
   const sw = t.dash.swaps;
   const d = sw.detail;
   const c = sw.chainDetail;
@@ -208,7 +211,7 @@ function ChainSwapDetailModal({ api, swap, canManage, onClose }) {
     [F.sent, data.sendAmount ? `${data.sendAmount} ${chainAssetLabel(chain, data.sendAsset)}` : null],
     [F.received, data.destEstimated ? `${data.destEstimated} ${chainAssetLabel(chain, data.destAsset)}` : null],
     [F.minimum, data.destMin ? `${data.destMin} ${chainAssetLabel(chain, data.destAsset)}` : null],
-    [F.fee, data.feeAmount ? `${data.feeAmount} ${chainAssetLabel(chain, data.destAsset)} (${data.feeBps} ${sw.modal.bps})` : null],
+    [F.fee, data.feeAmount ? `${data.feeAmount} ${chainAssetLabel(chain, data.destAsset)} (${bpsPercent(data.feeBps, lang)})` : null],
     [c.expires, data.status === "PENDING" ? fmtDateTime(data.expiresAt) : null],
     [F.txHash, data.txHash],
     [F.created, fmtDateTime(data.createdAt)],
@@ -223,11 +226,11 @@ function ChainSwapDetailModal({ api, swap, canManage, onClose }) {
         <h3>{c.title}</h3>
 
         {data.approval && data.status === "PENDING" && (
-          <CopyBlock label={c.approval} value={JSON.stringify(data.approval, null, 2)}>
+          <CopyBlock label={c.approval} value={JSON.stringify(data.approval, null, 2)} lang="json">
             <p className="field-note">{c.approvalNote}</p>
           </CopyBlock>
         )}
-        {data.transaction && data.status === "PENDING" && <CopyBlock label={c.transaction} value={txText} />}
+        {data.transaction && data.status === "PENDING" && <CopyBlock label={c.transaction} value={txText} lang={tx.encoding === "base64" ? undefined : "json"} />}
         {data.txHash && (
           <div className="paylink-actions" style={{ marginBottom: 12 }}>
             <a className="btn btn-soft btn-sm" href={swapExplorer(data)} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewExplorer}</a>
@@ -258,6 +261,7 @@ function ChainSwapDetailModal({ api, swap, canManage, onClose }) {
 /* ---------------- USDT0 out of Stellar (LayerZero's OFT) ---------------- */
 function Usdt0TransferDetailModal({ api, transfer, canManage, onClose }) {
   const t = useT();
+  const lang = useLang();
   const sw = t.dash.swaps;
   const d = sw.detail;
   const u = sw.usdt0;
@@ -290,7 +294,7 @@ function Usdt0TransferDetailModal({ api, transfer, canManage, onClose }) {
     [F.sent, data.amountSent ? `${data.amountSent} USDT0` : null],
     [u.arrives, data.amountReceived ? `${data.amountReceived} ${data.receives}` : null],
     // Cosmos Pay's commission, paid by the fee wrapper (none without one).
-    [F.fee, Number(data.feeAmount) > 0 ? `${data.feeAmount} USDT0 (${data.feeBps} ${sw.modal.bps})` : null],
+    [F.fee, Number(data.feeAmount) > 0 ? `${data.feeAmount} USDT0 (${bpsPercent(data.feeBps, lang)})` : null],
     [u.fee, data.nativeFee ? `${data.nativeFee} XLM` : null],
     [F.txHash, data.txHash],
     [u.destTx, data.destinationTxHash],
@@ -304,7 +308,7 @@ function Usdt0TransferDetailModal({ api, transfer, canManage, onClose }) {
   return (
     <Modal onClose={onClose}>
       <div className="modal-body paylink-detail">
-        <div className="modal-eyebrow">USDT0 · LayerZero</div>
+        <div className="modal-eyebrow">USDT0</div>
         <h3>{fmt(u.title, { chain: dest })}</h3>
 
         {data.status === "SUBMITTED" && <p className="field-help swap-trustline" role="status">{fmt(u.travelling, { chain: dest })}</p>}

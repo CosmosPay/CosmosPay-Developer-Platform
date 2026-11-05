@@ -255,7 +255,7 @@ export default {
     rv: { org: "Organization", type: "Business type", goals: "Goals", volume: "Expected volume", plan: "Plan" },
     notSet: "Not set", edit: "Edit",
     termsPre: "I agree to the Cosmos Pay ", termsA: "Developer Terms", termsMid: " and ", termsB: "Acceptable Use Policy", termsPost: ".",
-    specTagline: "One API. Stellar, Solana and Monad.",
+    specTagline: "One API. Every network we work with.",
     specTaglineSub: "Accept and move money in USDC with ~5-second settlement. Pick the plan that fits and change it anytime.",
     selectedPlan: "Selected plan", recommendedForYou: "Recommended for you",
     spec: { perTx: "Per transaction", swap: "Per swap", settle: "Settlement", network: "Network", team: "Team members", orgs: "Organizations", support: "Support", live: "Live payments", included: "Included", notIncluded: "Not included" },
@@ -263,7 +263,7 @@ export default {
     specFoot: "Test keys are ready instantly. No card required to start.",
     supportLevels: { standard: "Standard", priority: "Priority" },
     plans: {
-      starter: { desc: "Take real payments on Stellar, Solana & Monad", sub: "+ 18¢ / txn", pnote: "1.5% + 18¢ per transaction", team: "Up to 2", feats: ["Partial API access", "Live & test keys", "USDC settlement", "Up to 2 members"] },
+      starter: { desc: "Take real payments on every network we work with", sub: "+ 18¢ / txn", pnote: "1.5% + 18¢ per transaction", team: "Up to 2", feats: ["Partial API access", "Live & test keys", "USDC settlement", "Up to 2 members"] },
       growth: { desc: "Lower rates for scaling teams", sub: "/mo", pnote: "0.75% + 18¢ per transaction", team: "Unlimited", feats: ["Everything in Starter", "Lower transaction rate", "Unlimited members", "Priority support"] },
     },
   },
@@ -286,7 +286,7 @@ export default {
         label: "Products",
         cols: [
           { head: "Accept money", links: [
-            { t: "Payments", s: "Stellar, Solana & Monad" },
+            { t: "Payments", s: "Stablecoins on all our networks" },
             { t: "Checkout", s: "Hosted payment page" },
             { t: "Payment Links", s: "No-code payment links" },
             { t: "Invoicing", s: "Bill in stablecoins" },
@@ -346,7 +346,7 @@ export default {
         cols: [
           { head: "Learn", links: [
             { t: "Documentation", s: "Guides & references" },
-            { t: "Tutorials", s: "Step-by-step walkthroughs" },
+            { t: "Guides", s: "Step-by-step walkthroughs" },
             { t: "Blog", s: "Engineering & product" },
             { t: "Customer stories", s: "Built on Cosmos Pay" },
           ] },
@@ -374,7 +374,7 @@ export default {
 
   /* ---------------- shared: footer ---------------- */
   footer: {
-    tagline: "Stablecoin payments, swaps and a non-custodial wallet on Stellar, Solana and Monad.",
+    tagline: "Stablecoin payments and swaps on every network we work with, and a non-custodial wallet.",
     copyright: "© 2026 Cosmos Pay",
     groups: {
       products: { title: "Products", links: ["Payments", "Stablecoins", "Payouts", "Anchors", "Wallets", "Checkout", "Payment Links", "Pricing", "Fee comparison"] },
@@ -390,19 +390,19 @@ export default {
   landing: {
     meta: {
       title: "Cosmos Pay | Stablecoin payments API and wallet for LATAM",
-      description: "Accept USDC and other stablecoins on Stellar, Solana and Monad with a payments API, a hosted checkout and a non-custodial wallet, made for Latin America.",
+      description: "Accept USDC and other stablecoins on every network we work with: a payments API, a hosted checkout and a wallet for Latin America.",
     },
     hero: {
       tagline: "Your digital world, in motion.",
       headline: "Write less code -> move more money",
-      lede: "One API key for payment links, a hosted checkout, swaps and signed webhooks on Stellar, Solana and Monad. Build on testnet with no real money and go live when you’re ready.",
+      lede: "One API key for payment links, a hosted checkout, swaps and signed webhooks on every network we work with. Build on testnet with no real money and go live when you’re ready.",
       getKeys: "Get API keys",
       trustedBy: "Trusted by engineering teams at",
     },
     wallet: {
       tag: "Your digital world, in one wallet.",
       title: "Stablecoin payments and a wallet for Latin America.",
-      lede: "Cosmos Pay is a stablecoin payments API, a hosted checkout and a non-custodial wallet on Stellar, Solana and Monad. Get the wallet for Chrome, the web or Android.",
+      lede: "Cosmos Pay is a stablecoin payments API and a hosted checkout on every network we work with, and a non-custodial wallet. Get the wallet for Chrome, the web or Android.",
       chrome: { t: "Install on Chrome", s: "Official extension on the Chrome Web Store." },
       web: { t: "Try it in your browser", s: "Open the web app now, nothing to install." },
       android: { t: "Download for Android", s: "Signed APK. Allow \"Install unknown apps\" for your browser, then open the file and install." },
@@ -437,7 +437,7 @@ export default {
       cards: {
         payments: {
           title: "Payments",
-          desc: "Create payment intents and payment links on Stellar, Solana and Monad. Customers pay from their own wallet, and the money reaches an address you control.",
+          desc: "Create payment intents and payment links that customers pay from their own wallet, on any of the {n} networks we work with. The money reaches an address you control.",
           link: "Payment intents API",
         },
         stablecoin: {
@@ -447,7 +447,7 @@ export default {
         },
         swaps: {
           title: "Swaps",
-          desc: "Quote and run swaps on the Stellar DEX, Jupiter and Kuru, or between {n} networks through NEAR Intents.",
+          desc: "Quote and run swaps on one network or between {n} networks.",
           link: "Swaps API",
         },
       },
@@ -476,7 +476,7 @@ export default {
         },
         {
           t: "Build your own",
-          d: "Use the REST API, documented with OpenAPI, and the TypeScript SDK to build your own payment flow on Stellar, Solana and Monad.",
+          d: "Use the REST API, documented with OpenAPI, and the TypeScript SDK to build your own payment flow on every network we work with.",
           a: "Read the docs",
         },
       ],
@@ -492,8 +492,8 @@ export default {
       items: {
         pay: {
           t: "Accept multi-chain payments",
-          d: "Get paid on Stellar, Solana or Monad from the customer’s own wallet, at an address you control.",
-          long: "Accept payments from anyone with a Stellar, Solana or Monad wallet. A payment counts once the network confirms it (about 5 seconds on Stellar), it cannot be charged back, and it reaches your address instead of a balance you have to ask for.",
+          d: "Get paid from the customer’s own wallet, on any of the {n} networks we work with, at an address you control.",
+          long: "Accept payments from anyone with a wallet on any of the {n} networks we work with. A payment counts once the network confirms it (about 5 seconds on Stellar), it cannot be charged back, and it reaches your address instead of a balance you have to ask for.",
           points: [
             "SEP-7, Solana Pay and EIP-681 payment links",
             "About 5 seconds to settle on Stellar",
@@ -503,7 +503,7 @@ export default {
         },
         coin: {
           t: "Stablecoin settlement",
-          d: "Charge in USDC, EURC or any token on Stellar, Solana and Monad, and receive that same asset.",
+          d: "Charge in USDC, EURC or any other token, and receive that same asset. A customer on any of the {n} networks can swap into it first.",
           long: "Price each payment in USDC, EURC, the network’s own coin or any other token, named by its issuer, mint or contract. The customer pays in that asset and you receive it at your address. Every payment keeps its transaction hash, and the dashboard shows your balances by asset and the settled volume in USD.",
           points: ["USDC, EURC or any token you name", "A transaction hash for every payment", "Balances by asset in the dashboard", "Settled volume in USD"],
         },
@@ -516,11 +516,11 @@ export default {
         swap: {
           t: "Swaps across networks",
           d: "Swap tokens across {n} networks, with or without an account.",
-          long: "Swap on the Stellar DEX, on Jupiter (Solana) and Kuru (Monad), or between {n} networks through NEAR Intents, and send USDT0 out of Stellar through LayerZero. A swap on one network is one transaction the person signs; a swap between networks waits at a NEAR Intents deposit address until NEAR Intents settles or refunds it. Cosmos Pay never holds the funds. The public swap page and its API need no account.",
+          long: "Swap tokens on one network or between {n} networks, and send USDT0 out of Stellar to other networks. A swap on one network is one transaction the person signs; a swap between networks waits at a deposit address made for it until it settles or is refunded. Cosmos Pay never holds the funds. The public swap page and its API need no account.",
           points: [
-            "Stellar DEX, Jupiter and Kuru",
-            "{n} networks through NEAR Intents",
-            "USDT0 out of Stellar through LayerZero",
+            "Swaps within one network",
+            "Swaps between {n} networks",
+            "USDT0 out of Stellar to other networks",
             "A public swap API with no account",
           ],
         },
@@ -541,10 +541,10 @@ export default {
     stats: {
       title: "Simple. Secure. Limitless.",
       question: "What is Cosmos Pay?",
-      answer: "Cosmos Pay is a stablecoin payments platform for businesses in Latin America. Merchants take payments on Stellar, Solana and Monad through payment links, a hosted checkout or an API, and the money reaches an address they control. It also offers swaps across networks and a non-custodial wallet.",
+      answer: "Cosmos Pay is a stablecoin payments platform for businesses in Latin America. Merchants take payments on every network Cosmos Pay works with, through payment links, a hosted checkout or an API, and the money reaches an address they control. It also offers swaps between all those networks, and a non-custodial wallet.",
       items: [
-        "networks to get paid on: Stellar, Solana and Monad",
-        "networks to swap between",
+        "networks to get paid from, with swaps between them",
+        "chargebacks: once the network confirms a payment, it is final",
         "+ {fixed} per payment on Starter, with no monthly fee",
         "to settle a payment on Stellar",
       ],
@@ -600,7 +600,7 @@ export default {
       label: "A new way to move your digital world.",
       thanks: "Thanks for trusting us.",
       title: "Start building today.",
-      desc: "Create an account, build on testnet with no real money and go live on Stellar, Solana and Monad when you’re ready.",
+      desc: "Create an account, build on testnet with no real money and go live on every network we work with when you’re ready.",
       getKeys: "Get API keys",
       talk: "Talk to engineering",
       helpers: [
@@ -614,7 +614,7 @@ export default {
   pricing: {
     kicker: "// pricing",
     title: "Pay for what you process.",
-    lede: "Payments, swaps and private payments as a service, priced per operation. No monthly fee to start: you only pay a small fee on each successful one.",
+    lede: "Payments, swaps and private payments as a service, priced per operation. No monthly fee to start: you only pay {starterRate} on each successful one.",
     monthly: "Monthly",
     annual: "Annual",
     save: "−17%",
@@ -629,7 +629,7 @@ export default {
         txt: "+ 18¢ per transaction *",
         cta: "Get started",
         feats: [
-          "Live payments on Stellar, Solana and Monad",
+          "Live payments on every network we work with",
           "Test API keys on testnet",
           "Payment links and hosted checkout",
           "Swaps and signed webhooks",
@@ -681,7 +681,7 @@ export default {
     faqs: [
       {
         q: "Do I have to pay a monthly fee?",
-        a: "No. Starter has no monthly fee: you only pay a small fee per successful transaction. Essentials and Growth add a monthly fee in exchange for lower rates.",
+        a: "No. Starter has no monthly fee: you only pay {starterRate} per successful transaction. Essentials and Growth add a monthly fee in exchange for lower rates.",
       },
       {
         q: "What does a transaction cost?",
@@ -689,7 +689,7 @@ export default {
       },
       {
         q: "Which payment methods do you support?",
-        a: "Stablecoins and other tokens on Stellar, Solana and Monad: USDC, EURC, the network’s own coin or any token you name, paid from the customer’s own wallet. Cosmos Pay does not take card or bank payments.",
+        a: "Stablecoins and other tokens: USDC, EURC, each network’s own coin or any token you name, paid from the customer’s own wallet on any network we work with; a customer who holds another token can swap it in first. Cosmos Pay does not take card or bank payments.",
       },
       {
         q: "How fast does money settle?",
@@ -720,11 +720,11 @@ export default {
      src/pages/site/about.astro, not here. */
   about: {
     title: "About Cosmos Pay",
-    lede: "Cosmos Pay builds stablecoin payments for businesses: a payments API, a hosted checkout and payment links, swaps, private payments and the non-custodial Cosmos Pay Wallet, on Stellar, Solana and Monad.",
+    lede: "Cosmos Pay builds stablecoin payments for businesses on every network it works with: a payments API, a hosted checkout and payment links, swaps, private payments and the non-custodial Cosmos Pay Wallet.",
     disambiguation: "Cosmos Pay (cosmospay.lat) is a different project from the Cosmos Network (ATOM) and from BitCanna's CosmosPay payment plugins.",
     facts: {
       networks: "Networks",
-      networksValue: "Stellar, Solana and Monad",
+      networksValue: "{n} networks",
       based: "Based in",
       basedValue: "Argentina",
       code: "Source code",
@@ -733,7 +733,7 @@ export default {
     },
     products: {
       title: "What we make",
-      lede: "Payments settle on Stellar, Solana and Monad, and each network has its own page.",
+      lede: "Payments and swaps reach every network Cosmos Pay works with.",
       items: {
         api: { t: "Payments API and SDK", d: "A REST API documented with OpenAPI and a TypeScript SDK to create payment intents and payment links, with signed webhooks when a payment is confirmed.", a: "Read the docs" },
         checkout: { t: "Hosted checkout and payment links", d: "A payment link with its QR code and a checkout page we host, in four designs and seven languages. A pay button or an embedded checkout takes one script tag.", a: "See the integration options" },
@@ -782,12 +782,15 @@ export default {
     lede: "Pick what you pay with and what you get. Your wallet signs, and Cosmos Pay never holds your funds.",
     facts: [
       { t: "No account", s: "Open the page and swap. The public API works the same way." },
-      { t: "{n} networks", s: "Stellar, Solana and Monad markets, and every network NEAR Intents reaches." },
+      { t: "{n} networks", s: "Every network our swaps reach, on one chain or between chains." },
       { t: "Non-custodial", s: "Each swap is a transaction your wallet signs or a deposit address you pay." },
     ],
     fee: "Commission: {pct} per swap without an account, from {max} to {min} with a plan, plus the networks' fees.",
+    feeSignedIn: "You are signed in, so your swaps go through {org} on the {plan} plan: {pct} commission per swap, plus the networks' fees. They show in your dashboard.",
+    orgLabel: "Organization",
+    yourSwaps: "See your swaps",
     usdt0Title: "USDT0: native USDT from Stellar",
-    usdt0Lede: "USDT0 on Stellar is Tether's omnichain USDT. Send it 1:1 through LayerZero: it arrives as native USDT on Ethereum and as USDT0 on {n} more networks. LayerZero's fee is paid in XLM, and the quote shows every fee before you sign.",
+    usdt0Lede: "USDT0 on Stellar is Tether's omnichain USDT. Send it 1:1 to another network: it arrives as native USDT on Ethereum and as USDT0 on {n} more networks. The bridge fee is paid in XLM, and the quote shows every fee before you sign.",
     usdt0Cta: "Send USDT0",
     usdt0Networks: "Where it arrives",
     apiTitle: "The same swaps from your code",
@@ -799,8 +802,8 @@ export default {
     faqTitle: "Questions",
     faq: [
       { q: "Do I need an account?", a: "No. The page and the public API use a shared public key. An account adds a history in the dashboard and, with a plan, a lower commission: from {max} to {min}." },
-      { q: "Who holds my funds?", a: "Not Cosmos Pay. A swap on one network is one transaction your wallet signs. A swap between networks waits at a NEAR Intents deposit address until NEAR Intents settles or refunds it, and USDT0 travels through LayerZero." },
-      { q: "What does it cost?", a: "{pct} per swap without an account, from {max} to {min} with a plan, plus the networks' fees. USDT0 out of Stellar also pays LayerZero's fee, in XLM. Every quote shows the fees before you sign." },
+      { q: "Who holds my funds?", a: "Not Cosmos Pay. A swap on one network is one transaction your wallet signs. A swap between networks waits at a deposit address made for it until it settles or is refunded, and USDT0 travels through its own bridge." },
+      { q: "What does it cost?", a: "{pct} per swap without an account, from {max} to {min} with a plan, plus the networks' fees. USDT0 out of Stellar also pays the bridge fee, in XLM. Every quote shows the fees before you sign." },
       { q: "Why does USDT0 leave a tiny remainder?", a: "USDT0 crosses with six decimals and Stellar has seven: the seventh stays in your account." },
       { q: "Can I offer swaps to my customers?", a: "Yes, as a service: we run the swaps, and you only set the wallet addresses that receive the money and sign with your wallet. Each swap pays your plan's commission, and you can add your own fee to it, paid to the wallet you choose." },
     ],
@@ -880,7 +883,7 @@ export default {
         volHead: { asset: "Asset", amount: "Amount", count: "Count" },
       },
       payments: { title: "Payment intents", sub: "All payment intents across organizations", searchPlaceholder: "Search by ID, destination, organization…", empty: "No payment intents.", tableHead: { id: "ID", org: "Organization", destination: "Destination", amount: "Amount", status: "Status", created: "Created" }, one: "Payment" },
-      swaps: { venues: { stellar: "Stellar", solana: "Solana · Jupiter", monad: "Monad · Kuru Flow", crossChain: "Cross-chain" }, crossStatus: { AWAITING_DEPOSIT: "Awaiting deposit", PROCESSING: "Processing", REFUNDED: "Refunded" }, title: "Swaps", sub: "All swaps across organizations", searchPlaceholder: "Search by ID, account, organization…", empty: "No swaps.", tableHead: { id: "Swap", org: "Organization", route: "Sent → received", status: "Status", created: "Created" }, one: "Swap", from: "From", to: "To", deposit: "Deposit address" },
+      swaps: { venues: { stellar: "Stellar", solana: "Solana", monad: "Monad", crossChain: "Cross-chain" }, crossStatus: { AWAITING_DEPOSIT: "Awaiting deposit", PROCESSING: "Processing", REFUNDED: "Refunded" }, title: "Swaps", sub: "All swaps across organizations", searchPlaceholder: "Search by ID, account, organization…", empty: "No swaps.", tableHead: { id: "Swap", org: "Organization", route: "Sent → received", status: "Status", created: "Created" }, one: "Swap", from: "From", to: "To", deposit: "Deposit address" },
       fiat: {
         title: "Fiat", sub: "Receivers, payins and payouts across organizations",
         tabs: { receivers: "Receivers", payins: "Payins", payouts: "Payouts" },
@@ -993,7 +996,7 @@ export default {
       },
     },
     overview: {
-      hub: { partDone: "Completed", partPending: "Pending", partNotDone: "Not completed", partDelivered: "Delivered", tipTotal: "Total", tipSettledUsd: "Settled (USD)", doneShare: "{pct} completed", deliveredShare: "{pct} delivered", avgTicket: "Average ticket {amount}", settledAmount: "{amount} settled", feesAmount: "{amount} in fees", planStatus: { active: "Active", paused: "Paused", past_due: "Payment overdue", suspended: "Suspended" }, legendDeliveriesFailed: "Failed", expiredOne: "1 expired", expiredN: "{n} expired", legendExpired: "Expired", quick: "Quick links", usdUnpricedOne: "1 payment in an asset with no USD price is not counted", usdUnpricedN: "{n} payments in assets with no USD price are not counted", webhooksFailedOne: "1 failed", paymentsFailedOne: "1 failed", paymentsFailedN: "{n} failed", doneOne: "1 completed", payersOne: "1 payer", sumSwaps: "Swaps", sumLiquidity: "Liquidity", payersN: "{n} payers", doneN: "{n} completed", newSwap: "Swap", crumb: "Overview", active: "Active", since: "Since {date}", settled: "Settled volume", noVolume: "No settled payments yet", rate: "Rate", plan: "Plan", orgId: "Organization ID", createLink: "Create payment link", docs: "Documentation", designs: "Checkout designs", kpiTotal: "Total payments", kpiSucceeded: "Succeeded", kpiFailed: "Failed", kpiRate: "Success rate", activity: "Activity", period7: "7 days", period30: "30 days", periods: { today: "Today", week: "Week", month: "Month", year: "Year" }, noPeriodTx: "No settled payments in this period.", sumVolume: "Settled volume", sumCount: "Payments", sumPayers: "Payers", sumWebhooks: "Webhook deliveries", sumWebhooksFailed: "{n} failed", growthVs: "{pct} vs the previous {n} days", legendVolume: "Volume (USD)", legendCount: "Payments", legendDone: "Completed", goTo: "Go to {view}", periodLabel: "Period", chartLabel: "Payments created and volume settled per day over the last {n} days.", transactions: "Latest settled payments", viewAll: "View all payments", thId: "Payment", thDate: "Date", thAmount: "Amount", thNetwork: "Network", thTo: "Paid to", thStatus: "Status", chartPeriods: { day: "Daily", week: "Weekly", month: "Monthly", year: "Yearly" }, chartLabels: { day: "Payments created and volume settled per day over the last 30 days.", week: "Payments created and volume settled per week over the last 12 weeks.", month: "Payments created and volume settled per month over the last 12 months.", year: "Payments created and volume settled per year over the last 5 years." }, sumFailed: "Failed", sumGrowth: "Growth", growthTitle: "Against the window just before", growthVolume: "Volume", growthCount: "Payments", prevOrg: "Previous organization", nextOrg: "Next organization", created: "Created {date}", fee: "Fee", txTitle: "Transactions", thFrom: "Paid by", thMemo: "Memo", onlySettled: "Only settled", network: "Network", allNetworks: "All networks", wallet: "Wallet", applyFilters: "Filter the list", filtersLabel: "Filter transactions", noTx: "No payments in this period.", noMatch: "No payment matches these filters.", shown: "{n} of {total} payments", rowMenu: "Actions for payment {id}", copyId: "Copy ID", explorer: "View on explorer", openPayments: "Open in Payments", status: { SUCCEEDED: "Settled", FAILED: "Failed", CANCELLED: "Cancelled", EXPIRED: "Expired", PENDING: "Pending", SUBMITTED: "Confirming" }, searchPlaceholder: "Search by ID, address, amount or asset…", groups: { settled: "Settled", open: "In progress", failed: "Failed" } },
+      hub: { partDone: "Completed", partPending: "Pending", partNotDone: "Not completed", partDelivered: "Delivered", tipTotal: "Total", tipSettledUsd: "Settled (USD)", doneShare: "{pct} completed", deliveredShare: "{pct} delivered", avgTicket: "Average ticket {amount}", settledAmount: "{amount} settled", feesAmount: "{amount} in fees", planStatus: { active: "Active", paused: "Paused", past_due: "Payment overdue", suspended: "Suspended" }, legendDeliveriesFailed: "Failed", expiredOne: "1 expired", expiredN: "{n} expired", legendExpired: "Expired", quick: "Quick links", usdUnpricedOne: "1 payment in an asset with no USD price is not counted", usdUnpricedN: "{n} payments in assets with no USD price are not counted", webhooksFailedOne: "1 failed", paymentsFailedOne: "1 failed", paymentsFailedN: "{n} failed", doneOne: "1 completed", payersOne: "1 payer", sumSwaps: "Swaps", sumLiquidity: "Liquidity", payersN: "{n} payers", doneN: "{n} completed", newSwap: "Swap", crumb: "Overview", active: "Active", since: "Since {date}", settled: "Settled volume", noVolume: "No settled payments yet", rate: "Rate", plan: "Plan", orgId: "Organization ID", createLink: "Create payment link", docs: "Documentation", designs: "Checkout designs", kpiTotal: "Total payments", kpiSucceeded: "Succeeded", kpiFailed: "Failed", kpiRate: "Success rate", activity: "Activity", period7: "7 days", period30: "30 days", periods: { today: "Today", week: "Week", month: "Month", year: "Year" }, noPeriodTx: "No settled payments in this period.", sumVolume: "Settled volume", sumCount: "Payments", sumPayers: "Payers", sumWebhooks: "Webhook deliveries", sumWebhooksFailed: "{n} failed", growthVs: "{pct} vs the previous {n} days", legendVolume: "Volume (USD)", legendCount: "Payments", legendDone: "Completed", goTo: "Go to {view}", periodLabel: "Period", chartLabel: "Payments created and volume settled per day over the last {n} days.", transactions: "Latest settled payments", viewAll: "View all payments", thId: "Payment", thDate: "Date", thAmount: "Amount", thNetwork: "Network", thTo: "Paid to", thStatus: "Status", chartPeriods: { day: "Daily", week: "Weekly", month: "Monthly", year: "Yearly" }, chartKindLabel: "Chart type", chartKinds: { bars: "Bars", lines: "Lines", area: "Area" }, chartLabels: { day: "Payments created and volume settled per day over the last 30 days.", week: "Payments created and volume settled per week over the last 12 weeks.", month: "Payments created and volume settled per month over the last 12 months.", year: "Payments created and volume settled per year over the last 5 years." }, sumFailed: "Failed", sumGrowth: "Growth", growthTitle: "Against the window just before", growthVolume: "Volume", growthCount: "Payments", prevOrg: "Previous organization", nextOrg: "Next organization", created: "Created {date}", fee: "Fee", txTitle: "Transactions", thFrom: "Paid by", thMemo: "Memo", onlySettled: "Only settled", network: "Network", allNetworks: "All networks", wallet: "Wallet", applyFilters: "Filter the list", filtersLabel: "Filter transactions", noTx: "No payments in this period.", noMatch: "No payment matches these filters.", shown: "{n} of {total} payments", rowMenu: "Actions for payment {id}", copyId: "Copy ID", explorer: "View on explorer", openPayments: "Open in Payments", status: { SUCCEEDED: "Settled", FAILED: "Failed", CANCELLED: "Cancelled", EXPIRED: "Expired", PENDING: "Pending", SUBMITTED: "Confirming" }, searchPlaceholder: "Search by ID, address, amount or asset…", groups: { settled: "Settled", open: "In progress", failed: "Failed" } },
       greeting: "Good morning, {name}",
       sub: "Here’s what’s happening at {org} today.",
       metrics: { gross: "Gross volume", net: "Net volume", success: "Successful payments", newCust: "New customers" },
@@ -1383,16 +1386,16 @@ export default {
     },
     swaps: {
       title: "Swaps",
-      sub: "{n} swaps · on one chain or between Stellar, Solana and Monad",
+      sub: "{n} swaps · on one chain or between networks",
       create: "New swap",
       readOnly: "You have read-only access to swaps in this organization.",
       listTitle: "Your swaps",
-      widget: { title: "Swap", pay: "You pay", receive: "You receive", selectToken: "Select a token", changeToken: "{token} on {chain}, change the token", flip: "Switch what you pay and what you receive", pickPay: "Pay with", pickReceive: "Receive", details: "Quote details", invertRate: "Invert the rate", eta: "Estimated time", seconds: "{n} s", slippage: "Slippage tolerance", slippageAuto: "Auto", slippageHint: "Below the minimum this sets, the swap is not made (a swap between chains is refunded).", settings: "Swap settings", route: "Route", venueNear: "NEAR Intents", venueUsdt0: "LayerZero (USDT0)", ctaBridge: "Send to {chain}", lzFee: "LayerZero fee", dustNote: "Stays on Stellar", accountLabel: "Your {chain} account", accountHint: "It pays for and signs the swap.", refundLabel: "Refund address on {chain}", recipientLabel: "Receive at, on {chain}", another: "Send to another account", ctaSelect: "Select a token", ctaSame: "Pick two different tokens", ctaProduction: "Available in Production", ctaUnsupported: "These tokens cannot be swapped together", ctaAmount: "Enter an amount", ctaAmountBad: "Check the amount", ctaAccount: "Enter your {chain} account", ctaRefund: "Enter the refund address on {chain}", ctaRecipient: "Enter the address on {chain}", ctaMemo: "Check the memo", ctaQuoting: "Getting a quote…", ctaRetry: "Try the quote again", ctaProductionOpen: "Opening a swap needs Production", ctaOpen: "Open swap", ctaSwap: "Swap on {venue}", ctaBusy: "Preparing…" },
+      widget: { title: "Swap", pay: "You pay", receive: "You receive", selectToken: "Select a token", changeToken: "{token} on {chain}, change the token", flip: "Switch what you pay and what you receive", pickPay: "Pay with", pickReceive: "Receive", details: "Quote details", invertRate: "Invert the rate", eta: "Estimated time", seconds: "{n} s", slippage: "Slippage tolerance", slippageAuto: "Auto", slippageHint: "Below the minimum this sets, the swap is not made (a swap between chains is refunded).", settings: "Swap settings", route: "Route", venueNear: "Cross-chain", venueUsdt0: "USDT0 bridge", ctaBridge: "Send to {chain}", lzFee: "Bridge fee", dustNote: "Stays on Stellar", accountLabel: "Your {chain} account", accountHint: "It pays for and signs the swap.", refundLabel: "Refund address on {chain}", recipientLabel: "Receive at, on {chain}", another: "Send to another account", ctaSelect: "Select a token", ctaSame: "Pick two different tokens", ctaProduction: "Available in Production", ctaUnsupported: "These tokens cannot be swapped together", ctaAmount: "Enter an amount", ctaAmountBad: "Check the amount", ctaAccount: "Enter your {chain} account", ctaRefund: "Enter the refund address on {chain}", ctaRecipient: "Enter the address on {chain}", ctaMemo: "Check the memo", ctaQuoting: "Getting a quote…", ctaRetry: "Try the quote again", ctaProductionOpen: "Opening a swap needs Production", ctaOpen: "Open swap", ctaSwap: "Swap on {venue}", ctaBusy: "Preparing…" },
       picker: { search: "Search a token, network or address", network: "Network", allNetworks: "All networks", count: "{n} tokens", useToken: "Use {token}", none: "No token matches. Paste a token address on Stellar, Solana or Monad to use it.", more: "{n} more: search to narrow the list." },
       groups: { open: "In progress", succeeded: "Succeeded", refunded: "Refunded", failed: "Failed", expired: "Expired" },
       typeLabel: "Type",
       types: { all: "All types", same: "On one chain", cross: "Between chains", usdt0: "USDT0 bridge" },
-      form: { desc: "Pick what you send and what you receive. On one chain its market trades it; between chains NEAR Intents settles it. Cosmos Pay never holds the funds.", from: "You send", to: "You receive", chain: "Chain", asset: "Asset", amountHint: "How much of the asset you send.", flip: "Switch what you send and what you receive", routeLine: "Route: {route}", route: "Route", venueCross: "NEAR Intents" },
+      form: { desc: "Pick what you send and what you receive. On one chain its market trades it; between chains a cross-chain swap settles it. Cosmos Pay never holds the funds.", from: "You send", to: "You receive", chain: "Chain", asset: "Asset", amountHint: "How much of the asset you send.", flip: "Switch what you send and what you receive", routeLine: "Route: {route}", route: "Route", venueCross: "Cross-chain" },
       searchPlaceholder: "Search by ID, address or asset…",
       filters: { all: "All", PENDING: "Pending", SUBMITTED: "Submitted", SUCCEEDED: "Succeeded", FAILED: "Failed", EXPIRED: "Expired" },
       status: { PENDING: "Pending", SUBMITTED: "Submitted", SUCCEEDED: "Succeeded", FAILED: "Failed", EXPIRED: "Expired", DELIVERED: "Delivered" },
@@ -1405,7 +1408,7 @@ export default {
       network: { dev: "Testnet", prod: "Public network" },
       chainLabel: "Chain",
       chains: { stellar: "Stellar", solana: "Solana", monad: "Monad" },
-      venues: { stellar: "Stellar DEX", solana: "Jupiter", monad: "Kuru Flow" },
+      venues: { stellar: "Stellar DEX", solana: "Solana DEX", monad: "Monad DEX" },
       chainModal: {
         desc: "Swap two assets on {chain} through {venue}, which routes across every liquidity source on the chain. Get a quote, then sign the transaction in the wallet.",
         sourceHint: { solana: "Solana wallet that signs, pays and receives (base58).", monad: "Monad wallet that signs, pays and receives (0x…)." },
@@ -1435,7 +1438,7 @@ export default {
         quoteTitle: "Quote",
         swapped: "Swapped after commission",
         estimated: "Estimated received", minimum: "Minimum received",
-        fee: "Commission", bps: "bps",
+        fee: "Commission",
         feeNote: "The commission is your organization plan's rate, applied automatically.",
         create: "Create swap", creating: "Creating…",
       },
@@ -1444,10 +1447,10 @@ export default {
         destination: "Network",
         recipient: "Recipient",
         arrives: "Arrives",
-        fee: "LayerZero fee",
+        fee: "Bridge fee",
         destTx: "Destination transaction",
-        scan: "View on LayerZero Scan",
-        travelling: "Sent from Stellar. LayerZero is delivering it to {chain}.",
+        scan: "Track the transfer",
+        travelling: "Sent from Stellar. Delivering it to {chain}.",
         delivered: "Delivered on {chain}.",
       },
       detail: {
@@ -1468,7 +1471,7 @@ export default {
     },
     crossChain: {
       title: "Cross-chain swaps",
-      sub: "{n} swaps · Stellar ⇄ Solana ⇄ Monad through NEAR Intents",
+      sub: "{n} swaps · between networks",
       create: "New cross-chain swap",
       readOnly: "You have read-only access to swaps in this organization.",
       searchPlaceholder: "Search by address, asset or ID…",
@@ -1482,11 +1485,11 @@ export default {
       quoteError: "Couldn't price the swap.",
       modal: {
         eyebrow: "Cross-chain swap", title: "New cross-chain swap",
-        desc: "Send an asset on one chain and receive another on a different chain. NEAR Intents settles it; Cosmos Pay never holds the funds.",
+        desc: "Send an asset on one chain and receive another on a different chain. A cross-chain swap settles it; Cosmos Pay never holds the funds.",
         from: "From", to: "To", chain: "Chain", asset: "Asset", assetsLoading: "Loading assets…",
         amount: "Amount to send", recipient: "Recipient",
         refundTo: "Refund address",
-        slippage: "Slippage (bps)", slippageHint: "Optional, e.g. 100. Below the minimum NEAR Intents refunds.",
+        slippage: "Slippage (bps)", slippageHint: "Optional, e.g. 100. Below the minimum, the swap is refunded.",
         getQuote: "Get quote", quoting: "Pricing…", quoteTitle: "Quote",
         estimated: "Estimated received", minimum: "Minimum received", fee: "Commission", eta: "Estimated time", seconds: "s",
         feeNote: "The commission is your organization plan's rate, taken from the input.",
@@ -1517,7 +1520,6 @@ export default {
       status: { PENDING: "Pending", SUBMITTED: "Submitted", SUCCEEDED: "Succeeded", FAILED: "Failed", EXPIRED: "Expired" },
       kind: { DEPOSIT: "Deposit", WITHDRAW: "Withdraw" },
       sharesUnit: "shares",
-      bps: "bps",
       opsHead: { id: "Operation", kind: "Type", pool: "Pool", amounts: "Amounts", status: "Status", created: "Created" },
       empty: "No liquidity operations yet. Deposit into a pool to get an unsigned transaction to sign.",
       loading: "Loading operations…",
@@ -1628,7 +1630,7 @@ export default {
         verificationSent: "Verification email sent to {email}",
         refresh: "Refresh status",
         refreshing: "Refreshing…",
-        refreshError: "Couldn't refresh the KYC status from BlindPay.",
+        refreshError: "Couldn't refresh the KYC status.",
         sending: "Sending…",
         types: { individual: "Individual", business: "Business" },
         createError: "Couldn't create the receiver.",

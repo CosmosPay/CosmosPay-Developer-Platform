@@ -16,14 +16,14 @@ const en = {
   meta: {
     title: "Stablecoin payment gateway for Latin America | Cosmos Pay",
     description:
-      "Stablecoin payments that reach your own address: payment links, a hosted checkout and an API. Customers pay from their wallet on Stellar, Solana or Monad.",
+      "Stablecoin payments that reach your own address: payment links, a hosted checkout and an API, on {n} networks with swaps between them.",
   },
   hero: {
     titleA: "Accept",
     titleMark: "stablecoins.",
     titleB: "Get paid in seconds.",
     lede:
-      "Payment links, hosted checkout and APIs to accept stablecoins on Stellar, Solana and Monad. Funds settle directly to your wallet in seconds.",
+      "Payment links, hosted checkout and APIs to accept stablecoins on {n} networks. Funds settle directly to your wallet in seconds.",
     primary: "Create a payment link",
     secondary: "Read the docs",
     designs: "See the ways to integrate",
@@ -109,7 +109,7 @@ const en = {
     titleBold: "to money in your wallet.",
     create: { title: "Create", body: "A payment link in the dashboard, or a payment intent from your server." },
     share: { title: "Share", body: "Send the link or show its QR code. The checkout shows the amount, the network and a countdown." },
-    pay: { title: "Pay", body: "Your customer pays from their own wallet on Stellar, Solana or Monad." },
+    pay: { title: "Pay", body: "Your customer pays from their own wallet, on any of the {n} networks we work with." },
     confirm: { title: "Confirm", body: "The payment is verified on-chain, the checkout turns to Paid and your webhook fires." },
   },
   integrations: {
@@ -209,20 +209,21 @@ const en = {
   faq: {
     title: "Questions",
     titleBold: "and answers.",
-    what: { q: "What is Cosmos Pay?", a: "Cosmos Pay is a stablecoin payment gateway for businesses in Latin America. Create a payment link, a hosted checkout or a payment intent through the API; your customer pays from their own wallet on Stellar, Solana or Monad, and the funds settle to an address you control." },
-    assets: { q: "Which currencies can I charge in?", a: "USDC, EURC, the network’s own coin (XLM, SOL or MON) or any other token on Stellar, Solana or Monad, such as USDT on Solana: you name it by its issuer, mint or contract when you create the link. Your customer pays in that asset, and you receive that same asset." },
-    wallet: { q: "Do I need my own crypto wallet?", a: "Yes. With Cosmos Pay, payments settle to an address you control on each network you accept: Stellar, Solana or Monad (on Monad, through a deposit address made for each payment, which can only forward it to yours). You add each wallet to your organization in the dashboard and prove it is yours with a signature, and payment links created there pay only into those wallets. Cosmos Pay never asks for a secret key and stores no one’s keys, so the funds are yours from the first payment and looking after the keys is up to you." },
+    what: { q: "What is Cosmos Pay?", a: "Cosmos Pay is a stablecoin payment gateway for businesses in Latin America, working with {n} networks. Create a payment link, a hosted checkout or a payment intent through the API; your customer pays from their own wallet, on any of those networks, and the payment reaches an address you control." },
+    networks: { q: "Which networks does Cosmos Pay work with?", a: "Cosmos Pay works with {n} networks, the whole collection of its swap platform: {networks}. Your customers can pay from any of them, with no account, and you can move what you receive to any of them." },
+    assets: { q: "Which currencies can I charge in?", a: "USDC, EURC, USDT, each network’s own coin or any other token, which you name by its issuer, mint or contract when you create the link. Your customer pays in that asset, and you receive that same asset. A customer who holds another token, on any of the {n} networks Cosmos Pay works with, can swap it into that asset first." },
+    wallet: { q: "Do I need my own crypto wallet?", a: "Yes. With Cosmos Pay, payments reach an address you control (on some networks through a deposit address made for each payment, which can only forward it to yours), and you can move those funds to any of the {n} networks Cosmos Pay works with. You add each wallet to your organization in the dashboard and prove it is yours with a signature, and payment links created there pay only into those wallets. Cosmos Pay never asks for a secret key and stores no one’s keys, so the funds are yours from the first payment and looking after the keys is up to you." },
     account: {
       q: "Do my customers need an account?",
-      a: "No. Your customers need no Cosmos Pay account, only a wallet on the payment’s network (Stellar, Solana or Monad) that holds the asset you charge in. They open the checkout, scan the QR code or tap their wallet’s button, and approve the payment in their wallet: there is nothing to sign up for. The checkout opens in their browser’s language when it is one of the seven it speaks (English, Spanish, Portuguese, French, German, Hindi and Chinese), and their wallet pays the network fee.",
+      a: "No. Your customers need no Cosmos Pay account, only a wallet that holds the asset you charge in, on the payment’s network; if their funds are on another of the {n} networks Cosmos Pay works with, they can swap them first, also without an account. They open the checkout, scan the QR code or tap their wallet’s button, and approve the payment in their wallet: there is nothing to sign up for. The checkout opens in their browser’s language when it is one of the seven it speaks (English, Spanish, Portuguese, French, German, Hindi and Chinese), and their wallet pays the network fee.",
     },
     wallets: {
       q: "Which wallets can my customers use?",
-      a: "Your customers pay a Cosmos Pay payment link from their own wallet, on the network the link settles on. On Stellar, any wallet that opens SEP-7 links, such as Freighter, xBull, Rabet, LOBSTR, Albedo or Cosmos Pay Wallet. On Solana, any wallet that reads Solana Pay links, such as Phantom or Solflare; on Monad, any EVM wallet that reads EIP-681 links. Every link also comes with a QR code, so on a computer the customer can scan it with a phone wallet.",
+      a: "Your customers pay from their own wallet: any wallet that opens standard payment links, such as Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare or any EVM wallet. A customer whose funds are on any of the {n} networks Cosmos Pay works with can swap them first and pay, with no account. Every link also comes with a QR code, so on a computer the customer can scan it with a phone wallet.",
     },
     custody: {
       q: "Does Cosmos Pay hold my money?",
-      a: "No. On Stellar and Solana the payer pays your address directly. On Monad each payment goes to a deposit address made for it, which can only forward it to your address (less the relay’s fee): Cosmos Pay holds no key to it. Protected payments wait in a smart contract, not with Cosmos Pay, until they are released.",
+      a: "No. Each payment goes straight to your address or, on networks that need one, to a deposit address made for that payment, which can only forward it to yours (less the relay’s fee): Cosmos Pay holds no key to it. Protected payments wait in a smart contract, not with Cosmos Pay, until they are released. A swap between networks waits at a deposit address made for it until it settles or is refunded.",
     },
     service: { q: "Can I offer this to my own customers?", a: "Yes. Cosmos Pay is the payment gateway, payments, swaps and private payments as a service: we run the whole service, and you only set the wallet addresses that receive the money and sign with your wallet. Each operation pays your plan's rate, and you can add your own fee to it, paid to the wallet you choose." },
     protected: {
@@ -231,11 +232,11 @@ const en = {
     },
     zk: {
       q: "What are private payments?",
-      a: "Private payments are Cosmos Pay payments whose amount stays private on-chain: the network checks a zero-knowledge proof instead of reading the amount. They run on Stellar, on OpenZeppelin’s confidential token for Stellar, and are available on testnet for now; Solana and Monad payments do not offer them. A private payment costs 0.18% per transaction, the same on every plan.",
+      a: "Private payments are Cosmos Pay payments whose amount stays private on-chain: the network checks a zero-knowledge proof instead of reading the amount. They run on a confidential token on Stellar and are available on testnet for now. A private payment costs 0.18% per transaction, the same on every plan.",
     },
     expiry: { q: "What happens when a link expires?", a: "A Cosmos Pay payment link is open for a limited time, which its checkout shows as a countdown. Once that time passes, the checkout says the link has expired, stops asking for the payment and tells your customer to ask you for a new link, so create another one and send it. If a payment still arrives and the network confirms it, the link is marked as paid." },
-    refunds: { q: "How do refunds work?", a: "Cosmos Pay payments have no chargebacks: once the network (Stellar, Solana or Monad) confirms a payment, it is final. A refund is your decision: it is a new payment you send back from your wallet to your customer. A card payment, by contrast, can be disputed for months after the sale." },
-    testing: { q: "Can I try it without real money?", a: "Yes. Choose Sandbox in the Cosmos Pay dashboard or create a test API key (it starts with dv_): payment links then run on Stellar Testnet, Solana Devnet and Monad Testnet, and their checkout says clearly that no real funds move. On Stellar Testnet you can charge in XLM, which Friendbot, the Testnet faucet, sends to a test account. When you are ready, a live key (prod_) runs the same requests on the main networks: the key decides the network, not the code." },
+    refunds: { q: "How do refunds work?", a: "Cosmos Pay payments have no chargebacks: once the network confirms a payment, it is final. A refund is your decision: it is a new payment you send back from your wallet to your customer. A card payment, by contrast, can be disputed for months after the sale." },
+    testing: { q: "Can I try it without real money?", a: "Yes. Choose Sandbox in the Cosmos Pay dashboard or create a test API key (it starts with dv_): payment links then run on test networks, and their checkout says clearly that no real funds move. You can charge in a test network’s own coin, which its faucet sends to a test account. When you are ready, a live key (prod_) runs the same requests on the main networks: the key decides the network, not the code." },
     designs: { q: "Can I change how the checkout looks?", a: "Yes. The Cosmos Pay hosted checkout comes in four designs, and you pick one for each payment link when you create it: Classic, one clean column with the amount, live status and QR code; Split, payment methods on a side rail with a countdown; Receipt, the payment fields with a receipt beside them; and Card, a large countdown and a payment card that carries the QR code. Every design is in seven languages, and no other site can frame the checkout pages." },
   },
   ui: {
@@ -312,7 +313,6 @@ const en = {
     monad: { nav: "Monad", title: "Accept payments on Monad", lede: "Cosmos Pay turns each payment into an EIP-681 link and QR code. Your customer pays from any EVM wallet, and a deposit address forwards it to yours.", meta: "Monad payments: accept USDC and MON | Cosmos Pay", link: "Monad payments" },
     more: { integrations: "See every integration option", fees: "Work out your fees", security: "See how payments are protected", faq: "See every question", useCases: "See every use case", compare: "Compare with other providers" },
     notes: ["No monthly fee on Starter", "Try it on testnet with no real money"],
-    byNetwork: "Payments by network:",
     /* The day the page last changed (src/lib/seo/page-dates.ts), under the lede of /faq, /compare
        and the network pages. */
     updated: "Updated {date}",
@@ -356,7 +356,7 @@ const en = {
         assets: { q: "Can I charge in USDC or EURC on Stellar?", a: "Yes. On Stellar’s public network, Cosmos Pay offers Circle’s USDC and EURC by name, next to XLM and Tether’s USDT0, and USDC has a preset on Stellar Testnet too. Any other Stellar asset goes by its code and issuer when you create the link. Your customer pays in the asset set on the link, and that same asset reaches your Stellar address once the network confirms the payment: about 5 seconds." },
         testing: { q: "How do I test Stellar payments without real money?", a: "Create a test API key (dv_) in the Cosmos Pay dashboard, or choose Sandbox there: payment links then run on Stellar Testnet, and their checkout says that no real funds move. Charge in Testnet USDC with its preset issuer, or in XLM, which Friendbot, the Testnet faucet, sends to a test account. A live key (prod_) then creates the same links on Stellar’s public network: the key decides the network, not the code." },
         fee: { q: "Can I add my own fee to a Stellar payment?", a: "Yes. Cosmos Pay can add your own fee to a Stellar payment, paid to a fee wallet you choose; it is separate from your plan’s rate, which each payment still pays. A SEP-7 payment link pays only one account, so a link with your fee asks the payer for their Stellar account and builds one prepared transaction (web+stellar:tx) that pays you and your fee wallet together. The payer approves that single transaction in their wallet." },
-        private: { q: "Can the amount of a Stellar payment stay private?", a: "Yes, with Cosmos Pay’s private payments: the network checks a zero-knowledge proof instead of reading the amount, so the amount stays private on-chain. They run on Stellar, on OpenZeppelin’s confidential token for Stellar, and are on Testnet for now; Solana and Monad payments do not offer them. A private payment costs {rate} per transaction, the same on every plan." },
+        private: { q: "Can the amount of a Stellar payment stay private?", a: "Yes, with Cosmos Pay’s private payments: the network checks a zero-knowledge proof instead of reading the amount, so the amount stays private on-chain. They run on a confidential token on Stellar and are on Testnet for now; Solana and Monad payments do not offer them. A private payment costs {rate} per transaction, the same on every plan." },
       },
     },
     solana: {
@@ -434,7 +434,7 @@ const en = {
       rows: {
         who: { k: "Businesses that can accept it", ours: "Businesses in Latin America and worldwide", theirs: "Businesses in the US; in private preview in the EU, Hong Kong, Mexico and Switzerland" },
         settle: { k: "Where a payment settles", ours: "Your own wallet, in the stablecoin your customer paid (on Monad, through a deposit address that can only forward it to yours)", theirs: "Your Stripe balance, in your local currency" },
-        networks: { k: "Stellar and Monad", ours: "Yes, besides Solana: USDC, EURC and USDT0 on Stellar, USDC on Monad", theirs: "No: USDC on Tempo, Ethereum, Solana, Polygon and Base" },
+        networks: { k: "Networks", ours: "{n} networks, with swaps between them", theirs: "USDC on Tempo, Ethereum, Solana, Polygon and Base" },
       },
       asOf: "Stripe’s terms as its documentation stated them on {date}.",
     },
@@ -471,14 +471,14 @@ const es: LandingMessages = {
   meta: {
     title: "Pasarela de pagos cripto: cobrar en USDC y USDT | Cosmos Pay",
     description:
-      "Cobros en stablecoins que llegan a tu propia dirección: enlaces de pago, checkout alojado y API. Tus clientes pagan desde su wallet en Stellar, Solana o Monad.",
+      "Cobros en stablecoins que llegan a tu propia dirección: enlaces de pago, checkout alojado y API, en {n} redes con swaps entre ellas.",
   },
   hero: {
     titleA: "Acepta",
     titleMark: "stablecoins.",
     titleB: "Cobra en segundos.",
     lede:
-      "Enlaces de pago, checkout alojado y API para aceptar stablecoins en Stellar, Solana y Monad. Los fondos llegan directo a tu wallet en segundos.",
+      "Enlaces de pago, checkout alojado y API para aceptar stablecoins en {n} redes. Los fondos llegan directo a tu wallet en segundos.",
     primary: "Crear un enlace de pago",
     secondary: "Leer la documentación",
     designs: "Ver las formas de integrar",
@@ -564,7 +564,7 @@ const es: LandingMessages = {
     titleBold: "al dinero en tu wallet.",
     create: { title: "Crea", body: "Un enlace de pago en el dashboard, o un intent de pago desde tu servidor." },
     share: { title: "Comparte", body: "Envía el enlace o muestra su código QR. El checkout muestra el importe, la red y una cuenta regresiva." },
-    pay: { title: "Cobra", body: "Tu cliente paga desde su propia wallet en Stellar, Solana o Monad." },
+    pay: { title: "Cobra", body: "Tu cliente paga desde su propia wallet, en cualquiera de las {n} redes con las que trabajamos." },
     confirm: { title: "Confirma", body: "El pago se verifica on-chain, el checkout pasa a Pagado y tu webhook se dispara." },
   },
   integrations: {
@@ -653,7 +653,7 @@ const es: LandingMessages = {
   pricing: {
     title: "Paga",
     titleBold: "por pago.",
-    lede: "Cada plan tiene su tarifa por pago. Los pagos protegidos suman un 1,95 % por pago. La wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío del depósito se descuenta y se muestra en el checkout. Los pagos privados cuestan 0,18 % por transacción.",
+    lede: "Cada plan tiene su tarifa por pago. Los pagos protegidos suman un 1,95\u00a0% por pago. La wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío del depósito se descuenta y se muestra en el checkout. Los pagos privados cuestan 0,18\u00a0% por transacción.",
     perPayment: "por pago",
     perSwap: "{rate} por swap",
     perMonth: "al mes",
@@ -664,33 +664,34 @@ const es: LandingMessages = {
   faq: {
     title: "Preguntas",
     titleBold: "y respuestas.",
-    what: { q: "¿Qué es Cosmos Pay?", a: "Cosmos Pay es una pasarela de pagos en stablecoins para empresas de Latinoamérica. Crea un enlace de pago, un checkout alojado o un intento de pago con la API; tu cliente paga desde su propia wallet en Stellar, Solana o Monad, y los fondos se liquidan en una dirección que controlas." },
-    assets: { q: "¿En qué monedas se puede cobrar?", a: "En USDC, EURC, la moneda propia de cada red (XLM, SOL o MON) o cualquier otro token en Stellar, Solana o Monad, como USDT en Solana: se indica por su emisor, mint o contrato al crear el enlace. El cliente paga en ese activo y el negocio recibe ese mismo activo." },
-    wallet: { q: "¿Necesito mi propia wallet cripto?", a: "Sí. Con Cosmos Pay, los pagos se liquidan en una dirección que controlas en cada red que aceptes: Stellar, Solana o Monad (en Monad, a través de una dirección de depósito creada para cada pago, que solo puede reenviarlo a la tuya). Agregas cada wallet a tu organización en el dashboard y demuestras que es tuya con una firma, y los enlaces de pago creados ahí solo pagan a esas wallets. Cosmos Pay nunca pide una clave secreta ni guarda las claves de nadie, así que los fondos son tuyos desde el primer pago y cuidar las claves depende de ti." },
+    what: { q: "¿Qué es Cosmos Pay?", a: "Cosmos Pay es una pasarela de pagos en stablecoins para empresas de Latinoamérica, que trabaja con {n} redes. Crea un enlace de pago, un checkout alojado o un intento de pago con la API; tu cliente paga desde su propia wallet, en cualquiera de esas redes, y el pago llega a una dirección que controlas." },
+    networks: { q: "¿Con qué redes trabaja Cosmos Pay?", a: "Cosmos Pay trabaja con {n} redes, toda la colección de su plataforma de swaps: {networks}. Tus clientes pueden pagar desde cualquiera de ellas, sin cuenta, y tú puedes mover lo que recibes a cualquiera de ellas." },
+    assets: { q: "¿En qué monedas se puede cobrar?", a: "En USDC, EURC, USDT, la moneda propia de cada red o cualquier otro token, que se indica por su emisor, mint o contrato al crear el enlace. El cliente paga en ese activo y el negocio recibe ese mismo activo. Un cliente que tenga otro token, en cualquiera de las {n} redes con las que trabaja Cosmos Pay, puede hacer primero un swap a ese activo." },
+    wallet: { q: "¿Necesito mi propia wallet cripto?", a: "Sí. Con Cosmos Pay, los pagos llegan a una dirección que controlas (en algunas redes, a través de una dirección de depósito creada para cada pago, que solo puede reenviarlo a la tuya), y puedes mover esos fondos a cualquiera de las {n} redes con las que trabaja Cosmos Pay. Agregas cada wallet a tu organización en el dashboard y demuestras que es tuya con una firma, y los enlaces de pago creados ahí solo pagan a esas wallets. Cosmos Pay nunca pide una clave secreta ni guarda las claves de nadie, así que los fondos son tuyos desde el primer pago y cuidar las claves depende de ti." },
     account: {
       q: "¿Mis clientes necesitan una cuenta?",
-      a: "No. Tus clientes no necesitan una cuenta de Cosmos Pay, solo una wallet en la red del pago (Stellar, Solana o Monad) con el activo en el que cobras. Abren el checkout, escanean el código QR o tocan el botón de su wallet, y aprueban el pago en su wallet: no tienen que registrarse en nada. El checkout se abre en el idioma de su navegador cuando es uno de los siete que habla (inglés, español, portugués, francés, alemán, hindi y chino), y su wallet paga la comisión de red.",
+      a: "No. Tus clientes no necesitan una cuenta de Cosmos Pay, solo una wallet con el activo en el que cobras, en la red del pago; si sus fondos están en otra de las {n} redes con las que trabaja Cosmos Pay, pueden hacer primero un swap, también sin cuenta. Abren el checkout, escanean el código QR o tocan el botón de su wallet, y aprueban el pago en su wallet: no tienen que registrarse en nada. El checkout se abre en el idioma de su navegador cuando es uno de los siete que habla (inglés, español, portugués, francés, alemán, hindi y chino), y su wallet paga la comisión de red.",
     },
     wallets: {
       q: "¿Qué wallets pueden usar mis clientes?",
-      a: "Tus clientes pagan un enlace de pago de Cosmos Pay desde su propia wallet, en la red en la que se liquida el enlace. En Stellar, cualquier wallet que abra enlaces SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo o Cosmos Pay Wallet. En Solana, cualquier wallet que lea enlaces de Solana Pay, como Phantom o Solflare; en Monad, cualquier wallet EVM que lea enlaces EIP-681. Cada enlace trae también un código QR, así que en una computadora el cliente puede escanearlo con una wallet del teléfono.",
+      a: "Tus clientes pagan desde su propia wallet: cualquier wallet que abra enlaces de pago estándar, como Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare o cualquier wallet EVM. Un cliente con fondos en cualquiera de las {n} redes con las que trabaja Cosmos Pay puede hacer primero un swap y pagar, sin cuenta. Cada enlace trae también un código QR, así que en una computadora el cliente puede escanearlo con una wallet del teléfono.",
     },
     custody: {
       q: "¿Cosmos Pay retiene mi dinero?",
-      a: "No. En Stellar y Solana quien paga envía directo a tu dirección. En Monad cada pago va a una dirección de depósito creada para él, que solo puede reenviarlo a tu dirección (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella. Los pagos protegidos esperan en un contrato inteligente, no en Cosmos Pay, hasta que se liberan.",
+      a: "No. Cada pago va directo a tu dirección o, en las redes que lo requieren, a una dirección de depósito creada para ese pago, que solo puede reenviarlo a la tuya (menos la comisión del reenvío): Cosmos Pay no tiene ninguna clave de ella. Los pagos protegidos esperan en un contrato inteligente, no en Cosmos Pay, hasta que se liberan. Un swap entre redes espera en una dirección de depósito creada para él hasta que se liquida o se reembolsa.",
     },
     service: { q: "¿Puedo ofrecerlo a mis propios clientes?", a: "Sí. Cosmos Pay es pasarela de pagos, pagos, swaps y pagos privados como servicio: nosotros operamos todo el servicio, y tú solo indicas las direcciones de wallet que reciben el dinero y firmas con tu wallet. Cada operación paga la tarifa de tu plan, y puedes sumarle tu propia comisión, que se paga a la wallet que elijas." },
     protected: {
       q: "¿Cómo funcionan los pagos protegidos?",
-      a: "Tu cliente paga como siempre, pero los fondos quedan retenidos en un contrato inteligente en lugar de llegarte al instante. Cuando se confirma la entrega, por tu cliente o por ti según cómo configures el pago, los fondos se liberan a tu wallet. Tú fijas el plazo de entrega; si vence, el pago pasa a revisión o se reembolsa o libera automáticamente, como elijas. Los pagos protegidos cuestan 1,95 % por pago además de la tarifa de tu plan, y un reembolso se devuelve con la misma comisión descontada.",
+      a: "Tu cliente paga como siempre, pero los fondos quedan retenidos en un contrato inteligente en lugar de llegarte al instante. Cuando se confirma la entrega, por tu cliente o por ti según cómo configures el pago, los fondos se liberan a tu wallet. Tú fijas el plazo de entrega; si vence, el pago pasa a revisión o se reembolsa o libera automáticamente, como elijas. Los pagos protegidos cuestan 1,95\u00a0% por pago además de la tarifa de tu plan, y un reembolso se devuelve con la misma comisión descontada.",
     },
     zk: {
       q: "¿Qué son los pagos privados?",
-      a: "Los pagos privados son pagos de Cosmos Pay cuyo monto queda privado en la cadena: la red verifica una prueba de conocimiento cero en lugar de leer el monto. Funcionan en Stellar, sobre el token confidencial de OpenZeppelin para Stellar, y por ahora están disponibles en testnet; los pagos en Solana y Monad no los ofrecen. Un pago privado cuesta 0,18 % por transacción, lo mismo en todos los planes.",
+      a: "Los pagos privados son pagos de Cosmos Pay cuyo monto queda privado en la cadena: la red verifica una prueba de conocimiento cero en lugar de leer el monto. Funcionan con un token confidencial en Stellar y por ahora están disponibles en testnet. Un pago privado cuesta 0,18 % por transacción, lo mismo en todos los planes.",
     },
     expiry: { q: "¿Qué pasa cuando vence un enlace?", a: "Un enlace de pago de Cosmos Pay está abierto por un tiempo limitado, que su checkout muestra como cuenta regresiva. Cuando ese tiempo pasa, el checkout indica que el enlace venció, deja de pedir el pago y le dice a tu cliente que te pida un enlace nuevo, así que crea otro y envíaselo. Si aun así llega un pago y la red lo confirma, el enlace queda como pagado." },
-    refunds: { q: "¿Cómo funcionan los reembolsos?", a: "Los pagos con Cosmos Pay no tienen contracargos: una vez que la red (Stellar, Solana o Monad) confirma un pago, es definitivo. Un reembolso lo decides tú: es un pago nuevo que envías desde tu wallet a tu cliente. Un pago con tarjeta, en cambio, puede disputarse meses después de la venta." },
-    testing: { q: "¿Puedo probarlo sin dinero real?", a: "Sí. Elige Sandbox en el dashboard de Cosmos Pay o crea una clave de API de prueba (empieza con dv_): los enlaces de pago funcionan entonces en Stellar Testnet, Solana Devnet y Monad Testnet, y su checkout indica con claridad que no se mueven fondos reales. En Stellar Testnet puedes cobrar en XLM, que Friendbot, el faucet de Testnet, envía a una cuenta de prueba. Cuando estés listo, una clave de producción (prod_) ejecuta las mismas solicitudes en las redes principales: la red la decide la clave, no el código." },
+    refunds: { q: "¿Cómo funcionan los reembolsos?", a: "Los pagos con Cosmos Pay no tienen contracargos: una vez que la red confirma un pago, es definitivo. Un reembolso lo decides tú: es un pago nuevo que envías desde tu wallet a tu cliente. Un pago con tarjeta, en cambio, puede disputarse meses después de la venta." },
+    testing: { q: "¿Puedo probarlo sin dinero real?", a: "Sí. Elige Sandbox en el dashboard de Cosmos Pay o crea una clave de API de prueba (empieza con dv_): los enlaces de pago funcionan entonces en redes de prueba, y su checkout indica con claridad que no se mueven fondos reales. Puedes cobrar en la moneda propia de una red de prueba, que su faucet envía a una cuenta de prueba. Cuando estés listo, una clave de producción (prod_) ejecuta las mismas solicitudes en las redes principales: la red la decide la clave, no el código." },
     designs: { q: "¿Puedo cambiar cómo se ve el checkout?", a: "Sí. El checkout alojado de Cosmos Pay tiene cuatro diseños, y eliges uno para cada enlace de pago al crearlo: Clásico, una columna limpia con el importe, el estado en vivo y el código QR; Dividido, los métodos de pago en un panel lateral con cuenta regresiva; Recibo, los datos del pago con un recibo al lado; y Tarjeta, una cuenta regresiva grande y una tarjeta de pago con el código QR. Cada diseño está en siete idiomas, y ningún otro sitio puede incrustar las páginas del checkout." },
   },
   ui: {
@@ -736,7 +737,7 @@ const es: LandingMessages = {
   calc: {
     title: "Calcula tus comisiones",
     amount: "Importe del pago",
-    protected: "Pago protegido (+1,95 %)",
+    protected: "Pago protegido (+1,95\u00a0%)",
     plan: "Plan",
     fee: "Comisión",
     youGet: "Recibes",
@@ -767,7 +768,6 @@ const es: LandingMessages = {
     monad: { nav: "Monad", title: "Acepta pagos en Monad", lede: "Cosmos Pay convierte cada pago en un enlace EIP-681 con código QR. Tu cliente paga con cualquier wallet EVM y una dirección de depósito te lo reenvía.", meta: "Pagos en Monad: cobra en USDC y MON | Cosmos Pay", link: "Pagos en Monad" },
     more: { integrations: "Ver todas las opciones de integración", fees: "Calcular mis comisiones", security: "Ver cómo protegemos los pagos", faq: "Ver todas las preguntas", useCases: "Ver todos los casos de uso", compare: "Comparar con otros proveedores" },
     notes: ["Sin cuota mensual en Starter", "Prueba en testnet sin dinero real"],
-    byNetwork: "Pagos por red:",
     updated: "Actualizado el {date}",
   },
   network: {
@@ -809,7 +809,7 @@ const es: LandingMessages = {
         assets: { q: "¿Puedo cobrar en USDC o EURC en Stellar?", a: "Sí. En la red pública de Stellar, Cosmos Pay ofrece por nombre USDC y EURC de Circle, junto con XLM y USDT0 de Tether, y USDC también está predefinido en Stellar Testnet. Cualquier otro activo de Stellar se indica por su código y su emisor al crear el enlace. Tu cliente paga en el activo del enlace, y ese mismo activo llega a tu dirección de Stellar en cuanto la red confirma el pago: unos 5 segundos." },
         testing: { q: "¿Cómo pruebo pagos en Stellar sin dinero real?", a: "Crea una clave de API de prueba (dv_) en el dashboard de Cosmos Pay, o elige Sandbox ahí: los enlaces de pago funcionan entonces en Stellar Testnet, y su checkout indica que no se mueven fondos reales. Cobra en USDC de Testnet con su emisor predefinido, o en XLM, que Friendbot, el faucet de Testnet, envía a una cuenta de prueba. Luego, una clave de producción (prod_) crea los mismos enlaces en la red pública de Stellar: la red la decide la clave, no el código." },
         fee: { q: "¿Puedo sumar mi propia comisión a un pago en Stellar?", a: "Sí. Cosmos Pay puede sumar tu propia comisión a un pago en Stellar, pagada a la wallet de comisiones que elijas; es aparte de la tarifa de tu plan, que cada pago sigue pagando. Un enlace de pago SEP-7 paga a una sola cuenta, así que un enlace con tu comisión le pide a quien paga su cuenta de Stellar y arma una sola transacción preparada (web+stellar:tx) que te paga a ti y a tu wallet de comisiones a la vez. Quien paga aprueba esa única transacción en su wallet." },
-        private: { q: "¿El monto de un pago en Stellar puede quedar privado?", a: "Sí, con los pagos privados de Cosmos Pay: la red verifica una prueba de conocimiento cero en lugar de leer el monto, así que el monto queda privado en la cadena. Funcionan en Stellar, sobre el token confidencial de OpenZeppelin para Stellar, y por ahora en Testnet; los pagos en Solana y Monad no los ofrecen. Un pago privado cuesta {rate} por transacción, lo mismo en todos los planes." },
+        private: { q: "¿El monto de un pago en Stellar puede quedar privado?", a: "Sí, con los pagos privados de Cosmos Pay: la red verifica una prueba de conocimiento cero en lugar de leer el monto, así que el monto queda privado en la cadena. Funcionan con un token confidencial en Stellar y por ahora en Testnet; los pagos en Solana y Monad no los ofrecen. Un pago privado cuesta {rate} por transacción, lo mismo en todos los planes." },
       },
     },
     solana: {
@@ -852,7 +852,7 @@ const es: LandingMessages = {
   comparePage: {
     title: "Nuestras tarifas junto a",
     titleBold: "las publicadas.",
-    lede: "Cada tarifa de Cosmos Pay es como máximo el 75 % de la tarifa que tiene al lado: la de BitPay para pagos, la de MetaMask para swaps, la de RAILGUN para pagos privados y la de Escrow.com para pagos protegidos.",
+    lede: "Cada tarifa de Cosmos Pay es como máximo el 75\u00a0% de la tarifa que tiene al lado: la de BitPay para pagos, la de MetaMask para swaps, la de RAILGUN para pagos privados y la de Escrow.com para pagos protegidos.",
     caption: "Tarifas de Cosmos Pay junto a las tarifas publicadas de otros proveedores",
     service: "Servicio",
     ours: "Cosmos Pay",
@@ -885,7 +885,7 @@ const es: LandingMessages = {
       rows: {
         who: { k: "Negocios que pueden cobrar", ours: "Negocios en Latinoamérica y en todo el mundo", theirs: "Negocios en EE. UU.; en preview privado en la UE, Hong Kong, México y Suiza" },
         settle: { k: "Dónde se acredita un pago", ours: "Tu propia wallet, en la stablecoin que pagó tu cliente (en Monad, a través de una dirección de depósito que solo puede reenviarlo a la tuya)", theirs: "Tu saldo de Stripe, en tu moneda local" },
-        networks: { k: "Stellar y Monad", ours: "Sí, además de Solana: USDC, EURC y USDT0 en Stellar, USDC en Monad", theirs: "No: USDC en Tempo, Ethereum, Solana, Polygon y Base" },
+        networks: { k: "Redes", ours: "{n} redes, con swaps entre ellas", theirs: "USDC en Tempo, Ethereum, Solana, Polygon y Base" },
       },
       asOf: "Condiciones de Stripe según su documentación al {date}.",
     },
@@ -921,14 +921,14 @@ const pt: LandingMessages = {
   meta: {
     title: "Gateway de pagamento cripto em USDC e USDT | Cosmos Pay",
     description:
-      "Pagamentos em stablecoins que chegam ao seu endereço: links de pagamento, checkout hospedado e API. Clientes pagam com a carteira na Stellar, Solana ou Monad.",
+      "Pagamentos em stablecoins direto no seu endereço: links de pagamento, checkout hospedado e API, em {n} redes com swaps entre elas.",
   },
   hero: {
     titleA: "Aceite",
     titleMark: "stablecoins.",
     titleB: "Receba em segundos.",
     lede:
-      "Links de pagamento, checkout hospedado e APIs para aceitar stablecoins na Stellar, Solana e Monad. Os fundos chegam diretamente à sua carteira em segundos.",
+      "Links de pagamento, checkout hospedado e APIs para aceitar stablecoins em {n} redes. Os fundos chegam diretamente à sua carteira em segundos.",
     primary: "Criar um link de pagamento",
     secondary: "Ler a documentação",
     designs: "Ver as formas de integrar",
@@ -1014,7 +1014,7 @@ const pt: LandingMessages = {
     titleBold: "ao dinheiro na sua carteira.",
     create: { title: "Crie", body: "Um link de pagamento no dashboard, ou um intent de pagamento no seu servidor." },
     share: { title: "Compartilhe", body: "Envie o link ou mostre o código QR. O checkout mostra o valor, a rede e uma contagem regressiva." },
-    pay: { title: "Receba", body: "Seu cliente paga com a própria carteira na Stellar, Solana ou Monad." },
+    pay: { title: "Receba", body: "Seu cliente paga com a própria carteira, em qualquer uma das {n} redes com que trabalhamos." },
     confirm: { title: "Confirme", body: "O pagamento é verificado on-chain, o checkout passa para Pago e o seu webhook é disparado." },
   },
   integrations: {
@@ -1114,20 +1114,21 @@ const pt: LandingMessages = {
   faq: {
     title: "Perguntas",
     titleBold: "e respostas.",
-    what: { q: "O que é o Cosmos Pay?", a: "O Cosmos Pay é um gateway de pagamento em stablecoins para empresas da América Latina. Crie um link de pagamento, um checkout hospedado ou uma intenção de pagamento pela API; seu cliente paga com a própria carteira na Stellar, Solana ou Monad, e os fundos são liquidados em um endereço que você controla." },
-    assets: { q: "Em quais moedas posso cobrar?", a: "Em USDC, EURC, a moeda da própria rede (XLM, SOL ou MON) ou qualquer outro token na Stellar, Solana ou Monad, como USDT na Solana: você indica o emissor, o mint ou o contrato ao criar o link. Seu cliente paga nesse ativo, e você recebe o mesmo ativo." },
-    wallet: { q: "Preciso da minha própria carteira cripto?", a: "Sim. Com o Cosmos Pay, os pagamentos são liquidados num endereço que você controla em cada rede que aceitar: Stellar, Solana ou Monad (na Monad, por meio de um endereço de depósito criado para cada pagamento, que só pode repassá-lo ao seu). Você adiciona cada carteira à sua organização no dashboard e comprova que ela é sua com uma assinatura, e os links de pagamento criados ali só pagam nessas carteiras. O Cosmos Pay nunca pede uma chave secreta nem guarda as chaves de ninguém, então os fundos são seus desde o primeiro pagamento, e cuidar das chaves fica por sua conta." },
+    what: { q: "O que é o Cosmos Pay?", a: "O Cosmos Pay é um gateway de pagamento em stablecoins para empresas da América Latina, que trabalha com {n} redes. Crie um link de pagamento, um checkout hospedado ou uma intenção de pagamento pela API; seu cliente paga com a própria carteira, em qualquer uma dessas redes, e o pagamento chega a um endereço que você controla." },
+    networks: { q: "Com quais redes o Cosmos Pay trabalha?", a: "O Cosmos Pay trabalha com {n} redes, toda a coleção da sua plataforma de swaps: {networks}. Seus clientes podem pagar a partir de qualquer uma delas, sem conta, e você pode mover o que recebe para qualquer uma delas." },
+    assets: { q: "Em quais moedas posso cobrar?", a: "Em USDC, EURC, USDT, a moeda própria de cada rede ou qualquer outro token, que você indica pelo emissor, pelo mint ou pelo contrato ao criar o link. Seu cliente paga nesse ativo, e você recebe o mesmo ativo. Um cliente que tenha outro token, em qualquer uma das {n} redes com que o Cosmos Pay trabalha, pode antes fazer um swap para esse ativo." },
+    wallet: { q: "Preciso da minha própria carteira cripto?", a: "Sim. Com o Cosmos Pay, os pagamentos chegam a um endereço que você controla (em algumas redes, por meio de um endereço de depósito criado para cada pagamento, que só pode repassá-lo ao seu), e você pode mover esses fundos para qualquer uma das {n} redes com que o Cosmos Pay trabalha. Você adiciona cada carteira à sua organização no dashboard e comprova que ela é sua com uma assinatura, e os links de pagamento criados ali só pagam nessas carteiras. O Cosmos Pay nunca pede uma chave secreta nem guarda as chaves de ninguém, então os fundos são seus desde o primeiro pagamento, e cuidar das chaves fica por sua conta." },
     account: {
       q: "Meus clientes precisam de uma conta?",
-      a: "Não. Seus clientes não precisam de conta no Cosmos Pay, só de uma carteira na rede do pagamento (Stellar, Solana ou Monad) com o ativo em que você cobra. Eles abrem o checkout, escaneiam o código QR ou tocam no botão da carteira e aprovam o pagamento na própria carteira: não há cadastro. O checkout abre no idioma do navegador deles quando é um dos sete que ele fala (inglês, espanhol, português, francês, alemão, hindi e chinês), e a carteira deles paga a taxa de rede.",
+      a: "Não. Seus clientes não precisam de conta no Cosmos Pay, só de uma carteira com o ativo em que você cobra, na rede do pagamento; se os fundos deles estiverem em outra das {n} redes com que o Cosmos Pay trabalha, podem antes fazer um swap, também sem conta. Eles abrem o checkout, escaneiam o código QR ou tocam no botão da carteira e aprovam o pagamento na própria carteira: não há cadastro. O checkout abre no idioma do navegador deles quando é um dos sete que ele fala (inglês, espanhol, português, francês, alemão, hindi e chinês), e a carteira deles paga a taxa de rede.",
     },
     wallets: {
       q: "Quais carteiras meus clientes podem usar?",
-      a: "Seus clientes pagam um link de pagamento do Cosmos Pay com a própria carteira, na rede em que o link é liquidado. Na Stellar, qualquer carteira que abra links SEP-7, como Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Pay Wallet. Na Solana, qualquer carteira que leia links do Solana Pay, como Phantom ou Solflare; na Monad, qualquer carteira EVM que leia links EIP-681. Cada link também vem com um código QR, então no computador o cliente pode escaneá-lo com uma carteira no celular.",
+      a: "Seus clientes pagam com a própria carteira: qualquer carteira que abra links de pagamento padrão, como Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare ou qualquer carteira EVM. Um cliente com fundos em qualquer uma das {n} redes com que o Cosmos Pay trabalha pode antes fazer um swap e pagar, sem conta. Cada link também vem com um código QR, então no computador o cliente pode escaneá-lo com uma carteira no celular.",
     },
     custody: {
       q: "O Cosmos Pay fica com o meu dinheiro?",
-      a: "Não. Na Stellar e na Solana, quem paga envia direto para o seu endereço. Na Monad, cada pagamento vai para um endereço de depósito criado para ele, que só pode repassá-lo ao seu endereço (menos a taxa do repasse): o Cosmos Pay não tem nenhuma chave dele. Os pagamentos protegidos esperam em um contrato inteligente, não no Cosmos Pay, até serem liberados.",
+      a: "Não. Cada pagamento vai direto para o seu endereço ou, nas redes que precisam de um, para um endereço de depósito criado para esse pagamento, que só pode repassá-lo ao seu (menos a taxa do repasse): o Cosmos Pay não tem nenhuma chave dele. Os pagamentos protegidos esperam em um contrato inteligente, não no Cosmos Pay, até serem liberados. Um swap entre redes espera em um endereço de depósito criado para ele até ser liquidado ou reembolsado.",
     },
     service: { q: "Posso oferecer isso aos meus próprios clientes?", a: "Sim. A Cosmos Pay é gateway de pagamento, pagamentos, swaps e pagamentos privados como serviço: nós operamos todo o serviço, e você só informa os endereços de carteira que recebem o dinheiro e assina com a sua carteira. Cada operação paga a tarifa do seu plano, e você pode somar sua própria taxa, paga à carteira que escolher." },
     protected: {
@@ -1136,11 +1137,11 @@ const pt: LandingMessages = {
     },
     zk: {
       q: "O que são pagamentos privados?",
-      a: "Pagamentos privados são pagamentos do Cosmos Pay em que o valor fica privado na blockchain: a rede verifica uma prova de conhecimento zero em vez de ler o valor. Funcionam na Stellar, sobre o token confidencial da OpenZeppelin para Stellar, e por enquanto estão disponíveis na testnet; os pagamentos na Solana e na Monad não os oferecem. Um pagamento privado custa 0,18% por transação, o mesmo em todos os planos.",
+      a: "Pagamentos privados são pagamentos do Cosmos Pay em que o valor fica privado na blockchain: a rede verifica uma prova de conhecimento zero em vez de ler o valor. Funcionam sobre um token confidencial na Stellar e por enquanto estão disponíveis na testnet. Um pagamento privado custa 0,18% por transação, o mesmo em todos os planos.",
     },
     expiry: { q: "O que acontece quando um link expira?", a: "Um link de pagamento do Cosmos Pay fica aberto por um tempo limitado, que o checkout mostra como contagem regressiva. Quando esse tempo passa, o checkout avisa que o link expirou, deixa de pedir o pagamento e orienta seu cliente a pedir um link novo, então crie outro e envie. Se ainda assim chegar um pagamento e a rede confirmar, o link fica como pago." },
-    refunds: { q: "Como funcionam os reembolsos?", a: "Os pagamentos com o Cosmos Pay não têm estornos: depois que a rede (Stellar, Solana ou Monad) confirma um pagamento, ele é definitivo. O reembolso é decisão sua: é um novo pagamento que você envia da sua carteira para o cliente. Um pagamento com cartão, por outro lado, pode ser contestado meses depois da venda." },
-    testing: { q: "Posso testar sem dinheiro real?", a: "Sim. Escolha Sandbox no dashboard do Cosmos Pay ou crie uma chave de API de teste (começa com dv_): os links de pagamento passam a funcionar na Stellar Testnet, na Solana Devnet e na Monad Testnet, e o checkout deixa claro que nenhum fundo real é movimentado. Na Stellar Testnet você pode cobrar em XLM, que o Friendbot, o faucet da Testnet, envia para uma conta de teste. Quando estiver pronto, uma chave de produção (prod_) executa as mesmas requisições nas redes principais: a chave decide a rede, não o código." },
+    refunds: { q: "Como funcionam os reembolsos?", a: "Os pagamentos com o Cosmos Pay não têm estornos: depois que a rede confirma um pagamento, ele é definitivo. O reembolso é decisão sua: é um novo pagamento que você envia da sua carteira para o cliente. Um pagamento com cartão, por outro lado, pode ser contestado meses depois da venda." },
+    testing: { q: "Posso testar sem dinheiro real?", a: "Sim. Escolha Sandbox no dashboard do Cosmos Pay ou crie uma chave de API de teste (começa com dv_): os links de pagamento passam a funcionar em redes de teste, e o checkout deixa claro que nenhum fundo real é movimentado. Você pode cobrar na moeda própria de uma rede de teste, que o faucet dela envia para uma conta de teste. Quando estiver pronto, uma chave de produção (prod_) executa as mesmas requisições nas redes principais: a chave decide a rede, não o código." },
     designs: { q: "Posso mudar a aparência do checkout?", a: "Sim. O checkout hospedado do Cosmos Pay tem quatro designs, e você escolhe um para cada link de pagamento ao criá-lo: Clássico, uma coluna limpa com o valor, o status ao vivo e o código QR; Dividido, os métodos de pagamento num painel lateral com contagem regressiva; Recibo, os dados do pagamento com um recibo ao lado; e Cartão, uma contagem regressiva grande e um cartão de pagamento com o código QR. Cada design está em sete idiomas, e nenhum outro site pode incorporar as páginas do checkout." },
   },
   ui: {
@@ -1217,7 +1218,6 @@ const pt: LandingMessages = {
     monad: { nav: "Monad", title: "Aceite pagamentos na Monad", lede: "A Cosmos Pay transforma cada pagamento em um link EIP-681 com QR code. Seu cliente paga com qualquer carteira EVM e um endereço de depósito repassa a você.", meta: "Pagamentos na Monad: receba em USDC e MON | Cosmos Pay", link: "Pagamentos na Monad" },
     more: { integrations: "Ver todas as opções de integração", fees: "Calcular minhas tarifas", security: "Ver como protegemos os pagamentos", faq: "Ver todas as perguntas", useCases: "Ver todos os casos de uso", compare: "Comparar com outros provedores" },
     notes: ["Sem mensalidade no Starter", "Teste na testnet sem dinheiro real"],
-    byNetwork: "Pagamentos por rede:",
     updated: "Atualizado em {date}",
   },
   network: {
@@ -1259,7 +1259,7 @@ const pt: LandingMessages = {
         assets: { q: "Posso cobrar em USDC ou EURC na Stellar?", a: "Sim. Na rede pública da Stellar, a Cosmos Pay oferece pelo nome o USDC e o EURC da Circle, junto com XLM e o USDT0 da Tether, e o USDC também é predefinido na Stellar Testnet. Qualquer outro ativo da Stellar é indicado pelo código e pelo emissor ao criar o link. Seu cliente paga no ativo do link, e esse mesmo ativo chega ao seu endereço Stellar assim que a rede confirma o pagamento: cerca de 5 segundos." },
         testing: { q: "Como testo pagamentos na Stellar sem dinheiro real?", a: "Crie uma chave de API de teste (dv_) no dashboard da Cosmos Pay, ou escolha Sandbox ali: os links de pagamento passam a funcionar na Stellar Testnet, e o checkout avisa que nenhum fundo real é movimentado. Cobre em USDC da Testnet com o emissor predefinido, ou em XLM, que o Friendbot, o faucet da Testnet, envia para uma conta de teste. Depois, uma chave de produção (prod_) cria os mesmos links na rede pública da Stellar: a chave decide a rede, não o código." },
         fee: { q: "Posso adicionar minha própria taxa a um pagamento na Stellar?", a: "Sim. A Cosmos Pay pode adicionar a sua própria taxa a um pagamento na Stellar, paga à carteira de taxas que você escolher; ela é separada da tarifa do seu plano, que cada pagamento continua pagando. Um link de pagamento SEP-7 paga uma única conta, então um link com a sua taxa pede a conta Stellar de quem paga e monta uma única transação preparada (web+stellar:tx) que paga você e a sua carteira de taxas ao mesmo tempo. Quem paga aprova essa única transação na carteira." },
-        private: { q: "O valor de um pagamento na Stellar pode ficar privado?", a: "Sim, com os pagamentos privados da Cosmos Pay: a rede verifica uma prova de conhecimento zero em vez de ler o valor, então o valor fica privado na blockchain. Eles funcionam na Stellar, sobre o token confidencial da OpenZeppelin para Stellar, e por enquanto na Testnet; os pagamentos na Solana e na Monad não os oferecem. Um pagamento privado custa {rate} por transação, o mesmo em todos os planos." },
+        private: { q: "O valor de um pagamento na Stellar pode ficar privado?", a: "Sim, com os pagamentos privados da Cosmos Pay: a rede verifica uma prova de conhecimento zero em vez de ler o valor, então o valor fica privado na blockchain. Eles funcionam sobre um token confidencial na Stellar e por enquanto estão na Testnet; os pagamentos na Solana e na Monad não os oferecem. Um pagamento privado custa {rate} por transação, o mesmo em todos os planos." },
       },
     },
     solana: {
@@ -1335,7 +1335,7 @@ const pt: LandingMessages = {
       rows: {
         who: { k: "Empresas que podem receber", ours: "Empresas na América Latina e no mundo todo", theirs: "Empresas nos EUA; em preview privado na UE, Hong Kong, México e Suíça" },
         settle: { k: "Onde o pagamento é liquidado", ours: "Na sua própria carteira, na stablecoin que o cliente pagou (na Monad, por um endereço de depósito que só pode repassá-lo ao seu)", theirs: "No seu saldo da Stripe, na sua moeda local" },
-        networks: { k: "Stellar e Monad", ours: "Sim, além da Solana: USDC, EURC e USDT0 na Stellar, USDC na Monad", theirs: "Não: USDC na Tempo, Ethereum, Solana, Polygon e Base" },
+        networks: { k: "Redes", ours: "{n} redes, com swaps entre elas", theirs: "USDC na Tempo, Ethereum, Solana, Polygon e Base" },
       },
       asOf: "Condições da Stripe conforme a documentação dela em {date}.",
     },
@@ -1371,14 +1371,14 @@ const fr: LandingMessages = {
   meta: {
     title: "Passerelle de paiement crypto en USDC | Cosmos Pay",
     description:
-      "Paiements en stablecoins versés à votre adresse : liens de paiement, checkout hébergé et API. Le client paie avec son wallet sur Stellar, Solana ou Monad.",
+      "Paiements en stablecoins versés à votre adresse : liens de paiement, checkout hébergé et API, sur {n} réseaux avec des swaps entre eux.",
   },
   hero: {
     titleA: "Acceptez les",
     titleMark: "stablecoins.",
     titleB: "Soyez payé en secondes.",
     lede:
-      "Des liens de paiement, un checkout hébergé et des API pour accepter les stablecoins sur Stellar, Solana et Monad. Les fonds arrivent directement dans votre wallet en quelques secondes.",
+      "Des liens de paiement, un checkout hébergé et des API pour accepter les stablecoins sur {n} réseaux. Les fonds arrivent directement dans votre wallet en quelques secondes.",
     primary: "Créer un lien de paiement",
     secondary: "Lire la documentation",
     designs: "Voir les façons d’intégrer",
@@ -1464,7 +1464,7 @@ const fr: LandingMessages = {
     titleBold: "à l’argent dans votre wallet.",
     create: { title: "Créez", body: "Un lien de paiement dans le dashboard, ou un intent de paiement depuis votre serveur." },
     share: { title: "Partagez", body: "Envoyez le lien ou montrez son QR code. Le checkout affiche le montant, le réseau et un compte à rebours." },
-    pay: { title: "Encaissez", body: "Votre client paie depuis son propre wallet sur Stellar, Solana ou Monad." },
+    pay: { title: "Encaissez", body: "Votre client paie depuis son propre wallet, sur n’importe lequel des {n} réseaux avec lesquels nous travaillons." },
     confirm: { title: "Confirmez", body: "Le paiement est vérifié on-chain, le checkout passe à Payé et votre webhook se déclenche." },
   },
   integrations: {
@@ -1553,7 +1553,7 @@ const fr: LandingMessages = {
   pricing: {
     title: "Payez",
     titleBold: "au paiement.",
-    lede: "Chaque offre a son propre tarif par paiement. Les paiements protégés ajoutent 1,95 % par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais de dépôt sont déduits et affichés sur le checkout. Les paiements privés coûtent 0,18 % par transaction.",
+    lede: "Chaque offre a son propre tarif par paiement. Les paiements protégés ajoutent 1,95\u00a0% par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais de dépôt sont déduits et affichés sur le checkout. Les paiements privés coûtent 0,18\u00a0% par transaction.",
     perPayment: "par paiement",
     perSwap: "{rate} par swap",
     perMonth: "par mois",
@@ -1564,33 +1564,34 @@ const fr: LandingMessages = {
   faq: {
     title: "Questions",
     titleBold: "et réponses.",
-    what: { q: "Qu’est-ce que Cosmos Pay ?", a: "Cosmos Pay est une passerelle de paiement en stablecoins pour les entreprises d’Amérique latine. Créez un lien de paiement, un checkout hébergé ou une intention de paiement via l’API ; votre client paie depuis son propre wallet sur Stellar, Solana ou Monad, et les fonds sont réglés sur une adresse que vous contrôlez." },
-    assets: { q: "Dans quelles devises puis-je encaisser ?", a: "En USDC, en EURC, dans la monnaie du réseau (XLM, SOL ou MON) ou dans tout autre jeton sur Stellar, Solana ou Monad, comme l’USDT sur Solana : vous l’indiquez par son émetteur, son mint ou son contrat en créant le lien. Votre client paie dans cet actif, et vous recevez ce même actif." },
-    wallet: { q: "Ai-je besoin de mon propre wallet crypto ?", a: "Oui. Avec Cosmos Pay, les paiements sont réglés sur une adresse que vous contrôlez pour chaque réseau accepté : Stellar, Solana ou Monad (sur Monad, via une adresse de dépôt créée pour chaque paiement, qui ne peut que le transférer à la vôtre). Vous ajoutez chaque wallet à votre organisation dans le tableau de bord et prouvez qu’il est à vous par une signature, et les liens de paiement créés là ne paient que vers ces wallets. Cosmos Pay ne demande jamais de clé secrète et ne conserve les clés de personne : les fonds sont à vous dès le premier paiement, et veiller sur vos clés vous revient." },
+    what: { q: "Qu’est-ce que Cosmos Pay ?", a: "Cosmos Pay est une passerelle de paiement en stablecoins pour les entreprises d’Amérique latine, qui fonctionne avec {n} réseaux. Créez un lien de paiement, un checkout hébergé ou une intention de paiement via l’API ; votre client paie depuis son propre wallet, sur n’importe lequel de ces réseaux, et le paiement arrive à une adresse que vous contrôlez." },
+    networks: { q: "Avec quels réseaux Cosmos Pay fonctionne-t-il ?", a: "Cosmos Pay fonctionne avec {n} réseaux, toute la collection de sa plateforme de swaps : {networks}. Vos clients peuvent payer depuis n’importe lequel d’entre eux, sans compte, et vous pouvez transférer ce que vous recevez vers n’importe lequel d’entre eux." },
+    assets: { q: "Dans quelles devises puis-je encaisser ?", a: "En USDC, en EURC, en USDT, dans la monnaie propre à chaque réseau ou dans tout autre jeton, que vous indiquez par son émetteur, son mint ou son contrat en créant le lien. Votre client paie dans cet actif, et vous recevez ce même actif. Un client qui détient un autre jeton, sur n’importe lequel des {n} réseaux avec lesquels fonctionne Cosmos Pay, peut d’abord l’échanger contre cet actif par un swap." },
+    wallet: { q: "Ai-je besoin de mon propre wallet crypto ?", a: "Oui. Avec Cosmos Pay, les paiements arrivent à une adresse que vous contrôlez (sur certains réseaux, via une adresse de dépôt créée pour chaque paiement, qui ne peut que le transférer à la vôtre), et vous pouvez transférer ces fonds vers n’importe lequel des {n} réseaux avec lesquels fonctionne Cosmos Pay. Vous ajoutez chaque wallet à votre organisation dans le tableau de bord et prouvez qu’il est à vous par une signature, et les liens de paiement créés là ne paient que vers ces wallets. Cosmos Pay ne demande jamais de clé secrète et ne conserve les clés de personne : les fonds sont à vous dès le premier paiement, et veiller sur vos clés vous revient." },
     account: {
       q: "Mes clients ont-ils besoin d’un compte ?",
-      a: "Non. Vos clients n’ont pas besoin de compte Cosmos Pay, seulement d’un wallet sur le réseau du paiement (Stellar, Solana ou Monad) qui détient l’actif dans lequel vous encaissez. Ils ouvrent le checkout, scannent le QR code ou touchent le bouton de leur wallet, puis approuvent le paiement dans leur wallet : aucune inscription. Le checkout s’ouvre dans la langue de leur navigateur quand c’est l’une des sept qu’il parle (anglais, espagnol, portugais, français, allemand, hindi et chinois), et leur wallet paie les frais de réseau.",
+      a: "Non. Vos clients n’ont pas besoin de compte Cosmos Pay, seulement d’un wallet qui détient l’actif dans lequel vous encaissez, sur le réseau du paiement, et si leurs fonds sont sur un autre des {n} réseaux avec lesquels fonctionne Cosmos Pay, ils peuvent d’abord faire un swap, toujours sans compte. Ils ouvrent le checkout, scannent le QR code ou touchent le bouton de leur wallet, puis approuvent le paiement dans leur wallet : aucune inscription. Le checkout s’ouvre dans la langue de leur navigateur quand c’est l’une des sept qu’il parle (anglais, espagnol, portugais, français, allemand, hindi et chinois), et leur wallet paie les frais de réseau.",
     },
     wallets: {
       q: "Quels wallets mes clients peuvent-ils utiliser ?",
-      a: "Vos clients paient un lien de paiement Cosmos Pay depuis leur propre wallet, sur le réseau où le lien est réglé. Sur Stellar, tout wallet qui ouvre les liens SEP-7, comme Freighter, xBull, Rabet, LOBSTR, Albedo ou Cosmos Pay Wallet. Sur Solana, tout wallet qui lit les liens Solana Pay, comme Phantom ou Solflare ; sur Monad, tout wallet EVM qui lit les liens EIP-681. Chaque lien a aussi un QR code : sur un ordinateur, le client peut le scanner avec un wallet sur son téléphone.",
+      a: "Vos clients paient depuis leur propre wallet : tout wallet qui ouvre les liens de paiement standard, comme Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare ou n’importe quel wallet EVM. Un client dont les fonds sont sur n’importe lequel des {n} réseaux avec lesquels fonctionne Cosmos Pay peut d’abord faire un swap et payer, sans compte. Chaque lien a aussi un QR code : sur un ordinateur, le client peut le scanner avec un wallet sur son téléphone.",
     },
     custody: {
       q: "Cosmos Pay garde-t-il mon argent ?",
-      a: "Non. Sur Stellar et Solana, le payeur paie directement votre adresse. Sur Monad, chaque paiement va à une adresse de dépôt créée pour lui, qui ne peut que le transférer à votre adresse (moins les frais du relais) : Cosmos Pay n’en détient aucune clé. Les paiements protégés attendent dans un contrat intelligent, pas chez Cosmos Pay, jusqu’à leur libération.",
+      a: "Non. Chaque paiement va directement à votre adresse ou, sur les réseaux qui en ont besoin, à une adresse de dépôt créée pour ce paiement, qui ne peut que le transférer à la vôtre (moins les frais du relais) : Cosmos Pay n’en détient aucune clé. Les paiements protégés attendent dans un contrat intelligent, pas chez Cosmos Pay, jusqu’à leur libération. Un swap entre réseaux attend sur une adresse de dépôt créée pour lui jusqu’à ce qu’il soit réglé ou remboursé.",
     },
     service: { q: "Puis-je le proposer à mes propres clients ?", a: "Oui. Cosmos Pay, c’est la passerelle de paiement, les paiements, les swaps et les paiements privés en tant que service : nous opérons tout le service, et vous indiquez seulement les adresses de wallet qui reçoivent l’argent et signez avec votre wallet. Chaque opération paie le tarif de votre offre, et vous pouvez y ajouter vos propres frais, versés au wallet de votre choix." },
     protected: {
       q: "Comment fonctionnent les paiements protégés ?",
-      a: "Votre client paie comme d’habitude, mais les fonds sont retenus dans un contrat intelligent au lieu de vous parvenir aussitôt. Une fois la livraison confirmée, par votre client ou par vous selon le paramétrage du paiement, les fonds sont versés sur votre wallet. Vous fixez un délai de livraison ; s’il expire, le paiement passe en revue, ou il est remboursé ou libéré automatiquement, selon votre choix. Les paiements protégés coûtent 1,95 % par paiement en plus du tarif de votre offre, et un remboursement est restitué déduction faite des mêmes frais.",
+      a: "Votre client paie comme d’habitude, mais les fonds sont retenus dans un contrat intelligent au lieu de vous parvenir aussitôt. Une fois la livraison confirmée, par votre client ou par vous selon le paramétrage du paiement, les fonds sont versés sur votre wallet. Vous fixez un délai de livraison ; s’il expire, le paiement passe en revue, ou il est remboursé ou libéré automatiquement, selon votre choix. Les paiements protégés coûtent 1,95\u00a0% par paiement en plus du tarif de votre offre, et un remboursement est restitué déduction faite des mêmes frais.",
     },
     zk: {
       q: "Que sont les paiements privés ?",
-      a: "Les paiements privés sont des paiements Cosmos Pay dont le montant reste privé sur la blockchain : le réseau vérifie une preuve à divulgation nulle de connaissance au lieu de lire le montant. Ils fonctionnent sur Stellar, sur le jeton confidentiel d’OpenZeppelin pour Stellar, et sont pour l’instant disponibles sur le testnet ; les paiements sur Solana et Monad ne les proposent pas. Un paiement privé coûte 0,18 % par transaction, le même tarif sur toutes les offres.",
+      a: "Les paiements privés sont des paiements Cosmos Pay dont le montant reste privé sur la blockchain : le réseau vérifie une preuve à divulgation nulle de connaissance au lieu de lire le montant. Ils fonctionnent avec un jeton confidentiel sur Stellar et sont pour l’instant disponibles sur le testnet. Un paiement privé coûte 0,18\u00a0% par transaction, le même tarif sur toutes les offres.",
     },
     expiry: { q: "Que se passe-t-il quand un lien expire ?", a: "Un lien de paiement Cosmos Pay reste ouvert pendant une durée limitée, que son checkout affiche sous forme de compte à rebours. Une fois ce délai passé, le checkout indique que le lien a expiré, cesse de demander le paiement et invite votre client à vous demander un nouveau lien : créez-en un autre et envoyez-le. Si un paiement arrive quand même et que le réseau le confirme, le lien est marqué comme payé." },
-    refunds: { q: "Comment fonctionnent les remboursements ?", a: "Les paiements Cosmos Pay n’ont pas de rétrofacturation : une fois que le réseau (Stellar, Solana ou Monad) confirme un paiement, il est définitif. Un remboursement relève de votre décision : c’est un nouveau paiement que vous envoyez depuis votre wallet à votre client. Un paiement par carte, à l’inverse, peut être contesté des mois après la vente." },
-    testing: { q: "Puis-je essayer sans argent réel ?", a: "Oui. Choisissez Sandbox dans le tableau de bord de Cosmos Pay ou créez une clé d’API de test (elle commence par dv_) : les liens de paiement fonctionnent alors sur Stellar Testnet, Solana Devnet et Monad Testnet, et leur checkout indique clairement qu’aucun fonds réel ne circule. Sur Stellar Testnet, vous pouvez encaisser en XLM, que Friendbot, le faucet de Testnet, envoie à un compte de test. Quand vous êtes prêt, une clé de production (prod_) exécute les mêmes requêtes sur les réseaux principaux : la clé choisit le réseau, pas le code." },
+    refunds: { q: "Comment fonctionnent les remboursements ?", a: "Les paiements Cosmos Pay n’ont pas de rétrofacturation : une fois que le réseau confirme un paiement, il est définitif. Un remboursement relève de votre décision : c’est un nouveau paiement que vous envoyez depuis votre wallet à votre client. Un paiement par carte, à l’inverse, peut être contesté des mois après la vente." },
+    testing: { q: "Puis-je essayer sans argent réel ?", a: "Oui. Choisissez Sandbox dans le tableau de bord de Cosmos Pay ou créez une clé d’API de test (elle commence par dv_) : les liens de paiement fonctionnent alors sur des réseaux de test, et leur checkout indique clairement qu’aucun fonds réel ne circule. Vous pouvez encaisser dans la monnaie d’un réseau de test, que son faucet envoie à un compte de test. Quand vous êtes prêt, une clé de production (prod_) exécute les mêmes requêtes sur les réseaux principaux : la clé choisit le réseau, pas le code." },
     designs: { q: "Puis-je changer l’apparence du checkout ?", a: "Oui. Le checkout hébergé de Cosmos Pay existe en quatre designs, et vous en choisissez un pour chaque lien de paiement à sa création : Classique, une colonne épurée avec le montant, le statut en direct et le QR code ; Partagé, les moyens de paiement dans un panneau latéral avec un compte à rebours ; Reçu, les champs du paiement avec un reçu à côté ; et Carte, un grand compte à rebours et une carte de paiement qui porte le QR code. Chaque design existe en sept langues, et aucun autre site ne peut intégrer les pages du checkout." },
   },
   ui: {
@@ -1636,7 +1637,7 @@ const fr: LandingMessages = {
   calc: {
     title: "Estimez vos frais",
     amount: "Montant du paiement",
-    protected: "Paiement protégé (+1,95 %)",
+    protected: "Paiement protégé (+1,95\u00a0%)",
     plan: "Offre",
     fee: "Frais",
     youGet: "Vous recevez",
@@ -1667,7 +1668,6 @@ const fr: LandingMessages = {
     monad: { nav: "Monad", title: "Acceptez des paiements sur Monad", lede: "Cosmos Pay transforme chaque paiement en lien EIP-681 avec QR code. Votre client paie avec tout wallet EVM, et une adresse de dépôt vous le transfère.", meta: "Paiements sur Monad : acceptez USDC et MON | Cosmos Pay", link: "Paiements sur Monad" },
     more: { integrations: "Voir toutes les options d’intégration", fees: "Calculer mes frais", security: "Voir comment les paiements sont protégés", faq: "Voir toutes les questions", useCases: "Voir tous les cas d’usage", compare: "Comparer avec d’autres prestataires" },
     notes: ["Sans abonnement mensuel avec Starter", "Testez sur le testnet sans argent réel"],
-    byNetwork: "Paiements par réseau :",
     updated: "Mis à jour le {date}",
   },
   network: {
@@ -1709,7 +1709,7 @@ const fr: LandingMessages = {
         assets: { q: "Puis-je encaisser en USDC ou en EURC sur Stellar ?", a: "Oui. Sur le réseau public Stellar, Cosmos Pay propose par leur nom l’USDC et l’EURC de Circle, avec le XLM et l’USDT0 de Tether, et l’USDC est aussi préconfiguré sur Stellar Testnet. Tout autre actif Stellar s’indique par son code et son émetteur à la création du lien. Votre client paie dans l’actif du lien, et ce même actif arrive à votre adresse Stellar dès que le réseau confirme le paiement : 5 secondes environ." },
         testing: { q: "Comment tester des paiements Stellar sans argent réel ?", a: "Créez une clé d’API de test (dv_) dans le tableau de bord de Cosmos Pay, ou choisissez Sandbox : les liens de paiement fonctionnent alors sur Stellar Testnet, et leur checkout indique qu’aucun fonds réel ne circule. Encaissez en USDC de Testnet avec son émetteur préconfiguré, ou en XLM, que Friendbot, le faucet de Testnet, envoie à un compte de test. Une clé de production (prod_) crée ensuite les mêmes liens sur le réseau public Stellar : la clé choisit le réseau, pas le code." },
         fee: { q: "Puis-je ajouter mes propres frais à un paiement Stellar ?", a: "Oui. Cosmos Pay peut ajouter vos propres frais à un paiement Stellar, versés au wallet de frais de votre choix ; ils sont distincts du tarif de votre offre, que chaque paiement continue de payer. Un lien de paiement SEP-7 paie un seul compte : un lien avec vos frais demande donc au payeur son compte Stellar et prépare une seule transaction (web+stellar:tx) qui vous paie, vous et votre wallet de frais, en même temps. Le payeur approuve cette transaction unique dans son wallet." },
-        private: { q: "Le montant d’un paiement Stellar peut-il rester privé ?", a: "Oui, avec les paiements privés de Cosmos Pay : le réseau vérifie une preuve à divulgation nulle de connaissance au lieu de lire le montant, qui reste donc privé sur la blockchain. Ils fonctionnent sur Stellar, sur le jeton confidentiel d’OpenZeppelin pour Stellar, et pour l’instant sur Testnet ; les paiements sur Solana et Monad ne les proposent pas. Un paiement privé coûte {rate} par transaction, le même tarif sur toutes les offres." },
+        private: { q: "Le montant d’un paiement Stellar peut-il rester privé ?", a: "Oui, avec les paiements privés de Cosmos Pay : le réseau vérifie une preuve à divulgation nulle de connaissance au lieu de lire le montant, qui reste donc privé sur la blockchain. Ils fonctionnent avec un jeton confidentiel sur Stellar et sont pour l’instant sur Testnet ; les paiements sur Solana et Monad ne les proposent pas. Un paiement privé coûte {rate} par transaction, le même tarif sur toutes les offres." },
       },
     },
     solana: {
@@ -1752,7 +1752,7 @@ const fr: LandingMessages = {
   comparePage: {
     title: "Nos tarifs à côté",
     titleBold: "des tarifs publiés.",
-    lede: "Chaque tarif de Cosmos Pay vaut au plus 75 % du tarif placé à côté : celui de BitPay pour les paiements, de MetaMask pour les swaps, de RAILGUN pour les paiements privés et d’Escrow.com pour les paiements protégés.",
+    lede: "Chaque tarif de Cosmos Pay vaut au plus 75\u00a0% du tarif placé à côté : celui de BitPay pour les paiements, de MetaMask pour les swaps, de RAILGUN pour les paiements privés et d’Escrow.com pour les paiements protégés.",
     caption: "Les tarifs de Cosmos Pay à côté des tarifs publiés par d’autres prestataires",
     service: "Service",
     ours: "Cosmos Pay",
@@ -1785,7 +1785,7 @@ const fr: LandingMessages = {
       rows: {
         who: { k: "Entreprises qui peuvent encaisser", ours: "Entreprises en Amérique latine et dans le monde entier", theirs: "Entreprises aux États-Unis ; en accès anticipé privé dans l’UE, à Hong Kong, au Mexique et en Suisse" },
         settle: { k: "Où un paiement est réglé", ours: "Votre propre wallet, dans le stablecoin payé par votre client (sur Monad, via une adresse de dépôt qui ne peut le transférer qu’à la vôtre)", theirs: "Votre solde Stripe, dans votre devise locale" },
-        networks: { k: "Stellar et Monad", ours: "Oui, en plus de Solana : USDC, EURC et USDT0 sur Stellar, USDC sur Monad", theirs: "Non : USDC sur Tempo, Ethereum, Solana, Polygon et Base" },
+        networks: { k: "Réseaux", ours: "{n} réseaux, avec des swaps entre eux", theirs: "USDC sur Tempo, Ethereum, Solana, Polygon et Base" },
       },
       asOf: "Conditions de Stripe telles que sa documentation les indiquait le {date}.",
     },
@@ -1821,14 +1821,14 @@ const de: LandingMessages = {
   meta: {
     title: "Krypto-Zahlungsgateway für USDC und Stablecoins | Cosmos Pay",
     description:
-      "Stablecoin-Zahlungen an deine Adresse: Zahlungslinks, gehosteter Checkout und API. Kunden zahlen aus ihrer Wallet auf Stellar, Solana oder Monad.",
+      "Stablecoin-Zahlungen an deine eigene Adresse: Zahlungslinks, gehosteter Checkout und API, in {n} Netzwerken mit Swaps zwischen ihnen.",
   },
   hero: {
     titleA: "Akzeptiere",
     titleMark: "Stablecoins.",
     titleB: "Werde in Sekunden bezahlt.",
     lede:
-      "Zahlungslinks, gehosteter Checkout und APIs, um Stablecoins auf Stellar, Solana und Monad zu akzeptieren. Das Geld landet in Sekunden direkt in deiner Wallet.",
+      "Zahlungslinks, gehosteter Checkout und APIs, um Stablecoins in {n} Netzwerken zu akzeptieren. Das Geld landet in Sekunden direkt in deiner Wallet.",
     primary: "Zahlungslink erstellen",
     secondary: "Dokumentation lesen",
     designs: "Integrationswege ansehen",
@@ -1914,7 +1914,7 @@ const de: LandingMessages = {
     titleBold: "zum Geld in deiner Wallet.",
     create: { title: "Erstellen", body: "Einen Zahlungslink im Dashboard oder einen Zahlungs-Intent von deinem Server." },
     share: { title: "Teilen", body: "Sende den Link oder zeige seinen QR-Code. Der Checkout zeigt Betrag, Netzwerk und einen Countdown." },
-    pay: { title: "Bezahlen", body: "Dein Kunde zahlt aus seiner eigenen Wallet auf Stellar, Solana oder Monad." },
+    pay: { title: "Bezahlen", body: "Dein Kunde zahlt aus seiner eigenen Wallet in einem der {n} Netzwerke, mit denen wir arbeiten." },
     confirm: { title: "Bestätigen", body: "Die Zahlung wird on-chain geprüft, der Checkout springt auf Bezahlt und dein Webhook wird ausgelöst." },
   },
   integrations: {
@@ -2003,7 +2003,7 @@ const de: LandingMessages = {
   pricing: {
     title: "Zahle",
     titleBold: "pro Zahlung.",
-    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung. Geschützte Zahlungen kosten zusätzlich 1,95 % pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt. Private Zahlungen kosten 0,18 % pro Transaktion.",
+    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung. Geschützte Zahlungen kosten zusätzlich 1,95\u00a0% pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt. Private Zahlungen kosten 0,18\u00a0% pro Transaktion.",
     perPayment: "pro Zahlung",
     perSwap: "{rate} pro Swap",
     perMonth: "pro Monat",
@@ -2014,33 +2014,34 @@ const de: LandingMessages = {
   faq: {
     title: "Fragen",
     titleBold: "und Antworten.",
-    what: { q: "Was ist Cosmos Pay?", a: "Cosmos Pay ist ein Zahlungsgateway für Stablecoins für Unternehmen in Lateinamerika. Erstelle einen Zahlungslink, einen gehosteten Checkout oder per API eine Zahlungsabsicht; dein Kunde zahlt aus seiner eigenen Wallet auf Stellar, Solana oder Monad, und das Geld geht an eine Adresse, die du kontrollierst." },
-    assets: { q: "In welchen Währungen kann ich kassieren?", a: "In USDC, EURC, der eigenen Coin des Netzwerks (XLM, SOL oder MON) oder jedem anderen Token auf Stellar, Solana oder Monad, etwa USDT auf Solana: Du gibst ihn beim Erstellen des Links über seinen Herausgeber, Mint oder Contract an. Dein Kunde zahlt in diesem Asset, und du erhältst dasselbe Asset." },
-    wallet: { q: "Brauche ich eine eigene Krypto-Wallet?", a: "Ja. Mit Cosmos Pay werden Zahlungen an eine Adresse abgewickelt, die du in jedem akzeptierten Netzwerk kontrollierst: Stellar, Solana oder Monad (auf Monad über eine für jede Zahlung erstellte Einzahlungsadresse, die sie nur an deine weiterleiten kann). Du fügst jede Wallet im Dashboard deiner Organisation hinzu und beweist mit einer Signatur, dass sie dir gehört, und dort erstellte Zahlungslinks zahlen nur an diese Wallets. Cosmos Pay fragt nie nach einem geheimen Schlüssel und speichert niemandes Schlüssel, also gehört das Geld ab der ersten Zahlung dir, und auf die Schlüssel aufzupassen ist deine Sache." },
+    what: { q: "Was ist Cosmos Pay?", a: "Cosmos Pay ist ein Zahlungsgateway für Stablecoins für Unternehmen in Lateinamerika und arbeitet mit {n} Netzwerken. Erstelle einen Zahlungslink, einen gehosteten Checkout oder per API eine Zahlungsabsicht; dein Kunde zahlt aus seiner eigenen Wallet in einem dieser Netzwerke, und die Zahlung kommt an einer Adresse an, die du kontrollierst." },
+    networks: { q: "Mit welchen Netzwerken arbeitet Cosmos Pay?", a: "Cosmos Pay arbeitet mit {n} Netzwerken, der ganzen Sammlung seiner Swap-Plattform: {networks}. Deine Kunden können aus jedem von ihnen zahlen, ohne Konto, und du kannst das Erhaltene in jedes von ihnen weiterbewegen." },
+    assets: { q: "In welchen Währungen kann ich kassieren?", a: "In USDC, EURC, USDT, der eigenen Coin jedes Netzwerks oder jedem anderen Token, den du beim Erstellen des Links über seinen Herausgeber, Mint oder Contract angibst. Dein Kunde zahlt in diesem Asset, und du erhältst dasselbe Asset. Ein Kunde mit einem anderen Token, in einem der {n} Netzwerke, mit denen Cosmos Pay arbeitet, kann ihn vorher per Swap in dieses Asset tauschen." },
+    wallet: { q: "Brauche ich eine eigene Krypto-Wallet?", a: "Ja. Mit Cosmos Pay kommen Zahlungen an einer Adresse an, die du kontrollierst (in manchen Netzwerken über eine für jede Zahlung erstellte Einzahlungsadresse, die sie nur an deine weiterleiten kann), und du kannst dieses Geld in jedes der {n} Netzwerke bewegen, mit denen Cosmos Pay arbeitet. Du fügst jede Wallet im Dashboard deiner Organisation hinzu und beweist mit einer Signatur, dass sie dir gehört, und dort erstellte Zahlungslinks zahlen nur an diese Wallets. Cosmos Pay fragt nie nach einem geheimen Schlüssel und speichert niemandes Schlüssel, also gehört das Geld ab der ersten Zahlung dir, und auf die Schlüssel aufzupassen ist deine Sache." },
     account: {
       q: "Brauchen meine Kunden ein Konto?",
-      a: "Nein. Deine Kunden brauchen kein Konto bei Cosmos Pay, nur eine Wallet im Netzwerk der Zahlung (Stellar, Solana oder Monad), die das Asset hält, in dem du kassierst. Sie öffnen den Checkout, scannen den QR-Code oder tippen auf den Button ihrer Wallet und bestätigen die Zahlung dort: Eine Registrierung gibt es nicht. Der Checkout öffnet sich in der Sprache ihres Browsers, wenn es eine der sieben ist, die er spricht (Englisch, Spanisch, Portugiesisch, Französisch, Deutsch, Hindi und Chinesisch), und ihre Wallet zahlt die Netzwerkgebühr.",
+      a: "Nein. Deine Kunden brauchen kein Konto bei Cosmos Pay, nur eine Wallet, die das Asset hält, in dem du kassierst, im Netzwerk der Zahlung; liegt ihr Guthaben in einem anderen der {n} Netzwerke, mit denen Cosmos Pay arbeitet, können sie vorher swappen, ebenfalls ohne Konto. Sie öffnen den Checkout, scannen den QR-Code oder tippen auf den Button ihrer Wallet und bestätigen die Zahlung dort: Eine Registrierung gibt es nicht. Der Checkout öffnet sich in der Sprache ihres Browsers, wenn es eine der sieben ist, die er spricht (Englisch, Spanisch, Portugiesisch, Französisch, Deutsch, Hindi und Chinesisch), und ihre Wallet zahlt die Netzwerkgebühr.",
     },
     wallets: {
       q: "Welche Wallets können meine Kunden nutzen?",
-      a: "Deine Kunden bezahlen einen Zahlungslink von Cosmos Pay aus ihrer eigenen Wallet, in dem Netzwerk, in dem der Link abgewickelt wird. Auf Stellar jede Wallet, die SEP-7-Links öffnet, etwa Freighter, xBull, Rabet, LOBSTR, Albedo oder Cosmos Pay Wallet. Auf Solana jede Wallet, die Solana-Pay-Links liest, etwa Phantom oder Solflare; auf Monad jede EVM-Wallet, die EIP-681-Links liest. Jeder Link hat auch einen QR-Code, den der Kunde am Computer mit einer Wallet auf dem Handy scannen kann.",
+      a: "Deine Kunden zahlen aus ihrer eigenen Wallet: aus jeder Wallet, die Standard-Zahlungslinks öffnet, etwa Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare oder einer beliebigen EVM-Wallet. Ein Kunde, dessen Guthaben in einem der {n} Netzwerke liegt, mit denen Cosmos Pay arbeitet, kann es vorher swappen und zahlen, ohne Konto. Jeder Link hat auch einen QR-Code, den der Kunde am Computer mit einer Wallet auf dem Handy scannen kann.",
     },
     custody: {
       q: "Verwahrt Cosmos Pay mein Geld?",
-      a: "Nein. Auf Stellar und Solana zahlt der Zahler direkt an deine Adresse. Auf Monad geht jede Zahlung an eine eigens dafür erstellte Einzahlungsadresse, die sie nur an deine Adresse weiterleiten kann (abzüglich der Relay-Gebühr): Cosmos Pay hat keinen Schlüssel dazu. Geschützte Zahlungen warten in einem Smart Contract, nicht bei Cosmos Pay, bis sie freigegeben werden.",
+      a: "Nein. Jede Zahlung geht direkt an deine Adresse oder, in Netzwerken, die eine brauchen, an eine eigens für diese Zahlung erstellte Einzahlungsadresse, die sie nur an deine weiterleiten kann (abzüglich der Relay-Gebühr): Cosmos Pay hat keinen Schlüssel dazu. Geschützte Zahlungen warten in einem Smart Contract, nicht bei Cosmos Pay, bis sie freigegeben werden. Ein Swap zwischen Netzwerken wartet an einer eigens dafür erstellten Einzahlungsadresse, bis er abgewickelt oder erstattet wird.",
     },
     service: { q: "Kann ich das meinen eigenen Kunden anbieten?", a: "Ja. Cosmos Pay bietet das Zahlungs-Gateway, Zahlungen, Swaps und private Zahlungen als Service: Wir betreiben den gesamten Service, und Sie geben nur die Wallet-Adressen an, die das Geld erhalten, und signieren mit Ihrer Wallet. Jeder Vorgang zahlt den Satz Ihres Tarifs, und Sie können Ihre eigene Gebühr hinzufügen, die an die Wallet Ihrer Wahl geht." },
     protected: {
       q: "Wie funktionieren geschützte Zahlungen?",
-      a: "Dein Kunde zahlt wie gewohnt, aber das Geld wird in einem Smart Contract gehalten, statt sofort bei dir anzukommen. Sobald die Lieferung bestätigt ist, durch deinen Kunden oder durch dich, je nachdem, wie du die Zahlung einrichtest, wird das Geld an deine Wallet freigegeben. Du legst eine Lieferfrist fest; läuft sie ab, geht die Zahlung in die Prüfung oder wird automatisch erstattet oder freigegeben, wie du es wählst. Geschützte Zahlungen kosten 1,95 % pro Zahlung zusätzlich zum Satz deines Tarifs, und eine Erstattung wird abzüglich derselben Gebühr zurückgezahlt.",
+      a: "Dein Kunde zahlt wie gewohnt, aber das Geld wird in einem Smart Contract gehalten, statt sofort bei dir anzukommen. Sobald die Lieferung bestätigt ist, durch deinen Kunden oder durch dich, je nachdem, wie du die Zahlung einrichtest, wird das Geld an deine Wallet freigegeben. Du legst eine Lieferfrist fest; läuft sie ab, geht die Zahlung in die Prüfung oder wird automatisch erstattet oder freigegeben, wie du es wählst. Geschützte Zahlungen kosten 1,95\u00a0% pro Zahlung zusätzlich zum Satz deines Tarifs, und eine Erstattung wird abzüglich derselben Gebühr zurückgezahlt.",
     },
     zk: {
       q: "Was sind private Zahlungen?",
-      a: "Private Zahlungen sind Zahlungen über Cosmos Pay, deren Betrag auf der Blockchain privat bleibt: Das Netzwerk prüft einen Zero-Knowledge-Beweis, statt den Betrag zu lesen. Sie laufen auf Stellar, auf dem vertraulichen Token von OpenZeppelin für Stellar, und sind vorerst im Testnet verfügbar; Zahlungen auf Solana und Monad bieten sie nicht. Eine private Zahlung kostet 0,18 % pro Transaktion, in jedem Tarif gleich.",
+      a: "Private Zahlungen sind Zahlungen über Cosmos Pay, deren Betrag auf der Blockchain privat bleibt: Das Netzwerk prüft einen Zero-Knowledge-Beweis, statt den Betrag zu lesen. Sie laufen auf einem vertraulichen Token auf Stellar und sind vorerst im Testnet verfügbar. Eine private Zahlung kostet 0,18 % pro Transaktion, in jedem Tarif gleich.",
     },
     expiry: { q: "Was passiert, wenn ein Link abläuft?", a: "Ein Zahlungslink von Cosmos Pay ist nur eine begrenzte Zeit offen, die sein Checkout als Countdown anzeigt. Ist sie vorbei, zeigt der Checkout an, dass der Link abgelaufen ist, fordert die Zahlung nicht mehr an und bittet deinen Kunden, sich von dir einen neuen Link zu holen: Erstelle einen neuen und sende ihn. Kommt trotzdem eine Zahlung an und bestätigt das Netzwerk sie, gilt der Link als bezahlt." },
-    refunds: { q: "Wie funktionieren Erstattungen?", a: "Zahlungen über Cosmos Pay kennen keine Rückbuchungen: Sobald das Netzwerk (Stellar, Solana oder Monad) eine Zahlung bestätigt, ist sie endgültig. Eine Erstattung ist deine Entscheidung: Sie ist eine neue Zahlung, die du aus deiner Wallet an deinen Kunden zurücksendest. Eine Kartenzahlung dagegen kann noch Monate nach dem Verkauf angefochten werden." },
-    testing: { q: "Kann ich es ohne echtes Geld ausprobieren?", a: "Ja. Wähle im Dashboard von Cosmos Pay die Sandbox oder erstelle einen Test-API-Schlüssel (er beginnt mit dv_): Zahlungslinks laufen dann im Stellar Testnet, im Solana Devnet und im Monad Testnet, und ihr Checkout zeigt deutlich, dass kein echtes Geld bewegt wird. Im Stellar Testnet kannst du in XLM kassieren, das Friendbot, der Faucet des Testnets, an ein Testkonto sendet. Wenn du so weit bist, führt ein Produktionsschlüssel (prod_) dieselben Anfragen in den Mainnets aus: Das Netzwerk bestimmt der Schlüssel, nicht der Code." },
+    refunds: { q: "Wie funktionieren Erstattungen?", a: "Zahlungen über Cosmos Pay kennen keine Rückbuchungen: Sobald das Netzwerk eine Zahlung bestätigt, ist sie endgültig. Eine Erstattung ist deine Entscheidung: Sie ist eine neue Zahlung, die du aus deiner Wallet an deinen Kunden zurücksendest. Eine Kartenzahlung dagegen kann noch Monate nach dem Verkauf angefochten werden." },
+    testing: { q: "Kann ich es ohne echtes Geld ausprobieren?", a: "Ja. Wähle im Dashboard von Cosmos Pay die Sandbox oder erstelle einen Test-API-Schlüssel (er beginnt mit dv_): Zahlungslinks laufen dann in Testnetzen, und ihr Checkout zeigt deutlich, dass kein echtes Geld bewegt wird. Du kannst in der eigenen Coin eines Testnetzes kassieren, die sein Faucet an ein Testkonto sendet. Wenn du so weit bist, führt ein Produktionsschlüssel (prod_) dieselben Anfragen in den Mainnets aus: Das Netzwerk bestimmt der Schlüssel, nicht der Code." },
     designs: { q: "Kann ich das Aussehen des Checkouts ändern?", a: "Ja. Der gehostete Checkout von Cosmos Pay hat vier Designs, und du wählst für jeden Zahlungslink beim Erstellen eines davon: Klassisch, eine klare Spalte mit Betrag, Live-Status und QR-Code; Geteilt, die Zahlungsmethoden in einer Seitenleiste mit Countdown; Beleg, die Zahlungsfelder mit einem Beleg daneben; und Karte, ein großer Countdown und eine Zahlungskarte mit dem QR-Code. Jedes Design gibt es in sieben Sprachen, und keine andere Website kann die Checkout-Seiten einbetten." },
   },
   ui: {
@@ -2086,7 +2087,7 @@ const de: LandingMessages = {
   calc: {
     title: "Berechne deine Gebühren",
     amount: "Zahlungsbetrag",
-    protected: "Geschützte Zahlung (+1,95 %)",
+    protected: "Geschützte Zahlung (+1,95\u00a0%)",
     plan: "Tarif",
     fee: "Gebühr",
     youGet: "Du erhältst",
@@ -2117,7 +2118,6 @@ const de: LandingMessages = {
     monad: { nav: "Monad", title: "Zahlungen auf Monad annehmen", lede: "Cosmos Pay macht jede Zahlung zu einem EIP-681-Link mit QR-Code. Dein Kunde zahlt aus jeder EVM-Wallet, eine Einzahlungsadresse leitet sie an dich weiter.", meta: "Monad-Zahlungen: USDC und MON annehmen | Cosmos Pay", link: "Zahlungen auf Monad" },
     more: { integrations: "Alle Integrationsoptionen ansehen", fees: "Meine Gebühren berechnen", security: "So schützen wir Zahlungen", faq: "Alle Fragen ansehen", useCases: "Alle Anwendungsfälle ansehen", compare: "Mit anderen Anbietern vergleichen" },
     notes: ["Keine Monatsgebühr bei Starter", "Im Testnet ohne echtes Geld testen"],
-    byNetwork: "Zahlungen nach Netzwerk:",
     updated: "Aktualisiert am {date}",
   },
   network: {
@@ -2159,7 +2159,7 @@ const de: LandingMessages = {
         assets: { q: "Kann ich auf Stellar in USDC oder EURC kassieren?", a: "Ja. Im öffentlichen Stellar-Netzwerk bietet Cosmos Pay USDC und EURC von Circle mit Namen an, neben XLM und Tethers USDT0, und im Stellar Testnet ist USDC ebenfalls voreingestellt. Jedes andere Stellar-Asset gibst du beim Erstellen des Links über Code und Herausgeber an. Dein Kunde zahlt im Asset des Links, und genau dieses Asset kommt an deiner Stellar-Adresse an, sobald das Netzwerk die Zahlung bestätigt: in etwa 5 Sekunden." },
         testing: { q: "Wie teste ich Stellar-Zahlungen ohne echtes Geld?", a: "Erstelle im Dashboard von Cosmos Pay einen Test-API-Schlüssel (dv_) oder wähle dort die Sandbox: Zahlungslinks laufen dann im Stellar Testnet, und ihr Checkout sagt, dass kein echtes Geld bewegt wird. Kassiere in Testnet-USDC mit seinem voreingestellten Herausgeber oder in XLM, das Friendbot, der Faucet des Testnets, an ein Testkonto sendet. Ein Produktionsschlüssel (prod_) erstellt danach dieselben Links im öffentlichen Stellar-Netzwerk: Das Netzwerk bestimmt der Schlüssel, nicht der Code." },
         fee: { q: "Kann ich einer Stellar-Zahlung meine eigene Gebühr hinzufügen?", a: "Ja. Cosmos Pay kann einer Stellar-Zahlung deine eigene Gebühr hinzufügen, die an eine Gebühren-Wallet deiner Wahl geht; sie ist unabhängig vom Satz deines Tarifs, den jede Zahlung weiterhin zahlt. Ein SEP-7-Zahlungslink zahlt an ein einziges Konto, deshalb fragt ein Link mit deiner Gebühr den Zahler nach seinem Stellar-Konto und baut eine einzige vorbereitete Transaktion (web+stellar:tx), die dich und deine Gebühren-Wallet zusammen bezahlt. Der Zahler bestätigt diese eine Transaktion in seiner Wallet." },
-        private: { q: "Kann der Betrag einer Stellar-Zahlung privat bleiben?", a: "Ja, mit den privaten Zahlungen von Cosmos Pay: Das Netzwerk prüft einen Zero-Knowledge-Beweis, statt den Betrag zu lesen, also bleibt der Betrag auf der Blockchain privat. Sie laufen auf Stellar, auf dem vertraulichen Token von OpenZeppelin für Stellar, und vorerst im Testnet; Zahlungen auf Solana und Monad bieten sie nicht. Eine private Zahlung kostet {rate} pro Transaktion, in jedem Tarif gleich." },
+        private: { q: "Kann der Betrag einer Stellar-Zahlung privat bleiben?", a: "Ja, mit den privaten Zahlungen von Cosmos Pay: Das Netzwerk prüft einen Zero-Knowledge-Beweis, statt den Betrag zu lesen, also bleibt der Betrag auf der Blockchain privat. Sie laufen auf einem vertraulichen Token auf Stellar, vorerst im Testnet; Zahlungen auf Solana und Monad bieten sie nicht. Eine private Zahlung kostet {rate} pro Transaktion, in jedem Tarif gleich." },
       },
     },
     solana: {
@@ -2202,7 +2202,7 @@ const de: LandingMessages = {
   comparePage: {
     title: "Unsere Sätze neben",
     titleBold: "veröffentlichten Sätzen.",
-    lede: "Jeder Satz von Cosmos Pay beträgt höchstens 75 % des Satzes daneben: der von BitPay für Zahlungen, von MetaMask für Swaps, von RAILGUN für private Zahlungen und von Escrow.com für geschützte Zahlungen.",
+    lede: "Jeder Satz von Cosmos Pay beträgt höchstens 75\u00a0% des Satzes daneben: der von BitPay für Zahlungen, von MetaMask für Swaps, von RAILGUN für private Zahlungen und von Escrow.com für geschützte Zahlungen.",
     caption: "Die Sätze von Cosmos Pay neben den veröffentlichten Sätzen anderer Anbieter",
     service: "Dienst",
     ours: "Cosmos Pay",
@@ -2235,7 +2235,7 @@ const de: LandingMessages = {
       rows: {
         who: { k: "Unternehmen, die annehmen können", ours: "Unternehmen in Lateinamerika und weltweit", theirs: "Unternehmen in den USA; als private Vorschau in der EU, Hongkong, Mexiko und der Schweiz" },
         settle: { k: "Wohin eine Zahlung geht", ours: "In deine eigene Wallet, im Stablecoin, den dein Kunde gezahlt hat (auf Monad über eine Einzahlungsadresse, die nur an deine weiterleiten kann)", theirs: "Auf dein Stripe-Guthaben, in deiner Landeswährung" },
-        networks: { k: "Stellar und Monad", ours: "Ja, neben Solana: USDC, EURC und USDT0 auf Stellar, USDC auf Monad", theirs: "Nein: USDC auf Tempo, Ethereum, Solana, Polygon und Base" },
+        networks: { k: "Netzwerke", ours: "{n} Netzwerke, mit Swaps zwischen ihnen", theirs: "USDC auf Tempo, Ethereum, Solana, Polygon und Base" },
       },
       asOf: "Stripes Bedingungen, wie seine Dokumentation sie am {date} angab.",
     },
@@ -2271,14 +2271,14 @@ const hi: LandingMessages = {
   meta: {
     title: "स्टेबलकॉइन पेमेंट गेटवे: USDC में भुगतान लें | Cosmos Pay",
     description:
-      "स्टेबलकॉइन भुगतान जो आपके अपने पते पर पहुँचते हैं: पेमेंट लिंक, होस्टेड चेकआउट और API। ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करते हैं।",
+      "स्टेबलकॉइन भुगतान जो आपके अपने पते पर पहुँचते हैं: {n} नेटवर्क पर पेमेंट लिंक, होस्टेड चेकआउट और API, उनके बीच स्वैप के साथ।",
   },
   hero: {
     titleA: "भुगतान लें",
     titleMark: "स्टेबलकॉइन में।",
     titleB: "पैसा पाएँ सेकंडों में।",
     lede:
-      "Stellar, Solana और Monad पर स्टेबलकॉइन स्वीकार करने के लिए पेमेंट लिंक, होस्टेड चेकआउट और API। फ़ंड कुछ ही सेकंड में सीधे आपके वॉलेट में सेटल होते हैं।",
+      "{n} नेटवर्क पर स्टेबलकॉइन स्वीकार करने के लिए पेमेंट लिंक, होस्टेड चेकआउट और API। फ़ंड कुछ ही सेकंड में सीधे आपके वॉलेट में सेटल होते हैं।",
     primary: "पेमेंट लिंक बनाएँ",
     secondary: "डॉक्स पढ़ें",
     designs: "इंटीग्रेशन के तरीके देखें",
@@ -2364,7 +2364,7 @@ const hi: LandingMessages = {
     titleBold: "आपके वॉलेट में पैसे तक।",
     create: { title: "बनाएँ", body: "डैशबोर्ड में पेमेंट लिंक, या अपने सर्वर से पेमेंट इंटेंट।" },
     share: { title: "शेयर करें", body: "लिंक भेजें या उसका QR कोड दिखाएँ। चेकआउट राशि, नेटवर्क और काउंटडाउन दिखाता है।" },
-    pay: { title: "भुगतान", body: "आपका ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करता है।" },
+    pay: { title: "भुगतान", body: "आपका ग्राहक हमारे {n} नेटवर्क में से किसी पर भी, अपने वॉलेट से भुगतान करता है।" },
     confirm: { title: "पुष्टि", body: "भुगतान ऑन-चेन वेरिफ़ाई होता है, चेकआउट पर “भुगतान हो गया” दिखता है और आपका वेबहुक ट्रिगर होता है।" },
   },
   integrations: {
@@ -2464,20 +2464,21 @@ const hi: LandingMessages = {
   faq: {
     title: "सवाल",
     titleBold: "और जवाब।",
-    what: { q: "Cosmos Pay क्या है?", a: "Cosmos Pay लैटिन अमेरिका के कारोबारों के लिए एक स्टेबलकॉइन पेमेंट गेटवे है। पेमेंट लिंक, होस्टेड चेकआउट या API से पेमेंट इंटेंट बनाएँ; आपका ग्राहक Stellar, Solana या Monad पर अपने वॉलेट से भुगतान करता है, और फ़ंड आपके नियंत्रण वाले पते पर सेटल होते हैं।" },
-    assets: { q: "मैं किन मुद्राओं में भुगतान ले सकता हूँ?", a: "USDC, EURC, नेटवर्क का अपना कॉइन (XLM, SOL या MON) या Stellar, Solana या Monad पर कोई भी दूसरा टोकन, जैसे Solana पर USDT: लिंक बनाते समय आप उसे उसके इश्यूअर, मिंट या कॉन्ट्रैक्ट से बताते हैं। आपका ग्राहक उसी एसेट में भुगतान करता है, और आपको वही एसेट मिलता है।" },
-    wallet: { q: "क्या मुझे अपना क्रिप्टो वॉलेट चाहिए?", a: "हाँ। Cosmos Pay के साथ, आप जो भी नेटवर्क स्वीकार करते हैं, हर एक पर भुगतान आपके नियंत्रण वाले पते पर सेटल होते हैं: Stellar, Solana या Monad (Monad पर, हर भुगतान के लिए बने डिपॉज़िट पते के ज़रिए, जो उसे सिर्फ़ आपके पते पर ही भेज सकता है)। आप डैशबोर्ड में हर वॉलेट को अपने संगठन में जोड़ते हैं और एक सिग्नेचर से साबित करते हैं कि वह आपका है, और वहाँ बने पेमेंट लिंक सिर्फ़ उन्हीं वॉलेट में भुगतान करते हैं। Cosmos Pay कभी सीक्रेट की नहीं माँगता और किसी की कीज़ नहीं रखता, इसलिए पहले भुगतान से ही फ़ंड आपके होते हैं, और कीज़ को सुरक्षित रखना आपकी ज़िम्मेदारी है।" },
+    what: { q: "Cosmos Pay क्या है?", a: "Cosmos Pay लैटिन अमेरिका के कारोबारों के लिए एक स्टेबलकॉइन पेमेंट गेटवे है, जो {n} नेटवर्क के साथ काम करता है। पेमेंट लिंक, होस्टेड चेकआउट या API से पेमेंट इंटेंट बनाएँ; आपका ग्राहक इनमें से किसी भी नेटवर्क पर अपने वॉलेट से भुगतान करता है, और भुगतान आपके नियंत्रण वाले पते पर पहुँचता है।" },
+    networks: { q: "Cosmos Pay किन नेटवर्क के साथ काम करता है?", a: "Cosmos Pay {n} नेटवर्क के साथ काम करता है, यानी अपने स्वैप प्लेटफ़ॉर्म का पूरा संग्रह: {networks}। आपके ग्राहक इनमें से किसी से भी भुगतान कर सकते हैं, बिना अकाउंट के, और आप जो पाते हैं उसे इनमें से किसी भी नेटवर्क पर भेज सकते हैं।" },
+    assets: { q: "मैं किन मुद्राओं में भुगतान ले सकता हूँ?", a: "USDC, EURC, USDT, हर नेटवर्क का अपना कॉइन या कोई भी दूसरा टोकन, जिसे लिंक बनाते समय आप उसके इश्यूअर, मिंट या कॉन्ट्रैक्ट से बताते हैं। आपका ग्राहक उसी एसेट में भुगतान करता है, और आपको वही एसेट मिलता है। जिस ग्राहक के पास कोई दूसरा टोकन है, Cosmos Pay के {n} नेटवर्क में से किसी पर भी, वह पहले स्वैप करके उसे इस एसेट में बदल सकता है।" },
+    wallet: { q: "क्या मुझे अपना क्रिप्टो वॉलेट चाहिए?", a: "हाँ। Cosmos Pay के साथ, भुगतान आपके नियंत्रण वाले पते पर पहुँचते हैं (कुछ नेटवर्क पर, हर भुगतान के लिए बने डिपॉज़िट पते के ज़रिए, जो उसे सिर्फ़ आपके पते पर ही भेज सकता है), और आप उन फ़ंड को Cosmos Pay के {n} नेटवर्क में से किसी पर भी ले जा सकते हैं। आप डैशबोर्ड में हर वॉलेट को अपने संगठन में जोड़ते हैं और एक सिग्नेचर से साबित करते हैं कि वह आपका है, और वहाँ बने पेमेंट लिंक सिर्फ़ उन्हीं वॉलेट में भुगतान करते हैं। Cosmos Pay कभी सीक्रेट की नहीं माँगता और किसी की कीज़ नहीं रखता, इसलिए पहले भुगतान से ही फ़ंड आपके होते हैं, और कीज़ को सुरक्षित रखना आपकी ज़िम्मेदारी है।" },
     account: {
       q: "क्या मेरे ग्राहकों को अकाउंट चाहिए?",
-      a: "नहीं। आपके ग्राहकों को Cosmos Pay अकाउंट की ज़रूरत नहीं, बस भुगतान के नेटवर्क (Stellar, Solana या Monad) पर एक वॉलेट चाहिए जिसमें वह एसेट हो जिसमें आप भुगतान लेते हैं। वे चेकआउट खोलते हैं, QR कोड स्कैन करते हैं या अपने वॉलेट का बटन टैप करते हैं, और अपने वॉलेट में भुगतान को मंज़ूरी देते हैं: किसी चीज़ के लिए साइन अप नहीं करना होता। अगर उनके ब्राउज़र की भाषा चेकआउट की सात भाषाओं (अंग्रेज़ी, स्पेनिश, पुर्तगाली, फ़्रेंच, जर्मन, हिन्दी और चीनी) में से एक है, तो चेकआउट उसी भाषा में खुलता है, और नेटवर्क शुल्क उनका वॉलेट चुकाता है।",
+      a: "नहीं। आपके ग्राहकों को Cosmos Pay अकाउंट की ज़रूरत नहीं, बस भुगतान के नेटवर्क पर एक वॉलेट चाहिए जिसमें वह एसेट हो जिसमें आप भुगतान लेते हैं; अगर उनके फ़ंड Cosmos Pay के {n} नेटवर्क में से किसी दूसरे पर हैं, तो वे पहले स्वैप कर सकते हैं, वह भी बिना अकाउंट के। वे चेकआउट खोलते हैं, QR कोड स्कैन करते हैं या अपने वॉलेट का बटन टैप करते हैं, और अपने वॉलेट में भुगतान को मंज़ूरी देते हैं: किसी चीज़ के लिए साइन अप नहीं करना होता। अगर उनके ब्राउज़र की भाषा चेकआउट की सात भाषाओं (अंग्रेज़ी, स्पेनिश, पुर्तगाली, फ़्रेंच, जर्मन, हिन्दी और चीनी) में से एक है, तो चेकआउट उसी भाषा में खुलता है, और नेटवर्क शुल्क उनका वॉलेट चुकाता है।",
     },
     wallets: {
       q: "मेरे ग्राहक कौन-से वॉलेट इस्तेमाल कर सकते हैं?",
-      a: "आपके ग्राहक Cosmos Pay पेमेंट लिंक का भुगतान अपने वॉलेट से, उसी नेटवर्क पर करते हैं जिस पर लिंक सेटल होता है। Stellar पर, कोई भी वॉलेट जो SEP-7 लिंक खोलता है, जैसे Freighter, xBull, Rabet, LOBSTR, Albedo या Cosmos Pay Wallet। Solana पर, कोई भी वॉलेट जो Solana Pay लिंक पढ़ता है, जैसे Phantom या Solflare; Monad पर, कोई भी EVM वॉलेट जो EIP-681 लिंक पढ़ता है। हर लिंक के साथ एक QR कोड भी होता है, इसलिए कंप्यूटर पर ग्राहक उसे फ़ोन वाले वॉलेट से स्कैन कर सकता है।",
+      a: "आपके ग्राहक अपने वॉलेट से भुगतान करते हैं: कोई भी वॉलेट जो स्टैंडर्ड पेमेंट लिंक खोलता है, जैसे Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare या कोई भी EVM वॉलेट। जिस ग्राहक के फ़ंड Cosmos Pay के {n} नेटवर्क में से किसी पर भी हैं, वह पहले उन्हें स्वैप करके भुगतान कर सकता है, बिना अकाउंट के। हर लिंक के साथ एक QR कोड भी होता है, इसलिए कंप्यूटर पर ग्राहक उसे फ़ोन वाले वॉलेट से स्कैन कर सकता है।",
     },
     custody: {
       q: "क्या Cosmos Pay मेरा पैसा अपने पास रखता है?",
-      a: "नहीं। Stellar और Solana पर भुगतान करने वाला सीधे आपके पते पर भुगतान करता है। Monad पर हर भुगतान उसी के लिए बने डिपॉज़िट पते पर जाता है, जो उसे (रिले शुल्क घटाकर) सिर्फ़ आपके पते पर ही भेज सकता है: Cosmos Pay के पास उसकी कोई कुंजी नहीं है। सुरक्षित भुगतान रिलीज़ होने तक स्मार्ट कॉन्ट्रैक्ट में रहते हैं, Cosmos Pay के पास नहीं।",
+      a: "नहीं। हर भुगतान सीधे आपके पते पर जाता है या, जिन नेटवर्क पर इसकी ज़रूरत होती है वहाँ, उसी भुगतान के लिए बने डिपॉज़िट पते पर, जो उसे (रिले शुल्क घटाकर) सिर्फ़ आपके पते पर ही भेज सकता है: Cosmos Pay के पास उसकी कोई कुंजी नहीं है। सुरक्षित भुगतान रिलीज़ होने तक स्मार्ट कॉन्ट्रैक्ट में रहते हैं, Cosmos Pay के पास नहीं। नेटवर्कों के बीच का स्वैप उसी के लिए बने डिपॉज़िट पते पर तब तक रहता है जब तक वह सेटल या रिफ़ंड नहीं हो जाता।",
     },
     service: { q: "क्या मैं इसे अपने ग्राहकों को दे सकता हूँ?", a: "हाँ। Cosmos Pay पेमेंट गेटवे, भुगतान, स्वैप और निजी भुगतान एक सेवा के रूप में है: पूरी सेवा हम चलाते हैं, और आप सिर्फ़ वे वॉलेट पते देते हैं जिन पर पैसा आता है और अपने वॉलेट से साइन करते हैं। हर ऑपरेशन आपके प्लान की दर चुकाता है, और आप उस पर अपना शुल्क जोड़ सकते हैं, जो आपके चुने हुए वॉलेट में जाता है।" },
     protected: {
@@ -2486,11 +2487,11 @@ const hi: LandingMessages = {
     },
     zk: {
       q: "निजी भुगतान क्या हैं?",
-      a: "निजी भुगतान Cosmos Pay के ऐसे भुगतान हैं जिनमें राशि ऑन-चेन निजी रहती है: नेटवर्क राशि पढ़ने के बजाय एक ज़ीरो-नॉलेज प्रूफ़ की जाँच करता है। ये Stellar पर, Stellar के लिए OpenZeppelin के गोपनीय टोकन पर चलते हैं, और फ़िलहाल टेस्टनेट पर उपलब्ध हैं; Solana और Monad पर भुगतान में ये नहीं मिलते। निजी भुगतान पर प्रति लेन-देन 0.18% लगता है, हर प्लान में एक जैसा।",
+      a: "निजी भुगतान Cosmos Pay के ऐसे भुगतान हैं जिनमें राशि ऑन-चेन निजी रहती है: नेटवर्क राशि पढ़ने के बजाय एक ज़ीरो-नॉलेज प्रूफ़ की जाँच करता है। ये Stellar पर बने एक गोपनीय टोकन पर चलते हैं और फ़िलहाल टेस्टनेट पर उपलब्ध हैं। निजी भुगतान पर प्रति लेन-देन 0.18% लगता है, हर प्लान में एक जैसा।",
     },
     expiry: { q: "लिंक की समय-सीमा समाप्त होने पर क्या होता है?", a: "Cosmos Pay पेमेंट लिंक सीमित समय के लिए खुला रहता है, जिसे उसका चेकआउट काउंटडाउन के रूप में दिखाता है। यह समय बीतने पर चेकआउट बताता है कि लिंक की समय-सीमा समाप्त हो गई है, भुगतान माँगना बंद कर देता है और आपके ग्राहक से आपसे नया लिंक माँगने को कहता है, इसलिए दूसरा लिंक बनाकर भेजें। अगर इसके बाद भी कोई भुगतान आता है और नेटवर्क उसकी पुष्टि करता है, तो लिंक को भुगतान हुआ मार्क कर दिया जाता है।" },
-    refunds: { q: "रिफ़ंड कैसे होते हैं?", a: "Cosmos Pay भुगतानों में कोई चार्जबैक नहीं होता: नेटवर्क (Stellar, Solana या Monad) के किसी भुगतान की पुष्टि करते ही वह अंतिम हो जाता है। रिफ़ंड आपका फ़ैसला है: यह एक नया भुगतान है जो आप अपने वॉलेट से अपने ग्राहक को वापस भेजते हैं। इसके उलट, कार्ड भुगतान पर बिक्री के महीनों बाद तक विवाद किया जा सकता है।" },
-    testing: { q: "क्या इसे असली पैसे के बिना आज़माया जा सकता है?", a: "हाँ। Cosmos Pay डैशबोर्ड में “सैंडबॉक्स” चुनें या एक टेस्ट API की बनाएँ (यह dv_ से शुरू होती है): तब पेमेंट लिंक Stellar Testnet, Solana Devnet और Monad Testnet पर चलते हैं, और उनका चेकआउट साफ़ बताता है कि कोई असली फ़ंड ट्रांसफ़र नहीं होता। Stellar Testnet पर आप XLM में भुगतान ले सकते हैं, जिसे Testnet का फ़ॉसेट Friendbot किसी टेस्ट अकाउंट में भेज देता है। तैयार होने पर, एक लाइव API की (prod_) वही रिक्वेस्ट मेननेट पर चलाती है: नेटवर्क API की तय करती है, कोड नहीं।" },
+    refunds: { q: "रिफ़ंड कैसे होते हैं?", a: "Cosmos Pay भुगतानों में कोई चार्जबैक नहीं होता: नेटवर्क के किसी भुगतान की पुष्टि करते ही वह अंतिम हो जाता है। रिफ़ंड आपका फ़ैसला है: यह एक नया भुगतान है जो आप अपने वॉलेट से अपने ग्राहक को वापस भेजते हैं। इसके उलट, कार्ड भुगतान पर बिक्री के महीनों बाद तक विवाद किया जा सकता है।" },
+    testing: { q: "क्या इसे असली पैसे के बिना आज़माया जा सकता है?", a: "हाँ। Cosmos Pay डैशबोर्ड में “सैंडबॉक्स” चुनें या एक टेस्ट API की बनाएँ (यह dv_ से शुरू होती है): तब पेमेंट लिंक टेस्ट नेटवर्क पर चलते हैं, और उनका चेकआउट साफ़ बताता है कि कोई असली फ़ंड ट्रांसफ़र नहीं होता। आप किसी टेस्ट नेटवर्क के अपने कॉइन में भुगतान ले सकते हैं, जिसे उसका फ़ॉसेट किसी टेस्ट अकाउंट में भेज देता है। तैयार होने पर, एक लाइव API की (prod_) वही रिक्वेस्ट मेननेट पर चलाती है: नेटवर्क API की तय करती है, कोड नहीं।" },
     designs: { q: "क्या चेकआउट का लुक बदला जा सकता है?", a: "हाँ। Cosmos Pay के होस्टेड चेकआउट के चार डिज़ाइन हैं, और हर पेमेंट लिंक बनाते समय आप उनमें से एक चुनते हैं: क्लासिक, राशि, लाइव स्टेटस और QR कोड वाला एक साफ़ कॉलम; स्प्लिट, काउंटडाउन के साथ साइड रेल पर भुगतान के तरीके; रसीद, बगल में रसीद के साथ भुगतान के फ़ील्ड; और कार्ड, बड़ा काउंटडाउन और QR कोड वाला पेमेंट कार्ड। हर डिज़ाइन सात भाषाओं में है, और कोई दूसरी साइट चेकआउट पेजों को फ़्रेम नहीं कर सकती।" },
   },
   ui: {
@@ -2567,7 +2568,6 @@ const hi: LandingMessages = {
     monad: { nav: "Monad", title: "Monad पर भुगतान लें", lede: "Cosmos Pay हर भुगतान को QR कोड वाले EIP-681 लिंक में बदल देता है। ग्राहक किसी भी EVM वॉलेट से भुगतान करता है और एक डिपॉज़िट पता उसे आपके पते पर भेजता है।", meta: "Monad पेमेंट: USDC और MON में भुगतान लें | Cosmos Pay", link: "Monad पर भुगतान" },
     more: { integrations: "इंटीग्रेशन के सभी विकल्प देखें", fees: "अपने शुल्क का हिसाब लगाएँ", security: "देखें कि भुगतान कैसे सुरक्षित रहते हैं", faq: "सभी सवाल देखें", useCases: "उपयोग के सभी उदाहरण देखें", compare: "दूसरे प्रदाताओं से तुलना करें" },
     notes: ["Starter पर कोई मासिक शुल्क नहीं", "टेस्टनेट पर बिना असली पैसे के आज़माएँ"],
-    byNetwork: "नेटवर्क के हिसाब से भुगतान:",
     updated: "{date} को अपडेट किया गया",
   },
   network: {
@@ -2609,7 +2609,7 @@ const hi: LandingMessages = {
         assets: { q: "क्या मैं Stellar पर USDC या EURC में भुगतान ले सकता हूँ?", a: "हाँ। Stellar के पब्लिक नेटवर्क पर Cosmos Pay, XLM और Tether के USDT0 के साथ, Circle के USDC और EURC नाम से देता है, और Stellar Testnet पर भी USDC पहले से सेट है। Stellar का कोई भी दूसरा एसेट लिंक बनाते समय उसके कोड और इश्यूअर से बताया जाता है। आपका ग्राहक लिंक में तय एसेट में भुगतान करता है, और नेटवर्क के भुगतान की पुष्टि करते ही वही एसेट आपके Stellar पते पर पहुँचता है: लगभग 5 सेकंड में।" },
         testing: { q: "बिना असली पैसे के Stellar भुगतान कैसे टेस्ट करूँ?", a: "Cosmos Pay डैशबोर्ड में एक टेस्ट API की (dv_) बनाएँ, या वहाँ “सैंडबॉक्स” चुनें: तब पेमेंट लिंक Stellar Testnet पर चलते हैं, और उनका चेकआउट बताता है कि कोई असली फ़ंड ट्रांसफ़र नहीं होता। Testnet USDC में उसके पहले से सेट इश्यूअर के साथ भुगतान लें, या XLM में, जिसे Testnet का फ़ॉसेट Friendbot किसी टेस्ट अकाउंट में भेज देता है। इसके बाद एक लाइव API की (prod_) वही लिंक Stellar के पब्लिक नेटवर्क पर बनाती है: नेटवर्क API की तय करती है, कोड नहीं।" },
         fee: { q: "क्या मैं Stellar भुगतान में अपना शुल्क जोड़ सकता हूँ?", a: "हाँ। Cosmos Pay किसी Stellar भुगतान में आपका अपना शुल्क जोड़ सकता है, जो आपके चुने हुए शुल्क वाले वॉलेट में जाता है; यह आपके प्लान की दर से अलग है, जो हर भुगतान चुकाता ही है। SEP-7 पेमेंट लिंक सिर्फ़ एक अकाउंट को भुगतान करता है, इसलिए आपके शुल्क वाला लिंक भुगतान करने वाले से उसका Stellar अकाउंट पूछता है और एक तैयार ट्रांज़ैक्शन (web+stellar:tx) बनाता है जो आपको और आपके शुल्क वाले वॉलेट को साथ में भुगतान करता है। भुगतान करने वाला अपने वॉलेट में उसी एक ट्रांज़ैक्शन को मंज़ूरी देता है।" },
-        private: { q: "क्या Stellar भुगतान की राशि निजी रह सकती है?", a: "हाँ, Cosmos Pay के निजी भुगतान के साथ: नेटवर्क राशि पढ़ने के बजाय ज़ीरो-नॉलेज प्रूफ़ जाँचता है, इसलिए राशि ऑन-चेन निजी रहती है। ये Stellar पर, Stellar के लिए OpenZeppelin के गोपनीय टोकन पर चलते हैं और अभी Testnet पर हैं; Solana और Monad पर भुगतान में ये नहीं मिलते। निजी भुगतान पर हर ट्रांज़ैक्शन के लिए {rate} लगता है, हर प्लान में एक जैसा।" },
+        private: { q: "क्या Stellar भुगतान की राशि निजी रह सकती है?", a: "हाँ, Cosmos Pay के निजी भुगतान के साथ: नेटवर्क राशि पढ़ने के बजाय ज़ीरो-नॉलेज प्रूफ़ जाँचता है, इसलिए राशि ऑन-चेन निजी रहती है। ये Stellar पर बने एक गोपनीय टोकन पर चलते हैं और अभी Testnet पर हैं; Solana और Monad पर भुगतान में ये नहीं मिलते। निजी भुगतान पर हर ट्रांज़ैक्शन के लिए {rate} लगता है, हर प्लान में एक जैसा।" },
       },
     },
     solana: {
@@ -2685,7 +2685,7 @@ const hi: LandingMessages = {
       rows: {
         who: { k: "कौन-से व्यवसाय भुगतान ले सकते हैं", ours: "लैटिन अमेरिका और दुनिया भर के व्यवसाय", theirs: "अमेरिका के व्यवसाय; EU, हांगकांग, मेक्सिको और स्विट्ज़रलैंड में प्राइवेट प्रीव्यू में" },
         settle: { k: "भुगतान कहाँ सेटल होता है", ours: "आपके अपने वॉलेट में, उसी स्टेबलकॉइन में जिसमें ग्राहक ने भुगतान किया (Monad पर एक डिपॉज़िट पते के ज़रिए, जो उसे केवल आपके पते पर भेज सकता है)", theirs: "आपके Stripe बैलेंस में, आपकी स्थानीय मुद्रा में" },
-        networks: { k: "Stellar और Monad", ours: "हाँ, Solana के अलावा: Stellar पर USDC, EURC और USDT0, Monad पर USDC", theirs: "नहीं: Tempo, Ethereum, Solana, Polygon और Base पर USDC" },
+        networks: { k: "नेटवर्क", ours: "{n} नेटवर्क, उनके बीच स्वैप के साथ", theirs: "Tempo, Ethereum, Solana, Polygon और Base पर USDC" },
       },
       asOf: "Stripe की शर्तें, जैसी उसके दस्तावेज़ों में {date} को बताई गई थीं।",
     },
@@ -2721,14 +2721,14 @@ const zh: LandingMessages = {
   meta: {
     title: "稳定币支付网关：收取 USDC 和 USDT | Cosmos Pay",
     description:
-      "款项进入您自己地址的稳定币收款：支付链接、托管收银台和 API。客户在 Stellar、Solana 或 Monad 上使用自己的钱包付款。",
+      "款项进入您自己地址的稳定币收款：支付链接、托管收银台和 API，覆盖 {n} 个网络，并支持网络之间的兑换。",
   },
   hero: {
     titleA: "接受",
     titleMark: "稳定币支付。",
     titleB: "数秒即可到账。",
     lede:
-      "通过支付链接、托管收银台和 API，在 Stellar、Solana 和 Monad 上接受稳定币。资金数秒内直接结算到您的钱包。",
+      "通过支付链接、托管收银台和 API，在 {n} 个网络上接受稳定币。资金数秒内直接结算到您的钱包。",
     primary: "创建支付链接",
     secondary: "阅读文档",
     designs: "查看集成方式",
@@ -2814,7 +2814,7 @@ const zh: LandingMessages = {
     titleBold: "到钱包里的资金。",
     create: { title: "创建", body: "在控制台中创建支付链接，或从您的服务器创建支付意图。" },
     share: { title: "分享", body: "发送链接或展示二维码。收银台会显示金额、网络和倒计时。" },
-    pay: { title: "支付", body: "客户在 Stellar、Solana 或 Monad 上使用自己的钱包付款。" },
+    pay: { title: "支付", body: "客户使用自己的钱包，在我们支持的 {n} 个网络中的任意一个上付款。" },
     confirm: { title: "确认", body: "支付经链上验证，收银台状态变为“已支付”，您的 Webhook 随即触发。" },
   },
   integrations: {
@@ -2914,20 +2914,21 @@ const zh: LandingMessages = {
   faq: {
     title: "常见问题",
     titleBold: "与解答。",
-    what: { q: "Cosmos Pay 是什么？", a: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付网关。创建支付链接、托管收银台，或通过 API 创建支付意图；客户在 Stellar、Solana 或 Monad 上用自己的钱包付款，资金结算到您掌控的地址。" },
-    assets: { q: "可以用哪些币种收款？", a: "USDC、EURC、各网络的原生币（XLM、SOL 或 MON），或 Stellar、Solana、Monad 上的任何其他代币，例如 Solana 上的 USDT：创建链接时按发行方、铸币地址（mint）或合约指定即可。客户以该资产付款，您收到的也是同一资产。" },
-    wallet: { q: "我需要自己的加密钱包吗？", a: "需要。使用 Cosmos Pay 时，在您接受的每个网络（Stellar、Solana 或 Monad）上，支付都会结算到您掌控的地址（在 Monad 上，经由为每笔支付创建的充值地址，该地址只能将款项转至您的地址）。您在控制台中将每个钱包添加到组织，并通过签名证明钱包属于您；在控制台创建的支付链接只会付款到这些钱包。Cosmos Pay 从不索要私钥，也不保存任何人的密钥，因此从第一笔支付起资金就归您所有，妥善保管密钥也是您自己的责任。" },
+    what: { q: "Cosmos Pay 是什么？", a: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付网关，支持 {n} 个网络。创建支付链接、托管收银台，或通过 API 创建支付意图；客户用自己的钱包，在其中任意一个网络上付款，款项进入您掌控的地址。" },
+    networks: { q: "Cosmos Pay 支持哪些网络？", a: "Cosmos Pay 支持 {n} 个网络，即其兑换平台的全部网络：{networks}。您的客户可以从其中任何一个网络付款，无需账户；您也可以把收到的款项转到其中任何一个网络。" },
+    assets: { q: "可以用哪些币种收款？", a: "USDC、EURC、USDT、各网络的原生币或任何其他代币，创建链接时按发行方、铸币地址（mint）或合约指定即可。客户以该资产付款，您收到的也是同一资产。持有其他代币的客户，无论在 Cosmos Pay 支持的 {n} 个网络中的哪一个，都可以先将其兑换成该资产。" },
+    wallet: { q: "我需要自己的加密钱包吗？", a: "需要。使用 Cosmos Pay 时，支付会进入您掌控的地址（在部分网络上，经由为每笔支付创建的充值地址，该地址只能将款项转至您的地址），您还可以把这些资金转到 Cosmos Pay 支持的 {n} 个网络中的任何一个。您在控制台中将每个钱包添加到组织，并通过签名证明钱包属于您；在控制台创建的支付链接只会付款到这些钱包。Cosmos Pay 从不索要私钥，也不保存任何人的密钥，因此从第一笔支付起资金就归您所有，妥善保管密钥也是您自己的责任。" },
     account: {
       q: "我的客户需要注册账户吗？",
-      a: "不需要。您的客户无需 Cosmos Pay 账户，只需在该笔支付的网络（Stellar、Solana 或 Monad）上有一个持有您收款资产的钱包。他们打开收银台，扫描二维码或点击钱包按钮，然后在钱包中确认支付，无需注册任何账户。如果客户浏览器的语言是收银台支持的七种语言之一（英语、西班牙语、葡萄牙语、法语、德语、印地语和中文），收银台就会以该语言打开；网络手续费由客户的钱包支付。",
+      a: "不需要。您的客户无需 Cosmos Pay 账户，只需在该笔支付的网络上有一个持有您收款资产的钱包；如果客户的资金在 Cosmos Pay 支持的 {n} 个网络中的其他网络上，也可以先兑换，同样无需账户。他们打开收银台，扫描二维码或点击钱包按钮，然后在钱包中确认支付，无需注册任何账户。如果客户浏览器的语言是收银台支持的七种语言之一（英语、西班牙语、葡萄牙语、法语、德语、印地语和中文），收银台就会以该语言打开；网络手续费由客户的钱包支付。",
     },
     wallets: {
       q: "我的客户可以使用哪些钱包？",
-      a: "您的客户用自己的钱包，在链接结算的网络上支付 Cosmos Pay 支付链接。在 Stellar 上，可使用任何能打开 SEP-7 链接的钱包，例如 Freighter、xBull、Rabet、LOBSTR、Albedo 或 Cosmos Pay Wallet。在 Solana 上，可使用任何能读取 Solana Pay 链接的钱包，例如 Phantom 或 Solflare；在 Monad 上，可使用任何能读取 EIP-681 链接的 EVM 钱包。每个链接还附有二维码，因此在电脑上，客户也可以用手机钱包扫码支付。",
+      a: "您的客户用自己的钱包付款：任何能打开标准支付链接的钱包均可，例如 Freighter、xBull、LOBSTR、Albedo、Rabet、Cosmos Pay Wallet、Phantom、Solflare 或任意 EVM 钱包。资金在 Cosmos Pay 支持的 {n} 个网络中任何一个上的客户，都可以先兑换再付款，无需账户。每个链接还附有二维码，因此在电脑上，客户也可以用手机钱包扫码支付。",
     },
     custody: {
       q: "Cosmos Pay 会持有我的资金吗？",
-      a: "不会。在 Stellar 和 Solana 上，付款人直接向您的地址付款。在 Monad 上，每笔支付会进入为其创建的充值地址，该地址只能将款项转至您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。受保护付款在释放前暂存在智能合约中，而非由 Cosmos Pay 持有。",
+      a: "不会。每笔支付都直接进入您的地址；在需要充值地址的网络上，则进入为该笔支付创建的充值地址，该地址只能将款项转至您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。受保护付款在释放前暂存在智能合约中，而非由 Cosmos Pay 持有。跨网络兑换在为其创建的充值地址中等待，直到完成结算或退款。",
     },
     service: { q: "我可以向自己的客户提供这些服务吗？", a: "可以。Cosmos Pay 提供支付网关、支付、兑换和隐私支付即服务：整个服务由我们运行，您只需填写收款的钱包地址，并用您的钱包签名。每笔操作按您套餐的费率计费，您还可以加上自己的费用，支付到您选择的钱包。" },
     protected: {
@@ -2936,11 +2937,11 @@ const zh: LandingMessages = {
     },
     zk: {
       q: "什么是隐私支付？",
-      a: "隐私支付是金额在链上保持私密的 Cosmos Pay 支付：网络验证零知识证明，而不是读取金额。它运行在 Stellar 上，基于 OpenZeppelin 为 Stellar 打造的保密代币，目前在测试网上提供；Solana 和 Monad 上的支付不提供隐私支付。每笔隐私支付按交易收取 0.18%，所有套餐相同。",
+      a: "隐私支付是金额在链上保持私密的 Cosmos Pay 支付：网络验证零知识证明，而不是读取金额。它运行在 Stellar 上的一种保密代币之上，目前在测试网上提供。每笔隐私支付按交易收取 0.18%，所有套餐相同。",
     },
     expiry: { q: "链接过期后会怎样？", a: "Cosmos Pay 支付链接的有效时间有限，收银台会以倒计时显示。时间一到，收银台会提示链接已过期，停止请求付款，并请客户向您索取新的链接；再创建一个链接发给对方即可。如果之后仍有支付到达并经网络确认，该链接会被标记为已支付。" },
-    refunds: { q: "如何退款？", a: "Cosmos Pay 的支付不存在拒付：一旦网络（Stellar、Solana 或 Monad）确认一笔支付，它就是最终的。是否退款由您决定：退款就是您从自己的钱包向客户发回的一笔新支付。相比之下，银行卡支付在销售后数月内仍可能被提出争议。" },
-    testing: { q: "可以不用真实资金试用吗？", a: "可以。在 Cosmos Pay 控制台中选择“沙箱”，或创建测试 API 密钥（以 dv_ 开头）：支付链接随即在 Stellar Testnet、Solana Devnet 和 Monad Testnet 上运行，其收银台会明确提示不涉及真实资金。在 Stellar Testnet 上可以用 XLM 收款，Testnet 的水龙头 Friendbot 可为测试账户充入 XLM。准备就绪后，生产 API 密钥（prod_）会在主网上执行同样的请求：网络由密钥决定，而不是由代码决定。" },
+    refunds: { q: "如何退款？", a: "Cosmos Pay 的支付不存在拒付：一旦网络确认一笔支付，它就是最终的。是否退款由您决定：退款就是您从自己的钱包向客户发回的一笔新支付。相比之下，银行卡支付在销售后数月内仍可能被提出争议。" },
+    testing: { q: "可以不用真实资金试用吗？", a: "可以。在 Cosmos Pay 控制台中选择“沙箱”，或创建测试 API 密钥（以 dv_ 开头）：支付链接随即在测试网络上运行，其收银台会明确提示不涉及真实资金。您可以用测试网络的原生币收款，该网络的水龙头可为测试账户充入这种币。准备就绪后，生产 API 密钥（prod_）会在主网上执行同样的请求：网络由密钥决定，而不是由代码决定。" },
     designs: { q: "可以更改收银台的外观吗？", a: "可以。Cosmos Pay 托管收银台有四款设计，您在创建每个支付链接时为其选择一款：经典，单栏简洁呈现金额、实时状态和二维码；分栏，侧栏列出支付方式并带倒计时；收据，支付信息旁附一张收据；卡片，大号倒计时加一张载有二维码的支付卡片。每款设计都支持七种语言，且任何其他网站都无法嵌入收银台页面。" },
   },
   ui: {
@@ -3017,7 +3018,6 @@ const zh: LandingMessages = {
     monad: { nav: "Monad", title: "在 Monad 上收款", lede: "Cosmos Pay 为每笔支付生成带二维码的 EIP-681 链接。客户可用任意 EVM 钱包付款，再由充值地址转发到您的地址。", meta: "Monad 支付：收取 USDC 和 MON | Cosmos Pay", link: "Monad 支付" },
     more: { integrations: "查看全部集成选项", fees: "计算您的费用", security: "了解支付如何受到保护", faq: "查看全部问题", useCases: "查看全部使用场景", compare: "与其他服务商对比" },
     notes: ["Starter 无月费", "在测试网上试用，不涉及真实资金"],
-    byNetwork: "按网络查看支付：",
     updated: "更新于 {date}",
   },
   network: {
@@ -3059,7 +3059,7 @@ const zh: LandingMessages = {
         assets: { q: "可以在 Stellar 上用 USDC 或 EURC 收款吗？", a: "可以。在 Stellar 公共网络上，Cosmos Pay 按名称提供 Circle 的 USDC 和 EURC，另有 XLM 和 Tether 的 USDT0；Stellar Testnet 上的 USDC 也是预设资产。其他 Stellar 资产在创建链接时按资产代码和发行方指定。客户以链接设定的资产付款，网络确认后，同一资产会进入您的 Stellar 地址：约 5 秒。" },
         testing: { q: "如何在不使用真实资金的情况下测试 Stellar 付款？", a: "在 Cosmos Pay 控制台创建测试 API 密钥（dv_），或在控制台中选择“沙箱”：支付链接随即在 Stellar Testnet 上运行，收银台会注明不涉及真实资金。您可以用预设发行方的 Testnet USDC 收款，也可以用 XLM 收款，Testnet 的水龙头 Friendbot 可为测试账户充入 XLM。之后，生产 API 密钥（prod_）会在 Stellar 公共网络上创建同样的链接：网络由密钥决定，而不是由代码决定。" },
         fee: { q: "可以在 Stellar 付款上加收自己的费用吗？", a: "可以。Cosmos Pay 可以在 Stellar 付款上加收您自己的费用，支付到您选择的收费钱包；这笔费用独立于您的套餐费率，每笔付款仍按套餐费率计费。SEP-7 支付链接只能向一个账户付款，因此带有您费用的链接会请付款方提供其 Stellar 账户，并构建一笔预先准备的交易（web+stellar:tx），同时向您和您的收费钱包付款。付款方在钱包中确认这一笔交易即可。" },
-        private: { q: "Stellar 付款的金额可以保密吗？", a: "可以，使用 Cosmos Pay 的隐私支付：网络验证零知识证明，而不读取金额，因此金额在链上保持私密。隐私支付运行在 Stellar 上，基于 OpenZeppelin 为 Stellar 打造的保密代币，目前仅在 Testnet 提供；Solana 和 Monad 上的付款不提供隐私支付。每笔隐私支付按交易收费 {rate}，所有套餐相同。" },
+        private: { q: "Stellar 付款的金额可以保密吗？", a: "可以，使用 Cosmos Pay 的隐私支付：网络验证零知识证明，而不读取金额，因此金额在链上保持私密。隐私支付运行在 Stellar 上的一种保密代币之上，目前仅在 Testnet 提供；Solana 和 Monad 上的付款不提供隐私支付。每笔隐私支付按交易收费 {rate}，所有套餐相同。" },
       },
     },
     solana: {
@@ -3135,7 +3135,7 @@ const zh: LandingMessages = {
       rows: {
         who: { k: "可以收款的企业", ours: "拉丁美洲及全球的企业", theirs: "美国企业；欧盟、香港、墨西哥和瑞士为私人预览" },
         settle: { k: "款项结算到哪里", ours: "您自己的钱包，以客户支付的稳定币结算（在 Monad 上经由一个只能转发到您地址的充值地址）", theirs: "您的 Stripe 余额，以您的本地货币结算" },
-        networks: { k: "Stellar 和 Monad", ours: "支持，此外还有 Solana：Stellar 上的 USDC、EURC 和 USDT0，Monad 上的 USDC", theirs: "不支持：Tempo、Ethereum、Solana、Polygon 和 Base 上的 USDC" },
+        networks: { k: "网络", ours: "{n} 个网络，支持网络之间的兑换", theirs: "Tempo、Ethereum、Solana、Polygon 和 Base 上的 USDC" },
       },
       asOf: "Stripe 的条件以其文档在 {date} 的说明为准。",
     },

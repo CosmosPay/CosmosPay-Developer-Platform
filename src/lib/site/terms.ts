@@ -24,7 +24,7 @@ const en: TermsText = {
     {
       h: "1. Who we are",
       ps: [
-        "“Cosmos Pay” (“we”) provides open, multi-chain payment infrastructure on the Stellar, Solana and Monad networks: a developer platform (dev.cosmospay.lat), a payments gateway (api.cosmospay.lat) and a non-custodial wallet. Contact: organization@cosmospay.lat.",
+        "“Cosmos Pay” (“we”) provides open, multi-chain payment infrastructure: payments on the Stellar, Solana and Monad networks and swaps between them and every other network the swap providers reach, through a developer platform (dev.cosmospay.lat), a payments gateway (api.cosmospay.lat) and a non-custodial wallet. Contact: organization@cosmospay.lat.",
       ],
     },
     {
@@ -32,13 +32,13 @@ const en: TermsText = {
       ps: [
         "The wallet generates and encrypts your keys locally on your device. We never receive, store or can recover your recovery phrase, secret key or password.",
         "You are solely and exclusively responsible for safekeeping your recovery phrase and password, and for all funds in your wallet. If you lose the phrase and forget the password, the funds are irrecoverable by anyone, including us.",
-        "All transactions you sign are executed on the public blockchain network they belong to (Stellar, Solana or Monad) and are irreversible. Verify addresses and amounts before confirming; we cannot cancel, reverse or refund on-chain transactions.",
+        "All transactions you sign are executed on the public blockchain network they belong to (Stellar, Solana, Monad or another network a swap reaches) and are irreversible. Verify addresses and amounts before confirming; we cannot cancel, reverse or refund on-chain transactions.",
       ],
     },
     {
       h: "3. Payment gateway & developer platform",
       ps: [
-        "The gateway lets registered users and developers create payment intents, quotes and swaps on Stellar, Solana and Monad via API keys issued by the developer platform. You are responsible for keeping your API keys secret and for all activity performed with them.",
+        "The gateway lets registered users and developers create payment intents on Stellar, Solana and Monad, and quotes and swaps across every network the swap providers reach, via API keys issued by the developer platform. You are responsible for keeping your API keys secret and for all activity performed with them.",
         "Swap quotes are estimates; the executed price may differ within the disclosed slippage tolerance. Network fees and, where applicable, service fees are shown before you confirm.",
         "We may throttle, suspend or revoke API access that abuses the service, breaks the law or harms other users.",
       ],
@@ -77,7 +77,7 @@ const en: TermsText = {
     {
       h: "9. No warranty & limitation of liability",
       ps: [
-        "The services are provided “as is”, without warranties of any kind. To the maximum extent permitted by law, we are not liable for lost funds resulting from lost phrases/passwords, user error, on-chain behaviour, third-party services (the Stellar, Solana and Monad networks and their nodes, Horizon, swap aggregators, price feeds, fiat partners), force majeure, or indirect or consequential damages. Nothing here excludes liability that cannot be excluded by law.",
+        "The services are provided “as is”, without warranties of any kind. To the maximum extent permitted by law, we are not liable for lost funds resulting from lost phrases/passwords, user error, on-chain behaviour, third-party services (the Stellar, Solana and Monad networks, every other network a swap reaches, their nodes, Horizon, swap aggregators, price feeds, fiat partners), force majeure, or indirect or consequential damages. Nothing here excludes liability that cannot be excluded by law.",
       ],
     },
     {
@@ -102,7 +102,7 @@ const es: TermsText = {
     {
       h: "1. Quiénes somos",
       ps: [
-        "“Cosmos Pay” (“nosotros”) ofrece infraestructura abierta de pagos multichain sobre las redes Stellar, Solana y Monad: una plataforma para desarrolladores (dev.cosmospay.lat), una pasarela de pagos (api.cosmospay.lat) y una wallet no custodial. Contacto: organization@cosmospay.lat.",
+        "“Cosmos Pay” (“nosotros”) ofrece infraestructura abierta de pagos multichain: pagos en las redes Stellar, Solana y Monad y swaps entre ellas y todas las demás redes que alcanzan los proveedores de swaps, a través de una plataforma para desarrolladores (dev.cosmospay.lat), una pasarela de pagos (api.cosmospay.lat) y una wallet no custodial. Contacto: organization@cosmospay.lat.",
       ],
     },
     {
@@ -110,13 +110,13 @@ const es: TermsText = {
       ps: [
         "La wallet genera y cifra tus claves localmente en tu dispositivo. Nunca recibimos, guardamos ni podemos recuperar tu frase de recuperación, tu clave secreta ni tu contraseña.",
         "Eres única y exclusivamente responsable de custodiar tu frase de recuperación y tu contraseña, y de todos los fondos de tu wallet. Si pierdes la frase y olvidas la contraseña, los fondos son irrecuperables para cualquiera, incluidos nosotros.",
-        "Toda transacción que firmes se ejecuta en la red blockchain pública a la que pertenece (Stellar, Solana o Monad) y es irreversible. Verifica direcciones e importes antes de confirmar; no podemos cancelar, revertir ni reembolsar transacciones on-chain.",
+        "Toda transacción que firmes se ejecuta en la red blockchain pública a la que pertenece (Stellar, Solana, Monad u otra red que alcance un swap) y es irreversible. Verifica direcciones e importes antes de confirmar; no podemos cancelar, revertir ni reembolsar transacciones on-chain.",
       ],
     },
     {
       h: "3. Pasarela de pagos y plataforma de desarrolladores",
       ps: [
-        "La pasarela permite a usuarios y desarrolladores registrados crear intentos de pago, cotizaciones y swaps en Stellar, Solana y Monad mediante claves API emitidas por la plataforma. Eres responsable de mantener en secreto tus claves API y de toda la actividad realizada con ellas.",
+        "La pasarela permite a usuarios y desarrolladores registrados crear intentos de pago en Stellar, Solana y Monad, y cotizaciones y swaps en todas las redes que alcanzan los proveedores de swaps, mediante claves API emitidas por la plataforma. Eres responsable de mantener en secreto tus claves API y de toda la actividad realizada con ellas.",
         "Las cotizaciones de swap son estimaciones; el precio ejecutado puede variar dentro de la tolerancia de slippage mostrada. Las comisiones de red y, en su caso, de servicio se muestran antes de confirmar.",
         "Podemos limitar, suspender o revocar el acceso API que abuse del servicio, incumpla la ley o dañe a otros usuarios.",
       ],
@@ -155,7 +155,7 @@ const es: TermsText = {
     {
       h: "9. Sin garantías y limitación de responsabilidad",
       ps: [
-        "Los servicios se prestan “tal cual”, sin garantías de ningún tipo. En la máxima medida permitida por la ley, no respondemos por fondos perdidos por pérdida de frases/contraseñas, error del usuario, comportamiento on-chain, servicios de terceros (las redes Stellar, Solana y Monad y sus nodos, Horizon, agregadores de swaps, feeds de precios, socios fiat), fuerza mayor, ni por daños indirectos o consecuenciales. Nada de lo anterior excluye responsabilidades que la ley no permita excluir.",
+        "Los servicios se prestan “tal cual”, sin garantías de ningún tipo. En la máxima medida permitida por la ley, no respondemos por fondos perdidos por pérdida de frases/contraseñas, error del usuario, comportamiento on-chain, servicios de terceros (las redes Stellar, Solana y Monad, cualquier otra red que alcance un swap, sus nodos, Horizon, agregadores de swaps, feeds de precios, socios fiat), fuerza mayor, ni por daños indirectos o consecuenciales. Nada de lo anterior excluye responsabilidades que la ley no permita excluir.",
       ],
     },
     {

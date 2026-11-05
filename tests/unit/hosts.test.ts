@@ -29,7 +29,7 @@ test('ownerOf assigns every public path to one domain', () => {
     assert.equal(ownerOf(p), 'payments', p);
   }
   assert.equal(ownerOf('/learn/not-a-guide'), null, 'only the registered guides');
-  for (const p of ['/login', '/dashboard', '/onboarding', '/invite/abc', '/kyc/return/o/e/r', '/swagger', '/docs', '/docs/api', '/api/auth/get-session']) {
+  for (const p of ['/login', '/logout', '/dashboard', '/onboarding', '/invite/abc', '/kyc/return/o/e/r', '/swagger', '/docs', '/docs/api', '/api/auth/get-session']) {
     assert.equal(ownerOf(p), 'dev', p);
   }
   assert.equal(ownerOf('/dashboards'), null, 'a prefix match needs a path boundary');
@@ -94,6 +94,9 @@ test('payments.cosmospay.lat renders its landing and the checkout pages', () => 
   });
   assert.deepEqual(route('payments.cosmospay.lat', '/login', '?next=%2Fdashboard'), {
     kind: 'redirect', location: 'https://dev.cosmospay.lat/login?next=%2Fdashboard', status: 301,
+  });
+  assert.deepEqual(route('payments.cosmospay.lat', '/logout', '?next=https%3A%2F%2Fpayments.cosmospay.lat%2Ffaq'), {
+    kind: 'redirect', location: 'https://dev.cosmospay.lat/logout?next=https%3A%2F%2Fpayments.cosmospay.lat%2Ffaq', status: 301,
   });
   assert.deepEqual(route('payments.cosmospay.lat', '/pricing'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing', status: 301 });
   assert.deepEqual(route('payments.cosmospay.lat', '/not-a-link'), { kind: 'not-found', area: 'payments' });

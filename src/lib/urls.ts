@@ -19,6 +19,16 @@ export function loginUrl(devOrigin: string, next?: string): string {
   return `${base}?next=${encodeURIComponent(next)}`;
 }
 
+/**
+ * The platform's sign-out entry, for pages on a domain that may not sign out cross-origin (the
+ * gateway's): /logout signs out on the server and sends the browser back to `returnTo`, an
+ * absolute URL on one of this app's origins (src/lib/safe-next.ts, safeReturnUrl).
+ */
+export function logoutUrl(devOrigin: string, returnTo?: string): string {
+  const base = `${normalizeOrigin(devOrigin)}/logout`;
+  return returnTo ? `${base}?next=${encodeURIComponent(returnTo)}` : base;
+}
+
 /** The documentation's root, `<platform>/docs/`: a static export served under /docs, whose
  *  canonical addresses end in a slash. */
 export function docsRoot(devOrigin: string): string {

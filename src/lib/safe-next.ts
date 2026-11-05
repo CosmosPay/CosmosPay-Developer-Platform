@@ -16,3 +16,27 @@ export function isSafeNextPath(next: string): boolean {
 export function safeNextPath(next: string | null | undefined, fallback: string = DEFAULT_NEXT): string {
   return next && isSafeNextPath(next) ? next : fallback;
 }
+
+/**
+ * Where /logout sends the browser afterwards: back to the page the visitor signed out from,
+ * which can be on any of this app's domains. So an absolute URL is honoured, but only when its
+ * origin (scheme, host and port) is exactly one of `origins`; anything else, a relative path
+ * included, gets `fallback` rather than becoming an open redirect.
+ */
+export function safeReturnUrl(next: string | null | undefined, origins: readonly string[], fallback: string): string {
+  if (!next || /[\u0000-\u001f\u007f]/.test(next)) return fallback;
+  let url: URL;
+  try {
+    url = new URL(next);
+  } catch {
+    return fallback;
+  }
+  const allowed = origins.some((origin) => {
+    try {
+      return new URL(origin).origin === url.origin;
+    } catch {
+      return false;
+    }
+  });
+  return allowed && !url.username && !url.password ? url.href : fallback;
+}

@@ -8,6 +8,7 @@
   "scripts": {
     "predev": "prisma migrate deploy && node scripts/ensure-docs.mjs && npm run embed:build -- --mode development && npm run og:build -- --mode development",
     "dev": "astro dev --host",
+    "dev:mock": "node scripts/dev-mock.mjs",
     "build": "prisma generate && npm run docs:build && npm run embed:build && npm run og:build && astro build",
     "build:app": "prisma generate && npm run embed:build && npm run og:build && astro build",
     "docs:build": "node scripts/build-docs.mjs",

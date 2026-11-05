@@ -3,8 +3,9 @@ import { recordLogin, touchLastSeen } from "@/lib/profile";
 import { trackActivity } from "@/lib/activity";
 import { ensureCosmosRouteSynced } from "@/lib/apisix-route";
 import { defineMiddleware } from "astro:middleware";
+import type { APIContext } from "astro";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
-import { MOUNTS, canonicalPath, languagesOf, routeRequest } from "@/lib/hosts";
+import { MOUNTS, areasOf, canonicalPath, languagesOf, routeRequest } from "@/lib/hosts";
 import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
 import { DEV, DOCS, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 import { DEFAULT_LOCALE, LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
@@ -15,10 +16,21 @@ import { markdownHeaders, pageDoc, versionLang } from "@/lib/seo/page-markdown";
 import { renderPage } from "@/lib/seo/markdown";
 import { MARKDOWN_INPUT } from "@/lib/seo/markdown-config";
 import { discoveryLinks, pageMarkdownLink } from "@/lib/seo/link-headers";
+import { isMockMode } from "@/lib/mock/mode";
+import { handleMockApi, mockHandles } from "@/lib/mock/index";
+import { MOCK_GATEWAY_PREFIX, handleMockGateway } from "@/lib/mock/gateway";
+import { MOCK_SIGNED_OUT_COOKIE, mockAuthSession, mockAuthUser, mockSignedOut } from "@/lib/mock/session";
+import { jsonUnauthorized } from "@/lib/http";
+import { safeNextPath, safeReturnUrl } from "@/lib/safe-next";
+import { paymentsSessionPreflight, sessionCors, wantsPaymentsSessionCors } from "@/lib/payments-session";
+
+/* Mock mode (`npm run dev:mock`, src/lib/mock): no database, no Authentik, no Payments API.
+   Read once: the script sets it before the server starts. */
+const MOCK = isMockMode();
 
 // On server start: (re)create the Cosmos API route in APISIX with the current
 // COSMOS_API_URL. Runs once per process (idempotent), non-blocking.
-ensureCosmosRouteSynced();
+if (!MOCK) ensureCosmosRouteSynced();
 
 /* --- CORS ---
    cosmospay.lat (site + wallet) calls this API (dev.cosmospay.lat) cross-origin, so we
@@ -128,15 +140,59 @@ function trackApiRequest(context: {
   });
 }
 
+/* --- Mock mode ---
+   Signs the visitor in as the sample account (or leaves them anonymous after a mock sign-out),
+   answers /login by signing back in, and answers every /api/* request from src/lib/mock. Returns
+   the response for those, or null for a page, which then renders as usual with the mock user. */
+async function mockRequest(context: APIContext): Promise<Response | null> {
+  const path = context.url.pathname;
+  if (path === "/login") {
+    const headers = new Headers({ Location: safeNextPath(context.url.searchParams.get("next")), "Cache-Control": "no-store" });
+    headers.append("Set-Cookie", `${MOCK_SIGNED_OUT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly`);
+    return new Response(null, { status: 302, headers });
+  }
+  if (path === "/logout") {
+    // As src/pages/logout.astro: signed out (the cookie above) unless another website sent the
+    // visitor here, then back to the page they left.
+    const target = safeReturnUrl(context.url.searchParams.get("next"), [SITE, DEV, PAYMENTS], SITE);
+    const headers = new Headers({ Location: target, "Cache-Control": "no-store" });
+    if (context.request.headers.get("sec-fetch-site") !== "cross-site") {
+      headers.append("Set-Cookie", `${MOCK_SIGNED_OUT_COOKIE}=1; Path=/; SameSite=Lax; HttpOnly`);
+    }
+    return new Response(null, { status: 302, headers });
+  }
+  const signedOut = mockSignedOut(context.request.headers.get("cookie"));
+  // As in production, where the session cookie is host-only on the platform: only its host knows
+  // the visitor on the server. The company site and the gateway render signed out and their nav
+  // asks /api/nav-session, so a mock sign-out shows on every domain.
+  const known = !signedOut && areasOf(context.url.hostname, ORIGINS).has("dev");
+  context.locals.user = known ? mockAuthUser() : null;
+  context.locals.session = known ? mockAuthSession() : null;
+  if (!mockHandles(path)) return null;
+  if (signedOut) {
+    if (path === "/api/auth/get-session") return new Response("null", { headers: { "Content-Type": "application/json" } });
+    if (!path.startsWith("/api/auth/")) return jsonUnauthorized("Session required");
+  }
+  return handleMockApi(context.request, context.url);
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Mock mode's gateway (the payments pages' PUBLIC_PAYMENTS_API_URL): on any host, with its own
+  // CORS, before routing, like the real gateway in front of this app.
+  if (MOCK && context.url.pathname.startsWith(`${MOCK_GATEWAY_PREFIX}/`)) {
+    return handleMockGateway(context.request, context.url);
+  }
+
   const origin = context.request.headers.get("origin");
   const corsOk = isAllowedOrigin(origin);
 
-  // Answer CORS preflight directly, before auth/route work (preflight carries no creds).
+  // Answer CORS preflight directly, before auth/route work (preflight carries no creds). The
+  // gateway's domain gets one only for the calls it may make with the session
+  // (src/lib/payments-session.ts).
   if (context.request.method === "OPTIONS") {
-    const headers = new Headers();
-    if (corsOk) applyCors(headers, origin, context.request);
-    return new Response(null, { status: corsOk ? 204 : 403, headers });
+    const headers = corsOk ? new Headers() : paymentsSessionPreflight(context.request, context.url.pathname, PAYMENTS);
+    if (corsOk) applyCors(headers!, origin, context.request);
+    return new Response(null, { status: headers ? 204 : 403, headers: headers ?? undefined });
   }
 
   // Next 16 client-prefetch segment files (`__next.*`) under /docs don't exist in the static
@@ -243,13 +299,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // Belt-and-suspenders: ensure the route was synced (no-op after the first call).
-  ensureCosmosRouteSynced();
+  if (MOCK) {
+    // The sample account instead of a session, and the in-memory API instead of the routes.
+    const mocked = await mockRequest(context);
+    if (mocked) {
+      if (corsOk) applyCors(mocked.headers, origin, context.request);
+      else if (wantsPaymentsSessionCors(method, context.url.pathname, origin, PAYMENTS)) sessionCors(mocked.headers, origin!);
+      return mocked;
+    }
+  } else {
+    // Belt-and-suspenders: ensure the route was synced (no-op after the first call).
+    ensureCosmosRouteSynced();
+  }
 
   // Read once for the whole request: an API route asking again gets this same answer.
-  const isAuthed = await requestSession(context.request.headers);
+  const isAuthed = MOCK ? null : await requestSession(context.request.headers);
 
-  if (isAuthed) {
+  if (MOCK) {
+    // Set by mockRequest.
+  } else if (isAuthed) {
     context.locals.user = isAuthed.user;
     context.locals.session = isAuthed.session;
     // Best-effort: ensure the profile exists and capture sign-in location once per
@@ -301,6 +369,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // and those links (src/lib/seo/response-headers.ts).
   const served = responseHeaders(response, { https: areaOrigin.startsWith("https://"), negotiatedLang, negotiatedType, links });
   if (corsOk) applyCors(served.headers, origin, context.request);
+  // The platform answers the gateway's domain may read with the visitor's cookie: who is signed
+  // in, for its nav, and the signed-in public swap page's calls (src/lib/payments-session.ts). Its
+  // origin stays off the session's allowlist.
+  else if (wantsPaymentsSessionCors(method, context.url.pathname, origin, PAYMENTS)) sessionCors(served.headers, origin!);
   trackApiRequest(context, served.status, startedAt);
   return served;
 });

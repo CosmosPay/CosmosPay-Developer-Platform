@@ -8,7 +8,7 @@
    (localizeHref). /swaps is left out: its canonical page is the gateway's. Pure, so
    tests/unit/seoMarkdown.test.ts covers it. */
 import { messages } from "@/lib/i18n/messages/index";
-import { PLAN_IDS, PLAN_SPECS, PROTECTED_PAYMENT_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT, swapFeePct, type PlanId } from "@/lib/plans";
+import { PLAN_IDS, PLAN_SPECS, PROTECTED_PAYMENT_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT, pricingCopyVars, swapFeePct, type PlanId } from "@/lib/plans";
 import { NETWORK_IDS } from "@/lib/chains";
 import { docsLink, docsRoot, loginUrl } from "@/lib/urls";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
@@ -229,10 +229,10 @@ function pricing({ c, login }: Ctx): Block[] {
     [pr.seatsRow, ...PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxSeats))],
     [pr.keysRow, ...PLAN_IDS.map((id) => limit(PLAN_SPECS[id].maxApiKeys))],
   ];
-  const swapRates = { ...Object.fromEntries(PLAN_IDS.map((id) => [id, swapFeePct(id)])), public: swapFeePct("community") };
+  const rateVars = pricingCopyVars();
   return [
     h(1, pr.title),
-    p(pr.lede),
+    p(fill(pr.lede, rateVars)),
     ...cards,
     h(2, ent.name),
     p(ent.desc),
@@ -242,7 +242,7 @@ function pricing({ c, login }: Ctx): Block[] {
     h(2, pr.compareTitle),
     table(pr.compareHead, rows),
     h(2, pr.faqTitle),
-    ...pr.faqs.flatMap((f) => [h(3, f.q), p(fill(f.a, swapRates))]),
+    ...pr.faqs.flatMap((f) => [h(3, f.q), p(fill(f.a, rateVars))]),
     h(2, pr.ctaTitle),
     p(pr.ctaDesc),
     p(link(pr.openDashboard, login)),
@@ -258,7 +258,7 @@ function about({ c, input, at }: Ctx): Block[] {
     p(t.lede),
     p(t.disambiguation),
     ul([
-      term(t.facts.networks, t.facts.networksValue),
+      term(t.facts.networks, t.facts.networksValue.replace(/\{n\}/g, String(NETWORK_IDS.length))),
       term(t.facts.based, t.facts.basedValue),
       term(t.facts.code, link(GITHUB_ORG.replace(/^https:\/\//, ""), GITHUB_ORG)),
       term(t.facts.sdk, link(SDK_PACKAGE, SDK_NPM)),

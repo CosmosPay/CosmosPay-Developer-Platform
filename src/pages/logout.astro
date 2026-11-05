@@ -1,0 +1,31 @@
+---
+/* /logout signs the visitor out on the server and answers 302 back to `next`, the page they
+ * signed out from (an absolute URL on one of this app's three origins, src/lib/safe-next.ts;
+ * anything else goes to the company site). It is how the gateway's domain signs out: that origin
+ * is not trusted with the session, so it cannot call Better Auth's sign-out itself, and a
+ * navigation here carries the host-only session cookie. The company site and the dashboard keep
+ * signing out with the auth client (startLogout, src/components/cosmos/lib/auth.ts).
+ *
+ * Another website could send a visitor here to sign them out. Only a navigation from one of our
+ * own pages (Sec-Fetch-Site same-origin or same-site) or one the visitor started (none, or a
+ * browser that sends no such header) signs out; a cross-site one is just sent on. Mock mode
+ * answers this path in the middleware, as it does /login.
+ */
+import { auth } from "@/lib/auth";
+import { DEV, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
+import { safeReturnUrl } from "@/lib/safe-next";
+
+const target = safeReturnUrl(Astro.url.searchParams.get("next"), [SITE, DEV, PAYMENTS], SITE);
+const headers = new Headers({ Location: target, "Cache-Control": "no-store" });
+
+if (Astro.locals.user && Astro.request.headers.get("sec-fetch-site") !== "cross-site") {
+  try {
+    const res = await auth.api.signOut({ headers: Astro.request.headers, asResponse: true });
+    for (const cookie of res.headers.getSetCookie()) headers.append("Set-Cookie", cookie);
+  } catch (err) {
+    console.error("[logout] sign-out failed:", err instanceof Error ? err.message : err);
+  }
+}
+
+return new Response(null, { status: 302, headers });
+---

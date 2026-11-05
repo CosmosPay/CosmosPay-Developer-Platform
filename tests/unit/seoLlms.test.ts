@@ -57,9 +57,15 @@ test('the custody facts hold for every service, and the networks count is the co
     assert.match(text, /Cosmos Pay holds no key to it/);
     assert.doesNotMatch(text, /nobody holds|never pass through/i);
   }
-  assert.match(files.site, /a swap between networks waits at a NEAR Intents deposit address/);
+  assert.match(files.site, /a swap between networks waits at a deposit address made for it until it settles or is refunded/);
   assert.ok(files.site.includes(`across ${NETWORK_IDS.length} networks`));
   assert.doesNotMatch(files.site, /\d+\+ networks/);
+});
+
+test('no provider is named: customers never learn what Cosmos Pay is built on (product owner, 2026-11-03)', () => {
+  for (const [name, text] of Object.entries(files)) {
+    assert.doesNotMatch(text, /NEAR Intents|1Click|LayerZero|Jupiter|Kuru|OpenZeppelin|BlindPay|Trustless Work/, name);
+  }
 });
 
 test('the company file points developers at the docs, the OpenAPI document and the SDK', () => {

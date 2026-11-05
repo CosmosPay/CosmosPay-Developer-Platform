@@ -58,10 +58,9 @@ export function learnHrefs(docs: string) {
     sep7: "https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0007.md",
     solanaPay: "https://solana.com/docs/tools/solana-pay/specification/version1-1",
     eip681: "https://eips.ethereum.org/EIPS/eip-681",
-    // What USDT0 is and how it moves between networks, at its issuer and at LayerZero (read 2026-11-02).
+    // What USDT0 is and how it moves between networks, at its issuer (read 2026-11-02).
     usdt0Site: "https://usdt0.to/",
     usdt0Network: "https://docs.usdt0.to/",
-    layerzeroOft: "https://docs.layerzero.network/v2/home/token-standards/oft-standard",
   } as const;
 }
 
@@ -74,7 +73,6 @@ export const SOURCE_LINKS = [
   "eip681",
   "usdt0Site",
   "usdt0Network",
-  "layerzeroOft",
 ] as const;
 
 export type LearnLink = keyof ReturnType<typeof learnHrefs>;

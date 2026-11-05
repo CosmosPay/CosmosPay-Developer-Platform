@@ -16,7 +16,7 @@ import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
 import { metrics as metricsApi } from "@/lib/api-client";
 import { goFiltered } from "@/components/cosmos/dashboard/hooks";
-import { StackChart, type StackPart } from "@/components/cosmos/dashboard/components/StackChart";
+import { CHART_KINDS, StackChart, type ChartKind, type StackPart } from "@/components/cosmos/dashboard/components/StackChart";
 import { Odometer } from "@/components/cosmos/dashboard/components/Odometer";
 import { Sk, ChartSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 
@@ -44,6 +44,35 @@ function zeroBuckets(period: SeriesPeriod) {
 }
 /* Plural-safe counts: the singular has its own string. */
 export const countText = (n, one, many, num) => (n === 1 ? one : fmt(many, { n: num.format(n || 0) }));
+
+/* The chart's form (bars, lines or area), one choice for every activity chart, kept in this
+   browser as the rows per page are. Read after mount, so the first render matches the server's;
+   a change reaches every chart on screen. */
+const CHART_KEY = "cosmospay-chart";
+const CHART_EVENT = "dash:chart";
+const isKind = (v: unknown): v is ChartKind => CHART_KINDS.includes(v as ChartKind);
+export function useChartKind(): [ChartKind, (k: ChartKind) => void] {
+  const [kind, setKind] = useState<ChartKind>("bars");
+  useEffect(() => {
+    try { const v = localStorage.getItem(CHART_KEY); if (isKind(v)) setKind(v); } catch (e) {}
+    const on = (e: Event) => { const v = (e as CustomEvent).detail; if (isKind(v)) setKind(v); };
+    window.addEventListener(CHART_EVENT, on);
+    return () => window.removeEventListener(CHART_EVENT, on);
+  }, []);
+  const choose = (k: ChartKind) => {
+    try { localStorage.setItem(CHART_KEY, k); } catch (e) {}
+    setKind(k);
+    window.dispatchEvent(new CustomEvent(CHART_EVENT, { detail: k }));
+  };
+  return [kind, choose];
+}
+
+/* The chart types' marks: what each form looks like, small, in the button's ink. */
+const KIND_ICONS: Record<ChartKind, ReactNode> = {
+  bars: <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><rect x="2" y="8" width="3" height="6" rx=".5" /><rect x="6.5" y="4" width="3" height="10" rx=".5" /><rect x="11" y="6" width="3" height="8" rx=".5" /></svg>,
+  lines: <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12l3.5-4 3 2.5L14 4" /></svg>,
+  area: <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12l3.5-4 3 2.5L14 4v10H2z" fill="currentColor" opacity=".35" /><path d="M2 12l3.5-4 3 2.5L14 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+};
 
 /* A view's own series: one call per environment and period (undefined while the first one loads,
    null when it failed). */
@@ -79,6 +108,7 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
   const lang = useLang();
   const h = t.dash.overview.hub;
   const [metric, setMetric] = useState<MetricKey>(metrics[0]);
+  const [kind, setKind] = useChartKind();
   const num = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 });
   const usdFmt = new Intl.NumberFormat(lang, { style: "currency", currency: "USD" });
   const usd = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? "-" : usdFmt.format(Number(v)));
@@ -205,13 +235,21 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
     <section className={`hub-section${className ? ` ${className}` : ""}`} aria-labelledby={id}>
       <div className="hub-section-head">
         <h2 id={id}>{h.activity}</h2>
-        <div className="seg-tabs" role="group" aria-label={h.periodLabel}>
-          {CHART_PERIODS.map((p) => (
-            <button key={p} type="button" className={period === p ? "on" : ""} aria-pressed={period === p} onClick={() => onPeriod(p)}>{h.chartPeriods[p]}</button>
-          ))}
+        <div className="hub-section-tools">
+          {/* The chart's form, as icons named for assistive tech and on hover. */}
+          <div className="seg-tabs seg-icons" role="group" aria-label={h.chartKindLabel}>
+            {CHART_KINDS.map((k) => (
+              <button key={k} type="button" className={kind === k ? "on" : ""} aria-pressed={kind === k} aria-label={h.chartKinds[k]} title={h.chartKinds[k]} onClick={() => setKind(k)}>{KIND_ICONS[k]}</button>
+            ))}
+          </div>
+          <div className="seg-tabs" role="group" aria-label={h.periodLabel}>
+            {CHART_PERIODS.map((p) => (
+              <button key={p} type="button" className={period === p ? "on" : ""} aria-pressed={period === p} onClick={() => onPeriod(p)}>{h.chartPeriods[p]}</button>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="panel hub-panel" aria-busy={loading || undefined}>
+      <div className={`panel hub-panel kind-${kind}`} aria-busy={loading || undefined}>
         {many ? (
           <div className={`hub-metrics n${metrics.length}`} role="tablist" aria-label={h.activity} onKeyDown={onTabKey}>
             {metrics.map((k) => (
@@ -247,9 +285,10 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
           </div>
           {first ? <ChartSkeleton label={h.chartLabels[period]} bars={12} /> : (
             <div className={loading ? "hub-chart is-loading" : "hub-chart"}>
-              {/* Remounted per figure and period, so the bars grow again from the axis. */}
+              {/* Remounted per figure, period and form, so the bars grow again from the axis and the
+                  lines draw in again. */}
               <StackChart
-                key={`${key}-${period}-${points.length}`}
+                key={`${key}-${period}-${kind}-${points.length}`}
                 data={points}
                 parts={cur.parts}
                 label={`${cur.label} (${h.chartPeriods[period]})`}
@@ -258,6 +297,7 @@ export function ActivityPanel({ id, series, loading, period, onPeriod, metrics, 
                 lang={lang}
                 period={period}
                 currency={cur.currency}
+                kind={kind}
               />
             </div>
           )}

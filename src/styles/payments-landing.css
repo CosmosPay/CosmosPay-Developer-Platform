@@ -497,15 +497,8 @@
 .pl-code .pl-codeblock { min-height: 22rem; padding: 18px 22px 8px 10px; }
 .pl-code-note { margin: 0; padding: 0 22px 22px 70px; font: 13px/1.7 var(--ff-mono); color: var(--ink-3); }
 
-/* ---- code: highlighted samples (Code.astro, highlight.ts) in the page's palette ---- */
-.pl {
-  --tk-kw: #6E40C9; --tk-str: #1F7A4D; --tk-num: #B45309; --tk-key: #2346F4;
-  --tk-fn: #13131A; --tk-com: #6A6A75; --tk-punc: #6A6A75; --tk-tag: #6E40C9; --tk-attr: #2346F4;
-}
-[data-theme="dark"] .pl {
-  --tk-kw: #C4A7FF; --tk-str: #7EE0A8; --tk-num: #F5B97A; --tk-key: #8FA3FF;
-  --tk-fn: #FFFFFF; --tk-com: #8A8A96; --tk-punc: #8A8A96; --tk-tag: #C4A7FF; --tk-attr: #8FA3FF;
-}
+/* ---- code: highlighted samples (Code.astro, src/lib/highlight.ts); the .tk-* colours and
+   their --tk-* tokens are cosmos.css's, shared by every code window ---- */
 .pl-codeblock { margin: 0; overflow-x: auto; font: 13px/1.75 var(--ff-mono); color: var(--ink); tab-size: 2; }
 .pl-codeblock code { display: block; min-width: max-content; font: inherit; }
 .pl-line { display: block; min-height: 1.75em; white-space: pre; }
@@ -514,13 +507,6 @@
   counter-increment: pl-line; content: counter(pl-line); content: counter(pl-line) / "";
   display: inline-block; width: 2.4em; margin-right: 1.4em; text-align: right; color: var(--ink-3); opacity: .6; user-select: none;
 }
-.tk-kw, .tk-tag { color: var(--tk-kw); }
-.tk-str { color: var(--tk-str); }
-.tk-num { color: var(--tk-num); }
-.tk-key, .tk-attr, .tk-flag { color: var(--tk-key); }
-.tk-fn { color: var(--tk-fn); font-weight: 700; }
-.tk-com { color: var(--tk-com); font-style: italic; }
-.tk-punc { color: var(--tk-punc); }
 /* copy: a small light pill; it paints blue under the pointer like the other light buttons */
 .pl-copy {
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; cursor: pointer;
@@ -1131,6 +1117,10 @@
 .pl-section:not(.pl-section-alt) + .pl-section:not(.pl-section-alt, .is-pinned),
 .pl-section-alt + .pl-section-alt:not(.is-pinned, .pl-inline-cta) { padding-top: clamp(40px, 5vw, 68px); }
 .pl-section:not(.pl-section-alt, .is-pinned):has(+ .pl-final-wrap) { padding-bottom: clamp(48px, 6vw, 88px); }
+/* After a section on the other canvas (the related guides, /compare's tables, the use cases) the
+   final call has no section of its own canvas to keep the gap: it keeps it itself, or its panel
+   starts on the edge where the canvas changes. */
+.pl-section-alt + .pl-final-wrap { padding-top: clamp(48px, 6vw, 88px); }
 .pl-inline-cta-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 28px; }
 .pl-inline-cta .btn { min-height: 50px; padding: 13px 24px; }
 /* in one row with the button, so it drops the space it keeps above it elsewhere */
@@ -1146,9 +1136,14 @@
 .pl-plans-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .pl-plans-actions .pl-plans-more { margin-top: 0; }
 
-/* the network pages under the FAQ's heading: a line of links to them */
-.pl-faq-nets { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin: 24px 0 0; font-size: .9375rem; color: var(--ink-2); }
+/* the network pages under the FAQ's heading: their name over a short list of links, one per line
+   (as one wrapping line it broke mid-list and read as a stray sentence) */
+.pl-faq-nets { margin: 28px 0 0; }
+.pl-faq-nets p { margin: 0 0 10px; font-size: .875rem; color: var(--ink-3); }
+.pl-faq-nets ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 10px; }
 .pl-faq-nets .pl-textlink { margin-top: 0; }
+/* on /faq the heading is for assistive tech only, so the list opens the column */
+.pl-sr + .pl-faq-nets { margin-top: 0; }
 
 /* ---- the network pages (/stellar, /solana, /monad) ---- */
 /* how a payment works there: one fact per row, the term beside its text */
@@ -1181,6 +1176,13 @@ a.pl-brand:hover > span { text-decoration-line: underline; }
 .pl-rates thead th:last-child { width: 20%; }
 .pl-rate { display: block; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .pl-rates td { overflow-wrap: anywhere; }
+/* "Beyond the rate" (beside Stripe) is the section's second part: it starts as far from the rates'
+   footnotes as a section from the next, its heading one step under the section's, and its three
+   columns share the width (the rates table's 18% / 20% gave Stripe a fifth of it). */
+.pl-beyond-head { margin-top: clamp(56px, 7vw, 88px); }
+.pl-beyond-head h3 { margin: 0; font-weight: 600; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15; letter-spacing: -.025em; color: var(--ink); text-wrap: balance; }
+.pl-beyond thead th:first-child { width: 22%; }
+.pl-beyond thead th:not(:first-child) { width: 39%; }
 @media (max-width: 720px) {
   .pl-net-facts > div { grid-template-columns: minmax(0, 1fr); }
   .pl-rates tbody th[rowspan] { border-top: 0; }
@@ -1306,7 +1308,10 @@ a.pl-brand:hover > span { text-decoration-line: underline; }
   .pl-final-art { width: 130px; margin-top: 24px; }
   .pl-contact-grid { grid-template-columns: 1fr; }
   .pl-subnav .pl-subnav-cta { display: none; }
-  .pl-page-art { width: 96px; }
+  /* On a phone the render goes above the copy, as the page's mark: beside it, it left the title
+     and the lede a third of the width (a guide's title broke into one word per line). */
+  .pl-page-head-inner { flex-direction: column-reverse; align-items: flex-start; gap: 16px; }
+  .pl-page-art { width: 72px; }
   .pl-uses-tabs { grid-template-columns: 1fr; }
   /* The comparison becomes one block per topic, each value under its column's name. */
   .pl-compare, .pl-compare tbody, .pl-compare tr, .pl-compare th, .pl-compare td { display: block; width: auto; }

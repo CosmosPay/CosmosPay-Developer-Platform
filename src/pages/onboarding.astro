@@ -3,6 +3,8 @@ import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import Onboarding from "@/components/cosmos/Onboarding.tsx";
 import { listForUser } from "@/lib/organizations";
 import { planFeatures, ONBOARDING_ENABLED } from "@/lib/features";
+import { isMockMode } from "@/lib/mock/mode";
+import { mockBoot } from "@/lib/mock/handlers/platform";
 
 // Only for signed-in users without an organization yet.
 const user = Astro.locals.user;
@@ -17,7 +19,8 @@ if (!ONBOARDING_ENABLED) {
 
 let orgs: unknown[] = [];
 try {
-  orgs = await listForUser(user.id);
+  // Mock mode (npm run dev:mock) reads the sample account's organizations.
+  orgs = isMockMode() ? mockBoot().orgs : await listForUser(user.id);
 } catch (e) {
   orgs = [];
 }

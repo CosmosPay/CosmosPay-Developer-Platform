@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { IcCopy } from "@/components/cosmos/icons";
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
-import { useT, fmt } from "@/lib/i18n/index";
+import { useLang, useT, fmt } from "@/lib/i18n/index";
+import { bpsPercent } from "@/lib/plans";
 import { liquidity as liquidityApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
@@ -548,6 +549,7 @@ function WithdrawModal({ lq, orgId, env, prefill, onClose, onCreated }) {
 
 /* ---------------- detail modal (QR + uri + xdr + submit signed tx) ---------------- */
 function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
+  const lang = useLang();
   const d = lq.detail;
   const [data, setData] = useState(op);
   const [signed, setSigned] = useState("");
@@ -600,7 +602,7 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
     [data.kind === "WITHDRAW" ? F.minReceived : F.maxDeposit, opAmounts(data)],
     [F.shares, data.shares ? `${data.shares} ${lq.sharesUnit}` : null],
     [F.priceBounds, data.minPrice && data.maxPrice ? `${data.minPrice} – ${data.maxPrice}` : null],
-    [F.commission, data.feeBps ? `${data.feeAmountA} ${assetLabel(data.assetA)} + ${data.feeAmountB} ${assetLabel(data.assetB)} (${data.feeBps} ${lq.bps})` : null],
+    [F.commission, data.feeBps ? `${data.feeAmountA} ${assetLabel(data.assetA)} + ${data.feeAmountB} ${assetLabel(data.assetB)} (${bpsPercent(data.feeBps, lang)})` : null],
     [F.commissionMemo, data.commissionMemo],
     [F.txHash, data.txHash],
     [F.created, fmtDateTime(data.createdAt)],

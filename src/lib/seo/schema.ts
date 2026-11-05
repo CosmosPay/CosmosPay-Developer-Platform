@@ -8,6 +8,7 @@
    carry. Pure (no astro:env), so tests/unit/seoSchema.test.ts covers it. */
 import { PLAN_IDS, PLAN_SPECS, type PlanId } from "@/lib/plans";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
+import { NETWORK_IDS } from "@/lib/chains";
 
 export type JsonLdNode = Record<string, unknown>;
 
@@ -26,7 +27,7 @@ export function chromeStoreListing(url: string): string {
 }
 
 const ORG_DESCRIPTION =
-  "Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on Stellar, Solana and Monad: a payments REST API, a JavaScript and TypeScript SDK, payment links with a hosted checkout, and the Cosmos Pay Wallet.";
+  `Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on ${NETWORK_IDS.length} networks: a payments REST API, a JavaScript and TypeScript SDK, payment links with a hosted checkout, and the Cosmos Pay Wallet.`;
 
 export const orgId = (site: string): string => `${site}/#organization`;
 export const websiteId = (origin: string): string => `${origin}/#website`;
@@ -52,7 +53,7 @@ export function organizationNode(site: string, sameAs: string[]): JsonLdNode {
     logo: { "@type": "ImageObject", "@id": `${site}/#logo`, url: logo, contentUrl: logo, width: 512, height: 512, caption: "Cosmos Pay" },
     image: { "@id": `${site}/#logo` },
     description: ORG_DESCRIPTION,
-    disambiguatingDescription: "The payments company at cosmospay.lat, working on Stellar, Solana and Monad; not the Cosmos Network (ATOM) blockchain, nor BitCanna's CosmosPay payment plugins.",
+    disambiguatingDescription: `The payments company at cosmospay.lat, working on ${NETWORK_IDS.length} networks; not the Cosmos Network (ATOM) blockchain, nor BitCanna's CosmosPay payment plugins.`,
     email: CONTACT_ADDRESS,
     // The country only, as /about states it (its public source: the GitHub organization's
     // location). Product owner, 2026-11-01. No street, city or legal name until they provide them.
@@ -200,7 +201,7 @@ export function plansProductNode(site: string): JsonLdNode {
     "@type": "Product",
     "@id": plansProductId(site),
     name: "Cosmos Pay",
-    description: "Cosmos Pay's plans for payments, swaps and private payments as a service on Stellar, Solana and Monad: the rate per payment and per swap on each plan.",
+    description: `Cosmos Pay's plans for payments, swaps and private payments as a service on ${NETWORK_IDS.length} networks: the rate per payment and per swap on each plan.`,
     brand: { "@id": orgId(site) },
     image: `${site}/og-image.png`,
     url,
@@ -257,7 +258,7 @@ export function apiNode({ site, docs, apiBase }: Pick<ProductNodesInput, "site" 
     "@id": `${site}/#api`,
     name: "Cosmos Pay Payments API",
     description:
-      "REST API to create payment intents and payment links, receive signed webhooks, and manage products, customers and swaps on Stellar, Solana and Monad. API keys starting with dv_ run on testnet and prod_ keys on mainnet.",
+      "REST API to create payment intents and payment links, receive signed webhooks, and manage products and customers on Stellar, Solana and Monad, and swaps across every network they reach. API keys starting with dv_ run on testnet and prod_ keys on mainnet.",
     url: `${docs}api/`,
     documentation: docs,
     termsOfService: `${site}/tos`,

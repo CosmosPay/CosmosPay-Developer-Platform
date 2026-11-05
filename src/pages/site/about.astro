@@ -48,6 +48,8 @@ const CHECKS = LINKS.checks.map((c) => ({ key: c.key, links: c.links.map((l) => 
 // `{n}` in a product's line is how many networks cross-chain swaps reach (NETWORK_IDS).
 const fill = (text: string) => text.replace(/\{n\}/g, String(NETWORK_IDS.length));
 const MAILTO = `mailto:${CONTACT_ADDRESS}`;
+// The address may break after its "@" in a narrow column, never inside a word.
+const [EMAIL_USER, EMAIL_DOMAIN] = CONTACT_ADDRESS.split("@");
 const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
 ---
 
@@ -68,11 +70,11 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
         <p class="about-lede">{t.lede}</p>
         <p class="about-lede">{t.disambiguation}</p>
         <dl class="about-facts">
-          <div><dt>{t.facts.networks}</dt><dd>{t.facts.networksValue}</dd></div>
+          <div><dt>{t.facts.networks}</dt><dd>{fill(t.facts.networksValue)}</dd></div>
           <div><dt>{t.facts.based}</dt><dd>{t.facts.basedValue}</dd></div>
           <div><dt>{t.facts.code}</dt><dd><a href={GITHUB_ORG} rel="noopener" translate="no">{GITHUB_HOST}</a></dd></div>
           <div><dt>{t.facts.sdk}</dt><dd><a href={SDK_NPM} rel="noopener" translate="no">{SDK_PACKAGE}</a></dd></div>
-          <div><dt>{t.facts.email}</dt><dd><a href={MAILTO} translate="no">{CONTACT_ADDRESS}</a></dd></div>
+          <div><dt>{t.facts.email}</dt><dd><a href={MAILTO} translate="no">{EMAIL_USER}@<wbr />{EMAIL_DOMAIN}</a></dd></div>
         </dl>
       </div>
     </section>
@@ -179,9 +181,10 @@ const GITHUB_HOST = GITHUB_ORG.replace(/^https:\/\//, "");
   .about-lede { font-size: 1.125rem; line-height: 1.55; color: var(--ink-2); margin: 32px 0 0; max-width: 52ch; }
   /* The line that tells Cosmos Pay apart from the Cosmos Network sits right under the lede. */
   .about-lede + .about-lede { margin-top: 12px; }
-  /* The facts in one line of label-over-value pairs, split by hairlines. */
+  /* The facts in one line of label-over-value pairs, split by hairlines; the last, the email, as
+     wide as the address (a fifth of the row broke it before its last letter). */
   .about-facts {
-    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 0;
     margin: 64px 0 0; padding: 0; border-top: 1px solid var(--line);
   }
   .about-facts > div { padding: 20px 20px 0 0; min-width: 0; }

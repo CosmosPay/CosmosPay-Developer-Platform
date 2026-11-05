@@ -1,10 +1,10 @@
 ---
-// A highlighted code sample for the payments landing (tokens from highlight.ts, coloured by
-// payments-landing.css's .tk-* rules). `numbered` adds the line-number gutter; the raw code
+// A highlighted code sample for the payments pages (tokens from src/lib/highlight.ts, coloured by
+// cosmos.css's .tk-* rules, shared by every code window). `numbered` adds the line-number gutter; the raw code
 // rides along in data-raw so the page's copy buttons copy it exactly (the rendered lines are
 // spans without newlines between them). A sample that can scroll sideways is focusable, so a
 // keyboard can scroll it; one inside a decorative mock-up is not.
-import { highlightLines, type CodeLang } from "@/lib/payments/highlight";
+import { highlightLines, type CodeLang } from "@/lib/highlight";
 
 interface Props {
   code: string;

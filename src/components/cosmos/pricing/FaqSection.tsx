@@ -1,5 +1,5 @@
 import { useT, fmt } from "@/lib/i18n/index";
-import { PLAN_IDS, swapFeePct } from "@/lib/plans.ts";
+import { pricingCopyVars } from "@/lib/plans.ts";
 import { FaqItem } from "@/components/cosmos/pricing/FaqItem";
 
 /* Las preguntas son el respiro negro de la pagina: sin un panel oscuro en el
@@ -7,8 +7,8 @@ import { FaqItem } from "@/components/cosmos/pricing/FaqItem";
 export function FaqSection() {
   const t = useT();
   const p = t.pricing;
-  // The swap answer quotes each plan's commission and the public one's, from the specs.
-  const rates = { ...Object.fromEntries(PLAN_IDS.map((id) => [id, swapFeePct(id)])), public: swapFeePct("community") };
+  // The answers quote the rates from the specs: Starter's per payment, each plan's swap commission.
+  const rates = pricingCopyVars();
   return (
     <section className="lp-panel faq-panel" data-panel="black">
       <div className="wrap">

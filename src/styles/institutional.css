@@ -109,7 +109,7 @@
 
 /* Light in both themes: the payments hero, whose video is drawn on white, and the nav
    while it sits over it. */
-.inst [data-panel="paper"], .inst .nav.over-paper {
+.inst [data-panel="paper"], :where(:root:not([data-past-panel])) .inst .nav.over-paper {
   --bg: #F6F6F7; --surface: #FFFFFF; --surface-2: #F1F1F3;
   --ink: #13131A; --ink-2: #4A4A55; --ink-3: #6A6A75;
   --line: #E6E6EA; --line-2: #D2D2D8;
@@ -135,9 +135,9 @@
 .inst :is(.btn-outline-w, .btn-ghost-pill):focus-visible { border-color: var(--out-ink); }
 .inst .btn-soft.danger-soft { --ink-fill: #D64545; --ink-fg: #FFFFFF; }
 .inst .nav { background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: saturate(1.4) blur(12px); }
-.inst .nav.over-paper { background: transparent; backdrop-filter: none; }
-.inst .nav:not(.scrolled):not(.menu-open) { background: transparent; backdrop-filter: none; }
-.inst .nav.scrolled { border-color: var(--line); }
+:where(:root:not([data-past-panel])) .inst .nav.over-paper { background: transparent; backdrop-filter: none; }
+:where(:root:not([data-scrolled])) .inst .nav:not(.scrolled):not(.menu-open) { background: transparent; backdrop-filter: none; }
+.inst .nav.scrolled, :where(:root[data-scrolled]) .inst .nav { border-color: var(--line); }
 .inst .lang-btn, .inst .theme-btn { background: var(--surface); }
 .inst ::selection { background: var(--accent-soft-2); }
 .inst :focus-visible { outline: 2px solid var(--tertiary); outline-offset: 3px; }
