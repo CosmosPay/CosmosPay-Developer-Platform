@@ -126,7 +126,7 @@
 [data-theme="dark"] [data-panel="white"] { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 /* Paper: white in both themes, for a panel whose artwork is drawn on white (the payments
    hero's video). The nav takes the same tokens while it sits over one (.nav.over-paper). */
-[data-panel="paper"], .nav.over-paper {
+[data-panel="paper"], :where(:root:not([data-past-panel])) .nav.over-paper {
   --bg: var(--cosmos-white); --surface: var(--cosmos-white); --surface-2: rgba(0,0,0,.04);
   --ink: var(--cosmos-black); --ink-2: rgba(0,0,0,.66); --ink-3: rgba(0,0,0,.56);
   --line: rgba(0,0,0,.12); --line-2: rgba(0,0,0,.20);
@@ -178,7 +178,10 @@ a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 ::selection { background: rgba(5,6,79,.18); }
 
-.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 40px; }
+/* The page's horizontal gutters only: a component that is also a .wrap (`pswap-band wrap`,
+   `wrap pl-marks-title`) keeps its own vertical padding and margins, whichever stylesheet loads
+   last (a shorthand here zeroed them on pages that load cosmos.css after their own CSS). */
+.wrap { max-width: var(--maxw); margin-inline: auto; padding-inline: 40px; }
 /* cada capitulo de la landing es un panel a sangre; el aire vertical es el gesto.
    Se llama lp-panel porque .panel ya es la tarjeta del dashboard. */
 .lp-panel { padding: 128px 0; }
@@ -204,13 +207,18 @@ button { font-family: inherit; cursor: pointer; }
   background: var(--bg);
   border-bottom: 1px solid transparent; transition: border-color .3s, background .3s, color .3s;
 }
-.nav.scrolled { border-color: var(--line); }
+.nav.scrolled, :where(:root[data-scrolled]) .nav { border-color: var(--line); }
 /* At the very top the bar has no surface of its own: no fill, no border, no blur. It takes one
-   back as soon as the page moves, or while the mobile menu hangs from it. */
-.nav:not(.scrolled):not(.menu-open) { background: transparent; border-color: transparent; backdrop-filter: none; }
+   back as soon as the page moves, or while the mobile menu hangs from it. "Moved" is React's
+   `scrolled` or the head script's `data-scrolled` on <html> (src/lib/nav-scroll.ts), so the bar
+   covers and blurs what scrolls under it before the nav hydrates too; :where() keeps these
+   selectors' weight as it was. */
+:where(:root:not([data-scrolled])) .nav:not(.scrolled):not(.menu-open) { background: transparent; border-color: transparent; backdrop-filter: none; }
 /* mientras la barra esta sobre el hero negro se vuelve transparente y toma la
    tinta del panel; el estado inicial ya viene del SSR asi que no parpadea */
-.nav.over-ink {
+/* Once the first panel has gone under the bar (data-past-panel, src/lib/nav-scroll.ts) its ink no
+   longer applies, whether or not React has dropped the class yet. */
+:where(:root:not([data-past-panel])) .nav.over-ink {
   background: transparent; backdrop-filter: none; border-color: transparent;
   --ink: var(--cosmos-white); --ink-2: rgba(255,255,255,.66); --ink-3: rgba(255,255,255,.52);
   --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.20);
@@ -219,7 +227,7 @@ button { font-family: inherit; cursor: pointer; }
   --btn-bg: var(--cosmos-white); --btn-fg: var(--cosmos-black); --btn-bg-h: rgba(255,255,255,.86); --btn-ink: var(--cosmos-blue); --btn-ink-fg: var(--cosmos-white);
   color: var(--cosmos-white);
 }
-.nav.over-paper { background: transparent; border-color: transparent; color: var(--ink); }
+:where(:root:not([data-past-panel])) .nav.over-paper { background: transparent; border-color: transparent; color: var(--ink); }
 .nav-inner { display: flex; align-items: center; gap: 30px; height: 72px; }
 
 .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); }
@@ -335,6 +343,9 @@ html.nav-locked { overflow: hidden; }
 @media (max-width: 1100px) {
   .nav-burger { display: grid; }
   .nav-right .lang, .nav-right .link-login, .nav-right .getkeys { display: none; }
+  /* The session buttons it stands for are hidden here too: left on, it pushed the bar past a
+     phone's width (and the page sideways) until the nav hydrated. */
+  .nav-right .nav-session-skel { display: none; }
   .mobile-menu { display: block; position: fixed; left: 0; right: 0; top: 72px; background: var(--bg); border-bottom: 1px solid var(--line); padding: 14px 16px 22px; z-index: 49; box-shadow: none; max-height: calc(100vh - 72px); max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain; }
   .mm-lang { padding: 14px 0; border-bottom: 1px solid var(--line); }
   /* inside the menu the language list opens in place, so the menu's own scroll never cuts it */
@@ -623,8 +634,37 @@ html.nav-locked { overflow: hidden; }
    en horizontal, y a 390px el codigo le pasa por debajo. Translucido no se lee
    ni el badge ni el codigo. */
 .terminal-badge { position: absolute; right: 18px; bottom: 18px; font-family: var(--ff-mono); font-size: 11px; color: #909090; background: #1C1C1C; padding: 4px 10px; border-radius: 999px; }
-/* colores de sintaxis: semantica de editor autorizada por BRAND.md, no corregir a Cosmic Blue */
-.tok-kw { color: #8FB4FF; } .tok-fn { color: #6FB7FF; } .tok-str { color: #7EE0A8; } .tok-num { color: #FFB86B; } .tok-com { color: #8A8A8A; font-style: italic; } .tok-prop { color: #E6E6E6; }
+/* Where the code is wider than the window (phones), the badge sat on the last line and hid it:
+   the body leaves the badge a row of its own under the code. */
+@media (max-width: 760px) { .terminal-body { padding-bottom: 52px; } }
+/* Syntax colours for every code window on the three domains: the tokens of src/lib/highlight.ts
+   as .tk-* spans (Code.astro, CodeTokens.tsx, integration-demos.ts). The --tk-* tokens follow the
+   theme; a window whose surface keeps one tone in both themes names it: .code-on-dark (the
+   terminal, the integration mock: editor colours authorised by BRAND.md, keywords a light blue
+   readable on #161616, never Cosmic Blue) or .code-on-light (a white card in both themes). */
+:root {
+  --tk-kw: #6E40C9; --tk-str: #1F7A4D; --tk-num: #B45309; --tk-key: #2346F4;
+  --tk-fn: #13131A; --tk-com: #6A6A75; --tk-punc: #6A6A75;
+}
+[data-theme="dark"] {
+  --tk-kw: #C4A7FF; --tk-str: #7EE0A8; --tk-num: #F5B97A; --tk-key: #8FA3FF;
+  --tk-fn: #FFFFFF; --tk-com: #8A8A96; --tk-punc: #8A8A96;
+}
+.code-on-dark {
+  --tk-kw: #8FB4FF; --tk-str: #7EE0A8; --tk-num: #FFB86B; --tk-key: #E6E6E6;
+  --tk-fn: #6FB7FF; --tk-com: #8A8A8A; --tk-punc: #8F8F8F;
+}
+.code-on-light {
+  --tk-kw: #6E40C9; --tk-str: #1F7A4D; --tk-num: #B45309; --tk-key: #2346F4;
+  --tk-fn: #13131A; --tk-com: #6A6A75; --tk-punc: #6A6A75;
+}
+.tk-kw, .tk-tag { color: var(--tk-kw); }
+.tk-str { color: var(--tk-str); }
+.tk-num { color: var(--tk-num); }
+.tk-key, .tk-attr, .tk-flag { color: var(--tk-key); }
+.tk-fn { color: var(--tk-fn); font-weight: 700; }
+.tk-com { color: var(--tk-com); font-style: italic; }
+.tk-punc { color: var(--tk-punc); }
 
 /* ============================================================
    STATS  (el momento de marca a mitad de pagina: navy liso a sangre)
@@ -705,7 +745,7 @@ html.nav-locked { overflow: hidden; }
   .cta-grid { grid-template-columns: 1fr; gap: 56px; }
 }
 @media (max-width: 720px) {
-  .wrap { padding: 0 16px; }
+  .wrap { padding-inline: 16px; }
   .lp-panel { padding: 80px 0; }
   .link-login { display: none; }
 

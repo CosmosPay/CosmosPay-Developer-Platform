@@ -12,6 +12,11 @@
    LayerZero's OFT reaches goes through the OFT (/usdt0/transfers: a Soroban transaction the holder
    signs, 1:1, LayerZero's fee in XLM), mainnet only like USDT0 itself.
 
+   The commission is always in sight under the rate, in percent (product owner, 2026-11-04: "in
+   the swap the commission does not show"): the quote's rate and amount once there is one, before
+   it the rate the caller's plan charges (`feeBps`), which the estimate takes off too. USDT0's comes
+   with its quote only.
+
    The calls go through `api` (src/lib/swap-api.ts): the organization's proxies in the dashboard,
    the gateway with the shared public key on the public swap pages. */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +31,7 @@ import { TokenPicker } from "@/components/cosmos/dashboard/components/TokenPicke
 import { amountFits, buildCatalog, canPayWith, estimateOut, receivableFrom, routeFor, type NearAsset, type SwapToken } from "@/lib/swap-catalog";
 import { NATIVE_CODES, isAddress, isChain, placeholderFor, type Tier } from "@/lib/chains";
 import { isEvmAddress, type Usdt0Route } from "@/lib/usdt0";
+import { bpsPercent } from "@/lib/plans";
 import type { SwapApi, SwapRecordKind } from "@/lib/swap-api";
 
 /* An account on a network the dashboard has no rule for: one word of address characters.
@@ -38,7 +44,9 @@ const SLIPPAGES = ["", "50", "100", "200"];
    accepts, whenever `n` changes. */
 export type SwapPick = { from: (t: SwapToken) => boolean; to: (t: SwapToken) => boolean; n: number };
 
-export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapApi; tier: Tier; onCreated: (kind: SwapRecordKind, rec: any) => void; preset?: SwapPick | null }) {
+/* `feeBps`: the commission (basis points) the caller's swaps pay, the organization owner's plan's or
+   the public consumer's; the server sets the real one, and the quote's rate replaces this. */
+export function SwapWidget({ api, tier, onCreated, preset = null, feeBps = null }: { api: SwapApi; tier: Tier; onCreated: (kind: SwapRecordKind, rec: any) => void; preset?: SwapPick | null; feeBps?: number | null }) {
   const t = useT();
   const lang = useLang();
   const w = t.dash.swaps.widget;
@@ -57,7 +65,8 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
   const [details, setDetails] = useState(false);
   const [inverse, setInverse] = useState(false);
   const [flipped, setFlipped] = useState(false);
-  const [quote, setQuote] = useState({ status: "idle", data: null, key: "" });
+  // `data`: the quote (its shape is the route's: src/lib/cosmos.ts), or the error message.
+  const [quote, setQuote] = useState<{ status: string; data: any; key: string }>({ status: "idle", data: null, key: "" });
   const [busy, setBusy] = useState(false);
   const keys = useRef(idempotencyKeys()).current;
 
@@ -148,12 +157,21 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
   const usd = (v) => (v === null || v === undefined || v === "" ? null : new Intl.NumberFormat(lang, { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(Number(v)));
   // What the receive side shows: the quote, else an estimate from the listed prices.
   const out = fresh ? (isNear ? fresh.destination?.amount : isUsdt0 ? fresh.amountReceived : fresh.destination?.estimated) : null;
-  // Before the quote: NEAR Intents' listed prices, or 1:1 for USDT0.
-  const estimate = !out && amountValid ? (isNear ? estimateOut(amount, from, to) : isUsdt0 ? Number(amount) : null) : null;
+  // Before the quote: NEAR Intents' listed prices less the commission, or 1:1 for USDT0.
+  const listed = !out && amountValid && isNear && from && to ? estimateOut(amount, from, to) : null;
+  const estimate = !out && amountValid ? (isNear ? (listed !== null && feeBps ? listed * (1 - feeBps / 10_000) : listed) : isUsdt0 ? Number(amount) : null) : null;
   const shownOut = out ?? (estimate !== null ? String(estimate) : "");
   const payUsd = fresh && isNear ? fresh.origin?.amountUsd : amountValid && from?.priceUsd ? Number(amount) * from.priceUsd : null;
   const getUsd = fresh && isNear ? fresh.destination?.amountUsd : estimate !== null && to?.priceUsd ? estimate * to.priceUsd : null;
   const rate = out && amountValid ? Number(out) / Number(amount) : estimate !== null ? estimate / Number(amount) : null;
+  // A long amount takes a smaller type, so it reads whole beside the token instead of cut short.
+  const fit = (text: string) => (text.length > 11 ? " len-l" : text.length > 8 ? " len-m" : "");
+  const outText = shownOut ? `${estimate !== null && !out ? "≈ " : ""}${num(shownOut)}` : "";
+  // The commission: the quote's rate and amount (in the asset it is taken in), else the plan's rate.
+  const feeRate: number | null = fresh ? (isUsdt0 ? fresh.feeBps : fresh.fee?.bps) ?? null : isUsdt0 ? null : feeBps;
+  const feeAmount = !fresh || !from || !to ? null
+    : isUsdt0 ? (Number(fresh.feeAmount) > 0 ? `${num(fresh.feeAmount)} ${from.symbol}` : null)
+    : fresh.fee ? `${num(fresh.fee.amount)} ${isNear ? fresh.fee.asset : from.chain === "stellar" ? from.symbol : to.symbol}` : null;
   const venue = isNear ? w.venueNear : isUsdt0 ? w.venueUsdt0 : isDex ? t.dash.swaps.venues[route.chain] : "";
 
   // The button: what is missing, or the action.
@@ -232,7 +250,7 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
         <div className="sp-top"><label htmlFor="swap-pay">{w.pay}</label>{usd(payUsd) && <span className="sp-usd">≈ {usd(payUsd)}</span>}</div>
         <div className="sp-row">
           <input
-            id="swap-pay" className="sp-amount" inputMode="decimal" autoComplete="off" placeholder="0"
+            id="swap-pay" className={`sp-amount${fit(amount)}`} inputMode="decimal" autoComplete="off" placeholder="0"
             value={amount} onChange={(e) => setAmount(e.target.value.replace(",", "."))}
             aria-invalid={amount.trim() && !amountValid ? true : undefined}
           />
@@ -247,8 +265,8 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
       <div className="sp sp-get" aria-busy={quote.status === "loading" || undefined}>
         <div className="sp-top"><span id="swap-get-l">{w.receive}</span>{usd(getUsd) && <span className="sp-usd">≈ {usd(getUsd)}</span>}</div>
         <div className="sp-row">
-          <output className={`sp-amount${shownOut ? "" : " is-empty"}${estimate !== null && !out ? " is-estimate" : ""}`} aria-labelledby="swap-get-l" aria-live="polite">
-            {quote.status === "loading" && !shownOut ? <Sk className="lg sp-sk" w="60%" /> : shownOut ? <span className="arrive" key={shownOut}>{estimate !== null && !out ? "≈ " : ""}{num(shownOut)}</span> : "0"}
+          <output className={`sp-amount${shownOut ? fit(outText) : " is-empty"}${estimate !== null && !out ? " is-estimate" : ""}`} aria-labelledby="swap-get-l" aria-live="polite">
+            {quote.status === "loading" && !shownOut ? <Sk className="lg sp-sk" w="60%" /> : shownOut ? <span className="arrive" key={shownOut}>{outText}</span> : "0"}
           </output>
           {tokenButton("to", to)}
         </div>
@@ -266,13 +284,14 @@ export function SwapWidget({ api, tier, onCreated, preset = null }: { api: SwapA
               <span className="sr-only">{w.details}</span>
             </button>
           </div>
+          {feeRate !== null && (
+            <p className="sq-fee"><span>{m.fee}</span><b>{bpsPercent(feeRate, lang)}{feeAmount && <small>{feeAmount}</small>}</b></p>
+          )}
           <div className="sq-body" id="swap-details" inert={!details}>
             <dl className="sq-rows">
               {fresh && fresh.destination?.minimum != null && <div><dt>{m.minimum}</dt><dd>{num(fresh.destination.minimum)} {to.symbol}</dd></div>}
-              {fresh?.fee && <div><dt>{m.fee}</dt><dd>{num(fresh.fee.amount)} {isNear ? fresh.fee.asset : from.chain === "stellar" ? from.symbol : to.symbol} ({fresh.fee.bps} {m.bps})</dd></div>}
               {fresh?.swap && <div><dt>{m.swapped}</dt><dd>{num(fresh.swap.amount)} {from.symbol}</dd></div>}
               {isNear && fresh?.timeEstimateSeconds != null && <div><dt>{w.eta}</dt><dd>{fmt(w.seconds, { n: fresh.timeEstimateSeconds })}</dd></div>}
-              {isUsdt0 && Number(fresh?.feeAmount) > 0 && <div><dt>{m.fee}</dt><dd>{num(fresh.feeAmount)} {from.symbol} ({fresh.feeBps} {m.bps})</dd></div>}
               {isUsdt0 && fresh?.nativeFee != null && <div><dt>{w.lzFee}</dt><dd>{num(fresh.nativeFee)} XLM</dd></div>}
               {isUsdt0 && Number(fresh?.dust) > 0 && <div><dt>{w.dustNote}</dt><dd>{num(fresh.dust)} {from.symbol}</dd></div>}
               {!isUsdt0 && <div><dt>{w.slippage}</dt><dd>{slippage ? `${Number(slippage) / 100}%` : w.slippageAuto}</dd></div>}

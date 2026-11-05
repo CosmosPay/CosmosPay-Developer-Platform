@@ -10,7 +10,9 @@ import { LANDING } from '@/lib/payments/landing-i18n';
 import { LEARN, guideCopy } from '@/lib/payments/learn/index';
 import { GUIDES, PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 import { messages } from '@/lib/i18n/messages/index';
-import { NETWORK_IDS } from '@/lib/chains';
+import { NETWORK_IDS, networkName } from '@/lib/chains';
+import { landingContent } from '@/lib/payments/landing-content';
+import type { Locale } from '@/lib/payments/i18n';
 import { isSlashlessDocsLink } from '@/lib/urls';
 
 const INPUT: MarkdownInput = {
@@ -181,7 +183,8 @@ test('the plans and every service rate come from src/lib/plans.ts', () => {
   }
   const stats = md('site', '/');
   assert.ok(stats.includes(`- ${PLAN_SPECS.starter.perTx.split(' + ')[0]} + ${PLAN_SPECS.starter.perTx.split(' + ')[1]} per payment on Starter`));
-  assert.ok(stats.includes(`- ${NETWORK_IDS.length} networks to swap between`));
+  assert.ok(stats.includes(`- ${NETWORK_IDS.length} networks to get paid from, with swaps between them`));
+  assert.ok(stats.includes('- 0 chargebacks: once the network confirms a payment, it is final'));
 });
 
 test('protected payments are never labelled "coming soon", and escrow is never said, in every language', () => {
@@ -210,14 +213,23 @@ test('each page carries what its page shows: every question, fact and guide, in 
   for (const lang of AREA_LANGS.payments) {
     const t = LANDING[lang as keyof typeof LANDING];
     const faq = md('payments', '/faq', lang);
+    // The questions as the page shows them: {n} and {networks} filled from NETWORK_IDS.
+    const shown = landingContent(lang as Locale).faq;
+    const order = ['what', 'networks', 'wallet', 'account', 'wallets', 'assets', 'custody', 'service', 'protected', 'zk', 'expiry', 'refunds', 'testing', 'designs'] as const;
     let at = 0;
-    for (const key of ['what', 'wallet', 'account', 'wallets', 'assets', 'custody', 'service', 'protected', 'zk', 'expiry', 'refunds', 'testing', 'designs'] as const) {
-      const found = faq.indexOf(`### ${t.faq[key].q}\n\n${t.faq[key].a}`, at);
+    order.forEach((key, i) => {
+      const { q, a } = shown[i];
+      assert.ok(!/\{(n|networks)\}/.test(q + a), `${lang} faq ${key}: a placeholder left`);
+      const found = faq.indexOf(`### ${q}\n\n${a}`, at);
       assert.ok(found > at, `${lang} faq ${key}`);
       at = found;
-    }
+    });
+    // The networks answer names the swap platform's whole collection, not Stellar, Solana and
+    // Monad alone (product owner, 2026-11-03).
+    for (const id of NETWORK_IDS) assert.ok(shown[1].a.includes(networkName(id)), `${lang} faq networks names ${id}`);
+    assert.ok(shown[1].a.includes(String(NETWORK_IDS.length)), `${lang} faq networks counts them`);
     const keys = Object.keys(t.faq).filter((k) => k !== 'title' && k !== 'titleBold');
-    assert.equal(keys.length, 13, 'a new question needs its place in landing-content.ts');
+    assert.equal(keys.length, order.length, 'a new question needs its place in landing-content.ts');
     const security = md('payments', '/security', lang);
     for (const key of ['onchain', 'keys', 'framing', 'environments', 'expiry', 'docs'] as const) assert.ok(security.includes(t.security[key].title), `${lang} ${key}`);
     const hub = md('payments', '/learn', lang);
@@ -232,7 +244,7 @@ test('each page carries what its page shows: every question, fact and guide, in 
   assert.ok(swaps.includes('curl "https://api.cosmospay.lat/cosmos-api/v1/public-key?env=prod"'));
   assert.ok(swaps.includes(`${NETWORK_IDS.length} networks`));
   const terms = md('site', '/tos', 'es');
-  assert.ok(terms.includes('## Términos y Condiciones de Uso') && terms.includes('Última actualización: 2026-10-09'));
+  assert.ok(terms.includes('## Términos y Condiciones de Uso') && terms.includes('Última actualización: 2026-11-03'));
   const about = md('site', '/about');
   assert.ok(about.includes('[X](https://x.com/CosmosPay)') && about.includes('Cosmos Network (ATOM)'));
 });

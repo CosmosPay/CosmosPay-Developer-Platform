@@ -282,6 +282,26 @@ export default defineConfig({
       // requests whose Host header isn't localhost (e.g. when the dev server is
       // proxied behind the dev.cosmospay.lat domain) with a "host not allowed" error.
       allowedHosts: ['dev.cosmospay.lat', 'cosmospay.lat', 'www.cosmospay.lat', 'payments.cosmospay.lat'],
+      // Generated folders the dev server never needs to reload for: the docs export (served from
+      // disk by cosmosDocsDevStatic), the docs project's build output, this app's own and the
+      // Prisma client (`generated/`, rewritten by every `prisma generate`; a schema change needs a
+      // restart anyway). Each build rewrites files there, and in a OneDrive folder the watcher's
+      // own reads made OneDrive touch them again, so a watched one kept firing change events: the
+      // dev server stayed busy on about two cores for hours and every page took seconds more.
+      // The whole docs project too: `npm run build` rewrites its `src/` (the portal UI it copies)
+      // and `content/` (the generated SDK and API pages), and nothing of the app imports from it.
+      watch: {
+        ignored: ['**/docs/**', '**/docs-static/**', '**/dist/**', '**/generated/**'],
+      },
+      // Vite answers a CORS preflight itself, before the app's middleware, and without
+      // Access-Control-Allow-Credentials, so in `astro dev` the browser refused every credentialed
+      // cross-origin call that needs one (the company site signing out on the platform). Let the
+      // preflight through to src/middleware.ts, which answers it as production does. The origins are
+      // Vite's own default (localhost and *.localhost), not the `cors` package's `*`.
+      cors: {
+        origin: /^https?:\/\/(?:(?:[^:]+\.)?localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/,
+        preflightContinue: true,
+      },
     },
     resolve: {
       alias: {

@@ -22,8 +22,9 @@ export const DEFAULT_ALLOWED_ORIGINS = [
 
 /* The company site's domain as configured (src/lib/hosts.ts): it reads the session and signs
    out cross-origin, so a staging or local setup works without listing it again. Only that one:
-   the payments domain calls no platform API, and an origin in this list is trusted with the
-   session, so keep it out unless it needs that, and then prefer a non-credentialed allowance. */
+   an origin in this list is trusted with the session, so the payments domain stays out. Its nav
+   gets one narrow credentialed allowance instead, for /api/nav-session (name, email and picture,
+   no token: src/lib/nav-session.ts), and it signs out by navigating to /logout. */
 function configuredOrigins(): string[] {
   try {
     return [new URL(PUBLIC_SITE_URL).origin];

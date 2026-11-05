@@ -222,7 +222,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const isTx = stellar && kind === "tx";
   // The assets offered on this network, each with its mark.
   const assets = useMemo(() => {
-    if (stellar) return standardAssets(tier).map((a) => ({ key: a.issuer ? `std:${a.code}:${a.issuer}` : "native", code: a.issuer ? a.code : "", issuer: a.issuer || "", label: a.code, hint: a.issuer ? a.issuerName : undefined, symbol: a.code }));
+    if (stellar) return standardAssets(tier).map((a) => ({ key: a.issuer ? `std:${a.code}:${a.issuer}` : "native", code: a.issuer ? a.code : "", issuer: a.issuer || "", label: a.code, hint: a.issuer ? a.issuerName ?? undefined : undefined, symbol: a.code }));
     return [
       { key: "native", code: "", issuer: "", label: NATIVE_CODES[chain], hint: undefined, symbol: NATIVE_CODES[chain] },
       ...TOKEN_PRESETS[chain][tier].map((p) => ({ key: `preset:${p.issuer}`, code: p.code, issuer: p.issuer, label: p.code, hint: `${p.issuer.slice(0, 4)}…${p.issuer.slice(-4)}`, symbol: p.code })),

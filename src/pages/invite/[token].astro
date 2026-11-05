@@ -2,6 +2,8 @@
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 import Invite from "@/components/cosmos/Invite.tsx";
 import { getInvitationByToken, acceptInvitation } from "@/lib/invitations";
+import { isMockMode } from "@/lib/mock/mode";
+import { mockInvite } from "@/lib/mock/handlers/platform";
 
 // Magic-link invitation landing. If the visitor is signed in with the invited email we
 // accept the invitation here (server-side) and show success; otherwise we prompt sign-in,
@@ -14,7 +16,10 @@ let state = "invalid";
 let org = "";
 let email = "";
 
-if (token) {
+if (token && isMockMode()) {
+  // Mock mode: the token names the state to look at (src/lib/mock/handlers/platform.ts).
+  ({ state, org, email } = mockInvite(token, !!user));
+} else if (token) {
   const inv = await getInvitationByToken(token).catch(() => null);
   if (inv) {
     org = inv.org?.name ?? "";

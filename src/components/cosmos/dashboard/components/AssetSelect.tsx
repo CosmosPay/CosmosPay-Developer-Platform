@@ -100,7 +100,7 @@ export function AssetSelect({
           labelledBy={`${id}-l`}
           options={[
             ...(allowAny ? [{ value: ANY_KEY, label: anyText || "" }] : []),
-            ...assets.map((a) => ({ value: a.key, label: a.label, hint: a.issuer ? a.issuerName : undefined })),
+            ...assets.map((a) => ({ value: a.key, label: a.label, hint: a.issuer ? a.issuerName ?? undefined : undefined })),
             { value: CUSTOM_KEY, label: customText },
           ]}
         />

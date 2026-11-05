@@ -3,6 +3,7 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { activity as activityApi } from "@/lib/api-client";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { IcCopy } from "@/components/cosmos/icons";
+import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { usePaged, useGsapRows, usePolling, useListFilters } from "@/components/cosmos/dashboard/hooks";
@@ -201,7 +202,7 @@ export function ActivityLogView({ env = "dev" }) {
                 .filter(([, v]) => v !== null && v !== undefined && v !== "")
                 .map(([k, v]) => (<div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{String(v)}</span></div>))}
             </div>
-            {open.props && <div className="paylink-block"><div className="paylink-block-head"><span className="field-l">{av.props}</span></div><pre className="paylink-code">{JSON.stringify(open.props, null, 2)}</pre></div>}
+            {open.props && <div className="paylink-block"><div className="paylink-block-head"><span className="field-l">{av.props}</span></div><pre className="paylink-code is-code" translate="no"><CodeTokens code={JSON.stringify(open.props, null, 2)} lang="json" /></pre></div>}
             <div className="modal-actions">
               <button type="button" className="btn btn-soft" onClick={() => copy(open.id)}><IcCopy /> {cm.copyId}</button>
               <button type="button" className="btn btn-soft" onClick={() => setOpen(null)}>{t.ui.close}</button>

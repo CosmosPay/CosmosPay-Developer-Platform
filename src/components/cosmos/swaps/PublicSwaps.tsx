@@ -4,26 +4,77 @@
    widget and screens, calling the gateway from the visitor's browser with the shared public key
    (publicSwapApi), so nobody signs up; then USDT0 out of Stellar, the public API in three calls,
    and the questions people ask. The commission is the public consumer's plan's (src/lib/plans.ts),
-   USDT0's routes come from the API. Mainnet. */
+   USDT0's routes come from the API. Mainnet.
+   A signed-in visitor swaps as one of their organizations instead (product owner, 2026-11-04: "with
+   my plan the commission should come down"): the widget calls the platform's proxies with the
+   session (orgSwapApi with the platform's origin; src/lib/payments-session.ts is what the payments
+   domain may call), so the swap pays that organization's plan's commission and lands in its
+   dashboard. Only organizations where the visitor may open payments count; with several, they
+   pick one. Signed out, or with none, it is the public key as before. */
 import { useEffect, useMemo, useState } from "react";
 import { fmt, initLang, useT } from "@/lib/i18n/index";
+import { DASH, DEV } from "@/components/cosmos/lib/constants";
+import { useDevSession } from "@/components/cosmos/lib/auth";
+import { hasOrgPermission } from "@/lib/org-permissions";
 import { showToast } from "@/components/cosmos/shared";
+import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
 import { SwapWidget, type SwapPick } from "@/components/cosmos/dashboard/components/SwapWidget";
 import { SwapRecordDetail } from "@/components/cosmos/dashboard/components/SwapDetails";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
-import { publicSwapApi, type SwapRecordKind } from "@/lib/swap-api";
+import { orgSwapApi, publicSwapApi, type SwapRecordKind } from "@/lib/swap-api";
 import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
-import { swapFeePct, swapFeeRange } from "@/lib/plans";
+import { planSwapFeeBps, swapFeePct, swapFeeRange } from "@/lib/plans";
 import { NETWORK_IDS } from "@/lib/chains";
 import { publicSwapCalls, usdt0OtherNetworks } from "@/lib/public-swaps";
 import { docsLink } from "@/lib/urls";
 
-export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false }: { lang: string; apiBase: string; docsUrl: string; showHeader?: boolean }) {
+interface SwapOrg {
+  id: string;
+  name: string;
+  /** The organization's plan: its owner's. */
+  plan: string;
+}
+
+/* The signed-in visitor's organizations that may open swaps, once known; [] when signed out or
+   when none may. The nav's session answer says whether anyone is signed in, so a visitor without
+   a session never asks for organizations. */
+function useSwapOrgs(enabled: boolean): SwapOrg[] | null {
+  const { user, ready } = useDevSession();
+  const [orgs, setOrgs] = useState<SwapOrg[] | null>(null);
+  useEffect(() => {
+    if (!enabled) { setOrgs([]); return; }
+    if (!ready) return;
+    if (!user) { setOrgs([]); return; }
+    let alive = true;
+    fetch(`${DEV}/api/organizations`, { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const list: any[] = Array.isArray(j?.data) ? j.data : [];
+        const usable = list
+          .filter((o) => o && typeof o.id === "string" && hasOrgPermission(o.role, o.permissions, "payments:create"))
+          .map((o) => ({ id: o.id, name: String(o.name ?? ""), plan: String(o.plan ?? "") }));
+        if (alive) setOrgs(usable);
+      })
+      .catch(() => { if (alive) setOrgs([]); });
+    return () => { alive = false; };
+  }, [enabled, ready, user]);
+  return orgs;
+}
+
+/* `accountSwaps`: whether a signed-in visitor swaps as their organization; off in mock mode, where
+   every swap is the real gateway's under the public key (src/lib/mock/real-swaps.ts). */
+export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false, accountSwaps = true }: { lang: string; apiBase: string; docsUrl: string; showHeader?: boolean; accountSwaps?: boolean }) {
   initLang(lang);
   const t = useT();
   const p = t.swapsPage;
-  const api = useMemo(() => publicSwapApi(apiBase, "prod"), [apiBase]);
+  const orgs = useSwapOrgs(accountSwaps);
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const org = orgs?.find((o) => o.id === orgId) ?? orgs?.[0] ?? null;
+  // Signed in: the organization's swaps, at its plan's commission; else the public key's. Always
+  // production (mainnet): the landing never quotes on a test network (product owner, 2026-11-04).
+  const api = useMemo(() => (org ? orgSwapApi(org.id, "prod", DEV) : publicSwapApi(apiBase, "prod")), [org?.id, apiBase]);
+  const feeBps = planSwapFeeBps(org ? org.plan : "community");
   const [routes, setRoutes] = useState<Usdt0Route[] | null>(null);
   const [opened, setOpened] = useState<{ kind: SwapRecordKind; rec: unknown } | null>(null);
   const [pick, setPick] = useState<SwapPick | null>(null);
@@ -62,13 +113,30 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
           </div>
         )}
         <div className="pswap-widget" id="pswap-widget">
-          <SwapWidget api={api} tier="public" preset={pick} onCreated={(kind, rec) => setOpened({ kind, rec })} />
+          <SwapWidget api={api} tier="public" preset={pick} feeBps={feeBps} onCreated={(kind, rec) => setOpened({ kind, rec })} />
         </div>
         <div className="pswap-copy">
           <ul className="pswap-facts" role="list">
             {p.facts.map((f) => <li key={f.t}><b>{fmt(f.t, nets)}</b><span>{fmt(f.s, nets)}</span></li>)}
           </ul>
-          <p className="pswap-fee">{fmt(p.fee, rates)}</p>
+          {org ? (
+            <div className="pswap-fee is-org">
+              <p>{fmt(p.feeSignedIn, { org: org.name, plan: (t.dash.planNames as Record<string, string>)[org.plan] || org.plan, pct: swapFeePct(org.plan) })}</p>
+              <div className="pswap-org">
+                {orgs!.length > 1 && (
+                  <label>
+                    <span>{p.orgLabel}</span>
+                    <select className="field" value={org.id} onChange={(e) => setOrgId(e.target.value)}>
+                      {orgs!.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                    </select>
+                  </label>
+                )}
+                <a href={`${DASH}?view=swaps`}>{p.yourSwaps}</a>
+              </div>
+            </div>
+          ) : (
+            <p className="pswap-fee">{fmt(p.fee, rates)}</p>
+          )}
         </div>
       </section>
 
@@ -105,7 +173,7 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 012-2h10" /></svg>
                 </button>
               </div>
-              <pre className="pswap-code"><code>{s.code}</code></pre>
+              <pre className="pswap-code" translate="no"><code><CodeTokens code={s.code} lang="bash" /></code></pre>
             </li>
           ))}
         </ol>

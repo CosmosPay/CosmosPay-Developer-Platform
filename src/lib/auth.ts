@@ -22,9 +22,10 @@ export const auth = betterAuth({
   /* The session cookie stays HOST-ONLY on the platform's domain, although this app also
      answers cosmospay.lat and payments.cosmospay.lat. Scoped to the parent domain it would
      travel to every *.cosmospay.lat host (the gateway, Authentik, the wallet landing),
-     none of which needs it. The company site reads the session with a credentialed call to
-     /api/auth/get-session instead (useDevSession), and the payments pages need none. Do not
-     turn on crossSubDomainCookies to save that call. */
+     none of which needs it. The company site and the payments pages ask who is signed in with
+     a credentialed call to /api/nav-session instead (useDevSession, src/lib/nav-session.ts),
+     and the payments domain signs out through /logout. Do not turn on crossSubDomainCookies
+     to save that call. */
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

@@ -35,7 +35,7 @@ export const PAGE_LANGS: Record<SitePage, readonly string[]> = {
 };
 
 /** The date the terms show as their last update (src/pages/site/tos.astro), also the sitemap's lastmod. */
-export const TOS_LAST_UPDATED = "2026-10-09";
+export const TOS_LAST_UPDATED = "2026-11-03";
 
 type MetaPage = Exclude<SitePage, "swaps">;
 type Crumbs = Record<SitePage, string>;
@@ -45,14 +45,14 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     pricing: {
       title: "Plans and pricing | Cosmos Pay",
       description:
-        "Pay per payment, with no monthly fee on Starter: Cosmos Pay's rates for stablecoin payments, swaps and private payments on Stellar, Solana and Monad.",
+        "Pay per payment, with no monthly fee on Starter: Cosmos Pay's rates for stablecoin payments, private payments and swaps across every network we reach.",
     },
     tos: {
       title: "Terms and Conditions of Use | Cosmos Pay",
-      description: "Cosmos Pay Terms and Conditions: crypto payment gateway and non-custodial wallet for Stellar, Solana and Monad.",
+      description: "Cosmos Pay Terms and Conditions: the crypto payment gateway, swaps across networks and the non-custodial wallet.",
     },
     about: {
-      title: "About Cosmos Pay | Stablecoin payments on Stellar, Solana, Monad",
+      title: "About Cosmos Pay | Stablecoin payments and swaps",
       description:
         "Cosmos Pay builds a stablecoin payments API, a hosted checkout, swaps, private payments and a non-custodial wallet. Its code is public on GitHub.",
     },
@@ -62,14 +62,14 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     pricing: {
       title: "Precios | Cosmos Pay",
       description:
-        "Un precio por pago, sin cuota mensual en Starter: las tarifas de Cosmos Pay para pagos en stablecoins, swaps y pagos privados en Stellar, Solana y Monad.",
+        "Un precio por pago, sin cuota mensual en Starter: las tarifas de Cosmos Pay para pagos en stablecoins, pagos privados y swaps en todas las redes que alcanzamos.",
     },
     tos: {
       title: "Términos y Condiciones de Uso | Cosmos Pay",
-      description: "Términos y Condiciones de Cosmos Pay: pasarela de pagos cripto y wallet no custodial para Stellar, Solana y Monad.",
+      description: "Términos y Condiciones de Cosmos Pay: la pasarela de pagos cripto, los swaps entre redes y la wallet no custodial.",
     },
     about: {
-      title: "Sobre Cosmos Pay | Pagos en stablecoins en Stellar, Solana y Monad",
+      title: "Sobre Cosmos Pay | Pagos en stablecoins y swaps",
       description:
         "Cosmos Pay hace una API de pagos en stablecoins, un checkout alojado, swaps, pagos privados y una wallet sin custodia. Su código es público en GitHub.",
     },
@@ -79,10 +79,10 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     pricing: {
       title: "Preços | Cosmos Pay",
       description:
-        "Por pagamento, sem mensalidade no Starter: as tarifas da Cosmos Pay para pagamentos em stablecoins, swaps e pagamentos privados na Stellar, Solana e Monad.",
+        "Por pagamento, sem mensalidade no Starter: tarifas da Cosmos Pay para pagamentos em stablecoins, pagamentos privados e swaps em todas as redes que alcançamos.",
     },
     about: {
-      title: "Sobre a Cosmos Pay | Stablecoins na Stellar, Solana e Monad",
+      title: "Sobre a Cosmos Pay | Pagamentos em stablecoins e swaps",
       description:
         "A Cosmos Pay faz uma API de pagamentos em stablecoins, checkout hospedado, swaps, pagamentos privados e carteira sem custódia, com código público no GitHub.",
     },
@@ -92,10 +92,10 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     pricing: {
       title: "Tarifs | Cosmos Pay",
       description:
-        "Payez par paiement, sans abonnement sur Starter : les tarifs Cosmos Pay des paiements en stablecoins, swaps et paiements privés sur Stellar, Solana et Monad.",
+        "Payez par paiement, sans abonnement sur Starter : les tarifs Cosmos Pay des paiements en stablecoins, paiements privés et swaps sur tous les réseaux couverts.",
     },
     about: {
-      title: "À propos de Cosmos Pay | Stablecoins sur Stellar, Solana et Monad",
+      title: "À propos de Cosmos Pay | Paiements en stablecoins et swaps",
       description:
         "API de paiement en stablecoins, checkout hébergé, swaps, paiements privés et wallet non dépositaire : ce que fait Cosmos Pay, avec son code public sur GitHub.",
     },
@@ -105,10 +105,10 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     pricing: {
       title: "Preise | Cosmos Pay",
       description:
-        "Pro Zahlung bezahlen, ohne Grundgebühr bei Starter: Sätze von Cosmos Pay für Stablecoin-Zahlungen, Swaps und private Zahlungen auf Stellar, Solana und Monad.",
+        "Pro Zahlung bezahlen, ohne Grundgebühr bei Starter: Sätze für Stablecoin-Zahlungen, private Zahlungen und Swaps in jedem Netzwerk, das Cosmos Pay erreicht.",
     },
     about: {
-      title: "Über Cosmos Pay | Stablecoin-Zahlungen auf Stellar, Solana, Monad",
+      title: "Über Cosmos Pay | Stablecoin-Zahlungen und Swaps",
       description:
         "Stablecoin-Zahlungs-API, gehosteter Checkout, Swaps, private Zahlungen und eine nicht verwahrte Wallet: das baut Cosmos Pay, mit öffentlichem Code auf GitHub.",
     },
@@ -118,10 +118,10 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     pricing: {
       title: "प्राइसिंग | Cosmos Pay",
       description:
-        "प्रति भुगतान दर, Starter पर कोई मासिक शुल्क नहीं: Stellar, Solana और Monad पर स्टेबलकॉइन भुगतान, स्वैप और निजी भुगतान के लिए Cosmos Pay की दरें।",
+        "प्रति भुगतान दर, Starter पर कोई मासिक शुल्क नहीं: स्टेबलकॉइन भुगतान, निजी भुगतान और हमारी पहुँच वाले हर नेटवर्क पर स्वैप के लिए Cosmos Pay की दरें।",
     },
     about: {
-      title: "Cosmos Pay के बारे में | Stellar, Solana और Monad पर स्टेबलकॉइन",
+      title: "Cosmos Pay के बारे में | स्टेबलकॉइन भुगतान और स्वैप",
       description:
         "Cosmos Pay स्टेबलकॉइन पेमेंट्स API, होस्टेड चेकआउट, स्वैप, निजी भुगतान और नॉन-कस्टोडियल वॉलेट बनाता है। उसका कोड GitHub पर सार्वजनिक है।",
     },
@@ -131,10 +131,10 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
     pricing: {
       title: "定价 | Cosmos Pay",
       description:
-        "按笔付费，Starter 套餐无月费：Cosmos Pay 在 Stellar、Solana 和 Monad 上的稳定币支付、兑换和隐私支付费率。",
+        "按笔付费，Starter 套餐无月费：Cosmos Pay 的稳定币支付、隐私支付，以及在我们覆盖的所有网络之间兑换的费率。",
     },
     about: {
-      title: "关于 Cosmos Pay | Stellar、Solana 和 Monad 上的稳定币支付",
+      title: "关于 Cosmos Pay | 稳定币支付与兑换",
       description:
         "Cosmos Pay 打造稳定币支付 API、托管收银台、兑换、隐私支付和非托管钱包，其代码在 GitHub 上公开。",
     },

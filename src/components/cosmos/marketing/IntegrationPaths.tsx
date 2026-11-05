@@ -3,6 +3,7 @@
 import { IcChevSm, DASH, docsHref } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
 import { SCALE_VALUES, PATH_NUMS, PATH_TARGETS } from "@/components/cosmos/marketing/data";
+import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
 
 // Targets for the three integration-path CTAs, by position (marketing/data.ts PATH_TARGETS):
 // the dashboard, the embed guide, the docs.
@@ -21,8 +22,11 @@ function pathMock(n, ig) {
       </div>
     </div>
   );
-  return <div className="ip-mock"><div className="ip-code"><span className="tok-kw">const</span> {"{ Client }"} = require(<span className="tok-str">'@cosmosapp/pay_sdk'</span>);<br />await client.paymentIntents.createPay(...)</div></div>;
+  return <div className="ip-mock"><pre className="ip-code code-on-dark" translate="no"><CodeTokens code={SDK_MOCK} lang="ts" /></pre></div>;
 }
+
+/* The /03 card's glimpse of the SDK (never translated), highlighted like every code window. */
+const SDK_MOCK = "const { Client } = require('@cosmosapp/pay_sdk');\nawait client.paymentIntents.createPay(...)";
 
 export function IntegrationPaths() {
   const t = useT();

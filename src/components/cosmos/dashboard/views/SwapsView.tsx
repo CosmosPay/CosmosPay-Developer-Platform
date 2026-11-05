@@ -103,7 +103,8 @@ function SwapRowActions({ r, onView }) {
   );
 }
 
-export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = "all" }) {
+/* `feeBps`: the commission the organization's swaps pay (its owner's plan), shown by the swap form. */
+export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = "all", feeBps = null as number | null }) {
   const t = useT();
   const sw = t.dash.swaps;
   const cc = t.dash.crossChain;
@@ -216,7 +217,7 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
       {swapping && (
         <Modal onClose={() => setSwapping(false)} label={sw.create}>
           <div className="modal-body swap-modal">
-            <SwapWidget api={api} tier={env === "prod" ? "public" : "testnet"} onCreated={onCreated} />
+            <SwapWidget api={api} tier={env === "prod" ? "public" : "testnet"} onCreated={onCreated} feeBps={feeBps} />
           </div>
         </Modal>
       )}

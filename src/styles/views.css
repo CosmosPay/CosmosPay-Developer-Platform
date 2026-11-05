@@ -159,7 +159,9 @@
 .plan li.off { color: var(--ink-3); }
 .plan li.off svg { color: var(--ink-3); }
 
-.compare { padding: 0; }
+/* No vertical padding of its own; the page's gutters come from .wrap (a `padding: 0` here took
+   them away, and "Compare plans" sat on the window's edge). */
+.compare { padding-block: 0; }
 .compare h2 {
   font-weight: 300; font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1.05;
   letter-spacing: -0.02em; margin: 0 0 48px; text-align: left;
@@ -609,8 +611,8 @@ a.card-link:hover svg, button.card-link:hover svg, .ip:hover .card-link svg,
 .ip-checkout .ipc-amt span { font-size: .8125rem; color: rgba(255,255,255,.60); }
 .ip-checkout .ipc-field { border: 1px solid rgba(255,255,255,.20); border-radius: var(--radius); padding: 9px 13px; font-family: var(--ff-mono); font-size: 11px; color: rgba(255,255,255,.60); }
 .ip-checkout .ipc-btn { border-radius: var(--radius-btn); background: var(--cosmos-white); color: var(--cosmos-black); font-size: 12px; font-weight: 600; padding: 9px 14px; text-align: center; }
-.ip-code { width: 100%; height: 100%; background: var(--cosmos-black); font-family: var(--ff-mono); font-size: 11px; color: #C9C9C9; padding: 12px 14px; line-height: 1.7; }
-.ip-code .tok-kw { color: #8FB4FF; } .ip-code .tok-str { color: #7EE0A8; }
+/* a <pre> (CodeTokens, .code-on-dark): its lines wrap inside the card instead of scrolling */
+.ip-code { width: 100%; height: 100%; margin: 0; background: var(--cosmos-black); font-family: var(--ff-mono); font-size: 11px; color: #C9C9C9; padding: 12px 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* ---- /03 soluciones (bento) ---- */
 /* El trazo de /03 es del panel, no de la ficha destacada. Dentro de la ficha no
@@ -952,6 +954,8 @@ select.field { background-position: right 13px center; padding-right: 34px; }
 .copy-mini svg { width: 16px; height: 16px; }
 .paylink-code { font-size: 12.5px; line-height: 1.55; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; word-break: break-all; max-height: 168px; overflow-y: auto; cursor: copy; }
 .paylink-code:hover { border-color: var(--ink-3); }
+/* a block of code (pretty-printed JSON, CodeTokens): its lines kept, a long value wrapped */
+.paylink-code.is-code { margin: 0; font-family: var(--ff-mono); white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; color: var(--ink); }
 .paylink-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
 
 /* copyable key/value rows; each is a full-width button */
@@ -1085,7 +1089,9 @@ a.icon-mini { text-decoration: none; }
    el astronauta medía unos 277px y quedaba chico al lado del titular. */
 /* Each figure is an <img> in a <picture> (AVIF / WebP / PNG): the wrapper adds no box. */
 .wallet-figure picture { display: contents; }
-.wfig { display: block; width: auto; height: 560px; max-width: 100%; }
+/* A fixed height, and the width the column allows: when the column is narrower than the image at
+   that height, max-width takes width off and the picture would stretch, so it is contained. */
+.wfig { display: block; width: auto; height: 560px; max-width: 100%; object-fit: contain; }
 .wfig-dark { display: none; }
 [data-theme="dark"] .wfig-light { display: none; }
 [data-theme="dark"] .wfig-dark { display: block; }

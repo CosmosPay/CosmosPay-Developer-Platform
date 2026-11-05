@@ -1,6 +1,7 @@
 /* ApiSection.tsx: /01 del deck, los tres modulos de la API mas el bloque de
    documentacion con el terminal y los dos SDK. */
-import { useCopy, hl, IcArrow, IcChevSm, IcCheck, IcCopy, DOCS, docsHref } from "@/components/cosmos/shared";
+import { useCopy, IcArrow, IcChevSm, IcCheck, IcCopy, DOCS, docsHref } from "@/components/cosmos/shared";
+import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
 import { useT, fmt } from "@/lib/i18n/index";
 import { API_SNIPPET, API_CARD_DOCS, API_CARD_KEYS, SDK_DOCS, SDK_KEYS, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
 import { API_ICONS, SDK_ICONS } from "@/components/cosmos/marketing/icons";
@@ -38,10 +39,10 @@ export function ApiSection() {
         </div>
         <div className="api-docs">
           <div className="docs-grid">
-            <div className="terminal reveal">
+            <div className="terminal code-on-dark reveal">
               <div className="terminal-bar"><i /><i /><i /><TermCopy text={API_SNIPPET} /></div>
               <div className="terminal-body">
-                <pre dangerouslySetInnerHTML={{ __html: hl(API_SNIPPET) }} />
+                <pre translate="no"><CodeTokens code={API_SNIPPET} lang="ts" /></pre>
                 <span className="terminal-badge">@cosmosapp/pay_sdk</span>
               </div>
             </div>

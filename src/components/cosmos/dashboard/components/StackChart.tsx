@@ -1,11 +1,20 @@
-/* StackChart: one bar per day, week, month or year, split by how each operation ended: completed,
+/* StackChart: one bucket per day, week, month or year, split by how each operation ended: completed,
    still pending, not completed (product owner, 2026-10-27: a chart has to tell something, compare
    what completed with what did not or is still pending). Hovering a bucket shows its total, each
    part with its share of it, and what the bucket is worth when the server values it (the swaps'
    settled volume in USD). With `currency` it draws one amount instead (the settled volume), on its
-   own axis: one axis per chart, never two scales on one plot. Square bars (product owner), a 2px
-   surface gap between stacked parts, solid hairline grid; the figures are also in a visually
-   hidden table, so the chart is never the only way to read them. */
+   own axis: one axis per chart, never two scales on one plot. The figures are also in a visually
+   hidden table, so the chart is never the only way to read them.
+   Three forms of the same numbers (product owner, 2026-11-04: pick the chart type, lines too):
+   - `bars`: stacked bars, square (product owner), a 2px surface gap between stacked parts;
+   - `lines`: one 2px line per part on the same axis, so each outcome's trend reads on its own,
+     with an end-dot on the latest bucket;
+   - `area`: the parts stacked as bands, each a light wash of its colour under a 2px line, so the
+     whole and its split read over time.
+   Lines and areas answer the pointer with a crosshair on the nearest bucket and a dot on every
+   part there (the same tooltip as the bars). The SVG stretches to the plot's width
+   (preserveAspectRatio none), so dots are drawn in HTML over it, never as SVG circles that would
+   turn into ellipses; strokes keep their width with non-scaling-stroke. */
 import { useState } from "react";
 
 export interface StackPart {
@@ -22,6 +31,9 @@ export interface StackPoint {
   extra?: [string, string][];
 }
 
+export type ChartKind = "bars" | "lines" | "area";
+export const CHART_KINDS: ChartKind[] = ["bars", "lines", "area"];
+
 interface Props {
   data: StackPoint[];
   parts: StackPart[];
@@ -32,6 +44,7 @@ interface Props {
   period?: "day" | "week" | "month" | "year";
   /** The values are amounts of this currency (ISO code), named once by the legend. */
   currency?: string;
+  kind?: ChartKind;
 }
 
 const H = 220;
@@ -52,12 +65,15 @@ function niceMax(v: number): number {
 /* A count axis: a round ceiling whose quarters are whole numbers. */
 const countMax = (v: number) => Math.max(4, Math.ceil(niceMax(v) / 4) * 4);
 
-export function StackChart({ data, parts, label, dateLabel, totalLabel, lang, period = "day", currency = undefined }: Props) {
+export function StackChart({ data, parts, label, dateLabel, totalLabel, lang, period = "day", currency = undefined, kind = "bars" }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const w = Math.max(data.length, 1) * GROUP;
   const plotH = H - PAD_TOP - PAD_BOTTOM;
   const total = (d: StackPoint) => d.values.reduce((a, b) => a + (b || 0), 0);
-  const peak = Math.max(0, ...data.map(total));
+  // Lines share one axis but are not stacked: its ceiling is the largest single part.
+  const peak = kind === "lines"
+    ? Math.max(0, ...data.flatMap((d) => parts.map((_, k) => d.values[k] || 0)))
+    : Math.max(0, ...data.map(total));
   const max = currency ? niceMax(peak) : countMax(peak);
   const whole = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 });
   const money = new Intl.NumberFormat(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -85,8 +101,26 @@ export function StackChart({ data, parts, label, dateLabel, totalLabel, lang, pe
   const unit = plotH / max;
   const split = parts.length > 1;
 
+  // Lines and areas: a bucket's centre, a value's height, and each part's line (for areas, the
+  // top of its band: the parts below it added up).
+  const cx = (i: number) => i * GROUP + GROUP / 2;
+  const cy = (v: number) => PAD_TOP + plotH - v * unit;
+  const levels = data.map((d) => {
+    let sum = 0;
+    return parts.map((_, k) => (kind === "area" ? (sum += d.values[k] || 0) : d.values[k] || 0));
+  });
+  const path = (k: number) => levels.map((lv, i) => `${i ? "L" : "M"}${cx(i)} ${cy(lv[k])}`).join("");
+  const band = (k: number) => {
+    const under = levels.map((lv) => (k > 0 ? lv[k - 1] : 0));
+    const back = levels.map((_, i) => levels.length - 1 - i).map((i) => `L${cx(i)} ${cy(under[i])}`).join("");
+    return `${path(k)}${back}Z`;
+  };
+  // The dots over the lines: every part at the hovered bucket, and (lines) each one's latest value.
+  const last = data.length - 1;
+  const dotsAt = kind === "bars" ? [] : [...new Set([...(kind === "lines" && last >= 0 ? [last] : []), ...(hover !== null ? [hover] : [])])];
+
   return (
-    <div className={`bars shared stack${currency ? " money" : ""}`} onMouseLeave={() => setHover(null)}>
+    <div className={`bars shared stack kind-${kind}${currency ? " money" : ""}`} onMouseLeave={() => setHover(null)}>
       <div className="bars-axis bars-axis-l" aria-hidden="true">
         {[1, 0.75, 0.5, 0.25, 0].map((f) => <span key={f}>{axis.format(max * f)}</span>)}
       </div>
@@ -95,7 +129,25 @@ export function StackChart({ data, parts, label, dateLabel, totalLabel, lang, pe
           {[0, 0.25, 0.5, 0.75, 1].map((f) => (
             <line key={f} x1="0" x2={w} y1={PAD_TOP + plotH * f} y2={PAD_TOP + plotH * f} className="bars-grid" vectorEffect="non-scaling-stroke" />
           ))}
+          {kind !== "bars" && data.length > 0 && (
+            <g className="line-reveal">
+              {/* Areas: the bands from the baseline up, then every line over them. Lines: the first
+                  part (completed) drawn last, on top. */}
+              {kind === "area" && parts.map((p, k) => <path key={`a-${p.key}`} className={`area-s ${p.tone}`} d={band(k)} />)}
+              {parts.map((p, k) => ({ p, k })).reverse().map(({ p, k }) => (
+                <path key={`l-${p.key}`} className={`line-s ${p.tone}`} d={path(k)} vectorEffect="non-scaling-stroke" />
+              ))}
+            </g>
+          )}
           {data.map((d, i) => {
+            if (kind !== "bars") {
+              return (
+                <g key={d.date} onMouseEnter={() => setHover(i)} className={hover === i ? "on" : undefined}>
+                  <rect x={i * GROUP} y={0} width={GROUP} height={H} className="bars-hit" />
+                  {hover === i && <line className="bars-cross" x1={cx(i)} x2={cx(i)} y1={PAD_TOP} y2={PAD_TOP + plotH} vectorEffect="non-scaling-stroke" />}
+                </g>
+              );
+            }
             const x = i * GROUP + (GROUP - BAR) / 2;
             let base = PAD_TOP + plotH;
             let drawn = 0;
@@ -116,6 +168,15 @@ export function StackChart({ data, parts, label, dateLabel, totalLabel, lang, pe
             );
           })}
         </svg>
+        {dotsAt.length > 0 && (
+          <div className="bars-dots" aria-hidden="true">
+            {dotsAt.flatMap((i) => parts.map((p, k) => {
+              // A band with nothing in it has no edge of its own to mark.
+              if (kind === "area" && !(data[i].values[k] || 0)) return null;
+              return <i key={`${i}-${p.key}`} className={`dot-s ${p.tone}`} style={{ left: `${((i + 0.5) / data.length) * 100}%`, top: `${cy(levels[i][k])}px` }} />;
+            }))}
+          </div>
+        )}
         <div className="bars-x" aria-hidden="true">
           {data.map((d, i) => <span key={d.date} className={hover === i ? "on" : undefined}>{(data.length - 1 - i) % every === 0 || hover === i ? short(d.date) : ""}</span>)}
         </div>

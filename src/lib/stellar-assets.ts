@@ -27,8 +27,10 @@ export interface StandardAsset {
   issuer: string | null;
   /** Who issues it (`Circle`, `Tether`). Shown next to the code, because the
    *  code alone does not identify an asset: mainnet carries two legitimate
-   *  `EURC`s from different issuers, and twenty impostor `USDC`s. */
-  issuerName: string;
+   *  `EURC`s from different issuers, and twenty impostor `USDC`s. null where the
+   *  issuer is one of Cosmos Pay's providers, which copy never names (CLAUDE.md,
+   *  "Never name a provider"): the code and the linked issuer account show alone. */
+  issuerName: string | null;
 }
 
 /** Sentinel option keys (kept distinct from any real asset code). */
@@ -86,11 +88,12 @@ const ASSETS: Record<StellarNetwork, StandardAsset[]> = {
     },
     {
       // BlindPay's test stablecoin, the one this platform's fiat rails settle in.
+      // Its issuer is a provider, so no name is shown with it.
       key: "USDB",
       label: "USDB",
       code: "USDB",
       issuer: "GCQSSIMOW5OCGULZATDXKU5MOJBOMFX6G65X6CXZDQ7AIB3SKFUZ67NX",
-      issuerName: "BlindPay",
+      issuerName: null,
     },
   ],
 };

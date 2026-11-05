@@ -253,7 +253,7 @@ export default {
     rv: { org: "组织", type: "业务类型", goals: "目标", volume: "预计交易额", plan: "套餐" },
     notSet: "未设置", edit: "编辑",
     termsPre: "我同意 Cosmos Pay 的", termsA: "开发者条款", termsMid: "和", termsB: "可接受使用政策", termsPost: "。",
-    specTagline: "一个 API，覆盖 Stellar、Solana 和 Monad。",
+    specTagline: "一个 API，覆盖我们支持的所有网络。",
     specTaglineSub: "以 USDC 收款和转账，~5 秒完成结算。选择合适的套餐，并可随时更改。",
     selectedPlan: "已选套餐", recommendedForYou: "为您推荐",
     spec: { perTx: "每笔交易", swap: "每次兑换", settle: "结算", network: "网络", team: "团队成员", orgs: "组织", support: "支持", live: "真实支付", included: "已包含", notIncluded: "不包含" },
@@ -261,7 +261,7 @@ export default {
     specFoot: "测试密钥即刻可用。无需绑卡即可开始。",
     supportLevels: { standard: "标准", priority: "优先" },
     plans: {
-      starter: { desc: "在 Stellar、Solana 和 Monad 上接受真实支付", sub: "+ 18¢ / 笔", pnote: "每笔交易 1.5% + 18¢", team: "最多 2 人", feats: ["部分 API 访问权限", "生产与测试密钥", "USDC 结算", "最多 2 名成员"] },
+      starter: { desc: "在我们支持的所有网络上接受真实支付", sub: "+ 18¢ / 笔", pnote: "每笔交易 1.5% + 18¢", team: "最多 2 人", feats: ["部分 API 访问权限", "生产与测试密钥", "USDC 结算", "最多 2 名成员"] },
       growth: { desc: "为成长中的团队提供更低费率", sub: "/月", pnote: "每笔交易 0.75% + 18¢", team: "不限", feats: ["包含 Starter 全部功能", "更低的交易费率", "不限成员数量", "优先支持"] },
     },
   },
@@ -284,7 +284,7 @@ export default {
         label: "产品",
         cols: [
           { head: "收款", links: [
-            { t: "支付", s: "Stellar、Solana 和 Monad" },
+            { t: "支付", s: "我们支持的所有网络上的稳定币" },
             { t: "收银台", s: "托管支付页面" },
             { t: "支付链接", s: "无代码支付链接" },
             { t: "发票", s: "以稳定币开具账单" },
@@ -344,7 +344,7 @@ export default {
         cols: [
           { head: "学习", links: [
             { t: "文档", s: "指南与参考" },
-            { t: "教程", s: "分步演练" },
+            { t: "指南", s: "分步演练" },
             { t: "博客", s: "工程与产品" },
             { t: "客户案例", s: "基于 Cosmos Pay 构建" },
           ] },
@@ -372,7 +372,7 @@ export default {
 
   /* ---------------- shared: footer ---------------- */
   footer: {
-    tagline: "Stellar、Solana 和 Monad 上的稳定币支付、兑换和非托管钱包。",
+    tagline: "在我们支持的所有网络上提供稳定币支付和兑换，另有非托管钱包。",
     copyright: "© 2026 Cosmos Pay",
     groups: {
       products: { title: "产品", links: ["支付", "稳定币", "代付", "锚点", "钱包", "收银台", "支付链接", "定价", "费用对比"] },
@@ -386,18 +386,18 @@ export default {
 
   /* ---------------- landing ---------------- */
   landing: {
-    meta: { title: "Cosmos Pay | 稳定币支付 API 与钱包", description: "通过支付 API、托管收银台和非托管钱包，在 Stellar、Solana 和 Monad 上接受 USDC 及其他稳定币，专为拉丁美洲打造。" },
+    meta: { title: "Cosmos Pay | 稳定币支付 API 与钱包", description: "在我们支持的所有网络上接受 USDC 及其他稳定币：面向拉丁美洲的支付 API、托管收银台和钱包。" },
     hero: {
       tagline: "让您的数字世界流动起来。",
       headline: "少写代码 -> 让更多资金流动",
-      lede: "一个 API 密钥即可使用 Stellar、Solana 和 Monad 上的支付链接、托管收银台、兑换和签名 Webhook。先在测试网上开发，不动用真实资金，准备好后再上线。",
+      lede: "一个 API 密钥即可使用我们支持的所有网络上的支付链接、托管收银台、兑换和签名 Webhook。先在测试网上开发，不动用真实资金，准备好后再上线。",
       getKeys: "获取 API 密钥",
       trustedBy: "深受以下公司工程团队的信赖",
     },
     wallet: {
       tag: "您的数字世界，尽在一个钱包。",
       title: "面向拉丁美洲的稳定币支付与钱包。",
-      lede: "Cosmos Pay 是基于 Stellar、Solana 和 Monad 的稳定币支付 API、托管收银台和非托管钱包。可在 Chrome、网页版或 Android 上使用钱包。",
+      lede: "Cosmos Pay 是覆盖我们支持的所有网络的稳定币支付 API 和托管收银台，并提供非托管钱包。可在 Chrome、网页版或 Android 上使用钱包。",
       chrome: { t: "在 Chrome 中安装", s: "Chrome 应用商店中的官方扩展程序。" },
       web: { t: "在浏览器中试用", s: "立即打开网页版，无需安装。" },
       android: { t: "下载 Android 版", s: "已签名的 APK。为您的浏览器开启“安装未知应用”权限，然后打开文件进行安装。" },
@@ -427,9 +427,9 @@ export default {
       title: "一个 API，搞定支付与兑换。",
       lede: "支付意图、支付链接、兑换和 Webhook，一个 API 密钥全部搞定，并以 OpenAPI 文档说明。",
       cards: {
-        payments: { title: "支付", desc: "在 Stellar、Solana 和 Monad 上创建支付意图和支付链接。客户用自己的钱包付款，款项进入您掌控的地址。", link: "支付意图 API" },
+        payments: { title: "支付", desc: "创建支付意图和支付链接，客户在我们支持的 {n} 个网络中的任意一个上用自己的钱包付款。款项进入您掌控的地址。", link: "支付意图 API" },
         stablecoin: { title: "稳定币", desc: "以 USDC、EURC、网络原生币或任何其他代币收款，按发行方、铸币地址或合约指定。", link: "资产 API" },
-        swaps: { title: "兑换", desc: "在 Stellar DEX、Jupiter 和 Kuru 上报价并执行兑换，或通过 NEAR Intents 在 {n} 个网络之间兑换。", link: "兑换 API" },
+        swaps: { title: "兑换", desc: "在单一网络内或在 {n} 个网络之间报价并执行兑换。", link: "兑换 API" },
       },
       docsTitle: "公开文档",
       docsDesc: "指南、OpenAPI 参考，以及适用于服务器和浏览器的类型化 JavaScript 与 TypeScript SDK。",
@@ -446,7 +446,7 @@ export default {
       paths: [
         { t: "无代码", d: "在控制台中创建支付链接，通过聊天、邮件或二维码分享。无需开发。", a: "创建支付链接" },
         { t: "预构建 UI", d: "用一个 script 标签添加支付按钮或嵌入式收银台，或将客户引导至托管收银台。", a: "阅读嵌入指南" },
-        { t: "自主构建", d: "使用以 OpenAPI 文档说明的 REST API 和 TypeScript SDK，在 Stellar、Solana 和 Monad 上构建您自己的支付流程。", a: "阅读文档" },
+        { t: "自主构建", d: "使用以 OpenAPI 文档说明的 REST API 和 TypeScript SDK，在我们支持的所有网络上构建您自己的支付流程。", a: "阅读文档" },
       ],
       mockLink: "支付链接 · 19.99 USDC",
       mockPay: "支付",
@@ -460,13 +460,13 @@ export default {
       items: {
         pay: {
           t: "接受多链支付",
-          d: "在 Stellar、Solana 或 Monad 上直接从客户自己的钱包收款，款项进入您掌控的地址。",
-          long: "接受任何持有 Stellar、Solana 或 Monad 钱包的人的付款。网络确认后支付即生效（在 Stellar 上约 5 秒），不可拒付，并直接进入您的地址，而不是需要您申请提取的余额。",
+          d: "在我们支持的 {n} 个网络中的任意一个上，从客户自己的钱包收款，款项进入您掌控的地址。",
+          long: "接受任何在我们支持的 {n} 个网络中任意一个上持有钱包的人的付款。网络确认后支付即生效（在 Stellar 上约 5 秒），不可拒付，并直接进入您的地址，而不是需要您申请提取的余额。",
           points: ["SEP-7、Solana Pay 和 EIP-681 支付链接", "在 Stellar 上约 5 秒完成结算", "已确认的支付不可拒付", "每笔支付都有签名 Webhook"],
         },
         coin: {
           t: "稳定币结算",
-          d: "在 Stellar、Solana 和 Monad 上以 USDC、EURC 或任意代币收款，并收到同一资产。",
+          d: "以 USDC、EURC 或任何其他代币收款，并收到同一资产。{n} 个网络中任意一个上的客户都可以先兑换成该资产。",
           long: "用 USDC、EURC、网络原生币或任何其他代币为每笔支付定价，按发行方、铸币地址或合约指定。客户以该资产付款，您在自己的地址收到它。每笔支付都保留交易哈希，控制台按资产显示余额，并以美元显示已结算交易额。",
           points: ["USDC、EURC 或您指定的任意代币", "每笔支付都有交易哈希", "控制台按资产显示余额", "以美元计的已结算交易额"],
         },
@@ -479,8 +479,8 @@ export default {
         swap: {
           t: "跨网络兑换",
           d: "无论有没有账户，都能在 {n} 个网络之间兑换代币。",
-          long: "在 Stellar DEX、Jupiter（Solana）和 Kuru（Monad）上兑换，或通过 NEAR Intents 在 {n} 个网络之间兑换，并通过 LayerZero 从 Stellar 发送 USDT0。单一网络内的兑换是本人签名的一笔交易；跨网络兑换会停留在 NEAR Intents 的充值地址，直到 NEAR Intents 完成结算或退款。Cosmos Pay 从不代管资金。公开兑换页面及其 API 无需账户。",
-          points: ["Stellar DEX、Jupiter 和 Kuru", "通过 NEAR Intents 连接 {n} 个网络", "通过 LayerZero 从 Stellar 发送 USDT0", "无需账户的公开兑换 API"],
+          long: "在单一网络内或在 {n} 个网络之间兑换代币，并将 USDT0 从 Stellar 发送到其他网络。单一网络内的兑换是本人签名的一笔交易；跨网络兑换会停留在为其专门生成的充值地址，直到完成结算或退款。Cosmos Pay 从不代管资金。公开兑换页面及其 API 无需账户。",
+          points: ["单一网络内的兑换", "在 {n} 个网络之间兑换", "将 USDT0 从 Stellar 发送到其他网络", "无需账户的公开兑换 API"],
         },
         wallet: {
           t: "用任意钱包付款",
@@ -494,8 +494,8 @@ export default {
     stats: {
       title: "简单。安全。无限。",
       question: "Cosmos Pay 是什么？",
-      answer: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付平台。商家通过支付链接、托管收银台或 API 在 Stellar、Solana 和 Monad 上收款，款项进入他们自己掌控的地址。它还提供跨网络兑换和非托管钱包。",
-      items: ["个收款网络：Stellar、Solana 和 Monad", "个可兑换的网络", "+ {fixed} / 笔（Starter，无月费）", "在 Stellar 上完成一笔支付结算"],
+      answer: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付平台。商家通过支付链接、托管收银台或 API，在 Cosmos Pay 支持的所有网络上收款，款项进入他们自己掌控的地址。它还提供所有这些网络之间的兑换，以及非托管钱包。",
+      items: ["个收款网络，并支持网络之间的兑换", "笔拒付：网络确认支付后，即不可撤销", "+ {fixed} / 笔（Starter，无月费）", "在 Stellar 上完成一笔支付结算"],
     },
     stories: {
       title: "企业如何使用。",
@@ -540,7 +540,7 @@ export default {
       label: "让数字世界流动起来的新方式。",
       thanks: "感谢您的信任。",
       title: "今天就开始构建。",
-      desc: "创建账户，先在测试网上开发，不动用真实资金，准备好后再在 Stellar、Solana 和 Monad 上线。",
+      desc: "创建账户，先在测试网上开发，不动用真实资金，准备好后再在我们支持的所有网络上线。",
       getKeys: "获取 API 密钥",
       talk: "联系工程团队",
       helpers: [
@@ -554,7 +554,7 @@ export default {
   pricing: {
     kicker: "// 定价",
     title: "按处理量付费。",
-    lede: "支付、兑换和隐私支付即服务，按操作计费。无需月费即可开始：只需为每笔成功操作支付少量手续费。",
+    lede: "支付、兑换和隐私支付即服务，按操作计费。无需月费即可开始：只需为每笔成功操作支付 {starterRate}。",
     monthly: "按月",
     annual: "按年",
     save: "−17%",
@@ -568,7 +568,7 @@ export default {
         amt: "1.5%",
         txt: "+ 18¢ / 笔交易 *",
         cta: "开始使用",
-        feats: ["Stellar、Solana 和 Monad 上的真实支付", "测试网上的测试 API 密钥", "支付链接和托管收银台", "兑换和签名 Webhook", "部分 API 访问权限", "标准支持", "完整 API 访问权限"],
+        feats: ["我们支持的所有网络上的真实支付", "测试网上的测试 API 密钥", "支付链接和托管收银台", "兑换和签名 Webhook", "部分 API 访问权限", "标准支持", "完整 API 访问权限"],
       },
       {
         name: "Essentials",
@@ -611,12 +611,12 @@ export default {
     ],
     faqTitle: "常见问题",
     faqs: [
-      { q: "需要支付月费吗？", a: "不需要。Starter 无月费：您只需为每笔成功交易支付少量手续费。Essentials 和 Growth 收取月费，以换取更低的费率。" },
+      { q: "需要支付月费吗？", a: "不需要。Starter 无月费：您只需为每笔成功交易支付 {starterRate}。Essentials 和 Growth 收取月费，以换取更低的费率。" },
       {
         q: "一笔交易的费用是多少？",
         a: "Starter 为每笔成功交易收取 1.5% + 18¢。Essentials 为 $33/月（按年付费为 $27.50/月），并将费率降至 1.12% + 18¢；Growth 为 $99/月，费率进一步降至 0.75% + 18¢。网络手续费由付款方的钱包支付。",
       },
-      { q: "支持哪些支付方式？", a: "Stellar、Solana 和 Monad 上的稳定币及其他代币：USDC、EURC、网络原生币或您指定的任意代币，由客户用自己的钱包支付。Cosmos Pay 不接受银行卡或银行转账付款。" },
+      { q: "支持哪些支付方式？", a: "稳定币及其他代币：USDC、EURC、各网络的原生币或您指定的任意代币，由客户在我们支持的任意网络上用自己的钱包支付；持有其他代币的客户可以先兑换转入。Cosmos Pay 不接受银行卡或银行转账付款。" },
       { q: "资金结算有多快？", a: "在 Stellar 上，客户确认后约五秒支付即为最终状态，所有套餐均如此。没有付款周期：款项直接进入您掌控的地址。" },
       { q: "以后可以更换套餐吗？", a: "当然可以。您可以随时在控制台中升级或降级。更改立即生效，无需致电。" },
       {
@@ -633,11 +633,11 @@ export default {
 
   about: {
     title: "关于 Cosmos Pay",
-    lede: "Cosmos Pay 为企业打造稳定币支付：支付 API、托管收银台和支付链接、兑换、隐私支付，以及非托管的 Cosmos Pay Wallet，支持 Stellar、Solana 和 Monad。",
+    lede: "Cosmos Pay 在其支持的所有网络上为企业打造稳定币支付：支付 API、托管收银台和支付链接、兑换、隐私支付，以及非托管的 Cosmos Pay Wallet。",
     disambiguation: "Cosmos Pay（cosmospay.lat）与 Cosmos Network（ATOM）以及 BitCanna 的 CosmosPay 支付插件是不同的项目。",
     facts: {
       networks: "网络",
-      networksValue: "Stellar、Solana 和 Monad",
+      networksValue: "{n} 个网络",
       based: "所在地",
       basedValue: "阿根廷",
       code: "源代码",
@@ -646,7 +646,7 @@ export default {
     },
     products: {
       title: "我们的产品",
-      lede: "支付在 Stellar、Solana 和 Monad 上结算，每个网络都有自己的页面。",
+      lede: "支付和兑换覆盖 Cosmos Pay 支持的所有网络。",
       items: {
         api: { t: "支付 API 和 SDK", d: "以 OpenAPI 编写文档的 REST API 和 TypeScript SDK，用于创建支付意图和支付链接，并在支付确认时发送签名 Webhook。", a: "阅读文档" },
         checkout: { t: "托管收银台和支付链接", d: "带二维码的支付链接和由我们托管的收银台页面，提供四种设计和七种语言。支付按钮或嵌入式收银台只需一个 script 标签。", a: "查看集成方式" },
@@ -695,12 +695,15 @@ export default {
     lede: "选择您用什么支付、收到什么。由您的钱包签名，Cosmos Pay 从不托管您的资金。",
     facts: [
       { t: "无需账户", s: "打开页面即可兑换。公开 API 也是一样。" },
-      { t: "{n} 个网络", s: "Stellar、Solana 和 Monad 的市场，以及 NEAR Intents 覆盖的所有网络。" },
+      { t: "{n} 个网络", s: "我们的兑换覆盖的所有网络，可同链兑换，也可跨链兑换。" },
       { t: "非托管", s: "每次兑换都是由您的钱包签名的交易，或由您支付的存款地址。" },
     ],
     fee: "佣金：无账户时每次兑换 {pct}，使用套餐时为 {max} 至 {min}，另加网络费用。",
+    feeSignedIn: "你已登录，兑换将通过 {org} 按 {plan} 套餐进行：每次兑换佣金 {pct}，另加网络费用。兑换记录显示在你的控制台中。",
+    orgLabel: "组织",
+    yourSwaps: "查看你的兑换",
     usdt0Title: "USDT0：从 Stellar 发送原生 USDT",
-    usdt0Lede: "Stellar 上的 USDT0 是 Tether 的全链 USDT。通过 LayerZero 1:1 发送：在 Ethereum 上以原生 USDT 到账，在另外 {n} 个网络上以 USDT0 到账。LayerZero 的费用以 XLM 支付，报价会在您签名前显示所有费用。",
+    usdt0Lede: "Stellar 上的 USDT0 是 Tether 的全链 USDT。1:1 发送到其他网络：在 Ethereum 上以原生 USDT 到账，在另外 {n} 个网络上以 USDT0 到账。跨链桥费用以 XLM 支付，报价会在您签名前显示所有费用。",
     usdt0Cta: "发送 USDT0",
     usdt0Networks: "可到达的网络",
     apiTitle: "在您的代码中使用同样的兑换",
@@ -712,8 +715,8 @@ export default {
     faqTitle: "常见问题",
     faq: [
       { q: "需要账户吗？", a: "不需要。本页和公开 API 使用共享公钥。有了账户，可以在控制台查看历史记录，选择套餐还能享受更低佣金：{max} 至 {min}。" },
-      { q: "谁托管我的资金？", a: "不是 Cosmos Pay。单一网络内的兑换是由您的钱包签名的一笔交易。跨网络兑换会停留在 NEAR Intents 的存款地址，直到 NEAR Intents 完成结算或退款；USDT0 则通过 LayerZero 传输。" },
-      { q: "费用是多少？", a: "无账户时每次兑换 {pct}，使用套餐时为 {max} 至 {min}，另加网络费用。从 Stellar 发送 USDT0 还需支付 LayerZero 的费用，以 XLM 支付。每份报价都会在您签名前显示所有费用。" },
+      { q: "谁托管我的资金？", a: "不是 Cosmos Pay。单一网络内的兑换是由您的钱包签名的一笔交易。跨网络兑换会停留在为其专门生成的存款地址，直到完成结算或退款；USDT0 则通过其自有的跨链桥传输。" },
+      { q: "费用是多少？", a: "无账户时每次兑换 {pct}，使用套餐时为 {max} 至 {min}，另加网络费用。从 Stellar 发送 USDT0 还需支付跨链桥费用，以 XLM 支付。每份报价都会在您签名前显示所有费用。" },
       { q: "为什么 USDT0 会留下一点余额？", a: "USDT0 以六位小数跨链，而 Stellar 有七位：第七位会留在您的账户中。" },
       { q: "我可以向我的客户提供兑换吗？", a: "可以，以服务的形式：兑换由我们运行，您只需填写收款的钱包地址，并用您的钱包签名。每次兑换按您套餐的佣金计费，您还可以加上自己的费用，支付到您选择的钱包。" },
     ],
@@ -793,7 +796,7 @@ export default {
         volHead: { asset: "资产", amount: "金额", count: "笔数" },
       },
       payments: { title: "支付意图", sub: "所有组织的支付意图", searchPlaceholder: "按 ID、目标地址、组织搜索…", empty: "暂无支付意图。", tableHead: { id: "ID", org: "组织", destination: "目标地址", amount: "金额", status: "状态", created: "创建时间" }, one: "付款" },
-      swaps: { venues: { stellar: "Stellar", solana: "Solana · Jupiter", monad: "Monad · Kuru Flow", crossChain: "跨链" }, crossStatus: { AWAITING_DEPOSIT: "等待充值", PROCESSING: "处理中", REFUNDED: "已退款" }, title: "兑换", sub: "所有组织的兑换", searchPlaceholder: "按 ID、账户、组织搜索…", empty: "暂无兑换。", tableHead: { id: "兑换", org: "组织", route: "发送 → 收到", status: "状态", created: "创建时间" }, one: "兑换", from: "来自", to: "发往", deposit: "充值地址" },
+      swaps: { venues: { stellar: "Stellar", solana: "Solana", monad: "Monad", crossChain: "跨链" }, crossStatus: { AWAITING_DEPOSIT: "等待充值", PROCESSING: "处理中", REFUNDED: "已退款" }, title: "兑换", sub: "所有组织的兑换", searchPlaceholder: "按 ID、账户、组织搜索…", empty: "暂无兑换。", tableHead: { id: "兑换", org: "组织", route: "发送 → 收到", status: "状态", created: "创建时间" }, one: "兑换", from: "来自", to: "发往", deposit: "充值地址" },
       fiat: {
         title: "法币", sub: "所有组织的收款人、入金单和出金单",
         tabs: { receivers: "收款人", payins: "入金单", payouts: "出金单" },
@@ -906,7 +909,7 @@ export default {
       },
     },
     overview: {
-      hub: { partDone: "已完成", partPending: "待处理", partNotDone: "未完成", partDelivered: "已送达", tipTotal: "合计", tipSettledUsd: "已结算（USD）", doneShare: "{pct} 已完成", deliveredShare: "{pct} 已送达", avgTicket: "平均客单价 {amount}", settledAmount: "已结算 {amount}", feesAmount: "手续费 {amount}", planStatus: { active: "正常", paused: "已暂停", past_due: "付款逾期", suspended: "已停用" }, legendDeliveriesFailed: "失败", expiredOne: "1 笔已过期", expiredN: "{n} 笔已过期", legendExpired: "已过期", quick: "快捷入口", usdUnpricedOne: "1 笔以无美元价格资产支付的款项未计入", usdUnpricedN: "{n} 笔以无美元价格资产支付的款项未计入", webhooksFailedOne: "1 次失败", paymentsFailedOne: "1 笔失败", paymentsFailedN: "{n} 笔失败", doneOne: "1 笔已完成", payersOne: "1 位付款方", sumSwaps: "兑换", sumLiquidity: "流动性", payersN: "{n} 位付款方", doneN: "{n} 笔已完成", newSwap: "兑换", crumb: "概览", active: "已激活", since: "自 {date} 起", settled: "已结算交易额", noVolume: "暂无已结算支付", rate: "费率", plan: "套餐", orgId: "组织 ID", createLink: "创建支付链接", docs: "文档", designs: "收银台样式", kpiTotal: "支付总数", kpiSucceeded: "成功", kpiFailed: "失败", kpiRate: "成功率", activity: "活动", period7: "7 天", period30: "30 天", periods: { today: "今天", week: "近一周", month: "近一个月", year: "近一年" }, noPeriodTx: "此期间内暂无已结算支付。", sumVolume: "已结算交易额", sumCount: "支付", sumPayers: "付款方", sumWebhooks: "Webhook 推送", sumWebhooksFailed: "{n} 次失败", growthVs: "较前 {n} 天 {pct}", legendVolume: "交易额（USD）", legendCount: "支付", legendDone: "已完成", goTo: "前往{view}", periodLabel: "时段", chartLabel: "过去 {n} 天每日创建的支付数和结算交易额。", transactions: "最近结算的支付", viewAll: "查看全部支付", thId: "支付", thDate: "日期", thAmount: "金额", thNetwork: "网络", thTo: "收款方", thStatus: "状态", chartPeriods: { day: "按日", week: "按周", month: "按月", year: "按年" }, chartLabels: { day: "过去 30 天每日创建的支付数和结算交易额。", week: "过去 12 周每周创建的支付数和结算交易额。", month: "过去 12 个月每月创建的支付数和结算交易额。", year: "过去 5 年每年创建的支付数和结算交易额。" }, sumFailed: "失败", sumGrowth: "增长", growthTitle: "与上一时段相比", growthVolume: "交易额", growthCount: "支付", prevOrg: "上一个组织", nextOrg: "下一个组织", created: "创建于 {date}", fee: "手续费", txTitle: "交易", thFrom: "付款方", thMemo: "备注", onlySettled: "仅已结算", network: "网络", allNetworks: "所有网络", wallet: "钱包", applyFilters: "筛选列表", filtersLabel: "筛选交易", noTx: "此期间内暂无支付。", noMatch: "没有符合这些筛选条件的支付。", shown: "{n} / {total} 笔支付", rowMenu: "支付 {id} 的操作", copyId: "复制 ID", explorer: "在区块浏览器中查看", openPayments: "在支付中打开", status: { SUCCEEDED: "已结算", FAILED: "失败", CANCELLED: "已取消", EXPIRED: "已过期", PENDING: "待处理", SUBMITTED: "确认中" }, searchPlaceholder: "按 ID、地址、金额或资产搜索…", groups: { settled: "已结算", open: "进行中", failed: "失败" } },
+      hub: { partDone: "已完成", partPending: "待处理", partNotDone: "未完成", partDelivered: "已送达", tipTotal: "合计", tipSettledUsd: "已结算（USD）", doneShare: "{pct} 已完成", deliveredShare: "{pct} 已送达", avgTicket: "平均客单价 {amount}", settledAmount: "已结算 {amount}", feesAmount: "手续费 {amount}", planStatus: { active: "正常", paused: "已暂停", past_due: "付款逾期", suspended: "已停用" }, legendDeliveriesFailed: "失败", expiredOne: "1 笔已过期", expiredN: "{n} 笔已过期", legendExpired: "已过期", quick: "快捷入口", usdUnpricedOne: "1 笔以无美元价格资产支付的款项未计入", usdUnpricedN: "{n} 笔以无美元价格资产支付的款项未计入", webhooksFailedOne: "1 次失败", paymentsFailedOne: "1 笔失败", paymentsFailedN: "{n} 笔失败", doneOne: "1 笔已完成", payersOne: "1 位付款方", sumSwaps: "兑换", sumLiquidity: "流动性", payersN: "{n} 位付款方", doneN: "{n} 笔已完成", newSwap: "兑换", crumb: "概览", active: "已激活", since: "自 {date} 起", settled: "已结算交易额", noVolume: "暂无已结算支付", rate: "费率", plan: "套餐", orgId: "组织 ID", createLink: "创建支付链接", docs: "文档", designs: "收银台样式", kpiTotal: "支付总数", kpiSucceeded: "成功", kpiFailed: "失败", kpiRate: "成功率", activity: "活动", period7: "7 天", period30: "30 天", periods: { today: "今天", week: "近一周", month: "近一个月", year: "近一年" }, noPeriodTx: "此期间内暂无已结算支付。", sumVolume: "已结算交易额", sumCount: "支付", sumPayers: "付款方", sumWebhooks: "Webhook 推送", sumWebhooksFailed: "{n} 次失败", growthVs: "较前 {n} 天 {pct}", legendVolume: "交易额（USD）", legendCount: "支付", legendDone: "已完成", goTo: "前往{view}", periodLabel: "时段", chartLabel: "过去 {n} 天每日创建的支付数和结算交易额。", transactions: "最近结算的支付", viewAll: "查看全部支付", thId: "支付", thDate: "日期", thAmount: "金额", thNetwork: "网络", thTo: "收款方", thStatus: "状态", chartPeriods: { day: "按日", week: "按周", month: "按月", year: "按年" }, chartKindLabel: "图表类型", chartKinds: { bars: "柱状图", lines: "折线图", area: "面积图" }, chartLabels: { day: "过去 30 天每日创建的支付数和结算交易额。", week: "过去 12 周每周创建的支付数和结算交易额。", month: "过去 12 个月每月创建的支付数和结算交易额。", year: "过去 5 年每年创建的支付数和结算交易额。" }, sumFailed: "失败", sumGrowth: "增长", growthTitle: "与上一时段相比", growthVolume: "交易额", growthCount: "支付", prevOrg: "上一个组织", nextOrg: "下一个组织", created: "创建于 {date}", fee: "手续费", txTitle: "交易", thFrom: "付款方", thMemo: "备注", onlySettled: "仅已结算", network: "网络", allNetworks: "所有网络", wallet: "钱包", applyFilters: "筛选列表", filtersLabel: "筛选交易", noTx: "此期间内暂无支付。", noMatch: "没有符合这些筛选条件的支付。", shown: "{n} / {total} 笔支付", rowMenu: "支付 {id} 的操作", copyId: "复制 ID", explorer: "在区块浏览器中查看", openPayments: "在支付中打开", status: { SUCCEEDED: "已结算", FAILED: "失败", CANCELLED: "已取消", EXPIRED: "已过期", PENDING: "待处理", SUBMITTED: "确认中" }, searchPlaceholder: "按 ID、地址、金额或资产搜索…", groups: { settled: "已结算", open: "进行中", failed: "失败" } },
       greeting: "早上好，{name}",
       sub: "以下是 {org} 今天的动态。",
       metrics: { gross: "总交易额", net: "净交易额", success: "成功支付", newCust: "新客户" },
@@ -1296,16 +1299,16 @@ export default {
     },
     swaps: {
       title: "兑换",
-      sub: "{n} 笔兑换 · 在单条链上或在 Stellar、Solana 和 Monad 之间",
+      sub: "{n} 笔兑换 · 在单条链上或在网络之间",
       create: "新建兑换",
       readOnly: "您对此组织的兑换仅有只读权限。",
       listTitle: "您的兑换",
-      widget: { title: "兑换", pay: "您支付", receive: "您收到", selectToken: "选择代币", changeToken: "{token}（{chain}），更换代币", flip: "互换支付和收到的代币", pickPay: "选择支付代币", pickReceive: "选择收到的代币", details: "报价详情", invertRate: "反转汇率", eta: "预计时间", seconds: "{n} 秒", slippage: "滑点容差", slippageAuto: "自动", slippageHint: "低于此设置的最低值时不会执行兑换（跨链兑换将退款）。", settings: "兑换设置", route: "路由", venueNear: "NEAR Intents", venueUsdt0: "LayerZero (USDT0)", ctaBridge: "发送到 {chain}", lzFee: "LayerZero 费用", dustNote: "留在 Stellar", accountLabel: "您的 {chain} 账户", accountHint: "该账户支付并签署此次兑换。", refundLabel: "{chain} 上的退款地址", recipientLabel: "{chain} 上的收款地址", another: "发送到其他账户", ctaSelect: "选择代币", ctaSame: "请选择两种不同的代币", ctaProduction: "仅在生产环境中可用", ctaUnsupported: "这两种代币无法互相兑换", ctaAmount: "输入金额", ctaAmountBad: "请检查金额", ctaAccount: "输入您的 {chain} 账户", ctaRefund: "输入 {chain} 上的退款地址", ctaRecipient: "输入 {chain} 上的地址", ctaMemo: "请检查备注", ctaQuoting: "正在获取报价…", ctaRetry: "重新获取报价", ctaProductionOpen: "需要在生产环境中发起兑换", ctaOpen: "发起兑换", ctaSwap: "在 {venue} 上兑换", ctaBusy: "准备中…" },
+      widget: { title: "兑换", pay: "您支付", receive: "您收到", selectToken: "选择代币", changeToken: "{token}（{chain}），更换代币", flip: "互换支付和收到的代币", pickPay: "选择支付代币", pickReceive: "选择收到的代币", details: "报价详情", invertRate: "反转汇率", eta: "预计时间", seconds: "{n} 秒", slippage: "滑点容差", slippageAuto: "自动", slippageHint: "低于此设置的最低值时不会执行兑换（跨链兑换将退款）。", settings: "兑换设置", route: "路由", venueNear: "跨链", venueUsdt0: "USDT0 跨链桥", ctaBridge: "发送到 {chain}", lzFee: "跨链桥费用", dustNote: "留在 Stellar", accountLabel: "您的 {chain} 账户", accountHint: "该账户支付并签署此次兑换。", refundLabel: "{chain} 上的退款地址", recipientLabel: "{chain} 上的收款地址", another: "发送到其他账户", ctaSelect: "选择代币", ctaSame: "请选择两种不同的代币", ctaProduction: "仅在生产环境中可用", ctaUnsupported: "这两种代币无法互相兑换", ctaAmount: "输入金额", ctaAmountBad: "请检查金额", ctaAccount: "输入您的 {chain} 账户", ctaRefund: "输入 {chain} 上的退款地址", ctaRecipient: "输入 {chain} 上的地址", ctaMemo: "请检查备注", ctaQuoting: "正在获取报价…", ctaRetry: "重新获取报价", ctaProductionOpen: "需要在生产环境中发起兑换", ctaOpen: "发起兑换", ctaSwap: "在 {venue} 上兑换", ctaBusy: "准备中…" },
       picker: { search: "搜索代币、网络或地址", network: "网络", allNetworks: "所有网络", count: "{n} 种代币", useToken: "使用 {token}", none: "没有匹配的代币。粘贴 Stellar、Solana 或 Monad 上的代币地址即可使用。", more: "还有 {n} 种：请搜索以缩小范围。" },
       groups: { open: "进行中", succeeded: "成功", refunded: "已退款", failed: "失败", expired: "已过期" },
       typeLabel: "类型",
       types: { all: "所有类型", same: "单链", cross: "跨链", usdt0: "USDT0 跨链" },
-      form: { desc: "选择您要发送和收到的资产。单链兑换由该链的市场撮合；跨链兑换由 NEAR Intents 结算。Cosmos Pay 从不代管资金。", from: "您发送", to: "您收到", chain: "链", asset: "资产", amountHint: "您要发送的资产数量。", flip: "互换发送和收到的资产", routeLine: "路由：{route}", route: "路由", venueCross: "NEAR Intents" },
+      form: { desc: "选择您要发送和收到的资产。单链兑换由该链的市场撮合；跨链兑换则以跨链方式结算。Cosmos Pay 从不代管资金。", from: "您发送", to: "您收到", chain: "链", asset: "资产", amountHint: "您要发送的资产数量。", flip: "互换发送和收到的资产", routeLine: "路由：{route}", route: "路由", venueCross: "跨链" },
       searchPlaceholder: "按 ID、地址或资产搜索…",
       filters: { all: "全部", PENDING: "待处理", SUBMITTED: "已提交", SUCCEEDED: "成功", FAILED: "失败", EXPIRED: "已过期" },
       status: { PENDING: "待处理", SUBMITTED: "已提交", SUCCEEDED: "成功", FAILED: "失败", EXPIRED: "已过期", DELIVERED: "已送达" },
@@ -1318,7 +1321,7 @@ export default {
       network: { dev: "测试网", prod: "公共网络" },
       chainLabel: "链",
       chains: { stellar: "Stellar", solana: "Solana", monad: "Monad" },
-      venues: { stellar: "Stellar DEX", solana: "Jupiter", monad: "Kuru Flow" },
+      venues: { stellar: "Stellar DEX", solana: "Solana DEX", monad: "Monad DEX" },
       chainModal: {
         desc: "通过 {venue} 在 {chain} 上兑换两种资产，它会在该链的所有流动性来源之间进行路由。先获取报价，然后在钱包中签署交易。",
         sourceHint: { solana: "负责签名、支付和接收的 Solana 钱包（base58）。", monad: "负责签名、支付和接收的 Monad 钱包（0x…）。" },
@@ -1348,7 +1351,7 @@ export default {
         quoteTitle: "报价",
         swapped: "扣除佣金后兑换",
         estimated: "预计收到", minimum: "最少收到",
-        fee: "佣金", bps: "bps",
+        fee: "佣金",
         feeNote: "佣金按您组织套餐的费率自动收取。",
         create: "创建兑换", creating: "创建中…",
       },
@@ -1357,10 +1360,10 @@ export default {
         destination: "网络",
         recipient: "收款地址",
         arrives: "到账",
-        fee: "LayerZero 费用",
+        fee: "跨链桥费用",
         destTx: "目标链交易",
-        scan: "在 LayerZero Scan 查看",
-        travelling: "已从 Stellar 发出，LayerZero 正在送达 {chain}。",
+        scan: "跟踪转账",
+        travelling: "已从 Stellar 发出，正在送达 {chain}。",
         delivered: "已送达 {chain}。",
       },
       detail: {
@@ -1381,7 +1384,7 @@ export default {
     },
     crossChain: {
       title: "跨链兑换",
-      sub: "{n} 笔兑换 · 通过 NEAR Intents 实现 Stellar ⇄ Solana ⇄ Monad",
+      sub: "{n} 笔兑换 · 跨网络",
       create: "新建跨链兑换",
       readOnly: "您对此组织的兑换仅有只读权限。",
       searchPlaceholder: "按地址、资产或 ID 搜索…",
@@ -1395,11 +1398,11 @@ export default {
       quoteError: "无法为此兑换报价。",
       modal: {
         eyebrow: "跨链兑换", title: "新建跨链兑换",
-        desc: "在一条链上发送资产，在另一条链上收到另一种资产。由 NEAR Intents 结算，Cosmos Pay 从不代管资金。",
+        desc: "在一条链上发送资产，在另一条链上收到另一种资产。由跨链兑换完成结算，Cosmos Pay 从不代管资金。",
         from: "从", to: "至", chain: "链", asset: "资产", assetsLoading: "正在加载资产…",
         amount: "发送数量", recipient: "收款方",
         refundTo: "退款地址",
-        slippage: "滑点（bps）", slippageHint: "可选，例如 100。低于最低值时 NEAR Intents 将退款。",
+        slippage: "滑点（bps）", slippageHint: "可选，例如 100。低于最低值时，兑换将被退款。",
         getQuote: "获取报价", quoting: "报价中…", quoteTitle: "报价",
         estimated: "预计收到", minimum: "最少收到", fee: "佣金", eta: "预计时间", seconds: "秒",
         feeNote: "佣金按您组织套餐的费率计算，从兑换输入中扣除。",
@@ -1430,7 +1433,6 @@ export default {
       status: { PENDING: "待处理", SUBMITTED: "已提交", SUCCEEDED: "成功", FAILED: "失败", EXPIRED: "已过期" },
       kind: { DEPOSIT: "存入", WITHDRAW: "提取" },
       sharesUnit: "份额",
-      bps: "bps",
       opsHead: { id: "操作", kind: "类型", pool: "池", amounts: "金额", status: "状态", created: "创建时间" },
       empty: "暂无流动性操作。向池中存入资产即可获得一笔待签名的交易。",
       loading: "正在加载操作…",
@@ -1541,7 +1543,7 @@ export default {
         verificationSent: "验证邮件已发送至 {email}",
         refresh: "刷新状态",
         refreshing: "刷新中…",
-        refreshError: "无法从 BlindPay 刷新 KYC 状态。",
+        refreshError: "无法刷新 KYC 状态。",
         sending: "发送中…",
         types: { individual: "个人", business: "企业" },
         createError: "无法创建收款人。",

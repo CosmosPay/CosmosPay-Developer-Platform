@@ -73,7 +73,7 @@ body.inst:has(.dash) { background: var(--surface); }
    the page moves */
 .inst .nav.nav-dash { top: 0; background: transparent; backdrop-filter: none; }
 .inst .nav.nav-dash, .inst .nav.nav-dash:not(.scrolled) { border-bottom-color: var(--line); }
-.inst .nav.nav-dash.scrolled { background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(10px); border-bottom-color: var(--line); }
+.inst .nav.nav-dash.scrolled, :where(:root[data-scrolled]) .inst .nav.nav-dash { background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(10px); border-bottom-color: var(--line); }
 .nav-dash .brand { display: none; }
 /* the content column keeps a gutter from the sidebar: nav, page head and view all start at 40px */
 .nav-dash .wrap { max-width: none; margin: 0; padding: 0 36px 0 40px; }
@@ -128,6 +128,9 @@ body.inst:has(.dash) { background: var(--surface); }
 /* main holds the page head and the view, so it takes the column's height */
 .dash-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .inst .dash-body { padding: 0 36px 44px 40px; }
+/* A pending invitation sits between the page head and the view, in the view's gutters, with the
+   head's gap above it (the topbar's padding) and the same gap below it before the view starts. */
+.inst .invite-bar { padding: 0 36px 26px 40px; }
 .inst .icon-btn { background: var(--surface); border-color: var(--line); border-radius: 12px; }
 
 /* tablet and phone: the frame fills the screen and the sidebar slides over it */
@@ -137,6 +140,7 @@ body.inst:has(.dash) { background: var(--surface); }
   .nav-dash .wrap { padding: 0 16px; }
   .inst .topbar { padding: 6px 16px 18px; }
   .inst .dash-body { padding: 0 16px 36px; }
+  .inst .invite-bar { padding: 0 16px 18px; }
   .page-title { flex: 1 1 0; }
   .page-title { --title-fs: 22px; }
   .inst .top-actions { margin-left: 0; width: 100%; justify-content: space-between; }
@@ -281,6 +285,11 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 }
 .seg-tabs button:hover { color: var(--ink); }
 .seg-tabs button.on { background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; }
+/* The activity head's controls: the chart's form (icons) beside the period. */
+.hub-section-tools { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.seg-icons { gap: 2px; }
+.seg-icons button { display: inline-flex; align-items: center; justify-content: center; padding: 8px 10px; }
+.seg-icons svg { display: block; width: 16px; height: 16px; }
 .hub-panel { overflow: visible; }
 /* the window's figures, split by short rules; each is a tab over its own chart: the chosen one
    in ink with a line drawn under it, the others answering the pointer with the surface tint */
@@ -390,6 +399,23 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .bar-s { fill: var(--viz-done); }
 .bar-s.wait { fill: var(--viz-wait); }
 .bar-s.fail { fill: var(--viz-fail); }
+/* Lines and areas (StackChart `kind`): 2px round lines in the parts' colours, each area band a
+   light wash of its colour under its line, a hairline crosshair on the hovered bucket instead of
+   the bars' column tint, and 8px dots with a 2px surface ring, drawn in HTML over the stretched
+   SVG so they stay round. */
+.line-s { fill: none; stroke: var(--viz-done); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.line-s.wait { stroke: var(--viz-wait); }
+.line-s.fail { stroke: var(--viz-fail); }
+.area-s { fill: var(--viz-done); fill-opacity: .12; }
+.area-s.wait { fill: var(--viz-wait); }
+.area-s.fail { fill: var(--viz-fail); }
+[data-theme="dark"] .area-s { fill-opacity: .18; }
+.bars.kind-lines g.on .bars-hit, .bars.kind-area g.on .bars-hit { fill: transparent; }
+.bars-cross { stroke: var(--ink-3); stroke-width: 1; }
+.bars-dots { position: absolute; top: 0; left: 0; right: 0; height: 220px; pointer-events: none; }
+.bars-dots .dot-s { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; box-shadow: 0 0 0 2px var(--surface); }
+/* In the lines form the legend's keys are short lines, as the marks are. */
+.hub-panel.kind-lines .hub-legend .dot-s { width: 14px; height: 3px; border-radius: 2px; }
 /* two counts on one axis: no right axis */
 .bars.shared { grid-template-columns: 52px minmax(0, 1fr); }
 .bars.shared.money { grid-template-columns: 76px minmax(0, 1fr); }
@@ -464,6 +490,9 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 }
 @media (max-width: 520px) {
   .bars { grid-template-columns: 44px minmax(0, 1fr) 28px; padding: 8px 8px 14px; }
+  /* A phone's plot is narrower than the tip beside a bucket on either side: it ran off the
+     screen. The tip sits centred over the plot instead, whichever bucket is touched. */
+  .bars-tip, .bars-tip.left { left: 50% !important; transform: translateX(-50%); transition: none; }
   .bars.shared.money { grid-template-columns: 60px minmax(0, 1fr); }
   .design-grid { grid-template-columns: 1fr; }
 }
@@ -686,6 +715,10 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 @keyframes arrive { from { opacity: 0; transform: translateY(6px); } }
 .bars-svg .bar-s { transform-box: fill-box; transform-origin: 50% 100%; animation: barGrow .55s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
 @keyframes barGrow { from { transform: scaleY(0); } }
+/* lines and areas draw in from the left, over the same time the bars take to grow */
+.bars-svg .line-reveal { animation: lineIn .7s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes lineIn { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.bars-dots .dot-s { animation: tipIn .14s ease-out both; }
 
 /* ---- the swap widget: the pattern every swap app uses. A card with two wells ("You pay", "You
    receive"), each a big amount in tabular figures and a token button naming its network; a flip
@@ -712,6 +745,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .sp-amount[aria-invalid="true"] { color: #B42F2F; }
 [data-theme="dark"] .sp-amount[aria-invalid="true"] { color: #FF9B9B; }
 .sp-amount.is-estimate { color: var(--ink-2); }
+/* A long amount (SwapWidget's fit) steps its type down rather than end in an ellipsis. */
+.sp-amount.len-m { font-size: 28px; }
+.sp-amount.len-l { font-size: 22px; }
 .sp-sk { height: 30px; margin: 4px 0; }
 .sp-note { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-3); }
 /* the flip sits across the seam between the wells and turns half a turn each time */
@@ -763,6 +799,12 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .sq-rows > div:first-child { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 10px; }
 .sq-rows dt { color: var(--ink-3); }
 .sq-rows dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+/* The commission, always in sight under the rate: its percent, then what it comes to. */
+.sq-fee { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; padding: 2px 6px 4px; font-size: 13px; }
+.sq-fee > span { color: var(--ink-3); }
+.sq-fee b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.sq-fee small { color: var(--ink-3); font-size: 12.5px; font-weight: 500; }
+.sq-fee small::before { content: "·"; margin: 0 6px; }
 /* the accounts the route needs, under the quote */
 .swap-accounts { margin-top: 6px; padding: 0 2px; }
 .swap-accounts .fld { margin-top: 12px; }
@@ -795,8 +837,14 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .swap-modal .swapper { max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .swap-modal .swapper-head { padding: 0 48px 14px 2px; }
 @media (max-width: 520px) {
+  /* On a phone the dialog's margins would leave the form too narrow for a token's name and the
+     amount it receives: the dialog takes the width, and the form most of it. */
+  .modal-overlay:has(.swap-modal) { padding: 12px; }
+  .modal-body.swap-modal { padding: 20px 16px 18px; }
   .swapper { padding: 12px; border-radius: 20px; }
   .sp-amount { font-size: 28px; }
+  .sp-amount.len-m { font-size: 20px; }
+  .sp-amount.len-l { font-size: 16px; }
   .inst .field-row { grid-template-columns: minmax(0, 1fr); }
 }
 
