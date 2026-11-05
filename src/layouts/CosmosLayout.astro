@@ -1,5 +1,6 @@
 ---
 import { messages } from "@/lib/i18n/messages/index";
+import { NETWORK_IDS } from "@/lib/chains";
 import "@/styles/cosmos.css";
 import "@/styles/views.css";
 import "@/styles/onboarding.css";
@@ -63,7 +64,7 @@ interface Props {
 const {
   title = "Cosmos Pay Developer Platform",
   lang,
-  description = "The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API (payment intents on Stellar, Solana and Monad, swaps across every network they reach, webhooks, products, customers and analytics).",
+  description = `The Cosmos Pay developer dashboard: sign in, manage your organization, mint API keys, and operate the Cosmos Pay Payments API (payment intents customers pay from any of the ${NETWORK_IDS.length} networks we work with, swaps between them, webhooks, products, customers and analytics).`,
   image,
   noindex = false,
   type = "website",

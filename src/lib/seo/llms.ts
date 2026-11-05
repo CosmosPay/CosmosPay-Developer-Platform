@@ -151,7 +151,7 @@ ${authLine(site)}
 
 ## Cosmos Pay Wallet
 
-- [Web app](${wallet.webApp}): non-custodial wallet for Stellar, Solana and Monad; keys are generated and encrypted on the device
+- [Web app](${wallet.webApp}): non-custodial wallet for the ${NETWORK_IDS.length} networks Cosmos Pay works with; keys are generated and encrypted on the device
 - [Chrome extension](${wallet.chromeStore})
 - [Android, Windows, macOS, Linux and Firefox builds](${WALLET_RELEASES})
 

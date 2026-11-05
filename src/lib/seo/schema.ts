@@ -258,7 +258,7 @@ export function apiNode({ site, docs, apiBase }: Pick<ProductNodesInput, "site" 
     "@id": `${site}/#api`,
     name: "Cosmos Pay Payments API",
     description:
-      "REST API to create payment intents and payment links, receive signed webhooks, and manage products and customers on Stellar, Solana and Monad, and swaps across every network they reach. API keys starting with dv_ run on testnet and prod_ keys on mainnet.",
+      `REST API to create payment intents and payment links that customers pay from any of the ${NETWORK_IDS.length} networks Cosmos Pay works with, swap between those networks, receive signed webhooks, and manage products and customers. API keys starting with dv_ run on testnet and prod_ keys on mainnet.`,
     url: `${docs}api/`,
     documentation: docs,
     termsOfService: `${site}/tos`,
@@ -297,7 +297,7 @@ export function walletNode(site: string, wallet: ProductNodesInput["wallet"]): J
     applicationCategory: "FinanceApplication",
     operatingSystem: "Web, Android, Windows, macOS, Linux; extension for Chrome and Firefox",
     description:
-      "Non-custodial wallet for Stellar, Solana and Monad: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.",
+      `Non-custodial wallet for the ${NETWORK_IDS.length} networks Cosmos Pay works with: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.`,
     url: wallet.webApp,
     downloadUrl: [wallet.chromeStore, WALLET_RELEASES],
     publisher: { "@id": orgId(site) },

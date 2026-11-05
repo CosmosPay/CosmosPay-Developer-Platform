@@ -1022,7 +1022,7 @@ export default {
         checkout: { t: "Checkout hébergé et liens de paiement", d: "Un lien de paiement avec son QR code et une page de checkout que nous hébergeons, en quatre designs et sept langues. Un bouton de paiement ou un checkout intégré tient en une seule balise script.", a: "Voir les options d’intégration" },
         swaps: { t: "Swaps", d: "Échangez des tokens entre {n} réseaux et envoyez de l’USDT0 depuis Stellar, sans compte.", a: "Ouvrir les swaps" },
         private: { t: "Paiements privés", d: "Des paiements sur Stellar dont le montant reste caché sur la blockchain derrière une preuve à divulgation nulle de connaissance. Sur testnet pour l’instant.", a: "Voir comment ils fonctionnent" },
-        wallet: { t: "Cosmos Pay Wallet", d: "Un wallet non dépositaire pour Stellar, Solana et Monad : une app web, une extension de navigateur et des apps pour Android, Windows, macOS et Linux. Les clés sont générées et chiffrées sur l’appareil.", a: "Obtenir le wallet" },
+        wallet: { t: "Cosmos Pay Wallet", d: "Un wallet non dépositaire pour les {n} réseaux avec lesquels nous travaillons : une app web, une extension de navigateur et des apps pour Android, Windows, macOS et Linux. Les clés sont générées et chiffrées sur l’appareil.", a: "Obtenir le wallet" },
       },
     },
     code: {
