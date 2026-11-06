@@ -60,7 +60,7 @@ _openapi:
           Requires the `onramp:write` scope.
         heading: get-a-firm-price-for-a-purchase-with-local-money
       - content: >-
-          The sessions this key's consumer opened on the key's network, newest
+          The purchases this key's consumer opened on the key's network, newest
           first, from this service's records (no call to the marketplace).
           Paginated with `take` (default 100, max 100) and `skip`; answers `{
           data, total, take, skip }`, where `total` counts every matching
@@ -83,9 +83,10 @@ _openapi:
           Requires the `onramp:write` scope.
         heading: open-a-purchase-with-local-money
       - content: >-
-          One session of this key's consumer on the key's network, from this
-          service's records, with its widget URL. Another consumer's session, or
-          one opened on the other network, is the 404 of a missing one.
+          One purchase of this key's consumer on the key's network, from this
+          service's records, with its widget URL. Another consumer's session,
+          one opened on the other network, or a sale, is the 404 of a missing
+          one.
 
 
           Requires the `onramp:read` scope.

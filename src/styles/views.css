@@ -334,17 +334,6 @@ button.bal-card:not(.total):hover { border-color: var(--line-2); }
 
 /* settings */
 .set-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-/* The P2P on-ramp view (P2pOnrampView.tsx): its form fields in the settings grid, the estimate
-   line, the firm quote's rows and the two actions. */
-.p2p-form .set-body > .fld { margin-top: 16px; }
-.p2p-msg { margin: 0; color: var(--ink-2); font-size: 14px; }
-.p2p-estimate { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
-.p2p-estimate b { color: var(--ink); font-size: 16px; }
-.p2p-quote { padding: 4px 0 0; }
-.p2p-quote .set-row { font-size: 14px; color: var(--ink-2); }
-.p2p-quote .set-row b { color: var(--ink); }
-.p2p-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 18px; }
-@media (max-width: 640px) { .p2p-form .set-grid { grid-template-columns: 1fr; } .p2p-actions { justify-content: stretch; } .p2p-actions .btn { flex: 1 1 auto; } }
 .set-body { padding: 18px 20px; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line); }
 .set-row:last-child { border-bottom: 0; }
@@ -1166,3 +1155,28 @@ a.icon-mini { text-decoration: none; }
 /* ---- a view head left with its title only (for assistive tech: the buttons now close the filter
    row) takes no room, so the list starts right under the page head instead of after an empty band ---- */
 .inst .view-head:not(:has(.vh-actions > *, p)) { margin-bottom: 0; }
+
+/* ---- the P2P ramps (components/RampWidget.tsx, the Fiat group's On-ramp and Off-ramp): the swap
+   widget's wells and rows, with a local currency's flag in its asset button (a round crop over its
+   two letters, which show when the flag cannot load) and a fixed arrow on the seam between the
+   wells, since a purchase or a sale goes one way only. ---- */
+.ramp-flag {
+  position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; width: var(--rf, 28px); height: var(--rf, 28px);
+  border-radius: 50%; overflow: hidden; background: var(--line);
+}
+.ramp-flag::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(19, 19, 26, .1); }
+.ramp-flag-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ramp-flag-mono { font-size: calc(var(--rf, 28px) * .36); font-weight: 700; letter-spacing: -.02em; color: var(--ink-2); }
+.ramp .token-btn:disabled, .ramp .token-btn.is-fixed { opacity: 1; cursor: default; padding-right: 14px; }
+.ramp .token-btn:disabled:hover, .ramp .token-btn.is-fixed:hover { border-color: var(--line-2); }
+.ramp .token-btn:disabled:active, .ramp .token-btn.is-fixed:active { transform: none; }
+.swap-flip-btn.is-static { cursor: default; }
+.swap-flip-btn.is-static:hover { background: var(--surface-2); }
+.ramp .ramp-gap { margin-top: 8px; }
+.ramp .sp .sk + .sp-sk { margin-top: 10px; }
+.ramp-cta-sk { height: 54px; margin-top: 16px; border-radius: 999px; }
+.ramp-cta-ic { display: inline-flex; margin-left: 8px; }
+.ramp-cta-ic svg { width: 16px; height: 16px; }
+.ramp .sp-top .sp-usd { font-size: 12.5px; }
+.sq-src { padding: 4px 0; color: var(--ink-3); font: 500 12.5px/1 var(--ff-sans); }
+.modal:has(> .ramp-pick) { width: min(520px, 100%); }

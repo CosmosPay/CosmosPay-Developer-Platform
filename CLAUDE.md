@@ -1009,6 +1009,27 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   503 misconfigured. A local server can set `SWAP_COMMISSION_DEV_WAIVER=true` instead: it waives
   (and logs) the commission; the boot refuses it in production.
 
+### Fiat: P2P on-ramp and off-ramp
+
+- **The sidebar's Fiat group holds On-ramp (`?view=onramp`) and Off-ramp (`?view=offramp`)**
+  (product owner, 2026-11-05), both `views/P2pRampView.tsx` (`side` "buy" / "sell"): local money
+  to stablecoins paid to P2P sellers, and stablecoins to local money paid by P2P buyers, through
+  the Payments API's `/v1/onramp/p2p` and `/v1/offramp/p2p` (its `eldorado` plugin) behind the
+  `/api/onramp` and `/api/offramp` proxies. BlindPay's view stays in the group, off with
+  `DISABLED_VIEWS`; give it its own label before turning it back on.
+- **The form is the swap widget's pattern** (product owner: "take the swap as the example"):
+  `components/RampWidget.tsx` in the dialog the filter row's button opens: the two wells (the
+  local currency's flag, `CurrencyMark`, and the stablecoin with its network), the market price,
+  replaced on its own by the firm quote once the order is complete (a 503 means the deployment has
+  no integrator ids and the widget stops asking), the payment method, the account and one button
+  that says what is missing. The view is the Payments table: figures counted from the sessions,
+  the filter row, rows opening a `RecordDetail` with the hosted window's link.
+- **A purchase fixes its delivery address in the hosted window; a sale never fixes one**: the
+  seller connects the wallet that sends there. The dashboard connects no wallet. The tab is claimed
+  on the click, before the session is created, so a popup blocker lets it through.
+- Mock mode: `src/lib/mock/handlers/p2p-ramp.ts` (both sides' markets recorded from the
+  marketplace on 2026-11-05, the sessions they open with the real hosted URL).
+
 ### The payments landing
 
 - **The gateway is several pages** (multi-page layout, product owner, 2026-10-25: "so not

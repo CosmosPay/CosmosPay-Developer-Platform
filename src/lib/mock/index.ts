@@ -10,9 +10,9 @@ import { routes as platformRoutes } from "@/lib/mock/handlers/platform";
 import { routes as paymentsRoutes } from "@/lib/mock/handlers/payments";
 import { routes as swapsRoutes } from "@/lib/mock/handlers/swaps";
 import { routes as fiatAdminRoutes } from "@/lib/mock/handlers/fiat-admin";
-import { routes as p2pOnrampRoutes } from "@/lib/mock/handlers/p2p-onramp";
+import { routes as p2pRampRoutes } from "@/lib/mock/handlers/p2p-ramp";
 
-const ROUTES: MockRoute[] = [...platformRoutes, ...paymentsRoutes, ...swapsRoutes, ...p2pOnrampRoutes, ...fiatAdminRoutes];
+const ROUTES: MockRoute[] = [...platformRoutes, ...paymentsRoutes, ...swapsRoutes, ...p2pRampRoutes, ...fiatAdminRoutes];
 
 /** Paths served by the real route even in mock mode (no database or upstream behind them;
  *  /api/nav-session reads the sample account the middleware set). */
