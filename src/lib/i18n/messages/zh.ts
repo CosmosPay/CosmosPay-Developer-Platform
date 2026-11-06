@@ -652,7 +652,7 @@ export default {
         checkout: { t: "托管收银台和支付链接", d: "带二维码的支付链接和由我们托管的收银台页面，提供四种设计和七种语言。支付按钮或嵌入式收银台只需一个 script 标签。", a: "查看集成方式" },
         swaps: { t: "兑换", d: "无需账户，在 {n} 个网络之间兑换代币，并从 Stellar 发送 USDT0。", a: "打开兑换" },
         private: { t: "隐私支付", d: "Stellar 上的支付，其金额借助零知识证明在链上保持隐藏。目前仅在测试网上提供。", a: "了解其工作方式" },
-        wallet: { t: "Cosmos Pay Wallet", d: "适用于 Stellar、Solana 和 Monad 的非托管钱包：网页应用、浏览器扩展，以及 Android、Windows、macOS 和 Linux 应用。密钥在设备上生成并加密。", a: "获取钱包" },
+        wallet: { t: "Cosmos Pay Wallet", d: "适用于我们支持的 {n} 个网络的非托管钱包：网页应用、浏览器扩展，以及 Android、Windows、macOS 和 Linux 应用。密钥在设备上生成并加密。", a: "获取钱包" },
       },
     },
     code: {
