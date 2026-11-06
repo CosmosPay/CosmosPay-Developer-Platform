@@ -169,6 +169,10 @@ html {
      the scrollbar, and without it the whole page widened by its width and reflowed under them. */
   scrollbar-gutter: stable;
 }
+/* Paragraphs and list items wrap without leaving one word alone on the last line; headings
+   balance their lines (each heading rule sets it). */
+p, li, dd, figcaption { text-wrap: pretty; }
+
 body {
   margin: 0; font-family: var(--ff-sans); background: var(--bg); color: var(--ink);
   font-size: 17px; line-height: 1.55; letter-spacing: -0.01em;
@@ -523,7 +527,7 @@ html.nav-locked { overflow: hidden; }
    con la numeracion /0n chiquita pegada a la ultima palabra.
    ============================================================ */
 .hero h2, .section-head :is(h1, h2), .stats-title, .cta-panel h2 {
-  font-weight: 300; font-size: clamp(2.75rem, 6vw, 5rem); line-height: 1.0;
+  font-weight: 300; font-size: clamp(2.25rem, 5vw, 4rem); line-height: 1.0;
   letter-spacing: -0.02em; text-wrap: balance; margin: 0;
 }
 /* the hero's two lines are one text node split by a newline (Hero.tsx) */
@@ -554,7 +558,8 @@ html.nav-locked { overflow: hidden; }
 .hero-copy { grid-column: 1 / 8; max-width: 760px; }
 .hero-tag { font-weight: 500; font-size: .75rem; color: var(--ink-2); margin-bottom: 32px; }
 .hero p.lede { font-size: 1rem; line-height: 1.55; color: var(--ink-2); margin: 32px 0 0; max-width: 40ch; }
-.hero-cta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 40px; }
+/* the main button and the install command side by side, one height (a row of one size) */
+.hero-cta { display: flex; align-items: stretch; gap: 14px; flex-wrap: wrap; margin-top: 40px; }
 .hero-cta code { font-family: var(--ff-mono); font-size: .8125rem; }
 
 /* la cinta: el elemento hero de la marca, una sola vez en toda la landing.
@@ -612,7 +617,7 @@ html.nav-locked { overflow: hidden; }
 .api-docs { background: none; margin-top: 96px; padding: 0; border: 0; }
 .docs-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: center; }
 .docs-grid > * { min-width: 0; }
-.docs-copy h3 { font-size: clamp(2rem, 3vw, 2.75rem); font-weight: 300; line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 14px; }
+.docs-copy h3 { font-size: clamp(1.5rem, 2.2vw, 2rem); font-weight: 300; line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 14px; }
 .docs-copy > p { font-size: .9375rem; color: var(--ink-2); margin: 0 0 26px; max-width: 40ch; }
 .sdk-btns { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; justify-items: start; }
 .sdk-btn { display: inline-flex; align-items: center; gap: 11px; padding: 12px 20px; border: 1px solid var(--line-2); border-radius: var(--radius-btn); background: transparent; font-weight: 600; font-size: .9375rem; color: var(--ink); transition: border-color .3s ease; }
@@ -652,7 +657,7 @@ html.nav-locked { overflow: hidden; }
 }
 .code-on-dark {
   --tk-kw: #8FB4FF; --tk-str: #7EE0A8; --tk-num: #FFB86B; --tk-key: #E6E6E6;
-  --tk-fn: #6FB7FF; --tk-com: #8A8A8A; --tk-punc: #8F8F8F;
+  --tk-fn: #6FB7FF; --tk-com: #A3A3A3; --tk-punc: #A3A3A3;
 }
 .code-on-light {
   --tk-kw: #6E40C9; --tk-str: #1F7A4D; --tk-num: #B45309; --tk-key: #2346F4;
@@ -692,6 +697,7 @@ html.nav-locked { overflow: hidden; }
 .cta-label { font-weight: 500; font-size: .75rem; color: var(--ink-2); margin-bottom: 32px; }
 .cta-panel p { font-size: 1rem; color: var(--ink-2); margin: 32px 0 0; max-width: 36ch; }
 .cta-panel .row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 40px; }
+@media (max-width: 640px) { .cta-panel .row > .btn { flex: 1 1 100%; justify-content: center; } }
 .cta-thanks { font-weight: 300; font-size: 1.25rem; color: var(--ink-2); margin: 96px 0 0; }
 
 /* ============================================================
@@ -749,8 +755,10 @@ html.nav-locked { overflow: hidden; }
   .lp-panel { padding: 80px 0; }
   .link-login { display: none; }
 
-  .hero h2, .stats-title, .cta-panel h2 { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
-  .section-head :is(h1, h2) { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
+  /* a section's heading stays under the page's h1 on a phone too (the home's is 36px there) */
+  .hero h2, .stats-title, .cta-panel h2 { font-size: clamp(2rem, 9vw, 2.25rem); max-width: none; }
+  .section-head :is(h1, h2) { font-size: clamp(2rem, 9vw, 2.25rem); max-width: none; }
+  .section-head h1 { font-size: clamp(2.25rem, 10vw, 3rem); }
   .stats-about { margin-top: 40px; }
   .section-head { margin-bottom: 56px; }
 

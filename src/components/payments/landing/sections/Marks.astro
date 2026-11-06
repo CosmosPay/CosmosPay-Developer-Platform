@@ -37,10 +37,10 @@ const { layout, links, DOCS, PRICING, t, CREATE_LINK, CONTACT, lowestRate, marke
                   <Tag class="pl-brand" href={item.href} tabindex={item.href ? -1 : undefined}>
                     {item.mark ? <Mark name={item.mark} /> : item.srcDark ? (
                       <>
-                        <img class="pl-brand-light" src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />
-                        <img class="pl-brand-dark" src={item.srcDark} alt="" width="32" height="32" loading="lazy" decoding="async" />
+                        <img class="pl-brand-light" src={item.src} alt="" width="32" height="32" decoding="async" />
+                        <img class="pl-brand-dark" src={item.srcDark} alt="" width="32" height="32" decoding="async" />
                       </>
-                    ) : <img src={item.src} alt="" width="32" height="32" loading="lazy" decoding="async" />}
+                    ) : <img src={item.src} alt="" width="32" height="32" decoding="async" />}
                     <span>{item.name}</span>
                   </Tag>
                 );

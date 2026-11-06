@@ -3,9 +3,9 @@
    with a payment method and a price on either side (buy: local money per USD stablecoin and the
    least local money; sell: the same price and the least USD), every chain with how many tokens it
    lists, and each chain's main assets (in the API's order) followed by the first 12 others it
-   lists, as [address, symbol, decimals, USD price]. */
+   lists, as [address, symbol, decimals, USD price, the listed logo or null, whether it is a main asset]. */
 export interface RecordedCurrency { id: string; name: string; buy?: [string, string]; sell?: [string, string]; methods: { id: string; name: string }[] }
-export interface RecordedMarket { currencies: RecordedCurrency[]; networks: { chainId: number; tokenCount: number }[]; tokens: Record<string, [string, string, number, string | null][]> }
+export interface RecordedMarket { currencies: RecordedCurrency[]; networks: { chainId: number; tokenCount: number }[]; tokens: Record<string, [string, string, number, string | null, string | null, boolean][]> }
 
 export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
   "prod": {
@@ -14,11 +14,11 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "ARS",
         "name": "Argentine Pesos",
         "buy": [
-          "1675.69",
-          "8378.45"
+          "1677.99",
+          "8389.95"
         ],
         "sell": [
-          "1627.1",
+          "1622.555",
           "5"
         ],
         "methods": [
@@ -32,11 +32,11 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "COP",
         "name": "Colombian Pesos",
         "buy": [
-          "3265",
-          "16325"
+          "3252.5",
+          "16262.5"
         ],
         "sell": [
-          "3144.01",
+          "3144",
           "5"
         ],
         "methods": [
@@ -76,11 +76,11 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "USD",
         "name": "Dollars",
         "buy": [
-          "1.1",
-          "5.5"
+          "1.141",
+          "5.705"
         ],
         "sell": [
-          "0.972",
+          "0.962",
           "5"
         ],
         "methods": [
@@ -106,11 +106,11 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "PEN",
         "name": "Soles",
         "buy": [
-          "3.555",
-          "17.775"
+          "3.5465",
+          "17.7325"
         ],
         "sell": [
-          "3.2115",
+          "3.395",
           "5"
         ],
         "methods": [
@@ -140,7 +140,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
       },
       {
         "chainId": 8453,
-        "tokenCount": 1223
+        "tokenCount": 1222
       },
       {
         "chainId": 10,
@@ -148,7 +148,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
       },
       {
         "chainId": 1,
-        "tokenCount": 6778
+        "tokenCount": 6779
       },
       {
         "chainId": 480,
@@ -156,7 +156,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
       },
       {
         "chainId": 56,
-        "tokenCount": 3000
+        "tokenCount": 3003
       },
       {
         "chainId": 130,
@@ -177,193 +177,257 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2237.71"
+          "2224.81",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "USDT",
           6,
-          "0.9980459727"
+          "0.9980459727",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+          true
         ],
         [
           "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "USDC",
           6,
-          "1.0010305153"
+          "0.9991740604",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "WETH",
           18,
-          "2237.71"
+          "2224.81",
+          "https://static.debank.com/image/eth_token/logo_url/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2/61844453e63cf81301f845d7864236f6.png",
+          true
         ],
         [
           "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "WBTC",
           8,
-          "75950.8664840131"
+          "75533.911549077",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+          true
         ],
         [
           "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "cbBTC",
           8,
-          "75973.7899260218"
+          "75535.9156016719",
+          "https://static.debank.com/image/eth_token/logo_url/0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf/a4ae837a6ca2fc45f07a74898cc4ba45.png",
+          true
         ],
         [
           "0x6B175474E89094C44Da98b954EedeAC495271d0F",
           "DAI",
           18,
-          "0.9993367991"
+          "0.9983327367",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+          true
         ],
         [
           "0xdC035D45d973E3EC169d2276DDab16f1e407384F",
           "USDS",
           18,
-          "1.0013547956"
+          "0.9977067488",
+          null,
+          true
         ],
         [
           "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
           "USDe",
           18,
-          "0.9979858915"
+          "0.9994590909",
+          "https://static.debank.com/image/eth_token/logo_url/0x4c9edd5852cd905f086c759e8383e09bff1e68b3/1228d6e73f70f37ec1f6fe02a3bbe6ff.png",
+          true
         ],
         [
           "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8",
           "PYUSD",
           6,
-          "1.0023698463"
+          "1.0001324171",
+          "https://static.debank.com/image/eth_token/logo_url/0x6c3ea9036406852006290770bedfcaba0e23a0e8/8af98a6a2c36c107eeb4b349fddb51b0.png",
+          true
         ],
         [
           "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409",
           "FDUSD",
           18,
-          "1.0006650355"
+          "1.0006650355",
+          "https://static.debank.com/image/eth_token/logo_url/0xc5f0f7b66764f6ec8c8dff7ba683102295e16409/9c61b134f82d8780005895d8fb6b19ab.png",
+          true
         ],
         [
           "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c",
           "EURC",
           6,
-          "1.1207420803"
+          "1.1197527186",
+          "https://static.debank.com/image/eth_token/logo_url/0x1abaea1f7c830bd89acc67ec4af516284b1bc33c/790d0c3a6da87111b66255c0d57108fa.png",
+          true
         ],
         [
           "0x514910771AF9Ca656af840dff83E8264EcF986CA",
           "LINK",
           18,
-          "10.8759224195"
+          "10.7245455311242",
+          "https://static.debank.com/image/eth_token/logo_url/0x514910771af9ca656af840dff83e8264ecf986ca/69425617db0ef93a7c21c4f9b81c7ca5.png",
+          true
         ],
         [
           "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
           "UNI",
           18,
-          "6.9955348183"
+          "6.9056340102",
+          "https://static.debank.com/image/eth_token/logo_url/0x1f9840a85d5af5bf1d1762f925bdaddc4201f984/fcee0c46fc9864f48ce6a40ed1cdd135.png",
+          true
         ],
         [
           "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
           "AAVE",
           18,
-          "130.0807483199"
+          "130.0354731343",
+          "https://static.debank.com/image/eth_token/logo_url/0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9/7baf403c819f679dc1c6571d9d978f21.png",
+          true
         ],
         [
           "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
           "LDO",
           18,
-          "0.3294609212"
+          "0.3277960402",
+          "https://static.debank.com/image/eth_token/logo_url/0x5a98fcbea516cf06857215779fd812ca3bef1b32/ca70e712bf4b68bd979e825960a63577.png",
+          true
         ],
         [
           "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
           "wstETH",
           18,
-          "2794.553457657"
+          "2779.6568078955",
+          "https://static.debank.com/image/eth_token/logo_url/0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0/d0405a0d11669d4e75286d8dd808e19b.png",
+          true
         ],
         [
           "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee",
           "weETH",
           18,
-          "2476.583242995"
+          "2469.2725664447",
+          null,
+          true
         ],
         [
           "0xae78736Cd615f374D3085123A210448E74Fc6393",
           "rETH",
           18,
-          "2840.339457995"
+          "2626.0256542383",
+          "https://static.debank.com/image/eth_token/logo_url/0xae78736cd615f374d3085123a210448e74fc6393/0a56aa87c04449332f88702b2bd5f45c.png",
+          true
         ],
         [
           "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704",
           "cbETH",
           18,
-          "2556.1231567826"
+          "2550.729908131",
+          "https://static.debank.com/image/eth_token/logo_url/0xbe9895146f7af43049ca1c1ae358b0541ea49704/1f287272a7d8439af0f6b281ebf0143e.png",
+          true
         ],
         [
           "0x888ceA2BBDD5D47a4032cf63668D7525C74af57A",
           "POOF",
           18,
-          "69968790068819.8"
+          "69968790068819.8",
+          "https://static.debank.com/image/eth_token/logo_url/0x888cea2bbdd5d47a4032cf63668d7525c74af57a/68e9d0b6c8da9218c3c4450f991938de.png",
+          false
         ],
         [
           "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
           "mkr",
           18,
-          "1480.4870891183"
+          "1488.0150740305",
+          "https://static.debank.com/image/eth_token/logo_url/0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2/1d0390168de63ca803e8db7990e4f6ec.png",
+          false
         ],
         [
           "0xD849882983F1bA8A3c23B16b65BB0173A7f63b63",
           "DEAI (De Layer)",
           18,
-          "57540183084686.2"
+          "57540183084686.2",
+          "https://static.debank.com/image/eth_token/logo_url/0xd849882983f1ba8a3c23b16b65bb0173a7f63b63/56a1496be33bf437e5d0b715d36d59be.png",
+          false
         ],
         [
           "0xad3E3Fc59dff318BecEaAb7D00EB4F68b1EcF195",
           "wCUSD",
           18,
-          "1530655185643400"
+          "1530655185643400",
+          null,
+          false
         ],
         [
           "0xF841D292c1141cbF1460A1E2010916565a010cc8",
           "AMONG",
           18,
-          "159392632936335"
+          "159392632936335",
+          null,
+          false
+        ],
+        [
+          "0xE0aD1806Fd3E7edF6FF52Fdb822432e847411033",
+          "ONX",
+          18,
+          "191561141536.483",
+          "https://static.debank.com/image/eth_token/logo_url/0xe0ad1806fd3e7edf6ff52fdb822432e847411033/9ae0736d58d219fcfca8c1829c93f089.png",
+          false
         ],
         [
           "0x17c090F9a17E4e5a8cEb23bbe7E7e28E3C4Ca196",
           "DNS",
           18,
-          "0.0008330890493"
+          "0.0008330890493",
+          "https://static.debank.com/image/eth_token/logo_url/0x17c090f9a17e4e5a8ceb23bbe7e7e28e3c4ca196/ab4bc6fb5730b19462d7afd6bc9e937c.png",
+          false
         ],
         [
           "0x65e3c4a750a2E7cC7cce86d01587bBcbbe99042E",
           "OPU",
           18,
-          "38837.6679789665"
+          "38837.6679789665",
+          null,
+          false
         ],
         [
           "0xa6A21313FE2FC6a5cf1e293Dcbf99d180865Babc",
           "HUH",
           18,
-          "92.83534525721632"
+          "92.83534525721632",
+          null,
+          false
         ],
         [
           "0x4B7ee45f30767F36f06F79B32BF1FCa6f726DEda",
           "eFIL",
           18,
-          "81440175689.0423"
+          "81440175689.0423",
+          "https://static.debank.com/image/eth_token/logo_url/0x4b7ee45f30767f36f06f79b32bf1fca6f726deda/6bf5d1ca8ed293ff12c1b2689d0ef6c4.png",
+          false
         ],
         [
           "0xc0A25a24CcE412E2Fb407c08E3785437FEE9Ad1d",
           "OFT",
           18,
-          "1625286383166.5"
+          "1625286383166.5",
+          "https://static.debank.com/image/token/logo_url/0xc0a25a24cce412e2fb407c08e3785437fee9ad1d/c72c87033a4da243d9ae27a24fe63c2c.png",
+          false
         ],
         [
           "0x9ee8c380E1926730aD89e91665FF27063b13c90A",
           "CA",
           18,
-          "358731.294072223"
-        ],
-        [
-          "0xcb69B067d9d8d6dD1209fE4557c43586E54f9045",
-          "PSM",
-          18,
-          "628.0374706259"
+          "358731.294072223",
+          "https://static.debank.com/image/eth_token/logo_url/0x9ee8c380e1926730ad89e91665ff27063b13c90a/d75789aa34329ad94aa320a9b5b40d4b.png",
+          false
         ]
       ],
       "10": [
@@ -371,175 +435,233 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2210.81"
+          "2226.67",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
           "USDT0",
           6,
-          "0.9979655221"
+          "0.9993791903",
+          "https://static.debank.com/image/ink_token/logo_url/0x0200c29006150606b650577bbe7b6248f58470c1/8bba37fddc2774e06a94b8952e3e3ad7.png",
+          true
         ],
         [
           "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
           "USDC",
           6,
-          "0.9991462536"
+          "1.0015624932",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2241.65"
+          "2226.67",
+          "https://static.debank.com/image/op_token/logo_url/0x4200000000000000000000000000000000000006/61844453e63cf81301f845d7864236f6.png",
+          true
         ],
         [
           "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
           "WBTC",
           8,
-          "75766.4626300052"
+          "75482.9251460255",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+          true
         ],
         [
           "0x4200000000000000000000000000000000000042",
           "OP",
           18,
-          "0.1043444383"
+          "0.1034350528",
+          "https://optimistic.etherscan.io/token/images/optimism_32.png",
+          true
         ],
         [
           "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
           "USDT",
           6,
-          "0.9980533886"
+          "0.9981370325",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+          true
         ],
         [
           "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
           "USDC.e",
           6,
-          "1.001785855"
+          "1.0011665674",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
           "DAI",
           18,
-          "1.0008654215"
+          "1.0005453275",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+          true
         ],
         [
           "0xDCB612005417Dc906fF72c87DF732e5a90D49e11",
           "EURC",
           6,
-          "1.1198537055"
+          "1.1157783998",
+          "https://static.debank.com/image/op_token/logo_url/0xdcb612005417dc906ff72c87df732e5a90d49e11/790d0c3a6da87111b66255c0d57108fa.png",
+          true
         ],
         [
           "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1",
           "WLD",
           18,
-          "0.3498075408"
+          "0.3437201417",
+          "https://static.debank.com/image/eth_token/logo_url/0x163f8c2467924be0ae7b5347228cabf260318753/30ac094d49a4b6e7561810c16ddc8c69.png",
+          true
         ],
         [
           "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6",
           "LINK",
           18,
-          "10.7947410338"
+          "10.7545843718",
+          "https://static.debank.com/image/op_token/logo_url/0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6/c30bfeeea5f4889668905d2911767bca.png",
+          true
         ],
         [
           "0x6fd9d7AD17242c41f7131d257212c54A0e816691",
           "UNI",
           18,
-          "6.892549046"
+          "6.8830694248",
+          "https://static.debank.com/image/op_token/logo_url/0x6fd9d7ad17242c41f7131d257212c54a0e816691/74bba1cee2827aca7b8156830d1aa75c.png",
+          true
         ],
         [
           "0x76FB31fb4af56892A25e32cFC43De717950c9278",
           "AAVE",
           18,
-          "129.9379439292"
+          "129.5772811402",
+          "https://static.debank.com/image/op_token/logo_url/0x76fb31fb4af56892a25e32cfc43de717950c9278/9ac673ff449bb7b8fbc8b8119caf4a1f.png",
+          true
         ],
         [
           "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb",
           "wstETH",
           18,
-          "2793.7004617396"
+          "2777.7857703005",
+          "https://static.debank.com/image/op_token/logo_url/0x1f32b1c2345538c0c6f582fcb022739c4a194ebb/7e931af8cb34b6f5671ca2eb1b847849.png",
+          true
         ],
         [
           "0x5A7fACB970D094B6C7FF1df0eA68D99E6e73CBFF",
           "weETH",
           18,
-          "2464.1244148664"
+          "2464.1244148664",
+          "https://static.debank.com/image/eth_token/logo_url/0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee/6c02f6b3bcd264d433c3676100ad8da6.png",
+          true
         ],
         [
           "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D",
           "rETH",
           18,
-          "2612.2034239834"
+          "2605.005253757",
+          "https://static.debank.com/image/op_token/logo_url/0x9bcef72be871e61ed4fbbc7630889bee758eb81d/0a56aa87c04449332f88702b2bd5f45c.png",
+          true
         ],
         [
           "0x4ac8bD1bDaE47beeF2D1c6Aa62229509b962Aa0d",
           "ETHx",
           18,
-          "2241.27"
+          "2237.3",
+          null,
+          false
         ],
         [
           "0x35Adeb0638EB192755B6E52544650603Fe65A006",
           "USDCx",
           18,
-          "1.0015022533800702"
+          "1.001401962747847",
+          "https://tokenlist.superfluid.org/icons/usdc.svg",
+          false
         ],
         [
           "0x58538e6A46E07434d7E7375Bc268D3cb839C0133",
           "ENA",
           18,
-          "3.7553817514"
+          "3.7553817514",
+          "https://static.debank.com/image/op_token/logo_url/0x58538e6a46e07434d7e7375bc268d3cb839c0133/20d567bc301b43d0d2131731f7ac4736.png",
+          false
         ],
         [
           "0x76A50b8c7349cCDDb7578c6627e79b5d99D24138",
           "stETH",
           18,
-          "2245.4035015456443"
+          "2231.0572491884577",
+          null,
+          false
         ],
         [
           "0x38d693cE1dF5AaDF7bC62595A37D667aD57922e5",
           "aOptUSDCn",
           6,
-          "1.00"
+          "1.00",
+          null,
+          false
         ],
         [
           "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "WBTC",
           8,
-          "76053.47"
+          "75595.47",
+          null,
+          false
         ],
         [
           "0x9638EC1D29dfA9835fdb7fa74B5B77B14d6Ac77e",
           "WBTCx",
           18,
-          "75528.67"
+          "75528.67",
+          "https://tokenlist.superfluid.org/icons/wbtc.svg",
+          false
         ],
         [
           "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
           "USDe",
           18,
-          "1.6748159196"
+          "1.0828576488",
+          "https://static.debank.com/image/eth_token/logo_url/0x4c9edd5852cd905f086c759e8383e09bff1e68b3/1228d6e73f70f37ec1f6fe02a3bbe6ff.png",
+          false
         ],
         [
           "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
           "aOptWETH",
           18,
-          "2230.57"
+          "2230.57",
+          "https://static.debank.com/image/op_token/logo_url/0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8/0db976c087d5a67d228ec013ff42c83a.png",
+          false
         ],
         [
           "0xc6BDFC4f2E90196738873E824a9eFa03F7c64176",
           "VCNT",
           18,
-          "0.4054299905"
+          "0.4054299905",
+          "https://static.debank.com/image/op_token/logo_url/0xc6bdfc4f2e90196738873e824a9efa03f7c64176/23a9b1aee2760f3c53c54824c0e1a34e.png",
+          false
         ],
         [
           "0x7a4c2C39e25ca0D6A1Ac4af14dD601c2A7eDA8Ae",
           "clBTC",
           18,
-          "76439.1703510795"
+          "76234.59935286718",
+          null,
+          false
         ],
         [
           "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2",
           "sUSDe",
           18,
-          "1.1839618928"
+          "1.1839618928",
+          "https://ethena.fi/shared/ecosystem/sUSDe.svg",
+          false
         ]
       ],
       "56": [
@@ -547,163 +669,217 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "BNB",
           18,
-          "694.3"
+          "690.62",
+          null,
+          true
         ],
         [
           "0x55d398326f99059fF775485246999027B3197955",
           "USDT",
           18,
-          "0.9988860314"
+          "0.9984198248",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+          true
         ],
         [
           "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
           "USDC",
           18,
-          "0.9998810174"
+          "1.0000787338",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
           "WBNB",
           18,
-          "694.3"
+          "690.62",
+          "https://static.debank.com/image/coin/logo_url/bnb/9784283a36f23a58982fc964574ea530.png",
+          true
         ],
         [
           "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "BTCB",
           18,
-          "75962.4211312314"
+          "75563.1666846787",
+          "https://static.debank.com/image/bsc_token/logo_url/0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c/6f9302fa889419e4ce8745931d2e19bf.png",
+          true
         ],
         [
           "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
           "WETH",
           18,
-          "2235.98874018758"
+          "2225.05265807358",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409",
           "FDUSD",
           18,
-          "0.9939436367"
+          "0.997938469",
+          "https://static.debank.com/image/eth_token/logo_url/0xc5f0f7b66764f6ec8c8dff7ba683102295e16409/9c61b134f82d8780005895d8fb6b19ab.png",
+          true
         ],
         [
           "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
           "USDe",
           18,
-          "1.0078023633"
+          "1.0078023633",
+          "https://static.debank.com/image/eth_token/logo_url/0x4c9edd5852cd905f086c759e8383e09bff1e68b3/1228d6e73f70f37ec1f6fe02a3bbe6ff.png",
+          true
         ],
         [
           "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
           "DAI",
           18,
-          "1.0064093632"
+          "1.0011232041",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+          true
         ],
         [
           "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82",
           "Cake",
           18,
-          "1.9281085274"
+          "1.9226452692",
+          "https://static.debank.com/image/bsc_token/logo_url/0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82/9003539eb61139bd494b7412b785d482.png",
+          true
         ],
         [
           "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "WBTC",
           8,
-          "76027.4840767608"
+          "75588.5431676474",
+          "https://static.debank.com/image/bsc_token/logo_url/0x0555e30da8f98308edb960aa94c0db47230d2b9c/e95a41d0ae2465957140ef2db2c228ea.png",
+          true
         ],
         [
           "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD",
           "LINK",
           18,
-          "10.8397497256"
+          "10.7820929204",
+          "https://static.debank.com/image/bsc_token/logo_url/0xf8a0bf9cf54bb92f17374d9e9a321e6a111a51bd/69425617db0ef93a7c21c4f9b81c7ca5.png",
+          true
         ],
         [
           "0xBf5140A22578168FD562DCcF235E5D43A02ce9B1",
           "UNI",
           18,
-          "6.9851065919"
+          "6.9002033555",
+          "https://static.debank.com/image/bsc_token/logo_url/0xbf5140a22578168fd562dccf235e5d43a02ce9b1/fcee0c46fc9864f48ce6a40ed1cdd135.png",
+          true
         ],
         [
           "0xfb6115445Bff7b52FeB98650C87f44907E58f802",
           "AAVE",
           18,
-          "130.5527085318"
+          "129.7956526088",
+          "https://static.debank.com/image/eth_token/logo_url/0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9/7baf403c819f679dc1c6571d9d978f21.png",
+          true
         ],
         [
           "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A",
           "weETH",
           18,
-          "2662.0146739594"
+          "2662.0146739594",
+          "https://static.debank.com/image/bsc_token/logo_url/0x04c0599ae5a44757c0af6f9ec3b93da8976c150a/6c02f6b3bcd264d433c3676100ad8da6.png",
+          true
         ],
         [
           "0x07145Ad7C7351c6FE86b6B841fC9Bed74eb475A7",
           "MUXLP",
           18,
-          "0.05150577947"
+          "0.05150577947",
+          "https://static.debank.com/image/bsc_token/logo_url/0x07145ad7c7351c6fe86b6b841fc9bed74eb475a7/d536a770b1ed120d6952fba46d52aa05.png",
+          false
         ],
         [
           "0x7E1391089da0c4E769a0361e2D3e0CD2c89520B4",
           "BTCBR",
           18,
-          "0.007944425022"
+          "0.007944425022",
+          null,
+          false
         ],
         [
           "0x0acdb582C1d5512Ea31fD64b9C07882CB31E494D",
           "ARB",
           18,
-          "161688110.229035"
+          "161688110.229035",
+          null,
+          false
         ],
         [
           "0x529A4116F160c833c61311569D6B33dFF41fD657",
           "BNBx",
           18,
-          "693.94"
+          "693.16",
+          null,
+          false
         ],
         [
           "0xa2E3356610840701BDf5611a53974510Ae27E2e1",
           "wBETH",
           18,
-          "2474.9661685569"
+          "2468.3422119394",
+          "https://static.debank.com/image/bsc_token/logo_url/0xa2e3356610840701bdf5611a53974510ae27e2e1/9944c9e8308ca03ddf015d0bb6d4cc9e.png",
+          false
         ],
         [
           "0xA07c5b74C9B40447a954e1466938b865b6BBea36",
           "vBNB",
           8,
-          "16.4169212969"
+          "16.4169212969",
+          "https://static.debank.com/image/bsc_token/logo_url/0xa07c5b74c9b40447a954e1466938b865b6bbea36/c15a0076f76ca8123971570cb4c3418c.png",
+          false
         ],
         [
           "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d",
           "USD1",
           18,
-          "0.9948819406"
+          "1.0007995572",
+          "https://static.debank.com/image/eth_token/logo_url/0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d/20466428407a585c38e7141a7bf5e100.png",
+          false
         ],
         [
           "0x76A797A59Ba2C17726896976B7B3747BfD1d220f",
           "TONCOIN",
           9,
-          "1.1808898982"
+          "1.1821283651",
+          "https://static.debank.com/image/bsc_token/logo_url/0x76a797a59ba2c17726896976b7b3747bfd1d220f/3a9da52af597a531b7174a0107aa6234.png",
+          false
         ],
         [
           "0xAf48B7e315a52518CfBF7d96C455D9dFAD94cB48",
           "IOST",
           18,
-          "0.07968397542"
+          "0.07968397542",
+          null,
+          false
         ],
         [
           "0xfD5840Cd36d94D7229439859C0112a4185BC0255",
           "vUSDT",
           8,
-          "0.3046392037"
+          "0.3046392037",
+          "https://static.debank.com/image/bsc_token/logo_url/0xfd5840cd36d94d7229439859c0112a4185bc0255/87d28aa3d4345191420dba57d962f0ba.png",
+          false
         ],
         [
           "0x608593d17A2decBbc4399e4185bE4922F97eD32E",
           "USDY",
           18,
-          "1.1521515057515632"
+          "1.1521602929481416",
+          "https://cdn.ondo.finance/tokens/logos/usdy_160x160.png",
+          false
         ],
         [
-          "0x0667873E07FFec6509525B4e4Cd97409e1fe9424",
-          "CAT",
+          "0x22b1458e780F8fA71E2F84502cEe8B5A3cc731Fa",
+          "M",
           18,
-          "0.6087615385"
+          "0.8418247855",
+          null,
+          false
         ]
       ],
       "130": [
@@ -711,127 +887,169 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2238.66"
+          "2226.67",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
           "USDC",
           6,
-          "0.9978423097"
+          "1.0033240468",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x9151434b16b9763660705744891fA906F660EcC5",
           "USD₮0",
           6,
-          "0.9980265971"
+          "1.0002922452",
+          "https://static.debank.com/image/ink_token/logo_url/0x0200c29006150606b650577bbe7b6248f58470c1/8bba37fddc2774e06a94b8952e3e3ad7.png",
+          true
         ],
         [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2241.65"
+          "2226.67",
+          "https://static.debank.com/image/eth_token/logo_url/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2/61844453e63cf81301f845d7864236f6.png",
+          true
         ],
         [
           "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "WBTC",
           8,
-          "75992.4787481282"
+          "75597.4483355772",
+          "https://static.debank.com/image/eth_token/logo_url/0x2260fac5e5542a773aa44fbcfedf7c193bc2c599/d3c52e7c7449afa8bd4fad1c93f50d93.png",
+          true
         ],
         [
           "0x20CAb320A855b39F724131C69424240519573f81",
           "DAI",
           18,
-          "0.9807421616"
+          "0.978664635",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+          true
         ],
         [
           "0xc02fE7317D4eb8753a02c35fe019786854A92001",
           "wstETH",
           18,
-          "2802.588407682"
+          "2780.6800267415",
+          "https://static.debank.com/image/uni_token/logo_url/0xc02fe7317d4eb8753a02c35fe019786854a92001/d0405a0d11669d4e75286d8dd808e19b.png",
+          true
         ],
         [
           "0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7",
           "weETH",
           18,
-          "2443.1303609657"
+          "2466.5408615399",
+          "https://static.debank.com/image/plasma_token/logo_url/0xa3d68b74bf0528fdd07263c60d6488749044914b/44da129be16d522a3255d2c066f2049a.png",
+          true
         ],
         [
           "0x94Cac393f3444cEf63a651FfC18497E7e8bd036a",
           "rETH",
           18,
-          "2642.3895871098"
+          "2617.6058085055",
+          null,
+          true
         ],
         [
           "0x73E0C0d45E048D25Fc26Fa3159b0aA04BfA4Db98",
           "kBTC",
           8,
-          "23981648.0318786"
+          "23981648.0318786",
+          "https://static.debank.com/image/uni_token/logo_url/0x73e0c0d45e048d25fc26fa3159b0aa04bfa4db98/3be926c0ab287724f3048d2e85f5a887.png",
+          false
         ],
         [
           "0x81f2508AAC59757EF7425DDc9717AB5c2AA0A84F",
           "stETH",
           18,
-          "2241.4434521796"
+          "2240.0211343588",
+          null,
+          false
         ],
         [
           "0xbe51A5e8FA434F09663e8fB4CCe79d0B2381Afad",
           "JUP",
           6,
-          "0.3816819304"
+          "0.3816819304",
+          "https://static.debank.com/image/uni_token/logo_url/0xbe51a5e8fa434f09663e8fb4cce79d0b2381afad/754fd9e6dd7a1efde5a7b7722e19d319.png",
+          false
         ],
         [
           "0x97Fadb3D000b953360FD011e173F12cDDB5d70Fa",
           "$WIF",
           6,
-          "0.7538922475"
+          "0.7538922475",
+          "https://static.debank.com/image/uni_token/logo_url/0x97fadb3d000b953360fd011e173f12cddb5d70fa/318aab4ab1e959e3c14d46cb54430138.png",
+          false
         ],
         [
           "0x4809010926aec940b550D34a46A52739f996D75D",
           "wsrUSD",
           18,
-          "3.1101311982"
+          "1.1084720867278834",
+          "https://static.debank.com/image/uni_token/logo_url/0x4809010926aec940b550d34a46a52739f996d75d/04697174bc689b0a572e36458104f38b.png",
+          false
         ],
         [
           "0xd3c8dA379d71a33BfEE8875F87Ac2748bEB1d58d",
           "uniBTC",
           8,
-          "75530.2453530602"
+          "75138.19487709537",
+          "https://static.debank.com/image/uni_token/logo_url/0xd3c8da379d71a33bfee8875f87ac2748beb1d58d/64c9ab765d8e09bac00ddef345a01942.png",
+          false
         ],
         [
           "0x3Ec3849C33291a9eF4c5dB86De593EB4A37fDe45",
           "sfrxETH",
           18,
-          "2590.8415769638"
+          "2615.1108007019675",
+          null,
+          false
         ],
         [
           "0x80Eede496655FB9047dd39d9f418d5483ED600df",
           "frxUSD",
           18,
-          "0.9156370994"
+          "0.9156370994",
+          "https://static.debank.com/image/uni_token/logo_url/0x80eede496655fb9047dd39d9f418d5483ed600df/7610ebe75cb08ff21ee6dfb7e1592e25.png",
+          false
         ],
         [
           "0x81908BBaad3f6fC74093540Ab2E9B749BB62aA0d",
           "XVS",
           18,
-          "2.7183984366"
+          "2.7183984366",
+          "https://static.debank.com/image/bsc_token/logo_url/0xcf6bb5389c92bdda8a3747ddb454cb7a64626c63/a21a9e370c4c173a880e39af1d243117.png",
+          false
         ],
         [
           "0xE9C43e09C5FA733bCC2aEAa96063A4a60147AA09",
           "EUL",
           18,
-          "1.2568304649"
+          "1.2568304649",
+          "https://static.debank.com/image/project/logo_url/euler2/672f19349da6dd7cdf30621720681753.png",
+          false
         ],
         [
           "0x5Bff88cA1442c2496f7E475E9e7786383Bc070c0",
           "sfrxUSD",
           18,
-          "0.9843067004"
+          "1.219146545827269",
+          null,
+          false
         ],
         [
           "0x64445f0aecC51E94aD52d8AC56b7190e764E561a",
           "WFRAX",
           18,
-          "0.2514872983"
+          "0.2514872983",
+          null,
+          false
         ]
       ],
       "137": [
@@ -839,157 +1057,209 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "POL",
           18,
-          "0.0944239647778383"
+          "0.0924530317241504",
+          "https://static.debank.com/image/matic_token/logo_url/matic/6f5a6b6f0732a7a235131bd7804d357c.png",
+          true
         ],
         [
           "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
           "USDT",
           6,
-          "0.9991645184"
+          "0.9946733466",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+          true
         ],
         [
           "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
           "USDC",
           6,
-          "0.9993475801"
+          "0.9999488343",
+          "https://static.debank.com/image/coin/logo_url/usdc/e87790bfe0b3f2ea855dc29069b38818.png",
+          true
         ],
         [
           "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
           "WPOL",
           18,
-          "0.0944239647778383"
+          "0.0924530317241504",
+          "https://static.debank.com/image/matic_token/logo_url/0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270/f6e604ba0324726a3d687c618aa4f163.png",
+          true
         ],
         [
           "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
           "WETH",
           18,
-          "2237.99"
+          "2226.67",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
           "WBTC",
           8,
-          "76045.9480927326"
+          "75643.6331164951",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+          true
         ],
         [
           "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
           "USDC.e",
           6,
-          "1.0015181309"
+          "0.9992737285",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
           "DAI",
           18,
-          "1.0041992274"
+          "1.0000399178",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+          true
         ],
         [
           "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39",
           "LINK",
           18,
-          "10.8755706799"
+          "10.7388346049",
+          "https://static.debank.com/image/matic_token/logo_url/0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39/cef6e0d1f77e59becae308dad59a5377.png",
+          true
         ],
         [
           "0xb33EaAd8d922B1083446DC23f610c2567fB5180f",
           "UNI",
           18,
-          "6.9915284425"
+          "6.9062791911",
+          "https://static.debank.com/image/matic_token/logo_url/0xb33eaad8d922b1083446dc23f610c2567fb5180f/fcee0c46fc9864f48ce6a40ed1cdd135.png",
+          true
         ],
         [
           "0xD6DF932A45C0f255f85145f286eA0b292B21C90B",
           "AAVE",
           18,
-          "130.3217062653"
+          "130.0002069546",
+          "https://static.debank.com/image/matic_token/logo_url/0xd6df932a45c0f255f85145f286ea0b292b21c90b/9ac673ff449bb7b8fbc8b8119caf4a1f.png",
+          true
         ],
         [
           "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
           "LDO",
           18,
-          "0.3294044797"
+          "0.3276811845",
+          "https://static.debank.com/image/matic_token/logo_url/0xc3c7d422809852031b44ab29eec9f1eff2a58756/ca70e712bf4b68bd979e825960a63577.png",
+          true
         ],
         [
           "0x172370d5Cd63279eFa6d502DAB29171933a610AF",
           "CRV",
           18,
-          "0.2523914803"
+          "0.2577988114",
+          "https://static.debank.com/image/matic_token/logo_url/0x172370d5cd63279efa6d502dab29171933a610af/4a3b2aa9775c79867db769e3bed76e83.png",
+          true
         ],
         [
           "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD",
           "wstETH",
           18,
-          "2796.3267081146"
+          "2780.1050952544",
+          "https://static.debank.com/image/eth_token/logo_url/0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0/d0405a0d11669d4e75286d8dd808e19b.png",
+          true
         ],
         [
           "0x42435F467D33e5C4146a4E8893976ef12BBCE762",
           "DEFI5",
           18,
-          "0.2416538291"
+          "0.2416538291",
+          "https://static.debank.com/image/matic_token/logo_url/0x42435f467d33e5c4146a4e8893976ef12bbce762/4516d46e7bdd2d11947e2735674ed086.png",
+          false
+        ],
+        [
+          "0xf1c1A3C2481A3a8A3f173A9ab5Ade275292A6fA3",
+          "VEE",
+          18,
+          "33854352465.5495",
+          "https://static.debank.com/image/matic_token/logo_url/0xf1c1a3c2481a3a8a3f173a9ab5ade275292a6fa3/1a37ac87fdf69fb81f0d0145be306f3c.png",
+          false
         ],
         [
           "0x92e918ea7aa872F91BF7EC9BcD248a5920C9f3CB",
           "DBEAT",
           18,
-          "1135666732662.98"
+          "1135666732662.98",
+          "https://raw.githubusercontent.com/superfluid-finance/assets/master/public/tokens/dbeat/icon.svg",
+          false
         ],
         [
           "0x2e12D38C6aa87cb68cE96C044b9A68dD98233Ceb",
           "DBEATx",
           18,
-          "1135666732662.98"
+          "1135666732662.98",
+          "https://raw.githubusercontent.com/superfluid-finance/assets/master/public/tokens/dbeat/icon.svg",
+          false
         ],
         [
           "0x1581929770bE3275a82068c1135b6dD59c5334Ed",
           "ALM",
           18,
-          "0.002261308512173946"
+          "0.002261308512173946",
+          "https://static.debank.com/image/matic_token/logo_url/0x1581929770be3275a82068c1135b6dd59c5334ed/7ad6b35cbdb5401c6bc0db3eb36edf2e.png",
+          false
         ],
         [
           "0x954AEC663b893D81b4C8dbE1a0544491fD63FA77",
           "EDOM",
           18,
-          "75493.0517833887"
+          "75493.0517833887",
+          null,
+          false
         ],
         [
           "0x12919A30447fF59947740507362A05B8BEA9A6e7",
           "SDARK",
           18,
-          "29780078.4715305"
+          "29780078.4715305",
+          null,
+          false
         ],
         [
           "0x176f5AB638cf4Ff3B6239Ba609C3fadAA46ef5B0",
           "mFARM",
           18,
-          "28887.6726614643"
+          "28887.6726614643",
+          "https://static.debank.com/image/matic_token/logo_url/0x176f5ab638cf4ff3b6239ba609c3fadaa46ef5b0/c7602852a1c43b87601c6a11cc8b43e5.png",
+          false
         ],
         [
           "0x43E4B063F96c33F0433863A927F5bad34bb4B03d",
           "EWTB",
           18,
-          "6893139666.857906"
+          "6893139666.857906",
+          null,
+          false
         ],
         [
           "0x25eFae7B0b2866CaFB14E8eaD333a42eeb2A0b80",
           "GEMS",
           6,
-          "857000.859200518"
+          "857000.859200518",
+          null,
+          false
         ],
         [
           "0x36dE20a30386b5Bf99762e4B7e62f6A28DceA3Ae",
           "BAD",
           18,
-          "25059.6348774616"
+          "25059.6348774616",
+          null,
+          false
         ],
         [
           "0x19782D3Dc4701cEeeDcD90f0993f0A9126ed89d0",
           "REN",
           18,
-          "3313030.11980017"
-        ],
-        [
-          "0x0335DeFC8A1977b99488e0b5f5c6bc3D44fAcdD4",
-          "ATTR",
-          18,
-          "276303149.31466"
+          "3313030.11980017",
+          null,
+          false
         ]
       ],
       "480": [
@@ -997,103 +1267,137 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2244.96"
+          "2228",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1",
           "USDC",
           6,
-          "1.0194619391"
+          "1.0088855323",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2244.96"
+          "2229.91",
+          "https://static.debank.com/image/world_token/logo_url/world/48bfb74adddd170e936578aec422836d.png",
+          true
         ],
         [
           "0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3",
           "WBTC",
           8,
-          "76092.8682710682"
+          "75923.0234069623",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+          true
         ],
         [
           "0x2cFc85d8E48F8EAB294be644d9E25C3030863003",
           "WLD",
           18,
-          "0.3478754447"
+          "0.3465516738",
+          "https://static.debank.com/image/eth_token/logo_url/0x163f8c2467924be0ae7b5347228cabf260318753/30ac094d49a4b6e7561810c16ddc8c69.png",
+          true
         ],
         [
           "0x0DC4F92879B7670e5f4e4e6e3c801D229129D90D",
           "wARS",
           18,
-          "0.0005771264824"
+          "0.0005803427815",
+          null,
+          false
         ],
         [
           "0xFdCa15bd55F350a36E63C47661914d80411d2C22",
           "uTAO",
           18,
-          "74.5559739218"
+          "74.5559739218",
+          null,
+          false
         ],
         [
           "0x43eDD7f3831b08FE70B7555ddD373C8bF65a9050",
           "frxETH",
           18,
-          "2239.6527513074357"
+          "2225.1638909575763",
+          "https://static.debank.com/image/ink_token/logo_url/0x43edd7f3831b08fe70b7555ddd373c8bf65a9050/4313f25f6c5196e8fce2c80fa34c73d0.png",
+          false
         ],
         [
           "0x80Eede496655FB9047dd39d9f418d5483ED600df",
           "frxUSD",
           18,
-          "1.00005301"
+          "1.00005301",
+          "https://static.debank.com/image/world_token/logo_url/0x80eede496655fb9047dd39d9f418d5483ed600df/7610ebe75cb08ff21ee6dfb7e1592e25.png",
+          false
         ],
         [
           "0x3Ec3849C33291a9eF4c5dB86De593EB4A37fDe45",
           "sfrxETH",
           18,
-          "2628.4678748103465"
+          "2611.4895446337696",
+          "https://static.debank.com/image/world_token/logo_url/0x3ec3849c33291a9ef4c5db86de593eb4a37fde45/b0802881acff20fd906a2e189a4ea882.png",
+          false
         ],
         [
           "0x5Bff88cA1442c2496f7E475E9e7786383Bc070c0",
           "sfrxUSD",
           18,
-          "1.2191221571970388"
+          "1.2191437427869956",
+          "https://static.debank.com/image/world_token/logo_url/0x5bff88ca1442c2496f7e475e9e7786383bc070c0/afe8a7ab1731c4322c252e0e38d034f5.png",
+          false
         ],
         [
           "0x119Dd7dAFf816f29D7eE47596ae5E4bdC4299165",
           "nOPAL",
           6,
-          "1.13"
+          "1.13",
+          null,
+          false
         ],
         [
           "0xE72Fe64840F4EF80E3Ec73a1c749491b5c938CB9",
           "nTBILL",
           6,
-          "1.08"
+          "1.08",
+          null,
+          false
         ],
         [
           "0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db",
           "nALPHA",
           6,
-          "1.15"
+          "1.15",
+          null,
+          false
         ],
         [
           "0x11113Ff3a60C2450F4b22515cB760417259eE94B",
           "nBASIS",
           6,
-          "1.10"
+          "1.10",
+          null,
+          false
         ],
         [
           "0x90581eCa9469D8D7F5D3B60f4715027aDFCf7927",
           "FPI",
           18,
-          "1.142580741706081"
+          "1.1427023018593456",
+          "https://static.debank.com/image/world_token/logo_url/0x90581eca9469d8d7f5d3b60f4715027adfcf7927/f557a6a5913d141a0f1709d02ae5a362.png",
+          false
         ],
         [
           "0x64445f0aecC51E94aD52d8AC56b7190e764E561a",
           "WFRAX",
           18,
-          "0.24417691298702435"
+          "0.24256590821236704",
+          "https://static.debank.com/image/world_token/logo_url/0x64445f0aecc51e94ad52d8ac56b7190e764e561a/c9fc14504dda4d18f661628d56f73606.png",
+          false
         ]
       ],
       "8453": [
@@ -1101,181 +1405,241 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2237.41"
+          "2224.68",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
           "USDC",
           6,
-          "0.9977940142"
+          "0.9965669845",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
           "USDT",
           6,
-          "0.9992193057"
+          "0.9987298689",
+          "https://static.debank.com/image/coin/logo_url/usdt/23af7472292cb41dc39b3f1146ead0fe.png",
+          true
         ],
         [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2237.41"
+          "2224.68",
+          "https://static.debank.com/image/coin/logo_url/eth/d61441782d4a08a7479d54aea211679e.png",
+          true
         ],
         [
           "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "cbBTC",
           8,
-          "76076.4128641155"
+          "75626.7525549138",
+          "https://static.debank.com/image/base_token/logo_url/0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf/a4ae837a6ca2fc45f07a74898cc4ba45.png",
+          true
         ],
         [
           "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "WBTC",
           8,
-          "75690.3664737342"
+          "75690.3664737342",
+          "https://static.debank.com/image/base_token/logo_url/0x0555e30da8f98308edb960aa94c0db47230d2b9c/e95a41d0ae2465957140ef2db2c228ea.png",
+          true
         ],
         [
           "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
           "AERO",
           18,
-          "0.5904271986"
+          "0.5913275554",
+          "https://static.debank.com/image/base_token/logo_url/0x940181a94a35a4569e4529a3cdfb74e38fd98631/bb455b8557be5d08ad67f4314f899e15.png",
+          true
         ],
         [
           "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
           "USDbC",
           6,
-          "1.0001244239"
+          "1.0001148427",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
           "DAI",
           18,
-          "0.995298987"
+          "0.9971240411",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+          true
         ],
         [
           "0x820C137fa70C8691f0e44Dc420a5e53c168921Dc",
           "USDS",
           18,
-          "0.9956311343"
+          "0.9984301324",
+          "https://static.debank.com/image/eth_token/logo_url/0xdc035d45d973e3ec169d2276ddab16f1e407384f/78fbc2e73e33fa80fcecfaafa2074887.png",
+          true
         ],
         [
           "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
           "USDe",
           18,
-          "0.9957427822"
+          "1.0015248905",
+          "https://static.debank.com/image/eth_token/logo_url/0x4c9edd5852cd905f086c759e8383e09bff1e68b3/1228d6e73f70f37ec1f6fe02a3bbe6ff.png",
+          true
         ],
         [
           "0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42",
           "EURC",
           6,
-          "1.1200501076"
+          "1.121285783",
+          "https://static.debank.com/image/base_token/logo_url/0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42/d780f677e5a8c6a28cca43f5a091e8a7.png",
+          true
         ],
         [
           "0x88Fb150BDc53A65fe94Dea0c9BA0a6dAf8C6e196",
           "LINK",
           18,
-          "10.8836300753"
+          "10.7344931834",
+          "https://static.debank.com/image/eth_token/logo_url/0x514910771af9ca656af840dff83e8264ecf986ca/69425617db0ef93a7c21c4f9b81c7ca5.png",
+          true
         ],
         [
           "0x63706e401c06ac8513145b7687A14804d17f814b",
           "AAVE",
           18,
-          "129.8188908007"
+          "130.0803400305",
+          "https://static.debank.com/image/base_token/logo_url/0x63706e401c06ac8513145b7687a14804d17f814b/9ac673ff449bb7b8fbc8b8119caf4a1f.png",
+          true
         ],
         [
           "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
           "wstETH",
           18,
-          "2791.6896437374"
+          "2780.8705794384",
+          "https://static.debank.com/image/canto_token/logo_url/0xc71aaf8e486e3f33841bb56ca3fd2ac3fa8d29a8/ba9510019b6fe342763515973115cc3c.png",
+          true
         ],
         [
           "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A",
           "weETH",
           18,
-          "2482.1268425967"
+          "2467.3390275633",
+          "https://static.debank.com/image/eth_token/logo_url/0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee/6c02f6b3bcd264d433c3676100ad8da6.png",
+          true
         ],
         [
           "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
           "cbETH",
           18,
-          "2557.039341239"
+          "2545.9736099742",
+          "https://static.debank.com/image/eth_token/logo_url/0xbe9895146f7af43049ca1c1ae358b0541ea49704/1f287272a7d8439af0f6b281ebf0143e.png",
+          true
         ],
         [
           "0xB6fe221Fe9EeF5aBa221c348bA20A1Bf5e73624c",
           "rETH",
           18,
-          "2628.2957167545"
+          "2621.7780694911",
+          "https://static.debank.com/image/arb_token/logo_url/0xec70dcb4a1efa46b8f2d97c310c9c4790ba5ffa8/6c8aa3f550d300ce84e06f95c496af69.png",
+          true
         ],
         [
           "0x7614F61feD79e0FF47Aa0831D18d046Cb3ee0cE6",
           "NEST",
           18,
-          "79356565462.474"
+          "79356565462.474",
+          "https://static.debank.com/image/base_token/logo_url/0x7614f61fed79e0ff47aa0831d18d046cb3ee0ce6/f1fae09f0f38090447d801ab53237e2a.png",
+          false
         ],
         [
           "0x4d5CB527bD9d87c727B6DBE01114ADc086e646A2",
           "RX",
           18,
-          "3307912.16351"
+          "3307912.16351",
+          "https://static.debank.com/image/base_token/logo_url/0x4d5cb527bd9d87c727b6dbe01114adc086e646a2/3f1e50a4f3cfd33263ece06dbdd835f0.png",
+          false
         ],
         [
           "0x2f85d372Bef829e866f8917378Ff20A88E7FC403",
           "$COOL",
           10,
-          "6509.6431167879"
+          "6509.6431167879",
+          "https://strapi.jumper.exchange/uploads/coolcoin_b7e2f7f32f.webp",
+          false
         ],
         [
           "0x392B3CCf36C8adB8094F45573346B457414cD752",
           "KPK_USDC_Yield",
           18,
-          "1.01"
+          "1.01",
+          null,
+          false
         ],
         [
           "0x46fd5cfB4c12D87acD3a13e92BAa53240C661D93",
           "ETHx",
           18,
-          "2240.2680048513"
+          "2227.5500272791",
+          null,
+          false
         ],
         [
           "0xcf3D55c10DB69f28fD1A75Bd73f3D8A2d9c595ad",
           "aBascbETH",
           18,
-          "2558.97"
+          "2563.77",
+          "https://static.debank.com/image/base_token/logo_url/0xcf3d55c10db69f28fd1a75bd73f3d8a2d9c595ad/c2db9a93181dde6a4b9baadfc63620ee.png",
+          false
         ],
         [
           "0xD04383398dD2426297da660F9CCA3d439AF9ce1b",
           "USDCx",
           18,
-          "0.9211046117"
+          "0.9211046117",
+          "https://tokenlist.superfluid.org/icons/usdc.svg",
+          false
         ],
         [
           "0x437cc33344a0B27A429f795ff6B469C72698B291",
           "wM",
           6,
-          "0.9985865909"
-        ],
-        [
-          "0xeBDB0942cE16386Ab90718C7BD10C91CDb66b14d",
-          "PYUSDx",
-          6,
-          "0.9985865909"
-        ],
-        [
-          "0xE327833c6D4C35A50F47be9474D995d7CD2F6Cd7",
-          "CUSD",
-          6,
-          "0.9985865909"
+          "0.9985865909",
+          null,
+          false
         ],
         [
           "0x655bB806972f41b93085601119a876a29D799CD5",
           "mrUSD",
           6,
-          "0.9983056389"
+          "0.9965669845",
+          null,
+          false
         ],
         [
           "0x2d8d3aADeD3641C4358a8334D72086C908B515fb",
           "pUSD",
           6,
-          "0.9983056389"
+          "0.9965669845",
+          null,
+          false
+        ],
+        [
+          "0xeBDB0942cE16386Ab90718C7BD10C91CDb66b14d",
+          "PYUSDx",
+          6,
+          "0.9965669845",
+          null,
+          false
+        ],
+        [
+          "0xE327833c6D4C35A50F47be9474D995d7CD2F6Cd7",
+          "CUSD",
+          6,
+          "0.9965669845",
+          null,
+          false
         ]
       ],
       "42161": [
@@ -1283,181 +1647,241 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2237.99"
+          "2224.52",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
           "USDT0",
           6,
-          "0.998206963"
+          "0.9980789018",
+          "https://static.debank.com/image/ink_token/logo_url/0x0200c29006150606b650577bbe7b6248f58470c1/8bba37fddc2774e06a94b8952e3e3ad7.png",
+          true
         ],
         [
           "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
           "USDC",
           6,
-          "0.9999624021"
+          "1.0005859301",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
           "WETH",
           18,
-          "2237.99"
+          "2224.52",
+          "https://static.debank.com/image/era_token/logo_url/0x5aea5775959fbc2557cc8789bc1bf90a239d9a91/61844453e63cf81301f845d7864236f6.png",
+          true
         ],
         [
           "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
           "WBTC",
           8,
-          "76053.7058593045"
+          "75637.9802201482",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+          true
         ],
         [
           "0x912CE59144191C1204E64559FE8253a0e49E6548",
           "ARB",
           18,
-          "0.166024747668223"
+          "0.166075388742991",
+          "https://static.debank.com/image/coin/logo_url/arbitrum/854f629937ce94bebeb2cd38fb336de7.png",
+          true
         ],
         [
           "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
           "USDC.e",
           6,
-          "1.0005620681"
+          "0.998933525",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
           "DAI",
           18,
-          "0.9996509139"
+          "1.0015739541",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+          true
         ],
         [
           "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "cbBTC",
           8,
-          "76111.2391951979"
+          "75665.2341404141",
+          "https://static.debank.com/image/base_token/logo_url/0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf/a4ae837a6ca2fc45f07a74898cc4ba45.png",
+          true
         ],
         [
           "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
           "USDe",
           18,
-          "0.9979127475"
+          "0.9928357642",
+          "https://static.debank.com/image/eth_token/logo_url/0x4c9edd5852cd905f086c759e8383e09bff1e68b3/734064e545eabfc501b9d0e752644b7d.png",
+          true
         ],
         [
           "0x46850aD61C2B7d64d08c9C754F45254596696984",
           "PYUSD",
           6,
-          "1.0004714797"
+          "1.0003359196",
+          "https://static.debank.com/image/arb_token/logo_url/0x46850ad61c2b7d64d08c9c754f45254596696984/4f85a1a76650fb9478b6778cd624b453.png",
+          true
         ],
         [
           "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
           "LINK",
           18,
-          "10.8233981193"
+          "10.7096647104",
+          "https://static.debank.com/image/arb_token/logo_url/0xf97f4df75117a78c1a5a0dbb814af92458539fb4/69425617db0ef93a7c21c4f9b81c7ca5.png",
+          true
         ],
         [
           "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
           "UNI",
           18,
-          "6.9800521861"
+          "6.8724819189",
+          "https://static.debank.com/image/arb_token/logo_url/0xfa7f8980b0f1e64a2062791cc3b0871572f1f7f0/fcee0c46fc9864f48ce6a40ed1cdd135.png",
+          true
         ],
         [
           "0xba5DdD1f9d7F570dc94a51479a000E3BCE967196",
           "AAVE",
           18,
-          "130.2498719819"
+          "129.9538150652",
+          "https://static.debank.com/image/arb_token/logo_url/0xba5ddd1f9d7f570dc94a51479a000e3bce967196/7baf403c819f679dc1c6571d9d978f21.png",
+          true
         ],
         [
           "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
           "GMX",
           18,
-          "8.3581638449"
+          "8.276423919",
+          "https://static.debank.com/image/arb_token/logo_url/0xfc5a1a6eb076a2c7ad06ed22c90d7e710e35ad0a/b4e362278f64a738b878e5393fa29837.png",
+          true
         ],
         [
           "0x5979D7b546E38E414F7E9822514be443A4800529",
           "wstETH",
           18,
-          "2792.9061058379"
+          "2782.8295110939",
+          "https://static.debank.com/image/arb_token/logo_url/0x5979d7b546e38e414f7e9822514be443a4800529/7e931af8cb34b6f5671ca2eb1b847849.png",
+          true
         ],
         [
           "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
           "weETH",
           18,
-          "2471.4559613421"
+          "2468.2077089789",
+          "https://static.debank.com/image/eth_token/logo_url/0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee/bbe132e0827e0b26a725a6c81de284b5.png",
+          true
         ],
         [
           "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8",
           "rETH",
           18,
-          "2625.2060836708"
+          "2625.2060836708",
+          "https://static.debank.com/image/arb_token/logo_url/0xec70dcb4a1efa46b8f2d97c310c9c4790ba5ffa8/6c8aa3f550d300ce84e06f95c496af69.png",
+          true
         ],
         [
           "0x1e08Ae9bf59dfc14a28d2f9e61CE4Be007881617",
           "XOR",
           18,
-          "2.4911398937"
+          "2.4911398937",
+          null,
+          false
         ],
         [
           "0x4135582CfcddDa297E4649574776B9d3Ad9c329e",
           "RAIL",
           18,
-          "441345117.941895"
+          "441345117.941895",
+          null,
+          false
         ],
         [
           "0xe6C8d111337D0052b9D88BF5d7D55B7f8385ACd3",
           "ETHx",
           18,
-          "2233.05"
+          "2230.46",
+          null,
+          false
         ],
         [
           "0x688c202577670Fa1aE186C433965D178F26347f9",
           "sUSDS",
           18,
-          "192333070600553000"
+          "192333070600553000",
+          null,
+          false
         ],
         [
           "0x8CF7e3aa6fAf6Ae180E5eC3f0fb95081C2086eBe",
           "SX",
           18,
-          "270.7762122221"
+          "270.7762122221",
+          "https://static.debank.com/image/arb_token/logo_url/0x8cf7e3aa6faf6ae180e5ec3f0fb95081c2086ebe/418f1ac3bf6a52e750017dd31b3071aa.png",
+          false
         ],
         [
           "0xFc55F2854e74b4f42D01a6d3DAAC4c52D9dfdcFf",
           "USDCx",
           18,
-          "1.001401962747847"
-        ],
-        [
-          "0x98CC41ED4fC4a5a8c0a4526260da9F7ce1322e1A",
-          "USDxyz",
-          6,
-          "1.0028716008"
+          "1.001401962747847",
+          null,
+          false
         ],
         [
           "0xE327833c6D4C35A50F47be9474D995d7CD2F6Cd7",
           "CUSD",
           6,
-          "1.0005106309"
+          "1.0024572712",
+          null,
+          false
         ],
         [
           "0xeBDB0942cE16386Ab90718C7BD10C91CDb66b14d",
           "PYUSDx",
           6,
-          "0.9985397138"
+          "1.0002730053",
+          null,
+          false
+        ],
+        [
+          "0x98CC41ED4fC4a5a8c0a4526260da9F7ce1322e1A",
+          "USDxyz",
+          6,
+          "0.9995424909",
+          null,
+          false
         ],
         [
           "0x6491c05A82219b8D1479057361ff1654749b876b",
           "USDS",
           18,
-          "0.910037751"
+          "0.910037751",
+          "https://static.debank.com/image/eth_token/logo_url/0xdc035d45d973e3ec169d2276ddab16f1e407384f/78fbc2e73e33fa80fcecfaafa2074887.png",
+          false
         ],
         [
           "0x11F98c7E42A367DaB4f200d2fdc460fb445CE9a8",
           "SPARTA",
           18,
-          "214.8969993591"
+          "214.8969993591",
+          "https://static.debank.com/image/arb_token/logo_url/0x11f98c7e42a367dab4f200d2fdc460fb445ce9a8/e85facc1541d33cd12f37fe09ef03531.png",
+          false
         ],
         [
           "0x95d486aF638A6972F9C0bE2c29d281e404aCB08a",
           "DEAI",
           18,
-          "2249.463157971"
+          "2249.463157971",
+          null,
+          false
         ]
       ],
       "42220": [
@@ -1465,121 +1889,161 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x471EcE3750Da237f93B8E339c536989b8978a438",
           "CELO",
           18,
-          "0.067865"
+          "0.068004",
+          null,
+          true
         ],
         [
           "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
           "USD₮",
           6,
-          "0.9966381023"
+          "0.9952383563",
+          "https://static.debank.com/image/coin/logo_url/usdt/23af7472292cb41dc39b3f1146ead0fe.png",
+          true
         ],
         [
           "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
           "USDC",
           6,
-          "0.9986772865"
+          "0.9959149941",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x765DE816845861e75A25fCA122bb6898B8B1282a",
           "USDm",
           18,
-          "1.0044864896"
+          "0.9957527741",
+          "https://reserve.mento.org/tokens/USDm.svg",
+          true
         ],
         [
           "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
           "EURm",
           18,
-          "1.1206441019"
+          "1.1128263458",
+          "https://reserve.mento.org/tokens/EURm.svg",
+          true
         ],
         [
           "0xD221812de1BD094f35587EE8E174B07B6167D9Af",
           "WETH",
           18,
-          "2244.5071192596"
+          "2230.3427636482",
+          "https://static.debank.com/image/celo_token/logo_url/0xd221812de1bd094f35587ee8e174b07b6167d9af/1430f9beebf5246bfbe8193886e0d302.png",
+          true
         ],
         [
           "0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787",
           "BRLm",
           18,
-          "0.170804038"
+          "0.1862601288",
+          "https://reserve.mento.org/tokens/BRLm.svg",
+          true
         ],
         [
           "0x8A567e2aE79CA692Bd748aB832081C45de4041eA",
           "COPm",
           18,
-          "0.0003092975733"
+          "0.0003092975733",
+          "https://reserve.mento.org/tokens/COPm.svg",
+          true
         ],
         [
           "0x788BA01f8E2b87c08B142DB46F82094e0bdCad4F",
           "xABR",
           18,
-          "23060381966419.4"
+          "23060381966419.4",
+          null,
+          false
         ],
         [
           "0xd07294e6E917e07dfDcee882dd1e2565085C2ae0",
           "LINK",
           18,
-          "14.9050483709"
+          "14.9050483709",
+          "https://static.debank.com/image/celo_token/logo_url/0xd07294e6e917e07dfdcee882dd1e2565085c2ae0/c30bfeeea5f4889668905d2911767bca.png",
+          false
         ],
         [
           "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
           "XAUt0",
           6,
-          "4074.8236074211627"
+          "4029.5421967068573",
+          null,
+          false
         ],
         [
           "0xD301a90cb3C7a9253305af30D92dd2C1FD1e704E",
           "BONE",
           18,
-          "0.05086189492"
+          "0.05075987049",
+          null,
+          false
         ],
         [
           "0x9995cc8F20Db5896943Afc8eE0ba463259c931ed",
           "ETHIX",
           18,
-          "0.02628273115"
+          "0.02632590747",
+          "https://static.debank.com/image/celo_token/logo_url/0x9995cc8f20db5896943afc8ee0ba463259c931ed/9aa0c8c8a184562384e2fb066d97762f.png",
+          false
         ],
         [
           "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
           "axlUSDC",
           6,
-          "1.0010002695"
+          "1.0010002695",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          false
         ],
         [
           "0xC16B81Af351BA9e64C1a069E3Ab18c244A1E3049",
           "EURA",
           18,
-          "0.4988612738"
+          "0.881607783",
+          "https://raw.githubusercontent.com/AngleProtocol/angle-token-list/main/src/assets/tokens/EURA.svg",
+          false
         ],
         [
           "0x918146359264C492BD6934071c6Bd31C854EDBc3",
           "mCUSD",
           18,
-          "0.9923921855"
+          "0.9880138835",
+          "https://static.debank.com/image/celo_token/logo_url/0x918146359264c492bd6934071c6bd31c854edbc3/7ed8826cb36d17b032528714ce908b20.png",
+          false
         ],
         [
           "0xd450dB3188b7Fbf52C670eee30372ba74B4c5857",
           "ABR0",
           18,
-          "0.026260370464394972"
+          "0.026259581446083022",
+          "https://static.debank.com/image/celo_token/logo_url/0xd450db3188b7fbf52c670eee30372ba74b4c5857/efbbe97d120380a602e77e97b64e41e7.png",
+          false
         ],
         [
           "0x0000206329b97DB379d5E1Bf586BbDB969C63274",
           "USDA",
           18,
-          "0.991655664858757"
+          "0.991655664858757",
+          "https://raw.githubusercontent.com/AngleProtocol/angle-token-list/main/src/assets/tokens/USDA.svg",
+          false
         ],
         [
           "0x7D00cd74FF385c955EA3d79e47BF06bD7386387D",
           "mCELO",
           18,
-          "0.07171911327"
+          "0.07171911327",
+          "https://static.debank.com/image/celo_token/logo_url/0x7d00cd74ff385c955ea3d79e47bf06bd7386387d/7ed8826cb36d17b032528714ce908b20.png",
+          false
         ],
         [
           "0xE273Ad7ee11dCfAA87383aD5977EE1504aC07568",
           "mCEUR",
           18,
-          "1.1232325462"
+          "1.1114561531",
+          "https://static.debank.com/image/celo_token/logo_url/0xe273ad7ee11dcfaa87383ad5977ee1504ac07568/7ed8826cb36d17b032528714ce908b20.png",
+          false
         ]
       ],
       "43114": [
@@ -1587,151 +2051,201 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x0000000000000000000000000000000000000000",
           "AVAX",
           18,
-          "8.3"
+          "8.26",
+          "https://static.debank.com/image/avax_token/logo_url/avax/0b9c84359c84d6bdd5bfda9c2d4c4a82.png",
+          true
         ],
         [
           "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
           "USDt",
           6,
-          "0.9989350601"
+          "1.0005209939",
+          "https://static.debank.com/image/eth_token/logo_url/0xdac17f958d2ee523a2206206994597c13d831ec7/464c0de678334b8fe87327e527bc476d.png",
+          true
         ],
         [
           "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
           "USDC",
           6,
-          "1.0028515739"
+          "0.9990370242",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
           "WAVAX",
           18,
-          "8.3"
+          "8.26",
+          "https://static.debank.com/image/avax_token/logo_url/0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7/753d82f0137617110f8dec56309b4065.png",
+          true
         ],
         [
           "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
           "BTC.b",
           8,
-          "76107.6059756234"
+          "75622.5796615277",
+          "https://static.debank.com/image/avax_token/logo_url/0x152b9d0fdc40c096757f570a51e494bd4b943e50/2411fb147c1cc4328edff5d204f09f80.png",
+          true
         ],
         [
           "0x50b7545627a5162F82A992c33b87aDc75187B218",
           "WBTC",
           8,
-          "75906.3341801634"
+          "75894.0147177019",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+          true
         ],
         [
           "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
           "WETH.e",
           18,
-          "2240.9706250956"
+          "2224.7851200705",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+          true
         ],
         [
           "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
           "USDC.e",
           6,
-          "0.9982761822"
+          "1.0003658907",
+          "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          true
         ],
         [
           "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
           "USDe",
           18,
-          "1.0008244329"
+          "0.9982775262",
+          "https://static.debank.com/image/avax_token/logo_url/0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34/1228d6e73f70f37ec1f6fe02a3bbe6ff.png",
+          true
         ],
         [
           "0xC891EB4cbdEFf6e073e859e987815Ed1505c2ACD",
           "EURC",
           6,
-          "1.120545304"
+          "1.120545304",
+          "https://static.debank.com/image/avax_token/logo_url/0xc891eb4cbdeff6e073e859e987815ed1505c2acd/790d0c3a6da87111b66255c0d57108fa.png",
+          true
         ],
         [
           "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
           "JOE",
           18,
-          "0.0269775791"
+          "0.02688077404",
+          "https://static.debank.com/image/avax_token/logo_url/0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd/25f094b523a2d6c51e084eeb8f60dd2f.png",
+          true
         ],
         [
           "0x62edc0692BD897D2295872a9FFCac5425011c661",
           "GMX",
           18,
-          "8.4492968412"
+          "8.4492968412",
+          "https://static.debank.com/image/avax_token/logo_url/0x62edc0692bd897d2295872a9ffcac5425011c661/b4e362278f64a738b878e5393fa29837.png",
+          true
         ],
         [
           "0xA3D68b74bF0528fdD07263c60d6488749044914b",
           "weETH",
           18,
-          "2924.6598281553"
+          "2924.6598281553",
+          null,
+          true
         ],
         [
           "0xAf2D365e668bAaFEdcFd256c0FBbe519e594E390",
           "MUXLP",
           18,
-          "0.05150577947"
+          "0.05150577947",
+          "https://static.debank.com/image/avax_token/logo_url/0xaf2d365e668baafedcfd256c0fbbe519e594e390/d536a770b1ed120d6952fba46d52aa05.png",
+          false
         ],
         [
           "0x3Bd2B1c7ED8D396dbb98DED3aEbb41350a5b2339",
           "UMA.e",
           18,
-          "18751.6989801607"
+          "18751.6989801607",
+          "https://static.debank.com/image/avax_token/logo_url/0x3bd2b1c7ed8d396dbb98ded3aebb41350a5b2339/cabffedd327aaea32dd7bcf155f9cbd6.png",
+          false
         ],
         [
           "0xc3048E19E76CB9a3Aa9d77D8C03c29Fc906e2437",
           "COMP.e",
           18,
-          "141620.30692882"
+          "141620.30692882",
+          "https://static.debank.com/image/avax_token/logo_url/0xc3048e19e76cb9a3aa9d77d8c03c29fc906e2437/dd174d3d7083fa027a433dc50edaf0bc.png",
+          false
         ],
         [
           "0xdf37ee57B2efD215A6a8329D6B8b72064F09BBD0",
           "USDtx",
           18,
-          "0.99847"
+          "0.99847",
+          "https://superfluid-finance.github.io/tokenlist/icons/usdt.png",
+          false
         ],
         [
           "0x288398F314D472B82C44855F3f6fF20b633c2A97",
           "USDCx",
           18,
-          "1.001401962747847"
+          "1.001401962747847",
+          "https://superfluid-finance.github.io/tokenlist/icons/usdc.svg",
+          false
         ],
         [
           "0x5947BB275c521040051D82396192181b413227A3",
           "LINK.e",
           18,
-          "10.8453953826"
+          "10.8453953826",
+          "https://static.debank.com/image/avax_token/logo_url/0x5947bb275c521040051d82396192181b413227a3/69425617db0ef93a7c21c4f9b81c7ca5.png",
+          false
         ],
         [
           "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
           "aAvaUSDC",
           6,
-          "1.00"
+          "1.00",
+          "https://static.debank.com/image/avax_token/logo_url/0x625e7708f30ca75bfd92586e17077590c60eb4cd/edbff4857cf186c17bfdac67f2b0e6b1.png",
+          false
         ],
         [
           "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
           "aAvaWETH",
           18,
-          "2239.40"
+          "2239.40",
+          "https://static.debank.com/image/avax_token/logo_url/0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8/a27c1def8d782e2f73f2cad6b752406f.png",
+          false
         ],
         [
           "0x8eBAf22B6F053dFFeaf46f4Dd9eFA95D89ba8580",
           "UNI.e",
           18,
-          "6.9545019846"
+          "6.9545019846",
+          "https://static.debank.com/image/avax_token/logo_url/0x8ebaf22b6f053dffeaf46f4dd9efa95d89ba8580/fcee0c46fc9864f48ce6a40ed1cdd135.png",
+          false
         ],
         [
           "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
           "aAvaUSDT",
           6,
-          "1.00"
+          "1.00",
+          "https://static.debank.com/image/avax_token/logo_url/0x6ab707aca953edaefbc4fd23ba73294241490620/057271a3c3a18b2776a0bf6baf0cfe0b.png",
+          false
         ],
         [
           "0x30974f73A4ac9E606Ed80da928e454977ac486D2",
           "oXAUT",
           6,
-          "4025.5084345548"
+          "4025.5084345548",
+          null,
+          false
         ],
         [
           "0x58538e6A46E07434d7E7375Bc268D3cb839C0133",
           "ENA",
           18,
-          "0.2342535721"
+          "0.2342535721",
+          "https://static.debank.com/image/avax_token/logo_url/0x58538e6a46e07434d7e7375bc268d3cb839c0133/20d567bc301b43d0d2131731f7ac4736.png",
+          false
         ]
       ]
     }
@@ -1834,7 +2348,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "PEN",
         "name": "Soles",
         "sell": [
-          "4.251187",
+          "4.25094",
           "5"
         ],
         "methods": [
@@ -1865,7 +2379,9 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x25f5D414F85b7f4668ADe4E557ef234023208771",
           "USDT",
           18,
-          null
+          null,
+          null,
+          true
         ]
       ]
     }
