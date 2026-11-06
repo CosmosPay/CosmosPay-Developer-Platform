@@ -12,6 +12,13 @@
    10,000 URLs, and prints every answer (200 and 202 are taken; 403 key not found, 422 URLs not
    on the host, 429 too many requests).
 
+   FROM THE SERVER ITSELF. Behind Cloudflare, the VPS's own requests for the sitemaps answered 403
+   (2026-11-05: the release's submit sent nothing, while the same requests from a workstation got
+   200). `--sitemaps-from http://127.0.0.1:4321` (or INDEXNOW_SITEMAPS_FROM) reads every sitemap
+   from the app on that origin instead, the same path with the sitemap's host as the Host header,
+   as the deploy's health checks do. The key file is still checked at the public address, as the
+   engines will read it.
+
    DRY RUN BY DEFAULT. Without --submit it only reads (sitemaps and key files) and prints what it
    would send. It refuses to run without a valid INDEXNOW_KEY, and --submit refuses a domain whose
    key file does not answer with the key (the engines would answer 403) or whose origin is not a
@@ -23,9 +30,12 @@
      npm run indexnow -- --only payments,dev  # some domains only (site, payments, dev)
      npm run indexnow -- --list               # print every URL too
      npm run indexnow -- --submit             # send
+     npm run indexnow -- --submit --sitemaps-from http://127.0.0.1:4321   # on the server
 
    The parsing, filtering and batching are pure, in src/lib/seo/indexnow.ts
    (tests/unit/seoIndexNow.test.ts). */
+import http from 'node:http';
+import https from 'node:https';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import dotenv from 'dotenv';
@@ -49,12 +59,14 @@ import { normalizeOrigin } from '@/lib/urls';
 const ROOT = resolve(import.meta.dirname, '..');
 dotenv.config({ path: resolve(ROOT, '.env'), quiet: true });
 
-const USAGE = `Usage: npm run indexnow -- [--submit] [--since <date>] [--only site,payments,dev] [--list]
+const USAGE = `Usage: npm run indexnow -- [--submit] [--since <date>] [--only site,payments,dev] [--list] [--sitemaps-from <origin>]
 
-  --submit        send the URLs to IndexNow (without it: a dry run that only reads)
-  --since <date>  only URLs whose sitemap lastmod is on or after <date> (2026-10-31 or ISO 8601)
-  --only <areas>  only these domains: site (company), payments (gateway), dev (platform docs)
-  --list          print every URL that would be sent`;
+  --submit                  send the URLs to IndexNow (without it: a dry run that only reads)
+  --since <date>            only URLs whose sitemap lastmod is on or after <date> (2026-10-31 or ISO 8601)
+  --only <areas>            only these domains: site (company), payments (gateway), dev (platform docs)
+  --list                    print every URL that would be sent
+  --sitemaps-from <origin>  read the sitemaps from the app at this origin (http://127.0.0.1:4321 on the
+                            server), each with its domain as the Host header; also INDEXNOW_SITEMAPS_FROM`;
 
 const TIMEOUT_MS = 30_000;
 const USER_AGENT = 'CosmosPay-IndexNow (+https://dev.cosmospay.lat)';
@@ -67,6 +79,7 @@ try {
       since: { type: 'string' },
       only: { type: 'string' },
       list: { type: 'boolean', default: false },
+      'sitemaps-from': { type: 'string' },
       help: { type: 'boolean', short: 'h', default: false },
     },
   }).values;
@@ -119,11 +132,58 @@ if (args.only !== undefined) {
 const chosen = DOMAINS.filter((d) => !only || only.has(d.area));
 const domains = chosen.filter((d, i) => chosen.findIndex((o) => o.origin === d.origin) === i);
 
+/* Where the sitemaps are read from: the public origins, or the app itself (`--sitemaps-from`). */
+const sitemapsFromRaw = args['sitemaps-from'] ?? process.env.INDEXNOW_SITEMAPS_FROM ?? '';
+let sitemapsFrom = null;
+if (sitemapsFromRaw) {
+  try {
+    const u = new URL(sitemapsFromRaw);
+    if (!/^https?:$/.test(u.protocol) || u.pathname !== '/' || u.search || u.hash) throw new Error('not an origin');
+    sitemapsFrom = u;
+  } catch {
+    console.error(`--sitemaps-from takes an http(s) origin such as http://127.0.0.1:4321, not "${sitemapsFromRaw}".`);
+    process.exit(2);
+  }
+}
+
 /** `n` and the word, plural unless n is 1. */
 const count = (n, word) => `${n} ${word}${n === 1 ? '' : word.endsWith('h') ? 'es' : 's'}`;
 
 async function get(url, init = {}) {
   return fetch(url, { ...init, headers: { 'User-Agent': USER_AGENT, ...init.headers }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+}
+
+/**
+ * A sitemap read from the app at `sitemapsFrom`: the same path and query, the sitemap's host as
+ * the Host header (fetch drops a Host header, so node:http). Answers what `get` does: status,
+ * headers.get(), text().
+ */
+function getFromApp(url, headers) {
+  const target = new URL(url);
+  const lib = sitemapsFrom.protocol === 'https:' ? https : http;
+  return new Promise((resolveRes, reject) => {
+    const req = lib.request(
+      {
+        host: sitemapsFrom.hostname,
+        port: sitemapsFrom.port || undefined,
+        path: `${target.pathname}${target.search}`,
+        method: 'GET',
+        headers: { ...headers, 'User-Agent': USER_AGENT, Host: target.host, 'X-Forwarded-Proto': target.protocol.replace(':', '') },
+        timeout: TIMEOUT_MS,
+      },
+      (res) => {
+        const chunks = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8');
+          resolveRes({ status: res.statusCode, headers: { get: (n) => res.headers[n.toLowerCase()] ?? null }, text: async () => body });
+        });
+      },
+    );
+    req.on('timeout', () => req.destroy(new Error(`no answer in ${TIMEOUT_MS / 1000} s`)));
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 /**
@@ -140,7 +200,8 @@ async function readSitemaps(origin) {
     seen.add(url);
     let res;
     try {
-      res = await get(url, { headers: { Accept: 'application/xml, text/xml;q=0.9, */*;q=0.1' } });
+      const accept = { Accept: 'application/xml, text/xml;q=0.9, */*;q=0.1' };
+      res = sitemapsFrom ? await getFromApp(url, accept) : await get(url, { headers: accept });
     } catch (error) {
       errors.push(`${url}: ${error.message}`);
       return;
@@ -212,7 +273,8 @@ async function submit(origin, urls) {
 
 console.log(
   `IndexNow ${args.submit ? 'SUBMIT' : 'dry run (nothing is sent; add --submit to send)'}\n` +
-    `key ${key}, ${since === null ? 'every URL in the sitemaps' : `URLs whose lastmod is on or after ${new Date(since).toISOString()}`}`,
+    `key ${key}, ${since === null ? 'every URL in the sitemaps' : `URLs whose lastmod is on or after ${new Date(since).toISOString()}`}` +
+      (sitemapsFrom ? `, sitemaps read from the app at ${sitemapsFrom.origin}` : ''),
 );
 
 let failed = false;

@@ -290,6 +290,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   one file. `INDEXNOW_KEY` is public by design; `access: 'secret'` only makes it a runtime read.
   The script refuses to run without it, and `--submit` skips a domain whose key file does not
   answer with the key (IndexNow would answer 403) or whose origin is not public https.
+  **On the VPS, read the sitemaps from the app itself**: `--sitemaps-from http://127.0.0.1:4321`
+  (or `INDEXNOW_SITEMAPS_FROM`) fetches each sitemap there with its domain as the Host header.
+  Through Cloudflare the server's own requests for the sitemaps answered 403 (2026-11-05: that
+  release's submit sent nothing, while a workstation got 200); the key file is still checked at
+  the public address, as the engines read it.
 - **A site or gateway page has one address per language**: asked with a trailing slash, a GET is
   a 301 to it without (`routeRequest`), and a `?lang=` the pages do not take as written (`ES`,
   `pt-BR`, `xx`, twice) is a 301 to the language it names, or to the bare path
@@ -1953,7 +1958,8 @@ consumer headers.
   `INDEXNOW_KEY` in the production `.env` and restart so the process reloads it (it is read at
   runtime, no rebuild: `pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat`;
   check `https://<each domain>/<key>.txt` answers the key). Then, after every deploy that
-  changes indexable pages, run `npm run indexnow` (dry run) and `npm run indexnow -- --submit`.
+  changes indexable pages, run `npm run indexnow` (dry run) and `npm run indexnow -- --submit`
+  (on the VPS with `--sitemaps-from http://127.0.0.1:4321`).
 - **Deploy with `npm ci && npm run build`, never `npm install`.** Dependencies are external to
   `dist/`, so a caret that resolves a new minor against an old build only fails when the server
   boots (`does not provide an export named …`, PM2 restart-looping). `npm run test:smoke` is
