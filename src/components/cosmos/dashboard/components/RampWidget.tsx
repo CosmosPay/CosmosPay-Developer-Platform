@@ -30,7 +30,7 @@ import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 
 export type RampSide = "buy" | "sell";
-export interface RampToken { chainId: number; address: string; symbol: string; decimals: number; priceUsd?: string | null }
+export interface RampToken { chainId: number; address: string; symbol: string; decimals: number; priceUsd?: string | null; logoUrl?: string | null; main?: boolean }
 export interface RampMethod { id: string; name: string }
 export interface RampCurrency { id: string; name: string; price: string; minAmount: string; paymentMethods: RampMethod[] }
 export interface RampNetwork { chainId: number; name: string; tokenCount: number }
@@ -106,9 +106,11 @@ export function CurrencyMark({ id, size = 28 }: { id: string; size?: number }) {
   );
 }
 
-/** A token's mark with its network's badge. */
-export const RampTokenMark = ({ token, size = 28, networks }: { token: Pick<RampToken, "symbol" | "chainId">; size?: number; networks?: RampNetwork[] }) => (
-  <TokenMark symbol={token.symbol} chain={rampChainMark(token.chainId)} chainName={rampChainName(token.chainId, networks)} size={size} />
+/** A token's mark with its network's badge: our own artwork for a network's main asset (`main`,
+    by address; a list's copy of a known symbol never wears it), else the logo the marketplace's
+    list names (`logoUrl`), else its monogram. */
+export const RampTokenMark = ({ token, size = 28, networks }: { token: Pick<RampToken, "symbol" | "chainId" | "logoUrl" | "main">; size?: number; networks?: RampNetwork[] }) => (
+  <TokenMark symbol={token.symbol} chain={rampChainMark(token.chainId)} chainName={rampChainName(token.chainId, networks)} size={size} fallbackSrc={token.logoUrl ?? null} ownArt={token.main !== false} />
 );
 
 export function RampWidget({ side, market, env, orgId, onCreated }: {
@@ -150,7 +152,7 @@ export function RampWidget({ side, market, env, orgId, onCreated }: {
     rampApi(side).get("p2p/tokens", env, orgId, { chainId: d.chainId, q: d.address, take: 1 })
       .then((page) => {
         const hit = Array.isArray(page?.data) ? page.data[0] : null;
-        if (alive && hit) setToken((tk) => (tk && tk.chainId === hit.chainId && tk.address.toLowerCase() === hit.address.toLowerCase() ? { ...tk, priceUsd: hit.priceUsd } : tk));
+        if (alive && hit) setToken((tk) => (tk && tk.chainId === hit.chainId && tk.address.toLowerCase() === hit.address.toLowerCase() ? { ...tk, priceUsd: hit.priceUsd, logoUrl: hit.logoUrl, main: hit.main } : tk));
       })
       .catch(() => {});
     return () => { alive = false; };

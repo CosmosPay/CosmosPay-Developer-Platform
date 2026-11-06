@@ -31383,6 +31383,17 @@
             "example": "0.9975",
             "nullable": true,
             "description": "USD per token, a decimal string: the marketplace’s price, or 1 for a USD stablecoin it has no price for; null otherwise. Estimates and a sale’s minimum need it."
+          },
+          "logoUrl": {
+            "type": "string",
+            "example": "https://static.debank.com/image/arb_token/logo_url/0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9/logo.png",
+            "nullable": true,
+            "description": "Its logo as the P2P marketplace lists it, an https address, for a picker to show where you have no artwork of your own; null when it lists none (most tokens) or names CoinGecko or CoinMarketCap, whose images are not passed on. Not checked by this service: load it as any third-party image."
+          },
+          "main": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether it is one of its network’s main assets, matched by address (they come first). A chain’s list reuses known symbols at other addresses (an \"ARB\" on BNB Chain that is not Arbitrum’s), so show a known token’s own artwork only when this is true."
           }
         },
         "description": "A token an order can name: one a purchase delivers, or one a sale sends, on its chain.",
@@ -31391,7 +31402,9 @@
           "address",
           "symbol",
           "decimals",
-          "priceUsd"
+          "priceUsd",
+          "logoUrl",
+          "main"
         ]
       },
       "P2pTokenListEntity": {

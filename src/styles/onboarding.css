@@ -115,7 +115,7 @@
 .pp.on .pp-radio::after { transform: scale(1); }
 .pp-mid { flex: 1; min-width: 0; }
 .pp-name { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); display: flex; align-items: center; gap: 9px; }
-.pp-pop { font-size: 10.5px; font-weight: 600; letter-spacing: 0; text-transform: uppercase; color: var(--accent-fg); background: var(--ob-accent); padding: 2px 8px; border-radius: 999px; }
+.pp-pop { font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--accent-fg); background: var(--ob-accent); padding: 2px 8px; border-radius: 999px; }
 .pp-desc { font-size: 13px; color: var(--ink-3); margin-top: 3px; display: block; }
 .pp-price { text-align: right; flex: 0 0 auto; }
 .pp-price .a { font-size: 19px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); display: block; }

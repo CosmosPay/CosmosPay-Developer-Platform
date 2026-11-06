@@ -12,13 +12,13 @@ import { nowIso } from "@/lib/mock/fixtures";
 import { RECORDED_MARKET } from "@/lib/mock/handlers/p2p-ramp-market";
 
 type Side = "buy" | "sell";
-interface P2pToken { chainId: number; address: string; symbol: string; decimals: number; priceUsd: string | null }
+interface P2pToken { chainId: number; address: string; symbol: string; decimals: number; priceUsd: string | null; logoUrl: string | null; main: boolean }
 
 const NETWORK_NAMES: Record<number, string> = {
   1: "Ethereum", 10: "Optimism", 56: "BNB Chain", 130: "Unichain", 137: "Polygon", 480: "World Chain", 8453: "Base",
   42161: "Arbitrum", 42220: "Celo", 43114: "Avalanche", 81457: "Blast", 421614: "Arbitrum Sepolia",
 };
-const DEFAULT_TOKEN: Record<MockEnv, Omit<P2pToken, "priceUsd">> = {
+const DEFAULT_TOKEN: Record<MockEnv, Pick<P2pToken, "chainId" | "address" | "symbol" | "decimals">> = {
   prod: { chainId: 42161, address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", symbol: "USDT0", decimals: 6 },
   dev: { chainId: 421614, address: "0x25f5D414F85b7f4668ADe4E557ef234023208771", symbol: "USDT", decimals: 18 },
 };
@@ -29,7 +29,7 @@ const ADDRESS = /^0x[a-fA-F0-9]{40}$/;
 const AMOUNT = /^(0|[1-9]\d{0,17})(\.\d{1,18})?$/;
 
 const tokensOf = (env: MockEnv, chainId: number): P2pToken[] =>
-  (RECORDED_MARKET[env].tokens[String(chainId)] ?? []).map(([address, symbol, decimals, priceUsd]) => ({ chainId, address, symbol, decimals, priceUsd }));
+  (RECORDED_MARKET[env].tokens[String(chainId)] ?? []).map(([address, symbol, decimals, priceUsd, logoUrl, main]) => ({ chainId, address, symbol, decimals, priceUsd, logoUrl, main }));
 const usdOf = (t: P2pToken) => (t.priceUsd !== null ? Number(t.priceUsd) : USD_STABLE.has(t.symbol) ? 1 : null);
 const sessions = (env: MockEnv, side: Side) => mockEnvStore<any[]>(`p2p-${side}-sessions`, env, () => []);
 
