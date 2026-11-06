@@ -2,6 +2,16 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.32.0] - 2026-11-06
+
+### Features
+- The web's design pattern (DESIGN.md) and the audit's fixes (2908611)
+- The dashboard's dark colours on the payments landing, and icons for every asset (447bbb0)
+
+### Bug Fixes
+- An id's text ends in an ellipsis before its copy button on a phone (3af0003)
+- The use cases' tabs are flat, the selected one marked by a bar on its left (955a047)
+
 ## [0.31.0] - 2026-11-06
 
 ### Features
