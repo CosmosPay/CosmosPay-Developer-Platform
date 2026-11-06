@@ -7,7 +7,8 @@
 
    WHAT IT COVERS. Every symbol NEAR Intents' 1Click lists (GET /v0/tokens, minus the
    blockchains the Payments API does not offer: qtc, adi), the standard assets the dashboard
-   offers on Stellar, Solana and Monad, every network id in NETWORK_NAMES and OFT_NETWORK_NAMES
+   offers on Stellar, Solana and Monad, the P2P ramps' main assets on each of their networks
+   (RAMP_TOKENS: the Payments API's P2P_MAIN_TOKENS) and those networks (Celo, World Chain, Blast), every network id in NETWORK_NAMES and OFT_NETWORK_NAMES
    (src/lib/chains.ts: the networks only USDT0 reaches), and Pollar's mark for the landing's
    wallets marquee. Logos are keyed by normalized symbol
    (uppercase, a trailing "(...)" tag and a leading "$" removed), so one symbol on several chains
@@ -88,7 +89,154 @@ const TW_CHAIN = {
   avax: 'avalanchec', gnosis: 'xdai', sol: 'solana', xrp: 'ripple', btc: 'bitcoin', ltc: 'litecoin', doge: 'doge',
   bch: 'bitcoincash', dash: 'dash', zec: 'zcash', tron: 'tron', ton: 'ton', sui: 'sui', aptos: 'aptos',
   cardano: 'cardano', stellar: 'stellar', monad: 'monad', plasma: 'plasma', hood: 'robinhoodchain', scroll: 'scroll',
+  celo: 'celo', blast: 'blast',
 };
+
+/* The P2P ramps' main assets on each network (the community server's P2P_MAIN_TOKENS, resolved
+   against the marketplace's lists on 2026-11-05), as [network, symbol, address]. Each becomes a
+   listing like 1Click's, so its logo comes from Trust Wallet's folder for that very contract. The
+   zero address is the network's own coin; ETH on an L2 is left to Ethereum's listing, since an
+   L2's info logo is the L2's. */
+const RAMP_TOKENS = [
+  ["eth", "ETH", "0x0000000000000000000000000000000000000000"],
+  ["eth", "USDT", "0xdAC17F958D2ee523a2206206994597C13D831ec7"],
+  ["eth", "USDC", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
+  ["eth", "WETH", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"],
+  ["eth", "WBTC", "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"],
+  ["eth", "cbBTC", "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"],
+  ["eth", "DAI", "0x6B175474E89094C44Da98b954EedeAC495271d0F"],
+  ["eth", "USDS", "0xdC035D45d973E3EC169d2276DDab16f1e407384F"],
+  ["eth", "USDe", "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3"],
+  ["eth", "PYUSD", "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8"],
+  ["eth", "FDUSD", "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409"],
+  ["eth", "EURC", "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c"],
+  ["eth", "LINK", "0x514910771AF9Ca656af840dff83E8264EcF986CA"],
+  ["eth", "UNI", "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"],
+  ["eth", "AAVE", "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"],
+  ["eth", "LDO", "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"],
+  ["eth", "wstETH", "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"],
+  ["eth", "weETH", "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee"],
+  ["eth", "rETH", "0xae78736Cd615f374D3085123A210448E74Fc6393"],
+  ["eth", "cbETH", "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704"],
+  ["op", "ETH", "0x0000000000000000000000000000000000000000"],
+  ["op", "USDT0", "0x01bFF41798a0BcF287b996046Ca68b395DbC1071"],
+  ["op", "USDC", "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"],
+  ["op", "WETH", "0x4200000000000000000000000000000000000006"],
+  ["op", "WBTC", "0x68f180fcCe6836688e9084f035309E29Bf0A2095"],
+  ["op", "OP", "0x4200000000000000000000000000000000000042"],
+  ["op", "USDT", "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58"],
+  ["op", "USDC.e", "0x7F5c764cBc14f9669B88837ca1490cCa17c31607"],
+  ["op", "DAI", "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"],
+  ["op", "EURC", "0xDCB612005417Dc906fF72c87DF732e5a90D49e11"],
+  ["op", "WLD", "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1"],
+  ["op", "LINK", "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6"],
+  ["op", "UNI", "0x6fd9d7AD17242c41f7131d257212c54A0e816691"],
+  ["op", "AAVE", "0x76FB31fb4af56892A25e32cFC43De717950c9278"],
+  ["op", "wstETH", "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb"],
+  ["op", "weETH", "0x5A7fACB970D094B6C7FF1df0eA68D99E6e73CBFF"],
+  ["op", "rETH", "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D"],
+  ["bsc", "BNB", "0x0000000000000000000000000000000000000000"],
+  ["bsc", "USDT", "0x55d398326f99059fF775485246999027B3197955"],
+  ["bsc", "USDC", "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"],
+  ["bsc", "WBNB", "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"],
+  ["bsc", "BTCB", "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c"],
+  ["bsc", "WETH", "0x2170Ed0880ac9A755fd29B2688956BD959F933F8"],
+  ["bsc", "FDUSD", "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409"],
+  ["bsc", "USDe", "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"],
+  ["bsc", "DAI", "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3"],
+  ["bsc", "Cake", "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82"],
+  ["bsc", "WBTC", "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"],
+  ["bsc", "LINK", "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD"],
+  ["bsc", "UNI", "0xBf5140A22578168FD562DCcF235E5D43A02ce9B1"],
+  ["bsc", "AAVE", "0xfb6115445Bff7b52FeB98650C87f44907E58f802"],
+  ["bsc", "weETH", "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A"],
+  ["unichain", "ETH", "0x0000000000000000000000000000000000000000"],
+  ["unichain", "USDC", "0x078D782b760474a361dDA0AF3839290b0EF57AD6"],
+  ["unichain", "USD₮0", "0x9151434b16b9763660705744891fA906F660EcC5"],
+  ["unichain", "WETH", "0x4200000000000000000000000000000000000006"],
+  ["unichain", "WBTC", "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"],
+  ["unichain", "DAI", "0x20CAb320A855b39F724131C69424240519573f81"],
+  ["unichain", "wstETH", "0xc02fE7317D4eb8753a02c35fe019786854A92001"],
+  ["unichain", "weETH", "0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7"],
+  ["unichain", "rETH", "0x94Cac393f3444cEf63a651FfC18497E7e8bd036a"],
+  ["pol", "POL", "0x0000000000000000000000000000000000000000"],
+  ["pol", "USDT", "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"],
+  ["pol", "USDC", "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"],
+  ["pol", "WPOL", "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"],
+  ["pol", "WETH", "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619"],
+  ["pol", "WBTC", "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6"],
+  ["pol", "USDC.e", "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"],
+  ["pol", "DAI", "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063"],
+  ["pol", "LINK", "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39"],
+  ["pol", "UNI", "0xb33EaAd8d922B1083446DC23f610c2567fB5180f"],
+  ["pol", "AAVE", "0xD6DF932A45C0f255f85145f286eA0b292B21C90B"],
+  ["pol", "LDO", "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756"],
+  ["pol", "CRV", "0x172370d5Cd63279eFa6d502DAB29171933a610AF"],
+  ["pol", "wstETH", "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD"],
+  ["world", "ETH", "0x0000000000000000000000000000000000000000"],
+  ["world", "USDC", "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1"],
+  ["world", "WETH", "0x4200000000000000000000000000000000000006"],
+  ["world", "WBTC", "0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3"],
+  ["world", "WLD", "0x2cFc85d8E48F8EAB294be644d9E25C3030863003"],
+  ["base", "ETH", "0x0000000000000000000000000000000000000000"],
+  ["base", "USDC", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
+  ["base", "USDT", "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"],
+  ["base", "WETH", "0x4200000000000000000000000000000000000006"],
+  ["base", "cbBTC", "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"],
+  ["base", "WBTC", "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"],
+  ["base", "AERO", "0x940181a94A35A4569E4529A3CDfB74e38FD98631"],
+  ["base", "USDbC", "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA"],
+  ["base", "DAI", "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb"],
+  ["base", "USDS", "0x820C137fa70C8691f0e44Dc420a5e53c168921Dc"],
+  ["base", "USDe", "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"],
+  ["base", "EURC", "0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42"],
+  ["base", "LINK", "0x88Fb150BDc53A65fe94Dea0c9BA0a6dAf8C6e196"],
+  ["base", "AAVE", "0x63706e401c06ac8513145b7687A14804d17f814b"],
+  ["base", "wstETH", "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452"],
+  ["base", "weETH", "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A"],
+  ["base", "cbETH", "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22"],
+  ["base", "rETH", "0xB6fe221Fe9EeF5aBa221c348bA20A1Bf5e73624c"],
+  ["arb", "ETH", "0x0000000000000000000000000000000000000000"],
+  ["arb", "USDT0", "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"],
+  ["arb", "USDC", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"],
+  ["arb", "WETH", "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"],
+  ["arb", "WBTC", "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"],
+  ["arb", "ARB", "0x912CE59144191C1204E64559FE8253a0e49E6548"],
+  ["arb", "USDC.e", "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"],
+  ["arb", "DAI", "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"],
+  ["arb", "cbBTC", "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"],
+  ["arb", "USDe", "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"],
+  ["arb", "PYUSD", "0x46850aD61C2B7d64d08c9C754F45254596696984"],
+  ["arb", "LINK", "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4"],
+  ["arb", "UNI", "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0"],
+  ["arb", "AAVE", "0xba5DdD1f9d7F570dc94a51479a000E3BCE967196"],
+  ["arb", "GMX", "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a"],
+  ["arb", "wstETH", "0x5979D7b546E38E414F7E9822514be443A4800529"],
+  ["arb", "weETH", "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe"],
+  ["arb", "rETH", "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8"],
+  ["celo", "CELO", "0x471EcE3750Da237f93B8E339c536989b8978a438"],
+  ["celo", "USD₮", "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e"],
+  ["celo", "USDC", "0xcebA9300f2b948710d2653dD7B07f33A8B32118C"],
+  ["celo", "USDm", "0x765DE816845861e75A25fCA122bb6898B8B1282a"],
+  ["celo", "EURm", "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73"],
+  ["celo", "WETH", "0xD221812de1BD094f35587EE8E174B07B6167D9Af"],
+  ["celo", "BRLm", "0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787"],
+  ["celo", "COPm", "0x8A567e2aE79CA692Bd748aB832081C45de4041eA"],
+  ["avax", "AVAX", "0x0000000000000000000000000000000000000000"],
+  ["avax", "USDt", "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7"],
+  ["avax", "USDC", "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"],
+  ["avax", "WAVAX", "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"],
+  ["avax", "BTC.b", "0x152b9d0FdC40C096757F570A51E494bd4b943E50"],
+  ["avax", "WBTC", "0x50b7545627a5162F82A992c33b87aDc75187B218"],
+  ["avax", "WETH.e", "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB"],
+  ["avax", "USDC.e", "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664"],
+  ["avax", "USDe", "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"],
+  ["avax", "EURC", "0xC891EB4cbdEFf6e073e859e987815Ed1505c2ACD"],
+  ["avax", "JOE", "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"],
+  ["avax", "GMX", "0x62edc0692BD897D2295872a9FFCac5425011c661"],
+  ["avax", "weETH", "0xA3D68b74bF0528fdD07263c60d6488749044914b"],
+];
+const RAMP_NATIVE = '0x0000000000000000000000000000000000000000';
 /* Which listing of a symbol is tried first: its native coin, then the largest networks. */
 const CHAIN_ORDER = ['eth', 'base', 'arb', 'op', 'bsc', 'pol', 'avax', 'gnosis', 'sol', 'near', 'tron', 'ton', 'sui', 'aptos'];
 
@@ -108,6 +256,14 @@ const HEMI_LIST = 'https://raw.githubusercontent.com/hemilabs/token-list/master/
 
 /* Symbols decided by hand, with the reason. Everything else is resolved automatically. */
 const TOKEN_SOURCES = {
+  // Tether's own spellings on Celo and Unichain: the same token mark as USDT.
+  'USD₮': alias('USDT', 'Tether USDT on Celo, listed as USD₮: the USDT mark'),
+  'USD₮0': alias('USDT', 'Tether USDT0 on Unichain, listed as USD₮0: the USDT mark'),
+  // Avalanche's bridged coins, which Trust Wallet does not carry: the original asset's mark (the
+  // network shows in the mark's badge).
+  'BTC.B': alias('BTC', 'Bitcoin bridged to Avalanche (BTC.b): the BTC mark'),
+  'WBTC.E': alias('WBTC', 'WBTC bridged to Avalanche (WBTC.e): the WBTC mark'),
+  'WETH.E': alias('WETH', 'WETH bridged to Avalanche (WETH.e): the WETH mark'),
   // Already in public/media/brands, used by the landing; reused as they are.
   USDC: brand('/media/brands/usdc.svg'),
   EURC: brand('/media/brands/eurc.webp'),
@@ -225,6 +381,10 @@ const NETWORK_SOURCES = {
   sei: tw('sei/info/logo.png'),
   stable: plate(url('https://www.stable.xyz/brand/logo/stable-logotype-light.svg', NO_LICENCE, 'Stable brand kit (stable.xyz/brand-kit), light logotype on the kit\'s Dark #001E1E disc'), '#001e1e'),
   tempo: url('https://drive.usercontent.google.com/download?id=1xDMoRdUg2htMpEhrQS6SPvV8XJ3ob0-u&export=download', NO_LICENCE, 'Tempo brand kit (the Google Drive folder tempo.xyz/brand opens), social/circle-black.png: white mark on its black disc'),
+  // The P2P ramps' networks. World Chain's mark is World's own, the one its WLD token carries.
+  celo: tw('celo/info/logo.png'),
+  blast: tw('blast/info/logo.png'),
+  world: url(TW_RAW + 'ethereum/assets/0x163f8C2467924be0ae7B5347228CABF260318753/logo.png', TW_LICENCE, "World's mark, as Trust Wallet carries it for the WLD token (World Chain's own network mark)"),
   unichain: zip('https://unichain.org/assets/zip/unichain-brand-kit.zip', 'Unichain Brand Kit /Network icons/Mainnet.svg', NO_LICENCE, 'Unichain brand kit (unichain.org/brand-kit), mainnet network icon'),
 };
 
@@ -482,6 +642,12 @@ async function main() {
     bySymbol.get(key).push(t);
   }
   for (const s of EXTRA_SYMBOLS) if (!bySymbol.has(s)) bySymbol.set(s, []);
+  for (const [blockchain, symbol, address] of RAMP_TOKENS) {
+    if (address === RAMP_NATIVE && symbol === 'ETH') continue;
+    const key = normalizeSymbol(symbol);
+    if (!bySymbol.has(key)) bySymbol.set(key, []);
+    bySymbol.get(key).push({ blockchain, symbol, contractAddress: address === RAMP_NATIVE ? null : address });
+  }
 
   const tokenLogos = {};
   const tokenLines = [];

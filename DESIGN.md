@@ -32,6 +32,9 @@ One token set per skin, redeclared for dark mode and for dark panels. Components
 - Black is primary on the institutional skin, neutral greys secondary, the corporate blue tertiary.
   On the brand skin the navy is the primary button on white and white the primary on dark panels.
 - Never violet, never gradients, no decorative chips. Status is a mark and a word, never colour alone.
+- Dark mode is one palette on every surface: the dashboard's (institutional.css). The payments
+  landing redefines no colour in dark; its alternate sections are `--surface`, its cards and lines
+  the dashboard's.
 - Contrast: running text 7:1 where it can be, 4.5:1 the floor; labels and meta 4.5:1; large text and
   marks 3:1. Code windows keep comments and punctuation at 7:1 on their dark surface.
 
@@ -104,6 +107,9 @@ One family, Open Sauce One (`--ff-sans`); Cosmos Lazos only for the logo; a mono
   assistive tech, never written.
 - **Disclosures** (FAQ answers, folded details) open to their content's height
   (`grid-template-rows: 0fr` to `1fr`), never a fixed `max-height` a long answer outgrows.
+- **Token and network marks:** official artwork from the generated manifest
+  (`src/lib/token-logos.ts`), the network's mark as a badge; a P2P ramp token without artwork shows
+  the logo its list names, else its two-letter monogram.
 - **Code windows:** highlighted tokens; on a phone the bar drops its window dots and the copy button
   shows its icon only (its word stays its accessible name).
 - **Navigation:** the general nav on every page; the dashboard sidebar with groups as a dashed tree.

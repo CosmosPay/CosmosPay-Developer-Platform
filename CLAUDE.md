@@ -1270,10 +1270,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   first shows two stray spaces.
 - **The FAQ and the final call are separate sections** in the multi-page layout (the product
   owner asked to see them apart); `.pl-closing` (one canvas for both) remains for the single page.
-- **The landing's dark mode has more colour** (product owner): inside `.pl` the dark tokens take a
-  navy tint (canvas `#090B14`, alternate sections `#0E1222`, cards `#121729`, blue-tinted lines)
-  and the tertiary blue marks progress, checks, the current step, the best plan and links. The
-  nav, the footer and every other page keep the neutral dark of institutional.css.
+- **The landing's dark mode is the dashboard's** (product owner, 2026-11-06, replacing the navy
+  tint it had: "the dashboard's dark colours must apply to the payments landing's dark mode too"):
+  `.pl` redefines no colour token in dark, so the canvas, the alternate sections, the cards, the
+  lines and the highlights are institutional.css's neutral dark, the dashboard's (`--bg` #0C0C10,
+  `--surface` #15151B, white hairlines). The dashboard's tertiary blue still marks progress,
+  checks and the current tab there. Never bring back a landing-only dark palette.
 - **The sections show the product, not only text** (the product owner found text-only sections
   flat): as those gateways do, each one carries a piece of the interface:
   `src/components/payments/landing/Mock.astro` draws them with the page's tokens (a confirmed
@@ -1410,7 +1412,13 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   folder's `SOURCES.md` (Trust Wallet's assets, MIT; the projects' own brand kits; token lists
   that name an official icon). `scripts/fetch-token-logos.mjs` refreshes the set (never during the
   build) and refuses CoinGecko and CoinMarketCap images. A token without official artwork keeps a
-  neutral monogram.
+  neutral monogram. It also covers the P2P ramps' main assets on every network (`RAMP_TOKENS`, the
+  Payments API's `P2P_MAIN_TOKENS`) and their networks (Celo, World Chain with World's mark,
+  Blast). **The ramps' long tail is the one exception** (product owner, 2026-11-06: every asset
+  gets an icon): a chain lists thousands of tokens, so a token the manifest lacks shows the logo
+  the marketplace's list names (`logoUrl` from GET .../p2p/tokens, `TokenMark fallbackSrc`,
+  loaded with no referrer), never CoinGecko's or CoinMarketCap's (the API drops them), and its
+  monogram when there is none or it fails to load.
 - **Typography and structure stay quiet** (design-skill pass, 2026-10-24): no labels above
   headings, headings in one colour with no accent word, no all-caps labels, numbering only for
   real sequences ("how it works"), no arrows on buttons or links, no rows of icon cards (an icon

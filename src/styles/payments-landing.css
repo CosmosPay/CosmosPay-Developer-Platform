@@ -1017,23 +1017,18 @@
 .pl-odo-s > span { display: block; height: 1.2em; line-height: 1.2em; }
 .pl-odo.is-on .pl-odo-s { translate: 0 calc(var(--to, 0) * -1.2em); }
 
-/* ---- dark mode: depth from hairlines and the blue, never from shadows. The landing's own
-   canvas takes a navy tint (the product owner wanted more colour in dark), so its tokens are
-   redefined inside .pl only; the nav, footer and other pages keep the neutral dark. ---- */
-[data-theme="dark"] .pl {
-  --bg: #090B14; --surface: #121729; --surface-2: #181E33;
-  --line: rgba(143, 163, 255, .13); --line-2: rgba(143, 163, 255, .24);
-  --accent-soft: rgba(143, 163, 255, .09); --accent-soft-2: rgba(143, 163, 255, .18);
-}
-[data-theme="dark"] .pl-section, [data-theme="dark"] .pl-final-wrap { background: #090B14; }
-[data-theme="dark"] :is(.pl-section-alt, .pl-closing, .pl-marks) { background: #0E1222; }
-[data-theme="dark"] .pl-mk-ok, [data-theme="dark"] .pl-how.is-pinned li.is-current .pl-step-num { background: var(--tertiary); color: #090B14; }
+/* ---- dark mode: the dashboard's dark colours (product owner, 2026-11-06: the landing's dark
+   takes the dashboard's): institutional.css's neutral dark tokens, so the canvas, the alternate
+   sections, the cards, the lines and the highlights are the dashboard's canvas, panels and lines
+   (the navy tint it had before is gone). Depth from hairlines, never from shadows; the dashboard's
+   tertiary blue marks progress, checks and the current tab. ---- */
+[data-theme="dark"] .pl-mk-ok, [data-theme="dark"] .pl-how.is-pinned li.is-current .pl-step-num { background: var(--tertiary); color: var(--bg); }
 [data-theme="dark"] .pl-textlink::after { background: var(--tertiary); }
 [data-theme="dark"] .pl-faq summary:hover { color: var(--tertiary); }
 [data-theme="dark"] .pl-pin-bar i::after { background: var(--tertiary); }
 [data-theme="dark"] .pl-pin-count { color: var(--tertiary); }
 [data-theme="dark"] :is(.pl-bento-card, .pl-settle-card, .pl-paths, .pl-plans, .pl-calc, .pl-compare-card, .pl-uses-panel, .pl-dm, .pl-code, .pl-final, .pl-snippet) {
-  box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .12);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 [data-theme="dark"] :is(.pl-bento-visual, .pl-path-visual, .pl-step-visual, .pl-dm-box) { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); }
 [data-theme="dark"] .pl-dm-stage .pl-field-error { color: #FF8A80; }
@@ -1042,11 +1037,9 @@
 [data-theme="dark"] :is(.pl-dm-shot, .pl-dm-popup img) { filter: invert(.92) hue-rotate(180deg); }
 [data-theme="dark"] .pl-section + .pl-section { border-top: 1px solid rgba(255, 255, 255, .05); }
 [data-theme="dark"] .pl-check { color: var(--tertiary); }
-[data-theme="dark"] .pl-compare .pl-compare-us { background: rgba(143, 163, 255, .08); }
 [data-theme="dark"] .pl-compare thead .pl-compare-us { color: var(--tertiary); }
-[data-theme="dark"] .pl-compare tbody tr:hover > .pl-compare-us { background-color: rgba(143, 163, 255, .14); }
-[data-theme="dark"] .pl-plan-best { background: rgba(143, 163, 255, .1); box-shadow: inset 0 0 0 1px rgba(143, 163, 255, .35); }
-[data-theme="dark"] .pl-calc-table tr.is-best > * { background: rgba(143, 163, 255, .1); }
+/* the highlighted column, plan and row: the light mode's tokens, so the dashboard's soft fills */
+[data-theme="dark"] .pl-plan-best { box-shadow: inset 0 0 0 1px var(--line-2); }
 
 [data-theme="dark"] .pl-uses-tab[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--tertiary); }
 [data-theme="dark"] .pl-code-tab::after { background: var(--tertiary); }
