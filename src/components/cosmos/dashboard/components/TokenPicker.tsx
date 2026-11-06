@@ -89,7 +89,8 @@ export function TokenPicker({ tokens, selectedKey, onPick, onClose, title, dexLi
             options={[{ value: "all", label: tp.allNetworks, count: tokens.length }, ...networks.map(([id, x]) => ({ value: id, label: x.name, count: x.n, icon: <NetworkMark chain={id} size={18} /> }))]}
           />
         </div>
-        <p className="tpick-count" role="status" aria-live="polite">{fmt(tp.count, { n: shown.length })}</p>
+        {/* How many tokens the list shows: announced, not written (product owner, 2026-11-05). */}
+        <p className="sr-only" role="status" aria-live="polite">{fmt(tp.count, { n: shown.length })}</p>
         <ul className="tpick-list" ref={list} role="list" onKeyDown={onKey}>
           {shown.slice(0, MAX_ROWS).map((tk, i, rows) => [
             // Across every network, each one's tokens sit under its name.

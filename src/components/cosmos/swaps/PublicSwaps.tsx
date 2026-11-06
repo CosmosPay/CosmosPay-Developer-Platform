@@ -10,7 +10,8 @@
    session (orgSwapApi with the platform's origin; src/lib/payments-session.ts is what the payments
    domain may call), so the swap pays that organization's plan's commission and lands in its
    dashboard. Only organizations where the visitor may open payments count; with several, they
-   pick one. Signed out, or with none, it is the public key as before. */
+   pick one in the swap form's settings (the gear). Signed out, or with none, it is the public key
+   as before. */
 import { useEffect, useMemo, useState } from "react";
 import { fmt, initLang, useT } from "@/lib/i18n/index";
 import { DASH, DEV } from "@/components/cosmos/lib/constants";
@@ -113,7 +114,13 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
           </div>
         )}
         <div className="pswap-widget" id="pswap-widget">
-          <SwapWidget api={api} tier="public" preset={pick} feeBps={feeBps} onCreated={(kind, rec) => setOpened({ kind, rec })} />
+          <SwapWidget
+            api={api} tier="public" preset={pick} feeBps={feeBps} onCreated={(kind, rec) => setOpened({ kind, rec })}
+            accounts={org && orgs!.length > 1 ? {
+              label: p.orgLabel, value: org.id, onChange: setOrgId,
+              options: orgs!.map((o) => ({ value: o.id, label: o.name, hint: `${(t.dash.planNames as Record<string, string>)[o.plan] || o.plan}: ${swapFeePct(o.plan)}` })),
+            } : null}
+          />
         </div>
         <div className="pswap-copy">
           <ul className="pswap-facts" role="list">
@@ -122,15 +129,8 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
           {org ? (
             <div className="pswap-fee is-org">
               <p>{fmt(p.feeSignedIn, { org: org.name, plan: (t.dash.planNames as Record<string, string>)[org.plan] || org.plan, pct: swapFeePct(org.plan) })}</p>
+              {/* The organization is chosen in the swap form's settings (SwapWidget `accounts`). */}
               <div className="pswap-org">
-                {orgs!.length > 1 && (
-                  <label>
-                    <span>{p.orgLabel}</span>
-                    <select className="field" value={org.id} onChange={(e) => setOrgId(e.target.value)}>
-                      {orgs!.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                    </select>
-                  </label>
-                )}
                 <a href={`${DASH}?view=swaps`}>{p.yourSwaps}</a>
               </div>
             </div>

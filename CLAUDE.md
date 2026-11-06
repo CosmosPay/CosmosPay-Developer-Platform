@@ -1714,7 +1714,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the organizations where they may open payments (`payments:create`), and swaps as one of them
   (`orgSwapApi(org, "prod", DEV)`: the platform's proxies with the session cookie), so the quote
   and the record carry that organization's plan's rate and the swap lands in its dashboard; with
-  several organizations a select picks one. Signed out, or with none, it is the public key.
+  several organizations the swap form's settings (the gear, above the slippage) pick one, each with
+  its plan's commission (`SwapWidget accounts`; product owner, 2026-11-05: not a select beside the
+  form). Signed out, or with none, it is the public key.
+- **The token picker writes no count** (product owner, 2026-11-05: "201 tokens" should not be
+  written there): how many tokens it shows is a status for assistive tech only.
 - **The landing always quotes on production** (product owner, 2026-11-04: "en landing siempre es
   cotización de producción, no de test"). The public swap page, signed in or not, uses mainnet
   (`"prod"`, the widget's `public` tier); never a test network there.

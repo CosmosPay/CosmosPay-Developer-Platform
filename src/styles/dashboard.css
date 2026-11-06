@@ -828,6 +828,22 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 }
 .slip-pop[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
 .slip-t { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--ink); }
+/* Who the swap is made as (SwapWidget `accounts`), above the slippage: one row per organization,
+   its commission under its name, the chosen one checked. */
+.slip-acct { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.slip-acct-list { display: grid; gap: 4px; max-height: 220px; overflow-y: auto; }
+.slip-acct-opt {
+  display: grid; gap: 2px; width: 100%; padding: 9px 34px 9px 12px; border: 0; border-radius: var(--r-item, 10px);
+  background: transparent; color: var(--ink); text-align: left; cursor: pointer; position: relative;
+}
+.slip-acct-opt:hover, .slip-acct-opt:focus-visible { background: var(--surface-2); }
+.slip-acct-opt.on { background: var(--surface-2); }
+.slip-acct-opt.on::after {
+  content: ""; position: absolute; right: 13px; top: 50%; width: 10px; height: 5px; margin-top: -4px;
+  border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg);
+}
+.slip-acct-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slip-acct-hint { font-size: 12px; color: var(--ink-3); }
 .slip-pop .seg-tabs { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2); }
 .slip-pop .seg-tabs button { flex: 1; padding: 8px 6px; }
 .slip-h { margin: 10px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-3); }
