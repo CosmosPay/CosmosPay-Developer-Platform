@@ -213,17 +213,29 @@ export function startLanding(): void {
       pin.onStep?.(step);
     }
   };
+  /* The stage centres its content in a screen-tall box: what follows the section starts that far
+     under the content past the last step. --pin-tail is that space less 52px, which the section
+     gives back (payments-landing.css), so what follows sits 52px under the content, the gap the
+     page's other calls to action keep. */
+  const fitPinTails = () => {
+    for (const pin of pinned) {
+      const content = pin.stage.querySelector<HTMLElement>(":scope > .wrap");
+      const free = pin.section.classList.contains("is-pinned") && content ? (pin.stage.clientHeight - content.offsetHeight) / 2 - 52 : 0;
+      pin.section.style.setProperty("--pin-tail", `${Math.max(0, Math.round(free))}px`);
+    }
+  };
   const setPinMode = () => {
     for (const pin of pinned) {
       pin.section.classList.toggle("is-pinned", pinQuery.matches);
       pin.at = -1;
       if (!pinQuery.matches) pin.section.querySelectorAll("[data-pin-item]").forEach((item) => item.classList.remove("is-reached", "is-current"));
     }
+    fitPinTails();
     paintPins();
   };
   let pinFrame = 0;
   window.addEventListener("scroll", () => { if (!pinFrame) pinFrame = requestAnimationFrame(() => { pinFrame = 0; paintPins(); }); }, { passive: true });
-  window.addEventListener("resize", paintPins);
+  window.addEventListener("resize", () => { fitPinTails(); paintPins(); });
   pinQuery.addEventListener("change", setPinMode);
 
   /* Tabs for the use cases and the code samples (WAI-ARIA tabs, automatic activation):
