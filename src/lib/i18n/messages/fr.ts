@@ -1983,7 +1983,7 @@ export default {
         approvalNote: "L’allowance du portefeuille pour ce jeton est insuffisante : envoyez et confirmez cet appel approve avant de signer le swap.",
         provider: "Construit par", expires: "Signer avant",
         submitDesc: "Collez la transaction signée renvoyée par le portefeuille (Solana : base64 ; Monad : transaction brute 0x).",
-        submitPlaceholder: "Transaction signée…",
+        submitPlaceholder: "Transaction signée…", submitDescMonad: "Collez la transaction signée (transaction brute 0x) ou le hash du swap que votre portefeuille a déjà envoyé.", submitPlaceholderMonad: "Transaction signée ou hash de la transaction…",
       },
       modal: {
         eyebrow: "Swap", title: "Nouveau swap",
@@ -2068,7 +2068,7 @@ export default {
         report: "Signaler", reporting: "Signalement…", reported: "Dépôt signalé", reportError: "Le dépôt n’a pas pu être signalé.", noLink: "Payez l’adresse de dépôt (et le mémo, s’il apparaît) depuis n’importe quel wallet {chain}, ou scannez le QR.",
       },
     },
-    wallet: { signTitle: "Signez avec votre wallet", freighter: "Signer avec Freighter", signing: "En attente de Freighter…", submitting: "Envoi…", missing: "Freighter n’est pas installé dans ce navigateur. Scannez le QR avec un autre wallet ou collez ci-dessous la transaction signée.", declined: "Freighter n’a pas signé la transaction.", wrongAccount: "Freighter est sur un autre compte. Passez à {account} et réessayez.", wrongNetwork: "Freighter est sur un autre réseau. Passez à {network} et réessayez.", networks: { testnet: "Testnet", public: "Réseau public" } },
+    wallet: { signTitle: "Signez avec votre wallet", freighter: "Signer avec Freighter", missing: "Freighter n’est pas installé dans ce navigateur. Scannez le QR avec un autre wallet ou collez ci-dessous la transaction signée.", declined: "Freighter n’a pas signé la transaction.", wrongAccount: "Freighter est sur un autre compte. Passez à {account} et réessayez.", finding: "Recherche des wallets dans ce navigateur…", walletsOn: "Wallets {chain} dans ce navigateur", confirmIn: "Confirmez dans {wallet}…", otherAccount: "{wallet} est sur un autre compte. Passez à {account} et réessayez.", declinedBy: "{wallet} n’a pas approuvé.", failedIn: "{wallet} n’a pas pu terminer : {reason}", approveIn: "Approuvez d’abord le jeton dans {wallet}…", approvalMining: "En attente de la confirmation de l’approbation sur le réseau…", approvalFailed: "L’approbation a échoué sur le réseau.", waitingNode: "Envoyée. En attente que le réseau voie la transaction…", sending: "Envoi de la transaction…", payTitle: "Payez avec votre wallet" },
     liquidity: {
       title: "Pools de liquidité",
       sub: "{n} opérations · pools AMM sur Stellar",

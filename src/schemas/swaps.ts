@@ -135,9 +135,11 @@ export const submitSwapBodySchema = z
   .object({
     signedXdr: z.string().trim().min(1).max(100000).optional(),
     signedTransaction: z.string().trim().min(1).max(100000).optional(),
+    /* Monad: the hash of the swap a browser wallet sent itself (EVM wallets only send). */
+    txHash: z.string().trim().regex(/^0x[0-9a-fA-F]{64}$/, "txHash must be a 0x-prefixed 32-byte hex hash").optional(),
   })
-  .refine((v) => (v.signedXdr === undefined) !== (v.signedTransaction === undefined), {
-    message: "Send exactly one of signedXdr (Stellar) or signedTransaction (Solana, Monad).",
+  .refine((v) => [v.signedXdr, v.signedTransaction, v.txHash].filter((x) => x !== undefined).length === 1, {
+    message: "Send exactly one of signedXdr (Stellar), signedTransaction (Solana, Monad) or txHash (Monad).",
     path: ["signedXdr"],
   });
 

@@ -171,8 +171,12 @@ const submitBody = z
   .object({
     signedXdr: z.string().optional().openapi({ example: "AAAAAgAAAAB...(signed base64 XDR)...", description: "Stellar swaps." }),
     signedTransaction: z.string().optional().openapi({ description: "Solana (base64 wire bytes) or Monad (0x raw EIP-1559) swaps." }),
+    txHash: z.string().optional().openapi({
+      example: "0x5f2c...(32-byte hex)",
+      description: "Monad swaps a browser wallet already sent (EVM wallets only send): the swap transaction's hash, checked on-chain. A hash the network does not show yet answers 400 and records nothing: retry in a few seconds.",
+    }),
   })
-  .openapi("SubmitSwapBody", { description: "Exactly one of signedXdr / signedTransaction." });
+  .openapi("SubmitSwapBody", { description: "Exactly one of signedXdr / signedTransaction / txHash." });
 
 const orgQuery = z.string().openapi({ param: { name: "org", in: "query" }, example: "org_123" });
 const envQuery = z.enum(["dev", "prod"]).optional().openapi({ param: { name: "env", in: "query" }, example: "dev" });
@@ -264,7 +268,7 @@ registerRoutes([
     tags: ["Swaps"],
     summary: "Submit a signed swap",
     description:
-      "Relays the signed transaction to its network (signedXdr on Stellar, signedTransaction on Solana / Monad). The Payments API checks it is the transaction it built before broadcasting.",
+      "Relays the signed transaction to its network (signedXdr on Stellar, signedTransaction on Solana / Monad), or records a Monad swap a browser wallet already sent (txHash). The Payments API checks it is the transaction it built, before broadcasting or on-chain.",
     security: sessionSecurity,
     request: { params: idParam, query: z.object({ org: orgQuery, env: envQuery }), ...jsonBody(submitBody) },
     responses: {

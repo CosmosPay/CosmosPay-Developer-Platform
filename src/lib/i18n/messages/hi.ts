@@ -1414,7 +1414,7 @@ export default {
         approvalNote: "इस टोकन के लिए वॉलेट का अलाउंस बहुत कम है: स्वैप पर साइन करने से पहले यह approve कॉल भेजें और उसकी पुष्टि करें।",
         provider: "द्वारा बनाया गया", expires: "इससे पहले साइन करें",
         submitDesc: "वॉलेट से मिला साइन किया हुआ लेन-देन पेस्ट करें (Solana: base64; Monad: 0x रॉ लेन-देन)।",
-        submitPlaceholder: "साइन किया हुआ लेन-देन…",
+        submitPlaceholder: "साइन किया हुआ लेन-देन…", submitDescMonad: "साइन किया हुआ लेन-देन (0x रॉ लेन-देन) पेस्ट करें, या उस स्वैप का हैश जिसे आपका वॉलेट पहले ही भेज चुका है।", submitPlaceholderMonad: "साइन किया हुआ लेन-देन या लेन-देन हैश…",
       },
       modal: {
         eyebrow: "स्वैप", title: "नया स्वैप",
@@ -1499,7 +1499,7 @@ export default {
         report: "जानकारी दें", reporting: "जानकारी भेजी जा रही है…", reported: "जमा की जानकारी दी गई", reportError: "जमा की जानकारी नहीं दी जा सकी।", noLink: "किसी भी {chain} वॉलेट से जमा पते पर भुगतान करें (और मेमो, अगर दिखाया गया हो), या QR स्कैन करें।",
       },
     },
-    wallet: { signTitle: "अपने वॉलेट से साइन करें", freighter: "Freighter से साइन करें", signing: "Freighter की प्रतीक्षा की जा रही है…", submitting: "सबमिट किया जा रहा है…", missing: "इस ब्राउज़र में Freighter इंस्टॉल नहीं है। किसी दूसरे वॉलेट से QR स्कैन करें, या नीचे साइन किया हुआ लेन-देन पेस्ट करें।", declined: "Freighter ने लेन-देन पर साइन नहीं किया।", wrongAccount: "Freighter किसी दूसरे खाते पर है। इसे {account} पर स्विच करें और फिर से कोशिश करें।", wrongNetwork: "Freighter किसी दूसरे नेटवर्क पर है। इसे {network} पर स्विच करें और फिर से कोशिश करें।", networks: { testnet: "टेस्टनेट", public: "पब्लिक नेटवर्क" } },
+    wallet: { signTitle: "अपने वॉलेट से साइन करें", freighter: "Freighter से साइन करें", missing: "इस ब्राउज़र में Freighter इंस्टॉल नहीं है। किसी दूसरे वॉलेट से QR स्कैन करें, या नीचे साइन किया हुआ लेन-देन पेस्ट करें।", declined: "Freighter ने लेन-देन पर साइन नहीं किया।", wrongAccount: "Freighter किसी दूसरे खाते पर है। इसे {account} पर स्विच करें और फिर से कोशिश करें।", finding: "इस ब्राउज़र में वॉलेट खोजे जा रहे हैं…", walletsOn: "इस ब्राउज़र में {chain} के वॉलेट", confirmIn: "{wallet} में पुष्टि करें…", otherAccount: "{wallet} किसी दूसरे खाते पर है। इसे {account} पर बदलें और फिर से कोशिश करें।", declinedBy: "{wallet} ने इसे मंज़ूरी नहीं दी।", failedIn: "{wallet} इसे पूरा नहीं कर सका: {reason}", approveIn: "पहले {wallet} में टोकन को मंज़ूरी दें…", approvalMining: "नेटवर्क पर मंज़ूरी की पुष्टि की प्रतीक्षा की जा रही है…", approvalFailed: "नेटवर्क पर मंज़ूरी विफल रही।", waitingNode: "भेज दिया गया। नेटवर्क को लेन-देन दिखने की प्रतीक्षा की जा रही है…", sending: "लेन-देन भेजा जा रहा है…", payTitle: "अपने वॉलेट से भुगतान करें" },
     liquidity: {
       title: "लिक्विडिटी पूल",
       sub: "{n} ऑपरेशन · Stellar पर AMM पूल",

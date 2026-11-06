@@ -1970,7 +1970,7 @@ export default {
         approvalNote: "Die Allowance der Wallet für diesen Token reicht nicht: Senden und bestätigen Sie diesen approve-Aufruf, bevor Sie den Swap signieren.",
         provider: "Gebaut von", expires: "Signieren bis",
         submitDesc: "Fügen Sie die von der Wallet signierte Transaktion ein (Solana: base64; Monad: rohe 0x-Transaktion).",
-        submitPlaceholder: "Signierte Transaktion…",
+        submitPlaceholder: "Signierte Transaktion…", submitDescMonad: "Fügen Sie die signierte Transaktion (rohe 0x-Transaktion) oder den Hash des Swaps ein, den Ihre Wallet bereits gesendet hat.", submitPlaceholderMonad: "Signierte Transaktion oder Transaktions-Hash…",
       },
       modal: {
         eyebrow: "Swap", title: "Neuer Swap",
@@ -2055,7 +2055,7 @@ export default {
         report: "Melden", reporting: "Wird gemeldet…", reported: "Einzahlung gemeldet", reportError: "Die Einzahlung konnte nicht gemeldet werden.", noLink: "Zahlen Sie an die Einzahlungsadresse (und das Memo, falls angezeigt) aus einer beliebigen {chain}-Wallet, oder scannen Sie den QR-Code.",
       },
     },
-    wallet: { signTitle: "Mit Ihrem Wallet signieren", freighter: "Mit Freighter signieren", signing: "Warten auf Freighter…", submitting: "Wird gesendet…", missing: "Freighter ist in diesem Browser nicht installiert. Scannen Sie den QR-Code mit einem anderen Wallet oder fügen Sie unten die signierte Transaktion ein.", declined: "Freighter hat die Transaktion nicht signiert.", wrongAccount: "Freighter ist auf einem anderen Konto. Wechseln Sie zu {account} und versuchen Sie es erneut.", wrongNetwork: "Freighter ist in einem anderen Netzwerk. Wechseln Sie zu {network} und versuchen Sie es erneut.", networks: { testnet: "Testnet", public: "Öffentliches Netzwerk" } },
+    wallet: { signTitle: "Mit Ihrem Wallet signieren", freighter: "Mit Freighter signieren", missing: "Freighter ist in diesem Browser nicht installiert. Scannen Sie den QR-Code mit einem anderen Wallet oder fügen Sie unten die signierte Transaktion ein.", declined: "Freighter hat die Transaktion nicht signiert.", wrongAccount: "Freighter ist auf einem anderen Konto. Wechseln Sie zu {account} und versuchen Sie es erneut.", finding: "Wallets in diesem Browser werden gesucht…", walletsOn: "{chain}-Wallets in diesem Browser", confirmIn: "In {wallet} bestätigen…", otherAccount: "{wallet} ist auf einem anderen Konto. Wechseln Sie zu {account} und versuchen Sie es erneut.", declinedBy: "{wallet} hat nicht zugestimmt.", failedIn: "{wallet} konnte nicht abschließen: {reason}", approveIn: "Genehmigen Sie zuerst den Token in {wallet}…", approvalMining: "Warten, bis die Genehmigung im Netzwerk bestätigt ist…", approvalFailed: "Die Genehmigung ist im Netzwerk fehlgeschlagen.", waitingNode: "Gesendet. Warten, bis das Netzwerk die Transaktion sieht…", sending: "Transaktion wird gesendet…", payTitle: "Mit Ihrem Wallet bezahlen" },
     liquidity: {
       title: "Liquiditätspools",
       sub: "{n} Vorgänge · AMM-Pools auf Stellar",

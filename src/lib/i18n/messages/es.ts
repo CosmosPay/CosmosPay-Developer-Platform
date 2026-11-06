@@ -1957,7 +1957,7 @@ export default {
         approvalNote: "El allowance de la billetera para este token no alcanza: envía y confirma esta llamada approve antes de firmar el swap.",
         provider: "Construido por", expires: "Firmar antes de",
         submitDesc: "Pega la transacción firmada que devolvió la billetera (Solana: base64; Monad: transacción cruda 0x).",
-        submitPlaceholder: "Transacción firmada…",
+        submitPlaceholder: "Transacción firmada…", submitDescMonad: "Pega la transacción firmada (transacción cruda 0x) o el hash del swap que tu billetera ya envió.", submitPlaceholderMonad: "Transacción firmada o hash de la transacción…",
       },
       modal: {
         eyebrow: "Swap", title: "Nuevo swap",
@@ -2042,7 +2042,7 @@ export default {
         report: "Informar", reporting: "Informando…", reported: "Depósito informado", reportError: "No se pudo informar el depósito.", noLink: "Paga a la dirección de depósito (y el memo, si aparece) desde cualquier wallet de {chain}, o escanea el QR.",
       },
     },
-    wallet: { signTitle: "Firma con tu wallet", freighter: "Firmar con Freighter", signing: "Esperando a Freighter…", submitting: "Enviando…", missing: "Freighter no está instalada en este navegador. Escanea el QR con otra wallet o pega abajo la transacción firmada.", declined: "Freighter no firmó la transacción.", wrongAccount: "Freighter está en otra cuenta. Cámbiala a {account} y vuelve a intentarlo.", wrongNetwork: "Freighter está en otra red. Cámbiala a {network} y vuelve a intentarlo.", networks: { testnet: "Testnet", public: "Red pública" } },
+    wallet: { signTitle: "Firma con tu wallet", freighter: "Firmar con Freighter", missing: "Freighter no está instalada en este navegador. Escanea el QR con otra wallet o pega abajo la transacción firmada.", declined: "Freighter no firmó la transacción.", wrongAccount: "Freighter está en otra cuenta. Cámbiala a {account} y vuelve a intentarlo.", finding: "Buscando wallets en este navegador…", walletsOn: "Wallets de {chain} en este navegador", confirmIn: "Confirma en {wallet}…", otherAccount: "{wallet} está en otra cuenta. Cámbiala a {account} y vuelve a intentarlo.", declinedBy: "{wallet} no lo aprobó.", failedIn: "{wallet} no pudo terminar: {reason}", approveIn: "Primero aprueba el token en {wallet}…", approvalMining: "Esperando que la aprobación se confirme en la red…", approvalFailed: "La aprobación falló en la red.", waitingNode: "Enviada. Esperando que la red vea la transacción…", sending: "Enviando la transacción…", payTitle: "Paga con tu wallet" },
     liquidity: {
       title: "Pools de liquidez",
       sub: "{n} operaciones · pools AMM en Stellar",
