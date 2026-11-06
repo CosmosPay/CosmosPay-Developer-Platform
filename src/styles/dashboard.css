@@ -920,6 +920,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
   /* the id shortens and its copy button keeps its own room beside it (it sat over the id) */
   .inst .tx td.tid .ref { display: flex; width: 100%; }
   .inst .tx td.tid .ref > .rec-link { flex: 1 1 auto; }
+  .inst .tx td.tid .rec-link > code { display: block; overflow: hidden; text-overflow: ellipsis; }
 }
 /* a row's menu (RowMenu): fixed and portaled, as the previews, so no table scroller clips it; it
    grows out of its button and opens upwards near the window's bottom */
