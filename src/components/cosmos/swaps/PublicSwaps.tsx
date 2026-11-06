@@ -116,27 +116,22 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
         <div className="pswap-widget" id="pswap-widget">
           <SwapWidget
             api={api} tier="public" preset={pick} feeBps={feeBps} onCreated={(kind, rec) => setOpened({ kind, rec })}
-            accounts={org && orgs!.length > 1 ? {
-              label: p.orgLabel, value: org.id, onChange: setOrgId,
+            accounts={org ? {
+              label: p.commissionLabel, value: org.id, onChange: setOrgId,
               options: orgs!.map((o) => ({ value: o.id, label: o.name, hint: `${(t.dash.planNames as Record<string, string>)[o.plan] || o.plan}: ${swapFeePct(o.plan)}` })),
-            } : null}
+            } : {
+              label: p.commissionLabel, value: "public", onChange: () => {},
+              options: [{ value: "public", label: p.noAccount, hint: swapFeePct("community") }],
+            }}
           />
         </div>
         <div className="pswap-copy">
           <ul className="pswap-facts" role="list">
             {p.facts.map((f) => <li key={f.t}><b>{fmt(f.t, nets)}</b><span>{fmt(f.s, nets)}</span></li>)}
           </ul>
-          {org ? (
-            <div className="pswap-fee is-org">
-              <p>{fmt(p.feeSignedIn, { org: org.name, plan: (t.dash.planNames as Record<string, string>)[org.plan] || org.plan, pct: swapFeePct(org.plan) })}</p>
-              {/* The organization is chosen in the swap form's settings (SwapWidget `accounts`). */}
-              <div className="pswap-org">
-                <a href={`${DASH}?view=swaps`}>{p.yourSwaps}</a>
-              </div>
-            </div>
-          ) : (
-            <p className="pswap-fee">{fmt(p.fee, rates)}</p>
-          )}
+          {/* The commission is chosen in the swap form's settings (SwapWidget `accounts`) and the
+              quote shows what it comes to: nothing about it is written here. */}
+          {org && <a className="pswap-yours" href={`${DASH}?view=swaps`}>{p.yourSwaps}</a>}
         </div>
       </section>
 

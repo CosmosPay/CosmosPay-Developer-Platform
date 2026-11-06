@@ -217,7 +217,8 @@ export const invites = {
      destAssetCode, destAssetIssuer?, slippageBps? } → a quote.
    create body: quote fields + { source, destination?, memo? } → a Swap (Stellar) or a
      ChainSwap (Solana / Monad: `transaction` to sign, `approval` on Monad when needed).
-   submit: { signedXdr } for Stellar, { signedTransaction } for Solana / Monad. */
+   submit: { signedXdr } for Stellar, { signedTransaction } for Solana / Monad, { txHash } for a
+     Monad swap a browser wallet already sent. */
 export const swaps = {
   list: (org, env, query = {}) => {
     const qs = new URLSearchParams({ env: env || "dev" });
@@ -231,7 +232,7 @@ export const swaps = {
   get: (id, org, env) => request(`/api/swaps/${encodeURIComponent(id)}?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`),
   quote: (body) => request("/api/swaps/quote", { method: "POST", body: JSON.stringify(body) }),
   create: (body) => request("/api/swaps", { method: "POST", body: JSON.stringify(body) }),
-  /* `signed` is { signedXdr } or { signedTransaction }; a bare string is a Stellar XDR. */
+  /* `signed` is { signedXdr }, { signedTransaction } or { txHash }; a bare string is a Stellar XDR. */
   submit: (id, org, env, signed) => request(`/api/swaps/${encodeURIComponent(id)}/submit?env=${env || "dev"}${org ? `&org=${encodeURIComponent(org)}` : ""}`, { method: "POST", body: JSON.stringify(typeof signed === "string" ? { signedXdr: signed } : signed) }),
 };
 
