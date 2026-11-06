@@ -290,6 +290,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   one file. `INDEXNOW_KEY` is public by design; `access: 'secret'` only makes it a runtime read.
   The script refuses to run without it, and `--submit` skips a domain whose key file does not
   answer with the key (IndexNow would answer 403) or whose origin is not public https.
+  **On the VPS, read the sitemaps from the app itself**: `--sitemaps-from http://127.0.0.1:4321`
+  (or `INDEXNOW_SITEMAPS_FROM`) fetches each sitemap there with its domain as the Host header.
+  Through Cloudflare the server's own requests for the sitemaps answered 403 (2026-11-05: that
+  release's submit sent nothing, while a workstation got 200); the key file is still checked at
+  the public address, as the engines read it.
 - **A site or gateway page has one address per language**: asked with a trailing slash, a GET is
   a 301 to it without (`routeRequest`), and a `?lang=` the pages do not take as written (`ES`,
   `pt-BR`, `xx`, twice) is a 301 to the language it names, or to the bare path
@@ -1009,6 +1014,36 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   503 misconfigured. A local server can set `SWAP_COMMISSION_DEV_WAIVER=true` instead: it waives
   (and logs) the commission; the boot refuses it in production.
 
+### Fiat: P2P on-ramp and off-ramp
+
+- **The sidebar's Fiat group holds On-ramp (`?view=onramp`) and Off-ramp (`?view=offramp`)**
+  (product owner, 2026-11-05), both `views/P2pRampView.tsx` (`side` "buy" / "sell"): crypto bought
+  with local money from P2P sellers, and sold for it to P2P buyers, through the Payments API's
+  `/v1/onramp/p2p` and `/v1/offramp/p2p` (its `eldorado` plugin) behind the `/api/onramp` and
+  `/api/offramp` proxies. BlindPay's view stays in the group, off with `DISABLED_VIEWS`; give it
+  its own label before turning it back on.
+- **Everything the marketplace's own window offers** (product owner: "every method of the widget,
+  which has several currencies and networks"): every local currency with its payment methods, every
+  network the market lists (`networks`, ten on mainnet, Arbitrum Sepolia alone in the sandbox) and
+  every token on it, searched per network on the API (`GET .../p2p/tokens?chainId=&q=`; thousands
+  per network, so never loaded whole), each network's main assets first and the tokens nobody uses
+  after them (product owner, 2026-11-05; the API's `P2P_MAIN_TOKENS`, matched by address). Prices are local money per USD stablecoin, times the token's
+  USD price (`tokenUsd`: a USD stablecoin without one counts as a dollar, the sandbox's test USDT).
+- **The form is the swap widget's pattern** (product owner: "take the swap as the example"):
+  `components/RampWidget.tsx` in the dialog the filter row's button opens: the two wells (the
+  local currency's flag alone, `CurrencyMark`, product owner: "the flag is more than enough"; the
+  token with its network's badge), the market price, replaced on its own by the firm quote once the
+  order is complete (a 503 means the deployment has no integrator ids and the widget stops asking),
+  the payment method, the account and one button that says what is missing. The view is the
+  Payments table: figures counted from the sessions, search, currency, network and date filters,
+  rows opening a `RecordDetail` with the hosted window's link.
+- **A purchase fixes its delivery address in the hosted window; a sale never fixes one**: the
+  seller connects the wallet that sends there. The dashboard connects no wallet. The tab is claimed
+  on the click, before the session is created, so a popup blocker lets it through.
+- Mock mode: `src/lib/mock/handlers/p2p-ramp.ts` over `p2p-ramp-market.ts`, the marketplace's
+  market recorded on 2026-11-05 for both environments (each network's main assets, in the API's
+  order, then a few others).
+
 ### The payments landing
 
 - **The gateway is several pages** (multi-page layout, product owner, 2026-10-25: "so not
@@ -1714,7 +1749,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the organizations where they may open payments (`payments:create`), and swaps as one of them
   (`orgSwapApi(org, "prod", DEV)`: the platform's proxies with the session cookie), so the quote
   and the record carry that organization's plan's rate and the swap lands in its dashboard; with
-  several organizations a select picks one. Signed out, or with none, it is the public key.
+  several organizations the swap form's settings (the gear, above the slippage) pick one, each with
+  its plan's commission (`SwapWidget accounts`; product owner, 2026-11-05: not a select beside the
+  form). Signed out, or with none, it is the public key.
+- **The token picker writes no count** (product owner, 2026-11-05: "201 tokens" should not be
+  written there): how many tokens it shows is a status for assistive tech only.
 - **The landing always quotes on production** (product owner, 2026-11-04: "en landing siempre es
   cotización de producción, no de test"). The public swap page, signed in or not, uses mainnet
   (`"prod"`, the widget's `public` tier); never a test network there.
@@ -1919,7 +1958,8 @@ consumer headers.
   `INDEXNOW_KEY` in the production `.env` and restart so the process reloads it (it is read at
   runtime, no rebuild: `pm2 delete devplat; pm2 start ecosystem.config.cjs --only devplat`;
   check `https://<each domain>/<key>.txt` answers the key). Then, after every deploy that
-  changes indexable pages, run `npm run indexnow` (dry run) and `npm run indexnow -- --submit`.
+  changes indexable pages, run `npm run indexnow` (dry run) and `npm run indexnow -- --submit`
+  (on the VPS with `--sitemaps-from http://127.0.0.1:4321`).
 - **Deploy with `npm ci && npm run build`, never `npm install`.** Dependencies are external to
   `dist/`, so a caret that resolves a new minor against an old build only fails when the server
   boots (`does not provide an export named …`, PM2 restart-looping). `npm run test:smoke` is

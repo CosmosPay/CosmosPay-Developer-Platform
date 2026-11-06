@@ -102,7 +102,10 @@ export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[]
       { group: "payments", views: ["payments", "zkPayments", "zkAccounts", "customers", "products"] },
       { view: "balances" },
       { group: "swaps", views: ["swaps", "liquidity"] },
-      { view: "blindpay" },
+      // Fiat: local money in and out through P2P sellers and buyers (product owner, 2026-11-05:
+      // "a section called Fiat with on-ramp and off-ramp as its options"). BlindPay's view stays
+      // in it, off with DISABLED_VIEWS; give it its own label before turning it back on.
+      { group: "fiat", views: ["onramp", "offramp", "blindpay"] },
       { group: "developers", views: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
     ],
   },

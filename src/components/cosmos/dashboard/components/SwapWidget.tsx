@@ -44,9 +44,14 @@ const SLIPPAGES = ["", "50", "100", "200"];
    accepts, whenever `n` changes. */
 export type SwapPick = { from: (t: SwapToken) => boolean; to: (t: SwapToken) => boolean; n: number };
 
+/* Who the swap is made as, chosen in the form's settings (the public swap page, signed in with
+   several organizations; product owner, 2026-11-05: the organization picker belongs in the swap
+   form's options, not beside it). Each option names an organization and its commission. */
+export type SwapAccounts = { label: string; value: string; options: { value: string; label: string; hint?: string }[]; onChange: (value: string) => void };
+
 /* `feeBps`: the commission (basis points) the caller's swaps pay, the organization owner's plan's or
    the public consumer's; the server sets the real one, and the quote's rate replaces this. */
-export function SwapWidget({ api, tier, onCreated, preset = null, feeBps = null }: { api: SwapApi; tier: Tier; onCreated: (kind: SwapRecordKind, rec: any) => void; preset?: SwapPick | null; feeBps?: number | null }) {
+export function SwapWidget({ api, tier, onCreated, preset = null, feeBps = null, accounts = null }: { api: SwapApi; tier: Tier; onCreated: (kind: SwapRecordKind, rec: any) => void; preset?: SwapPick | null; feeBps?: number | null; accounts?: SwapAccounts | null }) {
   const t = useT();
   const lang = useLang();
   const w = t.dash.swaps.widget;
@@ -243,7 +248,7 @@ export function SwapWidget({ api, tier, onCreated, preset = null, feeBps = null 
     <section className="swapper" aria-labelledby="swapper-h">
       <div className="swapper-head">
         <h2 id="swapper-h">{w.title}</h2>
-        <SlippageMenu value={slippage} onChange={setSlippage} />
+        <SlippageMenu value={slippage} onChange={setSlippage} accounts={accounts} />
       </div>
 
       <div className="sp">
@@ -353,9 +358,9 @@ export function SwapWidget({ api, tier, onCreated, preset = null, feeBps = null 
   );
 }
 
-/* The slippage setting, a small popover from the gear: automatic (the service default) or a
-   fixed tolerance. */
-function SlippageMenu({ value, onChange }) {
+/* The form's settings, a small popover from the gear: who the swap is made as, when there is a
+   choice (`accounts`), and the slippage: automatic (the service default) or a fixed tolerance. */
+function SlippageMenu({ value, onChange, accounts = null }: { value: string; onChange: (v: string) => void; accounts?: SwapAccounts | null }) {
   const t = useT();
   const w = t.dash.swaps.widget;
   const [open, setOpen] = useState(false);
@@ -368,6 +373,19 @@ function SlippageMenu({ value, onChange }) {
       </button>
       {pop.mounted && (
         <div className="slip-pop" id="swap-slippage" data-state={pop.state}>
+          {accounts && (
+            <div className="slip-acct">
+              <p className="slip-t" id="swap-account-t">{accounts.label}</p>
+              <div className="slip-acct-list" role="radiogroup" aria-labelledby="swap-account-t">
+                {accounts.options.map((o) => (
+                  <button key={o.value} type="button" role="radio" aria-checked={accounts.value === o.value} className={`slip-acct-opt${accounts.value === o.value ? " on" : ""}`} onClick={() => { accounts.onChange(o.value); setOpen(false); }}>
+                    <span className="slip-acct-name">{o.label}</span>
+                    {o.hint && <span className="slip-acct-hint">{o.hint}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <p className="slip-t" id="swap-slippage-t">{w.slippage}</p>
           <div className="seg-tabs" role="group" aria-labelledby="swap-slippage-t">
             {SLIPPAGES.map((s) => (

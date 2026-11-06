@@ -137,6 +137,16 @@ export const TAGS = [
     description: 'Fiat in: quotes, payins, virtual accounts, and the trustline for the asset delivered.',
   },
   {
+    name: 'p2p-onramp',
+    title: 'P2P On-ramp',
+    description: 'Local money in through P2P sellers: the market, a firm quote, and purchase sessions that open a hosted purchase delivered to the address you name.',
+  },
+  {
+    name: 'p2p-offramp',
+    title: 'P2P Off-ramp',
+    description: 'Local money out through P2P buyers: the market, a firm quote, and sale sessions that open a hosted sale the seller sends the stablecoin from.',
+  },
+  {
     name: 'offramp',
     title: 'Off-ramp',
     description: 'Fiat out: quotes, payout authorization, and payout tracking.',

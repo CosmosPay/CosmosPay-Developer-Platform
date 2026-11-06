@@ -12,7 +12,7 @@ import { SIDE } from "@/components/cosmos/dashboard/data";
    viewer's role may not see; a group left with one view is drawn as that one entry. */
 
 const GROUP_ICON: Record<string, string> = {
-  payments: "payments", swaps: "swaps", developers: "developers", settings: "settings", help: "help", admin: "adminOverview",
+  payments: "payments", swaps: "swaps", fiat: "fiat", developers: "developers", settings: "settings", help: "help", admin: "adminOverview",
 };
 
 type Props = {

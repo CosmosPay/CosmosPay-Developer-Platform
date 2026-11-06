@@ -324,13 +324,15 @@ export const liquidity = {
    permission (enforced server-side). Use the path-style helpers, e.g.
    kyc.get("receivers", env, org), kyc.post(`receivers/${id}/wallets`, env, org, body). */
 function blindpayClient(prefix) {
-  const url = (path, env, org) => {
+  // `query`: the read's own parameters (the P2P ramps' token search: chainId, q, take, skip).
+  const url = (path, env, org, query = {}) => {
     const qs = new URLSearchParams({ env: env || "dev" });
     if (org) qs.set("org", org);
+    for (const [k, v] of Object.entries(query)) if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
     return `/api/${prefix}/${path}?${qs.toString()}`;
   };
   return {
-    get: (path, env, org) => request(url(path, env, org)),
+    get: (path, env, org, query = {}) => request(url(path, env, org, query)),
     post: (path, env, org, body) => request(url(path, env, org), { method: "POST", body: JSON.stringify(body || {}) }),
     patch: (path, env, org, body) => request(url(path, env, org), { method: "PATCH", body: JSON.stringify(body || {}) }),
     remove: (path, env, org) => request(url(path, env, org), { method: "DELETE" }),

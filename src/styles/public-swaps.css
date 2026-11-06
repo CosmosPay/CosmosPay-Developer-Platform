@@ -23,8 +23,6 @@
 .pswap-fee.is-org { max-width: 46ch; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); }
 .pswap-fee.is-org p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
 .pswap-org { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 16px; margin-top: 12px; }
-.pswap-org label { display: grid; gap: 6px; flex: 1 1 200px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
-.pswap-org select { width: 100%; padding: 9px 12px; font-size: 14px; }
 .pswap-org a { font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .pswap-widget { scroll-margin-top: 140px; }
 .pswap-widget .swapper { margin: 0; }
