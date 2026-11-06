@@ -469,9 +469,11 @@ function RampTokenSheet({ side, env, orgId, networks, selected, onPick, onClose 
             options={networks.map((n) => ({ value: String(n.chainId), label: n.name, count: n.tokenCount, icon: <NetworkMark chain={rampChainMark(n.chainId)} size={18} /> }))}
           />
         </div>
-        <p className="tpick-count" role="status" aria-live="polite">
-          {page ? (page.total > page.rows.length ? fmt(w.tokensMore, { n: page.rows.length, total: page.total }) : fmt(w.tokensCount, { n: page.rows.length })) : page === null ? w.tokensError : " "}
+        {/* How many tokens the list shows: announced, not written (product owner, 2026-11-05). */}
+        <p className="sr-only" role="status" aria-live="polite">
+          {page ? (page.total > page.rows.length ? fmt(w.tokensMore, { n: page.rows.length, total: page.total }) : fmt(w.tokensCount, { n: page.rows.length })) : ""}
         </p>
+        {page === null && <p className="tpick-count is-error" role="alert">{w.tokensError}</p>}
         <ul className="tpick-list" ref={list} role="list" onKeyDown={onKey} aria-busy={page === undefined || undefined}>
           {page === undefined && [0, 1, 2, 3, 4].map((i) => <li key={i} className="ramp-pick-sk"><Sk className="lg" w="34px" /><Sk w={`${40 + i * 7}%`} /></li>)}
           {page && page.rows.map((x) => (
