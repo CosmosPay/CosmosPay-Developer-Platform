@@ -8,8 +8,11 @@ _openapi:
     - ./openapi.json
   toc:
     - depth: 2
-      title: Read what stablecoins can be sold for in local money
-      url: '#read-what-stablecoins-can-be-sold-for-in-local-money'
+      title: Read what tokens can be sold for local money
+      url: '#read-what-tokens-can-be-sold-for-local-money'
+    - depth: 2
+      title: List the tokens a sale can send on one chain
+      url: '#list-the-tokens-a-sale-can-send-on-one-chain'
     - depth: 2
       title: Get a firm price for a sale for local money
       url: '#get-a-firm-price-for-a-sale-for-local-money'
@@ -24,8 +27,10 @@ _openapi:
       url: '#read-a-sale-opened-for-local-money'
   structuredData:
     headings:
-      - content: Read what stablecoins can be sold for in local money
-        id: read-what-stablecoins-can-be-sold-for-in-local-money
+      - content: Read what tokens can be sold for local money
+        id: read-what-tokens-can-be-sold-for-local-money
+      - content: List the tokens a sale can send on one chain
+        id: list-the-tokens-a-sale-can-send-on-one-chain
       - content: Get a firm price for a sale for local money
         id: get-a-firm-price-for-a-sale-for-local-money
       - content: List the sales opened for local money
@@ -38,22 +43,37 @@ _openapi:
       - content: >-
           The currencies a seller can be paid in on the key's network (a `prod`
           key reads mainnet, a `dev` key the sandbox), each with its payment
-          methods, sell price (local money per stablecoin) and minimum (in the
-          stablecoin), plus the chain and the stablecoins a sale takes. Read
-          from the P2P marketplace and served from memory for up to a minute; a
-          currency without a price, a minimum or a payment method is left out.
+          methods, sell price (local money per USD stablecoin) and minimum (in
+          USD), plus the chains a sale can send from (each with its token count)
+          and the token a form starts from. Read from the P2P marketplace and
+          served from memory for up to a minute; a currency without a price, a
+          minimum or a payment method is left out, and so is a chain whose token
+          list cannot be read right now.
 
 
           Requires the `offramp:read` scope. The shared public key may call it.
-        heading: read-what-stablecoins-can-be-sold-for-in-local-money
+        heading: read-what-tokens-can-be-sold-for-local-money
       - content: >-
-          The P2P marketplace prices the sale of `amount` of the stablecoin sent
-          from `address`: the local money paid with fees taken, the least it can
-          pay, the rate and the fees, valid until `expiresAt`. Nothing is
-          stored. The order is checked against the market first (currency,
-          payment method, token and minimum: `400 validation_failed` with the
-          reason). A deployment without the marketplace integrator ids answers
-          `503 misconfigured`; the market and the sessions work without them.
+          One chain of the market (`chainId`, one of its `networks`), a page at
+          a time: each token with its contract address, symbol, decimals and USD
+          price. The stablecoins the P2P leg settles in come first, then the
+          chain’s own coin and the most held tokens, then the rest in the
+          marketplace’s order. `q` searches by symbol fragment or exact address.
+          A chain the market does not offer right now is `400
+          validation_failed`.
+
+
+          Requires the `offramp:read` scope. The shared public key may call it.
+        heading: list-the-tokens-a-sale-can-send-on-one-chain
+      - content: >-
+          The P2P marketplace prices the sale of `amount` of the token sent from
+          `address` on `chainId`: the local money paid with fees taken, the
+          least it can pay, the rate and the fees, valid until `expiresAt`.
+          Nothing is stored. The order is checked against the market first
+          (currency, payment method, token and minimum: `400 validation_failed`
+          with the reason). A deployment without the marketplace integrator ids
+          answers `503 misconfigured`; the market and the sessions work without
+          them.
 
 
           Requires the `offramp:write` scope.
@@ -71,13 +91,14 @@ _openapi:
       - content: >-
           Records the order and answers `widgetUrl`, the hosted sale that takes
           it: open it in a browser tab or window, where the seller signs in,
-          verifies their identity, connects the wallet holding the stablecoin
-          and sends it, and a P2P buyer pays the local money with the chosen
-          method. `address` is recorded as the account it is sent from; the
-          widget does not fix it. `estimatedAmountOut` is the local money at the
-          market price, rounded down; the widget quotes the firm figure first.
-          The order is checked against the market (`400 validation_failed` with
-          the reason), and opened on the key's network.
+          verifies their identity, connects the wallet holding the token and
+          sends it, and a P2P buyer pays the local money with the chosen method.
+          `address` is recorded as the account it is sent from; the widget does
+          not fix it. `estimatedAmountOut` is the local money at the market
+          price, rounded down (null for a token with no USD price); the widget
+          quotes the firm figure first. The order is checked against the market
+          (`400 validation_failed` with the reason), and opened on the key's
+          network.
 
 
           Requires the `offramp:write` scope.
@@ -100,7 +121,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/offramp/p2p/market","method":"get"},{"path":"/v1/offramp/p2p/quotes","method":"post"},{"path":"/v1/offramp/p2p/sessions","method":"get"},{"path":"/v1/offramp/p2p/sessions","method":"post"},{"path":"/v1/offramp/p2p/sessions/{id}","method":"get"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/offramp/p2p/market","method":"get"},{"path":"/v1/offramp/p2p/tokens","method":"get"},{"path":"/v1/offramp/p2p/quotes","method":"post"},{"path":"/v1/offramp/p2p/sessions","method":"get"},{"path":"/v1/offramp/p2p/sessions","method":"post"},{"path":"/v1/offramp/p2p/sessions/{id}","method":"get"}]} showTitle />
     </>
   );
 }

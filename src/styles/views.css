@@ -1180,3 +1180,7 @@ a.icon-mini { text-decoration: none; }
 .ramp .sp-top .sp-usd { font-size: 12.5px; }
 .sq-src { padding: 4px 0; color: var(--ink-3); font: 500 12.5px/1 var(--ff-sans); }
 .modal:has(> .ramp-pick) { width: min(520px, 100%); }
+.ramp-flag.is-mono { background: var(--line); }
+.ramp-flag:not(.is-mono)::after { content: ""; }
+.ramp-pick-sk { display: flex; align-items: center; gap: 12px; padding: 10px; }
+.ramp-pick-sk .sk.lg:first-child { flex: 0 0 34px; height: 34px; border-radius: 50%; }

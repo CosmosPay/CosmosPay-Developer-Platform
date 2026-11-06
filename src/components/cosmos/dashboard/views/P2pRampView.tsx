@@ -24,9 +24,9 @@ import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink"
 import { RecordDetail } from "@/components/cosmos/dashboard/components/RecordDetail";
 import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
-import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
+import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
 import {
-  RampWidget, CurrencyMark, currencyName, methodName, rampApi, rampChainName, rampExplorer,
+  RampWidget, CurrencyMark, RampTokenMark, currencyName, methodName, rampApi, rampChainMark, rampChainName, rampExplorer,
   type RampMarket, type RampSide,
 } from "@/components/cosmos/dashboard/components/RampWidget";
 import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
@@ -48,7 +48,7 @@ export function P2pRampView({ side, canManage = false, orgId, env = "dev" }: { s
   const [error, setError] = useState(false);
   const [creating, setCreating] = useState(false);
   const [detail, setDetail] = useState<any>(null);
-  const defaults = useMemo(() => ({ q: "", currency: "all", date: "any" }), []);
+  const defaults = useMemo(() => ({ q: "", currency: "all", chain: "all", date: "any" }), []);
   const { filters, set, reset, active } = useListFilters(defaults, { date: DATE_RANGES });
 
   // The market and the sessions together; an answer for an organization or environment the
@@ -100,31 +100,38 @@ export function P2pRampView({ side, canManage = false, orgId, env = "dev" }: { s
   // No break inside an amount (NBSP): "120,000 ARS" wraps as a whole in a narrow cell.
   const NBSP = String.fromCharCode(160);
   const paid = (x) => [num(x.amount), side === "buy" ? x.currency : x.token].join(NBSP);
-  const got = (x) => ["≈", num(x.estimatedAmountOut), side === "buy" ? x.token : x.currency].join(NBSP);
+  // The estimate is null for a token the marketplace lists no USD price for.
+  const got = (x) => (x.estimatedAmountOut == null ? "-" : ["≈", num(x.estimatedAmountOut, side === "buy" && Number(x.estimatedAmountOut) < 1 ? 6 : 2), side === "buy" ? x.token : x.currency].join(NBSP));
   const fiatMark = (x, size = 22) => <CurrencyMark id={x.currency} size={size} />;
-  const tokenMark = (x, size = 22) => <TokenMark symbol={x.token} chain="arb" chainName={rampChainName(x.chainId)} size={size} />;
+  const tokenMark = (x, size = 22) => <RampTokenMark token={{ symbol: x.token, chainId: x.chainId }} networks={market?.networks} size={size} />;
+  const chainName = (x) => rampChainName(x.chainId, market?.networks ?? undefined);
 
   const matches = (x, skip) =>
     (skip === "currency" || filters.currency === "all" || x.currency === filters.currency) &&
+    (skip === "chain" || filters.chain === "all" || String(x.chainId) === filters.chain) &&
     inRange(x.createdAt, filters.date) &&
-    matchesQuery([x.id, x.address, x.currency, x.token, x.amount, x.estimatedAmountOut, x.reference, methodLabel(x), currencyName(x.currency, lang)], filters.q);
+    matchesQuery([x.id, x.address, x.currency, x.token, x.tokenAddress, x.amount, x.estimatedAmountOut, x.reference, methodLabel(x), currencyName(x.currency, lang), chainName(x)], filters.q);
   const view = rows.filter((x) => matches(x, null));
   const currencyRows = rows.filter((x) => matches(x, "currency"));
   const currencyCounts = countBy(currencyRows, (x) => x.currency);
   const currencyIds = [...new Set<string>([...(market?.currencies ?? []).map((c) => c.id), ...rows.map((x) => x.currency)])];
+  const chainRows = rows.filter((x) => matches(x, "chain"));
+  const chainCounts = countBy(chainRows, (x) => String(x.chainId));
+  const chainIds = [...new Set<number>([...(market?.networks ?? []).map((n) => n.chainId), ...rows.map((x) => Number(x.chainId))])];
 
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
 
   // Figures first, counted from the list.
   const weekAgo = Date.now() - WEEK_MS;
-  const stable = rows.reduce((sum, x) => sum + (Number(side === "buy" ? x.estimatedAmountOut : x.amount) || 0), 0);
   const byCurrency = countBy(rows, (x) => x.currency);
   const topCurrency = Object.entries(byCurrency).sort((a, b) => b[1] - a[1])[0]?.[0];
+  const byChain = countBy(rows, (x) => String(x.chainId));
+  const topChain = Object.entries(byChain).sort((a, b) => b[1] - a[1])[0]?.[0];
   const figures = [
     { key: "count", label: s.figures.count, value: String(rows.length) },
     { key: "week", label: s.figures.week, value: String(rows.filter((x) => new Date(x.createdAt).getTime() >= weekAgo).length) },
-    { key: "stable", label: s.figures.stable, value: num(stable) },
+    { key: "networks", label: s.figures.networks, value: String(Object.keys(byChain).length), sub: topChain ? fmt(s.figures.topNetwork, { network: rampChainName(Number(topChain), market?.networks ?? undefined) }) : undefined },
     { key: "currencies", label: s.figures.currencies, value: String(Object.keys(byCurrency).length), sub: topCurrency ? fmt(s.figures.top, { currency: currencyName(topCurrency, lang) }) : undefined },
   ];
 
@@ -141,7 +148,7 @@ export function P2pRampView({ side, canManage = false, orgId, env = "dev" }: { s
     { key: "copy", label: cm.copyId, icon: <IcCopy />, onClick: () => copy(x.id, t.toasts.copied) },
   ];
   const addressCell = (x) => (
-    <AddressLink chain="arb" address={x.address} label={s.addressRole} networkName={rampChainName(x.chainId)} explorer={rampExplorer(x.chainId, x.address)} />
+    <AddressLink chain={rampChainMark(x.chainId)} address={x.address} label={s.addressRole} networkName={chainName(x)} explorer={rampExplorer(x.chainId, x.address)} />
   );
 
   return (
@@ -157,6 +164,12 @@ export function P2pRampView({ side, canManage = false, orgId, env = "dev" }: { s
           options: [
             { key: "all", label: r.allCurrencies, count: currencyRows.length },
             ...currencyIds.map((id) => ({ key: id, label: `${currencyName(id, lang)} (${id})`, icon: <CurrencyMark id={id} size={18} />, count: currencyCounts[id] || 0 })),
+          ],
+        }, {
+          key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v),
+          options: [
+            { key: "all", label: fl.allNetworks, count: chainRows.length },
+            ...chainIds.map((id) => ({ key: String(id), label: rampChainName(id, market?.networks ?? undefined), icon: <NetworkMark chain={rampChainMark(id)} size={18} />, count: chainCounts[String(id)] || 0 })),
           ],
         }]}
         date={filters.date} onDate={(v) => set("date", v)}
@@ -212,7 +225,7 @@ export function P2pRampView({ side, canManage = false, orgId, env = "dev" }: { s
             [s.head.receives, <span className="cell-mark">{side === "buy" ? tokenMark(detail, 20) : fiatMark(detail, 20)}<span>{got(detail)}</span></span>],
             [s.head.method, methodLabel(detail)],
             [s.head.address, addressCell(detail)],
-            [r.network, rampChainName(detail.chainId)],
+            [r.network, <span className="cell-mark"><NetworkMark chain={rampChainMark(detail.chainId)} size={18} /><span>{chainName(detail)}</span></span>],
             [r.reference, <code>{detail.reference}</code>],
             [s.head.created, fmtDateTime(detail.createdAt)],
           ]}
