@@ -13,23 +13,27 @@ import { networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDe
 
 export { shortAddress };
 
-export function AddressLink({ chain, network, address, label, context }: {
+/* `explorer` and `networkName` stand in for a network the chain vocabulary has no explorer for
+   (an EVM account a P2P ramp delivers to on Arbitrum). */
+export function AddressLink({ chain, network, address, label, context, explorer, networkName }: {
   chain: string;
   network?: string | null;
   address?: string | null;
   label?: string;
   context?: () => [string, ReactNode][];
+  explorer?: string | null;
+  networkName?: string;
 }) {
   const t = useT();
   if (!address) return <span>-</span>;
-  const url = isChain(chain) ? explorerAccountUrl(chain, tierOf(network ?? ""), address) : null;
+  const url = explorer !== undefined ? explorer : isChain(chain) ? explorerAccountUrl(chain, tierOf(network ?? ""), address) : null;
   return (
     <RecordLink
       href={url} external className="addr-link" title={address} copy={address}
       preview={() => (
         <PreviewCard
           label={label || t.dash.common.account} title={address} wrap
-          fields={[[t.dash.paylinks.detail.fields.network, networkLabel({ chain, network })], ...(context ? context() : [])]}
+          fields={[[t.dash.paylinks.detail.fields.network, networkName ?? networkLabel({ chain, network })], ...(context ? context() : [])]}
         />
       )}
     >

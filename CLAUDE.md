@@ -1009,6 +1009,36 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   503 misconfigured. A local server can set `SWAP_COMMISSION_DEV_WAIVER=true` instead: it waives
   (and logs) the commission; the boot refuses it in production.
 
+### Fiat: P2P on-ramp and off-ramp
+
+- **The sidebar's Fiat group holds On-ramp (`?view=onramp`) and Off-ramp (`?view=offramp`)**
+  (product owner, 2026-11-05), both `views/P2pRampView.tsx` (`side` "buy" / "sell"): crypto bought
+  with local money from P2P sellers, and sold for it to P2P buyers, through the Payments API's
+  `/v1/onramp/p2p` and `/v1/offramp/p2p` (its `eldorado` plugin) behind the `/api/onramp` and
+  `/api/offramp` proxies. BlindPay's view stays in the group, off with `DISABLED_VIEWS`; give it
+  its own label before turning it back on.
+- **Everything the marketplace's own window offers** (product owner: "every method of the widget,
+  which has several currencies and networks"): every local currency with its payment methods, every
+  network the market lists (`networks`, ten on mainnet, Arbitrum Sepolia alone in the sandbox) and
+  every token on it, searched per network on the API (`GET .../p2p/tokens?chainId=&q=`; thousands
+  per network, so never loaded whole), each network's main assets first and the tokens nobody uses
+  after them (product owner, 2026-11-05; the API's `P2P_MAIN_TOKENS`, matched by address). Prices are local money per USD stablecoin, times the token's
+  USD price (`tokenUsd`: a USD stablecoin without one counts as a dollar, the sandbox's test USDT).
+- **The form is the swap widget's pattern** (product owner: "take the swap as the example"):
+  `components/RampWidget.tsx` in the dialog the filter row's button opens: the two wells (the
+  local currency's flag alone, `CurrencyMark`, product owner: "the flag is more than enough"; the
+  token with its network's badge), the market price, replaced on its own by the firm quote once the
+  order is complete (a 503 means the deployment has no integrator ids and the widget stops asking),
+  the payment method, the account and one button that says what is missing. The view is the
+  Payments table: figures counted from the sessions, search, currency, network and date filters,
+  rows opening a `RecordDetail` with the hosted window's link.
+- **A purchase fixes its delivery address in the hosted window; a sale never fixes one**: the
+  seller connects the wallet that sends there. The dashboard connects no wallet. The tab is claimed
+  on the click, before the session is created, so a popup blocker lets it through.
+- Mock mode: `src/lib/mock/handlers/p2p-ramp.ts` over `p2p-ramp-market.ts`, the marketplace's
+  market recorded on 2026-11-05 for both environments (each network's main assets, in the API's
+  order, then a few others).
+
 ### The payments landing
 
 - **The gateway is several pages** (multi-page layout, product owner, 2026-10-25: "so not

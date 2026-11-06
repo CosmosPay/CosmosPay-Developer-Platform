@@ -13444,6 +13444,888 @@
         ]
       }
     },
+    "/v1/onramp/p2p/market": {
+      "get": {
+        "description": "The currencies a buyer can pay with on the key's network (a `prod` key reads mainnet, a `dev` key the sandbox), each with its payment methods, buy price (local money per USD stablecoin) and minimum, plus the chains a purchase can deliver on (each with its token count) and the token a form starts from. Read from the P2P marketplace and served from memory for up to a minute; a currency without a price, a minimum or a payment method is left out, and so is a chain whose token list cannot be read right now.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
+        "operationId": "P2pOnrampController_market_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pMarketEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Read what can be bought with local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      }
+    },
+    "/v1/onramp/p2p/tokens": {
+      "get": {
+        "description": "One chain of the market (`chainId`, one of its `networks`), a page at a time: each token with its contract address, symbol, decimals and USD price. The network’s main assets come first, matched by address (its own coin, its USD stablecoins, the wrapped coin, bitcoin, its token, other stablecoins, DeFi blue chips, liquid staked ether), then every other token in the marketplace’s order. `q` searches by symbol fragment or exact address. A chain the market does not offer right now is `400 validation_failed`.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
+        "operationId": "P2pOnrampController_tokens_v1",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Page size: how many tokens to return (1 to 200).",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "How many items to skip before this page (offset).",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "chainId",
+            "required": true,
+            "in": "query",
+            "description": "EIP-155 id of the chain: a `chainId` of the market’s `networks`.",
+            "schema": {
+              "example": 42161,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "A symbol fragment (any case) or a token contract address (exact, any case).",
+            "schema": {
+              "example": "usd",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pTokenListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "List the tokens a purchase can deliver on one chain",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      }
+    },
+    "/v1/onramp/p2p/quotes": {
+      "post": {
+        "description": "The P2P marketplace prices the order: the token delivered on `chainId` with fees and the swap taken, the least it can deliver, the rate and the fees, valid until `expiresAt`. Nothing is stored. The order is checked against the market first (currency, payment method, chain, token, decimals and minimum: `400 validation_failed` with the reason). A deployment without the marketplace integrator ids answers `503 misconfigured`; the market and the sessions work without them.\n\nRequires the `onramp:write` scope.",
+        "operationId": "P2pOnrampController_quote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/P2pOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pQuoteEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Get a firm price for a purchase with local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "onramp-p2p:quote",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      }
+    },
+    "/v1/onramp/p2p/sessions": {
+      "post": {
+        "description": "Records the order and answers `widgetUrl`, the hosted purchase that takes it: open it in a browser tab or window, where the buyer signs in, verifies their identity and pays a P2P seller. `address` is fixed as the recipient there, so the token can only be delivered to it, on `chainId`. `estimatedAmountOut` is the market price, rounded down (null for a token with no USD price); the widget quotes the firm figure before payment. The order is checked against the market first (`400 validation_failed` with the reason), and opened on the key's network.\n\nRequires the `onramp:write` scope.",
+        "operationId": "P2pOnrampController_createSession_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/P2pOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pSessionEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Open a purchase with local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "onramp-p2p:session",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      },
+      "get": {
+        "description": "The purchases this key's consumer opened on the key's network, newest first, from this service's records (no call to the marketplace). Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`, where `total` counts every matching session.\n\nRequires the `onramp:read` scope.",
+        "operationId": "P2pOnrampController_findAll_v1",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Page size: how many items to return (1 to 100).",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "How many items to skip before this page (offset).",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pSessionListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the purchases opened with local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ]
+      }
+    },
+    "/v1/onramp/p2p/sessions/{id}": {
+      "get": {
+        "description": "One purchase of this key's consumer on the key's network, from this service's records, with its widget URL. Another consumer's session, one opened on the other network, or a sale, is the 404 of a missing one.\n\nRequires the `onramp:read` scope.",
+        "operationId": "P2pOnrampController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Cosmos Pay id of the session.",
+            "schema": {
+              "example": "clz9xp2p0001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pSessionEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a purchase opened with local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ]
+      }
+    },
+    "/v1/offramp/p2p/market": {
+      "get": {
+        "description": "The currencies a seller can be paid in on the key's network (a `prod` key reads mainnet, a `dev` key the sandbox), each with its payment methods, sell price (local money per USD stablecoin) and minimum (in USD), plus the chains a sale can send from (each with its token count) and the token a form starts from. Read from the P2P marketplace and served from memory for up to a minute; a currency without a price, a minimum or a payment method is left out, and so is a chain whose token list cannot be read right now.\n\nRequires the `offramp:read` scope. The shared public key may call it.",
+        "operationId": "P2pOfframpController_market_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pMarketEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Read what tokens can be sold for local money",
+        "tags": [
+          "p2p-offramp"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "offramp:read"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      }
+    },
+    "/v1/offramp/p2p/tokens": {
+      "get": {
+        "description": "One chain of the market (`chainId`, one of its `networks`), a page at a time: each token with its contract address, symbol, decimals and USD price. The network’s main assets come first, matched by address (its own coin, its USD stablecoins, the wrapped coin, bitcoin, its token, other stablecoins, DeFi blue chips, liquid staked ether), then every other token in the marketplace’s order. `q` searches by symbol fragment or exact address. A chain the market does not offer right now is `400 validation_failed`.\n\nRequires the `offramp:read` scope. The shared public key may call it.",
+        "operationId": "P2pOfframpController_tokens_v1",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Page size: how many tokens to return (1 to 200).",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "How many items to skip before this page (offset).",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "chainId",
+            "required": true,
+            "in": "query",
+            "description": "EIP-155 id of the chain: a `chainId` of the market’s `networks`.",
+            "schema": {
+              "example": 42161,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "A symbol fragment (any case) or a token contract address (exact, any case).",
+            "schema": {
+              "example": "usd",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pTokenListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "List the tokens a sale can send on one chain",
+        "tags": [
+          "p2p-offramp"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "offramp:read"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      }
+    },
+    "/v1/offramp/p2p/quotes": {
+      "post": {
+        "description": "The P2P marketplace prices the sale of `amount` of the token sent from `address` on `chainId`: the local money paid with fees taken, the least it can pay, the rate and the fees, valid until `expiresAt`. Nothing is stored. The order is checked against the market first (currency, payment method, token and minimum: `400 validation_failed` with the reason). A deployment without the marketplace integrator ids answers `503 misconfigured`; the market and the sessions work without them.\n\nRequires the `offramp:write` scope.",
+        "operationId": "P2pOfframpController_quote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/P2pOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pQuoteEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Get a firm price for a sale for local money",
+        "tags": [
+          "p2p-offramp"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "offramp-p2p:quote",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "offramp:write"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      }
+    },
+    "/v1/offramp/p2p/sessions": {
+      "post": {
+        "description": "Records the order and answers `widgetUrl`, the hosted sale that takes it: open it in a browser tab or window, where the seller signs in, verifies their identity, connects the wallet holding the token and sends it, and a P2P buyer pays the local money with the chosen method. `address` is recorded as the account it is sent from; the widget does not fix it. `estimatedAmountOut` is the local money at the market price, rounded down (null for a token with no USD price); the widget quotes the firm figure first. The order is checked against the market (`400 validation_failed` with the reason), and opened on the key's network.\n\nRequires the `offramp:write` scope.",
+        "operationId": "P2pOfframpController_createSession_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/P2pOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pSessionEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Open a sale for local money",
+        "tags": [
+          "p2p-offramp"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "offramp-p2p:session",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "offramp:write"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      },
+      "get": {
+        "description": "The sales this key's consumer opened on the key's network, newest first, from this service's records (no call to the marketplace). Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`, where `total` counts every matching session.\n\nRequires the `offramp:read` scope.",
+        "operationId": "P2pOfframpController_findAll_v1",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Page size: how many items to return (1 to 100).",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "How many items to skip before this page (offset).",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pSessionListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the sales opened for local money",
+        "tags": [
+          "p2p-offramp"
+        ],
+        "x-cosmos-scopes": [
+          "offramp:read"
+        ]
+      }
+    },
+    "/v1/offramp/p2p/sessions/{id}": {
+      "get": {
+        "description": "One sale of this key's consumer on the key's network, from this service's records, with its widget URL. Another consumer's session, one opened on the other network, or a purchase, is the 404 of a missing one.\n\nRequires the `offramp:read` scope.",
+        "operationId": "P2pOfframpController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Cosmos Pay id of the session.",
+            "schema": {
+              "example": "clz9xp2p0001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pSessionEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a sale opened for local money",
+        "tags": [
+          "p2p-offramp"
+        ],
+        "x-cosmos-scopes": [
+          "offramp:read"
+        ]
+      }
+    },
     "/v1/protected-payments": {
       "post": {
         "description": "Creates a protected payment in USDC on the key’s network, with the release model and the deadline policy of your choice, and answers `checkoutUrl`, the page to send the buyer. Nothing happens on-chain yet: the contract is deployed when the buyer first funds it. Emits `PROTECTED_PAYMENT_CREATED`; the same `Idempotency-Key` with the same request returns the stored payment.\n\nRequires the `payments:write` scope.",
@@ -17663,6 +18545,14 @@
     {
       "name": "onramp",
       "description": "Fiat in: quotes, payins, virtual accounts, and the trustline for the asset delivered."
+    },
+    {
+      "name": "p2p-onramp",
+      "description": "Local money in through P2P sellers: the market, a firm quote, and purchase sessions that open a hosted purchase delivered to the address you name."
+    },
+    {
+      "name": "p2p-offramp",
+      "description": "Local money out through P2P buyers: the market, a firm quote, and sale sessions that open a hosted sale the seller sends the stablecoin from."
     },
     {
       "name": "offramp",
@@ -30312,6 +31202,503 @@
           "success",
           "result",
           "ledger"
+        ]
+      },
+      "P2pPaymentMethodEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "bank_tx_ar",
+            "description": "Id, as orders name it in `paymentMethod`."
+          },
+          "name": {
+            "type": "string",
+            "example": "Bank Transfer (ARS)",
+            "description": "Display name."
+          }
+        },
+        "description": "A way to pay or receive local money in one currency.",
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "P2pCurrencyEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Currency id, as orders name it in `currency`."
+          },
+          "name": {
+            "type": "string",
+            "example": "Argentine Pesos",
+            "description": "English name."
+          },
+          "price": {
+            "type": "string",
+            "example": "1677.89",
+            "description": "Local money per USD stablecoin on this side of the market (what a buyer pays, or what a seller receives), a decimal string. Another token is valued through its `priceUsd`; the firm price, fees and the swap included, is the quote."
+          },
+          "minAmount": {
+            "type": "string",
+            "example": "8389.45",
+            "description": "Least an order puts in, a decimal string: local money for a purchase, USD worth of the token for a sale."
+          },
+          "paymentMethods": {
+            "description": "How the local money is paid (purchase) or received (sale).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/P2pPaymentMethodEntity"
+            }
+          }
+        },
+        "description": "A local currency the market trades on one side, with its price and minimum there.",
+        "required": [
+          "id",
+          "name",
+          "price",
+          "minAmount",
+          "paymentMethods"
+        ]
+      },
+      "P2pNetworkEntity": {
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id, as orders name it in `chainId`."
+          },
+          "name": {
+            "type": "string",
+            "example": "Arbitrum",
+            "description": "Display name."
+          },
+          "tokenCount": {
+            "type": "number",
+            "example": 2768,
+            "description": "How many tokens it lists: page through them with `GET .../tokens`."
+          }
+        },
+        "description": "A chain the market trades on.",
+        "required": [
+          "chainId",
+          "name",
+          "tokenCount"
+        ]
+      },
+      "P2pDefaultTokenEntity": {
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of its chain."
+          },
+          "address": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "Its contract on `chainId` (EIP-55), as orders name it in `token`."
+          },
+          "symbol": {
+            "type": "string",
+            "example": "USDT0",
+            "description": "Symbol."
+          },
+          "decimals": {
+            "type": "number",
+            "example": 6,
+            "description": "Decimals of the token contract."
+          }
+        },
+        "description": "The token a form starts from: the stablecoin the marketplace settles in, on its chain.",
+        "required": [
+          "chainId",
+          "address",
+          "symbol",
+          "decimals"
+        ]
+      },
+      "P2pMarketEntity": {
+        "type": "object",
+        "properties": {
+          "currencies": {
+            "description": "The currencies this side trades right now: each with a price, a minimum and at least one payment method.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/P2pCurrencyEntity"
+            }
+          },
+          "networks": {
+            "description": "The chains an order can name, the default token’s first, then the longest token lists. A chain whose token list could not be read right now is left out.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/P2pNetworkEntity"
+            }
+          },
+          "defaultToken": {
+            "description": "The token a form starts from.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/P2pDefaultTokenEntity"
+              }
+            ]
+          }
+        },
+        "description": "One side of the P2P market on the key’s network: what can be bought with local money (on-ramp) or sold for it (off-ramp).",
+        "required": [
+          "currencies",
+          "networks",
+          "defaultToken"
+        ]
+      },
+      "P2pTokenEntity": {
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of its chain."
+          },
+          "address": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "Its contract on `chainId` (EIP-55), as orders name it in `token`. The zero address is the chain’s own coin."
+          },
+          "symbol": {
+            "type": "string",
+            "example": "USDT0",
+            "description": "Symbol. Not unique on a chain: orders name the address."
+          },
+          "decimals": {
+            "type": "number",
+            "example": 6,
+            "description": "Decimals of the token contract."
+          },
+          "priceUsd": {
+            "type": "string",
+            "example": "0.9975",
+            "nullable": true,
+            "description": "USD per token, a decimal string: the marketplace’s price, or 1 for a USD stablecoin it has no price for; null otherwise. Estimates and a sale’s minimum need it."
+          }
+        },
+        "description": "A token an order can name: one a purchase delivers, or one a sale sends, on its chain.",
+        "required": [
+          "chainId",
+          "address",
+          "symbol",
+          "decimals",
+          "priceUsd"
+        ]
+      },
+      "P2pTokenListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "The tokens on this page.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/P2pTokenEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Matching tokens, not the page length.",
+            "example": 2768
+          },
+          "take": {
+            "type": "number",
+            "example": 100,
+            "description": "The page size applied, from the `take` query parameter (default 100)."
+          },
+          "skip": {
+            "type": "number",
+            "example": 0,
+            "description": "Tokens skipped before this page, from the `skip` query parameter (default 0)."
+          }
+        },
+        "description": "A page of one chain’s tokens, the most traded first.",
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "P2pOrderDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Local currency paid (purchase) or received (sale): an `id` from the market of the same route, `GET /v1/onramp/p2p/market` or `GET /v1/offramp/p2p/market`."
+          },
+          "paymentMethod": {
+            "type": "string",
+            "example": "bank_tx_ar",
+            "description": "How the local money is paid (purchase) or received (sale): one of that currency’s `paymentMethods` in the market."
+          },
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of the chain the token is on: a `chainId` of the market’s `networks`."
+          },
+          "token": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "The token bought or sold: its contract `address` on `chainId`, from `GET .../tokens?chainId=` of the same route (the zero address is the chain’s own coin)."
+          },
+          "amount": {
+            "type": "string",
+            "example": "50000",
+            "description": "What the order puts in, a decimal string: the local money paid for a purchase (at most two decimals, at least the currency’s `minAmount`), the token sold for a sale (at most the token’s decimals, worth at least the currency’s `minAmount` in USD where the token has a USD price)."
+          },
+          "address": {
+            "type": "string",
+            "example": "0x52908400098527886E0F7030069857D2E4169EE7",
+            "description": "An EVM account on `chainId`: where a purchase delivers the token, or the account a sale sends it from."
+          }
+        },
+        "description": "An order on the P2P marketplace. On `/v1/onramp/p2p` a purchase: the local money paid, how, the token bought on its chain and where it is delivered. On `/v1/offramp/p2p` a sale: the token sold on its chain, the account it is sent from, and the local money received and how.",
+        "required": [
+          "currency",
+          "paymentMethod",
+          "chainId",
+          "token",
+          "amount",
+          "address"
+        ]
+      },
+      "P2pQuoteFeeEntity": {
+        "type": "object",
+        "properties": {
+          "amountInToken": {
+            "type": "string",
+            "example": "0.90",
+            "description": "Fees in the token, a decimal string."
+          },
+          "amountInFiat": {
+            "type": "string",
+            "example": "1329.06",
+            "description": "Fees in the local currency, a decimal string."
+          }
+        },
+        "description": "The fees inside a P2P quote.",
+        "required": [
+          "amountInToken",
+          "amountInFiat"
+        ]
+      },
+      "P2pQuoteEntity": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "example": "6f1c0e1a-1b2c-4d5e-8f90-123456789abc",
+            "description": "The marketplace’s quote id."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Local currency paid (purchase) or received (sale)."
+          },
+          "token": {
+            "type": "string",
+            "example": "USDT0",
+            "description": "Symbol of the token bought or sold."
+          },
+          "tokenAddress": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "Its contract on `chainId` (EIP-55)."
+          },
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of the chain it moves on."
+          },
+          "amountIn": {
+            "type": "string",
+            "example": "54500",
+            "description": "What the order puts in, a decimal string: local money for a purchase, the token for a sale."
+          },
+          "amountOut": {
+            "type": "string",
+            "example": "35.04",
+            "description": "What it gives, fees taken, a decimal string: the token a purchase delivers, the local money a sale pays."
+          },
+          "minAmountOut": {
+            "type": "string",
+            "example": "34.343",
+            "description": "The least the order can deliver once it runs, a decimal string."
+          },
+          "exchangeRate": {
+            "type": "string",
+            "example": "1516.5",
+            "description": "Local money per token, a decimal string."
+          },
+          "fee": {
+            "description": "The fees included in `amountOut`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/P2pQuoteFeeEntity"
+              }
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-05T18:05:00.000Z",
+            "description": "When the quote stops being valid."
+          }
+        },
+        "description": "A firm price for an order on the P2P marketplace: a purchase of a token with local money, or a sale of one for it.",
+        "required": [
+          "quoteId",
+          "currency",
+          "token",
+          "tokenAddress",
+          "chainId",
+          "amountIn",
+          "amountOut",
+          "minAmountOut",
+          "exchangeRate",
+          "fee",
+          "expiresAt"
+        ]
+      },
+      "P2pSessionEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clz9xp2p0001",
+            "description": "Cosmos Pay id of the session."
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "`public` (mainnet) or `testnet` (the sandbox), from the key."
+          },
+          "side": {
+            "type": "string",
+            "example": "buy",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "description": "`buy` for a purchase (`/v1/onramp/p2p`), `sell` for a sale (`/v1/offramp/p2p`)."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Local currency paid (purchase) or received (sale)."
+          },
+          "paymentMethod": {
+            "type": "string",
+            "example": "bank_tx_ar",
+            "description": "How the local money is paid (purchase) or received (sale)."
+          },
+          "amount": {
+            "type": "string",
+            "example": "50000",
+            "description": "What the order puts in, a decimal string: local money for a purchase, the token for a sale."
+          },
+          "token": {
+            "type": "string",
+            "example": "USDT0",
+            "description": "Symbol of the token bought or sold."
+          },
+          "tokenAddress": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "Its contract on `chainId` (EIP-55); the zero address is the chain’s own coin."
+          },
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of the chain it moves on."
+          },
+          "address": {
+            "type": "string",
+            "example": "0x52908400098527886E0F7030069857D2E4169EE7",
+            "description": "EIP-55. A purchase: where the token is delivered, fixed in the widget so the buyer cannot change it. A sale: the account the order named as the one it is sent from; the seller connects that wallet in the widget."
+          },
+          "estimatedAmountOut": {
+            "type": "string",
+            "example": "29.79",
+            "nullable": true,
+            "description": "About what `amount` gives at the market price when the session was opened, rounded down: the token a purchase delivers, or the local money a sale pays. Null for a token with no USD price. The widget quotes the firm figure before anything moves."
+          },
+          "reference": {
+            "type": "string",
+            "example": "cp-clz9xp2p0001",
+            "description": "The reference the marketplace’s order carries."
+          },
+          "widgetUrl": {
+            "type": "string",
+            "example": "https://p2p-widget.example/exchange?operation=BUY&token=0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9&chain=42161&currency=ARS&paymentMethod=bank_tx_ar&amount=50000&address=0x52908400098527886E0F7030069857D2E4169EE7&externalReferenceId=cp-clz9xp2p0001",
+            "description": "Open it in a browser tab or window (not an iframe): the person signs in and verifies their identity there, then pays a P2P seller (purchase) or connects their wallet, sends the token and is paid by a P2P buyer (sale)."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-11-05T18:00:00.000Z",
+            "description": "When the session was opened."
+          }
+        },
+        "description": "An order opened on the P2P marketplace (a purchase, or a sale): the order filled in and the widget URL that takes it.",
+        "required": [
+          "id",
+          "network",
+          "side",
+          "currency",
+          "paymentMethod",
+          "amount",
+          "token",
+          "tokenAddress",
+          "chainId",
+          "address",
+          "estimatedAmountOut",
+          "reference",
+          "widgetUrl",
+          "createdAt"
+        ]
+      },
+      "P2pSessionListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "The sessions on this page.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/P2pSessionEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Matching rows, not the page length.",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 100,
+            "description": "The page size applied, from the `take` query parameter (default 100)."
+          },
+          "skip": {
+            "type": "number",
+            "example": 0,
+            "description": "Rows skipped before this page, from the `skip` query parameter (default 0)."
+          }
+        },
+        "description": "A page of P2P sessions of one side, newest first.",
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
         ]
       },
       "CreateProtectedPaymentDto": {

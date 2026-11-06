@@ -1,0 +1,128 @@
+---
+title: "P2P Off-ramp"
+description: 'Local money out through P2P buyers: the market, a firm quote, and
+  sale sessions that open a hosted sale the seller sends the stablecoin from.'
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: Read what tokens can be sold for local money
+      url: '#read-what-tokens-can-be-sold-for-local-money'
+    - depth: 2
+      title: List the tokens a sale can send on one chain
+      url: '#list-the-tokens-a-sale-can-send-on-one-chain'
+    - depth: 2
+      title: Get a firm price for a sale for local money
+      url: '#get-a-firm-price-for-a-sale-for-local-money'
+    - depth: 2
+      title: List the sales opened for local money
+      url: '#list-the-sales-opened-for-local-money'
+    - depth: 2
+      title: Open a sale for local money
+      url: '#open-a-sale-for-local-money'
+    - depth: 2
+      title: Read a sale opened for local money
+      url: '#read-a-sale-opened-for-local-money'
+  structuredData:
+    headings:
+      - content: Read what tokens can be sold for local money
+        id: read-what-tokens-can-be-sold-for-local-money
+      - content: List the tokens a sale can send on one chain
+        id: list-the-tokens-a-sale-can-send-on-one-chain
+      - content: Get a firm price for a sale for local money
+        id: get-a-firm-price-for-a-sale-for-local-money
+      - content: List the sales opened for local money
+        id: list-the-sales-opened-for-local-money
+      - content: Open a sale for local money
+        id: open-a-sale-for-local-money
+      - content: Read a sale opened for local money
+        id: read-a-sale-opened-for-local-money
+    contents:
+      - content: >-
+          The currencies a seller can be paid in on the key's network (a `prod`
+          key reads mainnet, a `dev` key the sandbox), each with its payment
+          methods, sell price (local money per USD stablecoin) and minimum (in
+          USD), plus the chains a sale can send from (each with its token count)
+          and the token a form starts from. Read from the P2P marketplace and
+          served from memory for up to a minute; a currency without a price, a
+          minimum or a payment method is left out, and so is a chain whose token
+          list cannot be read right now.
+
+
+          Requires the `offramp:read` scope. The shared public key may call it.
+        heading: read-what-tokens-can-be-sold-for-local-money
+      - content: >-
+          One chain of the market (`chainId`, one of its `networks`), a page at
+          a time: each token with its contract address, symbol, decimals and USD
+          price. The network’s main assets come first, matched by address (its
+          own coin, its USD stablecoins, the wrapped coin, bitcoin, its token,
+          other stablecoins, DeFi blue chips, liquid staked ether), then every
+          other token in the marketplace’s order. `q` searches by symbol
+          fragment or exact address. A chain the market does not offer right now
+          is `400 validation_failed`.
+
+
+          Requires the `offramp:read` scope. The shared public key may call it.
+        heading: list-the-tokens-a-sale-can-send-on-one-chain
+      - content: >-
+          The P2P marketplace prices the sale of `amount` of the token sent from
+          `address` on `chainId`: the local money paid with fees taken, the
+          least it can pay, the rate and the fees, valid until `expiresAt`.
+          Nothing is stored. The order is checked against the market first
+          (currency, payment method, token and minimum: `400 validation_failed`
+          with the reason). A deployment without the marketplace integrator ids
+          answers `503 misconfigured`; the market and the sessions work without
+          them.
+
+
+          Requires the `offramp:write` scope.
+        heading: get-a-firm-price-for-a-sale-for-local-money
+      - content: >-
+          The sales this key's consumer opened on the key's network, newest
+          first, from this service's records (no call to the marketplace).
+          Paginated with `take` (default 100, max 100) and `skip`; answers `{
+          data, total, take, skip }`, where `total` counts every matching
+          session.
+
+
+          Requires the `offramp:read` scope.
+        heading: list-the-sales-opened-for-local-money
+      - content: >-
+          Records the order and answers `widgetUrl`, the hosted sale that takes
+          it: open it in a browser tab or window, where the seller signs in,
+          verifies their identity, connects the wallet holding the token and
+          sends it, and a P2P buyer pays the local money with the chosen method.
+          `address` is recorded as the account it is sent from; the widget does
+          not fix it. `estimatedAmountOut` is the local money at the market
+          price, rounded down (null for a token with no USD price); the widget
+          quotes the firm figure first. The order is checked against the market
+          (`400 validation_failed` with the reason), and opened on the key's
+          network.
+
+
+          Requires the `offramp:write` scope.
+        heading: open-a-sale-for-local-money
+      - content: >-
+          One sale of this key's consumer on the key's network, from this
+          service's records, with its widget URL. Another consumer's session,
+          one opened on the other network, or a purchase, is the 404 of a
+          missing one.
+
+
+          Requires the `offramp:read` scope.
+        heading: read-a-sale-opened-for-local-money
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/offramp/p2p/market","method":"get"},{"path":"/v1/offramp/p2p/tokens","method":"get"},{"path":"/v1/offramp/p2p/quotes","method":"post"},{"path":"/v1/offramp/p2p/sessions","method":"get"},{"path":"/v1/offramp/p2p/sessions","method":"post"},{"path":"/v1/offramp/p2p/sessions/{id}","method":"get"}]} showTitle />
+    </>
+  );
+}
