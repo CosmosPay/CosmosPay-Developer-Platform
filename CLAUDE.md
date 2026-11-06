@@ -1021,7 +1021,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   which has several currencies and networks"): every local currency with its payment methods, every
   network the market lists (`networks`, ten on mainnet, Arbitrum Sepolia alone in the sandbox) and
   every token on it, searched per network on the API (`GET .../p2p/tokens?chainId=&q=`; thousands
-  per network, so never loaded whole). Prices are local money per USD stablecoin, times the token's
+  per network, so never loaded whole), each network's main assets first and the tokens nobody uses
+  after them (product owner, 2026-11-05; the API's `P2P_MAIN_TOKENS`, matched by address). Prices are local money per USD stablecoin, times the token's
   USD price (`tokenUsd`: a USD stablecoin without one counts as a dollar, the sandbox's test USDT).
 - **The form is the swap widget's pattern** (product owner: "take the swap as the example"):
   `components/RampWidget.tsx` in the dialog the filter row's button opens: the two wells (the
@@ -1035,7 +1036,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   seller connects the wallet that sends there. The dashboard connects no wallet. The tab is claimed
   on the click, before the session is created, so a popup blocker lets it through.
 - Mock mode: `src/lib/mock/handlers/p2p-ramp.ts` over `p2p-ramp-market.ts`, the marketplace's
-  market recorded on 2026-11-05 for both environments (each network's first 24 tokens).
+  market recorded on 2026-11-05 for both environments (each network's main assets, in the API's
+  order, then a few others).
 
 ### The payments landing
 

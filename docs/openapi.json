@@ -13494,7 +13494,7 @@
     },
     "/v1/onramp/p2p/tokens": {
       "get": {
-        "description": "One chain of the market (`chainId`, one of its `networks`), a page at a time: each token with its contract address, symbol, decimals and USD price. The stablecoins the P2P leg settles in come first, then the chain’s own coin and the most held tokens, then the rest in the marketplace’s order. `q` searches by symbol fragment or exact address. A chain the market does not offer right now is `400 validation_failed`.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
+        "description": "One chain of the market (`chainId`, one of its `networks`), a page at a time: each token with its contract address, symbol, decimals and USD price. The network’s main assets come first, matched by address (its own coin, its USD stablecoins, the wrapped coin, bitcoin, its token, other stablecoins, DeFi blue chips, liquid staked ether), then every other token in the marketplace’s order. `q` searches by symbol fragment or exact address. A chain the market does not offer right now is `400 validation_failed`.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
         "operationId": "P2pOnrampController_tokens_v1",
         "parameters": [
           {
@@ -13935,7 +13935,7 @@
     },
     "/v1/offramp/p2p/tokens": {
       "get": {
-        "description": "One chain of the market (`chainId`, one of its `networks`), a page at a time: each token with its contract address, symbol, decimals and USD price. The stablecoins the P2P leg settles in come first, then the chain’s own coin and the most held tokens, then the rest in the marketplace’s order. `q` searches by symbol fragment or exact address. A chain the market does not offer right now is `400 validation_failed`.\n\nRequires the `offramp:read` scope. The shared public key may call it.",
+        "description": "One chain of the market (`chainId`, one of its `networks`), a page at a time: each token with its contract address, symbol, decimals and USD price. The network’s main assets come first, matched by address (its own coin, its USD stablecoins, the wrapped coin, bitcoin, its token, other stablecoins, DeFi blue chips, liquid staked ether), then every other token in the marketplace’s order. `q` searches by symbol fragment or exact address. A chain the market does not offer right now is `400 validation_failed`.\n\nRequires the `offramp:read` scope. The shared public key may call it.",
         "operationId": "P2pOfframpController_tokens_v1",
         "parameters": [
           {

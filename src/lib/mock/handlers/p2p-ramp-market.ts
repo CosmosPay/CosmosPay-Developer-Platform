@@ -2,8 +2,8 @@
    the marketplace on 2026-11-06 by a script (both environments): every fiat currency
    with a payment method and a price on either side (buy: local money per USD stablecoin and the
    least local money; sell: the same price and the least USD), every chain with how many tokens it
-   lists, and each chain's first 24 tokens (the stablecoins, the network's own coin and the
-   majors first) as [address, symbol, decimals, USD price]. */
+   lists, and each chain's main assets (in the API's order) followed by the first 12 others it
+   lists, as [address, symbol, decimals, USD price]. */
 export interface RecordedCurrency { id: string; name: string; buy?: [string, string]; sell?: [string, string]; methods: { id: string; name: string }[] }
 export interface RecordedMarket { currencies: RecordedCurrency[]; networks: { chainId: number; tokenCount: number }[]; tokens: Record<string, [string, string, number, string | null][]> }
 
@@ -14,8 +14,8 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "ARS",
         "name": "Argentine Pesos",
         "buy": [
-          "1676.45",
-          "8382.25"
+          "1675.69",
+          "8378.45"
         ],
         "sell": [
           "1627.1",
@@ -32,11 +32,11 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "COP",
         "name": "Colombian Pesos",
         "buy": [
-          "3240",
-          "16200"
+          "3265",
+          "16325"
         ],
         "sell": [
-          "3144.005",
+          "3144.01",
           "5"
         ],
         "methods": [
@@ -76,11 +76,11 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "USD",
         "name": "Dollars",
         "buy": [
-          "1.09",
-          "5.45"
+          "1.1",
+          "5.5"
         ],
         "sell": [
-          "0.98",
+          "0.972",
           "5"
         ],
         "methods": [
@@ -110,7 +110,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "17.775"
         ],
         "sell": [
-          "3.212",
+          "3.2115",
           "5"
         ],
         "methods": [
@@ -132,15 +132,15 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
     "networks": [
       {
         "chainId": 42161,
-        "tokenCount": 2768
+        "tokenCount": 2766
       },
       {
         "chainId": 137,
-        "tokenCount": 1429
+        "tokenCount": 1427
       },
       {
         "chainId": 8453,
-        "tokenCount": 1224
+        "tokenCount": 1223
       },
       {
         "chainId": 10,
@@ -174,10 +174,16 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
     "tokens": {
       "1": [
         [
+          "0x0000000000000000000000000000000000000000",
+          "ETH",
+          18,
+          "2237.71"
+        ],
+        [
           "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "USDT",
           6,
-          "0.9964365353"
+          "0.9980459727"
         ],
         [
           "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -186,28 +192,106 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "1.0010305153"
         ],
         [
-          "0x0000000000000000000000000000000000000000",
-          "ETH",
-          18,
-          "2240"
-        ],
-        [
           "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "WETH",
           18,
-          "2240"
+          "2237.71"
         ],
         [
           "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "WBTC",
           8,
-          "76183.6607726459"
+          "75950.8664840131"
+        ],
+        [
+          "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "cbBTC",
+          8,
+          "75973.7899260218"
         ],
         [
           "0x6B175474E89094C44Da98b954EedeAC495271d0F",
           "DAI",
           18,
           "0.9993367991"
+        ],
+        [
+          "0xdC035D45d973E3EC169d2276DDab16f1e407384F",
+          "USDS",
+          18,
+          "1.0013547956"
+        ],
+        [
+          "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+          "USDe",
+          18,
+          "0.9979858915"
+        ],
+        [
+          "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8",
+          "PYUSD",
+          6,
+          "1.0023698463"
+        ],
+        [
+          "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409",
+          "FDUSD",
+          18,
+          "1.0006650355"
+        ],
+        [
+          "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c",
+          "EURC",
+          6,
+          "1.1207420803"
+        ],
+        [
+          "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+          "LINK",
+          18,
+          "10.8759224195"
+        ],
+        [
+          "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+          "UNI",
+          18,
+          "6.9955348183"
+        ],
+        [
+          "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+          "AAVE",
+          18,
+          "130.0807483199"
+        ],
+        [
+          "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
+          "LDO",
+          18,
+          "0.3294609212"
+        ],
+        [
+          "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+          "wstETH",
+          18,
+          "2794.553457657"
+        ],
+        [
+          "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee",
+          "weETH",
+          18,
+          "2476.583242995"
+        ],
+        [
+          "0xae78736Cd615f374D3085123A210448E74Fc6393",
+          "rETH",
+          18,
+          "2840.339457995"
+        ],
+        [
+          "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704",
+          "cbETH",
+          18,
+          "2556.1231567826"
         ],
         [
           "0x888ceA2BBDD5D47a4032cf63668D7525C74af57A",
@@ -219,7 +303,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
           "mkr",
           18,
-          "1475.3170473138"
+          "1480.4870891183"
         ],
         [
           "0xD849882983F1bA8A3c23B16b65BB0173A7f63b63",
@@ -280,63 +364,9 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "PSM",
           18,
           "628.0374706259"
-        ],
-        [
-          "0x8E964e35A76103Af4C7D7318e1B1a82c682ae296",
-          "FLZ",
-          18,
-          "0.00934982972"
-        ],
-        [
-          "0x83D7D7315B918bc002376F73fCD07Ea0708E44eF",
-          "SWEE",
-          18,
-          "1705.8461512735"
-        ],
-        [
-          "0x93581991f68DBaE1eA105233b67f7FA0D6BDeE7b",
-          "WEVMOS",
-          18,
-          "507.5626958033"
-        ],
-        [
-          "0x34b13F8CD184F55d0Bd4Dd1fe6C07D46f245c7eD",
-          "SLP",
-          18,
-          "4151813913.74442"
-        ],
-        [
-          "0xa3d58c4E56fedCae3a7c43A725aeE9A71F0ece4e",
-          "MET",
-          18,
-          "662.4035569021"
-        ],
-        [
-          "0x390f3595bCa2Df7d23783dFd126427CCeb997BF4",
-          "crvUSDUSDT-f",
-          18,
-          "0.987483854"
         ]
       ],
       "10": [
-        [
-          "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
-          "USDT0",
-          6,
-          "0.9996154648"
-        ],
-        [
-          "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
-          "USDT",
-          6,
-          "0.9989415967"
-        ],
-        [
-          "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
-          "USDC",
-          6,
-          "0.9998354751"
-        ],
         [
           "0x0000000000000000000000000000000000000000",
           "ETH",
@@ -344,34 +374,106 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "2210.81"
         ],
         [
+          "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
+          "USDT0",
+          6,
+          "0.9979655221"
+        ],
+        [
+          "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+          "USDC",
+          6,
+          "0.9991462536"
+        ],
+        [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2246.57"
+          "2241.65"
         ],
         [
-          "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
           "WBTC",
           8,
-          "76058.59"
+          "75766.4626300052"
         ],
         [
-          "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
-          "DAI",
+          "0x4200000000000000000000000000000000000042",
+          "OP",
           18,
-          "0.9976824877"
+          "0.1043444383"
+        ],
+        [
+          "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+          "USDT",
+          6,
+          "0.9980533886"
         ],
         [
           "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
           "USDC.e",
           6,
-          "0.9984311599"
+          "1.001785855"
+        ],
+        [
+          "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+          "DAI",
+          18,
+          "1.0008654215"
+        ],
+        [
+          "0xDCB612005417Dc906fF72c87DF732e5a90D49e11",
+          "EURC",
+          6,
+          "1.1198537055"
+        ],
+        [
+          "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1",
+          "WLD",
+          18,
+          "0.3498075408"
+        ],
+        [
+          "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6",
+          "LINK",
+          18,
+          "10.7947410338"
+        ],
+        [
+          "0x6fd9d7AD17242c41f7131d257212c54A0e816691",
+          "UNI",
+          18,
+          "6.892549046"
+        ],
+        [
+          "0x76FB31fb4af56892A25e32cFC43De717950c9278",
+          "AAVE",
+          18,
+          "129.9379439292"
+        ],
+        [
+          "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb",
+          "wstETH",
+          18,
+          "2793.7004617396"
+        ],
+        [
+          "0x5A7fACB970D094B6C7FF1df0eA68D99E6e73CBFF",
+          "weETH",
+          18,
+          "2464.1244148664"
+        ],
+        [
+          "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D",
+          "rETH",
+          18,
+          "2612.2034239834"
         ],
         [
           "0x4ac8bD1bDaE47beeF2D1c6Aa62229509b962Aa0d",
           "ETHx",
           18,
-          "2246.38"
+          "2241.27"
         ],
         [
           "0x35Adeb0638EB192755B6E52544650603Fe65A006",
@@ -389,7 +491,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x76A50b8c7349cCDDb7578c6627e79b5d99D24138",
           "stETH",
           18,
-          "2233.9368473681097"
+          "2245.4035015456443"
         ],
         [
           "0x38d693cE1dF5AaDF7bC62595A37D667aD57922e5",
@@ -398,16 +500,16 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "1.00"
         ],
         [
+          "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "WBTC",
+          8,
+          "76053.47"
+        ],
+        [
           "0x9638EC1D29dfA9835fdb7fa74B5B77B14d6Ac77e",
           "WBTCx",
           18,
-          "76079.53"
-        ],
-        [
-          "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6",
-          "LINK",
-          18,
-          "10.8058771321"
+          "75528.67"
         ],
         [
           "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
@@ -416,28 +518,10 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "1.6748159196"
         ],
         [
-          "0x5A7fACB970D094B6C7FF1df0eA68D99E6e73CBFF",
-          "weETH",
-          18,
-          "2464.1244148664"
-        ],
-        [
           "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
           "aOptWETH",
           18,
-          "2232.51"
-        ],
-        [
-          "0x6fd9d7AD17242c41f7131d257212c54A0e816691",
-          "UNI",
-          18,
-          "6.9287900611"
-        ],
-        [
-          "0x76FB31fb4af56892A25e32cFC43De717950c9278",
-          "AAVE",
-          18,
-          "130.0314566834"
+          "2230.57"
         ],
         [
           "0xc6BDFC4f2E90196738873E824a9eFa03F7c64176",
@@ -446,16 +530,10 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0.4054299905"
         ],
         [
-          "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1",
-          "WLD",
-          18,
-          "0.3427322248"
-        ],
-        [
           "0x7a4c2C39e25ca0D6A1Ac4af14dD601c2A7eDA8Ae",
           "clBTC",
           18,
-          "76382.01377023173"
+          "76439.1703510795"
         ],
         [
           "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2",
@@ -466,6 +544,12 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
       ],
       "56": [
         [
+          "0x0000000000000000000000000000000000000000",
+          "BNB",
+          18,
+          "694.3"
+        ],
+        [
           "0x55d398326f99059fF775485246999027B3197955",
           "USDT",
           18,
@@ -475,31 +559,79 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
           "USDC",
           18,
-          "0.9993823199"
+          "0.9998810174"
         ],
         [
-          "0x0000000000000000000000000000000000000000",
-          "BNB",
+          "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+          "WBNB",
           18,
-          "693.14"
+          "694.3"
+        ],
+        [
+          "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+          "BTCB",
+          18,
+          "75962.4211312314"
         ],
         [
           "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
           "WETH",
           18,
-          "2238.84681543432"
+          "2235.98874018758"
         ],
         [
-          "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-          "WBTC",
-          8,
-          "76303.9349014104"
+          "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409",
+          "FDUSD",
+          18,
+          "0.9939436367"
+        ],
+        [
+          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+          "USDe",
+          18,
+          "1.0078023633"
         ],
         [
           "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
           "DAI",
           18,
-          "0.9981043719"
+          "1.0064093632"
+        ],
+        [
+          "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82",
+          "Cake",
+          18,
+          "1.9281085274"
+        ],
+        [
+          "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "WBTC",
+          8,
+          "76027.4840767608"
+        ],
+        [
+          "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD",
+          "LINK",
+          18,
+          "10.8397497256"
+        ],
+        [
+          "0xBf5140A22578168FD562DCcF235E5D43A02ce9B1",
+          "UNI",
+          18,
+          "6.9851065919"
+        ],
+        [
+          "0xfb6115445Bff7b52FeB98650C87f44907E58f802",
+          "AAVE",
+          18,
+          "130.5527085318"
+        ],
+        [
+          "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A",
+          "weETH",
+          18,
+          "2662.0146739594"
         ],
         [
           "0x07145Ad7C7351c6FE86b6B841fC9Bed74eb475A7",
@@ -523,19 +655,13 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x529A4116F160c833c61311569D6B33dFF41fD657",
           "BNBx",
           18,
-          "693.42"
+          "693.94"
         ],
         [
           "0xa2E3356610840701BDf5611a53974510Ae27E2e1",
           "wBETH",
           18,
-          "2488.5878430774"
-        ],
-        [
-          "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD",
-          "LINK",
-          18,
-          "10.8171860626"
+          "2474.9661685569"
         ],
         [
           "0xA07c5b74C9B40447a954e1466938b865b6BBea36",
@@ -544,34 +670,10 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "16.4169212969"
         ],
         [
-          "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A",
-          "weETH",
-          18,
-          "2662.0146739594"
-        ],
-        [
-          "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
-          "BTCB",
-          18,
-          "76154.5131241377"
-        ],
-        [
-          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
-          "USDe",
-          18,
-          "0.9992014541"
-        ],
-        [
-          "0xBf5140A22578168FD562DCcF235E5D43A02ce9B1",
-          "UNI",
-          18,
-          "6.9850840476"
-        ],
-        [
           "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d",
           "USD1",
           18,
-          "0.9967582716"
+          "0.9948819406"
         ],
         [
           "0x76A797A59Ba2C17726896976B7B3747BfD1d220f",
@@ -580,66 +682,84 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "1.1808898982"
         ],
         [
+          "0xAf48B7e315a52518CfBF7d96C455D9dFAD94cB48",
+          "IOST",
+          18,
+          "0.07968397542"
+        ],
+        [
+          "0xfD5840Cd36d94D7229439859C0112a4185BC0255",
+          "vUSDT",
+          8,
+          "0.3046392037"
+        ],
+        [
           "0x608593d17A2decBbc4399e4185bE4922F97eD32E",
           "USDY",
           18,
-          "1.1521426971036821"
-        ],
-        [
-          "0xfb6115445Bff7b52FeB98650C87f44907E58f802",
-          "AAVE",
-          18,
-          "130.7811384708"
+          "1.1521515057515632"
         ],
         [
           "0x0667873E07FFec6509525B4e4Cd97409e1fe9424",
           "CAT",
           18,
-          "0.605369752"
-        ],
-        [
-          "0x22b1458e780F8fA71E2F84502cEe8B5A3cc731Fa",
-          "M",
-          18,
-          "0.8256046144"
-        ],
-        [
-          "0xb3b02E4A9Fb2bD28CC2ff97B0aB3F6B3Ec1eE9D2",
-          "USDf",
-          18,
-          "0.9904589296"
+          "0.6087615385"
         ]
       ],
       "130": [
         [
-          "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
-          "USDC",
-          6,
-          "0.9989023865"
-        ],
-        [
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2243.54"
+          "2238.66"
+        ],
+        [
+          "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
+          "USDC",
+          6,
+          "0.9978423097"
+        ],
+        [
+          "0x9151434b16b9763660705744891fA906F660EcC5",
+          "USD₮0",
+          6,
+          "0.9980265971"
         ],
         [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2246.57"
+          "2241.65"
         ],
         [
           "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "WBTC",
           8,
-          "76127.8020685771"
+          "75992.4787481282"
         ],
         [
           "0x20CAb320A855b39F724131C69424240519573f81",
           "DAI",
           18,
-          "0.9776551576"
+          "0.9807421616"
+        ],
+        [
+          "0xc02fE7317D4eb8753a02c35fe019786854A92001",
+          "wstETH",
+          18,
+          "2802.588407682"
+        ],
+        [
+          "0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7",
+          "weETH",
+          18,
+          "2443.1303609657"
+        ],
+        [
+          "0x94Cac393f3444cEf63a651FfC18497E7e8bd036a",
+          "rETH",
+          18,
+          "2642.3895871098"
         ],
         [
           "0x73E0C0d45E048D25Fc26Fa3159b0aA04BfA4Db98",
@@ -651,37 +771,13 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x81f2508AAC59757EF7425DDc9717AB5c2AA0A84F",
           "stETH",
           18,
-          "2229.5162136947"
-        ],
-        [
-          "0xc02fE7317D4eb8753a02c35fe019786854A92001",
-          "wstETH",
-          18,
-          "2809.2549470252"
-        ],
-        [
-          "0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7",
-          "weETH",
-          18,
-          "2443.1303609657"
-        ],
-        [
-          "0x9151434b16b9763660705744891fA906F660EcC5",
-          "USD₮0",
-          6,
-          "0.9981710215"
+          "2241.4434521796"
         ],
         [
           "0xbe51A5e8FA434F09663e8fB4CCe79d0B2381Afad",
           "JUP",
           6,
           "0.3816819304"
-        ],
-        [
-          "0x94Cac393f3444cEf63a651FfC18497E7e8bd036a",
-          "rETH",
-          18,
-          "2642.3895871098"
         ],
         [
           "0x97Fadb3D000b953360FD011e173F12cDDB5d70Fa",
@@ -699,13 +795,13 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0xd3c8dA379d71a33BfEE8875F87Ac2748bEB1d58d",
           "uniBTC",
           8,
-          "75184.65224237813"
+          "75530.2453530602"
         ],
         [
           "0x3Ec3849C33291a9eF4c5dB86De593EB4A37fDe45",
           "sfrxETH",
           18,
-          "2611.4791801765"
+          "2590.8415769638"
         ],
         [
           "0x80Eede496655FB9047dd39d9f418d5483ED600df",
@@ -729,69 +825,51 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x5Bff88cA1442c2496f7E475E9e7786383Bc070c0",
           "sfrxUSD",
           18,
-          "1.0020004369"
+          "0.9843067004"
         ],
         [
           "0x64445f0aecC51E94aD52d8AC56b7190e764E561a",
           "WFRAX",
           18,
           "0.2514872983"
-        ],
-        [
-          "0xB9af873C7089CF3a0b6D67538065dD94b5E3208f",
-          "TEST",
-          18,
-          "0.03584634933"
-        ],
-        [
-          "0x1f3134C3f3f8AdD904B9635acBeFC0eA0D0E1ffC",
-          "eWETH-1",
-          18,
-          "2291.10"
-        ],
-        [
-          "0xd450dB3188b7Fbf52C670eee30372ba74B4c5857",
-          "ABR0",
-          18,
-          "0.02640755815"
         ]
       ],
       "137": [
         [
+          "0x0000000000000000000000000000000000000000",
+          "POL",
+          18,
+          "0.0944239647778383"
+        ],
+        [
           "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
           "USDT",
           6,
-          "0.9980080807"
+          "0.9991645184"
         ],
         [
           "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
           "USDC",
           6,
-          "1.000734137"
+          "0.9993475801"
         ],
         [
-          "0x0000000000000000000000000000000000000000",
-          "POL",
+          "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+          "WPOL",
           18,
-          "0.0938535358255971"
+          "0.0944239647778383"
         ],
         [
           "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
           "WETH",
           18,
-          "2242.2"
+          "2237.99"
         ],
         [
           "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
           "WBTC",
           8,
-          "76228.3145386362"
-        ],
-        [
-          "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
-          "DAI",
-          18,
-          "0.9981050687"
+          "76045.9480927326"
         ],
         [
           "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -800,10 +878,52 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "1.0015181309"
         ],
         [
+          "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+          "DAI",
+          18,
+          "1.0041992274"
+        ],
+        [
+          "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39",
+          "LINK",
+          18,
+          "10.8755706799"
+        ],
+        [
+          "0xb33EaAd8d922B1083446DC23f610c2567fB5180f",
+          "UNI",
+          18,
+          "6.9915284425"
+        ],
+        [
+          "0xD6DF932A45C0f255f85145f286eA0b292B21C90B",
+          "AAVE",
+          18,
+          "130.3217062653"
+        ],
+        [
+          "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
+          "LDO",
+          18,
+          "0.3294044797"
+        ],
+        [
+          "0x172370d5Cd63279eFa6d502DAB29171933a610AF",
+          "CRV",
+          18,
+          "0.2523914803"
+        ],
+        [
+          "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD",
+          "wstETH",
+          18,
+          "2796.3267081146"
+        ],
+        [
           "0x42435F467D33e5C4146a4E8893976ef12BBCE762",
           "DEFI5",
           18,
-          "0.2424869551"
+          "0.2416538291"
         ],
         [
           "0x92e918ea7aa872F91BF7EC9BcD248a5920C9f3CB",
@@ -870,74 +990,44 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "ATTR",
           18,
           "276303149.31466"
-        ],
-        [
-          "0xb95E2384d8db81D8776a0f2B2EB994B4E9f1Dd1f",
-          "CTC",
-          18,
-          "0.4767947966"
-        ],
-        [
-          "0x6109cB051c5C64093830121ed76272aB04bBDD7C",
-          "PROS",
-          18,
-          "3333.8322007064"
-        ],
-        [
-          "0x5cC8D49984834314f54211B1d872318Cf766d466",
-          "dBSGG",
-          6,
-          "0.997184575"
-        ],
-        [
-          "0x0B0abbb41b5bC851e70C7ed21D259F136118D498",
-          "I♡U",
-          18,
-          "0.0001046767506"
-        ],
-        [
-          "0xa3eD22EEE92a3872709823a6970069e12A4540Eb",
-          "FRONT",
-          18,
-          "807.3077656105"
         ]
       ],
       "480": [
         [
-          "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1",
-          "USDC",
-          6,
-          "0.9960733674"
-        ],
-        [
           "0x0000000000000000000000000000000000000000",
           "ETH",
           18,
-          "2228.51"
+          "2244.96"
+        ],
+        [
+          "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1",
+          "USDC",
+          6,
+          "1.0194619391"
         ],
         [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2228.51"
+          "2244.96"
         ],
         [
           "0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3",
           "WBTC",
           8,
-          "75391.7492958696"
+          "76092.8682710682"
         ],
         [
           "0x2cFc85d8E48F8EAB294be644d9E25C3030863003",
           "WLD",
           18,
-          "0.3370249627"
+          "0.3478754447"
         ],
         [
           "0x0DC4F92879B7670e5f4e4e6e3c801D229129D90D",
           "wARS",
           18,
-          "0.0005987266023"
+          "0.0005771264824"
         ],
         [
           "0xFdCa15bd55F350a36E63C47661914d80411d2C22",
@@ -949,7 +1039,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x43eDD7f3831b08FE70B7555ddD373C8bF65a9050",
           "frxETH",
           18,
-          "2239.533023796507"
+          "2239.6527513074357"
         ],
         [
           "0x80Eede496655FB9047dd39d9f418d5483ED600df",
@@ -961,37 +1051,37 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x3Ec3849C33291a9eF4c5dB86De593EB4A37fDe45",
           "sfrxETH",
           18,
-          "2628.327361993785"
+          "2628.4678748103465"
         ],
         [
           "0x5Bff88cA1442c2496f7E475E9e7786383Bc070c0",
           "sfrxUSD",
           18,
-          "1.2191209353826213"
+          "1.2191221571970388"
         ],
         [
           "0x119Dd7dAFf816f29D7eE47596ae5E4bdC4299165",
           "nOPAL",
           6,
-          "1.10"
+          "1.13"
         ],
         [
           "0xE72Fe64840F4EF80E3Ec73a1c749491b5c938CB9",
           "nTBILL",
           6,
-          "1.05"
+          "1.08"
         ],
         [
           "0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db",
           "nALPHA",
           6,
-          "1.12"
+          "1.15"
         ],
         [
           "0x11113Ff3a60C2450F4b22515cB760417259eE94B",
           "nBASIS",
           6,
-          "1.07"
+          "1.10"
         ],
         [
           "0x90581eCa9469D8D7F5D3B60f4715027aDFCf7927",
@@ -1008,40 +1098,112 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
       ],
       "8453": [
         [
-          "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
-          "USDT",
-          6,
-          "0.998176998"
+          "0x0000000000000000000000000000000000000000",
+          "ETH",
+          18,
+          "2237.41"
         ],
         [
           "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
           "USDC",
           6,
-          "0.9983056389"
+          "0.9977940142"
         ],
         [
-          "0x0000000000000000000000000000000000000000",
-          "ETH",
-          18,
-          "2240"
+          "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
+          "USDT",
+          6,
+          "0.9992193057"
         ],
         [
           "0x4200000000000000000000000000000000000006",
           "WETH",
           18,
-          "2240"
+          "2237.41"
+        ],
+        [
+          "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "cbBTC",
+          8,
+          "76076.4128641155"
         ],
         [
           "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "WBTC",
           8,
-          "75685.9765964828"
+          "75690.3664737342"
+        ],
+        [
+          "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+          "AERO",
+          18,
+          "0.5904271986"
+        ],
+        [
+          "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+          "USDbC",
+          6,
+          "1.0001244239"
         ],
         [
           "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
           "DAI",
           18,
-          "0.999302712"
+          "0.995298987"
+        ],
+        [
+          "0x820C137fa70C8691f0e44Dc420a5e53c168921Dc",
+          "USDS",
+          18,
+          "0.9956311343"
+        ],
+        [
+          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+          "USDe",
+          18,
+          "0.9957427822"
+        ],
+        [
+          "0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42",
+          "EURC",
+          6,
+          "1.1200501076"
+        ],
+        [
+          "0x88Fb150BDc53A65fe94Dea0c9BA0a6dAf8C6e196",
+          "LINK",
+          18,
+          "10.8836300753"
+        ],
+        [
+          "0x63706e401c06ac8513145b7687A14804d17f814b",
+          "AAVE",
+          18,
+          "129.8188908007"
+        ],
+        [
+          "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
+          "wstETH",
+          18,
+          "2791.6896437374"
+        ],
+        [
+          "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A",
+          "weETH",
+          18,
+          "2482.1268425967"
+        ],
+        [
+          "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+          "cbETH",
+          18,
+          "2557.039341239"
+        ],
+        [
+          "0xB6fe221Fe9EeF5aBa221c348bA20A1Bf5e73624c",
+          "rETH",
+          18,
+          "2628.2957167545"
         ],
         [
           "0x7614F61feD79e0FF47Aa0831D18d046Cb3ee0cE6",
@@ -1071,13 +1233,13 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x46fd5cfB4c12D87acD3a13e92BAa53240C661D93",
           "ETHx",
           18,
-          "2243.7378024463"
+          "2240.2680048513"
         ],
         [
           "0xcf3D55c10DB69f28fD1A75Bd73f3D8A2d9c595ad",
           "aBascbETH",
           18,
-          "2550.37"
+          "2558.97"
         ],
         [
           "0xD04383398dD2426297da660F9CCA3d439AF9ce1b",
@@ -1088,18 +1250,6 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         [
           "0x437cc33344a0B27A429f795ff6B469C72698B291",
           "wM",
-          6,
-          "0.9985865909"
-        ],
-        [
-          "0x655bB806972f41b93085601119a876a29D799CD5",
-          "mrUSD",
-          6,
-          "0.9985865909"
-        ],
-        [
-          "0x2d8d3aADeD3641C4358a8334D72086C908B515fb",
-          "pUSD",
           6,
           "0.9985865909"
         ],
@@ -1116,84 +1266,126 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0.9985865909"
         ],
         [
-          "0xbeeff7aE5E00Aae3Db302e4B0d8C883810a58100",
-          "bbqUSDC",
-          18,
-          "1.05"
+          "0x655bB806972f41b93085601119a876a29D799CD5",
+          "mrUSD",
+          6,
+          "0.9983056389"
         ],
         [
-          "0xeE8F4eC5672F09119b96Ab6fB59C27E1b7e44b61",
-          "gtUSDCp",
-          18,
-          "1.11"
-        ],
-        [
-          "0xc325a14b9A2A7e25864195Fdd42D05Ce3e68E7F6",
-          "USDSx",
-          18,
-          "0.9957013926"
-        ],
-        [
-          "0x820C137fa70C8691f0e44Dc420a5e53c168921Dc",
-          "USDS",
-          18,
-          "1.0056484428"
-        ],
-        [
-          "0x88Fb150BDc53A65fe94Dea0c9BA0a6dAf8C6e196",
-          "LINK",
-          18,
-          "10.8562202778"
-        ],
-        [
-          "0xDFd428908909CB5E24F5e79E6aD6BDE10bdf2327",
-          "cbBTCx",
-          18,
-          "75949.48"
+          "0x2d8d3aADeD3641C4358a8334D72086C908B515fb",
+          "pUSD",
+          6,
+          "0.9983056389"
         ]
       ],
       "42161": [
         [
+          "0x0000000000000000000000000000000000000000",
+          "ETH",
+          18,
+          "2237.99"
+        ],
+        [
           "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
           "USDT0",
           6,
-          "0.997504535"
+          "0.998206963"
         ],
         [
           "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
           "USDC",
           6,
-          "1.0006651066"
-        ],
-        [
-          "0x0000000000000000000000000000000000000000",
-          "ETH",
-          18,
-          "2241.32"
+          "0.9999624021"
         ],
         [
           "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
           "WETH",
           18,
-          "2241.32"
+          "2237.99"
         ],
         [
           "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
           "WBTC",
           8,
-          "76205.6309137185"
+          "76053.7058593045"
         ],
         [
-          "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
-          "DAI",
+          "0x912CE59144191C1204E64559FE8253a0e49E6548",
+          "ARB",
           18,
-          "1.0025007244"
+          "0.166024747668223"
         ],
         [
           "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
           "USDC.e",
           6,
           "1.0005620681"
+        ],
+        [
+          "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+          "DAI",
+          18,
+          "0.9996509139"
+        ],
+        [
+          "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "cbBTC",
+          8,
+          "76111.2391951979"
+        ],
+        [
+          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+          "USDe",
+          18,
+          "0.9979127475"
+        ],
+        [
+          "0x46850aD61C2B7d64d08c9C754F45254596696984",
+          "PYUSD",
+          6,
+          "1.0004714797"
+        ],
+        [
+          "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
+          "LINK",
+          18,
+          "10.8233981193"
+        ],
+        [
+          "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
+          "UNI",
+          18,
+          "6.9800521861"
+        ],
+        [
+          "0xba5DdD1f9d7F570dc94a51479a000E3BCE967196",
+          "AAVE",
+          18,
+          "130.2498719819"
+        ],
+        [
+          "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
+          "GMX",
+          18,
+          "8.3581638449"
+        ],
+        [
+          "0x5979D7b546E38E414F7E9822514be443A4800529",
+          "wstETH",
+          18,
+          "2792.9061058379"
+        ],
+        [
+          "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
+          "weETH",
+          18,
+          "2471.4559613421"
+        ],
+        [
+          "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8",
+          "rETH",
+          18,
+          "2625.2060836708"
         ],
         [
           "0x1e08Ae9bf59dfc14a28d2f9e61CE4Be007881617",
@@ -1211,7 +1403,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0xe6C8d111337D0052b9D88BF5d7D55B7f8385ACd3",
           "ETHx",
           18,
-          "2230.31"
+          "2233.05"
         ],
         [
           "0x688c202577670Fa1aE186C433965D178F26347f9",
@@ -1232,40 +1424,28 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "1.001401962747847"
         ],
         [
+          "0x98CC41ED4fC4a5a8c0a4526260da9F7ce1322e1A",
+          "USDxyz",
+          6,
+          "1.0028716008"
+        ],
+        [
           "0xE327833c6D4C35A50F47be9474D995d7CD2F6Cd7",
           "CUSD",
           6,
-          "1.0003450972"
+          "1.0005106309"
         ],
         [
           "0xeBDB0942cE16386Ab90718C7BD10C91CDb66b14d",
           "PYUSDx",
           6,
-          "0.9993516698"
-        ],
-        [
-          "0x98CC41ED4fC4a5a8c0a4526260da9F7ce1322e1A",
-          "USDxyz",
-          6,
-          "0.9988188239"
+          "0.9985397138"
         ],
         [
           "0x6491c05A82219b8D1479057361ff1654749b876b",
           "USDS",
           18,
           "0.910037751"
-        ],
-        [
-          "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
-          "LINK",
-          18,
-          "10.8317420054"
-        ],
-        [
-          "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-          "cbBTC",
-          8,
-          "76238.7610351552"
         ],
         [
           "0x11F98c7E42A367DaB4f200d2fdc460fb445CE9a8",
@@ -1278,74 +1458,62 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "DEAI",
           18,
           "2249.463157971"
-        ],
-        [
-          "0x25118290e6A5f4139381D072181157035864099d",
-          "RAIN",
-          18,
-          "0.006434441263"
-        ],
-        [
-          "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
-          "aArbWETH",
-          18,
-          "2236.15"
-        ],
-        [
-          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
-          "USDe",
-          18,
-          "0.9979127475"
         ]
       ],
       "42220": [
         [
-          "0x617f3112bf5397D0467D315cC709EF968D9ba546",
-          "USDT",
+          "0x471EcE3750Da237f93B8E339c536989b8978a438",
+          "CELO",
+          18,
+          "0.067865"
+        ],
+        [
+          "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+          "USD₮",
           6,
-          "0.9994313691"
+          "0.9966381023"
         ],
         [
           "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
           "USDC",
           6,
-          "0.9991347887"
+          "0.9986772865"
+        ],
+        [
+          "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+          "USDm",
+          18,
+          "1.0044864896"
+        ],
+        [
+          "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
+          "EURm",
+          18,
+          "1.1206441019"
         ],
         [
           "0xD221812de1BD094f35587EE8E174B07B6167D9Af",
           "WETH",
           18,
-          "2246.0856979371"
+          "2244.5071192596"
         ],
         [
-          "0xBAAB46E28388d2779e6E31Fd00cF0e5Ad95E327B",
-          "WBTC",
-          8,
-          "18780.5840654247"
-        ],
-        [
-          "0x90Ca507a5D4458a4C6C6249d186b6dCb02a5BCCd",
-          "DAI",
+          "0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787",
+          "BRLm",
           18,
-          "0.9802614463"
+          "0.170804038"
         ],
         [
-          "0x471EcE3750Da237f93B8E339c536989b8978a438",
-          "CELO",
+          "0x8A567e2aE79CA692Bd748aB832081C45de4041eA",
+          "COPm",
           18,
-          "0.067357"
+          "0.0003092975733"
         ],
         [
           "0x788BA01f8E2b87c08B142DB46F82094e0bdCad4F",
           "xABR",
           18,
           "23060381966419.4"
-        ],
-        [
-          "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
-          "USD₮",
-          6,
-          "0.996989485"
         ],
         [
           "0xd07294e6E917e07dfDcee882dd1e2565085C2ae0",
@@ -1360,34 +1528,22 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "4074.8236074211627"
         ],
         [
-          "0x765DE816845861e75A25fCA122bb6898B8B1282a",
-          "USDm",
-          18,
-          "0.996696078"
-        ],
-        [
           "0xD301a90cb3C7a9253305af30D92dd2C1FD1e704E",
           "BONE",
           18,
-          "0.05101590164"
-        ],
-        [
-          "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
-          "axlUSDC",
-          6,
-          "0.9997282351"
+          "0.05086189492"
         ],
         [
           "0x9995cc8F20Db5896943Afc8eE0ba463259c931ed",
           "ETHIX",
           18,
-          "0.02590732307"
+          "0.02628273115"
         ],
         [
-          "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
-          "EURm",
-          18,
-          "1.1103248525"
+          "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
+          "axlUSDC",
+          6,
+          "1.0010002695"
         ],
         [
           "0xC16B81Af351BA9e64C1a069E3Ab18c244A1E3049",
@@ -1399,19 +1555,19 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x918146359264C492BD6934071c6Bd31C854EDBc3",
           "mCUSD",
           18,
-          "0.9876817203"
+          "0.9923921855"
         ],
         [
           "0xd450dB3188b7Fbf52C670eee30372ba74B4c5857",
           "ABR0",
           18,
-          "0.026259581446083022"
+          "0.026260370464394972"
         ],
         [
           "0x0000206329b97DB379d5E1Bf586BbDB969C63274",
           "USDA",
           18,
-          "0.9915563702092267"
+          "0.991655664858757"
         ],
         [
           "0x7D00cd74FF385c955EA3d79e47BF06bD7386387D",
@@ -1423,51 +1579,87 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0xE273Ad7ee11dCfAA87383aD5977EE1504aC07568",
           "mCEUR",
           18,
-          "1.1190502221"
-        ],
-        [
-          "0xCCF663b1fF11028f0b19058d0f7B674004a40746",
-          "GBPm",
-          18,
-          "1.3499005496"
-        ],
-        [
-          "0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787",
-          "BRLm",
-          18,
-          "0.170804038"
-        ],
-        [
-          "0x37f750B7cC259A2f741AF45294f6a16572CF5cAd",
-          "USDC(wormhole)",
-          6,
-          "0.9973708239"
+          "1.1232325462"
         ]
       ],
       "43114": [
         [
-          "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
-          "USDC",
-          6,
-          "0.9977318336"
-        ],
-        [
           "0x0000000000000000000000000000000000000000",
           "AVAX",
           18,
-          "8.31"
+          "8.3"
+        ],
+        [
+          "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+          "USDt",
+          6,
+          "0.9989350601"
+        ],
+        [
+          "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+          "USDC",
+          6,
+          "1.0028515739"
+        ],
+        [
+          "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+          "WAVAX",
+          18,
+          "8.3"
+        ],
+        [
+          "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
+          "BTC.b",
+          8,
+          "76107.6059756234"
         ],
         [
           "0x50b7545627a5162F82A992c33b87aDc75187B218",
           "WBTC",
           8,
-          "76074.6205407217"
+          "75906.3341801634"
+        ],
+        [
+          "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
+          "WETH.e",
+          18,
+          "2240.9706250956"
         ],
         [
           "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
           "USDC.e",
           6,
-          "0.9965542931"
+          "0.9982761822"
+        ],
+        [
+          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+          "USDe",
+          18,
+          "1.0008244329"
+        ],
+        [
+          "0xC891EB4cbdEFf6e073e859e987815Ed1505c2ACD",
+          "EURC",
+          6,
+          "1.120545304"
+        ],
+        [
+          "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
+          "JOE",
+          18,
+          "0.0269775791"
+        ],
+        [
+          "0x62edc0692BD897D2295872a9FFCac5425011c661",
+          "GMX",
+          18,
+          "8.4492968412"
+        ],
+        [
+          "0xA3D68b74bF0528fdD07263c60d6488749044914b",
+          "weETH",
+          18,
+          "2924.6598281553"
         ],
         [
           "0xAf2D365e668bAaFEdcFd256c0FBbe519e594E390",
@@ -1488,16 +1680,10 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "141620.30692882"
         ],
         [
-          "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
-          "USDt",
-          6,
-          "0.999313216"
-        ],
-        [
           "0xdf37ee57B2efD215A6a8329D6B8b72064F09BBD0",
           "USDtx",
           18,
-          "0.999313216"
+          "0.99847"
         ],
         [
           "0x288398F314D472B82C44855F3f6fF20b633c2A97",
@@ -1509,7 +1695,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "0x5947BB275c521040051D82396192181b413227A3",
           "LINK.e",
           18,
-          "10.8474009341"
+          "10.8453953826"
         ],
         [
           "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
@@ -1518,22 +1704,10 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "1.00"
         ],
         [
-          "0xA3D68b74bF0528fdD07263c60d6488749044914b",
-          "weETH",
-          18,
-          "2924.6598281553"
-        ],
-        [
           "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
           "aAvaWETH",
           18,
           "2239.40"
-        ],
-        [
-          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
-          "USDe",
-          18,
-          "1.0006554062"
         ],
         [
           "0x8eBAf22B6F053dFFeaf46f4Dd9eFA95D89ba8580",
@@ -1558,36 +1732,6 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "ENA",
           18,
           "0.2342535721"
-        ],
-        [
-          "0xBE916845D8678b5d2F7aD79525A62D7c08ABba7e",
-          "AVAXx",
-          18,
-          "8.17"
-        ],
-        [
-          "0x142cdc44890978B506e745bB3Bd11607B7f7faEf",
-          "PYUSD0",
-          6,
-          "1.0000771811664515"
-        ],
-        [
-          "0x63a72806098Bd3D9520cC43356dD78afe5D386D9",
-          "AAVE.e",
-          18,
-          "130.276656355"
-        ],
-        [
-          "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2",
-          "sUSDe",
-          18,
-          "1.1774149052"
-        ],
-        [
-          "0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97",
-          "aAvaWAVAX",
-          18,
-          "8.81"
         ]
       ]
     }
@@ -1646,7 +1790,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
           "60"
         ],
         "sell": [
-          "5.646123",
+          "5.663307",
           "5"
         ],
         "methods": [
@@ -1690,7 +1834,7 @@ export const RECORDED_MARKET: Record<"prod" | "dev", RecordedMarket> = {
         "id": "PEN",
         "name": "Soles",
         "sell": [
-          "4.247854",
+          "4.251187",
           "5"
         ],
         "methods": [
