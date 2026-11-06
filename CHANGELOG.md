@@ -2,6 +2,23 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.31.0] - 2026-11-06
+
+### Features
+- Open P2P on-ramp purchases and document their API (fc45c7a)
+- Fiat group with P2P on-ramp and off-ramp in the swap widget's pattern (362dfd2)
+- Every network and token of the P2P ramps, the flag alone as a currency's mark (6813dfa)
+- Each network's main assets first in the ramp's token sheet (8a7fbf9)
+- Pick the organization in the swap form's settings; no token count in the picker (129d847)
+
+### Bug Fixes
+- Present Cosmos Pay by every network in the docs and descriptions (4f3ab90)
+- The ramp token sheet announces its count instead of writing it (37c8d72)
+- Read the sitemaps from the app itself when submitting to IndexNow on the server (29dcc88)
+
+### Documentation
+- Regenerate the docs home's committed translations (9bfcdc9)
+
 ## [0.30.0] - 2026-11-05
 
 ### Features
