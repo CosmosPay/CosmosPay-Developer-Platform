@@ -518,6 +518,13 @@
   box-shadow: 3px -3px 0 -1.5px var(--surface), 3px -3px 0 0 currentColor;
 }
 @media (hover: hover) { .pl-copy:hover { color: var(--out-ink-fg); background: var(--out-ink); border-color: var(--out-ink); } }
+/* On a phone the editor's bar keeps its room for the tabs: no window dots, and the copy button is
+   its icon (its word stays its accessible name). */
+@media (max-width: 480px) {
+  .pl-code-bar { gap: 8px; padding-left: 8px; }
+  .pl-code-dots { display: none; }
+  .pl-copy { gap: 0; padding: 9px 11px; font-size: 0; }
+}
 .pl-copy.is-done { color: var(--ok); border-color: var(--ok); background: var(--surface); }
 
 /* pricing: one panel, a column per plan; the lowest rate sits on the accent tint */

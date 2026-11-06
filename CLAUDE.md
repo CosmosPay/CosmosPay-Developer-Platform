@@ -146,7 +146,9 @@ These were said more than once; breaking one is a bug, whatever the task was.
   dialog is a component (the `.zka-exists` warning panel, choice cards as radio buttons), never a
   paragraph; a sequence is a list with who does each step; every address, transaction or contract
   shown is a link (`AddressLink` / `TxLink`: explorer, copy, preview), and `fmtNodes` puts
-  links inside translated sentences. Load the design skills (frontend-design) for UI work.
+  links inside translated sentences. Load the design skills (frontend-design, design-taste-frontend) for UI work, and follow
+  `DESIGN.md` (the web's design pattern: colour roles, the type scale and its floor, space, shape,
+  components, touch targets, motion, copy and accessibility; the owner's rules here win over it).
 - **The dashboard never connects a wallet**: people hand over a signed XDR. Cosmos Pay is
   non-custodial: no key or key material of anyone's is stored, client or server.
 - **Every list is the Payments table** (figures first, filter bar with the view's buttons, a row

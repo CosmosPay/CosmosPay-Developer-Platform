@@ -65,7 +65,7 @@ body.inst:has(.dash) { background: var(--surface); }
 .side-count {
   margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px;
   display: grid; place-items: center; background: var(--btn-bg); color: var(--btn-fg);
-  font-size: 11.5px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
 }
 
 /* the general nav inside the frame: the content column's width, no logo (the sidebar has it),
@@ -267,7 +267,7 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .hub-quick-ic { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 auto; border-radius: var(--r-field); background: var(--surface-2); color: var(--ink); }
 .hub-quick-ic svg { width: 18px; height: 18px; }
 .hub-code-k { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-.hub-code code { flex: 1; min-width: 0; font-family: var(--ff-mono); font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-code code { flex: 1; min-width: 0; font-family: var(--ff-mono); font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hub-code-ic { display: grid; color: var(--ink-3); }
 .hub-code-ic svg { width: 16px; height: 16px; }
 /* plain underlined links, as in the reference */
@@ -368,7 +368,7 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 /* each payment's fields: a small label over its value */
 .hub-cells { flex: 1; min-width: 0; display: grid; grid-template-columns: 1.1fr .9fr 1.25fr 1.15fr .8fr 1fr 1fr; gap: 12px; margin: 0; }
 .hub-cells > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.hub-cells dt { font-size: 11px; color: var(--ink-3); }
+.hub-cells dt { font-size: 12px; color: var(--ink-3); }
 .hub-cells dd { margin: 0; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hub-cells code { font-family: var(--ff-mono); font-size: 12px; }
 /* a cell with a link and its copy button keeps the row's height and shows the button's focus */
@@ -389,7 +389,7 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 
 /* ---- paired bar chart ---- */
 .bars { display: grid; grid-template-columns: 64px minmax(0, 1fr) 40px; gap: 8px; padding: 10px 18px 18px; position: relative; }
-.bars-axis { display: flex; flex-direction: column; justify-content: space-between; height: 194px; margin-top: 6px; font-size: 11px; color: var(--ink-3); }
+.bars-axis { display: flex; flex-direction: column; justify-content: space-between; height: 194px; margin-top: 6px; font-size: 12px; color: var(--ink-3); }
 .bars-axis-l { text-align: right; }
 .bars-plot { position: relative; min-width: 0; }
 .bars-svg { display: block; width: 100%; height: 220px; }
@@ -420,7 +420,7 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .bars.shared { grid-template-columns: 52px minmax(0, 1fr); }
 .bars.shared.money { grid-template-columns: 76px minmax(0, 1fr); }
 .bars-x { display: flex; margin-top: 4px; }
-.bars-x span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: visible; }
+.bars-x span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: visible; }
 /* the hovered bucket's label in ink, as the reference marks "Jul" */
 .bars-x span.on { color: var(--ink); font-weight: 700; }
 .bars-tip {
@@ -435,7 +435,7 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 .bars-tip b { font-size: 12.5px; }
 .bars-tip span { display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, .78); }
 .bars-tip em { margin-left: auto; font-style: normal; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
-.bars-tip em small { margin-left: 6px; font-size: 11.5px; font-weight: 500; color: rgba(255, 255, 255, .7); }
+.bars-tip em small { margin-left: 6px; font-size: 12px; font-weight: 500; color: rgba(255, 255, 255, .7); }
 .bars-tip-total { padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, .18); }
 .bars-tip span:not(.bars-tip-extra) + .bars-tip-extra { padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, .18); }
 
@@ -473,6 +473,17 @@ a.hub-quick-a:focus-visible { outline: 2px solid var(--tertiary); outline-offset
 }
 @media (max-width: 900px) {
   .hub-bals { grid-template-columns: minmax(0, 1fr); }
+  /* A figure strip with no chart under it (ViewFigures) is not a row of tabs: on a phone its
+     figures sit two to a row, all in sight, instead of a sideways row that cuts the last one. */
+  .view-figures .hub-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
+  .view-figures .hub-metrics.n1 { grid-template-columns: minmax(0, 1fr); }
+  .view-figures .hub-metric { min-width: 0; padding-left: 16px; }
+  .view-figures .hub-metric:nth-child(odd)::before { display: none; }
+  .view-figures .hub-metric:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .hub-metric-k, .hub-sub { overflow-wrap: anywhere; }
+  /* the activity's tabs still scroll sideways: each one stops at the row's start */
+  .hub-metrics { scroll-snap-type: x proximity; }
+  .hub-metric { scroll-snap-align: start; }
   /* phones and tablets: the figures scroll sideways as a row of tabs */
   .hub-metrics { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0; }
   .hub-metrics::-webkit-scrollbar { display: none; }
@@ -603,15 +614,15 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .rec-preview.up { translate: 0 -100%; }
 @keyframes rp-in { from { opacity: 0; transform: translateY(4px); } }
 .rpv-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 12px; color: var(--ink-3); }
-.rpv-head code { min-width: 0; font-family: var(--ff-mono); font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rpv-head code { min-width: 0; font-family: var(--ff-mono); font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rpv-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 8px 0 12px; font-size: 16px; }
 .rpv-line b { font-weight: 700; letter-spacing: -.01em; }
 .rpv-line .hub-st-t { font-size: 13px; }
 .rpv-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
 .rpv-fields > div { min-width: 0; }
-.rpv-fields dt { font-size: 11px; color: var(--ink-3); }
+.rpv-fields dt { font-size: 12px; color: var(--ink-3); }
 .rpv-fields dd { margin: 2px 0 0; font-size: 12.5px; overflow-wrap: anywhere; }
-.rpv-fields code { font-family: var(--ff-mono); font-size: 11.5px; }
+.rpv-fields code { font-family: var(--ff-mono); font-size: 12px; }
 /* a reference and its copy button side by side; a reference that opens in place is a button
    dressed as the link, one with nothing to open is plain text that still previews */
 .ref { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; vertical-align: middle; }
@@ -771,7 +782,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .token-btn:active { transform: scale(.97); }
 .token-btn-t { display: flex; flex-direction: column; min-width: 0; text-align: left; line-height: 1.15; }
 .token-btn-t b { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.token-btn-t small { font-size: 11.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.token-btn-t small { font-size: 12px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .token-btn-chev { width: 16px; height: 16px; flex: 0 0 auto; color: var(--ink-3); }
 .token-btn.empty { padding: 10px 14px; background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-fg); }
 .token-btn.empty .token-btn-chev { color: currentColor; }
@@ -866,7 +877,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 
 /* ---- the token picker: a search, a network filter, and one row per token ---- */
 .tpick h3 { margin-bottom: 14px; }
-.tpick-tools { display: flex; gap: 10px; flex-wrap: wrap; }
+/* The search and the network filter stay put over the list that scrolls, one step of space between
+   them (product owner, 2026-11-05: the list ran straight under the controls). */
+.tpick-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
 .tpick-tools .fbar-search { flex: 1 1 220px; max-width: none; }
 /* The network filter sits at the sheet's right edge: its list opens leftwards, inside the sheet. */
 .tpick-net .dd-list { left: auto; right: 0; transform-origin: top right; }
@@ -903,7 +916,10 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .side-group.open .side-tree > li { opacity: 1; translate: 0 0; transition-delay: calc(60ms + var(--i, 0) * 35ms); }
 /* phones: a record's long id is cut, so the columns that tell rows apart keep their room */
 @media (max-width: 700px) {
-  .inst .tx td.tid { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .inst .tx td.tid { max-width: 10em; white-space: nowrap; }
+  /* the id shortens and its copy button keeps its own room beside it (it sat over the id) */
+  .inst .tx td.tid .ref { display: flex; width: 100%; }
+  .inst .tx td.tid .ref > .rec-link { flex: 1 1 auto; }
 }
 /* a row's menu (RowMenu): fixed and portaled, as the previews, so no table scroller clips it; it
    grows out of its button and opens upwards near the window's bottom */
@@ -924,7 +940,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .row-menu svg { width: 16px; height: 16px; color: var(--ink-3); flex: 0 0 auto; }
 .row-menu .danger, .row-menu .danger svg { color: #C93636; }
 .row-menu button.danger:disabled, .row-menu button.danger:disabled svg { color: var(--ink-3); }
-.row-menu-hint { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
+.row-menu-hint { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--ink-3); }
 /* a row's actions sit against the table's right edge and take only the room they need, so the
    width goes to the columns with data instead of an empty band after the menu (product owner).
    `.tx td` sets text-align: left more specifically than an actions class, hence the table in
@@ -997,10 +1013,10 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .design-picker.compact .design-opt { padding: 6px; gap: 2px; }
 .design-picker.compact .design-opt img { aspect-ratio: 16 / 11; height: auto; object-fit: cover; }
 .design-picker.compact .design-opt-thumb { margin-bottom: 4px; }
-.design-picker.compact .design-opt-sel { font-size: 11.5px; }
+.design-picker.compact .design-opt-sel { font-size: 12px; }
 .design-picker.compact .design-opt-name { font-size: 12.5px; }
 .design-picker.compact .design-opt-desc { display: none; }
-.design-picker.compact .design-opt-preview { font-size: 11.5px; }
+.design-picker.compact .design-opt-preview { font-size: 12px; }
 @media (max-width: 700px) { .design-picker.compact .design-grid { grid-template-columns: repeat(2, minmax(0, 148px)); } }
 .pay-record-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0; position: sticky; top: 92px; }
 .pay-record-main { padding: 0; display: flex; flex-direction: column; gap: 16px; }
@@ -1076,7 +1092,7 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .dsearch-input:focus, .dsearch-input:focus-visible { outline: none; }
 .dsearch-input::placeholder { color: var(--ink-3); }
 .dsearch-input::-webkit-search-cancel-button { display: none; }
-.dsearch-kbd { margin-right: 10px; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--radius-btn); font: 500 11px/1.2 var(--ff-sans); color: var(--ink-3); white-space: nowrap; }
+.dsearch-kbd { margin-right: 10px; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--radius-btn); font: 500 12px/1.2 var(--ff-sans); color: var(--ink-3); white-space: nowrap; }
 .dsearch:focus-within .dsearch-kbd { opacity: 0; }
 .dsearch-pop {
   position: absolute; z-index: 90; top: calc(100% + 8px); right: 0; width: min(380px, calc(100vw - 32px)); max-height: 420px; overflow: auto;
@@ -1149,6 +1165,17 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 @media (hover: hover) {
   .inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn, .hub-step, .hub-gear, .modal-x):hover:not(:disabled) { color: var(--ink-fg); border-color: var(--ink-fill); background-color: transparent; }
   .inst :is(.icon-btn, .icon-mini, .hub-kebab, .pager-btn, .copy-mini, .copy-inline, .term-copy, .collapse-btn, .slip-btn, .hub-step, .hub-gear, .modal-x):hover:not(:disabled)::before { scale: 1; }
+}
+
+/* Touch screens (design pattern, 2026-11-06): fields at 16px, since iOS zooms the page into a
+   smaller one on focus, and every control at least 44px, the size a finger hits. The copy chip
+   beside an id grows to 32px, which a table row still holds. */
+@media (pointer: coarse) {
+  .inst .field, .dsearch-input { font-size: 16px; }
+  .inst input.field, .inst .fbar-search .field { height: 44px; }
+  .inst :is(.icon-mini, .icon-btn, .hub-kebab, .pager-btn, .collapse-btn, .slip-btn, .modal-x) { min-width: 44px; min-height: 44px; }
+  .inst :is(.btn-sm, .dd-btn, .mini-select, .msel-btn) { min-height: 44px; }
+  .inst .ref-copy { width: 32px; height: 32px; }
 }
 
 /* balances: each asset with its logo; the black card counts settlements */
