@@ -3,14 +3,28 @@
 // reliably even when something is broken (the nav is server-rendered too). Themed via the cosmos.css variables loaded by CosmosLayout.
 import CosmosLayout from "@/layouts/CosmosLayout.astro";
 
+interface Action {
+  href: string;
+  label: string;
+  primary?: boolean;
+}
+
 interface Props {
   code: string | number;
   title: string;
   message: string;
   lang?: string;
+  /** The buttons under the message; without them, back to home and to the dashboard. */
+  actions?: Action[];
+  /** A short line under the buttons (a sign-in error's code, to quote to support). */
+  note?: string;
 }
 
-const { code, title, message, lang } = Astro.props;
+const { code, title, message, lang, note } = Astro.props;
+const actions: Action[] = Astro.props.actions ?? [
+  { href: "/", label: "Back to home", primary: true },
+  { href: "/dashboard", label: "Go to dashboard" },
+];
 const locale = lang ?? Astro.cookies.get("cosmospay-lang")?.value ?? "en";
 
 // Una pose por pantalla: el que piensa para el 404 (no encontramos la pagina),
@@ -26,9 +40,9 @@ const astro = String(code) === "500" ? "astronauta-acostado.svg" : "astronauta-p
       <p class="errp-msg">{message}</p>
       <img class="errp-astro" src={`/brand/${astro}`} alt="" aria-hidden="true" loading="lazy" decoding="async" />
       <div class="errp-actions">
-        <a class="errp-btn primary" href="/">Back to home</a>
-        <a class="errp-btn" href="/dashboard">Go to dashboard</a>
+        {actions.map((a) => <a class:list={["errp-btn", { primary: a.primary }]} href={a.href}>{a.label}</a>)}
       </div>
+      {note && <p class="errp-note">{note}</p>}
     </div>
   </main>
 
@@ -103,6 +117,13 @@ const astro = String(code) === "500" ? "astronauta-acostado.svg" : "astronauta-p
     .errp-btn.primary:hover {
       background: var(--btn-bg-h, #05064F);
       border-color: var(--btn-bg-h, #05064F);
+    }
+    /* Meta text (DESIGN.md's caption step and contrast floor for meta). */
+    .errp-note {
+      margin: 20px 0 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--ink-2, rgba(0,0,0,.66));
     }
   </style>
 </CosmosLayout>

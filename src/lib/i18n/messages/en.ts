@@ -182,6 +182,17 @@ export default {
       transactions: "Transactions",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "We couldn’t sign you in",
+    notLinked: "This email already has a Cosmos Pay account, linked to another sign-in. Sign in with the account you used first (you can recover its password from the sign-in page). If you can’t, write to us and we’ll link it for you.",
+    noEmail: "Your sign-in account didn’t share an email address with us, and we need it to find your Cosmos Pay account. Add or confirm an email in your sign-in account, then sign in again.",
+    cancelled: "The sign-in was cancelled before it finished. Sign in again whenever you’re ready.",
+    generic: "Something went wrong while signing you in. Try again in a moment.",
+    retry: "Sign in again",
+    support: "Contact support",
+    code: "Error code: {code}",
+  },
   invite: {
     eyebrow: "Invitation",
     joinTitle: "Join {org}",

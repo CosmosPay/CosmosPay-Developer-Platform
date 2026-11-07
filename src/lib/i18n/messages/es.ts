@@ -180,6 +180,17 @@ export default {
       transactions: "Transacciones",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "No pudimos iniciar tu sesión",
+    notLinked: "Este email ya tiene una cuenta de Cosmos Pay, vinculada a otro acceso. Inicia sesión con la cuenta que usaste primero (puedes recuperar su contraseña desde la página de inicio de sesión). Si no puedes, escríbenos y la vinculamos por ti.",
+    noEmail: "Tu cuenta de acceso no nos compartió un email, y lo necesitamos para encontrar tu cuenta de Cosmos Pay. Agrega o confirma un email en tu cuenta de acceso y vuelve a iniciar sesión.",
+    cancelled: "El inicio de sesión se canceló antes de terminar. Vuelve a iniciar sesión cuando quieras.",
+    generic: "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo en un momento.",
+    retry: "Iniciar sesión de nuevo",
+    support: "Contactar a soporte",
+    code: "Código de error: {code}",
+  },
   invite: {
     eyebrow: "Invitación",
     joinTitle: "Únete a {org}",

@@ -180,6 +180,17 @@ export default {
       transactions: "交易",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "无法登录",
+    notLinked: "该邮箱已有 Cosmos Pay 账户，并关联到另一个登录账户。请使用你最初使用的账户登录（可在登录页面找回其密码）。如果无法登录，请联系我们，我们会为你关联。",
+    noEmail: "你的登录账户没有向我们提供邮箱，而我们需要它来找到你的 Cosmos Pay 账户。请在登录账户中添加或确认邮箱，然后重新登录。",
+    cancelled: "登录在完成前被取消。准备好后随时重新登录。",
+    generic: "登录时出了点问题。请稍后重试。",
+    retry: "重新登录",
+    support: "联系支持",
+    code: "错误代码：{code}",
+  },
   invite: {
     eyebrow: "邀请",
     joinTitle: "加入 {org}",

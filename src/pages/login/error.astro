@@ -1,0 +1,33 @@
+---
+/* /login/error: where a failed sign-in lands (Better Auth's onAPIError.errorURL, src/lib/auth.ts),
+ * with `?error=<code>`. It says what happened and what to do, in the visitor's language, with a
+ * way to sign in again and one to reach support, and shows the code (letters, digits and _ only)
+ * to quote to support. Under /login, so it is the platform's page on every domain (hosts.ts). */
+import ErrorPage from "@/components/ErrorPage.astro";
+import { messages } from "@/lib/i18n/messages/index";
+import { authErrorKind, displayCode } from "@/lib/auth-linking";
+import { CONTACT_ADDRESS } from "@/lib/payments/contact";
+
+const catalogs = messages as Record<string, typeof messages.en>;
+const cookieLang = Astro.cookies.get("cosmospay-lang")?.value ?? "en";
+const lang = cookieLang in catalogs ? cookieLang : "en";
+const t = catalogs[lang].signInError;
+
+const code = displayCode(Astro.url.searchParams.get("error"));
+const message = t[authErrorKind(code)];
+
+Astro.response.status = 401;
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<ErrorPage
+  code="401"
+  title={t.title}
+  message={message}
+  lang={lang}
+  actions={[
+    { href: "/login", label: t.retry, primary: true },
+    { href: `mailto:${CONTACT_ADDRESS}`, label: t.support },
+  ]}
+  note={code ? t.code.replace("{code}", code) : undefined}
+/>
