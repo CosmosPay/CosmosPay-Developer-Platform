@@ -35,7 +35,8 @@ const home = new URL(url).pathname === "/";
 
 const graph: JsonLdNode[] = [
   ORGANIZATION_NODE,
-  webSiteNode({ origin: SITE, name: "Cosmos Pay", site: SITE, langs: SITE_LANGS }),
+  // The same alternate name as the organisation's, so the site name a result shows is the company's.
+  webSiteNode({ origin: SITE, name: "Cosmos Pay", alternateName: "CosmosPay", site: SITE, langs: SITE_LANGS }),
   ...webPageNodes({
     url,
     name: title,

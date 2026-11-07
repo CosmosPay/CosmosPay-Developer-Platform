@@ -3,8 +3,8 @@
    resto de las plataformas plegado abajo, para que no le compitan. El peso
    de cada archivo va en el boton: nadie baja 75 MB sin enterarse antes. */
 import { IcArrow, IcChevSm } from "@/components/cosmos/shared";
-import { useT } from "@/lib/i18n/index";
-import { WALLET_LINKS, WALLET_MORE, WALLET_VERSION, ANDROID_SIZE } from "@/components/cosmos/marketing/data";
+import { useT, fmt } from "@/lib/i18n/index";
+import { WALLET_LINKS, WALLET_MORE, WALLET_VERSION, ANDROID_SIZE, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
 import { WALLET_ICONS } from "@/components/cosmos/marketing/icons";
 
 /* todo lo que sale del dominio se abre aparte y sin pasarle el referrer */
@@ -55,11 +55,11 @@ export function WalletSection() {
           <div className="wallet-copy">
             {/* The first thing on screen, so it holds the page's h1: what Cosmos Pay is, with the
                 brand's line over it. The section number is drawn by CSS (data-num), outside the
-                heading's text. */}
+                heading's text. The lede counts the networks (`{n}`). */}
             <div className="section-head reveal">
               <div className="hero-tag">{w.tag}</div>
               <h1 data-num="/01">{w.title}</h1>
-              <p>{w.lede}</p>
+              <p>{fmt(w.lede, { n: SWAP_NETWORKS })}</p>
             </div>
 
             <div className="wallet-ways reveal">

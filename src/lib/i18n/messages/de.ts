@@ -643,7 +643,7 @@ export default {
   landing: {
     meta: {
       title: "Cosmos Pay | Stablecoin-Zahlungs-API und Wallet",
-      description: "Nimm USDC und andere Stablecoins in allen Netzwerken an, mit denen wir arbeiten: Zahlungs-API, gehosteter Checkout und Wallet für Lateinamerika.",
+      description: "Nimm USDC und andere Stablecoins in {n} Netzwerken an: Zahlungs-API, Zahlungslinks mit gehostetem Checkout, Swaps und nicht verwahrte Wallet für Lateinamerika.",
     },
     hero: {
       tagline: "Deine digitale Welt in Bewegung.",
@@ -655,7 +655,7 @@ export default {
     wallet: {
       tag: "Deine digitale Welt in einer Wallet.",
       title: "Stablecoin-Zahlungen und eine Wallet für Lateinamerika.",
-      lede: "Cosmos Pay ist eine Zahlungs-API für Stablecoins und ein gehosteter Checkout in allen Netzwerken, mit denen wir arbeiten, sowie eine nicht verwahrte Wallet. Nutze die Wallet in Chrome, im Web oder auf Android.",
+      lede: "Cosmos Pay ist eine Zahlungs-API für Stablecoins und ein gehosteter Checkout in {n} Netzwerken sowie eine nicht verwahrte Wallet. Nutze die Wallet in Chrome, im Web oder auf Android.",
       chrome: { t: "In Chrome installieren", s: "Offizielle Erweiterung im Chrome Web Store." },
       web: { t: "Im Browser ausprobieren", s: "Web-App jetzt öffnen, ohne Installation." },
       android: {
@@ -802,7 +802,7 @@ export default {
     stats: {
       title: "Einfach. Sicher. Grenzenlos.",
       question: "Was ist Cosmos Pay?",
-      answer: "Cosmos Pay ist eine Plattform für Stablecoin-Zahlungen für Unternehmen in Lateinamerika. Händler kassieren in allen Netzwerken, mit denen Cosmos Pay arbeitet, über Zahlungslinks, einen gehosteten Checkout oder eine API, und das Geld kommt an einer Adresse an, die sie kontrollieren. Dazu kommen Swaps zwischen all diesen Netzwerken und eine nicht verwahrte Wallet.",
+      answer: "Cosmos Pay ist eine Plattform für Stablecoin-Zahlungen für Unternehmen in Lateinamerika. Händler kassieren in {n} Netzwerken über Zahlungslinks, einen gehosteten Checkout oder eine API, und das Geld kommt an einer Adresse an, die sie kontrollieren. Dazu kommen Swaps zwischen all diesen Netzwerken und eine nicht verwahrte Wallet.",
       items: [
         "Netzwerke, aus denen du Zahlungen erhältst, mit Swaps zwischen ihnen",
         "Rückbuchungen: Sobald das Netzwerk eine Zahlung bestätigt, ist sie endgültig",

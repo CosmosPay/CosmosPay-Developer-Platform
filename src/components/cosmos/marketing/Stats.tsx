@@ -3,7 +3,7 @@
    derecha. Every figure is a product fact from the code (data.ts: STAT_VALUES), never a
    volume, an uptime or a customer count. */
 import { useT, fmt } from "@/lib/i18n/index";
-import { STAT_VALUES, STAT_VARS } from "@/components/cosmos/marketing/data";
+import { STAT_VALUES, STAT_VARS, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
 
 export function Stats() {
   const t = useT();
@@ -17,10 +17,11 @@ export function Stats() {
         <div className="stats-grid reveal">
           <div className="stats-copy">
             <h2 className="stats-title">{title}</h2>
-            {/* What Cosmos Pay is, in a few sentences a reader (or an AI answer) can quote alone. */}
+            {/* What Cosmos Pay is, in a few sentences a reader (or an AI answer) can quote alone,
+                with the number of networks (`{n}`) rather than "every network". */}
             <div className="stats-about">
               <h3>{st.question}</h3>
-              <p>{st.answer}</p>
+              <p>{fmt(st.answer, { n: SWAP_NETWORKS })}</p>
             </div>
           </div>
           <div className="stats-figs">

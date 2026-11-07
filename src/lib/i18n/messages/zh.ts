@@ -386,7 +386,7 @@ export default {
 
   /* ---------------- landing ---------------- */
   landing: {
-    meta: { title: "Cosmos Pay | 稳定币支付 API 与钱包", description: "在我们支持的所有网络上接受 USDC 及其他稳定币：面向拉丁美洲的支付 API、托管收银台和钱包。" },
+    meta: { title: "Cosmos Pay | 稳定币支付 API 与钱包", description: "在 {n} 个网络上接受 USDC 及其他稳定币：面向拉丁美洲的支付 API、带托管收银台的支付链接、兑换和非托管钱包。" },
     hero: {
       tagline: "让您的数字世界流动起来。",
       headline: "少写代码 -> 让更多资金流动",
@@ -397,7 +397,7 @@ export default {
     wallet: {
       tag: "您的数字世界，尽在一个钱包。",
       title: "面向拉丁美洲的稳定币支付与钱包。",
-      lede: "Cosmos Pay 是覆盖我们支持的所有网络的稳定币支付 API 和托管收银台，并提供非托管钱包。可在 Chrome、网页版或 Android 上使用钱包。",
+      lede: "Cosmos Pay 是覆盖 {n} 个网络的稳定币支付 API 和托管收银台，并提供非托管钱包。可在 Chrome、网页版或 Android 上使用钱包。",
       chrome: { t: "在 Chrome 中安装", s: "Chrome 应用商店中的官方扩展程序。" },
       web: { t: "在浏览器中试用", s: "立即打开网页版，无需安装。" },
       android: { t: "下载 Android 版", s: "已签名的 APK。为您的浏览器开启“安装未知应用”权限，然后打开文件进行安装。" },
@@ -494,7 +494,7 @@ export default {
     stats: {
       title: "简单。安全。无限。",
       question: "Cosmos Pay 是什么？",
-      answer: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付平台。商家通过支付链接、托管收银台或 API，在 Cosmos Pay 支持的所有网络上收款，款项进入他们自己掌控的地址。它还提供所有这些网络之间的兑换，以及非托管钱包。",
+      answer: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付平台。商家通过支付链接、托管收银台或 API，在 Cosmos Pay 支持的 {n} 个网络上收款，款项进入他们自己掌控的地址。它还提供所有这些网络之间的兑换，以及非托管钱包。",
       items: ["个收款网络，并支持网络之间的兑换", "笔拒付：网络确认支付后，即不可撤销", "+ {fixed} / 笔（Starter，无月费）", "在 Stellar 上完成一笔支付结算"],
     },
     stories: {
