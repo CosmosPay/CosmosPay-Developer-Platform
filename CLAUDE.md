@@ -378,7 +378,19 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   over that way on 2026-10-11, while the Authentik provider identified users by email (`sub`) and
   let anyone sign up or switch to an address they did not own. The provider's `sub` is the
   Authentik user's UUID since 2026-10-31, and its `email` scope sends the `email_verified`
-  attribute the enrollment's confirmation sets.
+  attribute the enrollment's confirmation sets. The policy lives in `src/lib/auth-linking.ts`
+  (tested): Better Auth also requires the user row here to be verified
+  (`requireLocalEmailVerified`, left at its default; it is deprecated and the next minor makes it
+  unconditional), which stops a row someone created first with a victim's unconfirmed address from
+  receiving the victim's identity.
+- **`account_not_linked` almost always means a second Authentik user with a known email**
+  (2026-11-07): it gets a new UUID, the platform finds the email but not that subject, and refuses.
+  Authentik's enrollment must refuse a known email (an expression policy on the prompt stages) so
+  the person recovers their account instead. A failed sign-in lands on `/login/error`
+  (`onAPIError.errorURL`, `src/pages/login/error.astro`): what happened and what to do in the
+  visitor's language, sign in again, contact support, and the code. To re-link one person, point
+  their `account` row (`providerId` "ak") at the subject Authentik sends now, in a transaction,
+  after confirming in Authentik that the new user is them.
 
 ### The payments domain
 

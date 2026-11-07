@@ -58,6 +58,18 @@ test("the company site presents Cosmos Pay by every network it works with, in ev
   }
 });
 
+test("the company home says what Cosmos Pay is with the number of its networks, in every language", () => {
+  // The sentence under the h1, the home's search description and the "What is Cosmos Pay?" answer
+  // are what a result snippet or an AI answer quotes: a count says more than "every network".
+  for (const [lang, m] of Object.entries(messages as Record<string, any>)) {
+    for (const [key, text] of Object.entries({
+      "landing.wallet.lede": m.landing.wallet.lede as string,
+      "landing.meta.description": m.landing.meta.description as string,
+      "landing.stats.answer": m.landing.stats.answer as string,
+    })) assert.ok(text.includes("{n}"), `${lang} ${key} counts the networks: ${text}`);
+  }
+});
+
 test("the company site's wallet card counts the networks the wallet holds, in every language", () => {
   for (const [lang, m] of Object.entries(messages as Record<string, any>)) {
     const text: string = m.about.products.items.wallet.d;
