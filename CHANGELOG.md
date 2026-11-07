@@ -2,6 +2,17 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.33.0] - 2026-11-07
+
+### Features
+- The company home counts its networks and names its site (587c7a0)
+
+### Bug Fixes
+- A failed sign-in explains itself, and the linking policy is tested (06a286a)
+
+### Documentation
+- Brand banner and no emojis (8ccc1ee)
+
 ## [0.32.0] - 2026-11-06
 
 ### Features
