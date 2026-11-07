@@ -643,7 +643,7 @@ export default {
   landing: {
     meta: {
       title: "Cosmos Pay | API de pagos en stablecoins y wallet para LATAM",
-      description: "Cobrá en USDC y otras stablecoins en todas las redes con las que trabajamos: API de pagos, checkout alojado y wallet para Latinoamérica.",
+      description: "Cobrá en USDC y otras stablecoins en {n} redes: API de pagos, enlaces de pago con checkout alojado, swaps y una wallet sin custodia para Latinoamérica.",
     },
     hero: {
       tagline: "Tu mundo digital en movimiento.",
@@ -655,7 +655,7 @@ export default {
     wallet: {
       tag: "Tu mundo digital en una wallet.",
       title: "Pagos en stablecoins y una wallet para Latinoamérica.",
-      lede: "Cosmos Pay es una API de pagos en stablecoins y un checkout alojado en todas las redes con las que trabajamos, y una wallet sin custodia. Usá la wallet en Chrome, en la web o en Android.",
+      lede: "Cosmos Pay es una API de pagos en stablecoins y un checkout alojado en {n} redes, y una wallet sin custodia. Usá la wallet en Chrome, en la web o en Android.",
       chrome: { t: "Instalar en Chrome", s: "Extensión oficial en la Chrome Web Store." },
       web: { t: "Probar en el navegador", s: "Abrí la webapp ahora, sin instalar nada." },
       android: { t: "Descargar para Android", s: "APK firmado. Permití \"Instalar apps desconocidas\" para tu navegador, abrí el archivo e instalá." },
@@ -794,7 +794,7 @@ export default {
     stats: {
       title: "Simple. Seguro. Sin límites.",
       question: "¿Qué es Cosmos Pay?",
-      answer: "Cosmos Pay es una plataforma de pagos en stablecoins para negocios de Latinoamérica. Los comercios cobran en todas las redes con las que trabaja Cosmos Pay, con enlaces de pago, un checkout alojado o una API, y el dinero llega a una dirección que ellos controlan. También ofrece swaps entre todas esas redes, y una wallet sin custodia.",
+      answer: "Cosmos Pay es una plataforma de pagos en stablecoins para negocios de Latinoamérica. Los comercios cobran en {n} redes, con enlaces de pago, un checkout alojado o una API, y el dinero llega a una dirección que ellos controlan. También ofrece swaps entre todas esas redes, y una wallet sin custodia.",
       items: [
         "redes para cobrar, con swaps entre ellas",
         "contracargos: cuando la red confirma un pago, es definitivo",
