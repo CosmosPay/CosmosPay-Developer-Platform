@@ -180,6 +180,17 @@ export default {
       transactions: "Transactions",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "Impossible de vous connecter",
+    notLinked: "Cette adresse email a déjà un compte Cosmos Pay, relié à un autre accès. Connectez-vous avec le compte utilisé la première fois (vous pouvez récupérer son mot de passe depuis la page de connexion). Sinon, écrivez-nous et nous le relierons pour vous.",
+    noEmail: "Votre compte de connexion ne nous a pas transmis d’adresse email, et nous en avons besoin pour retrouver votre compte Cosmos Pay. Ajoutez ou confirmez une adresse dans votre compte de connexion, puis reconnectez-vous.",
+    cancelled: "La connexion a été annulée avant la fin. Reconnectez-vous quand vous le souhaitez.",
+    generic: "Un problème est survenu pendant la connexion. Réessayez dans un instant.",
+    retry: "Se reconnecter",
+    support: "Contacter le support",
+    code: "Code d’erreur : {code}",
+  },
   invite: {
     eyebrow: "Invitation",
     joinTitle: "Rejoindre {org}",

@@ -180,6 +180,17 @@ export default {
       transactions: "Transações",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "Não conseguimos entrar na sua conta",
+    notLinked: "Este email já tem uma conta da Cosmos Pay, vinculada a outro acesso. Entre com a conta que você usou primeiro (é possível recuperar a senha na página de login). Se não conseguir, escreva para nós e vinculamos para você.",
+    noEmail: "Sua conta de acesso não compartilhou um email conosco, e precisamos dele para encontrar sua conta da Cosmos Pay. Adicione ou confirme um email na sua conta de acesso e entre novamente.",
+    cancelled: "O login foi cancelado antes de terminar. Entre novamente quando quiser.",
+    generic: "Algo deu errado ao entrar. Tente novamente em instantes.",
+    retry: "Entrar novamente",
+    support: "Falar com o suporte",
+    code: "Código do erro: {code}",
+  },
   invite: {
     eyebrow: "Convite",
     joinTitle: "Entrar em {org}",

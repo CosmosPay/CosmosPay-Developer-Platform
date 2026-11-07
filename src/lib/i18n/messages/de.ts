@@ -180,6 +180,17 @@ export default {
       transactions: "Transaktionen",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "Anmeldung nicht möglich",
+    notLinked: "Zu dieser E-Mail-Adresse gibt es schon ein Cosmos-Pay-Konto, verknüpft mit einer anderen Anmeldung. Melde dich mit dem Konto an, das du zuerst benutzt hast (das Passwort kannst du auf der Anmeldeseite zurücksetzen). Klappt das nicht, schreib uns und wir verknüpfen es für dich.",
+    noEmail: "Dein Anmeldekonto hat uns keine E-Mail-Adresse übermittelt, und wir brauchen sie, um dein Cosmos-Pay-Konto zu finden. Füge in deinem Anmeldekonto eine E-Mail-Adresse hinzu oder bestätige sie, und melde dich dann erneut an.",
+    cancelled: "Die Anmeldung wurde abgebrochen, bevor sie fertig war. Melde dich erneut an, wann immer du bereit bist.",
+    generic: "Bei der Anmeldung ist etwas schiefgelaufen. Versuche es gleich noch einmal.",
+    retry: "Erneut anmelden",
+    support: "Support kontaktieren",
+    code: "Fehlercode: {code}",
+  },
   invite: {
     eyebrow: "Einladung",
     joinTitle: "{org} beitreten",

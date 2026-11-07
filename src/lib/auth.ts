@@ -10,6 +10,7 @@ import {
 } from "astro:env/server";
 import { prisma } from "@/lib/prisma";
 import { ALLOWED_ORIGINS } from "@/lib/allowed-origins";
+import { ACCOUNT_LINKING, AUTH_ERROR_PATH } from "@/lib/auth-linking";
 
 export const auth = betterAuth({
   secret: BETTER_AUTH_SECRET,
@@ -30,20 +31,18 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
   /* Link an Authentik ("ak") sign-in to an existing user with the same email ONLY when
-     Authentik says that address is verified. This is what lets a CosmosPay account
-     auto-provisioned from the wallet be picked up when that user later logs in at
-     auth.cosmospay.lat, instead of creating a duplicate.
-     Never list "ak" in `trustedProviders`: Better Auth links a trusted provider's sign-in
-     by email whatever its `email_verified` says, so any Authentik account that merely holds
-     someone's address becomes that person here. That is how accounts were taken over on
-     2026-10-11 (Authentik then let anyone sign up or switch to an address they did not own,
-     and identified users by email). Authentik sends `email_verified: true` only once the
-     address was confirmed (the `email_verified` attribute the enrollment's confirmation
-     sets), and identifies users by UUID, not email. */
+     Authentik says that address is verified (and the user row here is too): the policy and
+     why each switch is set the way it is live in src/lib/auth-linking.ts (tested). Never list
+     "ak" in `trustedProviders` (the 2026-10-11 takeovers). Authentik sends
+     `email_verified: true` only once the address was confirmed, and identifies users by UUID,
+     not email. */
   account: {
-    accountLinking: {
-      enabled: true,
-    },
+    accountLinking: ACCOUNT_LINKING,
+  },
+  /* A failed sign-in lands on the platform's own page, in the person's language, saying what
+     to do (src/pages/login/error.astro), instead of Better Auth's bare error page. */
+  onAPIError: {
+    errorURL: new URL(AUTH_ERROR_PATH, BETTER_AUTH_URL).toString(),
   },
   plugins: [
     genericOAuth({
