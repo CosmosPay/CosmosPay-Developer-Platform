@@ -18,12 +18,8 @@
 .pswap-facts li { display: grid; gap: 4px; padding-left: 16px; border-left: 2px solid var(--line); }
 .pswap-facts b { font-size: 16px; font-weight: 600; }
 .pswap-facts span { font-size: 15px; line-height: 1.5; color: var(--ink-2); }
-.pswap-fee { margin: 24px 0 0; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
-/* Signed in: the organization the swaps go through, at its plan's commission, and where they land. */
-.pswap-fee.is-org { max-width: 46ch; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); }
-.pswap-fee.is-org p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
-.pswap-org { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 16px; margin-top: 12px; }
-.pswap-org a { font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+/* signed in: where the swaps land (the commission is in the swap form's settings) */
+.pswap-yours { display: inline-block; margin-top: 24px; font-size: 15px; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .pswap-widget { scroll-margin-top: 140px; }
 .pswap-widget .swapper { margin: 0; }
 

@@ -839,9 +839,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 }
 .slip-pop[data-state="closing"] { animation: popOut .12s ease-in both; pointer-events: none; }
 .slip-t { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--ink); }
-/* Who the swap is made as (SwapWidget `accounts`), above the slippage: one row per organization,
-   its commission under its name, the chosen one checked. */
-.slip-acct { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+/* The commission by organization or account (SwapWidget `accounts`), under the slippage: one row
+   per organization, its plan and rate under its name, the chosen one checked. */
+.slip-acct { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .slip-acct-list { display: grid; gap: 4px; max-height: 220px; overflow-y: auto; }
 .slip-acct-opt {
   display: grid; gap: 2px; width: 100%; padding: 9px 34px 9px 12px; border: 0; border-radius: var(--r-item, 10px);

@@ -392,7 +392,6 @@ function swapsPage(ctx: Ctx): Block[] {
   return [
     ...pageHeader(d.t.pages.swaps),
     ul(sp.facts.map((f) => term(fill(f.t, nets), fill(f.s, nets)))),
-    p(fill(sp.fee, rates)),
     h(2, sp.usdt0Title),
     p(fill(sp.usdt0Lede, { n: String(USDT0_OTHER_NETWORKS_BEFORE_ROUTES) })),
     h(2, sp.apiTitle),

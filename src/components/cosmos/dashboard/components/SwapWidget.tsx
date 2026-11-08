@@ -44,9 +44,10 @@ const SLIPPAGES = ["", "50", "100", "200"];
    accepts, whenever `n` changes. */
 export type SwapPick = { from: (t: SwapToken) => boolean; to: (t: SwapToken) => boolean; n: number };
 
-/* Who the swap is made as, chosen in the form's settings (the public swap page, signed in with
-   several organizations; product owner, 2026-11-05: the organization picker belongs in the swap
-   form's options, not beside it). Each option names an organization and its commission. */
+/* The commission the swap pays, by who it is made as, in the form's settings under the slippage
+   (the public swap page; product owner, 2026-11-06: the commission is chosen there by
+   organization or account, never written beside the form; the quote shows the amount). Each
+   option names an organization (or no account) and its rate; a single option is shown, checked. */
 export type SwapAccounts = { label: string; value: string; options: { value: string; label: string; hint?: string }[]; onChange: (value: string) => void };
 
 /* `feeBps`: the commission (basis points) the caller's swaps pay, the organization owner's plan's or
@@ -373,6 +374,14 @@ function SlippageMenu({ value, onChange, accounts = null }: { value: string; onC
       </button>
       {pop.mounted && (
         <div className="slip-pop" id="swap-slippage" data-state={pop.state}>
+          <p className="slip-t" id="swap-slippage-t">{w.slippage}</p>
+          <div className="seg-tabs" role="group" aria-labelledby="swap-slippage-t">
+            {SLIPPAGES.map((s) => (
+              <button key={s || "auto"} type="button" className={value === s ? "on" : ""} aria-pressed={value === s} onClick={() => { onChange(s); setOpen(false); }}>
+                {s ? `${Number(s) / 100}%` : w.slippageAuto}
+              </button>
+            ))}
+          </div>
           {accounts && (
             <div className="slip-acct">
               <p className="slip-t" id="swap-account-t">{accounts.label}</p>
@@ -386,14 +395,6 @@ function SlippageMenu({ value, onChange, accounts = null }: { value: string; onC
               </div>
             </div>
           )}
-          <p className="slip-t" id="swap-slippage-t">{w.slippage}</p>
-          <div className="seg-tabs" role="group" aria-labelledby="swap-slippage-t">
-            {SLIPPAGES.map((s) => (
-              <button key={s || "auto"} type="button" className={value === s ? "on" : ""} aria-pressed={value === s} onClick={() => { onChange(s); setOpen(false); }}>
-                {s ? `${Number(s) / 100}%` : w.slippageAuto}
-              </button>
-            ))}
-          </div>
         </div>
       )}
     </div>

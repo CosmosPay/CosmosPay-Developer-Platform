@@ -971,6 +971,12 @@
 .is-pinned .pl-head { margin-bottom: 32px; }
 /* the stage is a flex column: without this its centred .wrap would shrink to its content */
 .is-pinned .pl-pin-stage > .wrap { width: 100%; }
+/* The stage centres its content in a screen-tall box, so past the last step the space under the
+   content stood before what follows (the call to action after "how it works" sat 110px or more
+   under the steps). landing.ts measures that space (--pin-tail) and the section gives it back;
+   the next section is drawn over the stage's empty foot. */
+.pl-section.is-pinned { margin-bottom: calc(var(--pin-tail, 0px) * -1); }
+.pl-section.is-pinned + * { position: relative; z-index: 1; }
 
 /* how it works, pinned: the steps on a rail on the left, the current step's screen on the right */
 .pl-how.is-pinned .pl-steps { display: block; position: relative; min-height: 420px; padding-right: 56%; }
@@ -1131,7 +1137,9 @@
 /* the two facts that lower the risk, under the hero's buttons */
 .pl-hero-notes { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; margin: 22px 0 0; padding: 0; animation: pl-rise .9s cubic-bezier(.2, .7, .2, 1) .44s both; }
 .pl-hero-notes li { display: flex; align-items: center; gap: 8px; font-size: .9375rem; font-weight: 500; color: var(--ink-2); }
-.pl-hero-notes .pl-icon { width: 16px; height: 16px; }
+/* each check in a small ring (product owner, 2026-11-06: "a little circle, not only the check") */
+.pl-hero-notes .pl-check { display: grid; place-items: center; width: 20px; height: 20px; margin-top: 0; border: 1.5px solid currentColor; border-radius: 50%; }
+.pl-hero-notes .pl-icon { width: 11px; height: 11px; }
 
 /* "see more" links at the end of a teaser */
 .pl-more { display: inline-block; margin-top: 24px; }
