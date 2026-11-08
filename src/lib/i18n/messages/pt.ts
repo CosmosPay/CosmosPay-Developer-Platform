@@ -180,6 +180,17 @@ export default {
       transactions: "Transações",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "Não conseguimos entrar na sua conta",
+    notLinked: "Este email já tem uma conta da Cosmos Pay, vinculada a outro acesso. Entre com a conta que você usou primeiro (é possível recuperar a senha na página de login). Se não conseguir, escreva para nós e vinculamos para você.",
+    noEmail: "Sua conta de acesso não compartilhou um email conosco, e precisamos dele para encontrar sua conta da Cosmos Pay. Adicione ou confirme um email na sua conta de acesso e entre novamente.",
+    cancelled: "O login foi cancelado antes de terminar. Entre novamente quando quiser.",
+    generic: "Algo deu errado ao entrar. Tente novamente em instantes.",
+    retry: "Entrar novamente",
+    support: "Falar com o suporte",
+    code: "Código do erro: {code}",
+  },
   invite: {
     eyebrow: "Convite",
     joinTitle: "Entrar em {org}",
@@ -643,7 +654,7 @@ export default {
   landing: {
     meta: {
       title: "Cosmos Pay | API de pagamentos em stablecoins e carteira",
-      description: "Receba USDC e outras stablecoins em todas as redes com que trabalhamos: API de pagamentos, checkout hospedado e carteira para a América Latina.",
+      description: "Receba USDC e outras stablecoins em {n} redes: API de pagamentos, links de pagamento com checkout hospedado, swaps e carteira sem custódia na América Latina.",
     },
     hero: {
       tagline: "O teu mundo digital em movimento.",
@@ -655,7 +666,7 @@ export default {
     wallet: {
       tag: "O teu mundo digital numa wallet.",
       title: "Pagamentos em stablecoins e uma carteira para a América Latina.",
-      lede: "A Cosmos Pay é uma API de pagamentos em stablecoins e um checkout hospedado em todas as redes com que trabalhamos, e uma carteira sem custódia. Use a carteira no Chrome, na web ou no Android.",
+      lede: "A Cosmos Pay é uma API de pagamentos em stablecoins e um checkout hospedado em {n} redes, e uma carteira sem custódia. Use a carteira no Chrome, na web ou no Android.",
       chrome: { t: "Instalar no Chrome", s: "Extensão oficial na Chrome Web Store." },
       web: { t: "Testar no navegador", s: "Abra o web app agora, sem instalar nada." },
       android: { t: "Baixar para Android", s: "APK assinado. Libere \"Instalar apps desconhecidos\" para o seu navegador, abra o arquivo e instale." },
@@ -799,7 +810,7 @@ export default {
     stats: {
       title: "Simples. Seguro. Sem limites.",
       question: "O que é a Cosmos Pay?",
-      answer: "A Cosmos Pay é uma plataforma de pagamentos em stablecoins para empresas da América Latina. Os comerciantes recebem em todas as redes com que a Cosmos Pay trabalha, com links de pagamento, um checkout hospedado ou uma API, e o dinheiro chega a um endereço que eles controlam. Ela também oferece swaps entre todas essas redes, e uma carteira sem custódia.",
+      answer: "A Cosmos Pay é uma plataforma de pagamentos em stablecoins para empresas da América Latina. Os comerciantes recebem em {n} redes, com links de pagamento, um checkout hospedado ou uma API, e o dinheiro chega a um endereço que eles controlam. Ela também oferece swaps entre todas essas redes, e uma carteira sem custódia.",
       items: [
         "redes para receber, com swaps entre elas",
         "chargebacks: quando a rede confirma um pagamento, ele é definitivo",

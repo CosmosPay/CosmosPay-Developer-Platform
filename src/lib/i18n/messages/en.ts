@@ -182,6 +182,17 @@ export default {
       transactions: "Transactions",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "We couldn’t sign you in",
+    notLinked: "This email already has a Cosmos Pay account, linked to another sign-in. Sign in with the account you used first (you can recover its password from the sign-in page). If you can’t, write to us and we’ll link it for you.",
+    noEmail: "Your sign-in account didn’t share an email address with us, and we need it to find your Cosmos Pay account. Add or confirm an email in your sign-in account, then sign in again.",
+    cancelled: "The sign-in was cancelled before it finished. Sign in again whenever you’re ready.",
+    generic: "Something went wrong while signing you in. Try again in a moment.",
+    retry: "Sign in again",
+    support: "Contact support",
+    code: "Error code: {code}",
+  },
   invite: {
     eyebrow: "Invitation",
     joinTitle: "Join {org}",
@@ -390,7 +401,7 @@ export default {
   landing: {
     meta: {
       title: "Cosmos Pay | Stablecoin payments API and wallet for LATAM",
-      description: "Accept USDC and other stablecoins on every network we work with: a payments API, a hosted checkout and a wallet for Latin America.",
+      description: "Accept USDC and other stablecoins on {n} networks: a payments API, payment links with a hosted checkout, swaps and a non-custodial wallet for Latin America.",
     },
     hero: {
       tagline: "Your digital world, in motion.",
@@ -402,7 +413,7 @@ export default {
     wallet: {
       tag: "Your digital world, in one wallet.",
       title: "Stablecoin payments and a wallet for Latin America.",
-      lede: "Cosmos Pay is a stablecoin payments API and a hosted checkout on every network we work with, and a non-custodial wallet. Get the wallet for Chrome, the web or Android.",
+      lede: "Cosmos Pay is a stablecoin payments API and a hosted checkout on {n} networks, and a non-custodial wallet. Get the wallet for Chrome, the web or Android.",
       chrome: { t: "Install on Chrome", s: "Official extension on the Chrome Web Store." },
       web: { t: "Try it in your browser", s: "Open the web app now, nothing to install." },
       android: { t: "Download for Android", s: "Signed APK. Allow \"Install unknown apps\" for your browser, then open the file and install." },
@@ -541,7 +552,7 @@ export default {
     stats: {
       title: "Simple. Secure. Limitless.",
       question: "What is Cosmos Pay?",
-      answer: "Cosmos Pay is a stablecoin payments platform for businesses in Latin America. Merchants take payments on every network Cosmos Pay works with, through payment links, a hosted checkout or an API, and the money reaches an address they control. It also offers swaps between all those networks, and a non-custodial wallet.",
+      answer: "Cosmos Pay is a stablecoin payments platform for businesses in Latin America. Merchants take payments on {n} networks, through payment links, a hosted checkout or an API, and the money reaches an address they control. It also offers swaps between all those networks, and a non-custodial wallet.",
       items: [
         "networks to get paid from, with swaps between them",
         "chargebacks: once the network confirms a payment, it is final",

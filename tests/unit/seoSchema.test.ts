@@ -87,6 +87,13 @@ test('the website names its languages and its publisher', () => {
   assert.equal(site['@id'], 'https://cosmospay.lat/#website');
   assert.deepEqual(site.inLanguage, ['en', 'es']);
   assert.deepEqual(site.publisher, { '@id': 'https://cosmospay.lat/#organization' });
+  assert.equal('alternateName' in site, false, 'no alternate name unless one is given');
+});
+
+test('the website carries the alternate name it is given, for the site name a search result shows', () => {
+  const site = webSiteNode({ origin: SITE, name: 'Cosmos Pay', alternateName: 'CosmosPay', site: SITE, langs: ['en'] });
+  assert.equal(site.name, 'Cosmos Pay');
+  assert.equal(site.alternateName, 'CosmosPay');
 });
 
 test('every offered plan that states a price is an offer, at the price plans.ts states', () => {

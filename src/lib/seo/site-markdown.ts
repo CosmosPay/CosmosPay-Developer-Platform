@@ -88,7 +88,7 @@ function home({ c, input, docs, login, at, lang }: Ctx): Block[] {
     // The wallet panel: the page's h1, what Cosmos Pay is.
     h(1, w.title),
     p(w.tag),
-    p(w.lede),
+    p(fill(w.lede, nets)),
     ul([
       term(link(w.chrome.t, chromeStoreListing(WALLET_LINKS.chrome)), w.chrome.s),
       term(link(w.web.t, WALLET_LINKS.webapp), w.web.s),
@@ -142,7 +142,7 @@ function home({ c, input, docs, login, at, lang }: Ctx): Block[] {
     // What Cosmos Pay is, and the figures the code backs.
     h(2, st.title),
     h(3, st.question),
-    p(st.answer),
+    p(fill(st.answer, nets)),
     ul(STAT_VALUES.map((value, i) => `${value.n}${value.u} ${fill(st.items[i], STAT_VARS)}`)),
     // Use cases, each with what its card opens.
     h(2, stories.title),

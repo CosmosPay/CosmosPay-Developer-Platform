@@ -180,6 +180,17 @@ export default {
       transactions: "Transactions",
     },
   },
+  /* ---------------- a failed sign-in (src/pages/login/error.astro) ---------------- */
+  signInError: {
+    title: "Impossible de vous connecter",
+    notLinked: "Cette adresse email a déjà un compte Cosmos Pay, relié à un autre accès. Connectez-vous avec le compte utilisé la première fois (vous pouvez récupérer son mot de passe depuis la page de connexion). Sinon, écrivez-nous et nous le relierons pour vous.",
+    noEmail: "Votre compte de connexion ne nous a pas transmis d’adresse email, et nous en avons besoin pour retrouver votre compte Cosmos Pay. Ajoutez ou confirmez une adresse dans votre compte de connexion, puis reconnectez-vous.",
+    cancelled: "La connexion a été annulée avant la fin. Reconnectez-vous quand vous le souhaitez.",
+    generic: "Un problème est survenu pendant la connexion. Réessayez dans un instant.",
+    retry: "Se reconnecter",
+    support: "Contacter le support",
+    code: "Code d’erreur : {code}",
+  },
   invite: {
     eyebrow: "Invitation",
     joinTitle: "Rejoindre {org}",
@@ -643,7 +654,7 @@ export default {
   landing: {
     meta: {
       title: "Cosmos Pay | API de paiement en stablecoins et wallet",
-      description: "Encaissez en USDC et autres stablecoins sur tous les réseaux avec lesquels nous travaillons : API de paiement, checkout hébergé et wallet en Amérique latine.",
+      description: "Encaissez en USDC et autres stablecoins sur {n} réseaux : API de paiement, liens de paiement avec checkout hébergé, swaps et wallet non dépositaire.",
     },
     hero: {
       tagline: "Votre monde numérique en mouvement.",
@@ -655,7 +666,7 @@ export default {
     wallet: {
       tag: "Votre monde numérique dans un wallet.",
       title: "Des paiements en stablecoins et un wallet pour l’Amérique latine.",
-      lede: "Cosmos Pay est une API de paiement en stablecoins et un checkout hébergé sur tous les réseaux avec lesquels nous travaillons, ainsi qu’un wallet non dépositaire. Utilisez le wallet dans Chrome, sur le web ou sur Android.",
+      lede: "Cosmos Pay est une API de paiement en stablecoins et un checkout hébergé sur {n} réseaux, ainsi qu’un wallet non dépositaire. Utilisez le wallet dans Chrome, sur le web ou sur Android.",
       chrome: { t: "Installer sur Chrome", s: "Extension officielle sur le Chrome Web Store." },
       web: { t: "Essayer dans le navigateur", s: "Ouvrez l’application web, rien à installer." },
       android: {
@@ -807,7 +818,7 @@ export default {
     stats: {
       title: "Simple. Sûr. Sans limites.",
       question: "Qu’est-ce que Cosmos Pay ?",
-      answer: "Cosmos Pay est une plateforme de paiement en stablecoins pour les entreprises d’Amérique latine. Les marchands encaissent sur tous les réseaux avec lesquels fonctionne Cosmos Pay, avec des liens de paiement, un checkout hébergé ou une API, et l’argent arrive à une adresse qu’ils contrôlent. Cosmos Pay propose aussi des swaps entre tous ces réseaux, ainsi qu’un wallet non dépositaire.",
+      answer: "Cosmos Pay est une plateforme de paiement en stablecoins pour les entreprises d’Amérique latine. Les marchands encaissent sur {n} réseaux, avec des liens de paiement, un checkout hébergé ou une API, et l’argent arrive à une adresse qu’ils contrôlent. Cosmos Pay propose aussi des swaps entre tous ces réseaux, ainsi qu’un wallet non dépositaire.",
       items: [
         "réseaux pour être payé, avec des swaps entre eux",
         "rétrofacturation : une fois qu’un paiement est confirmé par le réseau, il est définitif",

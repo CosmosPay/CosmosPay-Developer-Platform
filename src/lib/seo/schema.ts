@@ -66,17 +66,21 @@ export function organizationNode(site: string, sameAs: string[]): JsonLdNode {
 export interface WebSiteInput {
   origin: string;
   name: string;
+  /** Another name the site goes by. Google reads `name` and `alternateName` from the home's
+   *  WebSite node when it picks the site name a search result shows. */
+  alternateName?: string;
   site: string;
   langs: readonly string[];
   description?: string;
 }
 
-export function webSiteNode({ origin, name, site, langs, description }: WebSiteInput): JsonLdNode {
+export function webSiteNode({ origin, name, alternateName, site, langs, description }: WebSiteInput): JsonLdNode {
   return {
     "@type": "WebSite",
     "@id": websiteId(origin),
     url: `${origin}/`,
     name,
+    ...(alternateName && { alternateName }),
     ...(description && { description }),
     inLanguage: [...langs],
     publisher: { "@id": orgId(site) },

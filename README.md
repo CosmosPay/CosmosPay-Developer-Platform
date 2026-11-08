@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://dev.cosmospay.lat/docs/"><img src=".github/assets/banner.png" width="100%" alt="Cosmos Pay Developer Platform: dashboard, API keys, docs, hosted checkout and payment links."></a>
+</p>
+
 # Cosmos Pay Developer Platform
 
 The developer dashboard for **Cosmos Pay**: a self-service console where developers sign in,
@@ -46,7 +50,7 @@ domains. `src/middleware.ts` routes every request by host with the table in
 
 ---
 
-## ✨ Features
+## Features
 
 - **Auth**: OAuth2 login through Authentik (Better Auth `genericOAuth`), sessions in Postgres.
 - **Organizations & teams**: orgs, members, role/permission scoping, email invitations
@@ -75,7 +79,7 @@ domains. `src/middleware.ts` routes every request by host with the table in
 
 ---
 
-## 🧱 Architecture
+## Architecture
 
 ```
 Browser ──▶ Cloudflare ──▶ nginx ──▶ Astro SSR app (this repo, :4321)
@@ -109,7 +113,7 @@ Prisma + PostgreSQL · APISIX · Resend/SMTP (email) · Zod + zod-to-openapi · 
 
 ---
 
-## 📁 Project structure
+## Project structure
 
 ```text
 src/
@@ -147,7 +151,7 @@ COMMON_ISSUES.md          # production troubleshooting runbook
 
 ---
 
-## 🔧 Prerequisites
+## Prerequisites
 
 - **Node.js ≥ 22.23.4**
 - **PostgreSQL** (for the dashboard's own accounts/profile data)
@@ -158,7 +162,7 @@ COMMON_ISSUES.md          # production troubleshooting runbook
 
 ---
 
-## 🚀 Getting started
+## Getting started
 
 ```bash
 # 1. Install
@@ -215,7 +219,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `ONBOARDING_ENABLED` / `PLANS_ENABLED` / `ALLOW_USER_PLAN_CHANGES` / `ENABLED_PLANS` | Feature flags |
 | `INDEXNOW_KEY` | Optional: the IndexNow key every domain serves at `/<key>.txt` (public by design, read at runtime). Unset: that file is a 404 and `npm run indexnow` refuses to run |
 
-> ⚠️ `PUBLIC_BETTER_AUTH_URL` is **inlined at build time**: change it before `npm run build`,
+> **Note:** `PUBLIC_BETTER_AUTH_URL` is **inlined at build time**: change it before `npm run build`,
 > not just before restarting. See [COMMON_ISSUES.md](./COMMON_ISSUES.md) for the why.
 
 ### External setup checklist
@@ -229,7 +233,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 
 ---
 
-## 🧞 Commands
+## Commands
 
 | Command | Action |
 | :--- | :--- |
@@ -248,7 +252,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 
 ---
 
-## 🌐 nginx: three domains, one upstream
+## nginx: three domains, one upstream
 
 All three domains proxy to the same process (`127.0.0.1:4321`) and **must pass the original
 `Host`**, because that is what the app routes on. Two things stay outside the app:
@@ -276,7 +280,7 @@ The `/docs` rules are there because the docs are a static export the Node server
 before the middleware runs, on every host. Everything else is routed by the app. Point
 `www.cosmospay.lat` at the same upstream too (the app redirects it to the apex).
 
-## 🏗️ Production deployment (PM2)
+## Production deployment (PM2)
 
 The repo ships an [`ecosystem.config.cjs`](./ecosystem.config.cjs) that loads `.env` into the
 process (so Prisma sees `DATABASE_URL`) and defines two apps that share it:
@@ -320,7 +324,7 @@ read **[COMMON_ISSUES.md](./COMMON_ISSUES.md)**.
 
 ---
 
-## 🔌 API
+## API
 
 Every route under `src/pages/api/**` is a typed SSR endpoint. A generated OpenAPI document is
 served at **`/api/openapi.json`** (schemas live in `src/schemas/`). Highlights:
@@ -341,7 +345,7 @@ served at **`/api/openapi.json`** (schemas live in `src/schemas/`). Highlights:
 
 ---
 
-## 🔗 Related projects
+## Related projects
 
 Part of the Cosmos Pay ecosystem:
 
@@ -364,6 +368,6 @@ Built on top of:
 
 ---
 
-## 📄 License
+## License
 
 Proprietary. © Cosmos Pay. All rights reserved.
