@@ -149,8 +149,12 @@ These were said more than once; breaking one is a bug, whatever the task was.
   links inside translated sentences. Load the design skills (frontend-design, design-taste-frontend) for UI work, and follow
   `DESIGN.md` (the web's design pattern: colour roles, the type scale and its floor, space, shape,
   components, touch targets, motion, copy and accessibility; the owner's rules here win over it).
-- **The dashboard never connects a wallet**: people hand over a signed XDR. Cosmos Pay is
-  non-custodial: no key or key material of anyone's is stored, client or server.
+- **A wallet is connected only to sign a swap** (product owner, 2026-11-06: "every compatible
+  wallet, from the Stellar Wallets Kit to MetaMask"): the swap screens (same-chain, cross-chain
+  deposits, USDT0) and the liquidity operations list every wallet the browser has and sign or send
+  with the one picked (`WalletSign`, below). Everywhere else people hand over a signed XDR (private
+  accounts, the organization's Stellar wallet proof). Cosmos Pay is non-custodial: no key or key
+  material of anyone's is stored, client or server.
 - **Every list is the Payments table** (figures first, filter bar with the view's buttons, a row
   that opens its detail, icon actions and a "⋮" menu with every action, empty rows, pages),
   **long forms go in steps** (`FormSteps`), **every create opens a modal** copied from an
@@ -1001,20 +1005,36 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   Stellar to USDT or USDT0 on a network LayerZero's OFT reaches (`GET /v1/usdt0/routes`: 21 today,
   native USDT on Ethereum, USDT0 elsewhere) is its own route in the catalogue (`routeFor` kind
   `usdt0`, ahead of NEAR Intents): 1:1, no slippage, LayerZero's fee in XLM, the seventh decimal
-  stays on Stellar (the OFT shares six). The holder signs one Soroban transaction (Freighter or
-  SEP-7), the screen follows the LayerZero message to its destination. Stellar mainnet only (USDT0
+  stays on Stellar (the OFT shares six). The holder signs one Soroban transaction (any Stellar
+  wallet, or SEP-7), the screen follows the LayerZero message to its destination. Stellar mainnet only (USDT0
   does not exist on testnet), no Cosmos Pay commission. Networks only USDT0 reaches are named in
   `OFT_NETWORK_NAMES` (`src/lib/chains.ts`), never in `NETWORK_IDS` (that is NEAR Intents' set).
 - **Stellar swaps, Solana / Monad swaps, cross-chain swaps and liquidity are non-custodial**: the
   Payments API builds the transaction, the person signs it in a wallet, the dashboard submits the
   signed envelope. Nobody's key ever reaches this app.
-- **Freighter signs in one click** (`components/FreighterSign.tsx` over
-  `src/lib/wallets/freighter.ts`, the SDF's `@stellar/freighter-api`, pinned and loaded on the
-  first click): it checks the extension answers (2.5 s), the account matches the transaction's
-  source and Freighter is on the transaction's network before asking it to sign, and says which
-  one to switch otherwise. The QR (SEP-7) and the paste box stay for every other wallet. Used by the
-  Stellar swap and the liquidity details; only a PENDING operation can be signed, and the swap's QR,
-  link and unsigned XDR disappear once it was sent.
+- **Every compatible wallet signs in one click** (`components/WalletSign.tsx` over
+  `src/lib/wallets/find.ts`, which loads the SDK's `@cosmosapp/pay_sdk/wallets` on first use):
+  Stellar wallets (Freighter through `@stellar/freighter-api`, LOBSTR through its signer API,
+  Albedo, xBull, Rabet, the hosted or installed Cosmos Pay Wallet listed first, and Hana, Klever,
+  OneKey, Bitget, Cactus Link, D'CENT and Scopuly from the providers they inject), every EVM
+  wallet that announces itself (EIP-6963: MetaMask, Rabby, Coinbase Wallet...) and every Solana
+  wallet (Wallet Standard: Phantom, Solflare, Backpack...). The block lists the wallets found
+  (their own icons, else the official artwork in `public/media/brands`, else a monogram) and is not
+  drawn when none is; a click connects the wallet, refuses another account than the transaction's
+  source, then signs or sends. Stellar (`StellarWalletSign`: swaps, USDT0, liquidity) and Solana
+  submit the signed transaction; **Monad wallets only send** (an EVM wallet never hands a signed
+  transaction back), so the screen sends the approval first when the swap has one, waits for it to
+  be mined, sends the swap and submits its `txHash` (`/api/swaps/{id}/submit` takes it; a 400
+  "retry in a few seconds", the server's `transaction_not_found`, is asked again every 3 s, up to
+  ten times, `isRetryLater`). A cross-chain deposit whose link is SEP-7 or EIP-681 is paid the same
+  way and reported with its hash. The QR (SEP-7), the link and the paste box stay for every other
+  wallet; on Monad the box also takes the hash of a swap sent elsewhere. Only a PENDING operation
+  can be signed, and the swap's QR, link and unsigned XDR disappear once it was sent. **Two
+  libraries are kept out on purpose:** the Stellar Wallets Kit itself (its hard dependencies,
+  WalletConnect's appkit and HOT's `elliptic`, carry audit advisories with no fix, and CI's audit
+  is zero-tolerance; the SDK reaches the kit's injected wallets directly), and Albedo's
+  `@albedo-link/intent` until someone picks Albedo (imported, it takes over every `web+stellar:`
+  link on the page through a document click listener).
 - **Every create carries an idempotency key** (`idempotencyKeys()` in `dashboard/helpers.ts`): the
   same terms keep their key, so a double click or a retry gets the swap already built (the server
   answers 409 to the same key with other terms). The proxies forward `idempotencyKey` in the body.

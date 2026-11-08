@@ -83,10 +83,21 @@ export function orgSwapApi(orgId: string, env: string, platform = ""): SwapApi {
 
 export class PublicSwapError extends Error {
   readonly status: number;
-  constructor(message: string, status: number) {
+  readonly code: unknown;
+  constructor(message: string, status: number, code?: unknown) {
     super(message);
     this.status = status;
+    this.code = code;
   }
+}
+
+/* A Monad hash the node does not know yet: the Payments API recorded nothing and asks to retry
+   in a few seconds (`transaction_not_found`). The dashboard's proxy keeps the message, not the
+   code, so both are read. */
+export function isRetryLater(err: unknown): boolean {
+  const e = err as { status?: unknown; code?: unknown; message?: unknown } | null;
+  if (!e || e.status !== 400) return false;
+  return e.code === "transaction_not_found" || (typeof e.message === "string" && /retry in a few seconds/i.test(e.message));
 }
 
 export function publicSwapApi(apiBase: string, env: "prod" | "dev" = "prod"): SwapApi {
@@ -119,7 +130,7 @@ export function publicSwapApi(apiBase: string, env: "prod" | "dev" = "prod"): Sw
       cache: "no-store",
     });
     const j = await r.json().catch(() => null);
-    if (!r.ok) throw new PublicSwapError(j?.message || `Request failed (${r.status})`, r.status);
+    if (!r.ok) throw new PublicSwapError(j?.message || `Request failed (${r.status})`, r.status, j?.code);
     return j && typeof j === "object" && "data" in j ? j.data : j;
   };
   const post = (path: string, body: Body, record?: string) => call(path, { method: "POST", body: JSON.stringify(body), record });

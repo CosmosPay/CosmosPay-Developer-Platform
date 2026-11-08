@@ -1,12 +1,15 @@
 /* The screens a swap opens once created, shared by the dashboard (the organization's proxies) and
    the public swap pages (the gateway with the shared public key): both pass a SwapApi
    (src/lib/swap-api.ts). One per kind of record:
-   - a swap on Stellar: Freighter in one click, the SEP-7 QR / link / XDR for any other wallet, or a
-     signed envelope pasted back;
-   - a swap on Solana or Monad: the transaction (and any approval) to sign elsewhere, pasted back;
+   - a swap on Stellar: any Stellar wallet in this browser in one click (WalletSign), the SEP-7 QR /
+     link / XDR for any other wallet, or a signed envelope pasted back;
+   - a swap on Solana: any Solana wallet signs it in one click, or the transaction is signed
+     elsewhere and pasted back;
+   - a swap on Monad: any EVM wallet sends the approval (when there is one) and the swap, and the
+     swap's hash is submitted; or the signed transaction, or the hash of one sent elsewhere, pasted;
    - a swap between chains: NEAR Intents' deposit address (CrossChainSwapDetailModal);
-   - USDT0 out of Stellar: the Soroban transaction to sign (Freighter or another wallet), then the
-     LayerZero message followed to its destination.
+   - USDT0 out of Stellar: the Soroban transaction to sign (any Stellar wallet, or the QR / XDR),
+     then the LayerZero message followed to its destination.
    Each reads its record again until it settles. */
 import { useEffect, useState } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
@@ -14,11 +17,12 @@ import { fmt, useLang, useT } from "@/lib/i18n/index";
 import { bpsPercent } from "@/lib/plans";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
-import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
+import { StellarWalletSign, WalletSign, type WalletProgress } from "@/components/cosmos/dashboard/components/WalletSign";
+import { walletsSdk } from "@/lib/wallets/find";
 import { CrossChainSwapDetailModal } from "@/components/cosmos/dashboard/components/CrossChainSwapDetail";
 import { assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { assetLabel as chainAssetLabel, explorerTxUrl, networkName, tierOf } from "@/lib/chains";
-import type { SwapApi, SwapRecordKind } from "@/lib/swap-api";
+import { isRetryLater, type SwapApi, type SwapRecordKind } from "@/lib/swap-api";
 
 const TERMINAL = ["SUCCEEDED", "FAILED", "DELIVERED"];
 /* A record stops changing once it settled, failed, or expired without a transaction (an expired
@@ -26,6 +30,11 @@ const TERMINAL = ["SUCCEEDED", "FAILED", "DELIVERED"];
 const settled = (s) => TERMINAL.includes(s.status) || (s.status === "EXPIRED" && !s.txHash);
 const chainOfSwap = (s) => s.chain || "stellar";
 const swapExplorer = (s) => explorerTxUrl(chainOfSwap(s), tierOf(s.network), s.txHash);
+const TX_HASH = /^0x[0-9a-fA-F]{64}$/;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/* How long the Payments API is given to see a Monad transaction the wallet just sent. */
+const NODE_RETRIES = 10;
+const NODE_RETRY_MS = 3000;
 
 /* Polls a record until it is terminal so its status and hashes update live. */
 function useRecord(api: SwapApi, kind: SwapRecordKind, rec, complete: (r) => boolean, everyMs = 5000) {
@@ -103,7 +112,6 @@ function SwapDetailModal({ api, swap, canManage, onClose }) {
   // Only a built, unsigned swap can be signed: a submitted one is on its way, an expired one's
   // time bounds have passed.
   const signable = canManage && !!data.xdr && data.status === "PENDING";
-  const w = t.dash.wallet;
 
   return (
     <Modal onClose={onClose}>
@@ -117,12 +125,7 @@ function SwapDetailModal({ api, swap, canManage, onClose }) {
           <p className="field-help swap-trustline" role="note">{fmt(d.trustlineNote, { asset: data.trustline.code })}</p>
         )}
 
-        {signable && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
-            <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
-          </div>
-        )}
+        {signable && <StellarWalletSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />}
 
         {/* What other wallets sign from, while the swap waits for its signature. */}
         {data.status === "PENDING" && data.qr && (
@@ -180,23 +183,77 @@ function ChainSwapDetailModal({ api, swap, canManage, onClose }) {
   const d = sw.detail;
   const c = sw.chainDetail;
   const chain = swap.chain;
+  const w = t.dash.wallet;
   const [data, setData] = useRecord(api, "same", swap, (s) => !!s.transaction);
   const [signed, setSigned] = useState("");
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState(null);
 
-  const submit = () => {
-    if (!signed.trim() || busy) return;
+  /* Submits a signed transaction, or (Monad) the hash of one already sent. A hash the Payments
+     API's node does not know yet records nothing and is asked again a few seconds later; one
+     that still fails stays in the paste box to send again. */
+  const send = async (body: { signedTransaction: string } | { txHash: string }, progress: WalletProgress = () => {}) => {
     setBusy(true);
     setOutcome(null);
-    api.submit("same", swap.id, { signedTransaction: signed.trim() })
-      .then((res) => {
-        setOutcome(res || {});
-        if (res && res.swap) setData((cur) => ({ ...cur, ...res.swap }));
-        if (res && res.submitted) showToast(d.submitted);
-      })
-      .catch((err) => { setOutcome({ submitted: false, reason: (err && err.message) || d.submitFailed }); })
-      .finally(() => setBusy(false));
+    try {
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          const res = await api.submit("same", swap.id, body);
+          setOutcome(res || {});
+          if (res && res.swap) setData((cur) => ({ ...cur, ...res.swap }));
+          if (res && res.submitted) showToast(d.submitted);
+          return;
+        } catch (err) {
+          if ("txHash" in body && isRetryLater(err) && attempt < NODE_RETRIES) {
+            progress(w.waitingNode);
+            await sleep(NODE_RETRY_MS);
+            continue;
+          }
+          throw err;
+        }
+      }
+    } catch (err) {
+      if ("txHash" in body) setSigned(body.txHash);
+      setOutcome({ submitted: false, reason: (err as Error | null)?.message || d.submitFailed });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // The paste box takes the signed transaction, or on Monad the hash of one sent elsewhere.
+  const submit = () => {
+    const value = signed.trim();
+    if (!value || busy) return;
+    send(chain === "monad" && TX_HASH.test(value) ? { txHash: value } : { signedTransaction: value });
+  };
+
+  /* Solana: the wallet signs the base64 transaction, the Payments API checks and relays it. */
+  const signSolana = async (wallet, _address: string, progress: WalletProgress) => {
+    if (wallet.ecosystem !== "solana") return;
+    const cluster = tierOf(data.network) === "public" ? "solana:mainnet" : "solana:devnet";
+    const signedTransaction = await wallet.signTransaction(data.transaction.data, cluster);
+    progress(d.submitting);
+    await send({ signedTransaction }, progress);
+  };
+
+  /* Monad: an EVM wallet sends (it cannot hand a signed transaction back): the approval first
+     when the swap has one, mined before the swap, then the swap, whose hash is submitted. */
+  const sendMonad = async (wallet, from: string, progress: WalletProgress) => {
+    if (wallet.ecosystem !== "evm") return;
+    const { EvmChains } = await walletsSdk();
+    const chainFor = (id) => (id === EvmChains.monad.chainId ? EvmChains.monad : id === EvmChains.monadTestnet.chainId ? EvmChains.monadTestnet : undefined);
+    const call = (c) => ({ from, to: c.to, data: c.data, value: c.value, chainId: c.chainId });
+    if (data.approval) {
+      progress(fmt(w.approveIn, { wallet: wallet.name }));
+      const approval = await wallet.sendTransaction(call(data.approval), chainFor(data.approval.chainId));
+      progress(w.approvalMining);
+      const receipt = await wallet.waitForTransaction(approval);
+      if (receipt.status !== "success") throw new Error(w.approvalFailed);
+    }
+    progress(fmt(w.confirmIn, { wallet: wallet.name }));
+    const txHash = await wallet.sendTransaction(call(data.transaction), chainFor(data.transaction.chainId));
+    progress(d.submitting);
+    await send({ txHash }, progress);
   };
 
   const tx = data.transaction || {};
@@ -218,12 +275,23 @@ function ChainSwapDetailModal({ api, swap, canManage, onClose }) {
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
   const isTerminal = TERMINAL.includes(data.status);
+  const walletSignable = canManage && data.status === "PENDING" && !!data.transaction && (chain === "solana" || chain === "monad");
 
   return (
     <Modal onClose={onClose}>
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{d.eyebrow} · {sw.chains[chain]}</div>
         <h3>{c.title}</h3>
+
+        {walletSignable && (
+          <WalletSign
+            ecosystem={chain === "monad" ? "evm" : "solana"}
+            chainName={sw.chains[chain]}
+            signer={data.source}
+            busy={busy}
+            onUse={chain === "monad" ? sendMonad : signSolana}
+          />
+        )}
 
         {data.approval && data.status === "PENDING" && (
           <CopyBlock label={c.approval} value={JSON.stringify(data.approval, null, 2)} lang="json">
@@ -244,8 +312,8 @@ function ChainSwapDetailModal({ api, swap, canManage, onClose }) {
         {canManage && !isTerminal && data.status !== "EXPIRED" && (
           <div className="paylink-block">
             <div className="paylink-block-head"><label className="field-l">{d.submitTitle}</label></div>
-            <p className="field-note">{c.submitDesc}</p>
-            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={c.submitPlaceholder} />
+            <p className="field-note">{chain === "monad" ? c.submitDescMonad : c.submitDesc}</p>
+            <textarea className="field" rows={4} value={signed} onChange={(e) => setSigned(e.target.value)} placeholder={chain === "monad" ? c.submitPlaceholderMonad : c.submitPlaceholder} />
             <div className="modal-actions">
               <button className="btn btn-violet" disabled={!signed.trim() || busy} onClick={submit}>{busy ? d.submitting : d.submit}</button>
             </div>
@@ -302,7 +370,6 @@ function Usdt0TransferDetailModal({ api, transfer, canManage, onClose }) {
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
   const signable = canManage && !!data.xdr && data.status === "PENDING";
-  const w = t.dash.wallet;
   const stellarTx = data.txHash ? explorerTxUrl("stellar", tierOf(data.network), data.txHash) : null;
 
   return (
@@ -314,12 +381,7 @@ function Usdt0TransferDetailModal({ api, transfer, canManage, onClose }) {
         {data.status === "SUBMITTED" && <p className="field-help swap-trustline" role="status">{fmt(u.travelling, { chain: dest })}</p>}
         {data.status === "DELIVERED" && <p className="field-help swap-trustline" role="status">{fmt(u.delivered, { chain: dest })}</p>}
 
-        {signable && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
-            <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
-          </div>
-        )}
+        {signable && <StellarWalletSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />}
 
         {data.status === "PENDING" && data.qr && (
           <div className="paylink-qr-wrap">

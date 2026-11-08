@@ -97,9 +97,14 @@ _openapi:
           the result codes (a `FAILED` swap can be resubmitted up to 3 times
           while its envelope is valid). Solana and Monad: broadcast through this
           service's RPC, the swap is `SUBMITTED` until the observer sees it
-          settle. Emits `SWAP_SUBMITTED`, then `SWAP_SUCCEEDED` or
-          `SWAP_FAILED`; with the shared public key, send the swap's
-          `publicToken` in `X-Record-Token`.
+          settle. A Monad wallet that sends the transaction itself
+          (eth_sendTransaction) submits its `txHash` instead: the transaction is
+          read from the network and checked the same way, then recorded as
+          `SUBMITTED`; not on the network yet is `transaction_not_found`, retry
+          in a few seconds, and the same hash again answers the swap as it is.
+          Emits `SWAP_SUBMITTED`, then `SWAP_SUCCEEDED` or `SWAP_FAILED`; with
+          the shared public key, send the swap's `publicToken` in
+          `X-Record-Token`.
 
 
           Requires the `swaps:write` scope. The shared public key may call it.

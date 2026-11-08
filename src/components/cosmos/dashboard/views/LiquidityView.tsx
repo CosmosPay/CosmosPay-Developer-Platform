@@ -18,7 +18,7 @@ import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { AssetSelect } from "@/components/cosmos/dashboard/components/AssetSelect";
 import { Pagination } from "@/components/cosmos/dashboard/components/Pagination";
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
-import { FreighterSign } from "@/components/cosmos/dashboard/components/FreighterSign";
+import { StellarWalletSign } from "@/components/cosmos/dashboard/components/WalletSign";
 import { STATUS_PILL, assetLabel, CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { TableSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
@@ -610,7 +610,6 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
 
   // Only a built, unsigned operation can be signed.
   const signable = canManage && !!data.xdr && data.status === "PENDING";
-  const w = useT().dash.wallet;
 
   return (
     <Modal onClose={onClose}>
@@ -618,12 +617,7 @@ function LiquidityDetailModal({ lq, op, orgId, env, canManage, onClose }) {
         <div className="modal-eyebrow">{d.eyebrow}</div>
         <h3>{data.kind === "WITHDRAW" ? d.titleWithdraw : d.titleDeposit}</h3>
 
-        {signable && (
-          <div className="paylink-block">
-            <div className="paylink-block-head"><span className="field-l">{w.signTitle}</span></div>
-            <FreighterSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />
-          </div>
-        )}
+        {signable && <StellarWalletSign xdr={data.xdr} network={data.network} signer={data.source} busy={busy} onSigned={(x) => submit(x)} />}
 
         {data.qr && (
           <div className="paylink-qr-wrap">

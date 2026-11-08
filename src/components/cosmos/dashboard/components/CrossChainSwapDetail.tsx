@@ -1,6 +1,9 @@
 /* CrossChainSwapDetailModal: one swap between chains (NEAR Intents), opened from the swaps list.
    While it waits for its deposit it shows where to pay (address, memo on Stellar, QR, wallet
-   link) and lets the merchant report the deposit; then its legs' transactions. */
+   link) and lets the merchant report the deposit; then its legs' transactions. Where the deposit
+   link is SEP-7 (Stellar) or EIP-681 (an EVM network with a known chain id), any wallet of that
+   ecosystem in this browser pays it in one click (WalletSign) and the deposit is reported with
+   the transaction's hash; elsewhere the address, memo and QR serve every wallet. */
 import { useState, useEffect } from "react";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { useLang, useT, fmt } from "@/lib/i18n/index";
@@ -9,7 +12,13 @@ import type { SwapApi } from "@/lib/swap-api";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { CopyBlock, CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { networkName } from "@/lib/chains";
+import { networkName, tierOf } from "@/lib/chains";
+import { WalletSign, type WalletProgress } from "@/components/cosmos/dashboard/components/WalletSign";
+import { walletsSdk } from "@/lib/wallets/find";
+
+/* Which wallets can pay a deposit link: SEP-7 by a Stellar wallet, EIP-681 by an EVM one. */
+const depositEcosystem = (uri: string | null | undefined) =>
+  !uri ? null : uri.startsWith("web+stellar:") ? "stellar" : uri.startsWith("ethereum:") ? "evm" : null;
 
 export const CROSS_FINAL = ["SUCCEEDED", "REFUNDED", "FAILED"];
 
@@ -42,13 +51,39 @@ export function CrossChainSwapDetailModal({ swap, api, canManage, onClose }: { s
     return () => { alive = false; clearInterval(h); };
   }, [swap.id, api, data.status]);
 
-  const report = () => {
-    if (!txHash.trim() || busy) return;
+  const report = (hash = txHash.trim()) => {
+    if (!hash || busy) return Promise.resolve();
     setBusy(true);
-    api.reportDeposit(swap.id, txHash.trim())
+    return api.reportDeposit(swap.id, hash)
       .then((fresh) => { if (fresh) setData(fresh); showToast(d.reported); setTxHash(""); })
-      .catch((err) => showToast((err && err.message) || d.reportError, "error"))
+      // The deposit is on its way whatever this says: the hash stays in the box to report again.
+      .catch((err) => { setTxHash(hash); showToast((err && err.message) || d.reportError, "error"); })
       .finally(() => setBusy(false));
+  };
+
+  /* Pays the deposit from the picked wallet, then reports its hash so the swap starts without
+     waiting for the indexer. EVM: the EIP-681 link is the transaction (a native payment or an
+     ERC-20 transfer, amount in base units, on its chain). Stellar: the SEP-7 link becomes a
+     payment with its memo, signed by the wallet and submitted to Horizon. */
+  const wl = t.dash.wallet;
+  const payDeposit = async (wallet, from: string, progress: WalletProgress) => {
+    let hash: string | undefined;
+    if (wallet.ecosystem === "evm") {
+      const { parseEip681 } = await walletsSdk();
+      hash = await wallet.sendTransaction({ from, ...parseEip681(data.depositUri) });
+    } else if (wallet.ecosystem === "stellar") {
+      const [web, stellarSdk] = await Promise.all([import("@cosmosapp/pay_sdk/web"), import("@stellar/stellar-sdk")]);
+      const tier = tierOf(data.network);
+      const network = { network: tier, passphrase: web.PASSPHRASES[tier], horizonUrl: web.HORIZON_URLS[tier] };
+      const xdr = await web.buildPaymentXdr(stellarSdk, network, { intent: web.normalizeIntent(data.depositUri), source: from });
+      const signedXdr = await wallet.signTransaction(xdr, { network: tier, address: from });
+      progress(wl.sending);
+      const res = (await web.submitToHorizon(stellarSdk, network, signedXdr)) as { hash?: string } | null;
+      hash = res?.hash || web.transactionHash(stellarSdk, signedXdr, network.passphrase);
+    }
+    if (!hash) return;
+    progress(d.reporting);
+    await report(hash);
   };
 
   const F = d.fields;
@@ -70,12 +105,24 @@ export function CrossChainSwapDetailModal({ swap, api, canManage, onClose }: { s
     [F.created, fmtDateTime(data.createdAt)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
   const txs = [...(data.originTxHashes || []), ...(data.destinationTxHashes || [])];
+  const payable = canManage && awaiting ? depositEcosystem(data.depositUri) : null;
 
   return (
     <Modal onClose={onClose}>
       <div className="modal-body paylink-detail">
         <div className="modal-eyebrow">{d.eyebrow}</div>
         <h3>{d.title}</h3>
+
+        {payable && (
+          <WalletSign
+            ecosystem={payable}
+            chainName={networkName(data.originChain)}
+            network={tierOf(data.network)}
+            busy={busy}
+            title={wl.payTitle}
+            onUse={payDeposit}
+          />
+        )}
 
         {awaiting && (
           <>
@@ -116,7 +163,7 @@ export function CrossChainSwapDetailModal({ swap, api, canManage, onClose }: { s
             <div className="paylink-block-head"><label className="field-l" htmlFor={`xswap-deposit-${data.id}`}>{d.reportTitle}</label></div>
             <input id={`xswap-deposit-${data.id}`} className="field" value={txHash} onChange={(e) => setTxHash(e.target.value)} placeholder={d.reportPlaceholder} />
             <div className="modal-actions">
-              <button className="btn btn-violet" disabled={!txHash.trim() || busy} onClick={report}>{busy ? d.reporting : d.report}</button>
+              <button className="btn btn-violet" disabled={!txHash.trim() || busy} onClick={() => report()}>{busy ? d.reporting : d.report}</button>
             </div>
           </div>
         )}
