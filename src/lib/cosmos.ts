@@ -573,7 +573,7 @@ export const cosmosSwaps = {
   get: (userId: string, env: CosmosEnv, org: string, id: string) =>
     cosmosFetch<Swap | ChainSwap>(userId, env, `/v1/swaps/${encodeURIComponent(id)}`, { org }),
   /** `{ signedXdr }` for a Stellar swap, `{ signedTransaction }` for Solana / Monad. */
-  submit: (userId: string, env: CosmosEnv, org: string, id: string, body: { signedXdr: string } | { signedTransaction: string }) =>
+  submit: (userId: string, env: CosmosEnv, org: string, id: string, body: { signedXdr: string } | { signedTransaction: string } | { txHash: string }) =>
     cosmosFetch<SwapSubmitOutcome>(userId, env, `/v1/swaps/${encodeURIComponent(id)}/submit`, { method: "POST", body, org }),
 };
 

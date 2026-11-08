@@ -1432,7 +1432,7 @@ export default {
         approvalNote: "The wallet's allowance for this token is too small: send and confirm this approve call before signing the swap.",
         provider: "Built by", expires: "Sign before",
         submitDesc: "Paste the signed transaction returned by the wallet (Solana: base64; Monad: 0x raw transaction).",
-        submitPlaceholder: "Signed transaction…",
+        submitPlaceholder: "Signed transaction…", submitDescMonad: "Paste the signed transaction (0x raw transaction), or the hash of the swap your wallet already sent.", submitPlaceholderMonad: "Signed transaction or transaction hash…",
       },
       modal: {
         eyebrow: "Swap", title: "New swap",
@@ -1517,7 +1517,7 @@ export default {
         report: "Report", reporting: "Reporting…", reported: "Deposit reported", reportError: "Couldn't report the deposit.", noLink: "Pay the deposit address (and the memo, if shown) from any {chain} wallet, or scan the QR.",
       },
     },
-    wallet: { signTitle: "Sign with your wallet", freighter: "Sign with Freighter", signing: "Waiting for Freighter…", submitting: "Submitting…", missing: "Freighter isn't installed in this browser. Scan the QR with another wallet, or paste the signed transaction below.", declined: "Freighter didn't sign the transaction.", wrongAccount: "Freighter is on another account. Switch it to {account} and try again.", wrongNetwork: "Freighter is on another network. Switch it to {network} and try again.", networks: { testnet: "Testnet", public: "Public network" } },
+    wallet: { signTitle: "Sign with your wallet", freighter: "Sign with Freighter", missing: "Freighter isn't installed in this browser. Scan the QR with another wallet, or paste the signed transaction below.", declined: "Freighter didn't sign the transaction.", wrongAccount: "Freighter is on another account. Switch it to {account} and try again.", finding: "Looking for wallets in this browser…", walletsOn: "Wallets for {chain} in this browser", confirmIn: "Confirm in {wallet}…", otherAccount: "{wallet} is on another account. Switch it to {account} and try again.", declinedBy: "{wallet} didn't approve it.", failedIn: "{wallet} couldn't finish: {reason}", approveIn: "Approve the token in {wallet} first…", approvalMining: "Waiting for the approval to confirm on the network…", approvalFailed: "The approval failed on the network.", waitingNode: "Sent. Waiting for the network to see the transaction…", sending: "Sending the transaction…", payTitle: "Pay with your wallet" },
     liquidity: {
       title: "Liquidity pools",
       sub: "{n} operations · AMM pools on Stellar",

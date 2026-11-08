@@ -26,8 +26,9 @@ function cosmosErrorResponse(err: unknown): Response {
 }
 
 /* Relay a signed swap transaction to its network: `signedXdr` for Stellar,
-   `signedTransaction` for Solana / Monad. The Payments API checks it is the transaction
-   it built before broadcasting. */
+   `signedTransaction` for Solana / Monad, or `txHash` for a Monad swap a browser wallet sent
+   itself. The Payments API checks it is the transaction it built (before broadcasting, or
+   on-chain for a hash). */
 export const POST: APIRoute = async (ctx) => {
   const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
@@ -51,7 +52,9 @@ export const POST: APIRoute = async (ctx) => {
   try {
     const signed = body.data.signedXdr !== undefined
       ? { signedXdr: body.data.signedXdr }
-      : { signedTransaction: body.data.signedTransaction as string };
+      : body.data.txHash !== undefined
+        ? { txHash: body.data.txHash }
+        : { signedTransaction: body.data.signedTransaction as string };
     const outcome = await cosmosSwaps.submit(session.user.id, envFromQuery(ctx.url), org, id, signed);
     return jsonSuccess({ data: outcome, message: "Swap submitted" });
   } catch (err) {

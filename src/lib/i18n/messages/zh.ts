@@ -1345,7 +1345,7 @@ export default {
         approvalNote: "钱包对该代币的授权额度不足：请先发送并确认此 approve 调用，然后再签署兑换。",
         provider: "构建方", expires: "签名截止时间",
         submitDesc: "粘贴钱包返回的已签名交易（Solana：base64；Monad：0x 原始交易）。",
-        submitPlaceholder: "已签名交易…",
+        submitPlaceholder: "已签名交易…", submitDescMonad: "粘贴已签名交易（0x 原始交易），或粘贴钱包已发送的兑换交易哈希。", submitPlaceholderMonad: "已签名交易或交易哈希…",
       },
       modal: {
         eyebrow: "兑换", title: "新建兑换",
@@ -1430,7 +1430,7 @@ export default {
         report: "上报", reporting: "上报中…", reported: "充值已上报", reportError: "无法上报充值。", noLink: "可从任意 {chain} 钱包向充值地址付款（如显示备注，请一并附上），或扫描二维码。",
       },
     },
-    wallet: { signTitle: "使用钱包签名", freighter: "使用 Freighter 签名", signing: "等待 Freighter…", submitting: "提交中…", missing: "此浏览器未安装 Freighter。请使用其他钱包扫描二维码，或在下方粘贴已签名交易。", declined: "Freighter 未签署该交易。", wrongAccount: "Freighter 当前为其他账户。请切换到 {account} 后重试。", wrongNetwork: "Freighter 当前为其他网络。请切换到 {network} 后重试。", networks: { testnet: "测试网", public: "公共网络" } },
+    wallet: { signTitle: "使用钱包签名", freighter: "使用 Freighter 签名", missing: "此浏览器未安装 Freighter。请使用其他钱包扫描二维码，或在下方粘贴已签名交易。", declined: "Freighter 未签署该交易。", wrongAccount: "Freighter 当前为其他账户。请切换到 {account} 后重试。", finding: "正在查找此浏览器中的钱包…", walletsOn: "此浏览器中的 {chain} 钱包", confirmIn: "请在 {wallet} 中确认…", otherAccount: "{wallet} 当前为其他账户。请切换到 {account} 后重试。", declinedBy: "{wallet} 未批准。", failedIn: "{wallet} 无法完成：{reason}", approveIn: "请先在 {wallet} 中批准该代币…", approvalMining: "正在等待网络确认批准…", approvalFailed: "批准在网络上失败。", waitingNode: "已发送。正在等待网络识别该交易…", sending: "正在发送交易…", payTitle: "使用钱包支付" },
     liquidity: {
       title: "流动性池",
       sub: "{n} 笔操作 · Stellar 上的 AMM 池",

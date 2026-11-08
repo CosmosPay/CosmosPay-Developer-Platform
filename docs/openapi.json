@@ -2918,7 +2918,7 @@
     },
     "/v1/swaps/{id}/submit": {
       "post": {
-        "description": "`signedXdr` (Stellar) or `signedTransaction` (Solana, Monad) must be the transaction built for this swap and carry its source's signature, checked before anything about the swap is answered. Stellar: broadcast through Horizon, the answer is `SUCCEEDED` or `submitted: false` with the result codes (a `FAILED` swap can be resubmitted up to 3 times while its envelope is valid). Solana and Monad: broadcast through this service's RPC, the swap is `SUBMITTED` until the observer sees it settle. Emits `SWAP_SUBMITTED`, then `SWAP_SUCCEEDED` or `SWAP_FAILED`; with the shared public key, send the swap's `publicToken` in `X-Record-Token`.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
+        "description": "`signedXdr` (Stellar) or `signedTransaction` (Solana, Monad) must be the transaction built for this swap and carry its source's signature, checked before anything about the swap is answered. Stellar: broadcast through Horizon, the answer is `SUCCEEDED` or `submitted: false` with the result codes (a `FAILED` swap can be resubmitted up to 3 times while its envelope is valid). Solana and Monad: broadcast through this service's RPC, the swap is `SUBMITTED` until the observer sees it settle. A Monad wallet that sends the transaction itself (eth_sendTransaction) submits its `txHash` instead: the transaction is read from the network and checked the same way, then recorded as `SUBMITTED`; not on the network yet is `transaction_not_found`, retry in a few seconds, and the same hash again answers the swap as it is. Emits `SWAP_SUBMITTED`, then `SWAP_SUCCEEDED` or `SWAP_FAILED`; with the shared public key, send the swap's `publicToken` in `X-Record-Token`.\n\nRequires the `swaps:write` scope. The shared public key may call it.",
         "operationId": "SwapsController_submit_v1",
         "parameters": [
           {
@@ -2992,7 +2992,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed`: `signedXdr` (Stellar) / `signedTransaction` (Solana, Monad) is not a transaction, is not the one built for this swap, or carries no signature of its source. `transaction_rejected`: the Solana or Monad node refused the broadcast; the swap stays PENDING. `invalid_state_transition`: the swap can no longer be submitted, because it is EXPIRED, its transaction's validity window has passed, or it was already resubmitted the maximum number of times after a rejection. Build a new swap.",
+            "description": "`validation_failed`: `signedXdr` (Stellar) / `signedTransaction` (Solana, Monad) is not a transaction, is not the one built for this swap, or carries no signature of its source; or `txHash` (Monad) names another transaction (the message names the field: `to`, `input`, `value`, `from` or `chainId`), the approval, or one recorded on another swap; or the body sends a field the swap does not take. `transaction_not_found`: the network does not have that `txHash` yet; nothing was recorded, retry in a few seconds. `transaction_rejected`: the Solana or Monad node refused the broadcast; the swap stays PENDING. `invalid_state_transition`: the swap can no longer be submitted, because it is EXPIRED, its transaction's validity window has passed, it was already submitted with another `txHash`, or it was already resubmitted the maximum number of times after a rejection. Build a new swap.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3032,6 +3032,17 @@
                       "error": "Bad Request",
                       "message": "The transaction does not settle this payment intent: the amount paid is below the amount requested",
                       "path": "/v1/payment-intents/pi_7Yc3Qn0Kx2/validate",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "transaction_not_found": {
+                    "summary": "transaction_not_found: No such transaction on the network yet, or it is older than the RPC keeps",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "transaction_not_found",
+                      "error": "Bad Request",
+                      "message": "Transaction 0x8f3b6a1c2d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8 is not on Monad yet: it has not reached this service's node. Retry in a few seconds; nothing was recorded.",
+                      "path": "/v1/swaps/cmh4x2k9a0001l70g8v5q3z2w/submit",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
                   }
@@ -20831,7 +20842,7 @@
           "submitted": {
             "type": "boolean",
             "example": true,
-            "description": "Always true: the node accepted the broadcast. A refusal is a 400 `transaction_rejected` instead."
+            "description": "Always true: the node accepted the broadcast, or (a Monad `txHash`) the network has the transaction. A refusal is a 400 `transaction_rejected` instead."
           },
           "status": {
             "type": "string",
@@ -21927,16 +21938,22 @@
         "properties": {
           "signedXdr": {
             "type": "string",
-            "description": "Stellar swaps: the signed transaction envelope (base64 XDR). Required unless signedTransaction is sent.",
+            "description": "Stellar swaps: the signed transaction envelope (base64 XDR). Required unless signedTransaction or txHash is sent.",
             "example": "AAAAAgAAAABx…(signed base64 XDR)…AAAAAAAAAAA="
           },
           "signedTransaction": {
             "type": "string",
-            "description": "Solana and Monad swaps: the signed transaction. Solana: base64 wire bytes of the VersionedTransaction; Monad: the 0x-hex raw EIP-1559 transaction (the eth_sendRawTransaction input).",
+            "description": "Solana and Monad swaps: the signed transaction, which this service broadcasts. Solana: base64 wire bytes of the VersionedTransaction; Monad: the 0x-hex raw EIP-1559 transaction (the eth_sendRawTransaction input). On Monad, send this or txHash, not both.",
             "example": "0x02f8b1818f…"
+          },
+          "txHash": {
+            "type": "string",
+            "description": "Monad swaps only: the hash of the swap transaction the wallet already broadcast, for wallets that send a transaction but never hand over its signed bytes (EVM browser wallets answer eth_sendTransaction with the hash alone). The service reads it from its Monad node and checks it is the call built for this swap (`to`, `input`, `value`), sent from the swap's source on chain 143, before anything about the swap is answered; it then records it and the swap is SUBMITTED until the observer sees it settle. Not on the node yet: 400 `transaction_not_found`, nothing recorded, retry in a few seconds. The same hash again answers the swap as it is. The approval transaction is sent by the wallet first and never submitted here. A Solana swap takes signedTransaction.",
+            "example": "0x8f3b6a1c2d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8",
+            "pattern": "^0x[0-9a-fA-F]{64}$"
           }
         },
-        "description": "The signed swap transaction to relay: `signedXdr` for a Stellar swap, `signedTransaction` for a Solana or Monad swap. It must be the transaction built for this swap."
+        "description": "The swap transaction: `signedXdr` for a Stellar swap, `signedTransaction` for a Solana swap, and for a Monad swap either `signedTransaction` (this service broadcasts it) or `txHash` (the wallet already broadcast it). Whichever is sent, it must be the transaction built for this swap."
       },
       "CrossChainAssetEntity": {
         "type": "object",

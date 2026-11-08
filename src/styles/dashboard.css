@@ -524,6 +524,28 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .wallet-sign { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .wallet-sign-note { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
 .wallet-sign-note:empty { display: none; }
+/* every wallet this browser has, as a list of rows (the token picker's rows, outlined): a click
+   connects that wallet and signs */
+.wsign .wallet-sign-note { margin-top: 8px; }
+.wsign-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.wsign-opt {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: var(--r-item, 10px); background: var(--surface);
+  color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;
+  transition: background-color .14s ease, border-color .14s ease, opacity .14s ease;
+}
+.wsign-opt:hover:not(:disabled) { background: var(--surface-2); border-color: var(--line-2); }
+.wsign-opt:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 2px; }
+.wsign-opt:disabled { cursor: default; opacity: .5; }
+.wsign-opt.on:disabled { opacity: 1; border-color: var(--ink); }
+.wsign-opt.is-sk { cursor: default; }
+.wsign-opt.is-sk .sk:not(.round) { width: 48%; }
+.wsign-mark { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 8px; object-fit: contain; }
+.wsign-mono { display: grid; place-items: center; background: var(--line); color: var(--ink-2); font-size: 11px; font-weight: 700; letter-spacing: -.02em; }
+.wsign-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsign-spin { flex: 0 0 auto; width: 16px; height: 16px; border: 2px solid var(--line-2); border-top-color: var(--ink); border-radius: 50%; animation: wsign-spin .8s linear infinite; }
+@keyframes wsign-spin { to { transform: rotate(360deg); } }
+@media (pointer: coarse) { .wsign-opt { min-height: 52px; font-size: 16px; } }
 
 /* ---- forms: one plain field everywhere in the dashboard (inputs, selects, text areas, the
    search boxes). White, a 1px grey line, 10px corners; the label above, the help under it.
