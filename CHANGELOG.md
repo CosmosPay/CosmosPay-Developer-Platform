@@ -2,6 +2,18 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.34.0] - 2026-11-08
+
+### Features
+- The hero's checks in a ring, the pinned sections' gap, the swap commission in its settings (e84d196)
+- Sign with every compatible wallet, from Stellar's to MetaMask (40848c5)
+
+### Documentation
+- The swap submit's txHash, from the community server's spec (637e876)
+
+### Dependencies
+- Install @cosmosapp/pay_sdk 2.4.0 for its wallets module (c623ca2)
+
 ## [0.33.1] - 2026-11-08
 
 ### Miscellaneous
