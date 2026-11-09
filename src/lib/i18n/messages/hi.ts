@@ -385,6 +385,7 @@ export default {
   footer: {
     tagline: "हमारे सभी नेटवर्क पर स्टेबलकॉइन भुगतान और स्वैप, और एक नॉन-कस्टोडियल वॉलेट।",
     copyright: "© 2026 Cosmos Pay",
+    launchnest: "LaunchNest पर Cosmos Pay",
     groups: {
       products: { title: "प्रोडक्ट", links: ["भुगतान", "स्टेबलकॉइन", "पेआउट", "एंकर", "वॉलेट", "चेकआउट", "पेमेंट लिंक", "प्राइसिंग", "शुल्क की तुलना"] },
       networks: { title: "नेटवर्क", links: ["Stellar पर भुगतान", "Solana पर भुगतान", "Monad पर भुगतान"] },

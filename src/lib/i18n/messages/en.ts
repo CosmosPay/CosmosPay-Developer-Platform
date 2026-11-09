@@ -387,6 +387,7 @@ export default {
   footer: {
     tagline: "Stablecoin payments and swaps on every network we work with, and a non-custodial wallet.",
     copyright: "© 2026 Cosmos Pay",
+    launchnest: "Cosmos Pay on LaunchNest",
     groups: {
       products: { title: "Products", links: ["Payments", "Stablecoins", "Payouts", "Anchors", "Wallets", "Checkout", "Payment Links", "Pricing", "Fee comparison"] },
       networks: { title: "Networks", links: ["Stellar payments", "Solana payments", "Monad payments"] },

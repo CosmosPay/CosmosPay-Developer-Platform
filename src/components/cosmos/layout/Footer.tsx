@@ -72,6 +72,13 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
   },
 ];
 
+/* Cosmos Pay's listing on LaunchNest and its badge in each theme (the directory serves both). */
+const LAUNCHNEST = {
+  href: "https://launchnest.io/p/cosmos-pay",
+  light: "https://launchnest.io/badge/cosmos-pay.svg?variant=featured&theme=light",
+  dark: "https://launchnest.io/badge/cosmos-pay.svg?variant=featured",
+};
+
 /* `area` as in Nav: on the payments gateway its own links stay on it. Every link to a page of the
    company site or the gateway is in the page's language (constants.ts langHref). */
 export function Footer({ area }: { area?: Area } = {}) {
@@ -105,6 +112,13 @@ export function Footer({ area }: { area?: Area } = {}) {
         </div>
         <div className="foot-bottom">
           <span>{t.footer.copyright}</span>
+          {/* The LaunchNest listing's badge, which the directory checks for on the site. Its light
+              badge on the light theme and its dark one on the dark theme, swapped in CSS via
+              [data-theme] like the logo. */}
+          <a className="foot-launchnest" href={LAUNCHNEST.href} target="_blank" rel="noopener">
+            <img className="ln-light" src={LAUNCHNEST.light} alt={t.footer.launchnest} width="220" height="56" loading="lazy" decoding="async" />
+            <img className="ln-dark" src={LAUNCHNEST.dark} alt={t.footer.launchnest} width="220" height="56" loading="lazy" decoding="async" />
+          </a>
         </div>
       </div>
     </footer>

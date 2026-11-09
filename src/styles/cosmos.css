@@ -715,6 +715,12 @@ html.nav-locked { overflow: hidden; }
 .foot-col a:hover { color: var(--accent); }
 .foot-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 56px; padding-top: 26px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .8125rem; flex-wrap: wrap; gap: 14px; }
 .foot-bottom .badge { display: inline-flex; align-items: center; gap: 8px; }
+/* the LaunchNest badge (Footer.tsx): one image per theme, as the logo */
+.foot-launchnest { display: inline-flex; line-height: 0; border-radius: 10px; }
+.foot-launchnest img { display: block; width: 220px; height: 56px; max-width: 100%; }
+.foot-launchnest .ln-dark { display: none; }
+[data-theme="dark"] .foot-launchnest .ln-light { display: none; }
+[data-theme="dark"] .foot-launchnest .ln-dark { display: block; }
 /* the social profiles: round outlined icons, painted blue under the pointer like light buttons */
 .foot-social { display: flex; gap: 10px; list-style: none; margin: 20px 0 0; padding: 0; }
 .foot-social a {
