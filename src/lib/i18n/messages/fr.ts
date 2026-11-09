@@ -624,6 +624,7 @@ export default {
   footer: {
     tagline: "Paiements en stablecoins et swaps sur tous les réseaux avec lesquels nous travaillons, plus un wallet non dépositaire.",
     copyright: "© 2026 Cosmos Pay",
+    launchnest: "Cosmos Pay sur LaunchNest",
     groups: {
       products: {
         title: "Produits",

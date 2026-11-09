@@ -624,6 +624,7 @@ export default {
   footer: {
     tagline: "Pagamentos em stablecoins e swaps em todas as redes com que trabalhamos, e uma carteira sem custódia.",
     copyright: "© 2026 Cosmos Pay",
+    launchnest: "Cosmos Pay no LaunchNest",
     groups: {
       products: {
         title: "Produtos",
