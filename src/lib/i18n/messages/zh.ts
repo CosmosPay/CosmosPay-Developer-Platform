@@ -385,6 +385,7 @@ export default {
   footer: {
     tagline: "在我们支持的所有网络上提供稳定币支付和兑换，另有非托管钱包。",
     copyright: "© 2026 Cosmos Pay",
+    launchnest: "LaunchNest 上的 Cosmos Pay",
     groups: {
       products: { title: "产品", links: ["支付", "稳定币", "代付", "锚点", "钱包", "收银台", "支付链接", "定价", "费用对比"] },
       networks: { title: "网络", links: ["Stellar 支付", "Solana 支付", "Monad 支付"] },
