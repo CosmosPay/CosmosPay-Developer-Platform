@@ -2,6 +2,20 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.36.0] - 2026-11-11
+
+### Features
+- Buy and sell with local money from a wallet with no account (65f7d6b)
+- Serve stellar.toml on cosmospay.lat and anchor the terms' privacy section (654eff0)
+
+### Bug Fixes
+- Server-set API key roles and no self-service paid plans (8c6e4cc)
+- A script policy on every payments page (c7e5e5b)
+
+### Documentation
+- Follow the server's neutral tags (8b9462f)
+- Sync the reference with the server's dev (d5ebd69)
+
 ## [0.35.0] - 2026-11-09
 
 ### Features
