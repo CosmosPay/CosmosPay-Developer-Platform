@@ -1298,7 +1298,7 @@ export default {
       title: "组织",
       sub: "管理 {org}",
       org: { title: "详情", name: "名称", id: "组织 ID", created: "创建时间" },
-      plan: { title: "套餐与限额", change: "更改套餐", current: "当前套餐", orgs: "组织", apiKeys: "API 密钥", seats: "团队席位", unlimited: "不限", manage: "管理组织", changeTitle: "更改套餐", changeSub: "切换您的套餐。这是模拟操作，不会产生任何费用。", save: "更新套餐", liveKeys: "生产密钥", confirmSwitch: "切换套餐", downgradeNote: "超出新限额的资源将被锁定，直到您再次升级。", feature: "功能", youAreHere: "当前", upgrade: "升级", downgrade: "降级", switchTo: "切换到 {plan}", price: "价格", perTx: "每笔交易", swapFee: "兑换佣金", mainnet: "真实支付", settle: "结算", apiAccess: "API 访问权限", apiLevels: { notifications: "支付通知", partial: "部分 API", full: "完整 API" } },
+      plan: { title: "套餐与限额", change: "更改套餐", current: "当前套餐", orgs: "组织", apiKeys: "API 密钥", seats: "团队席位", unlimited: "不限", manage: "管理组织", changeTitle: "更改套餐", changeSub: "切换您的套餐。这是模拟操作，不会产生任何费用。", save: "更新套餐", liveKeys: "生产密钥", confirmSwitch: "切换套餐", downgradeNote: "超出新限额的资源将被锁定，直到您再次升级。", feature: "功能", youAreHere: "当前", upgrade: "升级", downgrade: "降级", switchTo: "切换到 {plan}", askFor: "向我们申请 {plan}", billedNote: "{plan} 需要付费，因此由我们的团队为你开通。请在“支持”中联系我们，我们会为你的账户切换。", price: "价格", perTx: "每笔交易", swapFee: "兑换佣金", mainnet: "真实支付", settle: "结算", apiAccess: "API 访问权限", apiLevels: { notifications: "支付通知", partial: "部分 API", full: "完整 API" } },
       appearance: { title: "外观", theme: "主题", light: "浅色", dark: "深色" },
       team: { title: "团队", add: "+ 添加成员", roles: { Admin: "管理员", Developer: "开发者", Analyst: "分析师", Viewer: "查看者", Owner: "所有者" } },
       teamModal: {
