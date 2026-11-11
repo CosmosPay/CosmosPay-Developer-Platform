@@ -6,7 +6,13 @@
  * version of the page (src/lib/seo/site-markdown.ts) reads it too, so both say the same words.
  * NOTE: template terms; have counsel review before relying on them legally. Pure. */
 
-export type TermsSection = { h: string; ps: string[] };
+export type TermsSection = {
+  /** The heading's anchor, for a section other pages link to: the wallet links `/tos#privacy`. The
+   *  same in every language, so a link keeps working whichever version the visitor is sent to. */
+  id?: string;
+  h: string;
+  ps: string[];
+};
 export interface TermsText {
   title: string;
   /** The label before the date of the last update. */
@@ -69,6 +75,7 @@ const en: TermsText = {
       ],
     },
     {
+      id: "privacy",
       h: "8. Privacy",
       ps: [
         "The wallet stores your profile data (name, email, birthdate, gender) locally on your device. The email is sent to us only if you opt in to create/link a Cosmos Pay account. Anonymous usage metrics and promotional communications are strictly opt-in. KYC data is processed by the fiat partner, not by us.",
@@ -147,6 +154,7 @@ const es: TermsText = {
       ],
     },
     {
+      id: "privacy",
       h: "8. Privacidad",
       ps: [
         "La wallet guarda tus datos de perfil (nombre, correo, fecha de nacimiento, género) localmente en tu dispositivo. El correo solo se nos envía si eliges crear/vincular una cuenta de Cosmos Pay. Las métricas anónimas de uso y las comunicaciones promocionales son estrictamente opt-in. Los datos KYC los trata el socio fiat, no nosotros.",

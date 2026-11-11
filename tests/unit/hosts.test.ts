@@ -185,6 +185,7 @@ test('robots.txt, sitemap.xml, llms.txt, llms-full.txt, auth.md and the /.well-k
     '/.well-known/security.txt',
     '/.well-known/api-catalog',
     '/.well-known/agent-skills/index.json',
+    '/.well-known/stellar.toml',
     '/BingSiteAuth.xml',
   ]) {
     assert.deepEqual(route('cosmospay.lat', path), { kind: 'pass', area: 'site' }, path);

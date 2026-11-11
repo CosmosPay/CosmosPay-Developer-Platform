@@ -29,7 +29,7 @@ const t = termsText(lang);
       <p class="tos-intro">{t.intro}</p>
       {t.sections.map((s) => (
         <section>
-          <h2>{s.h}</h2>
+          <h2 id={s.id}>{s.h}</h2>
           {s.ps.map((p) => <p>{p}</p>)}
         </section>
       ))}
