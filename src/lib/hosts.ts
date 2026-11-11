@@ -91,6 +91,8 @@ const SHARED_PATHS = new Set([
   "/.well-known/security.txt",
   "/.well-known/api-catalog",
   "/.well-known/agent-skills/index.json",
+  // SEP-1; the route answers it on the company site only (src/pages/.well-known/stellar.toml.ts).
+  "/.well-known/stellar.toml",
   // Bing Webmaster Tools' ownership file (src/pages/BingSiteAuth.xml.ts), lowercased like `path`.
   "/bingsiteauth.xml",
 ]);

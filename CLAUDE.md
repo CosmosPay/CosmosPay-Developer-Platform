@@ -216,10 +216,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
 - **`robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, `auth.md`, `/.well-known/security.txt`,
-  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json`, Bing's `/BingSiteAuth.xml` and the IndexNow key file are
+  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json`, `/.well-known/stellar.toml`, Bing's `/BingSiteAuth.xml` and the IndexNow key file are
   per-domain endpoints** (`SHARED_PATHS`
   in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
-  `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
+  `public/`. `stellar.toml` (SEP-1) answers on the company site only, a 404 elsewhere: the wallet's
+  recovery servers name cosmospay.lat as their home domain. It documents the organization and never
+  lists a `SIGNING_KEY`, a `WEB_AUTH_ENDPOINT` or accounts (`stellarToml` in `well-known.ts` says why). robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
   the product owner's decision
   (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The company site's
   robots.txt closes `/wallet/` (the web wallet, an app) to `*`, and gives the crawlers that draw
