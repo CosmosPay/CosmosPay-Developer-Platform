@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areasOf, canonicalPath, isLanguagePage, languagesOf, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
+import { areasOf, canonicalPath, isLanguagePage, languagesOf, MOVED_DOCS, ownerOf, routeRequest, type Origins, type RouteRequest } from '@/lib/hosts';
 import { indexablePages } from '@/lib/seo/indexable';
 import { markdownPath } from '@/lib/seo/markdown-urls';
 
@@ -77,6 +77,23 @@ test('dev.cosmospay.lat renders the platform and redirects the rest', () => {
   });
   // The platform renders its own 404 for paths nobody owns.
   assert.deepEqual(route('dev.cosmospay.lat', '/nope'), { kind: 'pass', area: 'dev' });
+});
+
+test('a docs page that moved answers a 301 to its new address, query kept', () => {
+  const yieldVaults = 'https://dev.cosmospay.lat/docs/api/yield-vaults/';
+  assert.deepEqual(route('dev.cosmospay.lat', '/docs/api/defindex/'), { kind: 'redirect', location: yieldVaults, status: 301 });
+  assert.deepEqual(route('dev.cosmospay.lat', '/docs/api/defindex'), { kind: 'redirect', location: yieldVaults, status: 301 });
+  assert.deepEqual(route('dev.cosmospay.lat', '/docs/api/DeFindex/', '?ref=x'), { kind: 'redirect', location: `${yieldVaults}?ref=x`, status: 301 });
+  assert.deepEqual(route('dev.cosmospay.lat', '/docs/api/defindex.md'), {
+    kind: 'redirect', location: 'https://dev.cosmospay.lat/docs/api/yield-vaults.md', status: 301,
+  });
+  // The new page and its neighbours are left to the static export.
+  assert.deepEqual(route('dev.cosmospay.lat', '/docs/api/yield-vaults/'), { kind: 'pass', area: 'dev' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/docs/api/swaps/'), { kind: 'pass', area: 'dev' });
+  for (const [from, to] of Object.entries(MOVED_DOCS)) {
+    assert.ok(from === from.toLowerCase() && !from.endsWith('/'), `${from}: lower-case, no trailing slash`);
+    assert.ok(to.startsWith('/docs/') && !MOVED_DOCS[to.replace(/\/+$/, '')], `${to}: a docs address that did not move`);
+  }
 });
 
 test('payments.cosmospay.lat renders its landing and the checkout pages', () => {
