@@ -77,7 +77,7 @@ _openapi:
           misconfigured`; the market and the sessions work without them.
 
 
-          Requires the `onramp:write` scope.
+          Requires the `onramp:write` scope. The shared public key may call it.
         heading: get-a-firm-price-for-a-purchase-with-local-money
       - content: >-
           The purchases this key's consumer opened on the key's network, newest
@@ -98,19 +98,22 @@ _openapi:
           (null for a token with no USD price); the widget quotes the firm
           figure before payment. The order is checked against the market first
           (`400 validation_failed` with the reason), and opened on the key's
-          network.
+          network. The shared public key also gets `publicToken`, the only way
+          it reads the session back.
 
 
-          Requires the `onramp:write` scope.
+          Requires the `onramp:write` scope. The shared public key may call it.
         heading: open-a-purchase-with-local-money
       - content: >-
           One purchase of this key's consumer on the key's network, from this
           service's records, with its widget URL. Another consumer's session,
           one opened on the other network, or a sale, is the 404 of a missing
-          one.
+          one. The shared public key reads a session only with its `publicToken`
+          in `X-Record-Token`; without it, or with another session's, the answer
+          is that 404. Listing sessions stays closed to the public key.
 
 
-          Requires the `onramp:read` scope.
+          Requires the `onramp:read` scope. The shared public key may call it.
         heading: read-a-purchase-opened-with-local-money
 ---
 

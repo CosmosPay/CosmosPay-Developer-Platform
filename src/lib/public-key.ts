@@ -35,12 +35,15 @@
    is deleted. Delete deliberately. */
 import { prisma } from "@/lib/prisma";
 import { createOrg, listForUser } from "@/lib/organizations";
+import { credentialsWithStaleScopes, PUBLIC_KEY_SCOPES } from "@/lib/public-key-scopes";
 import {
   createApiKey,
   createConsumer,
   keyPrefix,
   listUserApiKeys,
   parseApiKeyEnv,
+  parsePermissionsLabel,
+  setApiKeyPermissions,
   syncConsumerForwarder,
 } from "@/utils/apisix";
 
@@ -55,33 +58,8 @@ export const PUBLIC_CONSUMER = `${keyPrefix}${PUBLIC_USER_ID}`;
    person could register or receive mail at. */
 const PUBLIC_EMAIL = "public-key@cosmospay.invalid";
 
-/**
- * Exactly the scopes the allowlisted routes require, and nothing else.
- *
- * Notably absent: `activity:read` (it would replay every anonymous wallet's
- * telemetry), every `kyc:*` / `onramp:*` / `offramp:*` scope (identity documents
- * and bank accounts are per-person by definition), and
- * `webhooks:*` / `products:*` / `customers:*` (merchant configuration).
- *
- * `activity:write` IS here, and it matters: a wallet with no account still
- * crashes, and without this scope its error reports would be refused with a 403,
- * blinding us to exactly the population that meets first-run failures. Events on
- * this key are anonymous by construction, so the wallet strips anything that
- * names an account or a transaction before sending.
- *
- * `swaps:read` is here only because `POST /v1/swaps/quote` requires it. It also
- * unlocks `GET /v1/swaps`, which is why the Payments service does not rely on
- * scopes alone for this key (see PublicKeyGuard).
- */
-export const PUBLIC_KEY_SCOPES = [
-  "swaps:read",
-  "swaps:write",
-  "liquidity:read",
-  "liquidity:write",
-  "payments:read",
-  "payments:write",
-  "activity:write",
-];
+/* The scopes and why each is there: src/lib/public-key-scopes.ts. */
+export { PUBLIC_KEY_SCOPES };
 
 export interface PublicKeys {
   dev: string | null;
@@ -160,7 +138,27 @@ async function readPublicKeys(): Promise<PublicKeys> {
  */
 async function healPublicConsumer(userId: string): Promise<void> {
   await createConsumer(userId).catch(() => null);
+  await healPublicScopes(userId);
   await syncConsumerForwarder(userId).catch(() => null);
+}
+
+/**
+ * Brings every public credential's scopes to PUBLIC_KEY_SCOPES. A credential keeps the
+ * scopes it was minted with, and this key's value is compiled into every wallet, so it is
+ * never rotated to pick up a new scope: its labels are rewritten in place instead (the
+ * secret untouched), and the forwarder is rebuilt by the caller. A no-op, one list call,
+ * when nothing drifted.
+ */
+async function healPublicScopes(userId: string): Promise<void> {
+  const credentials = await listUserApiKeys(userId).catch(() => []);
+  const stale = credentialsWithStaleScopes(
+    (Array.isArray(credentials) ? credentials : [])
+      .filter((c) => typeof c?.value?.id === "string")
+      .map((c) => ({ id: c.value.id as string, scopes: parsePermissionsLabel(c.value.labels?.permissions) })),
+  );
+  for (const id of stale) {
+    await setApiKeyPermissions(id, userId, [...PUBLIC_KEY_SCOPES]).catch(() => false);
+  }
 }
 
 /**
@@ -193,7 +191,7 @@ export async function ensurePublicKeys(): Promise<PublicKeys> {
     createApiKey(
       userId,
       environment,
-      PUBLIC_KEY_SCOPES,
+      [...PUBLIC_KEY_SCOPES],
       "public",
       `CosmosPay public access (${label})`,
       "Shared key embedded in the open-source wallet. Not a secret; " +

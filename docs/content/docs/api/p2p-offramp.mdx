@@ -77,7 +77,7 @@ _openapi:
           them.
 
 
-          Requires the `offramp:write` scope.
+          Requires the `offramp:write` scope. The shared public key may call it.
         heading: get-a-firm-price-for-a-sale-for-local-money
       - content: >-
           The sales this key's consumer opened on the key's network, newest
@@ -99,19 +99,23 @@ _openapi:
           price, rounded down (null for a token with no USD price); the widget
           quotes the firm figure first. The order is checked against the market
           (`400 validation_failed` with the reason), and opened on the key's
-          network.
+          network. The shared public key also gets `publicToken`, the only way
+          it reads the session back.
 
 
-          Requires the `offramp:write` scope.
+          Requires the `offramp:write` scope. The shared public key may call it.
         heading: open-a-sale-for-local-money
       - content: >-
           One sale of this key's consumer on the key's network, from this
           service's records, with its widget URL. Another consumer's session,
           one opened on the other network, or a purchase, is the 404 of a
-          missing one.
+          missing one. The shared public key reads a session only with its
+          `publicToken` in `X-Record-Token`; without it, or with another
+          session's, the answer is that 404. Listing sessions stays closed to
+          the public key.
 
 
-          Requires the `offramp:read` scope.
+          Requires the `offramp:read` scope. The shared public key may call it.
         heading: read-a-sale-opened-for-local-money
 ---
 

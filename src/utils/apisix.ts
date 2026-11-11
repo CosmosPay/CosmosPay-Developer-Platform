@@ -1046,6 +1046,36 @@ export async function deleteApiKey(
   }
 }
 
+/* Replace a credential's scopes in place: the secret, the role, the environment, the org,
+   the name and the description stay. For a key whose value others hold and that cannot be
+   rotated without breaking them (the shared public key compiled into every wallet), this is
+   how a newly added scope reaches it. The forwarder bakes credential -> scopes into one
+   plugin, so it is rebuilt here, or the new scopes would not reach the Payments service.
+   False when the credential is missing or APISIX refused the write. */
+export async function setApiKeyPermissions(
+  apiKeyId: string,
+  userId: string,
+  permissions: string[],
+): Promise<boolean> {
+  const key = apiKeyId.includes(keyPrefix) ? apiKeyId : `${keyPrefix}${apiKeyId}`;
+  const apiKey = await getApiKey(apiKeyId, userId).catch(() => null);
+  if (!apiKey) return false;
+
+  const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
+  const body: Record<string, unknown> = {
+    plugins: apiKey.value.plugins ?? {},
+    labels: { ...(apiKey.value.labels ?? {}), permissions: JSON.stringify(permissions) },
+  };
+  if (apiKey.value.name) body.name = apiKey.value.name;
+  if (apiKey.value.desc) body.desc = apiKey.value.desc;
+
+  const response = await apisix.put(`/consumers/${username}/credentials/${key}`, body).catch(() => null);
+  if (!response) return false;
+
+  await syncConsumerForwarder(userId).catch(() => null);
+  return true;
+}
+
 /* Swap a credential's secret, keeping its identity. `permissions` is optional and
    exists for one case: a wallet-provisioned account whose keys were minted before a
    scope existed. Rotation is the only lever those users have -- the
