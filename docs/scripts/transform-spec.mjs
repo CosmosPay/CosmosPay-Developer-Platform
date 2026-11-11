@@ -53,21 +53,21 @@ export const TAGS = [
     title: 'Swaps',
     description:
       'Quote, create, sign and submit same-chain swaps: Stellar path payments by default, ' +
-      'Solana through Jupiter and Monad through Kuru Flow with `chain`.',
+      "Solana's and Monad's own markets with `chain`.",
   },
   {
     name: 'cross-chain-swaps',
     title: 'Cross-chain Swaps',
     description:
-      'Swaps between every network NEAR Intents reaches, settled by NEAR Intents: quote, get a ' +
-      'deposit address, pay it, and follow the swap to its outcome.',
+      'Swaps between every network Cosmos Pay works with: quote, get a deposit address made for ' +
+      'the swap, pay it, and follow the swap to its outcome.',
   },
   {
     name: 'usdt0',
     title: 'USDT0 Transfers',
-    meta: 'Send USDT0 from Stellar to 21 EVM networks through LayerZero with the Cosmos Pay API: quote, sign, submit and track each transfer. Mainnet only.',
+    meta: 'Send USDT0 from Stellar to 21 EVM networks over the USDT0 bridge with the Cosmos Pay API: quote, sign, submit and track each transfer.',
     description:
-      'USDT0 out of Stellar through LayerZero: quote, build the Soroban transaction the holder signs, ' +
+      'USDT0 out of Stellar over the USDT0 bridge: quote, build the Soroban transaction the holder signs, ' +
       'submit it and follow the message to its destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only.',
   },
   {
@@ -165,11 +165,12 @@ export const TAGS = [
     description: "A receiver's blockchain wallets and fiat bank accounts, the bank rails and the fields each rail asks for.",
   },
   {
-    // The server tags this one in PascalCase, unlike the rest; the name must match it.
-    name: 'DeFindex',
-    title: 'DeFindex Vaults',
+    // The server tags this one in words, unlike the rest; the name must match it. Its page is
+    // /docs/api/yield-vaults/ (it was /docs/api/defindex/, which src/lib/hosts.ts redirects).
+    name: 'Yield vaults',
+    title: 'Yield Vaults',
     description:
-      'Yield vaults on DeFindex: discover vaults, read a balance, and build the unsigned ' +
+      'Yield vaults on Stellar: discover vaults, read a balance, and build the unsigned ' +
       'deposit or withdrawal the account signs before it is submitted.',
   },
   {

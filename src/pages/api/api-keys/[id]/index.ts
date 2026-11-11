@@ -187,7 +187,8 @@ export const PATCH: APIRoute = async (ctx) => {
     });
   }
 
-  const result = await updateApiKey(id, session.user.id, body.data.permissions, body.data.role, body.data.name, body.data.description).catch(err => {
+  // No role from the caller: an edited key is `user` (src/lib/api-key-role.ts).
+  const result = await updateApiKey(id, session.user.id, body.data.permissions, body.data.name, body.data.description).catch(err => {
     return null
   });
 

@@ -216,10 +216,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   answer on every domain. Fine for assets; the docs export under `/docs` is kept to the
   platform domain by nginx (README → nginx).
 - **`robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, `auth.md`, `/.well-known/security.txt`,
-  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json`, Bing's `/BingSiteAuth.xml` and the IndexNow key file are
+  `/.well-known/api-catalog`, `/.well-known/agent-skills/index.json`, `/.well-known/stellar.toml`, Bing's `/BingSiteAuth.xml` and the IndexNow key file are
   per-domain endpoints** (`SHARED_PATHS`
   in `hosts.ts`, their content in `src/lib/seo/`, all pure and tested); never add them to
-  `public/`. robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
+  `public/`. `stellar.toml` (SEP-1) answers on the company site only, a 404 elsewhere: the wallet's
+  recovery servers name cosmospay.lat as their home domain. It documents the organization and never
+  lists a `SIGNING_KEY`, a `WEB_AUTH_ENDPOINT` or accounts (`stellarToml` in `well-known.ts` says why). robots.txt carries a `Content-Signal` line on every domain; its `ai-train` value is
   the product owner's decision
   (`AI_TRAIN` in `src/lib/seo/robots.ts`, "yes" until they say otherwise). The company site's
   robots.txt closes `/wallet/` (the web wallet, an app) to `*`, and gives the crawlers that draw
@@ -420,7 +422,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
   stops on paid, failed and cancelled (`nextPollDelay`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
-  to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` (the
+  to every payments response.
+- **Only the page's own scripts run on the payments domain** (`src/lib/payments/csp.ts`, security
+  audit 2026-11-11: an injected script could change the address a payer sees). Every HTML page gets
+  `script-src 'self'`, the SHA-256 of each inline script in the HTML it sends, and a per-response
+  nonce that only Cloudflare's injected detection script uses, plus `script-src-attr 'none'`. So:
+  no inline `on*=` handler, no `javascript:` URL, no script from another origin, no `eval`, and a
+  new inline script is fine (it is hashed as sent). Never `set:html` anything a visitor or the API
+  controls into these pages: a script injected on the server would be hashed with the rest. The
+  private checkout (`/zk/…`) gets the script policy as Report-Only (bb.js needs
+  `'wasm-unsafe-eval'` and a blob: worker) until a testnet payment runs clean under it; then flip
+  `ZK_SCRIPT_POLICY_ENFORCED`. A new third-party script on these pages means a new source in the
+  policy, on purpose, in the same change. Payment pages (checkout, `/pay`, previews) are `noindex` (the
   home and the content pages are the indexed ones), and the domain has its own seven-language
   catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`).
   An indexable page's language is its address (English bare, `?lang=` otherwise); a payment
@@ -1750,6 +1763,21 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   stays on community on purpose (its swap rate must stay the highest; see `public-key.ts`).
 - Production leaves `ENABLED_PLANS` empty: every offered plan can be picked (product owner,
   2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
+- **An account never puts itself on a plan with a fee** (security review, 2026-11-11):
+  nothing bills a plan yet, so `PATCH /api/account/plan` used to hand any account
+  Enterprise's rates for free while `ALLOW_USER_PLAN_CHANGES` was on. A plan with
+  `billed: true` in `plans.ts` (Essentials, Growth, Enterprise) is set by an operator
+  (`PATCH /api/admin/users/{id}`) or, later, billing; a regular account may still move
+  itself to Starter. Owners and admins may set any enabled plan. The rule is
+  `src/lib/plan-change.ts` (tested); the plan modal turns a billed plan's switch into a
+  request in Support and onboarding offers only `selfServicePlans`.
+- **An API key's role is the server's, never the caller's** (security review, 2026-11-11).
+  The Payments API reads `X-Consumer-Role: admin` as the platform's own key (no scope
+  checks, KYC review sign-off, the fiat kill-switch), so no key minted here is `admin`
+  and the consumer forwarder never sends it (`src/lib/api-key-role.ts`, tested). The
+  dashboard's "Admin" key is full access to the organization's own resources: every
+  scope of `COSMOS_SCOPES`, role `user`. A key labelled `admin` before that is forwarded
+  as `user` with every scope.
 - Starter is 1.5% + 18¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
 - **A plan card lists only what the product does**: the pricing cards and the onboarding plan

@@ -1651,7 +1651,7 @@ export default {
         youAreHere: "Aktuell",
         upgrade: "Upgrade",
         downgrade: "Downgrade",
-        switchTo: "Zu {plan} wechseln",
+        switchTo: "Zu {plan} wechseln", askFor: "{plan} bei uns anfragen", billedNote: "{plan} ist kostenpflichtig, deshalb richtet unser Team ihn für Sie ein. Schreiben Sie uns über den Support, und wir stellen Ihr Konto um.",
         price: "Preis",
         perTx: "Pro Transaktion",
         swapFee: "Provision pro Swap",

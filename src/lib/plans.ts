@@ -43,16 +43,20 @@ export interface PlanSpec {
   // Payments API and the swap aggregators refuse fractions), so the floor is 7 (0.07%).
   // A new rate reaches existing keys on the next start (syncAllConsumerForwarders).
   swapFeeBps: number;
+  // The plan carries a fixed fee (monthly, or negotiated for Enterprise) that billing has to
+  // collect. Nothing collects it yet, so only billing or an operator puts an account on such a
+  // plan, never the account itself (src/lib/plan-change.ts).
+  billed: boolean;
 }
 
 export const PLAN_SPECS: Record<PlanId, PlanSpec> = {
   // Legacy: the free plan, no longer offered. Kept so existing accounts on it keep working
   // (and the shared public wallet key, which pays this plan's swap rate; see public-key.ts).
-  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "-",             settle: "~5 sec", swapFeeBps: 65 },
-  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1.5% + 18¢",   perTx: "1.5% + 18¢",    settle: "~5 sec", swapFeeBps: 65 },
-  essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "1.12% + 18¢",   settle: "~5 sec", swapFeeBps: 26 },
-  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.75% + 18¢",   settle: "~5 sec", swapFeeBps: 13 },
-  enterprise: { id: "enterprise", maxApiKeys: null, maxOrgs: null, maxSeats: null, mainnet: true, api: "full",          price: "Custom",       perTx: "Custom",        settle: "~5 sec", swapFeeBps: 7  },
+  community:  { id: "community",  maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 1,    mainnet: true, api: "notifications", price: "Free",         perTx: "-",             settle: "~5 sec", swapFeeBps: 65, billed: false },
+  starter:    { id: "starter",    maxApiKeys: 2,    maxOrgs: 1,    maxSeats: 2,    mainnet: true, api: "partial",       price: "1.5% + 18¢",   perTx: "1.5% + 18¢",    settle: "~5 sec", swapFeeBps: 65, billed: false },
+  essentials: { id: "essentials", maxApiKeys: null, maxOrgs: 3,    maxSeats: 10,   mainnet: true, api: "full",          price: "$33/mo",       perTx: "1.12% + 18¢",   settle: "~5 sec", swapFeeBps: 26, billed: true },
+  growth:     { id: "growth",     maxApiKeys: null, maxOrgs: 10,   maxSeats: null, mainnet: true, api: "full",          price: "$99/mo",       perTx: "0.75% + 18¢",   settle: "~5 sec", swapFeeBps: 13, billed: true },
+  enterprise: { id: "enterprise", maxApiKeys: null, maxOrgs: null, maxSeats: null, mainnet: true, api: "full",          price: "Custom",       perTx: "Custom",        settle: "~5 sec", swapFeeBps: 7,  billed: true },
 };
 
 /* The restrictions enforced across the app, derived from the specs above. */

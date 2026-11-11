@@ -1,6 +1,14 @@
 import { z } from '@/lib/openapi/zod';
 import { apiKeyEnvironmentSchema } from '@/schemas/shared/environment';
 
+// Every key minted today is `user`. `admin` is only on keys created before the server
+// stopped accepting a role; the gateway forwards those as `user` with every scope.
+const apiKeyRoleSchema = z.enum(['admin', 'user']).openapi({
+  example: 'user',
+  description:
+    'Always `user` for a key created today. `admin` marks a key created before roles were set by the server: it has every scope of its organization and nothing more.',
+});
+
 const apiKeyIdValueSchema = z
   .string()
   .regex(
@@ -30,7 +38,7 @@ export const apiKeyDataSchema = z
     createdAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     updatedAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     permissions: z.array(z.string()).openapi({ example: ['read', 'write'] }),
-    role: z.enum(['admin', 'user']).openapi({ example: 'admin' }),
+    role: apiKeyRoleSchema,
     environment: apiKeyEnvironmentSchema,
     name: z.string().optional().openapi({ example: 'Production server' }),
     description: z.string().optional().openapi({ example: 'Used by the billing service' }),
@@ -56,7 +64,7 @@ export const apiKeyIdDataSchema = z
     createdAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     updatedAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     permissions: z.array(z.string()).openapi({ example: ['read', 'write'] }),
-    role: z.enum(['admin', 'user']).openapi({ example: 'user' }),
+    role: apiKeyRoleSchema,
     environment: apiKeyEnvironmentSchema,
     name: z.string().optional().openapi({ example: 'Production server' }),
     description: z.string().optional().openapi({ example: 'Used by the billing service' }),
@@ -73,7 +81,7 @@ export const apiKeyListDataSchema = z
     createdAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     updatedAt: z.string().openapi({ example: '2021-01-01T00:00:00Z' }),
     permissions: z.array(z.string()).openapi({ example: ['read', 'write'] }),
-    role: z.enum(['admin', 'user']).openapi({ example: 'admin' }),
+    role: apiKeyRoleSchema,
     environment: apiKeyEnvironmentSchema,
     name: z.string().optional().openapi({ example: 'Production server' }),
     description: z.string().optional().openapi({ example: 'Used by the billing service' }),

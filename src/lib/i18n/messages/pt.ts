@@ -1643,7 +1643,7 @@ export default {
         youAreHere: "Atual",
         upgrade: "Upgrade",
         downgrade: "Downgrade",
-        switchTo: "Mudar para {plan}",
+        switchTo: "Mudar para {plan}", askFor: "Pedir {plan}", billedNote: "{plan} tem uma tarifa, então nossa equipe o ativa para você. Escreva para nós pelo Suporte e mudaremos sua conta.",
         price: "Preço",
         perTx: "Por transação",
         swapFee: "Comissão por swap",

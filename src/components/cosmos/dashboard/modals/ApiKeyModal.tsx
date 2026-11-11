@@ -1,7 +1,8 @@
 import { useState, Fragment } from "react";
 import { Modal, IcCheck } from "@/components/cosmos/shared";
 import { useT } from "@/lib/i18n/index";
-import { COSMOS_RESOURCES, COSMOS_ACTIONS, cosmosScopeKey } from "@/lib/cosmos-scopes.ts";
+import { COSMOS_RESOURCES, COSMOS_ACTIONS, COSMOS_SCOPES, cosmosScopeKey } from "@/lib/cosmos-scopes.ts";
+import { keyAccess } from "@/lib/api-key-role";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 
@@ -36,7 +37,11 @@ function ScopePicker({ value, m }: any) {
    follows the dashboard's test/production switch and is injected by the caller, so the
    key is always created for the environment the user is currently viewing. Two steps (product
    owner, 2026-10-27: a long form goes in steps): its name and role, then its scopes (the
-   resource × action matrix, or an admin key's note). */
+   resource × action matrix, or an admin key's note).
+
+   "Admin" here is full access to the organization's own resources, so it is sent as every
+   scope of the catalog and no role: the server decides a key's role (always `user`), and
+   the gateway reads `admin` as the platform's own key (src/lib/api-key-role.ts). */
 export function ApiKeyModal({ mode, initial, onClose, onSubmit }) {
   const t = useT();
   const m = t.dash.modals.key;
@@ -44,12 +49,12 @@ export function ApiKeyModal({ mode, initial, onClose, onSubmit }) {
   const isEdit = mode === "edit";
   const [name, setName] = useState((initial && initial.name) || "");
   const [description, setDescription] = useState((initial && initial.description) || "");
-  const [role, setRole] = useState((initial && initial.role) || "user");
+  const [role, setRole] = useState(initial ? keyAccess(initial) : "user");
   const [perms, setPerms] = useState(initial && initial.permissions && initial.permissions.length ? initial.permissions : ["payments:read"]);
-  // admin keys bypass scopes upstream, so the matrix only matters for "user" keys.
+  // A full-access ("admin") key holds every scope, so the matrix only matters for "user" keys.
   const valid = name.trim().length > 0 && (role === "admin" || perms.length > 0);
   const submit = () => {
-    const body = { role, permissions: role === "admin" ? [] : perms, name: name.trim(), description: description.trim() };
+    const body = { permissions: role === "admin" ? [...COSMOS_SCOPES] : perms, name: name.trim(), description: description.trim() };
     onSubmit(body);
     onClose();
   };

@@ -1,8 +1,8 @@
 import { z } from '@/lib/openapi/zod';
 import { apiKeyEnvironmentSchema } from '@/schemas/shared/environment';
 
-// Scopes are `resource:action` (e.g. payments:write). May be empty for `admin`
-// keys, which bypass scope checks upstream.
+// Scopes are `resource:action` (e.g. payments:write). A full-access key lists every scope
+// of the catalog (`COSMOS_SCOPES`).
 const apiKeyPermissionsSchema = z
   .array(z.string().min(1))
   .default([])
@@ -13,12 +13,24 @@ const apiKeyDescriptionSchema = z.string().trim().max(240).optional().openapi({ 
 // API keys belong to an organization: the caller must specify which one.
 const apiKeyOrgSchema = z.string().trim().min(1).max(64).openapi({ example: 'org_abc123' });
 
+// A key's role is decided by the server, never by the caller: every key minted here is
+// `user`, and the gateway reads `admin` as the platform's own key (no scope checks, KYC
+// review sign-off, the fiat kill-switch). The field stays only so clients that still send
+// `"user"` keep working; any other value is a 400.
+const apiKeyRoleSchema = z
+  .literal('user')
+  .optional()
+  .openapi({
+    example: 'user',
+    description: 'Deprecated: every key is `user`. A key\'s role is set by the server; any other value is refused.',
+  });
+
 export const createApiKeyBodySchema = z
   .object({
     org: apiKeyOrgSchema,
     environment: apiKeyEnvironmentSchema.default('dev'),
     permissions: apiKeyPermissionsSchema,
-    role: z.enum(['admin', 'user']).default('user'),
+    role: apiKeyRoleSchema,
     name: apiKeyNameSchema,
     description: apiKeyDescriptionSchema,
   })
@@ -29,7 +41,7 @@ export const createApiKeyBodySchema = z
 export const updateApiKeyBodySchema = z
   .object({
     permissions: apiKeyPermissionsSchema,
-    role: z.enum(['admin', 'user']).default('user'),
+    role: apiKeyRoleSchema,
     name: apiKeyNameSchema,
     description: apiKeyDescriptionSchema,
   })

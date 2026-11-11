@@ -28,8 +28,13 @@ export default function Onboarding({ lang, features }) {
   const feat = features || {};
   // Only the plans the wizard has cards for (its PLAN_IDS); the others are picked later
   // from the dashboard.
-  const enabledPlans = Array.isArray(feat.enabledPlans) ? feat.enabledPlans.filter((id: string) => ONBOARDING_PLAN_IDS.includes(id)) : undefined;
-  const defaultPlan = ONBOARDING_PLAN_IDS.includes(feat.defaultPlan) ? feat.defaultPlan : DEFAULT_PLAN_ID;
+  // Of those, only the ones the account may put itself on (`selfServicePlans`): a plan with a
+  // fee to bill is set up by our team from the dashboard's Support, never picked here.
+  const selfService = Array.isArray(feat.selfServicePlans) ? feat.selfServicePlans : null;
+  const enabledPlans = Array.isArray(feat.enabledPlans)
+    ? feat.enabledPlans.filter((id: string) => ONBOARDING_PLAN_IDS.includes(id) && (!selfService || selfService.includes(id)))
+    : undefined;
+  const defaultPlan = ONBOARDING_PLAN_IDS.includes(feat.defaultPlan) && (!selfService || selfService.includes(feat.defaultPlan)) ? feat.defaultPlan : DEFAULT_PLAN_ID;
   const planSelectable = (feat.plansEnabled ?? true) && (feat.allowUserPlanChanges ?? true) && (!enabledPlans || enabledPlans.length > 1);
   const planOptions = planSelectable ? (enabledPlans && enabledPlans.length ? enabledPlans : undefined) : [defaultPlan];
 
