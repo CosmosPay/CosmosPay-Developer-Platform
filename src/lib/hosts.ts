@@ -48,6 +48,15 @@ export type RouteDecision =
 /** Where the site and payments pages live in src/pages. */
 export const MOUNTS: Record<Exclude<Area, "dev">, string> = { site: "/site", payments: "/payments" };
 
+/* Docs pages whose address moved, lower-case and without a trailing slash, to where they are now.
+   The docs are a static export: a moved page leaves no file behind, so its old address reaches the
+   middleware and gets a 301 here on the platform (with or without the slash, and its `.md`). */
+export const MOVED_DOCS: Readonly<Record<string, string>> = {
+  // The community server renamed the DeFindex tag (CS #153); the page follows the tag.
+  "/docs/api/defindex": "/docs/api/yield-vaults/",
+  "/docs/api/defindex.md": "/docs/api/yield-vaults.md",
+};
+
 import { PAYMENTS_PAGE_PATHS } from "@/lib/payments/site-pages";
 import { isKeyFilePath } from "@/lib/seo/indexnow";
 import { pageLanguages } from "@/lib/seo/lang-urls";
@@ -201,6 +210,9 @@ export function routeRequest(req: RouteRequest, origins: Origins): RouteDecision
   }
 
   if (isSharedPath(path)) return { kind: "pass", area: primary };
+
+  const movedDoc = MOVED_DOCS[path.replace(/\/+$/, "")];
+  if (movedDoc) return to("dev", movedDoc);
 
   /* A rewrite into a mount, re-encoded so the middleware's `new URL` reads nothing in it a second
      time, and refused (404) unless it still resolves inside that mount. */

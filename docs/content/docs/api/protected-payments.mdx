@@ -87,10 +87,10 @@ _openapi:
           Requires the `payments:read` scope.
         heading: get-one-of-your-protected-payments
       - content: >-
-          For a FUNDED payment: Trustless Work builds the milestone change to
-          `shipped` with `evidence`, which this service checks is exactly that
-          call and records for 15 minutes. Sign it with `merchantAddress` and
-          send it to `POST /v1/protected-payments/submit`.
+          For a FUNDED payment: the protected-payments service builds the
+          milestone change to `shipped` with `evidence`, which this service
+          checks is exactly that call and records for 15 minutes. Sign it with
+          `merchantAddress` and send it to `POST /v1/protected-payments/submit`.
 
 
           Requires the `payments:write` scope.
@@ -131,11 +131,11 @@ _openapi:
           Requires the `payments:write` scope.
         heading: cancel-a-protected-payment-nobody-funded
       - content: >-
-          Relays `xdr` through Trustless Work only when it is a signed copy of a
-          transaction built for that payment, for `merchantAddress`, on the
-          key’s network, before it expires. Relayed once: the answer is stored
-          and a replay returns it; on `SUCCESS` the payment moves and its
-          webhook is emitted.
+          Relays `xdr` through the protected-payments service only when it is a
+          signed copy of a transaction built for that payment, for
+          `merchantAddress`, on the key’s network, before it expires. Relayed
+          once: the answer is stored and a replay returns it; on `SUCCESS` the
+          payment moves and its webhook is emitted.
 
 
           Requires the `payments:write` scope.

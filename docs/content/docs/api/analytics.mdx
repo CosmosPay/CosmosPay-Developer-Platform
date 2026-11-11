@@ -37,8 +37,8 @@ _openapi:
         id: recent-webhook-deliveries-across-all-endpoints-with-details
     contents:
       - content: >-
-          The settled volume per asset, and every asset valued in USD at NEAR
-          Intents' current reference price (`volumeUsd`, indicative). Without
+          The settled volume per asset, and every asset valued in USD at the
+          current market reference price (`volumeUsd`, indicative). Without
           those prices the USD fields are null and the rest answers as usual.
 
 
@@ -49,7 +49,7 @@ _openapi:
           payments, each grouped into the buckets of `period` (UTC, weeks from
           Monday, a quiet bucket a zero), with the totals of the window and of
           the window before, for growth. Payments carry their settled volume in
-          USD too (`volumeUsd`), each asset valued at NEAR Intents' current
+          USD too (`volumeUsd`), each asset valued at the current market
           reference price (indicative). Without those prices the USD fields are
           null and the rest answers as usual.
 

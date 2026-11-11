@@ -56,16 +56,16 @@ _openapi:
         id: get-the-field-schema-required-by-a-rail
     contents:
       - content: >-
-          Fetches from BlindPay the message the customer signs in their own
-          wallet to prove an EOA wallet is theirs. Sign it, then register the
-          wallet with `POST /v1/kyc/receivers/{receiverId}/wallets` and its
+          Fetches from the fiat partner the message the customer signs in their
+          own wallet to prove an EOA wallet is theirs. Sign it, then register
+          the wallet with `POST /v1/kyc/receivers/{receiverId}/wallets` and its
           `signature_tx_hash` instead of an `address`. Nothing is stored.
 
 
           Requires the `kyc:read` scope.
         heading: get-the-message-to-sign-for-the-secure-wallet-flow
       - content: >-
-          Reads the local mirror, newest first; BlindPay is not called.
+          Reads the local mirror, newest first; the fiat partner is not called.
           Paginated with `take` (default 100, max 100) and `skip`; answers `{
           data, total, take, skip }`.
 
@@ -73,11 +73,11 @@ _openapi:
           Requires the `kyc:read` scope.
         heading: list-a-receivers-wallets
       - content: >-
-          Registers the wallet at BlindPay under the receiver and mirrors it
-          locally. Send `address` (account abstraction or the non-secure flow),
-          or the `signature_tx_hash` of the message from `GET
+          Registers the wallet at the fiat partner under the receiver and
+          mirrors it locally. Send `address` (account abstraction or the
+          non-secure flow), or the `signature_tx_hash` of the message from `GET
           /v1/kyc/receivers/{receiverId}/wallets/sign-message` (secure EOA
-          flow). `network` is one of BlindPay's: Stellar, Solana, Tron,
+          flow). `network` is one of the fiat partner's: Stellar, Solana, Tron,
           Ethereum, Base, Arbitrum, Polygon or one of their test networks. A
           disabled receiver is refused with 403 `account_disabled`.
 
@@ -85,24 +85,24 @@ _openapi:
           Requires the `kyc:write` scope.
         heading: register-a-blockchain-wallet-for-a-receiver
       - content: >-
-          Deletes the wallet at BlindPay, then its local row. A wallet id this
-          receiver does not have answers `deleted: true` without calling
-          BlindPay, so repeating a delete succeeds.
+          Deletes the wallet at the fiat partner, then its local row. A wallet
+          id this receiver does not have answers `deleted: true` without calling
+          the fiat partner, so repeating a delete succeeds.
 
 
           Requires the `kyc:write` scope.
         heading: delete-a-wallet
       - content: >-
-          Reads the local mirror, newest first; BlindPay is not called, and
-          account numbers are never returned. Paginated with `take` (default
+          Reads the local mirror, newest first; the fiat partner is not called,
+          and account numbers are never returned. Paginated with `take` (default
           100, max 100) and `skip`; answers `{ data, total, take, skip }`.
 
 
           Requires the `kyc:read` scope.
         heading: list-a-receivers-bank-accounts
       - content: >-
-          Creates the account at BlindPay under the receiver and mirrors it;
-          offramp payouts settle to it. `type` names the rail, and only that
+          Creates the account at the fiat partner under the receiver and mirrors
+          it; offramp payouts settle to it. `type` names the rail, and only that
           rail's fields are needed (`GET /v1/kyc/bank-details?rail=` lists
           them). The response carries identifiers only (`rail`, `name`,
           `country`), never the account numbers. A disabled receiver is refused
@@ -112,27 +112,27 @@ _openapi:
           Requires the `kyc:write` scope.
         heading: add-a-fiat-bank-account-for-a-receiver
       - content: >-
-          Deletes the account at BlindPay, then its local row. An id this
-          receiver does not have answers `deleted: true` without calling
-          BlindPay, so repeating a delete succeeds.
+          Deletes the account at the fiat partner, then its local row. An id
+          this receiver does not have answers `deleted: true` without calling
+          the fiat partner, so repeating a delete succeeds.
 
 
           Requires the `kyc:write` scope.
         heading: delete-a-bank-account
       - content: >-
-          Relays BlindPay's catalog of bank rails on the instance of the key's
-          network (production for a mainnet key, development otherwise). Nothing
-          is stored; the body is BlindPay's answer as returned.
+          Relays the fiat partner's catalog of bank rails on the instance of the
+          key's network (production for a mainnet key, development otherwise).
+          Nothing is stored; the body is the fiat partner's answer as returned.
 
 
           Requires the `kyc:read` scope.
         heading: list-available-bank-rails
       - content: >-
-          Relays BlindPay's field schema for the `rail` query parameter
+          Relays the fiat partner's field schema for the `rail` query parameter
           (required: 400 `validation_failed` without it), the fields `POST
           /v1/kyc/receivers/{receiverId}/bank-accounts` needs for that rail.
-          Answered as BlindPay returns it, from the instance of the key's
-          network.
+          Answered as the fiat partner returns it, from the instance of the
+          key's network.
 
 
           Requires the `kyc:read` scope.

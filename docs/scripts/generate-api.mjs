@@ -46,7 +46,8 @@ await generateFiles({
 
 // Build our own meta.json (ordered) + an index landing page with cards.
 // fumadocs writes each page under its tag lowercased, so match the table the same way.
-// A tag the server spells in capitals (`DeFindex`) would otherwise lose its title and place.
+// A tag the server spells in capitals or words (`Yield vaults`, `Protected payments`) would
+// otherwise lose its title and place.
 const order = TAGS.map((t) => t.name.toLowerCase());
 const titleOf = Object.fromEntries(TAGS.map((t) => [t.name.toLowerCase(), t.title]));
 const metaOf = Object.fromEntries(TAGS.filter((t) => t.meta).map((t) => [t.name.toLowerCase(), t.meta]));
