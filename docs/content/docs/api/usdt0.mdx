@@ -1,8 +1,8 @@
 ---
 title: "USDT0 Transfers"
-metaDescription: "Send USDT0 from Stellar to 21 EVM networks through LayerZero with the Cosmos Pay API: quote, sign, submit and track each transfer. Mainnet only."
-description: 'USDT0 out of Stellar through LayerZero: quote, build the Soroban
-  transaction the holder signs, submit it and follow the message to its
+metaDescription: "Send USDT0 from Stellar to 21 EVM networks over the USDT0 bridge with the Cosmos Pay API: quote, sign, submit and track each transfer."
+description: 'USDT0 out of Stellar over the USDT0 bridge: quote, build the
+  Soroban transaction the holder signs, submit it and follow the message to its
   destination. Native USDT on Ethereum, USDT0 elsewhere; mainnet only.'
 full: true
 _openapi:
@@ -24,9 +24,9 @@ _openapi:
         to sign (XDR + SEP-7 link)
       url: '#create-a-usdt0-transfer-from-stellar--the-unsigned-soroban-transaction-to-sign-xdr--sep-7-link'
     - depth: 2
-      title: Get a USDT0 transfer by id, refreshed from the Stellar ledger and
-        LayerZero Scan
-      url: '#get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-layerzero-scan'
+      title: Get a USDT0 transfer by id, refreshed from the Stellar ledger and the
+        bridge explorer
+      url: '#get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-the-bridge-explorer'
     - depth: 2
       title: Relay the signed USDT0 transaction to Stellar mainnet
       url: '#relay-the-signed-usdt0-transaction-to-stellar-mainnet'
@@ -42,29 +42,29 @@ _openapi:
       - content: Create a USDT0 transfer from Stellar → the unsigned Soroban transaction
           to sign (XDR + SEP-7 link)
         id: create-a-usdt0-transfer-from-stellar--the-unsigned-soroban-transaction-to-sign-xdr--sep-7-link
-      - content: Get a USDT0 transfer by id, refreshed from the Stellar ledger and
-          LayerZero Scan
-        id: get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-layerzero-scan
+      - content: Get a USDT0 transfer by id, refreshed from the Stellar ledger and the
+          bridge explorer
+        id: get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-the-bridge-explorer
       - content: Relay the signed USDT0 transaction to Stellar mainnet
         id: relay-the-signed-usdt0-transaction-to-stellar-mainnet
     contents:
       - content: >-
           USDT0 is Tether’s omnichain USDT. From Stellar it travels through
-          LayerZero’s OFT: Ethereum receives native USDT (Tether’s OFT adapter
-          unlocks it), every other network receives USDT0. All routes take an
-          EVM recipient. USDT0 exists on Stellar mainnet only: a dev (testnet)
-          key gets `available: false` and no routes.
+          bridge contract: Ethereum receives native USDT (Tether’s bridge
+          adapter unlocks it), every other network receives USDT0. All routes
+          take an EVM recipient. USDT0 exists on Stellar mainnet only: a dev
+          (testnet) key gets `available: false` and no routes.
 
 
           Requires the `swaps:read` scope. The shared public key may call it.
         heading: the-networks-usdt0-can-be-sent-to-from-stellar-with-what-arrives-there-mainnet-only
       - content: >-
-          Simulates the OFT’s `quote_oft` and `quote_send` on Stellar mainnet.
-          The OFT carries 6 decimals and the asset has 7, so the 7th is `dust`
-          that stays in the account. `nativeFee` is LayerZero’s fee, paid in XLM
-          on top of the USDT0; `nativeFeeLimit` is what a transfer built now
-          would offer (20% more, the excess refunded in the same transaction).
-          Mainnet only.
+          Simulates the bridge contract `quote_oft` and `quote_send` on Stellar
+          mainnet. The bridge contract carries 6 decimals and the asset has 7,
+          so the 7th is `dust` that stays in the account. `nativeFee` is the
+          bridge’s fee, paid in XLM on top of the USDT0; `nativeFeeLimit` is
+          what a transfer built now would offer (20% more, the excess refunded
+          in the same transaction). Mainnet only.
 
 
           Requires the `swaps:read` scope. The shared public key may call it.
@@ -78,10 +78,10 @@ _openapi:
           Requires the `swaps:read` scope.
         heading: list-the-consumers-usdt0-transfers-not-on-the-shared-public-key
       - content: >-
-          Builds `send` on USDT0’s LayerZero OFT: it burns the USDT0 on Stellar
-          and LayerZero delivers it to `recipient`, as native USDT on Ethereum
-          and as USDT0 elsewhere. The source signs one transaction (Freighter,
-          or the SEP-7 `uri`) and pays two fees in XLM: LayerZero’s
+          Builds `send` on the USDT0 bridge contract: it burns the USDT0 on
+          Stellar and the bridge delivers it to `recipient`, as native USDT on
+          Ethereum and as USDT0 elsewhere. The source signs one transaction
+          (Freighter, or the SEP-7 `uri`) and pays two fees in XLM: the bridge’s
           (`nativeFeeLimit` is offered, the unused part refunded in the same
           transaction) and the network’s (`networkFee`). A 7th decimal of
           `amount` is `dust` and stays in the account. No Cosmos Pay commission
@@ -94,10 +94,10 @@ _openapi:
         heading: create-a-usdt0-transfer-from-stellar--the-unsigned-soroban-transaction-to-sign-xdr--sep-7-link
       - content: >-
           While PENDING or SUBMITTED, a read asks the Stellar ledger (a wallet
-          may have broadcast the transaction itself) and LayerZero Scan, at most
-          once every 15 seconds per transfer, and moves it to SUBMITTED,
+          may have broadcast the transaction itself) and the bridge explorer, at
+          most once every 15 seconds per transfer, and moves it to SUBMITTED,
           DELIVERED (with `destinationTxHash`), FAILED or EXPIRED. Delivery
-          takes about 27 minutes on every route: LayerZero’s verifiers wait for
+          takes about 27 minutes on every route: the bridge’s verifiers wait for
           Stellar confirmations. The shared public key may call it, but only
           with the transfer’s `publicToken` in `X-Record-Token`: without it, or
           with another transfer’s, the answer is 404. Every other key reads its
@@ -105,10 +105,10 @@ _openapi:
 
 
           Requires the `swaps:read` scope. The shared public key may call it.
-        heading: get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-layerzero-scan
+        heading: get-a-usdt0-transfer-by-id-refreshed-from-the-stellar-ledger-and-the-bridge-explorer
       - content: >-
           The signed XDR must hash to the transfer’s transaction and carry a
-          signature. Accepted and applied: SUBMITTED, with LayerZero’s `guid`.
+          signature. Accepted and applied: SUBMITTED, with the bridge’s `guid`.
           Applied and failed: FAILED. Refused by the network: the transfer stays
           PENDING (`submitted: false`, `reason`) and can be submitted again
           until it expires. Waits up to 30 seconds for the ledger.

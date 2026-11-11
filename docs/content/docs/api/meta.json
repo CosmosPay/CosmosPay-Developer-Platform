@@ -21,7 +21,6 @@
     "offramp",
     "kyc",
     "kyc-accounts",
-    "defindex",
     "wallet-auth",
     "recovery",
     "wallet-easy-recovery",
@@ -32,6 +31,7 @@
     "activity",
     "health",
     "protected-payment-links",
-    "protected-payments"
+    "protected-payments",
+    "yield-vaults"
   ]
 }
