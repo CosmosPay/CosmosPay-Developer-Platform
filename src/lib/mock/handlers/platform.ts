@@ -7,6 +7,7 @@ import { randomBytes } from "node:crypto";
 import { ORG_PERMISSIONS } from "@/lib/org-permissions";
 import { ALL_PLAN_IDS, PLAN_IDS, planLimits, type PlanId } from "@/lib/plans";
 import { PLAN_STATUSES, type PlanStatus } from "@/lib/plan-status";
+import { selfServicePlanIds } from "@/lib/plan-change";
 import { TICKET_PRIORITIES, TICKET_STATUSES } from "@/lib/support-status";
 import { COSMOS_SCOPES } from "@/lib/cosmos-scopes";
 import type { Chain } from "@/lib/chains";
@@ -227,7 +228,7 @@ function seedState(options: MockOptions): PlatformState {
         createdAt: at,
         updatedAt: i === 1 ? daysAgo(3) : at,
         permissions: i === 0 ? [...COSMOS_SCOPES] : COSMOS_SCOPES.filter((_, j) => (j + i) % 3 !== 0),
-        role: i === 0 ? "admin" : "user",
+        role: "user",
         environment: i % 2 === 0 ? "dev" : "prod",
         name: names[i],
         description: i === 0 ? "Creates payment links from the store" : undefined,
@@ -644,6 +645,10 @@ const accountRoutes: MockRoute[] = [
   route("PATCH", "/api/account/plan", (req) => {
     const plan = str(req.body, "plan");
     if (!plan || !(PLAN_IDS as string[]).includes(plan)) return badRequest("Unknown plan");
+    // As the server: an account puts itself only on a plan with no fee to bill (src/lib/plan-change.ts).
+    if (!selfServicePlanIds(PLAN_IDS, mockOptions().role).includes(plan as PlanId)) {
+      return forbidden("That plan has a fee, so our team sets it up. Write to us from Support.");
+    }
     state().profile.plan = plan as PlanId;
     const me = state().users.find((u) => u.id === MOCK_USER.id);
     if (me) me.plan = plan;
@@ -677,6 +682,10 @@ const apiKeyView = (k: ApiKeyRec) => ({
   description: k.description,
 });
 
+/* The request bodies take no role but the deprecated `"user"`; anything else is the server's 400. */
+const roleAccepted = (body: Record<string, unknown> | null | undefined) =>
+  body?.role === undefined || body.role === "user";
+
 const apiKeyRoutes: MockRoute[] = [
   route("GET", "/api/api-keys", (req) => {
     const org = req.url.searchParams.get("org");
@@ -688,7 +697,8 @@ const apiKeyRoutes: MockRoute[] = [
     const orgId = str(req.body, "org");
     const environment = str(req.body, "environment") === "prod" ? "prod" : "dev";
     const permissions = Array.isArray(req.body?.permissions) ? (req.body.permissions as unknown[]).filter((p): p is string => typeof p === "string") : [];
-    if (!orgId || permissions.length === 0) return badRequest();
+    // Like the server: a key's role is never the caller's (src/lib/api-key-role.ts).
+    if (!orgId || permissions.length === 0 || !roleAccepted(req.body)) return badRequest();
     const org = findOrg(orgId);
     if (!org) return forbidden("You are not a member of this organization.");
     if (!hasPermission(org, `${environment === "prod" ? "apiKeysLive" : "apiKeysTest"}:create`)) {
@@ -707,7 +717,7 @@ const apiKeyRoutes: MockRoute[] = [
       createdAt: at,
       updatedAt: at,
       permissions,
-      role: str(req.body, "role") === "admin" ? "admin" : "user",
+      role: "user",
       environment,
       name: str(req.body, "name")?.trim() || undefined,
       description: str(req.body, "description")?.trim() || undefined,
@@ -727,9 +737,9 @@ const apiKeyRoutes: MockRoute[] = [
     const key = state().apiKeys.find((k) => k.id === req.params.id);
     if (!key) return notFound("API key not found");
     const permissions = Array.isArray(req.body?.permissions) ? (req.body.permissions as unknown[]).filter((p): p is string => typeof p === "string") : null;
-    if (!permissions || permissions.length === 0) return badRequest();
+    if (!permissions || permissions.length === 0 || !roleAccepted(req.body)) return badRequest();
     key.permissions = permissions;
-    key.role = str(req.body, "role") === "admin" ? "admin" : "user";
+    key.role = "user";
     if (req.body && "name" in req.body) key.name = str(req.body, "name")?.trim() || undefined;
     if (req.body && "description" in req.body) key.description = str(req.body, "description")?.trim() || undefined;
     key.updatedAt = nowIso();

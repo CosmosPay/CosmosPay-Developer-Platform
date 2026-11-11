@@ -40,7 +40,7 @@ registerRoutes([
     tags: ['API Keys'],
     summary: 'Create API key',
     description:
-      'Creates an APISIX consumer credential for the authenticated user. The API key secret is returned only in this response.',
+      'Creates an APISIX consumer credential for the authenticated user. The API key secret is returned only in this response. Every key is `user` with the scopes it lists (a full-access key lists them all); a `role` other than `user` is a 400.',
     security: sessionSecurity,
     request: {
       body: {
@@ -91,7 +91,7 @@ registerRoutes([
     tags: ['API Keys'],
     summary: 'Update API key',
     description:
-      'Updates permissions and role metadata for an API key owned by the authenticated user. Does not rotate the secret.',
+      'Updates the scopes, name and description of an API key owned by the authenticated user. The role is not editable: the key is `user` afterwards. Does not rotate the secret.',
     security: sessionSecurity,
     request: {
       params: apiKeyIdParamSchema,

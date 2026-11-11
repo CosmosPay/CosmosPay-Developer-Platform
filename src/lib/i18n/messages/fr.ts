@@ -1664,7 +1664,7 @@ export default {
         youAreHere: "Actuel",
         upgrade: "Évoluer",
         downgrade: "Réduire",
-        switchTo: "Passer à {plan}",
+        switchTo: "Passer à {plan}", askFor: "Nous demander {plan}", billedNote: "{plan} a des frais, c’est donc notre équipe qui l’active pour vous. Écrivez-nous depuis Assistance et nous changerons votre compte.",
         price: "Prix",
         perTx: "Par transaction",
         swapFee: "Commission par swap",

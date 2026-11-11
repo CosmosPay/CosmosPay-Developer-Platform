@@ -26,6 +26,7 @@ import { DashSearch } from "@/components/cosmos/dashboard/widgets/DashSearch";
 import { tierOf } from "@/lib/chains";
 import { DOCS } from "@/components/cosmos/lib/constants";
 import { parseUsage, quickLinks, recordUse } from "@/lib/dashboard-usage";
+import { keyAccess } from "@/lib/api-key-role";
 import { CreateOrgModal, RenameOrgModal, ApiKeyModal, PlanModal, RevealKeyModal } from "@/components/cosmos/dashboard/modals/index";
 
 /* ---------------- shell ---------------- */
@@ -34,7 +35,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   const t = useT();
   // Plan/onboarding feature flags resolved server-side (per account role). Defaults
   // keep the dashboard fully functional if a page forgets to pass them.
-  const feat = features || { plansEnabled: true, allowUserPlanChanges: true, enabledPlans: PLAN_IDS, defaultPlan: DEFAULT_PLAN_ID, canChangePlan: true };
+  const feat = features || { plansEnabled: true, allowUserPlanChanges: true, enabledPlans: PLAN_IDS, selfServicePlans: [DEFAULT_PLAN_ID], defaultPlan: DEFAULT_PLAN_ID, canChangePlan: true };
   const canChangePlan = !!feat.canChangePlan;
   // The signed-in user is held in state so editing the profile (name / photo) updates
   // the sidebar, topbar and account view live, without a reload.
@@ -180,12 +181,15 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   const [keysLoading, setKeysLoading] = useState(true);
   const [keysError, setKeysError] = useState(false);
   // Keys are scoped per organization: refetch whenever the active org changes.
+  // A key's row shows full access ("admin") when it holds every scope: the server mints every
+  // key as `user` (src/lib/api-key-role.ts), so the role it answers is not what the row means.
+  const withAccess = (k) => ({ ...k, role: keyAccess(k) });
   useEffect(() => {
     if (!curOrg) { setKeys([]); setKeysLoading(false); return; }
     let alive = true;
     setKeysLoading(true);
     apiKeysApi.list(curOrg)
-      .then((data) => { if (alive) { setKeys(Array.isArray(data) ? data : []); setKeysError(false); } })
+      .then((data) => { if (alive) { setKeys(Array.isArray(data) ? data.map(withAccess) : []); setKeysError(false); } })
       .catch(() => { if (alive) setKeysError(true); })
       .finally(() => { if (alive) setKeysLoading(false); });
     return () => { alive = false; };
@@ -329,7 +333,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
     const environment = live ? "prod" : "dev";
     apiKeysApi.create({ ...body, org: curOrg, environment })
       .then((created) => {
-        setKeys((k) => [{ id: created.id, createdAt: created.createdAt, updatedAt: created.updatedAt, permissions: created.permissions || [], role: created.role, environment: created.environment || environment, name: created.name, description: created.description }, ...k]);
+        setKeys((k) => [withAccess({ id: created.id, createdAt: created.createdAt, updatedAt: created.updatedAt, permissions: created.permissions || [], role: created.role, environment: created.environment || environment, name: created.name, description: created.description }), ...k]);
         setReveal({ id: created.id, secret: created.apiKey });
         refreshNotifsSoon();
       })
@@ -353,7 +357,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   // PATCH name/description/role/permissions; merge the returned record back into the list.
   const updateKey = (id, body) => {
     apiKeysApi.update(id, body)
-      .then((updated) => { setKeys((k) => k.map((x) => x.id === id ? { ...x, ...updated } : x)); refreshNotifsSoon(); })
+      .then((updated) => { setKeys((k) => k.map((x) => x.id === id ? withAccess({ ...x, ...updated }) : x)); refreshNotifsSoon(); })
       .catch(() => showToast(t.dash.apikeys.updateError, "error"));
   };
   // Cross-organization drill-down filter for the platform-admin views. Sidebar
@@ -518,7 +522,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       </div>
 
       {modal === "org" && <CreateOrgModal onClose={() => setModal(null)} onAdd={addOrg} count={ownedOrgCount} limit={limits.maxOrgs == null ? Infinity : limits.maxOrgs} planName={t.dash.planNames[plan] || plan} onUpgrade={canChangePlan ? () => setModal("plan") : null} />}
-      {modal === "plan" && canChangePlan && <PlanModal current={plan} enabledPlans={feat.enabledPlans} onClose={() => setModal(null)} onSelect={requestChangePlan} />}
+      {modal === "plan" && canChangePlan && <PlanModal current={plan} enabledPlans={feat.enabledPlans} selfServicePlans={feat.selfServicePlans} onAskForPlan={() => go("support")} onClose={() => setModal(null)} onSelect={requestChangePlan} />}
       {renamingOrg && <RenameOrgModal current={renamingOrg} onClose={() => setRenamingOrg(null)} onRename={(name) => requestRenameOrg(renamingOrg, name)} />}
       {modal === "key" && <ApiKeyModal mode="create" onClose={() => setModal(null)} onSubmit={addKey} />}
       {editing && <ApiKeyModal mode="edit" initial={editing} onClose={() => setEditing(null)} onSubmit={(body) => updateKey(editing.id, body)} />}

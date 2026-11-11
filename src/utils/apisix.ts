@@ -7,6 +7,7 @@ import {
   COSMOS_GATEWAY_SECRET,
 } from "astro:env/server";
 import { randomBytes, randomUUID } from "node:crypto";
+import { forwardedKeyAuth, isMintableKeyRole, type ForwardedKeyRole } from "@/lib/api-key-role";
 import { orgSwapContext } from "@/lib/organizations";
 import { prisma } from "@/lib/prisma";
 import { corsOrigins, rewriteLeavesPath, routeHost, upstreamNodes } from "@/lib/apisix-upstream";
@@ -635,7 +636,8 @@ function generateApiKey(
 
 type ForwardEntry = {
   p: string;
-  r: ApiKeyRole;
+  // Never `admin`: see forwardedKeyAuth (src/lib/api-key-role.ts).
+  r: ForwardedKeyRole;
   e: Environment;
   // Organization the key belongs to, the org's plan, and the plan's swap commission
   // (basis points). Baked from each credential's `org` label + the owner's plan so the
@@ -782,8 +784,14 @@ export async function syncConsumerForwarder(userId: string) {
     const labels = credential.value.labels ?? {};
     // Restrict scopes to a Lua-safe charset so the baked map can never break out of the
     // `[==[ ... ]==]` long string (scopes are `resource:action`, well within this set).
-    const permissions = parsePermissionsLabel(labels.permissions).filter((scope) =>
-      /^[A-Za-z0-9:_.\-]+$/.test(scope),
+    // The role and scopes come from forwardedKeyAuth, which never answers `admin`: a key
+    // labelled `admin` before that rule keeps every scope of its own organization and
+    // loses the platform's privileges (no scope checks, KYC sign-off, the kill-switch).
+    const auth = forwardedKeyAuth(
+      labels.role,
+      parsePermissionsLabel(labels.permissions).filter((scope) =>
+        /^[A-Za-z0-9:_.\-]+$/.test(scope),
+      ),
     );
     // The key's org (Lua-safe: cuid). When present, bake in the org plan's swap fee so
     // the Payments API charges the right commission for every swap on this key.
@@ -793,8 +801,8 @@ export async function syncConsumerForwarder(userId: string) {
         : '';
     const ctx = org ? await orgCtx(org) : null;
     map[id] = {
-      p: JSON.stringify(permissions),
-      r: parseApiKeyRole(labels.role),
+      p: JSON.stringify(auth.permissions),
+      r: auth.role,
       e: parseApiKeyEnv(labels.env),
       o: org,
       pl: ctx?.plan ?? '',
@@ -863,11 +871,15 @@ export async function createApiKey(
   userId: string,
   environment: Environment,
   permissions: string[],
-  role: string,
+  // `user` for every dashboard key, `public` for the shared wallet key. Never `admin`.
+  role: ForwardedKeyRole,
   name?: string,
   description?: string,
   orgId?: string,
 ) {
+  if (!isMintableKeyRole(role)) {
+    throw new Error(`Refusing to mint an API key with role ${JSON.stringify(role)}`);
+  }
 
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
   const randomId = keyPrefix + randomUUID();
@@ -1154,14 +1166,16 @@ export async function countUserApiKeys(
   return keys.length;
 }
 
+/* Edits a key's scopes and its name/description. Its role is not editable: an edited key
+   is `user`, so editing a legacy `admin` key leaves it with the scopes it is given. */
 export async function updateApiKey(
   apiKeyId: string,
   userId: string,
   permissions: string[],
-  role: string,
   name?: string,
   description?: string,
 ) {
+  const role: ForwardedKeyRole = 'user';
   const key = apiKeyId.includes(keyPrefix) ? apiKeyId : `${keyPrefix}${apiKeyId}`;
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
 

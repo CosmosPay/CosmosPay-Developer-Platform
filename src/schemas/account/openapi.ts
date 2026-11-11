@@ -35,7 +35,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Change my plan',
     description:
-      "Sets the account's (mock) billing plan. Gated twice: regular accounts are refused entirely when `ALLOW_USER_PLAN_CHANGES` is off, and a non-manager may only pick a plan listed in `ENABLED_PLANS`. Both refusals are 403.",
+      "Sets the account's (mock) billing plan. Regular accounts are refused entirely when `ALLOW_USER_PLAN_CHANGES` is off, and otherwise may only move to a plan listed in `ENABLED_PLANS` with no fee to bill (Starter): a plan with a monthly or custom fee is set by billing or an operator. Owners and admins may set any enabled plan. Every refusal is 403.",
     security: sessionSecurity,
     request: jsonBody(planBody),
     responses: {

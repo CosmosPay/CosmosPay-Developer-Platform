@@ -14,8 +14,12 @@ function Cell({ v }) {
 /* Plan switcher: always shows a full side-by-side comparison (in the style of the
    pricing page) between the current plan and a selected one, built entirely from the
    shared plan specs (@/lib/plans), so org counts, mainnet support, fees and limits stay
-   in sync everywhere. Selecting routes through a confirmation (onSelect) before applying. */
-export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
+   in sync everywhere. Selecting routes through a confirmation (onSelect) before applying.
+
+   Only the plans in `selfServicePlans` can be switched to from here: a plan with a fee to
+   bill is set up by our team (src/lib/plan-change.ts), so for those the action asks for it
+   in Support (onAskForPlan) instead. Every enabled plan is still listed to compare. */
+export function PlanModal({ current, onClose, onSelect, enabledPlans, selfServicePlans, onAskForPlan }) {
   const t = useT();
   const p = t.dash.settings.plan;
   const names = t.dash.planNames;
@@ -29,6 +33,8 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
   const [target, setTarget] = useState(ids.find((id) => id !== current) || current);
   const isSame = target === current;
   const isUpgrade = ALL_PLAN_IDS.indexOf(target) > curIdx;
+  // Without the list (an older caller) nothing is assumed switchable: the server decides.
+  const canSwitch = Array.isArray(selfServicePlans) && selfServicePlans.includes(target);
   const a = PLAN_SPECS[current];
   const b = PLAN_SPECS[target];
 
@@ -89,12 +95,15 @@ export function PlanModal({ current, onClose, onSelect, enabledPlans }) {
         </table>
       </div>
 
-      {!isSame && !isUpgrade && <p className="plan-cmp-note">{p.downgradeNote}</p>}
+      {!isSame && !isUpgrade && canSwitch && <p className="plan-cmp-note">{p.downgradeNote}</p>}
+      {!isSame && !canSwitch && <p className="plan-cmp-note">{fmt(p.billedNote, { plan: names[target] })}</p>}
 
       <div className="modal-actions">
         {isSame
           ? <button className="btn btn-soft" disabled>{p.current}</button>
-          : <button className="btn btn-violet" onClick={() => { onSelect(target); onClose(); }}>{fmt(p.switchTo, { plan: names[target] })} <IcArrow /></button>}
+          : canSwitch
+            ? <button className="btn btn-violet" onClick={() => { onSelect(target); onClose(); }}>{fmt(p.switchTo, { plan: names[target] })} <IcArrow /></button>
+            : <button className="btn btn-violet" onClick={() => { onClose(); if (onAskForPlan) onAskForPlan(target); }}>{fmt(p.askFor, { plan: names[target] })} <IcArrow /></button>}
         <a className="btn btn-soft" href={PRICING}>{t.dash.common.viewPlans}</a>
         <button className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
       </div>

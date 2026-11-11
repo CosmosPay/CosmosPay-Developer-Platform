@@ -252,11 +252,13 @@ export const POST: APIRoute = async (ctx) => {
   }
 
 
+  // The role is the server's, never the caller's: every dashboard key is `user` (see
+  // src/lib/api-key-role.ts). A full-access key is one that lists every scope.
   const result = await createApiKey(
     session.user.id,
     body.data.environment,
     body.data.permissions ?? [],
-    body.data.role,
+    "user",
     body.data.name,
     body.data.description,
     orgId,

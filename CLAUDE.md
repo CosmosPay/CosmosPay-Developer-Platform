@@ -1750,6 +1750,21 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   stays on community on purpose (its swap rate must stay the highest; see `public-key.ts`).
 - Production leaves `ENABLED_PLANS` empty: every offered plan can be picked (product owner,
   2026-10-25). There is no free trial: plan buttons name the plan, never a trial.
+- **An account never puts itself on a plan with a fee** (security review, 2026-11-11):
+  nothing bills a plan yet, so `PATCH /api/account/plan` used to hand any account
+  Enterprise's rates for free while `ALLOW_USER_PLAN_CHANGES` was on. A plan with
+  `billed: true` in `plans.ts` (Essentials, Growth, Enterprise) is set by an operator
+  (`PATCH /api/admin/users/{id}`) or, later, billing; a regular account may still move
+  itself to Starter. Owners and admins may set any enabled plan. The rule is
+  `src/lib/plan-change.ts` (tested); the plan modal turns a billed plan's switch into a
+  request in Support and onboarding offers only `selfServicePlans`.
+- **An API key's role is the server's, never the caller's** (security review, 2026-11-11).
+  The Payments API reads `X-Consumer-Role: admin` as the platform's own key (no scope
+  checks, KYC review sign-off, the fiat kill-switch), so no key minted here is `admin`
+  and the consumer forwarder never sends it (`src/lib/api-key-role.ts`, tested). The
+  dashboard's "Admin" key is full access to the organization's own resources: every
+  scope of `COSMOS_SCOPES`, role `user`. A key labelled `admin` before that is forwarded
+  as `user` with every scope.
 - Starter is 1.5% + 18¢ per payment, no monthly fee. A rate shown anywhere comes from `plans.ts`
   or must match it.
 - **A plan card lists only what the product does**: the pricing cards and the onboarding plan
