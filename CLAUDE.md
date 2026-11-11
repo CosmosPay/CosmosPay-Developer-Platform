@@ -420,7 +420,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
   stops on paid, failed and cancelled (`nextPollDelay`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
-  to every payments response. Payment pages (checkout, `/pay`, previews) are `noindex` (the
+  to every payments response.
+- **Only the page's own scripts run on the payments domain** (`src/lib/payments/csp.ts`, security
+  audit 2026-11-11: an injected script could change the address a payer sees). Every HTML page gets
+  `script-src 'self'`, the SHA-256 of each inline script in the HTML it sends, and a per-response
+  nonce that only Cloudflare's injected detection script uses, plus `script-src-attr 'none'`. So:
+  no inline `on*=` handler, no `javascript:` URL, no script from another origin, no `eval`, and a
+  new inline script is fine (it is hashed as sent). Never `set:html` anything a visitor or the API
+  controls into these pages: a script injected on the server would be hashed with the rest. The
+  private checkout (`/zk/…`) gets the script policy as Report-Only (bb.js needs
+  `'wasm-unsafe-eval'` and a blob: worker) until a testnet payment runs clean under it; then flip
+  `ZK_SCRIPT_POLICY_ENFORCED`. A new third-party script on these pages means a new source in the
+  policy, on purpose, in the same change. Payment pages (checkout, `/pay`, previews) are `noindex` (the
   home and the content pages are the indexed ones), and the domain has its own seven-language
   catalog (`src/lib/payments/i18n.ts`, parity checked by `tests/unit/paymentsI18n.test.ts`).
   An indexable page's language is its address (English bare, `?lang=` otherwise); a payment

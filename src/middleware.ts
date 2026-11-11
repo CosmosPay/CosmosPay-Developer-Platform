@@ -7,6 +7,7 @@ import type { APIContext } from "astro";
 import { ALLOWED_ORIGINS as ALLOWED_ORIGINS_LIST } from "@/lib/allowed-origins";
 import { MOUNTS, areasOf, canonicalPath, languagesOf, routeRequest } from "@/lib/hosts";
 import { ZK_ISOLATION_HEADERS } from "@/lib/zk/bb-assets";
+import { PAYMENTS_BASE_CSP, withScriptPolicy } from "@/lib/payments/csp";
 import { DEV, DOCS, PAYMENTS, SITE } from "@/components/cosmos/lib/constants";
 import { DEFAULT_LOCALE, LANG_COOKIE, LOCALES, resolveLocale } from "@/lib/payments/i18n";
 import { DEFAULT_LANG, explicitLang, isCrawler, langRedirect, normalizeLangQuery } from "@/lib/seo/lang-urls";
@@ -79,9 +80,10 @@ const LANG_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const LANG_CODES = LOCALES.map((l) => l.code);
 
 /* The payments domain shows people where to send money, so it must never render inside
-   someone else's frame (a framed checkout with an overlaid address is the attack). */
+   someone else's frame (a framed checkout with an overlaid address is the attack). Its HTML pages
+   also get a script policy (withScriptPolicy, src/lib/payments/csp.ts): only their own scripts run. */
 const PAYMENTS_SECURITY_HEADERS: Record<string, string> = {
-  "Content-Security-Policy": "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
+  "Content-Security-Policy": PAYMENTS_BASE_CSP,
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -332,7 +334,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const startedAt = performance.now();
   // The site and payments pages render from their internal mounts; the public URL stays.
-  const response =
+  let response =
     decision.kind === "rewrite"
       ? await next(new URL(decision.path + context.url.search, context.url))
       : decision.kind === "not-found"
@@ -344,9 +346,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     for (const [name, value] of Object.entries(PAYMENTS_SECURITY_HEADERS)) response.headers.set(name, value);
     // The ZK payment pages prove in the browser: bb.js needs SharedArrayBuffer, so they are
     // cross-origin isolated (src/lib/zk/bb-assets.ts).
-    if (context.url.pathname === "/zk" || context.url.pathname.startsWith("/zk/")) {
+    const zk = context.url.pathname === "/zk" || context.url.pathname.startsWith("/zk/");
+    if (zk) {
       for (const [name, value] of Object.entries(ZK_ISOLATION_HEADERS)) response.headers.set(name, value);
     }
+    // An HTML page also gets its script policy: its own scripts, by hash, and nothing else.
+    response = await withScriptPolicy(response, { method, zk });
   }
   // An indexable page of the company site or the gateway names in a Link header its llms.txt, the
   // API catalog, the OpenAPI document, the docs, its sitemap and its Markdown version, for agents
