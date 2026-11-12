@@ -40,6 +40,7 @@ function body(over: Record<string, unknown> = {}): Record<string, unknown> {
     tokenAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
     estimatedAmountOut: '8.91',
     paymentMethods: [{ id: 'bank_tx_ar', name: 'CVU/CBU o Alias (ARS)' }],
+    methods: ['transfer', 'p2p'],
     expiresAt: '2026-11-13T12:00:00.000Z',
     createdAt: '2026-11-12T12:00:00.000Z',
     paidAt: null,
@@ -82,13 +83,16 @@ test('the contract body parses into the charge, as sent', () => {
   assert.equal(bare.description, null);
   assert.equal(bare.estimatedAmountOut, null);
   assert.deepEqual(bare.paymentMethods, []);
-  for (const status of ['open', 'paid', 'expired', 'cancelled']) {
+  assert.deepEqual(r.methods, ['transfer', 'p2p']);
+  for (const status of ['open', 'processing', 'paid', 'expired', 'cancelled']) {
     assert.ok(parseFiatRequest(body({ status, paidAt: status === 'paid' ? '2026-11-12T13:00:00.000Z' : null })), status);
   }
 });
 
 test('a body missing any field is refused whole', () => {
-  for (const key of Object.keys(body())) assert.equal(parseFiatRequest(without(key)), null, key);
+  // `methods` alone may be missing: a server from before the bank transfer, paid in the window only.
+  for (const key of Object.keys(body())) if (key !== 'methods') assert.equal(parseFiatRequest(without(key)), null, key);
+  assert.deepEqual(parseFiatRequest(without('methods'))?.methods, ['p2p']);
   for (const junk of [null, undefined, 'x', 42, [], [body()]]) assert.equal(parseFiatRequest(junk), null, JSON.stringify(junk));
 });
 
@@ -129,12 +133,24 @@ test('a field of the wrong type or shape is refused whole', () => {
     { paymentMethods: [{ id: 'a', name: 'A' }, { id: 'a', name: 'B' }] },
     { paymentMethods: ['bank_tx_ar'] },
     { paymentMethods: Array.from({ length: 51 }, (_, i) => ({ id: `m${i}`, name: `M${i}` })) },
+    { methods: 'transfer' },
+    { methods: null },
+    { methods: [1] },
+    { methods: ['transfer', null] },
+    { methods: Array.from({ length: 9 }, () => 'p2p') },
     { expiresAt: 'tomorrow' },
     { expiresAt: null },
     { createdAt: 0 },
     { paidAt: 'yesterday' },
   ];
   for (const over of cases) assert.equal(parseFiatRequest(body(over)), null, JSON.stringify(over));
+});
+
+test('the ways to pay keep the server order, once each, and skip a rail this page does not know', () => {
+  assert.deepEqual(parseFiatRequest(body({ methods: ['p2p', 'transfer'] }))?.methods, ['p2p', 'transfer']);
+  assert.deepEqual(parseFiatRequest(body({ methods: ['transfer'] }))?.methods, ['transfer']);
+  assert.deepEqual(parseFiatRequest(body({ methods: ['card', 'transfer', 'transfer'] }))?.methods, ['transfer']);
+  assert.deepEqual(parseFiatRequest(body({ methods: [] }))?.methods, []);
 });
 
 test('an unknown status is refused, whatever its case', () => {
@@ -210,6 +226,9 @@ test('an open charge past its deadline reads expired; paid stops the reads, the 
   assert.equal(fiatPhaseOf({ status: 'open', expiresAt: '2026-11-12T11:59:59.000Z' }, now), 'expired');
   assert.equal(fiatPhaseOf({ status: 'paid', expiresAt: '2026-11-12T11:00:00.000Z' }, now), 'paid');
   assert.equal(fiatPhaseOf({ status: 'cancelled', expiresAt: '2026-11-12T13:00:00.000Z' }, now), 'cancelled');
+  // The transfer arrived: never expired, read at the open cadence until delivered.
+  assert.equal(fiatPhaseOf({ status: 'processing', expiresAt: '2026-11-12T11:00:00.000Z' }, now), 'processing');
+  assert.equal(nextFiatPollDelay('processing'), 5_000);
   assert.equal(nextFiatPollDelay('open'), 5_000);
   assert.equal(nextFiatPollDelay('expired'), 30_000);
   assert.equal(nextFiatPollDelay('cancelled'), 30_000);
@@ -265,7 +284,9 @@ const post = (id: string, payload: unknown) =>
   fiatRequestRoute(new Request(`http://mock/v1/payment-links/fiat/${id}/sessions`, { method: 'POST', body: JSON.stringify(payload) }), [id, 'sessions'], json);
 
 test('every mock charge is one the page accepts, in the state its id names', async () => {
-  const expected: Record<string, string> = { openArs: 'open', openCop: 'open', paid: 'paid', expired: 'expired', cancelled: 'cancelled' };
+  const expected: Record<string, string> = {
+    openArs: 'open', openCop: 'open', transferOnly: 'open', processing: 'processing', paid: 'paid', paidTransfer: 'paid', expired: 'expired', cancelled: 'cancelled',
+  };
   for (const [name, id] of Object.entries(FIAT_FIXTURE_IDS)) {
     assert.ok(isFiatRequestId(id), id);
     const res = await get(id);

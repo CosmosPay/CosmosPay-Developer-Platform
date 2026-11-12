@@ -16,6 +16,8 @@ import { mockEnvStore } from "@/lib/mock/store";
 import { nowIso } from "@/lib/mock/fixtures";
 import { RECORDED_MARKET } from "@/lib/mock/handlers/p2p-ramp-market";
 import { cancelFiatRequest, createFiatRequest, getFiatRequest, listFiatRequests } from "@/lib/mock/fiat-requests";
+import { getTransferAccount, startTransferAccount, transferAccountApproved } from "@/lib/mock/transfer-account";
+import { TRANSFER_ACCOUNT_TYPES, taxIdProblem, transferAccountBody, type TransferAccountType } from "@/lib/transfer-account";
 import { DEFAULT_EXPIRY, chargeAmountProblem, descriptionProblem, evmAddressProblem, expiryOk, toChecksumAddress } from "@/lib/qr-charges";
 
 type Side = "buy" | "sell";
@@ -246,6 +248,7 @@ const chargeRoutes: MockRoute[] = [
       estimatedAmountOut: estimate("buy", terms.amount, currency.price, usdOf(token)),
       paymentMethods: currency.paymentMethods,
       expiresInMinutes,
+      transferAccount: transferAccountApproved(req.env, req.org),
     }), "Created");
   }),
 
@@ -261,4 +264,28 @@ const chargeRoutes: MockRoute[] = [
   }),
 ];
 
-export const routes: MockRoute[] = [...sideRoutes("buy"), ...sideRoutes("sell"), ...chargeRoutes];
+/* The organization's bank-transfer account (`/v1/onramp/transfer/account`): read it, or activate it
+   (src/lib/mock/transfer-account.ts). Refused as the server refuses: a tax id that is not a CUIT/CUIL
+   for that kind of holder, another field the provider would not take, an account already under way. */
+const TRANSFER_ACCOUNT = "/api/onramp/transfer/account";
+
+const transferAccountRoutes: MockRoute[] = [
+  route("GET", TRANSFER_ACCOUNT, (req) => ok(getTransferAccount(req.env, req.org), "OK")),
+
+  route("POST", TRANSFER_ACCOUNT, (req) => {
+    const b = req.body ?? {};
+    const text = (k: string) => (typeof b[k] === "string" ? (b[k] as string) : "");
+    const type = TRANSFER_ACCOUNT_TYPES.includes(b.type as TransferAccountType) ? (b.type as TransferAccountType) : null;
+    if (!type) return badRequest("type must be person or company");
+    if (taxIdProblem(text("taxId"), type) !== null) return badRequest("invalid_tax_id: taxId must be a valid CUIT/CUIL (companies: a CUIT)");
+    const body = transferAccountBody({
+      type, name: text("name"), taxId: text("taxId"), email: text("email"), phone: text("phone"),
+      address: text("address"), city: text("city"), postalCode: text("postalCode"), dateOfBirth: text("dateOfBirth"),
+    });
+    if (!body) return badRequest("name, email, phone, address, city, postalCode and, for a person, dateOfBirth are required");
+    const done = startTransferAccount(req.env, req.org, body);
+    return "account" in done ? created(done.account, "Created") : conflict("account_exists: a bank-transfer account is already under way");
+  }),
+];
+
+export const routes: MockRoute[] = [...sideRoutes("buy"), ...sideRoutes("sell"), ...chargeRoutes, ...transferAccountRoutes];

@@ -12,12 +12,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   CHARGE_STATUSES, DEFAULT_EXPIRY, DESCRIPTION_MAX, EXPIRY_PRESETS,
-  chargeAmountProblem, chargeBody, chargeEstimate, chargeIsLive, chargePhase, descriptionProblem,
+  chargeAmountProblem, chargeBody, chargeEstimate, chargeIsLive, chargeIsPayable, chargeMethods, chargePaidMethod, chargePhase, descriptionProblem,
   evmAddressProblem, expiryOk, isExpiryPreset, normalizeEvmAddress, safeChargeUrl, safeQrDataUrl, sameEvmAccount, toChecksumAddress,
 } from '@/lib/qr-charges';
 import { matchPath, type MockRequest } from '@/lib/mock/http';
 import { routes } from '@/lib/mock/handlers/p2p-ramp';
-import { FIAT_FIXTURE_IDS, FIAT_SANDBOX_FIXTURE_IDS, PAID_AFTER_MS, fiatRequestRoute } from '@/lib/mock/fiat-requests';
+import { FIAT_FIXTURE_IDS, FIAT_SANDBOX_FIXTURE_IDS, PAID_AFTER_MS, TRANSFER_RECEIVED_MS, fiatRequestRoute } from '@/lib/mock/fiat-requests';
 import { parseFiatRequest } from '@/lib/payments/fiat-request';
 import { rampTxExplorer } from '@/lib/ramp-format';
 
@@ -156,6 +156,21 @@ test('an open charge past its deadline reads expired, and only an open one is fo
   assert.equal(chargePhase({ status: 'paid', expiresAt: '2026-11-12T11:00:00Z' }, now), 'paid');
   assert.ok(chargeIsLive({ status: 'open', expiresAt: '2026-11-13T12:00:00Z' }, now));
   for (const status of ['paid', 'expired', 'cancelled'] as const) assert.ok(!chargeIsLive({ status, expiresAt: '2026-11-13T12:00:00Z' }, now), status);
+  // A transfer that arrived is followed until the token is delivered, but it is no longer payable.
+  assert.equal(chargePhase({ status: 'processing', expiresAt: '2026-11-12T11:00:00Z' }, now), 'processing');
+  assert.ok(chargeIsLive({ status: 'processing', expiresAt: '2026-11-12T11:00:00Z' }, now));
+  assert.ok(!chargeIsPayable({ status: 'processing', expiresAt: '2026-11-13T12:00:00Z' }, now));
+  assert.ok(chargeIsPayable({ status: 'open', expiresAt: '2026-11-13T12:00:00Z' }, now));
+});
+
+test('the ways to pay and how it was paid read from the charge, from a server without them too', () => {
+  assert.deepEqual(chargeMethods({ methods: ['transfer', 'p2p'] }), ['transfer', 'p2p']);
+  assert.deepEqual(chargeMethods({ methods: ['p2p', 'card' as 'p2p', 'transfer'] }), ['p2p', 'transfer']);
+  assert.deepEqual(chargeMethods({}), ['p2p']);
+  assert.equal(chargePaidMethod({ status: 'paid', paidMethod: 'transfer' }), 'transfer');
+  assert.equal(chargePaidMethod({ status: 'paid', paidMethod: null }), null);
+  assert.equal(chargePaidMethod({ status: 'paid' }), null);
+  assert.equal(chargePaidMethod({ status: 'processing', paidMethod: 'transfer' }), null);
 });
 
 test('a delivery transaction opens on its network\'s explorer', () => {
@@ -170,7 +185,7 @@ test('a delivery transaction opens on its network\'s explorer', () => {
 /* ---- the mock API ---- */
 
 const spec = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '..', '..', 'docs', 'openapi.json'), 'utf8'));
-const ENTITY = spec.components.schemas.P2pPaymentRequestEntity as { properties: Record<string, { enum?: string[] }>; required: string[] };
+const ENTITY = spec.components.schemas.P2pPaymentRequestEntity as { properties: Record<string, { enum?: string[]; items?: { enum?: string[] } }>; required: string[] };
 
 async function call(method: string, pathname: string, { env = 'dev', body = null }: { env?: 'dev' | 'prod'; body?: Record<string, unknown> | null } = {}) {
   const url = new URL(`http://dev.cosmospay.localhost${pathname}?env=${env}&org=org_mock_andes`);
@@ -199,13 +214,18 @@ function assertEntity(row: Record<string, unknown>) {
   assert.equal(toChecksumAddress(row.tokenAddress as string), row.tokenAddress);
   assert.ok(safeQrDataUrl(row.qr), `${row.id} qr`);
   assert.ok(safeChargeUrl(row.url, row.id as string), `${row.id} url`);
+  assert.ok(Array.isArray(row.methods) && (row.methods as string[]).length > 0, `${row.id} methods`);
+  for (const m of row.methods as string[]) assert.ok(ENTITY.properties.methods.items?.enum?.includes(m), m);
   if (row.status === 'paid') {
-    assert.match(row.paidTxHash as string, /^0x[0-9a-f]{64}$/);
+    // A bank transfer's delivery may report no transaction; the marketplace's always does.
+    if (row.paidMethod === 'p2p' || row.paidTxHash !== null) assert.match(row.paidTxHash as string, /^0x[0-9a-f]{64}$/);
     assert.match(row.paidAmount as string, /^\d+(\.\d+)?$/);
     assert.ok(Number.isFinite(Date.parse(row.paidAt as string)));
+    assert.ok(ENTITY.properties.paidMethod.enum?.includes(row.paidMethod as string), String(row.paidMethod));
   } else {
     assert.equal(row.paidTxHash, null);
     assert.equal(row.paidAmount, null);
+    assert.equal(row.paidMethod, null);
   }
 }
 
@@ -217,6 +237,7 @@ test('the mock lists each environment\'s charges in the server\'s shape, newest 
   for (const row of rows) assertEntity(row);
   const states = Object.fromEntries(rows.map((r) => [r.id, r.status]));
   assert.equal(states[FIAT_SANDBOX_FIXTURE_IDS.open], 'open');
+  assert.equal(states[FIAT_SANDBOX_FIXTURE_IDS.processing], 'processing');
   assert.equal(states[FIAT_SANDBOX_FIXTURE_IDS.paid], 'paid');
   assert.equal(states[FIAT_SANDBOX_FIXTURE_IDS.expired], 'expired');
   assert.equal(states[FIAT_SANDBOX_FIXTURE_IDS.cancelled], 'cancelled');
@@ -227,6 +248,9 @@ test('the mock lists each environment\'s charges in the server\'s shape, newest 
   const prod = (await call('GET', BASE, { env: 'prod' })).json.data.data as Record<string, unknown>[];
   for (const row of prod) assertEntity(row);
   assert.ok(prod.some((r) => r.id === FIAT_FIXTURE_IDS.paid));
+  const paidBank = prod.find((r) => r.id === FIAT_FIXTURE_IDS.paidTransfer);
+  assert.equal(paidBank?.paidMethod, 'transfer');
+  assert.equal(paidBank?.paidTxHash, null);
   assert.ok(!prod.some((r) => r.id === FIAT_SANDBOX_FIXTURE_IDS.open));
   assert.equal((await call('GET', `${BASE}/${FIAT_FIXTURE_IDS.openArs}`)).status, 404);
 });
@@ -242,6 +266,7 @@ test('a charge created in the mock is open, opens on the payer page and turns pa
   assert.equal(charge.address, SELLER);
   assert.equal(charge.token, 'USDT');
   assert.equal(charge.description, 'Mesa 9');
+  assert.deepEqual(charge.methods, ['p2p']);
   assert.ok(Number(charge.estimatedAmountOut) > 0);
   assert.equal(Date.parse(charge.expiresAt) - Date.parse(charge.createdAt), 60 * 60_000);
   assert.equal((await call('GET', `${BASE}/${charge.id}`)).json.data.status, 'open');
@@ -260,6 +285,34 @@ test('a charge created in the mock is open, opens on the payer page and turns pa
     // A paid charge can no longer be cancelled.
     const again = await call('POST', `${BASE}/${charge.id}/cancel`, { body: {} });
     assert.equal(again.status, 409);
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+test('with an approved transfer account a new charge in pesos takes bank transfers, and goes processing before paid', async () => {
+  // Production's Andes Commerce has its account approved (src/lib/mock/transfer-account.ts).
+  const res = await call('POST', BASE, {
+    env: 'prod',
+    body: { currency: 'ARS', amount: '15000', chainId: 42161, token: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', address: SELLER },
+  });
+  assert.equal(res.status, 201, JSON.stringify(res.json));
+  const charge = res.json.data;
+  assertEntity(charge);
+  assert.deepEqual(charge.methods, ['transfer', 'p2p']);
+  const realNow = Date.now;
+  try {
+    Date.now = () => realNow() + TRANSFER_RECEIVED_MS + 500;
+    const processing = (await call('GET', `${BASE}/${charge.id}`, { env: 'prod' })).json.data;
+    assertEntity(processing);
+    assert.equal(processing.status, 'processing');
+    // Processing cannot be cancelled: the money is in.
+    assert.equal((await call('POST', `${BASE}/${charge.id}/cancel`, { env: 'prod', body: {} })).status, 409);
+    Date.now = () => realNow() + PAID_AFTER_MS + 500;
+    const paid = (await call('GET', `${BASE}/${charge.id}`, { env: 'prod' })).json.data;
+    assertEntity(paid);
+    assert.equal(paid.status, 'paid');
+    assert.equal(paid.paidMethod, 'transfer');
   } finally {
     Date.now = realNow;
   }
