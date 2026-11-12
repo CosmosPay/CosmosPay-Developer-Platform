@@ -7,9 +7,10 @@
    the account (TransferAccountEntity, its `bank-transfers` tag) and `POST` opens it, or submits a
    rejected one again; both go through the dashboard's /api/onramp proxy. There is one per consumer
    and network, so the Sandbox and Production each have their own; the shared public key holds none
-   (`403 account_required`). The server needs only the type, name, tax id, email and address (a
-   person's date of birth too); the form asks for the phone, city and postal code as well, which the
-   verification asks for anyway. The provider is never named in copy.
+   (`403 account_required`). The server needs the type, name, tax id, email and address (a person's
+   date of birth too); the phone, city and postal code are optional there and in the form (as in the
+   wallet): checked only when typed, left out of the body when empty. The provider is never named in
+   copy.
 
    Pure (no React, no DOM, no astro:env), so tests/unit/transferAccount.test.ts and the mock API
    (src/lib/mock/transfer-account.ts) reach it. Every value the card shows or opens is checked here:
@@ -47,10 +48,13 @@ export interface TransferAccountBody {
   /** CUIT or CUIL, digits only. */
   taxId: string;
   email: string;
-  phone: string;
+  /** Optional: international format, digits only after the +. */
+  phone?: string;
   address: string;
-  city: string;
-  postalCode: string;
+  /** Optional. */
+  city?: string;
+  /** Optional. */
+  postalCode?: string;
   /** YYYY-MM-DD; people only. */
   dateOfBirth?: string;
 }
@@ -149,6 +153,12 @@ export const normalizePhone = (v: string) => v.trim().replace(/[\s().-]/g, "");
 export const phoneOk = (v: string) => PHONE_DIGITS.test(normalizePhone(v));
 export const postalCodeOk = (v: string) => POSTAL.test(v.trim());
 
+/* The optional fields: fine when left empty, checked only once something is typed. */
+const optionalOk = (v: string, ok: (s: string) => boolean) => v.trim() === "" || ok(v);
+const phoneFieldOk = (v: string) => optionalOk(v, phoneOk);
+const cityFieldOk = (v: string) => optionalOk(v, (s) => oneLine(s, 80));
+const postalFieldOk = (v: string) => optionalOk(v, postalCodeOk);
+
 /** Why a date of birth cannot be sent: not a real date, or a holder younger than 18 or older than
     120. Null when it can. */
 export function birthDateProblem(v: string, now: Date = new Date()): "empty" | "shape" | "age" | null {
@@ -184,18 +194,18 @@ export function transferAccountBody(draft: TransferAccountDraft, now: Date = new
   if (!TRANSFER_ACCOUNT_TYPES.includes(draft.type)) return null;
   if (!oneLine(draft.name, NAME_MAX)) return null;
   if (taxIdProblem(draft.taxId, draft.type) !== null) return null;
-  if (!emailOk(draft.email) || !phoneOk(draft.phone)) return null;
-  if (!oneLine(draft.address, NAME_MAX) || !oneLine(draft.city, 80) || !postalCodeOk(draft.postalCode)) return null;
+  if (!emailOk(draft.email) || !phoneFieldOk(draft.phone)) return null;
+  if (!oneLine(draft.address, NAME_MAX) || !cityFieldOk(draft.city) || !postalFieldOk(draft.postalCode)) return null;
   if (draft.type === "person" && birthDateProblem(draft.dateOfBirth, now) !== null) return null;
   return {
     type: draft.type,
     name: draft.name.trim(),
     taxId: draft.taxId.trim().replace(/[\s.-]/g, ""),
     email: draft.email.trim(),
-    phone: normalizePhone(draft.phone),
+    ...(draft.phone.trim() ? { phone: normalizePhone(draft.phone) } : {}),
     address: draft.address.trim(),
-    city: draft.city.trim(),
-    postalCode: draft.postalCode.trim().toUpperCase(),
+    ...(draft.city.trim() ? { city: draft.city.trim() } : {}),
+    ...(draft.postalCode.trim() ? { postalCode: draft.postalCode.trim().toUpperCase() } : {}),
     ...(draft.type === "person" ? { dateOfBirth: draft.dateOfBirth.trim() } : {}),
   };
 }
@@ -207,6 +217,6 @@ export function transferAccountStepOk(draft: TransferAccountDraft, step: number,
     return oneLine(draft.name, NAME_MAX) && taxIdProblem(draft.taxId, draft.type) === null
       && (draft.type === "company" || birthDateProblem(draft.dateOfBirth, now) === null);
   }
-  if (step === 1) return emailOk(draft.email) && phoneOk(draft.phone);
-  return oneLine(draft.address, NAME_MAX) && oneLine(draft.city, 80) && postalCodeOk(draft.postalCode);
+  if (step === 1) return emailOk(draft.email) && phoneFieldOk(draft.phone);
+  return oneLine(draft.address, NAME_MAX) && cityFieldOk(draft.city) && postalFieldOk(draft.postalCode);
 }

@@ -94,6 +94,16 @@ test('the body sends what the server takes, digits only, a date of birth for a p
   assert.equal(transferAccountBody({ ...person, dateOfBirth: '' }, now), null);
   assert.equal(transferAccountBody({ ...person, taxId: '30-71234567-1' }, now), null);
   assert.equal(transferAccountBody(emptyTransferAccountDraft(), now), null);
+  // Phone, city and postal code are optional: left out when empty, checked only when typed.
+  const bare = transferAccountBody({ ...person, phone: '', city: ' ', postalCode: '' }, now);
+  assert.ok(bare);
+  assert.ok(!('phone' in bare) && !('city' in bare) && !('postalCode' in bare));
+  assert.equal(transferAccountBody({ ...person, phone: '555' }, now), null);
+  assert.equal(transferAccountBody({ ...person, postalCode: '44' }, now), null);
+  assert.ok(transferAccountStepOk({ ...person, phone: '' }, 1, now));
+  assert.ok(!transferAccountStepOk({ ...person, phone: '555' }, 1, now));
+  assert.ok(transferAccountStepOk({ ...person, city: '', postalCode: '' }, 2, now));
+  assert.ok(!transferAccountStepOk({ ...person, postalCode: '4400-AB' }, 2, now));
   // Each step is valid on its own: who, how to reach them, where.
   assert.ok(transferAccountStepOk(person, 0, now) && transferAccountStepOk(person, 1, now) && transferAccountStepOk(person, 2, now));
   assert.ok(!transferAccountStepOk({ ...person, email: 'x' }, 1, now));
@@ -152,6 +162,7 @@ test('activating in the mock goes none, pending, approved, and refuses what the 
   assert.equal((await call('POST', org, 'dev', { ...PERSON, taxId: '20-12345678-5' })).status, 400);
   assert.equal((await call('POST', org, 'dev', { ...PERSON, type: 'company' })).status, 400);
   assert.equal((await call('POST', org, 'dev', { ...PERSON, dateOfBirth: '' })).status, 400);
+  assert.equal((await call('POST', org, 'dev', { ...PERSON, phone: '555' })).status, 400);
   const res = await call('POST', org, 'dev', PERSON);
   assert.equal(res.status, 201);
   assertEntity(res.json.data);
@@ -174,5 +185,7 @@ test('activating in the mock goes none, pending, approved, and refuses what the 
   }
   // A rejected one is tried again.
   assert.equal((await call('GET', 'org_mock_salta', 'prod')).json.data.status, 'rejected');
-  assert.equal((await call('POST', 'org_mock_salta', 'prod', { ...PERSON, type: 'company', name: 'Salta Labs S.A.', taxId: '30-71234567-1' })).status, 201);
+  // Without the optional fields too.
+  const { phone: _p, city: _c, postalCode: _z, ...required } = PERSON;
+  assert.equal((await call('POST', 'org_mock_salta', 'prod', { ...required, type: 'company', name: 'Salta Labs S.A.', taxId: '30-71234567-1' })).status, 201);
 });

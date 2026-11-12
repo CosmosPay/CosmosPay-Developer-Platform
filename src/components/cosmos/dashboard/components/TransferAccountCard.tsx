@@ -167,7 +167,8 @@ function CopyValue({ label, value, shown }: { label: string; value: string; show
 }
 
 /* Activating, in three steps: who holds the account (a person or a company, the name, the CUIT or
-   CUIL with its check digit, a person's date of birth), how to reach them, where they are. Then
+   CUIL with its check digit, a person's date of birth), how to reach them, where they are (the
+   phone, city and postal code optional). Then
    who does what: the organization finishes the verification on the provider's form, Cosmos Pay
    turns bank transfers on once it is approved. */
 function ActivateTransfersModal({ env, orgId, onClose, onDone, onExists }: {
@@ -184,6 +185,8 @@ function ActivateTransfersModal({ env, orgId, onClose, onDone, onExists }: {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const set = (key: keyof TransferAccountDraft) => (e: { target: { value: string } }) => setDraft((d) => ({ ...d, [key]: e.target.value }));
+  // Phone, city and postal code are optional, as on the server: marked so, checked only when typed.
+  const optional = (label: string) => <>{label} <span className="field-hint">{t.dash.common.optional}</span></>;
   const steps = useFormSteps(3);
   const body = transferAccountBody(draft);
   const person = draft.type === "person";
@@ -258,15 +261,15 @@ function ActivateTransfersModal({ env, orgId, onClose, onDone, onExists }: {
           {steps.step === 1 && (<>
             <Field label={m.email} type="email" value={draft.email} onChange={set("email")} autoComplete="email" maxLength={254} aria-invalid={emailError ? true : undefined} />
             {err(emailError)}
-            <Field label={m.phone} hint={m.phoneHint} type="tel" value={draft.phone} onChange={set("phone")} autoComplete="tel" maxLength={24} aria-invalid={phoneError ? true : undefined} />
+            <Field label={optional(m.phone)} hint={m.phoneHint} type="tel" value={draft.phone} onChange={set("phone")} autoComplete="tel" maxLength={24} aria-invalid={phoneError ? true : undefined} />
             {err(phoneError)}
           </>)}
 
           {steps.step === 2 && (<>
             <Field label={m.address} value={draft.address} onChange={set("address")} autoComplete="street-address" maxLength={120} />
             <div className="tacc-row">
-              <Field label={m.city} value={draft.city} onChange={set("city")} autoComplete="address-level2" maxLength={80} />
-              <Field label={m.postalCode} value={draft.postalCode} onChange={set("postalCode")} autoComplete="postal-code" maxLength={8} aria-invalid={postalError ? true : undefined} />
+              <Field label={optional(m.city)} value={draft.city} onChange={set("city")} autoComplete="address-level2" maxLength={80} />
+              <Field label={optional(m.postalCode)} value={draft.postalCode} onChange={set("postalCode")} autoComplete="postal-code" maxLength={8} aria-invalid={postalError ? true : undefined} />
             </div>
             {err(postalError)}
             {/* What happens once it is sent, each step with who takes it. */}

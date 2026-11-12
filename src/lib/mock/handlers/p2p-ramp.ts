@@ -282,7 +282,7 @@ const transferAccountRoutes: MockRoute[] = [
       type, name: text("name"), taxId: text("taxId"), email: text("email"), phone: text("phone"),
       address: text("address"), city: text("city"), postalCode: text("postalCode"), dateOfBirth: text("dateOfBirth"),
     });
-    if (!body) return badRequest("name, email, phone, address, city, postalCode and, for a person, dateOfBirth are required");
+    if (!body) return badRequest("validation_failed: name, email, address and, for a person, dateOfBirth are required; phone, city and postalCode must be valid when given");
     const done = startTransferAccount(req.env, req.org, body);
     return "account" in done ? created(done.account, "Created") : conflict("account_exists: a bank-transfer account is already under way");
   }),
