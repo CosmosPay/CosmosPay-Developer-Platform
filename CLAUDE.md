@@ -53,10 +53,15 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   store, `src/lib/mock/fiat-requests.ts`, for the payer page (`/fiat/<id>` on the payments host)
   and the dashboard's Fiat > QR charges (`/api/onramp/p2p/payment-requests`, answered in
   `handlers/p2p-ramp.ts`): fixed ids per environment (production: open ARS with one method, open
-  COP with three, paid, expired, cancelled; the sandbox: open, paid, expired, cancelled). An open
-  one turns paid 20 s after its first session, one created in the dashboard 20 s after it was
-  created (it opens on the local payer page too), and a session opens the marketplace's sandbox
-  window.
+  COP with three, paid, expired, cancelled; the sandbox: open, paid, expired, cancelled; plus the
+  bank transfer's: `methods` both ways, transfer only and window only, a processing one, one paid by
+  transfer with no transaction). An open one turns paid 20 s after its first session; after a bank
+  transfer is started it reads processing 8 s later and paid 20 s later (the DNI 99999999 answers
+  503 `transfer_unavailable`); one created in the dashboard does the same by itself (it opens on the
+  local payer page too), and a session opens the marketplace's sandbox window. The organization's
+  bank-transfer account (`/api/onramp/transfer/account`, `src/lib/mock/transfer-account.ts`) has a
+  fixture per status by organization and environment; the sandbox's Andes Commerce is none, and
+  activating it goes pending, then approved 20 s later.
 - **One handler module per area** (`src/lib/mock/handlers/`: `platform`, `payments`, `swaps`,
   `fiat-admin`), each exporting `routes` built with `route()` from `src/lib/mock/http.ts`, typed
   against the interfaces in `src/lib/cosmos.ts`. Shared identities (organizations, their wallets,
@@ -441,6 +446,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   followed only over https on `WIDGET_HOSTS`, the marketplace's own hosts (code, never copy: the
   marketplace is never named, `noProviderNames.test.ts`). Paid is final; expired and cancelled keep
   being read slowly (the money can still arrive). Copy in the payments catalog's `fiat` block.
+  **Two ways to pay, the charge's `methods`** (`transfer`, `p2p`; absent from an older server means
+  `p2p`): with both, the payer chooses first (bank transfer first, recommended); with one, the page
+  goes straight to it. By bank transfer the payer types their CUIT/CUIL or DNI (check digit checked
+  here and on the server), `POST /v1/payment-links/fiat/{id}/transfers` answers the deposit
+  instructions (`parseBankTransfer`: the CVU's check digits too) and the page shows the exact
+  amount, the alias and the CVU with copy buttons, the holder (the seller's name) and how long they
+  hold; the instructions, never the document, stay in sessionStorage per charge, and the page reads
+  the charge every 5 s: `processing` once the transfer arrived (never expired, not cancellable),
+  then `paid`. The bank-transfer provider is never named either; its webhook,
+  `POST /v1/onramp/transfer/webhooks`, has its own keyless gateway route (`<route>-transfer-webhooks`,
+  POST only, no CORS, like `-p2p-webhooks`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
   to every payments response.
 - **Only the page's own scripts run on the payments domain** (`src/lib/payments/csp.ts`, security
@@ -1127,7 +1143,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   on that network); then the description (one line, 140 characters) and how long it can be paid
   (1 hour, 24 hours, 7 days, 30 days), with who does each step once the QR is shown. The checks are
   `src/lib/qr-charges.ts` (`tests/unit/qrCharges.test.ts`, which also holds the mock's answers
-  against `docs/openapi.json`'s `P2pPaymentRequestEntity`).
+  against `docs/openapi.json`'s `P2pPaymentRequestEntity`). A charge reads `processing` while a
+  bank transfer's token is on its way (followed like an open one, but no QR, link or cancel), and
+  the detail lists the ways the payer has (`methods`) and, once paid, how (`paidMethod`).
+  **Bank transfers need the organization's own account** (product owner, 2026-11-12: the money lands
+  in the seller's name): `components/TransferAccountCard.tsx` under the figures reads
+  `GET /v1/onramp/transfer/account` through `/api/onramp` (none, pending, in review, approved with
+  its alias and CVU to copy, rejected with the reason) and activates it in a three-step dialog
+  (holder: person or company, name, CUIT/CUIL for that kind of holder, a person's date of birth;
+  contact; address), `payments:create` only; pending and in review link the provider's hosted
+  verification form and refresh. Checks in `src/lib/transfer-account.ts`
+  (`tests/unit/transferAccount.test.ts`).
 
 ### The payments landing
 
