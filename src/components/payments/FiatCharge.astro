@@ -3,10 +3,16 @@
  *
  * Every string is rendered here from the payments catalog; the script
  * (src/scripts/payments/fiat-request.ts) reads the charge, fills the data-slot elements with
- * textContent and switches the views: open (pick a method, pay), opening (the button busy),
- * waiting (the secure window is open), paid, expired, cancelled. The loading, not-found and error
- * states are cards of their own, as on the checkout. Mobile first: a buyer scans the seller's QR
- * with a phone.
+ * textContent and switches the views (`data-when` lists the views an element shows in):
+ *   - choose: the charge takes a bank transfer and other methods, so the payer picks one first
+ *     (bank transfer first, recommended); a charge with one way goes straight to it;
+ *   - bank transfer: document (CUIT/CUIL or DNI), sending (the button busy), transfer (the deposit
+ *     instructions, followed until the money arrives), transfer-expired (the instructions ran out);
+ *   - other methods: open (pick a method, pay), opening (the button busy), waiting (the secure
+ *     window is open);
+ *   - processing (the transfer arrived, the token is on its way), paid, expired, cancelled.
+ * The loading, not-found and error states are cards of their own, as on the checkout. Mobile
+ * first: a buyer scans the seller's QR with a phone.
  */
 import "@/styles/checkout.css";
 import "@/styles/fiat.css";
@@ -37,9 +43,30 @@ const runtime = {
   closed: t.closed,
   errorBody: t.errorBody,
   rateLimited: t.rateLimited,
+  documentEmpty: t.documentEmpty,
+  documentShape: t.documentShape,
+  documentCheck: t.documentCheck,
+  getDetails: t.getDetails,
+  gettingDetails: t.gettingDetails,
+  invalidDocument: t.invalidDocument,
+  transferGone: t.transferGone,
+  transferGoneOther: t.transferGoneOther,
+  transferDown: t.transferDown,
+  transferDownOther: t.transferDownOther,
+  transferFailed: t.transferFailed,
+  copy: t.copy,
+  copied: t.copied,
+  copiedLabel: t.copiedLabel,
+  expiresIn: t.expiresIn,
+  endingIn: t.endingIn,
 };
 // `<` escaped so no string can close the JSON <script> block early.
 const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
+// The values a payer copies into their bank, each with its own button.
+const copyRows = [
+  { name: "alias", label: t.aliasLabel },
+  { name: "cvu", label: t.cvuLabel },
+] as const;
 ---
 
 <main id="main" class="ck-page">
@@ -79,6 +106,96 @@ const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
 
       <p class="fq-receives" data-slot="receives" hidden></p>
 
+      {/* Two ways to pay: a choice, bank transfer first (no sign-up, the recommended one). */}
+      <div class="fq-choice" role="group" aria-label={t.choiceLabel} data-when="choose" hidden>
+        <button class="fq-option" type="button" data-action="choose-transfer">
+          <span class="fq-option-icon fq-icon-bank" aria-hidden="true"></span>
+          <span class="fq-option-text">
+            <span class="fq-option-title">{t.transferTitle}</span>
+            <span class="fq-option-desc">{t.transferDesc}</span>
+          </span>
+          <span class="fq-recommended">{t.recommended}</span>
+        </button>
+        <button class="fq-option" type="button" data-action="choose-p2p">
+          <span class="fq-option-icon fq-icon-other" aria-hidden="true"></span>
+          <span class="fq-option-text">
+            <span class="fq-option-title">{t.otherTitle}</span>
+            <span class="fq-option-desc">{t.otherDesc}</span>
+          </span>
+        </button>
+      </div>
+
+      {/* Bank transfer, first step: who pays (their CUIT/CUIL or DNI), never kept by the page. */}
+      <form class="fq-doc" data-when="document sending" novalidate hidden>
+        <label class="fq-label" for="fq-document">{t.documentLabel}</label>
+        <p class="fq-hint" id="fq-document-hint">{t.documentHint}</p>
+        <input
+          id="fq-document"
+          class="fq-input"
+          name="document"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="20"
+          aria-describedby="fq-document-hint fq-document-error"
+        />
+        <p class="fq-error" id="fq-document-error" data-slot="document-error" role="alert" hidden></p>
+        <button class="btn btn-dark fq-cta" type="submit" data-slot="document-button">
+          <span class="pp-spinner fq-busy" data-slot="document-busy" aria-hidden="true" hidden></span>
+          <span data-slot="document-label">{t.getDetails}</span>
+        </button>
+        <button class="fq-link fq-back" type="button" data-action="back">{t.back}</button>
+      </form>
+
+      {/* Bank transfer, second step: where to send the exact amount, each value with its copy button. */}
+      <section class="fq-transfer" data-when="transfer transfer-expired" aria-labelledby="fq-transfer-title" hidden>
+        <h2 class="fq-transfer-title" id="fq-transfer-title" tabindex="-1">{t.instructionsTitle}</h2>
+        <div class="fq-well">
+          <div class="fq-copyrow fq-copyrow-amount">
+            <div class="fq-copytext">
+              <span class="fq-k">{t.amountLabel}</span>
+              <span class="fq-v fq-v-amount" data-slot="t-amount"></span>
+              <span class="fq-note">{t.exactNote}</span>
+              <span class="fq-note fq-cents" data-slot="t-cents" hidden>{t.centsNote}</span>
+            </div>
+            <button class="pp-copy fq-copy" type="button" data-copy="amount" data-label={t.amountLabel} aria-label={`${t.copy}: ${t.amountLabel}`}>{t.copy}</button>
+          </div>
+          {copyRows.map((row) => (
+            <div class="fq-copyrow">
+              <div class="fq-copytext">
+                <span class="fq-k">{row.label}</span>
+                <span class={`fq-v fq-v-${row.name}`} data-slot={`t-${row.name}`}></span>
+              </div>
+              <button class="pp-copy fq-copy" type="button" data-copy={row.name} data-label={row.label} aria-label={`${t.copy}: ${row.label}`}>{t.copy}</button>
+            </div>
+          ))}
+          <div class="fq-copyrow fq-plainrow" data-row="t-holder" hidden>
+            <div class="fq-copytext">
+              <span class="fq-k">{t.holderLabel}</span>
+              <span class="fq-v" data-slot="t-holder"></span>
+            </div>
+          </div>
+          <div class="fq-copyrow fq-plainrow" data-row="t-bank" hidden>
+            <div class="fq-copytext">
+              <span class="fq-k">{t.bankLabel}</span>
+              <span class="fq-v" data-slot="t-bank"></span>
+            </div>
+          </div>
+        </div>
+        <p class="fq-expiry" data-slot="t-expiry" hidden></p>
+        <ol class="fq-steps" aria-label={t.transferStepsLabel}>
+          <li>{t.tstep1}</li>
+          <li>{t.tstep2}</li>
+          <li>{t.tstep3}</li>
+        </ol>
+        <div class="fq-waiting-actions">
+          <button class="btn btn-dark fq-cta" type="button" data-action="new-transfer" data-slot="new-transfer" hidden>{t.newDetails}</button>
+          <button class="fq-link fq-back" type="button" data-action="back">{t.back}</button>
+        </div>
+      </section>
+      <p class="sr-only" data-slot="copy-status" role="status" aria-live="polite"></p>
+
       <form class="fq-pay" data-when="open opening" novalidate>
         <fieldset class="fq-methods" aria-describedby="fq-method-error">
           <legend class="fq-legend">{t.methodLabel}</legend>
@@ -86,9 +203,10 @@ const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
         </fieldset>
         <p class="fq-error" id="fq-method-error" data-slot="pay-error" role="alert" hidden></p>
         <button class="btn btn-dark fq-cta" type="submit" data-slot="pay-button">
-          <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+          <span class="pp-spinner fq-busy" data-slot="pay-busy" aria-hidden="true" hidden></span>
           <span data-slot="pay-label"></span>
         </button>
+        <button class="fq-link fq-back" type="button" data-action="back">{t.back}</button>
       </form>
 
       <div class="fq-waiting" data-when="waiting" hidden>
@@ -110,6 +228,7 @@ const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
 
       <dl class="pp-details ck-facts fq-facts">
         <div class="pp-row" data-row="method" hidden><dt>{t.methodLabel}</dt><dd data-slot="method-name"></dd></div>
+        <div class="pp-row" data-row="document" hidden><dt>{t.documentRow}</dt><dd data-slot="document-hint"></dd></div>
         <div class="pp-row" data-row="expires" hidden><dt>{t.expires}</dt><dd><time data-slot="expires"></time></dd></div>
         <div class="pp-row" data-row="paid" hidden><dt>{t.paidAt}</dt><dd><time data-slot="paid-at"></time></dd></div>
       </dl>

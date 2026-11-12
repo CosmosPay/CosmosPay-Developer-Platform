@@ -143,6 +143,14 @@ export const TAGS = [
     description: 'Local money in through P2P sellers: the market, a firm quote, purchase sessions that open a hosted purchase delivered to the address you name, and charges in local money shown as a QR that the payer pays on a hosted page.',
   },
   {
+    name: 'bank-transfers',
+    title: 'Bank transfers',
+    description:
+      'Your account for charges paid by bank transfer: open it in your name, complete its ' +
+      'verification on a hosted form, and once it is approved the payers of your charges in ' +
+      'pesos transfer to its alias and CVU, and the money is converted to your token.',
+  },
+  {
     name: 'p2p-offramp',
     title: 'P2P Off-ramp',
     description: 'Local money out through P2P buyers: the market, a firm quote, and sale sessions that open a hosted sale the seller sends the stablecoin from.',

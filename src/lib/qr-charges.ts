@@ -6,14 +6,18 @@
    the reader's language. Pure (no React, no DOM, no astro:env), so tests/unit/qrCharges.test.ts and
    the mock API (src/lib/mock/fiat-requests.ts) reach it.
 
-   A seller shows the QR; the payer pays the amount in local money on the payer page with a local
-   method, in the P2P marketplace's secure window, which delivers the token straight to the seller's
-   own EVM account. Cosmos Pay never holds the money. The marketplace is never named in copy. */
+   A seller shows the QR; the payer pays the amount in local money on the payer page, by bank
+   transfer to an alias and a CVU (the charge reads `processing` while the token is on its way) or
+   with a local method in the P2P marketplace's secure window, which delivers the token straight to
+   the seller's own EVM account. Neither provider is named in copy. */
 import { keccak_256 } from "@noble/hashes/sha3.js";
-import { fiatPhaseOf, type FiatPhase, type FiatRequestStatus } from "@/lib/payments/fiat-request";
+import { FIAT_METHODS, fiatPhaseOf, type FiatMethod, type FiatPhase, type FiatRequestStatus } from "@/lib/payments/fiat-request";
 
 export type ChargeStatus = FiatRequestStatus;
-export const CHARGE_STATUSES: readonly ChargeStatus[] = ["open", "paid", "expired", "cancelled"];
+export const CHARGE_STATUSES: readonly ChargeStatus[] = ["open", "processing", "paid", "expired", "cancelled"];
+
+/** How a charge can be paid, and how it was: by bank transfer or with another method. */
+export type ChargeMethod = FiatMethod;
 
 /** A charge as its seller reads it (`GET /v1/onramp/p2p/payment-requests[/{id}]`). */
 export interface QrCharge {
@@ -29,13 +33,18 @@ export interface QrCharge {
   address: string;
   description: string | null;
   estimatedAmountOut: string | null;
+  /** The ways the payer can pay it, preferred first (absent from a server before bank transfers). */
+  methods?: ChargeMethod[];
   url: string;
   qr: string;
   expiresAt: string;
   createdAt: string;
   paidAt: string | null;
   paidAmount: string | null;
+  /** Null until paid, and when the delivery reported no transaction. */
   paidTxHash: string | null;
+  /** How it was paid; null until paid (absent from a server before bank transfers). */
+  paidMethod?: ChargeMethod | null;
 }
 
 /** What creating one sends (CreateP2pPaymentRequestDto). */
@@ -197,10 +206,29 @@ export function chargePhase(charge: Pick<QrCharge, "status" | "expiresAt">, now:
   return fiatPhaseOf(charge, now);
 }
 
-/** Only an open charge is read again while its detail is open; paid is final, and expired or
-    cancelled ones change only if a payment already under way completes (the list shows that). */
+/** An open charge is read again while its detail is open, and so is a processing one until the
+    token is delivered; paid is final, and expired or cancelled ones change only if a payment
+    already under way completes (the list shows that). */
 export const CHARGE_POLL_MS = 5_000;
-export const chargeIsLive = (charge: Pick<QrCharge, "status" | "expiresAt">, now: number = Date.now()) => chargePhase(charge, now) === "open";
+export const chargeIsLive = (charge: Pick<QrCharge, "status" | "expiresAt">, now: number = Date.now()) => {
+  const phase = chargePhase(charge, now);
+  return phase === "open" || phase === "processing";
+};
+
+/** Only an open charge can still be paid (its QR and link shown) or cancelled. */
+export const chargeIsPayable = (charge: Pick<QrCharge, "status" | "expiresAt">, now: number = Date.now()) => chargePhase(charge, now) === "open";
+
+/** The charge's methods the dashboard knows, in the server's order; a server from before bank
+    transfers answers none, and every charge was paid with another method then. */
+export function chargeMethods(charge: Pick<QrCharge, "methods">): ChargeMethod[] {
+  const list: readonly string[] = Array.isArray(charge.methods) ? charge.methods : ["p2p"];
+  return FIAT_METHODS.filter((m) => list.includes(m)).sort((a, b) => list.indexOf(a) - list.indexOf(b));
+}
+
+/** How a paid charge was paid, when the server says. */
+export function chargePaidMethod(charge: Pick<QrCharge, "status" | "paidMethod">): ChargeMethod | null {
+  return charge.status === "paid" && (charge.paidMethod === "transfer" || charge.paidMethod === "p2p") ? charge.paidMethod : null;
+}
 
 const QR_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
 /* A QR of a short URL is a few kilobytes; anything near this is not one. */

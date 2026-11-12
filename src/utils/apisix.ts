@@ -19,12 +19,14 @@ import {
   PAYMENT_LINKS_METHODS,
   p2pWebhookRouteUris,
   paymentLinksRouteUris,
+  TRANSFER_WEBHOOK_METHODS,
+  transferWebhookRouteUris,
   ZK_CHECKOUT_CORS,
   ZK_CHECKOUT_METHODS,
   zkCheckoutRouteUris,
 } from "@/lib/apisix-keyless";
 
-export { callbackRouteUris, p2pWebhookRouteUris, paymentLinksRouteUris, zkCheckoutRouteUris } from "@/lib/apisix-keyless";
+export { callbackRouteUris, p2pWebhookRouteUris, paymentLinksRouteUris, transferWebhookRouteUris, zkCheckoutRouteUris } from "@/lib/apisix-keyless";
 
 export const keyPrefix = 'cosmos_';
 
@@ -188,6 +190,10 @@ export function zkCheckoutRouteId(routeId: string): string {
 
 export function p2pWebhookRouteId(routeId: string): string {
   return `${routeId}-p2p-webhooks`;
+}
+
+export function transferWebhookRouteId(routeId: string): string {
+  return `${routeId}-transfer-webhooks`;
 }
 
 /* What the callback route was called while it only served Pollar. The sync still removes
@@ -570,6 +576,25 @@ export async function createP2pWebhookRoute(
     uris: p2pWebhookRouteUris(entry),
     priority: 15,
     methods: P2P_WEBHOOK_METHODS,
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: false, forwardAuthorization: false }),
+    upstream: roundRobin(upstreamHost),
+  });
+}
+
+/* The keyless route of the bank-transfer provider's webhook (`POST /v1/onramp/transfer/webhooks`,
+   one exact URI: TRANSFER_WEBHOOK_PATH says why it is keyless and why nothing else under
+   /v1/onramp is). Built as the marketplace's webhook route above: server to server, so no cors
+   plugin; the body and the provider's signature header reach the upstream untouched, which
+   verifies them. Priority 15, above the key-auth route it would otherwise fall to. */
+export async function createTransferWebhookRoute(
+  routeId: string,
+  entry: string,
+  upstreamHost: string,
+) {
+  return putRoute(transferWebhookRouteId(routeId), {
+    uris: transferWebhookRouteUris(entry),
+    priority: 15,
+    methods: TRANSFER_WEBHOOK_METHODS,
     plugins: cosmosRoutePlugins({ keyAuth: false, cors: false, forwardAuthorization: false }),
     upstream: roundRobin(upstreamHost),
   });

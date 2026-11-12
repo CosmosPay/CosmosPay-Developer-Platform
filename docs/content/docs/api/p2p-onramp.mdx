@@ -147,34 +147,36 @@ _openapi:
         heading: list-the-payment-requests-in-local-money
       - content: >-
           Creates a payment request: show its `url` (or `qr`) to the payer, who
-          pays `amount` of `currency` with a local method in a hosted window,
-          and the token is delivered by the P2P marketplace straight to
-          `address` on `chainId`; Cosmos Pay never holds the money. The terms
-          are checked against the market like a purchase (`400
-          validation_failed` with the reason), on the key’s network, and the
-          request can be paid until `expiresAt`. The shared public key also gets
-          `publicToken`, the only way it reads the request back.
+          pays `amount` of `currency` by bank transfer (ARS, where `methods` has
+          `transfer`) or with another local method in a hosted window (`p2p`),
+          and the token is delivered to `address` on `chainId`. It is created
+          when at least one method takes the terms, on the key’s network; when
+          none does, the market’s check of the terms is the answer (`400
+          validation_failed` with the reason). It can be paid until `expiresAt`.
+          The shared public key also gets `publicToken`, the only way it reads
+          the request back.
 
 
           Requires the `onramp:write` scope. The shared public key may call it.
         heading: charge-in-local-money-with-a-qr
       - content: >-
           One payment request of this key's consumer on the key's network: poll
-          it to learn when it is `paid` (with the token delivered and its
-          transaction). Another consumer's request, or one on the other network,
-          is the 404 of a missing one. The shared public key reads a request
-          only with its `publicToken` in `X-Record-Token`; without it, or with
-          another request’s, the answer is that 404.
+          it to learn when it is `processing` (a bank transfer arrived) and
+          `paid` (with the token delivered, its transaction and `paidMethod`).
+          Another consumer's request, or one on the other network, is the 404 of
+          a missing one. The shared public key reads a request only with its
+          `publicToken` in `X-Record-Token`; without it, or with another
+          request’s, the answer is that 404.
 
 
           Requires the `onramp:read` scope. The shared public key may call it.
         heading: read-a-payment-request-in-local-money
       - content: >-
           Stops an open request from being paid: its page refuses new payments.
-          A payment already under way in the hosted window may still complete,
-          and the request then reads `paid`. A request that is not open (paid,
-          expired or cancelled) is `409 request_closed`. The shared public key
-          cancels only with the request’s `publicToken` in `X-Record-Token`.
+          A payment already under way may still complete, and the request then
+          reads `processing` or `paid`. A request that is not open (processing,
+          paid, expired or cancelled) is `409 request_closed`. The shared public
+          key cancels only with the request’s `publicToken` in `X-Record-Token`.
 
 
           Requires the `onramp:write` scope. The shared public key may call it.

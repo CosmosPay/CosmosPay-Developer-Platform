@@ -14365,7 +14365,7 @@
     },
     "/v1/onramp/p2p/payment-requests": {
       "post": {
-        "description": "Creates a payment request: show its `url` (or `qr`) to the payer, who pays `amount` of `currency` with a local method in a hosted window, and the token is delivered by the P2P marketplace straight to `address` on `chainId`; Cosmos Pay never holds the money. The terms are checked against the market like a purchase (`400 validation_failed` with the reason), on the key’s network, and the request can be paid until `expiresAt`. The shared public key also gets `publicToken`, the only way it reads the request back.\n\nRequires the `onramp:write` scope. The shared public key may call it.",
+        "description": "Creates a payment request: show its `url` (or `qr`) to the payer, who pays `amount` of `currency` by bank transfer (ARS, where `methods` has `transfer`) or with another local method in a hosted window (`p2p`), and the token is delivered to `address` on `chainId`. It is created when at least one method takes the terms, on the key’s network; when none does, the market’s check of the terms is the answer (`400 validation_failed` with the reason). It can be paid until `expiresAt`. The shared public key also gets `publicToken`, the only way it reads the request back.\n\nRequires the `onramp:write` scope. The shared public key may call it.",
         "operationId": "P2pPaymentRequestsController_create_v1",
         "parameters": [],
         "requestBody": {
@@ -14519,7 +14519,7 @@
     },
     "/v1/onramp/p2p/payment-requests/{id}": {
       "get": {
-        "description": "One payment request of this key's consumer on the key's network: poll it to learn when it is `paid` (with the token delivered and its transaction). Another consumer's request, or one on the other network, is the 404 of a missing one. The shared public key reads a request only with its `publicToken` in `X-Record-Token`; without it, or with another request’s, the answer is that 404.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
+        "description": "One payment request of this key's consumer on the key's network: poll it to learn when it is `processing` (a bank transfer arrived) and `paid` (with the token delivered, its transaction and `paidMethod`). Another consumer's request, or one on the other network, is the 404 of a missing one. The shared public key reads a request only with its `publicToken` in `X-Record-Token`; without it, or with another request’s, the answer is that 404.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
         "operationId": "P2pPaymentRequestsController_findOne_v1",
         "parameters": [
           {
@@ -14582,7 +14582,7 @@
     },
     "/v1/onramp/p2p/payment-requests/{id}/cancel": {
       "post": {
-        "description": "Stops an open request from being paid: its page refuses new payments. A payment already under way in the hosted window may still complete, and the request then reads `paid`. A request that is not open (paid, expired or cancelled) is `409 request_closed`. The shared public key cancels only with the request’s `publicToken` in `X-Record-Token`.\n\nRequires the `onramp:write` scope. The shared public key may call it.",
+        "description": "Stops an open request from being paid: its page refuses new payments. A payment already under way may still complete, and the request then reads `processing` or `paid`. A request that is not open (processing, paid, expired or cancelled) is `409 request_closed`. The shared public key cancels only with the request’s `publicToken` in `X-Record-Token`.\n\nRequires the `onramp:write` scope. The shared public key may call it.",
         "operationId": "P2pPaymentRequestsController_cancel_v1",
         "parameters": [
           {
@@ -14630,7 +14630,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "The request was already paid, cancelled, or it expired.",
+            "description": "The request is processing a bank transfer, was already paid or cancelled, or it expired.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14668,7 +14668,7 @@
     },
     "/v1/payment-links/fiat/{id}": {
       "get": {
-        "description": "For the hosted page of a payment request: the amount in local money, the description, the token the seller receives with an estimate at the market price right now, and the payment methods that can pay it. **The id is the capability**: nothing about the seller’s account or address is returned. Poll it until `status` is no longer `open`. Answered with `Cache-Control: no-store` and budgeted per client address.",
+        "description": "For the hosted page of a payment request: the amount in local money, the description, the token the seller receives with an estimate at the market price right now, and how it can be paid (`methods`, with the hosted window’s `paymentMethods`). **The id is the capability**: nothing about the seller’s account or address is returned. Poll it until `status` is neither `open` nor `processing`. Answered with `Cache-Control: no-store` and budgeted per client address.",
         "operationId": "P2pPaymentLinksController_findOne_v1",
         "parameters": [
           {
@@ -14910,6 +14910,518 @@
         ],
         "x-cosmos-upstream": [
           "P2P marketplace"
+        ],
+        "security": []
+      }
+    },
+    "/v1/onramp/transfer/account": {
+      "get": {
+        "description": "The account payers of your charges transfer pesos to, on the key’s network: `none` until you open one, then `pending` with the hosted `verificationUrl` to complete, `in_review`, `approved` with its `alias` and `cvu`, or `rejected` with the `reason`. While it is not approved, your charges are not offered by bank transfer. The shared public key is refused with `403 account_required`.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
+        "operationId": "TransferAccountsController_view_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferAccountEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "`insufficient_scope`: The API key does not hold the scope this route requires\n\n`gateway_required`: The request did not arrive through the APISIX gateway\n\n`account_required`: The shared public key cannot hold a bank transfer account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "insufficient_scope": {
+                    "summary": "insufficient_scope: The API key does not hold the scope this route requires",
+                    "value": {
+                      "statusCode": 403,
+                      "code": "insufficient_scope",
+                      "error": "Forbidden",
+                      "message": "This API key is missing the required scope(s): swaps:write",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "gateway_required": {
+                    "summary": "gateway_required: The request did not arrive through the APISIX gateway",
+                    "value": {
+                      "statusCode": 403,
+                      "code": "gateway_required",
+                      "error": "Forbidden",
+                      "message": "Request did not originate from the gateway",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "account_required": {
+                    "summary": "account_required: The shared public key cannot hold a bank transfer account",
+                    "value": {
+                      "statusCode": 403,
+                      "code": "account_required",
+                      "error": "Forbidden",
+                      "message": "Accepting bank transfers needs a Cosmos Pay account: sign in to use your own API key.",
+                      "path": "/v1/onramp/transfer/account",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read your bank transfer account",
+        "tags": [
+          "bank-transfers"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ]
+      },
+      "post": {
+        "description": "Opens an account in your name (a person with their CUIL or CUIT and date of birth, or a company with its CUIT) on the key’s network and starts its verification, which you complete on the hosted form at `verificationUrl`. Once approved, your charges in ARS can be paid by bank transfer into it and converted to your token. Only the name, the type and the last three digits of the tax id are kept. `409 account_exists` while one exists and is not rejected (a rejected one is submitted again), `400 invalid_tax_id`, `503 transfer_unavailable` when accounts cannot be opened right now. The shared public key is refused with `403 account_required`.\n\nRequires the `onramp:write` scope. The shared public key may call it.",
+        "operationId": "TransferAccountsController_open_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransferAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferAccountEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_tax_id`: The tax id is not a valid CUIT/CUIL for the account type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_tax_id": {
+                    "summary": "invalid_tax_id: The tax id is not a valid CUIT/CUIL for the account type",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_tax_id",
+                      "error": "Bad Request",
+                      "message": "taxId must be a CUIT or CUIL: 11 digits whose check digit verifies (a company: a CUIT starting 30, 33 or 34)",
+                      "path": "/v1/onramp/transfer/account",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "`insufficient_scope`: The API key does not hold the scope this route requires\n\n`gateway_required`: The request did not arrive through the APISIX gateway\n\n`account_required`: The shared public key cannot hold a bank transfer account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "insufficient_scope": {
+                    "summary": "insufficient_scope: The API key does not hold the scope this route requires",
+                    "value": {
+                      "statusCode": 403,
+                      "code": "insufficient_scope",
+                      "error": "Forbidden",
+                      "message": "This API key is missing the required scope(s): swaps:write",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "gateway_required": {
+                    "summary": "gateway_required: The request did not arrive through the APISIX gateway",
+                    "value": {
+                      "statusCode": 403,
+                      "code": "gateway_required",
+                      "error": "Forbidden",
+                      "message": "Request did not originate from the gateway",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "account_required": {
+                    "summary": "account_required: The shared public key cannot hold a bank transfer account",
+                    "value": {
+                      "statusCode": 403,
+                      "code": "account_required",
+                      "error": "Forbidden",
+                      "message": "Accepting bank transfers needs a Cosmos Pay account: sign in to use your own API key.",
+                      "path": "/v1/onramp/transfer/account",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`account_exists`: A bank transfer account already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "account_exists": {
+                    "summary": "account_exists: A bank transfer account already exists",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "account_exists",
+                      "error": "Conflict",
+                      "message": "This account already has a bank transfer account (pending): only a rejected one can be submitted again.",
+                      "path": "/v1/onramp/transfer/account",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`transfer_unavailable`: Bank transfers cannot be offered right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "transfer_unavailable": {
+                    "summary": "transfer_unavailable: Bank transfers cannot be offered right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "transfer_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Bank transfer accounts cannot be opened right now: retry shortly.",
+                      "path": "/v1/onramp/transfer/account",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Open your bank transfer account",
+        "tags": [
+          "bank-transfers"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "onramp-transfer:account",
+            "limit": 5,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ]
+      }
+    },
+    "/v1/payment-links/fiat/{id}/transfers": {
+      "post": {
+        "description": "For a request whose `methods` include `transfer`: the payer gives their CUIT/CUIL or DNI and is answered the exact amount, the alias and CVU to transfer it to and until when (an hour, never past the charge). The transfer must come from an account in the payer’s own name; it is detected on its own and the charge reads `processing`, then `paid`. The same document answers the same transfer (`200`), a new one `201`; only an HMAC of the document and its last three digits are kept. `400 invalid_document`, `400 method_unavailable` when the charge cannot be paid this way, `409 request_closed` unless it is open, `503 transfer_unavailable` when the account cannot be given right now.",
+        "operationId": "BankTransferLinksController_open_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankTransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The transfer this document already has for the charge.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankTransferEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "A new transfer was opened for this document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankTransferEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_document`: The document is neither a valid CUIT/CUIL nor a DNI\n\n`method_unavailable`: The payment request cannot be paid by that method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_document": {
+                    "summary": "invalid_document: The document is neither a valid CUIT/CUIL nor a DNI",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_document",
+                      "error": "Bad Request",
+                      "message": "document must be a CUIT/CUIL (11 digits with a valid check digit) or a DNI (7 or 8 digits)",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid by bank transfer",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is processing a payment, was paid or cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`transfer_unavailable`: Bank transfers cannot be offered right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "transfer_unavailable": {
+                    "summary": "transfer_unavailable: Bank transfers cannot be offered right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "transfer_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Bank transfers are not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get bank transfer instructions for a charge (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:transfer",
+            "limit": 10,
+            "windowMs": 60000
+          }
         ],
         "security": []
       }
@@ -19137,6 +19649,10 @@
     {
       "name": "p2p-onramp",
       "description": "Local money in through P2P sellers: the market, a firm quote, purchase sessions that open a hosted purchase delivered to the address you name, and charges in local money shown as a QR that the payer pays on a hosted page."
+    },
+    {
+      "name": "bank-transfers",
+      "description": "Your account for charges paid by bank transfer: open it in your name, complete its verification on a hosted form, and once it is approved the payers of your charges in pesos transfer to its alias and CVU, and the money is converted to your token."
     },
     {
       "name": "p2p-offramp",
@@ -32510,11 +33026,12 @@
             "example": "open",
             "enum": [
               "open",
+              "processing",
               "paid",
               "expired",
               "cancelled"
             ],
-            "description": "`open` until it is paid (`paid`), cancelled (`cancelled`) or past `expiresAt` (`expired`). An expired or cancelled request still turns `paid` when a purchase already under way completes."
+            "description": "`open` until it is paid (`paid`), cancelled (`cancelled`) or past `expiresAt` (`expired`). `processing` once a bank transfer for it arrived and the token is on its way to `address`: it never reads as expired and cannot be cancelled. An expired or cancelled request still turns `paid` when a payment already under way completes."
           },
           "currency": {
             "type": "string",
@@ -32563,6 +33080,21 @@
             "nullable": true,
             "description": "About the token the amount bought at the market price when the request was created, rounded down; null for a token with no USD price. The payer is quoted the firm figure, fees included, before paying."
           },
+          "methods": {
+            "type": "array",
+            "example": [
+              "transfer",
+              "p2p"
+            ],
+            "description": "How the payer can pay it right now, in the order the page offers them: `transfer` (a bank transfer from an account in the payer’s own name; ARS only) and `p2p` (other payment methods, in a hosted window). Decided when the request is created and checked again on every read.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "transfer",
+                "p2p"
+              ]
+            }
+          },
           "url": {
             "type": "string",
             "example": "https://payments.cosmospay.lat/fiat/cmh4x2k9a0001l70g8v5q3z2w",
@@ -32587,19 +33119,29 @@
             "type": "string",
             "example": null,
             "nullable": true,
-            "description": "When this service learned a purchase completed it; null until then."
+            "description": "When this service learned a payment completed it; null until then."
           },
           "paidAmount": {
             "type": "string",
             "example": null,
             "nullable": true,
-            "description": "The token delivered by the purchase that paid it, a decimal string; null until paid."
+            "description": "The token delivered by the payment that paid it, a decimal string; null until paid."
           },
           "paidTxHash": {
             "type": "string",
             "example": null,
             "nullable": true,
-            "description": "The transaction that delivered it on `chainId`; null until paid (or when the marketplace reported none)."
+            "description": "The transaction that delivered it on `chainId`; null until paid (or when the payment reported none)."
+          },
+          "paidMethod": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "enum": [
+              "transfer",
+              "p2p"
+            ],
+            "description": "How it was paid: `transfer` (a bank transfer) or `p2p` (another payment method); null until paid."
           },
           "publicToken": {
             "type": "string",
@@ -32621,13 +33163,15 @@
           "address",
           "description",
           "estimatedAmountOut",
+          "methods",
           "url",
           "qr",
           "expiresAt",
           "createdAt",
           "paidAt",
           "paidAmount",
-          "paidTxHash"
+          "paidTxHash",
+          "paidMethod"
         ]
       },
       "P2pPaymentRequestEntity": {
@@ -32648,11 +33192,12 @@
             "example": "open",
             "enum": [
               "open",
+              "processing",
               "paid",
               "expired",
               "cancelled"
             ],
-            "description": "`open` until it is paid (`paid`), cancelled (`cancelled`) or past `expiresAt` (`expired`). An expired or cancelled request still turns `paid` when a purchase already under way completes."
+            "description": "`open` until it is paid (`paid`), cancelled (`cancelled`) or past `expiresAt` (`expired`). `processing` once a bank transfer for it arrived and the token is on its way to `address`: it never reads as expired and cannot be cancelled. An expired or cancelled request still turns `paid` when a payment already under way completes."
           },
           "currency": {
             "type": "string",
@@ -32701,6 +33246,21 @@
             "nullable": true,
             "description": "About the token the amount bought at the market price when the request was created, rounded down; null for a token with no USD price. The payer is quoted the firm figure, fees included, before paying."
           },
+          "methods": {
+            "type": "array",
+            "example": [
+              "transfer",
+              "p2p"
+            ],
+            "description": "How the payer can pay it right now, in the order the page offers them: `transfer` (a bank transfer from an account in the payer’s own name; ARS only) and `p2p` (other payment methods, in a hosted window). Decided when the request is created and checked again on every read.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "transfer",
+                "p2p"
+              ]
+            }
+          },
           "url": {
             "type": "string",
             "example": "https://payments.cosmospay.lat/fiat/cmh4x2k9a0001l70g8v5q3z2w",
@@ -32725,19 +33285,29 @@
             "type": "string",
             "example": null,
             "nullable": true,
-            "description": "When this service learned a purchase completed it; null until then."
+            "description": "When this service learned a payment completed it; null until then."
           },
           "paidAmount": {
             "type": "string",
             "example": null,
             "nullable": true,
-            "description": "The token delivered by the purchase that paid it, a decimal string; null until paid."
+            "description": "The token delivered by the payment that paid it, a decimal string; null until paid."
           },
           "paidTxHash": {
             "type": "string",
             "example": null,
             "nullable": true,
-            "description": "The transaction that delivered it on `chainId`; null until paid (or when the marketplace reported none)."
+            "description": "The transaction that delivered it on `chainId`; null until paid (or when the payment reported none)."
+          },
+          "paidMethod": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "enum": [
+              "transfer",
+              "p2p"
+            ],
+            "description": "How it was paid: `transfer` (a bank transfer) or `p2p` (another payment method); null until paid."
           }
         },
         "description": "A charge in local money shown as a QR, as its seller reads it: the amount, the token and address it is delivered to, the link and QR to show, and whether it was paid.",
@@ -32754,13 +33324,15 @@
           "address",
           "description",
           "estimatedAmountOut",
+          "methods",
           "url",
           "qr",
           "expiresAt",
           "createdAt",
           "paidAt",
           "paidAmount",
-          "paidTxHash"
+          "paidTxHash",
+          "paidMethod"
         ]
       },
       "P2pPaymentRequestListEntity": {
@@ -32815,11 +33387,12 @@
             "example": "open",
             "enum": [
               "open",
+              "processing",
               "paid",
               "expired",
               "cancelled"
             ],
-            "description": "`open` while it can be paid; `paid`, `expired` or `cancelled` once it cannot. Poll it while the payment window is open."
+            "description": "`open` while it can be paid; `processing` once a bank transfer arrived and the token is on its way to the seller; `paid`, `expired` or `cancelled` once it cannot be paid. Poll it while the payer waits."
           },
           "currency": {
             "type": "string",
@@ -32859,10 +33432,25 @@
             "description": "About the token the seller receives at the market price right now, rounded down; null when the market cannot be read or the token has no USD price."
           },
           "paymentMethods": {
-            "description": "How the amount can be paid right now; empty when the market cannot be read.",
+            "description": "The local methods the hosted window (`p2p`) can take right now; empty when the market cannot be read.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/P2pPaymentMethodEntity"
+            }
+          },
+          "methods": {
+            "type": "array",
+            "example": [
+              "transfer",
+              "p2p"
+            ],
+            "description": "How it can be paid right now, in the order to offer them: `transfer` (`POST /v1/payment-links/fiat/{id}/transfers` answers the bank transfer instructions) and `p2p` (`POST /v1/payment-links/fiat/{id}/sessions` opens the hosted window). Empty when nothing can pay it now.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "transfer",
+                "p2p"
+              ]
             }
           },
           "expiresAt": {
@@ -32895,6 +33483,7 @@
           "tokenAddress",
           "estimatedAmountOut",
           "paymentMethods",
+          "methods",
           "expiresAt",
           "createdAt",
           "paidAt"
@@ -32932,6 +33521,240 @@
         "required": [
           "widgetUrl",
           "reference"
+        ]
+      },
+      "TransferAccountEntity": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "pending",
+            "enum": [
+              "none",
+              "pending",
+              "in_review",
+              "approved",
+              "rejected"
+            ],
+            "description": "`none` (no account yet), `pending` (finish the verification at `verificationUrl`), `in_review`, `approved` (charges can be paid by bank transfer to `alias` / `cvu`) or `rejected` (see `reason`; open it again)."
+          },
+          "type": {
+            "type": "string",
+            "example": "person",
+            "enum": [
+              "person",
+              "company"
+            ],
+            "nullable": true,
+            "description": "`person` or `company`; null with no account."
+          },
+          "name": {
+            "type": "string",
+            "example": "Juan Pérez",
+            "nullable": true,
+            "description": "The name the account is in; null with no account."
+          },
+          "verificationUrl": {
+            "type": "string",
+            "example": "https://verify.example/form/abc",
+            "nullable": true,
+            "description": "The hosted verification form to complete, while `pending` or `in_review`; null otherwise or while it is being prepared (read again in a few seconds)."
+          },
+          "reason": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "Why it was rejected; null unless `rejected`."
+          },
+          "alias": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The alias payers transfer to, once `approved`."
+          },
+          "cvu": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The CVU payers transfer to (22 digits), once `approved`."
+          },
+          "bank": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The bank or wallet that holds it, once `approved`, when known."
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-11-12T12:00:00.000Z",
+            "nullable": true,
+            "description": "When it last changed; null with no account."
+          }
+        },
+        "description": "Your bank transfer account: where payers of your charges transfer pesos, opened in your name once a verification you complete on a hosted form approves it.",
+        "required": [
+          "status",
+          "type",
+          "name",
+          "verificationUrl",
+          "reason",
+          "alias",
+          "cvu",
+          "bank",
+          "updatedAt"
+        ]
+      },
+      "CreateTransferAccountDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "person",
+            "enum": [
+              "person",
+              "company"
+            ],
+            "description": "`person` or `company`."
+          },
+          "name": {
+            "type": "string",
+            "example": "Juan Pérez",
+            "description": "The full legal name (a company’s registered name): the account is opened in it, and payers see it as the holder."
+          },
+          "taxId": {
+            "type": "string",
+            "example": "20-12345678-6",
+            "description": "The CUIT/CUIL (11 digits whose check digit verifies; dashes, dots and spaces allowed). A company gives its CUIT (starting 30, 33 or 34)."
+          },
+          "email": {
+            "type": "string",
+            "example": "juan@example.com",
+            "description": "Where the verification form and the account’s notices are sent."
+          },
+          "phone": {
+            "type": "string",
+            "example": "+5493875551234",
+            "description": "A phone number in international format."
+          },
+          "address": {
+            "type": "string",
+            "example": "Av. Belgrano 123",
+            "description": "The street address."
+          },
+          "city": {
+            "type": "string",
+            "example": "Salta",
+            "description": "The city."
+          },
+          "postalCode": {
+            "type": "string",
+            "example": "4400",
+            "description": "The postal code."
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "example": "1990-01-15",
+            "description": "A person’s date of birth (YYYY-MM-DD); required for `person`."
+          }
+        },
+        "description": "Who the bank transfer account is for: the seller, a person or a company, whose ARS account payers transfer to. Sent to the verification partner; only the name, the type and three digits of the tax id are kept.",
+        "required": [
+          "type",
+          "name",
+          "taxId",
+          "email",
+          "address"
+        ]
+      },
+      "CreateBankTransferDto": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "type": "string",
+            "example": "20-12345678-6",
+            "description": "A CUIT/CUIL (11 digits whose check digit verifies) or a DNI (7 or 8 digits), with or without dashes, dots or spaces. Only an HMAC of its DNI part and its last three digits are kept."
+          }
+        },
+        "description": "The payer’s Argentine CUIT/CUIL or DNI: it identifies their transfer, which must come from an account in their own name.",
+        "required": [
+          "document"
+        ]
+      },
+      "BankTransferEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmh9q1w2e0003l70gq7a1b2c3",
+            "description": "Cosmos Pay id of this transfer."
+          },
+          "status": {
+            "type": "string",
+            "example": "awaiting_deposit",
+            "enum": [
+              "awaiting_deposit",
+              "converting",
+              "completed",
+              "failed",
+              "expired"
+            ],
+            "description": "`awaiting_deposit` until the money arrives (`expired` past `expiresAt`), then `converting` while it becomes the seller’s token, `completed` once delivered, `failed` if the conversion was refused (the money is then refunded by hand). The charge itself reads `processing` and then `paid`."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "The currency to transfer."
+          },
+          "amount": {
+            "type": "string",
+            "example": "15000",
+            "description": "The exact amount to transfer, a decimal string: the charge’s amount, or a few cents more when the same payer has another open charge of that amount with the same seller (so each transfer is told apart). Transfer exactly this."
+          },
+          "alias": {
+            "type": "string",
+            "example": "cosmospay.qr",
+            "description": "The alias of the account to transfer to."
+          },
+          "cvu": {
+            "type": "string",
+            "example": "0000003100000000000000",
+            "description": "The CVU of the same account (22 digits)."
+          },
+          "holder": {
+            "type": "string",
+            "example": "Cosmos Pay",
+            "nullable": true,
+            "description": "Whose name the account is in: the seller’s; null when it is not known."
+          },
+          "bank": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The bank or wallet that holds the account; null when not known."
+          },
+          "documentHint": {
+            "type": "string",
+            "example": "…786",
+            "description": "The last three digits of the document given, to show back. The document itself is never returned or kept."
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-12T13:00:00.000Z",
+            "description": "Until when to transfer: an hour after asking, never past the charge’s own expiry. Asking again with the same document answers the same transfer."
+          }
+        },
+        "description": "How to pay a charge by bank transfer: the exact amount, the account to transfer it to and until when. Transfer from an account in your own name; the transfer is detected on its own.",
+        "required": [
+          "id",
+          "status",
+          "currency",
+          "amount",
+          "alias",
+          "cvu",
+          "holder",
+          "bank",
+          "documentHint",
+          "expiresAt"
         ]
       },
       "CreateProtectedPaymentDto": {
@@ -35800,6 +36623,12 @@
               "protected_payment_signature_invalid",
               "request_closed",
               "webhook_signature_invalid",
+              "invalid_document",
+              "method_unavailable",
+              "transfer_unavailable",
+              "account_required",
+              "account_exists",
+              "invalid_tax_id",
               "misconfigured",
               "internal_error"
             ],

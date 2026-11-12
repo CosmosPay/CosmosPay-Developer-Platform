@@ -15,6 +15,9 @@ import {
   P2P_WEBHOOK_METHODS,
   P2P_WEBHOOK_PATH,
   p2pWebhookRouteUris,
+  TRANSFER_WEBHOOK_METHODS,
+  TRANSFER_WEBHOOK_PATH,
+  transferWebhookRouteUris,
   PAYMENT_LINKS_CORS,
   PAYMENT_LINKS_METHODS,
   paymentLinksRouteUris,
@@ -80,6 +83,28 @@ test('the P2P marketplace webhook is one exact keyless URI, POST only, apart fro
   for (const uri of p2pWebhookRouteUris('/cosmos-api/*')) {
     assert.ok(!others.has(uri), uri);
     // No other keyless prefix swallows it either (their wildcards end in `/*`).
+    for (const other of others) if (other.endsWith('/*')) assert.ok(!uri.startsWith(other.slice(0, -1)), `${uri} under ${other}`);
+  }
+});
+
+test('the bank-transfer webhook is one exact keyless URI, POST only, apart from every other route', () => {
+  assert.equal(TRANSFER_WEBHOOK_PATH, '/v1/onramp/transfer/webhooks');
+  assert.deepEqual(transferWebhookRouteUris('/cosmos-api/*'), ['/cosmos-api/v1/onramp/transfer/webhooks']);
+  assert.deepEqual(transferWebhookRouteUris('"/cosmos-api/"'), ['/cosmos-api/v1/onramp/transfer/webhooks']);
+  // Exact, never a prefix: the seller's transfer account (/v1/onramp/transfer/account) is a consumer's.
+  for (const uri of transferWebhookRouteUris('/cosmos-api/*')) {
+    assert.ok(!uri.includes('*'), uri);
+    assert.ok(!'/cosmos-api/v1/onramp/transfer/account'.startsWith(uri), uri);
+  }
+  assert.deepEqual(TRANSFER_WEBHOOK_METHODS, ['POST']);
+  const others = new Set([
+    ...callbackRouteUris('/cosmos-api/*'),
+    ...paymentLinksRouteUris('/cosmos-api/*'),
+    ...zkCheckoutRouteUris('/cosmos-api/*'),
+    ...p2pWebhookRouteUris('/cosmos-api/*'),
+  ]);
+  for (const uri of transferWebhookRouteUris('/cosmos-api/*')) {
+    assert.ok(!others.has(uri), uri);
     for (const other of others) if (other.endsWith('/*')) assert.ok(!uri.startsWith(other.slice(0, -1)), `${uri} under ${other}`);
   }
 });

@@ -17,6 +17,7 @@
     "aliases",
     "onramp",
     "p2p-onramp",
+    "bank-transfers",
     "p2p-offramp",
     "offramp",
     "kyc",
