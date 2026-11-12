@@ -1,0 +1,97 @@
+/* ============================================================
+   Cosmos Pay: fiat.css
+   The payer's page for a charge in local money (/fiat/{id},
+   src/components/payments/FiatCharge.astro), on the institutional skin and
+   the checkout's vocabulary (checkout.css: .ck-page, .ck-card, .ck-brand,
+   .pp-status). Mobile first: a buyer scans the seller's QR with a phone.
+   The amount in local money is the page's one large element; everything
+   around it stays quiet. Solid colours only.
+   ============================================================ */
+
+.fq { max-width: 520px; }
+.fq-card { padding: clamp(22px, 5vw, 36px); }
+
+/* ---- what is charged ---- */
+.fq-head { margin: 0; }
+.fq-amount {
+  margin: 0; font-size: clamp(40px, 12vw, 60px); font-weight: 600; letter-spacing: -.035em; line-height: 1.05;
+  font-variant-numeric: tabular-nums; color: var(--ink); overflow-wrap: anywhere;
+}
+/* A long figure ("$ 1.250.000,50") steps down so it stays on one line on a phone. */
+.fq-amount[data-long] { font-size: clamp(32px, 8.6vw, 48px); }
+.fq-currency { margin: 6px 0 0; font-size: 14px; color: var(--ink-3); }
+.fq-desc { margin: 14px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; text-wrap: pretty; }
+.fq[data-view="paid"] .fq-amount { color: var(--ok); }
+.fq:is([data-view="expired"], [data-view="cancelled"]) .fq-amount { color: var(--ink-3); }
+
+.fq-status { margin: 20px 0 0; }
+.fq .pp-status .pp-body { font-size: 15px; line-height: 1.5; text-wrap: pretty; }
+/* Waiting on the secure window: the status dot breathes until the charge is paid. */
+.fq .pp-pill[data-phase="waiting"]::before { animation: fq-breathe 1.4s ease-in-out infinite; }
+.fq .pp-pill[data-phase="paid"] { animation: fq-arrive .32s cubic-bezier(.2, .9, .3, 1.2) both; }
+@keyframes fq-breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+@keyframes fq-arrive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* The seller's side, in one line on a quiet well. */
+.fq-receives {
+  margin: 18px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--surface-2);
+  font-size: 14.5px; line-height: 1.45; color: var(--ink-2); overflow-wrap: anywhere;
+}
+
+/* ---- paying ---- */
+.fq-pay, .fq-waiting { margin: 22px 0 0; padding: 22px 0 0; border-top: 1px solid var(--line); }
+.fq-methods { margin: 0; padding: 0; border: 0; min-width: 0; }
+.fq-legend { padding: 0; margin: 0 0 10px; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.fq-method-list { display: grid; gap: 8px; }
+/* Choice cards: the whole row is the radio's label, at least 56px tall for a thumb. */
+.fq-method {
+  display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 12px 16px;
+  border: 1px solid var(--line-2); border-radius: 12px; background: var(--surface);
+  font-size: 16px; line-height: 1.3; color: var(--ink); cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.fq-method:has(.fq-radio:checked) { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.fq-method:has(.fq-radio:disabled) { cursor: default; opacity: .7; }
+@media (hover: hover) { .fq-method:hover:not(:has(.fq-radio:checked)) { border-color: var(--ink-3); } }
+.fq-method-name { min-width: 0; overflow-wrap: anywhere; }
+.fq-radio {
+  appearance: none; flex: 0 0 auto; width: 20px; height: 20px; margin: 0; border-radius: 50%;
+  border: 1.5px solid var(--ink-3); background: var(--surface); transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+.fq-radio:checked { border-color: var(--ink); background: var(--ink); box-shadow: inset 0 0 0 4px var(--surface); }
+.fq-radio:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+
+.fq-error { margin: 10px 0 0; font-size: 14px; line-height: 1.45; color: var(--bad); }
+.fq-cta {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 56px; margin: 18px 0 0; font-size: 1.0625rem; text-align: center;
+}
+.fq-cta[aria-busy="true"] { cursor: progress; }
+/* The spinner in the dark button takes the button's own ink. */
+.fq-busy { width: 16px; height: 16px; border-color: color-mix(in srgb, currentColor 35%, transparent); border-top-color: currentColor; }
+.fq-busy[hidden] { display: none; }
+
+.fq-steps { margin: 18px 0 0; padding: 0 0 0 20px; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+.fq-steps li { padding-left: 4px; text-wrap: pretty; }
+.fq-steps li + li { margin-top: 6px; }
+.fq-steps li::marker { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ---- waiting on the secure window ---- */
+.fq-blocked { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--ink-2); }
+.fq-blocked + .fq-cta { margin-top: 12px; }
+.fq-waiting-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; }
+.fq-link {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none;
+  font: 600 15px/1.3 var(--ff-sans); color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-thickness: 1px; cursor: pointer;
+}
+@media (hover: hover) { .fq-link:hover { text-decoration-thickness: 2px; } }
+.fq-link[hidden] { display: none; }
+
+/* ---- details ---- */
+.fq .fq-facts { margin: 14px 0 0; border-top: 0; }
+.fq .fq-facts .pp-row { padding: 10px 0; }
+
+@media (max-width: 420px) {
+  .fq .fq-facts .pp-row { grid-template-columns: auto 1fr; }
+}

@@ -183,7 +183,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/fiat/{id}` a charge in local money, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:

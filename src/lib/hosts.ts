@@ -8,7 +8,9 @@
  *                                       /fees, /compare, /faq, /stellar, /solana, /monad: every
  *                                       page in src/lib/payments/site-pages.ts), /pay, /contact (the
  *                                       contact form's POST),
- *                                       /{payment link id}, /preview/{design}
+ *                                       /{payment link id}, /fiat/{charge id} (a charge in
+ *                                       local money, src/pages/payments/fiat/[id].astro),
+ *                                       /preview/{design}
  *                                       (pages under src/pages/payments/)
  *
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
@@ -102,6 +104,9 @@ const isSharedPath = (path: string): boolean => SHARED_PATHS.has(path) || isKeyF
 const DUAL_PATHS = new Set(["/swaps"]);
 /* A payment link id (Prisma cuid). Mirrors isPaymentLinkId in src/lib/payments/payment-link.ts. */
 const PAYMENT_LINK_PATH = /^\/c[a-z0-9]{20,31}$/;
+/* A charge in local money ("charge with QR"): its payer page. Mirrors isFiatRequestId in
+   src/lib/payments/fiat-request.ts; anything else under /fiat belongs to nobody. */
+const FIAT_REQUEST_PATH = /^\/fiat\/c[a-z0-9]{20,31}$/;
 
 function hostOf(origin: string): string {
   try {
@@ -166,7 +171,7 @@ export function languagesOf(area: Area, pathname: string): readonly string[] | n
 export function ownerOf(path: string): Area | "home" | null {
   if (path === "/") return "home";
   if (SITE_PATHS.has(path)) return "site";
-  if (path === "/pay" || path === "/contact" || PAYMENTS_PATHS.has(path) || PAYMENT_LINK_PATH.test(path)) return "payments";
+  if (path === "/pay" || path === "/contact" || PAYMENTS_PATHS.has(path) || PAYMENT_LINK_PATH.test(path) || FIAT_REQUEST_PATH.test(path)) return "payments";
   if (PAYMENTS_PREFIXES.some((p) => underPrefix(path, p))) return "payments";
   if (DEV_PREFIXES.some((p) => underPrefix(path, p))) return "dev";
   return null;

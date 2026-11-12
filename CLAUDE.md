@@ -49,7 +49,10 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   and mainnet rows for production, and kept on `globalThis`, so what is created or deleted survives
   a hot reload and is gone after a restart. Sign-out works (a `cosmos-mock-signed-out` cookie) and
   `/login` signs back in. `/invite/<token>` takes `expired`, `accepted`, `mismatch`, `seat_limit` or
-  `invalid` as the token to show those states.
+  `invalid` as the token to show those states. The payer page of a charge in local money,
+  `/fiat/<id>` on the payments host, has fixed ids in `src/lib/mock/fiat-requests.ts` (open ARS
+  with one method, open COP with three, paid, expired, cancelled); an open one turns paid 20 s after
+  its first session, and a session opens the marketplace's sandbox window.
 - **One handler module per area** (`src/lib/mock/handlers/`: `platform`, `payments`, `swaps`,
   `fiat-admin`), each exporting `routes` built with `route()` from `src/lib/mock/http.ts`, typed
   against the interfaces in `src/lib/cosmos.ts`. Shared identities (organizations, their wallets,
@@ -189,7 +192,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/fiat/{id}` a charge in local money, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -421,6 +424,19 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   covers that exact string).
 - **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
   stops on paid, failed and cancelled (`nextPollDelay`).
+- **A charge in local money ("charge with QR") has its own payer page, `/fiat/{id}`**
+  (`src/pages/payments/fiat/[id].astro`, `components/payments/FiatCharge.astro`, vanilla
+  `src/scripts/payments/fiat-request.ts`): a seller's QR for an amount in local money, paid with a
+  local method in the P2P marketplace's secure window, which delivers the crypto to the seller's
+  own wallet. The browser reads `GET /v1/payment-links/fiat/{id}` and opens a session with
+  `POST /v1/payment-links/fiat/{id}/sessions` (both keyless under the payment-links route); the tab
+  is claimed on the click and sent to the window with no opener, a blocked popup becomes a link to
+  tap, and the page waits (reopen, change method; the session kept in sessionStorage) and polls
+  until the server marks the charge paid from the marketplace's webhook. `src/lib/payments/fiat-request.ts`
+  is its trust boundary (`parseFiatRequest`, tested): every field checked, and the window's URL
+  followed only over https on `WIDGET_HOSTS`, the marketplace's own hosts (code, never copy: the
+  marketplace is never named, `noProviderNames.test.ts`). Paid is final; expired and cancelled keep
+  being read slowly (the money can still arrive). Copy in the payments catalog's `fiat` block.
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
   to every payments response.
 - **Only the page's own scripts run on the payments domain** (`src/lib/payments/csp.ts`, security
@@ -1965,7 +1981,11 @@ What this app still does for them:
     CORS from `COSMOS_API_CORS_ORIGINS`.
   - `<route>-payment-links`: the public payment-link read (`/v1/payment-links/*`, GET/OPTIONS),
     made from payers' browsers by the hosted and the embedded checkout, so its CORS is `*`
-    without credentials. No other keyless route lists that URI. The old `<route>-pollar-callback` route is only ever
+    without credentials. No other keyless route lists that URI.
+  - `<route>-p2p-webhooks`: exactly `POST /v1/onramp/p2p/webhooks`, the P2P marketplace's order
+    webhook (server to server, verified by the community server from the marketplace's signature
+    over the raw body), which marks a charge in local money paid. No CORS; every other
+    `/v1/onramp` route stays on the key-auth route. The old `<route>-pollar-callback` route is only ever
     DELETED at boot, never created.
   - `<route>-sep`: `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
     `cors` plugin, because the community server answers CORS itself for those prefixes and two

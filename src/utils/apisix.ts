@@ -14,15 +14,17 @@ import { corsOrigins, rewriteLeavesPath, routeHost, upstreamNodes } from "@/lib/
 import {
   callbackRouteUris,
   entryPrefix,
+  P2P_WEBHOOK_METHODS,
   PAYMENT_LINKS_CORS,
   PAYMENT_LINKS_METHODS,
+  p2pWebhookRouteUris,
   paymentLinksRouteUris,
   ZK_CHECKOUT_CORS,
   ZK_CHECKOUT_METHODS,
   zkCheckoutRouteUris,
 } from "@/lib/apisix-keyless";
 
-export { callbackRouteUris, paymentLinksRouteUris, zkCheckoutRouteUris } from "@/lib/apisix-keyless";
+export { callbackRouteUris, p2pWebhookRouteUris, paymentLinksRouteUris, zkCheckoutRouteUris } from "@/lib/apisix-keyless";
 
 export const keyPrefix = 'cosmos_';
 
@@ -182,6 +184,10 @@ export function paymentLinksRouteId(routeId: string): string {
 
 export function zkCheckoutRouteId(routeId: string): string {
   return `${routeId}-zk-checkout`;
+}
+
+export function p2pWebhookRouteId(routeId: string): string {
+  return `${routeId}-p2p-webhooks`;
 }
 
 /* What the callback route was called while it only served Pollar. The sync still removes
@@ -546,6 +552,25 @@ export async function createZkCheckoutRoute(
     priority: 15,
     methods: ZK_CHECKOUT_METHODS,
     plugins: cosmosRoutePlugins({ keyAuth: false, cors: 'zkCheckout', forwardAuthorization: false }),
+    upstream: roundRobin(upstreamHost),
+  });
+}
+
+/* The keyless route of the P2P marketplace's order webhook (`POST /v1/onramp/p2p/webhooks`, one
+   exact URI: P2P_WEBHOOK_PATH says why it is keyless and why nothing else under /v1/onramp is).
+   Server to server, so no cors plugin; the body and the marketplace's signature headers reach the
+   upstream untouched, which verifies them. Priority 15, above the key-auth route it would
+   otherwise fall to (a 401 for a caller that has no key of ours). */
+export async function createP2pWebhookRoute(
+  routeId: string,
+  entry: string,
+  upstreamHost: string,
+) {
+  return putRoute(p2pWebhookRouteId(routeId), {
+    uris: p2pWebhookRouteUris(entry),
+    priority: 15,
+    methods: P2P_WEBHOOK_METHODS,
+    plugins: cosmosRoutePlugins({ keyAuth: false, cors: false, forwardAuthorization: false }),
     upstream: roundRobin(upstreamHost),
   });
 }
