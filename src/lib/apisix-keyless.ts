@@ -125,6 +125,28 @@ export function p2pWebhookRouteUris(entry: string): string[] {
 
 export const P2P_WEBHOOK_METHODS = ['POST'];
 
+/* The bank-transfer provider's webhook (`POST /v1/onramp/transfer/webhooks`, `@Public()` on the
+   community server): the provider calls it server to server when a deposit reaches a seller's
+   account and when the conversion it starts completes, and that marks the charge in local money
+   processing, then paid (the payer page at payments.cosmospay.lat/fiat/{id} waits on both). The
+   caller holds no API key of ours; what authenticates it is its own signature, an HMAC-SHA256 of
+   the raw body with a secret only the server and the provider hold, sent in a header, so the route
+   must pass the body and that header untouched, which the shared plugin stack does (it strips only
+   our own credentials and markers).
+
+   Exactly this path and this method, like the marketplace's webhook: every other route under
+   `/v1/onramp` (the seller's transfer account, sessions, quotes, payment requests) belongs to a
+   consumer and stays on the key-auth route, so the URI is exact, never a prefix. No CORS plugin:
+   no browser calls it. */
+export const TRANSFER_WEBHOOK_PATH = '/v1/onramp/transfer/webhooks';
+
+/* The gateway URI of the bank-transfer webhook: one exact path. */
+export function transferWebhookRouteUris(entry: string): string[] {
+  return [`${entryPrefix(entry)}${TRANSFER_WEBHOOK_PATH}`];
+}
+
+export const TRANSFER_WEBHOOK_METHODS = ['POST'];
+
 export const PAYMENT_LINKS_CORS = {
   allow_origins: '*',
   allow_methods: PAYMENT_LINKS_METHODS.join(','),
