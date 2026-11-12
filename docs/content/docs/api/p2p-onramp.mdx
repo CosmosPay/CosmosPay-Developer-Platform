@@ -39,12 +39,6 @@ _openapi:
     - depth: 2
       title: Cancel a payment request in local money
       url: '#cancel-a-payment-request-in-local-money'
-    - depth: 2
-      title: Read the bank-transfer account
-      url: '#read-the-bank-transfer-account'
-    - depth: 2
-      title: Activate bank transfers
-      url: '#activate-bank-transfers'
   structuredData:
     headings:
       - content: Read what can be bought with local money
@@ -67,10 +61,6 @@ _openapi:
         id: read-a-payment-request-in-local-money
       - content: Cancel a payment request in local money
         id: cancel-a-payment-request-in-local-money
-      - content: Read the bank-transfer account
-        id: read-the-bank-transfer-account
-      - content: Activate bank transfers
-        id: activate-bank-transfers
     contents:
       - content: >-
           The currencies a buyer can pay with on the key's network (a `prod` key
@@ -157,65 +147,40 @@ _openapi:
         heading: list-the-payment-requests-in-local-money
       - content: >-
           Creates a payment request: show its `url` (or `qr`) to the payer, who
-          pays `amount` of `currency` with a local method in a hosted window,
-          the token delivered by the P2P marketplace straight to `address` on
-          `chainId`, or (`methods` includes `transfer`: ARS, once the consumer’s
-          bank-transfer account is approved) by bank transfer to that account,
-          the deposit then converted and delivered to `address`. The terms are
-          checked against the market like a purchase (`400 validation_failed`
-          with the reason), on the key’s network, and the request can be paid
-          until `expiresAt`. The shared public key also gets `publicToken`, the
-          only way it reads the request back.
+          pays `amount` of `currency` by bank transfer (ARS, where `methods` has
+          `transfer`) or with another local method in a hosted window (`p2p`),
+          and the token is delivered to `address` on `chainId`. It is created
+          when at least one method takes the terms, on the key’s network; when
+          none does, the market’s check of the terms is the answer (`400
+          validation_failed` with the reason). It can be paid until `expiresAt`.
+          The shared public key also gets `publicToken`, the only way it reads
+          the request back.
 
 
           Requires the `onramp:write` scope. The shared public key may call it.
         heading: charge-in-local-money-with-a-qr
       - content: >-
           One payment request of this key's consumer on the key's network: poll
-          it to learn when it is `paid` (with the token delivered and its
-          transaction). Another consumer's request, or one on the other network,
-          is the 404 of a missing one. The shared public key reads a request
-          only with its `publicToken` in `X-Record-Token`; without it, or with
-          another request’s, the answer is that 404.
+          it to learn when it is `processing` (a bank transfer arrived) and
+          `paid` (with the token delivered, its transaction and `paidMethod`).
+          Another consumer's request, or one on the other network, is the 404 of
+          a missing one. The shared public key reads a request only with its
+          `publicToken` in `X-Record-Token`; without it, or with another
+          request’s, the answer is that 404.
 
 
           Requires the `onramp:read` scope. The shared public key may call it.
         heading: read-a-payment-request-in-local-money
       - content: >-
           Stops an open request from being paid: its page refuses new payments.
-          A payment already under way in the hosted window may still complete,
-          and the request then reads `paid`. A request that is not open
-          (processing, paid, expired or cancelled) is `409 request_closed`. The
-          shared public key cancels only with the request’s `publicToken` in
-          `X-Record-Token`.
+          A payment already under way may still complete, and the request then
+          reads `processing` or `paid`. A request that is not open (processing,
+          paid, expired or cancelled) is `409 request_closed`. The shared public
+          key cancels only with the request’s `publicToken` in `X-Record-Token`.
 
 
           Requires the `onramp:write` scope. The shared public key may call it.
         heading: cancel-a-payment-request-in-local-money
-      - content: >-
-          The consumer’s account for payments by bank transfer: its status, the
-          verification form while it is pending, and its alias and CVU once
-          approved. `none` before it is activated. The shared public key cannot
-          hold one (`403 account_required`).
-
-
-          Requires the `onramp:read` scope.
-        heading: read-the-bank-transfer-account
-      - content: >-
-          Activates the consumer’s account for payments by bank transfer: the
-          holder’s details start a verification the holder completes at
-          `verificationUrl` (status `pending`, then `in_review`). Once
-          `approved` the account has its own alias and CVU in the holder’s name,
-          and the consumer’s payment requests in ARS take `transfer`. `400
-          invalid_tax_id` for a tax id that is not a valid CUIT/CUIL (a
-          company’s must be a CUIT); `409 account_exists` while one exists that
-          was not rejected (a rejected one is retried by activating again); `503
-          transfer_unavailable` while bank transfers are down. The shared public
-          key cannot activate one (`403 account_required`).
-
-
-          Requires the `onramp:write` scope.
-        heading: activate-bank-transfers
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
@@ -225,7 +190,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/onramp/p2p/market","method":"get"},{"path":"/v1/onramp/p2p/tokens","method":"get"},{"path":"/v1/onramp/p2p/quotes","method":"post"},{"path":"/v1/onramp/p2p/sessions","method":"get"},{"path":"/v1/onramp/p2p/sessions","method":"post"},{"path":"/v1/onramp/p2p/sessions/{id}","method":"get"},{"path":"/v1/onramp/p2p/payment-requests","method":"get"},{"path":"/v1/onramp/p2p/payment-requests","method":"post"},{"path":"/v1/onramp/p2p/payment-requests/{id}","method":"get"},{"path":"/v1/onramp/p2p/payment-requests/{id}/cancel","method":"post"},{"path":"/v1/onramp/transfer/account","method":"get"},{"path":"/v1/onramp/transfer/account","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/onramp/p2p/market","method":"get"},{"path":"/v1/onramp/p2p/tokens","method":"get"},{"path":"/v1/onramp/p2p/quotes","method":"post"},{"path":"/v1/onramp/p2p/sessions","method":"get"},{"path":"/v1/onramp/p2p/sessions","method":"post"},{"path":"/v1/onramp/p2p/sessions/{id}","method":"get"},{"path":"/v1/onramp/p2p/payment-requests","method":"get"},{"path":"/v1/onramp/p2p/payment-requests","method":"post"},{"path":"/v1/onramp/p2p/payment-requests/{id}","method":"get"},{"path":"/v1/onramp/p2p/payment-requests/{id}/cancel","method":"post"}]} showTitle />
     </>
   );
 }

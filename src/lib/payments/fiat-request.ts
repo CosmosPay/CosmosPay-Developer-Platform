@@ -496,7 +496,7 @@ export function transferPhaseOf(transfer: Pick<BankTransfer, "status" | "expires
 
 export type BankTransferResult =
   | { kind: "ok"; transfer: BankTransfer }
-  /** 400 `invalid_document`: not a CUIT/CUIL or DNI the server accepts. */
+  /** 400 `invalid_document` (or `validation_failed`): not a CUIT/CUIL or DNI the server accepts. */
   | { kind: "invalid-document" }
   /** 400 `method_unavailable`: this charge cannot be paid by bank transfer (any more). */
   | { kind: "method-unavailable" }
@@ -537,7 +537,8 @@ export async function startBankTransfer(
     if (res.status === 429) return { kind: "rate-limited", retryAfterMs: retryAfter(res) };
     if (!res.ok) {
       const code = await errorCode(res);
-      if (code === "invalid_document") return { kind: "invalid-document" };
+      // The body is the document alone: a `validation_failed` is the document's shape too.
+      if (code === "invalid_document" || code === "validation_failed") return { kind: "invalid-document" };
       if (code === "method_unavailable") return { kind: "method-unavailable" };
       if (code === "transfer_unavailable") return { kind: "unavailable" };
       if (code === "request_closed" || res.status === 409 || res.status === 404) return { kind: "closed" };

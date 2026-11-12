@@ -158,7 +158,8 @@ test('asking for the instructions posts the document and maps every refusal to i
   assert.equal(await kind(404, { code: 'not_found' }), 'closed');
   assert.equal(await kind(503, { code: 'transfer_unavailable' }), 'unavailable');
   assert.equal(await kind(503, {}), 'unavailable');
-  assert.equal(await kind(400, { code: 'validation_failed' }), 'error');
+  assert.equal(await kind(400, { code: 'validation_failed', message: ['document must be a string'] }), 'invalid-document');
+  assert.equal(await kind(400, { message: 'Bad Request' }), 'error');
   assert.equal(await kind(500, null), 'error');
   assert.deepEqual(await startBankTransfer('https://api.example', ID, '12345678', fakeFetch(429, {}, { 'retry-after': '9' }).fetch), { kind: 'rate-limited', retryAfterMs: 9000 });
   // Instructions that are not the contract (a broken CVU) are an error: nothing is shown.

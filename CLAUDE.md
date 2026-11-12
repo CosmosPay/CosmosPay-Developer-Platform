@@ -1155,7 +1155,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (holder: person or company, name, CUIT/CUIL for that kind of holder, a person's date of birth;
   contact; address), `payments:create` only; pending and in review link the provider's hosted
   verification form and refresh. Checks in `src/lib/transfer-account.ts`
-  (`tests/unit/transferAccount.test.ts`).
+  (`tests/unit/transferAccount.test.ts`). One account per consumer and network (Sandbox and
+  Production each have theirs); its routes are the API reference's "Bank transfers" page (the
+  server's `bank-transfers` tag, in `TAGS` of `docs/scripts/transform-spec.mjs`).
 
 ### The payments landing
 

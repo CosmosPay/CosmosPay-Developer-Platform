@@ -4,8 +4,12 @@
    account: the seller activates it with their tax details, the payment provider verifies them on a
    form it hosts, and once approved the account has its own alias and CVU in the seller's name, so
    the payer's money lands there. The community server's `GET /v1/onramp/transfer/account` answers
-   the account (TransferAccount) and `POST` starts it; both go through the dashboard's /api/onramp
-   proxy. The provider is never named in copy.
+   the account (TransferAccountEntity, its `bank-transfers` tag) and `POST` opens it, or submits a
+   rejected one again; both go through the dashboard's /api/onramp proxy. There is one per consumer
+   and network, so the Sandbox and Production each have their own; the shared public key holds none
+   (`403 account_required`). The server needs only the type, name, tax id, email and address (a
+   person's date of birth too); the form asks for the phone, city and postal code as well, which the
+   verification asks for anyway. The provider is never named in copy.
 
    Pure (no React, no DOM, no astro:env), so tests/unit/transferAccount.test.ts and the mock API
    (src/lib/mock/transfer-account.ts) reach it. Every value the card shows or opens is checked here:
