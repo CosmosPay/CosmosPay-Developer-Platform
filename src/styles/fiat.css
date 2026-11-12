@@ -155,6 +155,8 @@
    and a wrapped line starts flush. */
 .fq-v-cvu { display: flex; flex-wrap: wrap; column-gap: .34em; letter-spacing: .02em; }
 .fq-note { font-size: 13px; line-height: 1.45; color: var(--ink-2); text-wrap: pretty; }
+/* Cents the payer must not round away: said in the ink, not the quiet grey. */
+.fq-cents { font-weight: 600; color: var(--ink); }
 .fq-plainrow { padding: 12px 0; }
 .fq-plainrow .fq-v { font-size: 15.5px; }
 .fq-copy {

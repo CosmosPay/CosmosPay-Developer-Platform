@@ -15072,7 +15072,7 @@
     },
     "/v1/payment-links/fiat/{id}/transfers": {
       "post": {
-        "description": "For the hosted page of a payment request whose `methods` include `transfer`: answers the deposit instructions for the payer, the exact amount, the alias and CVU of the seller’s account, the holder and until when. The payer transfers from an account in their own name, and the deposit is matched to the request by that document; the request then reads `processing` and, once the token is delivered, `paid`. The same document answers the same instructions while they hold (200); another one gets its own (201). `400 invalid_document` for a document that is not a CUIT/CUIL or DNI; `400 method_unavailable` when the request cannot be paid by bank transfer; `409 request_closed` unless the request is `open`; `503 transfer_unavailable` while bank transfers are down. Answered with `Cache-Control: no-store` and budgeted per client address.",
+        "description": "For the hosted page of a payment request whose `methods` include `transfer`: answers the deposit instructions for the payer: the exact amount (which can differ from the request’s by a few cents, to tell two transfers of the same payer apart), the alias and CVU of the seller’s account, the holder and until when. The payer transfers from an account in their own name, and the deposit is matched to the request by that document; the request then reads `processing` and, once the token is delivered, `paid`. The same document answers the same instructions while they hold (200); another one gets its own (201). `400 invalid_document` for a document that is not a CUIT/CUIL or DNI; `400 method_unavailable` when the request cannot be paid by bank transfer; `409 request_closed` unless the request is `open`; `503 transfer_unavailable` while bank transfers are down. Answered with `Cache-Control: no-store` and budgeted per client address.",
         "operationId": "P2pPaymentLinksController_startTransfer_v1",
         "parameters": [
           {
@@ -36356,8 +36356,8 @@
           },
           "amount": {
             "type": "string",
-            "example": "15000",
-            "description": "The exact amount to transfer, in local money, in one transfer."
+            "example": "15000.37",
+            "description": "The exact amount to transfer, in local money, in one transfer, cents included. It can differ from the request’s `amount` by a few cents, which tell two transfers of the same payer apart: show and ask for this one, never the request’s."
           },
           "alias": {
             "type": "string",

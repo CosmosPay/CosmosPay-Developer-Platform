@@ -55,7 +55,8 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   `handlers/p2p-ramp.ts`): fixed ids per environment (production: open ARS with one method, open
   COP with three, paid, expired, cancelled; the sandbox: open, paid, expired, cancelled; plus the
   bank transfer's: `methods` both ways, transfer only and window only, a processing one, one paid by
-  transfer with no transaction). An open one turns paid 20 s after its first session; after a bank
+  transfer with no transaction; the sandbox's open one answers a transfer 37 cents above its
+  amount). An open one turns paid 20 s after its first session; after a bank
   transfer is started it reads processing 8 s later and paid 20 s later (the DNI 99999999 answers
   503 `transfer_unavailable`); one created in the dashboard does the same by itself (it opens on the
   local payer page too), and a session opens the marketplace's sandbox window. The organization's
@@ -452,7 +453,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   here and on the server), `POST /v1/payment-links/fiat/{id}/transfers` answers the deposit
   instructions (`parseBankTransfer`: the CVU's check digits too) and the page shows the exact
   amount, the alias and the CVU with copy buttons, the holder (the seller's name) and how long they
-  hold; the instructions, never the document, stay in sessionStorage per charge, and the page reads
+  hold. The amount is always the transfer's own, never the charge's: the server may add a few cents
+  to tell two transfers of the same payer apart, and then the card says to send the cents too; the instructions, never the document, stay in sessionStorage per charge, and the page reads
   the charge every 5 s: `processing` once the transfer arrived (never expired, not cancellable),
   then `paid`. The bank-transfer provider is never named either; its webhook,
   `POST /v1/onramp/transfer/webhooks`, has its own keyless gateway route (`<route>-transfer-webhooks`,

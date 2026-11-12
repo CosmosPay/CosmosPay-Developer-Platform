@@ -157,6 +157,7 @@ const copyRows = [
               <span class="fq-k">{t.amountLabel}</span>
               <span class="fq-v fq-v-amount" data-slot="t-amount"></span>
               <span class="fq-note">{t.exactNote}</span>
+              <span class="fq-note fq-cents" data-slot="t-cents" hidden>{t.centsNote}</span>
             </div>
             <button class="pp-copy fq-copy" type="button" data-copy="amount" data-label={t.amountLabel} aria-label={`${t.copy}: ${t.amountLabel}`}>{t.copy}</button>
           </div>

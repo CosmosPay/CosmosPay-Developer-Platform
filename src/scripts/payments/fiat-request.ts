@@ -46,6 +46,7 @@ import {
   safeWidgetUrl,
   startBankTransfer,
   transferAmountToCopy,
+  transferHasCents,
   transferPhaseOf,
   type BankTransfer,
   type FiatMethod,
@@ -317,7 +318,9 @@ export function startFiatRequest(): void {
     const tr = transfer;
     const shown = !!tr && (view === "transfer" || view === "transfer-expired");
     if (tr && shown) {
+      // The transfer's own amount, cents included: it can differ from the charge's by a few cents.
       text("t-amount", formatMoney(tr.amount, tr.currency, lang));
+      hide("t-cents", !transferHasCents(tr.amount));
       text("t-alias", tr.alias);
       // The CVU in groups of four to read it; the groups are spans, so a selection copies digits only.
       const cvu = slot("t-cvu");

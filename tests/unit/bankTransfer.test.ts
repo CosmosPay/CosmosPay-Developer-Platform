@@ -19,9 +19,10 @@ import {
   readStoredTransfer,
   startBankTransfer,
   transferAmountToCopy,
+  transferHasCents,
   transferPhaseOf,
 } from '@/lib/payments/fiat-request';
-import { FIAT_FIXTURE_IDS, PAID_AFTER_MS, TRANSFER_RECEIVED_MS, fiatRequestRoute } from '@/lib/mock/fiat-requests';
+import { FIAT_FIXTURE_IDS, FIAT_SANDBOX_FIXTURE_IDS, PAID_AFTER_MS, TRANSFER_RECEIVED_MS, fiatRequestRoute } from '@/lib/mock/fiat-requests';
 
 const ID = 'cmh4x2k9a0001l70g8v5q3z2w';
 
@@ -127,6 +128,13 @@ test('instructions past their deadline read expired; the amount copies as a bank
   assert.equal(transferAmountToCopy('15000'), '15000');
   assert.equal(transferAmountToCopy('15000.5'), '15000,50');
   assert.equal(transferAmountToCopy('48250.25'), '48250,25');
+  assert.equal(transferAmountToCopy('15000.37'), '15000,37');
+  // Cents the server added (to tell two transfers apart) must be sent: the page says so.
+  assert.ok(transferHasCents('15000.37'));
+  assert.ok(transferHasCents('15000.5'));
+  assert.ok(!transferHasCents('15000'));
+  assert.ok(!transferHasCents('15000.00'));
+  assert.equal(parseBankTransfer(transfer({ amount: '15000.37' }))?.amount, '15000.37');
   assert.equal(expiresIn('2026-11-12T12:58:00.000Z', 'en', now), 'in 58 minutes');
   assert.equal(expiresIn('2026-11-12T14:00:00.000Z', 'en', now), 'in 2 hours');
   assert.match(expiresIn('2026-11-12T12:30:00.000Z', 'es', now) ?? '', /30 minutos/);
@@ -218,6 +226,17 @@ test('the mock answers instructions as the server would, and refuses what it ref
   const other = await post(id, { document: '27-28033514-8' });
   assert.equal(other.status, 201);
   assert.notEqual(parseBankTransfer(await other.json())?.id, first.id);
+});
+
+test('the mock has a transfer whose amount carries cents the charge does not', async () => {
+  const id = FIAT_SANDBOX_FIXTURE_IDS.open;
+  const charge = parseFiatRequest(await (await get(id)).json());
+  assert.equal(charge?.amount, '12500');
+  const res = await post(id, { document: '20-12345678-6' });
+  assert.equal(res.status, 201);
+  const t = parseBankTransfer(await res.json());
+  assert.equal(t?.amount, '12500.37');
+  assert.ok(t && transferHasCents(t.amount));
 });
 
 test('the demo charge goes open, processing, paid after a transfer is started', async () => {

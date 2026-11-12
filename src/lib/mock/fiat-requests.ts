@@ -20,7 +20,9 @@
      cqrdemoarsexpired0000004  expired
      cqrdemoarscancel00000005  cancelled
    The sandbox's (the dashboard's Sandbox list, Arbitrum Sepolia's test USDT):
-     cqrdemotestopen000000006  open, bank transfer or another method
+     cqrdemotestopen000000006  open, bank transfer or another method; its transfer asks for 37
+                               cents more (12500.37), as the server does to tell two of the same
+                               payer's transfers apart
      cqrdemotestprocessing013  processing
      cqrdemotestpaid000000007  paid, with its delivery transaction
      cqrdemotestexpired000008  expired
@@ -95,6 +97,9 @@ interface MockFiatRequest {
   payAt: number | null;
   /** Mock only: the transfers started, one per document. */
   transfers: MockTransfer[];
+  /** Mock only: the cents a transfer adds to the amount (the server's way to tell two of the same
+      payer's transfers apart); null for none. */
+  transferCents?: string | null;
   /** Mock only: the seller's address the session's window carries (never in the public read). */
   address: string;
 }
@@ -209,7 +214,7 @@ function seed(): Record<string, MockFiatRequest> {
     {
       ...sandbox, id: FIAT_SANDBOX_FIXTURE_IDS.open, status: "open", currency: "ARS", amount: "12500", description: "Mesa 7",
       estimatedAmountOut: "12.61", paymentMethods: ARS_METHODS, methods: BOTH, expiresAt: hoursFromNow(23), createdAt: hoursAgo(0.6),
-      address: evmAddress("fiat-seller-test"),
+      address: evmAddress("fiat-seller-test"), transferCents: "0.37",
     },
     {
       ...sandbox, id: FIAT_SANDBOX_FIXTURE_IDS.processing, status: "processing", currency: "ARS", amount: "9800", description: "Pedido 91",
@@ -440,7 +445,7 @@ async function startTransfer(request: Request, r: MockFiatRequest, json: Json): 
     id: cuid(`fiat-transfer:${r.id}:${dni}:${now}`),
     dni,
     currency: r.currency,
-    amount: r.amount,
+    amount: r.transferCents ? (Number(r.amount) + Number(r.transferCents)).toFixed(2) : r.amount,
     documentHint: `…${dni.slice(-3)}`,
     expiresAt: new Date(Math.min(now + TRANSFER_TTL_MS, Date.parse(r.expiresAt))).toISOString(),
   };

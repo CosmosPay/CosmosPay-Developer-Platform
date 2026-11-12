@@ -411,7 +411,9 @@ export interface BankTransfer {
   status: BankTransferStatus;
   /** ISO 4217, ARS today. */
   currency: string;
-  /** The exact amount to transfer, in local money. */
+  /** The exact amount to transfer, in local money. It can differ from the charge's amount by a
+      few cents (the server tells two transfers of the same payer apart by them): the page always
+      shows and copies this one, never the charge's. */
   amount: string;
   alias: string;
   /** 22 digits. */
@@ -572,6 +574,13 @@ export function readStoredTransfer(raw: string | null, now: number = Date.now())
 export function transferAmountToCopy(amount: string): string {
   const [whole, cents] = amount.split(".");
   return cents === undefined ? whole : `${whole},${cents.padEnd(2, "0")}`;
+}
+
+/** The amount carries cents other than zero ("15000.37"): the payer must send them too, or the
+    deposit is not matched to this transfer. */
+export function transferHasCents(amount: string): boolean {
+  const cents = amount.split(".")[1] ?? "";
+  return /[1-9]/.test(cents);
 }
 
 /** A CVU in groups of four digits to read it ("0000 0031 …"); the copy button copies it whole. */
