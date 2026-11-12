@@ -49,10 +49,14 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   and mainnet rows for production, and kept on `globalThis`, so what is created or deleted survives
   a hot reload and is gone after a restart. Sign-out works (a `cosmos-mock-signed-out` cookie) and
   `/login` signs back in. `/invite/<token>` takes `expired`, `accepted`, `mismatch`, `seat_limit` or
-  `invalid` as the token to show those states. The payer page of a charge in local money,
-  `/fiat/<id>` on the payments host, has fixed ids in `src/lib/mock/fiat-requests.ts` (open ARS
-  with one method, open COP with three, paid, expired, cancelled); an open one turns paid 20 s after
-  its first session, and a session opens the marketplace's sandbox window.
+  `invalid` as the token to show those states. Charges in local money ("QR charges") are one
+  store, `src/lib/mock/fiat-requests.ts`, for the payer page (`/fiat/<id>` on the payments host)
+  and the dashboard's Fiat > QR charges (`/api/onramp/p2p/payment-requests`, answered in
+  `handlers/p2p-ramp.ts`): fixed ids per environment (production: open ARS with one method, open
+  COP with three, paid, expired, cancelled; the sandbox: open, paid, expired, cancelled). An open
+  one turns paid 20 s after its first session, one created in the dashboard 20 s after it was
+  created (it opens on the local payer page too), and a session opens the marketplace's sandbox
+  window.
 - **One handler module per area** (`src/lib/mock/handlers/`: `platform`, `payments`, `swaps`,
   `fiat-admin`), each exporting `routes` built with `route()` from `src/lib/mock/http.ts`, typed
   against the interfaces in `src/lib/cosmos.ts`. Shared identities (organizations, their wallets,
@@ -1106,6 +1110,24 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - Mock mode: `src/lib/mock/handlers/p2p-ramp.ts` over `p2p-ramp-market.ts`, the marketplace's
   market recorded on 2026-11-05 for both environments (each network's main assets, in the API's
   order, then a few others).
+- **QR charges (`?view=charges`, `views/QrChargesView.tsx`, third in the Fiat group)**: a charge in
+  local money shown as a QR, which the payer pays on `/fiat/{id}` (see "The payments domain") and
+  the marketplace delivers to the organization's own EVM account. The Payments API's
+  `/v1/onramp/p2p/payment-requests` (list, create, read, cancel) through the same `/api/onramp`
+  proxy, so no route of its own. The Payments table (figures counted from the list, status,
+  currency, network and date filters, rows opening the detail); the detail draws the API's QR only
+  when it is a PNG data URL (`safeQrDataUrl`) and the link only when it is that charge's
+  `/fiat/<id>` (`safeChargeUrl`), reads an open charge every 5 s until it is paid, and cancel asks
+  first. "New charge" is a dialog in three steps: the amount in local money (two decimals, at least
+  the market's minimum) with the market price's estimate of the token; the token on its network and
+  the receiving account, one of the organization's EVM wallets (Monad's, proven with a
+  `personal_sign`, are plain EVM accounts with the same address on every EVM network) or a typed
+  address checked against its EIP-55 checksum (the one place a payment form takes a typed address:
+  the server does not verify it either, so the hint says it must be an account the merchant controls
+  on that network); then the description (one line, 140 characters) and how long it can be paid
+  (1 hour, 24 hours, 7 days, 30 days), with who does each step once the QR is shown. The checks are
+  `src/lib/qr-charges.ts` (`tests/unit/qrCharges.test.ts`, which also holds the mock's answers
+  against `docs/openapi.json`'s `P2pPaymentRequestEntity`).
 
 ### The payments landing
 

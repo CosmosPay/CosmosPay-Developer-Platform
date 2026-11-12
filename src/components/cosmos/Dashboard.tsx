@@ -16,7 +16,7 @@ import { DI } from "@/components/cosmos/dashboard/icons";
 import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS, RECORD_VIEWS } from "@/components/cosmos/dashboard/data";
 import { OPEN_RECORD_EVENT, FILTERS_EVENT } from "@/components/cosmos/dashboard/hooks";
 import {
-  OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, ZkAccountsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView, P2pRampView,
+  OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, ZkAccountsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView, P2pRampView, QrChargesView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
@@ -428,6 +428,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
       case "onramp": return <P2pRampView key="buy" side="buy" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "offramp": return <P2pRampView key="sell" side="sell" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "charges": return <QrChargesView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;

@@ -1348,3 +1348,33 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .fbar.liq-lookup .fbar-filters { align-items: flex-end; flex: 1 1 auto; }
 .fbar.liq-lookup .fbar-filters > .fld, .fbar.liq-lookup .fbar-filters > div { margin: 0; min-width: 220px; }
 .fbar.liq-lookup .paylink-actions { margin: 0; }
+
+/* ---- QR charges (views/QrChargesView.tsx): the list's description and network lines, the detail's
+   QR beside its fields (stacked on a phone), the create dialog's estimate ---- */
+.qrc-name { display: block; max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--ink); }
+.qrc-sub { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; line-height: 1.3; color: var(--ink-3); }
+.qrc-state { display: flex; align-items: center; gap: 10px; margin: 2px 0 0; }
+.qrc-body { display: grid; gap: 20px; margin: 16px 0 18px; }
+.qrc-body.has-qr { grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+.qrc-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0; }
+.qrc-info { display: grid; gap: 14px; min-width: 0; }
+.qrc-info .paylink-block { margin: 0; }
+.qrc-info .paylink-fields { margin-top: 0; }
+/* A field's label gives way before its value: an amount and its token stay on one line. */
+.qrc-info .pf-k { flex: 0 1 auto; min-width: 0; }
+.qrc-info .pf-v { flex: 0 0 auto; max-width: 70%; word-break: normal; overflow-wrap: break-word; }
+.qrc-est { min-height: 22px; margin: 10px 6px 0; font-size: 15px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.qrc-get { margin-bottom: 18px; }
+.qrc-flow { margin: 18px 0 0; }
+/* Who does each step: the number, the step, who; on a phone who goes under the step, beside the number. */
+.zka-sigs.qrc-flow li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 12px; row-gap: 2px; }
+.qrc-wait { display: grid; gap: 12px; margin-top: 12px; }
+.qrc-form .seg-fill { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.qrc-form .seg-fill button { white-space: nowrap; }
+@media (max-width: 640px) {
+  .qrc-body.has-qr { grid-template-columns: minmax(0, 1fr); }
+  .qrc-name { max-width: 10em; }
+  .qrc-form .seg-fill { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .zka-sigs.qrc-flow li { grid-template-columns: auto minmax(0, 1fr); }
+  .zka-sigs.qrc-flow .zka-sig-who { grid-column: 2; justify-content: flex-start; padding-left: 0; }
+}

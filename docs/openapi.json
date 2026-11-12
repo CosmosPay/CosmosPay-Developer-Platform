@@ -14363,6 +14363,557 @@
         ]
       }
     },
+    "/v1/onramp/p2p/payment-requests": {
+      "post": {
+        "description": "Creates a payment request: show its `url` (or `qr`) to the payer, who pays `amount` of `currency` with a local method in a hosted window, and the token is delivered by the P2P marketplace straight to `address` on `chainId`; Cosmos Pay never holds the money. The terms are checked against the market like a purchase (`400 validation_failed` with the reason), on the key’s network, and the request can be paid until `expiresAt`. The shared public key also gets `publicToken`, the only way it reads the request back.\n\nRequires the `onramp:write` scope. The shared public key may call it.",
+        "operationId": "P2pPaymentRequestsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateP2pPaymentRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pPaymentRequestCreatedEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Charge in local money with a QR",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "onramp-p2p:payment-request",
+            "limit": 20,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ]
+      },
+      "get": {
+        "description": "The payment requests this key's consumer created on the key's network, newest first, from this service's records. Paginated with `take` (default 100, max 100) and `skip`; answers `{ data, total, take, skip }`, where `total` counts every matching request.\n\nRequires the `onramp:read` scope.",
+        "operationId": "P2pPaymentRequestsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Page size: how many items to return (1 to 100).",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "description": "How many items to skip before this page (offset).",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pPaymentRequestListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the payment requests in local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ]
+      }
+    },
+    "/v1/onramp/p2p/payment-requests/{id}": {
+      "get": {
+        "description": "One payment request of this key's consumer on the key's network: poll it to learn when it is `paid` (with the token delivered and its transaction). Another consumer's request, or one on the other network, is the 404 of a missing one. The shared public key reads a request only with its `publicToken` in `X-Record-Token`; without it, or with another request’s, the answer is that 404.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
+        "operationId": "P2pPaymentRequestsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Cosmos Pay id of the payment request.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "Required with the shared public key: the `publicToken` the create response returned for this record. Without it, or with the token of another record, the answer is 404, as for a record that does not exist. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pPaymentRequestEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a payment request in local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "onramp:read"
+        ]
+      }
+    },
+    "/v1/onramp/p2p/payment-requests/{id}/cancel": {
+      "post": {
+        "description": "Stops an open request from being paid: its page refuses new payments. A payment already under way in the hosted window may still complete, and the request then reads `paid`. A request that is not open (paid, expired or cancelled) is `409 request_closed`. The shared public key cancels only with the request’s `publicToken` in `X-Record-Token`.\n\nRequires the `onramp:write` scope. The shared public key may call it.",
+        "operationId": "P2pPaymentRequestsController_cancel_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Cosmos Pay id of the payment request.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Record-Token",
+            "in": "header",
+            "description": "Required with the shared public key: the `publicToken` the create response returned for this record. Without it, or with the token of another record, the answer is 404, as for a record that does not exist. Ignored for every other API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pPaymentRequestEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The request was already paid, cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: only an open one can be cancelled",
+                      "path": "/v1/onramp/p2p/payment-requests/cmh4x2k9a0001l70g8v5q3z2w/cancel",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Cancel a payment request in local money",
+        "tags": [
+          "p2p-onramp"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "onramp:write"
+        ]
+      }
+    },
+    "/v1/payment-links/fiat/{id}": {
+      "get": {
+        "description": "For the hosted page of a payment request: the amount in local money, the description, the token the seller receives with an estimate at the market price right now, and the payment methods that can pay it. **The id is the capability**: nothing about the seller’s account or address is returned. Poll it until `status` is no longer `open`. Answered with `Cache-Control: no-store` and budgeted per client address.",
+        "operationId": "P2pPaymentLinksController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              },
+              "Cache-Control": {
+                "description": "Always `no-store`: the status changes live.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              }
+            },
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicP2pPaymentRequestEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read a charge in local money as its payer sees it (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:read",
+            "limit": 60,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/sessions": {
+      "post": {
+        "description": "Opens a purchase of the request’s exact amount, delivered to the seller, paid with `paymentMethod`, and answers `widgetUrl`: open it in a tab or window (claim the tab before the call, so no popup blocker stops it), where the payer signs in, verifies their identity and pays. Starting again opens another purchase; the first one to complete pays the request. `409 request_closed` once the request is paid, cancelled or expired; `400 validation_failed` for a payment method the market does not offer for the currency.",
+        "operationId": "P2pPaymentLinksController_openSession_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenP2pPaymentRequestSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2pPaymentRequestSessionEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/sessions",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request was paid, cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is expired: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/sessions",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Start paying a charge in local money (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:session",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "P2P marketplace"
+        ],
+        "security": []
+      }
+    },
     "/v1/protected-payments": {
       "post": {
         "description": "Creates a protected payment in USDC on the key’s network, with the release model and the deadline policy of your choice, and answers `checkoutUrl`, the page to send the buyer. Nothing happens on-chain yet: the contract is deployed when the buyer first funds it. Emits `PROTECTED_PAYMENT_CREATED`; the same `Idempotency-Key` with the same request returns the stored payment.\n\nRequires the `payments:write` scope.",
@@ -18565,7 +19116,7 @@
     },
     {
       "name": "payment-links",
-      "description": "The payer’s view of one payment link, served without a key to the hosted checkout on payments.cosmospay.lat. The link id is the capability: anyone holding it can read the amount, the address to pay and the live status, and nothing about the merchant."
+      "description": "The payer’s view of one payment link, served without a key to the hosted checkout on payments.cosmospay.lat. The link id is the capability: anyone holding it can read the amount, the address to pay and the live status, and nothing about the merchant. A charge in local money shown as a QR is read and paid the same way, under `/fiat/{id}`."
     },
     {
       "name": "public-key",
@@ -18585,7 +19136,7 @@
     },
     {
       "name": "p2p-onramp",
-      "description": "Local money in through P2P sellers: the market, a firm quote, and purchase sessions that open a hosted purchase delivered to the address you name."
+      "description": "Local money in through P2P sellers: the market, a firm quote, purchase sessions that open a hosted purchase delivered to the address you name, and charges in local money shown as a QR that the payer pays on a hosted page."
     },
     {
       "name": "p2p-offramp",
@@ -31698,6 +32249,18 @@
             "example": "https://p2p-widget.example/exchange?operation=BUY&token=0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9&chain=42161&currency=ARS&paymentMethod=bank_tx_ar&amount=50000&address=0x52908400098527886E0F7030069857D2E4169EE7&externalReferenceId=cp-clz9xp2p0001",
             "description": "Open it in a browser tab or window (not an iframe): the person signs in and verifies their identity there, then pays a P2P seller (purchase) or connects their wallet, sends the token and is paid by a P2P buyer (sale)."
           },
+          "status": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The marketplace’s last status for the order, as it reports it (`REQUESTED`, `ACCEPTED`, `FIAT_PAID`, `FIAT_RECEIVED`, `COMPLETED`, `CANCELLED`, `DISPUTED`, `WAITING_FOR_FUNDS`, ...); null until it reports one. A completed order stays `COMPLETED`."
+          },
+          "paymentRequestId": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The payment request a payer opened this purchase from (`/v1/onramp/p2p/payment-requests`); null for every other session."
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -31725,6 +32288,8 @@
           "estimatedAmountOut",
           "reference",
           "widgetUrl",
+          "status",
+          "paymentRequestId",
           "createdAt"
         ]
       },
@@ -31801,6 +32366,18 @@
             "example": "https://p2p-widget.example/exchange?operation=BUY&token=0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9&chain=42161&currency=ARS&paymentMethod=bank_tx_ar&amount=50000&address=0x52908400098527886E0F7030069857D2E4169EE7&externalReferenceId=cp-clz9xp2p0001",
             "description": "Open it in a browser tab or window (not an iframe): the person signs in and verifies their identity there, then pays a P2P seller (purchase) or connects their wallet, sends the token and is paid by a P2P buyer (sale)."
           },
+          "status": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The marketplace’s last status for the order, as it reports it (`REQUESTED`, `ACCEPTED`, `FIAT_PAID`, `FIAT_RECEIVED`, `COMPLETED`, `CANCELLED`, `DISPUTED`, `WAITING_FOR_FUNDS`, ...); null until it reports one. A completed order stays `COMPLETED`."
+          },
+          "paymentRequestId": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The payment request a payer opened this purchase from (`/v1/onramp/p2p/payment-requests`); null for every other session."
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -31823,6 +32400,8 @@
           "estimatedAmountOut",
           "reference",
           "widgetUrl",
+          "status",
+          "paymentRequestId",
           "createdAt"
         ]
       },
@@ -31858,6 +32437,501 @@
           "total",
           "take",
           "skip"
+        ]
+      },
+      "CreateP2pPaymentRequestDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Local currency the payer pays in: an `id` of `GET /v1/onramp/p2p/market`."
+          },
+          "amount": {
+            "type": "string",
+            "example": "15000",
+            "description": "What the payer pays, in local money: a decimal string with at most two decimals, at least the currency’s `minAmount`."
+          },
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of the chain the token is delivered on: a `chainId` of the market’s `networks`."
+          },
+          "token": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "The token you receive: its contract `address` on `chainId`, from `GET /v1/onramp/p2p/tokens?chainId=` (the zero address is the chain’s own coin)."
+          },
+          "address": {
+            "type": "string",
+            "example": "0x52908400098527886E0F7030069857D2E4169EE7",
+            "description": "Your EVM account on `chainId`, where the token is delivered. Fixed in every purchase opened to pay this request."
+          },
+          "description": {
+            "type": "string",
+            "example": "Table 4",
+            "minLength": 1,
+            "maxLength": 140,
+            "description": "Shown to the payer under the amount: one line, 1 to 140 characters once trimmed, no control or bidirectional characters."
+          },
+          "expiresInMinutes": {
+            "type": "number",
+            "example": 1440,
+            "default": 1440,
+            "minimum": 5,
+            "maximum": 43200,
+            "description": "How long the request can be paid, in minutes (5 to 43200; a day by default)."
+          }
+        },
+        "description": "A charge in local money shown as a QR: what the payer pays, in which token it reaches you, on which chain and at which address.",
+        "required": [
+          "currency",
+          "amount",
+          "chainId",
+          "token",
+          "address"
+        ]
+      },
+      "P2pPaymentRequestCreatedEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmh4x2k9a0001l70g8v5q3z2w",
+            "description": "Cosmos Pay id of the request."
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "`public` (mainnet) or `testnet` (the sandbox), from the key."
+          },
+          "status": {
+            "type": "string",
+            "example": "open",
+            "enum": [
+              "open",
+              "paid",
+              "expired",
+              "cancelled"
+            ],
+            "description": "`open` until it is paid (`paid`), cancelled (`cancelled`) or past `expiresAt` (`expired`). An expired or cancelled request still turns `paid` when a purchase already under way completes."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Local currency the payer pays in."
+          },
+          "amount": {
+            "type": "string",
+            "example": "15000",
+            "description": "What the payer pays, in local money, a decimal string."
+          },
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of the chain the token is delivered on."
+          },
+          "token": {
+            "type": "string",
+            "example": "USDT0",
+            "description": "Symbol of the token."
+          },
+          "tokenAddress": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "Its contract on `chainId` (EIP-55); the zero address is the chain’s own coin."
+          },
+          "tokenDecimals": {
+            "type": "number",
+            "example": 6,
+            "description": "Decimals of the token contract."
+          },
+          "address": {
+            "type": "string",
+            "example": "0x52908400098527886E0F7030069857D2E4169EE7",
+            "description": "Where the token is delivered (EIP-55): fixed in every purchase a payer opens for this request. Never shown to the payer."
+          },
+          "description": {
+            "type": "string",
+            "example": "Table 4",
+            "nullable": true,
+            "description": "Shown to the payer under the amount."
+          },
+          "estimatedAmountOut": {
+            "type": "string",
+            "example": "8.94",
+            "nullable": true,
+            "description": "About the token the amount bought at the market price when the request was created, rounded down; null for a token with no USD price. The payer is quoted the firm figure, fees included, before paying."
+          },
+          "url": {
+            "type": "string",
+            "example": "https://payments.cosmospay.lat/fiat/cmh4x2k9a0001l70g8v5q3z2w",
+            "description": "The payer’s page: show it, or its QR. The payer picks how to pay there and pays in a hosted window."
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgo...",
+            "description": "A QR code of `url`, as a PNG data URL."
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-13T12:00:00.000Z",
+            "description": "When it stops being payable."
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-12T12:00:00.000Z",
+            "description": "When it was created."
+          },
+          "paidAt": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "When this service learned a purchase completed it; null until then."
+          },
+          "paidAmount": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The token delivered by the purchase that paid it, a decimal string; null until paid."
+          },
+          "paidTxHash": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The transaction that delivered it on `chainId`; null until paid (or when the marketplace reported none)."
+          },
+          "publicToken": {
+            "type": "string",
+            "example": "q3Zx0r8vH6c1yJ2bN5mT4kW9sD7fL0aE1gP3uR6iO2w",
+            "description": "Only when the caller is the shared public key: this record’s read token. Send it as `X-Record-Token` on the routes of this one record. Reading it by id (and submitting a USDT0 transfer) answers 404 without it; swap submit and cross-chain deposit still accept a request without it for now, and will require it once the deployment turns `PUBLIC_RECORD_TOKEN_REQUIRED_ON_LEGACY` on. The same create replayed with its Idempotency-Key answers the same token. Keep it like the record id: whoever holds both can read the record."
+          }
+        },
+        "description": "What creating a payment request answers: the request and, for the shared public key, its read token.",
+        "required": [
+          "id",
+          "network",
+          "status",
+          "currency",
+          "amount",
+          "chainId",
+          "token",
+          "tokenAddress",
+          "tokenDecimals",
+          "address",
+          "description",
+          "estimatedAmountOut",
+          "url",
+          "qr",
+          "expiresAt",
+          "createdAt",
+          "paidAt",
+          "paidAmount",
+          "paidTxHash"
+        ]
+      },
+      "P2pPaymentRequestEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmh4x2k9a0001l70g8v5q3z2w",
+            "description": "Cosmos Pay id of the request."
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "`public` (mainnet) or `testnet` (the sandbox), from the key."
+          },
+          "status": {
+            "type": "string",
+            "example": "open",
+            "enum": [
+              "open",
+              "paid",
+              "expired",
+              "cancelled"
+            ],
+            "description": "`open` until it is paid (`paid`), cancelled (`cancelled`) or past `expiresAt` (`expired`). An expired or cancelled request still turns `paid` when a purchase already under way completes."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Local currency the payer pays in."
+          },
+          "amount": {
+            "type": "string",
+            "example": "15000",
+            "description": "What the payer pays, in local money, a decimal string."
+          },
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of the chain the token is delivered on."
+          },
+          "token": {
+            "type": "string",
+            "example": "USDT0",
+            "description": "Symbol of the token."
+          },
+          "tokenAddress": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "Its contract on `chainId` (EIP-55); the zero address is the chain’s own coin."
+          },
+          "tokenDecimals": {
+            "type": "number",
+            "example": 6,
+            "description": "Decimals of the token contract."
+          },
+          "address": {
+            "type": "string",
+            "example": "0x52908400098527886E0F7030069857D2E4169EE7",
+            "description": "Where the token is delivered (EIP-55): fixed in every purchase a payer opens for this request. Never shown to the payer."
+          },
+          "description": {
+            "type": "string",
+            "example": "Table 4",
+            "nullable": true,
+            "description": "Shown to the payer under the amount."
+          },
+          "estimatedAmountOut": {
+            "type": "string",
+            "example": "8.94",
+            "nullable": true,
+            "description": "About the token the amount bought at the market price when the request was created, rounded down; null for a token with no USD price. The payer is quoted the firm figure, fees included, before paying."
+          },
+          "url": {
+            "type": "string",
+            "example": "https://payments.cosmospay.lat/fiat/cmh4x2k9a0001l70g8v5q3z2w",
+            "description": "The payer’s page: show it, or its QR. The payer picks how to pay there and pays in a hosted window."
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgo...",
+            "description": "A QR code of `url`, as a PNG data URL."
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-13T12:00:00.000Z",
+            "description": "When it stops being payable."
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-12T12:00:00.000Z",
+            "description": "When it was created."
+          },
+          "paidAt": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "When this service learned a purchase completed it; null until then."
+          },
+          "paidAmount": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The token delivered by the purchase that paid it, a decimal string; null until paid."
+          },
+          "paidTxHash": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "The transaction that delivered it on `chainId`; null until paid (or when the marketplace reported none)."
+          }
+        },
+        "description": "A charge in local money shown as a QR, as its seller reads it: the amount, the token and address it is delivered to, the link and QR to show, and whether it was paid.",
+        "required": [
+          "id",
+          "network",
+          "status",
+          "currency",
+          "amount",
+          "chainId",
+          "token",
+          "tokenAddress",
+          "tokenDecimals",
+          "address",
+          "description",
+          "estimatedAmountOut",
+          "url",
+          "qr",
+          "expiresAt",
+          "createdAt",
+          "paidAt",
+          "paidAmount",
+          "paidTxHash"
+        ]
+      },
+      "P2pPaymentRequestListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "The requests on this page.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/P2pPaymentRequestEntity"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Matching rows, not the page length.",
+            "example": 1
+          },
+          "take": {
+            "type": "number",
+            "example": 100,
+            "description": "The page size applied, from the `take` query parameter (default 100)."
+          },
+          "skip": {
+            "type": "number",
+            "example": 0,
+            "description": "Rows skipped before this page, from the `skip` query parameter (default 0)."
+          }
+        },
+        "description": "A page of payment requests, newest first.",
+        "required": [
+          "data",
+          "total",
+          "take",
+          "skip"
+        ]
+      },
+      "PublicP2pPaymentRequestEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmh4x2k9a0001l70g8v5q3z2w",
+            "description": "Cosmos Pay id of the request."
+          },
+          "network": {
+            "type": "string",
+            "example": "public",
+            "description": "`public` (mainnet) or `testnet` (the sandbox): where the purchase runs."
+          },
+          "status": {
+            "type": "string",
+            "example": "open",
+            "enum": [
+              "open",
+              "paid",
+              "expired",
+              "cancelled"
+            ],
+            "description": "`open` while it can be paid; `paid`, `expired` or `cancelled` once it cannot. Poll it while the payment window is open."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "Local currency to pay in."
+          },
+          "amount": {
+            "type": "string",
+            "example": "15000",
+            "description": "What to pay, in local money, a decimal string."
+          },
+          "description": {
+            "type": "string",
+            "example": "Table 4",
+            "nullable": true,
+            "description": "The seller’s description."
+          },
+          "chainId": {
+            "type": "number",
+            "example": 42161,
+            "description": "EIP-155 id of the chain the seller receives on."
+          },
+          "token": {
+            "type": "string",
+            "example": "USDT0",
+            "description": "Symbol of the token the seller receives."
+          },
+          "tokenAddress": {
+            "type": "string",
+            "example": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "description": "Its contract on `chainId` (EIP-55)."
+          },
+          "estimatedAmountOut": {
+            "type": "string",
+            "example": "8.91",
+            "nullable": true,
+            "description": "About the token the seller receives at the market price right now, rounded down; null when the market cannot be read or the token has no USD price."
+          },
+          "paymentMethods": {
+            "description": "How the amount can be paid right now; empty when the market cannot be read.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/P2pPaymentMethodEntity"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-13T12:00:00.000Z",
+            "description": "When it stops being payable."
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-12T12:00:00.000Z",
+            "description": "When it was created."
+          },
+          "paidAt": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "When it was paid; null until then."
+          }
+        },
+        "description": "A charge in local money as its payer sees it, read without an API key: the amount, the token the seller receives and how it can be paid. Never who is paid.",
+        "required": [
+          "id",
+          "network",
+          "status",
+          "currency",
+          "amount",
+          "description",
+          "chainId",
+          "token",
+          "tokenAddress",
+          "estimatedAmountOut",
+          "paymentMethods",
+          "expiresAt",
+          "createdAt",
+          "paidAt"
+        ]
+      },
+      "OpenP2pPaymentRequestSessionDto": {
+        "type": "object",
+        "properties": {
+          "paymentMethod": {
+            "type": "string",
+            "example": "bank_tx_ar",
+            "description": "One of the `paymentMethods` `GET /v1/payment-links/fiat/{id}` answers."
+          }
+        },
+        "description": "How the payer pays: one of the request’s `paymentMethods`, from its public read.",
+        "required": [
+          "paymentMethod"
+        ]
+      },
+      "P2pPaymentRequestSessionEntity": {
+        "type": "object",
+        "properties": {
+          "widgetUrl": {
+            "type": "string",
+            "example": "https://p2p-widget.example/exchange?operation=BUY&token=0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9&chain=42161&currency=ARS&paymentMethod=bank_tx_ar&amount=15000",
+            "description": "Open it in a browser tab or window (not an iframe): the payer signs in, verifies their identity and pays a P2P seller there, and the token is delivered to the request’s seller."
+          },
+          "reference": {
+            "type": "string",
+            "example": "cp-6f1c0e1a-1b2c-4d5e-8f90-123456789abc",
+            "description": "The reference of this purchase."
+          }
+        },
+        "description": "A purchase opened to pay a request: the hosted window that takes the payment.",
+        "required": [
+          "widgetUrl",
+          "reference"
         ]
       },
       "CreateProtectedPaymentDto": {
@@ -34724,6 +35798,8 @@
               "plugin_failed",
               "protected_payment_buyer_mismatch",
               "protected_payment_signature_invalid",
+              "request_closed",
+              "webhook_signature_invalid",
               "misconfigured",
               "internal_error"
             ],
