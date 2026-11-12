@@ -103,9 +103,10 @@ export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[]
       { view: "balances" },
       { group: "swaps", views: ["swaps", "liquidity"] },
       // Fiat: local money in and out through P2P sellers and buyers (product owner, 2026-11-05:
-      // "a section called Fiat with on-ramp and off-ramp as its options"). BlindPay's view stays
-      // in it, off with DISABLED_VIEWS; give it its own label before turning it back on.
-      { group: "fiat", views: ["onramp", "offramp", "blindpay"] },
+      // "a section called Fiat with on-ramp and off-ramp as its options"), then the charges in
+      // local money shown as a QR (QrChargesView). BlindPay's view stays in it, off with
+      // DISABLED_VIEWS; give it its own label before turning it back on.
+      { group: "fiat", views: ["onramp", "offramp", "charges", "blindpay"] },
       { group: "developers", views: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
     ],
   },

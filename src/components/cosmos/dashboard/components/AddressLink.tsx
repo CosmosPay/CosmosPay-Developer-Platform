@@ -43,20 +43,24 @@ export function AddressLink({ chain, network, address, label, context, explorer,
 }
 
 /* A transaction as a reference, the same way: its explorer page (a new tab), its copy button and
-   a preview. `label` names what the transaction did. */
-export function TxLink({ chain, network, hash, label }: {
+   a preview. `label` names what the transaction did. `explorer` and `networkName` stand in for a
+   network the chain vocabulary has no explorer for, as on AddressLink (a charge's delivery on an
+   EVM network of the P2P marketplace). */
+export function TxLink({ chain, network, hash, label, explorer, networkName }: {
   chain: string;
   network?: string | null;
   hash?: string | null;
   label: string;
+  explorer?: string | null;
+  networkName?: string;
 }) {
   const t = useT();
   if (!hash) return <span>-</span>;
-  const url = isChain(chain) ? explorerTxUrl(chain, tierOf(network ?? ""), hash) : null;
+  const url = explorer !== undefined ? explorer : isChain(chain) ? explorerTxUrl(chain, tierOf(network ?? ""), hash) : null;
   return (
     <RecordLink
       href={url} external className="addr-link" title={hash} copy={hash}
-      preview={() => <PreviewCard label={label} title={hash} wrap fields={[[t.dash.paylinks.detail.fields.network, networkLabel({ chain, network })]]} />}
+      preview={() => <PreviewCard label={label} title={hash} wrap fields={[[t.dash.paylinks.detail.fields.network, networkName ?? networkLabel({ chain, network })]]} />}
     >
       <code>{shortAddress(hash)}</code>
     </RecordLink>

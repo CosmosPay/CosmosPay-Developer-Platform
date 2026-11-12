@@ -16,7 +16,9 @@ import { llmsFullDocs } from "@/lib/seo/llms-full";
    happens instead (a cross-chain swap, the USDT0 bridge, a confidential token on Stellar). Only the
    terms of service name them, where the law requires it (src/lib/site/terms.ts, not a catalog). */
 
-const PROVIDERS = /NEAR Intents|1Click|LayerZero|Jupiter|Kuru|OpenZeppelin|BlindPay|Trustless Work/i;
+/* El Dorado is the P2P marketplace behind the ramps and the charges in local money: its window's
+   hostnames live in code (src/lib/payments/fiat-request.ts WIDGET_HOSTS), never in copy. */
+const PROVIDERS = /NEAR Intents|1Click|LayerZero|Jupiter|Kuru|OpenZeppelin|BlindPay|Trustless Work|El ?Dorado/i;
 
 type Leaf = string | number | boolean | null;
 function flatten(value: unknown, prefix = "", out: Record<string, Leaf> = {}): Record<string, Leaf> {
@@ -60,6 +62,6 @@ test("no page's Markdown names a provider, but the terms, where the law requires
 
 test("the guides cite no provider's page as their source", () => {
   for (const href of Object.values(learnHrefs("https://dev.cosmospay.lat/docs/"))) {
-    assert.doesNotMatch(href, /layerzero|near\.org|near-intents|jup\.ag|kuru|openzeppelin|blindpay|trustlesswork/i, href);
+    assert.doesNotMatch(href, /layerzero|near\.org|near-intents|jup\.ag|kuru|openzeppelin|blindpay|trustlesswork|eldorado/i, href);
   }
 });

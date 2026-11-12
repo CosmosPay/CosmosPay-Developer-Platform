@@ -106,7 +106,8 @@ export const TAGS = [
     description:
       'The payer’s view of one payment link, served without a key to the hosted checkout ' +
       'on payments.cosmospay.lat. The link id is the capability: anyone holding it can read ' +
-      'the amount, the address to pay and the live status, and nothing about the merchant.',
+      'the amount, the address to pay and the live status, and nothing about the merchant. ' +
+      'A charge in local money shown as a QR is read and paid the same way, under `/fiat/{id}`.',
   },
   {
     name: 'public-key',
@@ -139,7 +140,7 @@ export const TAGS = [
   {
     name: 'p2p-onramp',
     title: 'P2P On-ramp',
-    description: 'Local money in through P2P sellers: the market, a firm quote, and purchase sessions that open a hosted purchase delivered to the address you name.',
+    description: 'Local money in through P2P sellers: the market, a firm quote, purchase sessions that open a hosted purchase delivered to the address you name, and charges in local money shown as a QR that the payer pays on a hosted page.',
   },
   {
     name: 'p2p-offramp',
