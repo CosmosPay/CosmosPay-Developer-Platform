@@ -151,10 +151,9 @@
 .fq-k { font-size: 13px; line-height: 1.4; color: var(--ink-3); }
 .fq-v { font-size: 17px; font-weight: 600; line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .fq-v-amount { font-size: clamp(26px, 7.4vw, 30px); letter-spacing: -.02em; line-height: 1.15; }
-/* The CVU in groups of four: the gaps are margins, so a selection copies the digits alone. */
-.fq-v-cvu { letter-spacing: .02em; }
-.fq-v-cvu span { display: inline-block; }
-.fq-v-cvu span + span { margin-left: .34em; }
+/* The CVU in groups of four: the gaps are the row's gap, so a selection copies the digits alone
+   and a wrapped line starts flush. */
+.fq-v-cvu { display: flex; flex-wrap: wrap; column-gap: .34em; letter-spacing: .02em; }
 .fq-note { font-size: 13px; line-height: 1.45; color: var(--ink-2); text-wrap: pretty; }
 .fq-plainrow { padding: 12px 0; }
 .fq-plainrow .fq-v { font-size: 15.5px; }
