@@ -12,6 +12,9 @@ import { test } from 'node:test';
 import {
   callbackRouteUris,
   entryPrefix,
+  P2P_WEBHOOK_METHODS,
+  P2P_WEBHOOK_PATH,
+  p2pWebhookRouteUris,
   PAYMENT_LINKS_CORS,
   PAYMENT_LINKS_METHODS,
   paymentLinksRouteUris,
@@ -64,6 +67,21 @@ test('the ZK checkout has its own prefix, apart from every authenticated ZK rout
   for (const uri of zkCheckoutRouteUris('/cosmos-api/*')) assert.ok(!uri.includes('/zk-payments'), uri);
   const others = new Set([...callbackRouteUris('/cosmos-api/*'), ...paymentLinksRouteUris('/cosmos-api/*')]);
   for (const uri of zkCheckoutRouteUris('/cosmos-api/*')) assert.ok(!others.has(uri), uri);
+});
+
+test('the P2P marketplace webhook is one exact keyless URI, POST only, apart from every other route', () => {
+  assert.equal(P2P_WEBHOOK_PATH, '/v1/onramp/p2p/webhooks');
+  assert.deepEqual(p2pWebhookRouteUris('/cosmos-api/*'), ['/cosmos-api/v1/onramp/p2p/webhooks']);
+  assert.deepEqual(p2pWebhookRouteUris('"/cosmos-api/"'), ['/cosmos-api/v1/onramp/p2p/webhooks']);
+  // Exact, never a prefix: sessions, quotes and payment requests under /v1/onramp are a consumer's.
+  for (const uri of p2pWebhookRouteUris('/cosmos-api/*')) assert.ok(!uri.includes('*'), uri);
+  assert.deepEqual(P2P_WEBHOOK_METHODS, ['POST']);
+  const others = new Set([...callbackRouteUris('/cosmos-api/*'), ...paymentLinksRouteUris('/cosmos-api/*'), ...zkCheckoutRouteUris('/cosmos-api/*')]);
+  for (const uri of p2pWebhookRouteUris('/cosmos-api/*')) {
+    assert.ok(!others.has(uri), uri);
+    // No other keyless prefix swallows it either (their wildcards end in `/*`).
+    for (const other of others) if (other.endsWith('/*')) assert.ok(!uri.startsWith(other.slice(0, -1)), `${uri} under ${other}`);
+  }
 });
 
 test('the ZK checkout route is its read, its confirm and the preflight, any origin without credentials', () => {

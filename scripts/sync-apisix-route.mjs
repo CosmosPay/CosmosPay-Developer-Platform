@@ -4,7 +4,8 @@
 
    EVERY route is patched: the main one, and the keyless siblings, which are `-oauth-callbacks` (the
    wallet sign-in callback a browser lands on), `-payment-links` (the checkouts' public read
-   of a payment link), `-sep` (stellar.toml, SEP-10, SEP-30), and `-sep-recovery-{a,b}` when COSMOS_RECOVERY_{A,B}_UPSTREAM is set, each to its
+   of a payment link), `-p2p-webhooks` (the P2P marketplace's order webhook), `-sep`
+   (stellar.toml, SEP-10, SEP-30), and `-sep-recovery-{a,b}` when COSMOS_RECOVERY_{A,B}_UPSTREAM is set, each to its
    OWN upstream (see src/utils/apisix.ts). Patching only the first is how a tunnel change
    leaves sign-in or recovery pointing at an upstream that moved, with the rest of the
    API working perfectly, so nothing says which half is stale. The siblings are created by
@@ -101,6 +102,7 @@ async function patchRoute(id, nodes, { optional = false } = {}) {
 const results = [
   await patchRoute(routeId, mainNodes),
   await patchRoute(`${routeId}-payment-links`, mainNodes, { optional: true }),
+  await patchRoute(`${routeId}-p2p-webhooks`, mainNodes, { optional: true }),
   await patchRoute(`${routeId}-oauth-callbacks`, mainNodes, { optional: true }),
   // The Pollar-only route the callbacks route replaced; the app deletes it at boot.
   await patchRoute(`${routeId}-pollar-callback`, mainNodes, { optional: true }),

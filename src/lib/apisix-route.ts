@@ -5,7 +5,8 @@
    Several routes are synced, not one. The main one carries key-auth and serves the whole
    API; the others are keyless, each for callers that hold no API key of ours: the OAuth
    callback a browser lands on (the wallet sign-in's), the public payment-link read (hosted
-   and embedded checkouts, CORS for any origin), the SEP-1/10/30
+   and embedded checkouts, CORS for any origin), the P2P marketplace's order webhook (server to
+   server, signed by the marketplace), the SEP-1/10/30
    standards any Stellar wallet calls, and -- when configured -- the same standards on each
    recovery server's own host. See the header over the route section in utils/apisix.ts:
    without the callback route no sign-in can finish a single handshake, without the
@@ -21,6 +22,7 @@ import {
   createCallbackRoute,
   createPaymentLinksRoute,
   createZkCheckoutRoute,
+  createP2pWebhookRoute,
   createRecoveryRoute,
   createRoute,
   createSepRoute,
@@ -30,6 +32,8 @@ import {
   paymentLinksRouteUris,
   zkCheckoutRouteId,
   zkCheckoutRouteUris,
+  p2pWebhookRouteId,
+  p2pWebhookRouteUris,
   recoveryRouteId,
   routeExists,
   sepRouteId,
@@ -135,6 +139,14 @@ export async function syncCosmosRoute() {
     `${describeUris(() => zkCheckoutRouteUris(COSMOS_API_ENTRY))} (CORS: any origin)`,
     zkCheckout,
     "the ZK checkout cannot read or confirm its payment",
+  );
+
+  const p2pWebhook = await attempt(() => createP2pWebhookRoute(APISSIX_ROUTE_ID, COSMOS_API_ENTRY, COSMOS_API_URL));
+  logKeyless(
+    p2pWebhookRouteId(APISSIX_ROUTE_ID),
+    `${describeUris(() => p2pWebhookRouteUris(COSMOS_API_ENTRY))} (POST only, no CORS)`,
+    p2pWebhook,
+    "the P2P marketplace cannot report completed orders, so charges in local money are never marked paid",
   );
 
   const callbackId = callbackRouteId(APISSIX_ROUTE_ID);

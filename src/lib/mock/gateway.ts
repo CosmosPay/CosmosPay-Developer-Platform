@@ -1,14 +1,16 @@
 /* Mock mode's stand-in for the APISIX gateway that the payments pages call from the browser
    (PUBLIC_PAYMENTS_API_URL, which scripts/dev-mock.mjs points at `<payments origin>/mock-gateway`):
-   the hosted checkout's keyless reads of a payment link, and the public swap pages' calls with the
-   shared public key. Answers as the gateway does: the Payments API's JSON, CORS for any origin
-   without credentials. The payment links are the mock dashboard's (src/lib/mock/handlers/payments.ts),
+   the hosted checkout's keyless reads of a payment link, the payer page of a charge in local money
+   (src/lib/mock/fiat-requests.ts), and the public swap pages' calls with the shared public key.
+   Answers as the gateway does: the Payments API's JSON, CORS for any origin without credentials.
+   The payment links are the mock dashboard's (src/lib/mock/handlers/payments.ts),
    so a link created in the dashboard opens on the local checkout, and what the payer does there
    shows on the payment's view. */
 import { handleMockApi } from "@/lib/mock/index";
 import { mockPaymentIntents } from "@/lib/mock/handlers/payments";
 import { hex, nowIso, qrImage } from "@/lib/mock/fixtures";
 import { MOCK_PUBLIC_ORG } from "@/lib/mock/shared";
+import { fiatRequestRoute } from "@/lib/mock/fiat-requests";
 import type { MockEnv } from "@/lib/mock/http";
 import type { PaymentIntent } from "@/lib/cosmos";
 
@@ -81,6 +83,8 @@ const EVENT_FIELDS: Record<string, string> = {
 
 async function paymentLinks(request: Request, rest: string[]): Promise<Response> {
   const [id, action] = rest;
+  // A charge in local money lives under the same keyless prefix: /v1/payment-links/fiat/{id}.
+  if (id === "fiat") return fiatRequestRoute(request, rest.slice(1), json);
   const found = id ? findLink(id) : null;
   if (!found) return json({ statusCode: 404, message: "Payment link not found" }, 404);
   const record = found.intent as unknown as Record<string, unknown>;

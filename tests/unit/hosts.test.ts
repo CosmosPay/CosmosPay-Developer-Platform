@@ -125,6 +125,23 @@ test('payments.cosmospay.lat renders its landing and the checkout pages', () => 
   }
 });
 
+test('a charge in local money (/fiat/{id}) renders on the payments domain only, like a payment link', () => {
+  const fiat = '/fiat/cmh4x2k9a0001l70g8v5q3z2w';
+  assert.equal(ownerOf(fiat), 'payments');
+  for (const p of ['/fiat', '/fiat/', '/fiat/abc', '/fiat/cmh4x2k9a0001l70g8v5q3z2w/x', '/fiatcmh4x2k9a0001l70g8v5q3z2w']) assert.equal(ownerOf(p), null, p);
+  assert.ok(!isLanguagePage('payments', fiat), 'noindex: it resolves the language in place');
+  assert.deepEqual(route('payments.cosmospay.lat', fiat), { kind: 'rewrite', area: 'payments', path: `/payments${fiat}` });
+  assert.deepEqual(route('payments.cosmospay.lat', fiat, '?lang=es'), { kind: 'rewrite', area: 'payments', path: `/payments${fiat}` });
+  // A QR printed with the platform's or the company's host still lands on the gateway, query kept.
+  assert.deepEqual(route('dev.cosmospay.lat', fiat, '?lang=es'), { kind: 'redirect', location: `https://payments.cosmospay.lat${fiat}?lang=es`, status: 301 });
+  assert.deepEqual(route('cosmospay.lat', fiat), { kind: 'redirect', location: `https://payments.cosmospay.lat${fiat}`, status: 301 });
+  assert.deepEqual(route('dev.cosmospay.lat', fiat, '', 'POST'), { kind: 'redirect', location: `https://payments.cosmospay.lat${fiat}`, status: 308 });
+  assert.deepEqual(route('payments.cosmospay.lat', `${fiat}/`), { kind: 'redirect', location: `https://payments.cosmospay.lat${fiat}`, status: 301 });
+  // Anything else under /fiat is nobody's: a 404 on the gateway, the platform's own 404 there.
+  assert.deepEqual(route('payments.cosmospay.lat', '/fiat/not-a-charge'), { kind: 'not-found', area: 'payments' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/fiat/not-a-charge'), { kind: 'pass', area: 'dev' });
+});
+
 test("the prover's files answer on the platform as well, where the dashboard proves", () => {
   const file = '/zk/bb/0.87.0/main.worker.js';
   assert.deepEqual(route('payments.cosmospay.lat', file), { kind: 'rewrite', area: 'payments', path: `/payments${file}` });
