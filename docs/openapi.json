@@ -14914,6 +14914,2297 @@
         "security": []
       }
     },
+    "/v1/payment-links/fiat/{id}/direct/login": {
+      "post": {
+        "description": "For a request whose `p2pDirect` is true: emails the payer a code (in the language `Accept-Language` prefers among Spanish, English and Portuguese; Spanish by default) and answers the `challenge` to send back with it. A new email also opens the payer’s account. Nothing about the payer is stored. `400 invalid_email`, `400 method_unavailable` when the request cannot be paid this way, `409 request_closed` unless it is open.",
+        "operationId": "P2pDirectController_login_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectLoginEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`method_unavailable`: The payment request cannot be paid by that method\n\n`rejected`: The P2P marketplace refused the request\n\n`invalid_email`: The email is not an email address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid with a transfer to a verified seller from this page",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_email": {
+                    "summary": "invalid_email: The email is not an email address",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_email",
+                      "error": "Bad Request",
+                      "message": "email must be an email address",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is processing a payment, was paid or cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Start verifying a payer by email (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-login",
+            "limit": 5,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/login/verify": {
+      "post": {
+        "description": "Trades the emailed code for the payer’s `session` on this request, to send in `X-Payer-Session` on the other `.../direct/*` routes until `expiresAt` (at most two hours). `400 invalid_code` for a wrong or expired code; too many wrong codes lock the email for a while (`429 rate_limited`).",
+        "operationId": "P2pDirectController_verify_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectLoginVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectSessionEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`method_unavailable`: The payment request cannot be paid by that method\n\n`rejected`: The P2P marketplace refused the request\n\n`invalid_code`: The code is wrong, expired or malformed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid with a transfer to a verified seller from this page",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login/verify",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_code": {
+                    "summary": "invalid_code: The code is wrong, expired or malformed",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_code",
+                      "error": "Bad Request",
+                      "message": "The code is wrong or expired.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login/verify",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login/verify",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is processing a payment, was paid or cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login/verify",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login/verify",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Verify a payer’s emailed code (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-verify",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/kyc": {
+      "get": {
+        "description": "What the page asks next (`step`): the city and phone, the phone’s code, an ID document at `documentUrl`, a review, a refusal, or nothing (`ready`, with what the payer may still pay this month in `limitUsd`). Poll it while the payer verifies their document. Verifying happens once per payer, not per payment.",
+        "operationId": "P2pDirectController_kyc_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectKycEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`method_unavailable`: The payment request cannot be paid by that method\n\n`rejected`: The P2P marketplace refused the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid with a transfer to a verified seller from this page",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is processing a payment, was paid or cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read where a payer stands in verifying their identity (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-read",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/kyc/details": {
+      "post": {
+        "description": "The first verification step, for a payer living in Argentina: their city and their phone, which receives a 4-digit code. Answers where the payer stands now (usually `phone`). `400 invalid_phone` for a number that is not Argentine; a phone another account has comes back as `step: details` with `error: phone_taken`.",
+        "operationId": "P2pDirectController_submitKycDetails_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectKycDetailsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectKycEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`method_unavailable`: The payment request cannot be paid by that method\n\n`rejected`: The P2P marketplace refused the request\n\n`invalid_phone`: The phone is not an Argentine number",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid with a transfer to a verified seller from this page",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/details",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_phone": {
+                    "summary": "invalid_phone: The phone is not an Argentine number",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_phone",
+                      "error": "Bad Request",
+                      "message": "phone must be an Argentine number: 10 digits with the area code, optionally after +54.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/details",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/details",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/details",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is processing a payment, was paid or cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/details",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/details",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Send a payer’s city and phone (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-write",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/kyc/phone": {
+      "post": {
+        "description": "Checks the 4-digit code texted to the phone and answers where the payer stands now (usually `document`). `400 invalid_code` for a wrong one.",
+        "operationId": "P2pDirectController_verifyKycPhone_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectKycPhoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectKycEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`method_unavailable`: The payment request cannot be paid by that method\n\n`rejected`: The P2P marketplace refused the request\n\n`invalid_code`: The code is wrong, expired or malformed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid with a transfer to a verified seller from this page",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/phone",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_code": {
+                    "summary": "invalid_code: The code is wrong, expired or malformed",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_code",
+                      "error": "Bad Request",
+                      "message": "The code is wrong or expired.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/login/verify",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/phone",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/phone",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is processing a payment, was paid or cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/phone",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/kyc/phone",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Verify a payer’s phone code (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-write",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/accounts": {
+      "get": {
+        "description": "The bank accounts in the payer’s own name they paid from before, to pick one instead of typing it again: the holder, the bank and a hint (the alias, or the last four digits), never the full number.",
+        "operationId": "P2pDirectController_accounts_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectAccountsEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`method_unavailable`: The payment request cannot be paid by that method\n\n`rejected`: The P2P marketplace refused the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid with a transfer to a verified seller from this page",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/accounts",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/accounts",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/accounts",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is processing a payment, was paid or cancelled, or it expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/accounts",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/accounts",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List a payer’s saved bank accounts (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-read",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/orders": {
+      "post": {
+        "description": "Opens a payment of the request’s exact amount from the payer’s bank account (`accountId`, or a new `account` in their own name), delivered to the seller. Poll the order: once a seller takes it (`pay`), transfer exactly `amount` to `payTo` before `dueAt`, then mark it paid. Starting again opens another order; the first one to complete pays the request. A refused account answers its field’s code (`invalid_cbu`, `invalid_document`, `invalid_bank`, else `invalid_account`); `409 kyc_required` until the payer is verified, `409 too_many_orders` with two payments of theirs in progress, `503 no_sellers` when nobody can take it now.",
+        "operationId": "P2pDirectController_createOrder_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDirectOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectOrderEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`method_unavailable`: The payment request cannot be paid by that method\n\n`rejected`: The P2P marketplace refused the request\n\n`invalid_account`: The bank account to pay from cannot be sent\n\n`invalid_cbu`: The CVU/CBU is not 22 digits whose check digits verify\n\n`invalid_document`: The document is neither a valid CUIT/CUIL nor a DNI\n\n`invalid_bank`: The bank is not one an ARS account can be at",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "method_unavailable": {
+                    "summary": "method_unavailable: The payment request cannot be paid by that method",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "method_unavailable",
+                      "error": "Bad Request",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w cannot be paid with a transfer to a verified seller from this page",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_account": {
+                    "summary": "invalid_account: The bank account to pay from cannot be sent",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_account",
+                      "error": "Bad Request",
+                      "message": "account.holder must be the account holder's name",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_cbu": {
+                    "summary": "invalid_cbu: The CVU/CBU is not 22 digits whose check digits verify",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_cbu",
+                      "error": "Bad Request",
+                      "message": "account.cbu must be a CVU or CBU: 22 digits whose two check digits verify",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_document": {
+                    "summary": "invalid_document: The document is neither a valid CUIT/CUIL nor a DNI",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_document",
+                      "error": "Bad Request",
+                      "message": "document must be a CUIT/CUIL (11 digits with a valid check digit) or a DNI (7 or 8 digits)",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/transfers",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_bank": {
+                    "summary": "invalid_bank: The bank is not one an ARS account can be at",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_bank",
+                      "error": "Bad Request",
+                      "message": "account.bank must be one of the listed banks",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`request_closed`: The payment request was paid, cancelled or expired\n\n`kyc_required`: The payer has not finished verifying their identity\n\n`too_many_orders`: The payer already has two payments in progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "request_closed": {
+                    "summary": "request_closed: The payment request was paid, cancelled or expired",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "request_closed",
+                      "error": "Conflict",
+                      "message": "Payment request cmh4x2k9a0001l70g8v5q3z2w is paid: it can no longer be paid",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "kyc_required": {
+                    "summary": "kyc_required: The payer has not finished verifying their identity",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "kyc_required",
+                      "error": "Conflict",
+                      "message": "Verify your identity before paying.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "too_many_orders": {
+                    "summary": "too_many_orders: The payer already has two payments in progress",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "too_many_orders",
+                      "error": "Conflict",
+                      "message": "You already have two payments in progress: finish or cancel one before starting another.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now\n\n`no_sellers`: No verified seller can take this payment right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "no_sellers": {
+                    "summary": "no_sellers: No verified seller can take this payment right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "no_sellers",
+                      "error": "Service Unavailable",
+                      "message": "No verified seller can take this payment right now: retry shortly.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Start paying a charge through a verified seller (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-write",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/orders/{orderId}": {
+      "get": {
+        "description": "One order of this request, through the payer’s session: poll it while a seller is found (`matching`) and while the transfer is confirmed (`confirming`). It answers whatever the request reads as now, so a payer can follow a payment they started. An order of another request is the 404 of a missing one.",
+        "operationId": "P2pDirectController_order_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "The order’s `id`, as `POST .../direct/orders` answered it.",
+            "schema": {
+              "example": "0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectOrderEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`rejected`: The P2P marketplace refused the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id, or the order is not one of its orders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read a payment to a verified seller (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-read",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/orders/{orderId}/paid": {
+      "post": {
+        "description": "Only after transferring: the order moves from `pay` to `confirming` and the request reads `processing` until the seller confirms (it turns `paid`) or the order is cancelled (it is open again). It never answers `request_closed`: a payer who transferred can say so whatever the request reads as. `409 order_not_payable` unless the order is waiting for the transfer.",
+        "operationId": "P2pDirectController_markPaid_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "The order’s `id`, as `POST .../direct/orders` answered it.",
+            "schema": {
+              "example": "0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectOrderEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`rejected`: The P2P marketplace refused the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/paid",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id, or the order is not one of its orders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/paid",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`order_not_payable`: The order is not waiting for the transfer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "order_not_payable": {
+                    "summary": "order_not_payable: The order is not waiting for the transfer",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "order_not_payable",
+                      "error": "Conflict",
+                      "message": "This order is matching: only an order waiting for your transfer can be marked paid.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/paid",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/paid",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Tell the seller the transfer was made (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-write",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/fiat/{id}/direct/orders/{orderId}/cancel": {
+      "post": {
+        "description": "Cancels an order still `matching` or waiting for the transfer (`pay`); never one the payer marked paid. It never answers `request_closed`. `409 order_not_cancellable` otherwise.",
+        "operationId": "P2pDirectController_cancel_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment request id, as in its page `https://payments.cosmospay.lat/fiat/<id>`.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "The order’s `id`, as `POST .../direct/orders` answered it.",
+            "schema": {
+              "example": "0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Payer-Session",
+            "in": "header",
+            "description": "The `session` `POST .../direct/login/verify` answered for this payment request. Missing, altered, expired or issued for another request: `401 session_expired`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectOrderEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: The body, query or headers failed validation\n\n`rejected`: The P2P marketplace refused the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The body, query or headers failed validation",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": [
+                        "amount must be a positive decimal string",
+                        "destination must be a valid Stellar public key"
+                      ],
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "rejected": {
+                    "summary": "rejected: The P2P marketplace refused the request",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "rejected",
+                      "error": "Bad Request",
+                      "message": "The request was refused. Check the details and try again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The payer session is missing, expired, or belongs to another payment request: verify the email again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "session_expired": {
+                    "summary": "session_expired: The payer session expired or belongs to another payment request",
+                    "value": {
+                      "statusCode": 401,
+                      "code": "session_expired",
+                      "error": "Unauthorized",
+                      "message": "The payer session expired: verify your email again.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/cancel",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment request has this id, or the order is not one of its orders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such resource, or it belongs to another consumer",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment request not found",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/cancel",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`order_not_cancellable`: The order was paid or ended, so it cannot be cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "order_not_cancellable": {
+                    "summary": "order_not_cancellable: The order was paid or ended, so it cannot be cancelled",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "order_not_cancellable",
+                      "error": "Conflict",
+                      "message": "This order is confirming: only an order you have not paid yet can be cancelled.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/cancel",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "description": "`p2p_unavailable`: Paying through the P2P marketplace is not available right now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "p2p_unavailable": {
+                    "summary": "p2p_unavailable: Paying through the P2P marketplace is not available right now",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "p2p_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Paying through a verified seller is not available right now: retry shortly or pay with another method.",
+                      "path": "/v1/payment-links/fiat/cmh4x2k9a0001l70g8v5q3z2w/direct/orders/0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20/cancel",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Cancel a payment the payer has not made (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links-fiat:direct-write",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
     "/v1/onramp/transfer/account": {
       "get": {
         "description": "The account payers of your charges transfer pesos to, on the key’s network: `none` until you open one, then `pending` with the hosted `verificationUrl` to complete, `in_review`, `approved` with its `alias` and `cvu`, or `rejected` with the `reason`. While it is not approved, your charges are not offered by bank transfer. The shared public key is refused with `403 account_required`.\n\nRequires the `onramp:read` scope. The shared public key may call it.",
@@ -33095,6 +35386,11 @@
               ]
             }
           },
+          "p2pDirect": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether `p2p` is paid inside the payer’s page: the payer verifies once and transfers from their bank to a verified seller, without the hosted window. Only for ARS requests, on deployments that offer it."
+          },
           "url": {
             "type": "string",
             "example": "https://payments.cosmospay.lat/fiat/cmh4x2k9a0001l70g8v5q3z2w",
@@ -33164,6 +35460,7 @@
           "description",
           "estimatedAmountOut",
           "methods",
+          "p2pDirect",
           "url",
           "qr",
           "expiresAt",
@@ -33261,6 +35558,11 @@
               ]
             }
           },
+          "p2pDirect": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether `p2p` is paid inside the payer’s page: the payer verifies once and transfers from their bank to a verified seller, without the hosted window. Only for ARS requests, on deployments that offer it."
+          },
           "url": {
             "type": "string",
             "example": "https://payments.cosmospay.lat/fiat/cmh4x2k9a0001l70g8v5q3z2w",
@@ -33325,6 +35627,7 @@
           "description",
           "estimatedAmountOut",
           "methods",
+          "p2pDirect",
           "url",
           "qr",
           "expiresAt",
@@ -33444,7 +35747,7 @@
               "transfer",
               "p2p"
             ],
-            "description": "How it can be paid right now, in the order to offer them: `transfer` (`POST /v1/payment-links/fiat/{id}/transfers` answers the bank transfer instructions) and `p2p` (`POST /v1/payment-links/fiat/{id}/sessions` opens the hosted window). Empty when nothing can pay it now.",
+            "description": "How it can be paid right now, in the order to offer them: `transfer` (`POST /v1/payment-links/fiat/{id}/transfers` answers the bank transfer instructions) and `p2p` (a transfer to a verified seller: inside the page through `/v1/payment-links/fiat/{id}/direct/*` when `p2pDirect` is true, else in the hosted window `POST /v1/payment-links/fiat/{id}/sessions` opens). Empty when nothing can pay it now.",
             "items": {
               "type": "string",
               "enum": [
@@ -33452,6 +35755,11 @@
                 "p2p"
               ]
             }
+          },
+          "p2pDirect": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether `p2p` is paid inside this page (`/v1/payment-links/fiat/{id}/direct/*`): the payer verifies once, then transfers the exact amount from their bank to a verified seller. False: `p2p` opens the hosted window. Only ever true for ARS requests."
           },
           "expiresAt": {
             "type": "string",
@@ -33484,6 +35792,7 @@
           "estimatedAmountOut",
           "paymentMethods",
           "methods",
+          "p2pDirect",
           "expiresAt",
           "createdAt",
           "paidAt"
@@ -33521,6 +35830,402 @@
         "required": [
           "widgetUrl",
           "reference"
+        ]
+      },
+      "DirectLoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "payer@example.com",
+            "description": "The payer’s email: a code is sent there (a new email also opens their account). Never stored by this service. One that is not an email address is `400 invalid_email`."
+          }
+        },
+        "description": "Starts verifying the payer by email.",
+        "required": [
+          "email"
+        ]
+      },
+      "DirectLoginEntity": {
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "example": "9f1c2e4a-1b2c-4d5e-8f90-123456789abc",
+            "description": "Opaque: send it back with the emailed code to `POST .../direct/login/verify`."
+          },
+          "newAccount": {
+            "type": "boolean",
+            "example": false,
+            "description": "Whether the email is new: verifying it also opens the payer’s account."
+          }
+        },
+        "description": "A verification code was emailed to the payer: send it back with this challenge.",
+        "required": [
+          "challenge",
+          "newAccount"
+        ]
+      },
+      "DirectLoginVerifyDto": {
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "example": "9f1c2e4a-1b2c-4d5e-8f90-123456789abc",
+            "description": "The `challenge` the login answered: opaque, sent back as is."
+          },
+          "code": {
+            "type": "string",
+            "example": "A1B2C3D4",
+            "description": "The code from the email: 8 letters and digits. A wrong, expired or malformed one is `400 invalid_code`."
+          }
+        },
+        "description": "The code the payer received by email.",
+        "required": [
+          "challenge",
+          "code"
+        ]
+      },
+      "DirectSessionEntity": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "type": "string",
+            "example": "v1.Yp3h0Qx2...kq8",
+            "description": "Opaque: send it in `X-Payer-Session` on every other `.../direct/*` route of this payment request. It works for this request only and until `expiresAt`; keep it in the tab (session storage) and drop it once the request is paid."
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-13T14:00:00.000Z",
+            "description": "When the session stops working (at most two hours): the payer verifies their email again."
+          }
+        },
+        "description": "The payer is verified by email: their session for this payment request.",
+        "required": [
+          "session",
+          "expiresAt"
+        ]
+      },
+      "DirectKycEntity": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string",
+            "enum": [
+              "details",
+              "phone",
+              "document",
+              "review",
+              "rejected",
+              "ready"
+            ],
+            "example": "document",
+            "description": "`details`: ask the city and phone (`POST .../direct/kyc/details`). `phone`: ask the code texted to the phone (`POST .../direct/kyc/phone`). `document`: open `documentUrl` in a new tab to verify an ID document, then read this again. `review`: the document is being reviewed. `rejected`: the verification was refused. `ready`: the payer can pay."
+          },
+          "documentUrl": {
+            "type": "string",
+            "example": "https://verify.example/session/abc",
+            "nullable": true,
+            "description": "At `document`: the page where the payer verifies their ID document. Null at every other step."
+          },
+          "error": {
+            "type": "string",
+            "enum": [
+              "phone_taken",
+              "phone_invalid"
+            ],
+            "example": null,
+            "nullable": true,
+            "description": "At `details`, why the phone must be given again: `phone_taken` (another account has it) or `phone_invalid`. Null otherwise."
+          },
+          "limitUsd": {
+            "type": "string",
+            "example": "9850.00",
+            "nullable": true,
+            "description": "At `ready`: what the payer may still pay this month, in USD. Null when it cannot be read, and at every other step."
+          }
+        },
+        "description": "Where the payer stands in verifying their identity, and what the page asks next.",
+        "required": [
+          "step",
+          "documentUrl",
+          "error",
+          "limitUsd"
+        ]
+      },
+      "DirectKycDetailsDto": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "example": "Salta",
+            "description": "The city the payer lives in, in Argentina (the country is always Argentina)."
+          },
+          "phone": {
+            "type": "string",
+            "example": "+54 9 387 412-3456",
+            "description": "An Argentine phone: `+54` and the number, or the 10 digits of the area code and number. Spaces, dashes and parentheses are ignored. Anything else is `400 invalid_phone`."
+          }
+        },
+        "description": "The first verification step: where the payer lives and their phone, which receives a code.",
+        "required": [
+          "city",
+          "phone"
+        ]
+      },
+      "DirectKycPhoneDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "1234",
+            "description": "The 4-digit code texted to the phone. A wrong or malformed one is `400 invalid_code`."
+          }
+        },
+        "description": "The code the payer received on their phone.",
+        "required": [
+          "code"
+        ]
+      },
+      "DirectAccountEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3b1f8a2c-6d4e-4f7a-9c0b-1e2d3f4a5b6c",
+            "description": "Send it as `accountId` to `POST .../direct/orders`."
+          },
+          "holder": {
+            "type": "string",
+            "example": "Juan Pérez",
+            "description": "The account holder."
+          },
+          "bank": {
+            "type": "string",
+            "example": "mercado_pago",
+            "nullable": true,
+            "description": "The bank or wallet, as `account.bank` names it."
+          },
+          "hint": {
+            "type": "string",
+            "example": "0000",
+            "nullable": true,
+            "description": "Enough to recognise it: the alias of an alias account, else the last four digits of the CVU/CBU."
+          }
+        },
+        "description": "One of the payer’s saved bank accounts. Never its full number.",
+        "required": [
+          "id",
+          "holder",
+          "bank",
+          "hint"
+        ]
+      },
+      "DirectAccountsEntity": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "description": "Empty for a payer with none: ask for a new one.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectAccountEntity"
+            }
+          }
+        },
+        "description": "The payer’s saved bank accounts in their own name.",
+        "required": [
+          "accounts"
+        ]
+      },
+      "DirectAccountDto": {
+        "type": "object",
+        "properties": {
+          "holder": {
+            "type": "string",
+            "example": "Juan Pérez",
+            "description": "The account holder: the payer, as their bank names them (3 to 140 characters). Otherwise `400 invalid_account`."
+          },
+          "cbu": {
+            "type": "string",
+            "example": "0000003100000000000000",
+            "description": "The CVU or CBU: 22 digits whose two check digits verify (spaces, dashes and dots are ignored). Otherwise `400 invalid_cbu`."
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CUIT",
+              "CUIL"
+            ],
+            "example": "CUIL",
+            "description": "Which tax id `document` is. Otherwise `400 invalid_document`."
+          },
+          "document": {
+            "type": "string",
+            "example": "20123456786",
+            "description": "The holder’s CUIT or CUIL: 11 digits whose check digit verifies (dashes and dots are ignored). Otherwise `400 invalid_document`."
+          },
+          "bank": {
+            "type": "string",
+            "enum": [
+              "mercado_pago",
+              "galicia",
+              "santander",
+              "macro",
+              "bbva",
+              "nacion",
+              "ciudad",
+              "provincia",
+              "patagonia",
+              "supervielle",
+              "credicoop",
+              "comafi",
+              "hsbc",
+              "citibank",
+              "icbc",
+              "itau",
+              "brubank",
+              "wilobank",
+              "uala",
+              "naranja_x",
+              "lemon",
+              "belo",
+              "prex",
+              "industrial"
+            ],
+            "example": "mercado_pago",
+            "description": "The bank or wallet that holds the account. Otherwise `400 invalid_bank`."
+          },
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "savings",
+              "checking"
+            ],
+            "example": "savings",
+            "description": "The kind of account. Otherwise `400 invalid_account`."
+          }
+        },
+        "description": "A bank account in the payer’s own name, the one they will transfer from. Never stored by this service.",
+        "required": [
+          "holder",
+          "cbu",
+          "documentType",
+          "document",
+          "bank",
+          "accountType"
+        ]
+      },
+      "CreateDirectOrderDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "example": "3b1f8a2c-6d4e-4f7a-9c0b-1e2d3f4a5b6c",
+            "description": "An `id` from `GET .../direct/accounts`."
+          },
+          "account": {
+            "$ref": "#/components/schemas/DirectAccountDto"
+          }
+        },
+        "description": "Starts a payment: from one of the payer’s saved accounts (`accountId`), or from a new one (`account`). Exactly one of the two, else `400 invalid_account`."
+      },
+      "DirectPayToEntity": {
+        "type": "object",
+        "properties": {
+          "holder": {
+            "type": "string",
+            "example": "María Gómez",
+            "description": "Who receives the transfer."
+          },
+          "cbu": {
+            "type": "string",
+            "example": "0000003100000000000000",
+            "nullable": true,
+            "description": "The CVU/CBU to transfer to (22 digits), when the seller gave one."
+          },
+          "alias": {
+            "type": "string",
+            "example": "maria.gomez.mp",
+            "nullable": true,
+            "description": "The alias to transfer to, when the seller gave one."
+          },
+          "bank": {
+            "type": "string",
+            "example": "mercado_pago",
+            "nullable": true,
+            "description": "The seller’s bank or wallet."
+          }
+        },
+        "description": "Where to transfer: the account of the verified seller who took the payment.",
+        "required": [
+          "holder",
+          "cbu",
+          "alias",
+          "bank"
+        ]
+      },
+      "DirectOrderEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b8f4c6e-2a71-4c1e-9d3b-5f7a8e9c1d20",
+            "description": "The order’s id, for `.../direct/orders/{orderId}`."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "matching",
+              "pay",
+              "confirming",
+              "completed",
+              "cancelled",
+              "disputed"
+            ],
+            "example": "pay",
+            "description": "`matching`: looking for a seller (poll it). `pay`: transfer exactly `amount` to `payTo` before `dueAt`, then mark it paid. `confirming`: the payer transferred and the seller is confirming it; `dueAt` is when the payer may ask for help. `completed`: paid. `cancelled`: nobody took it, it ran out of time or it was cancelled: start again. `disputed`: under review."
+          },
+          "amount": {
+            "type": "string",
+            "example": "15000",
+            "description": "The exact amount to transfer, a decimal string."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ARS",
+            "description": "The currency of `amount`."
+          },
+          "payTo": {
+            "nullable": true,
+            "description": "At `pay` and `confirming`: where to transfer. Null otherwise.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DirectPayToEntity"
+              }
+            ]
+          },
+          "dueAt": {
+            "type": "string",
+            "example": "2026-11-13T13:00:00.000Z",
+            "nullable": true,
+            "description": "At `pay`: the deadline for the transfer, after which the order is cancelled. At `confirming`: from when the payer may ask for help. Null otherwise."
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-13T12:30:00.000Z",
+            "description": "When the order was opened."
+          }
+        },
+        "description": "A payment to a verified seller, as the payer’s page follows it.",
+        "required": [
+          "id",
+          "status",
+          "amount",
+          "currency",
+          "payTo",
+          "dueAt",
+          "createdAt"
         ]
       },
       "TransferAccountEntity": {
@@ -36629,6 +39334,20 @@
               "account_required",
               "account_exists",
               "invalid_tax_id",
+              "session_expired",
+              "p2p_unavailable",
+              "invalid_email",
+              "invalid_code",
+              "invalid_phone",
+              "invalid_account",
+              "invalid_cbu",
+              "invalid_bank",
+              "rejected",
+              "kyc_required",
+              "too_many_orders",
+              "no_sellers",
+              "order_not_payable",
+              "order_not_cancellable",
               "misconfigured",
               "internal_error"
             ],
