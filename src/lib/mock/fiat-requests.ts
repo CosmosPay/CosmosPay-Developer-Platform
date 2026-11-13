@@ -19,6 +19,11 @@
      cqrdemoarspaidbank000012  paid by bank transfer, no transaction reported
      cqrdemoarsexpired0000004  expired
      cqrdemoarscancel00000005  cancelled
+     cqrdemoarsdirect00000013  open, ARS, bank transfer or a transfer to a verified person paid inside
+                               the page (`p2pDirect`): a returning payer (identity done, two saved
+                               accounts; the Brubank one's orders end disputed)
+     cqrdemoarsdirectnew00014  open, ARS, only the transfer to a verified person: a new payer, who walks
+                               every identity step (src/lib/mock/fiat-direct.ts has the codes)
    The sandbox's (the dashboard's Sandbox list, Arbitrum Sepolia's test USDT):
      cqrdemotestopen000000006  open, bank transfer or another method; its transfer asks for 37
                                cents more (12500.37), as the server does to tell two of the same
@@ -33,12 +38,16 @@
    creation (through processing when it takes bank transfers). A session answers a URL on the
    marketplace's sandbox window, as the sandbox API does (the real one fixes the seller's address
    and the session's reference in it). The DNI 99999999 answers 503 `transfer_unavailable`, to see
-   that message. Kept on globalThis (mockStore): a hot reload keeps it, a restart resets it. */
+   that message. The direct flow (`/fiat/{id}/direct/*`) is src/lib/mock/fiat-direct.ts: an order
+   the payer says they transferred turns the charge processing, and paid once the order completes.
+   One created from the dashboard in pesos takes it too, as the server decides it. Kept on globalThis
+   (mockStore): a hot reload keeps it, a restart resets it. */
 import { mockStore } from "@/lib/mock/store";
 import { cuid, evmAddress, evmTxHash, hoursAgo, hoursFromNow, qrImage } from "@/lib/mock/fixtures";
 import type { MockEnv } from "@/lib/mock/http";
 import { toChecksumAddress } from "@/lib/qr-charges";
 import { documentProblem, normalizeDocument, type FiatMethod } from "@/lib/payments/fiat-request";
+import { directProgress, directRoute, type DirectPersona } from "@/lib/mock/fiat-direct";
 
 export const PAID_AFTER_MS = 20_000;
 /** After a bank transfer is started, when the mock "receives" it (the charge reads processing). */
@@ -83,6 +92,10 @@ interface MockFiatRequest {
   estimatedAmountOut: string | null;
   paymentMethods: { id: string; name: string }[];
   methods: FiatMethod[];
+  /** `p2p` runs inside the payer page (a transfer to a verified person), not in the window. */
+  p2pDirect: boolean;
+  /** Mock only: who signs in to the direct flow here (fiat-direct.ts). */
+  directPersona: DirectPersona;
   expiresAt: string;
   createdAt: string;
   paidAt: string | null;
@@ -113,6 +126,8 @@ export const FIAT_FIXTURE_IDS = {
   paidTransfer: "cqrdemoarspaidbank000012",
   expired: "cqrdemoarsexpired0000004",
   cancelled: "cqrdemoarscancel00000005",
+  direct: "cqrdemoarsdirect00000013",
+  directNew: "cqrdemoarsdirectnew00014",
 } as const;
 
 /** The sandbox's charges (the dashboard's Sandbox list). */
@@ -166,6 +181,8 @@ function seed(): Record<string, MockFiatRequest> {
     transferStartedAt: null,
     payAt: null,
     transfers: [],
+    p2pDirect: false,
+    directPersona: "new" as DirectPersona,
   };
   const sandbox = { ...prod, network: "testnet" as const, chainId: 421614, token: "USDT", tokenAddress: USDT_ARBITRUM_SEPOLIA, tokenDecimals: 18 };
   const rows: MockFiatRequest[] = [
@@ -210,6 +227,16 @@ function seed(): Record<string, MockFiatRequest> {
       ...prod, id: FIAT_FIXTURE_IDS.cancelled, status: "cancelled", currency: "ARS", amount: "4000", description: "Envío",
       estimatedAmountOut: "2.33", paymentMethods: ARS_METHODS, methods: BOTH, expiresAt: hoursFromNow(12), createdAt: hoursAgo(1),
       address: evmAddress("fiat-seller-ars"),
+    },
+    {
+      ...prod, id: FIAT_FIXTURE_IDS.direct, status: "open", currency: "ARS", amount: "18500", description: "Mesa 9",
+      estimatedAmountOut: "10.79", paymentMethods: ARS_METHODS, methods: BOTH, expiresAt: hoursFromNow(24), createdAt: hoursAgo(0.1),
+      address: evmAddress("fiat-seller-ars"), p2pDirect: true, directPersona: "returning",
+    },
+    {
+      ...prod, id: FIAT_FIXTURE_IDS.directNew, status: "open", currency: "ARS", amount: "26400.50", description: "Pedido 3307",
+      estimatedAmountOut: "15.40", paymentMethods: ARS_METHODS, methods: P2P, expiresAt: hoursFromNow(24), createdAt: hoursAgo(0.1),
+      address: evmAddress("fiat-seller-ars"), p2pDirect: true, directPersona: "new",
     },
     {
       ...sandbox, id: FIAT_SANDBOX_FIXTURE_IDS.open, status: "open", currency: "ARS", amount: "12500", description: "Mesa 7",
@@ -261,8 +288,10 @@ function markPaid(r: MockFiatRequest, at: number, method: FiatMethod) {
 function settle(r: MockFiatRequest, now = Date.now()): MockFiatRequest {
   if (r.status !== "open" && r.status !== "processing") return r;
   const viaTransfer = r.transferStartedAt ?? (r.payAt !== null && r.methods.includes("transfer") ? r.payAt - PAID_AFTER_MS : null);
+  const direct = directProgress(r.id, now);
   const due: { at: number; method: FiatMethod }[] = [];
   if (r.sessionOpenedAt !== null) due.push({ at: r.sessionOpenedAt + PAID_AFTER_MS, method: "p2p" });
+  if (direct.completedAt !== null) due.push({ at: direct.completedAt, method: "p2p" });
   if (viaTransfer !== null) due.push({ at: viaTransfer + PAID_AFTER_MS, method: "transfer" });
   else if (r.payAt !== null) due.push({ at: r.payAt, method: "p2p" });
   const first = due.sort((a, b) => a.at - b.at)[0];
@@ -272,6 +301,8 @@ function settle(r: MockFiatRequest, now = Date.now()): MockFiatRequest {
   }
   // Open past its deadline stays open in the store (shownStatus reads it expired), as the server.
   if (r.status === "open" && viaTransfer !== null && now >= viaTransfer + TRANSFER_RECEIVED_MS) r.status = "processing";
+  // The payer said they transferred to the verified person: processing until the order completes.
+  if (r.status === "open" && direct.paidAt !== null && now >= direct.paidAt) r.status = "processing";
   return r;
 }
 
@@ -293,6 +324,7 @@ function publicView(r: MockFiatRequest) {
     estimatedAmountOut: r.estimatedAmountOut,
     paymentMethods: r.paymentMethods,
     methods: r.methods,
+    p2pDirect: r.p2pDirect,
     expiresAt: r.expiresAt,
     createdAt: r.createdAt,
     paidAt: r.paidAt,
@@ -378,6 +410,9 @@ export function createFiatRequest(env: MockEnv, terms: {
     estimatedAmountOut: terms.estimatedAmountOut,
     paymentMethods: terms.paymentMethods,
     methods: methodsFor(terms.currency, terms.amount, terms.transferAccount),
+    // Pesos take the direct flow, as the server decides it for ARS.
+    p2pDirect: terms.currency === "ARS",
+    directPersona: "new",
     expiresAt: new Date(now + terms.expiresInMinutes * 60_000).toISOString(),
     createdAt: new Date(now).toISOString(),
     paidAt: null,
@@ -454,14 +489,21 @@ async function startTransfer(request: Request, r: MockFiatRequest, json: Json): 
   return json(transferView(transfer), 201);
 }
 
-/** `GET fiat/{id}`, `POST fiat/{id}/sessions` and `POST fiat/{id}/transfers` under the gateway's
-    /v1/payment-links. */
+/** `GET fiat/{id}`, `POST fiat/{id}/sessions`, `POST fiat/{id}/transfers` and the direct flow's
+    `fiat/{id}/direct/*` under the gateway's /v1/payment-links. */
 export async function fiatRequestRoute(request: Request, rest: string[], json: Json): Promise<Response> {
   const [id, action] = rest;
   const found = id ? requests()[id] : undefined;
   if (!found) return error(json, 404, "not_found", "Payment request not found");
   const r = settle(found);
   if (request.method === "GET" && !action) return json(publicView(r));
+  if (action === "direct") {
+    const charge = { id: r.id, amount: r.amount, currency: r.currency, p2pDirect: r.p2pDirect, open: shownStatus(r) === "open", persona: r.directPersona };
+    const res = await directRoute(request, charge, rest.slice(2), json);
+    // Saying the transfer is done moves the charge at once (processing), as on the server.
+    settle(r);
+    return res;
+  }
   if (request.method === "POST" && action === "transfers") return startTransfer(request, r, json);
   if (request.method === "POST" && action === "sessions") {
     if (publicView(r).status !== "open") return error(json, 409, "request_closed", "The payment request is closed");

@@ -26,6 +26,11 @@
  * waits, offers to reopen the same window or to change the method, and keeps reading the charge
  * until the marketplace's completion marks it paid. The session is kept in this tab's
  * sessionStorage, so a reload goes back to waiting instead of opening a second order.
+ *
+ * When the charge says `p2pDirect`, that other way runs inside this page instead of the window: a
+ * bank transfer to a verified person, after verifying once (src/scripts/payments/fiat-direct.ts
+ * draws its steps; the view here is "direct"). An order the payer started there is followed past the
+ * charge's deadline and through `processing`, as the window is.
  */
 import {
   documentProblem,
@@ -53,20 +58,23 @@ import {
   type FiatPhase,
   type FiatRequest,
   type StoredFiatSession,
+  fiatStorageKey,
 } from "@/lib/payments/fiat-request";
 import { currencyName } from "@/lib/ramp-format";
+import { createDirectFlow, type DirectFlow, type DirectStrings } from "@/scripts/payments/fiat-direct";
 
-/* What the card shows. The other methods' flow: open, opening, waiting. The bank transfer's:
-   document, sending, transfer, transfer-expired. Before either: choose. Then the charge's own
-   states: processing, paid, expired, cancelled. */
-type View = FiatPhase | "opening" | "waiting" | "choose" | "document" | "sending" | "transfer" | "transfer-expired";
+/* What the card shows. The other methods' flow: open, opening, waiting (the window), or direct (the
+   transfer to a verified person inside the page). The bank transfer's: document, sending, transfer,
+   transfer-expired. Before either: choose. Then the charge's own states: processing, paid, expired,
+   cancelled. */
+type View = FiatPhase | "opening" | "waiting" | "direct" | "choose" | "document" | "sending" | "transfer" | "transfer-expired";
 /* Which way the payer is paying: not chosen yet, or one of the charge's methods. */
 type Flow = "choose" | FiatMethod;
 
-type PhaseKey = "open" | "waiting" | "processing" | "transfer" | "paid" | "expired" | "cancelled";
+type PhaseKey = "open" | "waiting" | "processing" | "transfer" | "paid" | "expired" | "cancelled" | "matching" | "confirming" | "disputed" | "transferCancelled";
 type BodyKey = "open" | "waiting" | "paid" | "expired" | "cancelled" | "choose" | "document" | "transfer" | "transferExpired" | "transferLate" | "processing";
 
-interface Runtime {
+interface Runtime extends DirectStrings {
   phase: Record<PhaseKey, string>;
   body: Record<BodyKey, string>;
   receives: string;
@@ -91,25 +99,19 @@ interface Runtime {
   transferDown: string;
   transferDownOther: string;
   transferFailed: string;
-  copy: string;
-  copied: string;
-  copiedLabel: string;
   expiresIn: string;
-  endingIn: string;
 }
 
 /* A network failure retries on its own, backing off to this ceiling. */
 const ERROR_RETRY_MAX_MS = 60_000;
 /* Focus and visibility both fire when the payer comes back from the window: one read for both. */
 const REFRESH_GAP_MS = 1_000;
-const STORAGE_PREFIX = "cosmospay-fiat:";
-const TRANSFER_STORAGE_PREFIX = "cosmospay-fiat-transfer:";
 /* An amount longer than this many characters ("$ 1.250.000") is set a step smaller (fiat.css). */
 const LONG_AMOUNT = 10;
 /* How long a copy button says "Copied". */
 const COPIED_MS = 2_000;
 /* The views where the page is following something the payer started: read at the open cadence. */
-const FOLLOWING: readonly View[] = ["waiting", "transfer", "transfer-expired"];
+const FOLLOWING: readonly View[] = ["waiting", "direct", "transfer", "transfer-expired"];
 /* The views before the payer started paying, where the charge's own deadline is shown. */
 const BEFORE_PAYING: readonly View[] = ["open", "opening", "choose", "document", "sending"];
 const PAYABLE: readonly View[] = [...BEFORE_PAYING, "waiting", "transfer", "transfer-expired"];
@@ -155,8 +157,8 @@ export function startFiatRequest(): void {
   const apiBase = root.dataset.api || "";
   const lang = root.dataset.lang || "en";
   const t = JSON.parse(i18nEl.textContent || "{}") as Runtime;
-  const sessionStore = stored<StoredFiatSession>(`${STORAGE_PREFIX}${id}`, (raw) => readStoredSession(raw));
-  const transferStore = stored<BankTransfer>(`${TRANSFER_STORAGE_PREFIX}${id}`, (raw) => readStoredTransfer(raw));
+  const sessionStore = stored<StoredFiatSession>(fiatStorageKey("window", id), (raw) => readStoredSession(raw));
+  const transferStore = stored<BankTransfer>(fiatStorageKey("transfer", id), (raw) => readStoredTransfer(raw));
 
   const slot = <T extends HTMLElement = HTMLElement>(name: string) => root.querySelector<T>(`[data-slot="${name}"]`);
   const text = (name: string, value: string) => {
@@ -185,6 +187,7 @@ export function startFiatRequest(): void {
   let methodsKey = "";
   let lastBody = "";
   let timer: number | undefined;
+  let nextReadAt = 0;
   let errorDelay = 5_000;
   let lastRead = 0;
 
@@ -194,12 +197,55 @@ export function startFiatRequest(): void {
     });
   }
 
+  /* Copies one value and says so, on the button and to assistive tech; when the clipboard is
+     blocked, the value is selected for the payer to copy by hand. */
+  async function copyText(button: HTMLButtonElement, value: string, select: HTMLElement | null) {
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      if (select) window.getSelection()?.selectAllChildren(select);
+      return;
+    }
+    button.textContent = t.copied;
+    button.dataset.copied = "";
+    const status = slot("copy-status");
+    if (status) {
+      // Emptied first, so the same value copied twice is announced twice.
+      status.textContent = "";
+      window.setTimeout(() => {
+        status.textContent = fill(t.copiedLabel, { label: button.dataset.label ?? "" });
+      }, 50);
+    }
+    window.setTimeout(() => {
+      button.textContent = t.copy;
+      delete button.dataset.copied;
+    }, COPIED_MS);
+  }
+
+  /* The transfer to a verified person, when the charge pays its other way inside this page. */
+  const direct: DirectFlow | null = createDirectFlow({
+    root,
+    apiBase,
+    id,
+    lang,
+    t,
+    request: () => request,
+    changed: () => render(),
+    reload: () => void load(),
+    copy: (button, value, select) => void copyText(button, value, select),
+  });
+
+  /* The other way runs inside the page: the charge says so, or an order the payer started there is
+     still on its way (the flag may have changed since). */
+  const directOn = (r: FiatRequest) => !!direct && (r.p2pDirect || direct.following());
+
   /* The way in when nothing was chosen: what this tab already started, else the only method, else
      the choice. A charge that lists no method is offered the marketplace's window, as before the
      bank transfer existed (its own read says when no method can pay it). */
   function defaultFlow(r: FiatRequest): Flow {
     if (transfer) return "transfer";
     if (session) return "p2p";
+    if (direct?.resumable() && directOn(r)) return "p2p";
     if (r.methods.length > 1) return "choose";
     return r.methods[0] ?? "p2p";
   }
@@ -209,13 +255,23 @@ export function startFiatRequest(): void {
   function settleFlow(r: FiatRequest) {
     if (flow === null) flow = defaultFlow(r);
     else if (flow === "transfer" && !transfer && !r.methods.includes("transfer")) flow = defaultFlow(r);
-    else if (flow === "p2p" && !session && r.methods.length > 0 && !r.methods.includes("p2p")) flow = defaultFlow(r);
+    else if (flow === "p2p" && !session && !direct?.following() && r.methods.length > 0 && !r.methods.includes("p2p")) flow = defaultFlow(r);
     else if (flow === "choose" && r.methods.length < 2) flow = defaultFlow(r);
   }
 
   function viewOf(r: FiatRequest): View {
     const phase = fiatPhaseOf(r);
-    if (phase === "paid" || phase === "cancelled" || phase === "processing") return phase;
+    if (phase === "paid" || phase === "cancelled") return phase;
+    if (flow === "p2p" && direct && directOn(r)) {
+      // The order completed: the seller has the payment, whatever the charge's read says yet.
+      if (direct.completed()) return "paid";
+      // An order on its way is followed past the deadline and through processing (its own steps
+      // say where it stands); before one, the charge's state decides.
+      if (direct.following()) return "direct";
+      if (phase === "processing" || phase === "expired") return phase;
+      return "direct";
+    }
+    if (phase === "processing") return phase;
     if (flow === "transfer") {
       // Instructions already handed out stay on screen past their deadline: a deposit made then is
       // still detected, and the charge turns processing.
@@ -232,13 +288,14 @@ export function startFiatRequest(): void {
   }
 
   function pillOf(view: View, phase: FiatPhase): PhaseKey {
+    if (view === "direct") return direct?.pill() ?? "open";
     if (view === "transfer") return "transfer";
     if (view === "transfer-expired") return phase === "expired" ? "expired" : "open";
     if (view === "opening" || view === "choose" || view === "document" || view === "sending") return "open";
     return view;
   }
 
-  function bodyOf(view: View, phase: FiatPhase): BodyKey {
+  function bodyOf(view: Exclude<View, "direct">, phase: FiatPhase): BodyKey {
     if (view === "opening") return "open";
     if (view === "sending") return "document";
     if (view === "transfer-expired") return phase === "expired" ? "transferLate" : "transferExpired";
@@ -247,11 +304,13 @@ export function startFiatRequest(): void {
 
   function schedule(ms: number) {
     window.clearTimeout(timer);
+    nextReadAt = Date.now() + ms;
     timer = window.setTimeout(load, ms);
   }
 
   async function load() {
     window.clearTimeout(timer);
+    timer = undefined;
     // A hidden tab does not need a live status; it reads again the moment it is shown.
     if (document.hidden && request) return;
     lastRead = Date.now();
@@ -342,7 +401,7 @@ export function startFiatRequest(): void {
       text("t-expiry", when ? fill(t.expiresIn, { time: when }) : "");
       hide("t-expiry", !when);
     }
-    root!.querySelectorAll<HTMLButtonElement>("button[data-copy]").forEach((b) => {
+    root!.querySelectorAll<HTMLButtonElement>(".fq-transfer button[data-copy]").forEach((b) => {
       b.disabled = view !== "transfer";
     });
     root!.querySelector<HTMLElement>(".fq-transfer")?.toggleAttribute("data-expired", view === "transfer-expired");
@@ -389,7 +448,7 @@ export function startFiatRequest(): void {
       pill.dataset.phase = pillKey;
     }
     // Re-announce only on a change, or a screen reader repeats it every poll.
-    const body = t.body[bodyOf(view, phase)];
+    const body = view === "direct" ? (direct?.body() ?? "") : t.body[bodyOf(view, phase)];
     if (body !== lastBody) {
       text("phase-body", body);
       lastBody = body;
@@ -401,7 +460,15 @@ export function startFiatRequest(): void {
       "receives",
       r.estimatedAmountOut ? fill(t.receives, { amount: formatTokenAmount(r.estimatedAmountOut, lang), token: r.token, network }) : "",
     );
-    hide("receives", !payable || !r.estimatedAmountOut);
+    // Where the other way is a transfer to a verified person, the payer is paying a seller by bank
+    // transfer: no token or estimate on the page (product owner, 2026-11-13).
+    hide("receives", !payable || !r.estimatedAmountOut || directOn(r));
+
+    // The other way's card says what it is: the secure window, or the transfer to a verified person.
+    root!.querySelectorAll<HTMLElement>("[data-p2p]").forEach((el) => {
+      el.hidden = el.dataset.p2p !== (directOn(r) ? "direct" : "window");
+    });
+    direct?.show(view === "direct");
 
     root!.querySelectorAll<HTMLElement>("[data-when]").forEach((el) => {
       el.hidden = !(el.dataset.when ?? "").split(" ").includes(view);
@@ -410,6 +477,8 @@ export function startFiatRequest(): void {
     root!.querySelectorAll<HTMLElement>(".fq-back").forEach((el) => {
       el.hidden = r.methods.length < 2;
     });
+    // Once its section shows, so a step that takes focus can.
+    if (view === "direct") direct?.render();
 
     // Paying with another method: the methods, the button and what a click will do.
     renderMethods(r);
@@ -443,7 +512,9 @@ export function startFiatRequest(): void {
     renderTransfer(view, phase);
 
     const expires = new Date(r.expiresAt);
-    row("expires", !BEFORE_PAYING.includes(view));
+    // Before an order exists, the direct flow is still before paying: the charge's deadline holds.
+    const beforePaying = BEFORE_PAYING.includes(view) || (view === "direct" && !direct?.following());
+    row("expires", !beforePaying);
     const expiresEl = slot<HTMLTimeElement>("expires");
     if (expiresEl) {
       expiresEl.dateTime = expires.toISOString();
@@ -464,14 +535,23 @@ export function startFiatRequest(): void {
       sessionStore.write(null);
       transferStore.write(null);
     }
+    // The direct flow's session goes once the charge is paid or closed, unless an order is still
+    // on its way (its money may still arrive).
+    if (direct && (view === "paid" || ((phase === "expired" || phase === "cancelled") && !direct.following())) && direct.resumable()) {
+      direct.finish();
+    }
 
     const delay = nextFiatPollDelay(phase, FOLLOWING.includes(view));
     if (delay !== null && !busy && !sending) {
       // An open charge turns expired at its deadline, without waiting for a read.
-      const untilExpiry = BEFORE_PAYING.includes(view) ? expires.getTime() - Date.now() : Infinity;
-      schedule(Math.max(250, Math.min(delay, untilExpiry)));
+      const untilExpiry = beforePaying ? expires.getTime() - Date.now() : Infinity;
+      const ms = Math.max(250, Math.min(delay, untilExpiry));
+      // A read already planned sooner is kept: the direct flow draws the card between reads, and a
+      // draw must not keep postponing the next read.
+      if (timer === undefined || Date.now() + ms < nextReadAt) schedule(ms);
     } else if (delay === null) {
       window.clearTimeout(timer);
+      timer = undefined;
     }
   }
 
@@ -598,28 +678,7 @@ export function startFiatRequest(): void {
     if (!tr || !kind) return;
     const value = kind === "amount" ? transferAmountToCopy(tr.amount) : kind === "alias" ? tr.alias : kind === "cvu" ? tr.cvu : "";
     if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-    } catch {
-      // Clipboard blocked: the value is selected, for the payer to copy by hand.
-      const el = slot(`t-${kind}`);
-      if (el) window.getSelection()?.selectAllChildren(el);
-      return;
-    }
-    button.textContent = t.copied;
-    button.dataset.copied = "";
-    const status = slot("copy-status");
-    if (status) {
-      // Emptied first, so the same value copied twice is announced twice.
-      status.textContent = "";
-      window.setTimeout(() => {
-        status.textContent = fill(t.copiedLabel, { label: button.dataset.label ?? "" });
-      }, 50);
-    }
-    window.setTimeout(() => {
-      button.textContent = t.copy;
-      delete button.dataset.copied;
-    }, COPIED_MS);
+    await copyText(button, value, slot(`t-${kind}`));
   }
 
   function choose(next: Flow) {
@@ -631,7 +690,8 @@ export function startFiatRequest(): void {
       if (transfer) root!.querySelector<HTMLElement>("#fq-transfer-title")?.focus();
       else docInput!.focus();
     } else if (next === "p2p") {
-      focusFirstMethod();
+      if (request && viewOf(request) === "direct") direct?.focus();
+      else focusFirstMethod();
     } else {
       root!.querySelector<HTMLButtonElement>(".fq-option")?.focus();
     }
@@ -653,6 +713,7 @@ export function startFiatRequest(): void {
   }
 
   function refresh() {
+    if (!document.hidden) direct?.refresh();
     if (document.hidden || Date.now() - lastRead < REFRESH_GAP_MS) return;
     if (request && nextFiatPollDelay(fiatPhaseOf(request), FOLLOWING.includes(viewOf(request))) === null) return;
     void load();

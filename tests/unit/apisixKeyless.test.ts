@@ -64,6 +64,15 @@ test('its CORS admits any origin, without credentials, in a shape APISIX accepts
   assert.match(PAYMENT_LINKS_CORS.expose_headers, /(^|,)Retry-After(,|$)/);
 });
 
+test('its preflight lets the direct flow send the payer session, and never an API key', () => {
+  const allowed = PAYMENT_LINKS_CORS.allow_headers.split(',');
+  // The direct flow of a charge in local money sends its sealed session on every call after the
+  // login, and the login names the email's language: without them the browser never sends the call.
+  for (const header of ['Content-Type', 'X-Payer-Session', 'Accept-Language']) assert.ok(allowed.includes(header), header);
+  // Keyless: no credential header of ours is invited from any origin.
+  for (const header of ['Authorization', 'apikey', 'X-API-KEY']) assert.ok(!allowed.some((h) => h.toLowerCase() === header.toLowerCase()), header);
+});
+
 test('the ZK checkout has its own prefix, apart from every authenticated ZK route', () => {
   assert.deepEqual(zkCheckoutRouteUris('/cosmos-api/*'), ['/cosmos-api/v1/zk-checkout/*']);
   // The authenticated routes live under /v1/zk-payments: a keyless prefix there would take them.

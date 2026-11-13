@@ -59,7 +59,17 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   amount). An open one turns paid 20 s after its first session; after a bank
   transfer is started it reads processing 8 s later and paid 20 s later (the DNI 99999999 answers
   503 `transfer_unavailable`); one created in the dashboard does the same by itself (it opens on the
-  local payer page too), and a session opens the marketplace's sandbox window. The organization's
+  local payer page too), and a session opens the marketplace's sandbox window. The transfer to a
+  verified person inside the page (`p2pDirect`, `src/lib/mock/fiat-direct.ts`) has two demos:
+  `cqrdemoarsdirect00000013` (bank transfer or direct; a returning payer, identity done, two saved
+  accounts, the Brubank one's orders end disputed) and `cqrdemoarsdirectnew00014` (direct only; a new
+  payer who walks every step). Any email signs in (one starting with `ready` is the returning payer
+  anywhere, `rejected` ends the identity check rejected); the code is any 8 letters and digits but
+  00000000; the phone 1111111111 answers `phone_taken`; the texted code is 1234; the ID step reads
+  `review` 10 s after it starts and done 10 s later. An order is `matching` for 8 s, then `pay` (30
+  minutes to transfer), `confirming` once the payer says they transferred (the charge processing) and
+  `completed` 12 s later (the charge paid). A charge created in the dashboard in pesos takes it too.
+  The organization's
   bank-transfer account (`/api/onramp/transfer/account`, `src/lib/mock/transfer-account.ts`) has a
   fixture per status by organization and environment; the sandbox's Andes Commerce is none, and
   activating it goes pending, then approved 20 s later.
@@ -456,7 +466,22 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   hold. The amount is always the transfer's own, never the charge's: the server may add a few cents
   to tell two transfers of the same payer apart, and then the card says to send the cents too; the instructions, never the document, stay in sessionStorage per charge, and the page reads
   the charge every 5 s: `processing` once the transfer arrived (never expired, not cancellable),
-  then `paid`. The bank-transfer provider is never named either; its webhook,
+  then `paid`. **The other way inside the page** (product owner, 2026-11-13: the payer never sees
+  the marketplace's window, quotes or "buy" flow): when the charge's read says `p2pDirect: true`, the
+  `p2p` choice (labelled a transfer to a verified person, never crypto, a token or "buy") runs in
+  `src/scripts/payments/fiat-direct.ts` over the keyless `/v1/payment-links/fiat/{id}/direct/*`
+  routes (`src/lib/payments/p2p-direct.ts`, its trust boundary, tested in `p2pDirect.test.ts`):
+  email, its 8-character code, city and phone, the texted 4-digit code, the ID check in its own tab
+  (an https link only; read every 5 s while shown, "I'm done" reads it at once), review or rejected,
+  then the account the payer pays from (a saved one, or holder, CVU/CBU with both check digits,
+  CUIT/CUIL with its check digit, bank and account type, in their own name), the order: `matching`
+  (read every 4 s), `pay` (the verified person's account and alias to copy, the exact amount, a clock
+  to `dueAt`, "I transferred" behind a confirmation dialog), `confirming`, then `completed` (the paid
+  view), `cancelled` (start again) or `disputed` (support, with the reference). The server's opaque
+  session travels in `X-Payer-Session` and is the only thing kept, with the order's id, in
+  sessionStorage per charge (`fiatStorageKey`); a 401 goes back to the email and resumes the order
+  after; paid or closed forgets it. An order on its way is followed past the charge's deadline and
+  through `processing`. With `p2pDirect` false the window stays. The bank-transfer provider is never named either; its webhook,
   `POST /v1/onramp/transfer/webhooks`, has its own keyless gateway route (`<route>-transfer-webhooks`,
   POST only, no CORS, like `-p2p-webhooks`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
@@ -2033,7 +2058,9 @@ What this app still does for them:
     CORS from `COSMOS_API_CORS_ORIGINS`.
   - `<route>-payment-links`: the public payment-link read (`/v1/payment-links/*`, GET/OPTIONS),
     made from payers' browsers by the hosted and the embedded checkout, so its CORS is `*`
-    without credentials. No other keyless route lists that URI.
+    without credentials. No other keyless route lists that URI. Its preflight allows
+    `X-Payer-Session` (the direct flow's sealed payer session, `PAYMENT_LINKS_CORS`) and
+    `Accept-Language`, never an API key header.
   - `<route>-p2p-webhooks`: exactly `POST /v1/onramp/p2p/webhooks`, the P2P marketplace's order
     webhook (server to server, verified by the community server from the marketplace's signature
     over the raw body), which marks a charge in local money paid. No CORS; every other

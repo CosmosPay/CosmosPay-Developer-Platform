@@ -17,7 +17,10 @@
    gets an alias and a CVU to send the exact amount to from an account in their own name; the
    server detects the deposit, the request reads `processing` while the token is on its way and
    `paid` once delivered) and `p2p` (the marketplace's window above). The bank-transfer provider is
-   never named, in copy or here. */
+   never named, in copy or here.
+
+   `p2pDirect`: the `p2p` way runs inside this page instead of the window (the payer verifies once,
+   then transfers from their bank to a verified person: src/lib/payments/p2p-direct.ts). */
 import { knownRampChainName, methodName } from "@/lib/ramp-format";
 
 /* `processing`: the money arrived by bank transfer and the token is on its way to the seller. Never
@@ -58,6 +61,9 @@ export interface FiatRequest {
   paymentMethods: FiatPaymentMethod[];
   /** The ways it can be paid, preferred first; `["p2p"]` from a server that predates the transfer. */
   methods: FiatMethod[];
+  /** `p2p` is paid inside this page (a transfer to a verified person), not in the marketplace's
+      window; false from a server that predates it. */
+  p2pDirect: boolean;
   expiresAt: string;
   createdAt: string;
   paidAt: string | null;
@@ -165,6 +171,7 @@ export function parseFiatRequest(body: unknown): FiatRequest | null {
   if (!paymentMethods) return null;
   const methods = parseRails(b.methods);
   if (!methods) return null;
+  if (b.p2pDirect !== undefined && typeof b.p2pDirect !== "boolean") return null;
   // A deadline the page cannot read would break the expiry and the poll timing.
   if (!readableDate(b.expiresAt) || !readableDate(b.createdAt)) return null;
   if (b.paidAt !== null && !readableDate(b.paidAt)) return null;
@@ -181,6 +188,7 @@ export function parseFiatRequest(body: unknown): FiatRequest | null {
     estimatedAmountOut: b.estimatedAmountOut,
     paymentMethods,
     methods,
+    p2pDirect: b.p2pDirect === true,
     expiresAt: b.expiresAt,
     createdAt: b.createdAt,
     paidAt: b.paidAt,
@@ -337,6 +345,22 @@ export async function openFiatSession(
   } catch {
     return { kind: "error" };
   }
+}
+
+/**
+ * Where this tab keeps what a reload needs, per charge (sessionStorage): the marketplace window's
+ * session, a bank transfer's instructions, and the direct flow's session and order. One key per
+ * kind and charge, so one charge never reads another's and the kinds never overwrite each other.
+ */
+export const FIAT_STORAGE_PREFIXES = {
+  window: "cosmospay-fiat:",
+  transfer: "cosmospay-fiat-transfer:",
+  direct: "cosmospay-fiat-direct:",
+} as const;
+export type FiatStorageKind = keyof typeof FIAT_STORAGE_PREFIXES;
+
+export function fiatStorageKey(kind: FiatStorageKind, requestId: string): string {
+  return `${FIAT_STORAGE_PREFIXES[kind]}${requestId}`;
 }
 
 /** What the page keeps (sessionStorage, this tab only) so a reload goes back to waiting. */

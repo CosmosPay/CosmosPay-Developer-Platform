@@ -37,6 +37,36 @@ _openapi:
       title: Start paying a charge in local money (no API key)
       url: '#start-paying-a-charge-in-local-money-no-api-key'
     - depth: 2
+      title: Start verifying a payer by email (no API key)
+      url: '#start-verifying-a-payer-by-email-no-api-key'
+    - depth: 2
+      title: Verify a payer’s emailed code (no API key)
+      url: '#verify-a-payers-emailed-code-no-api-key'
+    - depth: 2
+      title: Read where a payer stands in verifying their identity (no API key)
+      url: '#read-where-a-payer-stands-in-verifying-their-identity-no-api-key'
+    - depth: 2
+      title: Send a payer’s city and phone (no API key)
+      url: '#send-a-payers-city-and-phone-no-api-key'
+    - depth: 2
+      title: Verify a payer’s phone code (no API key)
+      url: '#verify-a-payers-phone-code-no-api-key'
+    - depth: 2
+      title: List a payer’s saved bank accounts (no API key)
+      url: '#list-a-payers-saved-bank-accounts-no-api-key'
+    - depth: 2
+      title: Start paying a charge through a verified seller (no API key)
+      url: '#start-paying-a-charge-through-a-verified-seller-no-api-key'
+    - depth: 2
+      title: Read a payment to a verified seller (no API key)
+      url: '#read-a-payment-to-a-verified-seller-no-api-key'
+    - depth: 2
+      title: Tell the seller the transfer was made (no API key)
+      url: '#tell-the-seller-the-transfer-was-made-no-api-key'
+    - depth: 2
+      title: Cancel a payment the payer has not made (no API key)
+      url: '#cancel-a-payment-the-payer-has-not-made-no-api-key'
+    - depth: 2
       title: Get bank transfer instructions for a charge (no API key)
       url: '#get-bank-transfer-instructions-for-a-charge-no-api-key'
   structuredData:
@@ -59,6 +89,26 @@ _openapi:
         id: read-a-charge-in-local-money-as-its-payer-sees-it-no-api-key
       - content: Start paying a charge in local money (no API key)
         id: start-paying-a-charge-in-local-money-no-api-key
+      - content: Start verifying a payer by email (no API key)
+        id: start-verifying-a-payer-by-email-no-api-key
+      - content: Verify a payer’s emailed code (no API key)
+        id: verify-a-payers-emailed-code-no-api-key
+      - content: Read where a payer stands in verifying their identity (no API key)
+        id: read-where-a-payer-stands-in-verifying-their-identity-no-api-key
+      - content: Send a payer’s city and phone (no API key)
+        id: send-a-payers-city-and-phone-no-api-key
+      - content: Verify a payer’s phone code (no API key)
+        id: verify-a-payers-phone-code-no-api-key
+      - content: List a payer’s saved bank accounts (no API key)
+        id: list-a-payers-saved-bank-accounts-no-api-key
+      - content: Start paying a charge through a verified seller (no API key)
+        id: start-paying-a-charge-through-a-verified-seller-no-api-key
+      - content: Read a payment to a verified seller (no API key)
+        id: read-a-payment-to-a-verified-seller-no-api-key
+      - content: Tell the seller the transfer was made (no API key)
+        id: tell-the-seller-the-transfer-was-made-no-api-key
+      - content: Cancel a payment the payer has not made (no API key)
+        id: cancel-a-payment-the-payer-has-not-made-no-api-key
       - content: Get bank transfer instructions for a charge (no API key)
         id: get-bank-transfer-instructions-for-a-charge-no-api-key
     contents:
@@ -135,6 +185,67 @@ _openapi:
           or expired; `400 validation_failed` for a payment method the market
           does not offer for the currency.'
         heading: start-paying-a-charge-in-local-money-no-api-key
+      - content: 'For a request whose `p2pDirect` is true: emails the payer a code (in
+          the language `Accept-Language` prefers among Spanish, English and
+          Portuguese; Spanish by default) and answers the `challenge` to send
+          back with it. A new email also opens the payer’s account. Nothing
+          about the payer is stored. `400 invalid_email`, `400
+          method_unavailable` when the request cannot be paid this way, `409
+          request_closed` unless it is open.'
+        heading: start-verifying-a-payer-by-email-no-api-key
+      - content: Trades the emailed code for the payer’s `session` on this request, to
+          send in `X-Payer-Session` on the other `.../direct/*` routes until
+          `expiresAt` (at most two hours). `400 invalid_code` for a wrong or
+          expired code; too many wrong codes lock the email for a while (`429
+          rate_limited`).
+        heading: verify-a-payers-emailed-code-no-api-key
+      - content: 'What the page asks next (`step`): the city and phone, the phone’s
+          code, an ID document at `documentUrl`, a review, a refusal, or nothing
+          (`ready`, with what the payer may still pay this month in `limitUsd`).
+          Poll it while the payer verifies their document. Verifying happens
+          once per payer, not per payment.'
+        heading: read-where-a-payer-stands-in-verifying-their-identity-no-api-key
+      - content: 'The first verification step, for a payer living in Argentina: their
+          city and their phone, which receives a 4-digit code. Answers where the
+          payer stands now (usually `phone`). `400 invalid_phone` for a number
+          that is not Argentine; a phone another account has comes back as
+          `step: details` with `error: phone_taken`.'
+        heading: send-a-payers-city-and-phone-no-api-key
+      - content: Checks the 4-digit code texted to the phone and answers where the payer
+          stands now (usually `document`). `400 invalid_code` for a wrong one.
+        heading: verify-a-payers-phone-code-no-api-key
+      - content: 'The bank accounts in the payer’s own name they paid from before, to
+          pick one instead of typing it again: the holder, the bank and a hint
+          (the alias, or the last four digits), never the full number.'
+        heading: list-a-payers-saved-bank-accounts-no-api-key
+      - content: 'Opens a payment of the request’s exact amount from the payer’s bank
+          account (`accountId`, or a new `account` in their own name), delivered
+          to the seller. Poll the order: once a seller takes it (`pay`),
+          transfer exactly `amount` to `payTo` before `dueAt`, then mark it
+          paid. Starting again opens another order; the first one to complete
+          pays the request. A refused account answers its field’s code
+          (`invalid_cbu`, `invalid_document`, `invalid_bank`, else
+          `invalid_account`); `409 kyc_required` until the payer is verified,
+          `409 too_many_orders` with two payments of theirs in progress, `503
+          no_sellers` when nobody can take it now.'
+        heading: start-paying-a-charge-through-a-verified-seller-no-api-key
+      - content: 'One order of this request, through the payer’s session: poll it while
+          a seller is found (`matching`) and while the transfer is confirmed
+          (`confirming`). It answers whatever the request reads as now, so a
+          payer can follow a payment they started. An order of another request
+          is the 404 of a missing one.'
+        heading: read-a-payment-to-a-verified-seller-no-api-key
+      - content: 'Only after transferring: the order moves from `pay` to `confirming`
+          and the request reads `processing` until the seller confirms (it turns
+          `paid`) or the order is cancelled (it is open again). It never answers
+          `request_closed`: a payer who transferred can say so whatever the
+          request reads as. `409 order_not_payable` unless the order is waiting
+          for the transfer.'
+        heading: tell-the-seller-the-transfer-was-made-no-api-key
+      - content: Cancels an order still `matching` or waiting for the transfer (`pay`);
+          never one the payer marked paid. It never answers `request_closed`.
+          `409 order_not_cancellable` otherwise.
+        heading: cancel-a-payment-the-payer-has-not-made-no-api-key
       - content: 'For a request whose `methods` include `transfer`: the payer gives
           their CUIT/CUIL or DNI and is answered the exact amount, the alias and
           CVU to transfer it to and until when (an hour, never past the charge).
@@ -155,7 +266,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"},{"path":"/v1/payment-links/fiat/{id}","method":"get"},{"path":"/v1/payment-links/fiat/{id}/sessions","method":"post"},{"path":"/v1/payment-links/fiat/{id}/transfers","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"},{"path":"/v1/payment-links/fiat/{id}","method":"get"},{"path":"/v1/payment-links/fiat/{id}/sessions","method":"post"},{"path":"/v1/payment-links/fiat/{id}/direct/login","method":"post"},{"path":"/v1/payment-links/fiat/{id}/direct/login/verify","method":"post"},{"path":"/v1/payment-links/fiat/{id}/direct/kyc","method":"get"},{"path":"/v1/payment-links/fiat/{id}/direct/kyc/details","method":"post"},{"path":"/v1/payment-links/fiat/{id}/direct/kyc/phone","method":"post"},{"path":"/v1/payment-links/fiat/{id}/direct/accounts","method":"get"},{"path":"/v1/payment-links/fiat/{id}/direct/orders","method":"post"},{"path":"/v1/payment-links/fiat/{id}/direct/orders/{orderId}","method":"get"},{"path":"/v1/payment-links/fiat/{id}/direct/orders/{orderId}/paid","method":"post"},{"path":"/v1/payment-links/fiat/{id}/direct/orders/{orderId}/cancel","method":"post"},{"path":"/v1/payment-links/fiat/{id}/transfers","method":"post"}]} showTitle />
     </>
   );
 }
