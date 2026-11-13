@@ -84,6 +84,10 @@ test('the contract body parses into the charge, as sent', () => {
   assert.equal(bare.estimatedAmountOut, null);
   assert.deepEqual(bare.paymentMethods, []);
   assert.deepEqual(r.methods, ['transfer', 'p2p']);
+  // `p2pDirect`: the other way inside the page; absent from an older server, the window.
+  assert.equal(r.p2pDirect, false);
+  assert.equal(parseFiatRequest(body({ p2pDirect: true }))?.p2pDirect, true);
+  assert.equal(parseFiatRequest(body({ p2pDirect: false }))?.p2pDirect, false);
   for (const status of ['open', 'processing', 'paid', 'expired', 'cancelled']) {
     assert.ok(parseFiatRequest(body({ status, paidAt: status === 'paid' ? '2026-11-12T13:00:00.000Z' : null })), status);
   }
@@ -138,6 +142,9 @@ test('a field of the wrong type or shape is refused whole', () => {
     { methods: [1] },
     { methods: ['transfer', null] },
     { methods: Array.from({ length: 9 }, () => 'p2p') },
+    { p2pDirect: 'true' },
+    { p2pDirect: 1 },
+    { p2pDirect: null },
     { expiresAt: 'tomorrow' },
     { expiresAt: null },
     { createdAt: 0 },
@@ -286,6 +293,7 @@ const post = (id: string, payload: unknown) =>
 test('every mock charge is one the page accepts, in the state its id names', async () => {
   const expected: Record<string, string> = {
     openArs: 'open', openCop: 'open', transferOnly: 'open', processing: 'processing', paid: 'paid', paidTransfer: 'paid', expired: 'expired', cancelled: 'cancelled',
+    direct: 'open', directNew: 'open',
   };
   for (const [name, id] of Object.entries(FIAT_FIXTURE_IDS)) {
     assert.ok(isFiatRequestId(id), id);
