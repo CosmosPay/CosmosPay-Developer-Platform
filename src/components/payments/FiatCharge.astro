@@ -9,7 +9,9 @@
  *   - bank transfer: document (CUIT/CUIL or DNI), sending (the button busy), transfer (the deposit
  *     instructions, followed until the money arrives), transfer-expired (the instructions ran out);
  *   - other methods: open (pick a method, pay), opening (the button busy), waiting (the secure
- *     window is open);
+ *     window is open); or, when the charge says `p2pDirect`, direct: a bank transfer to a verified
+ *     person inside this page, whose steps src/scripts/payments/fiat-direct.ts draws (`data-dstep`
+ *     lists the steps an element shows in);
  *   - processing (the transfer arrived, the token is on its way), paid, expired, cancelled.
  * The loading, not-found and error states are cards of their own, as on the checkout. Mobile
  * first: a buyer scans the seller's QR with a phone.
@@ -18,6 +20,8 @@ import "@/styles/checkout.css";
 import "@/styles/fiat.css";
 import { MESSAGES } from "@/lib/payments/i18n";
 import { API_BASE } from "@/lib/payments/urls";
+import { CONTACT_ADDRESS } from "@/lib/payments/contact";
+import { ACCOUNT_TYPES, DOCUMENT_TYPES, banksByName } from "@/lib/payments/p2p-direct";
 
 interface Props {
   /** The charge to read. */
@@ -59,7 +63,16 @@ const runtime = {
   copiedLabel: t.copiedLabel,
   expiresIn: t.expiresIn,
   endingIn: t.endingIn,
+  direct: t.direct,
 };
+const d = t.direct;
+const banks = banksByName(lang);
+const accountTypeLabel = { savings: d.savings, checking: d.checking } as const;
+// The verified person's account, each value a payer copies with its own button.
+const payRows = [
+  { name: "cbu", label: d.cbuShort },
+  { name: "alias", label: t.aliasLabel },
+] as const;
 // `<` escaped so no string can close the JSON <script> block early.
 const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
 // The values a payer copies into their bank, each with its own button.
@@ -116,11 +129,17 @@ const copyRows = [
           </span>
           <span class="fq-recommended">{t.recommended}</span>
         </button>
+        {/* The other way: the secure window, or (`p2pDirect`) a transfer to a verified person here. */}
         <button class="fq-option" type="button" data-action="choose-p2p">
-          <span class="fq-option-icon fq-icon-other" aria-hidden="true"></span>
-          <span class="fq-option-text">
+          <span class="fq-option-icon fq-icon-other" aria-hidden="true" data-p2p="window"></span>
+          <span class="fq-option-icon fq-icon-person" aria-hidden="true" data-p2p="direct" hidden></span>
+          <span class="fq-option-text" data-p2p="window">
             <span class="fq-option-title">{t.otherTitle}</span>
             <span class="fq-option-desc">{t.otherDesc}</span>
+          </span>
+          <span class="fq-option-text" data-p2p="direct" hidden>
+            <span class="fq-option-title">{t.directTitle}</span>
+            <span class="fq-option-desc">{t.directDesc}</span>
           </span>
         </button>
       </div>
@@ -218,6 +237,209 @@ const copyRows = [
         </div>
       </div>
 
+      {/* A transfer to a verified person, inside this page: one step at a time. Nothing typed here is
+          kept: each field is sent once and cleared. */}
+      <section class="fq-direct" data-when="direct" aria-labelledby="fq-direct-title" hidden>
+        <h2 class="fq-transfer-title" id="fq-direct-title" tabindex="-1" data-dslot="title"></h2>
+
+        <div class="fq-dloading" data-dstep="loading matching" hidden><span class="pp-spinner" aria-hidden="true"></span></div>
+
+        <form class="fq-dform" data-dform="email" data-dstep="email" novalidate hidden>
+          <label class="fq-label" for="fq-d-email">{d.emailLabel}</label>
+          <p class="fq-hint" id="fq-d-email-hint">{d.emailHint}</p>
+          <input id="fq-d-email" class="fq-input fq-input-text" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder={d.emailPlaceholder} aria-describedby="fq-d-email-hint fq-d-email-error" />
+          <p class="fq-error" id="fq-d-email-error" data-derror="email" role="alert" hidden></p>
+          <button class="btn btn-dark fq-cta" type="submit" data-dsubmit="email">
+            <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+            <span data-idle={d.sendCode} data-busy={d.sendingCode}>{d.sendCode}</span>
+          </button>
+          <ol class="fq-steps" aria-label={d.stepsLabel}>
+            <li>{d.step1}</li>
+            <li>{d.step2}</li>
+            <li>{d.step3}</li>
+          </ol>
+          <button class="fq-link fq-back" type="button" data-action="back">{t.back}</button>
+        </form>
+
+        <form class="fq-dform" data-dform="code" data-dstep="code" novalidate hidden>
+          <label class="fq-label" for="fq-d-code">{d.codeLabel}</label>
+          <p class="fq-hint" id="fq-d-code-hint" data-dslot="code-hint"></p>
+          <input id="fq-d-code" class="fq-input" name="code" type="text" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" maxlength="40" aria-describedby="fq-d-code-hint fq-d-code-error" />
+          <p class="fq-error" id="fq-d-code-error" data-derror="code" role="alert" hidden></p>
+          <p class="fq-dnote" data-dslot="code-note" role="status" hidden></p>
+          <button class="btn btn-dark fq-cta" type="submit" data-dsubmit="code">
+            <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+            <span data-idle={d.verify} data-busy={d.verifying}>{d.verify}</span>
+          </button>
+          <div class="fq-waiting-actions fq-dactions">
+            <button class="fq-link" type="button" data-daction="resend">{d.resend}</button>
+            <button class="fq-link" type="button" data-daction="other-email">{d.otherEmail}</button>
+          </div>
+        </form>
+
+        <form class="fq-dform" data-dform="details" data-dstep="details" novalidate hidden>
+          <div class="fq-field">
+            <label class="fq-label" for="fq-d-city">{d.cityLabel}</label>
+            <input id="fq-d-city" class="fq-input fq-input-text" name="city" type="text" autocomplete="address-level2" maxlength="80" placeholder={d.cityPlaceholder} aria-describedby="fq-d-details-error" />
+          </div>
+          <div class="fq-field">
+            <label class="fq-label" for="fq-d-phone">{d.phoneLabel}</label>
+            <p class="fq-hint" id="fq-d-phone-hint">{d.phoneHint}</p>
+            <input id="fq-d-phone" class="fq-input" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="24" placeholder={d.phonePlaceholder} aria-describedby="fq-d-phone-hint fq-d-details-error" />
+          </div>
+          <p class="fq-error" id="fq-d-details-error" data-derror="details" role="alert" hidden></p>
+          <button class="btn btn-dark fq-cta" type="submit" data-dsubmit="details">
+            <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+            <span data-idle={d.sendSms} data-busy={d.sending}>{d.sendSms}</span>
+          </button>
+          <button class="fq-link fq-back" type="button" data-action="back">{t.back}</button>
+        </form>
+
+        <form class="fq-dform" data-dform="phone" data-dstep="phone" novalidate hidden>
+          <label class="fq-label" for="fq-d-sms">{d.phoneCodeLabel}</label>
+          <p class="fq-hint" id="fq-d-sms-hint">{d.phoneCodeHint}</p>
+          <input id="fq-d-sms" class="fq-input" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" aria-describedby="fq-d-sms-hint fq-d-sms-error" />
+          <p class="fq-error" id="fq-d-sms-error" data-derror="phone" role="alert" hidden></p>
+          <button class="btn btn-dark fq-cta" type="submit" data-dsubmit="phone">
+            <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+            <span data-idle={d.verifyPhone} data-busy={d.verifying}>{d.verifyPhone}</span>
+          </button>
+          <div class="fq-waiting-actions fq-dactions">
+            <button class="fq-link" type="button" data-daction="change-phone">{d.changePhone}</button>
+          </div>
+        </form>
+
+        {/* The ID check runs in its own tab (the server's https link); this page reads it again. */}
+        <div class="fq-dpanel" data-dstep="document" hidden>
+          <a class="btn btn-dark fq-cta" data-dslot="document-link" target="_blank" rel="noopener noreferrer" hidden>{d.openDocument}</a>
+          <p class="fq-hint fq-dhint">{d.idHint}</p>
+          <p class="fq-dnote" data-dslot="document-preparing" hidden>{d.documentPreparing}</p>
+          <button class="btn btn-ghost-pill fq-cta" type="button" data-daction="recheck" data-dsubmit="recheck">
+            <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+            <span data-idle={d.documentDone} data-busy={d.verifying}>{d.documentDone}</span>
+          </button>
+          <p class="fq-dnote" data-dslot="document-note" role="status" hidden></p>
+        </div>
+
+        <form class="fq-dform" data-dform="account" data-dstep="account" novalidate hidden>
+          <fieldset class="fq-methods" data-dslot="saved-fieldset" hidden>
+            <legend class="fq-legend">{d.savedLabel}</legend>
+            <div class="fq-method-list" data-dslot="saved"></div>
+          </fieldset>
+          <div class="fq-newaccount" data-dslot="new-account">
+            <div class="fq-notice" role="note">
+              <span class="fq-notice-icon" aria-hidden="true"></span>
+              <div class="fq-notice-text">
+                <p class="fq-notice-title">{d.ownNameTitle}</p>
+                <p class="fq-notice-body">{d.ownName}</p>
+              </div>
+            </div>
+            <div class="fq-field">
+              <label class="fq-label" for="fq-d-holder">{d.holderLabel}</label>
+              <p class="fq-hint" id="fq-d-holder-hint">{d.holderHint}</p>
+              <input id="fq-d-holder" class="fq-input fq-input-text" name="holder" type="text" autocomplete="name" maxlength="80" aria-describedby="fq-d-holder-hint fq-d-account-error" />
+            </div>
+            <div class="fq-field">
+              <label class="fq-label" for="fq-d-cbu">{d.cbuLabel}</label>
+              <p class="fq-hint" id="fq-d-cbu-hint">{d.cbuHint}</p>
+              <input id="fq-d-cbu" class="fq-input" name="cbu" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="30" aria-describedby="fq-d-cbu-hint fq-d-account-error" />
+            </div>
+            <div class="fq-field fq-field-pair">
+              <div>
+                <label class="fq-label" for="fq-d-doctype">{d.documentTypeLabel}</label>
+                <select id="fq-d-doctype" class="fq-input fq-select" name="documentType" aria-describedby="fq-d-account-error">
+                  {DOCUMENT_TYPES.map((type) => <option value={type}>{type}</option>)}
+                </select>
+              </div>
+              <div>
+                <label class="fq-label" for="fq-d-taxid">{d.taxIdLabel}</label>
+                <input id="fq-d-taxid" class="fq-input" name="document" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="16" aria-describedby="fq-d-taxid-hint fq-d-account-error" />
+                <p class="fq-hint fq-hint-after" id="fq-d-taxid-hint">{d.taxIdHint}</p>
+              </div>
+            </div>
+            <div class="fq-field">
+              <label class="fq-label" for="fq-d-bank">{d.bankLabel}</label>
+              <select id="fq-d-bank" class="fq-input fq-select" name="bank" aria-describedby="fq-d-account-error">
+                <option value="">{d.bankChoose}</option>
+                {banks.map((bank) => <option value={bank.id}>{bank.name}</option>)}
+              </select>
+            </div>
+            <div class="fq-field">
+              <label class="fq-label" for="fq-d-acctype">{d.accountTypeLabel}</label>
+              <select id="fq-d-acctype" class="fq-input fq-select" name="accountType" aria-describedby="fq-d-account-error">
+                {ACCOUNT_TYPES.map((type) => <option value={type}>{accountTypeLabel[type]}</option>)}
+              </select>
+            </div>
+          </div>
+          <p class="fq-error" id="fq-d-account-error" data-derror="account" role="alert" hidden></p>
+          <button class="btn btn-dark fq-cta" type="submit" data-dsubmit="account">
+            <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+            <span data-idle={t.getDetails} data-busy={t.gettingDetails}>{t.getDetails}</span>
+          </button>
+          <div class="fq-waiting-actions fq-dactions">
+            <button class="fq-link" type="button" data-daction="other-email">{d.otherEmail}</button>
+          </div>
+          <button class="fq-link fq-back" type="button" data-action="back">{t.back}</button>
+        </form>
+
+        {/* The verified person's account and the exact amount, each value with its copy button. */}
+        <div class="fq-dpanel" data-dstep="pay confirming" hidden>
+          <div class="fq-well">
+            <div class="fq-copyrow fq-copyrow-amount">
+              <div class="fq-copytext">
+                <span class="fq-k">{t.amountLabel}</span>
+                <span class="fq-v fq-v-amount" data-dslot="p-amount"></span>
+                <span class="fq-note">{t.exactNote}</span>
+              </div>
+              <button class="pp-copy fq-copy" type="button" data-dcopy="amount" data-label={t.amountLabel} aria-label={`${t.copy}: ${t.amountLabel}`}>{t.copy}</button>
+            </div>
+            <div class="fq-copyrow fq-plainrow">
+              <div class="fq-copytext">
+                <span class="fq-k">{t.holderLabel}</span>
+                <span class="fq-v" data-dslot="p-holder"></span>
+              </div>
+            </div>
+            {payRows.map((row) => (
+              <div class="fq-copyrow" data-drow={row.name}>
+                <div class="fq-copytext">
+                  <span class="fq-k">{row.label}</span>
+                  <span class={`fq-v fq-v-${row.name === "cbu" ? "cvu" : row.name}`} data-dslot={`p-${row.name}`}></span>
+                </div>
+                <button class="pp-copy fq-copy" type="button" data-dcopy={row.name} data-label={row.label} aria-label={`${t.copy}: ${row.label}`}>{t.copy}</button>
+              </div>
+            ))}
+            <div class="fq-copyrow fq-plainrow" data-drow="bank">
+              <div class="fq-copytext">
+                <span class="fq-k">{t.bankLabel}</span>
+                <span class="fq-v" data-dslot="p-bank"></span>
+              </div>
+            </div>
+          </div>
+          <p class="fq-expiry fq-countdown" data-dslot="countdown" role="timer" aria-live="off" hidden></p>
+          <ol class="fq-steps" data-dstep="pay" aria-label={d.payStepsLabel}>
+            <li>{d.pstep1}</li>
+            <li>{d.pstep2}</li>
+            <li>{d.pstep3}</li>
+          </ol>
+          <button class="btn btn-dark fq-cta" type="button" data-daction="paid" data-dstep="pay">{d.paid}</button>
+        </div>
+
+        <button class="btn btn-dark fq-cta" type="button" data-daction="restart" data-dstep="cancelled">{d.startAgain}</button>
+        <p class="fq-dnote" data-dslot="help" hidden>{d.help}</p>
+        <dl class="pp-details ck-facts fq-facts fq-dfacts" data-dstep="confirming cancelled disputed" hidden>
+          <div class="pp-row"><dt>{d.reference}</dt><dd class="fq-ref" data-dslot="reference"></dd></div>
+        </dl>
+        <p class="fq-error" data-derror="general" role="alert" hidden></p>
+        <div class="fq-waiting-actions fq-dactions" data-dslot="support-row" hidden>
+          <a class="fq-link" data-dslot="support" data-base={`mailto:${CONTACT_ADDRESS}`} href={`mailto:${CONTACT_ADDRESS}`}>{d.support}</a>
+        </div>
+        <button class="fq-link fq-dcancel" type="button" data-daction="cancel" data-dstep="matching pay">{d.cancel}</button>
+        {/* The step decides the wrapper; the page decides the link (only where there is another way). */}
+        <div data-dstep="review rejected" hidden>
+          <button class="fq-link fq-back" type="button" data-action="back">{t.back}</button>
+        </div>
+      </section>
+
       {/* How paying goes, in order and by who does it: before the click and while the window is open
           (the identity check happens there, the first time). */}
       <ol class="fq-steps" data-when="open opening waiting" aria-label={t.stepsLabel}>
@@ -232,6 +454,21 @@ const copyRows = [
         <div class="pp-row" data-row="expires" hidden><dt>{t.expires}</dt><dd><time data-slot="expires"></time></dd></div>
         <div class="pp-row" data-row="paid" hidden><dt>{t.paidAt}</dt><dd><time data-slot="paid-at"></time></dd></div>
       </dl>
+
+      {/* The direct flow's confirmations ("I transferred", cancel): a native modal dialog, which keeps
+          focus inside, closes with Escape and gives focus back. Its words are set when it opens. */}
+      <dialog class="fq-dialog" aria-labelledby="fq-dialog-title" aria-describedby="fq-dialog-body">
+        <h2 class="fq-dialog-title" id="fq-dialog-title" data-dslot="dialog-title"></h2>
+        <p class="fq-dialog-body" id="fq-dialog-body" data-dslot="dialog-body"></p>
+        <p class="fq-error" data-derror="dialog" role="alert" hidden></p>
+        <div class="fq-dialog-actions">
+          <button class="btn btn-dark" type="button" data-daction="dialog-yes" data-dsubmit="dialog">
+            <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+            <span data-dslot="dialog-yes" data-idle="" data-busy=""></span>
+          </button>
+          <button class="btn btn-ghost-pill" type="button" data-daction="dialog-no" data-dslot="dialog-no"></button>
+        </div>
+      </dialog>
     </div>
   </section>
 </main>
