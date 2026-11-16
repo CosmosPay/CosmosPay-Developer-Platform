@@ -122,7 +122,8 @@ test("a connect request names a wallet that signs on its network and an address 
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar", provider: "freighter" }).success, true);
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar", provider: "phantom" }).success, false);
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "solana", provider: "phantom" }).success, false);
-  for (const [chain, providers] of Object.entries(WALLET_PROVIDERS)) assert.ok(providers.length > 0, chain);
+  // Every network signs but Aleo, whose only verifier (snarkVM's WASM) is GPL-3.0: declined.
+  for (const [chain, providers] of Object.entries(WALLET_PROVIDERS)) assert.equal(providers.length > 0, chain !== "aleo", chain);
   // Without the challenge it signed, nothing proves the wallet.
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar", provider: "freighter", nonce: undefined }).success, false);
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar", provider: "freighter", nonce: "abc" }).success, false);
@@ -276,7 +277,6 @@ const CASES: { name: string; chain: NetworkId; address: string; message?: string
   { name: "Starknet", chain: "starknet", address: V.starknet.address, input: { provider: "snip12", proof: { signature: V.starknet.signature } } },
   { name: "Cardano", chain: "cardano", address: V.cardano.base.address, message: V.cardano.base.message, input: { provider: "cip30", proof: { signature: V.cardano.base.signature, key: V.cardano.base.key } } },
   { name: "XRP Ledger", chain: "xrp", address: V.xrpl.secp256k1.address, message: V.xrpl.secp256k1.message, input: { provider: "xrpl", proof: { publicKey: V.xrpl.secp256k1.publicKey, signature: V.xrpl.secp256k1.signature } } },
-  { name: "Aleo", chain: "aleo", address: V.aleo.address, message: V.aleo.message, input: { provider: "aleo", signature: V.aleo.signature } },
   { name: "Bitcoin BIP-322", chain: "btc", address: V.btc.bip322_p2tr.address, message: V.btc.bip322_p2tr.message, input: { provider: "bip322", signature: V.btc.bip322_p2tr.signature } },
   { name: "Bitcoin BIP-137", chain: "btc", address: V.btc.bip137_p2wpkh.address, message: V.btc.bip137_p2wpkh.message, input: { provider: "signmessage", signature: V.btc.bip137_p2wpkh.signature } },
   { name: "Litecoin", chain: "ltc", address: V.ltc.address, message: V.ltc.message, input: { provider: "signmessage", signature: V.ltc.signature } },
@@ -303,4 +303,11 @@ test("dispatcher: TON's proof binds its host; NEAR's its recipient", async () =>
   assert.equal(await verifyOwnershipProof(challengeOf("ton", null), ton.address, ton.input, { ...ctx, host: "evil.example" }), false);
   const near = CASES.find((c) => c.name === "NEAR (named)")!;
   assert.equal(await verifyOwnershipProof(challengeOf("near", near.address), near.address, near.input, { ...ctx, host: "evil.example" }), false);
+});
+
+test("Aleo is added by its address, typed twice: no signature is asked or accepted there", () => {
+  const address = "aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px";
+  assert.equal(addedByAddress("aleo", address), true);
+  assert.deepEqual(WALLET_PROVIDERS.aleo, []);
+  assert.equal(connectWalletBodySchema.safeParse({ chain: "aleo", address, nonce: NONCE, signature: "sign1abc", provider: "aleo" }).success, false);
 });

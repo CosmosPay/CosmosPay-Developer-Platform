@@ -2,7 +2,7 @@
    libraries (tests/unit/fixtures/wallet-proof-vectors.json: TronWeb, @ton/crypto + a v4 wallet's
    state init, near-api-js's KeyPair over NEP-413's borsh, @mysten/sui's keypairs, the Aptos TS SDK,
    starknet.js's typed-data signer, @emurgo/cardano-message-signing (CIP-8), ripple-keypairs, the
-   Aleo SDK, bitcoinjs-message and bip322-js, plus BIP-322's own "Hello World" vector). Each is
+   bitcoinjs-message and bip322-js, plus BIP-322's own "Hello World" vector). Each is
    checked as made, then with the message, the address or the signature changed. The chain reads
    (NEAR access keys, Aptos authentication keys, a Starknet account's validation) answer as a node
    does; the Starknet account's answer runs the STARK curve check an account contract runs. */
@@ -18,7 +18,6 @@ import { authKeysOf, verifyAptos } from "@/lib/wallet-proofs/aptos";
 import { starknetMessageHash, verifyStarknet, type StarknetCall } from "@/lib/wallet-proofs/starknet";
 import { cardanoPaymentKeyHash, verifyCardano } from "@/lib/wallet-proofs/cardano";
 import { verifyXrpl, xrplAccountId } from "@/lib/wallet-proofs/xrpl";
-import { readAleoSignature, verifyAleo } from "@/lib/wallet-proofs/aleo";
 import { canSignMessage, verifyBip322Simple, verifyBitcoinFamily, verifyCompactSignature } from "@/lib/wallet-proofs/bitcoin";
 import { fromHex } from "@/lib/wallet-proofs/bytes";
 
@@ -168,17 +167,6 @@ test("XRP Ledger: keypairs signatures, secp256k1 and Ed25519", () => {
     assert.equal(verifyXrpl(v.address, v.message, v.publicKey, flipHex(v.signature)), false, scheme);
   }
   assert.equal(xrplAccountId("r48WUUMoDHEta2wkrM149YrDJnnv9iJjqK"), null, "bad checksum");
-});
-
-test("Aleo: the wallet's signMessage, verified by snarkVM", () => {
-  const v = V.aleo;
-  const sig = readAleoSignature(v.signature);
-  assert.equal(sig, v.signature);
-  assert.equal(readAleoSignature(Array.from(new TextEncoder().encode(v.signature))), v.signature, "as the adapter's bytes");
-  assert.equal(verifyAleo(v.address, v.message, v.signature), true);
-  assert.equal(verifyAleo(v.address, `${v.message}.`, v.signature), false);
-  assert.equal(verifyAleo("aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px", v.message, v.signature), false);
-  assert.equal(readAleoSignature("not a signature"), null);
 });
 
 test("Bitcoin: BIP-137 compact signatures and BIP-322 simple", () => {

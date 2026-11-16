@@ -23,7 +23,7 @@ const walletSchema = z
     chain: z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "stellar", description: "Any network a payment link settles on." }),
     address: z.string().openapi({ example: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG", description: "As the network writes it; hex addresses (EVM and the like) lower-cased." }),
     label: z.string().nullable().openapi({ example: "Treasury" }),
-    provider: z.enum(WALLET_PROVIDER_IDS).nullable().openapi({ example: "freighter", description: "What proved the address: the wallet that signed (`freighter`, `phantom`, `solflare`, `evm`) or the signature's standard (`tip191`, `tonproof`, `nep413`, `sui`, `aip62`, `snip12`, `cip30`, `xrpl`, `aleo`, `bip322`, `signmessage`); `address` when it was added by its address, with no signature (an address that cannot sign a message); null for a signed Stellar XDR." }),
+    provider: z.enum(WALLET_PROVIDER_IDS).nullable().openapi({ example: "freighter", description: "What proved the address: the wallet that signed (`freighter`, `phantom`, `solflare`, `evm`) or the signature's standard (`tip191`, `tonproof`, `nep413`, `sui`, `aip62`, `snip12`, `cip30`, `xrpl`, `bip322`, `signmessage`); `address` when it was added by its address, with no signature (an address that cannot sign a message); null for a signed Stellar XDR." }),
     createdAt: z.string().openapi({ example: "2026-10-25T20:00:00.000Z" }),
   })
   .openapi("OrganizationWallet", { description: "A wallet the organization receives payments in." });
@@ -52,7 +52,7 @@ const connectBody = connectWalletBodySchema.openapi("ConnectOrganizationWalletBo
     "`nonce` names the challenge (POST .../wallets/challenge) and `provider` how it was signed; the proof is `signature` or `proof`.",
     "Stellar: SEP-53 base64 (`freighter`), or `signedXdr` instead (no `provider`): the proof transaction carrying the message (a manageData entry, sequence 1, never valid, public network passphrase), signed by the address in any wallet.",
     "Solana and Fogo: Ed25519 base64 over the message (`phantom`, `solflare`). Monad and every other EVM network: personal_sign 0x-hex (`evm`).",
-    "Tron: TIP-191 signMessageV2 0x-hex (`tip191`). Sui: the serialized personal-message signature, base64 (`sui`). Aleo: the `sign1...` signature over the message's UTF-8 (`aleo`).",
+    "Tron: TIP-191 signMessageV2 0x-hex (`tip191`). Sui: the serialized personal-message signature, base64 (`sui`).",
     "Bitcoin: BIP-322 simple, the base64 witness (`bip322`), or a BIP-137 compact signature (`signmessage`). Litecoin, Dogecoin, Dash, Zcash (transparent) and Bitcoin Cash: the wallet's signmessage, base64 (`signmessage`).",
     "TON (`tonproof`): `proof` is TON Connect's answer, `{ publicKey, walletStateInit, proof: { timestamp, domain, payload, signature } }`, its payload the nonce and its domain `domain`.",
     "NEAR (`nep413`): `proof` is `{ publicKey, signature }` of NEP-413 over the message, the nonce's 32 bytes and `domain` as recipient; the key must be a full-access key of the account.",

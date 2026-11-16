@@ -73,7 +73,6 @@ const SUGGESTED_WALLETS: Partial<Record<NetworkId, string[]>> = {
   movement: ["Nightly", "Razor"],
   starknet: ["Argent X", "Braavos"],
   cardano: ["Eternl", "Lace"],
-  aleo: ["Leo Wallet"],
   btc: ["Unisat", "Xverse", "Leather"],
 };
 
@@ -87,7 +86,6 @@ const STANDARD_NAMES: Partial<Record<WalletProvider, string>> = {
   snip12: "SNIP-12",
   cip30: "CIP-30",
   xrpl: "XRP Ledger",
-  aleo: "Aleo",
   bip322: "BIP-322",
   signmessage: "signmessage",
 };

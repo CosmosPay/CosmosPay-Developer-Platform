@@ -155,11 +155,6 @@
       "signature": "E00D7CDD2838C58DFFC415F98D691ADA2AAC4D700F09BA0C2ED297A72F063751BFE7B931CCE05E9CE472D22CA1AAD58B94A4FF250B12AA97C69F4DF2827F2B0A"
     }
   },
-  "aleo": {
-    "address": "aleo1qc88qj8ca0md76svk5xlcaacjgeldjutl9ptmx0lp9uynyjtzuxqhczrmu",
-    "message": "Cosmos Pay\nConnect this wallet to an organization to receive its payments.\nOrganization: org_test_1\nNetwork: Aleo\nAddress: aleo1qc88qj8ca0md76svk5xlcaacjgeldjutl9ptmx0lp9uynyjtzuxqhczrmu\nNonce: 0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0\nIssued at: 2026-11-16T12:00:00.000Z\nExpires at: 2026-11-16T12:10:00.000Z",
-    "signature": "sign1j88jhewt95uvmzwz5gh4phf60363739g6a83mxg9256pwk9t6cp9emcvrpgnvu8vaknduu33m8plf5sr3zhf35cht9tyj96audhexpqycwpl5e6w3phhdr9xuyphfrqmqshsdwe2dwhelgzctn5kuwk9ptkrr566r9p3cezk4ut840g0dgwwtxn2nxg5rn8lnrkka3ul6w3q6knu80a"
-  },
   "btc": {
     "bip137_p2pkh": {
       "address": "1Poj4FaWFGPhMF1ZMfx39k2DhPT7A8tp8P",

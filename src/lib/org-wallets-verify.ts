@@ -9,11 +9,11 @@
      prefixed text; the signer's address is recovered from the signature and compared.
    - Tron TIP-191, TON ton_proof, NEAR NEP-413 (and the account's full-access keys), Sui personal
      message, Aptos and Movement AIP-62 (and the account's authentication key), Starknet SNIP-12
-     (the account contract's own check), Cardano CIP-30 / CIP-8, XRP Ledger keypairs, Aleo,
+     (the account contract's own check), Cardano CIP-30 / CIP-8, XRP Ledger keypairs,
      Bitcoin BIP-322 and BIP-137, and the Bitcoin family's legacy signmessage.
    An address that cannot sign (`addedByAddress`) has no signature to check: the route takes it
    typed twice instead. Signatures arrive as base64 (Stellar, Solana, Sui, the Bitcoin family),
-   0x-hex (EVM, Tron) or the network's own text (Aleo); the rest as a `proof` object. Anything
+   0x-hex (EVM, Tron); the rest as a `proof` object. Anything
    malformed is a failed proof, never an exception; a chain read that cannot be made throws
    ProofNetworkError (src/lib/wallet-proofs/rpc.ts). */
 import { createHash, createPublicKey, verify } from "node:crypto";
@@ -31,7 +31,6 @@ import { readAptosProof, verifyAptos, type AptosAuthKeyReader } from "@/lib/wall
 import { readStarknetSignature, starknetProofMessage, verifyStarknet, type StarknetCall } from "@/lib/wallet-proofs/starknet";
 import { readCardanoProof, verifyCardano } from "@/lib/wallet-proofs/cardano";
 import { verifyXrpl } from "@/lib/wallet-proofs/xrpl";
-import { readAleoSignature, verifyAleo } from "@/lib/wallet-proofs/aleo";
 import { verifyBip322Simple, verifyCompactSignature, type BitcoinFamily } from "@/lib/wallet-proofs/bitcoin";
 import { str } from "@/lib/wallet-proofs/bytes";
 import { ProofNetworkError } from "@/lib/wallet-proofs/rpc";
@@ -182,10 +181,6 @@ export async function verifyOwnershipProof(challenge: WalletChallenge, address: 
       case "xrpl": {
         const publicKey = str(proof.publicKey);
         return !!publicKey && verifyXrpl(address, message, publicKey, str(proof.signature) ?? signature);
-      }
-      case "aleo": {
-        const sig = readAleoSignature(input.signature ?? proof.signature);
-        return !!sig && verifyAleo(address, message, sig);
       }
       case "bip322":
         return chain === "btc" && verifyBip322Simple(address, message, signature);

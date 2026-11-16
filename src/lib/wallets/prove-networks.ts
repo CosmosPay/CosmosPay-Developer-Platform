@@ -12,7 +12,6 @@
      `sui:signPersonalMessage` or `aptos:signMessage`.
    - Starknet: injected wallets (`window.starknet_*`: Argent X, Braavos...), SNIP-12 typed data.
    - Cardano: CIP-30 wallets (`window.cardano.*`: Eternl, Lace, Yoroi...), signData.
-   - Aleo: Leo Wallet (`window.leoWallet`), signMessage.
    - Bitcoin: Unisat, OKX, Xverse and Leather, BIP-322 (or BIP-137 for a legacy address).
    The XRP Ledger and the rest of the Bitcoin family have no browser standard: their wallets sign
    the message and the result is pasted (`PASTE_FIELDS`). */
@@ -358,36 +357,6 @@ function cardanoSigners(): NetworkSigner[] {
   return out;
 }
 
-/* ── Aleo (Leo Wallet) ── */
-function aleoSigners(): NetworkSigner[] {
-  const leo = (w().leoWallet || w().leo) as AnyRecord | undefined;
-  if (!leo || typeof leo.signMessage !== "function") return [];
-  return [{
-    id: "leo",
-    name: "Leo Wallet",
-    async account() {
-      try {
-        await leo.connect("NO_DECRYPT", "mainnet").catch(() => leo.connect("NO_DECRYPT", "mainnetbeta"));
-      } catch (e) {
-        throw declined(e);
-      }
-      const address = leo.publicKey;
-      if (!address) throw new NetworkProofError("declined", "The wallet shared no address");
-      return String(address);
-    },
-    async sign(challenge, address) {
-      try {
-        const out = await leo.signMessage(utf8(message(challenge)));
-        const bytes = out?.signature ?? out;
-        const signature = typeof bytes === "string" ? bytes : new TextDecoder().decode(new Uint8Array(bytes));
-        return { address: address!, payload: { provider: "aleo", signature } };
-      } catch (e) {
-        throw declined(e);
-      }
-    },
-  }];
-}
-
 /* ── Bitcoin ── */
 const isLegacyBtc = (address: string) => /^1/.test(address);
 function bitcoinSigners(): NetworkSigner[] {
@@ -496,7 +465,6 @@ export function networkSigners(chain: NetworkId): NetworkSigner[] {
       case "movement": return aptosSigners();
       case "starknet": return starknetSigners();
       case "cardano": return cardanoSigners();
-      case "aleo": return aleoSigners();
       case "btc": return bitcoinSigners();
       default: return [];
     }
@@ -517,7 +485,6 @@ export const PASTE_FIELDS: Partial<Record<NetworkId, { provider: WalletProvider;
   movement: { provider: "aip62", fields: ["publicKey", "signature", "fullMessage"] },
   cardano: { provider: "cip30", fields: ["signature", "coseKey"] },
   xrp: { provider: "xrpl", fields: ["publicKey", "signature"] },
-  aleo: { provider: "aleo", fields: ["signature"] },
   btc: { provider: "bip322", fields: ["signature"] },
   ltc: { provider: "signmessage", fields: ["signature"] },
   doge: { provider: "signmessage", fields: ["signature"] },

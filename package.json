@@ -43,7 +43,6 @@
     "@noble/hashes": "2.4.0",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
-    "@provablehq/wasm": "0.13.0",
     "@scure/base": "2.4.0",
     "@scure/btc-signer": "2.4.1",
     "@scure/starknet": "2.4.0",

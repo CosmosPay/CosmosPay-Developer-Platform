@@ -992,7 +992,6 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   | Starknet | SNIP-12 revision 1 typed data (domain Cosmos Pay / SN_MAIN; the organization, the nonce cut to 31 bytes, the expiry), validated by the account itself (`is_valid_signature`, Cairo 0's `isValidSignature`) (`snip12`) | injected `window.starknet_*` (Argent X, Braavos) | no |
   | Cardano | CIP-30 `signData` (CIP-8 COSE_Sign1): EdDSA, the protected header names the address, the key hashes to its payment credential (`cip30`) | CIP-30 `window.cardano.*` | signature and key |
   | XRP Ledger | keypairs signature of the message's hex, the master key of the address (`xrpl`) | none (no browser standard) | public key and signature |
-  | Aleo | the wallet's `signMessage`, verified by snarkVM (`@provablehq/wasm`, loaded on the first Aleo proof) (`aleo`) | Leo Wallet | the signature |
   | Bitcoin | BIP-322 simple (P2WPKH, P2TR, P2SH-P2WPKH) or BIP-137 (`bip322`, `signmessage`) | Unisat, OKX, Xverse, Leather | the signature |
   | Litecoin, Dogecoin, Dash, Zcash (transparent), Bitcoin Cash | the wallet's legacy signmessage with the coin's own magic (`signmessage`) | none | the signature |
 
@@ -1008,9 +1007,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the dispatcher in `orgWallets.test.ts`), SEP-53's vectors and web3.js's `personal_sign` example.
 - **Only an address that cannot sign a message is added by its address, typed twice**
   (`addedByAddress`: a Bitcoin or Litecoin P2WSH address, a P2SH address on Dogecoin, Dash, Bitcoin
-  Cash or Zcash, and a Zcash unified address), by members holding `wallets:create`, stored as
-  `provider: "address"` and listed as added by address. Rows stored as `address` before 2026-11-16
-  stay as they are.
+  Cash or Zcash, a Zcash unified address, and every Aleo address), by members holding
+  `wallets:create`, stored as `provider: "address"` and listed as added by address. Rows stored as
+  `address` before 2026-11-16 stay as they are. **Aleo is address-only by decision** (product
+  owner, 2026-11-16): the only verifier of its signatures, snarkVM's WASM (`@provablehq/wasm`), is
+  GPL-3.0 and was declined; never add it back. Aleo signing is a possible follow-up only with a
+  verifier under a compatible licence.
 - **A Stellar wallet is added with a signed XDR, not a connected wallet** (product owner,
   2026-10-27: people hand over a signed XDR). `ConnectWalletForm`'s Stellar branch takes the address
   and a name, then the proof transaction (`src/lib/wallets/wallet-proof-xdr.ts`: the challenge's
