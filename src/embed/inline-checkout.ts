@@ -22,6 +22,7 @@ import {
   chainName,
   fetchPaymentLink,
   nextPollDelay,
+  opensCheckout,
   phaseOf,
   shortAddress,
   type LinkStatus,
@@ -394,8 +395,9 @@ export class CosmosPayCheckout extends HTMLElement {
       ui.wallet.href = l.uri;
       ui.wallet.removeAttribute("aria-disabled");
       // A Stellar link with a merchant fee points at the hosted checkout, where the payer names
-      // their account: a new tab, so the merchant's page stays.
-      if (l.payerAccountRequired) {
+      // their account, and so does a link on any other network, paid through a deposit address
+      // the hosted checkout makes: a new tab, so the merchant's page stays.
+      if (opensCheckout(l)) {
         ui.wallet.target = "_blank";
         ui.wallet.rel = "noopener";
       } else {

@@ -4,6 +4,7 @@ import Brand from "@/components/payments/checkout/Brand.astro";
 import Amount from "@/components/payments/checkout/Amount.astro";
 import Status from "@/components/payments/checkout/Status.astro";
 import PayerStep from "@/components/payments/checkout/PayerStep.astro";
+import CrossChainStep from "@/components/payments/checkout/CrossChainStep.astro";
 import Qr from "@/components/payments/checkout/Qr.astro";
 import WalletActions from "@/components/payments/checkout/WalletActions.astro";
 import Field from "@/components/payments/checkout/Field.astro";
@@ -19,6 +20,7 @@ const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
     <Amount />
     <Status />
     <PayerStep />
+    <CrossChainStep />
     <div class="pp-pay" data-open-only>
       <Qr />
       <WalletActions />

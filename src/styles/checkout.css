@@ -291,3 +291,25 @@
 .ck-payer-input[aria-invalid="true"] { border-color: #C2410C; }
 .ck-payer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 520px) { .ck-payer-row { flex-direction: column; } }
+
+/* Paying from another network (CrossChainStep.astro). On a network with no wallet link of its own
+   it is the only way to pay: the QR, the wallet buttons and the manual transfer of the link itself
+   are not drawn, since the merchant is never paid directly there. */
+#checkout[data-xc="only"] :is(.pp-pay, [data-row="manual"], .ck-methods, .ck-panels, .ck-cta, .ck-receipt-qr, .ck-receipt-actions, .ck-card-actions, .ck-token-qr, .ck-token-address, [data-slot="tx-note"], .ck-xc-toggle) { display: none !important; }
+.ck-xc { display: grid; gap: 10px; margin: 14px 0 4px; }
+.ck-xc[hidden], .ck-xc-body[hidden], .ck-xc-refund[hidden], .ck-xc-deposit[hidden], .ck-xc-quote[hidden] { display: none; }
+.ck-xc-toggle { justify-self: start; }
+.ck-xc-body { display: grid; gap: 10px; }
+.ck-xc-title { margin: 0; }
+.ck-xc-form { display: grid; gap: 10px; }
+.ck-xc-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
+.ck-xc-field { display: grid; gap: 6px; min-width: 0; }
+.ck-xc-refund { display: grid; gap: 6px; }
+.ck-xc-select { font-family: inherit; appearance: auto; }
+.ck-xc-select:disabled { opacity: 0.6; }
+.ck-xc-detail { color: var(--ink-2); }
+.ck-xc-deposit { display: grid; gap: 10px; }
+.ck-xc-pay { display: grid; gap: 4px; justify-items: stretch; }
+.ck-xc-pay .pp-qr { justify-self: center; }
+.ck-xc-wallet { justify-self: center; }
+@media (max-width: 520px) { .ck-xc-pick { grid-template-columns: 1fr; } }

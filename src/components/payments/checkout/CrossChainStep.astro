@@ -1,0 +1,92 @@
+---
+// Paying from another network (src/lib/payments/deposits.ts): the payer picks the network and the
+// token their funds are in and names their own address there for a refund, sees what to send,
+// then gets a deposit address made for this one payment, with its QR, its wallet link where the
+// network has one, its memo when it needs one and its deadline, and follows it until the merchant
+// is paid. On a link whose network has no wallet link of its own this is the only way to pay and
+// starts open; on a mainnet Stellar, Solana or Monad link it opens from its button. The script
+// shows it only on a link that offers it (`crossChainPayment`) and fills the lists.
+import Field from "@/components/payments/checkout/Field.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+const x = t.xc;
+---
+
+<section class="ck-xc" data-xc-step hidden aria-labelledby="ck-xc-title">
+  <button class="btn btn-outline-w btn-sm ck-xc-toggle" type="button" data-action="xc-toggle" aria-expanded="false" aria-controls="ck-xc-body">{x.toggle}</button>
+  <div class="ck-xc-body" id="ck-xc-body" data-xc-body hidden>
+    <h2 class="ck-field-label ck-xc-title" id="ck-xc-title">{x.title}</h2>
+    <p class="ck-field-hint">{x.hint}</p>
+    <form class="ck-xc-form" data-xc-form novalidate>
+      <div class="ck-xc-pick">
+        <label class="ck-xc-field">
+          <span class="ck-field-label">{x.network}</span>
+          <select class="ck-payer-input ck-xc-select" name="network" data-xc-network required>
+            <option value="">{x.choose}</option>
+          </select>
+        </label>
+        <label class="ck-xc-field">
+          <span class="ck-field-label">{x.asset}</span>
+          <select class="ck-payer-input ck-xc-select" name="asset" data-xc-asset required disabled>
+            <option value="">{x.choose}</option>
+          </select>
+        </label>
+      </div>
+      <div class="ck-xc-refund" data-xc-refund hidden>
+        <label class="ck-xc-field" for="ck-xc-refund">
+          <span class="ck-field-label" data-slot="xc-refund-label"></span>
+        </label>
+        <input
+          id="ck-xc-refund"
+          class="ck-payer-input"
+          name="refundTo"
+          type="text"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-describedby="ck-xc-refund-hint ck-xc-status"
+        />
+        <p class="ck-field-hint" id="ck-xc-refund-hint">{x.refundHint}</p>
+      </div>
+      <dl class="pp-details ck-xc-quote" data-xc-quote hidden>
+        <div class="pp-row"><dt>{x.youSend}</dt><dd data-slot="xc-send"></dd></div>
+        <div class="pp-row" data-row="xc-fee"><dt>{x.fee}</dt><dd data-slot="xc-fee"></dd></div>
+        <div class="pp-row"><dt>{x.time}</dt><dd data-slot="xc-time"></dd></div>
+      </dl>
+      <p class="pp-hint" data-xc-quote hidden>{x.surplus}</p>
+      <div class="ck-payer-actions">
+        <button class="btn btn-dark btn-sm" type="submit" data-xc-submit>{x.quote}</button>
+      </div>
+      <p class="pp-hint" id="ck-xc-status" data-slot="xc-status" role="status" aria-live="polite"></p>
+      <p class="pp-hint ck-xc-detail" data-slot="xc-detail" hidden></p>
+    </form>
+    <div class="ck-xc-deposit" data-xc-deposit hidden>
+      <div class="pp-status" role="status" aria-live="polite">
+        <span class="pp-pill" data-slot="xc-phase"></span>
+        <p class="pp-body" data-slot="xc-phase-body"></p>
+      </div>
+      <div class="ck-xc-pay" data-xc-payable>
+        <img class="pp-qr" data-slot="xc-qr" alt={x.qrAlt} width="200" height="200" />
+        <a class="btn btn-dark ck-xc-wallet" data-slot="xc-open-wallet" hidden>{t.openWallet}</a>
+        <Field name="xc-amount" label={x.sendExactly} />
+        <div class="ck-field">
+          <div class="ck-field-text">
+            <span class="ck-field-label">{x.depositTo}</span>
+            <span class="ck-field-hint" data-slot="xc-deposit-hint"></span>
+          </div>
+          <div class="ck-field-box">
+            <code class="pp-code" data-slot="xc-address"></code>
+            <button class="pp-copy" type="button" data-copy="xc-address" aria-label={`${t.copy}: ${x.depositTo}`}>{t.copy}</button>
+          </div>
+        </div>
+        <Field name="xc-memo" label={t.memo} hint={x.memoHint} row="xc-memo" />
+      </div>
+      <dl class="pp-details">
+        <div class="pp-row" data-row="xc-expires" hidden><dt>{x.deadline}</dt><dd><time data-slot="xc-expires"></time></dd></div>
+        <div class="pp-row" data-row="xc-tx" hidden><dt>{x.payout}</dt><dd><a class="pp-link" data-slot="xc-tx" target="_blank" rel="noopener noreferrer">{t.explorer}</a></dd></div>
+      </dl>
+      <button class="btn btn-outline-w btn-sm" type="button" data-action="xc-reset" hidden>{x.another}</button>
+    </div>
+  </div>
+</section>
