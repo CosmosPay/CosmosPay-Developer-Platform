@@ -777,9 +777,12 @@ export function startCheckout(): void {
     payerStatus(t.signing);
     try {
       let opened = false;
-      const signed = await signWithFreighter(payerEnvelope.xdr, link.network, payerEnvelope.account, () => {
+      const account = payerEnvelope.account;
+      const signed = await signWithFreighter(payerEnvelope.xdr, link.network, account, () => {
         opened = true;
-        report("walletOpened");
+        // The account Freighter signs with, registered before the payment exists on-chain: a
+        // proof registered after the transaction closed does not count for the receipt.
+        report("walletOpened", { address: account });
       });
       if (!signed.ok) {
         if (opened) report("walletClosed");
@@ -796,8 +799,7 @@ export function startCheckout(): void {
         payerStatus(t.signFailed);
         return;
       }
-      // The account Freighter signed with is the payment's source.
-      report("sent", { address: payerEnvelope.account });
+      report("sent", { address: account });
       payerStatus(t.signSent);
       void load();
     } finally {

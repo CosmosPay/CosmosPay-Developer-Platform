@@ -929,9 +929,10 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   another session) and sends on its later calls: a changed email, the wallet events
   (`reportCheckoutEvent`) and every deposit (`createDeposit`). Every session keeps its own email, so
   another visitor never blocks the payer. The wallet events also carry what the session's wallet
-  said it pays from (`address`: Freighter's account) or the transaction it answered (`txHash`: the
-  extension's): the receipt and the customer link go to the deposit's session, else the session
-  whose proof matches the settlement; a bare `sent` decides nothing. A deposit refused as `payer_session_unknown` brings the email
+  said it pays from (`address`: Freighter's account, sent when Freighter opens, before the payment
+  exists) or the transaction it answered (`txHash`: the extension's): the receipt and the customer
+  link go to the deposit's session, else the one session whose proof matches the settlement and
+  was registered before the transaction closed on-chain; a bare `sent` decides nothing. A deposit refused as `payer_session_unknown` brings the email
   step back (a new session). The payment's view lists every email given (`payer-emails`). The embedded checkout
   (`<cosmos-pay-checkout>`) asks the same way before its QR; its strings are the hosted page's,
   word for word. A wallet link scanned outside these pages carries no email: nothing here can
