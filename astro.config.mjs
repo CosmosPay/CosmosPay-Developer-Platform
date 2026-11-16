@@ -271,6 +271,16 @@ export default defineConfig({
       // Bing verifies each of the three sites. Public by design, a runtime read like INDEXNOW_KEY;
       // keep it set, or the sites stop being verified. Unset: the file answers 404.
       BING_SITE_AUTH: envField.string({ context: 'server', access: 'secret', optional: true }),
+      // --- Organization wallet proofs (src/lib/wallet-proof-env.ts) ---
+      // The mainnet nodes a wallet proof reads the chain from: NEAR's JSON-RPC (is the signing key a
+      // full-access key of the account?), Aptos's and Movement's REST API (the account's
+      // authentication key) and Starknet's JSON-RPC (the account contract checks its own
+      // signature). Public endpoints by default; point them at a provider's when the public ones
+      // rate-limit. Runtime reads, no rebuild.
+      WALLET_PROOF_NEAR_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://free.rpc.fastnear.com' }),
+      WALLET_PROOF_APTOS_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://api.mainnet.aptoslabs.com/v1' }),
+      WALLET_PROOF_MOVEMENT_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://mainnet.movementnetwork.xyz/v1' }),
+      WALLET_PROOF_STARKNET_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://starknet-rpc.publicnode.com' }),
     },
   },
 

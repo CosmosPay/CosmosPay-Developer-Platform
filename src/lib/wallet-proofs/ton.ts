@@ -93,3 +93,12 @@ export function verifyTon(address: string, proof: TonProof, expected: TonExpecta
     return false;
   }
 }
+
+/** The address as TON wallets show it for receiving (user-friendly, non-bounceable, URL-safe); null when it is not one. */
+export function tonFriendlyAddress(address: string): string | null {
+  try {
+    return Address.parse(address.trim()).toString({ urlSafe: true, bounceable: false });
+  } catch {
+    return null;
+  }
+}

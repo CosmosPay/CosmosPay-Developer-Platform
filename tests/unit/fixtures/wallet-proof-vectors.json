@@ -14,13 +14,13 @@
     "publicKey": "a09aa5f47a6759802ff955f8dc2d2a14a5c99d23be97f864127ff9383455a4f0",
     "walletStateInit": "te6cckECFgEAAwQAAgE0ARUBFP8A9KQT9LzyyAsCAgEgAxACAUgEBwLm0AHQ0wMhcbCSXwTgItdJwSCSXwTgAtMfIYIQcGx1Z70ighBkc3RyvbCSXwXgA/pAMCD6RAHIygfL/8nQ7UTQgQFA1yH0BDBcgQEI9ApvoTGzkl8H4AXTP8glghBwbHVnupI4MOMNA4IQZHN0crqSXwbjDQUGAHgB+gD0BDD4J28iMFAKoSG+8uBQghBwbHVngx6xcIAYUATLBSbPFlj6Ahn0AMtpF8sfUmDLPyDJgED7AAYAilAEgQEI9Fkw7UTQgQFA1yDIAc8W9ADJ7VQBcrCOI4IQZHN0coMesXCAGFAFywVQA88WI/oCE8tqyx/LP8mAQPsAkl8D4gIBIAgPAgEgCQ4CAVgKCwA9sp37UTQgQFA1yH0BDACyMoHy//J0AGBAQj0Cm+hMYAIBIAwNABmtznaiaEAga5Drhf/AABmvHfaiaEAQa5DrhY/AABG4yX7UTQ1wsfgAWb0kK29qJoQICga5D6AhhHDUCAhHpJN9KZEM5pA+n/mDeBKAG3gQFImHFZ8xhAT48oMI1xgg0x/TH9MfAvgju/Jk7UTQ0x/TH9P/9ATRUUO68qFRUbryogX5AVQQZPkQ8qP4ACSkyMsfUkDLH1Iwy/9SEPQAye1U+A8B0wchwACfbFGTINdKltMH1AL7AOgw4CHAAeMAIcAC4wABwAORMOMNA6TIyx8Syx/L/xESExQAbtIH+gDU1CL5AAXIygcVy//J0Hd0gBjIywXLAiLPFlAF+gIUy2sSzMzJc/sAyEAUgQEI9FHypwIAcIEBCNcY+gDTP8hUIEeBAQj0UfKnghBub3RlcHSAGMjLBcsCUAbPFlAE+gIUy2oSyx/LP8lz+wACAGyBAQjXGPoA0z8wUiSBAQj0WfKnghBkc3RycHSAGMjLBcsCUAXPFlAD+gITy2rLHxLLP8lz+wAACvQAye1UAFEAAAAAKamjF6CapfR6Z1mAL/lV+NwtKhSlyZ0jvpf4ZBJ/+Tg0VaTwQOSsdU8=",
     "proof": {
-      "timestamp": 1763294400,
+      "timestamp": 1794830460,
       "domain": {
         "lengthBytes": 17,
         "value": "dev.cosmospay.lat"
       },
       "payload": "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0",
-      "signature": "ZOt5uGF5oAvSqATSGhUah1dEBHRdu124Equ/1kHwn27MyjQA9Y7EZqWyFN4JprebnPPyf+30o18vpuArE+1kCA=="
+      "signature": "H2hWAXETmHRoQa19CHR2OwNROR7RmYBnwYoLq67rqrRBq3AwGsZMdbVAFHfb20K04NHUfeg/RqCVXg/urMbDCQ=="
     }
   },
   "near": {
@@ -28,16 +28,16 @@
       "accountId": "17cb79fb2b4120f2b1ec65e4198d6e08b28e813feb01e4a400839b85e18080ce",
       "message": "Cosmos Pay\nConnect this wallet to an organization to receive its payments.\nOrganization: org_test_1\nNetwork: NEAR\nAddress: 17cb79fb2b4120f2b1ec65e4198d6e08b28e813feb01e4a400839b85e18080ce\nNonce: 0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0\nIssued at: 2026-11-16T12:00:00.000Z\nExpires at: 2026-11-16T12:10:00.000Z",
       "publicKey": "ed25519:2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h",
-      "signature": "YauaYt6F0PInZQI0LxCBsOZGHT1FjazhBLdIW2JLpe8rCjpHNs0oBuDZZ463F+CKhSAc8t+oMRaps58JmMB9Ag==",
-      "recipient": "cosmospay.lat",
+      "signature": "fPFtLunp3J4s+w003afklTEe6gGsHNi6sOg0X/5tbqwZ49oHcHy+M6zChYUlgl8rWCJwb7A++30mKbIqsoeWBg==",
+      "recipient": "dev.cosmospay.lat",
       "nonce": "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0"
     },
     "named": {
       "accountId": "cosmospay-test.near",
       "message": "Cosmos Pay\nConnect this wallet to an organization to receive its payments.\nOrganization: org_test_1\nNetwork: NEAR\nAddress: cosmospay-test.near\nNonce: 0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0\nIssued at: 2026-11-16T12:00:00.000Z\nExpires at: 2026-11-16T12:10:00.000Z",
       "publicKey": "ed25519:2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h",
-      "signature": "d8XyO0KMsdakJwl3w/AOb1ykfF2uARYRJs/EyGYqK/IA8FHrbOrdH0VOFfzi6onPW6w88MvtEXQ4oRZoCUxsCQ==",
-      "recipient": "cosmospay.lat",
+      "signature": "RhEu4pAteI5v2Qd/krGuUHgzl5bSk1xUbASwp5l2Wr7ZCpWT6tEbrlprlqzoXFWC0OTrQpkqcfFzgl95DTL2BQ==",
+      "recipient": "dev.cosmospay.lat",
       "nonce": "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0"
     }
   },
@@ -158,7 +158,7 @@
   "aleo": {
     "address": "aleo1qc88qj8ca0md76svk5xlcaacjgeldjutl9ptmx0lp9uynyjtzuxqhczrmu",
     "message": "Cosmos Pay\nConnect this wallet to an organization to receive its payments.\nOrganization: org_test_1\nNetwork: Aleo\nAddress: aleo1qc88qj8ca0md76svk5xlcaacjgeldjutl9ptmx0lp9uynyjtzuxqhczrmu\nNonce: 0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0\nIssued at: 2026-11-16T12:00:00.000Z\nExpires at: 2026-11-16T12:10:00.000Z",
-    "signature": "sign1u682z0jyrm7jlzmwdxmwzlzm3p8mthucjxhfvnwqu3xekfndhcppvht7hkg2tf93th20fp4zszz4txnhfw3r4uhznchrzsh7ygdjqqsycwpl5e6w3phhdr9xuyphfrqmqshsdwe2dwhelgzctn5kuwk9ptkrr566r9p3cezk4ut840g0dgwwtxn2nxg5rn8lnrkka3ul6w3q6px56wu"
+    "signature": "sign1j88jhewt95uvmzwz5gh4phf60363739g6a83mxg9256pwk9t6cp9emcvrpgnvu8vaknduu33m8plf5sr3zhf35cht9tyj96audhexpqycwpl5e6w3phhdr9xuyphfrqmqshsdwe2dwhelgzctn5kuwk9ptkrr566r9p3cezk4ut840g0dgwwtxn2nxg5rn8lnrkka3ul6w3q6knu80a"
   },
   "btc": {
     "bip137_p2pkh": {
@@ -184,7 +184,7 @@
     "bip322_p2tr": {
       "address": "bc1pxsxq9ayn2gke9samf29py2t49qvakgca2ywhks6txqfncd7al02syy6zc5",
       "message": "Cosmos Pay\nConnect this wallet to an organization to receive its payments.\nOrganization: org_test_1\nNetwork: Bitcoin\nAddress: bc1pxsxq9ayn2gke9samf29py2t49qvakgca2ywhks6txqfncd7al02syy6zc5\nNonce: 0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0\nIssued at: 2026-11-16T12:00:00.000Z\nExpires at: 2026-11-16T12:10:00.000Z",
-      "signature": "AUG0vaEpubnFlO3J1v1BAk9r6bkboy6XHaGpscCZnazz44WauJWzPx2qf7rtsODdcxanTzn9Wojq8TGL7DKL0QH2AQ=="
+      "signature": "AUHybpl3ormhKyKAvahdpzcVWQwRH8TMOImsNeiZGeJLSRa3BzVvGPahw1Cuf03c9/++lOPIgKmLFLBR5ZslW/pBAQ=="
     },
     "bip322_p2sh_p2wpkh": {
       "address": "36dPsdEHe5Md1htZRbDYsbAAofC1QWC152",

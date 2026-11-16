@@ -364,6 +364,8 @@ export const organizations = {
   // The wallets the organization receives payments in (Settings); connecting one carries its signed proof.
   wallets: (id) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`),
   connectWallet: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`, { method: "POST", body: JSON.stringify(body) }),
+  // A challenge to prove a wallet: the nonce and what the wallet signs (src/lib/org-wallets.ts).
+  walletChallenge: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/challenge`, { method: "POST", body: JSON.stringify(body) }),
   renameWallet: (id, walletId, label) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "PATCH", body: JSON.stringify({ label }) }),
   removeWallet: (id, walletId) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
 };

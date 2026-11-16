@@ -104,3 +104,8 @@ export async function verifyStarknet(account: string, message: StarknetProofMess
   const cairo0 = await call(account, hex(starknetKeccak("isValidSignature")), calldata);
   return !!cairo0 && cairo0.length > 0 && BigInt(cairo0[0]) === 1n;
 }
+
+/** The typed data's message for a challenge: its organization, its nonce cut to a felt (31 bytes), its expiry in seconds. */
+export function starknetProofMessage({ orgId, nonce, expiresAt }: { orgId: string; nonce: string; expiresAt: string }): StarknetProofMessage {
+  return { organization: orgId, nonce: `0x${nonce.slice(0, 62)}`, expires: Math.floor(Date.parse(expiresAt) / 1000) };
+}
