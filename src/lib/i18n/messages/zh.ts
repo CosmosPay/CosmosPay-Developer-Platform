@@ -994,7 +994,7 @@ export default {
         amount: "金额", amountHint: "留空则由付款方自行决定金额（适用于捐赠）。",
         asset: "资产", assetIssuer: "资产发行方", assetIssuerHint: "非原生资产必填（G…）。",
         memo: "备注", memoHint: "数字 MEMO_ID，留空时自动生成。",
-        message: "消息", messageHint: "在付款方钱包中显示（≤ 300 个字符）。", messageHintCheckout: "显示在付款页面上，供付款人查看（≤ 300 个字符）。", mainnetOnly: "仅限主网", mainnetOnlyHint: "此网络上的付款仅在主网运行。请切换到生产环境来创建。", depositNetworkHint: "你的客户可从任意网络付款，通过为每笔付款生成的充值地址完成。准确的金额会到账你的 {network} 钱包。", amountRequired: "此网络必填：你的钱包将收到正好这个金额。",
+        message: "消息", messageHint: "在付款方钱包中显示（≤ 300 个字符）。", messageHintCheckout: "显示在付款页面上，供付款人查看（≤ 300 个字符）。", mainnetOnly: "仅限主网", mainnetOnlyHint: "此网络上的付款仅在主网运行。请切换到生产环境来创建。", depositNetworkHint: "你的客户可从任意网络付款，通过为每笔付款生成的充值地址完成。准确的金额会到账你的 {network} 钱包。", amountRequired: "此网络必填：你的钱包将收到正好这个金额。", assetsError: "无法加载此网络的代币。",
         chain: "网络", amountMonad: "在 Monad 上为必填：系统通过精确金额识别该笔支付。", memoHintOther: "一个数字，用于防止重试时创建第二个链接；留空时自动生成。", submitting: "创建中…",
         mainnet: "主网", more: "更多选项",
         merchantFee: { title: "商户手续费", pct: "百分比", fixed: "固定金额", wallet: "接收手续费的钱包", paidBy: "由谁支付", recipient: "从金额中扣除", payer: "由付款方在金额之外支付", hint: "你自己的手续费，在同一笔付款中，与 Cosmos Pay 的佣金分开，且需要金额。在 Stellar 上收银台会请付款方提供账户；在 Solana 上付款是一笔 Solana Pay 交易；在 Monad 上由充值地址拆分。", needsAmount: "商户手续费需要金额。", sameWallet: "手续费需付到与付款不同的钱包。", pctMax: "最多 10%。", unavailable: "{network} 上暂不支持商户手续费。" },

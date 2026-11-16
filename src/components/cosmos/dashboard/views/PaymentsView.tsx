@@ -411,6 +411,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
             </div>
           </div>
           {(chain === "monad" || deposit || !isTx) && <p className="field-help" id="paylink-amount-h">{chain === "monad" ? m.amountMonad : deposit ? m.amountRequired : m.amountHint}</p>}
+          {deposit && !unavailable && Array.isArray(listed) && !assets.length && <p className="field-err" role="alert">{m.assetsError}</p>}
         </div>
         {custom && (
           <div className="field-row arrive">
