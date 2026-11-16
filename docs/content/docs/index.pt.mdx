@@ -28,9 +28,9 @@ A rede é escolhida pelo tipo de chave de API: chaves `dv_` usam a **testnet**, 
 Na Solana e na Monad, informe `chain`, com o SDK (`createPay({ chain: 'solana', ... })`, a partir da versão 2.2) ou pela [API REST](/api/payment-intents):
 você recebe um link Solana Pay ou EIP-681, o pagador paga de qualquer carteira dessa rede, e a
 API de Pagamentos detecta o pagamento on-chain e dispara os mesmos webhooks.
-
 Em qualquer outra rede que a API de Pagamentos lista (Ethereum, Base, Tron, Bitcoin, TON e as demais), informe
 sua `chain` com uma chave `prod_` e um `amount`: o `uri` do link é o checkout hospedado, onde o pagador escolhe
 a rede e o token com que paga e recebe um endereço de depósito criado para esse pagamento. Você recebe exatamente
 o `amount` na rede do link, e os mesmos webhooks são disparados. Qualquer link na mainnet com valor e sem taxa
 do comerciante também pode ser pago assim a partir de outra rede.
+

@@ -28,9 +28,9 @@ La red se elige según el tipo de clave de API: las claves `dv_` apuntan a **tes
 En Solana y Monad, indica `chain`, con el SDK (`createPay({ chain: 'solana', ... })`, desde la versión 2.2) o con la [API REST](/api/payment-intents):
 recibes un enlace Solana Pay o EIP-681, el pagador lo paga desde cualquier billetera de esa red, y
 la API de pagos detecta el pago en cadena y dispara los mismos webhooks.
-
 En cualquier otra red que lista la API de pagos (Ethereum, Base, Tron, Bitcoin, TON y las demás), indica su
 `chain` con una clave `prod_` y un `amount`: el `uri` del enlace es el checkout alojado, donde el pagador elige
 la red y el token con que paga y recibe una dirección de depósito creada para ese pago. Tú recibes exactamente
 el `amount` en la red del enlace, y se disparan los mismos webhooks. Cualquier enlace en mainnet con monto y sin
 comisión del comercio también se puede pagar así desde otra red.
+
