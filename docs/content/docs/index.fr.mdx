@@ -4,8 +4,8 @@ description: Acceptez des paiements en stablecoins depuis tous les réseaux avec
 ---
 
 **Cosmos Pay** vous permet d'accepter des paiements que vos clients font depuis n'importe quel réseau
-avec lequel nous travaillons (intentions de paiement avec des liens SEP-7, Solana Pay et EIP-681, et un
-swap préalable quand les fonds sont sur un autre réseau), de faire des swaps sur un réseau ou entre
+avec lequel nous travaillons (intentions de paiement avec des liens SEP-7, Solana Pay et EIP-681, ou une
+adresse de dépôt créée pour chaque paiement quand les fonds sont sur un autre réseau), de faire des swaps sur un réseau ou entre
 réseaux, et de gérer les webhooks, les produits, les clients et les analyses. Cette documentation couvre les deux façons d'intégrer :
 
 <Cards>
@@ -28,3 +28,9 @@ Le réseau est choisi par le type de clé API : les clés `dv_` ciblent le **tes
 Sur Solana et Monad, indiquez `chain`, avec le SDK (`createPay({ chain: 'solana', ... })`, depuis la version 2.2) ou l'[API REST](/api/payment-intents) :
 vous obtenez un lien Solana Pay ou EIP-681, le payeur le règle depuis n'importe quel portefeuille de ce réseau,
 et l'API Payments détecte le paiement sur la chaîne et déclenche les mêmes webhooks.
+
+Sur tout autre réseau que liste l'API Payments (Ethereum, Base, Tron, Bitcoin, TON et les autres), indiquez sa
+`chain` avec une clé `prod_` et un `amount` : l'`uri` du lien est le checkout hébergé, où le payeur choisit le
+réseau et le jeton avec lesquels il paie et reçoit une adresse de dépôt créée pour ce paiement. Vous recevez
+exactement l'`amount` sur le réseau du lien, et les mêmes webhooks sont déclenchés. Tout lien sur le mainnet avec
+un montant et sans frais du marchand peut aussi être payé ainsi depuis un autre réseau.

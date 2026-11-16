@@ -41,7 +41,7 @@ export const GUIDE_DATES: Record<Guide, { published: string; modified: string }>
   "accept-usdc-payments": { published: "2026-11-01", modified: "2026-11-03" },
   "whatsapp-payment-links": { published: "2026-11-01", modified: "2026-11-01" },
   "stablecoin-payment-gateway": { published: "2026-11-01", modified: "2026-11-03" },
-  "stellar-vs-solana-vs-monad": { published: "2026-11-01", modified: "2026-11-03" },
+  "stellar-vs-solana-vs-monad": { published: "2026-11-01", modified: "2026-11-16" },
   "accept-usdc-with-solana-pay": { published: "2026-11-02", modified: "2026-11-02" },
   "confirm-stablecoin-payments": { published: "2026-11-02", modified: "2026-11-02" },
   "usdt0-from-stellar": { published: "2026-11-02", modified: "2026-11-02" },
