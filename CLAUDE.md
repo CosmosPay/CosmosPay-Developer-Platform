@@ -894,16 +894,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   community server's `CROSS_CHAIN_NETWORK_IDS`). Stellar, Solana and Monad have their own wallet
   links (SEP-7, Solana Pay, EIP-681) and test networks (Solana devnet and Monad testnet in the
   sandbox); every other network is paid through a **deposit address made for each payment**, on
-  mainnet only (the sandbox lists them, off, saying why), for an amount in one of the tokens the
-  Payments API lists there, with no merchant fee (default taken 2026-11-16, open for the owner). The payer pays from
-  any network and token; the merchant receives exactly the amount on the link's network. A mainnet
-  Stellar, Solana or Monad link with an amount and no fee can be paid that way too
+  mainnet only (the sandbox lists them, off, saying why), in one of the tokens the Payments API
+  lists there, with or without an amount (product owner, 2026-11-16: the payer types it in the
+  checkout), and with a merchant fee paid as the cross-chain route's own app fee to a route account
+  (an organization wallet on NEAR, or an EVM one). The payer pays from any network and token, the
+  commission on top; the merchant receives exactly the amount on the link's network. A mainnet
+  Stellar, Solana or Monad link with no fee can be paid that way too, with or without an amount
   (`crossChainPayment` on the public read). The form is composed, not a stack of fields: the network
   as a `Select` of every network by name (none first for being ours), the amount with its asset
   dropdown in one well (as the swap widget; on the other networks the real cross-chain asset list,
   never sampled), the destination, and memo / message under "more options"; transaction intents
-  (a known payer) are Stellar's only, Monad and the other networks need an amount, Monad takes no
-  wallet message. The schema (`src/schemas/payment-intents.ts`, tested) checks each network's
+  (a known payer) are Stellar's only, Monad needs an amount and takes no wallet message, and a link
+  that can be paid from another network has its own limits under "more options" (`depositLimits`). The schema (`src/schemas/payment-intents.ts`, tested) checks each network's
   address shape and decimals; the Payments API checks the rest.
 - **The hosted checkout pays from another network** (`CrossChainStep.astro` in every design,
   `src/lib/payments/deposits.ts`, keyless `/v1/payment-links/{id}/deposit-assets`, `/quote`,
@@ -913,8 +915,20 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   the same address). Every answer goes through its parser: the deposit address must be one of its
   origin network, the wallet link one of the known standards, the QR a PNG, explorer links https. A
   route's refusal (a minimum, a token it cannot take now) is shown in the server's words, which name
-  no provider. Mock mode never fakes it: the token list is the real one, a quote or a deposit answers
-  that mock mode cannot make one.
+  no provider. The token list comes with `routes`, the server's check of the main origins for the
+  link's amount: a token the route cannot take for it is listed disabled, with the reason under the
+  lists, before anyone picks it. On a link without an amount the payer types it first (`amount` on
+  the quote and the deposit). Mock mode never fakes it: the token list is the real one, a quote or
+  a deposit answers that mock mode cannot make one.
+- **No way to pay before the payer's email** (product owner, 2026-11-16: a receipt always goes out).
+  Every design's `EmailStep.astro` asks for it on an open link; until it is in, the page holds no
+  QR, wallet link, manual transfer or deposit form (`emailGated` in `checkout.ts`, the QR's `src`
+  and the links' `href` removed, not only hidden). It is recorded with the keyless
+  `POST /v1/payment-links/{id}/payer` (`recordPayer`) and sent with every deposit, and kept in
+  sessionStorage per link so a reload does not ask again. The embedded checkout
+  (`<cosmos-pay-checkout>`) asks the same way before its QR; its strings are the hosted page's,
+  word for word. A wallet link scanned outside these pages carries no email: nothing here can
+  force one there.
 - **`src/lib/chains.ts` is the network vocabulary** for every screen and route: names, native coins,
   test-network names (the three), address shapes for all 35 (mirroring the server's rules),
   explorers (transactions and accounts, per network; mainnet only off the three) and the token

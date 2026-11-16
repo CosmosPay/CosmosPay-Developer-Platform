@@ -41,6 +41,7 @@ import { addedByAddress, shortAddress, WALLET_LABEL_MAX, WALLET_PROVIDERS, walle
 import { detectWallets, evmWalletName, proveWallet } from "@/lib/wallets/prove";
 import { signWithFreighter } from "@/lib/wallets/freighter";
 import { checkWalletProofXdr, walletProofTransactionXdr } from "@/lib/wallets/wallet-proof-xdr";
+import { isRouteFeeWallet, routeFeeAccount } from "@/lib/deposit-limits";
 import { CopyBlock } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { StrKey } from "@stellar/stellar-sdk";
 
@@ -539,6 +540,71 @@ export function WalletSelect({ orgId, chain, value, onChange, canConnect, label,
         </div>
       )}
       {hint && mine.length > 0 && !connecting && <p className="field-help" id={`${id}-h`}>{hint}</p>}
+    </div>
+  );
+}
+
+/* The account a merchant fee on a network paid through a deposit address is credited to: the
+   cross-chain route credits it inside itself, to a NEAR account or an EVM address, never to an
+   address on the link's network. So the choice is the organization's NEAR wallets and its EVM
+   ones (one address on every EVM network: listed once, lowercase, as the route stores it), never
+   a typed address. Whoever may connect wallets gets "add a NEAR wallet" inline. */
+export function RouteFeeWalletSelect({ orgId, value, onChange, canConnect, label, id, hint }: { orgId: string; value: string; onChange: (account: string) => void; canConnect: boolean; label: string; id: string; hint?: string }) {
+  const t = useT();
+  const w = t.dash.wallets;
+  const wallets = useOrgWallets(orgId);
+  const accounts = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { account: string; chain: NetworkId; label: string | null }[] = [];
+    for (const x of wallets || []) {
+      if (!isRouteFeeWallet(x.chain, x.address)) continue;
+      const account = routeFeeAccount(x.address);
+      if (seen.has(account)) continue;
+      seen.add(account);
+      out.push({ account, chain: x.chain, label: x.label });
+    }
+    return out;
+  }, [wallets]);
+  const [connecting, setConnecting] = useState(false);
+
+  // Always one of the list: the first when nothing (or something no longer listed) is chosen.
+  useEffect(() => {
+    if (wallets === undefined) return;
+    if (accounts.length && !accounts.some((x) => x.account === value)) onChange(accounts[0].account);
+    if (!accounts.length && value) onChange("");
+  }, [wallets, accounts]);
+
+  const labelId = `${id}-l`;
+  return (
+    <div className="fld">
+      <span className="field-l" id={labelId}>{label}</span>
+      {wallets === undefined ? (
+        <Sk className="lg" w="100%" />
+      ) : connecting ? (
+        <div className="wl-inline arrive">
+          <ConnectWalletForm orgId={orgId} chain="near" lockChain onDone={(wallet) => { setConnecting(false); onChange(routeFeeAccount(wallet.address)); }} onCancel={() => setConnecting(false)} />
+        </div>
+      ) : accounts.length ? (
+        <Select
+          id={id}
+          labelledBy={labelId}
+          describedBy={hint ? `${id}-h` : undefined}
+          value={value}
+          onChange={(v) => (v === CONNECT ? setConnecting(true) : onChange(v))}
+          options={[
+            ...accounts.map((x) => ({ value: x.account, label: x.label || shortAddress(x.account), hint: x.label ? shortAddress(x.account) : undefined, icon: <NetworkMark chain={x.chain} size={22} /> })),
+            ...(canConnect ? [{ value: CONNECT, label: w.connectAnother }] : []),
+          ]}
+        />
+      ) : (
+        <div className="wl-none" role="status">
+          <span>{wallets === null ? w.loadError : w.noneForRoute}</span>
+          {wallets !== null && (canConnect
+            ? <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setConnecting(true)}>{w.connect}</button>
+            : <span className="field-help">{w.askAdmin}</span>)}
+        </div>
+      )}
+      {hint && accounts.length > 0 && !connecting && <p className="field-help" id={`${id}-h`}>{hint}</p>}
     </div>
   );
 }

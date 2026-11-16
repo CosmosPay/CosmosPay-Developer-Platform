@@ -7,7 +7,8 @@
 import { Account, Asset, BASE_FEE, Memo, Networks, Operation, TransactionBuilder } from "@stellar/stellar-sdk";
 import { CHAINS, NATIVE_CODES, NETWORK_NATIVE_CODES, isAddress, isChain, isNetwork, type Chain, type NetworkId } from "@/lib/chains";
 import { CHECKOUT_THEMES, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
-import type { Customer, CustomerWallet, MerchantFee, PaymentIntent, Product, WebhookEndpoint } from "@/lib/cosmos";
+import type { Customer, CustomerWallet, DepositLimits, MerchantFee, PaymentIntent, PaymentRouteCheck, Product, WebhookEndpoint } from "@/lib/cosmos";
+import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, isRouteFeeAccount, routeFeeAccount, takesDeposits } from "@/lib/deposit-limits";
 import { badRequest, created, notFound, ok, page, route, str, type MockEnv, type MockRequest, type MockRoute } from "@/lib/mock/http";
 import { mockEnvStore } from "@/lib/mock/store";
 import {
@@ -222,6 +223,32 @@ function walletsOf(customer: Customer): CustomerWallet[] {
   return Array.isArray(customer.wallets) ? customer.wallets : [];
 }
 
+/* The limits on payments from another network, as the Payments API answers them (defaults filled). */
+function depositLimits(perPayer?: number | null, perWindow?: number | null): DepositLimits {
+  return {
+    perPayer: perPayer ?? DEPOSIT_LIMIT_PER_PAYER.min,
+    perWindow: perWindow ?? DEPOSIT_LIMIT_PER_WINDOW.min,
+    windowSeconds: DEPOSIT_LIMIT_WINDOW_MINUTES * 60,
+  };
+}
+
+/* A body's `depositLimits`, checked as the API's DepositLimitsDto: the limits, or a refusal. */
+function depositLimitsFrom(b: Record<string, unknown>, current?: DepositLimits): DepositLimits | string {
+  const raw = b.depositLimits;
+  if (raw === undefined) return current ?? depositLimits();
+  if (!raw || typeof raw !== "object") return "depositLimits must be an object";
+  const v = raw as Record<string, unknown>;
+  const bounded = (value: unknown, min: number, max: number, name: string): number | string | undefined => {
+    if (value === undefined) return undefined;
+    return typeof value === "number" && Number.isInteger(value) && value >= min && value <= max ? value : `depositLimits.${name} must be an integer from ${min} to ${max}`;
+  };
+  const perPayer = bounded(v.perPayer, DEPOSIT_LIMIT_PER_PAYER.min, DEPOSIT_LIMIT_PER_PAYER.max, "perPayer");
+  const perWindow = bounded(v.perWindow, DEPOSIT_LIMIT_PER_WINDOW.min, DEPOSIT_LIMIT_PER_WINDOW.max, "perWindow");
+  if (typeof perPayer === "string") return perPayer;
+  if (typeof perWindow === "string") return perWindow;
+  return depositLimits(perPayer ?? current?.perPayer, perWindow ?? current?.perWindow);
+}
+
 /* ------------------------------------------------------------------ seeds */
 
 function seedCustomers(env: MockEnv): Customer[] {
@@ -235,6 +262,7 @@ function seedCustomers(env: MockEnv): Customer[] {
       alias: i % 4 === 0 ? c.name.split(" ")[0] : null,
       note: r.pick(notes),
       email: i % 7 === 6 ? null : c.email,
+      emailProvidedByPayer: i % 7 !== 6 && i % 5 === 3,
       wallets,
       account: wallets[0]?.address ?? null,
       reference: i % 3 === 1 ? `crm_${1000 + i * 37}` : null,
@@ -361,9 +389,13 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
       checkoutWalletAt: walletAt,
       checkoutWalletClosedAt: walletClosed,
       checkoutSentAt: sentAt,
+      depositLimits: depositLimits(i % 11 === 2 ? 4 : null, i % 11 === 2 ? 60 : null),
+      payerEmail: seen && r.chance(0.7) ? `payer${i}@example.com` : null,
+      receiptSentAt: null,
       createdAt,
       updatedAt: final ? plusMinutes(createdAt, r.int(3, 50)) : (sentAt ?? walletClosed ?? walletAt ?? seen ?? createdAt),
     };
+    if (status === "SUCCEEDED" && intent.payerEmail) intent.receiptSentAt = plusMinutes(intent.updatedAt, 1);
     if (kind === "TX" && source && amount) intent.xdr = paymentXdr(env, source, destination, amount, asset, assetIssuer, memo);
     intent.uri = buildUri(env, intent);
     out.push({ org, intent });
@@ -372,13 +404,15 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
   // so the views and the local checkout show one: Base USDC and Tron USDT open, a Bitcoin one
   // expired. None of them is paid: payments from another network are never sampled.
   if (env === "prod") {
-    const samples: [NetworkId, string, string | null, string, Status, number][] = [
+    // Plus a Base USDC link with an open amount: the payer types it in the checkout.
+    const samples: [NetworkId, string, string | null, string | null, Status, number][] = [
       ["base", "USDC", "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", "48.50", "PENDING", 0.4],
       ["tron", "USDT", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "120", "PENDING", 2.5],
       ["btc", "native", null, "0.0042", "EXPIRED", 40],
+      ["base", "USDC", "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", null, "PENDING", 5],
     ];
     samples.forEach(([chain, asset, assetIssuer, amount, status, ageHours], i) => {
-      const id = cuid(`intent:${env}:network:${chain}`);
+      const id = cuid(`intent:${env}:network:${chain}${amount === null ? ":open" : ""}`);
       const createdAt = hoursAgo(ageHours);
       const destination = mockOrgWalletSeeds(DEFAULT_MOCK_ORG_ID).find((w) => w.chain === chain)!.address;
       out.push({
@@ -389,6 +423,7 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
           qr: status === "PENDING" ? qrImage(id) : BLANK_PNG, txHash: null, reference: null, checkoutTheme: CHECKOUT_THEMES[i % CHECKOUT_THEMES.length],
           merchantFee: null, paidFrom: null, chainReference: null, networkFee: null, expiresAt: new Date(ms(createdAt) + DAY).toISOString(),
           checkoutSeenAt: status === "PENDING" ? plusMinutes(createdAt, 3) : null, checkoutWalletAt: null, checkoutWalletClosedAt: null, checkoutSentAt: null,
+          depositLimits: depositLimits(), payerEmail: null, receiptSentAt: null,
           createdAt, updatedAt: createdAt,
         },
       });
@@ -640,6 +675,8 @@ function createIntent(req: MockRequest): Response {
     : issuerIn ?? (chain === "stellar" ? (code === "USDC" ? USDC_ISSUER[env] : code === "EURC" ? EURC_ISSUER[env] : null) : TOKEN_MINT[chain][env]);
   if (!native && !assetIssuer) return badRequest("A non-native asset requires an issuer.");
 
+  const limits = depositLimitsFrom(b);
+  if (typeof limits === "string") return badRequest(limits);
   const memo = chain === "stellar" ? (str(b, "memo")?.trim() || String(100_000 + Math.floor(Math.random() * 900_000_000))) : (str(b, "memo")?.trim() ?? "");
   const theme = str(b, "checkoutTheme");
   const fee = b.merchantFee && typeof b.merchantFee === "object" ? (b.merchantFee as Record<string, unknown>) : null;
@@ -690,6 +727,9 @@ function createIntent(req: MockRequest): Response {
     checkoutWalletAt: null,
     checkoutWalletClosedAt: null,
     checkoutSentAt: null,
+    depositLimits: limits,
+    payerEmail: null,
+    receiptSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -700,8 +740,9 @@ function createIntent(req: MockRequest): Response {
 }
 
 /* A payment link on a network paid through a deposit address made for each payment (every network
-   but Stellar, Solana and Monad), as the Payments API makes one: mainnet only, an amount, no
-   merchant fee, its `uri` the hosted checkout. The deposits themselves are never sampled: paying
+   but Stellar, Solana and Monad), as the Payments API makes one: mainnet only, with or without an
+   amount, a merchant fee credited to an account inside the cross-chain route (a NEAR account or an
+   EVM address), its `uri` the hosted checkout. The deposits themselves are never sampled: paying
    it from the local checkout says mock mode cannot (src/lib/mock/gateway.ts). */
 function createDepositNetworkIntent(req: MockRequest, env: MockEnv, org: string, chain: NetworkId): Response {
   const b = req.body ?? {};
@@ -709,10 +750,29 @@ function createDepositNetworkIntent(req: MockRequest, env: MockEnv, org: string,
   if (!isAddress(chain, destination)) return badRequest(`destination: must be an address on ${chain}.`);
   if (env !== "prod") return badRequest(`Payments on ${chain} run on mainnet only: use the production environment.`);
   const amount = str(b, "amount")?.trim() || null;
-  if (!amount || !/^\d+(\.\d+)?$/.test(amount)) return badRequest("An amount is required on this network.");
+  if (amount && !/^\d+(\.\d+)?$/.test(amount)) return badRequest("Amount must be a positive decimal.");
   if (str(b, "kind") === "tx") return badRequest(`Transaction intents are Stellar only; use a payment link on ${chain}.`);
-  if (b.merchantFee) return badRequest("A merchant fee is not available on this network yet.");
+  const limits = depositLimitsFrom(b);
+  if (typeof limits === "string") return badRequest(limits);
   const code = (str(b, "assetCode") ?? "").trim();
+  const fee = b.merchantFee && typeof b.merchantFee === "object" ? (b.merchantFee as Record<string, unknown>) : null;
+  let merchantFee: MerchantFee | null = null;
+  if (fee) {
+    if (!amount) return badRequest("A merchant fee needs an amount.");
+    const wallet = str(fee, "wallet") ?? "";
+    if (!isRouteFeeAccount(wallet)) return badRequest("merchantFee.wallet must be a NEAR account or an EVM address.");
+    if (routeFeeAccount(wallet).toLowerCase() === destination.toLowerCase()) return badRequest("The merchant fee must go to another wallet than the payment.");
+    const bps = Math.max(0, Math.min(1000, Math.trunc(Number(fee.bps) || 0)));
+    const fixed = str(fee, "fixed") ?? "0";
+    merchantFee = {
+      bps,
+      fixed,
+      amount: decimal((Number(amount) * bps) / 10_000 + (Number(fixed) || 0), 6),
+      asset: code.toUpperCase() || NETWORK_NATIVE_CODES[chain],
+      wallet: routeFeeAccount(wallet),
+      paidBy: str(fee, "paidBy") === "payer" ? "payer" : "recipient",
+    };
+  }
   const assetIssuer = str(b, "assetIssuer")?.trim() || null;
   const native = !assetIssuer && (!code || code.toUpperCase() === NETWORK_NATIVE_CODES[chain]);
   const theme = str(b, "checkoutTheme");
@@ -738,7 +798,7 @@ function createDepositNetworkIntent(req: MockRequest, env: MockEnv, org: string,
     txHash: null,
     reference: null,
     checkoutTheme: isCheckoutTheme(theme) ? theme : "classic",
-    merchantFee: null,
+    merchantFee,
     paidFrom: null,
     chainReference: null,
     networkFee: null,
@@ -747,6 +807,9 @@ function createDepositNetworkIntent(req: MockRequest, env: MockEnv, org: string,
     checkoutWalletAt: null,
     checkoutWalletClosedAt: null,
     checkoutSentAt: null,
+    depositLimits: limits,
+    payerEmail: null,
+    receiptSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -759,6 +822,36 @@ function createDepositNetworkIntent(req: MockRequest, env: MockEnv, org: string,
 function intentDeposits(req: MockRequest): Response {
   const intent = findIntent(req.env, req.params.id);
   return intent ? ok([], "Deposits fetched successfully") : notFound("Payment intent not found");
+}
+
+/* How the main origins fare for a link's amount (the Payments API's route check): a sample here,
+   the same answer every time. Tron USDT has a minimum of $100 and Bitcoin one of $250, the shape
+   of the route's own refusals; every other origin can pay. Empty, as the API answers, for a link
+   without an amount or one that takes no payments from another network. */
+const ROUTE_CHECK_ORIGINS: [PaymentRouteCheck["chain"], string, number][] = [
+  ["eth", "USDC", 0], ["base", "USDC", 0], ["arb", "USDC", 0], ["pol", "USDC", 0], ["solana", "USDC", 0],
+  ["bsc", "USDT", 0], ["tron", "USDT", 100], ["btc", "BTC", 250],
+];
+
+function intentRouteCheck(req: MockRequest): Response {
+  const intent = findIntent(req.env, req.params.id);
+  if (!intent) return notFound("Payment intent not found");
+  if (!intent.amount || !takesDeposits(intent.chain, intent.network === "public", intent.merchantFee != null)) {
+    return ok([], "Route check fetched successfully");
+  }
+  const amount = Number(intent.amount);
+  const routes: PaymentRouteCheck[] = ROUTE_CHECK_ORIGINS.map(([chain, asset, minimum]) =>
+    amount < minimum
+      ? {
+          chain,
+          asset,
+          available: false,
+          reason: chain === "btc" ? "The cross-chain route refused the request: Amount is too low for bridge" : `The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $${minimum}`,
+          amount: null,
+        }
+      : { chain, asset, available: true, reason: null, amount: decimal(amount * 1.0035, 6) },
+  );
+  return ok(routes, "Route check fetched successfully");
 }
 
 function getIntent(req: MockRequest): Response {
@@ -785,6 +878,11 @@ function updateIntent(req: MockRequest): Response {
   if (hash !== undefined) intent.txHash = hash;
   const reference = str(b, "reference");
   if (reference !== undefined) intent.reference = reference || null;
+  if (b.depositLimits !== undefined) {
+    const limits = depositLimitsFrom(b, intent.depositLimits);
+    if (typeof limits === "string") return badRequest(limits);
+    intent.depositLimits = limits;
+  }
   intent.updatedAt = nowIso();
   return ok(intent, "Payment intent updated successfully");
 }
@@ -1046,6 +1144,7 @@ function createCustomer(req: MockRequest): Response {
     alias: str(b, "alias")?.trim() || null,
     note: str(b, "note")?.trim() || null,
     email,
+    emailProvidedByPayer: false,
     wallets,
     account: wallets[0]?.address ?? null,
     reference: str(b, "reference")?.trim() || null,
@@ -1069,12 +1168,15 @@ function updateCustomer(req: MockRequest): Response {
     const v = str(b, key);
     if (v !== undefined) c[key] = v.trim() || null;
   }
-  if (b.email === null) c.email = null;
-  else {
+  if (b.email === null) {
+    c.email = null;
+    c.emailProvidedByPayer = false;
+  } else {
     const email = str(b, "email");
     if (email !== undefined) {
       if (email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return badRequest("email must be an email");
       c.email = email.trim() || null;
+      c.emailProvidedByPayer = false;
     }
   }
   c.updatedAt = nowIso();
@@ -1506,6 +1608,7 @@ export const routes: MockRoute[] = [
   route("DELETE", "/api/payment-intents/:id", deleteIntent),
   route("POST", "/api/payment-intents/:id/validate", validateIntent),
   route("GET", "/api/payment-intents/:id/deposits", intentDeposits),
+  route("GET", "/api/payment-intents/:id/route-check", intentRouteCheck),
 
   route("GET", "/api/webhooks", (req) => ok(state(req.env).webhooks.map(publicWebhook), "Webhooks fetched successfully")),
   route("POST", "/api/webhooks", createWebhook),

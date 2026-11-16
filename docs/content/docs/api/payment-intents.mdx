@@ -23,6 +23,9 @@ _openapi:
       title: List a payment intent's deposit addresses (payments from any network)
       url: '#list-a-payment-intents-deposit-addresses-payments-from-any-network'
     - depth: 2
+      title: Check which main origins can pay a payment link's amount right now
+      url: '#check-which-main-origins-can-pay-a-payment-links-amount-right-now'
+    - depth: 2
       title: Get a payment intent by id
       url: '#get-a-payment-intent-by-id'
     - depth: 2
@@ -46,6 +49,8 @@ _openapi:
         id: list-the-status-transition-history-for-a-payment-intent
       - content: List a payment intent's deposit addresses (payments from any network)
         id: list-a-payment-intents-deposit-addresses-payments-from-any-network
+      - content: Check which main origins can pay a payment link's amount right now
+        id: check-which-main-origins-can-pay-a-payment-links-amount-right-now
       - content: Get a payment intent by id
         id: get-a-payment-intent-by-id
       - content: Update a payment intent (status / txHash / reference / checkoutTheme)
@@ -116,6 +121,18 @@ _openapi:
           Requires the `payments:read` scope.
         heading: list-a-payment-intents-deposit-addresses-payments-from-any-network
       - content: >-
+          One dry quote per main origin (USDC and USDT on the networks most
+          payers hold them on, and Bitcoin) for the link’s amount and asset.
+          Routes have minimums of their own: an origin that cannot pay the
+          amount comes back `available: false` with the reason. Nothing blocks
+          the link; the hosted checkout disables those origins. Empty for a link
+          without a fixed amount or one that cannot be paid from another
+          network.
+
+
+          Requires the `payments:read` scope.
+        heading: check-which-main-origins-can-pay-a-payment-links-amount-right-now
+      - content: >-
           One of the consumer’s intents, on any chain, with its QR rebuilt from
           `uri`. `status` moves as the on-chain observer settles or expires the
           intent, which the `PAYMENT_INTENT_*` webhooks also report, so polling
@@ -172,7 +189,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-intents/tx","method":"post"},{"path":"/v1/payment-intents/pay","method":"post"},{"path":"/v1/payment-intents","method":"get"},{"path":"/v1/payment-intents/{id}/transitions","method":"get"},{"path":"/v1/payment-intents/{id}/deposits","method":"get"},{"path":"/v1/payment-intents/{id}","method":"get"},{"path":"/v1/payment-intents/{id}","method":"patch"},{"path":"/v1/payment-intents/{id}","method":"delete"},{"path":"/v1/payment-intents/{id}/validate","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-intents/tx","method":"post"},{"path":"/v1/payment-intents/pay","method":"post"},{"path":"/v1/payment-intents","method":"get"},{"path":"/v1/payment-intents/{id}/transitions","method":"get"},{"path":"/v1/payment-intents/{id}/deposits","method":"get"},{"path":"/v1/payment-intents/{id}/route-check","method":"get"},{"path":"/v1/payment-intents/{id}","method":"get"},{"path":"/v1/payment-intents/{id}","method":"patch"},{"path":"/v1/payment-intents/{id}","method":"delete"},{"path":"/v1/payment-intents/{id}/validate","method":"post"}]} showTitle />
     </>
   );
 }

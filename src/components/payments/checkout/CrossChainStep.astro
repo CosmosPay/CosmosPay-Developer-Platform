@@ -5,7 +5,9 @@
 // network has one, its memo when it needs one and its deadline, and follows it until the merchant
 // is paid. On a link whose network has no wallet link of its own this is the only way to pay and
 // starts open; on a mainnet Stellar, Solana or Monad link it opens from its button. The script
-// shows it only on a link that offers it (`crossChainPayment`) and fills the lists.
+// shows it only on a link that offers it (`crossChainPayment`) and fills the lists. On a link
+// without an amount the payer types it first; a token the route cannot take for this amount is
+// listed disabled, with the route's reason under the lists.
 import Field from "@/components/payments/checkout/Field.astro";
 import { MESSAGES } from "@/lib/payments/i18n";
 
@@ -19,6 +21,21 @@ const x = t.xc;
     <h2 class="ck-field-label ck-xc-title" id="ck-xc-title">{x.title}</h2>
     <p class="ck-field-hint">{x.hint}</p>
     <form class="ck-xc-form" data-xc-form novalidate>
+      <div class="ck-xc-amount" data-xc-amount hidden>
+        <label class="ck-xc-field" for="ck-xc-amount">
+          <span class="ck-field-label" data-slot="xc-amount-label"></span>
+        </label>
+        <input
+          id="ck-xc-amount"
+          class="ck-payer-input"
+          name="xcAmount"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          spellcheck="false"
+          aria-describedby="ck-xc-status"
+        />
+      </div>
       <div class="ck-xc-pick">
         <label class="ck-xc-field">
           <span class="ck-field-label">{x.network}</span>
@@ -33,6 +50,7 @@ const x = t.xc;
           </select>
         </label>
       </div>
+      <p class="pp-hint ck-xc-routes" data-slot="xc-routes" hidden></p>
       <div class="ck-xc-refund" data-xc-refund hidden>
         <label class="ck-xc-field" for="ck-xc-refund">
           <span class="ck-field-label" data-slot="xc-refund-label"></span>

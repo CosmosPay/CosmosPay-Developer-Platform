@@ -3,6 +3,7 @@
    must be one of these (src/pages/api/payment-intents, src/pages/api/zk-payments). */
 import { prisma } from "@/lib/prisma";
 import type { NetworkId } from "@/lib/chains";
+import { EVM_NETWORK_IDS, isRouteFeeAccount, routeFeeAccount } from "@/lib/deposit-limits";
 import { normalizeWalletAddress, type OrgWallet, type WalletProvider } from "@/lib/org-wallets";
 
 type Row = { id: string; chain: string; address: string; label: string | null; provider: string | null; createdAt: Date };
@@ -57,4 +58,20 @@ export async function removeOrgWallet(orgId: string, id: string): Promise<boolea
 export async function orgHasWallet(orgId: string, chain: NetworkId, address: string): Promise<boolean> {
   const n = await prisma.organizationWallet.count({ where: { orgId, chain, address: normalizeWalletAddress(chain, address) } });
   return n > 0;
+}
+
+/**
+ * Whether `wallet` is an organization wallet a merchant fee on a deposit network can be credited
+ * to: the cross-chain route credits one account inside it, a NEAR account id or an EVM address, so
+ * it must be one of the organization's NEAR wallets, or one of its wallets on an EVM network with
+ * that address (the same key holds it on every EVM network; compared lowercase).
+ */
+export async function orgHasRouteFeeAccount(orgId: string, wallet: string): Promise<boolean> {
+  if (!isRouteFeeAccount(wallet)) return false;
+  const account = routeFeeAccount(wallet);
+  const rows = await prisma.organizationWallet.findMany({
+    where: { orgId, chain: { in: ["near", ...EVM_NETWORK_IDS] } },
+    select: { chain: true, address: true },
+  });
+  return rows.some((r) => (r.chain === "near" ? r.address === account : r.address.toLowerCase() === account));
 }

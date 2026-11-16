@@ -291,6 +291,11 @@
 .ck-payer-input[aria-invalid="true"] { border-color: #C2410C; }
 .ck-payer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 520px) { .ck-payer-row { flex-direction: column; } }
+/* The payer's email, asked before any way to pay (EmailStep.astro); once given, one line names
+   where the receipt goes, with a text button to change it. */
+.ck-email-given { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 10px 0 0; }
+.ck-email-given[hidden] { display: none; }
+.ck-email-change { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 /* Paying from another network (CrossChainStep.astro). On a network with no wallet link of its own
    it is the only way to pay: the QR, the wallet buttons and the manual transfer of the link itself
@@ -304,7 +309,9 @@
 .ck-xc-form { display: grid; gap: 10px; }
 .ck-xc-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
 .ck-xc-field { display: grid; gap: 6px; min-width: 0; }
-.ck-xc-refund { display: grid; gap: 6px; }
+.ck-xc-refund, .ck-xc-amount { display: grid; gap: 6px; }
+.ck-xc-amount[hidden], .ck-xc-routes[hidden] { display: none; }
+.ck-xc-routes { color: var(--ink-2); }
 .ck-xc-select { font-family: inherit; appearance: auto; }
 .ck-xc-select:disabled { opacity: 0.6; }
 .ck-xc-detail { color: var(--ink-2); }

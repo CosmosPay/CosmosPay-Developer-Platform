@@ -777,6 +777,101 @@
         ]
       }
     },
+    "/v1/payment-intents/{id}/route-check": {
+      "get": {
+        "description": "One dry quote per main origin (USDC and USDT on the networks most payers hold them on, and Bitcoin) for the link’s amount and asset. Routes have minimums of their own: an origin that cannot pay the amount comes back `available: false` with the reason. Nothing blocks the link; the hosted checkout disables those origins. Empty for a link without a fixed amount or one that cannot be paid from another network.\n\nRequires the `payments:read` scope.",
+        "operationId": "PaymentIntentsController_routeCheck_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRouteCheckListEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Check which main origins can pay a payment link's amount right now",
+        "tags": [
+          "payment-intents"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-intents:route-check",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
+        ],
+        "x-cosmos-upstream": [
+          "Cross-chain route"
+        ]
+      }
+    },
     "/v1/payment-intents/{id}": {
       "get": {
         "description": "One of the consumer’s intents, on any chain, with its QR rebuilt from `uri`. `status` moves as the on-chain observer settles or expires the intent, which the `PAYMENT_INTENT_*` webhooks also report, so polling this route is optional.\n\nRequires the `payments:read` scope.",
@@ -1519,6 +1614,138 @@
         "security": []
       }
     },
+    "/v1/payment-links/{id}/payer": {
+      "post": {
+        "description": "The hosted checkout asks the payer for an email before it shows any way to pay, and records it here with the checkout language: when the payment succeeds, a receipt goes to that address in that language, and the merchant finds the payer among its customers by it (marked as given by the payer, not verified). The latest one recorded on an open link is the one used; a deposit carries its own. Budgeted per client address.",
+        "operationId": "PaymentLinksController_recordPayer_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id, as in the link.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayerContactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Recorded.",
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: not an email. `invalid_state_transition`: the link is no longer open.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: Not an email",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "email must be an email",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The link is no longer open",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w is SUCCEEDED: it can no longer be paid",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment intent has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Record the payer's email before they pay, for their receipt (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:payer",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
     "/v1/payment-links/{id}/events": {
       "post": {
         "description": "The hosted checkout tells what the payer did with a wallet while the link is pending: `walletOpened` (the wallet link, the web wallet, the extension or Freighter was opened), `walletClosed` (the wallet came back without paying) and `sent` (the page saw the wallet send the payment). The owner reads them as `checkoutWalletAt`, `checkoutWalletClosedAt` and `checkoutSentAt` on the intent, to follow a payment that is not on-chain yet.\n\n**Informational only:** the status changes on what the chain says, never on these. An event for a link that is no longer pending is ignored. Budgeted per client address.",
@@ -1940,7 +2167,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CrossChainAssetListEntity"
+                  "$ref": "#/components/schemas/PaymentDepositAssetsEntity"
                 }
               }
             },
@@ -2050,7 +2277,7 @@
     },
     "/v1/payment-links/{id}/quote": {
       "post": {
-        "description": "What the payer sends (`origin.amount`, with the fees and a small buffer for price moves in it; the unused part is refunded) for the merchant to receive exactly the link amount in its asset. A dry quote: nothing is reserved and nothing is stored. Routes have minimum amounts of their own, refused as `validation_failed` with the reason. Only for an open link that can be paid from another network; budgeted per client address.",
+        "description": "What the payer sends (`origin.amount`, with the fees and a small buffer for price moves in it; the unused part is refunded) for the merchant to receive exactly the link amount in its asset (on a link without one, the `amount` the payer typed). A dry quote: nothing is reserved and nothing is stored. Routes have minimum amounts of their own, refused as `provider_error` with the reason, so a checkout shows it before any deposit address exists. Only for an open link that can be paid from another network; budgeted per client address.",
         "operationId": "PaymentLinksController_quote_v1",
         "parameters": [
           {
@@ -2265,7 +2492,7 @@
     },
     "/v1/payment-links/{id}/deposits": {
       "post": {
-        "description": "A live quote: an address on `originChain` made for this payment alone. The payer sends `amountIn` of the origin asset there (with `depositMemo` when set) before `expiresAt`; the merchant is paid exactly the link amount, the link turns `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is refunded to `refundTo`. The same origin asset and refund address while an earlier deposit still waits from the same client answers that one. Each client address (an IPv6 caller by its /48) may have two open deposits per link (`409 operation_in_flight`), so no caller can take another payer’s, and a link takes a limited number of new ones every few minutes (`429` with `Retry-After`). Budgeted per client address too.",
+        "description": "A live quote: an address on `originChain` made for this payment alone, opened only with the payer’s `email` (their receipt goes there). The payer sends `amountIn` of the origin asset there (with `depositMemo` when set) before `expiresAt`; the merchant is paid exactly the link amount, the link turns `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is refunded to `refundTo`. The same origin asset and refund address while an earlier deposit still waits from the same client answers that one. Each client address (an IPv6 caller by its /48) may have two open deposits per link (`409 operation_in_flight`), so no caller can take another payer’s, and a link takes a limited number of new ones every few minutes (`429` with `Retry-After`). Budgeted per client address too.",
         "operationId": "PaymentLinksController_createDeposit_v1",
         "parameters": [
           {
@@ -2284,7 +2511,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PaymentDepositRequestDto"
+                "$ref": "#/components/schemas/CreatePaymentDepositDto"
               }
             }
           }
@@ -20297,6 +20524,31 @@
           "amount"
         ]
       },
+      "DepositLimitsEntity": {
+        "type": "object",
+        "properties": {
+          "perPayer": {
+            "type": "number",
+            "example": 2,
+            "description": "Open deposit addresses one payer may have on the link."
+          },
+          "perWindow": {
+            "type": "number",
+            "example": 20,
+            "description": "New deposit addresses the link takes per `windowSeconds`."
+          },
+          "windowSeconds": {
+            "type": "number",
+            "example": 300
+          }
+        },
+        "description": "A payment link’s limits on payments from another network, as they apply.",
+        "required": [
+          "perPayer",
+          "perWindow",
+          "windowSeconds"
+        ]
+      },
       "TxPaymentIntentEntity": {
         "type": "object",
         "properties": {
@@ -20437,6 +20689,27 @@
               }
             ]
           },
+          "depositLimits": {
+            "description": "Limits on payments from another network for this link, as they apply (yours, or the defaults).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsEntity"
+              }
+            ]
+          },
+          "payerEmail": {
+            "type": "string",
+            "nullable": true,
+            "example": "payer@example.com",
+            "description": "The email the payer typed in the hosted checkout before paying (the latest on the link; not verified). The receipt goes there."
+          },
+          "receiptSentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When the payer’s receipt was emailed; null until it was."
+          },
           "msg": {
             "type": "object",
             "nullable": true,
@@ -20547,6 +20820,9 @@
           "networkFee",
           "merchantFee",
           "paidFrom",
+          "depositLimits",
+          "payerEmail",
+          "receiptSentAt",
           "msg",
           "callback",
           "xdr",
@@ -20563,6 +20839,28 @@
           "createdAt",
           "updatedAt"
         ]
+      },
+      "DepositLimitsDto": {
+        "type": "object",
+        "properties": {
+          "perPayer": {
+            "type": "number",
+            "minimum": 2,
+            "maximum": 10,
+            "default": 2,
+            "description": "Open deposit addresses one payer (one client address) may have on the link.",
+            "example": 4
+          },
+          "perWindow": {
+            "type": "number",
+            "minimum": 20,
+            "maximum": 200,
+            "default": 20,
+            "description": "New deposit addresses the link takes every five minutes, from all payers.",
+            "example": 60
+          }
+        },
+        "description": "Limits on payments from another network for this link: how many deposit addresses one payer may have open, and how many new ones the link takes every five minutes. Raise them for a link many people pay at once."
       },
       "CreatePayPaymentIntentDto": {
         "type": "object",
@@ -20661,6 +20959,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"
+              }
+            ]
+          },
+          "depositLimits": {
+            "description": "Your own limits on payments from another network for this link, raised from the defaults (2 open deposit addresses per payer, 20 new ones every five minutes) up to the ceilings. `PATCH` changes them later.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsDto"
               }
             ]
           }
@@ -20812,6 +21118,27 @@
               }
             ]
           },
+          "depositLimits": {
+            "description": "Limits on payments from another network for this link, as they apply (yours, or the defaults).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsEntity"
+              }
+            ]
+          },
+          "payerEmail": {
+            "type": "string",
+            "nullable": true,
+            "example": "payer@example.com",
+            "description": "The email the payer typed in the hosted checkout before paying (the latest on the link; not verified). The receipt goes there."
+          },
+          "receiptSentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When the payer’s receipt was emailed; null until it was."
+          },
           "msg": {
             "type": "object",
             "nullable": true,
@@ -20923,6 +21250,9 @@
           "networkFee",
           "merchantFee",
           "paidFrom",
+          "depositLimits",
+          "payerEmail",
+          "receiptSentAt",
           "msg",
           "callback",
           "xdr",
@@ -21082,6 +21412,27 @@
               }
             ]
           },
+          "depositLimits": {
+            "description": "Limits on payments from another network for this link, as they apply (yours, or the defaults).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsEntity"
+              }
+            ]
+          },
+          "payerEmail": {
+            "type": "string",
+            "nullable": true,
+            "example": "payer@example.com",
+            "description": "The email the payer typed in the hosted checkout before paying (the latest on the link; not verified). The receipt goes there."
+          },
+          "receiptSentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When the payer’s receipt was emailed; null until it was."
+          },
           "msg": {
             "type": "object",
             "nullable": true,
@@ -21193,6 +21544,9 @@
           "networkFee",
           "merchantFee",
           "paidFrom",
+          "depositLimits",
+          "payerEmail",
+          "receiptSentAt",
           "msg",
           "callback",
           "xdr",
@@ -21494,6 +21848,16 @@
             "example": "0.126421",
             "description": "That commission, in the origin asset (inside `amountIn`)."
           },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The link's merchant fee as this deposit pays it: an app fee of the cross-chain route, in the origin asset, credited to the fee account inside the route; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeEntity"
+              }
+            ]
+          },
           "refundTo": {
             "type": "string",
             "example": "TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy",
@@ -21584,6 +21948,7 @@
           "amountOut",
           "feeBps",
           "feeAmount",
+          "merchantFee",
           "refundTo",
           "depositAddress",
           "depositMemo",
@@ -21610,6 +21975,97 @@
           }
         },
         "description": "A payment intent's deposit addresses, newest first.",
+        "required": [
+          "data"
+        ]
+      },
+      "PaymentRouteCheckEntity": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron"
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDT"
+          },
+          "available": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when the route quoted the amount."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": "The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $100",
+            "description": "Why not, in the route’s words (it names no provider); null when available."
+          },
+          "amount": {
+            "type": "string",
+            "nullable": true,
+            "example": "25.284231",
+            "description": "What the payer would send from there; null when not available."
+          }
+        },
+        "description": "Whether one origin network and asset can pay a payment link's amount right now, from a dry quote: routes have minimums of their own.",
+        "required": [
+          "chain",
+          "asset",
+          "available",
+          "reason",
+          "amount"
+        ]
+      },
+      "PaymentRouteCheckListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "One entry per main origin (USDC and USDT on the networks most payers hold them on, and Bitcoin) the route answered for; an origin that could not be asked right now is left out. Empty for a link without a fixed amount or one that cannot be paid from another network.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentRouteCheckEntity"
+            }
+          }
+        },
+        "description": "How the main origins fare for a payment link's amount: the ones that cannot pay it now, and why.",
         "required": [
           "data"
         ]
@@ -21706,6 +22162,14 @@
             ],
             "description": "Design of the hosted checkout page (`https://payments.cosmospay.lat/<id>`). Accepted in any status, final ones included, alone or with the other fields: it changes nothing about the payment.",
             "example": "split"
+          },
+          "depositLimits": {
+            "description": "Your limits on payments from another network for this link. Accepted in any status, alone or with the other fields; a field left out keeps its value.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsDto"
+              }
+            ]
           }
         },
         "description": "Changes to a payment intent: send only the fields that change."
@@ -21977,6 +22441,34 @@
           "qr"
         ]
       },
+      "PayerContactDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The payer's email, as typed in the checkout (not verified).",
+            "example": "payer@example.com"
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "en",
+              "es",
+              "pt",
+              "fr",
+              "de",
+              "hi",
+              "zh"
+            ],
+            "default": "en",
+            "description": "The language of the payer's checkout: the receipt is written in it."
+          }
+        },
+        "description": "The payer's email (and checkout language), recorded before the hosted checkout shows how to pay: the receipt goes there.",
+        "required": [
+          "email"
+        ]
+      },
       "CheckoutEventDto": {
         "type": "object",
         "properties": {
@@ -22138,20 +22630,28 @@
           "priceUsd"
         ]
       },
-      "CrossChainAssetListEntity": {
+      "PaymentDepositAssetsEntity": {
         "type": "object",
         "properties": {
           "data": {
-            "description": "Every asset the cross-chain route still trades: a token it tags deprecated or lists with no price is left out.",
+            "description": "Every asset the cross-chain route still trades.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CrossChainAssetEntity"
             }
+          },
+          "routes": {
+            "description": "The main origins checked against the link’s amount: show one that is not `available` as unavailable, with its `reason`. Empty for a link without a fixed amount (the quote tells then).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentRouteCheckEntity"
+            }
           }
         },
-        "description": "The assets cross-chain swaps can use, as `GET /v1/cross-chain-swaps/assets` lists them.",
+        "description": "What the payer of a payment link can pay from, and how the main origins fare for the link's amount.",
         "required": [
-          "data"
+          "data",
+          "routes"
         ]
       },
       "PaymentDepositRequestDto": {
@@ -22208,6 +22708,11 @@
             "type": "string",
             "description": "Where the deposit is refunded if the payment cannot complete (or the surplus of an overpayment), on originChain: normally the paying wallet.",
             "example": "TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Only for a link with no fixed amount: what the merchant should receive, in the link's asset, as the payer typed it. The quote pays exactly it; a link with an amount refuses another one.",
+            "example": "25"
           }
         },
         "description": "How a payer pays a payment link from any network: the asset sent and the address a refund goes to, on that network.",
@@ -22438,6 +22943,94 @@
           "timeEstimateSeconds"
         ]
       },
+      "CreatePaymentDepositDto": {
+        "type": "object",
+        "properties": {
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron",
+            "description": "The network the payer sends from: a `chain` from `GET /v1/payment-links/{id}/deposit-assets`."
+          },
+          "originAsset": {
+            "type": "string",
+            "description": "The asset sent: \"native\" or the native ticker (TRX, ETH, BTC), a symbol listed once on that network (USDT), its contract, or Stellar CODE:ISSUER. See `GET /v1/payment-links/{id}/deposit-assets`.",
+            "example": "USDT"
+          },
+          "refundTo": {
+            "type": "string",
+            "description": "Where the deposit is refunded if the payment cannot complete (or the surplus of an overpayment), on originChain: normally the paying wallet.",
+            "example": "TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Only for a link with no fixed amount: what the merchant should receive, in the link's asset, as the payer typed it. The quote pays exactly it; a link with an amount refuses another one.",
+            "example": "25"
+          },
+          "email": {
+            "type": "string",
+            "description": "The payer's email, as typed in the checkout (not verified): the receipt goes there when the payment succeeds, and the merchant sees it on the payment.",
+            "example": "payer@example.com"
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "en",
+              "es",
+              "pt",
+              "fr",
+              "de",
+              "hi",
+              "zh"
+            ],
+            "default": "en",
+            "description": "The language of the payer's checkout: the receipt is written in it."
+          }
+        },
+        "description": "Opens a deposit address for one payer: the asset sent, the refund address, and the email the receipt goes to.",
+        "required": [
+          "originChain",
+          "originAsset",
+          "refundTo",
+          "email"
+        ]
+      },
       "CustomerWalletDto": {
         "type": "object",
         "properties": {
@@ -22584,6 +23177,11 @@
             "example": "ada@example.com",
             "description": "Contact email address; null when none was given."
           },
+          "emailProvidedByPayer": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when `email` was typed by a payer in the hosted checkout to get a receipt: not verified. False when you set it, or there is none."
+          },
           "wallets": {
             "description": "The customer's wallets, oldest first, on any chain payments settle on.",
             "type": "array",
@@ -22627,6 +23225,7 @@
         "required": [
           "id",
           "name",
+          "emailProvidedByPayer",
           "wallets",
           "createdAt",
           "updatedAt"
@@ -22656,6 +23255,11 @@
             "nullable": true,
             "example": "ada@example.com",
             "description": "Contact email address; null when none was given."
+          },
+          "emailProvidedByPayer": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when `email` was typed by a payer in the hosted checkout to get a receipt: not verified. False when you set it, or there is none."
           },
           "wallets": {
             "description": "The customer's wallets, oldest first, on any chain payments settle on.",
@@ -22715,6 +23319,7 @@
         "required": [
           "id",
           "name",
+          "emailProvidedByPayer",
           "wallets",
           "createdAt",
           "updatedAt",
@@ -24344,6 +24949,22 @@
           }
         },
         "description": "The swap transaction: `signedXdr` for a Stellar swap, `signedTransaction` for a Solana swap, and for a Monad swap either `signedTransaction` (this service broadcasts it) or `txHash` (the wallet already broadcast it). Whichever is sent, it must be the transaction built for this swap."
+      },
+      "CrossChainAssetListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Every asset the cross-chain route still trades: a token it tags deprecated or lists with no price is left out.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainAssetEntity"
+            }
+          }
+        },
+        "description": "The assets cross-chain swaps can use, as `GET /v1/cross-chain-swaps/assets` lists them.",
+        "required": [
+          "data"
+        ]
       },
       "QuoteCrossChainSwapDto": {
         "type": "object",

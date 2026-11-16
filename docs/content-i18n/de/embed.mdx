@@ -53,6 +53,8 @@ eines hat. Er liest den Link aus dem Browser des Zahlers und hält ihn aktuell (
 solange die Zahlung aussteht, alle 3, während das Netzwerk sie bestätigt, alle 30 nach dem Ablauf)
 und hört auf, sobald die Zahlung bezahlt, fehlgeschlagen oder storniert ist.
 
+- Vor dem QR-Code fragt es den Zahler nach einer E-Mail, wie der gehostete Checkout: Der Beleg geht
+  dorthin, sobald die Zahlung bestätigt ist, und Sie erhalten sie mit der Zahlung.
 - Standardmäßig ist er höchstens 420px breit. Ändern Sie das per CSS am Element:
   `cosmos-pay-checkout { max-width: none; }`.
 - Er ist kein iframe: Die Zahlungsseiten lassen sich absichtlich nicht in Frames einbetten. Das

@@ -4,6 +4,7 @@
 import Brand from "@/components/payments/checkout/Brand.astro";
 import Amount from "@/components/payments/checkout/Amount.astro";
 import Status from "@/components/payments/checkout/Status.astro";
+import EmailStep from "@/components/payments/checkout/EmailStep.astro";
 import PayerStep from "@/components/payments/checkout/PayerStep.astro";
 import CrossChainStep from "@/components/payments/checkout/CrossChainStep.astro";
 import Timer from "@/components/payments/checkout/Timer.astro";
@@ -22,6 +23,7 @@ const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
       <div class="ck-head"><Brand /><Timer caption={false} /></div>
       <Amount />
       <Status />
+      <EmailStep />
       <PayerStep />
       <CrossChainStep />
       <div class="ck-rows" data-open-only data-row="manual">

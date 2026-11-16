@@ -49,6 +49,8 @@ navegador do pagador e o mantém atualizado (a cada 5 segundos enquanto aguarda 
 enquanto a rede confirma, a cada 30 depois de expirado) e para quando o pagamento é concluído, falha
 ou é cancelado.
 
+- Antes do código QR pede um e-mail ao pagador, como o checkout hospedado: o comprovante chega nele
+  quando o pagamento é confirmado, e você o recebe com o pagamento.
 - Por padrão tem até 420px de largura. Altere com CSS no elemento:
   `cosmos-pay-checkout { max-width: none; }`.
 - Não é um iframe: as páginas de pagamento se recusam a ser exibidas em um frame, de propósito. O

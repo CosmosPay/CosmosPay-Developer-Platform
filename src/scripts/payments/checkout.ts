@@ -29,6 +29,12 @@
  * same address). On a network with no wallet link of its own that is the only way to pay, and the
  * link's own QR and transfer are not drawn.
  *
+ * Before any way to pay is shown, the page asks for the payer's email (EmailStep.astro), for the
+ * receipt the server sends once the payment is confirmed: recorded on the link for a payment
+ * with its own wallet link or QR (`recordPayer`) and sent with every deposit. It is kept in
+ * sessionStorage for this link, so a reload does not ask again. A wallet link scanned outside this
+ * page carries no email; nothing here can change that.
+ *
  * Opened as a popup by a merchant's `<cosmos-pay-button>` (src/embed), the page also tells
  * its opener each status change (src/lib/payments/embed-protocol.ts): the id and the status,
  * nothing else.
@@ -63,13 +69,18 @@ import {
   durationLabel,
   fetchDeposit,
   fetchDepositAssets,
+  isPayerAmount,
+  isPayerEmail,
   nextDepositPollDelay,
   quoteDeposit,
+  recordPayer,
+  routeRefusal,
   type DepositAsset,
   type DepositChoice,
   type DepositFailure,
   type DepositPhase,
   type DepositQuote,
+  type DepositRoute,
   type PaymentDeposit,
 } from "@/lib/payments/deposits";
 import { isDepositNetwork, isNetwork, isNetworkAddress, networkName, type NetworkId } from "@/lib/chains";
@@ -105,7 +116,17 @@ interface Runtime {
   signFailed: string;
   signWrongNetwork: string;
   freighterMissing: string;
+  email: EmailCopy;
   xc: XcCopy;
+}
+
+/* The payer's email for the receipt: EmailStep.astro's copy that the script writes. */
+interface EmailCopy {
+  body: string;
+  saving: string;
+  invalid: string;
+  failed: string;
+  given: string;
 }
 
 /* Paying from another network: CrossChainStep.astro's copy that the script writes. */
@@ -130,6 +151,12 @@ interface XcCopy {
   later: string;
   error: string;
   only: string;
+  /* A link without an amount: what the payer types, in the link's asset. */
+  amount: string;
+  amountInvalid: string;
+  /* A token the route cannot take for this amount: beside it in the list, and why under the lists. */
+  routeOff: string;
+  routeNote: string;
   phase: Record<DepositPhase, string>;
   body: Record<DepositPhase, string>;
 }
@@ -146,6 +173,8 @@ const XC_PILL: Record<DepositPhase, Phase> = {
 };
 /* Where the open deposit's id is kept for this link, so a reload shows the same address. */
 const depositKey = (linkId: string) => `cosmospay-deposit:${linkId}`;
+/* Where the payer's email is kept for this link, so a reload does not ask again. */
+const payerKey = (linkId: string) => `cosmospay-payer:${linkId}`;
 
 /* The envelope built for this page's payer (a Stellar link with a merchant fee). */
 interface PayerEnvelope {
@@ -199,13 +228,19 @@ export function startCheckout(): void {
   let timer: number | undefined;
   let ticker: number | undefined;
   let errorDelay = 5_000;
-  let lastPhase: Phase | null = null;
+  let lastBody: string | null = null;
   let lastMinute = -1;
   let toldOpener: LinkStatus | null = null;
   let payerEnvelope: PayerEnvelope | null = null;
+  // The payer's email, asked before any way to pay (a reload keeps it for this link).
+  let payerEmail: string | null = preview ? null : storedEmail();
+  let emailBusy = false;
+  let emailEditing = false;
   // Paying from another network.
   let xcOpen = false;
   let xcAssets: DepositAsset[] | null = null;
+  let xcRoutes: DepositRoute[] = [];
+  let xcAmount = "";
   let xcAssetsLoading = false;
   let xcAssetsRetryAt = 0;
   let xcNetwork: NetworkId | "" = "";
@@ -235,7 +270,7 @@ export function startCheckout(): void {
     mount!.replaceChildren(template.content.cloneNode(true));
     root!.dataset.design = theme;
     design = theme;
-    lastPhase = null;
+    lastBody = null;
     xcShownPhase = null;
     lastMinute = -1;
     extensionChecked = false;
@@ -305,16 +340,20 @@ export function startCheckout(): void {
       pill.textContent = t.phase[phase];
       pill.dataset.phase = phase;
     });
+    // No way to pay is shown before the payer gives an email for the receipt.
+    const gated = emailGated(phase);
     // Re-announce only on a change, or a screen reader repeats it every poll. A link paid only
     // through a deposit address says so instead of "scan the code".
     const xcOnly = isDepositNetwork(l.chain);
-    if (phase !== lastPhase) text("phase-body", xcOnly && phase === "open" ? t.xc.only : t.body[phase]);
-    lastPhase = phase;
+    const body = gated ? t.email.body : xcOnly && phase === "open" ? t.xc.only : t.body[phase];
+    if (body !== lastBody) text("phase-body", body);
+    lastBody = body;
     root!.dataset.phase = phase;
 
     // Only an open link is payable. Processing has been paid already; expired, failed and
     // cancelled must not invite a payment the merchant no longer expects.
-    toggle("[data-open-only]", phase !== "open");
+    toggle("[data-open-only]", phase !== "open" || gated);
+    renderEmail(gated, phase);
     // A link that builds its payer's envelope: the account step, then that envelope's QR and
     // wallet link (the stored `uri` is this page). `data-payer` lets the stylesheet hide the
     // QR and the wallet buttons until the envelope exists.
@@ -323,8 +362,12 @@ export function startCheckout(): void {
     else delete root!.dataset.payer;
     toggle("[data-payer-step]", !payerLink || phase !== "open");
     all<HTMLButtonElement>('[data-action="sign-freighter"]').forEach((b) => { b.hidden = !payerEnvelope; });
-    const walletUri = payerLink ? payerEnvelope?.uri ?? null : l.uri;
-    slots<HTMLImageElement>("qr").forEach((img) => { img.src = payerLink ? payerEnvelope?.qr ?? l.qr : l.qr; });
+    // Until the email is in, the page holds no QR or wallet link either, not only hidden ones.
+    const walletUri = gated ? null : payerLink ? payerEnvelope?.uri ?? null : l.uri;
+    slots<HTMLImageElement>("qr").forEach((img) => {
+      if (gated) img.removeAttribute("src");
+      else img.src = payerLink ? payerEnvelope?.qr ?? l.qr : l.qr;
+    });
     slots<HTMLAnchorElement>("open-wallet").forEach((a) => {
       if (preview) inert(a);
       else if (walletUri) a.href = walletUri;
@@ -384,7 +427,87 @@ export function startCheckout(): void {
       }
     }
     offerExtension(l, phase);
-    renderXc(l, phase);
+    renderXc(l, phase, gated);
+  }
+
+  /* ---- the payer's email, for the receipt ---- */
+  function storedEmail(): string | null {
+    try {
+      const value = window.sessionStorage.getItem(payerKey(id));
+      return isPayerEmail(value) ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function keepEmail(email: string) {
+    try {
+      window.sessionStorage.setItem(payerKey(id), email);
+    } catch {
+      /* storage blocked: the email is kept until the page closes */
+    }
+  }
+
+  /* An open link asks for the email before it shows any way to pay; a preview never does. */
+  function emailGated(phase: Phase): boolean {
+    return !preview && phase === "open" && (payerEmail === null || emailEditing);
+  }
+
+  function renderEmail(gated: boolean, phase: Phase) {
+    toggle("[data-email-step]", !gated);
+    toggle("[data-email-given]", gated || phase !== "open" || payerEmail === null);
+    if (payerEmail) text("email-given", t.email.given.replace("{email}", payerEmail));
+    all<HTMLInputElement>('input[name="email"]').forEach((input) => {
+      if (!input.value && payerEmail) input.value = payerEmail;
+      input.disabled = emailBusy;
+    });
+    all<HTMLButtonElement>("[data-email-submit]").forEach((b) => { b.disabled = emailBusy; });
+  }
+
+  const emailStatus = (message: string) => text("email-status", message);
+
+  async function submitEmail(form: HTMLFormElement) {
+    if (!link || preview || emailBusy) return;
+    const input = form.querySelector<HTMLInputElement>('input[name="email"]');
+    const email = input?.value.trim() ?? "";
+    if (!isPayerEmail(email)) {
+      input?.setAttribute("aria-invalid", "true");
+      emailStatus(t.email.invalid);
+      input?.focus();
+      return;
+    }
+    input?.removeAttribute("aria-invalid");
+    emailBusy = true;
+    emailStatus(t.email.saving);
+    render(link);
+    const result = await recordPayer(apiBase, id, { email, lang });
+    emailBusy = false;
+    switch (result.kind) {
+      case "ok":
+        payerEmail = email.toLowerCase();
+        emailEditing = false;
+        keepEmail(payerEmail);
+        emailStatus("");
+        if (link) render(link);
+        // The form is gone: focus moves to the line that replaced it.
+        mount!.querySelector<HTMLButtonElement>('[data-action="email-change"]')?.focus();
+        return;
+      case "closed":
+      case "not-found":
+        emailStatus(t.payerClosed);
+        void load();
+        return;
+      case "rate-limited":
+        emailStatus(t.xc.later);
+        break;
+      case "refused":
+        input?.setAttribute("aria-invalid", "true");
+        emailStatus(t.email.invalid);
+        break;
+      default:
+        emailStatus(t.email.failed);
+    }
+    if (link) render(link);
   }
 
   /* ---- the merchant page that opened this one (<cosmos-pay-button>) ----
@@ -658,17 +781,23 @@ export function startCheckout(): void {
     toggle('[data-slot="xc-detail"]', !detail);
   };
   const xcSelected = (): DepositAsset | null => xcAssets?.find((a) => a.assetId === xcAssetId && a.chain === xcNetwork) ?? null;
+  /* A link without an amount is paid for the amount the payer types, in the link's asset. */
+  const xcOpenAmount = () => link !== null && link.amount === null;
   const xcChoice = (): DepositChoice | null => {
     const asset = xcSelected();
-    return asset ? { originChain: asset.chain, originAsset: assetRef(asset), refundTo: xcRefund.trim() } : null;
+    if (!asset) return null;
+    const choice: DepositChoice = { originChain: asset.chain, originAsset: assetRef(asset), refundTo: xcRefund.trim() };
+    return xcOpenAmount() ? { ...choice, amount: xcAmount.trim() } : choice;
   };
-  const xcKey = (c: DepositChoice) => `${c.originChain}|${c.originAsset}|${c.refundTo}`;
+  const xcKey = (c: DepositChoice) => `${c.originChain}|${c.originAsset}|${c.refundTo}|${c.amount ?? ""}`;
+  const xcRefused = (a: DepositAsset) => routeRefusal(xcRoutes, a);
 
-  function renderXc(l: PaymentLink, phase: Phase) {
+  function renderXc(l: PaymentLink, phase: Phase, gated: boolean) {
     const xcOnly = isDepositNetwork(l.chain);
     if (xcOnly) root!.dataset.xc = "only";
     else delete root!.dataset.xc;
-    const offered = !preview && l.crossChainPayment && (phase === "open" || xcDeposit !== null);
+    // A deposit already made stays on screen; a new one waits for the payer's email.
+    const offered = !preview && l.crossChainPayment && ((phase === "open" && !gated) || xcDeposit !== null);
     toggle("[data-xc-step]", !offered);
     if (!offered) return;
     const open = xcOnly || xcOpen || xcDeposit !== null;
@@ -685,7 +814,8 @@ export function startCheckout(): void {
     const result = await fetchDepositAssets(apiBase, id);
     xcAssetsLoading = false;
     if (result.kind === "ok") {
-      xcAssets = result.value;
+      xcAssets = result.value.assets;
+      xcRoutes = result.value.routes;
       if (link) render(link);
       return;
     }
@@ -717,14 +847,23 @@ export function startCheckout(): void {
     if (!netSelect || !assetSelect) return;
     const assets = xcAssets ?? [];
     // A link on a network paid only this way starts on its own token there, the cheapest way to
-    // pay it, when the list has it; a Stellar, Solana or Monad link starts on nothing.
+    // pay it, when the list has it and the route takes it for this amount; a Stellar, Solana or
+    // Monad link starts on nothing.
     if (!xcDefaulted && assets.length) {
       xcDefaulted = true;
       if (isDepositNetwork(l.chain)) {
         const own = assets.find((a) => a.chain === l.chain && (l.assetIssuer ? a.contract?.toLowerCase() === l.assetIssuer.toLowerCase() : a.contract === null));
-        if (own) { xcNetwork = own.chain; xcAssetId = own.assetId; }
+        if (own && !xcRefused(own)) { xcNetwork = own.chain; xcAssetId = own.assetId; }
       }
     }
+    // The amount comes first on a link without one.
+    const openAmount = l.amount === null;
+    toggle("[data-xc-amount]", !openAmount);
+    if (openAmount) text("xc-amount-label", xcText(t.xc.amount, { asset: assetSymbol(l) }));
+    all<HTMLInputElement>('input[name="xcAmount"]').forEach((input) => {
+      if (input.value !== xcAmount) input.value = xcAmount;
+      input.disabled = xcBusy;
+    });
     const networks = depositNetworks(assets);
     const netKey = networks.join(",");
     if (netSelect.dataset.filled !== netKey) {
@@ -734,13 +873,32 @@ export function startCheckout(): void {
     netSelect.value = xcNetwork;
     netSelect.disabled = xcBusy || !networks.length;
     const onNetwork = assets.filter((a) => a.chain === xcNetwork);
-    const assetKey = `${xcNetwork}:${onNetwork.map((a) => a.assetId).join(",")}`;
+    const assetKey = `${xcNetwork}:${onNetwork.map((a) => a.assetId).join(",")}:${xcRoutes.length}`;
     if (assetSelect.dataset.filled !== assetKey) {
-      assetSelect.replaceChildren(option("", t.xc.choose), ...onNetwork.map((a) => option(a.assetId, a.contract ? `${a.symbol} · ${shortAddress(a.contract, 4, 4)}` : a.symbol)));
+      // A token the route cannot take for this amount is listed, disabled, saying so.
+      assetSelect.replaceChildren(
+        option("", t.xc.choose),
+        ...onNetwork.map((a) => {
+          const label = a.contract ? `${a.symbol} · ${shortAddress(a.contract, 4, 4)}` : a.symbol;
+          const off = xcRefused(a) !== null;
+          return option(a.assetId, off ? `${label} · ${t.xc.routeOff}` : label, off);
+        }),
+      );
       assetSelect.dataset.filled = assetKey;
     }
     assetSelect.value = xcAssetId;
     assetSelect.disabled = xcBusy || !onNetwork.length;
+    // And why, under the lists, in the route's words.
+    const notes = new Map<string, string>();
+    for (const a of onNetwork) {
+      const refusal = xcRefused(a);
+      if (refusal && !notes.has(a.symbol)) {
+        notes.set(a.symbol, `${xcText(t.xc.routeNote, { asset: a.symbol, network: networkName(a.chain) })} ${refusal.reason ?? ""}`.trim());
+      }
+    }
+    const note = [...notes.values()].join(" ");
+    text("xc-routes", note);
+    toggle('[data-slot="xc-routes"]', !note);
     // The refund address is on the network the payer pays from, so it waits for that network.
     toggle("[data-xc-refund]", !xcNetwork);
     if (isNetwork(xcNetwork)) text("xc-refund-label", xcText(t.xc.refund, { network: networkName(xcNetwork) }));
@@ -764,10 +922,11 @@ export function startCheckout(): void {
     });
   }
 
-  function option(value: string, label: string): HTMLOptionElement {
+  function option(value: string, label: string, disabled = false): HTMLOptionElement {
     const el = document.createElement("option");
     el.value = value;
     el.textContent = label;
+    el.disabled = disabled;
     return el;
   }
 
@@ -874,9 +1033,28 @@ export function startCheckout(): void {
 
   async function submitXc() {
     if (!link || preview || xcBusy) return;
+    if (!payerEmail) {
+      // The email comes first (a deposit carries it for the receipt).
+      emailEditing = true;
+      render(link);
+      return;
+    }
+    if (xcOpenAmount() && !isPayerAmount(xcAmount)) {
+      const amountInput = mount!.querySelector<HTMLInputElement>('input[name="xcAmount"]');
+      amountInput?.setAttribute("aria-invalid", "true");
+      xcStatus(t.xc.amountInvalid);
+      amountInput?.focus();
+      return;
+    }
     const choice = xcChoice();
-    if (!choice) {
+    const selected = xcSelected();
+    if (!choice || !selected) {
       xcStatus(t.xc.pick);
+      return;
+    }
+    const refusal = xcRefused(selected);
+    if (refusal) {
+      xcStatus(t.xc.refused, refusal.reason ?? "");
       return;
     }
     const input = mount!.querySelector<HTMLInputElement>('input[name="refundTo"]');
@@ -893,7 +1071,7 @@ export function startCheckout(): void {
     xcStatus(creating ? t.xc.creating : t.xc.quoting);
     render(link);
     if (creating) {
-      const result = await createDeposit(apiBase, id, choice);
+      const result = await createDeposit(apiBase, id, choice, { email: payerEmail, lang });
       xcBusy = false;
       if (result.kind === "ok") {
         xcDeposit = result.value;
@@ -972,6 +1150,10 @@ export function startCheckout(): void {
       if (link) render(link);
     } else if (button.dataset.action === "xc-reset") {
       resetXc();
+    } else if (button.dataset.action === "email-change") {
+      emailEditing = true;
+      if (link) render(link);
+      mount!.querySelector<HTMLInputElement>('input[name="email"]')?.focus();
     } else if (button.dataset.action === "retry") {
       errorDelay = 5_000;
       show("loading");
@@ -986,6 +1168,12 @@ export function startCheckout(): void {
       void submitXc();
       return;
     }
+    const emailForm = target.closest<HTMLFormElement>("[data-email-step]");
+    if (emailForm) {
+      e.preventDefault();
+      void submitEmail(emailForm);
+      return;
+    }
     const form = target.closest<HTMLFormElement>("[data-payer-step]");
     if (!form) return;
     e.preventDefault();
@@ -998,7 +1186,7 @@ export function startCheckout(): void {
     const el = e.target as HTMLElement;
     if (el instanceof HTMLSelectElement && el.matches("[data-xc-network]")) {
       xcNetwork = isNetwork(el.value) ? el.value : "";
-      const only = xcAssets?.filter((a) => a.chain === xcNetwork) ?? [];
+      const only = xcAssets?.filter((a) => a.chain === xcNetwork && !xcRefused(a)) ?? [];
       xcAssetId = only.length === 1 ? only[0].assetId : "";
     } else if (el instanceof HTMLSelectElement && el.matches("[data-xc-asset]")) {
       xcAssetId = el.value;
@@ -1010,8 +1198,10 @@ export function startCheckout(): void {
   });
   root.addEventListener("input", (e) => {
     const el = e.target as HTMLElement;
-    if (!(el instanceof HTMLInputElement) || el.name !== "refundTo" || !el.closest("[data-xc-form]")) return;
-    xcRefund = el.value;
+    if (!(el instanceof HTMLInputElement) || !el.closest("[data-xc-form]")) return;
+    if (el.name === "refundTo") xcRefund = el.value;
+    else if (el.name === "xcAmount") xcAmount = el.value;
+    else return;
     el.removeAttribute("aria-invalid");
     if (xcQuote) {
       xcQuote = null;

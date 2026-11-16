@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createPaymentIntentBodySchema } from '@/schemas/payment-intents';
+import { createPaymentIntentBodySchema, updatePaymentIntentBodySchema } from '@/schemas/payment-intents';
 
 const STELLAR = 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ';
 const FEE_WALLET = 'GBDHAQXQQ75WVBUZ2IX3O7ME7JOKJUOUPUXRNDCORUJODWQCTVUEQ62R';
@@ -67,12 +67,13 @@ const TRON = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
 const BTC = 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq';
 const prod = { environment: 'prod' };
 
-test('every other network is a payment link on mainnet, with an amount', () => {
+test('every other network is a payment link on mainnet, with or without an amount', () => {
   assert.deepEqual(issues({ ...prod, chain: 'base', destination: BASE, amount: '25', assetCode: 'USDC', assetIssuer: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' }), []);
   assert.deepEqual(issues({ ...prod, chain: 'tron', destination: TRON, amount: '10', assetCode: 'USDT' }), []);
   assert.deepEqual(issues({ ...prod, chain: 'btc', destination: BTC, amount: '0.001' }), []);
   assert.deepEqual(issues({ chain: 'base', destination: BASE, amount: '25' }), ['environment']);
-  assert.deepEqual(issues({ ...prod, chain: 'tron', destination: TRON }), ['amount']);
+  // An open amount: the payer types it in the checkout.
+  assert.deepEqual(issues({ ...prod, chain: 'tron', destination: TRON }), []);
 });
 
 test('each network checks its own address shape', () => {
@@ -82,11 +83,39 @@ test('each network checks its own address shape', () => {
   assert.deepEqual(issues({ ...prod, chain: 'nope', destination: BASE, amount: '1' }), ['chain']);
 });
 
-test('a link on another network takes a message, but no fee, callback, source or transaction', () => {
+test('a link on another network takes a message, but no callback, source or transaction', () => {
   const link = { ...prod, chain: 'base', destination: BASE, amount: '25' };
   assert.deepEqual(issues({ ...link, msg: 'Order 24' }), []);
-  assert.deepEqual(issues({ ...link, merchantFee: { bps: 100, wallet: BASE, paidBy: 'payer' } }), ['merchantFee']);
   assert.deepEqual(issues({ ...link, callback: 'url:https://x.test' }), ['callback']);
   assert.deepEqual(issues({ ...link, kind: 'tx', source: BASE }).sort(), ['kind', 'source']);
   assert.deepEqual(issues({ ...link, assetIssuer: 'has space' }), ['assetIssuer']);
+});
+
+const FEE_EVM = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+
+test('a merchant fee on another network goes to an account inside the route, from an amount', () => {
+  const link = { ...prod, chain: 'tron', destination: TRON, amount: '25', assetCode: 'USDT' };
+  const fee = { bps: 100, wallet: FEE_EVM, paidBy: 'payer' };
+  assert.deepEqual(issues({ ...link, merchantFee: fee }), []);
+  assert.deepEqual(issues({ ...link, merchantFee: { ...fee, wallet: 'shop.near' } }), []);
+  // A Tron address is not an account inside the route.
+  assert.deepEqual(issues({ ...link, merchantFee: { ...fee, wallet: TRON } }), ['merchantFee']);
+  // An open amount has nothing to take a fee from.
+  assert.deepEqual(issues({ ...link, amount: undefined, merchantFee: fee }), ['merchantFee']);
+  // Not the destination, whatever its case.
+  const onBase = { ...prod, chain: 'base', destination: BASE, amount: '25' };
+  assert.deepEqual(issues({ ...onBase, merchantFee: { ...fee, wallet: BASE.toLowerCase() } }), ['merchantFee']);
+  assert.deepEqual(issues({ ...onBase, merchantFee: { ...fee, fixed: '0.0000000000000000001' } }), ['merchantFee']);
+});
+
+test('the deposit limits are raised within the bounds, never lowered', () => {
+  const link = { ...prod, chain: 'base', destination: BASE, amount: '25' };
+  assert.deepEqual(issues({ ...link, depositLimits: { perPayer: 4, perWindow: 60 } }), []);
+  assert.deepEqual(issues({ ...link, depositLimits: { perWindow: 200 } }), []);
+  assert.deepEqual(issues({ ...link, depositLimits: { perPayer: 1 } }), ['depositLimits.perPayer']);
+  assert.deepEqual(issues({ ...link, depositLimits: { perPayer: 11 } }), ['depositLimits.perPayer']);
+  assert.deepEqual(issues({ ...link, depositLimits: { perWindow: 201 } }), ['depositLimits.perWindow']);
+  assert.deepEqual(issues({ ...link, depositLimits: { perWindow: 30.5 } }), ['depositLimits.perWindow']);
+  assert.equal(updatePaymentIntentBodySchema.safeParse({ depositLimits: { perPayer: 3 } }).success, true);
+  assert.equal(updatePaymentIntentBodySchema.safeParse({ depositLimits: { perPayer: 30 } }).success, false);
 });

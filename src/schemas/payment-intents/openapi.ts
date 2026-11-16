@@ -104,6 +104,24 @@ export const paymentIntentSchema = z
       .nullable()
       .optional()
       .openapi({ description: 'Where the payer paid from, when a payment from another network settled the intent; null otherwise.' }),
+    depositLimits: z
+      .object({
+        perPayer: z.number().int().openapi({ example: 2, description: 'Open deposit addresses one payer may have on the link.' }),
+        perWindow: z.number().int().openapi({ example: 20, description: 'New deposit addresses the link takes per window, from all payers.' }),
+        windowSeconds: z.number().int().openapi({ example: 300 }),
+      })
+      .optional()
+      .openapi({ description: 'The limits on payments from another network for this link, defaults filled in.' }),
+    payerEmail: z
+      .string()
+      .nullable()
+      .optional()
+      .openapi({ example: 'payer@example.com', description: 'The email the payer typed in the hosted checkout, for the receipt (unverified); null when none was given.' }),
+    receiptSentAt: z
+      .string()
+      .nullable()
+      .optional()
+      .openapi({ example: null, description: 'When the receipt was emailed to the payer; null until it is.' }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     updatedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
   })
@@ -153,6 +171,25 @@ const paymentDepositSchema = z
 const paymentDepositListSchema = z
   .object({ data: z.array(paymentDepositSchema) })
   .openapi('PaymentDepositList', { description: "An intent's deposits, newest first." });
+
+const paymentRouteCheckListSchema = z
+  .object({
+    data: z.array(
+      z.object({
+        chain: z.enum(NETWORKS).openapi({ example: 'tron' }),
+        asset: z.string().openapi({ example: 'USDT' }),
+        available: z.boolean().openapi({ example: false, description: 'True when the route quoted the amount.' }),
+        reason: z.string().nullable().openapi({
+          example: 'The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $100',
+          description: "Why not, in the route's words; null when available.",
+        }),
+        amount: z.string().nullable().openapi({ example: null, description: 'What the payer would send from there; null when not available.' }),
+      }),
+    ),
+  })
+  .openapi('PaymentRouteCheckList', {
+    description: "How the main origins fare for a payment link's amount: the ones that cannot pay it now, and why.",
+  });
 
 const paymentIntentListSchema = z
   .object({
@@ -227,7 +264,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Create a payment intent',
     description:
-      'Creates a payment link on any network (`pay`; on every network but Stellar, Solana and Monad, mainnet only, with an amount) or a Stellar `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise).',
+      'Creates a payment link on any network (`pay`; on every network but Stellar, Solana and Monad, mainnet only, with or without an amount) or a Stellar `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise). A merchant fee goes to one of its wallets too: on a network paid through a deposit address, one of its NEAR wallets or EVM addresses, where the cross-chain route credits it.',
     security: sessionSecurity,
     request: {
       query: z.object({ env: envQuery }),
@@ -270,7 +307,7 @@ registerRoutes([
     path: '/api/payment-intents/{id}',
     tags: [TAG],
     summary: 'Update a payment intent',
-    description: 'Updates the status, transaction hash, merchant reference or checkout design of an intent.',
+    description: 'Updates the status, transaction hash, merchant reference, checkout design or the limits on payments from another network (`depositLimits`) of an intent.',
     security: sessionSecurity,
     request: {
       params: idParam,
@@ -320,6 +357,23 @@ registerRoutes([
     request: { params: idParam, query: z.object({ env: envQuery }) },
     responses: {
       200: jsonOk(paymentDepositListSchema, 'ListPaymentDepositsResponse', 'Deposits fetched successfully'),
+      400: errors.badRequest,
+      401: errors.unauthorized,
+      404: errors.notFound,
+      500: errors.internalError,
+    },
+  },
+  {
+    method: 'get',
+    path: '/api/payment-intents/{id}/route-check',
+    tags: [TAG],
+    summary: "Check a link's amount against the main origins",
+    description:
+      "Asks the cross-chain route whether the main origins (USDC and USDT on the networks most payers hold them on, and Bitcoin) can pay this link's amount, and why not when they cannot: routes have minimums of their own. A warning only, it never blocks the link; empty for a link without an amount or one that cannot be paid from another network. Budgeted by the Payments API (429). An intent that is not the caller's reads as 404.",
+    security: sessionSecurity,
+    request: { params: idParam, query: z.object({ env: envQuery }) },
+    responses: {
+      200: jsonOk(paymentRouteCheckListSchema, 'PaymentRouteCheckResponse', 'Route check fetched successfully'),
       400: errors.badRequest,
       401: errors.unauthorized,
       404: errors.notFound,

@@ -13,9 +13,12 @@
    the last half minute means someone is on it now), the payer's wallet (the checkout reports it
    opened, `checkoutWalletAt`, or back without paying, `checkoutWalletClosedAt`), the payment
    sent (the checkout saw the wallet send it, `checkoutSentAt`, or the chain has it), and paid or
-   how it ended. */
+   how it ended. A link that takes payments from other networks also shows, with an amount, the
+   main origins the cross-chain route cannot take that amount from (a warning, never a block), and
+   its limits on those payments, which the merchant may raise while it is open. The payer's email
+   (typed on the payment page, unverified) and the receipt sent to it are among its fields. */
 import { useEffect, useState } from "react";
-import { showToast, checkoutUrl } from "@/components/cosmos/shared";
+import { Modal, showToast, checkoutUrl } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -30,9 +33,11 @@ import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets
 import { AddressLink, TxLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { CopyRef } from "@/components/cosmos/dashboard/components/RecordLink";
 import { shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { isDepositNetwork, networkName, tierOf } from "@/lib/chains";
+import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, takesDeposits } from "@/lib/deposit-limits";
 import { parsePaymentDeposit, type PaymentDeposit } from "@/lib/payments/deposits";
-import type { PaymentIntent } from "@/lib/cosmos";
+import type { PaymentIntent, PaymentRouteCheck } from "@/lib/cosmos";
 
 const TERMINAL = ["SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 /* How recent the checkout's last read must be to count as a payer on the page now: it polls every
@@ -169,6 +174,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
+  const [editingLimits, setEditingLimits] = useState(false);
   // A Stellar payment still open can be checked against a transaction the payer sent from a
   // wallet that never reported back: the Payments API verifies it and settles the link.
   const [txHash, setTxHash] = useState("");
@@ -228,6 +234,18 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
     [F.paidFrom, data.paidFrom ? `${data.paidFrom.amount} ${data.paidFrom.asset} · ${networkName(data.paidFrom.chain)}` : null],
     // The on-chain transaction id, only present once paid or submitted.
     [F.txHash, data.txHash],
+    // What the payer typed on the payment page for the receipt (unverified).
+    [F.payerEmail, data.payerEmail],
+  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
+  // Read-only facts, not worth a copy button: the receipt and the limits.
+  const canDeposit = takesDeposits(chain, tierOf(data.network) === "public", !!data.merchantFee);
+  const limits = data.depositLimits;
+  const receipt = data.receiptSentAt
+    ? fmt(d.receipt.sent, { time: fmtDateTime(data.receiptSentAt) })
+    : data.payerEmail && paid ? d.receipt.pending : null;
+  const facts = [
+    [F.receipt, receipt],
+    [F.depositLimits, canDeposit && limits ? fmt(d.limitsValue, { perPayer: limits.perPayer, perWindow: limits.perWindow, minutes: Math.round((limits.windowSeconds || DEPOSIT_LIMIT_WINDOW_MINUTES * 60) / 60) }) : null],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
   return (
@@ -267,8 +285,9 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
       </section>
 
       <PaymentProgress data={data} />
+      <RouteCheckWarning data={data} env={env} />
 
-      {(payable || fields.length > 0 || canCheck || tierOf(data.network) === "public") && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
+      {(payable || fields.length > 0 || facts.length > 0 || canCheck || tierOf(data.network) === "public") && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
         {payable && <section className="pay-record-qr" aria-label={d.scan}>
           {data.qr
             ? <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
@@ -291,9 +310,15 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
             </CopyBlock>
           )}
           {payable && data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
-          {fields.length > 0 && (
+          {(fields.length > 0 || facts.length > 0) && (
             <div className="paylink-fields">
               {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
+              {facts.map(([label, v]) => <div className="paylink-field" key={label}><span className="pf-k">{label}</span><span className="pf-v">{v}</span></div>)}
+            </div>
+          )}
+          {canManage && payable && canDeposit && (
+            <div className="paylink-actions">
+              <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setEditingLimits(true)}>{DI.edit} {d.limitsEdit}</button>
             </div>
           )}
           {canCheck && (
@@ -315,7 +340,104 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
           )}
         </section>
       </div>}
+      {editingLimits && (
+        <DepositLimitsModal
+          data={data} env={env}
+          onClose={() => setEditingLimits(false)}
+          onSaved={(updated) => { setData((x: PaymentIntent) => ({ ...x, ...updated })); setEditingLimits(false); }}
+        />
+      )}
     </div>
+  );
+}
+
+/* The main origins the cross-chain route cannot take this link's amount from, and why (its own
+   minimums, which change over time): a warning panel, never a block, asked once per amount while
+   the link is open. Not drawn when every origin can pay, when the check could not be made, or for a
+   link without an amount or one that takes no payments from other networks. */
+function RouteCheckWarning({ data, env }: { data: PaymentIntent; env: string }) {
+  const t = useT();
+  const r = t.dash.paylinks.detail.routes;
+  const chain = chainOf(data);
+  const check = data.status === "PENDING" && !!data.amount && takesDeposits(chain, tierOf(data.network) === "public", !!data.merchantFee);
+  const [routes, setRoutes] = useState<PaymentRouteCheck[] | null>(null);
+  useEffect(() => {
+    setRoutes(null);
+    if (!check) return;
+    let alive = true;
+    payApi.routeCheck(data.id, env)
+      .then((res) => { if (alive) setRoutes(Array.isArray(res) ? res : []); })
+      .catch(() => { if (alive) setRoutes(null); });
+    return () => { alive = false; };
+  }, [data.id, env, check, data.amount]);
+  const blocked = (routes || []).filter((x) => x && x.available === false);
+  if (!blocked.length) return null;
+  const titleId = `pay-routes-${data.id}`;
+  return (
+    <div className="zka-exists pay-routes" role="note" aria-labelledby={titleId}>
+      <div className="zka-exists-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M12 7.5v5.5M12 16.4v.1" /></svg>
+        <b id={titleId}>{r.title}</b>
+      </div>
+      <ul className="pay-routes-list">
+        {blocked.map((x) => (
+          <li key={`${x.chain}:${x.asset}`}>
+            <span className="cell-mark"><NetworkMark chain={x.chain} size={18} /><b>{fmt(r.item, { asset: x.asset, network: networkName(x.chain) })}</b></span>
+            {x.reason && <span className="pay-routes-why">{x.reason}</span>}
+          </li>
+        ))}
+      </ul>
+      <p className="zka-exists-meta">{r.hint}</p>
+    </div>
+  );
+}
+
+/* The link's limits on payments from other networks, raised from the defaults up to the ceilings
+   (src/lib/deposit-limits.ts), while it is open. The Payments API has the last word. */
+function DepositLimitsModal({ data, env, onClose, onSaved }: { data: PaymentIntent; env: string; onClose: () => void; onSaved: (updated: PaymentIntent) => void }) {
+  const t = useT();
+  const m = t.dash.paylinks.modal;
+  const d = t.dash.paylinks.detail;
+  const cur = data.depositLimits;
+  const [perPayer, setPerPayer] = useState(String(cur?.perPayer ?? DEPOSIT_LIMIT_PER_PAYER.min));
+  const [perWindow, setPerWindow] = useState(String(cur?.perWindow ?? DEPOSIT_LIMIT_PER_WINDOW.min));
+  const [busy, setBusy] = useState(false);
+  const within = (v: string, b: { min: number; max: number }) => /^\d+$/.test(v.trim()) && Number(v) >= b.min && Number(v) <= b.max;
+  const payerOk = within(perPayer, DEPOSIT_LIMIT_PER_PAYER);
+  const windowOk = within(perWindow, DEPOSIT_LIMIT_PER_WINDOW);
+  const changed = Number(perPayer) !== cur?.perPayer || Number(perWindow) !== cur?.perWindow;
+  const save = () => {
+    if (!payerOk || !windowOk || busy) return;
+    setBusy(true);
+    payApi.update(data.id, env, { depositLimits: { perPayer: Number(perPayer), perWindow: Number(perWindow) } })
+      .then((updated) => { if (updated) onSaved(updated); showToast(d.limitsSaved); })
+      .catch((err) => showToast((err && err.message) || d.limitsError, "error"))
+      .finally(() => setBusy(false));
+  };
+  return (
+    <Modal onClose={onClose}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{d.eyebrow}</div>
+        <h3>{m.limits.title}</h3>
+        <p className="field-help">{m.limits.hint}</p>
+        <Field
+          label={m.limits.perPayer}
+          hint={fmt(payerOk ? m.limits.range : m.limits.invalid, { min: DEPOSIT_LIMIT_PER_PAYER.min, max: DEPOSIT_LIMIT_PER_PAYER.max })}
+          value={perPayer} onChange={(e: { target: { value: string } }) => setPerPayer(e.target.value.trim())} inputMode="numeric" autoComplete="off" autoFocus
+          aria-invalid={payerOk ? undefined : true}
+        />
+        <Field
+          label={fmt(m.limits.perWindow, { minutes: DEPOSIT_LIMIT_WINDOW_MINUTES })}
+          hint={fmt(windowOk ? m.limits.range : m.limits.invalid, { min: DEPOSIT_LIMIT_PER_WINDOW.min, max: DEPOSIT_LIMIT_PER_WINDOW.max })}
+          value={perWindow} onChange={(e: { target: { value: string } }) => setPerWindow(e.target.value.trim())} inputMode="numeric" autoComplete="off"
+          aria-invalid={windowOk ? undefined : true}
+        />
+        <div className="modal-actions">
+          <button type="button" className="btn btn-dark" disabled={!payerOk || !windowOk || !changed || busy} onClick={save}>{d.limitsSave}</button>
+          <button type="button" className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

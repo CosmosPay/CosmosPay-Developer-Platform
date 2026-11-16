@@ -22,11 +22,12 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
-import { WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { RouteFeeWalletSelect, WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { NATIVE_CODES, NETWORK_IDS, NETWORKS_BY_NAME, TEST_NETWORKS, TOKEN_PRESETS, ADDRESS_PLACEHOLDERS, isAddress, isChain, isDepositNetwork, networkName, sameNetworkAddress } from "@/lib/chains";
 import { parseDepositAssets, type DepositAsset } from "@/lib/payments/deposits";
 import { standardAssets } from "@/lib/stellar-assets";
+import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, routeFeeAccount, takesDeposits } from "@/lib/deposit-limits";
 import { DATE_RANGES, countBy, inRange, matchesQuery, rangeStart } from "@/lib/dashboard-filters";
 
 const STATUSES = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
@@ -192,9 +193,11 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
    links; every other network is paid through a deposit address made for each payment, on mainnet
    only, for an amount in one of the tokens listed there. Composed as the payer will meet it: the
    network (by name, none first for being ours), the amount with its asset in one field (as a swap
-   panel), then, a step each, the address that receives it (with the memo and message), the
-   organization's own fee and the checkout's design. Transaction intents (a known payer) are
-   Stellar's. */
+   panel), then, a step each, the address that receives it (with the memo and message, and under
+   "more options" the limits on payments from other networks), the organization's own fee and the
+   checkout's design. Transaction intents (a known payer) are Stellar's. On the other networks the
+   amount may stay open (the payer types it on the payment page) and the fee is the cross-chain
+   route's own, credited to one of the organization's NEAR or EVM wallets. */
 /* `initial` fills a Stellar link from elsewhere (a product): its amount, its asset (the chain's coin,
    a listed asset by code, or CODE:ISSUER as a custom one) and its name as the payer's message. */
 function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null, onClose, onCreated }) {
@@ -216,11 +219,16 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const [checkoutTheme, setCheckoutTheme] = useState("classic");
   // The organization's own fee on this payment (product owner, 2026-10-26: B2B through Cosmos
   // Pay): a percentage and/or a fixed part, to one of its wallets, taken from the amount or
-  // added on top. Stellar only for now; empty means none.
+  // added on top; empty means none. On a network paid through a deposit address the wallet is an
+  // account inside the cross-chain route (a NEAR wallet or an EVM address).
   const [feePct, setFeePct] = useState("");
   const [feeFixed, setFeeFixed] = useState("");
   const [feeWallet, setFeeWallet] = useState("");
   const [feePaidBy, setFeePaidBy] = useState("recipient");
+  // The limits on payments from other networks, raised from the defaults; empty keeps them.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [limitPayer, setLimitPayer] = useState("");
+  const [limitWindow, setLimitWindow] = useState("");
   const [busy, setBusy] = useState(false);
 
   const stellar = chain === "stellar";
@@ -293,7 +301,9 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const tokenOk = deposit ? !!picked : !custom || (stellar
     ? /^[A-Za-z0-9]{1,12}$/.test(customCode.trim()) && (customCode.trim().toLowerCase() === "xlm" || isAddress("stellar", customIssuer))
     : /^[A-Za-z0-9]{1,12}$/.test(customCode.trim()) && isAddress(chain, customIssuer));
-  const amountNeeded = isTx || chain === "monad" || deposit;
+  // An open amount is the payer's to type: on Stellar and Solana in their wallet, on the networks
+  // paid through a deposit address on the payment page. Monad recognises a payment by its amount.
+  const amountNeeded = isTx || chain === "monad";
   const amountOk = !amount.trim() || /^\d+(\.\d+)?$/.test(amount.trim());
   const memoOk = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
   const mf = m.merchantFee;
@@ -302,11 +312,18 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const fixedNum = Number(feeFixed.trim() || 0);
   const feePctOk = !feePct.trim() || (/^\d+(\.\d{1,2})?$/.test(feePct.trim()) && pctNum <= 10);
   const feeFixedOk = !feeFixed.trim() || (stellar ? /^\d+(\.\d{1,7})?$/ : /^\d+(\.\d{1,18})?$/).test(feeFixed.trim());
-  // EVM addresses are one account whatever their case.
-  const feeSameWallet = !!feeWallet && sameNetworkAddress(chain, feeWallet, destination);
-  // No merchant fee on the other networks yet: a deposit address pays the merchant alone.
-  const feeOk = deposit || !feeOn || (feePctOk && feeFixedOk && (pctNum > 0 || fixedNum > 0) && !!amount.trim() && !!feeWallet && !feeSameWallet);
-  const valid = !unavailable && destOk && sourceOk && (!amountNeeded || amount.trim()) && amountOk && tokenOk && memoOk && feeOk;
+  // EVM addresses are one account whatever their case; so is the route's fee account.
+  const feeSameWallet = !!feeWallet && (deposit
+    ? routeFeeAccount(feeWallet).toLowerCase() === destination.trim().toLowerCase()
+    : sameNetworkAddress(chain, feeWallet, destination));
+  const feeOk = !feeOn || (feePctOk && feeFixedOk && (pctNum > 0 || fixedNum > 0) && !!amount.trim() && !!feeWallet && !feeSameWallet);
+  // The limits matter only on a link that takes payments from other networks.
+  const canDeposit = takesDeposits(chain, tier === "public", feeOn);
+  const limitOk = (v: string, bounds: { min: number; max: number }) => !v.trim() || (/^\d+$/.test(v.trim()) && Number(v) >= bounds.min && Number(v) <= bounds.max);
+  const limitPayerOk = limitOk(limitPayer, DEPOSIT_LIMIT_PER_PAYER);
+  const limitWindowOk = limitOk(limitWindow, DEPOSIT_LIMIT_PER_WINDOW);
+  const limitsOk = !canDeposit || (limitPayerOk && limitWindowOk);
+  const valid = !unavailable && destOk && sourceOk && (!amountNeeded || amount.trim()) && amountOk && tokenOk && memoOk && feeOk && limitsOk;
 
   const submit = () => {
     if (!valid || busy) return;
@@ -324,13 +341,21 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
       ...(memo.trim() ? { memo: memo.trim() } : {}),
       ...(chain !== "monad" && msg.trim() ? { msg: msg.trim() } : {}),
       checkoutTheme,
-      ...(feeOn && !deposit
+      ...(feeOn
         ? {
             merchantFee: {
               ...(pctNum > 0 ? { bps: Math.round(pctNum * 100) } : {}),
               ...(fixedNum > 0 ? { fixed: feeFixed.trim() } : {}),
               wallet: feeWallet,
               paidBy: feePaidBy,
+            },
+          }
+        : {}),
+      ...(canDeposit && (limitPayer.trim() || limitWindow.trim())
+        ? {
+            depositLimits: {
+              ...(limitPayer.trim() ? { perPayer: Number(limitPayer.trim()) } : {}),
+              ...(limitWindow.trim() ? { perWindow: Number(limitWindow.trim()) } : {}),
             },
           }
         : {}),
@@ -350,7 +375,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
   const steps = useFormSteps(4);
   const stepOk = [
     !unavailable && amountOk && tokenOk && (!amountNeeded || !!amount.trim()),
-    destOk && sourceOk && memoOk,
+    destOk && sourceOk && memoOk && limitsOk,
     feeOk,
     true,
   ];
@@ -410,7 +435,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
               />
             </div>
           </div>
-          {(chain === "monad" || deposit || !isTx) && <p className="field-help" id="paylink-amount-h">{chain === "monad" ? m.amountMonad : deposit ? m.amountRequired : m.amountHint}</p>}
+          {(chain === "monad" || deposit || !isTx) && <p className="field-help" id="paylink-amount-h">{chain === "monad" ? m.amountMonad : deposit ? m.amountDeposit : m.amountHint}</p>}
           {deposit && !unavailable && Array.isArray(listed) && !assets.length && <p className="field-err" role="alert">{m.assetsError}</p>}
         </div>
         {custom && (
@@ -427,25 +452,48 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
         {isTx && <Field label={m.source} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" aria-invalid={invalid(sourceOk, source)} autoComplete="off" spellCheck={false} />}
         <Field label={m.memo} hint={stellar ? m.memoHint : m.memoHintOther} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />
         {chain !== "monad" && <Field label={m.message} hint={deposit ? m.messageHintCheckout : m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
-        </>)}
-
-        {steps.step === 2 && deposit && (
-          <div className="paylink-fee" role="group" aria-labelledby="paylink-fee-l">
-            <span className="field-l" id="paylink-fee-l">{mf.title}</span>
-            <p className="field-help">{fmt(mf.unavailable, { network: networkName(chain) })}</p>
+        {/* A link that takes payments from other networks: how many deposit addresses one payer may
+            hold open and how many new ones it takes per window, raised from the defaults. */}
+        {canDeposit && (
+          <div className="fld">
+            <button type="button" className="btn btn-outline-w btn-sm" aria-expanded={moreOpen} aria-controls="paylink-more" onClick={() => setMoreOpen((v) => !v)}>{m.more}</button>
+            <div id="paylink-more" className="paylink-limits arrive" role="group" aria-labelledby="paylink-limits-l" hidden={!moreOpen}>
+              <span className="field-l" id="paylink-limits-l">{m.limits.title} <span className="field-hint">{t.dash.common.optional}</span></span>
+              <p className="field-help">{m.limits.hint}</p>
+              <div className="field-row">
+                <Field
+                  label={m.limits.perPayer}
+                  hint={fmt(limitPayerOk ? m.limits.range : m.limits.invalid, { min: DEPOSIT_LIMIT_PER_PAYER.min, max: DEPOSIT_LIMIT_PER_PAYER.max })}
+                  value={limitPayer} onChange={(e: { target: { value: string } }) => setLimitPayer(e.target.value.trim())}
+                  placeholder={String(DEPOSIT_LIMIT_PER_PAYER.min)} inputMode="numeric" autoComplete="off"
+                  aria-invalid={limitPayerOk ? undefined : true}
+                />
+                <Field
+                  label={fmt(m.limits.perWindow, { minutes: DEPOSIT_LIMIT_WINDOW_MINUTES })}
+                  hint={fmt(limitWindowOk ? m.limits.range : m.limits.invalid, { min: DEPOSIT_LIMIT_PER_WINDOW.min, max: DEPOSIT_LIMIT_PER_WINDOW.max })}
+                  value={limitWindow} onChange={(e: { target: { value: string } }) => setLimitWindow(e.target.value.trim())}
+                  placeholder={String(DEPOSIT_LIMIT_PER_WINDOW.min)} inputMode="numeric" autoComplete="off"
+                  aria-invalid={limitWindowOk ? undefined : true}
+                />
+              </div>
+            </div>
           </div>
         )}
-        {steps.step === 2 && !deposit && (
+        </>)}
+
+        {steps.step === 2 && (
           <div className="paylink-fee" role="group" aria-labelledby="paylink-fee-l">
             <span className="field-l" id="paylink-fee-l">{mf.title} <span className="field-hint">{t.dash.common.optional}</span></span>
-            <p className="field-help">{mf.hint}</p>
+            <p className="field-help">{deposit ? fmt(mf.routeHint, { network: networkName(chain) }) : mf.hint}</p>
             <div className="field-row">
               <Field label={mf.pct} hint={feePctOk ? undefined : mf.pctMax} value={feePct} onChange={(e) => setFeePct(e.target.value.replace(",", "."))} placeholder="1.5" inputMode="decimal" autoComplete="off" aria-invalid={feePctOk ? undefined : true} />
               <Field label={mf.fixed} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value.replace(",", "."))} placeholder="0.25" inputMode="decimal" autoComplete="off" aria-invalid={feeFixedOk ? undefined : true} />
             </div>
             {feeOn && (
               <div className="arrive">
-                <WalletSelect id="paylink-fee-wallet" orgId={orgId} chain={chain} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />
+                {deposit
+                  ? <RouteFeeWalletSelect id="paylink-fee-wallet" orgId={orgId} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.routeWallet} />
+                  : <WalletSelect id="paylink-fee-wallet" orgId={orgId} chain={chain} value={feeWallet} onChange={setFeeWallet} canConnect={canConnectWallets} label={mf.wallet} />}
                 {feeSameWallet && <p className="field-err" role="alert">{mf.sameWallet}</p>}
                 {!amount.trim() && <p className="field-err" role="alert">{mf.needsAmount}</p>}
                 <div className="fld">

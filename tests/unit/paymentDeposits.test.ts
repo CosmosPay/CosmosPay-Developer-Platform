@@ -8,11 +8,16 @@ import {
   fetchDeposit,
   fetchDepositAssets,
   httpsUrl,
+  isPayerAmount,
+  isPayerEmail,
   nextDepositPollDelay,
   parseDepositAssets,
   parseDepositQuote,
+  parseDepositRoutes,
   parsePaymentDeposit,
   quoteDeposit,
+  recordPayer,
+  routeRefusal,
 } from '@/lib/payments/deposits';
 
 const QR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -139,11 +144,14 @@ test('requests go to the link routes, send the choice, and map every answer', as
   assert.equal(calls[0].url, 'https://gw.test/v1/payment-links/' + LINK + '/quote');
   assert.deepEqual(JSON.parse(String(calls[0].init?.body)), { originChain: 'tron', originAsset: TRON, refundTo: TRON });
 
-  const made = await createDeposit('https://gw.test', LINK, choice, recording(201, depositBody()));
+  const payer = { email: ' payer@example.com ', lang: 'es' };
+  const made = await createDeposit('https://gw.test', LINK, choice, payer, recording(201, depositBody()));
   assert.equal(made.kind, 'ok');
   assert.equal(calls[1].url, 'https://gw.test/v1/payment-links/' + LINK + '/deposits');
+  // The deposit carries the payer's email and language, for the receipt.
+  assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { originChain: 'tron', originAsset: TRON, refundTo: TRON, email: 'payer@example.com', lang: 'es' });
   // A deposit for another link is not this one.
-  assert.equal((await createDeposit('https://gw.test', LINK, choice, recording(201, depositBody({ paymentLinkId: DEPOSIT })))).kind, 'error');
+  assert.equal((await createDeposit('https://gw.test', LINK, choice, payer, recording(201, depositBody({ paymentLinkId: DEPOSIT })))).kind, 'error');
 
   const read = await fetchDeposit('https://gw.test', LINK, DEPOSIT, recording(200, depositBody()));
   assert.equal(read.kind, 'ok');
@@ -153,10 +161,73 @@ test('requests go to the link routes, send the choice, and map every answer', as
   const refusal = 'The cross-chain route refused the request: minimum swap amount is $100';
   assert.deepEqual(await quoteDeposit('https://gw.test', LINK, choice, respond(400, { code: 'provider_error', message: refusal })), { kind: 'refused', message: refusal });
   assert.deepEqual(await quoteDeposit('https://gw.test', LINK, choice, respond(400, { code: 'invalid_state_transition', message: 'closed' })), { kind: 'closed' });
-  assert.deepEqual(await createDeposit('https://gw.test', LINK, choice, respond(409, { code: 'operation_in_flight' })), { kind: 'busy' });
-  assert.deepEqual(await createDeposit('https://gw.test', LINK, choice, respond(429, {}, { 'retry-after': '7' })), { kind: 'rate-limited', retryAfterMs: 7000 });
+  assert.deepEqual(await createDeposit('https://gw.test', LINK, choice, payer, respond(409, { code: 'operation_in_flight' })), { kind: 'busy' });
+  assert.deepEqual(await createDeposit('https://gw.test', LINK, choice, payer, respond(429, {}, { 'retry-after': '7' })), { kind: 'rate-limited', retryAfterMs: 7000 });
   assert.deepEqual(await fetchDepositAssets('https://gw.test', LINK, respond(400, { code: 'validation_failed' })), { kind: 'unavailable' });
   assert.deepEqual(await fetchDepositAssets('https://gw.test', LINK, respond(404, {})), { kind: 'not-found' });
   const offline = (async () => { throw new Error('offline'); }) as unknown as typeof fetch;
   assert.deepEqual(await quoteDeposit('https://gw.test', LINK, choice, offline), { kind: 'error' });
+});
+
+test('the token list comes with the origins that cannot pay this amount, each with its reason', async () => {
+  const reason = 'The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $100';
+  const body = {
+    data: [
+      { chain: 'tron', chainName: 'Tron', symbol: 'USDT', assetId: 'nep141:tron-usdt', decimals: 6, contract: TRON, priceUsd: 1 },
+      { chain: 'base', chainName: 'Base', symbol: 'USDC', assetId: 'nep141:base-usdc', decimals: 6, contract: BASE, priceUsd: 1 },
+    ],
+    routes: [
+      { chain: 'tron', asset: 'USDT', available: false, reason: reason + '\n<b>', amount: null },
+      { chain: 'base', asset: 'USDC', available: true, reason: null, amount: '25.3' },
+      { chain: 'nowhere', asset: 'USDC', available: false, reason: 'x', amount: null },
+      { chain: 'eth', asset: 'USDC', available: 'no', reason: null, amount: null },
+    ],
+  };
+  const routes = parseDepositRoutes(body);
+  assert.deepEqual(routes.map((r) => r.chain), ['tron', 'base']);
+  assert.equal(routes[0].reason, reason + ' <b>');
+  const assets = parseDepositAssets(body);
+  assert.equal(routeRefusal(routes, assets.find((a) => a.chain === 'tron')!)?.reason, reason + ' <b>');
+  assert.equal(routeRefusal(routes, assets.find((a) => a.chain === 'base')!), null);
+  // No routes (an open amount, an older server): nothing is ruled out.
+  assert.deepEqual(parseDepositRoutes({ data: body.data }), []);
+
+  const listed = await fetchDepositAssets('https://gw.test', LINK, respond(200, body));
+  assert.equal(listed.kind, 'ok');
+  if (listed.kind === 'ok') {
+    assert.equal(listed.value.assets.length, 2);
+    assert.equal(listed.value.routes.length, 2);
+  }
+});
+
+test("the payer's email and an open amount are checked before they are sent", async () => {
+  for (const ok of ['payer@example.com', 'a.b+c@sub.example.co.uk', ' x@y.io ']) assert.ok(isPayerEmail(ok), ok);
+  for (const bad of ['', 'payer', 'payer@', '@example.com', 'a b@example.com', 'a@example', 'a@b.c', '<a@b.co>', 'a@b.co\nBcc: x@y.co', `${'a'.repeat(250)}@b.co`, 7]) {
+    assert.equal(isPayerEmail(bad), false, String(bad));
+  }
+  for (const ok of ['25', '0.5', '1000.123456']) assert.ok(isPayerAmount(ok), ok);
+  for (const bad of ['', '0', '0.000', '-1', '1e3', '1,5', '.5', 'abc']) assert.equal(isPayerAmount(bad), false, bad);
+
+  const calls: { url: string; init?: RequestInit }[] = [];
+  const noContent = (async (url: string, init?: RequestInit) => {
+    calls.push({ url, init });
+    return new Response(null, { status: 204 });
+  }) as unknown as typeof fetch;
+  assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: ' payer@example.com ', lang: 'pt' }, noContent), { kind: 'ok', value: true });
+  assert.equal(calls[0].url, 'https://gw.test/v1/payment-links/' + LINK + '/payer');
+  assert.equal(calls[0].init?.method, 'POST');
+  assert.deepEqual(JSON.parse(String(calls[0].init?.body)), { email: 'payer@example.com', lang: 'pt' });
+  // A language the receipts are not written in is left to the server's default.
+  await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'xx' }, noContent);
+  assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { email: 'payer@example.com' });
+  assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'en' }, respond(400, { code: 'invalid_state_transition' })), { kind: 'closed' });
+
+  // On a link without an amount, the payer's amount rides on the quote.
+  const quoted: { init?: RequestInit }[] = [];
+  const quoting = (async (_url: string, init?: RequestInit) => {
+    quoted.push({ init });
+    return new Response(JSON.stringify(quoteBody), { status: 200 });
+  }) as unknown as typeof fetch;
+  await quoteDeposit('https://gw.test', LINK, { originChain: 'tron', originAsset: TRON, refundTo: TRON, amount: ' 12.5 ' }, quoting);
+  assert.deepEqual(JSON.parse(String(quoted[0].init?.body)), { originChain: 'tron', originAsset: TRON, refundTo: TRON, amount: '12.5' });
 });

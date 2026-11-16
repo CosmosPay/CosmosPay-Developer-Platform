@@ -18,6 +18,9 @@ _openapi:
         (no API key)
       url: '#build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key'
     - depth: 2
+      title: Record the payer's email before they pay, for their receipt (no API key)
+      url: '#record-the-payers-email-before-they-pay-for-their-receipt-no-api-key'
+    - depth: 2
       title: Report what the payer did with a wallet from the hosted checkout (no API
         key)
       url: '#report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key'
@@ -56,6 +59,9 @@ _openapi:
       - content: Build the envelope a payer signs for a Stellar link with a merchant fee
           (no API key)
         id: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: Record the payer's email before they pay, for their receipt (no API
+          key)
+        id: record-the-payers-email-before-they-pay-for-their-receipt-no-api-key
       - content: Report what the payer did with a wallet from the hosted checkout (no
           API key)
         id: report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key
@@ -111,6 +117,14 @@ _openapi:
 
           Only for an open link (`PENDING`). Budgeted per client address.
         heading: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: 'The hosted checkout asks the payer for an email before it shows any
+          way to pay, and records it here with the checkout language: when the
+          payment succeeds, a receipt goes to that address in that language, and
+          the merchant finds the payer among its customers by it (marked as
+          given by the payer, not verified). The latest one recorded on an open
+          link is the one used; a deposit carries its own. Budgeted per client
+          address.'
+        heading: record-the-payers-email-before-they-pay-for-their-receipt-no-api-key
       - content: >-
           The hosted checkout tells what the payer did with a wallet while the
           link is pending: `walletOpened` (the wallet link, the web wallet, the
@@ -144,16 +158,18 @@ _openapi:
         heading: list-what-a-payer-can-pay-a-payment-link-with-from-any-network-no-api-key
       - content: 'What the payer sends (`origin.amount`, with the fees and a small
           buffer for price moves in it; the unused part is refunded) for the
-          merchant to receive exactly the link amount in its asset. A dry quote:
-          nothing is reserved and nothing is stored. Routes have minimum amounts
-          of their own, refused as `validation_failed` with the reason. Only for
-          an open link that can be paid from another network; budgeted per
-          client address.'
+          merchant to receive exactly the link amount in its asset (on a link
+          without one, the `amount` the payer typed). A dry quote: nothing is
+          reserved and nothing is stored. Routes have minimum amounts of their
+          own, refused as `provider_error` with the reason, so a checkout shows
+          it before any deposit address exists. Only for an open link that can
+          be paid from another network; budgeted per client address.'
         heading: price-paying-a-payment-link-from-one-network-and-asset-no-api-key
-      - content: 'A live quote: an address on `originChain` made for this payment alone.
-          The payer sends `amountIn` of the origin asset there (with
-          `depositMemo` when set) before `expiresAt`; the merchant is paid
-          exactly the link amount, the link turns `SUCCEEDED` and emits
+      - content: 'A live quote: an address on `originChain` made for this payment alone,
+          opened only with the payer’s `email` (their receipt goes there). The
+          payer sends `amountIn` of the origin asset there (with `depositMemo`
+          when set) before `expiresAt`; the merchant is paid exactly the link
+          amount, the link turns `SUCCEEDED` and emits
           `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is
           refunded to `refundTo`. The same origin asset and refund address while
           an earlier deposit still waits from the same client answers that one.
@@ -193,7 +209,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"},{"path":"/v1/payment-links/{id}/deposit-assets","method":"get"},{"path":"/v1/payment-links/{id}/quote","method":"post"},{"path":"/v1/payment-links/{id}/deposits","method":"post"},{"path":"/v1/payment-links/{id}/deposits/{depositId}","method":"get"},{"path":"/v1/payment-links/fiat/{id}","method":"get"},{"path":"/v1/payment-links/fiat/{id}/sessions","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/payer","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"},{"path":"/v1/payment-links/{id}/deposit-assets","method":"get"},{"path":"/v1/payment-links/{id}/quote","method":"post"},{"path":"/v1/payment-links/{id}/deposits","method":"post"},{"path":"/v1/payment-links/{id}/deposits/{depositId}","method":"get"},{"path":"/v1/payment-links/fiat/{id}","method":"get"},{"path":"/v1/payment-links/fiat/{id}/sessions","method":"post"}]} showTitle />
     </>
   );
 }

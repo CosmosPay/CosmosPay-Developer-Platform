@@ -54,9 +54,10 @@ function publicLink(intent: PaymentIntent, env: MockEnv) {
   const fee = intent.merchantFee ?? null;
   const payerAccountRequired = intent.chain === "stellar" && !!fee && intent.amount !== null;
   // Every network but Stellar, Solana and Monad is paid through a deposit address only; on those
-  // three a mainnet link with an amount and no fee can be paid from another network too.
+  // three a mainnet link with no fee can be paid from another network too (a Monad one only with
+  // an amount).
   const native = isChain(intent.chain);
-  const crossChainPayment = !native || (env === "prod" && intent.amount !== null && !fee);
+  const crossChainPayment = !native || (env === "prod" && !fee && (intent.chain !== "monad" || intent.amount !== null));
   const qr = intent.qr?.startsWith("data:image/png;base64,") ? intent.qr : qrImage(intent.id);
   return {
     id: intent.id,
@@ -106,12 +107,23 @@ async function paymentLinks(request: Request, rest: string[]): Promise<Response>
     record[field] = nowIso();
     return json(undefined, 204);
   }
+  if (request.method === "POST" && action === "payer") {
+    // The payer's email for the receipt, shown on the payment's view as the server would.
+    if (found.intent.status !== "PENDING") return json({ statusCode: 400, code: "invalid_state_transition", message: "The payment link is closed" }, 400);
+    const body = (await request.json().catch(() => null)) as { email?: unknown; lang?: unknown } | null;
+    const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 254) {
+      return json({ statusCode: 400, code: "validation_failed", message: "email must be an email" }, 400);
+    }
+    record.payerEmail = email;
+    return json(undefined, 204);
+  }
   if (request.method === "GET" && action === "deposit-assets") {
     // The real list of what can be paid with, from the gateway (never sampled).
     const assets = new URL(`/api/cross-chain-swaps/assets?env=prod&org=${MOCK_PUBLIC_ORG}`, "http://mock.local");
     const res = await handleMockApi(new Request(assets), assets);
     const body = (await res.json().catch(() => null)) as { data?: unknown } | null;
-    return res.ok && Array.isArray(body?.data) ? json({ data: body.data }) : json({ statusCode: 502, code: "provider_error", message: "Mock mode: the token list could not be read from the gateway." }, 502);
+    return res.ok && Array.isArray(body?.data) ? json({ data: body.data, routes: [] }) : json({ statusCode: 502, code: "provider_error", message: "Mock mode: the token list could not be read from the gateway." }, 502);
   }
   if (request.method === "POST" && (action === "quote" || action === "deposits")) {
     return json({ statusCode: 400, code: "validation_failed", message: "Mock mode: a payment from another network needs a real payment link, so no quote or deposit address is made here." }, 400);

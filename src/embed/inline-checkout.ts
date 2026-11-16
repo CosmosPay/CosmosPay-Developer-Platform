@@ -11,6 +11,10 @@
    DOM writes are textContent, or attributes parsePaymentLink validated (the QR's PNG data
    URL, the URI whose scheme matches the chain). Never HTML.
 
+   Before the QR and the wallet link it asks for the payer's email, as the hosted checkout does:
+   the receipt goes there once the payment is confirmed (`recordPayer`, keyless, kept in this
+   page's sessionStorage for the link so a reload does not ask again).
+
    Attributes: `link` (required), `lang` (en/es/pt/fr/de; default from the browser, then
    English), `theme` (light/dark/auto; default light), `demo` (no link and no request: it
    draws the payments site's sample, which nothing can pay, says so on top, and adds a button
@@ -30,6 +34,7 @@ import {
   type Phase,
 } from "@/lib/payments/payment-link";
 import { previewLink } from "@/lib/payments/preview";
+import { isPayerEmail, recordPayer } from "@/lib/payments/deposits";
 import { PAYMENTS_API_URL, PAYMENTS_ORIGIN } from "@/embed/config";
 import { browserLanguages, el } from "@/embed/dom";
 import { emitStatus } from "@/embed/events";
@@ -73,6 +78,15 @@ export class CosmosPayCheckout extends HTMLElement {
     msg: HTMLElement;
     status: HTMLElement;
     statusBody: HTMLElement;
+    emailForm: HTMLFormElement;
+    emailLabel: HTMLLabelElement;
+    emailHint: HTMLElement;
+    emailInput: HTMLInputElement;
+    emailSubmit: HTMLButtonElement;
+    emailStatus: HTMLElement;
+    emailGiven: HTMLElement;
+    emailGivenText: HTMLElement;
+    emailChange: HTMLButtonElement;
     pay: HTMLElement;
     qr: HTMLImageElement;
     wallet: HTMLAnchorElement;
@@ -94,7 +108,12 @@ export class CosmosPayCheckout extends HTMLElement {
   /* Bumped whenever the element restarts or leaves the page: a read that resolves after
      that belongs to a link this element no longer shows, and is dropped. */
   private generation = 0;
+  private shownBody: string | null = null;
   private shownPhase: Phase | null = null;
+  /* The payer's email for the receipt; null until given (or after "change"). */
+  private payerEmail: string | null = null;
+  private editingEmail = false;
+  private emailBusy = false;
   private emittedStatus: LinkStatus | null = null;
   private warnedFor: string | null = null;
   private demo = false;
@@ -144,6 +163,37 @@ export class CosmosPayCheckout extends HTMLElement {
     live.setAttribute("role", "status");
     const status = el("p", "status", live);
     const statusBody = el("p", "status-body", live);
+    // The payer's email, for the receipt: asked before the QR and the wallet link.
+    const emailForm = el("form", "email", view);
+    emailForm.noValidate = true;
+    const emailLabel = el("label", "email-label", emailForm);
+    emailLabel.htmlFor = "cp-email";
+    const emailHint = el("p", "hint", emailForm);
+    emailHint.id = "cp-email-hint";
+    const emailRow = el("div", "email-row", emailForm);
+    const emailInput = el("input", "email-input", emailRow);
+    emailInput.id = "cp-email";
+    emailInput.name = "email";
+    emailInput.type = "email";
+    emailInput.inputMode = "email";
+    emailInput.autocomplete = "email";
+    emailInput.spellcheck = false;
+    emailInput.maxLength = 254;
+    emailInput.required = true;
+    emailInput.setAttribute("autocapitalize", "off");
+    emailInput.setAttribute("aria-describedby", "cp-email-hint cp-email-status");
+    const emailSubmit = el("button", "btn", emailRow);
+    emailSubmit.type = "submit";
+    const emailStatus = el("p", "hint", emailForm);
+    emailStatus.id = "cp-email-status";
+    emailStatus.setAttribute("role", "status");
+    emailStatus.setAttribute("aria-live", "polite");
+    const emailGiven = el("p", "email-given", view);
+    const emailGivenText = el("span", "", emailGiven);
+    const emailChange = el("button", "link-btn", emailGiven);
+    emailChange.type = "button";
+    emailForm.hidden = true;
+    emailGiven.hidden = true;
     const pay = el("div", "pay", view);
     const qr = el("img", "qr", pay);
     qr.width = 200;
@@ -174,7 +224,8 @@ export class CosmosPayCheckout extends HTMLElement {
     this.card = card;
     this.ui = {
       eyebrow, demoNote, loadingText, notFoundTitle, notFoundBody, errorTitle, errorBody, retry, testnet,
-      amount, hint, msg, status, statusBody, pay, qr, wallet, demoRun, network, asset, expires, expiresTime, by,
+      amount, hint, msg, status, statusBody, emailForm, emailLabel, emailHint, emailInput, emailSubmit, emailStatus,
+      emailGiven, emailGivenText, emailChange, pay, qr, wallet, demoRun, network, asset, expires, expiresTime, by,
     };
     shadow.append(card);
 
@@ -184,6 +235,16 @@ export class CosmosPayCheckout extends HTMLElement {
       void this.load();
     });
     demoRun.addEventListener("click", this.onDemoRun);
+    emailForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      void this.submitEmail();
+    });
+    emailChange.addEventListener("click", () => {
+      this.editingEmail = true;
+      if (this.link) this.render(this.link);
+      this.ui.emailInput.focus();
+    });
+    emailInput.addEventListener("input", () => emailInput.removeAttribute("aria-invalid"));
   }
 
   connectedCallback(): void {
@@ -215,7 +276,10 @@ export class CosmosPayCheckout extends HTMLElement {
     window.clearTimeout(this.timer);
     this.link = null;
     this.shownPhase = null;
+    this.shownBody = null;
     this.emittedStatus = null;
+    this.editingEmail = false;
+    this.ui.emailStatus.textContent = "";
     this.errorDelay = FIRST_ERROR_DELAY_MS;
     this.demo = isDemo(this.getAttribute("demo"));
     this.ui.demoNote.hidden = !this.demo;
@@ -226,6 +290,7 @@ export class CosmosPayCheckout extends HTMLElement {
     }
     const raw = this.getAttribute("link");
     this.linkId = parseLinkId(raw);
+    this.payerEmail = this.linkId ? this.storedEmail(this.linkId) : null;
     if (!this.linkId) {
       if (this.warnedFor !== raw) {
         this.warnedFor = raw;
@@ -316,6 +381,57 @@ export class CosmosPayCheckout extends HTMLElement {
     if (!document.hidden && this.link && nextPollDelay(phaseOf(this.link)) !== null) void this.load();
   };
 
+  /* ---- the payer's email ---- */
+
+  private storedEmail(id: string): string | null {
+    try {
+      const value = window.sessionStorage.getItem(`cosmospay-payer:${id}`);
+      return isPayerEmail(value) ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async submitEmail(): Promise<void> {
+    const id = this.linkId;
+    const ui = this.ui;
+    const t = this.t.checkout;
+    if (!id || this.demo || this.emailBusy) return;
+    const email = ui.emailInput.value.trim();
+    if (!isPayerEmail(email)) {
+      ui.emailInput.setAttribute("aria-invalid", "true");
+      ui.emailStatus.textContent = t.email.invalid;
+      ui.emailInput.focus();
+      return;
+    }
+    const generation = this.generation;
+    this.emailBusy = true;
+    ui.emailStatus.textContent = t.email.saving;
+    if (this.link) this.render(this.link);
+    const result = await recordPayer(PAYMENTS_API_URL, id, { email, lang: this.locale });
+    this.emailBusy = false;
+    if (generation !== this.generation) return;
+    if (result.kind === "ok") {
+      this.payerEmail = email.toLowerCase();
+      this.editingEmail = false;
+      try {
+        window.sessionStorage.setItem(`cosmospay-payer:${id}`, this.payerEmail);
+      } catch {
+        /* storage blocked: the email is kept while the page is open */
+      }
+      ui.emailStatus.textContent = "";
+      if (this.link) this.render(this.link);
+      ui.emailChange.focus();
+      return;
+    }
+    if (result.kind === "refused") ui.emailInput.setAttribute("aria-invalid", "true");
+    ui.emailStatus.textContent =
+      result.kind === "refused" ? t.email.invalid : result.kind === "rate-limited" ? t.rateLimited : t.email.failed;
+    // A link that closed or went away is read again, and drawn as it is now.
+    if (result.kind === "closed" || result.kind === "not-found") void this.load();
+    else if (this.link) this.render(this.link);
+  }
+
   /* ---- drawing ---- */
 
   private show(state: State): void {
@@ -355,8 +471,14 @@ export class CosmosPayCheckout extends HTMLElement {
     ui.asset.label.textContent = t.asset;
     ui.expires.label.textContent = t.expires;
     ui.by.textContent = this.t.by;
+    ui.emailLabel.textContent = t.email.title;
+    ui.emailHint.textContent = t.email.hint;
+    ui.emailInput.placeholder = t.email.placeholder;
+    ui.emailSubmit.textContent = t.email.submit;
+    ui.emailChange.textContent = t.email.change;
     if (this.link) {
       this.shownPhase = null;
+      this.shownBody = null;
       this.render(this.link);
     }
   }
@@ -376,22 +498,38 @@ export class CosmosPayCheckout extends HTMLElement {
     ui.msg.textContent = l.msg ?? "";
     ui.msg.hidden = !l.msg;
 
+    // No way to pay before the payer gives an email for the receipt (never in the demo).
+    const gated = !this.demo && phase === "open" && (this.payerEmail === null || this.editingEmail);
+    const body = gated ? t.email.body : t.body[phase];
     // Written on a change only, or the live region repeats itself on every read.
-    if (phase !== this.shownPhase) {
+    if (phase !== this.shownPhase || body !== this.shownBody) {
       ui.status.textContent = t.phase[phase];
       ui.status.dataset.phase = phase;
-      ui.statusBody.textContent = t.body[phase];
+      ui.statusBody.textContent = body;
       this.shownPhase = phase;
+      this.shownBody = body;
     }
+    ui.emailForm.hidden = !gated;
+    ui.emailGiven.hidden = gated || this.demo || phase !== "open" || this.payerEmail === null;
+    if (this.payerEmail) ui.emailGivenText.textContent = t.email.given.replace("{email}", this.payerEmail);
+    if (!ui.emailInput.value && this.payerEmail) ui.emailInput.value = this.payerEmail;
+    ui.emailInput.disabled = this.emailBusy;
+    ui.emailSubmit.disabled = this.emailBusy;
 
     // Only an open link is payable: processing is paid already, and expired, failed and
-    // cancelled must not invite a payment the merchant no longer expects.
-    ui.pay.hidden = phase !== "open";
-    if (ui.qr.getAttribute("src") !== l.qr) ui.qr.src = l.qr;
+    // cancelled must not invite a payment the merchant no longer expects. Until the email is
+    // in, the element holds no QR or wallet link at all.
+    ui.pay.hidden = phase !== "open" || gated;
+    if (gated) {
+      ui.qr.removeAttribute("src");
+      ui.wallet.removeAttribute("href");
+    } else if (ui.qr.getAttribute("src") !== l.qr) ui.qr.src = l.qr;
     // The demo's sample has no URI: its own button stands in for the wallet's. A real link
     // without one keeps the button, leading nowhere and saying so.
     ui.wallet.hidden = this.demo;
-    if (l.uri) {
+    if (gated) {
+      ui.wallet.setAttribute("aria-disabled", "true");
+    } else if (l.uri) {
       ui.wallet.href = l.uri;
       ui.wallet.removeAttribute("aria-disabled");
       // A Stellar link with a merchant fee points at the hosted checkout, where the payer names

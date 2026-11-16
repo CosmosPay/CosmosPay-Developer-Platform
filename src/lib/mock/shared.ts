@@ -49,6 +49,8 @@ export function mockOrgWalletSeeds(orgId: string): MockWalletSeed[] {
     { id: uuid(`wallet:${orgId}:base`), orgId, chain: "base", address: evmAddress(`org:${orgId}:main`), label: "Base sales", provider: "evm", createdAt: daysAgo(20) },
     { id: uuid(`wallet:${orgId}:tron`), orgId, chain: "tron", address: tronAddress(`org:${orgId}:main`), label: "USDT on Tron", provider: "address", createdAt: daysAgo(12) },
     { id: uuid(`wallet:${orgId}:btc`), orgId, chain: "btc", address: bitcoinAddress(`org:${orgId}:main`), label: "Bitcoin", provider: "address", createdAt: daysAgo(6) },
+    // Where a merchant fee on a network paid through a deposit address is credited, inside the route.
+    { id: uuid(`wallet:${orgId}:near`), orgId, chain: "near", address: `fees-${orgId.toLowerCase().replace(/[^a-z0-9]/g, "").slice(-12)}.near`, label: "Route fees", provider: "address", createdAt: daysAgo(4) },
   ];
 }
 

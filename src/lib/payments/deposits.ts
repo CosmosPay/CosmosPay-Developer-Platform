@@ -9,6 +9,12 @@
    through Cosmos Pay. The keyless routes under `/v1/payment-links/{id}` (the community server's
    PaymentLinksController), called from the payer's browser like the read.
 
+   The payer gives their email first, for the receipt (`recordPayer`, and `email` on every deposit),
+   and a link without an amount is paid for the amount the payer types (`amount` on the quote and
+   the deposit). The token list comes with how the main origins fare for the link's amount
+   (`routes`), so an origin that cannot pay it is disabled with the route's reason before anyone
+   picks it.
+
    Pure and unit-tested (tests/unit/paymentDeposits.test.ts): every answer is checked here, as
    parsePaymentLink checks the link, before the page writes any of it (as text, or as an attribute
    validated first: the QR, the wallet link, the explorer). Every function returns a value for
@@ -24,6 +30,22 @@ export interface DepositAsset {
   decimals: number;
   contract: string | null;
   priceUsd: number | null;
+}
+
+/** How one main origin fares for the link's amount (the server's PaymentRouteCheck). */
+export interface DepositRoute {
+  chain: NetworkId;
+  /** The token's symbol on that network. */
+  asset: string;
+  available: boolean;
+  /** Why not, in the route's words (they name no provider); null when available. */
+  reason: string | null;
+}
+
+/** What the payer can pay with, and how the main origins fare for this amount. */
+export interface DepositOptions {
+  assets: DepositAsset[];
+  routes: DepositRoute[];
 }
 
 export type DepositStatus =
@@ -173,6 +195,26 @@ export function parseDepositAssets(body: unknown): DepositAsset[] {
       Number(a.contract !== null) - Number(b.contract !== null) ||
       a.symbol.localeCompare(b.symbol, "en"),
   );
+}
+
+/**
+ * How the main origins fare for the link's amount (`routes` beside the token list). A malformed
+ * entry is dropped: that origin stays selectable, and its quote says why if it cannot pay.
+ */
+export function parseDepositRoutes(body: unknown): DepositRoute[] {
+  const b = unwrap(body);
+  const list = record(b) && Array.isArray(b.routes) ? b.routes : [];
+  const routes: DepositRoute[] = [];
+  for (const r of list) {
+    if (!record(r) || !isNetwork(r.chain) || !str(r.asset) || !TOKEN_TEXT.test(r.asset) || typeof r.available !== "boolean") continue;
+    routes.push({ chain: r.chain, asset: r.asset, available: r.available, reason: r.available ? null : oneLine(r.reason) || null });
+  }
+  return routes;
+}
+
+/** The route check that rules a token out for this amount, if any (matched by network and symbol). */
+export function routeRefusal(routes: readonly DepositRoute[], asset: Pick<DepositAsset, "chain" | "symbol">): DepositRoute | null {
+  return routes.find((r) => !r.available && r.chain === asset.chain && r.asset.toUpperCase() === asset.symbol.toUpperCase()) ?? null;
 }
 
 /** The networks a list of tokens spans, by name. */
@@ -333,11 +375,15 @@ export type DepositFailure =
 
 export type DepositResult<T> = { kind: "ok"; value: T } | DepositFailure;
 
-/* The server's message, as one line of text the page may show (it names no provider). */
-function serverMessage(body: unknown): string {
-  const raw = record(body) ? (Array.isArray(body.message) ? body.message.join(" ") : body.message) : null;
+/* Server text as one line the page may show (it names no provider), at most 300 characters. */
+function oneLine(raw: unknown): string {
   const text = str(raw) ? raw.replace(/[\u0000-\u001f\u007f]+/g, " ").trim() : "";
   return text.length > 300 ? `${text.slice(0, 299)}…` : text;
+}
+
+/* The server's message, as one line of text the page may show. */
+function serverMessage(body: unknown): string {
+  return oneLine(record(body) ? (Array.isArray(body.message) ? body.message.join(" ") : body.message) : null);
 }
 
 async function call<T>(
@@ -365,7 +411,7 @@ async function call<T>(
       return { kind: "refused", message: serverMessage(body) };
     }
     if (!res.ok) return { kind: "error" };
-    const value = parse(await res.json());
+    const value = parse(res.status === 204 ? null : await res.json());
     return value === null ? { kind: "error" } : { kind: "ok", value };
   } catch {
     return { kind: "error" };
@@ -374,12 +420,48 @@ async function call<T>(
 
 const linkBase = (apiBase: string, id: string) => `${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}`;
 
-/** What the payer can pay this link with: `GET /v1/payment-links/{id}/deposit-assets`. */
-export function fetchDepositAssets(apiBase: string, id: string, fetchImpl: typeof fetch = fetch): Promise<DepositResult<DepositAsset[]>> {
+/** What the payer can pay this link with, and the origins that cannot pay its amount: `GET /v1/payment-links/{id}/deposit-assets`. */
+export function fetchDepositAssets(apiBase: string, id: string, fetchImpl: typeof fetch = fetch): Promise<DepositResult<DepositOptions>> {
   return call(fetchImpl, `${linkBase(apiBase, id)}/deposit-assets`, { method: "GET" }, (body) => {
     const assets = parseDepositAssets(body);
-    return assets.length ? assets : null;
+    return assets.length ? { assets, routes: parseDepositRoutes(body) } : null;
   }, "unavailable");
+}
+
+/* The receipt's languages: the checkout's seven (the server's RECEIPT_LANGS). */
+const RECEIPT_LANGS: readonly string[] = ["en", "es", "pt", "fr", "de", "hi", "zh"];
+/* One mailbox: a local part, an @, a domain with a dot; no spaces, quotes or brackets. */
+const EMAIL = /^[^\s@<>()",;:\\[\]]{1,64}@[^\s@<>()",;:\\[\]]+\.[^\s@<>()",;:\\[\].]{2,}$/;
+/* An amount the payer types on a link without one: a positive decimal, no sign or exponent. */
+const PAYER_AMOUNT = /^\d{1,30}(\.\d{1,36})?$/;
+
+/** An address the receipt can go to: one mailbox, at most 254 characters (the server checks it again). */
+export function isPayerEmail(value: unknown): value is string {
+  return str(value) && value.trim().length <= 254 && EMAIL.test(value.trim());
+}
+
+/** An amount the payer may type on a link without one: a decimal above zero. */
+export function isPayerAmount(value: unknown): value is string {
+  return str(value) && PAYER_AMOUNT.test(value.trim()) && /[1-9]/.test(value);
+}
+
+/** Who pays, for the receipt: their email and the language it is written in. */
+export interface PayerContact {
+  email: string;
+  lang: string;
+}
+
+const contactFields = (p: PayerContact) => ({
+  email: p.email.trim(),
+  ...(RECEIPT_LANGS.includes(p.lang) ? { lang: p.lang } : {}),
+});
+
+/**
+ * The payer's email, for the receipt of a payment made with the link's own wallet link or QR:
+ * `POST /v1/payment-links/{id}/payer` (204). A deposit carries the email itself.
+ */
+export function recordPayer(apiBase: string, id: string, payer: PayerContact, fetchImpl: typeof fetch = fetch): Promise<DepositResult<true>> {
+  return call(fetchImpl, `${linkBase(apiBase, id)}/payer`, { method: "POST", body: JSON.stringify(contactFields(payer)) }, () => true);
 }
 
 export interface DepositChoice {
@@ -388,18 +470,33 @@ export interface DepositChoice {
   originAsset: string;
   /** The payer's own address on `originChain`, where a refund goes. */
   refundTo: string;
+  /** What the merchant receives, in the link's asset, on a link without an amount; omitted otherwise. */
+  amount?: string;
 }
 
-const choiceBody = (c: DepositChoice) => JSON.stringify({ originChain: c.originChain, originAsset: c.originAsset, refundTo: c.refundTo.trim() });
+const choiceFields = (c: DepositChoice) => ({
+  originChain: c.originChain,
+  originAsset: c.originAsset,
+  refundTo: c.refundTo.trim(),
+  ...(c.amount !== undefined ? { amount: c.amount.trim() } : {}),
+});
+const choiceBody = (c: DepositChoice) => JSON.stringify(choiceFields(c));
 
 /** What paying from `choice` costs: `POST /v1/payment-links/{id}/quote` (a price; nothing is made). */
 export function quoteDeposit(apiBase: string, id: string, choice: DepositChoice, fetchImpl: typeof fetch = fetch): Promise<DepositResult<DepositQuote>> {
   return call(fetchImpl, `${linkBase(apiBase, id)}/quote`, { method: "POST", body: choiceBody(choice) }, parseDepositQuote);
 }
 
-/** A deposit address for this payment: `POST /v1/payment-links/{id}/deposits`. */
-export function createDeposit(apiBase: string, id: string, choice: DepositChoice, fetchImpl: typeof fetch = fetch): Promise<DepositResult<PaymentDeposit>> {
-  return call(fetchImpl, `${linkBase(apiBase, id)}/deposits`, { method: "POST", body: choiceBody(choice) }, (body) => {
+/** A deposit address for this payment, with the payer's email for the receipt: `POST /v1/payment-links/{id}/deposits`. */
+export function createDeposit(
+  apiBase: string,
+  id: string,
+  choice: DepositChoice,
+  payer: PayerContact,
+  fetchImpl: typeof fetch = fetch,
+): Promise<DepositResult<PaymentDeposit>> {
+  const request = JSON.stringify({ ...choiceFields(choice), ...contactFields(payer) });
+  return call(fetchImpl, `${linkBase(apiBase, id)}/deposits`, { method: "POST", body: request }, (body) => {
     const deposit = parsePaymentDeposit(body);
     return deposit && deposit.paymentLinkId === id ? deposit : null;
   });

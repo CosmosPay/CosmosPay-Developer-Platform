@@ -12,6 +12,7 @@ import { z } from "@/lib/openapi/zod";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
 import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, NATIVE_CODES, NETWORK_IDS, isChain, isNetworkAddress, networkAddressMessage, networkName, sameNetworkAddress, type NetworkId } from "@/lib/chains";
 import { merchantFeeSchema } from "@/schemas/merchant-fee";
+import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, isRouteFeeAccount, routeFeeAccount } from "@/lib/deposit-limits";
 
 // An account, mint or contract on any network; its shape is checked per network below. Long
 // enough for a Cardano base address or a Zcash unified one.
@@ -39,6 +40,24 @@ const callbackString = z.string().trim().max(2048);
 // The hosted checkout's design (src/lib/payments/checkout-themes.ts); the server defaults to classic.
 const checkoutTheme = z.enum(CHECKOUT_THEMES);
 
+/* The merchant's own limits on payments from another network for one link (the Payments API's
+   `depositLimits`): raised from the defaults, never above the ceilings. A part left out keeps the
+   default. */
+export const depositLimitsSchema = z
+  .object({
+    perPayer: z.number().int().min(DEPOSIT_LIMIT_PER_PAYER.min).max(DEPOSIT_LIMIT_PER_PAYER.max).optional().openapi({
+      example: 4,
+      description: `Open deposit addresses one payer may have on the link: ${DEPOSIT_LIMIT_PER_PAYER.min} (the default) to ${DEPOSIT_LIMIT_PER_PAYER.max}.`,
+    }),
+    perWindow: z.number().int().min(DEPOSIT_LIMIT_PER_WINDOW.min).max(DEPOSIT_LIMIT_PER_WINDOW.max).optional().openapi({
+      example: 60,
+      description: `New deposit addresses the link takes every ${DEPOSIT_LIMIT_WINDOW_MINUTES} minutes from all payers: ${DEPOSIT_LIMIT_PER_WINDOW.min} (the default) to ${DEPOSIT_LIMIT_PER_WINDOW.max}.`,
+    }),
+  })
+  .openapi("DepositLimits", {
+    description: "Limits on payments from another network for this link. Raise them for a link many people pay at once.",
+  });
+
 // Which environment (network) the intent targets; maps to the consumer env header.
 export const cosmosEnvSchema = z.enum(["dev", "prod"]).default("dev");
 
@@ -64,6 +83,7 @@ export const createPaymentIntentBodySchema = z
     callback: callbackString.optional(),
     checkoutTheme: checkoutTheme.optional(),
     merchantFee: merchantFeeSchema.optional(),
+    depositLimits: depositLimitsSchema.optional(),
   })
   .superRefine((v, ctx) => {
     const chain = v.chain;
@@ -71,15 +91,23 @@ export const createPaymentIntentBodySchema = z
     if (places(v.amount) > amountPlaces(chain)) issue("amount", "Amount must have at most " + amountPlaces(chain) + " decimals on " + networkName(chain) + ".");
     if (!isChain(chain)) {
       // Every other network: a payment link paid through a deposit address made for each payment,
-      // on mainnet only, for an amount in one of the tokens the network lists (or its coin).
+      // on mainnet only, in one of the tokens the network lists (or its coin). Without an amount
+      // the payer types it in the checkout.
       if (!isNetworkAddress(chain, v.destination)) issue("destination", networkAddressMessage(chain));
       if (v.environment !== "prod") issue("environment", "Payments on " + networkName(chain) + " run on mainnet only: use the production environment.");
       if (v.kind !== "pay") issue("kind", "Transaction intents are Stellar only; use a payment link on " + networkName(chain) + ".");
-      if (!v.amount) issue("amount", "An amount is required on " + networkName(chain) + ".");
       if (v.source !== undefined) issue("source", "Stellar only; not used on " + networkName(chain) + ".");
       if (v.callback !== undefined) issue("callback", "Stellar only; not used on " + networkName(chain) + ".");
-      if (v.merchantFee) issue("merchantFee", "A merchant fee is not available on " + networkName(chain) + " yet.");
       if (v.assetIssuer !== undefined && !contractString.safeParse(v.assetIssuer).success) issue("assetIssuer", "A token contract has no spaces.");
+      // A merchant fee here is the cross-chain route's own app fee, credited inside the route to
+      // one account (a NEAR account id or an EVM address), and it needs an amount to be a share of.
+      if (v.merchantFee) {
+        const wallet = v.merchantFee.wallet;
+        if (!v.amount) issue("merchantFee", "A merchant fee needs an amount.");
+        else if (!isRouteFeeAccount(wallet)) issue("merchantFee", "On " + networkName(chain) + " the fee goes to a NEAR account or an EVM address (0x + 40 hex).");
+        else if (routeFeeAccount(wallet).toLowerCase() === v.destination.trim().toLowerCase()) issue("merchantFee", "The fee goes to another wallet than the payment.");
+        else if (places(v.merchantFee.fixed) > amountPlaces(chain)) issue("merchantFee", "The fixed fee has too many decimals for " + networkName(chain) + ".");
+      }
       return;
     }
     for (const key of ["destination", "source", "assetIssuer"] as const) {
@@ -120,6 +148,7 @@ export const updatePaymentIntentBodySchema = z.object({
   txHash: z.string().trim().min(1).max(128).optional(),
   reference: z.string().trim().max(120).optional(),
   checkoutTheme: checkoutTheme.optional(),
+  depositLimits: depositLimitsSchema.optional(),
 });
 
 export const validatePaymentIntentBodySchema = z.object({
@@ -128,4 +157,5 @@ export const validatePaymentIntentBodySchema = z.object({
 
 export type CreatePaymentIntentBody = z.infer<typeof createPaymentIntentBodySchema>;
 export type UpdatePaymentIntentBody = z.infer<typeof updatePaymentIntentBodySchema>;
+export type DepositLimitsBody = z.infer<typeof depositLimitsSchema>;
 export type ValidatePaymentIntentBody = z.infer<typeof validatePaymentIntentBodySchema>;
