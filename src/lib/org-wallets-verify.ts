@@ -3,15 +3,19 @@
    wallets implement:
    - Stellar: SEP-53 (Freighter's signMessage), Ed25519 over SHA-256("Stellar Signed Message:\n" + text).
    - Solana: Ed25519 over the text's UTF-8 bytes (Phantom's and Solflare's signMessage).
-   - Monad (EVM): EIP-191 personal_sign, secp256k1 over keccak-256 of the prefixed text; the
-     signer's address is recovered from the signature and compared.
+   - Monad and every other EVM network (EIP-191 personal_sign), secp256k1 over keccak-256 of the
+     prefixed text; the signer's address is recovered from the signature and compared.
+   - Fogo: Solana's scheme (its keys are Solana's).
+   A network whose wallets are added by address (`addedByAddress`) has no signature to check: a
+   "proof" for one is refused here, and the route takes the address typed twice instead.
    Signatures arrive as base64 (Stellar, Solana) or 0x-hex (EVM). Anything malformed is a
    failed proof, never an exception. */
 import { createHash, createPublicKey, verify } from "node:crypto";
 import { Keypair } from "@stellar/stellar-sdk";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { keccak_256 } from "@noble/hashes/sha3.js";
-import type { Chain } from "@/lib/chains";
+import type { NetworkId } from "@/lib/chains";
+import { WALLET_PROVIDERS } from "@/lib/org-wallets";
 
 const SEP53_PREFIX = "Stellar Signed Message:\n";
 const BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -82,10 +86,13 @@ export function recoverEvmSigner(message: string, signature: string): string | n
 }
 
 /** Whether `signature` over `message` was made by `address` on `chain`. */
-export function verifyWalletProof(chain: Chain, address: string, message: string, signature: string): boolean {
+export function verifyWalletProof(chain: NetworkId, address: string, message: string, signature: string): boolean {
   try {
+    const providers = WALLET_PROVIDERS[chain];
+    if (!providers) return false;
     if (chain === "stellar") return verifyStellar(address, message, signature);
-    if (chain === "solana") return verifySolana(address, message, signature);
+    if (providers.includes("phantom")) return verifySolana(address, message, signature);
+    if (!providers.includes("evm")) return false;
     return recoverEvmSigner(message, signature) === address.trim().toLowerCase();
   } catch {
     return false;

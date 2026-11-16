@@ -6,7 +6,7 @@
    payments listed with it). With no explorer for it, it still copies and previews. */
 import type { ReactNode } from "react";
 import { useT } from "@/lib/i18n/index";
-import { explorerAccountUrl, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
+import { explorerAccountUrl, explorerTxUrl, tierOf } from "@/lib/chains";
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
@@ -26,7 +26,7 @@ export function AddressLink({ chain, network, address, label, context, explorer,
 }) {
   const t = useT();
   if (!address) return <span>-</span>;
-  const url = explorer !== undefined ? explorer : isChain(chain) ? explorerAccountUrl(chain, tierOf(network ?? ""), address) : null;
+  const url = explorer !== undefined ? explorer : explorerAccountUrl(chain, tierOf(network ?? ""), address);
   return (
     <RecordLink
       href={url} external className="addr-link" title={address} copy={address}
@@ -52,7 +52,7 @@ export function TxLink({ chain, network, hash, label }: {
 }) {
   const t = useT();
   if (!hash) return <span>-</span>;
-  const url = isChain(chain) ? explorerTxUrl(chain, tierOf(network ?? ""), hash) : null;
+  const url = explorerTxUrl(chain, tierOf(network ?? ""), hash);
   return (
     <RecordLink
       href={url} external className="addr-link" title={hash} copy={hash}

@@ -10,7 +10,8 @@ import { PLAN_STATUSES, type PlanStatus } from "@/lib/plan-status";
 import { selfServicePlanIds } from "@/lib/plan-change";
 import { TICKET_PRIORITIES, TICKET_STATUSES } from "@/lib/support-status";
 import { COSMOS_SCOPES } from "@/lib/cosmos-scopes";
-import type { Chain } from "@/lib/chains";
+import { isNetwork, isNetworkAddress, type NetworkId } from "@/lib/chains";
+import { addedByAddress, normalizeWalletAddress } from "@/lib/org-wallets";
 import {
   badRequest,
   conflict,
@@ -55,7 +56,7 @@ interface InvitationRec {
 
 interface WalletRec {
   id: string;
-  chain: Chain;
+  chain: NetworkId;
   address: string;
   label: string | null;
   provider: string | null;
@@ -603,11 +604,14 @@ const orgRoutes: MockRoute[] = [
     const org = findOrg(req.params.id);
     if (!org) return notFound("Organization not found");
     if (!hasPermission(org, "wallets:create")) return forbidden("You don't have permission to connect wallets to this organization.");
-    const chain = str(req.body, "chain") as Chain | undefined;
+    const chainRaw = str(req.body, "chain");
     const address = str(req.body, "address")?.trim();
-    if (!chain || !["stellar", "solana", "monad"].includes(chain) || !address) return badRequest();
-    const normalized = chain === "monad" ? address.toLowerCase() : address;
-    if (org.wallets.some((w) => w.chain === chain && (chain === "monad" ? w.address.toLowerCase() : w.address) === normalized)) {
+    if (!isNetwork(chainRaw) || !address || !isNetworkAddress(chainRaw, address)) return badRequest();
+    const chain: NetworkId = chainRaw;
+    // A wallet added by its address carries it typed twice, as the real route asks.
+    if (addedByAddress(chain) && str(req.body, "addressConfirm")?.trim() !== address) return badRequest("Type the same address twice.");
+    const normalized = normalizeWalletAddress(chain, address);
+    if (org.wallets.some((w) => w.chain === chain && normalizeWalletAddress(chain, w.address) === normalized)) {
       return conflict("This wallet is already connected to the organization.");
     }
     const wallet: WalletRec = {

@@ -4,13 +4,18 @@
    shared public key. Answers as the gateway does: the Payments API's JSON, CORS for any origin
    without credentials. The payment links are the mock dashboard's (src/lib/mock/handlers/payments.ts),
    so a link created in the dashboard opens on the local checkout, and what the payer does there
-   shows on the payment's view. */
+   shows on the payment's view.
+
+   Paying a link from another network is never faked: the list of tokens it can be paid with comes
+   from the real gateway (the cross-chain asset list), but a quote or a deposit address needs the
+   real link, which a sample is not, so those answer that mock mode cannot make them. */
 import { handleMockApi } from "@/lib/mock/index";
 import { mockPaymentIntents } from "@/lib/mock/handlers/payments";
 import { hex, nowIso, qrImage } from "@/lib/mock/fixtures";
 import { MOCK_PUBLIC_ORG } from "@/lib/mock/shared";
 import type { MockEnv } from "@/lib/mock/http";
 import type { PaymentIntent } from "@/lib/cosmos";
+import { isChain } from "@/lib/chains";
 
 export const MOCK_GATEWAY_PREFIX = "/mock-gateway";
 
@@ -48,6 +53,10 @@ function publicLink(intent: PaymentIntent, env: MockEnv) {
   const extra = intent as PaymentIntent & { networkFee?: string | null; expiresAt?: string | null };
   const fee = intent.merchantFee ?? null;
   const payerAccountRequired = intent.chain === "stellar" && !!fee && intent.amount !== null;
+  // Every network but Stellar, Solana and Monad is paid through a deposit address only; on those
+  // three a mainnet link with an amount and no fee can be paid from another network too.
+  const native = isChain(intent.chain);
+  const crossChainPayment = !native || (env === "prod" && intent.amount !== null && !fee);
   const qr = intent.qr?.startsWith("data:image/png;base64,") ? intent.qr : qrImage(intent.id);
   return {
     id: intent.id,
@@ -55,7 +64,7 @@ function publicLink(intent: PaymentIntent, env: MockEnv) {
     chain: intent.chain,
     network: env === "prod" ? "public" : "testnet",
     status: intent.status,
-    payTo: intent.destination,
+    payTo: native ? intent.destination : null,
     amount: intent.amount,
     asset: intent.asset,
     assetIssuer: intent.assetIssuer,
@@ -70,6 +79,7 @@ function publicLink(intent: PaymentIntent, env: MockEnv) {
     checkoutTheme: intent.checkoutTheme,
     merchantFee: fee,
     payerAccountRequired,
+    crossChainPayment,
   };
 }
 
@@ -96,6 +106,17 @@ async function paymentLinks(request: Request, rest: string[]): Promise<Response>
     record[field] = nowIso();
     return json(undefined, 204);
   }
+  if (request.method === "GET" && action === "deposit-assets") {
+    // The real list of what can be paid with, from the gateway (never sampled).
+    const assets = new URL(`/api/cross-chain-swaps/assets?env=prod&org=${MOCK_PUBLIC_ORG}`, "http://mock.local");
+    const res = await handleMockApi(new Request(assets), assets);
+    const body = (await res.json().catch(() => null)) as { data?: unknown } | null;
+    return res.ok && Array.isArray(body?.data) ? json({ data: body.data }) : json({ statusCode: 502, code: "provider_error", message: "Mock mode: the token list could not be read from the gateway." }, 502);
+  }
+  if (request.method === "POST" && (action === "quote" || action === "deposits")) {
+    return json({ statusCode: 400, code: "validation_failed", message: "Mock mode: a payment from another network needs a real payment link, so no quote or deposit address is made here." }, 400);
+  }
+  if (request.method === "GET" && action === "deposits") return json({ statusCode: 404, message: "Deposit not found" }, 404);
   if (request.method === "POST" && action === "transaction") {
     if (found.intent.status !== "PENDING") return json({ statusCode: 400, code: "invalid_state_transition", message: "The payment link is closed" }, 400);
     const body = (await request.json().catch(() => null)) as { account?: unknown } | null;

@@ -6,8 +6,9 @@
      signed XDR (product owner, 2026-10-27: people hand over a signed XDR, not their wallet):
      Freighter in one click, or the proof transaction (src/lib/wallets/wallet-proof-xdr.ts) signed
      in any wallet and pasted back, the way a swap is signed; on Solana and Monad the wallet shares
-     its address and signs the proof message (src/lib/wallets/prove.ts). The API checks the proof
-     and stores the wallet. Used in Settings' dialog, inline inside a payment form (never a dialog
+     its address and signs the proof message (src/lib/wallets/prove.ts); on a network whose wallets
+     this app verifies no signature from (`addedByAddress`), the address typed twice. Every network
+     a payment link settles on is offered, by name. The API checks the proof and stores the wallet. Used in Settings' dialog, inline inside a payment form (never a dialog
      on top of a dialog) and in the private accounts table.
    - OrgWalletsSection: Settings' list, the Payments table (a row opens its detail), with connect /
      rename / remove for whoever may.
@@ -34,9 +35,9 @@ import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLin
 import { usePaged, useListFilters } from "@/components/cosmos/dashboard/hooks";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { DATE_RANGES, countBy, inRange, matchesQuery, type DateRange } from "@/lib/dashboard-filters";
-import { CHAINS, CHAIN_NAMES, explorerAccountUrl, networkName, tierOf, type Chain } from "@/lib/chains";
+import { NETWORKS_BY_NAME, explorerAccountUrl, isNetworkAddress, networkName, placeholderFor, sameNetworkAddress, tierOf, type NetworkId } from "@/lib/chains";
 import { networkLogoUrl } from "@/lib/logo-urls";
-import { shortAddress, WALLET_LABEL_MAX, WALLET_PROVIDERS, walletProofMessage, type OrgWallet, type WalletProvider } from "@/lib/org-wallets";
+import { addedByAddress, shortAddress, WALLET_LABEL_MAX, WALLET_PROVIDERS, walletProofMessage, type OrgWallet, type WalletProvider } from "@/lib/org-wallets";
 import { detectWallets, evmWalletName, proveWallet } from "@/lib/wallets/prove";
 import { signWithFreighter } from "@/lib/wallets/freighter";
 import { checkWalletProofXdr, walletProofTransactionXdr } from "@/lib/wallets/wallet-proof-xdr";
@@ -55,7 +56,7 @@ const PROVIDER_LOGOS: Partial<Record<WalletProvider, string>> = {
 };
 
 /** Proves a wallet (its signature over the proof message) and connects it to the organization. */
-export async function connectOrgWallet({ orgId, chain, provider, label }: { orgId: string; chain: Chain; provider: WalletProvider; label?: string }): Promise<OrgWallet> {
+export async function connectOrgWallet({ orgId, chain, provider, label }: { orgId: string; chain: NetworkId; provider: WalletProvider; label?: string }): Promise<OrgWallet> {
   const issuedAt = new Date().toISOString();
   const { address, signature } = await proveWallet(provider, (address) => walletProofMessage({ orgId, chain, address, issuedAt }));
   const wallet = await orgsApi.connectWallet(orgId, { chain, address, provider, label: label?.trim() || undefined, issuedAt, signature });
@@ -90,10 +91,10 @@ export function NetworkMark({ chain, size = 32 }: { chain: string; size?: number
     : <span className="wl-mark wl-mono" style={{ width: size, height: size }} aria-hidden="true">{networkName(chain).slice(0, 1)}</span>;
 }
 
-export function ConnectWalletForm({ orgId, chain: initial = "stellar", lockChain = false, onDone, onCancel }: { orgId: string; chain?: Chain; lockChain?: boolean; onDone: (wallet: OrgWallet) => void; onCancel: () => void }) {
+export function ConnectWalletForm({ orgId, chain: initial = "stellar", lockChain = false, onDone, onCancel }: { orgId: string; chain?: NetworkId; lockChain?: boolean; onDone: (wallet: OrgWallet) => void; onCancel: () => void }) {
   const t = useT();
   const w = t.dash.wallets;
-  const [chain, setChain] = useState<Chain>(initial);
+  const [chain, setChain] = useState<NetworkId>(initial);
   const [installed, setInstalled] = useState<Record<WalletProvider, boolean> | null>(null);
   const [provider, setProvider] = useState<WalletProvider>(WALLET_PROVIDERS[initial][0]);
   const [label, setLabel] = useState("");
@@ -101,7 +102,7 @@ export function ConnectWalletForm({ orgId, chain: initial = "stellar", lockChain
   const [problem, setProblem] = useState<string | null>(null);
   const providers = WALLET_PROVIDERS[chain];
 
-  useEffect(() => { detectWallets().then(setInstalled).catch(() => setInstalled({ freighter: false, phantom: false, solflare: false, evm: false })); }, []);
+  useEffect(() => { detectWallets().then(setInstalled).catch(() => setInstalled({ freighter: false, phantom: false, solflare: false, evm: false, address: false })); }, []);
   // On a network change (or once detection answers), the first installed wallet is the choice.
   useEffect(() => { setProvider(providers.find((p) => installed?.[p]) ?? providers[0]); }, [chain, installed]);
 
@@ -128,17 +129,17 @@ export function ConnectWalletForm({ orgId, chain: initial = "stellar", lockChain
       {!lockChain && (
         <div className="fld">
           <span className="field-l" id="wl-chain-l">{w.network}</span>
-          <div className="net-pick" role="group" aria-labelledby="wl-chain-l">
-            {CHAINS.map((c) => (
-              <button key={c} type="button" className={`net-opt${chain === c ? " on" : ""}`} aria-pressed={chain === c} onClick={() => setChain(c)} disabled={busy}>
-                <NetworkMark chain={c} size={30} />
-                <span className="net-opt-t"><b>{CHAIN_NAMES[c]}</b></span>
-              </button>
-            ))}
-          </div>
+          {/* Every network a payment settles on, by name: none comes first for being one of ours. */}
+          <Select
+            id="wl-chain" labelledBy="wl-chain-l" value={chain} disabled={busy}
+            onChange={(v) => setChain(v as NetworkId)}
+            options={NETWORKS_BY_NAME.map((c) => ({ value: c, label: networkName(c), icon: <NetworkMark chain={c} size={22} /> }))}
+          />
         </div>
       )}
-      {chain === "stellar" ? <StellarWalletProof orgId={orgId} onDone={onDone} onCancel={onCancel} /> : <>
+      {chain === "stellar" ? <StellarWalletProof orgId={orgId} onDone={onDone} onCancel={onCancel} />
+        : addedByAddress(chain) ? <AddressWallet key={chain} orgId={orgId} chain={chain} onDone={onDone} onCancel={onCancel} />
+        : <>
       <div className="fld">
         <span className="field-l" id="wl-provider-l">{w.wallet}</span>
         <div className="net-pick" role="group" aria-labelledby="wl-provider-l">
@@ -260,7 +261,64 @@ function StellarWalletProof({ orgId, onDone, onCancel }: { orgId: string; onDone
   );
 }
 
-export function ConnectWalletDialog({ orgId, chain, onClose, onConnected }: { orgId: string; chain?: Chain; onClose: () => void; onConnected?: (wallet: OrgWallet) => void }) {
+/* A wallet on a network whose wallets this app verifies no signature from (the Bitcoin family, XRP
+   Ledger, Tron, TON, NEAR, Sui, Aptos, Movement, Starknet, Cardano, Aleo): its address, typed twice
+   so a slip is caught before any payment is sent there, and a name. It is listed as added without a
+   signature. Only whoever may connect wallets reaches this form, as for every other network. */
+function AddressWallet({ orgId, chain, onDone, onCancel }: { orgId: string; chain: NetworkId; onDone: (wallet: OrgWallet) => void; onCancel: () => void }) {
+  const t = useT();
+  const w = t.dash.wallets;
+  const [address, setAddress] = useState("");
+  const [again, setAgain] = useState("");
+  const [label, setLabel] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const account = address.trim();
+  const valid = isNetworkAddress(chain, account);
+  const matches = again.trim() !== "" && sameNetworkAddress(chain, account, again) && account === again.trim();
+  const network = networkName(chain);
+
+  const add = async () => {
+    if (!valid || !matches || busy) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      const wallet = await orgsApi.connectWallet(orgId, { chain, address: account, provider: "address", addressConfirm: again.trim(), label: label.trim() || undefined });
+      announce();
+      showToast(w.connected);
+      onDone(wallet);
+    } catch (e) {
+      setProblem((e as Error)?.message || w.connectError);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="zka-exists" role="note" aria-labelledby="wl-addr-t">
+        <div className="zka-exists-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M12 7.5v5.5M12 16.4v.1" /></svg>
+          <b id="wl-addr-t">{fmt(w.byAddressTitle, { network })}</b>
+        </div>
+        <p className="zka-exists-meta">{w.byAddressDesc}</p>
+      </div>
+      <Field label={fmt(w.addressOn, { network })} value={address} onChange={(e: { target: { value: string } }) => setAddress(e.target.value)} placeholder={placeholderFor(chain)} spellCheck={false} autoComplete="off" disabled={busy} aria-invalid={account !== "" && !valid ? true : undefined} />
+      {account !== "" && !valid && <p className="field-err" role="alert">{fmt(w.invalidNetworkAddress, { network })}</p>}
+      <Field label={w.addressAgain} value={again} onChange={(e: { target: { value: string } }) => setAgain(e.target.value)} placeholder={placeholderFor(chain)} spellCheck={false} autoComplete="off" disabled={busy} aria-invalid={again.trim() !== "" && !matches ? true : undefined} />
+      {again.trim() !== "" && !matches && <p className="field-err" role="alert">{w.addressMismatch}</p>}
+      <Field label={w.label} hint={t.dash.common.optional} value={label} onChange={(e: { target: { value: string } }) => setLabel(e.target.value)} placeholder={w.labelPlaceholder} maxLength={WALLET_LABEL_MAX} disabled={busy} />
+      {busy && <p className="work-progress" role="status"><span className="work-spin" aria-hidden="true" /><span>{w.adding}</span></p>}
+      {problem && <p className="field-err" role="alert">{problem}</p>}
+      <div className="modal-actions">
+        <button type="button" className="btn btn-violet" onClick={add} disabled={busy || !valid || !matches}>{w.add}</button>
+        <button type="button" className="btn btn-soft" onClick={onCancel} disabled={busy}>{t.dash.common.cancel}</button>
+      </div>
+    </>
+  );
+}
+
+export function ConnectWalletDialog({ orgId, chain, onClose, onConnected }: { orgId: string; chain?: NetworkId; onClose: () => void; onConnected?: (wallet: OrgWallet) => void }) {
   const t = useT();
   return (
     <Modal onClose={onClose} label={t.dash.wallets.connectTitle}>
@@ -300,7 +358,7 @@ function RenameWalletDialog({ orgId, wallet, onClose }: { orgId: string; wallet:
 }
 
 const WALLET_DEFAULTS = { wq: "", wchain: "all", wdate: "any" };
-const WALLET_ALLOWED = { wchain: ["all", ...CHAINS], wdate: [...DATE_RANGES] };
+const WALLET_ALLOWED = { wchain: ["all", ...NETWORKS_BY_NAME], wdate: [...DATE_RANGES] };
 const WALLET_COLS = 5;
 
 /* Settings' list of the organization's wallets (product owner, 2026-10-27: every list is the
@@ -326,14 +384,17 @@ export function OrgWalletsSection({ orgId, wallets, perms, network }: { orgId: s
   const matches = (x: OrgWallet, skip: string | null) =>
     (skip === "chain" || filters.wchain === "all" || x.chain === filters.wchain) &&
     inRange(x.createdAt, filters.wdate as DateRange) &&
-    matchesQuery([x.label, x.address, CHAIN_NAMES[x.chain]], filters.wq);
+    matchesQuery([x.label, x.address, networkName(x.chain)], filters.wq);
   const rows = all.filter((x) => matches(x, null));
   const chainCounts = countBy(all.filter((x) => matches(x, "chain")), (x) => x.chain);
   const pg = usePaged(rows, JSON.stringify(filters));
-  const nameOf = (x: OrgWallet) => x.label || CHAIN_NAMES[x.chain];
+  const nameOf = (x: OrgWallet) => x.label || networkName(x.chain);
+  // The filter offers the networks the organization has wallets on (and the one chosen), by name.
+  const walletNetworks = NETWORKS_BY_NAME.filter((c) => all.some((x) => x.chain === c) || filters.wchain === c);
   const explorer = (x: OrgWallet) => explorerAccountUrl(x.chain, tierOf(network), x.address);
-  // What proved it: the wallet that signed the proof message, or a signed XDR pasted back.
-  const provenWith = (x: OrgWallet) => (x.provider === "freighter" ? "Freighter" : x.provider === "phantom" ? "Phantom" : x.provider === "solflare" ? "Solflare" : x.provider === "evm" ? w.browserWallet : w.signedXdr);
+  // What proved it: the wallet that signed the proof message, a signed XDR pasted back, or nothing
+  // (added by its address, on a network whose wallets this app verifies no signature from).
+  const provenWith = (x: OrgWallet) => (x.provider === "freighter" ? "Freighter" : x.provider === "phantom" ? "Phantom" : x.provider === "solflare" ? "Solflare" : x.provider === "evm" ? w.browserWallet : x.provider === "address" ? w.byAddress : w.signedXdr);
   const items = (x: OrgWallet) => {
     const url = explorer(x);
     return [
@@ -351,7 +412,7 @@ export function OrgWalletsSection({ orgId, wallets, perms, network }: { orgId: s
       <FilterBar
         label={fl.label}
         query={filters.wq} onQuery={(v) => set("wq", v)} placeholder={w.searchPlaceholder}
-        selects={[{ key: "wchain", label: fl.network, value: filters.wchain, onChange: (v) => set("wchain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] || 0 }))] }]}
+        selects={[{ key: "wchain", label: fl.network, value: filters.wchain, onChange: (v) => set("wchain", v), options: [{ key: "all", label: fl.allNetworks }, ...walletNetworks.map((c) => ({ key: c, label: networkName(c), icon: <NetworkMark chain={c} size={18} />, count: chainCounts[c] || 0 }))] }]}
         date={filters.wdate} onDate={(v) => set("wdate", v)}
         active={active} onReset={reset}
         shown={rows.length} total={wallets ? all.length : undefined} loading={wallets === undefined}
@@ -373,11 +434,11 @@ export function OrgWalletsSection({ orgId, wallets, perms, network }: { orgId: s
                         <NetworkMark chain={x.chain} size={24} />
                         <RecordLink
                           onOpen={() => setOpen(x)} copy={x.address} title={x.address}
-                          preview={() => <PreviewCard label={w.detail} title={x.address} wrap headline={<b>{name}</b>} fields={[[w.tableHead.network, CHAIN_NAMES[x.chain]], [w.provenWith, provenWith(x)], [w.tableHead.added, fmtDateTime(x.createdAt)]]} />}
+                          preview={() => <PreviewCard label={w.detail} title={x.address} wrap headline={<b>{name}</b>} fields={[[w.tableHead.network, networkName(x.chain)], [w.provenWith, provenWith(x)], [w.tableHead.added, fmtDateTime(x.createdAt)]]} />}
                         >{name}</RecordLink>
                       </span>
                     </td>
-                    <td className="cust">{CHAIN_NAMES[x.chain]}</td>
+                    <td className="cust">{networkName(x.chain)}</td>
                     <td className="cust" onClick={(e) => e.stopPropagation()}><AddressLink chain={x.chain} network={network} address={x.address} label={w.tableHead.address} /></td>
                     <td className="cust">{fmtDateTime(x.createdAt)}</td>
                     <td className="row-actions" onClick={(e) => e.stopPropagation()}>
@@ -403,7 +464,7 @@ export function OrgWalletsSection({ orgId, wallets, perms, network }: { orgId: s
           eyebrow={w.detail} title={nameOf(open)} onClose={() => setOpen(null)}
           fields={[
             [w.label, open.label],
-            [w.tableHead.network, <span key="n" className="cell-mark"><NetworkMark chain={open.chain} size={18} />{CHAIN_NAMES[open.chain]}</span>],
+            [w.tableHead.network, <span key="n" className="cell-mark"><NetworkMark chain={open.chain} size={18} />{networkName(open.chain)}</span>],
             [w.tableHead.address, <AddressLink key="a" chain={open.chain} network={network} address={open.address} label={w.tableHead.address} />],
             [w.provenWith, provenWith(open)],
             [w.tableHead.added, fmtDateTime(open.createdAt)],
@@ -433,7 +494,7 @@ export function OrgWalletsSection({ orgId, wallets, perms, network }: { orgId: s
 }
 
 /** The receiving address of a payment form: one of the organization's wallets on `chain`. */
-export function WalletSelect({ orgId, chain, value, onChange, canConnect, label, id, hint }: { orgId: string; chain: Chain; value: string; onChange: (address: string) => void; canConnect: boolean; label: string; id: string; hint?: string }) {
+export function WalletSelect({ orgId, chain, value, onChange, canConnect, label, id, hint }: { orgId: string; chain: NetworkId; value: string; onChange: (address: string) => void; canConnect: boolean; label: string; id: string; hint?: string }) {
   const t = useT();
   const w = t.dash.wallets;
   const wallets = useOrgWallets(orgId);
@@ -471,7 +532,7 @@ export function WalletSelect({ orgId, chain, value, onChange, canConnect, label,
         />
       ) : (
         <div className="wl-none" role="status">
-          <span>{wallets === null ? w.loadError : fmt(w.noneForChain, { network: CHAIN_NAMES[chain] })}</span>
+          <span>{wallets === null ? w.loadError : fmt(w.noneForChain, { network: networkName(chain) })}</span>
           {wallets !== null && (canConnect
             ? <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setConnecting(true)}>{w.connect}</button>
             : <span className="field-help">{w.askAdmin}</span>)}

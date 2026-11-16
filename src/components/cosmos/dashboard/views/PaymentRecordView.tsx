@@ -27,9 +27,12 @@ import { CopyBlock, CopyField, PaymentAmount, STATUS_PILL, assetLabel, amountLab
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
-import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
+import { AddressLink, TxLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { CopyRef } from "@/components/cosmos/dashboard/components/RecordLink";
 import { shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { isDepositNetwork, networkName, tierOf } from "@/lib/chains";
+import { parsePaymentDeposit, type PaymentDeposit } from "@/lib/payments/deposits";
+import type { PaymentIntent } from "@/lib/cosmos";
 
 const TERMINAL = ["SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 /* How recent the checkout's last read must be to count as a payer on the page now: it polls every
@@ -216,11 +219,13 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
     [F.kind, pl.kinds[data.kind] || data.kind],
     [F.amount, amountLabel(data, pl)],
     [F.asset, assetLabel(data.asset, chain)],
-    [chain === "stellar" ? pl.modal.assetIssuer : t.dash.tokens.address[chain], data.assetIssuer],
+    [chain === "stellar" ? pl.modal.assetIssuer : t.dash.tokens.address[chain] ?? t.dash.tokens.address.monad, data.assetIssuer],
     [F.memo, data.memo],
     [F.message, data.msg],
     // The organization's own fee, paid to its wallet in the same transaction.
     [F.merchantFee, data.merchantFee ? `${data.merchantFee.amount} ${assetLabel(data.merchantFee.asset, chain)} · ${shortAddress(data.merchantFee.wallet)}` : null],
+    // Where the payer paid from, when a payment from another network settled it.
+    [F.paidFrom, data.paidFrom ? `${data.paidFrom.amount} ${data.paidFrom.asset} · ${networkName(data.paidFrom.chain)}` : null],
     // The on-chain transaction id, only present once paid or submitted.
     [F.txHash, data.txHash],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
@@ -263,7 +268,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
 
       <PaymentProgress data={data} />
 
-      {(payable || fields.length > 0 || canCheck) && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
+      {(payable || fields.length > 0 || canCheck || tierOf(data.network) === "public") && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
         {payable && <section className="pay-record-qr" aria-label={d.scan}>
           {data.qr
             ? <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
@@ -276,7 +281,9 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
           {/* The hosted page on payments.cosmospay.lat: what to send a payer who has no wallet
               open on this screen. It reads the link itself and follows its status. */}
           {payable && <CopyBlock label={d.checkout} value={checkoutUrl(data.id)} />}
-          {payable && data.uri && (
+          {/* A link on a network paid through a deposit address has no wallet link: its uri is
+              the checkout above. */}
+          {payable && data.uri && !isDepositNetwork(chain) && (
             <CopyBlock label={d.uriLabels[chain]} value={data.uri}>
               <div className="paylink-actions">
                 <a className="btn btn-soft btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
@@ -298,6 +305,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
               </div>
             </div>
           )}
+          <PaymentDeposits data={data} env={env} />
           {/* The checkout's look last: it takes room, and the essentials come first. */}
           {canManage && payable && (
             <div className="paylink-block">
@@ -307,6 +315,59 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
           )}
         </section>
       </div>}
+    </div>
+  );
+}
+
+/* The deposit addresses made for paying this link from another network (mainnet only): what each
+   payer chose to send, and how it went. Not drawn while there are none; a failed read says so. It
+   follows them while the link is open. */
+function PaymentDeposits({ data, env }: { data: PaymentIntent; env: string }) {
+  const t = useT();
+  const d = t.dash.paylinks.detail;
+  const x = d.deposits;
+  // undefined while loading, null when they could not be read.
+  const [rows, setRows] = useState<PaymentDeposit[] | null | undefined>(undefined);
+  const mainnet = tierOf(data.network) === "public";
+  useEffect(() => {
+    if (!mainnet) return;
+    let current = true;
+    const load = () =>
+      payApi.deposits(data.id, env)
+        .then((res) => { if (current) setRows((Array.isArray(res) ? res : []).map(parsePaymentDeposit).filter((r): r is PaymentDeposit => r !== null)); })
+        .catch(() => { if (current) setRows(null); });
+    load();
+    const open = data.status === "PENDING" || data.status === "SUBMITTED";
+    const timer = open ? window.setInterval(load, 15_000) : undefined;
+    return () => { current = false; window.clearInterval(timer); };
+  }, [data.id, data.status, env, mainnet]);
+  if (!mainnet || rows === undefined || (Array.isArray(rows) && rows.length === 0)) return null;
+  return (
+    <div className="paylink-block">
+      <div className="paylink-block-head"><span className="field-l" id={`pd-${data.id}`}>{x.title}</span></div>
+      {rows === null ? <p className="field-err" role="alert">{x.loadError}</p> : (
+        <div className="t-scroll" tabIndex={0}>
+          <table className="tx" aria-labelledby={`pd-${data.id}`}>
+            <thead><tr><th>{x.sent}</th><th>{x.from}</th><th>{x.status}</th><th>{x.created}</th></tr></thead>
+            <tbody>
+              {rows.map((r) => {
+                const payout = r.destinationTxHashes[0]?.hash ?? null;
+                return (
+                  <tr key={r.id}>
+                    <td className="cust">{`${r.amountIn} ${r.originAsset} · ${networkName(r.originChain)}`}</td>
+                    <td className="cust"><AddressLink chain={r.originChain} network="public" address={r.refundTo} label={x.refundTo} /></td>
+                    <td className="cust">
+                      {x.statuses[r.status as keyof typeof x.statuses] || r.status}
+                      {payout && <> · <TxLink chain={data.chain} network="public" hash={payout} label={x.payout} /></>}
+                    </td>
+                    <td className="cust">{fmtDateTime(r.createdAt)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

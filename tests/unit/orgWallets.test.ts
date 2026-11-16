@@ -4,7 +4,7 @@ import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { Keypair } from "@stellar/stellar-sdk";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { keccak_256 } from "@noble/hashes/sha3.js";
-import { isFreshProof, normalizeWalletAddress, PROOF_MAX_AGE_MS, walletProofMessage, WALLET_PROVIDERS } from "@/lib/org-wallets";
+import { addedByAddress, isFreshProof, normalizeWalletAddress, PROOF_MAX_AGE_MS, walletProofMessage, WALLET_PROVIDERS } from "@/lib/org-wallets";
 import { decodeBase58, recoverEvmSigner, verifyWalletProof } from "@/lib/org-wallets-verify";
 import { ORG_PERMISSIONS } from "@/lib/org-permissions";
 import { connectWalletBodySchema } from "@/schemas/org-wallets";
@@ -164,4 +164,43 @@ test("a connect request proves a wallet with a provider's signature, or with a s
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar", signedXdr, provider: "freighter" }).success, false);
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "stellar" }).success, false);
   assert.equal(connectWalletBodySchema.safeParse({ ...base, chain: "solana", address: "So11111111111111111111111111111111111111112", signedXdr }).success, false);
+});
+
+/* Every network a payment link settles on takes a wallet: the EVM ones and Fogo prove it with the
+   signatures above, the rest are added by their address, typed twice. */
+test("every network has a way to connect a wallet: an EVM or Solana signature, or the address typed twice", () => {
+  assert.deepEqual(WALLET_PROVIDERS.base, ["evm"]);
+  assert.deepEqual(WALLET_PROVIDERS.hypercore, ["evm"]);
+  assert.deepEqual(WALLET_PROVIDERS.fogo, ["phantom", "solflare"]);
+  assert.deepEqual(WALLET_PROVIDERS.tron, ["address"]);
+  assert.equal(addedByAddress("btc"), true);
+  assert.equal(addedByAddress("eth"), false);
+  assert.equal(addedByAddress("stellar"), false);
+});
+
+test("an EVM signature proves the same key on every EVM network, and none where wallets are added by address", () => {
+  const priv = secp256k1.utils.randomPrivateKey();
+  const address = `0x${Buffer.from(keccak_256(secp256k1.getPublicKey(priv, false).slice(1)).slice(-20)).toString("hex")}`;
+  const text = new TextEncoder().encode(message);
+  const digest = keccak_256(new Uint8Array([...new TextEncoder().encode(`\x19Ethereum Signed Message:\n${text.length}`), ...text]));
+  const s = secp256k1.sign(digest, priv);
+  const signature = `0x${Buffer.from(s.toCompactRawBytes()).toString("hex")}${(27 + s.recovery).toString(16)}`;
+  assert.equal(verifyWalletProof("base", address, message, signature), true);
+  assert.equal(verifyWalletProof("arb", address, message, signature), true);
+  assert.equal(verifyWalletProof("tron", address, message, signature), false);
+  assert.equal(normalizeWalletAddress("base", address.toUpperCase().replace("0X", "0x")), address);
+  assert.equal(normalizeWalletAddress("tron", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"), "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t");
+  assert.match(walletProofMessage({ orgId: "org_1", chain: "base", address, issuedAt: "2026-10-25T20:00:00.000Z" }), /Network: Base/);
+});
+
+test("a wallet added by its address needs it typed twice, and no signature", () => {
+  const tron = { chain: "tron", address: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", provider: "address" };
+  assert.equal(connectWalletBodySchema.safeParse({ ...tron, addressConfirm: tron.address }).success, true);
+  assert.equal(connectWalletBodySchema.safeParse({ ...tron, addressConfirm: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6x" }).success, false);
+  assert.equal(connectWalletBodySchema.safeParse({ ...tron, addressConfirm: tron.address, signature: "a".repeat(88) }).success, false);
+  assert.equal(connectWalletBodySchema.safeParse({ ...tron, address: "0x2527D02599Ba641c19FEa793cD0F167589a0f10D", addressConfirm: "0x2527D02599Ba641c19FEa793cD0F167589a0f10D" }).success, false);
+  // A network whose wallets sign is never added by address.
+  const evm = "0x2527D02599Ba641c19FEa793cD0F167589a0f10D";
+  assert.equal(connectWalletBodySchema.safeParse({ chain: "base", address: evm, provider: "address", addressConfirm: evm }).success, false);
+  assert.equal(connectWalletBodySchema.safeParse({ chain: "base", address: evm, provider: "evm", issuedAt: "2026-10-25T20:00:00.000Z", signature: "a".repeat(132) }).success, true);
 });

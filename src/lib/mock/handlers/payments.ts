@@ -5,7 +5,7 @@
    and deletes last until the dev server restarts. Shapes follow src/lib/cosmos.ts and the
    Payments API's spec (docs/openapi.json). */
 import { Account, Asset, BASE_FEE, Memo, Networks, Operation, TransactionBuilder } from "@stellar/stellar-sdk";
-import { CHAINS, NATIVE_CODES, isAddress, isChain, type Chain } from "@/lib/chains";
+import { CHAINS, NATIVE_CODES, NETWORK_NATIVE_CODES, isAddress, isChain, isNetwork, type Chain, type NetworkId } from "@/lib/chains";
 import { CHECKOUT_THEMES, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
 import type { Customer, CustomerWallet, MerchantFee, PaymentIntent, Product, WebhookEndpoint } from "@/lib/cosmos";
 import { badRequest, created, notFound, ok, page, route, str, type MockEnv, type MockRequest, type MockRoute } from "@/lib/mock/http";
@@ -117,7 +117,7 @@ const PAYMENT_EVENTS = [
 ] as const;
 
 const networkOf = (env: MockEnv) => (env === "prod" ? "public" : "testnet");
-const assetLabel = (chain: Chain, asset: string | null | undefined) => (!asset || asset === "native" ? NATIVE_CODES[chain] : asset);
+const assetLabel = (chain: NetworkId, asset: string | null | undefined) => (!asset || asset === "native" ? NETWORK_NATIVE_CODES[chain] : asset);
 const priceOf = (label: string) => PRICE_USD[label] ?? 0;
 const ms = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0);
 const plusMinutes = (iso: string, minutes: number) => new Date(ms(iso) + minutes * 60_000).toISOString();
@@ -368,6 +368,32 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
     intent.uri = buildUri(env, intent);
     out.push({ org, intent });
   }
+  // A few links on networks paid through a deposit address made for each payment (mainnet only),
+  // so the views and the local checkout show one: Base USDC and Tron USDT open, a Bitcoin one
+  // expired. None of them is paid: payments from another network are never sampled.
+  if (env === "prod") {
+    const samples: [NetworkId, string, string | null, string, Status, number][] = [
+      ["base", "USDC", "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", "48.50", "PENDING", 0.4],
+      ["tron", "USDT", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "120", "PENDING", 2.5],
+      ["btc", "native", null, "0.0042", "EXPIRED", 40],
+    ];
+    samples.forEach(([chain, asset, assetIssuer, amount, status, ageHours], i) => {
+      const id = cuid(`intent:${env}:network:${chain}`);
+      const createdAt = hoursAgo(ageHours);
+      const destination = mockOrgWalletSeeds(DEFAULT_MOCK_ORG_ID).find((w) => w.chain === chain)!.address;
+      out.push({
+        org: DEFAULT_MOCK_ORG_ID,
+        intent: {
+          id, kind: "PAY", chain, status, network: networkOf(env), source: null, destination, amount, asset, assetIssuer,
+          memo: "", msg: i === 0 ? "Order #1050" : null, callback: null, xdr: null, uri: `${PAYMENTS_ORIGIN}/${id}`,
+          qr: status === "PENDING" ? qrImage(id) : BLANK_PNG, txHash: null, reference: null, checkoutTheme: CHECKOUT_THEMES[i % CHECKOUT_THEMES.length],
+          merchantFee: null, paidFrom: null, chainReference: null, networkFee: null, expiresAt: new Date(ms(createdAt) + DAY).toISOString(),
+          checkoutSeenAt: status === "PENDING" ? plusMinutes(createdAt, 3) : null, checkoutWalletAt: null, checkoutWalletClosedAt: null, checkoutSentAt: null,
+          createdAt, updatedAt: createdAt,
+        },
+      });
+    });
+  }
   return out.sort((a, b) => ms(b.intent.createdAt) - ms(a.intent.createdAt));
 }
 
@@ -580,7 +606,7 @@ function listIntents(req: MockRequest): Response {
   const rows = state(req.env).intents
     .filter(({ org }) => !req.org || org === req.org)
     .map(({ intent }) => intent)
-    .filter((i) => (!status || i.status === status) && (!isChain(chain) || i.chain === chain) && (from === null || ms(i.createdAt) >= from));
+    .filter((i) => (!status || i.status === status) && (!isNetwork(chain) || i.chain === chain) && (from === null || ms(i.createdAt) >= from));
   return ok(page(rows, url, 20), "Payment intents fetched successfully");
 }
 
@@ -591,7 +617,8 @@ function createIntent(req: MockRequest): Response {
   const org = str(b, "org");
   const chainRaw = str(b, "chain") ?? "stellar";
   if (!org) return badRequest("org is required");
-  if (!isChain(chainRaw)) return badRequest("Unknown chain");
+  if (!isNetwork(chainRaw)) return badRequest("Unknown chain");
+  if (!isChain(chainRaw)) return createDepositNetworkIntent(req, env, org, chainRaw);
   const chain: Chain = chainRaw;
   const kind = str(b, "kind") === "tx" ? "TX" : "PAY";
   const destination = (str(b, "destination") ?? "").trim();
@@ -672,6 +699,68 @@ function createIntent(req: MockRequest): Response {
   return created(intent, "Payment intent created successfully");
 }
 
+/* A payment link on a network paid through a deposit address made for each payment (every network
+   but Stellar, Solana and Monad), as the Payments API makes one: mainnet only, an amount, no
+   merchant fee, its `uri` the hosted checkout. The deposits themselves are never sampled: paying
+   it from the local checkout says mock mode cannot (src/lib/mock/gateway.ts). */
+function createDepositNetworkIntent(req: MockRequest, env: MockEnv, org: string, chain: NetworkId): Response {
+  const b = req.body ?? {};
+  const destination = (str(b, "destination") ?? "").trim();
+  if (!isAddress(chain, destination)) return badRequest(`destination: must be an address on ${chain}.`);
+  if (env !== "prod") return badRequest(`Payments on ${chain} run on mainnet only: use the production environment.`);
+  const amount = str(b, "amount")?.trim() || null;
+  if (!amount || !/^\d+(\.\d+)?$/.test(amount)) return badRequest("An amount is required on this network.");
+  if (str(b, "kind") === "tx") return badRequest(`Transaction intents are Stellar only; use a payment link on ${chain}.`);
+  if (b.merchantFee) return badRequest("A merchant fee is not available on this network yet.");
+  const code = (str(b, "assetCode") ?? "").trim();
+  const assetIssuer = str(b, "assetIssuer")?.trim() || null;
+  const native = !assetIssuer && (!code || code.toUpperCase() === NETWORK_NATIVE_CODES[chain]);
+  const theme = str(b, "checkoutTheme");
+  const now = nowIso();
+  const id = cuid(`intent:new:${now}:${Math.random()}`);
+  const intent: MockIntent = {
+    id,
+    kind: "PAY",
+    chain,
+    status: "PENDING",
+    network: networkOf(env),
+    source: null,
+    destination,
+    amount,
+    asset: native ? "native" : code.toUpperCase() || "TOKEN",
+    assetIssuer: native ? null : assetIssuer,
+    memo: str(b, "memo")?.trim() ?? "",
+    msg: str(b, "msg")?.trim() || null,
+    callback: null,
+    xdr: null,
+    uri: `${PAYMENTS_ORIGIN}/${id}`,
+    qr: qrImage(id),
+    txHash: null,
+    reference: null,
+    checkoutTheme: isCheckoutTheme(theme) ? theme : "classic",
+    merchantFee: null,
+    paidFrom: null,
+    chainReference: null,
+    networkFee: null,
+    expiresAt: new Date(Date.now() + DAY).toISOString(),
+    checkoutSeenAt: null,
+    checkoutWalletAt: null,
+    checkoutWalletClosedAt: null,
+    checkoutSentAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  state(env).intents.unshift({ org, intent });
+  return created(intent, "Payment intent created successfully");
+}
+
+/* The deposits made for paying an intent from another network: never sampled (they are cross-chain
+   payments, which mock mode does not fake), so every intent here has none. */
+function intentDeposits(req: MockRequest): Response {
+  const intent = findIntent(req.env, req.params.id);
+  return intent ? ok([], "Deposits fetched successfully") : notFound("Payment intent not found");
+}
+
 function getIntent(req: MockRequest): Response {
   const intent = findIntent(req.env, req.params.id);
   return intent ? ok(intent, "Payment intent retrieved successfully") : notFound("Payment intent not found");
@@ -724,7 +813,8 @@ function validateIntent(req: MockRequest): Response {
   const now = nowIso();
   intent.status = "SUCCEEDED";
   intent.txHash = hash;
-  intent.source = intent.source ?? payerAddress(intent.chain, `validated:${intent.id}`);
+  // Only Stellar links are validated by hash (the dashboard offers it nowhere else).
+  intent.source = intent.source ?? (isChain(intent.chain) ? payerAddress(intent.chain, `validated:${intent.id}`) : null);
   intent.checkoutSentAt = intent.checkoutSentAt ?? now;
   intent.updatedAt = now;
   return ok({ valid: true, status: intent.status, reason: null, paymentIntent: intent }, "Payment intent validated");
@@ -1237,7 +1327,7 @@ function summary(env: MockEnv) {
   const intents = s.intents.map(({ intent }) => intent);
   const by = (st: Status) => intents.filter((i) => i.status === st).length;
   const settled = intents.filter((i) => i.status === "SUCCEEDED");
-  const groups = new Map<string, { chain: Chain; asset: string; amount: number; count: number; usd: number }>();
+  const groups = new Map<string, { chain: NetworkId; asset: string; amount: number; count: number; usd: number }>();
   for (const i of settled) {
     const label = assetLabel(i.chain, i.asset);
     const key = `${i.chain}:${label}`;
@@ -1273,7 +1363,7 @@ function summary(env: MockEnv) {
 }
 
 function balances(env: MockEnv) {
-  const groups = new Map<string, { chain: Chain; asset: string; amount: number; pending: number; count: number; usd: number }>();
+  const groups = new Map<string, { chain: NetworkId; asset: string; amount: number; pending: number; count: number; usd: number }>();
   for (const { intent: i } of state(env).intents) {
     const label = assetLabel(i.chain, i.asset);
     const key = `${i.chain}:${label}`;
@@ -1415,6 +1505,7 @@ export const routes: MockRoute[] = [
   route("PATCH", "/api/payment-intents/:id", updateIntent),
   route("DELETE", "/api/payment-intents/:id", deleteIntent),
   route("POST", "/api/payment-intents/:id/validate", validateIntent),
+  route("GET", "/api/payment-intents/:id/deposits", intentDeposits),
 
   route("GET", "/api/webhooks", (req) => ok(state(req.env).webhooks.map(publicWebhook), "Webhooks fetched successfully")),
   route("POST", "/api/webhooks", createWebhook),

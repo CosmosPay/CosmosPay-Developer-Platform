@@ -9,7 +9,8 @@
    those same headers ourselves, scoping every payment intent to the signed-in
    user's consumer (`cosmos_<userId>`), exactly as a real API key would. */
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
-import type { Chain } from "@/lib/chains";
+import type { NetworkId } from "@/lib/chains";
+import type { PaymentDeposit } from "@/lib/payments/deposits";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
 import { upstreamBaseUrls } from "@/lib/apisix-upstream";
@@ -242,8 +243,8 @@ export async function proxyCosmosRequest(opts: {
 export interface PaymentIntent {
   id: string;
   kind: "TX" | "PAY";
-  /** Where it settles; `network` is the tier (public or testnet) on every chain. */
-  chain: Chain;
+  /** Where it settles (any network of NETWORK_IDS); `network` is the tier (public or testnet). */
+  chain: NetworkId;
   status: "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
   network: string;
   source: string | null;
@@ -263,9 +264,22 @@ export interface PaymentIntent {
   checkoutTheme: CheckoutTheme;
   /** The organization's own fee on the payment, paid to its wallet in the same transaction. */
   merchantFee?: MerchantFee | null;
+  /** Set when a payment from another network settled it: where the payer paid from. */
+  paidFrom?: PaidFrom | null;
   createdAt: string;
   updatedAt: string;
 }
+
+/* Where a payment from another network came from (the Payments API's `paidFrom`). */
+export interface PaidFrom {
+  depositId: string;
+  chain: NetworkId;
+  asset: string;
+  contract: string | null;
+  amount: string;
+}
+
+export type { PaymentDeposit };
 
 /* A merchant fee as the Payments API records it (amounts in the payment's asset). */
 export interface MerchantFee {
@@ -285,8 +299,8 @@ export interface PaymentIntentList {
 }
 
 export interface CreatePayInput {
-  /** Stellar when omitted; Solana and Monad take a payment link only. */
-  chain?: Chain;
+  /** Stellar when omitted; any other network takes a payment link only (and on most, mainnet only). */
+  chain?: NetworkId;
   destination: string;
   amount?: string;
   assetCode?: string;
@@ -306,8 +320,8 @@ export interface CreateTxInput extends CreatePayInput {
 
 export interface ListIntentsQuery {
   status?: string;
-  /** Only intents on this chain; every chain when omitted. */
-  chain?: Chain;
+  /** Only intents on this network; every network when omitted. */
+  chain?: NetworkId;
   /** ISO instant: only intents created at or after it (the dashboard's period views). */
   createdFrom?: string;
   take?: number;
@@ -335,6 +349,10 @@ export const cosmos = {
 
   remove: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<{ id: string; deleted: boolean }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`, { method: "DELETE" }),
+
+  /** The deposit addresses made for paying this intent from another network, newest first. */
+  deposits: (userId: string, env: CosmosEnv, id: string) =>
+    cosmosFetch<{ data: PaymentDeposit[] }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}/deposits`),
 
   validate: (userId: string, env: CosmosEnv, id: string, txHash: string) =>
     cosmosFetch<{ valid: boolean; status: string; reason: string | null; paymentIntent?: PaymentIntent }>(

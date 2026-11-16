@@ -6,18 +6,45 @@
    text from the request, checks the signature against the address (src/lib/org-wallets-verify.ts)
    and that it is recent. A replayed proof can only connect the same wallet to the same
    organization again. Payment forms then offer only these wallets, and the API refuses any other
-   receiving address (src/lib/org-wallets-store.ts, `orgHasWallet`). */
-import { CHAIN_NAMES, type Chain } from "@/lib/chains";
+   receiving address (src/lib/org-wallets-store.ts, `orgHasWallet`).
 
-export type WalletProvider = "freighter" | "phantom" | "solflare" | "evm";
+   A wallet can be connected on every network a payment link settles on (NETWORK_IDS). Where this
+   app verifies no message signature for the network's wallets (the Bitcoin family, XRP Ledger,
+   Tron, TON, NEAR, Sui, Aptos, Movement, Starknet, Cardano, Aleo), a member who may connect
+   wallets adds it by its address, typed twice, and it is listed as added without a signature
+   (`provider: "address"`). */
+import { NETWORK_ADDRESS_RULES, isNetwork, networkName, type NetworkId } from "@/lib/chains";
 
-/* The wallets that can prove an address on each network. `evm` is whatever EIP-1193 wallet the
-   browser injects (MetaMask, Rabby…); Monad is an EVM chain. */
-export const WALLET_PROVIDERS: Record<Chain, WalletProvider[]> = {
+/* `address`: added by its address, with no signature (a network whose wallets this app cannot
+   verify a signature from). */
+export type WalletProvider = "freighter" | "phantom" | "solflare" | "evm" | "address";
+export const WALLET_PROVIDER_IDS = ["freighter", "phantom", "solflare", "evm", "address"] as const satisfies readonly WalletProvider[];
+
+const EVM_PROOF: WalletProvider[] = ["evm"];
+const SOLANA_PROOF: WalletProvider[] = ["phantom", "solflare"];
+const BY_ADDRESS: WalletProvider[] = ["address"];
+
+/* How an address is proven on each network: the wallets that can sign the proof message there
+   (`evm` is whatever EIP-1193 wallet the browser injects, MetaMask, Rabby…, for every EVM
+   network, Robinhood Chain and HyperCore included: one key, one address; Fogo's keys are
+   Solana's), or `address` where none can. */
+export const WALLET_PROVIDERS: Record<NetworkId, WalletProvider[]> = {
   stellar: ["freighter"],
-  solana: ["phantom", "solflare"],
-  monad: ["evm"],
+  solana: SOLANA_PROOF,
+  monad: EVM_PROOF,
+  eth: EVM_PROOF, base: EVM_PROOF, arb: EVM_PROOF, op: EVM_PROOF, bsc: EVM_PROOF, pol: EVM_PROOF,
+  avax: EVM_PROOF, gnosis: EVM_PROOF, bera: EVM_PROOF, scroll: EVM_PROOF, xlayer: EVM_PROOF,
+  abs: EVM_PROOF, plasma: EVM_PROOF, hood: EVM_PROOF, hypercore: EVM_PROOF,
+  fogo: SOLANA_PROOF,
+  btc: BY_ADDRESS, ltc: BY_ADDRESS, doge: BY_ADDRESS, bch: BY_ADDRESS, dash: BY_ADDRESS, zec: BY_ADDRESS,
+  xrp: BY_ADDRESS, tron: BY_ADDRESS, ton: BY_ADDRESS, near: BY_ADDRESS, sui: BY_ADDRESS, aptos: BY_ADDRESS,
+  movement: BY_ADDRESS, starknet: BY_ADDRESS, cardano: BY_ADDRESS, aleo: BY_ADDRESS,
 };
+
+/** Whether a wallet on `network` is connected by its address only (no signature this app verifies). */
+export function addedByAddress(network: NetworkId): boolean {
+  return WALLET_PROVIDERS[network].includes("address");
+}
 
 /* How long a signed proof stays acceptable, and how far ahead of the server's clock it may be. */
 export const PROOF_MAX_AGE_MS = 10 * 60_000;
@@ -28,26 +55,26 @@ export const MAX_ORG_WALLETS = 25;
 
 export interface OrgWallet {
   id: string;
-  chain: Chain;
+  chain: NetworkId;
   address: string;
   label: string | null;
   provider: WalletProvider | null;
   createdAt: string;
 }
 
-/** The address as stored and compared: EVM addresses are case-insensitive, the others are not. */
-export function normalizeWalletAddress(chain: Chain, address: string): string {
+/** The address as stored and compared: hex ones (EVM and the like) are case-insensitive, the others are not. */
+export function normalizeWalletAddress(chain: NetworkId, address: string): string {
   const a = address.trim();
-  return chain === "monad" ? a.toLowerCase() : a;
+  return isNetwork(chain) && NETWORK_ADDRESS_RULES[chain].hex ? a.toLowerCase() : a;
 }
 
 /** The text a wallet signs to be connected to an organization. */
-export function walletProofMessage({ orgId, chain, address, issuedAt }: { orgId: string; chain: Chain; address: string; issuedAt: string }): string {
+export function walletProofMessage({ orgId, chain, address, issuedAt }: { orgId: string; chain: NetworkId; address: string; issuedAt: string }): string {
   return [
     "Cosmos Pay",
     "Connect this wallet to an organization to receive its payments.",
     `Organization: ${orgId}`,
-    `Network: ${CHAIN_NAMES[chain]}`,
+    `Network: ${networkName(chain)}`,
     `Address: ${address}`,
     `Issued at: ${issuedAt}`,
   ].join("\n");

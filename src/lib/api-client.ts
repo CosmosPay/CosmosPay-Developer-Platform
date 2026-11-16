@@ -53,6 +53,8 @@ export const paymentIntents = {
   update: (id, env, body) => request(`/api/payment-intents/${encodeURIComponent(id)}?env=${env || "dev"}`, { method: "PATCH", body: JSON.stringify(body) }),
   remove: (id, env) => request(`/api/payment-intents/${encodeURIComponent(id)}?env=${env || "dev"}`, { method: "DELETE" }),
   validate: (id, env, txHash) => request(`/api/payment-intents/${encodeURIComponent(id)}/validate?env=${env || "dev"}`, { method: "POST", body: JSON.stringify({ txHash }) }),
+  /* The deposit addresses made for paying it from another network, newest first. */
+  deposits: (id: string, env?: string) => request(`/api/payment-intents/${encodeURIComponent(id)}/deposits?env=${env || "dev"}`),
 };
 
 /* Webhook endpoints, proxied to the Cosmos Payments API (per-user consumer).
