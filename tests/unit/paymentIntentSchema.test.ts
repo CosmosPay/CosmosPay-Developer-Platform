@@ -61,3 +61,32 @@ test('a link with a merchant fee is checked, not thrown on', () => {
   assert.deepEqual(issues({ ...link, merchantFee: { ...fee, wallet: STELLAR } }), ['merchantFee']);
   assert.deepEqual(issues({ ...link, amount: undefined, merchantFee: fee }), ['merchantFee']);
 });
+
+const BASE = '0x2527D02599Ba641c19FEa793cD0F167589a0f10D';
+const TRON = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+const BTC = 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq';
+const prod = { environment: 'prod' };
+
+test('every other network is a payment link on mainnet, with an amount', () => {
+  assert.deepEqual(issues({ ...prod, chain: 'base', destination: BASE, amount: '25', assetCode: 'USDC', assetIssuer: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' }), []);
+  assert.deepEqual(issues({ ...prod, chain: 'tron', destination: TRON, amount: '10', assetCode: 'USDT' }), []);
+  assert.deepEqual(issues({ ...prod, chain: 'btc', destination: BTC, amount: '0.001' }), []);
+  assert.deepEqual(issues({ chain: 'base', destination: BASE, amount: '25' }), ['environment']);
+  assert.deepEqual(issues({ ...prod, chain: 'tron', destination: TRON }), ['amount']);
+});
+
+test('each network checks its own address shape', () => {
+  assert.deepEqual(issues({ ...prod, chain: 'tron', destination: BASE, amount: '1' }), ['destination']);
+  assert.deepEqual(issues({ ...prod, chain: 'btc', destination: TRON, amount: '1' }), ['destination']);
+  assert.deepEqual(issues({ ...prod, chain: 'eth', destination: BASE.toLowerCase(), amount: '1' }), []);
+  assert.deepEqual(issues({ ...prod, chain: 'nope', destination: BASE, amount: '1' }), ['chain']);
+});
+
+test('a link on another network takes a message, but no fee, callback, source or transaction', () => {
+  const link = { ...prod, chain: 'base', destination: BASE, amount: '25' };
+  assert.deepEqual(issues({ ...link, msg: 'Order 24' }), []);
+  assert.deepEqual(issues({ ...link, merchantFee: { bps: 100, wallet: BASE, paidBy: 'payer' } }), ['merchantFee']);
+  assert.deepEqual(issues({ ...link, callback: 'url:https://x.test' }), ['callback']);
+  assert.deepEqual(issues({ ...link, kind: 'tx', source: BASE }).sort(), ['kind', 'source']);
+  assert.deepEqual(issues({ ...link, assetIssuer: 'has space' }), ['assetIssuer']);
+});
