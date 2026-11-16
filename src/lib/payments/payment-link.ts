@@ -292,12 +292,14 @@ export async function reportCheckoutEvent(
   id: string,
   event: CheckoutEvent,
   fetchImpl: typeof fetch = fetch,
+  /** This checkout session's token: a `sent` it reports picks the email the receipt goes to. */
+  payerToken?: string | null,
 ): Promise<boolean> {
   try {
     const res = await fetchImpl(`${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}/events`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ event }),
+      body: JSON.stringify(payerToken ? { event, payerToken } : { event }),
       cache: "no-store",
       keepalive: true,
     });

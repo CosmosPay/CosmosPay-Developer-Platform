@@ -16,7 +16,8 @@
    how it ended. A link that takes payments from other networks also shows, with an amount, the
    main origins the cross-chain route cannot take that amount from (a warning, never a block), and
    its limits on those payments, which the merchant may raise while it is open. The payer's email
-   (typed on the payment page, unverified) and the receipt sent to it are among its fields. */
+   (typed on the payment page, unverified) the receipt went to is among its fields, and every email
+   payers gave there is listed under the deposits. */
 import { useEffect, useState } from "react";
 import { Modal, showToast, checkoutUrl } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
@@ -37,7 +38,7 @@ import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { isDepositNetwork, networkName, tierOf } from "@/lib/chains";
 import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, takesDeposits } from "@/lib/deposit-limits";
 import { parsePaymentDeposit, type PaymentDeposit } from "@/lib/payments/deposits";
-import type { PaymentIntent, PaymentRouteCheck } from "@/lib/cosmos";
+import type { PaymentIntent, PaymentPayerEmail, PaymentRouteCheck } from "@/lib/cosmos";
 
 const TERMINAL = ["SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 /* How recent the checkout's last read must be to count as a payer on the page now: it polls every
@@ -234,15 +235,26 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
     [F.paidFrom, data.paidFrom ? `${data.paidFrom.amount} ${data.paidFrom.asset} · ${networkName(data.paidFrom.chain)}` : null],
     // The on-chain transaction id, only present once paid or submitted.
     [F.txHash, data.txHash],
-    // What the payer typed on the payment page for the receipt (unverified).
-    [F.payerEmail, data.payerEmail],
+    // Where the receipt went: an email a payer typed on the payment page (unverified).
+    [F.payerEmail, data.receiptTo],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
   // Read-only facts, not worth a copy button: the receipt and the limits.
   const canDeposit = takesDeposits(chain, tierOf(data.network) === "public", !!data.merchantFee);
   const limits = data.depositLimits;
+  const [payerEmails, setPayerEmails] = useState<PaymentPayerEmail[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    payApi.payerEmails(data.id, env)
+      .then((res) => { if (alive) setPayerEmails(Array.isArray(res) ? res : []); })
+      .catch(() => { if (alive) setPayerEmails(null); });
+    return () => { alive = false; };
+  }, [data.id, env, data.status]);
+  // Sent; or decided not to (no email given, or payers that cannot be told apart); or waiting.
   const receipt = data.receiptSentAt
     ? fmt(d.receipt.sent, { time: fmtDateTime(data.receiptSentAt) })
-    : data.payerEmail && paid ? d.receipt.pending : null;
+    : data.receiptSkippedAt
+      ? (payerEmails && payerEmails.length > 0 ? d.receipt.skippedMany : d.receipt.skippedNone)
+      : paid && payerEmails && payerEmails.length > 0 ? d.receipt.pending : null;
   const facts = [
     [F.receipt, receipt],
     [F.depositLimits, canDeposit && limits ? fmt(d.limitsValue, { perPayer: limits.perPayer, perWindow: limits.perWindow, minutes: Math.round((limits.windowSeconds || DEPOSIT_LIMIT_WINDOW_MINUTES * 60) / 60) }) : null],
@@ -331,6 +343,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
             </div>
           )}
           <PaymentDeposits data={data} env={env} />
+          <PayerEmails rows={payerEmails} id={data.id} />
           {/* The checkout's look last: it takes room, and the essentials come first. */}
           {canManage && payable && (
             <div className="paylink-block">
@@ -444,6 +457,34 @@ function DepositLimitsModal({ data, env, onClose, onSaved }: { data: PaymentInte
 /* The deposit addresses made for paying this link from another network (mainnet only): what each
    payer chose to send, and how it went. Not drawn while there are none; a failed read says so. It
    follows them while the link is open. */
+/* The emails payers gave in this link's hosted checkout, one per checkout session, newest first:
+   unverified, so the merchant can reach a payer when no receipt could be sent. Drawn only when
+   there is one: no empty-state text. */
+function PayerEmails({ rows, id }: { rows: PaymentPayerEmail[] | null; id: string }) {
+  const t = useT();
+  const e = t.dash.paylinks.detail.payerEmails;
+  if (!rows || rows.length === 0) return null;
+  const titleId = `pe-${id}`;
+  return (
+    <div className="paylink-block">
+      <div className="paylink-block-head"><span className="field-l" id={titleId}>{e.title}</span></div>
+      <p className="field-h">{e.hint}</p>
+      <ul className="pay-emails" aria-labelledby={titleId}>
+        {rows.map((row) => (
+          <li key={`${row.email}-${row.recordedAt}`}>
+            <span className="pay-emails-addr">{row.email}</span>
+            <CopyRef value={row.email} />
+            <span className="pay-emails-meta">
+              {fmtDateTime(row.recordedAt)}
+              {row.sentAt && <> · {e.sent}</>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function PaymentDeposits({ data, env }: { data: PaymentIntent; env: string }) {
   const t = useT();
   const d = t.dash.paylinks.detail;

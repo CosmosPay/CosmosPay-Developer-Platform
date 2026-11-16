@@ -30,10 +30,11 @@
  * link's own QR and transfer are not drawn.
  *
  * Before any way to pay is shown, the page asks for the payer's email (EmailStep.astro), for the
- * receipt the server sends once the payment is confirmed: recorded on the link for a payment
- * with its own wallet link or QR (`recordPayer`) and sent with every deposit. It is kept in
- * sessionStorage for this link, so a reload does not ask again. A wallet link scanned outside this
- * page carries no email; nothing here can change that.
+ * receipt the server sends once the payment is confirmed. It is one checkout session: the server
+ * answers a token (`recordPayer`) that this page keeps in memory and sessionStorage and sends on its
+ * wallet events and deposits, so the receipt goes to this session's email. Another visitor's
+ * session never blocks this one. A wallet link scanned outside this page carries no email; nothing
+ * here can change that.
  *
  * Opened as a popup by a merchant's `<cosmos-pay-button>` (src/embed), the page also tells
  * its opener each status change (src/lib/payments/embed-protocol.ts): the id and the status,
@@ -71,6 +72,7 @@ import {
   fetchDepositAssets,
   isPayerAmount,
   isPayerEmail,
+  isPayerToken,
   nextDepositPollDelay,
   quoteDeposit,
   recordPayer,
@@ -127,8 +129,6 @@ interface EmailCopy {
   invalid: string;
   failed: string;
   given: string;
-  /* 409: another client gave the link's email first; the payer can still pay. */
-  taken: string;
 }
 
 /* Paying from another network: CrossChainStep.astro's copy that the script writes. */
@@ -175,10 +175,10 @@ const XC_PILL: Record<DepositPhase, Phase> = {
 };
 /* Where the open deposit's id is kept for this link, so a reload shows the same address. */
 const depositKey = (linkId: string) => `cosmospay-deposit:${linkId}`;
-/* Where the payer's email is kept for this link, so a reload does not ask again. */
+/* Where the payer's email and this checkout session's token are kept for this link, so a reload
+   neither asks again nor opens another session. */
 const payerKey = (linkId: string) => `cosmospay-payer:${linkId}`;
-/* Set when the link's email was given by another client first (a 409). */
-const payerTakenKey = (linkId: string) => `cosmospay-payer-taken:${linkId}`;
+const payerTokenKey = (linkId: string) => `cosmospay-payer-token:${linkId}`;
 
 /* The envelope built for this page's payer (a Stellar link with a merchant fee). */
 interface PayerEnvelope {
@@ -236,11 +236,12 @@ export function startCheckout(): void {
   let lastMinute = -1;
   let toldOpener: LinkStatus | null = null;
   let payerEnvelope: PayerEnvelope | null = null;
-  // The payer's email, asked before any way to pay (a reload keeps it for this link).
-  let payerEmail: string | null = preview ? null : storedEmail();
+  // The payer's email and this checkout session's token, asked before any way to pay (a reload
+  // keeps both for this link; without a token the email is asked again).
+  let payerToken: string | null = preview ? null : storedToken();
+  let payerEmail: string | null = payerToken ? storedEmail() : null;
   let emailBusy = false;
   let emailEditing = false;
-  let emailTaken = !preview && storedFlag(payerTakenKey(id));
   // Paying from another network.
   let xcOpen = false;
   let xcAssets: DepositAsset[] | null = null;
@@ -445,34 +446,46 @@ export function startCheckout(): void {
     }
   }
 
-  function keepEmail(email: string, taken: boolean) {
+  function storedToken(): string | null {
     try {
-      window.sessionStorage.setItem(payerKey(id), email);
-      if (taken) window.sessionStorage.setItem(payerTakenKey(id), "1");
-      else window.sessionStorage.removeItem(payerTakenKey(id));
+      const value = window.sessionStorage.getItem(payerTokenKey(id));
+      return isPayerToken(value) ? value : null;
     } catch {
-      /* storage blocked: the email is kept until the page closes */
+      return null;
     }
   }
 
-  function storedFlag(key: string): boolean {
+  function keepSession(email: string | null, token: string | null) {
     try {
-      return window.sessionStorage.getItem(key) === "1";
+      if (email && token) {
+        window.sessionStorage.setItem(payerKey(id), email);
+        window.sessionStorage.setItem(payerTokenKey(id), token);
+      } else {
+        window.sessionStorage.removeItem(payerKey(id));
+        window.sessionStorage.removeItem(payerTokenKey(id));
+      }
     } catch {
-      return false;
+      /* storage blocked: the session is kept until the page closes */
     }
+  }
+
+  /* The server does not know this session (a token from another link, a cleared one): the
+     email is asked again, which opens a new session. */
+  function forgetSession() {
+    payerToken = null;
+    payerEmail = null;
+    keepSession(null, null);
   }
 
   /* An open link asks for the email before it shows any way to pay; a preview never does. */
   function emailGated(phase: Phase): boolean {
-    return !preview && phase === "open" && (payerEmail === null || emailEditing);
+    return !preview && phase === "open" && (payerEmail === null || payerToken === null || emailEditing);
   }
 
   function renderEmail(gated: boolean, phase: Phase) {
     toggle("[data-email-step]", !gated);
     toggle("[data-email-given]", gated || phase !== "open" || payerEmail === null);
-    // After a 409 the link's own receipt goes to the email given first; a deposit still carries this one.
-    if (payerEmail) text("email-given", emailTaken ? t.email.taken : t.email.given.replace("{email}", payerEmail));
+    if (payerEmail) text("email-given", t.email.given.replace("{email}", payerEmail));
     all<HTMLInputElement>('input[name="email"]').forEach((input) => {
       if (!input.value && payerEmail) input.value = payerEmail;
       input.disabled = emailBusy;
@@ -496,17 +509,14 @@ export function startCheckout(): void {
     emailBusy = true;
     emailStatus(t.email.saving);
     render(link);
-    const result = await recordPayer(apiBase, id, { email, lang });
+    const result = await recordPayer(apiBase, id, { email, lang, payerToken });
     emailBusy = false;
     switch (result.kind) {
       case "ok":
-      case "busy":
-        // A 409: another client gave the link's email first. The payer is never locked
-        // out: they pay, and their deposits carry their own email.
         payerEmail = email.toLowerCase();
-        emailTaken = result.kind === "busy";
+        payerToken = result.value;
         emailEditing = false;
-        keepEmail(payerEmail, emailTaken);
+        keepSession(payerEmail, payerToken);
         emailStatus("");
         if (link) render(link);
         // The form is gone: focus moves to the line that replaced it.
@@ -618,7 +628,8 @@ export function startCheckout(): void {
   function report(event: CheckoutEvent) {
     if (preview || !link || phaseOf(link) !== "open") return;
     if (event === "sent") sentReported = true;
-    void reportCheckoutEvent(apiBase, id, event);
+    // The session's token goes with it: a `sent` names the email the receipt goes to.
+    void reportCheckoutEvent(apiBase, id, event, fetch, payerToken);
   }
 
   function watchWalletLeave() {
@@ -1053,8 +1064,8 @@ export function startCheckout(): void {
 
   async function submitXc() {
     if (!link || preview || xcBusy) return;
-    if (!payerEmail) {
-      // The email comes first (a deposit carries it for the receipt).
+    if (!payerEmail || !payerToken) {
+      // The email comes first (a deposit belongs to the checkout session that gave it).
       emailEditing = true;
       render(link);
       return;
@@ -1091,7 +1102,7 @@ export function startCheckout(): void {
     xcStatus(creating ? t.xc.creating : t.xc.quoting);
     render(link);
     if (creating) {
-      const result = await createDeposit(apiBase, id, choice, { email: payerEmail, lang });
+      const result = await createDeposit(apiBase, id, choice, payerToken);
       xcBusy = false;
       if (result.kind === "ok") {
         xcDeposit = result.value;
@@ -1118,6 +1129,13 @@ export function startCheckout(): void {
   }
 
   function afterXcFailure(f: DepositFailure) {
+    if (f.kind === "session") {
+      // The server no longer knows this session: the email step comes back, then a new session.
+      forgetSession();
+      xcStatus("");
+      if (link) render(link);
+      return;
+    }
     // A refusal names why (a minimum this route has, a token it cannot take now) in the server's
     // own words, which name no provider; the payer can pick another network or token.
     xcStatus(xcFailure(f), f.kind === "refused" ? f.message : "");

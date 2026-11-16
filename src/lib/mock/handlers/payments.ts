@@ -7,7 +7,7 @@
 import { Account, Asset, BASE_FEE, Memo, Networks, Operation, TransactionBuilder } from "@stellar/stellar-sdk";
 import { CHAINS, NATIVE_CODES, NETWORK_NATIVE_CODES, isAddress, isChain, isNetwork, type Chain, type NetworkId } from "@/lib/chains";
 import { CHECKOUT_THEMES, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
-import type { Customer, CustomerWallet, DepositLimits, MerchantFee, PaymentIntent, PaymentRouteCheck, Product, WebhookEndpoint } from "@/lib/cosmos";
+import type { Customer, CustomerWallet, DepositLimits, MerchantFee, PaymentIntent, PaymentPayerEmail, PaymentRouteCheck, Product, WebhookEndpoint } from "@/lib/cosmos";
 import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, isRouteFeeAccount, routeFeeAccount, takesDeposits } from "@/lib/deposit-limits";
 import { badRequest, created, notFound, ok, page, route, str, type MockEnv, type MockRequest, type MockRoute } from "@/lib/mock/http";
 import { mockEnvStore } from "@/lib/mock/store";
@@ -390,12 +390,25 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
       checkoutWalletClosedAt: walletClosed,
       checkoutSentAt: sentAt,
       depositLimits: depositLimits(i % 11 === 2 ? 4 : null, i % 11 === 2 ? 60 : null),
-      payerEmail: seen && r.chance(0.7) ? `payer${i}@example.com` : null,
+      receiptTo: null,
       receiptSentAt: null,
+      receiptSkippedAt: null,
       createdAt,
       updatedAt: final ? plusMinutes(createdAt, r.int(3, 50)) : (sentAt ?? walletClosed ?? walletAt ?? seen ?? createdAt),
     };
-    if (status === "SUCCEEDED" && intent.payerEmail) intent.receiptSentAt = plusMinutes(intent.updatedAt, 1);
+    // One checkout session gave an email on most pages a payer reached; a settled one got the receipt.
+    if (seen && r.chance(0.7)) {
+      const email = `payer${i}@example.com`;
+      const sessions = mockPayerSessions(intent.id);
+      // Seeded once: the sessions outlive a reseed of the store on globalThis.
+      if (!sessions.length) sessions.push({ email, lang: "en", sentAt: sentAt ?? null, recordedAt: seen });
+      if (status === "SUCCEEDED") {
+        intent.receiptTo = email;
+        intent.receiptSentAt = plusMinutes(intent.updatedAt, 1);
+      }
+    } else if (status === "SUCCEEDED") {
+      intent.receiptSkippedAt = plusMinutes(intent.updatedAt, 1);
+    }
     if (kind === "TX" && source && amount) intent.xdr = paymentXdr(env, source, destination, amount, asset, assetIssuer, memo);
     intent.uri = buildUri(env, intent);
     out.push({ org, intent });
@@ -423,7 +436,7 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
           qr: status === "PENDING" ? qrImage(id) : BLANK_PNG, txHash: null, reference: null, checkoutTheme: CHECKOUT_THEMES[i % CHECKOUT_THEMES.length],
           merchantFee: null, paidFrom: null, chainReference: null, networkFee: null, expiresAt: new Date(ms(createdAt) + DAY).toISOString(),
           checkoutSeenAt: status === "PENDING" ? plusMinutes(createdAt, 3) : null, checkoutWalletAt: null, checkoutWalletClosedAt: null, checkoutSentAt: null,
-          depositLimits: depositLimits(), payerEmail: null, receiptSentAt: null,
+          depositLimits: depositLimits(), receiptTo: null, receiptSentAt: null, receiptSkippedAt: null,
           createdAt, updatedAt: createdAt,
         },
       });
@@ -617,6 +630,25 @@ export function mockCustomers(env: MockEnv): Customer[] {
 }
 
 /** Every payment intent of the environment, newest first, across organizations. */
+/* The emails payers gave in each link's hosted checkout sessions (the Payments API's
+   payment_payer_session), kept on globalThis like the rest of the mock store so a hot reload
+   keeps them. The mock gateway's payer route adds to them. */
+const PAYER_SESSIONS_KEY = "__cosmosMockPayerSessions";
+export function mockPayerSessions(id: string): PaymentPayerEmail[] {
+  const g = globalThis as unknown as Record<string, Map<string, PaymentPayerEmail[]> | undefined>;
+  const all = (g[PAYER_SESSIONS_KEY] ??= new Map());
+  let list = all.get(id);
+  if (!list) all.set(id, (list = []));
+  return list;
+}
+
+function intentPayerEmails(req: MockRequest): Response {
+  const intent = findIntent(req.env, req.params.id);
+  if (!intent) return notFound("Payment intent not found");
+  const list = [...mockPayerSessions(intent.id)].sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+  return ok(list, "Payer emails fetched successfully");
+}
+
 export function mockPaymentIntents(env: MockEnv): PaymentIntent[] {
   return state(env).intents.map(({ intent }) => intent);
 }
@@ -728,8 +760,9 @@ function createIntent(req: MockRequest): Response {
     checkoutWalletClosedAt: null,
     checkoutSentAt: null,
     depositLimits: limits,
-    payerEmail: null,
+    receiptTo: null,
     receiptSentAt: null,
+    receiptSkippedAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -808,8 +841,9 @@ function createDepositNetworkIntent(req: MockRequest, env: MockEnv, org: string,
     checkoutWalletClosedAt: null,
     checkoutSentAt: null,
     depositLimits: limits,
-    payerEmail: null,
+    receiptTo: null,
     receiptSentAt: null,
+    receiptSkippedAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -1609,6 +1643,7 @@ export const routes: MockRoute[] = [
   route("POST", "/api/payment-intents/:id/validate", validateIntent),
   route("GET", "/api/payment-intents/:id/deposits", intentDeposits),
   route("GET", "/api/payment-intents/:id/route-check", intentRouteCheck),
+  route("GET", "/api/payment-intents/:id/payer-emails", intentPayerEmails),
 
   route("GET", "/api/webhooks", (req) => ok(state(req.env).webhooks.map(publicWebhook), "Webhooks fetched successfully")),
   route("POST", "/api/webhooks", createWebhook),

@@ -118,12 +118,13 @@ _openapi:
           Only for an open link (`PENDING`). Budgeted per client address.
         heading: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
       - content: 'The hosted checkout asks the payer for an email before it shows any
-          way to pay, and records it here with the checkout language: when the
-          payment succeeds, a receipt goes to that address in that language, and
-          the merchant finds the payer among its customers by it (marked as
-          given by the payer, not verified). The first client to record one
-          keeps it: only that client may change it, anyone else gets `409`. A
-          deposit carries its own email. Budgeted per client address.'
+          way to pay and records it here, with the checkout language, as one
+          checkout session: the first call answers the session’s `payerToken`
+          (only its hash is stored), and the session sends it on its later calls
+          (a changed email, `events`, `deposits`). Every session keeps its own
+          email and none can change another’s, so a second payer never blocks
+          the first. The receipt goes to the deposit’s session, else to the
+          session that reported `sent` last. Budgeted per client address.'
         heading: record-the-payers-email-before-they-pay-for-their-receipt-no-api-key
       - content: >-
           The hosted checkout tells what the payer did with a wallet while the

@@ -144,12 +144,14 @@ test('requests go to the link routes, send the choice, and map every answer', as
   assert.equal(calls[0].url, 'https://gw.test/v1/payment-links/' + LINK + '/quote');
   assert.deepEqual(JSON.parse(String(calls[0].init?.body)), { originChain: 'tron', originAsset: TRON, refundTo: TRON });
 
-  const payer = { email: ' payer@example.com ', lang: 'es' };
+  const payer = 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ';
   const made = await createDeposit('https://gw.test', LINK, choice, payer, recording(201, depositBody()));
   assert.equal(made.kind, 'ok');
   assert.equal(calls[1].url, 'https://gw.test/v1/payment-links/' + LINK + '/deposits');
-  // The deposit carries the payer's email and language, for the receipt.
-  assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { originChain: 'tron', originAsset: TRON, refundTo: TRON, email: 'payer@example.com', lang: 'es' });
+  // The deposit carries this checkout session's token: its email gets the receipt.
+  assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { originChain: 'tron', originAsset: TRON, refundTo: TRON, payerToken: payer });
+  // A session the server does not know: the page asks for the email again.
+  assert.deepEqual(await createDeposit('https://gw.test', LINK, choice, payer, respond(400, { code: 'payer_session_unknown' })), { kind: 'session' });
   // A deposit for another link is not this one.
   assert.equal((await createDeposit('https://gw.test', LINK, choice, payer, recording(201, depositBody({ paymentLinkId: DEPOSIT })))).kind, 'error');
 
@@ -208,21 +210,26 @@ test("the payer's email and an open amount are checked before they are sent", as
   for (const ok of ['25', '0.5', '1000.123456']) assert.ok(isPayerAmount(ok), ok);
   for (const bad of ['', '0', '0.000', '-1', '1e3', '1,5', '.5', 'abc']) assert.equal(isPayerAmount(bad), false, bad);
 
+  const TOKEN = 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ';
   const calls: { url: string; init?: RequestInit }[] = [];
-  const noContent = (async (url: string, init?: RequestInit) => {
+  const session = (async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
-    return new Response(null, { status: 204 });
+    return new Response(JSON.stringify({ payerToken: TOKEN }), { status: 200 });
   }) as unknown as typeof fetch;
-  assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: ' payer@example.com ', lang: 'pt' }, noContent), { kind: 'ok', value: true });
+  // The first call opens a session and answers its token.
+  assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: ' payer@example.com ', lang: 'pt' }, session), { kind: 'ok', value: TOKEN });
   assert.equal(calls[0].url, 'https://gw.test/v1/payment-links/' + LINK + '/payer');
   assert.equal(calls[0].init?.method, 'POST');
   assert.deepEqual(JSON.parse(String(calls[0].init?.body)), { email: 'payer@example.com', lang: 'pt' });
-  // A language the receipts are not written in is left to the server's default.
-  await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'xx' }, noContent);
-  assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { email: 'payer@example.com' });
+  // A later one sends the token (the session changes its own email); a language the receipts
+  // are not written in is left to the server's default.
+  await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'xx', payerToken: TOKEN }, session);
+  assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { email: 'payer@example.com', payerToken: TOKEN });
+  // Never a malformed token, either way.
+  await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'en', payerToken: 'nope' }, session);
+  assert.equal(JSON.parse(String(calls[2].init?.body)).payerToken, undefined);
+  assert.equal((await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'en' }, respond(200, { payerToken: '<b>' }))).kind, 'error');
   assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'en' }, respond(400, { code: 'invalid_state_transition' })), { kind: 'closed' });
-  // Another client gave the link's email first: the page lets the payer pay anyway.
-  assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'en' }, respond(409, { code: 'payer_email_conflict' })), { kind: 'busy' });
 
   // On a link without an amount, the payer's amount rides on the quote.
   const quoted: { init?: RequestInit }[] = [];

@@ -10,7 +10,8 @@
    from the real gateway (the cross-chain asset list), but a quote or a deposit address needs the
    real link, which a sample is not, so those answer that mock mode cannot make them. */
 import { handleMockApi } from "@/lib/mock/index";
-import { mockPaymentIntents } from "@/lib/mock/handlers/payments";
+import { mockPaymentIntents, mockPayerSessions } from "@/lib/mock/handlers/payments";
+import type { PaymentPayerEmail } from "@/lib/cosmos";
 import { hex, nowIso, qrImage } from "@/lib/mock/fixtures";
 import { MOCK_PUBLIC_ORG } from "@/lib/mock/shared";
 import type { MockEnv } from "@/lib/mock/http";
@@ -18,6 +19,9 @@ import type { PaymentIntent } from "@/lib/cosmos";
 import { isChain } from "@/lib/chains";
 
 export const MOCK_GATEWAY_PREFIX = "/mock-gateway";
+
+/* The mock checkout sessions by token (the real server keeps only a hash; here it is a sample). */
+const MOCK_SESSION_TOKENS = new Map<string, PaymentPayerEmail>();
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -105,18 +109,34 @@ async function paymentLinks(request: Request, rest: string[]): Promise<Response>
     const field = typeof body?.event === "string" ? EVENT_FIELDS[body.event] : undefined;
     if (!field) return json({ statusCode: 400, message: "Unknown event" }, 400);
     record[field] = nowIso();
+    const token = typeof (body as { payerToken?: unknown } | null)?.payerToken === "string" ? (body as { payerToken: string }).payerToken : "";
+    const session = token ? MOCK_SESSION_TOKENS.get(token) : undefined;
+    if (body?.event === "sent" && session) session.sentAt = nowIso();
     return json(undefined, 204);
   }
   if (request.method === "POST" && action === "payer") {
-    // The payer's email for the receipt, shown on the payment's view as the server would.
+    // One checkout session per page, as the server: the first call answers a token, a later one
+    // with it changes that session's own email. The payment's view lists them.
     if (found.intent.status !== "PENDING") return json({ statusCode: 400, code: "invalid_state_transition", message: "The payment link is closed" }, 400);
-    const body = (await request.json().catch(() => null)) as { email?: unknown; lang?: unknown } | null;
+    const body = (await request.json().catch(() => null)) as { email?: unknown; lang?: unknown; payerToken?: unknown } | null;
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 254) {
       return json({ statusCode: 400, code: "validation_failed", message: "email must be an email" }, 400);
     }
-    record.payerEmail = email;
-    return json(undefined, 204);
+    const lang = typeof body?.lang === "string" ? body.lang : "en";
+    const sessions = mockPayerSessions(found.intent.id);
+    const token = typeof body?.payerToken === "string" ? body.payerToken : "";
+    const own = token ? MOCK_SESSION_TOKENS.get(token) : undefined;
+    if (own && sessions.includes(own)) {
+      own.email = email;
+      own.lang = lang;
+      return json({ payerToken: token });
+    }
+    const session = { email, lang, sentAt: null as string | null, recordedAt: nowIso() };
+    sessions.push(session);
+    const payerToken = Buffer.from(hex(`payer-session:${found.intent.id}:${sessions.length}:${Date.now()}`, 64), "hex").toString("base64url").slice(0, 43);
+    MOCK_SESSION_TOKENS.set(payerToken, session);
+    return json({ payerToken });
   }
   if (request.method === "GET" && action === "deposit-assets") {
     // The real list of what can be paid with, from the gateway (never sampled).

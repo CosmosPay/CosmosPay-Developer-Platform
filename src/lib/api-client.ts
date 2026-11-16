@@ -57,6 +57,7 @@ export const paymentIntents = {
   deposits: (id: string, env?: string) => request(`/api/payment-intents/${encodeURIComponent(id)}/deposits?env=${env || "dev"}`),
   /* How the main origins fare for its amount: the ones that cannot pay it, and why. */
   routeCheck: (id: string, env?: string) => request(`/api/payment-intents/${encodeURIComponent(id)}/route-check?env=${env || "dev"}`),
+  payerEmails: (id: string, env?: string) => request(`/api/payment-intents/${encodeURIComponent(id)}/payer-emails?env=${env || "dev"}`),
 };
 
 /* Webhook endpoints, proxied to the Cosmos Payments API (per-user consumer).

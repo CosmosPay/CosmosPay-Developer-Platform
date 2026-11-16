@@ -923,11 +923,14 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **No way to pay before the payer's email** (product owner, 2026-11-16: a receipt always goes out).
   Every design's `EmailStep.astro` asks for it on an open link; until it is in, the page holds no
   QR, wallet link, manual transfer or deposit form (`emailGated` in `checkout.ts`, the QR's `src`
-  and the links' `href` removed, not only hidden). It is recorded with the keyless
-  `POST /v1/payment-links/{id}/payer` (`recordPayer`) and sent with every deposit, and kept in
-  sessionStorage per link so a reload does not ask again. The server binds the link's own email
-  to the first client that gives it (anyone else gets `409`): the page then lets the payer pay
-  anyway, says an email was already given, and their deposits still carry their own. The embedded checkout
+  and the links' `href` removed, not only hidden). The keyless `POST /v1/payment-links/{id}/payer`
+  (`recordPayer`) records it as one checkout session and answers that session's `payerToken`, which
+  the page keeps in memory and sessionStorage (per link: a reload neither asks again nor opens
+  another session) and sends on its later calls: a changed email, the wallet events
+  (`reportCheckoutEvent`) and every deposit (`createDeposit`). Every session keeps its own email, so
+  another visitor never blocks the payer; the receipt goes to the deposit's session, else the
+  session that reported `sent` last. A deposit refused as `payer_session_unknown` brings the email
+  step back (a new session). The payment's view lists every email given (`payer-emails`). The embedded checkout
   (`<cosmos-pay-checkout>`) asks the same way before its QR; its strings are the hosted page's,
   word for word. A wallet link scanned outside these pages carries no email: nothing here can
   force one there.

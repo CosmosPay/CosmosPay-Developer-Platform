@@ -112,16 +112,21 @@ export const paymentIntentSchema = z
       })
       .optional()
       .openapi({ description: 'The limits on payments from another network for this link, defaults filled in.' }),
-    payerEmail: z
+    receiptTo: z
       .string()
       .nullable()
       .optional()
-      .openapi({ example: 'payer@example.com', description: 'The email the payer typed in the hosted checkout, for the receipt (unverified); null when none was given.' }),
+      .openapi({ example: 'payer@example.com', description: 'Where the receipt went: an email a payer gave in the hosted checkout (unverified); null until one was sent.' }),
     receiptSentAt: z
       .string()
       .nullable()
       .optional()
       .openapi({ example: null, description: 'When the receipt was emailed to the payer; null until it is.' }),
+    receiptSkippedAt: z
+      .string()
+      .nullable()
+      .optional()
+      .openapi({ example: null, description: 'When it was decided that no receipt goes out: no email was given, or several payers gave different ones and none reported paying.' }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     updatedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
   })
@@ -171,6 +176,19 @@ const paymentDepositSchema = z
 const paymentDepositListSchema = z
   .object({ data: z.array(paymentDepositSchema) })
   .openapi('PaymentDepositList', { description: "An intent's deposits, newest first." });
+
+const paymentPayerEmailListSchema = z
+  .object({
+    data: z.array(
+      z.object({
+        email: z.string().openapi({ example: 'payer@example.com' }),
+        lang: z.string().openapi({ example: 'es', description: 'The language of that checkout.' }),
+        sentAt: z.string().nullable().openapi({ example: null, description: 'The last time that session reported its wallet sent the payment; null if it never did.' }),
+        recordedAt: z.string().openapi({ example: '2026-11-17T12:00:00.000Z' }),
+      }),
+    ),
+  })
+  .openapi('PaymentPayerEmailList');
 
 const paymentRouteCheckListSchema = z
   .object({
@@ -357,6 +375,23 @@ registerRoutes([
     request: { params: idParam, query: z.object({ env: envQuery }) },
     responses: {
       200: jsonOk(paymentDepositListSchema, 'ListPaymentDepositsResponse', 'Deposits fetched successfully'),
+      400: errors.badRequest,
+      401: errors.unauthorized,
+      404: errors.notFound,
+      500: errors.internalError,
+    },
+  },
+  {
+    method: 'get',
+    path: '/api/payment-intents/{id}/payer-emails',
+    tags: [TAG],
+    summary: 'List the emails payers gave in the hosted checkout',
+    description:
+      "One per checkout session of this link, newest first, with the session's language and when it reported its wallet sent the payment. Unverified: whoever opened the payment page typed them. The receipt goes to one of them (`receiptTo`), or to none when the payer cannot be told apart (`receiptSkippedAt`). An intent that is not the caller's reads as 404.",
+    security: sessionSecurity,
+    request: { params: idParam, query: z.object({ env: envQuery }) },
+    responses: {
+      200: jsonOk(paymentPayerEmailListSchema, 'PaymentPayerEmailsResponse', 'Payer emails fetched successfully'),
       400: errors.badRequest,
       401: errors.unauthorized,
       404: errors.notFound,

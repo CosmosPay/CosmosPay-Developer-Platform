@@ -1358,3 +1358,9 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .fbar.liq-lookup .fbar-filters { align-items: flex-end; flex: 1 1 auto; }
 .fbar.liq-lookup .fbar-filters > .fld, .fbar.liq-lookup .fbar-filters > div { margin: 0; min-width: 220px; }
 .fbar.liq-lookup .paylink-actions { margin: 0; }
+
+/* The emails payers gave in a link's checkout (PaymentRecordView's PayerEmails). */
+.inst .pay-emails { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.inst .pay-emails li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.inst .pay-emails-addr { overflow-wrap: anywhere; font-weight: 500; }
+.inst .pay-emails-meta { color: var(--ink-2); font-size: 13px; }

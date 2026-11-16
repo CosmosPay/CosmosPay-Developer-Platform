@@ -9,7 +9,8 @@
    through Cosmos Pay. The keyless routes under `/v1/payment-links/{id}` (the community server's
    PaymentLinksController), called from the payer's browser like the read.
 
-   The payer gives their email first, for the receipt (`recordPayer`, and `email` on every deposit),
+   The payer gives their email first, for the receipt, as one checkout session (`recordPayer`
+   answers its token, sent on every deposit),
    and a link without an amount is paid for the amount the payer types (`amount` on the quote and
    the deposit). The token list comes with how the main origins fare for the link's amount
    (`routes`), so an origin that cannot pay it is disabled with the route's reason before anyone
@@ -370,6 +371,8 @@ export type DepositFailure =
   | { kind: "refused"; message: string }
   /** 409: this payer (client address) has its open deposits on the link already. */
   | { kind: "busy" }
+  /** The checkout session is not one of this link's (a token lost or from elsewhere): ask the email again. */
+  | { kind: "session" }
   | { kind: "rate-limited"; retryAfterMs: number }
   | { kind: "error" };
 
@@ -407,6 +410,7 @@ async function call<T>(
       const body = await res.json().catch(() => null);
       const code = record(body) ? body.code : null;
       if (code === "invalid_state_transition") return { kind: "closed" };
+      if (code === "payer_session_unknown") return { kind: "session" };
       if (on400 === "unavailable") return { kind: "unavailable" };
       return { kind: "refused", message: serverMessage(body) };
     }
@@ -451,17 +455,36 @@ export interface PayerContact {
   lang: string;
 }
 
+/* A checkout session's token: 32 random bytes, base64url (the server keeps only its hash). */
+const PAYER_TOKEN = /^[A-Za-z0-9_-]{43}$/;
+
+/** A checkout session token this page may keep and send back. */
+export function isPayerToken(value: unknown): value is string {
+  return str(value) && PAYER_TOKEN.test(value);
+}
+
 const contactFields = (p: PayerContact) => ({
   email: p.email.trim(),
   ...(RECEIPT_LANGS.includes(p.lang) ? { lang: p.lang } : {}),
 });
 
 /**
- * The payer's email, for the receipt of a payment made with the link's own wallet link or QR:
- * `POST /v1/payment-links/{id}/payer` (204). A deposit carries the email itself.
+ * The payer's email for the receipt, as one checkout session: `POST /v1/payment-links/{id}/payer`.
+ * The first call answers the session's token, which the page keeps (memory and sessionStorage) and
+ * sends on its later calls; with it, a session changes only its own email. Every session keeps its
+ * own, so another visitor's email never blocks this payer.
  */
-export function recordPayer(apiBase: string, id: string, payer: PayerContact, fetchImpl: typeof fetch = fetch): Promise<DepositResult<true>> {
-  return call(fetchImpl, `${linkBase(apiBase, id)}/payer`, { method: "POST", body: JSON.stringify(contactFields(payer)) }, () => true);
+export function recordPayer(
+  apiBase: string,
+  id: string,
+  payer: PayerContact & { payerToken?: string | null },
+  fetchImpl: typeof fetch = fetch,
+): Promise<DepositResult<string>> {
+  const body = { ...contactFields(payer), ...(isPayerToken(payer.payerToken) ? { payerToken: payer.payerToken } : {}) };
+  return call(fetchImpl, `${linkBase(apiBase, id)}/payer`, { method: "POST", body: JSON.stringify(body) }, (res) => {
+    const b = unwrap(res);
+    return record(b) && isPayerToken(b.payerToken) ? b.payerToken : null;
+  });
 }
 
 export interface DepositChoice {
@@ -487,15 +510,15 @@ export function quoteDeposit(apiBase: string, id: string, choice: DepositChoice,
   return call(fetchImpl, `${linkBase(apiBase, id)}/quote`, { method: "POST", body: choiceBody(choice) }, parseDepositQuote);
 }
 
-/** A deposit address for this payment, with the payer's email for the receipt: `POST /v1/payment-links/{id}/deposits`. */
+/** A deposit address for this payment, bound to this checkout session (its email gets the receipt): `POST /v1/payment-links/{id}/deposits`. */
 export function createDeposit(
   apiBase: string,
   id: string,
   choice: DepositChoice,
-  payer: PayerContact,
+  payerToken: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<DepositResult<PaymentDeposit>> {
-  const request = JSON.stringify({ ...choiceFields(choice), ...contactFields(payer) });
+  const request = JSON.stringify({ ...choiceFields(choice), payerToken });
   return call(fetchImpl, `${linkBase(apiBase, id)}/deposits`, { method: "POST", body: request }, (body) => {
     const deposit = parsePaymentDeposit(body);
     return deposit && deposit.paymentLinkId === id ? deposit : null;

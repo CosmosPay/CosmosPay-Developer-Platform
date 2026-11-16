@@ -777,6 +777,56 @@
         ]
       }
     },
+    "/v1/payment-intents/{id}/payer-emails": {
+      "get": {
+        "description": "Newest first, at most 50: each hosted checkout session of this link that gave an email for the receipt, its language and when it reported its wallet sent the payment. Unverified: anyone holding the link can type any address. The receipt goes to one of them (`receiptTo`), or to none when the payer cannot be told apart (`receiptSkippedAt`).\n\nRequires the `payments:read` scope.",
+        "operationId": "PaymentIntentsController_payerEmails_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentPayerEmailListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the emails payers gave in a payment link’s hosted checkout",
+        "tags": [
+          "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
+      }
+    },
     "/v1/payment-intents/{id}/route-check": {
       "get": {
         "description": "One dry quote per main origin (USDC and USDT on the networks most payers hold them on, and Bitcoin) for the link’s amount and asset. Routes have minimums of their own: an origin that cannot pay the amount comes back `available: false` with the reason. Nothing blocks the link; the hosted checkout disables those origins. Empty for a link without a fixed amount or one that cannot be paid from another network.\n\nRequires the `payments:read` scope.",
@@ -1616,7 +1666,7 @@
     },
     "/v1/payment-links/{id}/payer": {
       "post": {
-        "description": "The hosted checkout asks the payer for an email before it shows any way to pay, and records it here with the checkout language: when the payment succeeds, a receipt goes to that address in that language, and the merchant finds the payer among its customers by it (marked as given by the payer, not verified). The first client to record one keeps it: only that client may change it, anyone else gets `409`. A deposit carries its own email. Budgeted per client address.",
+        "description": "The hosted checkout asks the payer for an email before it shows any way to pay and records it here, with the checkout language, as one checkout session: the first call answers the session’s `payerToken` (only its hash is stored), and the session sends it on its later calls (a changed email, `events`, `deposits`). Every session keeps its own email and none can change another’s, so a second payer never blocks the first. The receipt goes to the deposit’s session, else to the session that reported `sent` last. Budgeted per client address.",
         "operationId": "PaymentLinksController_recordPayer_v1",
         "parameters": [
           {
@@ -1641,8 +1691,15 @@
           }
         },
         "responses": {
-          "204": {
-            "description": "Recorded.",
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayerSessionEntity"
+                }
+              }
+            },
             "headers": {
               "ratelimit-limit": {
                 "description": "Requests allowed in the current window.",
@@ -1668,7 +1725,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed`: not an email. `invalid_state_transition`: the link is no longer open.",
+            "description": "`validation_failed`: not an email, or not a session token. `invalid_state_transition`: the link is no longer open.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1716,29 +1773,6 @@
                       "code": "not_found",
                       "error": "Not Found",
                       "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
-                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
-                      "timestamp": "2026-09-01T12:00:00.000Z"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Another client recorded an email for this link first; only that client may change it.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
-                },
-                "examples": {
-                  "payer_email_conflict": {
-                    "summary": "payer_email_conflict: The payment's email was given by another client",
-                    "value": {
-                      "statusCode": 409,
-                      "code": "payer_email_conflict",
-                      "error": "Conflict",
-                      "message": "An email for this payment was already given.",
                       "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -20720,11 +20754,18 @@
               }
             ]
           },
-          "payerEmail": {
+          "receiptTo": {
             "type": "string",
             "nullable": true,
             "example": "payer@example.com",
-            "description": "The email the payer typed in the hosted checkout before paying (the latest on the link; not verified). The receipt goes there."
+            "description": "Where the receipt went: an email a payer gave in the hosted checkout (not verified). Null until one was sent. Every email given is listed by `GET /v1/payment-intents/{id}/payer-emails`."
+          },
+          "receiptSkippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several gave different ones and none reported sending the payment."
           },
           "receiptSentAt": {
             "type": "string",
@@ -20844,7 +20885,8 @@
           "merchantFee",
           "paidFrom",
           "depositLimits",
-          "payerEmail",
+          "receiptTo",
+          "receiptSkippedAt",
           "receiptSentAt",
           "msg",
           "callback",
@@ -21149,11 +21191,18 @@
               }
             ]
           },
-          "payerEmail": {
+          "receiptTo": {
             "type": "string",
             "nullable": true,
             "example": "payer@example.com",
-            "description": "The email the payer typed in the hosted checkout before paying (the latest on the link; not verified). The receipt goes there."
+            "description": "Where the receipt went: an email a payer gave in the hosted checkout (not verified). Null until one was sent. Every email given is listed by `GET /v1/payment-intents/{id}/payer-emails`."
+          },
+          "receiptSkippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several gave different ones and none reported sending the payment."
           },
           "receiptSentAt": {
             "type": "string",
@@ -21274,7 +21323,8 @@
           "merchantFee",
           "paidFrom",
           "depositLimits",
-          "payerEmail",
+          "receiptTo",
+          "receiptSkippedAt",
           "receiptSentAt",
           "msg",
           "callback",
@@ -21443,11 +21493,18 @@
               }
             ]
           },
-          "payerEmail": {
+          "receiptTo": {
             "type": "string",
             "nullable": true,
             "example": "payer@example.com",
-            "description": "The email the payer typed in the hosted checkout before paying (the latest on the link; not verified). The receipt goes there."
+            "description": "Where the receipt went: an email a payer gave in the hosted checkout (not verified). Null until one was sent. Every email given is listed by `GET /v1/payment-intents/{id}/payer-emails`."
+          },
+          "receiptSkippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several gave different ones and none reported sending the payment."
           },
           "receiptSentAt": {
             "type": "string",
@@ -21568,7 +21625,8 @@
           "merchantFee",
           "paidFrom",
           "depositLimits",
-          "payerEmail",
+          "receiptTo",
+          "receiptSkippedAt",
           "receiptSentAt",
           "msg",
           "callback",
@@ -21998,6 +22056,54 @@
           }
         },
         "description": "A payment intent's deposit addresses, newest first.",
+        "required": [
+          "data"
+        ]
+      },
+      "PaymentPayerEmailEntity": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "payer@example.com"
+          },
+          "lang": {
+            "type": "string",
+            "example": "es",
+            "description": "The language of that checkout."
+          },
+          "sentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "The last time that session reported its wallet sent the payment; null if it never did."
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-11-17T12:00:00.000Z"
+          }
+        },
+        "description": "An email a payer typed in a hosted checkout session of this payment link (not verified).",
+        "required": [
+          "email",
+          "lang",
+          "sentAt",
+          "recordedAt"
+        ]
+      },
+      "PaymentPayerEmailListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentPayerEmailEntity"
+            }
+          }
+        },
+        "description": "The emails payers gave in this payment link's hosted checkout, newest first.",
         "required": [
           "data"
         ]
@@ -22485,11 +22591,30 @@
             ],
             "default": "en",
             "description": "The language of the payer's checkout: the receipt is written in it."
+          },
+          "payerToken": {
+            "type": "string",
+            "description": "This checkout session's token, from an earlier answer: the session changes its own email. Without it (or with one this link does not know) a new session is opened.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
           }
         },
         "description": "The payer's email (and checkout language), recorded before the hosted checkout shows how to pay: the receipt goes there.",
         "required": [
           "email"
+        ]
+      },
+      "PayerSessionEntity": {
+        "type": "object",
+        "properties": {
+          "payerToken": {
+            "type": "string",
+            "description": "Random, 256 bits, base64url. Only its SHA-256 is stored; keep it in the page that asked for it.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
+          }
+        },
+        "description": "A hosted checkout session's token: the session's only credential, answered once. Send it on the session's later calls (`payer`, `events`, `deposits`).",
+        "required": [
+          "payerToken"
         ]
       },
       "CheckoutEventDto": {
@@ -22504,6 +22629,11 @@
             ],
             "description": "`walletOpened`: the payer opened a wallet from the page (the wallet link, the web wallet, the extension, Freighter). `walletClosed`: the wallet came back without paying (it declined, or the page was shown again first). `sent`: the page saw the wallet send the payment.",
             "example": "walletOpened"
+          },
+          "payerToken": {
+            "type": "string",
+            "description": "The checkout session's token: a `sent` it reports makes that session's email the one the receipt of a payment with the link itself goes to.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
           }
         },
         "description": "What the payer did with a wallet, as the hosted checkout page reports it. Informational: the intent status changes only on the chain.",
@@ -23026,24 +23156,10 @@
             "description": "Only for a link with no fixed amount: what the merchant should receive, in the link's asset, as the payer typed it. The quote pays exactly it; a link with an amount refuses another one.",
             "example": "25"
           },
-          "email": {
+          "payerToken": {
             "type": "string",
-            "description": "The payer's email, as typed in the checkout (not verified): the receipt goes there when the payment succeeds, and the merchant sees it on the payment.",
-            "example": "payer@example.com"
-          },
-          "lang": {
-            "type": "string",
-            "enum": [
-              "en",
-              "es",
-              "pt",
-              "fr",
-              "de",
-              "hi",
-              "zh"
-            ],
-            "default": "en",
-            "description": "The language of the payer's checkout: the receipt is written in it."
+            "description": "The checkout session token `POST /v1/payment-links/{id}/payer` answered: the receipt goes to that session's email when this deposit settles the payment.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
           }
         },
         "description": "Opens a deposit address for one payer: the asset sent, the refund address, and the email the receipt goes to.",
@@ -23051,7 +23167,7 @@
           "originChain",
           "originAsset",
           "refundTo",
-          "email"
+          "payerToken"
         ]
       },
       "CustomerWalletDto": {
@@ -38045,8 +38161,8 @@
               "payload_too_large",
               "idempotency_conflict",
               "operation_in_flight",
-              "payer_email_conflict",
               "invalid_state_transition",
+              "payer_session_unknown",
               "slippage_exceeded",
               "insufficient_balance",
               "no_path_found",

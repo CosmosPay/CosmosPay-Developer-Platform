@@ -12,8 +12,8 @@
    URL, the URI whose scheme matches the chain). Never HTML.
 
    Before the QR and the wallet link it asks for the payer's email, as the hosted checkout does:
-   the receipt goes there once the payment is confirmed (`recordPayer`, keyless, kept in this
-   page's sessionStorage for the link so a reload does not ask again).
+   one checkout session (`recordPayer`, keyless), whose token is kept in memory and in this page's
+   sessionStorage for the link, so a reload neither asks again nor opens another session.
 
    Attributes: `link` (required), `lang` (en/es/pt/fr/de; default from the browser, then
    English), `theme` (light/dark/auto; default light), `demo` (no link and no request: it
@@ -34,7 +34,7 @@ import {
   type Phase,
 } from "@/lib/payments/payment-link";
 import { previewLink } from "@/lib/payments/preview";
-import { isPayerEmail, recordPayer } from "@/lib/payments/deposits";
+import { isPayerEmail, isPayerToken, recordPayer } from "@/lib/payments/deposits";
 import { PAYMENTS_API_URL, PAYMENTS_ORIGIN } from "@/embed/config";
 import { browserLanguages, el } from "@/embed/dom";
 import { emitStatus } from "@/embed/events";
@@ -114,8 +114,8 @@ export class CosmosPayCheckout extends HTMLElement {
   private payerEmail: string | null = null;
   private editingEmail = false;
   private emailBusy = false;
-  /* Another client gave the link's email first (a 409): the payer still pays. */
-  private emailTaken = false;
+  /* This checkout session's token (the server keeps only its hash). */
+  private payerToken: string | null = null;
   private emittedStatus: LinkStatus | null = null;
   private warnedFor: string | null = null;
   private demo = false;
@@ -281,7 +281,6 @@ export class CosmosPayCheckout extends HTMLElement {
     this.shownBody = null;
     this.emittedStatus = null;
     this.editingEmail = false;
-    this.emailTaken = false;
     this.ui.emailStatus.textContent = "";
     this.errorDelay = FIRST_ERROR_DELAY_MS;
     this.demo = isDemo(this.getAttribute("demo"));
@@ -293,8 +292,8 @@ export class CosmosPayCheckout extends HTMLElement {
     }
     const raw = this.getAttribute("link");
     this.linkId = parseLinkId(raw);
-    this.payerEmail = this.linkId ? this.storedEmail(this.linkId) : null;
-    this.emailTaken = this.linkId ? this.storedTaken(this.linkId) : false;
+    this.payerToken = this.linkId ? this.storedToken(this.linkId) : null;
+    this.payerEmail = this.linkId && this.payerToken ? this.storedEmail(this.linkId) : null;
     if (!this.linkId) {
       if (this.warnedFor !== raw) {
         this.warnedFor = raw;
@@ -396,11 +395,12 @@ export class CosmosPayCheckout extends HTMLElement {
     }
   }
 
-  private storedTaken(id: string): boolean {
+  private storedToken(id: string): string | null {
     try {
-      return window.sessionStorage.getItem(`cosmospay-payer-taken:${id}`) === "1";
+      const value = window.sessionStorage.getItem(`cosmospay-payer-token:${id}`);
+      return isPayerToken(value) ? value : null;
     } catch {
-      return false;
+      return null;
     }
   }
 
@@ -420,18 +420,16 @@ export class CosmosPayCheckout extends HTMLElement {
     this.emailBusy = true;
     ui.emailStatus.textContent = t.email.saving;
     if (this.link) this.render(this.link);
-    const result = await recordPayer(PAYMENTS_API_URL, id, { email, lang: this.locale });
+    const result = await recordPayer(PAYMENTS_API_URL, id, { email, lang: this.locale, payerToken: this.payerToken });
     this.emailBusy = false;
     if (generation !== this.generation) return;
-    // A 409 (another client gave the link's email first) never locks the payer out.
-    if (result.kind === "ok" || result.kind === "busy") {
+    if (result.kind === "ok") {
       this.payerEmail = email.toLowerCase();
-      this.emailTaken = result.kind === "busy";
+      this.payerToken = result.value;
       this.editingEmail = false;
       try {
         window.sessionStorage.setItem(`cosmospay-payer:${id}`, this.payerEmail);
-        if (this.emailTaken) window.sessionStorage.setItem(`cosmospay-payer-taken:${id}`, "1");
-        else window.sessionStorage.removeItem(`cosmospay-payer-taken:${id}`);
+        window.sessionStorage.setItem(`cosmospay-payer-token:${id}`, result.value);
       } catch {
         /* storage blocked: the email is kept while the page is open */
       }
@@ -527,9 +525,7 @@ export class CosmosPayCheckout extends HTMLElement {
     }
     ui.emailForm.hidden = !gated;
     ui.emailGiven.hidden = gated || this.demo || phase !== "open" || this.payerEmail === null;
-    if (this.payerEmail) {
-      ui.emailGivenText.textContent = this.emailTaken ? t.email.taken : t.email.given.replace("{email}", this.payerEmail);
-    }
+    if (this.payerEmail) ui.emailGivenText.textContent = t.email.given.replace("{email}", this.payerEmail);
     if (!ui.emailInput.value && this.payerEmail) ui.emailInput.value = this.payerEmail;
     ui.emailInput.disabled = this.emailBusy;
     ui.emailSubmit.disabled = this.emailBusy;

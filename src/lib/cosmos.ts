@@ -268,10 +268,12 @@ export interface PaymentIntent {
   paidFrom?: PaidFrom | null;
   /** The limits on payments from another network for this link, defaults filled in. */
   depositLimits?: DepositLimits;
-  /** The email the payer typed in the hosted checkout (unverified); null when none was given. */
-  payerEmail?: string | null;
+  /** Where the receipt went: an email a payer gave in the hosted checkout (unverified); null until sent. */
+  receiptTo?: string | null;
   /** When the payment's receipt was emailed to the payer; null until it is. */
   receiptSentAt?: string | null;
+  /** When it was decided no receipt goes out (no email given, or payers that cannot be told apart). */
+  receiptSkippedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -291,6 +293,15 @@ export interface DepositLimitsInput {
 }
 
 /* How one of the main origins fares for a link's amount (the Payments API's route check). */
+/* An email a payer gave in one hosted checkout session of a link (the Payments API's PaymentPayerEmail). */
+export interface PaymentPayerEmail {
+  email: string;
+  lang: string;
+  /** The last time that session reported its wallet sent the payment; null if it never did. */
+  sentAt: string | null;
+  recordedAt: string;
+}
+
 export interface PaymentRouteCheck {
   chain: NetworkId;
   asset: string;
@@ -388,6 +399,8 @@ export const cosmos = {
   /** How the main origins fare for this link's amount: the ones that cannot pay it, and why. */
   routeCheck: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<{ data: PaymentRouteCheck[] }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}/route-check`),
+  payerEmails: (userId: string, env: CosmosEnv, id: string) =>
+    cosmosFetch<{ data: PaymentPayerEmail[] }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}/payer-emails`),
 
   validate: (userId: string, env: CosmosEnv, id: string, txHash: string) =>
     cosmosFetch<{ valid: boolean; status: string; reason: string | null; paymentIntent?: PaymentIntent }>(

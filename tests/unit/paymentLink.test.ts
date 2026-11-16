@@ -318,6 +318,13 @@ test('reportCheckoutEvent posts the event to the link and never throws', async (
   // It leaves while the page hands the payer to a wallet app.
   assert.equal(called!.keepalive, true);
   assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'sent', fakeFetch(429, {})), false);
+  const sent: RequestInit[] = [];
+  const keep = (async (_url: string, init?: RequestInit) => {
+    sent.push(init ?? {});
+    return new Response(null, { status: 204 });
+  }) as unknown as typeof fetch;
+  await reportCheckoutEvent('https://api.example', 'x', 'sent', keep, 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ');
+  assert.deepEqual(JSON.parse(String(sent[0].body)), { event: 'sent', payerToken: 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ' });
   const thrown = (async () => { throw new TypeError('offline'); }) as typeof fetch;
   assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'walletClosed', thrown), false);
 });
