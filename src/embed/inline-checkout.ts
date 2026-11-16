@@ -114,6 +114,8 @@ export class CosmosPayCheckout extends HTMLElement {
   private payerEmail: string | null = null;
   private editingEmail = false;
   private emailBusy = false;
+  /* Another client gave the link's email first (a 409): the payer still pays. */
+  private emailTaken = false;
   private emittedStatus: LinkStatus | null = null;
   private warnedFor: string | null = null;
   private demo = false;
@@ -279,6 +281,7 @@ export class CosmosPayCheckout extends HTMLElement {
     this.shownBody = null;
     this.emittedStatus = null;
     this.editingEmail = false;
+    this.emailTaken = false;
     this.ui.emailStatus.textContent = "";
     this.errorDelay = FIRST_ERROR_DELAY_MS;
     this.demo = isDemo(this.getAttribute("demo"));
@@ -291,6 +294,7 @@ export class CosmosPayCheckout extends HTMLElement {
     const raw = this.getAttribute("link");
     this.linkId = parseLinkId(raw);
     this.payerEmail = this.linkId ? this.storedEmail(this.linkId) : null;
+    this.emailTaken = this.linkId ? this.storedTaken(this.linkId) : false;
     if (!this.linkId) {
       if (this.warnedFor !== raw) {
         this.warnedFor = raw;
@@ -392,6 +396,14 @@ export class CosmosPayCheckout extends HTMLElement {
     }
   }
 
+  private storedTaken(id: string): boolean {
+    try {
+      return window.sessionStorage.getItem(`cosmospay-payer-taken:${id}`) === "1";
+    } catch {
+      return false;
+    }
+  }
+
   private async submitEmail(): Promise<void> {
     const id = this.linkId;
     const ui = this.ui;
@@ -411,11 +423,15 @@ export class CosmosPayCheckout extends HTMLElement {
     const result = await recordPayer(PAYMENTS_API_URL, id, { email, lang: this.locale });
     this.emailBusy = false;
     if (generation !== this.generation) return;
-    if (result.kind === "ok") {
+    // A 409 (another client gave the link's email first) never locks the payer out.
+    if (result.kind === "ok" || result.kind === "busy") {
       this.payerEmail = email.toLowerCase();
+      this.emailTaken = result.kind === "busy";
       this.editingEmail = false;
       try {
         window.sessionStorage.setItem(`cosmospay-payer:${id}`, this.payerEmail);
+        if (this.emailTaken) window.sessionStorage.setItem(`cosmospay-payer-taken:${id}`, "1");
+        else window.sessionStorage.removeItem(`cosmospay-payer-taken:${id}`);
       } catch {
         /* storage blocked: the email is kept while the page is open */
       }
@@ -511,7 +527,9 @@ export class CosmosPayCheckout extends HTMLElement {
     }
     ui.emailForm.hidden = !gated;
     ui.emailGiven.hidden = gated || this.demo || phase !== "open" || this.payerEmail === null;
-    if (this.payerEmail) ui.emailGivenText.textContent = t.email.given.replace("{email}", this.payerEmail);
+    if (this.payerEmail) {
+      ui.emailGivenText.textContent = this.emailTaken ? t.email.taken : t.email.given.replace("{email}", this.payerEmail);
+    }
     if (!ui.emailInput.value && this.payerEmail) ui.emailInput.value = this.payerEmail;
     ui.emailInput.disabled = this.emailBusy;
     ui.emailSubmit.disabled = this.emailBusy;

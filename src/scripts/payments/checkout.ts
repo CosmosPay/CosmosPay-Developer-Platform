@@ -127,6 +127,8 @@ interface EmailCopy {
   invalid: string;
   failed: string;
   given: string;
+  /* 409: another client gave the link's email first; the payer can still pay. */
+  taken: string;
 }
 
 /* Paying from another network: CrossChainStep.astro's copy that the script writes. */
@@ -175,6 +177,8 @@ const XC_PILL: Record<DepositPhase, Phase> = {
 const depositKey = (linkId: string) => `cosmospay-deposit:${linkId}`;
 /* Where the payer's email is kept for this link, so a reload does not ask again. */
 const payerKey = (linkId: string) => `cosmospay-payer:${linkId}`;
+/* Set when the link's email was given by another client first (a 409). */
+const payerTakenKey = (linkId: string) => `cosmospay-payer-taken:${linkId}`;
 
 /* The envelope built for this page's payer (a Stellar link with a merchant fee). */
 interface PayerEnvelope {
@@ -236,6 +240,7 @@ export function startCheckout(): void {
   let payerEmail: string | null = preview ? null : storedEmail();
   let emailBusy = false;
   let emailEditing = false;
+  let emailTaken = !preview && storedFlag(payerTakenKey(id));
   // Paying from another network.
   let xcOpen = false;
   let xcAssets: DepositAsset[] | null = null;
@@ -440,11 +445,21 @@ export function startCheckout(): void {
     }
   }
 
-  function keepEmail(email: string) {
+  function keepEmail(email: string, taken: boolean) {
     try {
       window.sessionStorage.setItem(payerKey(id), email);
+      if (taken) window.sessionStorage.setItem(payerTakenKey(id), "1");
+      else window.sessionStorage.removeItem(payerTakenKey(id));
     } catch {
       /* storage blocked: the email is kept until the page closes */
+    }
+  }
+
+  function storedFlag(key: string): boolean {
+    try {
+      return window.sessionStorage.getItem(key) === "1";
+    } catch {
+      return false;
     }
   }
 
@@ -456,7 +471,8 @@ export function startCheckout(): void {
   function renderEmail(gated: boolean, phase: Phase) {
     toggle("[data-email-step]", !gated);
     toggle("[data-email-given]", gated || phase !== "open" || payerEmail === null);
-    if (payerEmail) text("email-given", t.email.given.replace("{email}", payerEmail));
+    // After a 409 the link's own receipt goes to the email given first; a deposit still carries this one.
+    if (payerEmail) text("email-given", emailTaken ? t.email.taken : t.email.given.replace("{email}", payerEmail));
     all<HTMLInputElement>('input[name="email"]').forEach((input) => {
       if (!input.value && payerEmail) input.value = payerEmail;
       input.disabled = emailBusy;
@@ -484,9 +500,13 @@ export function startCheckout(): void {
     emailBusy = false;
     switch (result.kind) {
       case "ok":
+      case "busy":
+        // A 409: another client gave the link's email first. The payer is never locked
+        // out: they pay, and their deposits carry their own email.
         payerEmail = email.toLowerCase();
+        emailTaken = result.kind === "busy";
         emailEditing = false;
-        keepEmail(payerEmail);
+        keepEmail(payerEmail, emailTaken);
         emailStatus("");
         if (link) render(link);
         // The form is gone: focus moves to the line that replaced it.

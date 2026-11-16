@@ -925,7 +925,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   QR, wallet link, manual transfer or deposit form (`emailGated` in `checkout.ts`, the QR's `src`
   and the links' `href` removed, not only hidden). It is recorded with the keyless
   `POST /v1/payment-links/{id}/payer` (`recordPayer`) and sent with every deposit, and kept in
-  sessionStorage per link so a reload does not ask again. The embedded checkout
+  sessionStorage per link so a reload does not ask again. The server binds the link's own email
+  to the first client that gives it (anyone else gets `409`): the page then lets the payer pay
+  anyway, says an email was already given, and their deposits still carry their own. The embedded checkout
   (`<cosmos-pay-checkout>`) asks the same way before its QR; its strings are the hosted page's,
   word for word. A wallet link scanned outside these pages carries no email: nothing here can
   force one there.

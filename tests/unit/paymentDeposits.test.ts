@@ -221,6 +221,8 @@ test("the payer's email and an open amount are checked before they are sent", as
   await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'xx' }, noContent);
   assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { email: 'payer@example.com' });
   assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'en' }, respond(400, { code: 'invalid_state_transition' })), { kind: 'closed' });
+  // Another client gave the link's email first: the page lets the payer pay anyway.
+  assert.deepEqual(await recordPayer('https://gw.test', LINK, { email: 'payer@example.com', lang: 'en' }, respond(409, { code: 'payer_email_conflict' })), { kind: 'busy' });
 
   // On a link without an amount, the payer's amount rides on the quote.
   const quoted: { init?: RequestInit }[] = [];

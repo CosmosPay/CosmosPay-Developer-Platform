@@ -1616,7 +1616,7 @@
     },
     "/v1/payment-links/{id}/payer": {
       "post": {
-        "description": "The hosted checkout asks the payer for an email before it shows any way to pay, and records it here with the checkout language: when the payment succeeds, a receipt goes to that address in that language, and the merchant finds the payer among its customers by it (marked as given by the payer, not verified). The latest one recorded on an open link is the one used; a deposit carries its own. Budgeted per client address.",
+        "description": "The hosted checkout asks the payer for an email before it shows any way to pay, and records it here with the checkout language: when the payment succeeds, a receipt goes to that address in that language, and the merchant finds the payer among its customers by it (marked as given by the payer, not verified). The first client to record one keeps it: only that client may change it, anyone else gets `409`. A deposit carries its own email. Budgeted per client address.",
         "operationId": "PaymentLinksController_recordPayer_v1",
         "parameters": [
           {
@@ -1716,6 +1716,29 @@
                       "code": "not_found",
                       "error": "Not Found",
                       "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another client recorded an email for this link first; only that client may change it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "payer_email_conflict": {
+                    "summary": "payer_email_conflict: The payment's email was given by another client",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "payer_email_conflict",
+                      "error": "Conflict",
+                      "message": "An email for this payment was already given.",
                       "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -38022,6 +38045,7 @@
               "payload_too_large",
               "idempotency_conflict",
               "operation_in_flight",
+              "payer_email_conflict",
               "invalid_state_transition",
               "slippage_exceeded",
               "insufficient_balance",

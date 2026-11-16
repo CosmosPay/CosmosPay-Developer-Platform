@@ -122,6 +122,7 @@ const en = {
       failed: "We couldn't save your email. Try again.",
       change: "Change",
       given: "Receipt to {email}",
+      taken: "An email for this payment was already given. You can still pay.",
     },
     xc: {
       toggle: "Pay from another network",
@@ -334,6 +335,7 @@ const es: Messages = {
       failed: "No pudimos guardar tu email. Inténtalo de nuevo.",
       change: "Cambiar",
       given: "Comprobante a {email}",
+      taken: "Ya se indicó un email para este pago. Puedes pagar igual.",
     },
     xc: {
       toggle: "Pagar desde otra red",
@@ -545,6 +547,7 @@ const pt: Messages = {
       failed: "Não conseguimos salvar seu e-mail. Tente de novo.",
       change: "Alterar",
       given: "Comprovante para {email}",
+      taken: "Um e-mail já foi informado para este pagamento. Você ainda pode pagar.",
     },
     xc: {
       toggle: "Pagar a partir de outra rede",
@@ -756,6 +759,7 @@ const fr: Messages = {
       failed: "Impossible d'enregistrer votre e-mail. Réessayez.",
       change: "Modifier",
       given: "Reçu envoyé à {email}",
+      taken: "Un e-mail a déjà été indiqué pour ce paiement. Vous pouvez quand même payer.",
     },
     xc: {
       toggle: "Payer depuis un autre réseau",
@@ -967,6 +971,7 @@ const de: Messages = {
       failed: "Ihre E-Mail konnte nicht gespeichert werden. Versuchen Sie es erneut.",
       change: "Ändern",
       given: "Beleg an {email}",
+      taken: "Für diese Zahlung wurde bereits eine E-Mail angegeben. Sie können trotzdem zahlen.",
     },
     xc: {
       toggle: "Aus einem anderen Netzwerk bezahlen",
@@ -1178,6 +1183,7 @@ const hi: Messages = {
       failed: "हम आपका ईमेल सहेज नहीं सके। फिर से कोशिश करें।",
       change: "बदलें",
       given: "रसीद {email} पर",
+      taken: "इस भुगतान के लिए ईमेल पहले ही दिया जा चुका है। आप फिर भी भुगतान कर सकते हैं।",
     },
     xc: {
       toggle: "किसी दूसरे नेटवर्क से भुगतान करें",
@@ -1389,6 +1395,7 @@ const zh: Messages = {
       failed: "无法保存你的邮箱，请重试。",
       change: "更改",
       given: "收据发送至 {email}",
+      taken: "此付款已填写过邮箱。你仍然可以付款。",
     },
     xc: {
       toggle: "从其他网络付款",
