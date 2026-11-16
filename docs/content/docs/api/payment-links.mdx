@@ -157,8 +157,9 @@ _openapi:
           `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is
           refunded to `refundTo`. The same origin asset and refund address while
           an earlier deposit still waits answers that one; otherwise each client
-          address may have two open deposits per link (`operation_in_flight`),
-          so no caller can take another payer’s. Budgeted per client address.'
+          address (an IPv6 caller by its /48) may have two open deposits per
+          link, and a link twenty in all (`operation_in_flight`), so no caller
+          can take another payer’s. Budgeted per client address.'
         heading: open-a-deposit-address-that-pays-a-payment-link-from-any-network-no-api-key
       - content: What the payer sends and where, and how the payment stands, for the
           checkout to poll every few seconds until it is `SUCCEEDED`,
