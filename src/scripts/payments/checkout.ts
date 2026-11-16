@@ -126,6 +126,8 @@ interface XcCopy {
   unavailable: string;
   closed: string;
   busy: string;
+  /* A 429 on opening a deposit address: when to come back, nothing about the link. */
+  later: string;
   error: string;
   only: string;
   phase: Record<DepositPhase, string>;
@@ -702,7 +704,7 @@ export function startCheckout(): void {
       case "unavailable": return t.xc.unavailable;
       case "closed": return t.xc.closed;
       case "busy": return t.xc.busy;
-      case "rate-limited": return t.rateLimited;
+      case "rate-limited": return t.xc.later;
       case "refused": return t.xc.refused;
       default: return t.xc.error;
     }
