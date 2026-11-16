@@ -779,7 +779,7 @@
     },
     "/v1/payment-intents/{id}/payer-emails": {
       "get": {
-        "description": "Newest first, at most 50: each hosted checkout session of this link that gave an email for the receipt, its language and when it reported its wallet sent the payment. Unverified: anyone holding the link can type any address. The receipt goes to one of them (`receiptTo`), or to none when the payer cannot be told apart (`receiptSkippedAt`).\n\nRequires the `payments:read` scope.",
+        "description": "Newest first, at most 50: each hosted checkout session of this link that gave an email for the receipt, its language and when it reported its wallet sent the payment (informational). Unverified: anyone holding the link can type any address. The receipt goes to one of them (`receiptTo`), or to none when the payer cannot be told apart (`receiptSkippedAt`).\n\nRequires the `payments:read` scope.",
         "operationId": "PaymentIntentsController_payerEmails_v1",
         "parameters": [
           {
@@ -1666,7 +1666,7 @@
     },
     "/v1/payment-links/{id}/payer": {
       "post": {
-        "description": "The hosted checkout asks the payer for an email before it shows any way to pay and records it here, with the checkout language, as one checkout session: the first call answers the session’s `payerToken` (only its hash is stored), and the session sends it on its later calls (a changed email, `events`, `deposits`). Every session keeps its own email and none can change another’s, so a second payer never blocks the first. The receipt goes to the deposit’s session, else to the session that reported `sent` last. Budgeted per client address.",
+        "description": "The hosted checkout asks the payer for an email before it shows any way to pay and records it here, with the checkout language, as one checkout session: the first call answers the session’s `payerToken` (only its hash is stored), and the session sends it on its later calls (a changed email, `events`, `deposits`). Every session keeps its own email and none can change another’s, so a second payer never blocks the first. The receipt goes to the deposit’s session, else to the session whose wallet account or transaction (registered through `events`) matches the settlement, else to the only session if just one gave an email (with no customer link). Budgeted per client address.",
         "operationId": "PaymentLinksController_recordPayer_v1",
         "parameters": [
           {
@@ -20765,7 +20765,7 @@
             "nullable": true,
             "format": "date-time",
             "example": null,
-            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several gave different ones and none reported sending the payment."
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several did and none proved the payment was theirs (a wallet account or transaction matching the settlement)."
           },
           "receiptSentAt": {
             "type": "string",
@@ -21202,7 +21202,7 @@
             "nullable": true,
             "format": "date-time",
             "example": null,
-            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several gave different ones and none reported sending the payment."
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several did and none proved the payment was theirs (a wallet account or transaction matching the settlement)."
           },
           "receiptSentAt": {
             "type": "string",
@@ -21504,7 +21504,7 @@
             "nullable": true,
             "format": "date-time",
             "example": null,
-            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several gave different ones and none reported sending the payment."
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several did and none proved the payment was theirs (a wallet account or transaction matching the settlement)."
           },
           "receiptSentAt": {
             "type": "string",
@@ -22077,7 +22077,7 @@
             "nullable": true,
             "format": "date-time",
             "example": null,
-            "description": "The last time that session reported its wallet sent the payment; null if it never did."
+            "description": "The last time that session reported its wallet sent the payment (informational: a report proves nothing); null if it never did."
           },
           "recordedAt": {
             "format": "date-time",
@@ -22632,8 +22632,18 @@
           },
           "payerToken": {
             "type": "string",
-            "description": "The checkout session's token: a `sent` it reports makes that session's email the one the receipt of a payment with the link itself goes to.",
+            "description": "The checkout session's token. With `address` or `txHash` it registers what this session pays with; a report without them is informational.",
             "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
+          },
+          "address": {
+            "type": "string",
+            "description": "The account the session's connected wallet pays from, on the link's network (with `payerToken`). When it is the payment's source, the receipt and the customer link go to this session's email.",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "txHash": {
+            "type": "string",
+            "description": "The transaction the wallet answered when it sent the payment (with `payerToken`). When it is the payment's transaction, the receipt and the customer link go to this session's email.",
+            "example": "b7f1c3a2d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d"
           }
         },
         "description": "What the payer did with a wallet, as the hosted checkout page reports it. Informational: the intent status changes only on the chain.",

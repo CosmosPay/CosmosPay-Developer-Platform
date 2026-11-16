@@ -1011,7 +1011,7 @@ export default {
         uriLabels: { stellar: "SEP-7 URI", solana: "Solana Pay URI", monad: "EIP-681 URI" },
         openWallet: "在钱包中打开", copyLink: "复制链接", copyUri: "复制 URI",
         fields: { id: "ID", status: "状态", kind: "类型", network: "网络", destination: "目标地址", source: "来源账户", amount: "金额", asset: "资产", memo: "备注", message: "消息", txHash: "交易 ID", created: "创建时间", merchantFee: "商户手续费", paidFrom: "付款来源", payerEmail: "付款方邮箱", receipt: "收据", depositLimits: "来自其他网络的付款限制" },
-        receipt: { sent: "已于 {time} 通过邮件发送", pending: "尚未发送", skippedNone: "未发送：checkout 中没有填写邮箱", skippedMany: "未发送：多位付款方填写了邮箱，但没有人报告付款" }, payerEmails: { title: "checkout 中填写的邮箱", hint: "由打开付款页面的人填写，未经验证。", sent: "已报告付款" }, limitsValue: "每个付款方 {perPayer} 个未完成 · 每 {minutes} 分钟 {perWindow} 个新的", limitsEdit: "编辑限制", limitsSaved: "限制已更新", limitsError: "无法更改限制", limitsSave: "保存限制",
+        receipt: { sent: "已于 {time} 通过邮件发送", pending: "尚未发送", skippedNone: "未发送：checkout 中没有填写邮箱", skippedMany: "未发送：多位付款方填写了邮箱，但没有人证明这笔付款是自己的" }, payerEmails: { title: "checkout 中填写的邮箱", hint: "由打开付款页面的人填写，未经验证。", sent: "已报告付款" }, limitsValue: "每个付款方 {perPayer} 个未完成 · 每 {minutes} 分钟 {perWindow} 个新的", limitsEdit: "编辑限制", limitsSaved: "限制已更新", limitsError: "无法更改限制", limitsSave: "保存限制",
         routes: { title: "这些网络无法支付此金额", hint: "付款方仍可从其他任何网络付款。每条路由有自己的最低金额，并会随时间变化。", item: "{network} 上的 {asset}" },
         deposits: { title: "来自其他网络的付款", sent: "已发送", from: "退款地址", refundTo: "退款地址", status: "状态", created: "创建时间", payout: "向你钱包的付款", loadError: "无法加载来自其他网络的付款。", statuses: { AWAITING_DEPOSIT: "等待充值", DEPOSIT_DETECTED: "已收到充值", INCOMPLETE_DEPOSIT: "部分充值", PROCESSING: "正在兑换", SUCCEEDED: "已付款", REFUNDED: "已退款", FAILED: "失败", EXPIRED: "已过期" } },
         delete: "删除",

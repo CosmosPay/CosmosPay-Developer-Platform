@@ -292,14 +292,23 @@ export async function reportCheckoutEvent(
   id: string,
   event: CheckoutEvent,
   fetchImpl: typeof fetch = fetch,
-  /** This checkout session's token: a `sent` it reports picks the email the receipt goes to. */
+  /** This checkout session's token, sent with every event of the session. */
   payerToken?: string | null,
+  /** What the session's wallet said it pays from and the transaction it answered: the session's
+      proof, which decides who gets the receipt (a bare `sent` decides nothing). Only with a token. */
+  proof: { address?: string | null; txHash?: string | null } = {},
 ): Promise<boolean> {
+  const body: Record<string, string> = { event };
+  if (payerToken) {
+    body.payerToken = payerToken;
+    if (proof.address) body.address = proof.address;
+    if (proof.txHash) body.txHash = proof.txHash;
+  }
   try {
     const res = await fetchImpl(`${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}/events`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(payerToken ? { event, payerToken } : { event }),
+      body: JSON.stringify(body),
       cache: "no-store",
       keepalive: true,
     });

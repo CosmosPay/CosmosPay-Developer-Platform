@@ -124,7 +124,9 @@ _openapi:
           (a changed email, `events`, `deposits`). Every session keeps its own
           email and none can change another’s, so a second payer never blocks
           the first. The receipt goes to the deposit’s session, else to the
-          session that reported `sent` last. Budgeted per client address.'
+          session whose wallet account or transaction (registered through
+          `events`) matches the settlement, else to the only session if just one
+          gave an email (with no customer link). Budgeted per client address.'
         heading: record-the-payers-email-before-they-pay-for-their-receipt-no-api-key
       - content: >-
           The hosted checkout tells what the payer did with a wallet while the

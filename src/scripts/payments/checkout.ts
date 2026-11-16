@@ -625,11 +625,12 @@ export function startCheckout(): void {
   let walletAway = false;
   let sentReported = false;
   let backCheck: number | undefined;
-  function report(event: CheckoutEvent) {
+  function report(event: CheckoutEvent, proof: { address?: string | null; txHash?: string | null } = {}) {
     if (preview || !link || phaseOf(link) !== "open") return;
     if (event === "sent") sentReported = true;
-    // The session's token goes with it: a `sent` names the email the receipt goes to.
-    void reportCheckoutEvent(apiBase, id, event, fetch, payerToken);
+    // The session's token goes with it, and what the wallet said it pays from or answered: that
+    // proof, matched against the settlement, is what sends this session the receipt.
+    void reportCheckoutEvent(apiBase, id, event, fetch, payerToken, proof);
   }
 
   function watchWalletLeave() {
@@ -690,8 +691,8 @@ export function startCheckout(): void {
     text("ext-status", t.extOpening);
     report("walletOpened");
     try {
-      await window.cosmosWallet.requestPayment(link.uri);
-      report("sent");
+      const res = (await window.cosmosWallet.requestPayment(link.uri)) as { hash?: unknown } | undefined;
+      report("sent", { txHash: typeof res?.hash === "string" ? res.hash : null });
       text("ext-status", t.extSent);
       void load();
     } catch {
@@ -795,7 +796,8 @@ export function startCheckout(): void {
         payerStatus(t.signFailed);
         return;
       }
-      report("sent");
+      // The account Freighter signed with is the payment's source.
+      report("sent", { address: payerEnvelope.account });
       payerStatus(t.signSent);
       void load();
     } finally {
