@@ -326,7 +326,7 @@ export type DepositFailure =
   | { kind: "closed" }
   /** Refused (a minimum this route has, a token it cannot take now, a refund address): the server's own words. */
   | { kind: "refused"; message: string }
-  /** Too many open deposits on this link. */
+  /** This payer (client address) already has as many open deposits on the link as it may (409). */
   | { kind: "busy" }
   | { kind: "rate-limited"; retryAfterMs: number }
   | { kind: "error" };

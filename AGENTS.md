@@ -786,7 +786,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   links (SEP-7, Solana Pay, EIP-681) and test networks (Solana devnet and Monad testnet in the
   sandbox); every other network is paid through a **deposit address made for each payment**, on
   mainnet only (the sandbox lists them, off, saying why), for an amount in one of the tokens the
-  Payments API lists there, with no merchant fee (product decision, 2026-11-16). The payer pays from
+  Payments API lists there, with no merchant fee (default taken 2026-11-16, open for the owner). The payer pays from
   any network and token; the merchant receives exactly the amount on the link's network. A mainnet
   Stellar, Solana or Monad link with an amount and no fee can be paid that way too
   (`crossChainPayment` on the public read). The form is composed, not a stack of fields: the network
@@ -840,7 +840,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   networks whose wallets this app verifies no signature from (the Bitcoin family, XRP Ledger, Tron,
   TON, NEAR, Sui, Aptos, Movement, Starknet, Cardano, Aleo) are **added by their address, typed
   twice**, by members holding `wallets:create`, stored as `provider: "address"` and listed as added
-  without a signature (product decision, 2026-11-16, open for the owner).
+  without a signature (default taken 2026-11-16, open for the owner).
 - **Connecting proves the wallet**: it signs `walletProofMessage` (`src/lib/org-wallets.ts`: the
   organization, the network, the address and `issuedAt`), and the route checks the signature
   against the address (`src/lib/org-wallets-verify.ts`): SEP-53 on Stellar (Freighter), Ed25519 on

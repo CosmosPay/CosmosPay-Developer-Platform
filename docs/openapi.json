@@ -2265,7 +2265,7 @@
     },
     "/v1/payment-links/{id}/deposits": {
       "post": {
-        "description": "A live quote: an address on `originChain` made for this payment alone. The payer sends `amountIn` of the origin asset there (with `depositMemo` when set) before `expiresAt`; the merchant is paid exactly the link amount, the link turns `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is refunded to `refundTo`. The same origin asset and refund address while an earlier deposit still waits answers that one; at most a few are open per link (`operation_in_flight`). Budgeted per client address.",
+        "description": "A live quote: an address on `originChain` made for this payment alone. The payer sends `amountIn` of the origin asset there (with `depositMemo` when set) before `expiresAt`; the merchant is paid exactly the link amount, the link turns `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is refunded to `refundTo`. The same origin asset and refund address while an earlier deposit still waits answers that one; otherwise each client address may have two open deposits per link (`operation_in_flight`), so no caller can take another payer’s. Budgeted per client address.",
         "operationId": "PaymentLinksController_createDeposit_v1",
         "parameters": [
           {
@@ -2425,7 +2425,7 @@
             }
           },
           "409": {
-            "description": "The link already has as many open deposit addresses as it may: pay one of them, or try again once they expire.",
+            "description": "This client address already has as many open deposit addresses on the link as it may: pay one of them, or try again once they expire. Other payers are not affected.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2433,12 +2433,12 @@
                 },
                 "examples": {
                   "operation_in_flight": {
-                    "summary": "operation_in_flight: Too many open deposit addresses",
+                    "summary": "operation_in_flight: Too many open deposit addresses from this client",
                     "value": {
                       "statusCode": 409,
                       "code": "operation_in_flight",
                       "error": "Conflict",
-                      "message": "This payment link already has 5 open deposit addresses: pay one of them, or try again once they expire.",
+                      "message": "You already have 2 open deposit addresses for this payment link: pay one of them, or try again once they expire.",
                       "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
