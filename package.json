@@ -38,7 +38,7 @@
     "@astrojs/node": "^11.1.9",
     "@astrojs/react": "^7.1.2",
     "@cosmosapp/pay_sdk": "^2.4.0",
-    "@lobstrco/signer-extension-api": "2.0.0",
+    "@lobstrco/signer-extension-api": "2.1.0",
     "@noble/curves": "1.9.7",
     "@noble/hashes": "2.4.0",
     "@prisma/adapter-pg": "^7.10.1",
