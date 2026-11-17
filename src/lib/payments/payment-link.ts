@@ -140,14 +140,17 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
     // it would hide the wallet link the payment needs.
     if (payerAccountRequired && (chain !== "stellar" || !merchantFee || b.amount === null)) return null;
     if (payerAccountRequired ? !CHECKOUT_URI.test(b.uri) : !URI_SCHEMES[chain].test(b.uri)) return null;
-    // Offered only where the server can take it: a mainnet link with an amount and no fee (a
-    // server that predates the field says nothing, which is no).
-    crossChainPayment = b.crossChainPayment === true && b.network === "public" && b.amount !== null && !merchantFee;
+    // Offered only where the server can take it: a mainnet link with no fee, with an amount or
+    // one the payer types (a fee goes to a wallet on the chain, which the route cannot pay beside
+    // the merchant; a server that predates the field says nothing, which is no).
+    crossChainPayment = b.crossChainPayment === true && b.network === "public" && !merchantFee;
   } else {
-    // Every other network is paid through a deposit address made for the payment, on mainnet,
-    // for an amount, with no merchant fee: `payTo` is none, the `uri` is this page. A body that
-    // says otherwise would show the payer an address to pay that is not one.
-    if (b.payTo !== null || b.network !== "public" || b.amount === null || merchantFee || payerAccountRequired) return null;
+    // Every other network is paid through a deposit address made for the payment: `payTo` is
+    // none, the `uri` is this page. Which of those links can be paid is the server's call and it
+    // says so in `crossChainPayment`: mainnet or a test network it settles, a set amount or one
+    // the payer types, with or without a merchant fee (the route pays it). A body that says
+    // otherwise would show the payer an address to pay that is not one.
+    if (b.payTo !== null || payerAccountRequired) return null;
     if (b.kind !== "PAY" || b.crossChainPayment !== true || !CHECKOUT_URI.test(b.uri)) return null;
     crossChainPayment = true;
   }

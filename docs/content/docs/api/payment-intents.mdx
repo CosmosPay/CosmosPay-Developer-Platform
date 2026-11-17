@@ -17,6 +17,9 @@ _openapi:
       title: List the consumer's payment intents
       url: '#list-the-consumers-payment-intents'
     - depth: 2
+      title: List the networks a payment link can settle on, for this key
+      url: '#list-the-networks-a-payment-link-can-settle-on-for-this-key'
+    - depth: 2
       title: List the status-transition history for a payment intent
       url: '#list-the-status-transition-history-for-a-payment-intent'
     - depth: 2
@@ -48,6 +51,8 @@ _openapi:
         id: create-a-pay-intent-a-payment-link-and-qr-on-any-network
       - content: List the consumer's payment intents
         id: list-the-consumers-payment-intents
+      - content: List the networks a payment link can settle on, for this key
+        id: list-the-networks-a-payment-link-can-settle-on-for-this-key
       - content: List the status-transition history for a payment intent
         id: list-the-status-transition-history-for-a-payment-intent
       - content: List a payment intent's deposit addresses (payments from any network)
@@ -86,12 +91,14 @@ _openapi:
           Solana and EIP-681 on Monad, on the key's network (a `prod` key gets
           mainnet, a `dev` key the test networks); on every other network the
           hosted checkout, where the payer pays a deposit address made for the
-          payment from any network (mainnet only, `amount` required, no
-          `merchantFee` or `callback`). A mainnet link with an amount and no
-          merchant fee can also be paid from another network on Stellar, Solana
-          and Monad. `memo` (numeric, generated when omitted) is the idempotency
-          key: the same memo and terms return the stored intent, other terms are
-          `409 idempotency_conflict`. Emits `PAYMENT_INTENT_CREATED`.
+          payment from any network (`amount` required, no `merchantFee` or
+          `callback`; with a `dev` key, only where the sandbox settles, in the
+          network's test stablecoin: `GET /v1/payment-intents/networks`). A
+          mainnet link with an amount and no merchant fee can also be paid from
+          another network on Stellar, Solana and Monad. `memo` (numeric,
+          generated when omitted) is the idempotency key: the same memo and
+          terms return the stored intent, other terms are `409
+          idempotency_conflict`. Emits `PAYMENT_INTENT_CREATED`.
 
 
           Requires the `payments:write` scope. The shared public key may call
@@ -107,6 +114,17 @@ _openapi:
           Requires the `payments:read` scope.
         heading: list-the-consumers-payment-intents
       - content: >-
+          Every payment network, with whether a link can be created there with
+          this key and why not. A `prod` key reaches every network on mainnet; a
+          `dev` key reaches Stellar, Solana and Monad on their test networks,
+          and the networks paid through deposit addresses where the sandbox
+          settles them, each in its test stablecoin (`asset`). Read before
+          offering a network in a form.
+
+
+          Requires the `payments:read` scope. The shared public key may call it.
+        heading: list-the-networks-a-payment-link-can-settle-on-for-this-key
+      - content: >-
           The intent's audit trail as an array, oldest first: every status
           change with `fromStatus`, `toStatus`, the `txHash` it carried, its
           `reason` and the `actor` that made it (`api`, `validate`, `observer`
@@ -120,7 +138,7 @@ _openapi:
           this link through `POST /v1/payment-links/{id}/deposits`, with what
           was sent from which network, the refund address and how each stands.
           The one that settled the intent is also named by its `paidFrom`. Only
-          intents on the key's network; a link on a test network has none.
+          intents on the key's network.
 
 
           Requires the `payments:read` scope.
@@ -205,7 +223,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-intents/tx","method":"post"},{"path":"/v1/payment-intents/pay","method":"post"},{"path":"/v1/payment-intents","method":"get"},{"path":"/v1/payment-intents/{id}/transitions","method":"get"},{"path":"/v1/payment-intents/{id}/deposits","method":"get"},{"path":"/v1/payment-intents/{id}/payer-emails","method":"get"},{"path":"/v1/payment-intents/{id}/route-check","method":"get"},{"path":"/v1/payment-intents/{id}","method":"get"},{"path":"/v1/payment-intents/{id}","method":"patch"},{"path":"/v1/payment-intents/{id}","method":"delete"},{"path":"/v1/payment-intents/{id}/validate","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-intents/tx","method":"post"},{"path":"/v1/payment-intents/pay","method":"post"},{"path":"/v1/payment-intents","method":"get"},{"path":"/v1/payment-intents/networks","method":"get"},{"path":"/v1/payment-intents/{id}/transitions","method":"get"},{"path":"/v1/payment-intents/{id}/deposits","method":"get"},{"path":"/v1/payment-intents/{id}/payer-emails","method":"get"},{"path":"/v1/payment-intents/{id}/route-check","method":"get"},{"path":"/v1/payment-intents/{id}","method":"get"},{"path":"/v1/payment-intents/{id}","method":"patch"},{"path":"/v1/payment-intents/{id}","method":"delete"},{"path":"/v1/payment-intents/{id}/validate","method":"post"}]} showTitle />
     </>
   );
 }

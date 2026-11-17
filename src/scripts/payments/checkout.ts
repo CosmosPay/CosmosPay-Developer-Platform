@@ -971,9 +971,15 @@ export function startCheckout(): void {
     toggle("[data-xc-deposit]", d === null);
     if (!d) {
       xcShownPhase = null;
+      toggle("[data-xc-intro]", false);
+      toggle("[data-xc-phase-status]", false);
       return;
     }
     const ph = depositPhase(d);
+    // Once the merchant is paid the link's own status says so: the step's invitation to pay and
+    // its second "paid" would only repeat it. The payout's explorer row stays.
+    toggle("[data-xc-intro]", ph === "paid");
+    toggle("[data-xc-phase-status]", ph === "paid");
     slots("xc-phase").forEach((pill) => {
       pill.textContent = t.xc.phase[ph];
       pill.dataset.phase = XC_PILL[ph];

@@ -894,13 +894,17 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   community server's `CROSS_CHAIN_NETWORK_IDS`). Stellar, Solana and Monad have their own wallet
   links (SEP-7, Solana Pay, EIP-681) and test networks (Solana devnet and Monad testnet in the
   sandbox); every other network is paid through a **deposit address made for each payment**, on
-  mainnet only (the sandbox lists them, off, saying why), in one of the tokens the Payments API
+  mainnet and on the test networks the community server's sandbox settles (it lists the others,
+  off, saying why), in one of the tokens the Payments API
   lists there, with or without an amount (product owner, 2026-11-16: the payer types it in the
   checkout), and with a merchant fee paid as the cross-chain route's own app fee to a route account
   (an organization wallet on NEAR, or an EVM one). The payer pays from any network and token, the
   commission on top; the merchant receives exactly the amount on the link's network. A mainnet
   Stellar, Solana or Monad link with no fee can be paid that way too, with or without an amount
-  (`crossChainPayment` on the public read). The form is composed, not a stack of fields: the network
+  (`crossChainPayment` on the public read). Which deposit-network links can be paid is the server's
+  call: `parsePaymentLink` accepts a test network, an open amount and a merchant fee there whenever
+  the public read says `crossChainPayment` (it refused all three until 2026-11-17, so those links
+  failed to load). The form is composed, not a stack of fields: the network
   as a `Select` of every network by name (none first for being ours), the amount with its asset
   dropdown in one well (as the swap widget; on the other networks the real cross-chain asset list,
   never sampled), the destination, and memo / message under "more options"; transaction intents
