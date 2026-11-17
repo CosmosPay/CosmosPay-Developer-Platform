@@ -18,6 +18,9 @@ _openapi:
         (no API key)
       url: '#build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key'
     - depth: 2
+      title: Record the payer's email before they pay, for their receipt (no API key)
+      url: '#record-the-payers-email-before-they-pay-for-their-receipt-no-api-key'
+    - depth: 2
       title: Report what the payer did with a wallet from the hosted checkout (no API
         key)
       url: '#report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key'
@@ -29,6 +32,26 @@ _openapi:
       title: 'Solana Pay transaction request, POST: the transaction the payer signs
         (no API key)'
       url: '#solana-pay-transaction-request-post-the-transaction-the-payer-signs-no-api-key'
+    - depth: 2
+      title: List what a payer can pay a payment link with, from any network (no API
+        key)
+      url: '#list-what-a-payer-can-pay-a-payment-link-with-from-any-network-no-api-key'
+    - depth: 2
+      title: Price paying a payment link from one network and asset (no API key)
+      url: '#price-paying-a-payment-link-from-one-network-and-asset-no-api-key'
+    - depth: 2
+      title: Open a deposit address that pays a payment link from any network (no API
+        key)
+      url: '#open-a-deposit-address-that-pays-a-payment-link-from-any-network-no-api-key'
+    - depth: 2
+      title: Read one deposit address of a payment link (no API key)
+      url: '#read-one-deposit-address-of-a-payment-link-no-api-key'
+    - depth: 2
+      title: Read a charge in local money as its payer sees it (no API key)
+      url: '#read-a-charge-in-local-money-as-its-payer-sees-it-no-api-key'
+    - depth: 2
+      title: Start paying a charge in local money (no API key)
+      url: '#start-paying-a-charge-in-local-money-no-api-key'
   structuredData:
     headings:
       - content: Read a payment link as its payer sees it (no API key)
@@ -36,6 +59,9 @@ _openapi:
       - content: Build the envelope a payer signs for a Stellar link with a merchant fee
           (no API key)
         id: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: Record the payer's email before they pay, for their receipt (no API
+          key)
+        id: record-the-payers-email-before-they-pay-for-their-receipt-no-api-key
       - content: Report what the payer did with a wallet from the hosted checkout (no
           API key)
         id: report-what-the-payer-did-with-a-wallet-from-the-hosted-checkout-no-api-key
@@ -45,6 +71,20 @@ _openapi:
       - content: 'Solana Pay transaction request, POST: the transaction the payer signs
           (no API key)'
         id: solana-pay-transaction-request-post-the-transaction-the-payer-signs-no-api-key
+      - content: List what a payer can pay a payment link with, from any network (no API
+          key)
+        id: list-what-a-payer-can-pay-a-payment-link-with-from-any-network-no-api-key
+      - content: Price paying a payment link from one network and asset (no API key)
+        id: price-paying-a-payment-link-from-one-network-and-asset-no-api-key
+      - content: Open a deposit address that pays a payment link from any network (no
+          API key)
+        id: open-a-deposit-address-that-pays-a-payment-link-from-any-network-no-api-key
+      - content: Read one deposit address of a payment link (no API key)
+        id: read-one-deposit-address-of-a-payment-link-no-api-key
+      - content: Read a charge in local money as its payer sees it (no API key)
+        id: read-a-charge-in-local-money-as-its-payer-sees-it-no-api-key
+      - content: Start paying a charge in local money (no API key)
+        id: start-paying-a-charge-in-local-money-no-api-key
     contents:
       - content: >-
           For a hosted checkout page: amount, asset, network, the address to pay
@@ -77,6 +117,17 @@ _openapi:
 
           Only for an open link (`PENDING`). Budgeted per client address.
         heading: build-the-envelope-a-payer-signs-for-a-stellar-link-with-a-merchant-fee-no-api-key
+      - content: 'The hosted checkout asks the payer for an email before it shows any
+          way to pay and records it here, with the checkout language, as one
+          checkout session: the first call answers the session’s `payerToken`
+          (only its hash is stored), and the session sends it on its later calls
+          (a changed email, `events`, `deposits`). Every session keeps its own
+          email and none can change another’s, so a second payer never blocks
+          the first. The receipt goes to the deposit’s session, else to the
+          session whose wallet account or transaction (registered through
+          `events`) matches the settlement, else to the only session if just one
+          gave an email (with no customer link). Budgeted per client address.'
+        heading: record-the-payers-email-before-they-pay-for-their-receipt-no-api-key
       - content: >-
           The hosted checkout tells what the payer did with a wallet while the
           link is pending: `walletOpened` (the wallet link, the web wallet, the
@@ -102,6 +153,56 @@ _openapi:
           settles from the ledger, found by its reference; nothing is stored.
           Only for an open link.
         heading: solana-pay-transaction-request-post-the-transaction-the-payer-signs-no-api-key
+      - content: 'Every network and asset the cross-chain route still trades: a payer
+          picks one, then asks `POST /v1/payment-links/{id}/quote` what paying
+          from it costs. Only for a link that can be paid from another network
+          (`crossChainPayment` on the link); any other is `validation_failed`.
+          Reachable without an API key; budgeted per client address.'
+        heading: list-what-a-payer-can-pay-a-payment-link-with-from-any-network-no-api-key
+      - content: 'What the payer sends (`origin.amount`, with the fees and a small
+          buffer for price moves in it; the unused part is refunded) for the
+          merchant to receive exactly the link amount in its asset (on a link
+          without one, the `amount` the payer typed). A dry quote: nothing is
+          reserved and nothing is stored. Routes have minimum amounts of their
+          own, refused as `provider_error` with the reason, so a checkout shows
+          it before any deposit address exists. Only for an open link that can
+          be paid from another network; budgeted per client address.'
+        heading: price-paying-a-payment-link-from-one-network-and-asset-no-api-key
+      - content: 'A live quote: an address on `originChain` made for this payment alone,
+          opened only with the payer’s `email` (their receipt goes there). The
+          payer sends `amountIn` of the origin asset there (with `depositMemo`
+          when set) before `expiresAt`; the merchant is paid exactly the link
+          amount, the link turns `SUCCEEDED` and emits
+          `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is
+          refunded to `refundTo`. The same origin asset and refund address while
+          an earlier deposit still waits from the same client answers that one.
+          Each client address (an IPv6 caller by its /48) may have two open
+          deposits per link (`409 operation_in_flight`), so no caller can take
+          another payer’s, and a link takes a limited number of new ones every
+          few minutes (`429` with `Retry-After`). Budgeted per client address
+          too.'
+        heading: open-a-deposit-address-that-pays-a-payment-link-from-any-network-no-api-key
+      - content: What the payer sends and where, and how the payment stands, for the
+          checkout to poll every few seconds until it is `SUCCEEDED`,
+          `REFUNDED`, `FAILED` or `EXPIRED`. Both ids are needed; nothing about
+          the merchant is returned. Budgeted per client address.
+        heading: read-one-deposit-address-of-a-payment-link-no-api-key
+      - content: 'For the hosted page of a payment request: the amount in local money,
+          the description, the token the seller receives with an estimate at the
+          market price right now, and the payment methods that can pay it. **The
+          id is the capability**: nothing about the seller’s account or address
+          is returned. Poll it until `status` is no longer `open`. Answered with
+          `Cache-Control: no-store` and budgeted per client address.'
+        heading: read-a-charge-in-local-money-as-its-payer-sees-it-no-api-key
+      - content: 'Opens a purchase of the request’s exact amount, delivered to the
+          seller, paid with `paymentMethod`, and answers `widgetUrl`: open it in
+          a tab or window (claim the tab before the call, so no popup blocker
+          stops it), where the payer signs in, verifies their identity and pays.
+          Starting again opens another purchase; the first one to complete pays
+          the request. `409 request_closed` once the request is paid, cancelled
+          or expired; `400 validation_failed` for a payment method the market
+          does not offer for the currency.'
+        heading: start-paying-a-charge-in-local-money-no-api-key
 ---
 
 {/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
@@ -111,7 +212,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"}]} showTitle />
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/payment-links/{id}","method":"get"},{"path":"/v1/payment-links/{id}/transaction","method":"post"},{"path":"/v1/payment-links/{id}/payer","method":"post"},{"path":"/v1/payment-links/{id}/events","method":"post"},{"path":"/v1/payment-links/{id}/solana-pay","method":"get"},{"path":"/v1/payment-links/{id}/solana-pay","method":"post"},{"path":"/v1/payment-links/{id}/deposit-assets","method":"get"},{"path":"/v1/payment-links/{id}/quote","method":"post"},{"path":"/v1/payment-links/{id}/deposits","method":"post"},{"path":"/v1/payment-links/{id}/deposits/{depositId}","method":"get"},{"path":"/v1/payment-links/fiat/{id}","method":"get"},{"path":"/v1/payment-links/fiat/{id}/sessions","method":"post"}]} showTitle />
     </>
   );
 }
