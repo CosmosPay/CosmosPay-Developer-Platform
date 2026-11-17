@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { requestSession } from "@/lib/request-session";
-import { jsonBadRequest, jsonConflict, jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
+import { ApiStatus, jsonBadRequest, jsonConflict, jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
-import { addedByAddress, isFreshProof, MAX_ORG_WALLETS, walletProofMessage } from "@/lib/org-wallets";
-import { verifyWalletProof } from "@/lib/org-wallets-verify";
-import { checkWalletProofXdr } from "@/lib/wallets/wallet-proof-xdr";
+import { addedByAddress, isLiveChallenge, MAX_ORG_WALLETS, normalizeWalletAddress } from "@/lib/org-wallets";
+import { verifyOwnershipProof } from "@/lib/org-wallets-verify";
+import { consumeChallenge, findChallenge } from "@/lib/org-wallet-challenges";
+import { proofContext } from "@/lib/wallet-proof-env";
+import { ProofNetworkError } from "@/lib/wallet-proofs/rpc";
+import { tonFriendlyAddress } from "@/lib/wallet-proofs/ton";
 import { addOrgWallet, countOrgWallets, listOrgWallets, WalletAlreadyConnectedError } from "@/lib/org-wallets-store";
 import { connectWalletBodySchema } from "@/schemas/org-wallets";
 import type { APIRoute } from "astro";
@@ -29,12 +32,13 @@ export const GET: APIRoute = async (ctx) => {
   return jsonSuccess({ data: wallets, message: "Wallets loaded" });
 };
 
-/* POST /api/organizations/:id/wallets: connect a wallet (`wallets:create`). The wallet signed
-   walletProofMessage for this organization, network and address within the last minutes, or, on
-   Stellar, the proof transaction carrying it (a signed XDR from any wallet); the signature is
-   checked against the address before anything is stored. On a network whose wallets this app
-   verifies no signature from (`addedByAddress`), the member adds it by its address, typed twice,
-   and it is stored as added without a signature (`provider: "address"`). */
+/* POST /api/organizations/:id/wallets: connect a wallet (`wallets:create`). The wallet signed the
+   challenge this member was issued for this organization, network and address (POST
+   .../wallets/challenge; on Stellar the proof transaction carrying it, a signed XDR from any
+   wallet, also counts). The signature is checked against the address, the challenge is used up
+   (once, while alive) and only then is the wallet stored. An address that cannot sign a message
+   (`addedByAddress`) is added by its address, typed twice, and stored as added without a
+   signature (`provider: "address"`). */
 export const POST: APIRoute = async (ctx) => {
   const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
@@ -53,20 +57,34 @@ export const POST: APIRoute = async (ctx) => {
   if (!body || !body.ok) {
     return body?.response ?? jsonError({ message: "Invalid request", code: 400, status: "bad_request" });
   }
-  const { chain, address, provider, label, issuedAt, signature, signedXdr } = body.data;
+  const { chain, provider, label, nonce, signature, signedXdr, proof } = body.data;
+  let address = body.data.address;
 
-  // The schema already held a wallet added by its address to the address typed twice.
-  if (!addedByAddress(chain)) {
-    if (!issuedAt || !isFreshProof(issuedAt)) return jsonBadRequest("The wallet's signature has expired. Connect it again.");
-    const proven = signedXdr
-      ? checkWalletProofXdr({ orgId, address, issuedAt }, signedXdr).ok
-      : verifyWalletProof(chain, address, walletProofMessage({ orgId, chain, address, issuedAt }), signature!);
-    if (!proven) {
-      return jsonBadRequest("The signature was not made by this wallet.");
-    }
-  }
   if ((await countOrgWallets(orgId)) >= MAX_ORG_WALLETS) {
     return jsonBadRequest(`An organization can connect at most ${MAX_ORG_WALLETS} wallets.`);
+  }
+
+  // The schema already held an address that cannot sign to the address typed twice.
+  if (!addedByAddress(chain, address)) {
+    const challenge = nonce ? await findChallenge(nonce).catch(() => null) : null;
+    const expired = "The wallet's signature has expired. Connect it again.";
+    if (!challenge || challenge.orgId !== orgId || challenge.userId !== session.user.id || challenge.chain !== chain) return jsonBadRequest(expired);
+    if (challenge.usedAt || !isLiveChallenge(challenge.expiresAt)) return jsonBadRequest(expired);
+    if (challenge.address !== null && challenge.address !== normalizeWalletAddress(chain, address)) {
+      return jsonBadRequest("The signature was not made by this wallet.");
+    }
+    let proven: boolean;
+    try {
+      // The message names the address as the challenge stored it (hex lower-cased); TON's names none.
+      proven = await verifyOwnershipProof(challenge, challenge.address ?? address, { provider, signature, signedXdr, proof }, proofContext());
+    } catch (err) {
+      if (err instanceof ProofNetworkError) return jsonError({ message: "The network could not be reached to check this wallet. Try again in a moment.", code: 503, status: ApiStatus.INTERNAL_ERROR });
+      throw err;
+    }
+    if (!proven) return jsonBadRequest("The signature was not made by this wallet.");
+    // Used once: a second request with the same proof finds it used.
+    if (!(await consumeChallenge(challenge.nonce).catch(() => false))) return jsonBadRequest(expired);
+    if (chain === "ton") address = tonFriendlyAddress(address) ?? address;
   }
 
   try {

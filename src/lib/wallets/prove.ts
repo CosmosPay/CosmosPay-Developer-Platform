@@ -1,5 +1,6 @@
 /* Proving a wallet from the browser, to connect it to an organization (src/lib/org-wallets.ts):
-   the wallet shares its address, then signs the proof message for it. The page never sees a key;
+   the wallet shares its address, the server issues a challenge for it, then the wallet signs the
+   challenge's message (the other networks: src/lib/wallets/prove-networks.ts). The page never sees a key;
    each wallet shows the text and the person approves it there. One way per wallet:
    - Freighter (Stellar): SEP-53 signMessage, base64 back.
    - Phantom and Solflare (Solana): their injected provider's signMessage over UTF-8, base64 back.
@@ -10,8 +11,10 @@ import type { WalletProvider } from "@/lib/org-wallets";
 export type ProveProblem = "missing" | "declined";
 
 export class WalletProofError extends Error {
-  constructor(readonly problem: ProveProblem, message: string) {
+  readonly problem: ProveProblem;
+  constructor(problem: ProveProblem, message: string) {
     super(message);
+    this.problem = problem;
   }
 }
 
@@ -53,7 +56,9 @@ export function evmWalletName(): string | null {
 }
 
 /** Which wallets this browser has, per provider (Freighter answers asynchronously). */
-export async function detectWallets(): Promise<Record<WalletProvider, boolean>> {
+export type BrowserProvider = Extract<WalletProvider, "freighter" | "phantom" | "solflare" | "evm">;
+
+export async function detectWallets(): Promise<Record<BrowserProvider, boolean>> {
   let freighter = false;
   try {
     const api = await import("@stellar/freighter-api");
@@ -61,14 +66,14 @@ export async function detectWallets(): Promise<Record<WalletProvider, boolean>> 
   } catch {
     freighter = false;
   }
-  // `address` needs no wallet: it is the address typed twice (a network whose wallets sign nothing this app checks).
-  return { freighter, phantom: !!phantom(), solflare: !!solflare(), evm: !!evm(), address: true };
+  // The other providers are the networks' own standards: their wallets are found by prove-networks.ts.
+  return { freighter, phantom: !!phantom(), solflare: !!solflare(), evm: !!evm() };
 }
 
 const declined = (e: unknown) => new WalletProofError("declined", e instanceof Error ? e.message : typeof e === "string" ? e : "The wallet refused the request");
 
-/** The wallet's address, then its signature over `messageFor(address)`. */
-export async function proveWallet(provider: WalletProvider, messageFor: (address: string) => string): Promise<{ address: string; signature: string }> {
+/** The wallet's address, then its signature over `messageFor(address)` (the challenge's message, issued for that address). */
+export async function proveWallet(provider: BrowserProvider, messageFor: (address: string) => Promise<string>): Promise<{ address: string; signature: string }> {
   if (provider === "freighter") {
     const api = await import("@stellar/freighter-api");
     const conn = await withTimeout(api.isConnected().catch(() => ({ isConnected: false })), DETECT_TIMEOUT_MS, { isConnected: false });
@@ -76,7 +81,8 @@ export async function proveWallet(provider: WalletProvider, messageFor: (address
     const access = await api.requestAccess().catch((e) => ({ address: "", error: e }));
     if (access.error || !access.address) throw declined(access.error);
     const address = access.address;
-    const res = await api.signMessage(messageFor(address), { address }).catch((e) => ({ error: e, signedMessage: null, signerAddress: "" }));
+    const text = await messageFor(address);
+    const res = await api.signMessage(text, { address }).catch((e) => ({ error: e, signedMessage: null, signerAddress: "" }));
     if (res.error || !res.signedMessage) throw declined(res.error);
     if (res.signerAddress && res.signerAddress !== address) throw new WalletProofError("declined", `Freighter signed with ${res.signerAddress}, not ${address}`);
     const signed = res.signedMessage as unknown;
@@ -97,8 +103,9 @@ export async function proveWallet(provider: WalletProvider, messageFor: (address
       throw declined(e);
     }
     if (!address) throw new WalletProofError("declined", "The wallet shared no address");
+    const text = await messageFor(address);
     try {
-      const signed = await wallet.signMessage(new TextEncoder().encode(messageFor(address)), "utf8");
+      const signed = await wallet.signMessage(new TextEncoder().encode(text), "utf8");
       const bytes = signed instanceof Uint8Array ? signed : signed.signature;
       return { address, signature: toBase64(new Uint8Array(bytes)) };
     } catch (e) {
@@ -108,14 +115,20 @@ export async function proveWallet(provider: WalletProvider, messageFor: (address
 
   const eth = evm();
   if (!eth) throw new WalletProofError("missing", "No EVM wallet is installed");
+  let address: string | undefined;
   try {
     const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
-    const address = accounts?.[0];
-    if (!address) throw new WalletProofError("declined", "The wallet shared no address");
-    const signature = (await eth.request({ method: "personal_sign", params: [toHex(messageFor(address)), address] })) as string;
+    address = accounts?.[0];
+  } catch (e) {
+    throw declined(e);
+  }
+  if (!address) throw new WalletProofError("declined", "The wallet shared no address");
+  // The challenge's failure is the server's, not the wallet's: it is not caught as a refusal.
+  const text = await messageFor(address);
+  try {
+    const signature = (await eth.request({ method: "personal_sign", params: [toHex(text), address] })) as string;
     return { address, signature };
   } catch (e) {
-    if (e instanceof WalletProofError) throw e;
     throw declined(e);
   }
 }

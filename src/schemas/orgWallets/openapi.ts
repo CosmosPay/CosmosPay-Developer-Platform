@@ -1,14 +1,14 @@
 /* OpenAPI registration for an organization's receiving wallets
    (src/pages/api/organizations/[id]/wallets/**; auto-loaded by src/lib/openapi/auto-load.ts).
 
-   Connecting proves the wallet: it signs the message src/lib/org-wallets.ts builds from the
-   organization, the network, the address and `issuedAt`, and the route checks that signature
-   against the address. Payment links and private payments created from the dashboard must send
+   Connecting proves the wallet: the member asks for a challenge (a nonce, ten minutes, one use),
+   the wallet signs it as its network's wallets sign (src/lib/org-wallets.ts, WALLET_PROVIDERS),
+   and the route checks that signature against the address before it uses the challenge up. Payment links and private payments created from the dashboard must send
    to one of these wallets. A caller who is not a member is answered 404, as on every
    organization route. */
 import { errors, jsonCreated, jsonOk, registerRoutes, sessionSecurity } from "@/lib/openapi/route-helpers";
 import { z } from "@/lib/openapi/zod";
-import { connectWalletBodySchema, renameWalletBodySchema } from "@/schemas/org-wallets";
+import { connectWalletBodySchema, renameWalletBodySchema, walletChallengeBodySchema } from "@/schemas/org-wallets";
 import { jsonBody, pathParam } from "@/schemas/shared/openapi-params";
 import { NETWORK_IDS, type NetworkId } from "@/lib/chains";
 import { WALLET_PROVIDER_IDS } from "@/lib/org-wallets";
@@ -23,21 +23,52 @@ const walletSchema = z
     chain: z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "stellar", description: "Any network a payment link settles on." }),
     address: z.string().openapi({ example: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG", description: "As the network writes it; hex addresses (EVM and the like) lower-cased." }),
     label: z.string().nullable().openapi({ example: "Treasury" }),
-    provider: z.enum(WALLET_PROVIDER_IDS).nullable().openapi({ example: "freighter", description: "The wallet that proved the address; `address` when it was added by its address, with no signature (a network whose wallets this app verifies no signature from); null for a signed Stellar XDR." }),
+    provider: z.enum(WALLET_PROVIDER_IDS).nullable().openapi({ example: "freighter", description: "What proved the address: the wallet that signed (`freighter`, `phantom`, `solflare`, `evm`) or the signature's standard (`tip191`, `tonproof`, `nep413`, `sui`, `aip62`, `snip12`, `cip30`, `xrpl`, `bip322`, `signmessage`); `address` when it was added by its address, with no signature (an address that cannot sign a message); null for a signed Stellar XDR." }),
     createdAt: z.string().openapi({ example: "2026-10-25T20:00:00.000Z" }),
   })
   .openapi("OrganizationWallet", { description: "A wallet the organization receives payments in." });
 
+const challengeBody = walletChallengeBodySchema.openapi("OrganizationWalletChallengeBody", {
+  description: "The network and the address to prove. On TON no address: the wallet names it while signing.",
+  example: { chain: "tron", address: "TCLBgkbfVkJroVBJVqBEsxtPNQEQMTQCLQ" },
+});
+
+const challengeSchema = z
+  .object({
+    chain: z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "tron" }),
+    address: z.string().nullable().openapi({ example: "TCLBgkbfVkJroVBJVqBEsxtPNQEQMTQCLQ", description: "As stored and compared (hex lower-cased); null on TON." }),
+    nonce: z.string().openapi({ example: "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0", description: "32 random bytes, hex. Send it back as `nonce` when connecting." }),
+    issuedAt: z.string().openapi({ example: "2026-11-16T12:00:00.000Z" }),
+    expiresAt: z.string().openapi({ example: "2026-11-16T12:10:00.000Z", description: "Ten minutes after `issuedAt`; the challenge is good for one connect until then." }),
+    message: z.string().nullable().openapi({ description: "The text the wallet signs (every network but TON): the organization, the network, the address, the nonce and the challenge's life, one per line." }),
+    domain: z.string().openapi({ example: "dev.cosmospay.lat", description: "The dashboard's host: the domain of TON's ton_proof and the recipient of NEAR's NEP-413 signature." }),
+    manifestUrl: z.string().nullable().openapi({ description: "TON only: the TON Connect manifest the wallet reads; its host is `domain`." }),
+    typedData: z.record(z.string(), z.unknown()).nullable().openapi({ description: "Starknet only: the SNIP-12 (revision 1) typed data the account signs (domain Cosmos Pay on SN_MAIN; the organization, the nonce cut to 31 bytes, the expiry in seconds)." }),
+  })
+  .openapi("OrganizationWalletChallenge", { description: "What a wallet signs to be connected to the organization." });
+
 const connectBody = connectWalletBodySchema.openapi("ConnectOrganizationWalletBody", {
-  description:
-    "`signature` is the wallet's signature over the proof message for this organization, network, address and `issuedAt` (at most 10 minutes old): SEP-53 base64 on Stellar, Ed25519 base64 on Solana, personal_sign 0x-hex on Monad and every other EVM network, Ed25519 base64 on Fogo. On Stellar, `signedXdr` instead (no `provider`): the proof transaction carrying that message (a manageData entry, sequence 1, never valid, public network passphrase), signed by the address in any wallet. On a network whose wallets are added by their address (the Bitcoin family, XRP Ledger, Tron, TON, NEAR, Sui, Aptos, Movement, Starknet, Cardano, Aleo): `provider: \"address\"` and `addressConfirm`, the same address typed again, with no signature or `issuedAt`.",
+  description: [
+    "`nonce` names the challenge (POST .../wallets/challenge) and `provider` how it was signed; the proof is `signature` or `proof`.",
+    "Stellar: SEP-53 base64 (`freighter`), or `signedXdr` instead (no `provider`): the proof transaction carrying the message (a manageData entry, sequence 1, never valid, public network passphrase), signed by the address in any wallet.",
+    "Solana and Fogo: Ed25519 base64 over the message (`phantom`, `solflare`). Monad and every other EVM network: personal_sign 0x-hex (`evm`).",
+    "Tron: TIP-191 signMessageV2 0x-hex (`tip191`). Sui: the serialized personal-message signature, base64 (`sui`).",
+    "Bitcoin: BIP-322 simple, the base64 witness (`bip322`), or a BIP-137 compact signature (`signmessage`). Litecoin, Dogecoin, Dash, Zcash (transparent) and Bitcoin Cash: the wallet's signmessage, base64 (`signmessage`).",
+    "TON (`tonproof`): `proof` is TON Connect's answer, `{ publicKey, walletStateInit, proof: { timestamp, domain, payload, signature } }`, its payload the nonce and its domain `domain`.",
+    "NEAR (`nep413`): `proof` is `{ publicKey, signature }` of NEP-413 over the message, the nonce's 32 bytes and `domain` as recipient; the key must be a full-access key of the account.",
+    "Aptos and Movement (`aip62`): `proof` is `{ publicKey, signature, fullMessage }` of AIP-62 signMessage with the message and the nonce; the key must be the account's authentication key.",
+    "Starknet (`snip12`): `proof` is `{ signature: [felt, ...] }` over the challenge's `typedData`; the account contract must accept it (is_valid_signature).",
+    "Cardano (`cip30`): `proof` is CIP-30 signData's `{ signature, key }` (COSE_Sign1 and COSE_Key, hex) over the message, from the address's payment key.",
+    "XRP Ledger (`xrpl`): `proof` is `{ publicKey, signature }`, the keypairs signature of the message's hex.",
+    "An address that cannot sign a message (Bitcoin and Litecoin P2WSH, a P2SH address on Dogecoin, Dash, Bitcoin Cash or Zcash, a Zcash unified address): `provider: \"address\"` and `addressConfirm`, the same address typed again, with no nonce or signature.",
+  ].join(" "),
   example: {
-    chain: "stellar",
-    address: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG",
-    provider: "freighter",
+    chain: "tron",
+    address: "TCLBgkbfVkJroVBJVqBEsxtPNQEQMTQCLQ",
+    provider: "tip191",
     label: "Treasury",
-    issuedAt: "2026-10-25T20:00:00.000Z",
-    signature: "q5mX1b0rC2vJ3cQwM9h2c0Q4pG8sYxkS2t1Q0mN6aWv7Yk3h8e2Lr5Z9u4o1i0p3s6d8f2g7h1j4k9l0m3n5b2v8==",
+    nonce: "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0",
+    signature: "0x6a3c9e1f6f2d4b8a1e7c5d3b2a19087f6e5d4c3b2a1908f7e6d5c4b3a291807f6e5d4c3b2a1908f7e6d5c4b3a291807f6e5d4c3b2a1908f7e6d5c4b3a291807f1b",
   },
 });
 const renameBody = renameWalletBodySchema.openapi("RenameOrganizationWalletBody", { example: { label: "Store payouts" } });
@@ -60,11 +91,52 @@ registerRoutes([
   },
   {
     method: "post",
+    path: "/api/organizations/{id}/wallets/challenge",
+    tags: [TAG],
+    summary: "Get a challenge to prove a wallet",
+    description: "Needs `wallets:create`. A nonce for this member, organization, network and address, valid ten minutes and good for one connect, with what the wallet signs. 400 for an address that cannot sign a message (it is added by its address instead); 429 when the member already holds 20 open challenges in the organization.",
+    security: sessionSecurity,
+    request: { params: orgIdParam, ...jsonBody(challengeBody) },
+    responses: {
+      201: jsonCreated(challengeSchema, "OrganizationWalletChallengeResponse", "Challenge issued"),
+      400: errors.badRequest,
+      401: errors.unauthorized,
+      403: errors.forbidden,
+      404: errors.notFound,
+      429: { description: "Too many open challenges", content: errors.badRequest.content },
+      500: errors.internalError,
+    },
+  },
+  {
+    method: "get",
+    path: "/api/wallet-proofs/tonconnect-manifest.json",
+    tags: [TAG],
+    summary: "TON Connect manifest",
+    description: "Public. The manifest a TON wallet reads when it proves an address: the platform's origin (the ton_proof domain), its name and its icon.",
+    responses: {
+      200: {
+        description: "The manifest",
+        content: {
+          "application/json": {
+            schema: z
+              .object({
+                url: z.string().openapi({ example: "https://dev.cosmospay.lat" }),
+                name: z.string().openapi({ example: "Cosmos Pay" }),
+                iconUrl: z.string().openapi({ example: "https://dev.cosmospay.lat/apple-touch-icon.png" }),
+              })
+              .openapi("TonConnectManifest"),
+          },
+        },
+      },
+    },
+  },
+  {
+    method: "post",
     path: "/api/organizations/{id}/wallets",
     tags: [TAG],
     summary: "Connect a wallet",
     description:
-      "Needs `wallets:create`. The signature must come from the address and the proof must be recent (or, on a network whose wallets are added by their address, the address is typed twice); an organization holds at most 25 wallets. 409 when the wallet is already connected.",
+      "Needs `wallets:create`. The signature must come from the address, over a challenge issued to this member for this organization, network and address, still alive and not used (or, for an address that cannot sign a message, the address is typed twice); an organization holds at most 25 wallets. 409 when the wallet is already connected; 503 when the network a proof is checked on (NEAR, Aptos, Movement, Starknet) could not be reached.",
     security: sessionSecurity,
     request: { params: orgIdParam, ...jsonBody(connectBody) },
     responses: {
@@ -75,6 +147,7 @@ registerRoutes([
       404: errors.notFound,
       409: { description: "The wallet is already connected to this organization", content: errors.badRequest.content },
       500: errors.internalError,
+      503: { description: "The network the proof is checked on could not be reached", content: errors.badRequest.content },
     },
   },
   {

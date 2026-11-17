@@ -11,7 +11,7 @@ import { selfServicePlanIds } from "@/lib/plan-change";
 import { TICKET_PRIORITIES, TICKET_STATUSES } from "@/lib/support-status";
 import { COSMOS_SCOPES } from "@/lib/cosmos-scopes";
 import { isNetwork, isNetworkAddress, type NetworkId } from "@/lib/chains";
-import { addedByAddress, normalizeWalletAddress } from "@/lib/org-wallets";
+import { addedByAddress, CHALLENGE_TTL_MS, normalizeWalletAddress, walletProofMessage } from "@/lib/org-wallets";
 import {
   badRequest,
   conflict,
@@ -598,8 +598,42 @@ const orgRoutes: MockRoute[] = [
     if (!org) return notFound("Organization not found");
     return ok(org.wallets, "Wallets loaded");
   }),
-  // The real route checks the wallet's signature; the mock takes any proof, so the form can be
-  // walked through without a wallet extension.
+  // A challenge as the real route issues it (the typed data and the manifest are the client's
+  // business in mock mode: no wallet is asked to sign against this host).
+  route("POST", "/api/organizations/:id/wallets/challenge", (req) => {
+    const org = findOrg(req.params.id);
+    if (!org) return notFound("Organization not found");
+    if (!hasPermission(org, "wallets:create")) return forbidden("You don't have permission to connect wallets to this organization.");
+    const chainRaw = str(req.body, "chain");
+    if (!isNetwork(chainRaw)) return badRequest();
+    const chain: NetworkId = chainRaw;
+    const typed = str(req.body, "address")?.trim() ?? "";
+    if (chain !== "ton" && (!typed || !isNetworkAddress(chain, typed) || addedByAddress(chain, typed))) return badRequest();
+    const address = chain === "ton" ? null : normalizeWalletAddress(chain, typed);
+    const nonce = randomBytes(32).toString("hex");
+    const issuedAt = nowIso();
+    const expiresAt = new Date(Date.parse(issuedAt) + CHALLENGE_TTL_MS).toISOString();
+    const host = req.url.host;
+    return created({
+      chain,
+      address,
+      nonce,
+      issuedAt,
+      expiresAt,
+      message: address ? walletProofMessage({ orgId: org.id, chain, address, nonce, issuedAt, expiresAt }) : null,
+      domain: host,
+      manifestUrl: chain === "ton" ? new URL("/api/wallet-proofs/tonconnect-manifest.json", req.url).toString() : null,
+      typedData: null,
+    }, "Challenge issued");
+  }),
+  route("GET", "/api/wallet-proofs/tonconnect-manifest.json", (req) => {
+    const origin = req.url.origin;
+    return new Response(JSON.stringify({ url: origin, name: "Cosmos Pay", iconUrl: `${origin}/apple-touch-icon.png` }), {
+      headers: { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+  // The real route checks the wallet's signature over its challenge; the mock takes any proof, so
+  // the form can be walked through without a wallet extension.
   route("POST", "/api/organizations/:id/wallets", (req) => {
     const org = findOrg(req.params.id);
     if (!org) return notFound("Organization not found");
@@ -608,8 +642,9 @@ const orgRoutes: MockRoute[] = [
     const address = str(req.body, "address")?.trim();
     if (!isNetwork(chainRaw) || !address || !isNetworkAddress(chainRaw, address)) return badRequest();
     const chain: NetworkId = chainRaw;
-    // A wallet added by its address carries it typed twice, as the real route asks.
-    if (addedByAddress(chain) && str(req.body, "addressConfirm")?.trim() !== address) return badRequest("Type the same address twice.");
+    // An address that cannot sign carries it typed twice, as the real route asks; any other a challenge.
+    if (addedByAddress(chain, address) && str(req.body, "addressConfirm")?.trim() !== address) return badRequest("Type the same address twice.");
+    if (!addedByAddress(chain, address) && !str(req.body, "nonce")) return badRequest("The wallet's signature has expired. Connect it again.");
     const normalized = normalizeWalletAddress(chain, address);
     if (org.wallets.some((w) => w.chain === chain && normalizeWalletAddress(chain, w.address) === normalized)) {
       return conflict("This wallet is already connected to the organization.");
