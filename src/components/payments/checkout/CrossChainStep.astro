@@ -18,8 +18,8 @@ const x = t.xc;
 <section class="ck-xc" data-xc-step hidden aria-labelledby="ck-xc-title">
   <button class="btn btn-outline-w btn-sm ck-xc-toggle" type="button" data-action="xc-toggle" aria-expanded="false" aria-controls="ck-xc-body">{x.toggle}</button>
   <div class="ck-xc-body" id="ck-xc-body" data-xc-body hidden>
-    <h2 class="ck-field-label ck-xc-title" id="ck-xc-title">{x.title}</h2>
-    <p class="ck-field-hint">{x.hint}</p>
+    <h2 class="ck-field-label ck-xc-title" id="ck-xc-title" data-xc-intro>{x.title}</h2>
+    <p class="ck-field-hint" data-xc-intro>{x.hint}</p>
     <form class="ck-xc-form" data-xc-form novalidate>
       <div class="ck-xc-amount" data-xc-amount hidden>
         <label class="ck-xc-field" for="ck-xc-amount">
@@ -80,7 +80,7 @@ const x = t.xc;
       <p class="pp-hint ck-xc-detail" data-slot="xc-detail" hidden></p>
     </form>
     <div class="ck-xc-deposit" data-xc-deposit hidden>
-      <div class="pp-status" role="status" aria-live="polite">
+      <div class="pp-status" role="status" aria-live="polite" data-xc-phase-status>
         <span class="pp-pill" data-slot="xc-phase"></span>
         <p class="pp-body" data-slot="xc-phase-body"></p>
       </div>
