@@ -2,9 +2,9 @@
    account's organizations, the wallets each one receives payments in, and the customers (with
    their wallets per environment). The full records are built by the handler that owns them
    (platform.ts for organizations and wallets, payments.ts for customers). */
-import type { Chain } from "@/lib/chains";
+import type { Chain, NetworkId } from "@/lib/chains";
 import type { MockEnv } from "@/lib/mock/http";
-import { COMPANIES, daysAgo, emailFor, evmAddress, solanaAddress, stellarAccount, uuid } from "@/lib/mock/fixtures";
+import { COMPANIES, bitcoinAddress, daysAgo, emailFor, evmAddress, solanaAddress, stellarAccount, tronAddress, uuid } from "@/lib/mock/fixtures";
 
 export interface MockOrgSeed {
   id: string;
@@ -30,20 +30,27 @@ export const MOCK_PUBLIC_ORG = "org_mock_public";
 export interface MockWalletSeed {
   id: string;
   orgId: string;
-  chain: Chain;
+  chain: NetworkId;
   address: string;
   label: string | null;
   provider: string | null;
   createdAt: string;
 }
 
-/** Every organization receives on each chain; a payment link's destination is one of these. */
+/** Every organization receives on Stellar, Solana and Monad, and on a few of the other networks
+    (an EVM one proven by its wallet, two added by their address); a payment link's destination is
+    one of these. */
 export function mockOrgWalletSeeds(orgId: string): MockWalletSeed[] {
   return [
     { id: uuid(`wallet:${orgId}:stellar`), orgId, chain: "stellar", address: stellarAccount(`org:${orgId}:main`), label: "Treasury", provider: "freighter", createdAt: daysAgo(200) },
     { id: uuid(`wallet:${orgId}:stellar2`), orgId, chain: "stellar", address: stellarAccount(`org:${orgId}:fees`), label: "Fees", provider: null, createdAt: daysAgo(120) },
     { id: uuid(`wallet:${orgId}:solana`), orgId, chain: "solana", address: solanaAddress(`org:${orgId}:main`), label: "Solana sales", provider: "phantom", createdAt: daysAgo(90) },
     { id: uuid(`wallet:${orgId}:monad`), orgId, chain: "monad", address: evmAddress(`org:${orgId}:main`), label: null, provider: "metamask", createdAt: daysAgo(45) },
+    { id: uuid(`wallet:${orgId}:base`), orgId, chain: "base", address: evmAddress(`org:${orgId}:main`), label: "Base sales", provider: "evm", createdAt: daysAgo(20) },
+    { id: uuid(`wallet:${orgId}:tron`), orgId, chain: "tron", address: tronAddress(`org:${orgId}:main`), label: "USDT on Tron", provider: "address", createdAt: daysAgo(12) },
+    { id: uuid(`wallet:${orgId}:btc`), orgId, chain: "btc", address: bitcoinAddress(`org:${orgId}:main`), label: "Bitcoin", provider: "address", createdAt: daysAgo(6) },
+    // Where a merchant fee on a network paid through a deposit address is credited, inside the route.
+    { id: uuid(`wallet:${orgId}:near`), orgId, chain: "near", address: `fees-${orgId.toLowerCase().replace(/[^a-z0-9]/g, "").slice(-12)}.near`, label: "Route fees", provider: "address", createdAt: daysAgo(4) },
   ];
 }
 

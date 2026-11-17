@@ -10,6 +10,8 @@ import { errors, jsonCreated, jsonOk, registerRoutes, sessionSecurity } from "@/
 import { z } from "@/lib/openapi/zod";
 import { connectWalletBodySchema, renameWalletBodySchema } from "@/schemas/org-wallets";
 import { jsonBody, pathParam } from "@/schemas/shared/openapi-params";
+import { NETWORK_IDS, type NetworkId } from "@/lib/chains";
+import { WALLET_PROVIDER_IDS } from "@/lib/org-wallets";
 
 const TAG = "Organizations";
 const orgIdParam = pathParam("id", "org_123", "Organization id.");
@@ -18,17 +20,17 @@ const walletParams = orgIdParam.extend(pathParam("walletId", "clx9z8a1b0000wllt1
 const walletSchema = z
   .object({
     id: z.string().openapi({ example: "clx9z8a1b0000wllt1234abcd" }),
-    chain: z.enum(["stellar", "solana", "monad"]).openapi({ example: "stellar" }),
-    address: z.string().openapi({ example: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG", description: "As the chain writes it; EVM addresses lower-cased." }),
+    chain: z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "stellar", description: "Any network a payment link settles on." }),
+    address: z.string().openapi({ example: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG", description: "As the network writes it; hex addresses (EVM and the like) lower-cased." }),
     label: z.string().nullable().openapi({ example: "Treasury" }),
-    provider: z.enum(["freighter", "phantom", "solflare", "evm"]).nullable().openapi({ example: "freighter", description: "The wallet that proved the address." }),
+    provider: z.enum(WALLET_PROVIDER_IDS).nullable().openapi({ example: "freighter", description: "The wallet that proved the address; `address` when it was added by its address, with no signature (a network whose wallets this app verifies no signature from); null for a signed Stellar XDR." }),
     createdAt: z.string().openapi({ example: "2026-10-25T20:00:00.000Z" }),
   })
   .openapi("OrganizationWallet", { description: "A wallet the organization receives payments in." });
 
 const connectBody = connectWalletBodySchema.openapi("ConnectOrganizationWalletBody", {
   description:
-    "`signature` is the wallet's signature over the proof message for this organization, network, address and `issuedAt` (at most 10 minutes old): SEP-53 base64 on Stellar, Ed25519 base64 on Solana, personal_sign 0x-hex on Monad. On Stellar, `signedXdr` instead (no `provider`): the proof transaction carrying that message (a manageData entry, sequence 1, never valid, public network passphrase), signed by the address in any wallet.",
+    "`signature` is the wallet's signature over the proof message for this organization, network, address and `issuedAt` (at most 10 minutes old): SEP-53 base64 on Stellar, Ed25519 base64 on Solana, personal_sign 0x-hex on Monad and every other EVM network, Ed25519 base64 on Fogo. On Stellar, `signedXdr` instead (no `provider`): the proof transaction carrying that message (a manageData entry, sequence 1, never valid, public network passphrase), signed by the address in any wallet. On a network whose wallets are added by their address (the Bitcoin family, XRP Ledger, Tron, TON, NEAR, Sui, Aptos, Movement, Starknet, Cardano, Aleo): `provider: \"address\"` and `addressConfirm`, the same address typed again, with no signature or `issuedAt`.",
   example: {
     chain: "stellar",
     address: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG",
@@ -62,7 +64,7 @@ registerRoutes([
     tags: [TAG],
     summary: "Connect a wallet",
     description:
-      "Needs `wallets:create`. The signature must come from the address and the proof must be recent; an organization holds at most 25 wallets. 409 when the wallet is already connected.",
+      "Needs `wallets:create`. The signature must come from the address and the proof must be recent (or, on a network whose wallets are added by their address, the address is typed twice); an organization holds at most 25 wallets. 409 when the wallet is already connected.",
     security: sessionSecurity,
     request: { params: orgIdParam, ...jsonBody(connectBody) },
     responses: {

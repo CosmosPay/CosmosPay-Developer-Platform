@@ -203,7 +203,7 @@ export const zh: LearnMessages = {
       title: "Stellar、Solana 与 Monad 收款对比",
       meta: "Stellar、Solana 与 Monad 支付对比 | Cosmos Pay",
       description: "使用 Cosmos Pay 接受稳定币支付时，Stellar、Solana 与 Monad 的对比：链接标准、资产、测试网、网络费和费率。",
-      summary: "并列比较支付结算所在的三个网络：链接格式、资产、测试网和费用。",
+      summary: "并列比较拥有自己付款链接标准的三个网络：链接格式、资产、测试网和费用。",
       lede: "使用 Cosmos Pay 时，无论在 Stellar、Solana 还是 Monad 上，支付都会到达您的地址，并按同样的套餐费率计费。不同之处在于钱包读取的链接（Stellar 上为 SEP-7，Solana 上为 Solana Pay，Monad 上为指向充值地址的 EIP-681）、付款与链接的匹配方式，以及哪些资产有预设。下表按 Cosmos Pay 的支持情况对三者进行比较；兑换将这三个网络与 Cosmos Pay 支持的 {n} 个网络中的其他网络连接起来。",
       table: {
         title: "三个结算网络并列对比",

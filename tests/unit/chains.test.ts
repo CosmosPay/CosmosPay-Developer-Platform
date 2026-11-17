@@ -8,6 +8,15 @@ import {
   explorerTxUrl,
   isAddress,
   isChain,
+  isDepositNetwork,
+  isNetwork,
+  isNetworkAddress,
+  NETWORK_ADDRESS_RULES,
+  NETWORK_IDS,
+  NETWORK_NATIVE_CODES,
+  NETWORKS_BY_NAME,
+  networkName,
+  sameNetworkAddress,
   tierOf,
 } from '@/lib/chains';
 
@@ -72,4 +81,58 @@ test('assetLabel names the native coin, a code, or a shortened token', () => {
   assert.equal(assetLabel('monad', null), 'MON');
   assert.equal(assetLabel('stellar', `USDC:${STELLAR}`), 'USDC');
   assert.equal(assetLabel('solana', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'), 'EPjF…Dt1v');
+});
+
+test('every network has an address rule, a coin and a name, and the three chains are networks too', () => {
+  assert.equal(NETWORK_IDS.length, 35);
+  for (const id of NETWORK_IDS) {
+    assert.ok(NETWORK_ADDRESS_RULES[id], id);
+    assert.ok(NETWORK_NATIVE_CODES[id], id);
+    assert.ok(networkName(id), id);
+  }
+  for (const c of CHAINS) {
+    assert.equal(isNetwork(c), true);
+    assert.equal(isDepositNetwork(c), false);
+  }
+  assert.equal(isDepositNetwork('tron'), true);
+  assert.equal(isNetwork('toString'), false);
+});
+
+test('a picker lists the networks by name, so none comes first for being one of ours', () => {
+  const names = NETWORKS_BY_NAME.map((id) => networkName(id));
+  assert.deepEqual(names, [...names].sort((a, b) => a.localeCompare(b, 'en')));
+  assert.equal(NETWORKS_BY_NAME.length, NETWORK_IDS.length);
+});
+
+test('each network checks its own address shape, as the Payments API does', () => {
+  const ok: Record<string, string> = {
+    eth: '0x2527D02599Ba641c19FEa793cD0F167589a0f10D',
+    btc: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+    tron: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+    xrp: 'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',
+    near: 'alice.near',
+    sui: `0x${'a'.repeat(64)}`,
+    cardano: `addr1${'q'.repeat(98)}`,
+    ton: `0:${'a'.repeat(64)}`,
+    doge: 'DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L',
+  };
+  for (const [network, address] of Object.entries(ok)) assert.equal(isNetworkAddress(network, address), true, network);
+  assert.equal(isNetworkAddress('btc', 'BC1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'), false, 'mixed-case bech32');
+  assert.equal(isNetworkAddress('tron', ok.eth), false);
+  assert.equal(isNetworkAddress('eth', ok.tron), false);
+  assert.equal(isNetworkAddress('nope', ok.eth), false);
+  assert.equal(sameNetworkAddress('base', ok.eth, ok.eth.toLowerCase()), true);
+  assert.equal(sameNetworkAddress('tron', ok.tron, ok.tron.toLowerCase()), false);
+});
+
+test('a network reached on mainnet only has explorers there, and none in the sandbox', () => {
+  const evm = '0x2527D02599Ba641c19FEa793cD0F167589a0f10D';
+  const hash = `0x${'c'.repeat(64)}`;
+  assert.equal(explorerTxUrl('base', 'public', hash), `https://basescan.org/tx/${hash}`);
+  assert.equal(explorerTxUrl('base', 'testnet', hash), null);
+  assert.equal(explorerAccountUrl('arb', 'public', evm), `https://arbiscan.io/address/${evm}`);
+  assert.equal(explorerTxUrl('btc', 'public', 'd'.repeat(64)), `https://blockchair.com/bitcoin/transaction/${'d'.repeat(64)}`);
+  assert.equal(explorerTxUrl('tron', 'public', 'nothex/../x'), null);
+  assert.equal(explorerTxUrl('hood', 'public', hash), null);
+  assert.equal(assetLabel('tron', 'native'), 'TRX');
 });

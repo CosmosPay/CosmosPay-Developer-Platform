@@ -7,7 +7,9 @@
    tests/unit/embedI18n.test.ts fails when the two drift. The exceptions are the strings that
    only exist here (`button.*`) and one sentence that does not fit inline: the hosted page's
    "paid" line tells the payer they may close the page, and inline there is no page to close
-   (`checkout.body.paid`). `by` is the hosted page's footer line; `demo` is the line a `demo`
+   (`checkout.body.paid`). `checkout.email` is the hosted page's email step, word for word: the
+   inline checkout asks for the payer's email before it shows the QR, as the hosted page does.
+   `by` is the hosted page's footer line; `demo` is the line a `demo`
    checkout shows on top, and `demoPay` / `demoAgain` label the button that plays it. */
 
 export const EMBED_LOCALES = ["en", "es", "pt", "fr", "de", "hi", "zh"] as const;
@@ -57,6 +59,18 @@ const en = {
     errorBody: "Check your connection. We’ll keep trying.",
     rateLimited: "Too many requests from your network. Trying again shortly.",
     retry: "Try again",
+    email: {
+      title: "Email for your receipt",
+      hint: "The merchant receives it with your payment.",
+      body: "Enter your email to continue. Your receipt goes there once the payment is confirmed.",
+      placeholder: "you@example.com",
+      submit: "Continue",
+      saving: "Saving…",
+      invalid: "Enter a valid email address.",
+      failed: "We couldn't save your email. Try again.",
+      change: "Change",
+      given: "Receipt to {email}",
+    },
   },
 };
 export type EmbedMessages = typeof en;
@@ -105,6 +119,18 @@ const es: EmbedMessages = {
     errorBody: "Revisa tu conexión. Seguimos intentando.",
     rateLimited: "Demasiadas solicitudes desde tu red. Reintentamos en breve.",
     retry: "Reintentar",
+    email: {
+      title: "Email para tu comprobante",
+      hint: "El comercio lo recibe con tu pago.",
+      body: "Escribe tu email para continuar. Tu comprobante llega ahí cuando se confirme el pago.",
+      placeholder: "tu@ejemplo.com",
+      submit: "Continuar",
+      saving: "Guardando…",
+      invalid: "Escribe un email válido.",
+      failed: "No pudimos guardar tu email. Inténtalo de nuevo.",
+      change: "Cambiar",
+      given: "Comprobante a {email}",
+    },
   },
 };
 
@@ -152,6 +178,18 @@ const pt: EmbedMessages = {
     errorBody: "Verifique sua conexão. Continuamos tentando.",
     rateLimited: "Muitas solicitações da sua rede. Tentaremos de novo em breve.",
     retry: "Tentar novamente",
+    email: {
+      title: "E-mail para o seu comprovante",
+      hint: "O comerciante o recebe com o seu pagamento.",
+      body: "Digite seu e-mail para continuar. O comprovante chega nele quando o pagamento for confirmado.",
+      placeholder: "voce@exemplo.com",
+      submit: "Continuar",
+      saving: "Salvando…",
+      invalid: "Digite um e-mail válido.",
+      failed: "Não conseguimos salvar seu e-mail. Tente de novo.",
+      change: "Alterar",
+      given: "Comprovante para {email}",
+    },
   },
 };
 
@@ -199,6 +237,18 @@ const fr: EmbedMessages = {
     errorBody: "Vérifiez votre connexion. Nous réessayons.",
     rateLimited: "Trop de requêtes depuis votre réseau. Nouvel essai sous peu.",
     retry: "Réessayer",
+    email: {
+      title: "E-mail pour votre reçu",
+      hint: "Le marchand le reçoit avec votre paiement.",
+      body: "Saisissez votre e-mail pour continuer. Votre reçu y sera envoyé une fois le paiement confirmé.",
+      placeholder: "vous@exemple.com",
+      submit: "Continuer",
+      saving: "Enregistrement…",
+      invalid: "Saisissez une adresse e-mail valide.",
+      failed: "Impossible d'enregistrer votre e-mail. Réessayez.",
+      change: "Modifier",
+      given: "Reçu envoyé à {email}",
+    },
   },
 };
 
@@ -246,6 +296,18 @@ const de: EmbedMessages = {
     errorBody: "Prüfe deine Verbindung. Wir versuchen es weiter.",
     rateLimited: "Zu viele Anfragen aus deinem Netzwerk. Gleich neuer Versuch.",
     retry: "Erneut versuchen",
+    email: {
+      title: "E-Mail für Ihren Beleg",
+      hint: "Der Händler erhält sie mit Ihrer Zahlung.",
+      body: "Geben Sie Ihre E-Mail ein, um fortzufahren. Ihr Beleg geht dorthin, sobald die Zahlung bestätigt ist.",
+      placeholder: "sie@beispiel.de",
+      submit: "Weiter",
+      saving: "Wird gespeichert…",
+      invalid: "Geben Sie eine gültige E-Mail-Adresse ein.",
+      failed: "Ihre E-Mail konnte nicht gespeichert werden. Versuchen Sie es erneut.",
+      change: "Ändern",
+      given: "Beleg an {email}",
+    },
   },
 };
 
@@ -293,6 +355,18 @@ const hi: EmbedMessages = {
     errorBody: "अपना कनेक्शन जाँचें। हम कोशिश करते रहेंगे।",
     rateLimited: "आपके नेटवर्क से बहुत ज़्यादा अनुरोध आए हैं। थोड़ी देर में फिर कोशिश करेंगे।",
     retry: "फिर कोशिश करें",
+    email: {
+      title: "आपकी रसीद के लिए ईमेल",
+      hint: "आपके भुगतान के साथ यह मर्चेंट को भी मिलता है।",
+      body: "आगे बढ़ने के लिए अपना ईमेल लिखें। भुगतान की पुष्टि होते ही रसीद वहाँ भेजी जाएगी।",
+      placeholder: "aap@udaharan.com",
+      submit: "जारी रखें",
+      saving: "सहेजा जा रहा है…",
+      invalid: "मान्य ईमेल पता लिखें।",
+      failed: "हम आपका ईमेल सहेज नहीं सके। फिर से कोशिश करें।",
+      change: "बदलें",
+      given: "रसीद {email} पर",
+    },
   },
 };
 
@@ -340,6 +414,18 @@ const zh: EmbedMessages = {
     errorBody: "请检查网络连接。我们会持续重试。",
     rateLimited: "您所在网络的请求过多，稍后将自动重试。",
     retry: "重试",
+    email: {
+      title: "接收收据的邮箱",
+      hint: "商户会随付款一并收到该邮箱。",
+      body: "请输入邮箱以继续。付款确认后，收据将发送到该邮箱。",
+      placeholder: "you@example.com",
+      submit: "继续",
+      saving: "正在保存…",
+      invalid: "请输入有效的邮箱地址。",
+      failed: "无法保存你的邮箱，请重试。",
+      change: "更改",
+      given: "收据发送至 {email}",
+    },
   },
 };
 

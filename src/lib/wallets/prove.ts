@@ -61,7 +61,8 @@ export async function detectWallets(): Promise<Record<WalletProvider, boolean>> 
   } catch {
     freighter = false;
   }
-  return { freighter, phantom: !!phantom(), solflare: !!solflare(), evm: !!evm() };
+  // `address` needs no wallet: it is the address typed twice (a network whose wallets sign nothing this app checks).
+  return { freighter, phantom: !!phantom(), solflare: !!solflare(), evm: !!evm(), address: true };
 }
 
 const declined = (e: unknown) => new WalletProofError("declined", e instanceof Error ? e.message : typeof e === "string" ? e : "The wallet refused the request");

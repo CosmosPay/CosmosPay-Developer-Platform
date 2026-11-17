@@ -3,7 +3,7 @@ import { requestSession } from "@/lib/request-session";
 import { jsonBadRequest, jsonConflict, jsonCreated, jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
-import { isFreshProof, MAX_ORG_WALLETS, walletProofMessage } from "@/lib/org-wallets";
+import { addedByAddress, isFreshProof, MAX_ORG_WALLETS, walletProofMessage } from "@/lib/org-wallets";
 import { verifyWalletProof } from "@/lib/org-wallets-verify";
 import { checkWalletProofXdr } from "@/lib/wallets/wallet-proof-xdr";
 import { addOrgWallet, countOrgWallets, listOrgWallets, WalletAlreadyConnectedError } from "@/lib/org-wallets-store";
@@ -32,7 +32,9 @@ export const GET: APIRoute = async (ctx) => {
 /* POST /api/organizations/:id/wallets: connect a wallet (`wallets:create`). The wallet signed
    walletProofMessage for this organization, network and address within the last minutes, or, on
    Stellar, the proof transaction carrying it (a signed XDR from any wallet); the signature is
-   checked against the address before anything is stored. */
+   checked against the address before anything is stored. On a network whose wallets this app
+   verifies no signature from (`addedByAddress`), the member adds it by its address, typed twice,
+   and it is stored as added without a signature (`provider: "address"`). */
 export const POST: APIRoute = async (ctx) => {
   const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
@@ -53,12 +55,15 @@ export const POST: APIRoute = async (ctx) => {
   }
   const { chain, address, provider, label, issuedAt, signature, signedXdr } = body.data;
 
-  if (!isFreshProof(issuedAt)) return jsonBadRequest("The wallet's signature has expired. Connect it again.");
-  const proven = signedXdr
-    ? checkWalletProofXdr({ orgId, address, issuedAt }, signedXdr).ok
-    : verifyWalletProof(chain, address, walletProofMessage({ orgId, chain, address, issuedAt }), signature!);
-  if (!proven) {
-    return jsonBadRequest("The signature was not made by this wallet.");
+  // The schema already held a wallet added by its address to the address typed twice.
+  if (!addedByAddress(chain)) {
+    if (!issuedAt || !isFreshProof(issuedAt)) return jsonBadRequest("The wallet's signature has expired. Connect it again.");
+    const proven = signedXdr
+      ? checkWalletProofXdr({ orgId, address, issuedAt }, signedXdr).ok
+      : verifyWalletProof(chain, address, walletProofMessage({ orgId, chain, address, issuedAt }), signature!);
+    if (!proven) {
+      return jsonBadRequest("The signature was not made by this wallet.");
+    }
   }
   if ((await countOrgWallets(orgId)) >= MAX_ORG_WALLETS) {
     return jsonBadRequest(`An organization can connect at most ${MAX_ORG_WALLETS} wallets.`);

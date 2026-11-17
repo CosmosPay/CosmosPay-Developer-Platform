@@ -7,20 +7,20 @@ import { useT, fmt } from "@/lib/i18n/index";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { RowMenu } from "@/components/cosmos/dashboard/components/RowMenu";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
-import { CHAIN_NAMES, TEST_NETWORKS, assetLabel as chainAssetLabel, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
+import { TEST_NETWORKS, assetLabel as chainAssetLabel, explorerTxUrl, isChain, isNetwork, networkName, tierOf } from "@/lib/chains";
 
 /* Map an upstream status to a status-pill class (reuses the existing ok/fail/ref pills). */
 export const STATUS_PILL = { SUCCEEDED: "ok", FAILED: "fail", EXPIRED: "fail", CANCELLED: "fail", PENDING: "ref", SUBMITTED: "ref" };
 
-/* The chain a record settles on (Stellar for a record from before chains). */
-export const chainOf = (record) => (record && isChain(record.chain) ? record.chain : "stellar");
+/* The network a record settles on (Stellar for a record from before chains). */
+export const chainOf = (record) => (record && isNetwork(record.chain) ? record.chain : "stellar");
 /* "native" as the chain's coin (XLM, SOL, MON), a code as stored, a long token shortened. */
 export function assetLabel(asset, chain = "stellar") { return chainAssetLabel(chain, asset); }
 export function amountLabel(intent, pl) { return intent.amount ? `${intent.amount} ${assetLabel(intent.asset, chainOf(intent))}` : pl.anyAmount; }
-/* "Solana · Devnet" in the sandbox, "Solana" on mainnet. */
+/* "Solana · Devnet" in the sandbox, "Solana" on mainnet (every other network is mainnet only). */
 export function networkLabel(record) {
   const chain = chainOf(record);
-  return tierOf(record && record.network) === "public" ? CHAIN_NAMES[chain] : `${CHAIN_NAMES[chain]} · ${TEST_NETWORKS[chain]}`;
+  return tierOf(record && record.network) === "public" || !isChain(chain) ? networkName(chain) : `${networkName(chain)} · ${TEST_NETWORKS[chain]}`;
 }
 
 /* The explorer page of the record's on-chain transaction, on its chain and network; null until
@@ -39,7 +39,7 @@ export function PaymentAmount({ intent, pl, size = 24 }) {
   const chain = chainOf(intent);
   return (
     <span className="cell-mark">
-      <TokenMark symbol={assetLabel(intent.asset, chain)} chain={chain} chainName={CHAIN_NAMES[chain]} size={size} />
+      <TokenMark symbol={assetLabel(intent.asset, chain)} chain={chain} chainName={networkName(chain)} size={size} />
       <span>{amountLabel(intent, pl)}</span>
     </span>
   );
