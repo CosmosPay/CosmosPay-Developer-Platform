@@ -83,6 +83,14 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
 - Wallet proofs are not checked in mock mode (a challenge is issued, any proof over it is taken), and nothing else reaches a chain: QR codes are PNG
   drawings that encode nothing, and the other transactions and XDRs (payment links, liquidity,
   private payments) are sample strings.
+- **The Discord link can run live** (`src/lib/mock/discord-live.ts`): with `DISCORD_CLIENT_ID`,
+  `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_LINK_SECRET` and `COSMOS_MOCK_DISCORD_KEY` (a real `dv_` or
+  `prod_` key from a real platform) in the shell or `.env`, "Connect Discord" goes through the real
+  Discord application, and the callback hands that key to the real bot (`DISCORD_BOT_LINK_URL`,
+  default `http://127.0.0.1:3800`) and lists the real server. Nothing is minted (the key is the one
+  given, links only in its environment); an unlink tells the bot. The application must list
+  `http://localhost:<port>/api/integrations/discord/callback` as a redirect. Without them the
+  sample flow links a made-up server at once.
 
 ## Languages: seven, everywhere
 

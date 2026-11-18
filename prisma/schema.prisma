@@ -210,6 +210,8 @@ model Organization {
   invitations OrganizationInvitation[]
   wallets     OrganizationWallet[]
   walletProofChallenges WalletProofChallenge[]
+  discordInstallRequests DiscordInstallRequest[]
+  discordLinks          DiscordLink[]
 
   @@index([ownerId])
   @@map("organization")
@@ -298,6 +300,54 @@ model WalletProofChallenge {
   @@index([orgId, userId])
   @@index([expiresAt])
   @@map("wallet_proof_challenge")
+}
+
+// A request to link a Discord server, made from Settings (src/lib/discord-links-store.ts): its
+// `state` (32 random bytes, base64url) is what Discord hands back to the callback. Bound to the
+// member who asked, valid until `expiresAt` (ten minutes) and used once (`usedAt`); the wallet and
+// the asset are what the link will receive in. Expired rows are cleared as new ones are made.
+model DiscordInstallRequest {
+  state       String    @id
+  orgId       String
+  userId      String
+  environment String // dev | prod: the dashboard's switch when the request was made
+  walletId    String // an OrganizationWallet of the organization
+  asset       String // native, CODE or CODE:ISSUER (src/lib/discord-link-shared.ts)
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  usedAt      DateTime?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, userId])
+  @@index([expiresAt])
+  @@map("discord_install_request")
+}
+
+// A Discord server linked to an organization: the bot holds an API key of the organization
+// (`apiKeyId`, an APISIX credential of the member who linked it, `createdById`) and charges into
+// `chain` / `address` in `asset`. One row per server: linking it again, from any organization,
+// replaces the row and revokes the old key.
+model DiscordLink {
+  id              String   @id @default(cuid())
+  orgId           String
+  guildId         String   @unique
+  guildName       String
+  environment     String // dev | prod
+  apiKeyId        String
+  chain           String
+  address         String
+  asset           String
+  discordUserId   String?
+  discordUsername String?
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("discord_link")
 }
 
 // ---------------- Wallet account provisioning (RETIRED) ----------------

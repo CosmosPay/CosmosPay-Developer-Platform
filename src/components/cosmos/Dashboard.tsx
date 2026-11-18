@@ -10,7 +10,7 @@ import { Nav } from "@/components/cosmos/layout/Nav";
 import { SegThumb } from "@/components/cosmos/dashboard/components/SegThumb";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
 import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi } from "@/lib/api-client";
-import { planLimits, planSwapFeeBps, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
+import { atLimit, planLimits, planSwapFeeBps, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS, RECORD_VIEWS } from "@/components/cosmos/dashboard/data";
@@ -444,7 +444,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "adminCustomers": return isManager ? <AdminCustomersView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminProducts": return isManager ? <AdminProductsView adminFilter={adminFilter} goToAdmin={goToAdmin} /> : overview;
       case "adminConsumers": return isManager ? <AdminConsumersView goToAdmin={goToAdmin} /> : overview;
-      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} env={live ? "prod" : "dev"} meId={user?.id} walletPerms={{ create: can("wallets:create"), edit: can("wallets:edit"), remove: can("wallets:delete") }} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
+      case "settings": return <SettingsView org={org} orgCount={orgs.length} limits={limits} keyCount={keys.length} env={live ? "prod" : "dev"} meId={user?.id} walletPerms={{ create: can("wallets:create"), edit: can("wallets:edit"), remove: can("wallets:delete") }} discord={{ perms: { create: canCreateKeys, removeTest: can("apiKeysTest:delete"), removeLive: can("apiKeysLive:delete") }, keyLimitReached: atLimit(orgLimits.maxApiKeys, keys.length), liveLocked: liveKeysLocked, onUpgrade: keyUpgrade, onKeysRemoved: (ids) => setKeys((k) => k.filter((x) => !ids.includes(x.id))) }} onRenameOrg={(o) => setRenamingOrg(o)} onDeleteOrg={requestDeleteOrg} />;
       case "account": return <AccountView user={user} theme={theme} setTheme={setTheme} planId={plan} limits={limits} orgCount={orgs.length} onChangePlan={canChangePlan ? () => setModal("plan") : null} plansEnabled={feat.plansEnabled} onSaveProfile={saveProfile} />;
       default: return overview;
     }
