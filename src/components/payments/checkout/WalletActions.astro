@@ -1,6 +1,7 @@
 ---
 // Every way to hand the payment to a wallet on this device. The script shows the extension
-// button only when the Cosmos Pay Wallet extension is there and the link is a Stellar `pay`.
+// button only when the Cosmos Pay Wallet extension is there and the link is a Stellar `pay`, and
+// fills `evm-wallets` with a button per EVM wallet the browser has, on a Monad or Arc link.
 import { MESSAGES } from "@/lib/payments/i18n";
 
 interface Props {
@@ -17,6 +18,7 @@ const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
 <div class:list={["pp-actions", { "ck-actions-block": block }]}>
   {primary && <a class="btn btn-dark ck-primary" data-slot="open-wallet">{t.openWallet}</a>}
   <button class="btn btn-outline-w" type="button" data-action="pay-extension" hidden>{t.payExtension}</button>
+  <div class="ck-evm-wallets" data-slot="evm-wallets" hidden></div>
   <a class="btn btn-outline-w" data-slot="web-wallet" target="_blank" rel="noopener" hidden>{t.webWallet}</a>
 </div>
 <p class="pp-hint" data-slot="ext-status" role="status" aria-live="polite"></p>
