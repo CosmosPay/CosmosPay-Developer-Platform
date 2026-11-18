@@ -1280,7 +1280,7 @@
     },
     "/v1/payment-intents/{id}/validate": {
       "post": {
-        "description": "Looks `txHash` up on the intent's chain and checks it pays this intent (success, destination, asset, amount, memo or reference, age); a match settles it `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`. This intent's own payment that failed on-chain marks it `FAILED` (`PAYMENT_INTENT_FAILED`); any other mismatch answers `valid: false` with a `reason` and leaves the status unchanged. An `EXPIRED` intent still settles on a verified payment, a `SUCCEEDED` one answers as it is without asking the chain, and one transaction settles at most one intent of any consumer (the oldest it pays).\n\nRequires the `payments:write` scope.",
+        "description": "Looks `txHash` up on the intent's chain and checks it pays this intent (success, destination, asset, amount, memo or reference, age); a match settles it `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`. A failed transaction marks it `FAILED` (`PAYMENT_INTENT_FAILED`) only where it carries the intent's memo or reference (Stellar, Solana); on Monad and Arc it is a mismatch, and any mismatch answers `valid: false` with a `reason` and leaves the status unchanged. An `EXPIRED` intent still settles on a verified payment, a `SUCCEEDED` one answers as it is without asking the chain, and one transaction settles at most one intent of any consumer (the oldest it pays).\n\nRequires the `payments:write` scope.",
         "operationId": "PaymentIntentsController_validate_v1",
         "parameters": [
           {
