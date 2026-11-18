@@ -9,7 +9,7 @@
    is good once: a replay finds its challenge used. Payment forms then offer only these wallets, and
    the API refuses any other receiving address (src/lib/org-wallets-store.ts, `orgHasWallet`).
 
-   Every network a payment link settles on (NETWORK_IDS) proves its wallets with the signature its
+   Every network a payment link settles on (PAYMENT_NETWORK_IDS) proves its wallets with the signature its
    wallets make (`WALLET_PROVIDERS`). Only an address that cannot sign a message at all is added by
    its address, typed twice (`addedByAddress`, stored as `provider: "address"`): a Bitcoin or
    Litecoin P2WSH address and a P2SH address on a network without SegWit (scripts, multisig in
@@ -40,12 +40,12 @@ const SIGNMESSAGE: WalletProvider[] = ["signmessage"];
 
 /* How an address is proven on each network: the wallets that can sign the proof message there
    (`evm` is whatever EIP-1193 wallet the browser injects, MetaMask, Rabby…, for every EVM
-   network, Robinhood Chain and HyperCore included: one key, one address; Fogo's keys are
+   network, Arc, Robinhood Chain and HyperCore included: one key, one address; Fogo's keys are
    Solana's), or the signature standard of the network's wallets. */
 export const WALLET_PROVIDERS: Record<NetworkId, WalletProvider[]> = {
   stellar: ["freighter"],
   solana: SOLANA_PROOF,
-  monad: EVM_PROOF,
+  monad: EVM_PROOF, arc: EVM_PROOF,
   eth: EVM_PROOF, base: EVM_PROOF, arb: EVM_PROOF, op: EVM_PROOF, bsc: EVM_PROOF, pol: EVM_PROOF,
   avax: EVM_PROOF, gnosis: EVM_PROOF, bera: EVM_PROOF, scroll: EVM_PROOF, xlayer: EVM_PROOF,
   abs: EVM_PROOF, plasma: EVM_PROOF, hood: EVM_PROOF, hypercore: EVM_PROOF,

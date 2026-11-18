@@ -29,6 +29,7 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
       { i: 0, href: `${PAYMENTS}/stellar` }, // Stellar payments
       { i: 1, href: `${PAYMENTS}/solana` }, // Solana payments
       { i: 2, href: `${PAYMENTS}/monad` }, // Monad payments
+      { i: 3, href: `${PAYMENTS}/arc` }, // Arc payments
     ],
   },
   // Solutions: SaaS & subscriptions, Marketplaces, E-commerce, Platforms, Embedded finance,

@@ -22,7 +22,7 @@ export const ABOUT_REPOS = [
 ] as const;
 
 /** The networks a payment settles on, in the footer's order (its `networks` group names them). */
-export const ABOUT_NETWORKS = ["stellar", "solana", "monad"] as const;
+export const ABOUT_NETWORKS = ["stellar", "solana", "monad", "arc"] as const;
 
 /** Where each part of the page leads, on the given origins. A check's links name their label in
  *  the catalog (`a` or `b` of `about.checks.items.<key>`). */

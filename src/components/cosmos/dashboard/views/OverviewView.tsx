@@ -34,7 +34,7 @@ import { AddressLink, shortAddress } from "@/components/cosmos/dashboard/compone
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { Sk, ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { NETWORK_IDS, NETWORKS_BY_NAME, networkName } from "@/lib/chains";
+import { PAYMENT_NETWORK_IDS, NETWORKS_BY_NAME, networkName } from "@/lib/chains";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
@@ -55,7 +55,7 @@ const FAILED = ["FAILED", "CANCELLED", "EXPIRED"];
 const groupOf = (status) => (status === SETTLED ? "settled" : FAILED.includes(status) ? "failed" : "open");
 const GROUPS = ["settled", "open", "failed"];
 const DEFAULTS = { q: "", status: "all", chain: "all" };
-const ALLOWED = { status: ["all", ...GROUPS], chain: ["all", ...NETWORK_IDS] };
+const ALLOWED = { status: ["all", ...GROUPS], chain: ["all", ...PAYMENT_NETWORK_IDS] };
 
 /* The organization id, copyable: the merchant code of the reference. */
 function OrgIdField({ id, label }) {
