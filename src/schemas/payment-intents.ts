@@ -10,7 +10,7 @@
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
-import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, NATIVE_CODES, NETWORK_IDS, isChain, isNetworkAddress, networkAddressMessage, networkName, sameNetworkAddress, type NetworkId } from "@/lib/chains";
+import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, NATIVE_CODES, PAYMENT_NETWORK_IDS, isChain, isEvmChain, isNetworkAddress, networkAddressMessage, networkName, sameNetworkAddress, type NetworkId } from "@/lib/chains";
 import { merchantFeeSchema } from "@/schemas/merchant-fee";
 import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, isRouteFeeAccount, routeFeeAccount } from "@/lib/deposit-limits";
 
@@ -62,16 +62,16 @@ export const depositLimitsSchema = z
 export const cosmosEnvSchema = z.enum(["dev", "prod"]).default("dev");
 
 /* Unified create body. `chain` is where the payment settles (Stellar unless said): any network
-   in NETWORK_IDS. Stellar, Solana and Monad take the environment's network (Solana devnet and Monad
-   testnet in the sandbox); every other one is paid through a deposit address made for each
-   payment, on mainnet only. `kind` selects:
+   of PAYMENT_NETWORK_IDS. Stellar, Solana, Monad and Arc take the environment's network (Solana
+   devnet, Monad testnet and Arc Testnet in the sandbox); every other one is paid through a deposit
+   address made for each payment. `kind` selects:
    - "pay": a payment link, no source, amount optional (e.g. donations) on Stellar and Solana;
    - "tx":  Stellar only: source + amount required, returns an unsigned XDR to sign. */
 export const createPaymentIntentBodySchema = z
   .object({
     org: z.string().trim().min(1).max(64),
     environment: cosmosEnvSchema,
-    chain: z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]).default("stellar"),
+    chain: z.enum(PAYMENT_NETWORK_IDS as [NetworkId, ...NetworkId[]]).default("stellar"),
     kind: z.enum(["pay", "tx"]).default("pay"),
     source: chainAddress.optional(),
     destination: chainAddress,
@@ -114,9 +114,11 @@ export const createPaymentIntentBodySchema = z
       const value = v[key];
       if (value !== undefined && !ADDRESS_PATTERNS[chain].test(value)) issue(key, ADDRESS_MESSAGES[chain]);
     }
+    // On Arc the coin is USDC: no asset, `USDC` or `native` all charge it, and the Payments API stores
+    // its 6-decimal ERC-20 interface for them.
     const native = !v.assetCode || v.assetCode.toUpperCase() === NATIVE_CODES[chain];
     // A merchant fee is a second payment in the same transaction (Stellar, Solana) or a split at
-    // the deposit address (Monad), and it needs an amount to take it from. Its wallet is the
+    // the deposit address (Monad, Arc), and it needs an amount to take it from. Its wallet is the
     // organization's, on the link's chain (checked by the route).
     if (v.merchantFee) {
       const wallet = v.merchantFee.wallet;
@@ -131,15 +133,15 @@ export const createPaymentIntentBodySchema = z
       if (!native && !v.assetIssuer) issue("assetIssuer", "A non-native asset requires an issuer.");
       return;
     }
-    // Solana and Monad: payment links only; a token is its ticker plus its mint or contract.
+    // Solana, Monad and Arc: payment links only; a token is its ticker plus its mint or contract.
     if (v.kind !== "pay") issue("kind", "Transaction intents are Stellar only; use a payment link on " + chain + ".");
     if (v.source !== undefined) issue("source", "Stellar only; not used on " + chain + ".");
     if (v.callback !== undefined) issue("callback", "Stellar only; not used on " + chain + ".");
     if (v.assetIssuer && !v.assetCode) issue("assetCode", "A token needs its ticker (e.g. USDC) beside its address.");
     if (!native && !v.assetIssuer) issue("assetIssuer", chain === "solana" ? "A token needs its SPL mint." : "A token needs its ERC-20 contract.");
-    if (chain === "monad") {
-      if (!v.amount) issue("amount", "An amount is required on Monad: it is part of how the payment is recognised.");
-      if (v.msg !== undefined) issue("msg", "A wallet message is not supported on Monad.");
+    if (isEvmChain(chain)) {
+      if (!v.amount) issue("amount", "An amount is required on " + networkName(chain) + ": it is part of how the payment is recognised.");
+      if (v.msg !== undefined) issue("msg", "A wallet message is not supported on " + networkName(chain) + ".");
     }
   });
 

@@ -1,22 +1,48 @@
 /* The networks Cosmos Pay settles on, in one place for every screen, route and script that
    names them: display names, native coins, what an address looks like, the tokens offered as
-   presets and the explorers. `Chain` is the three with a wallet link and a test network of their
-   own (Stellar, Solana, Monad); `NetworkId` is every network, those three included. The Payments API stays the authority (it checks checksums, mints
-   and contracts); these are its shapes, checked early. Pure, so it is unit-tested. */
+   presets and the explorers. `Chain` is the four with a wallet link and a test network of their
+   own (Stellar, Solana, Monad, Arc); `NetworkId` is every network a payment settles on, those four
+   included. `NETWORK_IDS` is narrower: the swap platform's networks, which Arc is not one of. The
+   Payments API stays the authority (it checks checksums, mints and contracts); these are its
+   shapes, checked early. Pure, so it is unit-tested. */
 
-export const CHAINS = ["stellar", "solana", "monad"] as const;
+export const CHAINS = ["stellar", "solana", "monad", "arc"] as const;
 export type Chain = (typeof CHAINS)[number];
+/* The chains with a market of their own for swaps on one chain (the Stellar DEX, Solana's and
+   Monad's). Arc has none: no swap of any kind runs there. */
+export const DEX_CHAINS = ["stellar", "solana", "monad"] as const;
+export type DexChain = (typeof DEX_CHAINS)[number];
+/* The EVM chains among them: an EIP-681 wallet link with the chain's id, proofs by EIP-191
+   personal_sign, and a deposit address per payment when the Payments API has a relayer. */
+export const EVM_CHAINS = ["monad", "arc"] as const;
+export type EvmChain = (typeof EVM_CHAINS)[number];
 /* The Payments API reports every chain's network in one vocabulary: public or testnet. */
 export type Tier = "public" | "testnet";
 
-export const CHAIN_NAMES: Record<Chain, string> = { stellar: "Stellar", solana: "Solana", monad: "Monad" };
-export const NATIVE_CODES: Record<Chain, string> = { stellar: "XLM", solana: "SOL", monad: "MON" };
-export const NATIVE_DECIMALS: Record<Chain, number> = { stellar: 7, solana: 9, monad: 18 };
+export const CHAIN_NAMES: Record<Chain, string> = { stellar: "Stellar", solana: "Solana", monad: "Monad", arc: "Arc" };
+/* Arc's gas coin is USDC itself (18 decimals natively); a payment charges it through its 6-decimal
+   ERC-20 interface, the USDC preset below, so no screen offers it twice. */
+export const NATIVE_CODES: Record<Chain, string> = { stellar: "XLM", solana: "SOL", monad: "MON", arc: "USDC" };
+export const NATIVE_DECIMALS: Record<Chain, number> = { stellar: 7, solana: 9, monad: 18, arc: 18 };
 /* What each chain calls its test network (the sandbox), by its own name. */
-export const TEST_NETWORKS: Record<Chain, string> = { stellar: "Testnet", solana: "Devnet", monad: "Testnet" };
+export const TEST_NETWORKS: Record<Chain, string> = { stellar: "Testnet", solana: "Devnet", monad: "Testnet", arc: "Testnet" };
 
 export function isChain(value: unknown): value is Chain {
   return typeof value === "string" && (CHAINS as readonly string[]).includes(value);
+}
+
+export function isDexChain(value: unknown): value is DexChain {
+  return typeof value === "string" && (DEX_CHAINS as readonly string[]).includes(value);
+}
+
+export function isEvmChain(value: unknown): value is EvmChain {
+  return typeof value === "string" && (EVM_CHAINS as readonly string[]).includes(value);
+}
+
+/* Whether a payment link on `chain` offers the chain's coin as an asset of its own: everywhere but
+   on Arc, whose coin is the USDC its preset already charges. */
+export function offersNativeCoin(chain: string): boolean {
+  return chain !== "arc";
 }
 
 /* "public" for a mainnet, whatever the chain calls it; anything else is the test network. */
@@ -29,22 +55,27 @@ export const ADDRESS_PATTERNS: Record<Chain, RegExp> = {
   stellar: /^G[A-Z2-7]{55}$/,
   solana: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
   monad: /^0x[0-9a-fA-F]{40}$/,
+  arc: /^0x[0-9a-fA-F]{40}$/,
 };
 export const ADDRESS_MESSAGES: Record<Chain, string> = {
   stellar: "Must be a valid Stellar public key (G...56 chars).",
   solana: "Must be a valid Solana address (base58).",
   monad: "Must be a valid Monad (EVM) address (0x + 40 hex).",
+  arc: "Must be a valid Arc (EVM) address (0x + 40 hex).",
 };
-export const ADDRESS_PLACEHOLDERS: Record<Chain, string> = { stellar: "G…", solana: "Base58…", monad: "0x…" };
+export const ADDRESS_PLACEHOLDERS: Record<Chain, string> = { stellar: "G…", solana: "Base58…", monad: "0x…", arc: "0x…" };
 
-/** An account on `chain`: one of the three chains or any other network, by its shape. */
+/** An account on `chain`: one of the four chains or any other network, by its shape. */
 export function isAddress(chain: string, value: string): boolean {
   return isNetworkAddress(chain, value);
 }
 
-/* Tokens offered by name on Solana and Monad (Stellar's are in stellar-assets.ts). Mainnet
-   contracts are the ones NEAR Intents lists; Solana devnet's USDC is Circle's mint, checked
-   on-chain. Monad's test network has no USDC we can vouch for, so it offers none. */
+/* Tokens offered by name on Solana, Monad and Arc (Stellar's are in stellar-assets.ts). Solana's
+   and Monad's mainnet contracts are the ones NEAR Intents lists; Solana devnet's USDC is Circle's
+   mint, checked on-chain. Monad's test network has no USDC we can vouch for, so it offers none.
+   Arc's are Circle's contracts, as the Payments API presets them (docs.arc.io's contract
+   addresses): USDC is the ERC-20 interface to the chain's gas coin, at the same address on both
+   networks; EURC has one per network. Both have 6 decimals. */
 export interface TokenPreset {
   code: string;
   issuer: string;
@@ -59,14 +90,52 @@ export const TOKEN_PRESETS: Record<Exclude<Chain, "stellar">, Record<Tier, Token
     public: [{ code: "USDC", issuer: "0x754704bc059f8c67012fed69bc8a327a5aafb603", decimals: 6 }],
     testnet: [],
   },
+  arc: {
+    public: [
+      { code: "USDC", issuer: "0x3600000000000000000000000000000000000000", decimals: 6 },
+      { code: "EURC", issuer: "0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1", decimals: 6 },
+    ],
+    testnet: [
+      { code: "USDC", issuer: "0x3600000000000000000000000000000000000000", decimals: 6 },
+      { code: "EURC", issuer: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a", decimals: 6 },
+    ],
+  },
+};
+
+/* Each EVM chain's EIP-155 id per tier: the id its EIP-681 links carry, so a wallet pays on that
+   chain rather than on whichever one it has open. */
+export const EVM_CHAIN_IDS: Record<EvmChain, Record<Tier, number>> = {
+  monad: { public: 143, testnet: 10143 },
+  arc: { public: 5042, testnet: 5042002 },
+};
+
+/* What a wallet needs to add a chain it does not know yet (EIP-3085 `wallet_addEthereumChain`),
+   per tier: the chain's own name, its gas coin, its public RPC and its explorer. Arc's gas coin is
+   USDC at 18 decimals, as the chain itself counts it. */
+export interface EvmChainParams {
+  chainId: number;
+  chainName: string;
+  nativeCurrency: { name: string; symbol: string; decimals: number };
+  rpcUrls: string[];
+  blockExplorerUrls: string[];
+}
+export const EVM_CHAIN_PARAMS: Record<EvmChain, Record<Tier, EvmChainParams>> = {
+  monad: {
+    public: { chainId: 143, chainName: "Monad", nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 }, rpcUrls: ["https://rpc.monad.xyz"], blockExplorerUrls: ["https://monadscan.com"] },
+    testnet: { chainId: 10143, chainName: "Monad Testnet", nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 }, rpcUrls: ["https://testnet-rpc.monad.xyz"], blockExplorerUrls: ["https://testnet.monadexplorer.com"] },
+  },
+  arc: {
+    public: { chainId: 5042, chainName: "Arc", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: ["https://rpc.mainnet.arc.io"], blockExplorerUrls: ["https://explorer.arc.io"] },
+    testnet: { chainId: 5042002, chainName: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: ["https://rpc.testnet.arc.io"], blockExplorerUrls: ["https://explorer.testnet.arc.io"] },
+  },
 };
 
 /* Every network cross-chain swaps (NEAR Intents) reach, by the id the Payments API names it with,
    and how it is named to people: Stellar, Solana and Monad under their own ids, the others under
-   1Click's code. It is also every network a payment link settles on: Stellar, Solana and Monad
-   with their own wallet links (and test networks), every other one through a deposit address made
-   for each payment, on mainnet only. The community server keeps the same list
-   (`CROSS_CHAIN_NETWORK_IDS`); the assets endpoint also sends each name. */
+   1Click's code. A payment link settles on every one of them: Stellar, Solana and Monad with their
+   own wallet links (and test networks), every other one through a deposit address made for each
+   payment. The community server keeps the same list (`CROSS_CHAIN_NETWORK_IDS`); the assets
+   endpoint also sends each name. Copy counts these as the networks our swaps reach (`{swapN}`). */
 export const NETWORK_NAMES = {
   stellar: "Stellar", solana: "Solana", monad: "Monad",
   eth: "Ethereum", base: "Base", arb: "Arbitrum", op: "Optimism", bsc: "BNB Chain", pol: "Polygon",
@@ -76,24 +145,45 @@ export const NETWORK_NAMES = {
   xrp: "XRP Ledger", tron: "Tron", ton: "TON", near: "NEAR", sui: "Sui", aptos: "Aptos",
   movement: "Movement", starknet: "Starknet", cardano: "Cardano", aleo: "Aleo", fogo: "Fogo",
 } as const satisfies Record<string, string>;
-export type NetworkId = keyof typeof NETWORK_NAMES;
-export const NETWORK_IDS = Object.keys(NETWORK_NAMES) as NetworkId[];
-/* A network a payment link settles on through a deposit address: every one but the three chains
-   with their own wallet links. */
+export type SwapNetworkId = keyof typeof NETWORK_NAMES;
+export const NETWORK_IDS = Object.keys(NETWORK_NAMES) as SwapNetworkId[];
+
+/* Every network a payment settles on: the swap platform's, plus the chains it does not reach,
+   where a payment settles natively and nothing else runs (Arc). Copy counts these as the networks
+   Cosmos Pay works with (`{n}`). */
+export const PAYMENT_NETWORK_NAMES = { ...NETWORK_NAMES, arc: "Arc" } as const satisfies Record<string, string>;
+export type NetworkId = keyof typeof PAYMENT_NETWORK_NAMES;
+export const PAYMENT_NETWORK_IDS = Object.keys(PAYMENT_NETWORK_NAMES) as NetworkId[];
+/* A network a payment link settles on through a deposit address: every one but the chains with
+   their own wallet links. */
 export type DepositNetwork = Exclude<NetworkId, Chain>;
 
+/** Any network a payment settles on, Arc included. */
 export function isNetwork(value: unknown): value is NetworkId {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(PAYMENT_NETWORK_NAMES, value);
+}
+
+/** A network the swap platform reaches (Arc is not one): either side of a cross-chain swap or deposit. */
+export function isSwapNetwork(value: unknown): value is SwapNetworkId {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(NETWORK_NAMES, value);
 }
 
-/** Whether a payment on `value` is paid through a deposit address made for it (mainnet only). */
+/* `{n}` in copy is how many networks Cosmos Pay works with (every network a payment settles on);
+   `{swapN}` is how many networks its swaps reach. Every surface that fills one fills both, so a
+   sentence about payments and one about swaps can share a catalog. */
+export const NETWORK_COUNTS = { n: PAYMENT_NETWORK_IDS.length, swapN: NETWORK_IDS.length } as const;
+export function withNetworkCounts(text: string): string {
+  return text.replace(/\{n\}/g, String(NETWORK_COUNTS.n)).replace(/\{swapN\}/g, String(NETWORK_COUNTS.swapN));
+}
+
+/** Whether a payment on `value` is paid through a deposit address made for it. */
 export function isDepositNetwork(value: unknown): value is DepositNetwork {
   return isNetwork(value) && !isChain(value);
 }
 
-/* The networks by their names, for a picker: alphabetical, so no network is listed first for
-   being one of ours. */
-export const NETWORKS_BY_NAME: readonly NetworkId[] = [...NETWORK_IDS].sort((a, b) => NETWORK_NAMES[a].localeCompare(NETWORK_NAMES[b], "en"));
+/* Every network a payment settles on, by its name, for a picker: alphabetical, so no network is
+   listed first for being one of ours. */
+export const NETWORKS_BY_NAME: readonly NetworkId[] = [...PAYMENT_NETWORK_IDS].sort((a, b) => PAYMENT_NETWORK_NAMES[a].localeCompare(PAYMENT_NETWORK_NAMES[b], "en"));
 
 /* The native coin's ticker on every network (the community server's `nativeSymbol`). */
 export const NETWORK_NATIVE_CODES: Record<NetworkId, string> = {
@@ -133,6 +223,7 @@ export const NETWORK_ADDRESS_RULES: Record<NetworkId, AddressRule> = {
   stellar: { test: pattern(ADDRESS_PATTERNS.stellar), message: "a Stellar public key (G…, 56 characters)", hex: false },
   solana: { test: pattern(ADDRESS_PATTERNS.solana), message: "a Solana address (base58)", hex: false },
   monad: { test: pattern(ADDRESS_PATTERNS.monad), message: "a Monad (EVM) address (0x + 40 hex)", hex: true },
+  arc: { test: pattern(ADDRESS_PATTERNS.arc), message: "an Arc (EVM) address (0x + 40 hex)", hex: true },
   eth: evmNetwork, base: evmNetwork, arb: evmNetwork, op: evmNetwork, bsc: evmNetwork, pol: evmNetwork,
   avax: evmNetwork, gnosis: evmNetwork, bera: evmNetwork, scroll: evmNetwork, xlayer: evmNetwork,
   abs: evmNetwork, plasma: evmNetwork, hood: evmNetwork, hypercore: evmNetwork,
@@ -171,9 +262,8 @@ export function sameNetworkAddress(network: string, a: string, b: string): boole
   return hex ? a.trim().toLowerCase() === b.trim().toLowerCase() : a.trim() === b.trim();
 }
 
-/* Explorers, the same ones the wallet links, per network and tier. Stellar, Solana and Monad have
-   a test network; every other network is reached on mainnet only, so it has no explorer on the
-   sandbox tier. A network with no explorer we checked (Robinhood Chain, Aleo, Fogo) has none:
+/* Explorers, the same ones the wallet links, per network and tier. Stellar, Solana, Monad and Arc
+   have a test network; the other networks have no explorer on the sandbox tier. A network with no explorer we checked (Robinhood Chain, Aleo, Fogo) has none:
    the screens still copy and preview what they show. A hash or address is checked against the
    network's alphabet first, so a crafted value can't turn into a different URL. */
 const HEX64 = /^[0-9a-f]{64}$/i;
@@ -181,7 +271,7 @@ const EVM_TX = /^0x[0-9a-f]{64}$/i;
 const BASE58_TX = /^[1-9A-HJ-NP-Za-km-z]{43,90}$/;
 const BASE58_DIGEST = /^[1-9A-HJ-NP-Za-km-z]{43,44}$/;
 const TX_HASH: Record<NetworkId, RegExp> = {
-  stellar: HEX64, solana: BASE58_TX, monad: EVM_TX,
+  stellar: HEX64, solana: BASE58_TX, monad: EVM_TX, arc: EVM_TX,
   eth: EVM_TX, base: EVM_TX, arb: EVM_TX, op: EVM_TX, bsc: EVM_TX, pol: EVM_TX, avax: EVM_TX, gnosis: EVM_TX,
   bera: EVM_TX, scroll: EVM_TX, xlayer: EVM_TX, abs: EVM_TX, plasma: EVM_TX, hood: EVM_TX, hypercore: EVM_TX,
   btc: HEX64, ltc: HEX64, doge: HEX64, bch: HEX64, dash: HEX64, zec: HEX64, xrp: HEX64, tron: HEX64, cardano: HEX64,
@@ -211,6 +301,7 @@ const EXPLORERS: Record<NetworkId, Partial<Record<Tier, Explorer>>> = {
     testnet: { tx: (h) => `https://explorer.solana.com/tx/${h}?cluster=devnet`, account: (a) => `https://explorer.solana.com/address/${a}?cluster=devnet` },
   },
   monad: { public: scan("https://monadscan.com"), testnet: scan("https://testnet.monadexplorer.com") },
+  arc: { public: scan("https://explorer.arc.io"), testnet: scan("https://explorer.testnet.arc.io") },
   eth: { public: scan("https://etherscan.io") },
   base: { public: scan("https://basescan.org") },
   arb: { public: scan("https://arbiscan.io") },
@@ -273,7 +364,7 @@ export const OFT_NETWORK_NAMES: Record<string, string> = {
   conflux: "Conflux eSpace", flare: "Flare", hyperevm: "HyperEVM", hedera: "Hedera", ink: "Ink", mantle: "Mantle",
   megaeth: "MegaETH", morph: "Morph", rootstock: "Rootstock", sei: "Sei", stable: "Stable", tempo: "Tempo", unichain: "Unichain",
 };
-export const networkName = (id: string | null | undefined) => (id ? (isNetwork(id) ? NETWORK_NAMES[id] : OFT_NETWORK_NAMES[id]) || id.toUpperCase() : "");
+export const networkName = (id: string | null | undefined) => (id ? (isNetwork(id) ? PAYMENT_NETWORK_NAMES[id] : OFT_NETWORK_NAMES[id]) || id.toUpperCase() : "");
 
 /* What an address looks like on each network, as a field's placeholder. */
 const EVM_HINT = "0x…";

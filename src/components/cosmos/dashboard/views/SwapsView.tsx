@@ -30,7 +30,7 @@ import { Pagination } from "@/components/cosmos/dashboard/components/Pagination"
 import { FillRows } from "@/components/cosmos/dashboard/components/FillRows";
 import { SwapWidget } from "@/components/cosmos/dashboard/components/SwapWidget";
 import { SwapRecordDetail } from "@/components/cosmos/dashboard/components/SwapDetails";
-import { CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, networkName, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
+import { DEX_CHAINS, NETWORK_IDS, assetLabel as chainAssetLabel, networkName, explorerTxUrl, isChain, tierOf } from "@/lib/chains";
 import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 
 /* One vocabulary for every kind: a swap on one chain (PENDING → SUBMITTED → SUCCEEDED), one
@@ -130,15 +130,15 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   // Swaps on each chain, between chains and USDT0's transfers are five lists upstream; read
   // together, newest first.
   const fetchAll = useCallback(() => Promise.all([
-    ...CHAINS.map((c) => swapsApi.list(orgId, env, { take: 100, chain: c }).then(asList).catch(() => null)),
+    ...DEX_CHAINS.map((c) => swapsApi.list(orgId, env, { take: 100, chain: c }).then(asList).catch(() => null)),
     crossApi.list(orgId, env, { take: 100 }).then(asList).catch(() => null),
     usdt0Api.list(orgId, env, { take: 100 }).then(asList).catch(() => null),
   ]).then((parts) => {
     if (parts.every((p) => p === null)) throw new Error("unavailable");
     return [
-      ...parts.slice(0, CHAINS.length).flatMap((p) => (p || []).map(sameRow)),
-      ...(parts[CHAINS.length] || []).map(crossRow),
-      ...(parts[CHAINS.length + 1] || []).map(usdt0Row),
+      ...parts.slice(0, DEX_CHAINS.length).flatMap((p) => (p || []).map(sameRow)),
+      ...(parts[DEX_CHAINS.length] || []).map(crossRow),
+      ...(parts[DEX_CHAINS.length + 1] || []).map(usdt0Row),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }), [orgId, env]);
   const load = useCallback(() => {
@@ -177,8 +177,8 @@ export function SwapsView({ canManage = true, orgId, env = "dev", defaultType = 
   const groupCounts = countBy(rows.filter((r) => matches(r, "status")), (r) => groupOf(r.status));
   const typeCounts = countBy(rows.filter((r) => matches(r, "type")), (r) => r.kind);
   const chainRows = rows.filter((r) => matches(r, "chain"));
-  // The networks to filter by: ours, and any other a swap went through.
-  const networks = [...new Set<string>([...CHAINS, ...rows.flatMap((r) => [r.from, r.to])])];
+  // The networks to filter by: the chains with a market of their own, and any other a swap went through.
+  const networks = [...new Set<string>([...DEX_CHAINS, ...rows.flatMap((r) => [r.from, r.to])])];
   const chainCounts = Object.fromEntries(networks.map((c) => [c, chainRows.filter((r) => r.from === c || r.to === c).length]));
 
   const pg = usePaged(view, JSON.stringify(filters));

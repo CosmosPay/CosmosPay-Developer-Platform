@@ -12,7 +12,7 @@
      (stored lowercase). It is never sent to an address on the link's network.
 
    Pure, shared by the create schema, the create route and the form. */
-import { NETWORK_ADDRESS_RULES, NETWORK_IDS, isChain, isDepositNetwork, type NetworkId } from "@/lib/chains";
+import { NETWORK_ADDRESS_RULES, NETWORK_IDS, isChain, isDepositNetwork, isSwapNetwork, type SwapNetworkId } from "@/lib/chains";
 
 /** Open deposit addresses one payer may have on a link: the API's default, and its ceiling. */
 export const DEPOSIT_LIMIT_PER_PAYER = { min: 2, max: 10 } as const;
@@ -23,8 +23,9 @@ export const DEPOSIT_LIMIT_WINDOW_MINUTES = 5;
 
 const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
-/* The networks whose accounts are EVM addresses: the same key holds the same address on each. */
-export const EVM_NETWORK_IDS: readonly NetworkId[] = NETWORK_IDS.filter(
+/* The networks the route reaches whose accounts are EVM addresses: the same key holds the same
+   address on each. */
+export const EVM_NETWORK_IDS: readonly SwapNetworkId[] = NETWORK_IDS.filter(
   (id) => NETWORK_ADDRESS_RULES[id].hex && NETWORK_ADDRESS_RULES[id].test("0x0000000000000000000000000000000000000000"),
 );
 
@@ -49,8 +50,9 @@ export function isRouteFeeWallet(chain: string, address: string): boolean {
  * Whether a link takes payments from another network, so its deposit limits matter: every link on
  * a network paid through a deposit address, and a mainnet link on Stellar, Solana or Monad without
  * a merchant fee (the API also refuses a Monad link it recognises by amount; that is its call).
+ * Never on Arc: the cross-chain route does not reach it.
  */
 export function takesDeposits(chain: string, mainnet: boolean, merchantFee: boolean): boolean {
   if (isDepositNetwork(chain)) return true;
-  return isChain(chain) && mainnet && !merchantFee;
+  return isChain(chain) && isSwapNetwork(chain) && mainnet && !merchantFee;
 }

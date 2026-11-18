@@ -60,7 +60,7 @@ export const customerWalletBodySchema = z
 const anyChainAddress = z
   .string()
   .trim()
-  .refine((v) => CHAINS.some((c) => isAddress(c, v)), "Must be a Stellar, Solana or Monad address.");
+  .refine((v) => CHAINS.some((c) => isAddress(c, v)), "Must be a Stellar, Solana, Monad or Arc address.");
 
 export const createCustomerBodySchema = z.object({
   name: z.string().trim().min(1).max(120),
